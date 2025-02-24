@@ -20,6 +20,7 @@ import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { CloseMessage } from '@/components/library/Message';
+import RestartLineIcon from '@/components/ui/icons/Remix/system/restart-line.react.svg';
 
 interface Props {
   webhookId: string;
@@ -121,6 +122,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       key: 'success',
       title: 'Status',
       filtering: true,
+      defaultWidth: 64,
       type: {
         render: (success) =>
           success ? (
@@ -185,24 +187,23 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       type: DATE_TIME,
       filtering: true,
     }),
-    helper.simple<'deliveryTaskId'>({
-      key: 'deliveryTaskId',
+    helper.display({
       title: 'Actions',
-      type: {
-        render: (deliveryTaskId, { item: entity }) => (
-          <Button
-            type="PRIMARY"
-            size="SMALL"
-            onClick={() => handleReplayWebhook(entity)}
-            isLoading={
-              resendMutation.isLoading &&
-              resendMutation.variables?.deliveryTaskId === deliveryTaskId
-            }
-          >
-            Send again
-          </Button>
-        ),
-      },
+      defaultSticky: 'RIGHT',
+      render: (_, { item: entity }) => (
+        <Button
+          type="SECONDARY"
+          size="SMALL"
+          onClick={() => handleReplayWebhook(entity)}
+          icon={<RestartLineIcon />}
+          isLoading={
+            resendMutation.isLoading &&
+            resendMutation.variables?.deliveryTaskId === entity.deliveryTaskId
+          }
+        >
+          Replay
+        </Button>
+      ),
     }),
   ]);
 

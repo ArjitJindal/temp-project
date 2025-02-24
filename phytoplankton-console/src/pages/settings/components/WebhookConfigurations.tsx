@@ -177,7 +177,7 @@ export const WebhookConfigurations: React.FC = () => {
           DELETE: (entityId) => api.deleteWebhooksWebhookId({ webhookId: entityId }),
         }}
         columns={columns}
-        formWidth="800px"
+        formWidth="840px"
         formSteps={[
           {
             step: {
