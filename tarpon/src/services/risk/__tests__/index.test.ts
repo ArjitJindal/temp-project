@@ -14,15 +14,17 @@ describe('Risk Service Tests for V8', () => {
 
     const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
 
-    const riskFactor = await riskService.createOrUpdateRiskFactor({
-      name: 'Risk Factor',
-      description: 'Risk Factor',
-      status: 'ACTIVE',
-      logicAggregationVariables: [],
-      logicEntityVariables: [],
-      defaultWeight: 1,
-      type: 'BUSINESS',
-    })
+    const riskFactor = (
+      await riskService.createOrUpdateRiskFactor({
+        name: 'Risk Factor',
+        description: 'Risk Factor',
+        status: 'ACTIVE',
+        logicAggregationVariables: [],
+        logicEntityVariables: [],
+        defaultWeight: 1,
+        type: 'BUSINESS',
+      })
+    ).result
 
     const riskFactors = await riskService.getAllRiskFactors()
     expect(riskFactors).toBeDefined()

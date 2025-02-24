@@ -14002,6 +14002,7 @@ components:
         - CASE
         - USER
         - RISK_SCORING
+        - RISK_FACTOR
         - ALERT
         - WEBHOOK
         - API-KEY
@@ -14068,6 +14069,7 @@ components:
             - SLA_POLICY_UPDATE
             - SLA_STATUS_UPDATE
             - WEBHOOK
+            - RISK_FACTOR_V8
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

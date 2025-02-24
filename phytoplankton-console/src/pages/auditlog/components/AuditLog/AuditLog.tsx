@@ -7,6 +7,7 @@ import { HighlightOutlined } from '@ant-design/icons';
 import RuleAuditLogModal from '../RuleAuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import AuditLogModal from '../AuditLogModal';
+import RiskFactorAuditLogModal from '../RiskFactorAuditLogModal';
 import { TableItem, TableSearchParams } from './types';
 import { auditLogQueryAdapter, useTableData } from './helpers';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
@@ -167,6 +168,9 @@ export default function AuditLogTable() {
           }
           if (item.type === 'RULE') {
             return <RuleAuditLogModal data={item} />;
+          }
+          if (item.type === 'RISK_FACTOR') {
+            return <RiskFactorAuditLogModal data={item} />;
           }
           return (
             <AuditLogModal

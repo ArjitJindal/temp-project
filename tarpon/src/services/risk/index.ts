@@ -299,14 +299,16 @@ export class RiskService {
     return result
   }
 
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'CREATE')
   async createOrUpdateRiskFactor(
     riskFactor: RiskFactorsUpdateRequest,
     riskFactorId?: string
-  ): Promise<RiskFactor> {
+  ): Promise<AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor>> {
     if (!this.mongoDb) {
       throw new Error('MongoDB connection not available')
     }
     let currentRiskFactor: RiskFactor | null = null
+    const isNewRiskFactor = riskFactorId ? false : true
     const id =
       riskFactorId || riskFactor.riskFactorId
         ? riskFactorId && !riskFactor.riskFactorId
@@ -344,7 +346,30 @@ export class RiskService {
       createdAt: currentRiskFactor?.createdAt ?? now,
       updatedAt: now,
     }
+    const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
     await this.riskRepository.createOrUpdateRiskFactor(data)
+    let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> = {
+      entities: [
+        {
+          entityId: id,
+          newImage: data,
+        },
+      ],
+      result: data,
+    }
+    if (!isNewRiskFactor && oldRiskFactor) {
+      auditLogData = {
+        ...auditLogData,
+        entities: [
+          {
+            entityId: id,
+            newImage: data,
+            oldImage: oldRiskFactor,
+          },
+        ],
+        actionTypeOverride: 'UPDATE',
+      }
+    }
     await riskFactorAggregationVariablesRebuild(
       data,
       now,
@@ -352,7 +377,7 @@ export class RiskService {
       this.riskRepository
     )
     this.riskRepository.getAllRiskFactors.cache.clear?.()
-    return data
+    return auditLogData
   }
   async getNewRiskFactorId(riskFactorId?: string, update = false) {
     return await this.riskRepository.getNewRiskFactorId(riskFactorId, update)
@@ -367,8 +392,24 @@ export class RiskService {
     return data
   }
 
-  async deleteRiskFactor(riskFactorId: string) {
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'DELETE')
+  async deleteRiskFactor(
+    riskFactorId: string
+  ): Promise<AuditLogReturnData<void, RiskFactor>> {
     this.riskRepository.getAllRiskFactors.cache.clear?.()
-    return this.riskRepository.deleteRiskFactor(riskFactorId)
+    const riskFactor = await this.riskRepository.getRiskFactor(riskFactorId)
+    if (!riskFactor) {
+      throw new BadRequest('Risk factor not found')
+    }
+    await this.riskRepository.deleteRiskFactor(riskFactorId)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: riskFactorId,
+          newImage: riskFactor,
+        },
+      ],
+    }
   }
 }
