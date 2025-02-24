@@ -117,9 +117,24 @@ const userNameMaterilizedColumn = `username String MATERIALIZED
         JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
     )`
 
+export enum ClickhouseTableNames {
+  Transactions = 'transactions',
+  Users = 'users',
+  TransactionEvents = 'transaction_events',
+  UserEvents = 'user_events',
+  Cases = 'cases',
+  Reports = 'reports',
+  KrsScore = 'krs_score',
+  DrsScore = 'drs_score',
+  ArsScore = 'ars_score',
+  SanctionsScreeningDetails = 'sanctions_screening_details',
+  Alerts = 'alerts',
+  NangoRecords = 'nango_records',
+}
+
 export const CLICKHOUSE_DEFINITIONS = {
   TRANSACTIONS: {
-    tableName: 'transactions',
+    tableName: ClickhouseTableNames.Transactions,
     definition: {
       idColumn: 'transactionId',
       timestampColumn: 'timestamp',
@@ -132,7 +147,7 @@ export const CLICKHOUSE_DEFINITIONS = {
     },
   },
   USERS: {
-    tableName: 'users',
+    tableName: ClickhouseTableNames.Users,
     definition: {
       idColumn: 'userId',
       timestampColumn: 'createdTimestamp',
@@ -145,28 +160,28 @@ export const CLICKHOUSE_DEFINITIONS = {
     },
   },
   TRANSACTION_EVENTS: {
-    tableName: 'transaction_events',
+    tableName: ClickhouseTableNames.TransactionEvents,
   },
   USER_EVENTS: {
-    tableName: 'user_events',
+    tableName: ClickhouseTableNames.UserEvents,
   },
   CASES: {
-    tableName: 'cases',
+    tableName: ClickhouseTableNames.Cases,
   },
   REPORTS: {
-    tableName: 'reports',
+    tableName: ClickhouseTableNames.Reports,
   },
   KRS_SCORE: {
-    tableName: 'krs_score',
+    tableName: ClickhouseTableNames.KrsScore,
   },
   DRS_SCORE: {
-    tableName: 'drs_score',
+    tableName: ClickhouseTableNames.DrsScore,
   },
   ARS_SCORE: {
-    tableName: 'ars_score',
+    tableName: ClickhouseTableNames.ArsScore,
   },
   SANCTIONS_SCREENING_DETAILS: {
-    tableName: 'sanctions_screening_details',
+    tableName: ClickhouseTableNames.SanctionsScreeningDetails,
     materializedViews: {
       BY_ID: {
         viewName: 'sanctions_screening_details_by_id_mv',
@@ -175,10 +190,10 @@ export const CLICKHOUSE_DEFINITIONS = {
     },
   },
   ALERTS: {
-    tableName: 'alerts',
+    tableName: ClickhouseTableNames.Alerts,
   },
   NANGO_RECORDS: {
-    tableName: 'nango_records',
+    tableName: ClickhouseTableNames.NangoRecords,
   },
 } as const
 

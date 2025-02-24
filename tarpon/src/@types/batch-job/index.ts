@@ -14,6 +14,7 @@ import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
 import { V8LogicAggregationRebuildTask } from '@/services/rules-engine'
+import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
 
 /* Simulation (Pulse) */
 export type SimulationRiskLevelsBatchJob = {
@@ -209,6 +210,17 @@ export type PnbTransactionEventUpdatesBatchJob = {
     publicApiEndpoint: string
     concurrency: number
     s3Key: string
+  }
+}
+
+export type ClickhouseDataBackfillBatchJob = {
+  type: 'CLICKHOUSE_DATA_BACKFILL'
+  tenantId: string
+  parameters: {
+    referenceId: string // if referenceId is provided job will start from the last item of the referenceId
+    tableNames: ClickhouseTableNames[]
+    fromTimestamp?: number
+    toTimestamp?: number
   }
 }
 
@@ -427,6 +439,7 @@ export type BatchJob =
   | FailingBatchJob
   | FixLocksForKrs
   | FixArsBreakdownBatchJob
+  | ClickhouseDataBackfillBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string
