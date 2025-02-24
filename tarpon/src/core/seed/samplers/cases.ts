@@ -340,9 +340,9 @@ export class AlertSampler extends BaseSampler<Alert> {
     const checklistTemplateId = getRuleInstance(
       params.ruleHit.ruleInstanceId
     ).checklistTemplateId
-    const slaPolicyDetails: SLAPolicyDetails[] | undefined = getRuleInstance(
-      params.ruleHit.ruleInstanceId
-    ).alertConfig?.slaPolicies?.map((sla) => {
+    const slaPolicyDetails: SLAPolicyDetails[] | undefined = uniq(
+      getRuleInstance(params.ruleHit.ruleInstanceId).alertConfig?.slaPolicies
+    )?.map((sla) => {
       const slaPolicy = getSLAPolicyById(sla)
       let elapsedTime = 0
       if (slaPolicy && alertStatus === 'CLOSED') {

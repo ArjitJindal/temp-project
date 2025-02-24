@@ -30,6 +30,7 @@ import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dyna
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
+import { SLAPolicyService } from '../tenants/sla-policy-service'
 import {
   API_USER,
   AlertParams,
@@ -100,6 +101,7 @@ export class AlertsService extends CaseAlertsCommonService {
   ruleInstanceRepository: RuleInstanceRepository
   hasFeatureSla: boolean
   auth0Domain: string
+  slaPolicyService: SLAPolicyService
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -147,6 +149,7 @@ export class AlertsService extends CaseAlertsCommonService {
     })
     this.hasFeatureSla = hasFeature('ALERT_SLA')
     this.auth0Domain = getContext()?.auth0Domain ?? ''
+    this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
   }
 
   public async getAlerts(
@@ -159,7 +162,24 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     try {
-      return await this.alertsRepository.getAlerts(params, options)
+      const alerts: AlertListResponse = await this.alertsRepository.getAlerts(
+        params,
+        options
+      )
+      return {
+        ...alerts,
+        data: alerts.data.map((alertResponse) => ({
+          ...alertResponse,
+          alert: {
+            ...alertResponse.alert,
+            slaPolicyDetails: alertResponse.alert.slaPolicyDetails?.sort(
+              (a, b) => {
+                return (a?.startedAt ?? 0) - (b?.startedAt ?? 0)
+              }
+            ),
+          },
+        })),
+      }
     } finally {
       caseGetSegment?.close()
     }
@@ -854,6 +874,7 @@ export class AlertsService extends CaseAlertsCommonService {
             ? {
                 elapsedTime: slaDetail?.elapsedTime,
                 policyStatus: slaDetail?.policyStatus,
+                startedAt: slaDetail?.startedAt,
               }
             : {}),
           slaPolicyId: id,

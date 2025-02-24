@@ -360,6 +360,7 @@ export class CaseCreationService {
                   ? {
                       policyStatus: slaDetail?.policyStatus,
                       elapsedTime: slaDetail?.elapsedTime,
+                      startedAt: slaDetail?.startedAt,
                     }
                   : {}),
               }
@@ -707,6 +708,7 @@ export class CaseCreationService {
                 ? {
                     elapsedTime: slaDetail?.elapsedTime,
                     policyStatus: slaDetail?.policyStatus,
+                    startedAt: slaDetail?.startedAt,
                   }
                 : {}),
             }

@@ -18,7 +18,7 @@ function SlaStatus(props: Props) {
             <SlaPopover
               slaPolicyDetail={slaPolicyDetail as SLAPolicyStatusDetails}
               index={index}
-              key={slaPolicyDetail.slaPolicyId}
+              key={index}
             />
           );
         }

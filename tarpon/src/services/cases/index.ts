@@ -1109,6 +1109,7 @@ export class CaseService extends CaseAlertsCommonService {
             ? {
                 elapsedTime: slaDetail?.elapsedTime,
                 policyStatus: slaDetail?.policyStatus,
+                startedAt: slaDetail?.startedAt,
               }
             : {}),
         }

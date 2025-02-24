@@ -69,7 +69,8 @@ export class SLAService {
     slaPolicyId: string,
     type: 'alert' | 'case' = 'alert'
   ): Promise<
-    { elapsedTime: number; policyStatus: SLAPolicyStatus } | undefined
+    | { elapsedTime: number; policyStatus: SLAPolicyStatus; startedAt: number }
+    | undefined
   > {
     const slaPolicy = await this.getSLAPolicy(slaPolicyId)
     if (
@@ -174,6 +175,7 @@ export class SLAService {
     return {
       elapsedTime: elapsedTime,
       policyStatus: newStatus,
+      startedAt: entity.createdTimestamp ?? Date.now(),
     }
   }
 
@@ -211,6 +213,7 @@ export class SLAService {
                   elapsedTime: statusData.elapsedTime,
                   policyStatus: statusData.policyStatus,
                   updatedAt: Date.now(),
+                  startedAt: statusData.startedAt,
                 }
               })
             )

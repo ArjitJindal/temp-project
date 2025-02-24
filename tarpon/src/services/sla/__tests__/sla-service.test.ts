@@ -65,6 +65,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 86400000,
           policyStatus: 'OK',
+          startedAt: 1609459200000,
         })
       })
       test('should return the Warning status and time for open alert with 10 day SLA', async () => {
@@ -89,6 +90,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 604800000,
           policyStatus: 'WARNING',
+          startedAt: 1609459200000,
         })
       })
       test('should return the Breached and time for open alert with 10 day SLA', async () => {
@@ -117,6 +119,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 864000000,
           policyStatus: 'BREACHED',
+          startedAt: 1609459200000,
         })
       })
     })
@@ -190,6 +193,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 259200000,
           policyStatus: 'OK',
+          startedAt: 1609459200000,
         })
       })
       test('should return the Breached status with second open status time skipped', async () => {
@@ -236,6 +240,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 864000000,
           policyStatus: 'BREACHED',
+          startedAt: 1609459200000,
         })
       })
     })
@@ -267,6 +272,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 86400000,
           policyStatus: 'OK',
+          startedAt: 1609459200000,
         })
       })
     })
@@ -309,6 +315,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 86400000,
           policyStatus: 'OK',
+          startedAt: 1609459200000,
         })
       })
       test('should return the Breached status and time for open alert with 2 day SLA only counting monday and wednesday', async () => {
@@ -333,6 +340,7 @@ describe('test sla service', () => {
         expect(result).toEqual({
           elapsedTime: 172800000,
           policyStatus: 'BREACHED',
+          startedAt: 1609459200000,
         })
       })
     })
@@ -541,6 +549,7 @@ describe('test sla service', () => {
       expect(result).toEqual({
         elapsedTime: 86400000,
         policyStatus: 'BREACHED',
+        startedAt: 1609459200000,
       })
     })
   })

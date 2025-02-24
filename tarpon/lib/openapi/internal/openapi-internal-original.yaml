@@ -12168,6 +12168,8 @@ components:
           type: number
         updatedAt:
           type: number
+        startedAt:
+          type: number
       required:
         - slaPolicyId
     SLAPolicyStatus:
