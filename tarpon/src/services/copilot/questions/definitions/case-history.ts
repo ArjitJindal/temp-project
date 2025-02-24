@@ -16,8 +16,8 @@ export const CaseHistory: TableQuestion<Period> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.CASES,
   categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
-  title: async ({ humanReadableId }, vars) => {
-    return `Cases for ${humanReadableId} ${humanReadablePeriod(vars)}`
+  title: async (_params, vars) => {
+    return `Cases ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
     { tenantId, userId, humanReadableId, paymentIdentifier },

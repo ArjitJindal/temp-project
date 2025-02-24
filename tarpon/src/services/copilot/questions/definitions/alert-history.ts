@@ -17,8 +17,8 @@ export const AlertHistory: TableQuestion<Period> = {
   questionId: COPILOT_QUESTIONS.ALERTS,
   version: 2,
   categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
-  title: async ({ humanReadableId }, vars) => {
-    return `Alerts ${humanReadableId} ${humanReadablePeriod(vars)}`
+  title: async (_params, vars) => {
+    return `Alerts ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
     { tenantId, userId, humanReadableId, paymentIdentifier },
