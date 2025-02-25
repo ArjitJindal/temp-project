@@ -3,7 +3,7 @@ import { JSONSchemaType } from 'ajv'
 import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
   FUZZINESS_RANGE_SCHEMA,
-  // PEP_RANK_SCHEMA,
+  FUZZINESS_SETTINGS_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   GENERIC_SCREENING_VALUES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -14,7 +14,7 @@ import { formatConsumerName } from '@/utils/helpers'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
-// import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 
 export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
 export type GenericSanctionsConsumerUserRuleParameters = {
@@ -26,7 +26,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   ongoingScreening: boolean
   screeningValues?: GenericScreeningValues[]
   // PEPRank?: PepRank //Open-sanctions does not provide PEP rank data
-  isActive?: boolean
+  fuzzinessSetting: FuzzinessSettingOptions
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -52,16 +52,10 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           description:
             'Select the screening attributes to be used for the screening',
         }),
-        // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data
-        isActive: {
-          type: 'boolean',
-          nullable: true,
-          title: 'Only apply to active screening entities',
-          description:
-            'If checked, the rule will check only for active screening entities',
-        },
+        // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
+        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
       },
-      required: ['fuzzinessRange'],
+      required: ['fuzzinessRange', 'fuzzinessSetting'],
     }
   }
 
@@ -72,6 +66,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       ongoingScreening,
       screeningValues,
       // PEPRank,
+      fuzzinessSetting,
     } = this.parameters
     const user = this.user as User
     if (
@@ -130,12 +125,14 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
         entityType: 'PERSON',
-        isActivePep: Boolean(
-          screeningTypes?.includes('PEP') && this.parameters.isActive
-        ),
-        isActiveSanctioned: Boolean(
-          screeningTypes?.includes('SANCTIONS') && this.parameters.isActive
-        ),
+        fuzzinessSettings: {
+          sanitizeInputForFuzziness:
+            fuzzinessSetting === 'IGNORE_SPACES_AND_SPECIAL_CHARACTERS',
+          similarTermsConsideration:
+            fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
+          levenshteinDistanceDefault:
+            fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        },
       },
       hitContext,
       undefined

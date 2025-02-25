@@ -19,8 +19,8 @@ import Label from '@/components/ui/Form/Layout/Label';
 import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
-import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { SanctionsDataProviderName } from '@/apis';
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
 export const SanctionsSettings = () => {
@@ -66,6 +66,7 @@ export const SanctionsSettings = () => {
     useState<SanctionsSettingsProviderScreeningTypes>(
       getSettings('open-sanctions', OPEN_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
     );
+
   const [dowJonesScreeningTypes, setDowJonesScreeningTypes] =
     useState<SanctionsSettingsProviderScreeningTypes>(
       getSettings('dowjones', DOW_JONES_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),

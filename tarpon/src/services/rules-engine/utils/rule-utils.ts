@@ -5,6 +5,8 @@ import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -49,11 +51,37 @@ export function mergeRules<T extends { ruleInstanceId: string }>(
 export function getEntityTypeForSearch(
   provider: SanctionsDataProviderName,
   entity: SanctionsEntityType
-) {
+): {
+  entityType?: SanctionsEntityType
+} {
   if (provider === 'comply-advantage') {
     return {}
+  }
+  if (provider === 'acuris' && entity === 'BANK') {
+    return {
+      entityType: 'BUSINESS',
+    }
   }
   return {
     entityType: entity,
   }
+}
+
+export function getFuzzinessSettings(
+  provider: SanctionsDataProviderName,
+  fuzzinessSetting?: FuzzinessSettingOptions
+): FuzzinessSetting {
+  if (provider === 'comply-advantage') {
+    return {}
+  }
+  return fuzzinessSetting
+    ? {
+        sanitizeInputForFuzziness:
+          fuzzinessSetting === 'IGNORE_SPACES_AND_SPECIAL_CHARACTERS',
+        similarTermsConsideration:
+          fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
+        levenshteinDistanceDefault:
+          fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      }
+    : {}
 }

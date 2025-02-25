@@ -6,14 +6,19 @@ import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  FUZZINESS_SETTINGS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
-import { getEntityTypeForSearch } from '../utils/rule-utils'
+import {
+  getEntityTypeForSearch,
+  getFuzzinessSettings,
+} from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
 import { getDefaultProvider } from '@/services/sanctions/utils'
+import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 
 const caConcurrencyLimit = pLimit(10)
 
@@ -23,6 +28,7 @@ export type SanctionsBankUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   ongoingScreening: boolean
   fuzziness: number
+  fuzzinessSetting: FuzzinessSettingOptions
 }
 
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
@@ -36,14 +42,16 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
           description:
             'It will do a screening every 24hrs of all the existing bank names after it is enabled.',
         }),
+        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
     }
   }
 
   public async computeRule() {
-    const { fuzziness, screeningTypes, ongoingScreening } = this.parameters
+    const { fuzziness, screeningTypes, ongoingScreening, fuzzinessSetting } =
+      this.parameters
 
     if (this.ongoingScreeningMode && !ongoingScreening) {
       return
@@ -101,6 +109,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: ongoingScreening },
                 ...getEntityTypeForSearch(provider, 'BANK'),
+                ...getFuzzinessSettings(provider, fuzzinessSetting),
               },
               hitContext
             )

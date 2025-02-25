@@ -12,7 +12,7 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
 import { dereferenceType } from '@/components/library/JsonSchemaEditor/schema-utils';
 import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   item: PropertyItem;
@@ -77,7 +77,10 @@ export default function Property(props: Props) {
 
   const siblingPropertiesCount = useOrderedProps(parentSchema).length;
   const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
-  const canShowProperty = useFeaturesEnabled(requiredFeatures);
+  const features = useFeatures();
+  const canShowProperty = requiredFeatures?.length
+    ? features.some((f) => requiredFeatures.includes(f))
+    : true;
   return canShowProperty ? (
     <PropertyContext.Provider value={{ item, label: humanizeFunction(name) }}>
       <InputField<any>

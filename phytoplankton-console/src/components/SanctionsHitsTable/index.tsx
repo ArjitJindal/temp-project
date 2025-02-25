@@ -165,7 +165,13 @@ export default function SanctionsHitsTable(props: Props) {
       type: {
         defaultWrapMode: 'WRAP',
         render: (matchTypes) => {
-          return <div>{matchTypes?.map((type) => humanizeAuto(type)).join(', ')}</div>;
+          return (
+            <div>
+              {compact(matchTypes)
+                ?.map((type) => humanizeAuto(type))
+                .join(', ')}
+            </div>
+          );
         },
       },
     }),

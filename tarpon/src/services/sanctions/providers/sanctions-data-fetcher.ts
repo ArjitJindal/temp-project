@@ -1,3 +1,6 @@
+import { uniq } from 'lodash'
+import { token_similarity_sort_ratio } from 'fuzzball'
+import { sanitizeString } from '@flagright/lib/utils'
 import { getNameMatches, getSecondaryMatches } from './utils'
 import {
   SanctionsDataProvider,
@@ -18,6 +21,8 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
 import { traceable } from '@/core/xray'
 import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
+import { getNonDemoTenantId } from '@/utils/tenant'
+import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -55,7 +60,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         percentageDissimilarity <= upperBound
       )
     }
-    return request.fuzziness
+    return request.fuzziness != null
       ? percentageDissimilarity <= request.fuzziness * 100
       : false
   }
@@ -145,20 +150,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         ) {
           matchTypes.push('associate_PEP_rank')
         }
-      }
-      if (
-        request.isActivePep &&
-        (hit.isActivePep === true || hit.isActivePep === null) &&
-        hit.sanctionSearchTypes?.includes('PEP')
-      ) {
-        matchTypes.push('is_active_pep')
-      }
-      if (
-        request.isActiveSanctioned &&
-        (hit.isActiveSanctioned === true || hit.isActiveSanctioned === null) &&
-        hit.sanctionSearchTypes?.includes('SANCTIONS')
-      ) {
-        matchTypes.push('is_active_sanctioned')
       }
       return {
         ...hit,
@@ -251,50 +242,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (request.isActivePep) {
-      const isActivePepCondition = {
-        $or: [
-          {
-            isActivePep: {
-              $in: [true, null],
-            },
-          },
-          {
-            sanctionsSearchTypes: {
-              $ne: 'PEP',
-            },
-          },
-        ],
-      }
-      if (request.orFilters?.includes('isActivePep')) {
-        orConditions.push(isActivePepCondition)
-      } else {
-        andConditions.push(isActivePepCondition)
-      }
-    }
-
-    if (request.isActiveSanctioned) {
-      const isActiveSanctionedCondition = {
-        $or: [
-          {
-            isActiveSanctioned: {
-              $in: [true, null],
-            },
-          },
-          {
-            sanctionsSearchTypes: {
-              $ne: 'SANCTIONS',
-            },
-          },
-        ],
-      }
-      if (request.orFilters?.includes('isActiveSanctioned')) {
-        orConditions.push(isActiveSanctionedCondition)
-      } else {
-        andConditions.push(isActiveSanctionedCondition)
-      }
-    }
-
     if (request.entityType) {
       if (request.orFilters?.includes('entityType')) {
         orConditions.push({
@@ -359,6 +306,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           : SANCTIONS_COLLECTION(this.tenantId)
       )
       .find<SanctionsEntity>(match)
+      .limit(500)
       .toArray()
 
     return this.searchRepository.saveSearch(
@@ -369,7 +317,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   async searchWithMatchingNames(
     request: SanctionsSearchRequest,
-    limit: number = 100
+    limit: number = 200
   ): Promise<SanctionsProviderResponse> {
     const client = await getMongoDbClient()
     const match = {}
@@ -514,98 +462,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
-    if (request.isActivePep) {
-      const activeMatch = [
-        {
-          compound: {
-            should: [
-              {
-                compound: {
-                  should: [
-                    {
-                      equals: {
-                        value: true,
-                        path: 'isActivePep',
-                      },
-                    },
-                    {
-                      equals: {
-                        value: null,
-                        path: 'isActivePep',
-                      },
-                    },
-                  ],
-                  minimumShouldMatch: 1,
-                },
-              },
-              {
-                compound: {
-                  mustNot: {
-                    equals: {
-                      value: 'PEP',
-                      path: 'sanctionSearchTypes',
-                    },
-                  },
-                },
-              },
-            ],
-            minimumShouldMatch: 1,
-          },
-        },
-      ]
-      if (request.orFilters?.includes('isActivePep')) {
-        orFilters.push(...activeMatch)
-      } else {
-        andFilters.push(...activeMatch)
-      }
-    }
-
-    if (request.isActiveSanctioned) {
-      const activeMatch = [
-        {
-          compound: {
-            should: [
-              {
-                compound: {
-                  should: [
-                    {
-                      equals: {
-                        value: true,
-                        path: 'isActiveSanctioned',
-                      },
-                    },
-                    {
-                      equals: {
-                        value: null,
-                        path: 'isActiveSanctioned',
-                      },
-                    },
-                  ],
-                  minimumShouldMatch: 1,
-                },
-              },
-              {
-                compound: {
-                  mustNot: {
-                    equals: {
-                      value: 'SANCTIONS',
-                      path: 'sanctionSearchTypes',
-                    },
-                  },
-                },
-              },
-            ],
-            minimumShouldMatch: 1,
-          },
-        },
-      ]
-      if (request.orFilters?.includes('isActiveSanctioned')) {
-        orFilters.push(...activeMatch)
-      } else {
-        andFilters.push(...activeMatch)
-      }
-    }
-
     if (request.entityType) {
       const matchEntityType = [
         {
@@ -706,26 +562,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
     const searchScoreThreshold =
-      request.fuzzinessRange?.upperBound === 100 ? 3 : 7
+      request.fuzzinessRange?.upperBound === 100 ? 3 : 5
     const results = await client
       .db()
       .collection(
         request.isOngoingScreening
-          ? DELTA_SANCTIONS_COLLECTION(this.tenantId)
-          : SANCTIONS_COLLECTION(this.tenantId)
+          ? DELTA_SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
+          : SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
       )
       .aggregate<SanctionsEntity>([
         {
           $search: {
             index: request.isOngoingScreening
-              ? getSearchIndexName(DELTA_SANCTIONS_COLLECTION(this.tenantId))
-              : getSearchIndexName(SANCTIONS_COLLECTION(this.tenantId)),
+              ? getSearchIndexName(
+                  DELTA_SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
+                )
+              : getSearchIndexName(
+                  SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
+                ),
             concurrent: true,
             compound: {
               must: [
                 {
                   text: {
-                    query: request.searchTerm,
+                    query: sanitizeString(request.searchTerm),
                     path: ['name', 'aka'],
                     fuzzy: {
                       maxEdits: 2,
@@ -772,47 +632,70 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ])
       .toArray()
 
-    const searchTerm = request.searchTerm.toLowerCase()
+    const fuzzinessSettings = request?.fuzzinessSettings
     const filteredResults = this.hydrateHitsWithMatchTypes(
-      results.filter((entity) => {
-        const values = [entity.name, ...(entity.aka || [])]
-        const hasAka = entity.aka && entity.aka.length > 0
-
-        if (request.fuzzinessRange?.upperBound === 100) {
-          return true
-        } else {
-          for (const value of values) {
-            if (value.toLowerCase() === searchTerm) {
-              return true
-            }
-          }
-        }
-
-        const percentageSimilarity = calculateLevenshteinDistancePercentage(
-          request.searchTerm,
-          entity.name
-        )
-
-        const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
-          request,
-          percentageSimilarity
-        )
-
-        if (fuzzyMatch) {
-          return true
-        }
-        return (
-          hasAka &&
-          SanctionsDataFetcher.getFuzzinessEvaluationResult(
-            request,
-            Math.max(percentageSimilarity - 10, 0) // Approximation to avoid calculating levenshtein distance for every pair to reduce complexity
-          )
-        )
-      }),
+      this.filterResults(results, request, fuzzinessSettings),
       request
     )
 
     return this.searchRepository.saveSearch(filteredResults, request)
+  }
+
+  private getFuzzinessFunction(
+    fuzzinessSettings: FuzzinessSetting | undefined
+  ): (a, b) => number {
+    if (fuzzinessSettings?.similarTermsConsideration) {
+      return token_similarity_sort_ratio
+    }
+    return calculateLevenshteinDistancePercentage
+  }
+
+  private filterResults(
+    results: SanctionsEntity[],
+    request: SanctionsSearchRequest,
+    fuzzinessSettings: FuzzinessSetting | undefined
+  ): SanctionsEntity[] {
+    const keepSpaces = Boolean(
+      !fuzzinessSettings?.sanitizeInputForFuzziness ||
+        fuzzinessSettings?.similarTermsConsideration
+    )
+    const searchTerm =
+      fuzzinessSettings?.sanitizeInputForFuzziness ||
+      fuzzinessSettings?.similarTermsConsideration
+        ? sanitizeString(request.searchTerm.toLowerCase(), keepSpaces)
+        : request.searchTerm.toLowerCase()
+    return results.filter((entity) => {
+      const values = uniq([entity.name, ...(entity.aka || [])])
+
+      if (
+        request.fuzzinessRange?.upperBound === 100 ||
+        request.fuzziness === 1
+      ) {
+        return true
+      } else {
+        for (let value of values) {
+          if (value.toLowerCase() === searchTerm) {
+            return true
+          }
+          value =
+            fuzzinessSettings?.sanitizeInputForFuzziness ||
+            fuzzinessSettings?.similarTermsConsideration
+              ? sanitizeString(value, keepSpaces)
+              : value
+          const evaluatingFunction =
+            this.getFuzzinessFunction(fuzzinessSettings)
+          const percentageSimilarity = evaluatingFunction(searchTerm, value)
+          const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+            request,
+            percentageSimilarity
+          )
+          if (fuzzyMatch) {
+            return true
+          }
+        }
+      }
+      return false
+    })
   }
 
   async search(
@@ -829,7 +712,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     } else {
       result = await this.searchWithMatchingNames(
         request,
-        isMigration || request.manualSearch ? 500 : 100
+        isMigration || request.manualSearch ? 500 : 200
       )
     }
     return {

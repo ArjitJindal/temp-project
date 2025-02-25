@@ -1029,6 +1029,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [
@@ -1102,6 +1103,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [

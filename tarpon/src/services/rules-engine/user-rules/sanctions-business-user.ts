@@ -5,10 +5,14 @@ import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  FUZZINESS_SETTINGS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
-import { getEntityTypeForSearch } from '../utils/rule-utils'
+import {
+  getEntityTypeForSearch,
+  getFuzzinessSettings,
+} from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -17,6 +21,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { getDefaultProvider } from '@/services/sanctions/utils'
+import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -32,6 +37,7 @@ export type SanctionsBusinessUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   ongoingScreening: boolean
+  fuzzinessSetting: FuzzinessSettingOptions
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -58,15 +64,21 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           description:
             'It will do a screening every 24hrs of all the existing business users including shareholders and directors after it is enabled.',
         }),
+        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
     }
   }
 
   public async computeRule() {
-    const { fuzziness, entityTypes, screeningTypes, ongoingScreening } =
-      this.parameters
+    const {
+      fuzziness,
+      entityTypes,
+      screeningTypes,
+      ongoingScreening,
+      fuzzinessSetting,
+    } = this.parameters
 
     if (
       isEmpty(entityTypes) ||
@@ -95,7 +107,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         name: formatConsumerName(person.generalDetails?.name) || '',
         dateOfBirth: person.generalDetails?.dateOfBirth,
       })) ?? []),
-    ].filter((entity) => entity.name)
+    ].filter(
+      (entity) => entity.name && entityTypes?.includes(entity.entityType)
+    )
+    if (!entities.length) {
+      return
+    }
     const provider = getDefaultProvider()
 
     const hitResult: RuleHitResult = []
@@ -125,6 +142,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
                 provider,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
+              ...getFuzzinessSettings(provider, fuzzinessSetting),
             },
             hitContext
           )

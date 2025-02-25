@@ -502,7 +502,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
             case 'sanction.counter':
               return 'SANCTIONS'
             case 'poi':
-              return 'PROFILE_OF_INTEREST'
+              return 'PEP'
           }
         })
       ).filter((type) => this.types.includes(type))

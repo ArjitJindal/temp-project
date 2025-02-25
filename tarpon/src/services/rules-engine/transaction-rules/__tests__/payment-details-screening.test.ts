@@ -107,6 +107,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           transactionAmountThreshold: {
             INR: 1,
           },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])

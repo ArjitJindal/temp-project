@@ -12809,12 +12809,10 @@ components:
           type: boolean
         listVersion:
           type: number
-        isActivePep:
-          type: boolean
-        isActiveSanctioned:
-          type: boolean
         entityType:
           $ref: '#/components/schemas/SanctionsEntityType'
+        fuzzinessSettings:
+          $ref: '#/components/schemas/FuzzinessSetting'
       required:
         - searchTerm
     PepRank:
@@ -12838,7 +12836,6 @@ components:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
-        - PROFILE_OF_INTEREST
         - REGULATORY_ENFORCEMENT_LIST
         - CRIME
     AcurisSanctionsSearchType:
@@ -12848,7 +12845,6 @@ components:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
-        - PROFILE_OF_INTEREST
         - REGULATORY_ENFORCEMENT_LIST
     DowJonesSanctionsSearchType:
       title: DowJonesSanctionsSearchType
@@ -12863,7 +12859,6 @@ components:
       enum:
         - SANCTIONS
         - PEP
-        - PROFILE_OF_INTEREST
         - CRIME
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
@@ -13925,6 +13920,23 @@ components:
         - PERSON
         - BUSINESS
         - BANK
+    FuzzinessSetting:
+      title: FuzzinessSetting
+      type: object
+      properties:
+        similarTermsConsideration:
+          type: boolean
+        sanitizeInputForFuzziness:
+          type: boolean
+        levenshteinDistanceDefault:
+          type: boolean
+    FuzzinessSettingOptions:
+      title: FuzzinessSettingOptions
+      type: string
+      enum:
+        - LEVENSHTEIN_DISTANCE_DEFAULT
+        - IGNORE_SPACES_AND_SPECIAL_CHARACTERS
+        - TOKENIZED_SIMILARITY_MATCHING
     UsersUniquesField:
       title: UsersUniquesField
       type: string

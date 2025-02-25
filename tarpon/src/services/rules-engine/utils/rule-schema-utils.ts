@@ -38,6 +38,7 @@ export interface UiSchemaNumberRange extends UiSchemaParamsShared {
 export interface UiSchemaGeneric<Type> extends UiSchemaParamsShared {
   subtype?: string
   order?: (keyof Type)[]
+  requiredFeatures?: Feature[]
 }
 
 export interface UiSchemaRequiredFeatures extends UiSchemaParamsShared {

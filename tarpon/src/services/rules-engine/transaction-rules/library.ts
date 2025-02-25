@@ -1624,6 +1624,7 @@ const _RULES_LIBRARY: Array<
       fuzziness: 20,
       ongoingScreening: false,
       screeningTypes: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {
@@ -1656,6 +1657,7 @@ const _RULES_LIBRARY: Array<
       fuzziness: 20,
       ongoingScreening: false,
       screeningTypes: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {
@@ -1710,6 +1712,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: PaymentDetailsScreeningRuleParameters = {
       fuzziness: 20,
       screeningTypes: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {
@@ -1777,6 +1780,7 @@ const _RULES_LIBRARY: Array<
       },
       ongoingScreening: false,
       screeningValues: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {
@@ -1811,6 +1815,7 @@ const _RULES_LIBRARY: Array<
       },
       ongoingScreening: false,
       screeningTypes: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {
@@ -1832,7 +1837,7 @@ const _RULES_LIBRARY: Array<
       ],
       defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
-      requiredFeatures: ['SANCTIONS', 'DOW_JONES'],
+      requiredFeatures: ['DOW_JONES'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
@@ -1929,6 +1934,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: PaymentDetailsScreeningRuleParameters = {
       fuzziness: 20,
       screeningTypes: [],
+      fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
 
     return {

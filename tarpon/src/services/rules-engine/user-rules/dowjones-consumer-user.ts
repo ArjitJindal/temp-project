@@ -6,15 +6,19 @@ import {
   FUZZINESS_RANGE_SCHEMA,
   SANCTIONS_SCREENING_VALUES_SCHEMA,
   PEP_RANK_SCHEMA,
+  FUZZINESS_SETTINGS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
+import { getFuzzinessSettings } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
 export type DowJonesConsumerUserRuleParameters = {
@@ -26,6 +30,7 @@ export type DowJonesConsumerUserRuleParameters = {
   ongoingScreening: boolean
   screeningValues?: ScreeningValues[]
   PEPRank?: PepRank
+  fuzzinessSetting: FuzzinessSettingOptions
 }
 
 export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerUserRuleParameters> {
@@ -51,8 +56,9 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
             'Select the screening attributes to be used for the screening',
         }),
         PEPRank: PEP_RANK_SCHEMA({}),
+        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
       },
-      required: ['fuzzinessRange'],
+      required: ['fuzzinessRange', 'fuzzinessSetting'],
     }
   }
 
@@ -63,6 +69,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       ongoingScreening,
       screeningValues,
       PEPRank,
+      fuzzinessSetting,
     } = this.parameters
     const user = this.user as User
     if (
@@ -91,6 +98,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
+    const provider = getDefaultProvider()
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -121,6 +129,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
             }
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
+        ...getFuzzinessSettings(provider, fuzzinessSetting),
       },
       hitContext,
       undefined

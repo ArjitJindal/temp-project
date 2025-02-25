@@ -804,13 +804,43 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
 
   private getYearFromDates(date, dateType) {
-    return compact(
-      date?.flatMap((d) =>
-        d['@_DateType'] === dateType
-          ? Array.isArray(d.DateValue)
-            ? d.DateValue.map((v) => v['@_Year'])
-            : d.DateValue?.['@_Year'] ?? ''
-          : []
+    return uniq(
+      compact(
+        date?.flatMap((d) =>
+          d['@_DateType'] === dateType
+            ? Array.isArray(d.DateValue)
+              ? d.DateValue.map((v) => v['@_Year'])
+              : d.DateValue?.['@_Year'] ?? ''
+            : []
+        )
+      )
+    ) as string[]
+  }
+
+  private getFormattedDates(date, dateType: string) {
+    return uniq(
+      compact(
+        date?.flatMap((d) =>
+          d['@_DateType'] === dateType
+            ? Array.isArray(d.DateValue)
+              ? d.DateValue.map((v) => {
+                  const {
+                    '@_Day': day = '',
+                    '@_Month': month = '',
+                    '@_Year': year = '',
+                  } = v
+                  return convertDateFormat(year, month, day)
+                })
+              : (() => {
+                  const {
+                    '@_Day': day = '',
+                    '@_Month': month = '',
+                    '@_Year': year = '',
+                  } = d.DateValue || {}
+                  return convertDateFormat(year, month, day)
+                })()
+            : []
+        )
       )
     ) as string[]
   }
@@ -898,29 +928,11 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             person.DateDetails?.Date,
             'Date of Birth'
           ),
-          dateOfBirths: compact(
-            person.DateDetails?.Date?.flatMap((d) =>
-              d['@_DateType'] === 'Date of Birth'
-                ? Array.isArray(d.DateValue)
-                  ? d.DateValue.map((v) => {
-                      const {
-                        '@_Day': day = '',
-                        '@_Month': month = '',
-                        '@_Year': year = '',
-                      } = v
-                      return convertDateFormat(year, month, day)
-                    })
-                  : (() => {
-                      const {
-                        '@_Day': day = '',
-                        '@_Month': month = '',
-                        '@_Year': year = '',
-                      } = d.DateValue || {}
-                      return convertDateFormat(year, month, day)
-                    })()
-                : []
-            )
-          ) as string[],
+
+          dateOfBirths: this.getFormattedDates(
+            person.DateDetails?.Date,
+            'Date of Birth'
+          ),
         }
 
         return [

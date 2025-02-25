@@ -24,6 +24,7 @@ import { WebhookInput } from './custom/WebhookInput';
 import MarkdownInput from './custom/MarkdownInput';
 import { NumberRangeInput } from './custom/NumberRangeInput';
 import { GenericSanctionScreeningTypes } from './custom/GenericSanctionScreeningTypes';
+import { FuzzinessSettingsInput } from './custom/FuzzinessSettings';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -113,6 +114,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'GENERIC_SANCTIONS_SCREENING_TYPES') {
     return <GenericSanctionScreeningTypes {...props} />;
+  }
+  if (uiSchema['ui:subtype'] === 'FUZZINESS_SETTINGS') {
+    return <FuzzinessSettingsInput {...props} uiSchema={uiSchema} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

@@ -21,6 +21,7 @@ import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/Busines
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { RULE_STAGES } from '@/@types/openapi-internal-custom/RuleStage'
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/GenericSanctionsSearchType'
+import { FUZZINESS_SETTING_OPTIONSS } from '@/@types/openapi-internal-custom/FuzzinessSettingOptions'
 
 type SchemaOptions = {
   title?: string
@@ -961,6 +962,19 @@ export const GENERIC_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
     },
     uniqueItems: true,
     nullable: true,
+  } as const)
+
+export const FUZZINESS_SETTINGS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS'],
+      subtype: 'FUZZINESS_SETTINGS',
+    }),
+    title: options?.title || 'Fuzziness settings',
+    description:
+      options?.description || `Select a method for calculating fuzziness`,
+    enum: FUZZINESS_SETTING_OPTIONSS,
   } as const)
 
 export const PEP_RANK_SCHEMA = (options?: SchemaOptions) =>

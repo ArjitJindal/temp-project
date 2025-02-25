@@ -1,6 +1,6 @@
 import { Readable } from 'stream'
 import { createInterface } from 'readline'
-import { capitalize, compact, concat, intersection } from 'lodash'
+import { capitalize, compact, concat, intersection, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { getUniqueStrings, shouldLoadScreeningData } from './utils'
 import {
@@ -32,7 +32,7 @@ const EXTERNAL_TO_INTERNAL_TYPES: Record<string, AcurisSanctionsSearchType> = {
   'SOE-FORMER': 'PEP',
   'SOE-CURRENT': 'PEP',
   RRE: 'ADVERSE_MEDIA',
-  POI: 'PROFILE_OF_INTEREST',
+  POI: 'PEP',
   REL: 'REGULATORY_ENFORCEMENT_LIST',
 }
 
@@ -427,9 +427,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
     entityType: SanctionsEntityType
   ): SanctionsEntity | undefined {
     const pepTier = entity.pepEntries.pepTier
-    const sanctionSearchTypes = entity.datasets
-      .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-      .filter((type) => this.hasScreeningType(type))
+    const sanctionSearchTypes = uniq(
+      entity.datasets
+        .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
+        .filter((type) => this.hasScreeningType(type))
+    )
     if (!intersection(sanctionSearchTypes, this.screeningTypes).length) {
       return
     }
@@ -438,13 +440,15 @@ export class AcurisProvider extends SanctionsDataFetcher {
       id: entity.qrCode,
       name: this.getEntityName(entity, entityType),
       entityType: entityType,
-      types: concat(
-        entity.datasets
-          .filter((dataset) =>
-            this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
-          )
-          .map((dataset) => ACURIS_TYPES[dataset]),
-        sanctionSearchTypes
+      types: compact(
+        concat(
+          entity.datasets
+            .filter((dataset) =>
+              this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
+            )
+            .map((dataset) => ACURIS_TYPES[dataset]),
+          sanctionSearchTypes
+        )
       ),
       sanctionSearchTypes,
       gender: entity.gender,
@@ -488,9 +492,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ? entity.evidences
             .filter(
               ({ evidenceId }) =>
-                entity.pepEntries.current.some((pepEntry) =>
+                (entity.pepEntries.current.some((pepEntry) =>
                   pepEntry.evidenceIds.includes(evidenceId)
-                ) && sanctionSearchTypes.includes('PEP')
+                ) ||
+                  entity.poiEntries
+                    .flatMap(({ evidenceIds }) => evidenceIds)
+                    .includes(evidenceId)) &&
+                sanctionSearchTypes.includes('PEP')
             )
             .map((evidence) => this.getOtherSources(evidence))
         : [],
@@ -514,20 +522,6 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : [],
       rawResponse: entity,
       otherSources: [
-        ...(this.hasScreeningType('PROFILE_OF_INTEREST')
-          ? [
-              {
-                type: 'PROFILE_OF_INTEREST',
-                value: entity.evidences
-                  .filter(({ evidenceId }) =>
-                    entity.poiEntries
-                      .flatMap(({ evidenceIds }) => evidenceIds)
-                      .includes(evidenceId)
-                  )
-                  .map((evidence) => this.getOtherSources(evidence)),
-              },
-            ]
-          : []),
         ...(this.hasScreeningType('REGULATORY_ENFORCEMENT_LIST')
           ? [
               {
@@ -558,9 +552,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
     entity: AcurisBusinessEntity,
     entityType: SanctionsEntityType
   ): SanctionsEntity | undefined {
-    const sanctionSearchTypes = entity.datasets
-      .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-      .filter((type) => this.hasScreeningType(type))
+    const sanctionSearchTypes = uniq(
+      entity.datasets
+        .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
+        .filter((type) => this.hasScreeningType(type))
+    )
     if (!intersection(sanctionSearchTypes, this.screeningTypes).length) {
       return
     }
@@ -571,13 +567,15 @@ export class AcurisProvider extends SanctionsDataFetcher {
       aka: getUniqueStrings(
         compact(entity.aliases.map((alias) => alias.alias))
       ),
-      types: concat(
-        entity.datasets
-          .filter((dataset) =>
-            this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
-          )
-          .map((dataset) => ACURIS_TYPES[dataset]),
-        sanctionSearchTypes
+      types: compact(
+        concat(
+          entity.datasets
+            .filter((dataset) =>
+              this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
+            )
+            .map((dataset) => ACURIS_TYPES[dataset]),
+          sanctionSearchTypes
+        )
       ),
       sanctionSearchTypes,
       sanctionsSources: this.hasScreeningType('SANCTIONS')
@@ -610,20 +608,6 @@ export class AcurisProvider extends SanctionsDataFetcher {
             .map((evidence) => this.getMedia(evidence))
         : [],
       otherSources: [
-        ...(this.hasScreeningType('PROFILE_OF_INTEREST')
-          ? [
-              {
-                type: 'PROFILE_OF_INTEREST',
-                value: entity.evidences
-                  .filter(({ evidenceId }) =>
-                    entity.poiEntries
-                      .flatMap(({ evidenceIds }) => evidenceIds)
-                      .includes(evidenceId)
-                  )
-                  .map((evidence) => this.getOtherSources(evidence)),
-              },
-            ]
-          : []),
         ...(this.hasScreeningType('REGULATORY_ENFORCEMENT_LIST')
           ? [
               {

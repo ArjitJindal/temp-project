@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
+import { useHasNoSanctionsProviders, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import ComplyAdvantageHitDetailsDrawer from './ComplyAdvantageHitDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -66,7 +66,7 @@ export default function SanctionsSearchTable(props: Props) {
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
-  const dowJonesEnabled = useFeatureEnabled('DOW_JONES');
+  const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
 
   const helper = new ColumnHelper<SanctionsEntity>();
   const columns: TableColumn<SanctionsEntity>[] = helper.list([
@@ -169,7 +169,7 @@ export default function SanctionsSearchTable(props: Props) {
     },
   ];
 
-  if (dowJonesEnabled) {
+  if (isSanctionsEnabledWithDataProvider) {
     extraFilters.push({
       title: 'Nationality',
       key: 'nationality',

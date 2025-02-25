@@ -121,6 +121,10 @@ export interface UiSchemaGenericSanctionsScreeningTypes extends UiSchemaCommon {
   'ui:subtype': 'GENERIC_SANCTIONS_SCREENING_TYPES';
 }
 
+export interface UiSchemaFuzzinessSettings extends UiSchemaCommon {
+  'ui:subtype': 'FUZZINESS_SETTINGS';
+}
+
 export interface UiSchemaFincenGender extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_GENDER';
   'ui:maleIndicatorField'?: string;
@@ -161,7 +165,8 @@ export type UiSchema =
   | UiSchemaWebhook
   | UiSchemaList
   | UiSchemaNumberRange
-  | UiSchemaGenericSanctionsScreeningTypes;
+  | UiSchemaGenericSanctionsScreeningTypes
+  | UiSchemaFuzzinessSettings;
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
   items?: ExtendedSchema;

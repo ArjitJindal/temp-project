@@ -463,17 +463,6 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               {occupationCodes.join(', ')}
             </Form.Layout.Label>
           )}
-          {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
-            <Form.Layout.Label title={'PEP status'}>
-              {entity.isActivePep === true ? 'Active' : 'Inactive'}
-            </Form.Layout.Label>
-          )}
-          {entity.sanctionSearchTypes?.includes('SANCTIONS') &&
-            entity.isActiveSanctioned != null && (
-              <Form.Layout.Label title={'Sanctioned status'}>
-                {entity.isActiveSanctioned === true ? 'Active' : 'Inactive'}
-              </Form.Layout.Label>
-            )}
           {entity.isDeseased && (
             <Form.Layout.Label title={'Deseased'}>
               {entity.isDeseased ? 'Yes' : 'No'}
