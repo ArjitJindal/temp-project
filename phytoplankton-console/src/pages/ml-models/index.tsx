@@ -149,7 +149,7 @@ export const MlModelsPage = () => {
 
   const actionRef = useRef<TableRefType>(null);
   return (
-    <PageWrapper title={i18n('menu.ml-models')}>
+    <PageWrapper title={i18n('menu.ml-models')} description={i18n('menu.ml-models.description')}>
       <PageWrapperContentContainer>
         <QueryResultsTable<RuleMLModel, TableSearchParams>
           tableId="ml-models-table"
