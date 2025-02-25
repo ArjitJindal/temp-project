@@ -1635,27 +1635,19 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   onTransactionSelect={(alertId, transactionIds) => {
                     resetSelection({
                       keepTxns: true,
-                      keepAlerts: true,
+                      keepAlerts: selectedAlerts.includes(alertId),
                     });
-                    if (transactionIds.length > 0) {
-                      setSelectedAlerts((prevSelectedAlerts) => [...prevSelectedAlerts, alertId]);
-                      setSelectedTxns((prevSelectedTxns) => ({
-                        ...prevSelectedTxns,
-                        [alertId]: transactionIds,
-                      }));
-                    }
+                    setSelectedTxns((prevSelectedTxns) => ({
+                      ...prevSelectedTxns,
+                      [alertId]: [...transactionIds],
+                    }));
                   }}
                   onSanctionsHitSelect={(alertId, sanctionsHitsIds, status) => {
-                    resetSelection({
-                      keepAlerts: true,
-                    });
-                    if (sanctionsHitsIds.length > 0) {
-                      setSelectedAlerts((prevSelectedAlerts) => [...prevSelectedAlerts, alertId]);
-                      setSelectedSanctionHits((prevState) => ({
-                        ...prevState,
-                        [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
-                      }));
-                    }
+                    resetSelection({});
+                    setSelectedSanctionHits((prevState) => ({
+                      ...prevState,
+                      [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
+                    }));
                   }}
                   onSanctionsHitsChangeStatus={(sanctionsHitsIds, newStatus) => {
                     if (alert.alertId != null) {
