@@ -44,7 +44,7 @@ const getFinalText = (
   // tag @closers groupId: S05G5GF1NDN
   if (channel === 'PRODUCT_RELEASE') {
     return slackifyMarkdown(
-      `Hey <!subteam^S05G5GF1NDN>! We have a new deployment! 🚀🚀🚀\n${releaseNote}`
+      `Hey team! We have a new deployment! 🚀🚀🚀\n${releaseNote}`
     )
   }
 
