@@ -11,7 +11,6 @@ import Section from './Section';
 import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import {
   CountryCode,
-  GenericSanctionsSearchType,
   SanctionsEntity,
   SanctionsEntityType,
   SanctionsHit,
@@ -580,12 +579,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     ];
 
     return tabs
-      .filter((tab) => {
-        const searchType = tab.name
-          .toUpperCase()
-          .replace(/\s+/g, '_') as GenericSanctionsSearchType;
-        return entity.sanctionSearchTypes?.includes(searchType);
-      })
+      .filter((tab) => tab.sources.length > 0)
       .map((tab) => {
         return {
           key: tab.name,
@@ -671,7 +665,6 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     entity.sanctionsSources,
     pdfMode,
     entity.otherSources,
-    entity.sanctionSearchTypes,
   ]);
 }
 
