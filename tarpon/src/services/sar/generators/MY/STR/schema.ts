@@ -93,7 +93,7 @@ export const RIandBasisOfSuspicion = {
           title: 'Reporting on behalf of',
         },
       },
-      required: [],
+      required: ['reportingOnBehalfOf'],
     },
     basisOfSuspicion: {
       type: 'object',
