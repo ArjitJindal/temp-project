@@ -70,18 +70,20 @@ export function getEntityTypeForSearch(
 export function getFuzzinessSettings(
   provider: SanctionsDataProviderName,
   fuzzinessSetting?: FuzzinessSettingOptions
-): FuzzinessSetting {
+): { fuzzinessSettings?: FuzzinessSetting } {
   if (provider === 'comply-advantage') {
     return {}
   }
   return fuzzinessSetting
     ? {
-        sanitizeInputForFuzziness:
-          fuzzinessSetting === 'IGNORE_SPACES_AND_SPECIAL_CHARACTERS',
-        similarTermsConsideration:
-          fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
-        levenshteinDistanceDefault:
-          fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        fuzzinessSettings: {
+          sanitizeInputForFuzziness:
+            fuzzinessSetting === 'IGNORE_SPACES_AND_SPECIAL_CHARACTERS',
+          similarTermsConsideration:
+            fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
+          levenshteinDistanceDefault:
+            fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        },
       }
     : {}
 }
