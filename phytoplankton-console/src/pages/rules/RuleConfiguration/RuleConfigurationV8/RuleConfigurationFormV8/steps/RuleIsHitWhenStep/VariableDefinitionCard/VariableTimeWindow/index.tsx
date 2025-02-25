@@ -141,7 +141,12 @@ export default function VariableTimeWindow(props: Props) {
       {start.granularity !== 'all_time' &&
         !NO_ROLLING_BASIS_GRANULARITIES.includes(start.granularity) &&
         !NO_ROLLING_BASIS_GRANULARITIES.includes(end.granularity) && (
-          <Label label={'Rolling basis'} level={2} position="RIGHT">
+          <Label
+            label={'Rolling basis'}
+            level={2}
+            position="RIGHT"
+            hint="With rolling basis, the time window looks back from the hit time by ‘N’ units. Without it, the window starts at the beginning of the selected unit and runs up to the hit time"
+          >
             <Checkbox
               isDisabled={isDisabled}
               value={

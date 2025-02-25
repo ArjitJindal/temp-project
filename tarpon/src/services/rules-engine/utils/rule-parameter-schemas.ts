@@ -143,7 +143,7 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
         type: 'boolean',
         title: 'Rolling basis',
         description:
-          'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+          'With rolling basis, the time window looks back from the hit time by ‘N’ units. Without it, the window starts at the beginning of the selected unit and runs up to the hit time',
         nullable: true,
       },
     },
@@ -174,7 +174,7 @@ export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
         type: 'boolean',
         title: 'Rolling basis',
         description:
-          'When rolling basis is disabled, system starts the time period at 00:00.',
+          'With rolling basis, the time window looks back from the hit time by ‘N’ units. Without it, the window starts at the beginning of the selected unit and runs up to the hit time',
         nullable: true,
       },
     },
