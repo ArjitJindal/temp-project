@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import { compact, uniq } from 'lodash'
 import {
   AttributeBuilder,
   AttributeSet,
@@ -47,9 +47,30 @@ export class AlertAttributeBuilder implements AttributeBuilder {
       mapRuleAttributes(inputData.ruleInstances || [])
     )
 
-    attributes.setAttribute(
-      'ruleHitNames',
-      inputData.ruleInstances?.map((ri) => ri.ruleNameAlias || '') || []
+    const alertRuleHitNames = inputData._alerts?.map((a) => a.ruleName || '')
+
+    alertRuleHitNames.push(
+      ...(inputData.ruleInstances?.map((ri) => ri.ruleNameAlias || '') || [])
     )
+
+    if (alertRuleHitNames.length) {
+      attributes.setAttribute('ruleHitNames', uniq(alertRuleHitNames))
+    }
+
+    const alertRuleHitDescriptions = inputData._alerts?.map(
+      (a) => a.ruleDescription || ''
+    )
+
+    alertRuleHitDescriptions.push(
+      ...(inputData.ruleInstances?.map((ri) => ri.ruleDescriptionAlias || '') ||
+        [])
+    )
+
+    if (alertRuleHitDescriptions.length) {
+      attributes.setAttribute(
+        'ruleHitDescriptions',
+        uniq(alertRuleHitDescriptions)
+      )
+    }
   }
 }

@@ -113,7 +113,11 @@ const AI_SOURCES_MAP: Record<AIAttribute, AIAttributeData> = {
   },
   ruleHitNames: {
     isPii: false,
-    category: 'CASE',
+    category: 'ALERT',
+  },
+  ruleHitDescriptions: {
+    isPii: false,
+    category: 'ALERT',
   },
   originUserName: {
     isPii: true,

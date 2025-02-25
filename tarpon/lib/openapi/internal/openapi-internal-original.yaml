@@ -10434,6 +10434,7 @@ components:
         - transactionIds
         - rules
         - ruleHitNames
+        - ruleHitDescriptions
         - originUserName
         - destinationUserName
         - originTransactionAmount
