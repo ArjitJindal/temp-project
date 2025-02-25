@@ -52,11 +52,6 @@ function RiskAlgorithmsCra() {
           value={algorithmType}
           options={[
             {
-              label: 'Current',
-              value: 'FORMULA_LEGACY_MOVING_AVG',
-              description: 'Moving average between KRS and latest TRS',
-            },
-            {
               label: 'Default',
               value: 'FORMULA_SIMPLE_AVG',
               description: 'Simple average between KRS and avg TRS',
@@ -66,6 +61,11 @@ function RiskAlgorithmsCra() {
               value: 'FORMULA_CUSTOM',
               description:
                 'Choose the weight of KRS and avg TRS in calculating the CRA risk score.',
+            },
+            {
+              label: 'Moving average',
+              value: 'FORMULA_LEGACY_MOVING_AVG',
+              description: 'Moving average between KRS and latest CRA',
             },
           ]}
           onChange={(newValue) => {
