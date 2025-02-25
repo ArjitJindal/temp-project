@@ -99,7 +99,6 @@ export const featureDescriptions: Record<
   CLICKHOUSE_ENABLED: {
     title: 'Clickhouse (Beta)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
-    tag: FeatureTag.ENG,
   },
   MACHINE_LEARNING: { title: 'Machine learning', description: 'Enables machine learning features' },
   ALERT_SLA: { title: 'Alerts SLA', description: 'Enables Alert SLA' },
