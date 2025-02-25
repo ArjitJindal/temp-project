@@ -170,6 +170,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         }}
         nodes={nodes}
         edges={edges}
+        edgeLabelPosition={'inline'}
       />
     </div>
   );

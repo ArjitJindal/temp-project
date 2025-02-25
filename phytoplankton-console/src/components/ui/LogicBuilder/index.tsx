@@ -3,6 +3,7 @@ import '@react-awesome-query-builder/ui/css/styles.css';
 import React, { useEffect } from 'react';
 import cn from 'clsx';
 import { Operators } from '@react-awesome-query-builder/core';
+import { noop } from 'lodash';
 import s from './index.module.less';
 import { LogicBuilderValue, QueryBuilderConfig } from './types';
 
@@ -26,7 +27,7 @@ const EMPTY_VALUE = QbUtils.jsToImmutable({
     not: false,
   },
   path: [guid1],
-});
+}) as NonNullable<LogicBuilderValue>;
 
 const renderBuilder = (props: BuilderProps) => (
   <div className="query-builder">
@@ -61,7 +62,7 @@ export default function LogicBuilder(props: Props) {
 
   return (
     <div className={cn(s.root, hideConjunctions && s.hideConjunctions, s[`mode-${mode}`])}>
-      <Query {...config} value={value} onChange={onChange} renderBuilder={renderBuilder} />
+      <Query {...config} value={value} onChange={onChange ?? noop} renderBuilder={renderBuilder} />
     </div>
   );
 }
