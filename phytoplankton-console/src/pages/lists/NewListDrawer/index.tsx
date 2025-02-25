@@ -152,6 +152,7 @@ export default function NewListDrawer(props: Props) {
           <InputField<FormValues, 'subtype'>
             name="subtype"
             label={`${listType === 'WHITELIST' ? 'Whitelist' : 'Blacklist'} type`}
+            labelProps={{ required: { showHint: true, value: true } }}
           >
             {(inputProps) => (
               <Select
@@ -170,7 +171,11 @@ export default function NewListDrawer(props: Props) {
               <>
                 {subtype != null && (
                   <>
-                    <InputField<FormValues, 'name'> name="name" label={'List name'}>
+                    <InputField<FormValues, 'name'>
+                      name="name"
+                      label={'List name'}
+                      labelProps={{ required: { showHint: true, value: true } }}
+                    >
                       {(inputProps) => <TextInput {...inputProps} />}
                     </InputField>
                     {subtype !== 'USER_ID' && (
