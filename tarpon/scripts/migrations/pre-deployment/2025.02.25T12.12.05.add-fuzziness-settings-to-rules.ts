@@ -4,6 +4,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 
 const RULES_TO_UPDATE = ['R-17', 'R-18', 'R-32', 'R-128', 'R-169', 'R-170']
 
@@ -28,7 +29,11 @@ async function migrateTenant(tenant: Tenant) {
           ...r.parameters,
           fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         },
-        riskLevelParameters: addFuzzinessSetting(r.riskLevelParameters),
+        ...(r.riskLevelParameters
+          ? {
+              riskLevelParameters: addFuzzinessSetting(r.riskLevelParameters),
+            }
+          : {}),
       }
     })
   )
@@ -43,7 +48,7 @@ async function migrateTenant(tenant: Tenant) {
   )
 }
 
-function addFuzzinessSetting(riskLevelParameters) {
+function addFuzzinessSetting(riskLevelParameters: RiskLevelRuleParameters) {
   for (const key of Object.keys(riskLevelParameters)) {
     if (!riskLevelParameters[key].fuzzinessSetting) {
       riskLevelParameters[key].fuzzinessSetting = 'LEVENSHTEIN_DISTANCE_DEFAULT'
