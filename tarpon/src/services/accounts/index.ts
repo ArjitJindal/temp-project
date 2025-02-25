@@ -237,7 +237,6 @@ export class AccountsService {
           throw new BadRequest('The user already exists.')
         }
       }
-
       await this.addAccountToOrganizationInternal(tenant, account)
       await this.sendPasswordResetEmail(params.email)
     } catch (e) {
@@ -637,7 +636,7 @@ export class AccountsService {
     } else {
       consoleApiUrl = 'https://api.flagright.dev/console'
     }
-    const metadata: Auth0TenantMetadata = {
+    const metadata: Partial<Auth0TenantMetadata> = {
       tenantId,
       consoleApiUrl,
       apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
@@ -645,8 +644,6 @@ export class AccountsService {
       region: process.env.REGION as FlagrightRegion,
       isProductionAccessDisabled: false,
       tenantCreatedAt: Date.now().toString(),
-      mfaEnabled: true,
-      passwordResetDays: 30,
     }
 
     const organization = await this.auth0.createOrganization(tenantId, {
