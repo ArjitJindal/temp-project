@@ -10,7 +10,7 @@ const RULE_MODE_OPTIONS: Option<RuleRunMode>[] = [
     value: 'LIVE',
     label: 'Live rule',
     description:
-      'A live rule deploys the model and generates alerts when triggered. It is suggested for rules that do not require validation.',
+      'A live rule deploys the model and generates alerts when triggered. It is recommended to test the rule parameters and operational impact by using the simulator and shadow rules prior to enabling a live rule.',
   },
   {
     value: 'SHADOW',
