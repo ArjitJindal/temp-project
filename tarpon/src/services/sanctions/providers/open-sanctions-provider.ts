@@ -23,6 +23,8 @@ type OpenSanctionsLine = {
   entity: OpenSanctionsPersonEntity
 }
 
+const openSanctionsBaseUrl = 'https://www.opensanctions.org/datasets/'
+
 interface OpenSanctionsEntity {
   id: string
   caption?: string
@@ -324,10 +326,16 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         c.toUpperCase()
       ) as CountryCode[]) || ['ZZ'],
       sanctionSearchTypes,
-      screeningSources: properties.sourceUrl?.map((source) => ({
-        url: source,
-        name: source,
-      })),
+      screeningSources: concat(
+        properties.sourceUrl?.map((source) => ({
+          url: source,
+          name: source,
+        })) || [],
+        (entity.datasets || []).map((dataset) => ({
+          url: `${openSanctionsBaseUrl}${dataset}`,
+          name: startCase(dataset.replace(/_/g, ' ')),
+        }))
+      ),
       yearOfBirth: properties.birthDate?.map((date) =>
         dayjs(date).format('YYYY')
       ),
