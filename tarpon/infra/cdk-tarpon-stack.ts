@@ -104,7 +104,7 @@ import {
   FargatePlatformVersion,
 } from 'aws-cdk-lib/aws-ecs'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { SiloDataTenantAlias, siloDataTenants } from '@flagright/lib/constants'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -346,14 +346,14 @@ export class CdkTarponStack extends cdk.Stack {
     ] || []) {
       const siloTarponTable = this.createDynamodbTable(
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
-        tarponStream,
+        tenantId === SiloDataTenantAlias.PNB_SIT ? undefined : tarponStream,
         true,
         true
       )
 
       const siloHammerheadTable = this.createDynamodbTable(
         StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
-        tarponStream
+        tenantId === SiloDataTenantAlias.PNB_SIT ? undefined : tarponStream
       )
 
       siloTables.push(siloTarponTable, siloHammerheadTable)
