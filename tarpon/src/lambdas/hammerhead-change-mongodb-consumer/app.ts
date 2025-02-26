@@ -16,6 +16,7 @@ import { getRiskLevelForPNB } from '@/services/rules-engine/pnb-custom-logic'
 import { User } from '@/@types/openapi-internal/User'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { mergeUserTags } from '@/services/rules-engine/utils'
+import { UserType } from '@/@types/user/user-type'
 
 export async function arsScoreEventHandler(
   tenantId: string,
@@ -71,9 +72,9 @@ export async function drsScoreEventHandler(
     if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
       let riskLevel = newRiskLevel
       if (newDrsScore.userId && hasFeature('PNB')) {
-        const user = await userRepository.getUser<UserWithRulesResult>(
-          newDrsScore.userId
-        )
+        const user = await userRepository.getUser<
+          UserWithRulesResult & { type: UserType }
+        >(newDrsScore.userId)
         riskLevel = getRiskLevelForPNB(oldRiskLevel, newRiskLevel, user as User)
         const riskLevelStatus =
           riskLevel === 'HIGH' || riskLevel === 'VERY_HIGH'
@@ -95,7 +96,7 @@ export async function drsScoreEventHandler(
                 },
               ]),
             },
-            'CONSUMER'
+            user.type
           )
         }
       }
