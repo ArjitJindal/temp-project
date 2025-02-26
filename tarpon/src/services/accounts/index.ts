@@ -560,11 +560,25 @@ export class AccountsService {
     if (patch.role) {
       await this.roleService.setRole(tenant.id, accountId, patch.role)
     }
+
+    // This is done to reset old saved state and would only apply the new review permission by resetting all permission to undefined
+    const defaultPermission = {
+      escalationLevel: undefined,
+      escalationReviewerId: undefined,
+      reviewerId: undefined,
+      isReviewer: false,
+    }
+
+    const patchedData = {
+      ...defaultPermission,
+      ...patch,
+    }
+
     const patchedUser = await this.auth0.patchAccount(tenant.id, accountId, {
-      app_metadata: patch,
-      role: patch.role,
+      app_metadata: patchedData,
+      role: patchedData.role,
     })
-    await this.updateUserCache(tenant.id, accountId, patch)
+    await this.updateUserCache(tenant.id, accountId, patchedData)
     return patchedUser
   }
 

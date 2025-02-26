@@ -171,15 +171,22 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       userManager.get({ id: accountId })
     )
 
+    const patchedAppMetadata = {
+      ...user.app_metadata,
+      ...patchData.app_metadata,
+    }
+
+    // is to clean the nested app_metadata field which was created to incorrect destructing of patchData
+    if ('app_metadata' in patchedAppMetadata) {
+      delete patchedAppMetadata['app_metadata']
+    }
+
     const patchedUser = await auth0AsyncWrapper(() =>
       userManager.update(
         { id: accountId },
         {
           app_metadata: {
-            ...user.app_metadata,
-            ...(patchData.app_metadata && {
-              app_metadata: patchData.app_metadata,
-            }),
+            ...patchedAppMetadata,
             // Specific Undefined Check Don't Change
             ...(patchData.blockedReason !== undefined && {
               blockedReason: patchData.blockedReason,
