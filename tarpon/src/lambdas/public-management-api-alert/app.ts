@@ -44,8 +44,8 @@ export const alertHandler = lambdaApi()(
           'Payload seems to be empty or missing. Please provide a valid payload'
         )
       }
-
-      return await service.createAlert(payload)
+      const response = await service.createAlert(payload)
+      return response.result
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/alerts/{alertId}' &&
@@ -66,8 +66,8 @@ export const alertHandler = lambdaApi()(
           'Payload seems to be empty or missing. Please provide a valid payload'
         )
       }
-
-      return await service.updateAlert(alertId, payload)
+      const response = await service.updateAlert(alertId, payload)
+      return response.result
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/alerts/{alertId}/comments' &&

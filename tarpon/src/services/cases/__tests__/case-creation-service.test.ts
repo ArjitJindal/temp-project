@@ -1446,10 +1446,11 @@ describe('Env #3', () => {
     const [alert] = caseItem.alerts ?? []
     expect(alert.alertId).toBeTruthy()
 
-    const newCase = await caseCreationService.createNewCaseFromAlerts(
-      caseItem,
-      [alert.alertId ?? '']
-    )
+    const newCase = (
+      await caseCreationService.createNewCaseFromAlerts(caseItem, [
+        alert.alertId ?? '',
+      ])
+    ).result
     expect(newCase.caseId).toBeTruthy()
     expect(newCase.caseId).not.toEqual(caseItem.caseId)
     expect(newCase.alerts).toHaveLength(1)
@@ -1566,7 +1567,7 @@ describe('Test delayed publishing', () => {
 
       MockDate.set(DAY_AFTER_PUBLISH_DATE)
       {
-        const caseItem = await caseService.getCase(caseId as string)
+        const caseItem = (await caseService.getCase(caseId as string)).result
         expect(caseItem).not.toBeNull()
       }
     })

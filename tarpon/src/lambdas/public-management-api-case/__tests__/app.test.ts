@@ -77,7 +77,6 @@ describe('Test Create Case', () => {
     )
 
     const responseBody = JSON.parse(response?.body as string)
-
     expect(response?.statusCode).toBe(200)
     expect(responseBody).toEqual({
       caseId: 'CA-1',

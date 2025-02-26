@@ -1,9 +1,12 @@
+import { Alert } from '@/@types/openapi-internal/Alert'
 import {
   AuditLog,
   AuditLogSubtypeEnum,
 } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import { AuditLogType } from '@/@types/openapi-internal/AuditLogType'
+import { Case } from '@/@types/openapi-internal/Case'
+import { Report } from '@/@types/openapi-internal/Report'
 import { getContext } from '@/core/utils/context'
 import { publishAuditLog } from '@/services/audit-log'
 
@@ -15,6 +18,9 @@ export type AuditLogEntity<
   oldImage?: O
   newImage?: N
   logMetadata?: object
+  entityType?: AuditLogType
+  entitySubtype?: AuditLogSubtypeEnum
+  entityAction?: AuditLogActionEnum
 }
 
 export type AuditLogReturnData<
@@ -53,9 +59,10 @@ export function auditLog<
           await Promise.all(
             parameter.entities.map((entity) => {
               const auditLog: AuditLog = {
-                type,
-                subtype,
-                action: parameter.actionTypeOverride ?? action,
+                type: entity.entityType ?? type,
+                subtype: entity.entitySubtype ?? subtype,
+                action:
+                  entity.entityAction ?? parameter.actionTypeOverride ?? action,
                 timestamp: Date.now(),
                 oldImage: entity.oldImage,
                 newImage: entity.newImage,
@@ -72,5 +79,46 @@ export function auditLog<
     }
 
     return descriptor
+  }
+}
+
+export function getAlertAuditLogMetadata(
+  alertEntity: Alert | undefined | null
+) {
+  return {
+    alertAssignment: alertEntity?.assignments,
+    alertCreationTimestamp: alertEntity?.createdTimestamp,
+    alertPriority: alertEntity?.priority,
+    alertStatus: alertEntity?.alertStatus,
+    caseId: alertEntity?.caseId,
+  }
+}
+
+export function getCaseAuditLogMetadata(caseEntity: Case | undefined | null) {
+  return {
+    caseAssignment: caseEntity?.assignments ?? [],
+    caseCreationTimestamp: caseEntity?.createdTimestamp,
+    casePriority: caseEntity?.priority,
+    caseStatus: caseEntity?.caseStatus,
+    reviewAssignments: caseEntity?.reviewAssignments ?? [],
+  }
+}
+
+export function getReportAuditLogMetadata(
+  reportEntity: Report | undefined | null
+) {
+  return {
+    name: reportEntity?.name,
+    description: reportEntity?.description,
+    caseId: reportEntity?.caseId,
+    reportTypeId: reportEntity?.reportTypeId,
+    caseUserId: reportEntity?.caseUserId,
+    createdById: reportEntity?.createdById,
+    parameters: reportEntity?.parameters,
+    comments: reportEntity?.comments,
+    revisions: reportEntity?.revisions,
+    attachments: reportEntity?.attachments,
+    caseUser: reportEntity?.caseUser,
+    sarCreationTimestamp: reportEntity?.createdAt,
   }
 }

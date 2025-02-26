@@ -12,7 +12,6 @@ import { CaseRepository } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
-import { CasesAlertsReportAuditLogService } from '../cases/case-alerts-report-audit-log-service'
 import { CaseService } from '../cases'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
@@ -21,7 +20,7 @@ import {
   UNIMPLEMENTED_GENERATORS,
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
-import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   DefaultApiGetReportsRequest,
   DefaultApiDeleteReportsRequest,
@@ -39,6 +38,27 @@ import { getUserName } from '@/utils/helpers'
 import { FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/FincenReportValidStatus'
 import { NON_FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/NonFincenReportValidStatus'
 import { Account } from '@/@types/openapi-internal/Account'
+import {
+  auditLog,
+  AuditLogEntity,
+  AuditLogReturnData,
+  getReportAuditLogMetadata,
+} from '@/utils/audit-log'
+
+// Custom AuditLogReturnData types
+type SarCreationAuditLogReturnData = AuditLogReturnData<
+  Report,
+  object,
+  Report | Partial<Report>
+>
+
+type SarUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  Report | Partial<Report>,
+  Report | Partial<Report>
+>
+
+type SarDeleteAuditLogReturnData = AuditLogReturnData<void>
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)
@@ -57,7 +77,6 @@ export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
   mongoDb: MongoClient
-  auditLogService: CasesAlertsReportAuditLogService
   riskScoringService: RiskScoringV8Service
   caseService: CaseService
   s3: S3
@@ -93,10 +112,6 @@ export class ReportService {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
-    this.auditLogService = new CasesAlertsReportAuditLogService(
-      this.reportRepository.tenantId,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
-    )
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.riskScoringService = new RiskScoringV8Service(
       tenantId,
@@ -310,17 +325,23 @@ export class ReportService {
     return await this.reportRepository.getReports(params)
   }
 
-  async deleteReports(params: DefaultApiDeleteReportsRequest) {
-    await withTransaction(async () => {
-      await Promise.all([
-        this.reportRepository.deleteReports(
-          params.ReportsDeleteRequest.reportIds
-        ),
-        this.auditLogService.handleSarDeleteAuditLog(
-          params.ReportsDeleteRequest.reportIds
-        ),
-      ])
-    })
+  @auditLog('SAR', 'SAR_DELETE', 'DELETE')
+  async deleteReports(
+    params: DefaultApiDeleteReportsRequest
+  ): Promise<SarDeleteAuditLogReturnData> {
+    await this.reportRepository.deleteReports(
+      params.ReportsDeleteRequest.reportIds
+    )
+    const auditLogEntities: AuditLogEntity<object>[] = []
+    params.ReportsDeleteRequest.reportIds.map((id) =>
+      auditLogEntities.push({
+        entityId: id,
+      })
+    )
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   async getReport(reportId: string): Promise<Report> {
@@ -331,7 +352,8 @@ export class ReportService {
     return withSchema(report)
   }
 
-  async completeReport(report: Report): Promise<Report> {
+  @auditLog('SAR', 'CREATION', 'CREATE')
+  async completeReport(report: Report): Promise<SarCreationAuditLogReturnData> {
     const generator = this.getReportGenerator(report.reportTypeId)
     if (!generator) {
       throw new BadRequest(
@@ -385,16 +407,21 @@ export class ReportService {
       logger.info('Submitted report')
     }
 
-    const savedReport = await withTransaction(async () => {
-      const savedReport = await this.reportRepository.saveOrUpdateReport(report)
-      await this.auditLogService.handleAuditLogForNewSar(savedReport)
-      return savedReport
-    })
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
 
     await this.riskScoringService.handleReRunTriggers('SAR', {
       userIds: [report.caseUserId],
     }) // To rerun risk scores for user
-    return withSchema(savedReport)
+    return {
+      result: withSchema(savedReport),
+      entities: [
+        {
+          entityId: savedReport.id ?? '',
+          newImage: savedReport,
+          logMetadata: getReportAuditLogMetadata(savedReport),
+        },
+      ],
+    }
   }
 
   public async reportsFiledForUser(
@@ -421,22 +448,25 @@ export class ReportService {
     return withSchema(savedReport)
   }
 
+  @auditLog('SAR', 'SAR_UPDATE', 'UPDATE')
   async updateReportStatus(
     reportId: string,
     status: ReportStatus,
     statusInfo?: string
-  ): Promise<void> {
+  ): Promise<SarUpdateAuditLogReturnData> {
     const report = await this.getReport(reportId)
-    await withTransaction(async () => {
-      await Promise.all([
-        this.reportRepository.updateReportStatus(reportId, status, statusInfo),
-        this.auditLogService.handleSarUpdateAuditLog(
-          report,
-          { status: report.status, statusInfo: report.statusInfo },
-          { status, statusInfo }
-        ),
-      ])
-    })
+    await this.reportRepository.updateReportStatus(reportId, status, statusInfo)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: report.id ?? '-',
+          logMetadata: getReportAuditLogMetadata(report),
+          oldImage: { status: report.status, statusInfo: report.statusInfo },
+          newImage: { status, statusInfo },
+        },
+      ],
+    }
   }
 
   private getReportGenerator(reportTypeId: string) {

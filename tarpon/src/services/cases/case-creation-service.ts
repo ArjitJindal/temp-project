@@ -31,7 +31,6 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
-import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import {
   CaseRepository,
@@ -104,6 +103,12 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
+import {
+  auditLog,
+  AuditLogEntity,
+  AuditLogReturnData,
+  getCaseAuditLogMetadata,
+} from '@/utils/audit-log'
 import { isDemoTenant } from '@/utils/tenant'
 
 type CaseSubject =
@@ -116,13 +121,30 @@ type CaseSubject =
       paymentDetails: PaymentDetails
     }
 
+type CaseAuditLogReturnData = AuditLogReturnData<
+  Case,
+  { alerts: Alert[] | undefined },
+  { alerts: Alert[] | undefined }
+>
+
+type ManualCaseAuditLogReturnData = AuditLogReturnData<
+  Case,
+  Case | Partial<Case>,
+  Case | Partial<Case>
+>
+
+type NewCaseAuditLogReturnData = AuditLogReturnData<
+  void,
+  Case | Partial<Case>,
+  Case | Partial<Case>
+>
+
 @traceable
 export class CaseCreationService {
   caseRepository: CaseRepository
   userRepository: UserRepository
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
-  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -170,10 +192,6 @@ export class CaseCreationService {
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantID,
       connections.mongoDb
-    )
-    this.auditLogService = new CasesAlertsReportAuditLogService(
-      tenantID,
-      connections
     )
     if (s3 && s3Config) {
       this.caseService = new CaseService(
@@ -268,12 +286,13 @@ export class CaseCreationService {
     }
   }
 
+  @auditLog('CASE', 'MANUAL_CASE_CREATION', 'CREATE')
   public async createManualCaseFromUser(
     manualCaseData: CaseStatusChange,
     files: FileInfo[],
     transactionIds: string[],
     priority?: Priority
-  ): Promise<Case> {
+  ): Promise<ManualCaseAuditLogReturnData> {
     const { id: userId } = getContext()?.user as Account
 
     const caseUser = await this.userRepository.getUserById(
@@ -382,21 +401,22 @@ export class CaseCreationService {
       transactions.map((t) => t.transactionId)
     )
 
-    await this.auditLogService.createAuditLog({
-      caseId: case_?.caseId,
-      logAction: 'CREATE',
-      caseDetails: case_, // Removed case transactions to prevent sqs message size limit
-      newImage: case_,
-      oldImage: {},
-      subtype: 'MANUAL_CASE_CREATION',
-    })
     if (this.caseService) {
       await this.caseService.saveComment(case_.caseId, comment)
     } else {
       await this.caseRepository.saveComment(case_.caseId, comment)
     }
 
-    return case_
+    return {
+      result: case_,
+      entities: [
+        {
+          entityId: case_.caseId ?? '-',
+          newImage: case_,
+          logMetadata: getCaseAuditLogMetadata(case_), // Removed case transactions to prevent sqs message size limit
+        },
+      ],
+    }
   }
 
   private async addOrUpdateCase(caseEntity: Case): Promise<Case> {
@@ -935,10 +955,11 @@ export class CaseCreationService {
     }
   }
 
+  @auditLog('CASE', 'CREATION', 'CREATE')
   public async createNewCaseFromAlerts(
     sourceCase: Case,
     alertIds: string[]
-  ): Promise<Case> {
+  ): Promise<CaseAuditLogReturnData> {
     // Extract all alerts transactions
     const sourceAlerts = sourceCase.alerts ?? []
     const allAlertsTransactionIds: string[] = sourceAlerts
@@ -1001,27 +1022,34 @@ export class CaseCreationService {
       oldCaseAlertsTransactions.map(({ transactionId }) => transactionId)
     )
 
-    await Promise.all([
-      this.addOrUpdateCase({
-        ...sourceCase,
-        alerts: oldCaseAlerts,
-        caseTransactionsIds: oldCaseTransactionsIds,
-        caseTransactionsCount: oldCaseTransactionsIds.length,
-        priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
-        updatedAt: now,
-        caseAggregates: this.getCaseAggregatesFromTransactions(
-          oldCaseAlertsTransactions ?? []
-        ),
-      }),
-      this.auditLogService.handleAuditLogForNewCase(newCase),
-      this.auditLogService.handleAuditLogForAlerts(
-        sourceCase.caseId as string,
-        sourceCase.alerts,
-        newCase.alerts
+    await this.addOrUpdateCase({
+      ...sourceCase,
+      alerts: oldCaseAlerts,
+      caseTransactionsIds: oldCaseTransactionsIds,
+      caseTransactionsCount: oldCaseTransactionsIds.length,
+      priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
+      updatedAt: now,
+      caseAggregates: this.getCaseAggregatesFromTransactions(
+        oldCaseAlertsTransactions ?? []
       ),
-    ])
+    })
 
-    return newCase
+    return {
+      result: newCase,
+      entities: [
+        {
+          entityId: sourceCase.caseId as string,
+          oldImage: { alerts: sourceCase.alerts },
+          newImage: { alerts: newCase.alerts },
+        },
+        {
+          entityId: sourceCase.caseId as string,
+          newImage: { alerts: sourceCase.alerts },
+          oldImage: { alerts: newCase.alerts },
+          entityAction: 'UPDATE',
+        },
+      ],
+    }
   }
 
   private async getCheckListTemplates(
@@ -1409,13 +1437,17 @@ export class CaseCreationService {
     return this.updateRelatedCases(savedCases)
   }
 
+  @auditLog('CASE', 'CREATION', 'CREATE')
   async handleNewCases(
     tenantId: string,
     timestampBeforeCasesCreation: number,
     cases: Case[]
-  ) {
+  ): Promise<NewCaseAuditLogReturnData> {
     if (isDemoTenant(tenantId)) {
-      return
+      return {
+        result: undefined,
+        entities: [],
+      }
     }
     const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
       (alert) =>
@@ -1484,20 +1516,28 @@ export class CaseCreationService {
       'updatedAt',
     ]
 
-    await Promise.all([
-      ...newCases.map(
-        async (caseItem) =>
-          await this.auditLogService.handleAuditLogForNewCase(
-            pick(caseItem, propertiesToPickForCase)
-          )
-      ),
-      ...newAlerts.map(
-        async (alert) =>
-          await this.auditLogService.handleAuditLogForNewAlert(
-            pick(alert, propertiesToPickForAlert)
-          )
-      ),
-    ])
+    const auditLogEntities: AuditLogEntity<
+      object,
+      Alert | Partial<Alert> | Case | Partial<Case>
+    >[] = []
+    newCases.forEach((caseItem) => {
+      auditLogEntities.push({
+        entityId: caseItem?.caseId ?? '-',
+        newImage: pick(caseItem, propertiesToPickForCase),
+      })
+    })
+
+    newAlerts.forEach((alert) => {
+      auditLogEntities.push({
+        entityId: alert?.alertId ?? '-',
+        newImage: pick(alert, propertiesToPickForAlert),
+      })
+    })
+
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   async handleUser(user: InternalUser): Promise<Case[]> {

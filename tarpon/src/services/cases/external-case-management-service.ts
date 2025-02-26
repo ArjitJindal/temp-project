@@ -9,7 +9,6 @@ import { CaseAlertsCommonService } from '../case-alerts-common'
 import { API_USER } from '../users'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
-import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { Case as CaseInternal } from '@/@types/openapi-internal/Case'
@@ -32,6 +31,19 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { S3Config } from '@/services/aws/s3-service'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+
+type CaseCreateAuditLogReturnData = AuditLogReturnData<
+  Case,
+  Case | Partial<Case>,
+  Case | Partial<Case>
+>
+
+type CaseUpdateAuditLogReturnData = AuditLogReturnData<
+  Case,
+  Partial<CaseInternal>,
+  Partial<CaseInternal>
+>
 
 @traceable
 export class ExternalCaseManagementService extends CaseAlertsCommonService {
@@ -43,7 +55,6 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     mongoDb: MongoClient
     dynamoDb: DynamoDBDocumentClient
   }
-  private casesAlertsReportAuditLogService: CasesAlertsReportAuditLogService
 
   constructor(
     tenantId: string,
@@ -58,8 +69,6 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
     this.tenantId = tenantId
     this.connections = connections
-    this.casesAlertsReportAuditLogService =
-      new CasesAlertsReportAuditLogService(tenantId, connections)
   }
 
   private async validateCaseCreationRequest(
@@ -248,24 +257,32 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     return await this.transformInternalCaseToExternalCase(case_)
   }
 
-  public async createCase(requestBody: CaseCreationRequest): Promise<Case> {
+  @auditLog('CASE', 'API_CREATION', 'CREATE')
+  public async createCase(
+    requestBody: CaseCreationRequest
+  ): Promise<CaseCreateAuditLogReturnData> {
     await this.validateCaseCreationRequest(requestBody)
     const case_ = await this.transformCreationRequestToInternalCase(requestBody)
 
     const createdCase = await this.caseRepository.addExternalCaseMongo(case_)
-    await this.casesAlertsReportAuditLogService.handleAuditLogForNewCase(
-      case_,
-      'API_CREATION'
-    )
-    return await this.transformInternalCaseToExternalCase(createdCase)
+
+    return {
+      entities: [
+        {
+          entityId: createdCase.caseId ?? '-',
+          newImage: case_ as Partial<Case>,
+        },
+      ],
+      result: await this.transformInternalCaseToExternalCase(createdCase),
+    }
   }
 
+  @auditLog('CASE', 'API_UPDATE', 'UPDATE')
   public async updateCase(
     caseId: string,
     casePatchRequest: CaseUpdateable
-  ): Promise<Case> {
+  ): Promise<CaseUpdateAuditLogReturnData> {
     const internalCase = await this.caseRepository.getCaseById(caseId)
-
     if (!internalCase) {
       throw new createHttpError.NotFound(
         `Case with id: ${caseId} not found. You can create a new case by calling POST /cases with id: ${caseId}`
@@ -332,13 +349,12 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
 
     const oldImage = pick(internalCase, Object.keys(caseUpdates))
 
-    await this.casesAlertsReportAuditLogService.handleAuditLogForCaseUpdateViaApi(
-      caseId,
-      oldImage,
-      caseUpdates
-    )
-
-    return await this.transformInternalCaseToExternalCase(updatedCase)
+    return {
+      result: await this.transformInternalCaseToExternalCase(updatedCase),
+      entities: [
+        { entityId: caseId, oldImage: oldImage, newImage: caseUpdates },
+      ],
+    }
   }
 
   public async updateCaseStatus(

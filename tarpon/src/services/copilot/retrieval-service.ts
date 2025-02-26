@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { BadRequest, NotFound } from 'http-errors'
+import { BadRequest } from 'http-errors'
 import { uniq } from 'lodash'
 import { CurrencyService } from '../currency'
 import { AlertsService } from '../alerts'
@@ -120,7 +120,6 @@ export class RetrievalService {
         throw new Error('Not implemented yet: "SANCTIONS_HIT" case')
       }
     }
-    throw new NotFound(`Entity type not supported: ${entityType}`)
   }
 
   private async getReportAttributes(
@@ -129,7 +128,7 @@ export class RetrievalService {
   ): Promise<AttributeSet> {
     const report = await this.reportService.getReport(reportId)
     const caseItem = report.caseId
-      ? await this.caseService.getCase(report.caseId)
+      ? (await this.caseService.getCase(report.caseId)).result
       : undefined
 
     const user = await this.userService.getUser(report.caseUserId, false)
@@ -198,7 +197,8 @@ export class RetrievalService {
     caseId: string,
     reasons: Array<string>
   ): Promise<AttributeSet> {
-    const _case = await this.caseService.getCase(caseId)
+    const response = await this.caseService.getCase(caseId)
+    const _case = response.result
 
     const ruleInstanceIds =
       _case?.alerts?.map((a) => a.ruleInstanceId as string) || []

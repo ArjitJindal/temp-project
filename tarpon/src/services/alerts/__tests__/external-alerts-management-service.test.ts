@@ -77,7 +77,9 @@ describe('End to End External Alerts Management Service', () => {
       },
     }
 
-    const alert = await alertsExternalService.createAlert(alertCreationRequest)
+    const alert = (
+      await alertsExternalService.createAlert(alertCreationRequest)
+    ).result
     expect(alert).toEqual({
       alertId: 'AL-1234',
       alertStatus: 'OPEN',

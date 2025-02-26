@@ -67,11 +67,14 @@ export const copilotHandler = lambdaApi({})(
 
     handlers.registerGetQuestions(async (_ctx, request) => {
       const questionService = await QuestionService.fromEvent(event)
-      const alert = await alertsService.getAlert(request.alertId)
+      const response = await alertsService.getAlert(request.alertId)
+      const alert = response.result
       if (!alert?.caseId) {
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
-      const c = await caseService.getCase(alert.caseId)
+
+      const cresponse = await caseService.getCase(alert.caseId)
+      const c = cresponse.result
       return await questionService.getQuestions(alert, c)
     })
 
@@ -79,11 +82,13 @@ export const copilotHandler = lambdaApi({})(
     handlers.registerPostQuestion(async (ctx, request) => {
       const caseService = await CaseService.fromEvent(event)
       const alertService = await AlertsService.fromEvent(event)
-      const alert = await alertService.getAlert(request.alertId)
+      const response = await alertService.getAlert(request.alertId)
+      const alert = response.result
       if (!alert?.caseId) {
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
-      const c = await caseService.getCase(alert.caseId)
+      const cresponse = await caseService.getCase(alert.caseId)
+      const c = cresponse.result
       return questionService.answerQuestionFromString(
         ctx.userId,
         request.QuestionRequest.question || '',

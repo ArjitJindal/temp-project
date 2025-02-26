@@ -56,21 +56,23 @@ export const casesHandler = lambdaApi()(
         })
     )
 
-    handlers.registerPatchAlertsQaStatus((_ctx, request) =>
-      alertsService.updateAlertChecklistQaStatus(
+    handlers.registerPatchAlertsQaStatus(async (_ctx, request) => {
+      const result = await alertsService.updateAlertChecklistQaStatus(
         request.alertId,
         request.AlertChecklistQaUpdateRequest.checklistItemIds,
         request.AlertChecklistQaUpdateRequest.status
       )
-    )
+      return result.result
+    })
 
-    handlers.registerPatchAlertsChecklistStatus((_ctx, request) =>
-      alertsService.updateAlertChecklistStatus(
+    handlers.registerPatchAlertsChecklistStatus(async (_ctx, request) => {
+      const result = await alertsService.updateAlertChecklistStatus(
         request.alertId,
         request.AlertChecklistUpdateRequest.checklistItemIds,
         request.AlertChecklistUpdateRequest.done
       )
-    )
+      return result.result
+    })
 
     handlers.registerPatchAlertsQaAssignments((_ctx, request) =>
       alertsService.updateAlertsQaAssignments(
@@ -80,9 +82,10 @@ export const casesHandler = lambdaApi()(
     )
 
     handlers.registerAlertsQaStatusChange(async (ctx, request) => {
-      return alertsService.updateAlertQaStatus(
+      const response = await alertsService.updateAlertQaStatus(
         request.AlertQaStatusUpdateRequest
       )
+      return response.result
     })
 
     handlers.registerCreateAlertsQaSampling(
@@ -125,15 +128,21 @@ export const casesHandler = lambdaApi()(
         )
     )
 
-    handlers.registerGetCase(async (ctx, request) =>
-      caseResponse(
-        await caseService.getCase(request.caseId, { logAuditLogView: true })
-      )
-    )
+    handlers.registerGetCase(async (ctx, request) => {
+      const response = await caseService.getCase(request.caseId, {
+        logAuditLogView: true,
+      })
+      return caseResponse(response.result)
+    })
 
     handlers.registerDeleteCasesCaseIdCommentsCommentId(
-      async (ctx, request) =>
-        await caseService.deleteCaseComment(request.caseId, request.commentId)
+      async (ctx, request) => {
+        const response = await caseService.deleteCaseComment(
+          request.caseId,
+          request.commentId
+        )
+        return response.result
+      }
     )
 
     handlers.registerGetAlertList(
@@ -143,20 +152,22 @@ export const casesHandler = lambdaApi()(
         })
     )
 
-    handlers.registerPostCasesManual(
-      async (ctx, request) =>
-        await caseCreationService.createManualCaseFromUser(
-          request.ManualCaseCreationDataRequest.manualCaseData,
-          request.ManualCaseCreationDataRequest.files,
-          request.ManualCaseCreationDataRequest.transactionIds,
-          request.ManualCaseCreationDataRequest.priority
-        )
-    )
+    handlers.registerPostCasesManual(async (ctx, request) => {
+      const response = await caseCreationService.createManualCaseFromUser(
+        request.ManualCaseCreationDataRequest.manualCaseData,
+        request.ManualCaseCreationDataRequest.files,
+        request.ManualCaseCreationDataRequest.transactionIds,
+        request.ManualCaseCreationDataRequest.priority
+      )
+      return response.result
+    })
 
-    handlers.registerPatchCasesManual(
-      async (ctx, request) =>
-        await caseService.updateManualCase(request.ManualCasePatchRequest)
-    )
+    handlers.registerPatchCasesManual(async (ctx, request) => {
+      const response = await caseService.updateManualCase(
+        request.ManualCasePatchRequest
+      )
+      return response.result
+    })
 
     handlers.registerGetCaseIds(
       async (ctx, request) =>
@@ -170,23 +181,22 @@ export const casesHandler = lambdaApi()(
       return await transactionService.getCasesTransactions(request)
     })
 
-    handlers.registerGetAlert(
-      async (ctx, request) =>
-        await alertsService.getAlert(request.alertId, { auditLog: true })
-    )
+    handlers.registerGetAlert(async (ctx, request) => {
+      return (await alertsService.getAlert(request.alertId, { auditLog: true }))
+        .result
+    })
 
     handlers.registerAlertsNoNewCase(async (ctx, request) => {
       const { alertIds, sourceCaseId } = request.AlertsToNewCaseRequest
-      const sourceCase = await caseService.getCase(sourceCaseId)
+      const sourceCase = (await caseService.getCase(sourceCaseId)).result
 
       if (sourceCase == null) {
         throw new NotFound(`Unable to find source case by id "${sourceCaseId}"`)
       }
 
-      const newCase = await caseCreationService.createNewCaseFromAlerts(
-        sourceCase,
-        alertIds
-      )
+      const newCase = (
+        await caseCreationService.createNewCaseFromAlerts(sourceCase, alertIds)
+      ).result
 
       return caseResponse(newCase)
     })
@@ -208,7 +218,7 @@ export const casesHandler = lambdaApi()(
       async (ctx, request): Promise<AlertTransactionsStats> => {
         const transactionService = await TransactionService.fromEvent(event)
 
-        const alert = await alertsService.getAlert(request.alertId)
+        const alert = (await alertsService.getAlert(request.alertId)).result
 
         const transactionCursor = transactionService.getTransactionCursor({
           filterIdList: alert.transactionIds ?? [],
@@ -250,74 +260,90 @@ export const casesHandler = lambdaApi()(
       const { alertEscalations, caseUpdateRequest } = CaseEscalationRequest
 
       if (!alertEscalations?.length) {
-        return await caseService.escalateCase(caseId, caseUpdateRequest)
+        const response = await caseService.escalateCase(
+          caseId,
+          caseUpdateRequest
+        )
+        return response.result
       } else if (alertEscalations) {
-        return await alertsService.escalateAlerts(caseId, CaseEscalationRequest)
+        const response = await alertsService.escalateAlerts(
+          caseId,
+          CaseEscalationRequest
+        )
+        return response.result
       }
 
       throw new BadRequest('Invalid request of escalation')
     })
 
     /** Status Change */
-    handlers.registerAlertsStatusChange(
-      async (ctx, request) =>
-        await alertsService.updateStatus(
-          request.AlertsStatusUpdateRequest.alertIds,
-          request.AlertsStatusUpdateRequest.updates
-        )
-    )
+    handlers.registerAlertsStatusChange(async (ctx, request) => {
+      const response = await alertsService.updateStatus(
+        request.AlertsStatusUpdateRequest.alertIds,
+        request.AlertsStatusUpdateRequest.updates
+      )
+      return response.result
+    })
 
-    handlers.registerPatchCasesStatusChange(
-      async (ctx, request) =>
-        await caseService.updateStatus(
-          request.CasesStatusUpdateRequest.caseIds,
-          request.CasesStatusUpdateRequest.updates
-        )
-    )
+    handlers.registerPatchCasesStatusChange(async (ctx, request) => {
+      const response = await caseService.updateStatus(
+        request.CasesStatusUpdateRequest.caseIds,
+        request.CasesStatusUpdateRequest.updates
+      )
+      return response.result
+    })
 
     /** Assignments and Review Assignments */
-    handlers.registerAlertsReviewAssignment(
-      async (ctx, request) =>
-        await alertsService.updateReviewAssignments(
-          request.AlertsReviewAssignmentsUpdateRequest.alertIds,
-          request.AlertsReviewAssignmentsUpdateRequest.reviewAssignments
-        )
-    )
+    handlers.registerAlertsReviewAssignment(async (ctx, request) => {
+      const response = await alertsService.updateReviewAssignments(
+        request.AlertsReviewAssignmentsUpdateRequest.alertIds,
+        request.AlertsReviewAssignmentsUpdateRequest.reviewAssignments
+      )
 
-    handlers.registerAlertsAssignment(
-      async (ctx, request) =>
-        await alertsService.updateAssignments(
-          request.AlertsAssignmentsUpdateRequest.alertIds,
-          request.AlertsAssignmentsUpdateRequest.assignments
-        )
-    )
+      return response.result
+    })
 
-    handlers.registerPatchCasesAssignment(
-      async (ctx, request) =>
-        await caseService.updateAssignments(
-          request.CasesAssignmentsUpdateRequest.caseIds,
-          request.CasesAssignmentsUpdateRequest.assignments
-        )
-    )
+    handlers.registerAlertsAssignment(async (ctx, request) => {
+      const response = await alertsService.updateAssignments(
+        request.AlertsAssignmentsUpdateRequest.alertIds,
+        request.AlertsAssignmentsUpdateRequest.assignments
+      )
+      return response.result
+    })
 
-    handlers.registerPatchCasesReviewAssignment(
-      async (ctx, request) =>
-        await caseService.updateReviewAssignments(
-          request.CasesReviewAssignmentsUpdateRequest.caseIds,
-          request.CasesReviewAssignmentsUpdateRequest.reviewAssignments
-        )
-    )
+    handlers.registerPatchCasesAssignment(async (ctx, request) => {
+      const response = await caseService.updateAssignments(
+        request.CasesAssignmentsUpdateRequest.caseIds,
+        request.CasesAssignmentsUpdateRequest.assignments
+      )
+      return response.result
+    })
+
+    handlers.registerPatchCasesReviewAssignment(async (ctx, request) => {
+      const response = await caseService.updateReviewAssignments(
+        request.CasesReviewAssignmentsUpdateRequest.caseIds,
+        request.CasesReviewAssignmentsUpdateRequest.reviewAssignments
+      )
+      return response.result
+    })
 
     /** Comments APIs */
-    handlers.registerCreateAlertsComment(
-      async (ctx, request) =>
-        await alertsService.saveComment(request.alertId, request.CommentRequest)
-    )
+    handlers.registerCreateAlertsComment(async (ctx, request) => {
+      const response = await alertsService.saveComment(
+        request.alertId,
+        request.CommentRequest
+      )
 
-    handlers.registerPostCaseComments(
-      async (ctx, request) =>
-        await caseService.saveComment(request.caseId, request.CommentRequest)
-    )
+      return response.result
+    })
+
+    handlers.registerPostCaseComments(async (ctx, request) => {
+      const response = await caseService.saveComment(
+        request.caseId,
+        request.CommentRequest
+      )
+      return response.result
+    })
 
     handlers.registerCreateAlertsCommentReply(
       async (ctx, request) =>
@@ -328,19 +354,22 @@ export const casesHandler = lambdaApi()(
         )
     )
 
-    handlers.registerPostCaseCommentsReply(
-      async (ctx, request) =>
-        await caseService.saveCommentReply(
-          request.caseId,
-          request.commentId,
-          request.CommentRequest
-        )
-    )
+    handlers.registerPostCaseCommentsReply(async (ctx, request) => {
+      const response = await caseService.saveCommentReply(
+        request.caseId,
+        request.commentId,
+        request.CommentRequest
+      )
+      return response.result
+    })
 
-    handlers.registerDeleteAlertsComment(
-      async (ctx, request) =>
-        await alertsService.deleteComment(request.alertId, request.commentId)
-    )
+    handlers.registerDeleteAlertsComment(async (ctx, request) => {
+      const response = await alertsService.deleteComment(
+        request.alertId,
+        request.commentId
+      )
+      return response.result
+    })
 
     return await handlers.handle(event)
   }

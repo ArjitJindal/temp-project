@@ -57,7 +57,6 @@ import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusU
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
 import { isAlertAvailable } from '@/services/cases/utils'
-import { CasesAlertsReportAuditLogService } from '@/services/cases/case-alerts-report-audit-log-service'
 import {
   getMongoDbClient,
   sendMessageToMongoUpdateConsumer,
@@ -89,11 +88,60 @@ import { getCredentialsFromEvent } from '@/utils/credentials'
 import { S3Config } from '@/services/aws/s3-service'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  auditLog,
+  AuditLogEntity,
+  AuditLogReturnData,
+  getAlertAuditLogMetadata,
+  getCaseAuditLogMetadata,
+} from '@/utils/audit-log'
+import {
+  AlertUpdateAuditLogImage,
+  AuditLogAssignmentsImage,
+  CaseUpdateAuditLogImage,
+  CommentAuditLogImage,
+} from '@/@types/audit-log'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+
+type AlertViewAuditLogReturnData = AuditLogReturnData<Alert>
+
+type AlertEscalationAuditLogReturnData = AuditLogReturnData<
+  { childCaseId?: string; assigneeIds: string[] },
+  AlertUpdateAuditLogImage,
+  AlertUpdateAuditLogImage
+>
+
+type AlertUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  AlertUpdateAuditLogImage,
+  AlertUpdateAuditLogImage
+>
+
+type AlertChecklistUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  { ruleChecklist: ChecklistItemValue[] | undefined },
+  { ruleChecklist: ChecklistItemValue[] | undefined }
+>
+
+type AlertQaUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  object,
+  {
+    qaStatus: ChecklistStatus
+    qaInfo: {
+      reason: string[]
+      comment: string | undefined
+      files: FileInfo[] | undefined
+    }
+  }
+>
+
+type AlertCommentDeleteAuditLogReturnData = AuditLogReturnData<void, Comment>
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
-  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -134,10 +182,6 @@ export class AlertsService extends CaseAlertsCommonService {
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
     this.dynamoDb = alertsRepository.dynamoDb
-    this.auditLogService = new CasesAlertsReportAuditLogService(
-      alertsRepository.tenantId,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
-    )
 
     this.caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -185,7 +229,11 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  public async getAlert(alertId: string, options?: { auditLog?: boolean }) {
+  @auditLog('ALERT', 'VIEW_ALERT', 'VIEW')
+  public async getAlert(
+    alertId: string,
+    options?: { auditLog?: boolean }
+  ): Promise<AlertViewAuditLogReturnData> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Alert Query'
@@ -197,20 +245,7 @@ export class AlertsService extends CaseAlertsCommonService {
         throw new NotFound(`No alert for ${alertId}`)
       }
 
-      let auditLogPromise: Promise<void> = Promise.resolve()
-
-      if (options?.auditLog) {
-        auditLogPromise = this.auditLogService.createAlertAuditLog({
-          alertId,
-          logAction: 'VIEW',
-          oldImage: {},
-          newImage: {},
-          alertDetails: alert,
-        })
-      }
-
-      const [_, ...comments] = await Promise.all([
-        auditLogPromise,
+      const comments = await Promise.all([
         ...(alert.comments ?? [])
           .filter((c) => c.deletedAt == null)
           .map(async (c) => {
@@ -229,7 +264,16 @@ export class AlertsService extends CaseAlertsCommonService {
           }),
       ])
 
-      return { ...alert, comments }
+      return {
+        result: { ...alert, comments },
+        publishAuditLog: () => options?.auditLog ?? false,
+        entities: [
+          {
+            entityId: alertId,
+            logMetadata: getAlertAuditLogMetadata(alert),
+          },
+        ],
+      }
     } finally {
       caseGetSegment?.close()
     }
@@ -252,10 +296,11 @@ export class AlertsService extends CaseAlertsCommonService {
     return { valid }
   }
 
+  @auditLog('ALERT', 'STATUS_CHANGE', 'ESCALATE')
   public async escalateAlerts(
     caseId: string,
     caseEscalationRequest: CaseEscalationRequest
-  ): Promise<{ childCaseId?: string; assigneeIds: string[] }> {
+  ): Promise<AlertEscalationAuditLogReturnData> {
     const transactionsRepo = new MongoDbTransactionRepository(
       this.tenantId,
       this.mongoDb
@@ -278,7 +323,7 @@ export class AlertsService extends CaseAlertsCommonService {
       this.awsCredentials
     )
 
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
 
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
@@ -308,13 +353,11 @@ export class AlertsService extends CaseAlertsCommonService {
       alert.transactionIds = alert.transactionIds?.filter(
         (t) => !c.caseHierarchyDetails?.childTransactionIds?.includes(t)
       )
-
       if (alert.transactionIds?.length === 0) {
         throw new BadRequest(
           `Cannot escalate ${alert.alertId} as all of its transactions have already been escalated.`
         )
       }
-
       return alert
     })
 
@@ -340,7 +383,12 @@ export class AlertsService extends CaseAlertsCommonService {
 
     // if there are no remaining alerts, then we are escalating the entire case
     if (!remainingAlerts?.length && caseUpdateRequest) {
-      return caseService.escalateCase(caseId, caseUpdateRequest)
+      const response = await caseService.escalateCase(caseId, caseUpdateRequest)
+      return {
+        result: response.result,
+        publishAuditLog: () => false,
+        entities: [],
+      }
     }
 
     if (
@@ -379,7 +427,11 @@ export class AlertsService extends CaseAlertsCommonService {
       }
 
       return {
-        assigneeIds: [currentUserAccount.reviewerId as string],
+        result: {
+          assigneeIds: [currentUserAccount.reviewerId as string],
+        },
+        publishAuditLog: () => false,
+        entities: [],
       }
     }
 
@@ -615,33 +667,66 @@ export class AlertsService extends CaseAlertsCommonService {
     const updatedTransactions =
       alertEscalations?.flatMap((item) => item.transactionIds ?? []) ?? []
 
+    const auditLogEntities: AuditLogEntity<
+      AlertUpdateAuditLogImage | CaseUpdateAuditLogImage,
+      AlertUpdateAuditLogImage | CaseUpdateAuditLogImage
+    >[] = []
+
     if (childCaseId) {
-      await this.auditLogService.handleAuditLogForCaseEscalation(
-        caseId,
-        {
+      auditLogEntities.push({
+        entityId: caseId,
+        oldImage: {
+          caseStatus: c.caseStatus,
+          reviewAssignments: c.reviewAssignments,
+          assignments: c.assignments,
+        },
+        newImage: {
           ...caseUpdateRequest,
           reason: caseUpdateRequest?.reason ?? [],
           updatedTransactions,
+          caseStatus: newCase.caseStatus,
+          reviewAssignments: newCase.reviewAssignments,
+          assignments: newCase.assignments,
         },
-        c
-      )
+        logMetadata: getCaseAuditLogMetadata(newCase),
+        entityType: 'CASE',
+        entitySubtype: 'STATUS_CHANGE',
+        entityAction: 'ESCALATE',
+      })
     }
-    await this.auditLogService.handleAuditLogForAlertsEscalation(
-      alertIds,
-      {
-        ...caseUpdateRequest,
-        alertCaseId: childCaseId,
-        updatedTransactions,
-        reason: caseUpdateRequest?.reason ?? [],
-        reviewAssignments,
-      },
-      c
-    )
+
+    const data = {
+      ...caseUpdateRequest,
+      alertCaseId: childCaseId,
+      updatedTransactions,
+      reason: caseUpdateRequest?.reason ?? [],
+      reviewAssignments,
+    }
+    for (const alertId of alertIds) {
+      const alertEntity = c.alerts?.find((alert) => alert.alertId === alertId)
+
+      if (!alertEntity) {
+        continue
+      }
+
+      const oldImage: AlertUpdateAuditLogImage = {
+        alertStatus: alertEntity.alertStatus,
+        reviewAssignments: alertEntity.reviewAssignments,
+        assignments: alertEntity.assignments,
+      }
+
+      auditLogEntities.push({
+        entityId: alertId,
+        oldImage: oldImage,
+        newImage: { ...data, alertStatus: 'ESCALATED' },
+        logMetadata: getAlertAuditLogMetadata(alertEntity),
+      })
+    }
 
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
       .filter(Boolean)
-    return { childCaseId, assigneeIds }
+    return { result: { childCaseId, assigneeIds }, entities: auditLogEntities }
   }
 
   public static formatReasonsComment(params: {
@@ -695,11 +780,14 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  @auditLog('ALERT', 'COMMENT', 'CREATE')
   public async saveComment(
     alertId: string,
     comment: CommentRequest,
     externalRequest?: boolean
-  ): Promise<Comment> {
+  ): Promise<
+    AuditLogReturnData<Comment, CommentAuditLogImage, CommentAuditLogImage>
+  > {
     const alert = await this.alertsRepository.getAlertById(alertId)
 
     if (alert == null) {
@@ -725,16 +813,23 @@ export class AlertsService extends CaseAlertsCommonService {
       ...(savedComment.id
         ? [this.sendFilesAiSummaryBatchJob([alertId], savedComment.id)]
         : []),
-      this.auditLogService.handleAuditLogForAlertsComments(alertId, {
-        ...savedComment,
-        body: getParsedCommentBody(savedComment.body),
-        mentions,
-      }),
     ])
 
     return {
-      ...savedComment,
-      files: await this.getUpdatedFiles(savedComment.files),
+      result: {
+        ...savedComment,
+        files: await this.getUpdatedFiles(savedComment.files),
+      },
+      entities: [
+        {
+          entityId: alertId,
+          newImage: {
+            ...savedComment,
+            body: getParsedCommentBody(savedComment.body),
+            mentions,
+          },
+        },
+      ],
     }
   }
 
@@ -755,7 +850,11 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new NotFound(`"${commentId}" comment not found`)
     }
 
-    return this.saveComment(alertId, { ...reply, parentId: commentId })
+    const response = await this.saveComment(alertId, {
+      ...reply,
+      parentId: commentId,
+    })
+    return response.result
   }
 
   private async sendFilesAiSummaryBatchJob(
@@ -807,10 +906,13 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  @auditLog('ALERT', 'ASSIGNMENT', 'UPDATE')
   public async updateAssignments(
     alertIds: string[],
     assignments: Assignment[]
-  ): Promise<void> {
+  ): Promise<
+    AuditLogReturnData<void, AuditLogAssignmentsImage, AuditLogAssignmentsImage>
+  > {
     const timestamp = Date.now()
     const existingAlerts = await this.getAlertsByIds(alertIds)
 
@@ -826,17 +928,20 @@ export class AlertsService extends CaseAlertsCommonService {
     assignments.forEach((a) => {
       a.timestamp = timestamp
     })
-
+    const auditLogEntities: AuditLogEntity<
+      AuditLogAssignmentsImage,
+      AuditLogAssignmentsImage
+    >[] = []
     await Promise.all([
       this.alertsRepository.updateAssignments(alertIds, assignments),
       ...alertIds.map(async (alertId) => {
         const oldAlert = existingAlerts.find((a) => a.alertId === alertId)
-
-        await this.auditLogService.handleAuditLogForAlertAssignment(
-          alertId,
-          { assignments: oldAlert?.assignments },
-          { assignments }
-        )
+        auditLogEntities.push({
+          entityId: alertId,
+          oldImage: { assignments: oldAlert?.assignments },
+          newImage: { assignments },
+          logMetadata: getAlertAuditLogMetadata(oldAlert),
+        })
       }),
       ...(this.hasFeatureSla
         ? existingAlerts.map((alert) => {
@@ -851,6 +956,10 @@ export class AlertsService extends CaseAlertsCommonService {
           })
         : []),
     ])
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   private async updateAlertWithSlaDetails(alert: Alert, timestamp: number) {
@@ -898,17 +1007,23 @@ export class AlertsService extends CaseAlertsCommonService {
     })
   }
 
+  @auditLog('ALERT', 'REVIEW_ASSIGNMENT', 'UPDATE')
   public async updateReviewAssignments(
     alertIds: string[],
     reviewAssignments: Assignment[]
-  ): Promise<void> {
+  ): Promise<
+    AuditLogReturnData<void, AuditLogAssignmentsImage, AuditLogAssignmentsImage>
+  > {
     const timestamp = Date.now()
     const existingAlerts = await this.getAlertsByIds(alertIds)
 
     reviewAssignments.forEach((a) => {
       a.timestamp = timestamp
     })
-
+    const auditLogEntities: AuditLogEntity<
+      AuditLogAssignmentsImage,
+      AuditLogAssignmentsImage
+    >[] = []
     await Promise.all([
       this.alertsRepository.updateReviewAssignments(
         alertIds,
@@ -916,12 +1031,12 @@ export class AlertsService extends CaseAlertsCommonService {
       ),
       ...alertIds.map(async (alertId) => {
         const oldAlert = existingAlerts.find((a) => a.alertId === alertId)
-
-        await this.auditLogService.handleAuditLogForAlertAssignment(
-          alertId,
-          { reviewAssignments: oldAlert?.reviewAssignments },
-          { reviewAssignments }
-        )
+        auditLogEntities.push({
+          entityId: alertId,
+          oldImage: { reviewAssignments: oldAlert?.reviewAssignments },
+          newImage: { reviewAssignments },
+          logMetadata: getAlertAuditLogMetadata(oldAlert),
+        })
       }),
       ...(this.hasFeatureSla
         ? existingAlerts.map((alert) => {
@@ -936,12 +1051,18 @@ export class AlertsService extends CaseAlertsCommonService {
           })
         : []),
     ])
+
+    return {
+      result: undefined,
+      entities: [],
+    }
   }
 
+  @auditLog('ALERT', 'COMMENT', 'DELETE')
   public async deleteComment(
     alertId: string,
     commentId: string
-  ): Promise<void> {
+  ): Promise<AlertCommentDeleteAuditLogReturnData> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     const comment = alert?.comments?.find(({ id }) => id === commentId) ?? null
 
@@ -958,12 +1079,17 @@ export class AlertsService extends CaseAlertsCommonService {
     await withTransaction(async () => {
       await Promise.all([
         this.alertsRepository.deleteComment(caseId, alertId, commentId),
-        this.auditLogService.handleAuditLogForAlertsCommentDelete(
-          alertId,
-          comment
-        ),
       ])
     })
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: alertId,
+          oldImage: comment,
+        },
+      ],
+    }
   }
 
   private getAlertStatusChangeCommentBody(
@@ -1014,6 +1140,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return this.alertsRepository.getAlertsByIds(alertIds)
   }
 
+  @auditLog('ALERT', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     alertIds: string[],
     statusUpdateRequest: AlertStatusUpdateRequest,
@@ -1025,9 +1152,13 @@ export class AlertsService extends CaseAlertsCommonService {
       updateChecklistStatus?: boolean
       externalRequest?: boolean
     }
-  ): Promise<void> {
+  ): Promise<AlertUpdateAuditLogReturnData> {
     if (!alertIds.length) {
-      return
+      return {
+        result: undefined,
+        publishAuditLog: () => false,
+        entities: [],
+      }
     }
 
     const {
@@ -1190,11 +1321,6 @@ export class AlertsService extends CaseAlertsCommonService {
           : []),
       ])
 
-      await this.auditLogService.handleAuditLogForAlertsUpdate(
-        alerts,
-        statusUpdateRequest
-      )
-
       const caseIdsWithAllAlertsSameStatus =
         response.caseIdsWithAllAlertsSameStatus // Only for escalated and closed alerts
 
@@ -1248,6 +1374,37 @@ export class AlertsService extends CaseAlertsCommonService {
     if (statusUpdateRequest.alertStatus === 'CLOSED' && !externalRequest) {
       await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
     }
+
+    const auditLogEntities = await Promise.all(
+      alerts.map(async (oldAlert) => {
+        const alertId = oldAlert.alertId as string
+        const alertEntity = await this.alertsRepository.getAlertById(alertId)
+
+        const oldImage: AlertUpdateAuditLogImage = {
+          alertStatus: oldAlert.alertStatus,
+          reviewAssignments: oldAlert.reviewAssignments,
+          assignments: oldAlert.assignments,
+        }
+
+        const newImage: AlertUpdateAuditLogImage = {
+          ...statusUpdateRequest,
+          alertStatus: statusUpdateRequest.alertStatus,
+          reviewAssignments: alertEntity?.reviewAssignments,
+          assignments: alertEntity?.assignments,
+        }
+
+        return {
+          entityId: alertId,
+          oldImage,
+          newImage,
+        }
+      })
+    )
+
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   private async sendAlertClosedWebhook(
@@ -1293,11 +1450,12 @@ export class AlertsService extends CaseAlertsCommonService {
     await sendWebhookTasks<AlertClosedDetails>(this.tenantId, webhookTasks)
   }
 
+  @auditLog('ALERT', 'CHECKLIST_ITEM_STATUS_CHANGE', 'UPDATE')
   async updateAlertChecklistStatus(
     alertId: string,
     checklistItemIds: string[],
     done: ChecklistDoneStatus
-  ): Promise<void> {
+  ): Promise<AlertChecklistUpdateAuditLogReturnData> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     if (!alert) {
       throw new NotFound('No alert')
@@ -1317,25 +1475,35 @@ export class AlertsService extends CaseAlertsCommonService {
       return checkListItem
     })
     if (isEqual(originalChecklist, updatedChecklist)) {
-      return // No changes made to the checklist
+      return {
+        result: undefined,
+        entities: [],
+      } // No changes made to the checklist
     }
     alert.ruleChecklist = updatedChecklist
     await this.alertsRepository.updateAlertChecklistStatus(
       alertId,
       updatedChecklist ?? []
     )
-    await this.auditLogService.handleAuditLogForChecklistUpdate(
-      alertId,
-      originalChecklist,
-      updatedChecklist
-    )
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: alertId,
+
+          oldImage: { ruleChecklist: originalChecklist },
+          newImage: { ruleChecklist: updatedChecklist },
+        },
+      ],
+    }
   }
 
+  @auditLog('ALERT', 'CHECKLIST_ITEM_STATUS_CHANGE', 'UPDATE')
   async updateAlertChecklistQaStatus(
     alertId: string,
     checklistItemIds: string[],
     status: ChecklistStatus
-  ): Promise<void> {
+  ): Promise<AlertChecklistUpdateAuditLogReturnData> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     if (!alert) {
       throw new NotFound('No alert')
@@ -1354,22 +1522,29 @@ export class AlertsService extends CaseAlertsCommonService {
       return checkListItem
     })
     if (isEqual(originalChecklist, updatedChecklist)) {
-      return // No changes made to the checklist
+      return {
+        result: undefined,
+        entities: [],
+      } // No changes made to the checklist
     }
 
     alert.ruleChecklist = updatedChecklist
 
-    await Promise.all([
-      this.alertsRepository.updateAlertChecklistStatus(
-        alertId,
-        updatedChecklist ?? []
-      ),
-      this.auditLogService.handleAuditLogForChecklistUpdate(
-        alertId,
-        originalChecklist,
-        updatedChecklist
-      ),
-    ])
+    await this.alertsRepository.updateAlertChecklistStatus(
+      alertId,
+      updatedChecklist ?? []
+    )
+
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: alertId,
+          oldImage: { ruleChecklist: originalChecklist },
+          newImage: { ruleChecklist: updatedChecklist },
+        },
+      ],
+    }
   }
 
   private async acceptanceCriteriaPassed(
@@ -1419,73 +1594,95 @@ export class AlertsService extends CaseAlertsCommonService {
     return new ChecklistTemplatesService(this.tenantId, this.mongoDb)
   }
 
-  async updateAlertQaStatus(update: AlertQaStatusUpdateRequest): Promise<void> {
+  @auditLog('ALERT', 'CHECKLIST_QA_STATUS_CHANGE', 'UPDATE')
+  async updateAlertQaStatus(
+    update: AlertQaStatusUpdateRequest
+  ): Promise<AlertQaUpdateAuditLogReturnData> {
+    const auditLogEntities: AuditLogEntity<
+      object,
+      {
+        qaStatus: ChecklistStatus
+        qaInfo: {
+          reason: string[]
+          comment: string | undefined
+          files: FileInfo[] | undefined
+        }
+      }
+    >[] = []
     const alerts = await this.getAlertsByIds(update.alertIds)
     const comment = `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`
 
-    const promises = alerts.map(async (alert) => {
-      let updatedAssignments: Assignment[] = []
+    const promises: Promise<void | AlertUpdateAuditLogReturnData>[] =
+      alerts.map(async (alert) => {
+        let updatedAssignments: Assignment[] = []
 
-      if (update.checklistStatus === 'FAILED') {
-        // Find who closed the alert and reassign them
-        const originalAssignee = alert.statusChanges
-          ?.slice()
-          .reverse()
-          .find((sc) => sc.caseStatus === 'CLOSED')?.userId
+        if (update.checklistStatus === 'FAILED') {
+          // Find who closed the alert and reassign them
+          const originalAssignee = alert.statusChanges
+            ?.slice()
+            .reverse()
+            .find((sc) => sc.caseStatus === 'CLOSED')?.userId
 
-        if (originalAssignee) {
-          updatedAssignments = [
-            {
-              assigneeUserId: originalAssignee,
-              assignedByUserId: getContext()?.user?.id ?? '',
-              timestamp: Date.now(),
-            },
-          ]
+          if (originalAssignee) {
+            updatedAssignments = [
+              {
+                assigneeUserId: originalAssignee,
+                assignedByUserId: getContext()?.user?.id ?? '',
+                timestamp: Date.now(),
+              },
+            ]
+          }
         }
-      }
 
-      const commentToPush: Comment = {
-        body: comment,
-        createdAt: Date.now(),
-        files: update.files,
-        id: uuid4(),
-        updatedAt: Date.now(),
-        userId: getContext()?.user?.id ?? '',
-      }
+        const commentToPush: Comment = {
+          body: comment,
+          createdAt: Date.now(),
+          files: update.files,
+          id: uuid4(),
+          updatedAt: Date.now(),
+          userId: getContext()?.user?.id ?? '',
+        }
 
-      const checklistStatus = update.checklistStatus
+        const checklistStatus = update.checklistStatus
 
-      const acceptanceCriteriaPassed =
-        update.checklistStatus === 'PASSED'
-          ? await this.acceptanceCriteriaPassed({
-              ruleChecklist: alert.ruleChecklist,
-              ruleChecklistTemplateId: alert.ruleChecklistTemplateId,
-            })
-          : true
+        const acceptanceCriteriaPassed =
+          update.checklistStatus === 'PASSED'
+            ? await this.acceptanceCriteriaPassed({
+                ruleChecklist: alert.ruleChecklist,
+                ruleChecklistTemplateId: alert.ruleChecklistTemplateId,
+              })
+            : true
 
-      if (!acceptanceCriteriaPassed) {
-        throw new BadRequest(`Acceptance criteria not passed for alert`)
-      }
+        if (!acceptanceCriteriaPassed) {
+          throw new BadRequest(`Acceptance criteria not passed for alert`)
+        }
 
-      await withTransaction(async () => {
-        await Promise.all([
-          this.alertsRepository.updateAlertQaStatus(
-            alert.alertId as string,
-            checklistStatus,
-            commentToPush,
-            updatedAssignments
-          ),
-          this.auditLogService.handleAuditLogForAlertQaUpdate(
-            alert.alertId as string,
-            update
-          ),
-          this.alertsRepository.updateAlertQACountInSampling(
-            alert,
-            update.checklistStatus
-          ),
-        ])
+        await withTransaction(async () => {
+          await Promise.all([
+            this.alertsRepository.updateAlertQaStatus(
+              alert.alertId as string,
+              checklistStatus,
+              commentToPush,
+              updatedAssignments
+            ),
+            this.alertsRepository.updateAlertQACountInSampling(
+              alert,
+              update.checklistStatus
+            ),
+          ])
+        })
+        auditLogEntities.push({
+          entityId: alert.alertId as string,
+          newImage: {
+            qaStatus: update.checklistStatus,
+            qaInfo: {
+              reason: update.reason,
+              comment: update.comment,
+              files: update.files,
+            },
+          },
+        })
       })
-    })
 
     if (update.checklistStatus === 'FAILED') {
       const alertIds = alerts.map((a) => a.alertId as string)
@@ -1507,6 +1704,11 @@ export class AlertsService extends CaseAlertsCommonService {
     await withTransaction(async () => {
       await Promise.all(promises)
     })
+
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   async updateAlertsQaAssignments(

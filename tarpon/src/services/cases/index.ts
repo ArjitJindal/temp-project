@@ -24,7 +24,6 @@ import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import {
@@ -54,7 +53,10 @@ import { CaseEscalationsUpdateRequest } from '@/@types/openapi-internal/CaseEsca
 import { AccountsService } from '@/services/accounts'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { isCaseAvailable } from '@/services/cases/utils'
+import {
+  getLatestInvestigationTime,
+  isCaseAvailable,
+} from '@/services/cases/utils'
 import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
@@ -88,6 +90,46 @@ import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  auditLog,
+  AuditLogEntity,
+  AuditLogReturnData,
+  getCaseAuditLogMetadata,
+} from '@/utils/audit-log'
+import {
+  AuditLogAssignmentsImage,
+  CaseUpdateAuditLogImage,
+  CommentAuditLogImage,
+} from '@/@types/audit-log'
+
+// Custom AuditLogReturnData types
+type CaseUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  CaseUpdateAuditLogImage,
+  CaseUpdateAuditLogImage
+>
+
+type CommentAuditLogReturnData = AuditLogReturnData<
+  Comment,
+  CommentAuditLogImage,
+  CommentAuditLogImage
+>
+
+type DeleteCommentAuditLogReturnData = AuditLogReturnData<void, Comment>
+
+type AssignmentAuditLogReturnData = AuditLogReturnData<
+  void,
+  AuditLogAssignmentsImage,
+  AuditLogAssignmentsImage
+>
+
+type ViewCaseAuditLogReturnData = AuditLogReturnData<Case, Case, Case>
+
+type EscalateCaseAuditLogReturnData = AuditLogReturnData<
+  { assigneeIds: string[] },
+  CaseUpdateAuditLogImage,
+  CaseUpdateAuditLogImage
+>
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -97,7 +139,6 @@ export class CaseService extends CaseAlertsCommonService {
   linkerService: LinkerService
   userService: UserService
   transactionsRepository: MongoDbTransactionRepository
-  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
   hasFeatureSla: boolean
@@ -148,10 +189,6 @@ export class CaseService extends CaseAlertsCommonService {
       this.s3Config,
       awsCredentials
     )
-    this.auditLogService = new CasesAlertsReportAuditLogService(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.caseRepository.dynamoDb,
-    })
     this.accountsService = AccountsService.getInstance(
       this.caseRepository.dynamoDb,
       true
@@ -214,9 +251,10 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  @auditLog('CASE', 'MANUAL_CASE_TRANSACTIONS_ADDITION', 'UPDATE')
   public async updateManualCase(
     caseData: ManualCasePatchRequest
-  ): Promise<Case> {
+  ): Promise<AuditLogReturnData<Case, { total: number; data: Case[] }, Case>> {
     const { caseId, comment, files = [], transactionIds } = caseData
 
     const case_ = await this.caseRepository.getCases(
@@ -271,16 +309,17 @@ export class CaseService extends CaseAlertsCommonService {
       transactionsCount
     )
 
-    await this.auditLogService.createAuditLog({
-      caseId: caseId,
-      logAction: 'UPDATE',
-      caseDetails: updatedCase,
-      newImage: updatedCase,
-      oldImage: case_,
-      subtype: 'MANUAL_CASE_TRANSACTIONS_ADDITION',
-    })
-
-    return updatedCase as Case
+    return {
+      result: updatedCase as Case,
+      entities: [
+        {
+          entityId: caseId,
+          oldImage: case_,
+          newImage: updatedCase as Case,
+          logMetadata: getCaseAuditLogMetadata(updatedCase),
+        },
+      ],
+    }
   }
 
   public async getCaseByAlertId(alertId: string): Promise<Case | null> {
@@ -318,7 +357,7 @@ export class CaseService extends CaseAlertsCommonService {
     addAlertDetails: boolean
     addOntology: boolean
   }): Promise<{ downloadUrl: string }> {
-    const caseItem = await this.getCase(params.caseId)
+    const caseItem = (await this.getCase(params.caseId)).result
 
     const now = Date.now()
     const fileName = `${params.caseId}-case-report-${now}.xlsx`
@@ -508,6 +547,7 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  @auditLog('CASE', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     caseIds: string[],
     updates: CaseStatusUpdate,
@@ -521,7 +561,7 @@ export class CaseService extends CaseAlertsCommonService {
       updateChecklistStatus?: boolean
       externalRequest?: boolean
     }
-  ): Promise<void> {
+  ): Promise<CaseUpdateAuditLogReturnData> {
     const {
       cascadeAlertsUpdate = true,
       skipReview = false,
@@ -667,8 +707,6 @@ export class CaseService extends CaseAlertsCommonService {
           : []),
       ])
 
-      await this.auditLogService.handleAuditLogForCaseUpdate(cases, updates)
-
       if (updates.caseStatus && cascadeAlertsUpdate && !isInProgressOrOnHold) {
         const alerts = cases
           .filter((c) => c.caseType === 'SYSTEM')
@@ -737,6 +775,41 @@ export class CaseService extends CaseAlertsCommonService {
     if (!externalRequest && updates.caseStatus === 'CLOSED') {
       await this.sendCasesClosedWebhook(cases, updates)
     }
+
+    const auditLogEntitiesPromises = cases.map(async (caseItem) => {
+      const newCase =
+        (await this.caseRepository.getCaseById(caseItem.caseId ?? '-')) ??
+        ({} as Case)
+      const oldImage: CaseUpdateAuditLogImage = {
+        caseStatus: caseItem.caseStatus,
+        reviewAssignments: caseItem.reviewAssignments,
+        assignments: caseItem.assignments,
+      }
+      let investigationTime: number | undefined
+      if (updates.caseStatus === 'CLOSED') {
+        investigationTime =
+          getLatestInvestigationTime(newCase?.statusChanges) || undefined
+      }
+
+      const newImage: CaseUpdateAuditLogImage = {
+        caseStatus: newCase?.caseStatus,
+        reviewAssignments: newCase?.reviewAssignments,
+        investigationTime,
+        assignments: newCase?.assignments,
+        ...updates,
+      }
+      return {
+        entityId: newCase.caseId ?? '-',
+        oldImage,
+        newImage,
+      }
+    })
+
+    const auditLogEntities = await Promise.all(auditLogEntitiesPromises)
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
   }
 
   public async applyTransactionAction(transactionAction: TransactionAction) {
@@ -797,15 +870,12 @@ export class CaseService extends CaseAlertsCommonService {
     )
   }
 
+  @auditLog('CASE', 'VIEW_CASE', 'VIEW')
   public async getCase(
     caseId: string,
     options?: { logAuditLogView?: boolean }
-  ): Promise<Case> {
+  ): Promise<ViewCaseAuditLogReturnData> {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
-
-    if (options?.logAuditLogView && caseEntity) {
-      await this.auditLogService.handleViewCase(caseEntity)
-    }
 
     const case_ =
       (caseEntity &&
@@ -820,14 +890,29 @@ export class CaseService extends CaseAlertsCommonService {
     const paymentDetails =
       case_.paymentDetails?.origin ?? case_.paymentDetails?.destination
     const paymentMethodId = getPaymentMethodId(paymentDetails)
-
     return {
-      ...case_,
-      paymentMethodId,
+      result: { ...case_, paymentMethodId },
+      entities: [
+        {
+          entityId: caseId,
+          logMetadata: getCaseAuditLogMetadata(caseEntity),
+        },
+      ],
+      publishAuditLog: () => {
+        if (options?.logAuditLogView && caseEntity) {
+          return true
+        } else {
+          return false
+        }
+      },
     }
   }
 
-  public async saveComment(caseId: string | undefined, comment: Comment) {
+  @auditLog('CASE', 'COMMENT', 'CREATE')
+  public async saveComment(
+    caseId: string | undefined,
+    comment: Comment
+  ): Promise<CommentAuditLogReturnData> {
     if (!caseId) {
       throw new BadRequest('Case id is required')
     }
@@ -848,16 +933,26 @@ export class CaseService extends CaseAlertsCommonService {
       ...(savedComment.id
         ? [this.sendFilesAiSummaryBatchJob([caseId], savedComment.id)]
         : []),
-      this.auditLogService.handleAuditLogForCasesComments(caseId, {
-        ...savedComment,
-        body: getParsedCommentBody(savedComment.body),
-        mentions,
-      }),
     ])
 
+    const caseEntity = await this.caseRepository.getCaseById(caseId)
+
     return {
-      ...savedComment,
-      files: await this.getUpdatedFiles(savedComment.files),
+      result: {
+        ...savedComment,
+        files: await this.getUpdatedFiles(savedComment.files),
+      },
+      entities: [
+        {
+          entityId: caseId,
+          newImage: {
+            ...savedComment,
+            body: getParsedCommentBody(savedComment.body),
+            mentions,
+          },
+          logMetadata: getCaseAuditLogMetadata(caseEntity),
+        },
+      ],
     }
   }
 
@@ -928,7 +1023,11 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
-  public async deleteCaseComment(caseId: string, commentId: string) {
+  @auditLog('CASE', 'COMMENT', 'DELETE')
+  public async deleteCaseComment(
+    caseId: string,
+    commentId: string
+  ): Promise<DeleteCommentAuditLogReturnData> {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
 
     const comment = caseEntity?.comments?.find(
@@ -948,15 +1047,17 @@ export class CaseService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       await this.caseRepository.deleteCaseComment(caseId, commentId)
-      await this.handleAuditLogForDeleteComment(comment, caseId)
     })
-  }
 
-  private async handleAuditLogForDeleteComment(
-    comment: Comment,
-    caseId: string
-  ) {
-    await this.auditLogService.handleAuditLogForCommentDelete(caseId, comment)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: caseId,
+          oldImage: comment,
+        },
+      ],
+    }
   }
 
   private async getAugmentedCase(caseEntity: Case) {
@@ -981,16 +1082,17 @@ export class CaseService extends CaseAlertsCommonService {
     return { ...caseEntity, comments: commentsWithUrl, alerts }
   }
 
+  @auditLog('CASE', 'STATUS_CHANGE', 'ESCALATE')
   public async escalateCase(
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
-  ): Promise<{ assigneeIds: string[] }> {
+  ): Promise<EscalateCaseAuditLogReturnData> {
     const accountsService = AccountsService.getInstance(
       this.caseRepository.dynamoDb
     )
     const accounts = await accountsService.getAllActiveAccounts()
 
-    const case_ = await this.getCase(caseId)
+    const case_ = (await this.getCase(caseId)).result
 
     if (!case_) {
       throw new NotFound(`Cannot find case ${caseId}`)
@@ -1071,14 +1173,41 @@ export class CaseService extends CaseAlertsCommonService {
       reviewAssignments: finalReviewAssignments,
     })
 
-    await this.auditLogService.handleAuditLogForCaseEscalation(
-      caseId,
-      caseUpdateRequest,
-      case_
-    )
+    const oldImage: CaseUpdateAuditLogImage = {
+      caseStatus: case_.caseStatus,
+      reviewAssignments: case_.reviewAssignments,
+      assignments: case_.assignments,
+    }
+
+    const { reason, updatedTransactions } =
+      caseUpdateRequest as CaseUpdateAuditLogImage
+    const newImage: CaseUpdateAuditLogImage = {
+      ...caseUpdateRequest,
+      caseStatus: statusChange.caseStatus,
+      reviewAssignments: finalReviewAssignments,
+      reason: reason,
+      updatedTransactions: updatedTransactions,
+      assignments: assignmentsToUpdate,
+    }
+
+    const logMetadata = {
+      caseAssignment: assignmentsToUpdate ?? [],
+      caseCreationTimestamp: case_.createdTimestamp,
+      casePriority: case_.priority,
+      caseStatus: statusChange.caseStatus,
+      reviewAssignments: finalReviewAssignments ?? [],
+    }
 
     return {
-      assigneeIds: reviewAssignments.map((v) => v.assigneeUserId),
+      result: { assigneeIds: reviewAssignments.map((v) => v.assigneeUserId) },
+      entities: [
+        {
+          entityId: caseId,
+          oldImage,
+          newImage,
+          logMetadata,
+        },
+      ],
     }
   }
 
@@ -1128,10 +1257,11 @@ export class CaseService extends CaseAlertsCommonService {
     })
   }
 
+  @auditLog('CASE', 'ASSIGNMENT', 'UPDATE')
   public async updateAssignments(
     caseIds: string[],
     assignments: Assignment[]
-  ): Promise<void> {
+  ): Promise<AssignmentAuditLogReturnData> {
     const timestamp = Date.now()
 
     assignments.forEach((assignment) => {
@@ -1162,14 +1292,6 @@ export class CaseService extends CaseAlertsCommonService {
 
     await Promise.all([
       this.caseRepository.updateAssignments(caseIds, assignments),
-      ...caseIds.map(async (caseId) => {
-        const oldCase = oldCases.find((c) => c.caseId === caseId)
-        await this.auditLogService.handleAuditLogForCaseAssignment(
-          caseId,
-          { assignments: oldCase?.assignments },
-          { assignments }
-        )
-      }),
       ...(this.hasFeatureSla
         ? oldCases.map(async (c) =>
             this.updateManualCaseWithSlaDetails(
@@ -1183,12 +1305,36 @@ export class CaseService extends CaseAlertsCommonService {
           )
         : []),
     ])
+
+    const auditLogEntity: AuditLogEntity<
+      AuditLogAssignmentsImage,
+      AuditLogAssignmentsImage
+    >[] = []
+
+    caseIds.forEach((caseId) => {
+      const oldCase = oldCases.find((c) => c.caseId === caseId)
+      auditLogEntity.push({
+        entityId: caseId,
+        oldImage: {
+          assignments: oldCase?.assignments ?? [],
+        },
+        newImage: {
+          assignments: assignments ?? [],
+        },
+      })
+    })
+
+    return {
+      result: undefined,
+      entities: auditLogEntity,
+    }
   }
 
+  @auditLog('CASE', 'REVIEW_ASSIGNMENT', 'UPDATE')
   public async updateReviewAssignments(
     caseIds: string[],
     reviewAssignments: Assignment[]
-  ): Promise<void> {
+  ): Promise<AssignmentAuditLogReturnData> {
     const timestamp = Date.now()
 
     const oldCases = await this.caseRepository.getCasesByIds(caseIds)
@@ -1211,14 +1357,7 @@ export class CaseService extends CaseAlertsCommonService {
         caseIds,
         reviewAssignments
       ),
-      ...caseIds.map(async (caseId) => {
-        const oldCase = oldCases.find((c) => c.caseId === caseId)
-        await this.auditLogService.handleAuditLogForCaseAssignment(
-          caseId,
-          { reviewAssignments: oldCase?.reviewAssignments },
-          { reviewAssignments }
-        )
-      }),
+
       ...(this.hasFeatureSla
         ? oldCases.map(async (c) =>
             this.updateManualCaseWithSlaDetails(
@@ -1232,5 +1371,28 @@ export class CaseService extends CaseAlertsCommonService {
           )
         : []),
     ])
+
+    const auditLogEntity: AuditLogEntity<
+      AuditLogAssignmentsImage,
+      AuditLogAssignmentsImage
+    >[] = []
+
+    caseIds.forEach((caseId) => {
+      const oldCase = oldCases.find((c) => c.caseId === caseId)
+      auditLogEntity.push({
+        entityId: caseId,
+        oldImage: {
+          assignments: oldCase?.assignments ?? [],
+        },
+        newImage: {
+          assignments: reviewAssignments ?? [],
+        },
+      })
+    })
+
+    return {
+      result: undefined,
+      entities: auditLogEntity,
+    }
   }
 }

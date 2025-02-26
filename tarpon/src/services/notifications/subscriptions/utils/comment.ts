@@ -59,7 +59,6 @@ export const getCommentNotification = (
             (assignment) => assignment.assigneeUserId
           ) ?? []
   }
-
   if (!recievers.length) {
     return
   }

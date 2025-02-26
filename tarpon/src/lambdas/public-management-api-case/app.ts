@@ -45,7 +45,8 @@ export const caseHandler = lambdaApi()(
         )
       }
 
-      return await caseService.createCase(payload)
+      const response = await caseService.createCase(payload)
+      return response.result
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}' &&
@@ -69,8 +70,8 @@ export const caseHandler = lambdaApi()(
           'Payload seems to be empty or missing. Please provide a valid payload'
         )
       }
-
-      return await caseService.updateCase(caseId, payload)
+      const response = await caseService.updateCase(caseId, payload)
+      return response.result
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases/{caseId}/statuses' &&

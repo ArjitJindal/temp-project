@@ -17,7 +17,6 @@ import { Credentials } from 'aws-lambda'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { CasesAlertsReportAuditLogService } from '../cases/case-alerts-report-audit-log-service'
 import { AlertsRepository } from './repository'
 import { AlertsService } from '.'
 import { traceable } from '@/core/xray'
@@ -38,13 +37,25 @@ import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { S3Config } from '@/services/aws/s3-service'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+
+type AlertAuditLogCreateReturn = AuditLogReturnData<
+  Alert,
+  object,
+  Alert | Partial<Alert>
+>
+type AlertAuditLogUpdateReturn = AuditLogReturnData<
+  Alert,
+  Partial<AlertInternal>,
+  Partial<AlertInternal>
+>
+
 @traceable
 export class ExternalAlertManagementService {
   private alertsRepository: AlertsRepository
   private caseRepository: CaseRepository
   private transactionRepository: MongoDbTransactionRepository
   private alertsTransformer: CasesAlertsTransformer
-  private casesAlertsReportAuditLogService: CasesAlertsReportAuditLogService
   private alertsInternalService: AlertsService
 
   constructor(
@@ -61,8 +72,6 @@ export class ExternalAlertManagementService {
       connections.mongoDb
     )
     this.alertsTransformer = new CasesAlertsTransformer(tenantId, connections)
-    this.casesAlertsReportAuditLogService =
-      new CasesAlertsReportAuditLogService(tenantId, connections)
     this.alertsInternalService = new AlertsService(
       this.alertsRepository,
       s3,
@@ -306,7 +315,10 @@ export class ExternalAlertManagementService {
     }
   }
 
-  public async createAlert(requestBody: AlertCreationRequest): Promise<Alert> {
+  @auditLog('ALERT', 'API_CREATION', 'CREATE')
+  public async createAlert(
+    requestBody: AlertCreationRequest
+  ): Promise<AlertAuditLogCreateReturn> {
     await this.validateAlert(requestBody)
 
     const { alert, caseAggregates, caseTransactionsIds } =
@@ -331,11 +343,15 @@ export class ExternalAlertManagementService {
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       alert
     )
-    await this.casesAlertsReportAuditLogService.handleAuditLogForNewAlert(
-      alert,
-      'API_CREATION'
-    )
-    return externalAlert
+    return {
+      result: externalAlert,
+      entities: [
+        {
+          entityId: externalAlert.alertId,
+          newImage: externalAlert,
+        },
+      ],
+    }
   }
 
   public async getAlert(alertId: string): Promise<Alert> {
@@ -381,10 +397,11 @@ export class ExternalAlertManagementService {
     return { caseAggregates, caseTransactionIds }
   }
 
+  @auditLog('ALERT', 'API_UPDATE', 'UPDATE')
   public async updateAlert(
     alertId: string,
     alert: AlertUpdatable
-  ): Promise<Alert> {
+  ): Promise<AlertAuditLogUpdateReturn> {
     const existingAlert = await this.alertsRepository.getAlertById(alertId)
 
     if (!existingAlert) {
@@ -479,18 +496,22 @@ export class ExternalAlertManagementService {
     )
 
     const oldImage = pick(existingAlert, Object.keys(alertUpdate))
-    await this.casesAlertsReportAuditLogService.handleAuditLogForAlertUpdateViaApi(
-      alertId,
-      oldImage,
-      alertUpdate
-    )
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       updatedCaseData.alerts?.find(
         (alert) => alert.alertId === alertId
       ) as AlertInternal
     )
 
-    return externalAlert
+    return {
+      result: externalAlert,
+      entities: [
+        {
+          entityId: alertId,
+          newImage: alertUpdate,
+          oldImage,
+        },
+      ],
+    }
   }
 
   public async getComments(alertId: string) {
@@ -512,11 +533,13 @@ export class ExternalAlertManagementService {
     alertId: string,
     comment: CommentRequestExternal
   ) {
-    const commentInternal = await this.alertsInternalService.saveComment(
-      alertId,
-      omit(comment, ['createdAt']) as CommentRequest,
-      true
-    )
+    const commentInternal = (
+      await this.alertsInternalService.saveComment(
+        alertId,
+        omit(comment, ['createdAt']) as CommentRequest,
+        true
+      )
+    ).result
     return getExternalComment(commentInternal)
   }
 

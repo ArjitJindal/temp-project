@@ -20,11 +20,9 @@ export const notificationsConsumerHandler = lambdaConsumer()(
       JSON.parse(JSON.parse(record.body).Message as string)
     )
     const groups = groupBy(events, (event) => event.tenantId)
-
     for (const [tenantId, tenantEvents] of Object.entries(groups)) {
       await withContext(async () => {
         await initializeTenantContext(tenantId)
-
         if (!hasFeature('NOTIFICATIONS')) {
           return
         }

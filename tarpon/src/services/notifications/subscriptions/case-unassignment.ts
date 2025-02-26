@@ -25,6 +25,7 @@ export class CaseUnassignment extends Subscriptions {
   async getNotification(
     payload: Payload
   ): Promise<PartialNotification | undefined> {
-    return getUnassignmentNotification(payload, 'CASE')
+    const result = getUnassignmentNotification(payload, 'CASE')
+    return result
   }
 }

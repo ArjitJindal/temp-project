@@ -256,7 +256,7 @@ describe('Case service', () => {
         reason: ['Documents collected'],
       })
 
-      const c = await caseService.getCase('C-1')
+      const c = (await caseService.getCase('C-1')).result
 
       expect(c).toMatchObject({
         caseId: 'C-1',
@@ -314,7 +314,7 @@ describe('Case service', () => {
         caseAggregates: DEFAULT_CASE_AGGREGATES,
       })
       await caseService.escalateCase('C-2', { reason: ['Documents collected'] })
-      const c = await caseService.getCase('C-2')
+      const c = (await caseService.getCase('C-2')).result
       expect(c).toMatchObject({
         caseId: 'C-2',
         reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1', timestamp: t }],
@@ -378,7 +378,7 @@ describe('Case service', () => {
         },
       })
 
-      const c = await caseService.getCase('C-2.1')
+      const c = (await caseService.getCase('C-2.1')).result
       expect(c).toMatchObject({
         caseId: 'C-2.1',
         caseStatus: 'ESCALATED',
@@ -426,7 +426,7 @@ describe('Case service', () => {
           }),
         ],
       })
-      const oldCase = await caseService.getCase('C-2')
+      const oldCase = (await caseService.getCase('C-2')).result
       expect(oldCase).toMatchObject({
         caseId: 'C-2',
         caseStatus: 'OPEN',
@@ -516,7 +516,7 @@ describe('Case service', () => {
         closeSourceCase: true,
       })
 
-      const c = await caseService.getCase('C-2.1')
+      const c = (await caseService.getCase('C-2.1')).result
       expect(c).toMatchObject({
         caseId: 'C-2.1',
         caseStatus: 'ESCALATED',
@@ -550,7 +550,7 @@ describe('Case service', () => {
         ],
       })
       expect(c?.alerts).toHaveLength(1)
-      const oldCase = await caseService.getCase('C-2')
+      const oldCase = (await caseService.getCase('C-2')).result
       expect(oldCase).toMatchObject({
         caseId: 'C-2',
         caseStatus: 'CLOSED',
@@ -590,7 +590,7 @@ describe('Post APIs Alerts Tests', () => {
 
     await alertsService.saveComment(TEST_ALERT_1.alertId, comment)
 
-    const c = await caseService.getCase('C-1')
+    const c = (await caseService.getCase('C-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -624,7 +624,7 @@ describe('Post APIs Alerts Tests', () => {
     await alertsService.saveComment(TEST_ALERT_2.alertId, comment2)
     await alertsService.deleteComment(TEST_ALERT_1.alertId, COMMENT_ID_1)
 
-    const caseAfterDeletion = await caseService.getCase('C-1')
+    const caseAfterDeletion = (await caseService.getCase('C-1')).result
 
     expect(caseAfterDeletion).toMatchObject({
       _id: expect.any(ObjectId),
@@ -686,7 +686,7 @@ describe('Post APIs Alerts Tests', () => {
     await alertsService.saveComment(TEST_ALERT_1.alertId, comment)
     await alertsService.saveComment(TEST_ALERT_1.alertId, comment2)
 
-    const c = await caseService.getCase('C-1')
+    const c = (await caseService.getCase('C-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -722,7 +722,7 @@ describe('Post APIs Alerts Tests', () => {
 
     await alertsService.deleteComment(TEST_ALERT_1.alertId, COMMENT_ID_1)
 
-    const caseAfterDeletion = await caseService.getCase('C-1')
+    const caseAfterDeletion = (await caseService.getCase('C-1')).result
 
     expect(caseAfterDeletion).toMatchObject({
       _id: expect.any(ObjectId),
@@ -771,7 +771,7 @@ describe('Post APIs Alerts Tests', () => {
       reason: ['False positive'],
     })
 
-    const c = await caseService.getCase('C-1')
+    const c = (await caseService.getCase('C-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -873,7 +873,7 @@ describe('Post APIs Alerts Tests', () => {
       reason: ['False positive'],
     })
 
-    const c = await caseService.getCase('C-1')
+    const c = (await caseService.getCase('C-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -948,7 +948,7 @@ describe('Post APIs Alerts Tests', () => {
       ]
     )
 
-    const c = await caseService.getCase('C-1')
+    const c = (await caseService.getCase('C-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -993,7 +993,7 @@ describe('Case Service - Post Api Tests', () => {
       comment: 'some comment',
     })
 
-    const c = await caseService.getCase('C-1-2')
+    const c = (await caseService.getCase('C-1-2')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1047,7 +1047,7 @@ describe('Case Service - Post Api Tests', () => {
       comment: 'some comment',
     })
 
-    const c = await caseService.getCase('C-1-1')
+    const c = (await caseService.getCase('C-1-1')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1151,7 +1151,7 @@ describe('Case Service - Post Api Tests', () => {
       ]
     )
 
-    const c = await caseService.getCase('C-1-2')
+    const c = (await caseService.getCase('C-1-2')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1194,7 +1194,7 @@ describe('Case Service - Post Api Tests', () => {
       ]
     )
 
-    const c = await caseService.getCase('C-1-3')
+    const c = (await caseService.getCase('C-1-3')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1248,7 +1248,7 @@ describe('Case Service - Post Api Tests', () => {
       ]
     )
 
-    const c1 = await caseService.getCase('C-1-4')
+    const c1 = (await caseService.getCase('C-1-4')).result
 
     expect(c1).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1265,7 +1265,7 @@ describe('Case Service - Post Api Tests', () => {
       reviewAssignments: null,
     })
 
-    const c2 = await caseService.getCase('C-1-5')
+    const c2 = (await caseService.getCase('C-1-5')).result
 
     expect(c2).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1319,7 +1319,7 @@ describe('Case Service - Post Api Tests', () => {
       ]
     )
 
-    const c1 = await caseService.getCase('C-1-4')
+    const c1 = (await caseService.getCase('C-1-4')).result
 
     expect(c1).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1336,7 +1336,7 @@ describe('Case Service - Post Api Tests', () => {
       ],
     })
 
-    const c2 = await caseService.getCase('C-1-5')
+    const c2 = (await caseService.getCase('C-1-5')).result
 
     expect(c2).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1384,7 +1384,7 @@ describe('Case Service - Post Api Tests', () => {
       otherReason: 'This is a duplicate case',
     })
 
-    const c1 = await caseService.getCase('C-1-6')
+    const c1 = (await caseService.getCase('C-1-6')).result
 
     expect(c1).toMatchObject({
       caseId: 'C-1-6',
@@ -1465,7 +1465,7 @@ describe('Case Service - Post Api Tests', () => {
       otherReason: 'This is a duplicate case',
     })
 
-    const c2 = await caseService.getCase('C-1-6')
+    const c2 = (await caseService.getCase('C-1-6')).result
 
     expect(c2).toMatchObject({
       caseId: 'C-1-6',
@@ -1590,7 +1590,7 @@ describe('Case Service - Post Api Tests', () => {
     )
 
     // Get the case and check that reviewAssignments are still present
-    const c = await caseService.getCase('C-1-5')
+    const c = (await caseService.getCase('C-1-5')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1643,7 +1643,7 @@ describe('Case Service - Post Api Tests', () => {
     )
 
     // Get the case and check that reviewAssignments are still present
-    const c = await caseService.getCase('C-1-5')
+    const c = (await caseService.getCase('C-1-5')).result
 
     expect(c).toMatchObject({
       _id: expect.any(ObjectId),
@@ -1688,7 +1688,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       otherReason: 'This is a duplicate case',
       comment: 'I am closing this case',
     })
-    const c = await caseService.getCase('C-1-5')
+    const c = (await caseService.getCase('C-1-5')).result
     expect(c).toMatchObject({
       caseId: 'C-1-5',
       caseStatus: 'IN_REVIEW_CLOSED',
@@ -1784,7 +1784,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
     })
 
-    const c = await caseService.getCase('C-1-5')
+    const c = (await caseService.getCase('C-1-5')).result
     expect(c).toMatchObject({
       caseId: 'C-1-5',
       caseStatus: 'IN_REVIEW_ESCALATED',
@@ -1870,7 +1870,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       comment: 'I am closing this case',
     })
 
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
     expect(c?.caseStatus).toBe('IN_REVIEW_CLOSED')
     expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_CLOSED')
     expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
@@ -1903,7 +1903,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'CLOSED',
       reason: [],
     })
-    const c2 = await caseService.getCase(caseId)
+    const c2 = (await caseService.getCase(caseId)).result
     expect(c2?.caseStatus).toBe('CLOSED')
     expect(c2).toMatchObject({
       caseId: 'C-1-5',
@@ -2001,7 +2001,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       reason: [],
     })
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
     expect(c?.caseStatus).toBe('OPEN')
   })
 
@@ -2050,7 +2050,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
       ],
     })
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
     expect(c?.caseStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
@@ -2058,7 +2058,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       reason: [],
     })
 
-    const c2 = await caseService.getCase(caseId)
+    const c2 = (await caseService.getCase(caseId)).result
     expect(c2).toMatchObject({
       caseId: 'C-1-6',
       caseStatus: 'ESCALATED',
@@ -2176,7 +2176,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
       ],
     })
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
     expect(c?.caseStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[1]?.alertStatus).toBe('CLOSED')
@@ -2184,7 +2184,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       reason: [],
     })
-    const c2 = await caseService.getCase(caseId)
+    const c2 = (await caseService.getCase(caseId)).result
     expect(c2).toMatchObject({
       caseId: 'C-1-7',
       caseStatus: 'OPEN',
@@ -2255,9 +2255,9 @@ describe('Test Review Approvals Send Back Flow', () => {
       otherReason: 'This is a duplicate alert',
       comment: 'I am closing this alert',
     })
-    const a = await alertsService.getAlert(testAlertId)
+    const a = (await alertsService.getAlert(testAlertId)).result
     expect(a?.alertStatus).toBe('IN_REVIEW_CLOSED')
-    const a2 = await alertsService.getAlert(testAlertId2)
+    const a2 = (await alertsService.getAlert(testAlertId2)).result
     expect(a2?.alertStatus).toBe('CLOSED')
     expect(a).toMatchObject({
       alertStatus: 'IN_REVIEW_CLOSED',
@@ -2330,7 +2330,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         comment: 'I am closing this case',
       },
     })
-    const c = await caseService.getCase(caseId)
+    const c = (await caseService.getCase(caseId)).result
     expect(c?.caseStatus).toBe('OPEN')
     expect(c?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c?.alerts?.[1]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
@@ -2361,7 +2361,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       },
     })
 
-    const c2 = await caseService.getCase(caseId2)
+    const c2 = (await caseService.getCase(caseId2)).result
 
     expect(c2?.caseStatus).toBe('IN_REVIEW_CLOSED')
     Array.from({ length: 2 }).forEach((_, i) => {
@@ -2377,21 +2377,21 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       caseUpdateRequest: { reason: [] },
     })
-    const c3 = await caseService.getCase(caseId2)
+    const c3 = (await caseService.getCase(caseId2)).result
     expect(c3?.caseStatus).toBe('IN_REVIEW_CLOSED')
     expect(c3?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     Array.from({ length: 2 }).forEach((_, i) => {
       expect(c3?.alerts?.[i + 1]?.alertStatus).toBe('IN_REVIEW_CLOSED')
     })
     expect(c3?.alerts?.[3]?.alertStatus).toBe('CLOSED')
-    const c4 = await caseService.getCase(`${caseId2}.1`)
+    const c4 = (await caseService.getCase(`${caseId2}.1`)).result
     expect(c4?.caseStatus).toBe('IN_REVIEW_ESCALATED')
     expect(c4?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
     await alertsService.updateStatus([testAlertIds[1]], {
       alertStatus: 'OPEN',
       reason: [],
     })
-    const c5 = await caseService.getCase(caseId)
+    const c5 = (await caseService.getCase(caseId)).result
     expect(c5?.caseStatus).toBe('OPEN')
     expect(c5?.alerts?.[1]?.alertStatus).toBe('OPEN')
     expect(c5?.alerts?.[0]?.alertStatus).toBe('IN_REVIEW_ESCALATED')
@@ -2399,7 +2399,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       reason: [],
       caseStatus: 'CLOSED',
     })
-    const c6 = await caseService.getCase(caseId2)
+    const c6 = (await caseService.getCase(caseId2)).result
     expect(c6?.caseStatus).toBe('CLOSED')
     Array.from({ length: 3 }).forEach((_, i) => {
       expect(c6?.alerts?.[i]?.alertStatus).toBe('CLOSED')
@@ -2445,7 +2445,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
       reason: ['False positive'],
     })
 
-    const updatedCase = await caseService.getCase(caseId)
+    const updatedCase = (await caseService.getCase(caseId)).result
     expect(updatedCase).toMatchObject({
       caseStatus: 'CLOSED',
       statusChanges: [
@@ -2556,12 +2556,12 @@ describe('Case/Alerts Service - Status Change Tests', () => {
 
     // Check that user in case is updated
     {
-      const case1 = await caseService.getCase(caseId1)
+      const case1 = (await caseService.getCase(caseId1)).result
       expect(
         (case1?.caseUsers?.origin as InternalConsumerUser)?.userStateDetails
           ?.state
       ).toBe('TERMINATED')
-      const case2 = await caseService.getCase(caseId2)
+      const case2 = (await caseService.getCase(caseId2)).result
       expect(
         (case2?.caseUsers?.destination as InternalConsumerUser)
           ?.userStateDetails?.state
@@ -2655,12 +2655,12 @@ describe('Case/Alerts Service - Status Change Tests', () => {
 
     // Check that user in case is updated
     {
-      const case1 = await caseService.getCase(caseId1)
+      const case1 = (await caseService.getCase(caseId1)).result
       expect(
         (case1?.caseUsers?.origin as InternalConsumerUser)?.userStateDetails
           ?.state
       ).toBe('TERMINATED')
-      const case2 = await caseService.getCase(caseId2)
+      const case2 = (await caseService.getCase(caseId2)).result
       expect(
         (case2?.caseUsers?.destination as InternalConsumerUser)
           ?.userStateDetails?.state
@@ -2711,7 +2711,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
       reason: ['False positive'],
     })
 
-    const alert = await alertService.getAlert(alertId)
+    const alert = (await alertService.getAlert(alertId)).result
     expect(alert).toMatchObject({
       alertId,
       alertStatus: 'CLOSED',
@@ -2775,7 +2775,7 @@ describe('Test Cases Reassignment', () => {
 
     await caseService.caseRepository.reassignCases('ACCOUNT-1', 'ACCOUNT-3')
 
-    const updatedCase = await caseService.getCase(caseId)
+    const updatedCase = (await caseService.getCase(caseId)).result
 
     expect(updatedCase?.assignments).toEqual([
       {
@@ -2828,7 +2828,7 @@ describe('Test Alerts Reassignment', () => {
 
     await alertService.alertsRepository.reassignAlerts('ACCOUNT-1', 'ACCOUNT-3')
 
-    const updatedCase = await caseService.getCase(caseId)
+    const updatedCase = (await caseService.getCase(caseId)).result
 
     expect(updatedCase?.alerts?.[0]?.assignments).toEqual([
       {
@@ -2888,7 +2888,7 @@ describe('Test alert should reopen if qa status is failed', () => {
       reason: ['Other'],
     })
 
-    const updatedAlert = await alertsService.getAlert('AL-1234')
+    const updatedAlert = (await alertsService.getAlert('AL-1234')).result
 
     expect(updatedAlert?.alertStatus).toBe('REOPENED')
   })
@@ -2925,7 +2925,7 @@ describe('Test case escalation l2', () => {
       reason: ['Other'],
     })
 
-    const updatedCase = await caseService.getCase(caseId)
+    const updatedCase = (await caseService.getCase(caseId)).result
     expect(updatedCase?.caseStatus).toBe('IN_REVIEW_ESCALATED')
 
     getContextMocker.mockReturnValue({
@@ -2938,7 +2938,7 @@ describe('Test case escalation l2', () => {
       reason: ['Other'],
     })
 
-    const updatedCase2 = await caseService.getCase(caseId)
+    const updatedCase2 = (await caseService.getCase(caseId)).result
     expect(updatedCase2?.caseStatus).toBe('ESCALATED')
     expect(updatedCase2?.reviewAssignments).toMatchObject([
       {
@@ -2958,7 +2958,7 @@ describe('Test case escalation l2', () => {
       reason: ['Other'],
     })
 
-    const updatedCase3 = await caseService.getCase(caseId)
+    const updatedCase3 = (await caseService.getCase(caseId)).result
     expect(updatedCase3?.caseStatus).toBe('ESCALATED_L2')
     expect(
       updatedCase3?.reviewAssignments?.find(
@@ -2991,7 +2991,7 @@ describe('Test no double escalation review', () => {
       reason: ['Other'],
     })
 
-    const alert = await alertService.getAlert(TEST_ALERT_1.alertId)
+    const alert = (await alertService.getAlert(TEST_ALERT_1.alertId)).result
     expect(alert?.alertStatus).toBe('IN_REVIEW_CLOSED')
 
     getContextMocker.mockReturnValue({
@@ -3003,7 +3003,8 @@ describe('Test no double escalation review', () => {
       reason: ['Other'],
     })
 
-    const updatedAlert = await alertService.getAlert(TEST_ALERT_1.alertId)
+    const updatedAlert = (await alertService.getAlert(TEST_ALERT_1.alertId))
+      .result
     expect(updatedAlert?.alertStatus).toBe('OPEN')
 
     await alertService.escalateAlerts(caseId, {
@@ -3014,11 +3015,11 @@ describe('Test no double escalation review', () => {
       },
     })
 
-    const updatedCase = await caseService.getCase(caseId)
+    const updatedCase = (await caseService.getCase(caseId)).result
     const childCaseId =
       updatedCase?.caseHierarchyDetails?.childCaseIds?.[0] || ''
 
-    const childCase = await caseService.getCase(childCaseId)
+    const childCase = (await caseService.getCase(childCaseId)).result
     expect(childCase?.caseStatus).toBe('ESCALATED')
     expect(childCase?.reviewAssignments).toMatchObject([
       {

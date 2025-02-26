@@ -54,9 +54,10 @@ export const sarHandler = lambdaApi()(
       async (ctx, request) => await reportService.getReport(request.reportId)
     )
 
-    handlers.registerDeleteReports(
-      async (ctx, request) => await reportService.deleteReports(request)
-    )
+    handlers.registerDeleteReports(async (ctx, request) => {
+      const response = await reportService.deleteReports(request)
+      return response.result
+    })
 
     handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
       const status = request.ReportStatusUpdateRequest.status
@@ -71,7 +72,8 @@ export const sarHandler = lambdaApi()(
     })
 
     handlers.registerPostReports(async (ctx, request) => {
-      return await reportService.completeReport(request.Report)
+      const response = await reportService.completeReport(request.Report)
+      return response.result
     })
 
     handlers.registerPostReportsReportIdDraft(

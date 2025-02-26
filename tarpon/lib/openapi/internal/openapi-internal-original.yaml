@@ -14062,6 +14062,8 @@ components:
             - COMMENT
             - COMMENT_ALERT
             - COMMENT_CASE
+            - VIEW_CASE
+            - VIEW_ALERT
             - DOCUMENT
             - RISK_CLASSIFICATION
             - DRS_RISK_LEVEL
@@ -14082,6 +14084,8 @@ components:
             - SLA_POLICY_UPDATE
             - SLA_STATUS_UPDATE
             - WEBHOOK
+            - SAR_UPDATE
+            - SAR_DELETE
             - RISK_FACTOR_V8
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
