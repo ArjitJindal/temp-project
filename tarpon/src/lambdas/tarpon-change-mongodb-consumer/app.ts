@@ -57,8 +57,6 @@ import { envIsNot } from '@/utils/env'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { NangoRecord } from '@/@types/nango'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -455,11 +453,11 @@ async function alertsHandler(tenantId: string, newAlerts: Array<Alert>) {
   newAlerts.forEach((alert) => {
     alert.updatedAt = Date.now()
   })
-  await batchInsertToClickhouse(
-    tenantId,
-    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
-    newAlerts
-  )
+  // await batchInsertToClickhouse(
+  //   tenantId,
+  //   CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+  //   newAlerts
+  // )
 }
 
 async function alertCommentHandler(
