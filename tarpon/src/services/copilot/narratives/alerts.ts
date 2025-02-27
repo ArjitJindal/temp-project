@@ -41,7 +41,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
   public placeholderNarrative(): string {
     const screening = isScreening(this.attributes)
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
-    const overview = `OVERVIEW \n\nName: [name] \n\nDate of Alert Generation: [alertGenerationDate] \n\nReason for Alert Generation: [ruleHitNames] \n\nInvestigation Period: [alertGenerationDate] - [alertActionDate] \n\n ${statusPrefix} Date: [alertActionDate] \n\n`
+    const overview = `OVERVIEW \n\nName: [name] \n\nDate of Alert Generation: [alertGenerationDate] \n\nReason for Alert Generation: [ruleHitNames] \n\nInvestigation Period: [alertGenerationDate] - [alertActionDate] \n\n${statusPrefix} Date: [alertActionDate] \n\n`
 
     const background = `BACKGROUND \n\n[This section should contain general details about the alert in question.]`
 

@@ -34,17 +34,14 @@ export class TransactionsBuilder implements AttributeBuilder {
       return 0
     })
 
-    const mainCurrency =
-      transactions.at(0)?.originAmountDetails?.transactionCurrency
+    const firstTransaction = transactions.at(0)
 
-    const currencySymbol = getSymbolFromCurrency(mainCurrency || '')
-
-    const firstPaymentAmountInUsd = mainCurrency
-      ? CurrencyService.getExchangeRate(
-          mainCurrency,
+    const firstPaymentAmountInUsd = firstTransaction?.originAmountDetails
+      ? CurrencyService.getTargetCurrencyAmount(
+          firstTransaction.originAmountDetails,
           'USD',
           inputData.exchangeRates
-        )
+        ).transactionAmount
       : undefined
 
     transactions.forEach((t) => {
@@ -85,6 +82,9 @@ export class TransactionsBuilder implements AttributeBuilder {
       }
     })
 
+    const mainCurrency =
+      firstTransaction?.originAmountDetails?.transactionCurrency
+
     const convertToMainCurrency = (amountInUSD: number | null) => {
       return amountInUSD
         ? CurrencyService.getTargetCurrencyAmount(
@@ -120,6 +120,8 @@ export class TransactionsBuilder implements AttributeBuilder {
     const round = (amount: number | undefined) => {
       return lodashRound(amount ?? 0, 2)
     }
+
+    const currencySymbol = getSymbolFromCurrency(mainCurrency || '')
 
     attributes.setAttribute('transactionsCount', transactions.length)
     attributes.setAttribute(

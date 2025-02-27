@@ -156,7 +156,7 @@ export class AutoNarrativeService {
     const promptWithContext = promptMessages.concat([
       {
         role: 'system',
-        content: serialisedAttributes,
+        content: `Here is some data that you can use to write the narrative: ${serialisedAttributes}`,
       },
     ])
 
