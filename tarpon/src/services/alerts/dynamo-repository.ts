@@ -15,6 +15,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { batchGet, batchWrite } from '@/utils/dynamodb'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 
 export class DynamoAlertRepository {
   private readonly tenantId: string
@@ -198,7 +199,6 @@ export class DynamoAlertRepository {
     isLastInReview?: boolean
   ) {
     const now = Date.now()
-
     const updateExpression = `SET lastStatusChange = :statusChange, updatedAt = :updatedAt, ${
       isLastInReview
         ? 'userId = lastStatusChange.userId, reviewerId = :reviewerId'
@@ -213,6 +213,8 @@ export class DynamoAlertRepository {
       ':alertStatus': statusChange.caseStatus,
       ':empty_list': [],
     }
+
+    // Process in chunks of 25 (DynamoDB TransactWrite limit)
     const chunks = alertIds.reduce((acc, alertId, i) => {
       const chunkIndex = Math.floor(i / 25)
       if (!acc[chunkIndex]) {
@@ -224,24 +226,31 @@ export class DynamoAlertRepository {
 
     await Promise.all(
       chunks.map(async (chunk) => {
-        await this.dynamoDb.send(
-          new TransactWriteCommand({
-            TransactItems: chunk.map((alertId) => ({
-              Update: {
-                TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(
-                  this.tenantId
-                ),
-                Key: DynamoDbKeys.ALERT(this.tenantId, alertId),
-                UpdateExpression: updateExpression,
-                ExpressionAttributeValues: expressionAttributeValues,
-              },
-            })),
-          })
-        )
+        const transactItems = chunk.map((alertId) => ({
+          key: DynamoDbKeys.ALERT(this.tenantId, alertId),
+          updateExpression,
+          expressionAttributeValues,
+        }))
+        const command = new TransactWriteCommand({
+          TransactItems: transactItems.map((item) => ({
+            Update: {
+              TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(
+                this.tenantId
+              ),
+              Key: item.key,
+              UpdateExpression: item.updateExpression,
+              ExpressionAttributeValues: item.expressionAttributeValues,
+            },
+          })),
+        })
 
-        await this.localChangeHandlerBatch(
-          chunk.map((alertId) => DynamoDbKeys.ALERT(this.tenantId, alertId))
-        )
+        await this.dynamoDb.send(command)
+
+        await sendMessageToMongoConsumer({
+          tenantId: this.tenantId,
+          tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+          transactItems,
+        })
       })
     )
   }

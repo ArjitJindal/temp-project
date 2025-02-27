@@ -31,7 +31,10 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
-import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
+import {
+  DynamoUpdateMessage,
+  MongoConsumerMessage,
+} from '@/lambdas/mongo-db-trigger-consumer'
 
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
@@ -644,34 +647,16 @@ export const sanitizeSqlName = (tableName: string) =>
 const sqs = new SQS({ region: process.env.AWS_REGION })
 
 export const sendMessageToMongoConsumer = async (
-  message: MongoConsumerMessage
+  message: MongoConsumerMessage | DynamoUpdateMessage
 ) => {
   if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
     return
   }
 
   if (envIs('local') || envIs('test')) {
-    await handleMongoConsumerSQSMessage([message])
-    return
-  }
-
-  await sqs.send(
-    new SendMessageCommand({
-      MessageBody: JSON.stringify(message),
-      QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
-    })
-  )
-}
-
-export const sendMessageToDynamoDbConsumer = async (
-  message: MongoConsumerMessage
-) => {
-  if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
-    return
-  }
-
-  if (envIs('local') || envIs('test')) {
-    await handleMongoConsumerSQSMessage([message])
+    await handleMongoConsumerSQSMessage([message] as
+      | MongoConsumerMessage[]
+      | DynamoUpdateMessage[])
     return
   }
 

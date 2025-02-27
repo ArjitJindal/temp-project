@@ -1,5 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
-import { MongoDbConsumer, MongoConsumerMessage } from '.'
+import { MongoDbConsumer, MongoConsumerMessage, DynamoUpdateMessage } from '.'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
@@ -24,7 +24,7 @@ export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
 )
 
 export async function handleMongoConsumerSQSMessage(
-  events: MongoConsumerMessage[]
+  events: MongoConsumerMessage[] | DynamoUpdateMessage[]
 ) {
   const mongoClient = await getMongoDbClient()
 

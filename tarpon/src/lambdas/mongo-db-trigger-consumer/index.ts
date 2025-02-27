@@ -6,8 +6,9 @@ import {
   Filter,
   FindCursor,
 } from 'mongodb'
-import { Dictionary, groupBy, memoize } from 'lodash'
+import { chunk, Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
+import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -25,6 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 type TableDetails = {
   tenantId: string
@@ -48,6 +50,20 @@ export type MongoConsumerMessage = {
   documentKey: MongoConsumerFilterDocument | MongoConsumerIdDocument
   clusterTime: number
   collectionName: string
+  isDynamoDbTrigger?: boolean
+}
+
+export type DynamoUpdateMessage = {
+  tenantId: string
+  tableName: string
+  transactItems: {
+    key: {
+      PartitionKeyID: string
+      SortKeyID?: string
+    }
+    updateExpression: string
+    expressionAttributeValues: Record<string, any>
+  }[]
 }
 
 @traceable
@@ -68,14 +84,75 @@ export class MongoDbConsumer {
     }
   )
 
-  public async handleMongoConsumerMessage(events: MongoConsumerMessage[]) {
-    const { messagesToReplace, messagesToDelete } =
-      this.segregateMessages(events)
+  private isDynamoDbTrigger(
+    events: MongoConsumerMessage[] | DynamoUpdateMessage[]
+  ) {
+    const dynamoMessages = events.filter((event) => 'tableName' in event)
+    const mongoMessages = events.filter((event) => !('tableName' in event))
+    return { dynamoMessages, mongoMessages }
+  }
+
+  public async handleMongoConsumerMessage(
+    events: MongoConsumerMessage[] | DynamoUpdateMessage[]
+  ) {
+    const { dynamoMessages, mongoMessages } = this.isDynamoDbTrigger(events)
+    if (dynamoMessages.length > 0) {
+      await this.executeDynamoUpdate(dynamoMessages as DynamoUpdateMessage[])
+    }
+    const { messagesToReplace, messagesToDelete } = this.segregateMessages(
+      mongoMessages as MongoConsumerMessage[]
+    )
 
     await Promise.all([
       this.handleMessagesReplace(messagesToReplace),
       this.handleMessagesDelete(messagesToDelete),
     ])
+  }
+
+  private async executeDynamoUpdate(events: DynamoUpdateMessage[]) {
+    const dynamoDb = await getDynamoDbClient()
+    await Promise.all(
+      events.map(async (event) => {
+        // Fetch all updated items
+        const updatedItems = await Promise.all(
+          event.transactItems.map(async (item) => {
+            const { Item } = await dynamoDb.send(
+              new GetCommand({
+                TableName: event.tableName,
+                Key: item.key,
+              })
+            )
+            return Item
+          })
+        )
+
+        const clickhouseTable = 'alerts'
+        console.log(
+          '########################UPDATED ITEMS',
+          JSON.stringify(updatedItems)
+        )
+        // Process in chunks to avoid overwhelming Clickhouse
+        // Update updatedAt timestamp to current time
+        // await new Promise(resolve => setTimeout(resolve, 5000))
+        const updatedItemsWithTimestamp = updatedItems.map((item) => {
+          if (!item) {
+            return null
+          }
+          return {
+            ...item,
+            updatedAt: Date.now(),
+          }
+        })
+        const chunks = chunk(updatedItemsWithTimestamp.filter(Boolean), 1000)
+        for (const batch of chunks) {
+          await batchInsertToClickhouse(
+            event.tenantId,
+            clickhouseTable,
+            batch as object[]
+          )
+        }
+      })
+    )
   }
 
   public async handleMessagesReplace(
