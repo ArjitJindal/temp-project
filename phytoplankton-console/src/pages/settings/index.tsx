@@ -168,6 +168,7 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.screening'),
             key: 'sanctions',
+            requiredPermissions: ['settings:screening:read'],
             children: <SanctionsSettings />,
           },
           {

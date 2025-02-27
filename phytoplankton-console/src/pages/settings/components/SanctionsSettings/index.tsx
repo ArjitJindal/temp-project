@@ -24,7 +24,11 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsS
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
 export const SanctionsSettings = () => {
-  const permissions = useHasPermissions(['settings:add-ons:read']);
+  const permissions = useHasPermissions([
+    'settings:add-ons:read',
+    'settings:screening:read',
+    'settings:screening:write',
+  ]);
   const user = useAuth0User();
   const superAdmin = isSuperAdmin(user);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');

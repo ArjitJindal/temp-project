@@ -126,6 +126,7 @@ export const DEFAULT_ROLES: {
       'settings:transactions:read',
       'settings:users:read',
       'settings:rules:read',
+      'settings:screening:read',
       'settings:risk-scoring:read',
       'settings:notifications:read',
       'settings:add-ons:read',
