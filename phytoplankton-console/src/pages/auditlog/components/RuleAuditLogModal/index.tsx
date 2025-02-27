@@ -381,7 +381,7 @@ const RuleAuditLogModal = (props: Props) => {
               )}
 
               {/* NEW ACTION */}
-              {!showRiskLevels && (
+              {!showRiskLevels && newAction && (
                 <>
                   <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
                     <Typography.Title level={4}>New action</Typography.Title>
