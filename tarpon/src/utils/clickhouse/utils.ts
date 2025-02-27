@@ -663,6 +663,26 @@ export const sendMessageToMongoConsumer = async (
   )
 }
 
+export const sendMessageToDynamoDbConsumer = async (
+  message: MongoConsumerMessage
+) => {
+  if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
+    return
+  }
+
+  if (envIs('local') || envIs('test')) {
+    await handleMongoConsumerSQSMessage([message])
+    return
+  }
+
+  await sqs.send(
+    new SendMessageCommand({
+      MessageBody: JSON.stringify(message),
+      QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
+    })
+  )
+}
+
 async function addMissingIndexes(
   client: ClickHouseClient,
   tableName: string,
