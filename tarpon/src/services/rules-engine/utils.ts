@@ -31,6 +31,7 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
+import { isDemoTenant } from '@/utils/tenant'
 
 export function getSenderKeys(
   tenantId: string,
@@ -260,7 +261,7 @@ export async function ruleInstanceAggregationVariablesRebuild(
   ruleInstanceRepository: RuleInstanceRepository,
   options?: { updateRuleInstanceStatus?: boolean }
 ) {
-  if (hasFeature('MANUAL_PRE_AGGREGATION')) {
+  if (hasFeature('MANUAL_PRE_AGGREGATION') || isDemoTenant(tenantId)) {
     return
   }
   const aggVarsToRebuild =
