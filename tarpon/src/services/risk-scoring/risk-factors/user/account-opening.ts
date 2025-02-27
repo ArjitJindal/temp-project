@@ -35,7 +35,7 @@ export const reasonForAccountOpeningV8Logic: RiskFactorLogicGenerator = (
             {
               in: [
                 { var: '' },
-                (parameterValue.content as RiskParameterValueLiteral).content,
+                [(parameterValue.content as RiskParameterValueLiteral).content],
               ],
             },
           ],

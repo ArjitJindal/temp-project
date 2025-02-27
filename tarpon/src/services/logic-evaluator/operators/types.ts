@@ -1,7 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Config, Operator } from '@react-awesome-query-builder/core'
 import { JSONSchemaType } from 'ajv'
-import { CustomBuiltInLogicOperatorKeyType } from './custom-built-in-operators'
+import { CustomBuiltInLogicOperatorKey } from './custom-built-in-operators'
 import { LogicOperatorType } from '@/@types/openapi-internal/LogicOperatorType'
 
 export type TextLogicOperator = LogicOperator<
@@ -10,7 +10,7 @@ export type TextLogicOperator = LogicOperator<
   string[] | string | null | undefined
 >
 export type InternalCustomOperatorKeys =
-  | CustomBuiltInLogicOperatorKeyType
+  | CustomBuiltInLogicOperatorKey
   | 'op:hasItems'
   | 'op:equalArray'
 export type LogicOperator<LHS = any, RHS = any> = {

@@ -1,6 +1,7 @@
 import {
   CUSTOM_IN_BUILT_GREATER_THAN_OPERATOR,
   CUSTOM_IN_BUILT_GREATER_THAN_OR_EQUAL_TO_OPERATOR,
+  CUSTOM_IN_BUILT_IN_ANY_IN_LOGIC_OPERATOR,
   CUSTOM_IN_BUILT_LESS_THAN_OPERATOR,
   CUSTOM_IN_BUILT_LESS_THAN_OR_EQUAL_TO_OPERATOR,
 } from '../custom-built-in-operators'
@@ -107,5 +108,38 @@ describe('custom-built-in-operators', () => {
       null
     )
     expect(result5).toBe(false)
+  })
+
+  test('test in operator', async () => {
+    const result = await CUSTOM_IN_BUILT_IN_ANY_IN_LOGIC_OPERATOR.run('a', [
+      'a',
+      'b',
+      'c',
+    ])
+    expect(result).toBe(true)
+  })
+
+  test('test in operator with lhs as array and rhs as string', async () => {
+    const result = await CUSTOM_IN_BUILT_IN_ANY_IN_LOGIC_OPERATOR.run(
+      '1',
+      [1, 2, 3]
+    )
+    expect(result).toBe(true)
+  })
+
+  test('test in operator with lhs as array and rhs as array', async () => {
+    const result = await CUSTOM_IN_BUILT_IN_ANY_IN_LOGIC_OPERATOR.run(
+      '1',
+      [4, 1, 6]
+    )
+    expect(result).toBe(true)
+  })
+
+  test('test in operator with number falsy result', async () => {
+    const result = await CUSTOM_IN_BUILT_IN_ANY_IN_LOGIC_OPERATOR.run(
+      '1',
+      [4, 8, 6]
+    )
+    expect(result).toBe(false)
   })
 })
