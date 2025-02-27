@@ -9,6 +9,7 @@ import ExternalSourceTag from '@/components/library/Tag/ExternalSourceTag';
 import { useId } from '@/utils/hooks';
 import Tooltip from '@/components/library/Tooltip';
 import TagsContainer from '@/components/ui/TagsContainer';
+import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
 
 export type MainPanelCustomStyles = Partial<{
   background?: string;
@@ -24,6 +25,7 @@ interface Props {
   sortedItems: ValueItem[];
   defaultText?: string;
   isExternalSource?: boolean;
+  isLocked?: boolean;
 }
 
 export default function MainPanel(props: Props) {
@@ -36,6 +38,7 @@ export default function MainPanel(props: Props) {
     riskScoreAlgo,
     sortedItems,
     isExternalSource,
+    isLocked,
   } = props;
   const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
   const currentScore: number | undefined = lastItem && riskScoreAlgo(lastItem);
@@ -49,21 +52,30 @@ export default function MainPanel(props: Props) {
           <div className={s.icon}>{icon}</div>
           {title}
         </div>
-        {onClickInfo && (
-          <InformationLineIcon
-            className={s.infoIcon}
-            onClick={() => {
-              onClickInfo?.();
-            }}
-          />
-        )}
-        {!onClickInfo && props.defaultText && (
-          <Tooltip title={props.defaultText}>
-            <div>
-              <InformationLineIcon className={s.infoIcon} />
-            </div>
-          </Tooltip>
-        )}
+        <div className={s.title}>
+          {isLocked && (
+            <Tooltip title="KYC risk level locked">
+              <div>
+                <LockLineIcon className={s.infoIcon} />
+              </div>
+            </Tooltip>
+          )}
+          {onClickInfo && (
+            <InformationLineIcon
+              className={s.infoIcon}
+              onClick={() => {
+                onClickInfo?.();
+              }}
+            />
+          )}
+          {!onClickInfo && props.defaultText && (
+            <Tooltip title={props.defaultText}>
+              <div>
+                <InformationLineIcon className={s.infoIcon} />
+              </div>
+            </Tooltip>
+          )}
+        </div>
       </div>
       <div className={s.currentValue}>
         <span>{(currentScore ?? 0.0)?.toFixed(2) ?? 'N/A'}</span>

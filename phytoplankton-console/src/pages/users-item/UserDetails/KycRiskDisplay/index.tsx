@@ -39,6 +39,7 @@ export default function KycRiskDisplay({ userId }: Props) {
             showFormulaBackLink
             riskScoreAlgo={(values) => values.score}
             isExternalSource={Boolean(result?.manualRiskLevel)}
+            isLocked={result.isLocked}
           />
         )
       }

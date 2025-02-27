@@ -8,4 +8,5 @@ export interface ValueItem {
   components?: Array<RiskScoreComponent>;
   factorScoreDetails?: Array<RiskFactorScoreDetails>;
   transactionId?: string;
+  isLocked?: boolean;
 }

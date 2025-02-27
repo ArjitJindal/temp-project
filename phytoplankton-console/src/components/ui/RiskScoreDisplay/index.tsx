@@ -14,6 +14,7 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
   hideInfo?: boolean;
   isExternalSource?: boolean;
+  isLocked?: boolean;
 }
 
 export function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
@@ -33,6 +34,7 @@ export default function RiskScoreDisplay(props: Props) {
     riskScoreAlgo,
     hideInfo,
     isExternalSource,
+    isLocked,
   } = props;
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -66,6 +68,7 @@ export default function RiskScoreDisplay(props: Props) {
                 lastItem?.manualRiskLevel ?? '',
               )}.`
         }
+        isLocked={isLocked}
         {...(isExternalSource && { isExternalSource: true })}
       />
       <DetailsModal
