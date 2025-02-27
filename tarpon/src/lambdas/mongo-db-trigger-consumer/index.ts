@@ -140,7 +140,7 @@ export class MongoDbConsumer {
           }
           return {
             ...item,
-            updatedAt: Date.now(),
+            updatedAtClickhouse: Date.now(),
           }
         })
         const chunks = chunk(updatedItemsWithTimestamp.filter(Boolean), 1000)
