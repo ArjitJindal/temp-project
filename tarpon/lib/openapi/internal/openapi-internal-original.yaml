@@ -11413,6 +11413,8 @@ components:
         - settings:add-ons:write
         - settings:developers:read
         - settings:developers:write
+        - settings:screening:read
+        - settings:screening:write
         - sanctions:search:read
         - sanctions:search:write
         - transactions:overview:read
