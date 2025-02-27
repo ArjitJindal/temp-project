@@ -5,6 +5,7 @@ import {
   SHARED_AUTH0_PARTITION_KEY_PREFIX,
   SHARED_PARTITION_KEY_PREFIX,
 } from '../dynamodb/dynamodb-keys'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 export default class PolicyBuilder {
   tenantId: string
@@ -60,6 +61,22 @@ export default class PolicyBuilder {
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],
+        },
+      },
+    })
+    // this is policy for accessing session from demo mode
+    this.statements.push({
+      Effect: 'Allow',
+      Action: [
+        'dynamodb:GetItem',
+        'dynamodb:DeleteItem',
+        'dynamodb:Query',
+        'dynamodb:PutItem',
+      ], // only four operation are perfomed on Transient Table
+      Resource: ['arn:aws:dynamodb:*:*:table/Transient/*'],
+      Condition: {
+        'ForAllValues:StringLike': {
+          'dynamodb:LeadingKeys': [`${getNonDemoTenantId(this.tenantId)}*`],
         },
       },
     })
