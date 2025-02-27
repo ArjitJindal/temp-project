@@ -151,7 +151,7 @@ function RuleConfigurationFormV8(
           key: RULE_IS_HIT_WHEN_STEP,
           title: 'Rule is hit when',
           isOptional: false,
-          description: 'Define rule variables and condition for which the rule is hit',
+          description: 'Define rule variables and conditions for which the rule is hit',
         },
         ...(!isAlertCreationDetailsStepDisabled
           ? [
