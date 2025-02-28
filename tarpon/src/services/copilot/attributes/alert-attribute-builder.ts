@@ -1,4 +1,4 @@
-import { compact, uniq } from 'lodash'
+import { compact, uniq, uniqBy } from 'lodash'
 import {
   AttributeBuilder,
   AttributeSet,
@@ -7,6 +7,9 @@ import {
 } from './builder'
 
 import { mapRuleAttributes } from './utils/ruleAttributeMapper'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { getUserName } from '@/utils/helpers'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 
 export class AlertAttributeBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
@@ -70,6 +73,39 @@ export class AlertAttributeBuilder implements AttributeBuilder {
       attributes.setAttribute(
         'ruleHitDescriptions',
         uniq(alertRuleHitDescriptions)
+      )
+    }
+
+    if (inputData.sanctionsHits?.length) {
+      const name = getUserName(inputData.user)
+      const data: Partial<
+        SanctionsEntity & { sanctionsHitId: string; score: number }
+      >[] = inputData.sanctionsHits?.map((sh) => ({
+        sanctionsHitId: sh.sanctionsHitId,
+        score:
+          sh.score ||
+          calculateLevenshteinDistancePercentage(name, sh.entity.name),
+        name: sh.entity.name,
+        entityType: sh.entity.entityType,
+        matchTypes: sh.entity.matchTypes,
+        matchTypeDetails: sh.entity.matchTypeDetails,
+        mediaSources: sh.entity.mediaSources?.map((ms) => ({
+          name: ms.name,
+          media: ms.media?.map((m) => ({ title: m.title })),
+        })),
+      }))
+
+      const uniqById = uniqBy(data, 'sanctionsHitId')
+
+      uniqById.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 10)
+
+      attributes.setAttribute(
+        'sanctionsHitDetails',
+        uniqById.map((sh) => {
+          delete sh.score
+          delete sh.sanctionsHitId
+          return sh
+        })
       )
     }
   }

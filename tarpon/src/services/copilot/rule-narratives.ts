@@ -57,7 +57,27 @@ export const ruleNarratives = [
   {
     id: 'R-16',
     narrative:
-      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The customer was investigated and transactional activity was reviewed for the period of [caseGenerationDate] to [Case closure date]. The customers were asked to explain and provide supporting documentation for the transactions [transactionIds] on [Date customer was asked]. The customers did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customers. The activity does not make economic sense and the customer is a PEP/ we have identified significant adverse media/we have true sanctions hit, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The customer was investigated and sanctions hit was found. The customer was asked to explain and provide supporting documentation regarding the [Sanctions hit details]. The KYC information we hold on the customer does not match the sanctions hit details. The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+  },
+  {
+    id: 'R-17',
+    narrative:
+      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The customer was investigated and sanctions hit was found. The customer was asked to explain and provide supporting documentation regarding the [Sanctions hit details]. The KYC information we hold on the customer does not match the sanctions hit details. The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+  },
+  {
+    id: 'R-18',
+    narrative:
+      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The customer was investigated and sanctions hit was found. The customer was asked to explain and provide supporting documentation regarding the [Sanctions hit details]. The KYC information we hold on the customer does not match the sanctions hit details. The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+  },
+  {
+    id: 'R-169',
+    narrative:
+      'The customer activity was alerted by our screening system on Transactions counterparty screening. The counterparty(ies) of the transactions was/were reviewed and material adverse media was identified via public search ( then explain what exactly adverse media says ). The customer was asked to explain and provide supporting documentation for the transactions with high-risk countries on dd/mm/yyyy. The customer did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customer. The activity does not make economic sense and, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing.',
+  },
+  {
+    id: 'R-170',
+    narrative:
+      'The customer activity was alerted by our screening system on Transactions counterparty screening. The counterparty(ies) of the transactions was/were reviewed and material adverse media was identified via public search ( then explain what exactly adverse media says ). The customer was asked to explain and provide supporting documentation for the transactions with high-risk countries on dd/mm/yyyy. The customer did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customer. The activity does not make economic sense and, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing.',
   },
   { id: 'R-22', narrative: 'N/A' },
   {
@@ -78,7 +98,7 @@ export const ruleNarratives = [
   {
     id: 'R-32',
     narrative:
-      'The customer was alerted by our transaction screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists found in the bank name field. The customer sent/received [totalTransactionAmount] between [caseGenerationDate] to [Case closure date]. The customer was asked to explain and provide supporting documentation for the transactions  [transactionIds] on [Date customer was asked].  The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit on the transaction in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists found in the bank name field. The customer was hit by [Sanctions Hit Details]. The customer was asked to explain and provide supporting documentation regarding the [Sanctions hit details]. The KYC information we hold on the customer does not match the sanctions hit details. The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
   },
   {
     id: 'R-41',
@@ -99,11 +119,6 @@ export const ruleNarratives = [
     id: 'R-55',
     narrative:
       'The customer activity was alerted by our transaction monitoring system on mm/dd/yyyy by the rule "Same sender user using too many payment identifiers". The customer activity was reviewed from mm/dd/yyyy to mm/dd/yyyy for the total X number of transactions amounting to _____. The customer was asked to explain and provide supporting documentation to confirm that the cards used in the transactions belong to the customer______ on dd/mm/yyyy. The customer did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customer. The activity does not make economic sense and, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/card not present fraud.',
-  },
-  {
-    id: 'R-64',
-    narrative:
-      'The customer was alerted by our transaction screening system on mm/dd/yyyy due to a hit against adverse media/PEP/sanctions lists found in the transaction counterparty field. The customer sent/received _______(amount) on mm/dd/yyyy. The customer was asked to explain and provide supporting documentation for the transactions  ______ on mm/dd/yyyy.  The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit on the transaction in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
   },
   {
     id: 'R-69',
@@ -184,9 +199,8 @@ export const ruleNarratives = [
   {
     id: 'R-128',
     narrative:
-      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The alert was generated on the legal entity name/shareholder/director of the customer. The customer was investigated and transactional activity was reviewed for the period from [caseGenerationDate] to [Case closure date]. The customer was asked to explain and provide supporting documentation for the transactions and information revealed during screening on [Date customer contacted]. The customers did not provide a relevant explanation/is not responsive/or the provided explanations and documentation are not in line with the KYC information we hold on the customers. The activity does not make economic sense and the customer is a PEP/ we have identified significant adverse media/we have true sanctions hit, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
+      'The customer was alerted by our screening system on [caseGenerationDate] due to a hit against adverse media/PEP/sanctions lists. The alert was generated on the legal entity name/shareholder/director of the customer. The customer was investigated and sanctions hit was found. The customer was asked to explain and provide supporting documentation regarding the [Sanctions hit details]. The KYC information we hold on the customer does not match the sanctions hit details. The activity does not make economic sense and we have identified significant adverse media or high-risk activity that was not explained/we have true sanctions hit in question, therefore we find it suspicious and believe that it can be associated with money laundering/terrorist financing/sanctions evasion.',
   },
-  { id: 'R-129', narrative: 'Blacklisted payment details' },
   {
     id: 'R-130',
     narrative:

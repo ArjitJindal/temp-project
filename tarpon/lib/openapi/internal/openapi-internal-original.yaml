@@ -10469,6 +10469,7 @@ components:
         - destinationPaymentDetails
         - timeOfTransaction
         - transactionReference
+        - sanctionsHitDetails
     AIAttributeCategory:
       title: CoPilotAttributeCategory
       type: string

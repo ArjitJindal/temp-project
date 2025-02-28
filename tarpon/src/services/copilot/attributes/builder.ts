@@ -15,6 +15,8 @@ import { NarrativeResponseAttributes } from '@/@types/openapi-internal/Narrative
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 
 export type InputData = {
   transactions?: InternalTransaction[]
@@ -27,6 +29,7 @@ export type InputData = {
   currentTransaction?: InternalTransaction
   originUser?: InternalUser
   destinationUser?: InternalUser
+  sanctionsHits?: SanctionsHit[]
 }
 
 export interface AttributeBuilder {
@@ -90,6 +93,9 @@ interface AttributeTypes extends Record<AIAttribute, any> {
   originPaymentDetails: PaymentDetails
   destinationPaymentDetails: PaymentDetails
   timeOfTransaction: string
+  sanctionsHitDetails: Partial<
+    SanctionsEntity & { sanctionsHitId: string; score: number }
+  >[]
 }
 type AttributeValue<T extends AIAttribute> = T extends keyof AttributeTypes
   ? AttributeTypes[T]

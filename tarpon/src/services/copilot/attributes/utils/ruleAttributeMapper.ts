@@ -5,11 +5,12 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export const mapRuleAttributes = (ruleInstances: RuleInstance[]) => {
   return ruleInstances?.map((ri) => {
-    const rule = RULES_LIBRARY.find((r) => r.id === r.id)
+    const rule = RULES_LIBRARY.find((r) => r.id === ri.ruleId)
 
     return {
       name: ri.ruleNameAlias,
       nature: ri.nature,
+      description: ri.ruleDescriptionAlias,
       ...(!isV8RuleInstance(ri)
         ? {
             checksFor: rule?.checksFor,

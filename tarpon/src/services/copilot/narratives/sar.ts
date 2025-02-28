@@ -1,6 +1,7 @@
 import { AttributeSet } from '../attributes/builder'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { AdditionalCopilotInfoAdditionalSarInformation } from '@/@types/openapi-internal/AdditionalCopilotInfoAdditionalSarInformation'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 export class SarNarrativeService extends BaseNarrativeService<AdditionalCopilotInfoAdditionalSarInformation> {
   public readonly type = 'REPORT'
@@ -42,5 +43,9 @@ export class SarNarrativeService extends BaseNarrativeService<AdditionalCopilotI
         : 'customer'
 
     return `The following is a template for suspicious activity report written by bank staff to justify why they are reporting a ${customerType} to the financial authorities. This is basically a paragraph that explains why the bank is reporting the ${customerType}.`
+  }
+
+  public disabledAttributes(): AIAttribute[] {
+    return []
   }
 }

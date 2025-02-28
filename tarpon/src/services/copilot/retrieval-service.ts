@@ -7,6 +7,7 @@ import { BadRequest } from 'http-errors'
 import { compact, uniq } from 'lodash'
 import { CurrencyService } from '../currency'
 import { AlertsService } from '../alerts'
+import { SanctionsHitsRepository } from '../sanctions/repositories/sanctions-hits-repository'
 import { CaseService } from '@/services/cases'
 import { UserService } from '@/services/users'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -27,6 +28,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
+import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 
 export class RetrievalService {
   private readonly caseService: CaseService
@@ -36,6 +38,7 @@ export class RetrievalService {
   private readonly reportService: ReportService
   private readonly ruleInstanceRepository: RuleInstanceRepository
   private readonly attributeBuilder: AttributeGenerator
+  private readonly sanctionsHitsRepository: SanctionsHitsRepository
 
   public static async new(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -60,12 +63,14 @@ export class RetrievalService {
       txnRepository,
       reportService,
       alertService,
+      sanctionsHitsRepository,
     ] = await Promise.all([
       CaseService.fromEvent(event),
       UserService.fromEvent(event),
       MongoDbTransactionRepository.fromEvent(event),
       ReportService.fromEvent(event),
       AlertsService.fromEvent(event),
+      SanctionsHitsRepository.fromEvent(event),
     ])
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb: getDynamoDbClientByEvent(event),
@@ -77,7 +82,8 @@ export class RetrievalService {
       reportService,
       ruleInstanceRepository,
       enabledAttributes,
-      alertService
+      alertService,
+      sanctionsHitsRepository
     )
   }
 
@@ -88,7 +94,8 @@ export class RetrievalService {
     reportService: ReportService,
     ruleInstanceRepository: RuleInstanceRepository,
     enabledAttributes: AIAttribute[],
-    alertService: AlertsService
+    alertService: AlertsService,
+    sanctionsHitsRepository: SanctionsHitsRepository
   ) {
     this.caseService = caseService
     this.userService = userService
@@ -100,6 +107,7 @@ export class RetrievalService {
       enabledAttributes
     )
     this.alertService = alertService
+    this.sanctionsHitsRepository = sanctionsHitsRepository
   }
 
   async getAttributes(
@@ -221,6 +229,10 @@ export class RetrievalService {
       ),
     ])
 
+    const sanctionsHits = await this.getSanctionsHitAttributes(
+      _case.alerts || []
+    )
+
     const exchangeRates = await new CurrencyService().getExchangeData()
 
     return await this.attributeBuilder.getAttributes({
@@ -231,7 +243,24 @@ export class RetrievalService {
       reasons,
       exchangeRates: exchangeRates.rates,
       _alerts: _case.alerts || [],
+      sanctionsHits,
     })
+  }
+
+  private async getSanctionsHitAttributes(
+    alerts: Alert[]
+  ): Promise<SanctionsHit[]> {
+    const sanctionsHitIds = compact(
+      alerts.flatMap(
+        (a) =>
+          a.ruleHitMeta?.sanctionsDetails?.map((sd) => sd.sanctionHitIds) || []
+      )
+    ).flat()
+    const sanctionsHits = await this.sanctionsHitsRepository.getHitsByIds(
+      sanctionsHitIds
+    )
+
+    return sanctionsHits
   }
 
   private async getAlertAttributes(
@@ -245,6 +274,10 @@ export class RetrievalService {
     }
 
     const alert = _case?.alerts?.find((a) => a.alertId === alertId)
+
+    if (!alert) {
+      throw new BadRequest(`No alert for ${alertId}`)
+    }
 
     const user = await this.userService.getUser(
       _case?.caseUsers?.origin?.userId ||
@@ -261,13 +294,25 @@ export class RetrievalService {
 
     const exchangeRates = await new CurrencyService().getExchangeRates()
 
+    const isAnyScreeningRule = ruleInstances.some(
+      (ri) => ri.nature === 'SCREENING'
+    )
+
+    let allScreeningHits: SanctionsHit[] = []
+
+    if (isAnyScreeningRule) {
+      const sanctionsHits = await this.getSanctionsHitAttributes([alert])
+      allScreeningHits = sanctionsHits
+    }
+
     return await this.attributeBuilder.getAttributes({
       transactions,
       user,
       ruleInstances,
       reasons,
-      _alerts: [alert as Alert],
+      _alerts: [alert],
       exchangeRates,
+      sanctionsHits: allScreeningHits,
     })
   }
 }

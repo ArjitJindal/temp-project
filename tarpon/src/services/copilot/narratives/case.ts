@@ -1,9 +1,13 @@
 import { AttributeSet } from '../attributes/builder'
 import { getStatusToPrefix, isScreening } from './utils'
-import { reasonNarrativesCasesAlerts } from './utils/reason-narratives'
+import {
+  reasonNarrativesCasesAlerts,
+  reasonNarrativeScreening,
+} from './utils/reason-narratives'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 type AdditionalInfoCase = {
   status: CaseStatus
@@ -35,21 +39,27 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
-    return reasonNarrativesCasesAlerts(this.type)
+    const screening = isScreening(this.attributes)
+    const reasonNarratives = screening
+      ? reasonNarrativeScreening(this.type)
+      : reasonNarrativesCasesAlerts(this.type)
+    return Object.entries(reasonNarratives).map(([reason, narrative]) => ({
+      reason: reason as CaseReasons,
+      narrative,
+    }))
   }
 
   public placeholderNarrative(): string {
     const screening = isScreening(this.attributes)
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
-    const overview = `OVERVIEW \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [caseActionDate] \n\n ${statusPrefix} Date: [caseActionDate] \n\n`
-
+    const overview = `OVERVIEW \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [caseActionDate] \n\n${statusPrefix} Date: [caseActionDate] \n\n`
     const background = `BACKGROUND \n\n[This section should contain general details about the case in question.]`
-
     const investigation = `INVESTIGATION \n\n[This section should detail the method of the investigation and the case's activities that took place during the investigation.]`
 
-    const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the case's transactions and behaviors.]`
+    const type = screening ? 'screening details' : 'transactions'
+    const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the case's ${type} and behaviors.]`
 
-    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]`
+    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision\n\n Sanctions Sources: [sanctionsSources]. (Be more focused on screening details and information dense)`
 
     const conclusion = `CONCLUSION`
 
@@ -65,5 +75,30 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
     }
 
     return overview + background + investigation + findings + conclusion
+  }
+
+  public disabledAttributes(): AIAttribute[] {
+    if (isScreening(this.attributes)) {
+      return [
+        'maxOriginAmount',
+        'maxDestinationAmount',
+        'destinationTransactionAmount',
+        'originTransactionAmount',
+        'totalOriginAmount',
+        'totalDestinationAmount',
+        'firstPaymentAmount',
+        'transactionsCount',
+        'originPaymentDetails',
+        'destinationPaymentDetails',
+        'destinationTransactionCountry',
+        'originTransactionCountry',
+        'name',
+        'averageDestinationAmount',
+        'originTransactionCurrency',
+        'destinationTransactionCurrency',
+        'transactionReference',
+      ]
+    }
+    return ['sanctionsHitDetails']
   }
 }

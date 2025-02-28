@@ -10,9 +10,9 @@ import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
 import { prompt } from '@/utils/openai'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
-import { logger } from '@/core/logger'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 import { NarrativeMode } from '@/@types/openapi-internal/NarrativeMode'
+import { logger } from '@/core/logger'
 
 const SEPARATOR = '---'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
@@ -65,7 +65,7 @@ export class AutoNarrativeService {
     string += `\nThe following template is for a document written by bank staff to justify their decision about reporting suspicious activity. Please rewrite this information in a natural, professional tone that sounds like it was written by an experienced financial professional.`
 
     if (service.textType === 'MARKDOWN') {
-      string += `"You should only output markdown, no other text. Please do not include any other text than markdown."`
+      string += `"You can use markdown if required don't use \`\`\`markdown\`\`\`"`
     } else if (service.textType === 'PLAIN') {
       string += `"You should only output plaintext, no markdown. Please do not include any other text than plaintext."`
     }
@@ -74,7 +74,7 @@ export class AutoNarrativeService {
 
     completionMessages.push({ role: 'system', content: string })
 
-    return this.generate(completionMessages, attributes)
+    return this.generate(completionMessages, attributes, service)
   }
 
   async getService(
@@ -159,9 +159,17 @@ export class AutoNarrativeService {
 
   private async generate(
     promptMessages: OpenAI.ChatCompletionMessageParam[],
-    attributes: AttributeSet
+    attributes: AttributeSet,
+    service?: BaseNarrativeService<any>
   ): Promise<NarrativeResponse> {
+    if (service) {
+      const disabledAttributes = service.disabledAttributes()
+      disabledAttributes.forEach((attr) => {
+        attributes.deleteAttribute(attr)
+      })
+    }
     const serialisedAttributes = await attributes.serialise()
+
     const promptWithContext = promptMessages.concat([
       {
         role: 'system',
@@ -180,16 +188,16 @@ export class AutoNarrativeService {
       }
     }
 
-    response = await attributes.inject(response)
+    const injectedResponse = await attributes.inject(response)
 
     // Clean up response
-    response = response
+    const narrative = injectedResponse
       .replace(new RegExp(SEPARATOR, 'g'), '')
       .replace(new RegExp(PROMPT, 'g'), '')
       .trim()
 
     return {
-      narrative: response,
+      narrative,
       attributes: await attributes.present(attributes),
     }
   }

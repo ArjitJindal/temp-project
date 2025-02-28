@@ -1,9 +1,13 @@
 import { AttributeSet } from '../attributes/builder'
 import { getStatusToPrefix, isScreening } from './utils'
-import { reasonNarrativesCasesAlerts } from './utils/reason-narratives'
+import {
+  reasonNarrativesCasesAlerts,
+  reasonNarrativeScreening,
+} from './utils/reason-narratives'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 type AdditionalInfoAlert = {
   status: AlertStatus
@@ -35,7 +39,14 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
-    return reasonNarrativesCasesAlerts(this.type)
+    const screening = isScreening(this.attributes)
+    const reasonNarratives = screening
+      ? reasonNarrativeScreening(this.type)
+      : reasonNarrativesCasesAlerts(this.type)
+    return Object.entries(reasonNarratives).map(([reason, narrative]) => ({
+      reason: reason as CaseReasons,
+      narrative,
+    }))
   }
 
   public placeholderNarrative(): string {
@@ -49,7 +60,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
 
     const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the alert's transactions and behaviors.]`
 
-    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]`
+    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision. You should be more foucesed on screening details and information dense\n\n Sanctions Sources: [sanctionsSources]`
 
     const conclusion = `CONCLUSION`
 
@@ -65,5 +76,30 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
     }
 
     return overview + background + investigation + findings + conclusion
+  }
+
+  public disabledAttributes(): AIAttribute[] {
+    if (isScreening(this.attributes)) {
+      return [
+        'maxOriginAmount',
+        'maxDestinationAmount',
+        'destinationTransactionAmount',
+        'originTransactionAmount',
+        'totalOriginAmount',
+        'totalDestinationAmount',
+        'firstPaymentAmount',
+        'transactionsCount',
+        'originPaymentDetails',
+        'destinationPaymentDetails',
+        'destinationTransactionCountry',
+        'originTransactionCountry',
+        'name',
+        'averageDestinationAmount',
+        'originTransactionCurrency',
+        'destinationTransactionCurrency',
+        'transactionReference',
+      ]
+    }
+    return ['sanctionsHitDetails']
   }
 }

@@ -2,6 +2,7 @@ import { AttributeSet } from '../attributes/builder'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 type AdditionalInfoTransaction = {
   action: RuleAction
@@ -86,5 +87,9 @@ export class TransactionNarrativeService extends BaseNarrativeService<Additional
     }. Based on the following reasons: ${reasons}. You need be like a bank analyst and write a narrative that is easy to understand and contains all the possible information about why the transaction was ${
       ruleActionToAlias[this.additionalInfo.action]
     }.`
+  }
+
+  public disabledAttributes(): AIAttribute[] {
+    return ['sanctionsHitDetails']
   }
 }

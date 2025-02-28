@@ -5,7 +5,7 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 export const isScreening = (attributes: AttributeSet) => {
   return attributes
     ?.getAttribute('rules')
-    ?.some((r) => r.narrative === 'SCREENING')
+    ?.some((r) => r.nature === 'SCREENING')
 }
 
 export const getStatusToPrefix = (status: AlertStatus | CaseStatus) => {

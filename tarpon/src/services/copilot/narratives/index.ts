@@ -1,4 +1,5 @@
 import { AttributeSet } from '../attributes/builder'
+import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 
 export type ReasonNarrative<T extends string = string> = {
@@ -21,4 +22,5 @@ export abstract class BaseNarrativeService<T extends object> {
   public abstract placeholderNarrative(): string
   public abstract introductoryNarrative(): string
   public abstract closingNarrative(): string
+  public abstract disabledAttributes(): AIAttribute[]
 }

@@ -1,4 +1,9 @@
 import { MongoClient, UpdateResult, Filter, Document } from 'mongodb'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -16,6 +21,7 @@ import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/reposit
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -37,6 +43,15 @@ export class SanctionsHitsRepository {
     this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
+  }
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ): Promise<SanctionsHitsRepository> {
+    const tenantId = event.requestContext.authorizer.principalId
+    return new SanctionsHitsRepository(tenantId, await getMongoDbClient())
   }
 
   private getSearchHitsFilters(params: HitsFilters): Document {
@@ -296,5 +311,14 @@ export class SanctionsHitsRepository {
       { sanctionsHitId: { $in: ids } },
       { $set: updates }
     )
+  }
+
+  public async getHitsByIds(ids: string[]): Promise<SanctionsHit[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsHit>(
+      SANCTIONS_HITS_COLLECTION(this.tenantId)
+    )
+
+    return await collection.find({ sanctionsHitId: { $in: ids } }).toArray()
   }
 }
