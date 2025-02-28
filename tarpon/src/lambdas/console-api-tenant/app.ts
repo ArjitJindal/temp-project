@@ -172,6 +172,12 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
       const newTenantSettings = request.TenantSettings
+
+      // setting 0 as undefined, to reset maxActiveSession
+      if (newTenantSettings.maxActiveSessions === 0) {
+        newTenantSettings.maxActiveSessions = undefined
+      }
+
       const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const changedTenantSettings: TenantSettings = Object.fromEntries(
         Object.entries(newTenantSettings).filter(

@@ -158,7 +158,10 @@ export const SecuritySettings = () => {
         <Select
           value={settings.maxActiveSessions}
           onChange={(selectedValue) => {
-            mutateTenantSettings.mutate({ maxActiveSessions: selectedValue });
+            // setting 0 as undefined, to reset maxActiveSession
+            mutateTenantSettings.mutate({
+              maxActiveSessions: selectedValue === 0 ? undefined : selectedValue,
+            });
           }}
           options={maxActiveSessionsOptions}
           isLoading={mutateTenantSettings.isLoading}
