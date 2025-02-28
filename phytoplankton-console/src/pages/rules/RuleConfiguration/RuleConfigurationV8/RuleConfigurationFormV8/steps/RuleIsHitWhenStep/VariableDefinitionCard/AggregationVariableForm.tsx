@@ -692,23 +692,25 @@ export const AggregationVariableFormContent: React.FC<
           />
         </Label>
 
-        <Label
-          label={`Include current transaction`}
-          required={{ value: true, showHint: !readOnly }}
-        >
-          <SelectionGroup
-            value={formValues.includeCurrentEntity ?? true}
-            onChange={(includeCurrentEntity) => {
-              handleUpdateForm({
-                includeCurrentEntity,
-              });
-            }}
-            mode={'SINGLE'}
-            options={BOOLEAN_OPTIONS}
-            testName="aggregate-target-v8"
-            isDisabled={readOnly}
-          />
-        </Label>
+        {ruleType !== 'USER' && (
+          <Label
+            label={`Include current transaction`}
+            required={{ value: true, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              value={formValues.includeCurrentEntity ?? true}
+              onChange={(includeCurrentEntity) => {
+                handleUpdateForm({
+                  includeCurrentEntity,
+                });
+              }}
+              mode={'SINGLE'}
+              options={BOOLEAN_OPTIONS}
+              testName="aggregate-target-v8"
+              isDisabled={readOnly}
+            />
+          </Label>
+        )}
         {!aggregateByLastN && (
           <div className={s.timeWindow}>
             <VariableTimeWindow
@@ -786,7 +788,13 @@ export const AggregationVariableFormContent: React.FC<
 export const AggregationVariableForm = (props: AggregationVariableFormProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const { isNew, readOnly, variable, onCancel, onUpdate } = props;
-  const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
+  const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(() => {
+    // For other rules, keep existing behavior
+    return {
+      ...variable,
+      includeCurrentEntity: variable.includeCurrentEntity ?? true,
+    };
+  });
 
   const [isValidFormValues, setIsValidFormValues] = useState(false);
   return (

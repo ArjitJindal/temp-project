@@ -8214,7 +8214,6 @@ components:
         - aggregationFieldKey
         - aggregationFunc
         - timeWindow
-        - includeCurrentEntity
     UsedAggregationVariable:
       title: UsedAggregationVariable
       type: object
