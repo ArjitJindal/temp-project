@@ -28,6 +28,9 @@ export function AlertAssignedToInput() {
       <InputField<FormValues, 'alertAssigneesType'>
         name={'alertAssigneesType'}
         label={'Alert assigned to'}
+        description={
+          'Automatically assign an alert to an account or equally distribute the workfload across a role'
+        }
         labelProps={{ required: { value: false, showHint: true } }}
       >
         {(inputProps) => {

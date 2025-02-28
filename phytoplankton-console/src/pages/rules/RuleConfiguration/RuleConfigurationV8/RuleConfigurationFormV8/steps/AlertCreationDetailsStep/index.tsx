@@ -60,6 +60,9 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               <InputField<FormValues, 'alertPriority'>
                 name={'alertPriority'}
                 label={'Alert severity'}
+                description={
+                  'Select the severity of the alert when the rule is hit, P1 being the most severe.'
+                }
                 labelProps={{ required: true }}
               >
                 {(inputProps) => (
@@ -75,6 +78,9 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                   <InputField<FormValues, 'alertCreatedFor'>
                     name={'alertCreatedFor'}
                     label={'Alert created for'}
+                    description={
+                      'Define whether the alert is created for a user ID or payment identifier such as bank account number, card fingerprint etc.'
+                    }
                     labelProps={{ required: true }}
                   >
                     {(inputProps) => (
@@ -88,6 +94,9 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                   <InputField<FormValues, 'alertCreationDirection'>
                     name={'alertCreationDirection'}
                     label={'Alert creation direction'}
+                    description={
+                      'Choose whether alert is created for sender or receiver or automatically based on the rule'
+                    }
                     labelProps={{ required: true }}
                   >
                     {(inputProps) => (
@@ -119,6 +128,7 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               <InputField<FormValues, 'alertCreationInterval'>
                 name={'alertCreationInterval'}
                 label={'Alert creation interval'}
+                description={'Select the cadence in which the alerts are created.'}
                 labelProps={{ element: 'div', required: { value: true, showHint: true } }}
               >
                 {(inputProps) => <CreationIntervalInput {...inputProps} />}
@@ -126,6 +136,9 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               <InputField<FormValues, 'falsePositiveCheckEnabled'>
                 name={'falsePositiveCheckEnabled'}
                 label={'False positive check'}
+                description={
+                  'Calculates the false positive probability for a given alert using machine learning. Learns over time with usage.'
+                }
                 labelProps={{ required: true }}
               >
                 {(inputProps) => (
