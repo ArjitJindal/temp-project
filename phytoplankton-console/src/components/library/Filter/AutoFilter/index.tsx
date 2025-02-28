@@ -160,6 +160,13 @@ export function AutoFilter(props: Props): JSX.Element {
         key={filter.key}
         extraInputProps={{ innerRef: inputRef }}
         debounce={true}
+        onChange={(value) => {
+          if (value) {
+            onChange?.(Number(value));
+          } else {
+            onChange?.(undefined);
+          }
+        }}
         inputComponent={YearPickerInput}
       />
     );
