@@ -65,6 +65,7 @@ import {
   DefaultApiUpdateRuleMlModelModelIdRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -73,6 +74,10 @@ type AIFilters = {
   checksFor?: string[]
   typologies?: string[]
   nature?: string[]
+}
+type FeatureRuleMapping = {
+  feature: string
+  rulesToRemove: string[]
 }
 
 const ALL_RULES = {
@@ -210,15 +215,40 @@ export class RuleService {
     )
   }
 
+  private shouldRemoveRuleBasedOnFeatures(
+    rule: Rule,
+    featureRuleMappings: FeatureRuleMapping[]
+  ): boolean {
+    // Check each feature-rule mapping
+    for (const { feature, rulesToRemove } of featureRuleMappings) {
+      // If tenant has this feature and rule ID is in rulesToRemove list
+      if (
+        hasFeature(feature as Feature) &&
+        rulesToRemove.includes((rule as any).id)
+      ) {
+        return true // Rule should be removed
+      }
+    }
+    return false // Rule should be kept
+  }
+
   async getAllRules(): Promise<Array<Rule>> {
     let rules = await this.ruleRepository.getAllRules()
     rules = await Promise.all(
       rules.map((rule) => this.getTenantSpecificRule(rule))
     )
+    // add features DOW_JONES and OPEN_SANCTIONS also
+    const featureRuleMappings = [
+      { feature: 'ACURIS', rulesToRemove: ['R-16'] },
+      { feature: 'DOW_JONES', rulesToRemove: ['R-16'] },
+      { feature: 'OPEN_SANCTIONS', rulesToRemove: ['R-16'] },
+    ]
 
     return rules.filter(
       (rule) =>
-        isEmpty(rule.requiredFeatures) || this.hasRequiredFeaturesForRule(rule)
+        !this.shouldRemoveRuleBasedOnFeatures(rule, featureRuleMappings) &&
+        (isEmpty(rule.requiredFeatures) ||
+          this.hasRequiredFeaturesForRule(rule))
     )
   }
 
