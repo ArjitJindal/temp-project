@@ -56,9 +56,6 @@ import { envIsNot } from '@/utils/env'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { insertToClickhouse } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
 import { NangoRecord } from '@/@types/nango'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
@@ -434,26 +431,9 @@ async function alertHandler(
   alert: Alert | undefined,
   dbClients: DbClients
 ) {
-  if (!alert || !alert.alertId) {
+  if (!alert || !alert.alertId || dbClients) {
     return
   }
-
-  const caseRepository = new CaseRepository(tenantId, {
-    mongoDb: dbClients.mongoDb,
-    dynamoDb: dbClients.dynamoDb,
-  })
-
-  const case_ = await caseRepository.getCaseById(alert.caseId as string)
-
-  if (!case_) {
-    return
-  }
-
-  await insertToClickhouse<AlertClickhouse>(
-    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
-    { ...alert, caseStatus: case_.caseStatus },
-    tenantId
-  )
 }
 
 async function alertCommentHandler(
