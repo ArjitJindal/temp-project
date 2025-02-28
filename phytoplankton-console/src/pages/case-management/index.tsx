@@ -28,6 +28,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { DerivedStatus } from '@/apis';
 import Label from '@/components/library/Label';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -35,6 +36,9 @@ export default function CaseManagementPage() {
   const [qaMode, setQaMode] = useQaMode();
   const hasQaEnabled = useFeatureEnabled('QA');
   const navigate = useNavigate();
+  const auth0User = useAuth0User();
+  const [users] = useUsers();
+  const userAccount = users[auth0User.userId];
   const parsedParams = queryAdapter.deserializer({
     showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
     ...parseQueryString(location.search),
@@ -83,6 +87,15 @@ export default function CaseManagementPage() {
   const getDefaultStatus = (param?: ScopeSelectorValue): DerivedStatus[] => {
     if (param?.includes('QA')) {
       return ['CLOSED'];
+    }
+
+    // if users has escalation level then show relevant escalated cases
+    const userEscalationLevel = userAccount?.escalationLevel;
+    if (userEscalationLevel === 'L1') {
+      return ['ESCALATED'];
+    }
+    if (userEscalationLevel === 'L2') {
+      return ['ESCALATED_L2'];
     }
 
     return ['OPEN'];
