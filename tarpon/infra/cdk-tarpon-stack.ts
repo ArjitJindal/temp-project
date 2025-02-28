@@ -1309,6 +1309,7 @@ export class CdkTarponStack extends cdk.Stack {
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
+      this.zendutyCloudWatchTopic,
       publicApiLogGroup,
       StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
       publicApi.restApiName
@@ -1327,6 +1328,7 @@ export class CdkTarponStack extends cdk.Stack {
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
+      this.zendutyCloudWatchTopic,
       publicConsoleApiLogGroup,
       StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
       publicConsoleApi.restApiName
@@ -1427,6 +1429,7 @@ export class CdkTarponStack extends cdk.Stack {
         functionProps: this.functionProps,
         domainName,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
+        zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       }
     )
 

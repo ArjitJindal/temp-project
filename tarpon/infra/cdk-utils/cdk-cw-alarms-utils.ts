@@ -19,7 +19,8 @@ const isDev = process.env.ENV === 'dev'
 
 export const createTarponOverallLambdaAlarm = (
   context: Construct,
-  betterUptimeTopic: Topic
+  betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic
 ) => {
   if (isDevUserStack) {
     return null
@@ -54,12 +55,16 @@ export const createTarponOverallLambdaAlarm = (
         }),
       },
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 
 export const createKinesisAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
   streamAlarmName: string,
   kinesisStreamName: string
 ) => {
@@ -102,12 +107,16 @@ export const createKinesisAlarm = (
         }),
       },
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 
 export const createAPIGatewayAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
   restApiAlarmName: string,
   restApiName: string
 ) => {
@@ -139,7 +148,10 @@ export const createAPIGatewayAlarm = (
         }),
       },
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 
 export const dynamoTableOperationMetrics = [
@@ -159,6 +171,7 @@ export const dynamoTableOperations = [
 export const createDynamoDBAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
   dynamoDBTableAlarmName: string,
   dynamoDBTableName: string,
   metric: string,
@@ -196,7 +209,10 @@ export const createDynamoDBAlarm = (
       period: options.period,
       statistic: options.statistic || 'Average',
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 
 const createApiGatewayThrottlingMetricFilter = (
@@ -216,6 +232,7 @@ const createApiGatewayThrottlingMetricFilter = (
 export const createAPIGatewayThrottlingAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
   logGroup: ILogGroup,
   restApiAlarmName: string,
   restApiName: string
@@ -240,7 +257,10 @@ export const createAPIGatewayThrottlingAlarm = (
       period: Duration.seconds(300),
       statistic: 'Average',
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 
 export const createLambdaErrorPercentageAlarm = (
@@ -365,6 +385,7 @@ export const createLambdaDurationAlarm = (
 export const createRuleHitRateAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
   thresholdPerc: number
 ) => {
   if (isDevUserStack) {
@@ -386,7 +407,10 @@ export const createRuleHitRateAlarm = (
       period: Duration.seconds(300),
       statistic: 'Maximum',
     }),
-  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
 }
 export const createLambdaInitDurationAlarm = (
   context: Construct,

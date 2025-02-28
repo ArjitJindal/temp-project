@@ -94,7 +94,11 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     this.config = props.config
     this.betterUptimeCloudWatchTopic = props.betterUptimeCloudWatchTopic
     this.zendutyCloudWatchTopic = props.zendutyCloudWatchTopic
-    createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
+    createTarponOverallLambdaAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      this.zendutyCloudWatchTopic
+    )
 
     for (const lambdaName of allLambdas) {
       createLambdaDurationAlarm(
@@ -148,6 +152,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       createAPIGatewayAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
+        this.zendutyCloudWatchTopic,
         API_GATEWAY_ALARM_NAMES[i],
         API_GATEWAY_NAMES[i]
       )
@@ -157,6 +162,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       createKinesisAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
+        this.zendutyCloudWatchTopic,
         `${streamDetails.streamId}PutRecordErrorRate`,
         streamDetails.streamName
       )
@@ -167,6 +173,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           createDynamoDBAlarm(
             this,
             this.betterUptimeCloudWatchTopic,
+            this.zendutyCloudWatchTopic,
             `Dynamo${tableName}${operation}${metric}`,
             tableName,
             metric,
@@ -186,6 +193,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         createDynamoDBAlarm(
           this,
           this.betterUptimeCloudWatchTopic,
+          this.zendutyCloudWatchTopic,
           `Dynamo${tableName}ConsumedReadCapacityUnits`,
           tableName,
           'ConsumedReadCapacityUnits',
@@ -204,6 +212,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         createDynamoDBAlarm(
           this,
           this.betterUptimeCloudWatchTopic,
+          this.zendutyCloudWatchTopic,
           `Dynamo${tableName}ConsumedWriteCapacityUnits`,
           tableName,
           'ConsumedWriteCapacityUnits',
@@ -277,7 +286,12 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       })
     }
 
-    createRuleHitRateAlarm(this, this.betterUptimeCloudWatchTopic, 25)
+    createRuleHitRateAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      this.zendutyCloudWatchTopic,
+      25
+    )
 
     /* Canaries */
 
