@@ -43,7 +43,8 @@ export const copilotHandler = lambdaApi({})(
       const attributes = await retrievalService.getAttributes(
         entityId,
         entityType,
-        reasons
+        reasons,
+        additionalCopilotInfo
       )
 
       return copilotService.getNarrative(

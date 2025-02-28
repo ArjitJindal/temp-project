@@ -1,11 +1,15 @@
 import { AttributeSet } from '../attributes/builder'
 import { BaseNarrativeService, ReasonNarrative } from '.'
+import { AdditionalCopilotInfoAdditionalSarInformation } from '@/@types/openapi-internal/AdditionalCopilotInfoAdditionalSarInformation'
 
-export class SarNarrativeService extends BaseNarrativeService<object> {
+export class SarNarrativeService extends BaseNarrativeService<AdditionalCopilotInfoAdditionalSarInformation> {
   public readonly type = 'REPORT'
   public readonly textType = 'PLAIN'
 
-  constructor(additionalInfo: object, attributes: AttributeSet) {
+  constructor(
+    additionalInfo: AdditionalCopilotInfoAdditionalSarInformation,
+    attributes: AttributeSet
+  ) {
     super(additionalInfo, attributes)
   }
 
@@ -24,7 +28,11 @@ export class SarNarrativeService extends BaseNarrativeService<object> {
   }
 
   public placeholderNarrative(): string {
-    return ''
+    const additionalSarInformation = this.additionalInfo.title
+    const additionalSarInformationDescription = this.additionalInfo.description
+    return `
+    The following narrative is for a field with title "${additionalSarInformation}" and description "${additionalSarInformationDescription}". Write a narrative that is relevant to the field.
+    `
   }
 
   public introductoryNarrative(): string {
@@ -33,6 +41,6 @@ export class SarNarrativeService extends BaseNarrativeService<object> {
         ? 'business'
         : 'customer'
 
-    return `The following is a template for suspicious activity report written by bank staff to justify why they are reporting a ${customerType} to the financial authorities.`
+    return `The following is a template for suspicious activity report written by bank staff to justify why they are reporting a ${customerType} to the financial authorities. This is basically a paragraph that explains why the bank is reporting the ${customerType}.`
   }
 }

@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { InputProps } from '@/components/library/Form';
 import { CopilotWrapperContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import TextArea from '@/components/library/TextArea';
 import { ExtendedSchema, UiSchemaNarrative } from '@/components/library/JsonSchemaEditor/types';
-import { SarContext } from '@/components/Sar/SarReportDrawer';
-import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
+import { useSarContext } from '@/components/Sar/SarReportDrawer';
+import { TransactionStepContextValue } from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
 
 interface Props extends InputProps<any> {
   schema: ExtendedSchema;
@@ -13,8 +13,8 @@ interface Props extends InputProps<any> {
 
 export default function NarrativeInput(props: Props) {
   const { schema, value, onChange, ...inputProps } = props;
-  const report = useContext(SarContext);
-
+  const data = useSarContext<TransactionStepContextValue>();
+  const report = data?.report;
   return (
     <>
       <TextArea
@@ -26,11 +26,18 @@ export default function NarrativeInput(props: Props) {
       />
       <div style={{ width: '100%' }}>
         <CopilotWrapperContent
-          reasons={CASE_REASONSS}
+          reasons={[]}
           entityId={report?.id || ''}
           entityType={'REPORT'}
           setNarrativeValue={(narrative) => onChange && onChange(narrative)}
           narrative={value}
+          additionalCopilotInfo={{
+            additionalSarInformation: {
+              title: schema.title,
+              description: schema.description,
+              transactionId: data?.metaData.activeTransactionId,
+            },
+          }}
         />
       </div>
     </>

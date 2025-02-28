@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSarContext } from '../..';
 import s from './index.module.less';
 import ArrayItemForm from '@/components/library/Form/ArrayItemForm';
 import { JsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
@@ -14,6 +15,10 @@ import { useFormState } from '@/components/library/Form/utils/hooks';
 import Button from '@/components/library/Button';
 import { Option } from '@/components/library/Select';
 
+export type TransactionStepContextValue = {
+  activeTransactionId: string;
+};
+
 interface Props {
   settings: Partial<JsonSchemaEditorSettings>;
   report: Report;
@@ -24,6 +29,7 @@ interface Props {
 export default function TransactionStep(props: Props) {
   const { settings, report, validationResult, alwaysShowErrors } = props;
   const formState = useFormState<{ id: string }[]>();
+  const data = useSarContext<TransactionStepContextValue>();
 
   const transactionIds = useMemo(
     () => formState.values?.map((x) => x.id) ?? [],
@@ -31,11 +37,16 @@ export default function TransactionStep(props: Props) {
   );
   const [activeTransaction, setActiveTransaction] = useState<string>(transactionIds[0] ?? 'ADD');
   const activeTransactionIndex = transactionIds.findIndex((id) => id === activeTransaction);
+
   useEffect(() => {
     if (activeTransaction != 'ADD' && !transactionIds.includes(activeTransaction)) {
       setActiveTransaction(transactionIds[0] ?? 'ADD');
     }
   }, [activeTransaction, transactionIds]);
+
+  useEffect(() => {
+    data?.setMetaData('activeTransactionId', activeTransaction);
+  }, [activeTransaction]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectableTransactionIds = useMemo(() => {
     const options: Option<string>[] = [];
@@ -60,13 +71,7 @@ export default function TransactionStep(props: Props) {
 
   return (
     <VerticalMenu
-      items={[
-        ...menuItems,
-        {
-          key: 'ADD',
-          title: 'Add transaction',
-        },
-      ]}
+      items={[...menuItems, { key: 'ADD', title: 'Add transaction' }]}
       active={activeTransaction}
       onChange={setActiveTransaction}
     >

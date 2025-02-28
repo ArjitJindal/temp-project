@@ -64,14 +64,13 @@ export class AutoNarrativeService {
     string += service.closingNarrative()
     string += `\nThe following template is for a document written by bank staff to justify their decision about reporting suspicious activity. Please rewrite this information in a natural, professional tone that sounds like it was written by an experienced financial professional.`
 
-    const completionMessages: OpenAI.ChatCompletionMessageParam[] = []
-
-    if (service.textType !== 'MARKDOWN') {
-      completionMessages.push({
-        role: 'system',
-        content: 'Please only output plaintext, markdown is not supported',
-      })
+    if (service.textType === 'MARKDOWN') {
+      string += `"You should only output markdown, no other text. Please do not include any other text than markdown."`
+    } else if (service.textType === 'PLAIN') {
+      string += `"You should only output plaintext, no markdown. Please do not include any other text than plaintext."`
     }
+
+    const completionMessages: OpenAI.ChatCompletionMessageParam[] = []
 
     completionMessages.push({ role: 'system', content: string })
 
@@ -103,7 +102,16 @@ export class AutoNarrativeService {
       }
 
       case 'REPORT': {
-        return new SarNarrativeService({}, attributes)
+        if (!additionalCopilotInfo.additionalSarInformation) {
+          throw new Error(
+            'additionalSarInformation is not supported for REPORT narrative'
+          )
+        }
+
+        return new SarNarrativeService(
+          additionalCopilotInfo.additionalSarInformation ?? {},
+          attributes
+        )
       }
 
       case 'TRANSACTION': {
@@ -125,7 +133,8 @@ export class AutoNarrativeService {
     attributes: AttributeSet,
     otherReason?: string
   ): string[] {
-    const reasonNarrs = compact(attributes.getAttribute('reasons'))?.map(
+    const reasons = compact(attributes.getAttribute('reasons'))
+    const reasonNarrs = compact(reasons)?.map(
       (reason: string) =>
         narrativeInstance.reasonNarratives().find((rn) => rn.reason === reason)
           ?.narrative
@@ -135,7 +144,7 @@ export class AutoNarrativeService {
       reasonNarrs.push(`for the other reason: ${otherReason}`)
     }
 
-    const reasonsNotInCaseReasons = compact(attributes.getAttribute('reasons'))
+    const reasonsNotInCaseReasons = compact(reasons)
 
     if (reasonsNotInCaseReasons.length) {
       reasonNarrs.push(
@@ -161,6 +170,7 @@ export class AutoNarrativeService {
     ])
 
     let response = ''
+
     for (let i = 0; i < 3; i++) {
       try {
         response = await prompt(promptWithContext)

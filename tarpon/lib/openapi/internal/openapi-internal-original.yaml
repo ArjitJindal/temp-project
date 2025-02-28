@@ -10093,6 +10093,15 @@ components:
           $ref: '#/components/schemas/AlertStatus'
         action:
           $ref: '#/components/schemas/RuleAction'
+        additionalSarInformation:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            transactionId:
+              type: string
     NarrativeResponse:
       title: NarrativeResponse
       type: object

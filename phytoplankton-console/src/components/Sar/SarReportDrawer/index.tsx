@@ -1,4 +1,4 @@
-import { createContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { useReportType } from '../utils';
@@ -19,7 +19,24 @@ import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 
 const DISABLE_SUBMIT_STATUSES: ReportStatus[] = ['SUBMITTING', 'SUBMISSION_REJECTED'];
 
-export const SarContext = createContext<Report | null>(null);
+export type SarContextValue<MetaData extends Record<string, unknown> = Record<string, unknown>> = {
+  report: Report;
+  metaData: MetaData;
+  setMetaData: (key: keyof MetaData, value: MetaData[keyof MetaData]) => void;
+};
+
+export const SarContext = createContext<SarContextValue<Record<string, unknown>> | null>(null);
+
+export const useSarContext = <
+  MetaData extends Record<string, unknown> = Record<string, unknown>,
+>() => {
+  const context = useContext(SarContext);
+  if (!context) {
+    return null;
+  }
+  return context as SarContextValue<MetaData>;
+};
+
 export const REPORT_STEP = 'REPORT_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const CUSTOMER_AND_ACCOUNT_DETAILS_STEP = 'CUSTOMER_AND_ACCOUNT_DETAILS_STEP';
@@ -177,9 +194,15 @@ export default function SarReportDrawer(props: Props) {
 
   const activeStepIndex = steps.findIndex(({ key }) => key === activeStep);
   const formId = useId(`form-`);
-
+  const [metaData, setMetaData] = useState<Record<string, unknown>>({});
   return (
-    <SarContext.Provider value={props.initialReport}>
+    <SarContext.Provider
+      value={{
+        report: props.initialReport,
+        metaData,
+        setMetaData: (key, value) => setMetaData((prev) => ({ ...prev, [key]: value })),
+      }}
+    >
       <Drawer
         isVisible={props.isVisible}
         onChangeVisibility={props.onChangeVisibility}

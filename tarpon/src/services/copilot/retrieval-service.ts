@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { BadRequest } from 'http-errors'
-import { uniq } from 'lodash'
+import { compact, uniq } from 'lodash'
 import { CurrencyService } from '../currency'
 import { AlertsService } from '../alerts'
 import { CaseService } from '@/services/cases'
@@ -26,6 +26,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
 
 export class RetrievalService {
   private readonly caseService: CaseService
@@ -104,11 +105,12 @@ export class RetrievalService {
   async getAttributes(
     entityId: string,
     entityType: NarrativeType,
-    reasons: Array<string>
+    reasons: Array<string>,
+    additionalCopilotInfo?: AdditionalCopilotInfo
   ) {
     switch (entityType) {
       case 'REPORT':
-        return this.getReportAttributes(entityId, reasons)
+        return this.getReportAttributes(entityId, additionalCopilotInfo)
       case 'CASE':
         return this.getCaseAttributes(entityId, reasons)
       case 'ALERT':
@@ -124,7 +126,7 @@ export class RetrievalService {
 
   private async getReportAttributes(
     reportId: string,
-    reasons: Array<string>
+    additionalCopilotInfo?: AdditionalCopilotInfo
   ): Promise<AttributeSet> {
     const report = await this.reportService.getReport(reportId)
     const caseItem = report.caseId
@@ -134,18 +136,21 @@ export class RetrievalService {
     const user = await this.userService.getUser(report.caseUserId, false)
 
     // Hydrate case transactions
-    const transactions = await this.txnRepository.getTransactionsByIds(
-      report.parameters.transactions?.map((t) => t.id) ||
-        caseItem?.caseTransactionsIds ||
-        []
-    )
+    const transactionId =
+      additionalCopilotInfo?.additionalSarInformation?.transactionId
+    const currentTransaction = transactionId
+      ? (await this.txnRepository.getTransactionById(transactionId)) ??
+        undefined
+      : undefined
 
     const exchangeRates = await new CurrencyService().getExchangeData()
 
     return await this.attributeBuilder.getAttributes({
-      transactions,
+      currentTransaction,
       user,
-      reasons,
+      reasons: compact(
+        uniq(currentTransaction?.hitRules.map((r) => r.ruleName))
+      ),
       _case: caseItem,
       exchangeRates: exchangeRates.rates,
     })

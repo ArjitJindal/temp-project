@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Progress } from 'antd';
 import s from './index.module.less';
 import CopilotSources from './CopilotSources';
@@ -287,6 +287,14 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
     copilotDisabledReason,
   } = props;
 
+  const shouldDisplayCopilot = useCallback(() => {
+    if (entityType === 'REPORT') {
+      return true;
+    }
+
+    return reasons.length > 0;
+  }, [entityType, reasons]);
+
   const [askLoading, setAskLoading] = useState(false);
   const [formatLoading, setFormatLoading] = useState(false);
   const [attributes, setAttributes] = useState<NarrativeResponseAttributes[]>([]);
@@ -343,9 +351,9 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
   };
   return (
     <>
-      {reasons.length > 0 && (
+      {shouldDisplayCopilot() && (
         <div className={s.copilotWrapper}>
-          {reasons.length > 0 && (
+          {shouldDisplayCopilot() && (
             <CopilotButtons
               askLoading={askLoading}
               onAskClick={onAsk}
