@@ -252,12 +252,14 @@ export const casesHandler = lambdaApi()(
       const { caseId, CaseEscalationRequest } = request
       const { alertEscalations, caseUpdateRequest } = CaseEscalationRequest
 
+      // if there are no alerts to escalate, simply escalate the case
       if (!alertEscalations?.length) {
         const response = await caseService.escalateCase(
           caseId,
           caseUpdateRequest
         )
         return response.result
+        // else escalate the alerts together with the case
       } else if (alertEscalations) {
         const response = await alertsService.escalateAlerts(
           caseId,

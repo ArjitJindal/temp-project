@@ -435,11 +435,20 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     }
 
+    // if the reuqest specifies the alerts to be escalated
+    // then we need to pick the first of the selected alerts
+    let firstAlert = c.alerts?.[0]
+    if (alertEscalations?.length) {
+      firstAlert = c.alerts?.filter((alert) =>
+        alertEscalations?.some(
+          (alertEscalation) => alertEscalation.alertId === alert.alertId
+        )
+      )?.[0]
+    }
     const existingReviewAssignments =
       statusEscalated(c.caseStatus) && !isStatusInReview(c.caseStatus)
-        ? c.alerts?.[0]?.reviewAssignments ?? []
+        ? firstAlert?.reviewAssignments ?? []
         : []
-
     const reviewAssignments = await this.getEscalationAssignments(
       c.caseStatus as CaseStatus,
       existingReviewAssignments,
