@@ -5,11 +5,9 @@ import { statusToOperationName } from './StatusChangeButton';
 import s from './index.module.less';
 import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInternal } from '@/apis';
 import Modal from '@/components/library/Modal';
-import Checkbox from '@/components/library/Checkbox';
 import Narrative, { NarrativeRef } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
-import Label from '@/components/library/Label';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -48,7 +46,6 @@ export interface Props {
   initialValues?: Partial<FormValues>;
   onClose: () => void;
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
-  displayCloseRelatedCases?: boolean;
   skipReasonsModal?: boolean;
   advancedOptions?: React.ReactNode;
 }
@@ -72,7 +69,6 @@ export default function StatusChangeModal(props: Props) {
     onClose,
     updateMutation,
     newStatusActionLabel,
-    displayCloseRelatedCases,
     skipReasonsModal = false,
     advancedOptions,
   } = props;
@@ -89,7 +85,6 @@ export default function StatusChangeModal(props: Props) {
   const isReopen = oldStatus === 'CLOSED' && newStatus === 'REOPENED';
   const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
   const [showErrors, setAlwaysShowErrors] = useState(false);
-  const [closeRelatedCase, setCloseRelatedCase] = useState(false);
   const [users] = useUsers();
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
 
@@ -164,20 +159,6 @@ export default function StatusChangeModal(props: Props) {
           onChange={setFormState}
           alertMessage={alertMessage}
           entityType={entityName}
-          extraFields={
-            displayCloseRelatedCases &&
-            statusEscalated(newStatus) && (
-              <Label
-                label={`Close related ${entityName === 'ALERT' ? 'cases' : 'alerts'}`}
-                position={'RIGHT'}
-              >
-                <Checkbox
-                  onChange={(newValue) => newValue && setCloseRelatedCase(true)}
-                  value={closeRelatedCase}
-                />
-              </Label>
-            )
-          }
           entityIds={entityIds || []}
           placeholder={`Write a narrative explaining the ${entityName.toLowerCase()} ${
             statusEscalated(newStatus) ? 'escalation' : 'closure'
@@ -211,7 +192,6 @@ export default function StatusChangeModal(props: Props) {
           updateMutation.mutate({
             ...formState.values,
             comment: sanitizedComment,
-            closeRelatedCase,
           });
           narrativeRef?.current?.reset();
         }}

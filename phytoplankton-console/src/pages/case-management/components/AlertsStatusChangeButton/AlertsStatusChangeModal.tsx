@@ -184,7 +184,6 @@ export default function AlertsStatusChangeModal(props: Props) {
       entityIds={entityIds}
       entityName={isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
       updateMutation={updateMutation}
-      displayCloseRelatedCases={!isEscatedTimes(props.caseId as string, 1)}
     />
   );
 }
