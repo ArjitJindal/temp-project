@@ -10,6 +10,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { TransactionViewConfig } from '../app'
 import {
+  DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseTransactionsRequest,
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsV2ListRequest,
@@ -40,6 +41,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
+import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 
 @traceable
 export class TransactionService {
@@ -188,6 +190,32 @@ export class TransactionService {
       originFundsInfo: transaction.originFundsInfo,
       alertIds: transaction.alertIds,
     }
+  }
+
+  public async getAlertsTransaction(
+    params: DefaultApiGetAlertTransactionListRequest
+  ) {
+    let filterPaymentDetailName: string | undefined
+    if (params.filterSanctionsHitId) {
+      const sanctionsHitsRepository = new SanctionsHitsRepository(
+        this.tenantId,
+        this.mongoDb
+      )
+      const hit = await sanctionsHitsRepository.searchHits({
+        filterHitIds: [params.filterSanctionsHitId],
+      })
+      filterPaymentDetailName = hit?.items?.[0]?.hitContext?.searchTerm
+    }
+
+    return this.getTransactionsList(
+      {
+        ...params,
+        filterPaymentDetailName,
+      },
+      {
+        includeUsers: true,
+      }
+    )
   }
 
   public async getTransactionsList(

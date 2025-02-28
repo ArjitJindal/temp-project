@@ -11,7 +11,13 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import { dayjs } from '@/utils/dayjs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
-import { Alert, CurrencyCode, TransactionTableItem, TransactionType } from '@/apis';
+import {
+  Alert,
+  CurrencyCode,
+  SanctionsDetails,
+  TransactionTableItem,
+  TransactionType,
+} from '@/apis';
 import { SelectionAction } from '@/components/library/Table/types';
 
 interface Props {
@@ -22,6 +28,7 @@ interface Props {
   escalatedTransactionIds?: string[];
   fitHeight?: boolean;
   selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
+  sanctionsDetailsFilter?: SanctionsDetails;
 }
 
 export default function TransactionsTab(props: Props) {
@@ -33,7 +40,9 @@ export default function TransactionsTab(props: Props) {
     selectedTransactionIds,
     selectionActions,
     fitHeight,
+    sanctionsDetailsFilter,
   } = props;
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
@@ -42,8 +51,13 @@ export default function TransactionsTab(props: Props) {
 
   const api = useApi();
 
+  const filterSanctionsHitIds = sanctionsDetailsFilter
+    ? sanctionsDetailsFilter.sanctionHitIds
+    : undefined;
+  const filterSanctionsHitId = filterSanctionsHitIds?.[0];
+
   const transactionsResponse = useCursorQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', { ...params }),
+    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', { ...params, filterSanctionsHitId }),
     async ({ from, view }) => {
       if (alert.alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
@@ -77,6 +91,7 @@ export default function TransactionsTab(props: Props) {
         afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
         filterDestinationCountries: params['destinationAmountDetails.country'],
         filterOriginCountries: params['originAmountDetails.country'],
+        filterSanctionsHitId: filterSanctionsHitId,
       });
     },
   );

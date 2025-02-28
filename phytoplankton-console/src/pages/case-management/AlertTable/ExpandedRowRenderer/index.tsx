@@ -42,6 +42,7 @@ function ExpandedRowRenderer(props: Props) {
   const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
     sanctionDetails[0]?.searchId,
   );
+  const sanctionsDetailsFilter = sanctionDetails.find((x) => x.searchId === sanctionsDetailsId);
 
   const tabItems = useAlertTabs({
     alert: alert,
@@ -53,6 +54,7 @@ function ExpandedRowRenderer(props: Props) {
     sanctionsSearchIdFilter: sanctionsDetailsId,
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
+    sanctionsDetailsFilter: sanctionsDetailsFilter,
   });
 
   return (

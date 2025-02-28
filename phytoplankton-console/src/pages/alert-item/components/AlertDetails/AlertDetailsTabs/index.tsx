@@ -62,6 +62,8 @@ export default function AlertDetailsTabs(props: Props) {
   const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
     sanctionDetails[0]?.searchId,
   );
+  const sanctionsDetailsFilter = sanctionDetails.find((x) => x.searchId === sanctionsDetailsId);
+
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
   const isCaseHavingEscalated = statusEscalated(alert.alertStatus);
@@ -125,6 +127,7 @@ export default function AlertDetailsTabs(props: Props) {
     selectionInfo: selectionInfo,
     selectionActions: selectionActions,
     fitTablesHeight: true,
+    sanctionsDetailsFilter: sanctionsDetailsFilter,
   });
 
   const filteredTabItems = useMemo(() => {

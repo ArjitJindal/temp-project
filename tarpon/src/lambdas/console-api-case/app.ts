@@ -204,14 +204,7 @@ export const casesHandler = lambdaApi()(
     handlers.registerGetAlertTransactionList(async (ctx, request) => {
       const transactionService = await TransactionService.fromEvent(event)
 
-      return await transactionService.getTransactionsList(
-        {
-          ...request,
-          alertId: request.alertId,
-          filterId: request.filterTransactionId,
-        },
-        { includeUsers: true }
-      )
+      return await transactionService.getAlertsTransaction(request)
     })
 
     handlers.registerGetAlertTransactionStats(

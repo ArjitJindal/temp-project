@@ -90,6 +90,7 @@ export interface TransactionsTableParams extends CommonParams {
   direction?: 'incoming' | 'outgoing' | 'all';
   showDetailedView?: boolean;
   view?: TableListViewEnum;
+  filterSanctionsHitIds?: string[];
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {

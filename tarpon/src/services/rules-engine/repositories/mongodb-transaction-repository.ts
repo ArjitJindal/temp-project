@@ -190,6 +190,54 @@ export class MongoDbTransactionRepository
       })
     }
 
+    if (params.filterPaymentDetailName) {
+      const createPaymentDetailsFilter = (prefix: string) => ({
+        $and: [
+          { [`${prefix}.method`]: { $exists: true } },
+          {
+            $or: [
+              {
+                $and: [
+                  { [`${prefix}.method`]: 'CARD' },
+                  {
+                    $expr: {
+                      $eq: [
+                        params.filterPaymentDetailName,
+                        {
+                          $concat: [
+                            {
+                              $ifNull: [`$${prefix}.nameOnCard.firstName`, ''],
+                            },
+                            ' ',
+                            {
+                              $ifNull: [`$${prefix}.nameOnCard.middleName`, ''],
+                            },
+                            ' ',
+                            { $ifNull: [`$${prefix}.nameOnCard.lastName`, ''] },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+              {
+                [`${prefix}.method`]: { $ne: 'CARD' },
+                [`${prefix}.name`]: params.filterPaymentDetailName,
+              },
+            ],
+          },
+        ],
+      })
+
+      conditions.push({
+        $or: [
+          createPaymentDetailsFilter('originPaymentDetails'),
+          createPaymentDetailsFilter('destinationPaymentDetails'),
+        ],
+      } as Filter<InternalTransaction>)
+    }
+
     if (params.filterOriginCountries) {
       conditions.push({
         'originAmountDetails.country': {

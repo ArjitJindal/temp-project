@@ -1460,6 +1460,16 @@ paths:
             type: boolean
           in: query
           name: includeRuleHitDetails
+        - schema:
+            type: string
+          in: query
+          name: filterPaymentDetailName
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleHitDirection
+          in: query
+          name: filterRuleHitDirection
   /transactions/{transactionId}/events:
     parameters:
       - schema:
@@ -4740,6 +4750,10 @@ paths:
             type: string
         in: query
         name: filterDestinationCountries
+      - schema:
+          type: string
+        in: query
+        name: filterSanctionsHitId
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

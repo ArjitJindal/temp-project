@@ -22,6 +22,7 @@ import { notEmpty } from '@/utils/array';
 import {
   Alert,
   SanctionHitStatusUpdateRequest,
+  SanctionsDetails,
   SanctionsHit,
   SanctionsHitListResponse,
   SanctionsHitStatus,
@@ -245,6 +246,7 @@ interface Props {
   selectionInfo?: SelectionInfo;
   selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
   fitTablesHeight?: boolean;
+  sanctionsDetailsFilter?: SanctionsDetails;
 }
 
 export function useAlertTabs(props: Props): TabItem[] {
@@ -262,6 +264,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionInfo,
     selectionActions,
     fitTablesHeight,
+    sanctionsDetailsFilter,
   } = props;
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
@@ -340,6 +343,7 @@ export function useAlertTabs(props: Props): TabItem[] {
                 onTransactionSelect={onTransactionSelect}
                 escalatedTransactionIds={escalatedTransactionIds}
                 selectionActions={transactionSelectionActions}
+                sanctionsDetailsFilter={sanctionsDetailsFilter}
               />
             ),
           };
@@ -494,6 +498,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionInfo,
     selectionActions,
     fitTablesHeight,
+    sanctionsDetailsFilter,
   ]);
 
   return tabs;
