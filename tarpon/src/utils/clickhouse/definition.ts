@@ -519,6 +519,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "updatedAt UInt64 MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))",
       "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
       "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+      "updatedAtClickhouse UInt64 MATERIALIZED COALESCE(toUInt64OrNull(JSON_VALUE(data, '$.updatedAtClickhouse')), 0)",
+      'updatedAtDifference UInt64 MATERIALIZED COALESCE(updatedAtClickhouse - updatedAt, 0)',
     ],
   },
   {
