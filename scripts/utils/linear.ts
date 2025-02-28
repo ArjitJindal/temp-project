@@ -51,6 +51,8 @@ export async function updateTicketStatusByID(
   const foundStatus = statuses.nodes.find(
     (s) => s.name.toLowerCase() === status.toLowerCase()
   )
+  const ticketState = await linearTicket.state?.then((s) => s.name)
+
   if (!foundStatus) {
     throw new Error(`Status ${status} not found`)
   }
@@ -59,13 +61,13 @@ export async function updateTicketStatusByID(
   }
   console.info(`Updating ticket ${linearTicket.id} to status ${status}`)
 
-  if (ifStatusIgnore?.includes(status)) {
+  if (ticketState && ifStatusIgnore?.includes(ticketState as TicketStatus)) {
     console.info(`Skipping ticket ${ticketId} update to status ${status}`)
     return
   }
 
   await linearClient.updateIssue(linearTicket.id, {
-    stateId: foundStatus.id,
+    stateId: foundStatus?.id,
   })
   console.info(`Ticket '${ticketId}' updated to '${status}' status`)
 }
