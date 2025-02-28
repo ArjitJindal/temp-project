@@ -330,7 +330,7 @@ export class ListRepository {
     if (!requestedVersion) {
       const header = await this.getListHeader(listId)
       if (header == null) {
-        throw new Error(`List doesn't exist`)
+        throw new createHttpError.NotFound(`List ${listId} not found`)
       }
       requestedVersion = header.version
     }

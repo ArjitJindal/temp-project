@@ -43,23 +43,23 @@ export const listsHandler = lambdaApi()(
       async () => await listService.getListHeaders('BLACKLIST')
     )
 
-    handlers.registerPostWhiteList(
-      async (ctx, request) =>
-        await listService.createList(
-          'WHITELIST',
-          request.NewListPayload.subtype,
-          request.NewListPayload.data
-        )
-    )
+    handlers.registerPostWhiteList(async (ctx, request) => {
+      const result = await listService.createList(
+        'WHITELIST',
+        request.NewListPayload.subtype,
+        request.NewListPayload.data
+      )
+      return result.result
+    })
 
-    handlers.registerPostBlacklist(
-      async (ctx, request) =>
-        await listService.createList(
-          'BLACKLIST',
-          request.NewListPayload.subtype,
-          request.NewListPayload.data
-        )
-    )
+    handlers.registerPostBlacklist(async (ctx, request) => {
+      const result = await listService.createList(
+        'BLACKLIST',
+        request.NewListPayload.subtype,
+        request.NewListPayload.data
+      )
+      return result.result
+    })
 
     handlers.registerGetWhitelistListHeader(async (ctx, request) => {
       const list = await listService.getListHeader(request.listId)
@@ -82,13 +82,15 @@ export const listsHandler = lambdaApi()(
       return list
     })
 
-    handlers.registerDeleteWhiteList(
-      async (ctx, request) => await listService.deleteList(request.listId)
-    )
+    handlers.registerDeleteWhiteList(async (ctx, request) => {
+      const result = await listService.deleteList(request.listId)
+      return result.result
+    })
 
-    handlers.registerDeleteBlacklist(
-      async (ctx, request) => await listService.deleteList(request.listId)
-    )
+    handlers.registerDeleteBlacklist(async (ctx, request) => {
+      const result = await listService.deleteList(request.listId)
+      return result.result
+    })
 
     handlers.registerClearWhiteListItems(async (ctx, request) => {
       await listService.clearListItems(request.listId)
@@ -138,25 +140,37 @@ export const listsHandler = lambdaApi()(
       })
     })
 
-    handlers.registerPostWhiteListItem(
-      async (ctx, request) =>
-        await listService.setListItem(request.listId, request.ListItem)
-    )
+    handlers.registerPostWhiteListItem(async (ctx, request) => {
+      const result = await listService.updateOrCreateListItem(
+        request.listId,
+        request.ListItem
+      )
+      return result.result
+    })
 
-    handlers.registerPostBlacklistItem(
-      async (ctx, request) =>
-        await listService.setListItem(request.listId, request.ListItem)
-    )
+    handlers.registerPostBlacklistItem(async (ctx, request) => {
+      const result = await listService.updateOrCreateListItem(
+        request.listId,
+        request.ListItem
+      )
+      return result.result
+    })
 
-    handlers.registerDeleteWhiteListItem(
-      async (ctx, request) =>
-        await listService.deleteListItem(request.listId, request.key)
-    )
+    handlers.registerDeleteWhiteListItem(async (ctx, request) => {
+      const result = await listService.deleteListItem(
+        request.listId,
+        request.key
+      )
+      return result.result
+    })
 
-    handlers.registerDeleteBlacklistItem(
-      async (ctx, request) =>
-        await listService.deleteListItem(request.listId, request.key)
-    )
+    handlers.registerDeleteBlacklistItem(async (ctx, request) => {
+      const result = await listService.deleteListItem(
+        request.listId,
+        request.key
+      )
+      return result.result
+    })
 
     handlers.registerWhiteListImportCsv(async (ctx, request) => {
       return await listService.importCsvfromS3(

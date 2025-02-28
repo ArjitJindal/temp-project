@@ -58,28 +58,28 @@ describe('Bulk upload', () => {
   test('Create whitelist', async () => {
     const listService = await getService(TEST_TENANT_ID)
     const list = await listService.createList('WHITELIST', 'IBAN_NUMBER')
-    expect(list.header.size).toEqual(0)
+    expect(list.result.header.size).toEqual(0)
     const result = await listService.importCsvFromStream(
-      list.listId,
+      list.result.listId,
       stringStream(`DE111111\nUS666666\n`)
     )
     expect(result.successRows).toEqual(2)
-    const newList = await listService.getListHeader(list.listId)
+    const newList = await listService.getListHeader(list.result.listId)
     expect(newList?.size).toEqual(2)
   })
   describe('Metadata synching', () => {
     test('User list should be fulfilled with user data', async () => {
       const listService = await getService(TEST_TENANT_ID)
       const list = await listService.createList('WHITELIST', 'USER_ID')
-      expect(list.header.size).toEqual(0)
+      expect(list.result.header.size).toEqual(0)
       const csv = [`user01`, `unknown`, `user02`].join('\n')
       const result = await listService.importCsvFromStream(
-        list.listId,
+        list.result.listId,
         stringStream(csv)
       )
       expect(result.successRows).toEqual(3)
 
-      const listItems = await listService.getListItems(list.listId)
+      const listItems = await listService.getListItems(list.result.listId)
 
       expect(listItems.count).toEqual(3)
       expect(listItems.items).toEqual(
@@ -102,19 +102,19 @@ describe('Bulk upload', () => {
     test('Check for large CSV files with most users unknown ', async () => {
       const listService = await getService(TEST_TENANT_ID)
       const list = await listService.createList('WHITELIST', 'USER_ID')
-      expect(list.header.size).toEqual(0)
+      expect(list.result.header.size).toEqual(0)
       const csv = ['user01', ...new Array(300), 'user02']
         .map((x, i) => x || `unknown#${i}`)
         .join('\n')
       const result = await listService.importCsvFromStream(
-        list.listId,
+        list.result.listId,
         stringStream(csv)
       )
       expect(result.successRows).toEqual(302)
 
       const allItems: ListItem[] = []
       for await (const item of iterateItems((pagination) =>
-        listService.getListItems(list.listId, pagination)
+        listService.getListItems(list.result.listId, pagination)
       )) {
         allItems.push(item)
       }
@@ -137,12 +137,12 @@ describe('Bulk upload', () => {
       // Load CSV data
       const listService = await getService(TEST_TENANT_ID)
       const list = await listService.createList('WHITELIST', 'USER_ID')
-      expect(list.header.size).toEqual(0)
+      expect(list.result.header.size).toEqual(0)
       const csv = [...allUsers, ...new Array(100)]
         .map((x, i) => x?.userId || `unknown#${i}`)
         .join('\n')
       const result = await listService.importCsvFromStream(
-        list.listId,
+        list.result.listId,
         stringStream(csv)
       )
       expect(result.successRows).toEqual(302)
@@ -150,7 +150,7 @@ describe('Bulk upload', () => {
       // Fetch all items
       const allItems: ListItem[] = []
       for await (const item of iterateItems((pagination) =>
-        listService.getListItems(list.listId, pagination)
+        listService.getListItems(list.result.listId, pagination)
       )) {
         allItems.push(item)
       }
@@ -200,10 +200,10 @@ describe('Bulk upload', () => {
       // Load CSV data
       const listService = await getService(TEST_TENANT_ID)
       const list = await listService.createList('WHITELIST', 'USER_ID')
-      expect(list.header.size).toEqual(0)
+      expect(list.result.header.size).toEqual(0)
       const csv = `${newUser1.userId}\n${newUser2.userId}`
       const result = await listService.importCsvFromStream(
-        list.listId,
+        list.result.listId,
         stringStream(csv)
       )
       expect(result.successRows).toEqual(2)
@@ -211,7 +211,7 @@ describe('Bulk upload', () => {
       // Check that first user fulfilled and second is not
       {
         const listItem1 = await listService.getListItem(
-          list.listId,
+          list.result.listId,
           newUser1.userId
         )
         expect(listItem1).toEqual({
@@ -219,7 +219,7 @@ describe('Bulk upload', () => {
           metadata: { userFullName: 'Vladimir Putin' },
         })
         const listItem2 = await listService.getListItem(
-          list.listId,
+          list.result.listId,
           newUser2.userId
         )
         expect(listItem2).toEqual({
@@ -240,12 +240,12 @@ describe('Bulk upload', () => {
       // Save second user
       await userRepository.saveUserMongo(newUser2 as InternalConsumerUser)
       // Sync list
-      await listService.syncListMetadata(list.listId)
+      await listService.syncListMetadata(list.result.listId)
 
       // Check that both users synched with list
       {
         const listItem1 = await listService.getListItem(
-          list.listId,
+          list.result.listId,
           newUser1.userId
         )
         expect(listItem1).toEqual({
@@ -253,7 +253,7 @@ describe('Bulk upload', () => {
           metadata: { userFullName: 'Vova Putin' },
         })
         const listItem2 = await listService.getListItem(
-          list.listId,
+          list.result.listId,
           newUser2.userId
         )
         expect(listItem2).toEqual({

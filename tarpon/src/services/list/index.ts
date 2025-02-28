@@ -41,6 +41,7 @@ import { getUserName } from '@/utils/helpers'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { ListUpdatedDetails } from '@/@types/openapi-public/ListUpdatedDetails'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -89,18 +90,28 @@ export class ListService {
     })
   }
 
+  @auditLog('LIST', 'LIST_HEADER', 'CREATE')
   public async createList(
     listType: ListType,
     subtype: ListSubtype,
     newList: ListData = {},
     mannualListId?: string
-  ): Promise<ListExisted> {
-    return await this.listRepository.createList(
+  ): Promise<AuditLogReturnData<ListExisted>> {
+    const list = await this.listRepository.createList(
       listType,
       subtype,
       newList,
       mannualListId
     )
+    return {
+      result: list,
+      entities: [
+        {
+          entityId: list.listId,
+          newImage: list,
+        },
+      ],
+    }
   }
 
   private async validateAndHandleReRunTriggers(
@@ -118,45 +129,120 @@ export class ListService {
     }
   }
 
-  public async setListItem(listId: string, item: ListItem): Promise<void> {
-    const data = await this.listRepository.setListItem(listId, item)
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
+  public async setListItem(
+    listId: string,
+    item: ListItem
+  ): Promise<AuditLogReturnData<void, ListItem>> {
+    await this.listRepository.setListItem(listId, item)
     // To rerun risk scores for user
     await this.validateAndHandleReRunTriggers(listId, { items: [item] })
     await this.sendListUpdatedWebhook(listId, 'SET', [item])
-    return data
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: item,
+        },
+      ],
+    }
   }
 
-  public async setListItems(listId: string, items: ListItem[]): Promise<void> {
-    const data = await this.listRepository.setListItems(listId, items)
-    // To rerun risk scores for user
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
+  public async setListItems(
+    listId: string,
+    items: ListItem[]
+  ): Promise<AuditLogReturnData<void, ListItem[]>> {
+    await this.listRepository.setListItems(listId, items)
     await this.validateAndHandleReRunTriggers(listId, { items })
     await this.sendListUpdatedWebhook(listId, 'SET', items)
-    return data
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: items,
+        },
+      ],
+    }
   }
 
-  public async deleteListItem(listId: string, itemId: string): Promise<void> {
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
+  public async deleteListItem(
+    listId: string,
+    itemId: string
+  ): Promise<AuditLogReturnData<void, ListItem>> {
     const existingItem = await this.listRepository.getListItem(listId, itemId)
     if (!existingItem) {
-      return
+      return {
+        result: undefined,
+        entities: [],
+      }
     }
     await this.listRepository.deleteListItem(listId, itemId)
     // To re run risk scoring on triggers
     await this.validateAndHandleReRunTriggers(listId, { items: [existingItem] })
     await this.sendListUpdatedWebhook(listId, 'UNSET', [existingItem])
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: undefined,
+          oldImage: existingItem,
+        },
+      ],
+    }
   }
 
-  public async deleteList(listId: string) {
+  @auditLog('LIST', 'LIST_HEADER', 'DELETE')
+  public async deleteList(
+    listId: string
+  ): Promise<AuditLogReturnData<void, ListExisted>> {
+    const oldList = await this.listRepository.getListHeader(listId)
+    const oldItems = await this.listRepository.getListItems(listId)
     await this.listRepository.deleteList(listId)
     await this.sendListUpdatedWebhook(listId, 'CLEAR')
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: undefined,
+          oldImage: oldList
+            ? {
+                listId,
+                header: oldList,
+                items: oldItems.items,
+              }
+            : undefined,
+        },
+      ],
+    }
   }
 
-  public async clearListItems(listId: string): Promise<void> {
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
+  public async clearListItems(
+    listId: string
+  ): Promise<AuditLogReturnData<void, ListItem[]>> {
+    const oldItems = await this.listRepository.getListItems(listId)
     await this.listRepository.clearListItems(listId)
     // To re run risk scoring on triggers
     await this.validateAndHandleReRunTriggers(listId, {
       clearedListId: listId,
     })
     await this.sendListUpdatedWebhook(listId, 'CLEAR')
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: undefined,
+          oldImage: oldItems.items,
+        },
+      ],
+    }
   }
 
   public async getListHeaders(
@@ -169,16 +255,87 @@ export class ListService {
     return await this.listRepository.getListHeader(listId)
   }
 
-  public async updateListHeader(list: ListHeader): Promise<void> {
-    return await this.listRepository.updateListHeader(list)
+  @auditLog('LIST', 'LIST_HEADER', 'UPDATE')
+  public async updateListHeader(
+    list: ListHeader
+  ): Promise<AuditLogReturnData<void, ListHeader>> {
+    const oldList = await this.listRepository.getListHeader(list.listId)
+    await this.listRepository.updateListHeader(list)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: list.listId,
+          newImage: list,
+          oldImage: oldList ?? undefined,
+        },
+      ],
+    }
+  }
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
+  public async updateListItem(
+    listId: string,
+    item: ListItem
+  ): Promise<AuditLogReturnData<void, ListItem>> {
+    const oldItem = await this.listRepository.getListItem(listId, item.key)
+    await this.listRepository.updateListItems(listId, [
+      {
+        ...oldItem,
+        ...item,
+      },
+    ])
+    await this.sendListUpdatedWebhook(listId, 'SET', [item])
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: item,
+          oldImage: oldItem ?? undefined,
+        },
+      ],
+    }
   }
 
+  @auditLog('LIST', 'LIST_ITEM', 'UPDATE')
   public async updateListItems(
     listId: string,
     items: ListItem[]
-  ): Promise<void> {
+  ): Promise<AuditLogReturnData<void, ListItem[]>> {
+    const oldItems = await this.listRepository.getListItems(listId)
     await this.listRepository.updateListItems(listId, items)
     await this.sendListUpdatedWebhook(listId, 'SET', items)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: items,
+          oldImage: oldItems.items,
+        },
+      ],
+    }
+  }
+
+  public async updateOrCreateListItem(
+    listId: string,
+    item: ListItem
+  ): Promise<AuditLogReturnData<void, ListItem>> {
+    const listItem = await this.listRepository.getListItem(listId, item.key)
+    listItem
+      ? await this.updateListItem(listId, item)
+      : await this.setListItem(listId, item)
+    await this.sendListUpdatedWebhook(listId, 'SET', [item])
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: listId,
+          newImage: item,
+          oldImage: listItem ?? undefined,
+        },
+      ],
+    }
   }
 
   public async getListItems(
@@ -326,7 +483,8 @@ export class ListService {
             },
           }
         })
-        await this.updateListItems(listId, newItems)
+        await this.listRepository.updateListItems(listId, newItems)
+        await this.sendListUpdatedWebhook(listId, 'SET', newItems)
       }
     }
   }

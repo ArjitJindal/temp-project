@@ -14045,6 +14045,7 @@ components:
         - API-KEY
         - SAR
         - SLA
+        - LIST
     AuditLogActionEnum:
       title: AuditLogActionEnum
       type: string
@@ -14111,6 +14112,8 @@ components:
             - SAR_UPDATE
             - SAR_DELETE
             - RISK_FACTOR_V8
+            - LIST_HEADER
+            - LIST_ITEM
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
