@@ -1433,8 +1433,8 @@ export class CdkTarponStack extends cdk.Stack {
 
     mongoDbTriggerQueueConsumerAlias.addEventSource(
       new SqsEventSource(mongoDbConsumerQueue, {
-        batchSize: 1,
-        maxBatchingWindow: Duration.seconds(0),
+        batchSize: 50,
+        maxBatchingWindow: Duration.millis(500),
       })
     )
 
