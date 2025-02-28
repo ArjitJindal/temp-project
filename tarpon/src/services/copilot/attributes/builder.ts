@@ -40,7 +40,7 @@ export interface AttributeBuilder {
 // with a placeholder, leading to a jargon prompt. Fields like this are instead removed from the prompt.
 const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
   {
-    name: 'Robert Marsh',
+    name: 'Robert',
     websites: 'www.google.com',
   }
 
