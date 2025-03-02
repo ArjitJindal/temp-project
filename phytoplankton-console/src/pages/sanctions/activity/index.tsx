@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Row, Space } from 'antd';
 import s from './index.module.less';
 import { KpiCard } from './KpiCard';
@@ -6,8 +6,6 @@ import { useApi } from '@/api';
 import { SANCTIONS_SCREENING_DETAILS, SANCTIONS_SCREENING_STATS } from '@/utils/queries/keys';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { dayjs } from '@/utils/dayjs';
-import DatePicker from '@/components/ui/DatePicker';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   BooleanString,
@@ -16,7 +14,6 @@ import {
   SanctionsScreeningEntityStats,
 } from '@/apis';
 import { AllParams, TableColumn } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Tag from '@/components/library/Tag';
 import Id from '@/components/ui/Id';
@@ -36,11 +33,6 @@ type TableSearchParams = AllParams<{
   beforeTimestamp?: number;
 }>;
 
-const DEFAULT_DATE_RANGE_PARAMS = {
-  afterTimestamp: dayjs().subtract(1, 'month').valueOf(),
-  beforeTimestamp: dayjs().add(1, 'hour').valueOf(),
-};
-
 function getEntityName(entity: SanctionsScreeningEntity) {
   switch (entity) {
     case 'USER':
@@ -54,12 +46,8 @@ function getEntityName(entity: SanctionsScreeningEntity) {
   }
 }
 
-export const SanctionsScreeningActivity = () => {
+export const SanctionsScreeningActivity = ({ params, setParams }) => {
   const api = useApi({ debounce: 500 });
-  const [params, setParams] = useState<TableSearchParams>({
-    ...DEFAULT_PARAMS_STATE,
-    ...DEFAULT_DATE_RANGE_PARAMS,
-  });
   const statsResult = useQuery(
     SANCTIONS_SCREENING_STATS({
       afterTimestamp: params.afterTimestamp,
@@ -265,25 +253,6 @@ export const SanctionsScreeningActivity = () => {
 
   return (
     <>
-      <div className={s.datePicker}>
-        <DatePicker.RangePicker
-          value={[dayjs(params.afterTimestamp), dayjs(params.beforeTimestamp)]}
-          onChange={(range) => {
-            if (!range) {
-              setParams((prevState) => ({
-                ...prevState,
-                ...DEFAULT_DATE_RANGE_PARAMS,
-              }));
-              return;
-            }
-            setParams((prevState) => ({
-              ...prevState,
-              afterTimestamp: range?.[0]?.valueOf(),
-              beforeTimestamp: range?.[1]?.valueOf(),
-            }));
-          }}
-        />
-      </div>
       <AsyncResourceRenderer resource={statsResult.data}>
         {(response) => {
           const emptyState: SanctionsScreeningEntityStats = { screenedCount: 0, hitCount: 0 };

@@ -11,9 +11,26 @@ import SegmentedControl from '@/components/library/SegmentedControl';
 import WhitelistTab from '@/pages/sanctions/whitelist';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import { P } from '@/components/ui/Typography';
+import DatePicker from '@/components/ui/DatePicker';
+import { dayjs } from '@/utils/dayjs';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
+import { AllParams } from '@/components/library/Table/types';
+import { BooleanString, SanctionsScreeningEntity } from '@/apis';
 export type SanctionsType = 'manual' | 'rule';
-
+type TableSearchParams = AllParams<{
+  entity?: SanctionsScreeningEntity[];
+  isHit?: BooleanString;
+  isOngoingScreening?: BooleanString;
+  isNew?: BooleanString;
+  name?: string;
+  afterTimestamp?: number;
+  beforeTimestamp?: number;
+}>;
+const DEFAULT_DATE_RANGE_PARAMS = {
+  afterTimestamp: dayjs().subtract(1, 'month').valueOf(),
+  beforeTimestamp: dayjs().add(1, 'hour').valueOf(),
+};
 const SanctionsPage: React.FC = () => {
   const { type = 'manual-screening' } = useParams<'type'>();
   const { searchId } = useParams<'searchId'>();
@@ -29,7 +46,10 @@ const SanctionsPage: React.FC = () => {
   }, [activeType, setStoredActiveType]);
 
   const [searchTerm, setSearchTerm] = useState<string>('');
-
+  const [params, setParams] = useState<TableSearchParams>({
+    ...DEFAULT_PARAMS_STATE,
+    ...DEFAULT_DATE_RANGE_PARAMS,
+  });
   return (
     <PageWrapper
       header={
@@ -72,15 +92,37 @@ const SanctionsPage: React.FC = () => {
                   View screening history and results from both rule-based and manual screening
                   activities.
                 </P>
-                <SegmentedControl<SanctionsType>
-                  items={[
-                    { label: 'Rule', value: 'rule' },
-                    { label: 'Manual', value: 'manual' },
-                  ]}
-                  active={activeType}
-                  onChange={setActiveType}
-                />
-                {activeType === 'rule' && <SanctionsScreeningActivity />}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <SegmentedControl<SanctionsType>
+                    items={[
+                      { label: 'Rule', value: 'rule' },
+                      { label: 'Manual', value: 'manual' },
+                    ]}
+                    active={activeType}
+                    onChange={setActiveType}
+                  />
+                  {activeType === 'rule' && (
+                    <DatePicker.RangePicker
+                      value={[dayjs(params.afterTimestamp), dayjs(params.beforeTimestamp)]}
+                      onChange={(range) => {
+                        if (!range) {
+                          setParams((prevState) => ({
+                            ...prevState,
+                            ...DEFAULT_DATE_RANGE_PARAMS,
+                          }));
+                        }
+                        setParams((prevState) => ({
+                          ...prevState,
+                          afterTimestamp: range?.[0]?.valueOf(),
+                          beforeTimestamp: range?.[1]?.valueOf(),
+                        }));
+                      }}
+                    />
+                  )}
+                </div>
+                {activeType === 'rule' && (
+                  <SanctionsScreeningActivity params={params} setParams={setParams} />
+                )}
                 {activeType === 'manual' && <SanctionsSearchHistoryTable />}
               </PageWrapperContentContainer>
             ),
