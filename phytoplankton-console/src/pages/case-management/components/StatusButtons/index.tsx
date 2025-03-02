@@ -1,31 +1,31 @@
 import React from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
-import { TableSearchParams } from '../../types';
 import s from './style.module.less';
 import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import { AllParams } from '@/components/library/Table/types';
 import { RuleAction } from '@/apis';
+import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 
 interface Props {
-  params: AllParams<TableSearchParams>;
-  onChangeParams: (newParams: AllParams<TableSearchParams>) => void;
+  params: AllParams<TransactionsTableParams>;
+  onChangeParams: (newParams: AllParams<TransactionsTableParams>) => void;
 }
 export default function StatusButtons(props: Props) {
   const { onChangeParams, params } = props;
 
-  const options = useOptions(params);
-  const value = params.status?.[0] ?? 'SUSPEND';
+  const options = useOptions();
+  const value = params.status;
 
   return (
     <div className={s.root}>
-      <Dropdown
+      <Dropdown<RuleAction>
         options={options}
         onSelect={(option) => {
           onChangeParams({
             ...params,
-            status: [option.value as RuleAction],
+            status: option.value,
           });
         }}
       >
@@ -40,11 +40,8 @@ export default function StatusButtons(props: Props) {
   );
 }
 
-function useOptions(params: TableSearchParams): DropdownOption[] {
-  if (params.showCases !== 'PAYMENT_APPROVALS') {
-    return [];
-  }
-  return ['SUSPEND', 'ALLOW', 'BLOCK'].map((status) => ({
+function useOptions(): DropdownOption<RuleAction>[] {
+  return (['SUSPEND', 'ALLOW', 'BLOCK'] as const).map((status) => ({
     value: status,
     label: `${humanizeConstant(status)}ed`,
   }));

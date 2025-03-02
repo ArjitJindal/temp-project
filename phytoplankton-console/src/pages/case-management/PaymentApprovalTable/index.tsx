@@ -1,29 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import TransactionsTable, {
   transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import PaymentApprovalButton from '@/pages/case-management/components/PaymentApprovalButton';
-import { RuleAction, TransactionsResponse } from '@/apis';
+import { TransactionsResponse } from '@/apis';
 
 interface Props {
-  filterStatus?: Array<RuleAction>;
+  params: TransactionsTableParams;
+  onChangeParams: (newState: TransactionsTableParams) => void;
 }
 
 export default function PaymentApprovalsTable(props: Props) {
-  const { filterStatus = ['SUSPEND'] } = props;
-  const [params, setParams] = useState<TransactionsTableParams>({
-    ...DEFAULT_PARAMS_STATE,
-    sort: [['timestamp', 'descend']],
-  });
+  const { params, onChangeParams: setParams } = props;
   const api = useApi({ debounce: 500 });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
+  const filterStatus = [params.status ?? 'SUSPEND'];
   const queryKey = TRANSACTIONS_LIST({ ...params, filterStatus });
   const queryResult = useCursorQuery(queryKey, async ({ from }) => {
     return await api.getTransactionsList({
@@ -61,6 +58,7 @@ export default function PaymentApprovalsTable(props: Props) {
       onSelect={setSelectedIds}
       isExpandable
       paginationBorder
+      hideStatusFilter={true}
       selectionInfo={
         selectedIds.length
           ? { entityCount: selectedIds.length, entityName: 'transactions' }

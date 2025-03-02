@@ -86,7 +86,7 @@ export interface TransactionsTableParams extends CommonParams {
   'destinationAmountDetails.country'?: string[];
   'originPayment.country'?: string[];
   'destinationPayment.country'?: string[];
-  status?: RuleAction & 'all';
+  status?: RuleAction;
   direction?: 'incoming' | 'outgoing' | 'all';
   showDetailedView?: boolean;
   view?: TableListViewEnum;
@@ -172,7 +172,7 @@ export const transactionParamsToRequest = (
     filterProductType: productType,
     filterDestinationCountries: params['destinationPayment.country'],
     filterOriginCountries: params['originPayment.country'],
-    filterStatus: status && status !== 'all' ? [status] : undefined,
+    filterStatus: status ? [status] : undefined,
     includePaymentDetails: params.showDetailedView,
   };
   if (direction === 'outgoing') {
@@ -194,6 +194,7 @@ type Props = {
   selectedIds?: string[];
   onSelect?: (ids: string[]) => void;
   hideSearchForm?: boolean;
+  hideStatusFilter?: boolean;
   disableSorting?: boolean;
   headerSubtitle?: string;
   fitHeight?: boolean | number;
@@ -271,6 +272,7 @@ export default function TransactionsTable(props: Props) {
     queryResult,
     params,
     hideSearchForm,
+    hideStatusFilter,
     disableSorting,
     extraFilters,
     selectedIds,
@@ -427,7 +429,7 @@ export default function TransactionsTable(props: Props) {
               key: 'status',
               value: (entity) => entity.status,
               type: RULE_ACTION_STATUS,
-              filtering: true,
+              filtering: !hideStatusFilter,
             } as DerivedColumn<TransactionTableItem, RuleAction>,
           ]
         : [
@@ -435,7 +437,7 @@ export default function TransactionsTable(props: Props) {
               title: 'Status',
               key: 'status',
               type: RULE_ACTION_STATUS,
-              filtering: true,
+              filtering: !hideStatusFilter,
             }),
           ]),
       helper.simple<'originUser.id'>({
@@ -562,6 +564,7 @@ export default function TransactionsTable(props: Props) {
     showDetailsView,
     escalatedTransactions,
     riskClassificationValues,
+    hideStatusFilter,
   ]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [

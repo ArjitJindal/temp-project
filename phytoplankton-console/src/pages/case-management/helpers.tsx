@@ -1,6 +1,6 @@
 import { UserOutlined } from '@ant-design/icons';
 import { humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { map, range } from 'lodash';
+import { map, mapKeys, pickBy, range } from 'lodash';
 import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
@@ -26,6 +26,7 @@ import {
   SLAPolicy,
   SLAPolicyStatus,
 } from '@/apis';
+import { isValidTableListViewEnum } from '@/apis/models-custom/TableListViewEnum';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
@@ -37,6 +38,8 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { isPaymentMethod } from '@/utils/payments';
+import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -79,12 +82,24 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       filterCaseSlaPolicyStatus: params.filterCaseSlaPolicyStatus?.join(','),
       filterAlertSlaPolicyId: params.filterAlertSlaPolicyId?.join(','),
       filterAlertSlaPolicyStatus: params.filterAlertSlaPolicyStatus?.join(','),
+      ...(params.paymentApprovals
+        ? mapKeys(
+            paymentApprovalQueryAdapter.serializer(params.paymentApprovals),
+            (value, key) => PAYMENT_APPROVAL_KEY_PREFIX + key,
+          )
+        : {}),
     };
   },
   deserializer: (raw): TableSearchParams => {
     const showCases = raw.showCases;
     return {
       ...defaultQueryAdapter.deserializer(raw),
+      paymentApprovals: paymentApprovalQueryAdapter.deserializer(
+        mapKeys(
+          pickBy(raw, (value, key) => key.startsWith(PAYMENT_APPROVAL_KEY_PREFIX)),
+          (value, key) => key?.substring(PAYMENT_APPROVAL_KEY_PREFIX.length),
+        ),
+      ),
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
@@ -140,6 +155,80 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       filterAlertSlaPolicyStatus: raw.filterAlertSlaPolicyStatus?.split(',') as
         | SLAPolicyStatus[]
         | undefined,
+    };
+  },
+};
+
+const PAYMENT_APPROVAL_KEY_PREFIX = `paymentApproval_`;
+
+export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
+  serializer: (params) => {
+    return {
+      current: params.current,
+      timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      transactionId: params.transactionId,
+      type: params.type,
+      transactionState: params.transactionState?.join(','),
+      originCurrenciesFilter: params.originCurrenciesFilter?.join(','),
+      destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(','),
+      userId: params.userId,
+      tagKey: params.tagKey,
+      tagValue: params.tagValue,
+      originMethodFilter: params.originMethodFilter,
+      destinationMethodFilter: params.destinationMethodFilter,
+      originPaymentMethodId: params.originPaymentMethodId,
+      destinationPaymentMethodId: params.destinationPaymentMethodId,
+      'originPayment.paymentMethodId': params['originPayment.paymentMethodId'],
+      'destinationPayment.paymentMethodId': params['destinationPayment.paymentMethodId'],
+      transactionStatusFilter: params.transactionStatusFilter?.join(','),
+      ruleInstancesHitFilter: params.ruleInstancesHitFilter?.join(','),
+      productType: params.productType?.join(','),
+      'originAmountDetails.country': params['originAmountDetails.country']?.join(','),
+      'destinationAmountDetails.country': params['destinationAmountDetails.country']?.join(','),
+      'originPayment.country': params['originPayment.country']?.join(','),
+      'destinationPayment.country': params['destinationPayment.country']?.join(','),
+      status: params.status,
+      direction: params.direction,
+      showDetailedView: params.showDetailedView?.toString(),
+      view: params.view,
+    };
+  },
+  deserializer: (raw) => {
+    return {
+      ...defaultQueryAdapter.deserializer(raw),
+      current: raw.current,
+      timestamp: raw.timestamp
+        ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+        : undefined,
+      transactionId: raw.transactionId,
+      type: raw.type,
+      transactionState: raw.transactionState?.split(',').filter(isTransactionState),
+      originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
+      destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
+      userId: raw.userId,
+      tagKey: raw.tagKey,
+      tagValue: raw.tagValue,
+      originMethodFilter: isPaymentMethod(raw.originMethodFilter)
+        ? raw.originMethodFilter
+        : undefined,
+      destinationMethodFilter: isPaymentMethod(raw.destinationMethodFilter)
+        ? raw.destinationMethodFilter
+        : undefined,
+      originPaymentMethodId: raw.originPaymentMethodId,
+      destinationPaymentMethodId: raw.destinationPaymentMethodId,
+      'originPayment.paymentMethodId': raw['originPayment.paymentMethodId'],
+      'destinationPayment.paymentMethodId': raw['destinationPayment.paymentMethodId'],
+      transactionStatusFilter: raw.transactionStatusFilter?.split(',').filter(isRuleAction),
+      ruleInstancesHitFilter: raw.ruleInstancesHitFilter?.split(','),
+      productType: raw.productType?.split(','),
+      'originAmountDetails.country': raw['originAmountDetails.country']?.split(','),
+      'destinationAmountDetails.country': raw['destinationAmountDetails.country']?.split(','),
+      'originPayment.country': raw['originPayment.country']?.split(','),
+      'destinationPayment.country': raw['destinationPayment.country']?.split(','),
+      status: isRuleAction(raw.status) ? raw.status : undefined,
+      direction: raw.direction as 'incoming' | 'outgoing' | 'all' | undefined,
+      showDetailedView: raw.showDetailedView ? raw.showDetailedView === 'true' : undefined,
+      view: isValidTableListViewEnum(raw.view) ? raw.view : undefined,
     };
   },
 };

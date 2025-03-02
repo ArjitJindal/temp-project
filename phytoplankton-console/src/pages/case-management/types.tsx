@@ -14,6 +14,7 @@ import {
 } from '@/apis';
 import { CommonParams } from '@/components/library/Table/types';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
+import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 
 export type CommonCaseParams = {
   caseId: string;
@@ -62,4 +63,5 @@ export type TableSearchParams = CommonParams & {
   showCases?: ScopeSelectorValue;
   qaMode?: boolean;
   filterAlertIds?: string[];
+  paymentApprovals?: TransactionsTableParams;
 } & Partial<CommonCaseParams>;

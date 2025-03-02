@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useCallback, useEffect } from 'react';
 import CaseTableWrapper from './CaseTableWrapper';
 import s from './index.module.less';
 import { QAButton } from './QA/Dropdown';
@@ -9,12 +8,13 @@ import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapp
 import { useI18n } from '@/locales';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { makeUrl, parseQueryString } from '@/utils/routing';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams } from '@/components/library/Table/types';
-import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useDeepEqualEffect } from '@/utils/hooks';
 import ScopeSelector, {
+  isAlertScope,
+  isCasesScope,
+  isQaScope,
   ScopeSelectorValue,
 } from '@/pages/case-management/components/ScopeSelector';
 import StatusButtons from '@/pages/case-management/components/StatusButtons';
@@ -26,8 +26,10 @@ import QaTable from '@/pages/case-management/QA/Table';
 import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
-import { DerivedStatus } from '@/apis';
 import Label from '@/components/library/Label';
+import { applyUpdater, Updater } from '@/utils/state';
+import { useIsChanged } from '@/utils/hooks';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 
 export default function CaseManagementPage() {
@@ -35,90 +37,74 @@ export default function CaseManagementPage() {
   useCloseSidebarByDefault();
   const [qaMode, setQaMode] = useQaMode();
   const hasQaEnabled = useFeatureEnabled('QA');
-  const navigate = useNavigate();
   const auth0User = useAuth0User();
   const [users] = useUsers();
   const userAccount = users[auth0User.userId];
-  const parsedParams = queryAdapter.deserializer({
-    showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
-    ...parseQueryString(location.search),
-  });
-  const [params, setParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    ...parsedParams,
-    caseStatus: null,
-    alertStatus: null,
+
+  const [params, setParams] = useNavigationParams<AllParams<TableSearchParams>>({
+    queryAdapter: queryAdapter,
+    makeUrl: (rawQueryParams) => makeUrl('/case-management/cases', {}, rawQueryParams),
+    persist: {
+      id: 'case-management-navigation-params',
+    },
   });
 
-  useEffect(() => {
-    if (qaMode) {
-      setParams((params) => ({ ...params, showCases: 'QA_UNCHECKED_ALERTS' }));
-    } else {
-      setParams((params) => ({ ...params, showCases: 'ALL' }));
-    }
-  }, [qaMode]);
+  const userEscalationLevel = userAccount?.escalationLevel;
 
-  useEffect(() => {
-    setParams((params) => ({ ...params, alertStatus: null, caseStatus: null }));
-  }, [parsedParams.showCases]);
-
-  const pushParamsToNavigation = useCallback(
-    (params: TableSearchParams) => {
-      if (params.showCases === 'ALL' || params.showCases === 'MY') {
-        params.alertStatus = null;
-      } else {
-        params.caseStatus = null;
-      }
-
-      if (params.showCases === 'MY_ALERTS' || params.showCases === 'MY') {
-        params.assignedTo = undefined;
-      }
-      navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
-        replace: true,
+  const handleChangeParams = useCallback(
+    (paramsUpdater: Updater<AllParams<TableSearchParams>>) => {
+      setParams((prevState) => {
+        const newParams = applyUpdater(prevState, paramsUpdater);
+        // When changing type of scope - reset status filter
+        if (isAlertScope(newParams.showCases) && !isAlertScope(prevState.showCases)) {
+          newParams.alertStatus = ['OPEN'];
+          newParams.caseStatus = null;
+        } else if (isCasesScope(newParams.showCases) && !isCasesScope(prevState.showCases)) {
+          newParams.alertStatus = null;
+          // if users has escalation level then show relevant escalated cases
+          if (userEscalationLevel === 'L1') {
+            newParams.caseStatus = ['ESCALATED'];
+          } else if (userEscalationLevel === 'L2') {
+            newParams.caseStatus = ['ESCALATED_L2'];
+          } else {
+            newParams.caseStatus = ['OPEN'];
+          }
+        } else if (isQaScope(newParams.showCases)) {
+          newParams.alertStatus = ['CLOSED'];
+          newParams.caseStatus = null;
+        }
+        if (newParams.showCases === 'MY_ALERTS' || newParams.showCases === 'MY') {
+          newParams.assignedTo = undefined;
+        }
+        return newParams;
       });
     },
-    [navigate],
+    [setParams, userEscalationLevel],
   );
 
-  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
-    pushParamsToNavigation(newParams);
-  };
-
-  const getDefaultStatus = (param?: ScopeSelectorValue): DerivedStatus[] => {
-    if (param?.includes('QA')) {
-      return ['CLOSED'];
+  // When changing qa mode - change scope
+  const isQaModeChanged = useIsChanged(qaMode);
+  useEffect(() => {
+    if (isQaModeChanged) {
+      handleChangeParams((prevState) => {
+        if (qaMode && !isQaScope(prevState.showCases)) {
+          return {
+            ...prevState,
+            showCases: 'QA_UNCHECKED_ALERTS',
+          };
+        }
+        if (!qaMode && isQaScope(prevState.showCases)) {
+          return {
+            ...prevState,
+            showCases: 'ALL',
+          };
+        }
+        return prevState;
+      });
     }
-
-    // if users has escalation level then show relevant escalated cases
-    const userEscalationLevel = userAccount?.escalationLevel;
-    if (userEscalationLevel === 'L1') {
-      return ['ESCALATED'];
-    }
-    if (userEscalationLevel === 'L2') {
-      return ['ESCALATED_L2'];
-    }
-
-    return ['OPEN'];
-  };
+  }, [isQaModeChanged, qaMode, handleChangeParams]);
 
   const settings = useSettings();
-  useDeepEqualEffect(() => {
-    setParams((prevState: AllParams<TableSearchParams>) => ({
-      ...prevState,
-      ...parsedParams,
-      caseStatus:
-        prevState.caseStatus === null && !parsedParams.caseStatus
-          ? getDefaultStatus(parsedParams.showCases)
-          : parsedParams.caseStatus,
-      alertStatus:
-        prevState.alertStatus === null && !parsedParams.alertStatus
-          ? getDefaultStatus(parsedParams.showCases)
-          : parsedParams.alertStatus,
-      page: parsedParams.page ?? 1,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
-    }));
-  }, [parsedParams]);
 
   const normalModeItems: Item<ScopeSelectorValue>[] = [
     { value: 'ALL', label: 'All cases' },
@@ -173,7 +159,15 @@ export default function CaseManagementPage() {
             values={!qaMode ? normalModeItems : qaModeItems}
           />
           {!qaMode && params.showCases === 'PAYMENT_APPROVALS' && (
-            <StatusButtons params={params} onChangeParams={handleChangeParams} />
+            <StatusButtons
+              params={params.paymentApprovals ?? DEFAULT_PARAMS_STATE}
+              onChangeParams={(newParams) => {
+                handleChangeParams({
+                  ...params,
+                  paymentApprovals: newParams,
+                });
+              }}
+            />
           )}
           {qaMode && params.showCases === 'QA_UNCHECKED_ALERTS' && <QAButton params={params} />}
         </div>
@@ -225,7 +219,15 @@ function getTable(
     case 'PAYMENT_APPROVALS':
       return (
         <Authorized required={['transactions:details:read']} showForbiddenPage>
-          <PaymentApprovalsTable filterStatus={params.status} />
+          <PaymentApprovalsTable
+            params={params.paymentApprovals ?? DEFAULT_PARAMS_STATE}
+            onChangeParams={(newParams) => {
+              handleChangeParams({
+                ...params,
+                paymentApprovals: newParams,
+              });
+            }}
+          />
         </Authorized>
       );
     case 'QA_UNCHECKED_ALERTS':

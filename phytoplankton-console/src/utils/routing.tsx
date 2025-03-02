@@ -1,3 +1,9 @@
+import { useLocation, useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { StatePair } from '@/utils/state';
+import { useIsChanged } from '@/utils/hooks';
+import { useCurrentUser } from '@/utils/user-utils';
+
 export type RawQueryParams = { [key: string]: string | number | null | undefined };
 export type RawParsedQuery = { [key: string]: string | undefined };
 
@@ -95,3 +101,49 @@ export const getCaseUrl = (caseId: string, tab?: string) => {
   }
   return makeUrl(`/case-management/case/:caseId`, { caseId });
 };
+
+export function useNavigationParams<Params>(options: {
+  queryAdapter: Adapter<Params>;
+  makeUrl: (rawQueryParams?: RawQueryParams) => string;
+  replace?: boolean;
+  persist?: {
+    id: string;
+  };
+}): StatePair<Params> {
+  const { queryAdapter, makeUrl, replace = true, persist } = options;
+
+  const currentUser = useCurrentUser();
+  const persistId = persist?.id ? `${currentUser?.id ?? 'unauthorised'}-${persist?.id}` : null;
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const paramsState = useState<Params>(() => {
+    if (persistId != null && location.search === '') {
+      const savedDataItem = window.localStorage.getItem(persistId);
+      if (savedDataItem != null) {
+        try {
+          return JSON.parse(savedDataItem);
+        } catch (e) {
+          console.warn(
+            `Unable to parse navigation params from local storage, using default params`,
+          );
+        }
+      }
+    }
+    return queryAdapter.deserializer(parseQueryString(location.search));
+  });
+
+  const [params] = paramsState;
+
+  // When params changing, save them to local storage and update url
+  const isParamsChanged = useIsChanged(params);
+  useEffect(() => {
+    if (isParamsChanged && persistId != null) {
+      const url = makeUrl(queryAdapter.serializer(params));
+      window.localStorage.setItem(persistId, JSON.stringify(params));
+      navigate(url, { replace });
+    }
+  }, [queryAdapter, params, replace, navigate, makeUrl, persistId, isParamsChanged]);
+
+  return paramsState;
+}
