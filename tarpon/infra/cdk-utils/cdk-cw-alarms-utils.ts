@@ -668,11 +668,11 @@ export const createStateMachineAlarm = (
   zendutyCloudWatchTopic: Topic,
   stateMachineName: string
 ) => {
-  // Temporary enable alarm for dev (QA) env
   if (isDevUserStack) {
     return null
   }
   return new Alarm(context, `stateMachineFailedAlarm`, {
+    alarmName: `StepFunction-BatchJob-Failed`,
     metric: new Metric({
       namespace: 'AWS/States',
       metricName: 'ExecutionsFailed',
