@@ -38,7 +38,7 @@ paths:
 
         * `type`: Type of transaction (Ex: `WITHDRAWAL`, `DEPOSIT`, `TRANSFER` etc). 
 
-        * `transactionId` - Unique Identifier for the transaction. Flagright API will generate a `transactionId` if this field is left empty
+        * `transactionId` - Unique Identifier for the transaction. 
 
         * `timestamp` - UNIX timestamp in *milliseconds* of when the transaction took place
 
