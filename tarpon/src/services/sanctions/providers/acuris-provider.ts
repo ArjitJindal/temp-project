@@ -486,7 +486,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   )
                 ) && sanctionSearchTypes.includes('SANCTIONS')
             )
-            .map((evidence) => this.getOtherSources(evidence))
+            .map((evidence) => {
+              const evidenceName = entity.sanEntries.current.find((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )?.regime.name
+              return this.getOtherSources(evidence, evidenceName)
+            })
         : [],
       pepSources: this.hasScreeningType('PEP')
         ? entity.evidences
@@ -500,7 +507,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
                     .includes(evidenceId)) &&
                 sanctionSearchTypes.includes('PEP')
             )
-            .map((evidence) => this.getOtherSources(evidence))
+            .map((evidence) => {
+              const evidenceName = entity.pepEntries.current.find((pepEntry) =>
+                pepEntry.evidenceIds.includes(evidence.evidenceId)
+              )?.segment
+              return this.getOtherSources(evidence, evidenceName)
+            })
         : [],
       associates: entity.individualLinks.map((link) => ({
         name: this.getEntityName(link, entityType),
@@ -534,7 +546,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
                       )
                     )
                   )
-                  .map((evidence) => this.getOtherSources(evidence)),
+                  .map((evidence) => {
+                    const evidenceName = entity.relEntries.find((relEntry) =>
+                      relEntry.events.some((event) =>
+                        event.evidenceIds.includes(evidence.evidenceId)
+                      )
+                    )?.subcategory
+                    return this.getOtherSources(evidence, evidenceName)
+                  }),
               },
             ]
           : []),
@@ -577,6 +596,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           sanctionSearchTypes
         )
       ),
+      // pick evidence name from current.regime.name
       sanctionSearchTypes,
       sanctionsSources: this.hasScreeningType('SANCTIONS')
         ? entity.evidences
@@ -587,7 +607,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 )
               )
             )
-            .map((evidence) => this.getOtherSources(evidence))
+            .map((evidence) => {
+              const evidenceName = entity.sanEntries.current.find((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )?.regime.name
+              return this.getOtherSources(evidence, evidenceName)
+            })
         : [],
       associates: entity.businessLinks.map((link) => ({
         name: this.getEntityName(link, entityType),
@@ -620,7 +647,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
                       )
                     )
                   )
-                  .map((evidence) => this.getOtherSources(evidence)),
+                  .map((evidence) => {
+                    const evidenceName = entity.relEntries.find((relEntry) =>
+                      relEntry.events.some((event) =>
+                        event.evidenceIds.includes(evidence.evidenceId)
+                      )
+                    )?.subcategory
+                    return this.getOtherSources(evidence, evidenceName)
+                  }),
               },
             ]
           : []),
@@ -706,9 +740,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
     }
   }
 
-  private getOtherSources(evidence: AcurisEvidence): SanctionsSource {
+  private getOtherSources(
+    evidence: AcurisEvidence,
+    evidenceName?: string
+  ): SanctionsSource {
     const url = evidence.originalUrl || evidence.assetUrl
-    const name = evidence.title || url
+    const name = evidenceName || evidence.title || url
     return {
       url,
       createdAt: evidence.captureDateIso
