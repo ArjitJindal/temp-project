@@ -136,6 +136,8 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
     }
     case 'EMBEDDED':
       break;
+    case 'RULE_LOGIC':
+      break;
   }
   return serialize(result);
 };

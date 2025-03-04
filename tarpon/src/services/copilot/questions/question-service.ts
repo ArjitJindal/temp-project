@@ -225,7 +225,6 @@ export class QuestionService {
       paymentIdentifier,
       humanReadableId: username ?? 'payment details',
     }
-
     if (question.skipCache) {
       const response = await this.getQuestionResponse(
         ctx,
@@ -382,6 +381,10 @@ export class QuestionService {
     }
     if (question.type === 'EMBEDDED') {
       return common
+    }
+    if (question.type === 'RULE_LOGIC') {
+      const result = await question.aggregationPipeline(ctx, varObject)
+      return { ...common, properties: result.data, summary: result.summary }
     }
     if (question.type === 'SCREENING_COMPARISON') {
       throw new Error(`Not supported yet`)
