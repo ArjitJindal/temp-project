@@ -64,10 +64,8 @@ import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { RoleService } from '@/services/roles'
-import {
-  AlertsRepository,
-  FLAGRIGHT_SYSTEM_USER,
-} from '@/services/alerts/repository'
+import { AlertsRepository } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'

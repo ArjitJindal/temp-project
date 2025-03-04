@@ -27,24 +27,26 @@ export const rolesHandler = lambdaApi()(
       async () => await rolesService.getTenantRoles(tenantId)
     )
 
-    handlers.registerCreateRole(
-      async (ctx, request) =>
-        await rolesService.createRole(tenantId, request.CreateAccountRole)
-    )
+    handlers.registerCreateRole(async (ctx, request) => {
+      const response = await rolesService.createRole(
+        tenantId,
+        request.CreateAccountRole
+      )
+      return response.result
+    })
 
-    handlers.registerUpdateRole(
-      async (ctx, request) =>
-        await rolesService.updateRole(
-          tenantId,
-          request.roleId,
-          request.AccountRole
-        )
-    )
+    handlers.registerUpdateRole(async (ctx, request) => {
+      await rolesService.updateRole(
+        tenantId,
+        request.roleId,
+        request.AccountRole
+      )
+    })
 
-    handlers.registerDeleteRole(
-      async (ctx, request) =>
-        await rolesService.deleteRole(tenantId, request.roleId)
-    )
+    handlers.registerDeleteRole(async (ctx, request) => {
+      const response = await rolesService.deleteRole(tenantId, request.roleId)
+      return response.result
+    })
 
     handlers.registerGetRole(
       async (ctx, request) => await rolesService.getRole(request.roleId)

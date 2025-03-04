@@ -230,7 +230,7 @@ export const tenantsHandler = lambdaApi()(
       )
 
       const auditLog: AuditLog = {
-        type: 'ACCOUNT',
+        type: 'TENANT',
         action: 'UPDATE',
         timestamp: Date.now(),
         oldImage: tenantSettingsCurrent,

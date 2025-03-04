@@ -1,7 +1,7 @@
 import { PublishCommand } from '@aws-sdk/client-sns'
 import { MongoClient } from 'mongodb'
-import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { AuditLogRepository } from './repositories/auditlog-repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'

@@ -142,11 +142,12 @@ describe('Test Custom Roles Deletion and Updation', () => {
   })
   test('Test Custom Role creation,updation and deletion', async () => {
     const roleService = RoleService.getInstance(getDynamoDbClient())
-    const createdRole = await roleService.createRole(TEST_TENANT_ID, {
+    const createdRoleResponse = await roleService.createRole(TEST_TENANT_ID, {
       name: 'test-name',
       description: 'test-description',
       permissions: [],
     })
+    const createdRole = createdRoleResponse.result
     expect(createdRole).toEqual({
       id: 'test-id',
       name: 'test-name',
@@ -154,10 +155,22 @@ describe('Test Custom Roles Deletion and Updation', () => {
       permissions: [],
     })
     expect(TEST_ROLES.length).toEqual(3)
-    await roleService.updateRole(TEST_TENANT_ID, 'test-id', {
+
+    const updatedRoleResponse = await roleService.updateRole(
+      TEST_TENANT_ID,
+      'test-id',
+      {
+        name: 'test-name-updated',
+        description: 'test-description-updated',
+        id: 'test-id',
+        permissions: [],
+      }
+    )
+    const updatedRole = updatedRoleResponse.result
+    expect(updatedRole).toEqual({
+      id: 'test-id',
       name: 'test-name-updated',
       description: 'test-description-updated',
-      id: 'test-id',
       permissions: [],
     })
     expect(TEST_ROLES[2]).toEqual({
@@ -165,7 +178,13 @@ describe('Test Custom Roles Deletion and Updation', () => {
       name: 'test-tenant-id:test-name-updated',
       description: 'test-description-updated',
     })
-    await roleService.deleteRole(TEST_TENANT_ID, 'test-id')
+
+    const deletedRoleResponse = await roleService.deleteRole(
+      TEST_TENANT_ID,
+      'test-id'
+    )
+    const deletedRole = deletedRoleResponse.result
+    expect(deletedRole).toEqual(undefined)
     expect(TEST_ROLES.length).toEqual(2)
   })
 })

@@ -57,10 +57,8 @@ import {
   getLatestInvestigationTime,
   isCaseAvailable,
 } from '@/services/cases/utils'
-import {
-  AlertsRepository,
-  FLAGRIGHT_SYSTEM_USER,
-} from '@/services/alerts/repository'
+import { AlertsRepository } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { AlertsService } from '@/services/alerts'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'

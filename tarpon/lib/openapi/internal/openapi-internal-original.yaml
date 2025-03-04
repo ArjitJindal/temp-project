@@ -14035,8 +14035,10 @@ components:
       title: AuditLogType
       type: string
       enum:
+        - TENANT
         - RULE
         - ACCOUNT
+        - ROLE
         - CASE
         - USER
         - RISK_SCORING
@@ -14113,6 +14115,8 @@ components:
             - SAR_UPDATE
             - SAR_DELETE
             - RISK_FACTOR_V8
+            - ACCOUNT
+            - ROLE
             - LIST_HEADER
             - LIST_ITEM
         action:

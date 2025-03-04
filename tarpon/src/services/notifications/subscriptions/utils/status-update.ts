@@ -10,7 +10,7 @@ import {
   PartialNotification,
 } from '@/@types/notifications'
 import { UpdateNotification } from '@/@types/openapi-internal/UpdateNotification'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 
 export type CaseStatusUpdatePayload = NotificationRawPayload<

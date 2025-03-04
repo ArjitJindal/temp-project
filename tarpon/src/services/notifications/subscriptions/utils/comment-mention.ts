@@ -6,7 +6,7 @@ import {
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CommentMentionNotification } from '@/@types/openapi-internal/CommentMentionNotification'
 import { Notification } from '@/@types/openapi-internal/Notification'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 export const getCommentMentionNotification = (
   payload: NotificationRawPayload<Partial<Comment>, object>,
