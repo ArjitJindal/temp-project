@@ -1,4 +1,4 @@
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '../user'
 
 export const getInvestigationTimes = (
   scope: 'CASES' | 'ALERTS',

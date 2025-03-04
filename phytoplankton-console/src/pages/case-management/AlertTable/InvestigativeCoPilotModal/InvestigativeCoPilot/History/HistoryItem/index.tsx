@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { parseQuestionResponse, QuestionResponse } from '../../types';
+import { parseQuestionResponse, QuestionResponse, QuestionResponseRuleHit } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
 import HistoryItemTimeSeries from './HistoryItemTimeSeries';
@@ -146,6 +146,18 @@ function renderItem(
   }
   if (item.questionType === 'RULE_HIT') {
     return <HistoryItemRuleHit item={item} />;
+  }
+  if (item.questionType === 'RULE_LOGIC') {
+    const { properties } = item;
+    const itemResult = properties?.reduce((acc, item) => {
+      if (item.value !== undefined) {
+        if (item.key) {
+          acc[item.key] = item.value;
+        }
+      }
+      return acc;
+    }, {});
+    return <HistoryItemRuleHit item={itemResult as QuestionResponseRuleHit} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

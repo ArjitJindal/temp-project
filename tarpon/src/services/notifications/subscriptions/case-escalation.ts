@@ -9,7 +9,7 @@ import {
   CaseLogMetaDataType,
 } from '@/@types/audit-log'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { EscalationNotification } from '@/@types/openapi-internal/EscalationNotification'
 
 type Payload = NotificationRawPayload<

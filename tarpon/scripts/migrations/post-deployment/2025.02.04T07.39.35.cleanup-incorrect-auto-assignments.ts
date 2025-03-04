@@ -6,10 +6,8 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import {
-  AlertsRepository,
-  FLAGRIGHT_SYSTEM_USER,
-} from '@/services/alerts/repository'
+import { AlertsRepository } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { AccountsService } from '@/services/accounts'
 import { Alert } from '@/@types/openapi-internal/Alert'

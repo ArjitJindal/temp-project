@@ -9,10 +9,7 @@ import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-reposito
 import { Auth0TenantMetadata, InternalUserCreate, Tenant } from './repository'
 import { DynamoAccountsRepository } from './repository/dynamo'
 import { Auth0AccountsRepository } from './repository/auth0'
-import {
-  Account,
-  Account as ApiAccount,
-} from '@/@types/openapi-internal/Account'
+import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import {
@@ -37,6 +34,7 @@ import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePay
 import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 export type TenantBasic = {
   id: string
@@ -193,7 +191,7 @@ export class AccountsService {
   public async inviteAccount(
     organization: Tenant,
     values: AccountInvitePayload
-  ): Promise<ApiAccount> {
+  ): Promise<AuditLogReturnData<Account, Account, Account>> {
     const { role = 'analyst' } = values
     const inviteRole = role ?? 'analyst'
     if (inviteRole === 'root') {
@@ -218,10 +216,11 @@ export class AccountsService {
     return this.createAccount(organization, { ...values, role })
   }
 
+  @auditLog('ACCOUNT', 'ACCOUNT', 'CREATE')
   async createAccount(
     tenant: Tenant,
     params: InternalUserCreate
-  ): Promise<Account> {
+  ): Promise<AuditLogReturnData<Account, Account, Account>> {
     let account: Account | null = null
     try {
       account = await this.getAccountByEmail(params.email)
@@ -245,7 +244,16 @@ export class AccountsService {
       }
       throw e
     }
-    return account
+    return {
+      result: account,
+      entities: [
+        {
+          entityId: account.id,
+          oldImage: undefined,
+          newImage: account,
+        },
+      ],
+    }
   }
 
   private async createAccountInternal(
@@ -443,7 +451,17 @@ export class AccountsService {
     await this.cache.deleteAccountFromOrganization(tenant, account)
   }
 
-  async deleteUser(tenant: Tenant, idToDelete: string, reassignedTo: string) {
+  @auditLog('ACCOUNT', 'ACCOUNT', 'DELETE')
+  async deleteUser(
+    tenant: Tenant,
+    idToDelete: string,
+    reassignedTo: string
+  ): Promise<AuditLogReturnData<Account, Account, Account>> {
+    const account = await this.getAccount(idToDelete)
+    if (!account) {
+      throw new BadRequest(`Unable to find user by id: ${idToDelete}`)
+    }
+
     const mongodb = await getMongoDbClient()
     const userTenant = await this.getAccountTenant(idToDelete)
 
@@ -485,6 +503,17 @@ export class AccountsService {
     )
 
     await Promise.all(promises)
+
+    return {
+      result: account,
+      entities: [
+        {
+          entityId: account.id,
+          oldImage: account,
+          newImage: undefined,
+        },
+      ],
+    }
   }
 
   public async updateBlockedReason(
@@ -545,18 +574,25 @@ export class AccountsService {
     ) {
       throw new Forbidden(`It's not possible to set a root role`)
     }
-    return await this.patchUser(
+    const response = await this.patchUser(
       tenant,
       request.accountId,
       request.AccountPatchPayload
     )
+    return response.result
   }
 
+  @auditLog('ACCOUNT', 'ACCOUNT', 'UPDATE')
   async patchUser(
     tenant: Tenant,
     accountId: string,
     patch: AccountPatchPayload
-  ): Promise<Account> {
+  ): Promise<AuditLogReturnData<Account, Account, Account>> {
+    const oldAccount = await this.getAccount(accountId)
+    if (!oldAccount) {
+      throw new BadRequest(`Unable to find user by id: ${accountId}`)
+    }
+
     if (patch.role) {
       await this.roleService.setRole(tenant.id, accountId, patch.role)
     }
@@ -578,8 +614,19 @@ export class AccountsService {
       app_metadata: patchedData,
       role: patchedData.role,
     })
+
     await this.updateUserCache(tenant.id, accountId, patchedData)
-    return patchedUser
+
+    return {
+      result: patchedUser,
+      entities: [
+        {
+          entityId: patchedUser.id,
+          oldImage: oldAccount,
+          newImage: patchedUser,
+        },
+      ],
+    }
   }
 
   async getUserSettings(accountId: string): Promise<AccountSettings> {
@@ -609,11 +656,12 @@ export class AccountsService {
     }
   }
 
+  @auditLog('ACCOUNT', 'ACCOUNT', 'DEACTIVATE')
   async deactivateUser(
     tenantId: string,
     accountId: string,
     deactivate: boolean
-  ): Promise<Account | null> {
+  ): Promise<AuditLogReturnData<Account, Account, Account>> {
     await Promise.all([
       this.updateBlockedReason(
         tenantId,
@@ -626,10 +674,20 @@ export class AccountsService {
         blockedReason: deactivate ? 'DEACTIVATED' : undefined,
       }),
     ])
-
     const updatedUser = await this.getAccount(accountId)
-
-    return updatedUser
+    if (!updatedUser) {
+      throw new BadRequest(`Unable to find user by id: ${accountId}`)
+    }
+    return {
+      result: updatedUser,
+      entities: [
+        {
+          entityId: updatedUser.id,
+          oldImage: undefined,
+          newImage: updatedUser,
+        },
+      ],
+    }
   }
 
   async createAuth0Organization(

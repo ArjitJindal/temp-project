@@ -29,6 +29,10 @@ export interface QuestionResponseProperties extends QuestionResponseBase, Api.Pr
   questionType: 'PROPERTIES';
 }
 
+export interface QuestionResponseRuleLogic extends QuestionResponseBase, Api.Properties {
+  questionType: 'RULE_LOGIC';
+}
+
 export interface QuestionResponseEmbedded extends QuestionResponseBase {
   questionType: 'EMBEDDED';
 }
@@ -69,7 +73,8 @@ export type QuestionResponse =
   | QuestionResponseProperties
   | QuestionResponseEmbedded
   | QuestionResponseScreeningComparison
-  | QuestionResponseRuleHit;
+  | QuestionResponseRuleHit
+  | QuestionResponseRuleLogic;
 
 export function parseQuestionResponse(responses: Api.GetQuestionsResponse): QuestionResponse[] {
   return (
@@ -108,6 +113,12 @@ export function parseQuestionResponse(responses: Api.GetQuestionsResponse): Ques
       if (questionType === 'EMBEDDED') {
         return {
           questionType: 'EMBEDDED' as const,
+          ...rest,
+        };
+      }
+      if (questionType === 'RULE_LOGIC') {
+        return {
+          questionType: 'RULE_LOGIC' as const,
           ...rest,
         };
       }

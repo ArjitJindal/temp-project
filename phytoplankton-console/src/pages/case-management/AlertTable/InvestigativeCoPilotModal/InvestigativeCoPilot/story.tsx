@@ -32,6 +32,15 @@ export default function (): JSX.Element {
       logicAggregationVariables: fixture.aggregationVariables as LogicAggregationVariable[],
       logicEntityVariables: fixture.entityVariablesInUse,
     },
+    RULE_LOGIC: {
+      questionType: 'RULE_LOGIC',
+      title: 'Some title',
+      questionId: 'test2',
+      variables: [],
+      variableOptions: [],
+      createdById: 'test-user-id',
+      createdAt: new Date().getDate(),
+    },
     SCREENING_COMPARISON: {
       questionType: 'SCREENING_COMPARISON',
       title: 'SCREENING_COMPARISON answer title',

@@ -65,9 +65,6 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 
-export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
-export const API_USER = 'API'
-
 export interface AlertParams
   extends OptionalPagination<
     Omit<DefaultApiGetAlertListRequest, 'filterQaStatus'>

@@ -1,22 +1,22 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts/repository'
-import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  const auditLogCollection = db.collection(AUDITLOG_COLLECTION(tenant.id))
-  await auditLogCollection.updateMany(
-    { 'user.id': { $exists: false } },
-    { $set: { user: { id: FLAGRIGHT_SYSTEM_USER } } }
-  )
+  const collection = db.collection(AUDITLOG_COLLECTION(tenant.id))
+
+  // Update all documents where type is 'ACCOUNT' to 'TENANT'
+  await collection.updateMany({ type: 'ACCOUNT' }, { $set: { type: 'TENANT' } })
 }
 
 export const up = async () => {
   await migrateAllTenants(migrateTenant)
 }
+
 export const down = async () => {
-  // skip
+  // If needed, we could revert TENANT back to ACCOUNT here
+  // skip for now as specified
 }

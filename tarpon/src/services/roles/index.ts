@@ -17,6 +17,7 @@ import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { getContext } from '@/core/utils/context'
 import { Account } from '@/@types/openapi-internal/Account'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 @traceable
 export class RoleService {
@@ -69,10 +70,11 @@ export class RoleService {
     return roles.map((r) => transformRole(r, r.permissions))
   }
 
+  @auditLog('ROLE', 'ROLE', 'CREATE')
   async createRole(
     tenantId: string,
     inputRole: CreateAccountRole
-  ): Promise<AccountRole> {
+  ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
       params: inputRole,
@@ -81,14 +83,26 @@ export class RoleService {
       type: 'DATABASE',
       params: data,
     })
-    return transformRole(data, data.permissions)
+    const transformedRole = transformRole(data, data.permissions)
+    return {
+      result: transformedRole,
+      entities: [
+        {
+          entityId: transformedRole.id,
+          oldImage: undefined,
+          newImage: transformedRole,
+        },
+      ],
+    }
   }
 
+  @auditLog('ROLE', 'ROLE', 'UPDATE')
   async updateRole(
     tenantId: string,
     id: string,
     inputRole: AccountRole
-  ): Promise<void> {
+  ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
+    const oldRole = await this.getRole(id)
     await this.auth0.updateRole(tenantId, id, inputRole)
     await this.cache.updateRole(tenantId, id, inputRole)
     const accountsService = AccountsService.getInstance(this.dynamoDb)
@@ -99,7 +113,16 @@ export class RoleService {
         accountsService.patchUser(tenant, u.id, { role: inputRole.name })
       )
     )
-    return
+    return {
+      result: inputRole,
+      entities: [
+        {
+          entityId: id,
+          oldImage: oldRole,
+          newImage: inputRole,
+        },
+      ],
+    }
   }
 
   private validateRoleDeletion(
@@ -123,7 +146,12 @@ export class RoleService {
     }
   }
 
-  async deleteRole(tenantId: string, id: string): Promise<void> {
+  @auditLog('ROLE', 'ROLE', 'DELETE')
+  async deleteRole(
+    tenantId: string,
+    id: string
+  ): Promise<AuditLogReturnData<void, AccountRole, AccountRole>> {
+    const oldRole = await this.getRole(id)
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
@@ -138,6 +166,16 @@ export class RoleService {
     this.validateRoleDeletion(tenantId, role, users)
 
     await this.deleteRoleInternal(id)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: id,
+          oldImage: oldRole,
+          newImage: undefined,
+        },
+      ],
+    }
   }
 
   private async deleteRoleInternal(id: string) {

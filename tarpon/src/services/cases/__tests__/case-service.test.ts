@@ -14,10 +14,8 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
 import { AlertsService } from '@/services/alerts'
-import {
-  AlertsRepository,
-  FLAGRIGHT_SYSTEM_USER,
-} from '@/services/alerts/repository'
+import { AlertsRepository } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import * as Context from '@/core/utils/context'

@@ -3,7 +3,7 @@ import { keyBy, memoize } from 'lodash'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { AccountsService } from '../accounts'
-import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { traceable } from '@/core/xray'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import {

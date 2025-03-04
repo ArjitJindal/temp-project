@@ -1,5 +1,5 @@
 import { Account } from '@/@types/openapi-internal/Account'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 let accounts: Account[] = []
 

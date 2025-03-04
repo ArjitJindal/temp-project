@@ -50,10 +50,11 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsInvite(async (ctx, request) => {
-      return await accountsService.inviteAccount(
+      const response = await accountsService.inviteAccount(
         organization,
         request.AccountInvitePayload
       )
+      return response.result
     })
 
     handlers.registerAccountsResendInvite(async (ctx, request) => {
@@ -109,11 +110,12 @@ export const accountsHandler = lambdaApi()(
     )
 
     handlers.registerAccountsDeactivate(async (ctx, request) => {
-      return await accountsService.deactivateUser(
+      const response = await accountsService.deactivateUser(
         ctx.tenantId,
         request.accountId,
         request.InlineObject2.deactivate
       )
+      return response.result
     })
 
     handlers.registerAccountsResetPassword(async (ctx, request) => {

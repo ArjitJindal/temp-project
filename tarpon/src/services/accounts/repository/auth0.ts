@@ -301,15 +301,13 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           metadata: {
             ...tenant.metadata,
             ...(patch.mfaEnabled != null && {
-              mfaEnabled: patch.mfaEnabled ? 'true' : 'false',
+              mfaEnabled: patch.mfaEnabled,
             }),
             ...(patch.passwordResetDays != null && {
               passwordResetDays: patch.passwordResetDays.toString,
             }),
             ...(patch.isProductionAccessDisabled != null && {
-              isProductionAccessDisabled: patch.isProductionAccessDisabled
-                ? 'true'
-                : 'false',
+              isProductionAccessDisabled: patch.isProductionAccessDisabled,
             }),
           },
         }

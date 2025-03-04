@@ -1,6 +1,6 @@
 import { memoize } from 'lodash'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 const generatePolicyId = (index: number): string => `SLA-${index.toString()}`
 

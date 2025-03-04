@@ -10,7 +10,7 @@ import {
 } from '@/@types/notifications'
 import { AssignmentNotification } from '@/@types/openapi-internal/AssignmentNotification'
 import { Notification } from '@/@types/openapi-internal/Notification'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 export const getAssignmentNotification = (
   payload: NotificationRawPayload<

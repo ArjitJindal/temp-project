@@ -28,6 +28,7 @@ type FormValues = {
 };
 
 let SUGGESTIONS_ORDER: QuestionId[] = [
+  COPILOT_QUESTIONS.RULE_LOGIC,
   COPILOT_QUESTIONS.USER_DETAILS,
   COPILOT_QUESTIONS.ALERTS,
   COPILOT_QUESTIONS.TRS_SCORE,
@@ -192,6 +193,7 @@ export const SearchBar = (props: Props) => {
                     COPILOT_QUESTIONS.USER_DETAILS,
                     COPILOT_QUESTIONS.OPEN_HITS,
                     COPILOT_QUESTIONS.CLEARED_HITS,
+                    COPILOT_QUESTIONS.RULE_LOGIC,
                   ];
                 }
 

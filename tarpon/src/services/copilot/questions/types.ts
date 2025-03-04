@@ -11,7 +11,11 @@ import { PageSize } from '@/utils/pagination'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-
+import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { RuleType } from '@/@types/openapi-internal/RuleType'
+import { RuleMachineLearningVariable } from '@/@types/openapi-internal/RuleMachineLearningVariable'
 export type Variables = {
   [key: string]: (typeof QuestionVariable.prototype)['value']
 }
@@ -68,7 +72,7 @@ export type Question<T extends Variables> =
   | PropertiesQuestion<T>
   | EmbeddedQuestion<T>
   | ScreeningComparisonQuestion<T>
-
+  | RuleHitQuestion<T>
 export type AggregationQuestion<V extends Variables, D> = QuestionBase<V> & {
   aggregationPipeline: (
     context: InvestigationContext,
@@ -119,6 +123,18 @@ export type EmbeddedQuestion<V extends Variables> = {
 export type ScreeningComparisonQuestion<V extends Variables> = {
   type: 'SCREENING_COMPARISON'
 } & QuestionBase<V>
+export type RuleHitResponse = {
+  hitRulesDetails: HitRulesDetails
+  ruleLogic?: any
+  ruleSummary?: string
+  ruleType?: RuleType
+  logicAggregationVariables?: LogicAggregationVariable[]
+  logicEntityVariables?: LogicEntityVariableInUse[]
+  logicMlVariables?: RuleMachineLearningVariable[]
+}
+export type RuleHitQuestion<V extends Variables> = {
+  type: 'RULE_LOGIC'
+} & AggregationQuestion<V, any>
 
 export type Investigation = {
   alertId: string
