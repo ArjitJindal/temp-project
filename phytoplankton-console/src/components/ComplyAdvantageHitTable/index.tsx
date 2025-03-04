@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import { startCase } from 'lodash';
+import React, { useState, useMemo } from 'react';
+import { startCase, uniq } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { useHasNoSanctionsProviders, useSettings } from '../AppWrapper/Providers/SettingsProvider';
+import { humanizeSnakeCase, humanizeAuto } from '@flagright/lib/utils/humanize';
+import {
+  useFeatureEnabled,
+  useHasNoSanctionsProviders,
+  useSettings,
+} from '../AppWrapper/Providers/SettingsProvider';
 import ComplyAdvantageHitDetailsDrawer from './ComplyAdvantageHitDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -23,6 +27,9 @@ import Tag from '@/components/library/Tag';
 import { ID, STRING } from '@/components/library/Table/standardDataTypes';
 import { SanctionsEntity } from '@/apis';
 import Id from '@/components/ui/Id';
+import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
+import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -189,13 +196,77 @@ export default function SanctionsSearchTable(props: Props) {
     });
   }
 
+  const hasFeatureAcuris = useFeatureEnabled('ACURIS');
+  const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
+  const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+
+  // Generate options for each provider
+  const acurisOptions = useMemo(() => {
+    if (!hasFeatureAcuris) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'acuris')
+        ?.screeningTypes ?? ACURIS_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureAcuris]);
+
+  const openSanctionsOptions = useMemo(() => {
+    if (!hasFeatureOpenSanctions) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find(
+        (type) => type.provider === 'open-sanctions',
+      )?.screeningTypes ?? OPEN_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureOpenSanctions]);
+
+  const dowJonesOptions = useMemo(() => {
+    if (!hasFeatureDowJones) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'dowjones')
+        ?.screeningTypes ?? DOW_JONES_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureDowJones]);
+
+  const sanctionsOptions = useMemo(() => {
+    if (!hasFeatureSanctions || hasFeatureAcuris || hasFeatureOpenSanctions || hasFeatureDowJones) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find(
+        (type) => type.provider === 'comply-advantage',
+      )?.screeningTypes ?? SANCTIONS_SEARCH_TYPES
+    );
+  }, [
+    settings,
+    hasFeatureSanctions,
+    hasFeatureAcuris,
+    hasFeatureOpenSanctions,
+    hasFeatureDowJones,
+  ]);
+
+  const options = uniq([
+    ...openSanctionsOptions,
+    ...acurisOptions,
+    ...sanctionsOptions,
+    ...dowJonesOptions,
+  ]).map((option) => ({
+    label: humanizeAuto(option),
+    value: option,
+  }));
+
   if (!settings.sanctions?.customSearchProfileId) {
     extraFilters.push({
       title: 'Matched type',
       key: 'types',
       renderer: {
         kind: 'select',
-        options: SANCTIONS_SEARCH_TYPES.map((v) => ({ value: v, label: humanizeSnakeCase(v) })),
+        options: options,
         mode: 'MULTIPLE',
         displayMode: 'select',
       },
