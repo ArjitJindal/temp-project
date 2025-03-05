@@ -1,14 +1,14 @@
 import { Tooltip } from 'antd';
 import { useState } from 'react';
-import CasesStatusChangeModal from '../../components/CasesStatusChangeButton/CasesStatusChangeModal';
+import AlertStatusChangeModal from '../../components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import s from './index.module.less';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import { CaseStatus } from '@/apis';
 import Tag from '@/components/library/Tag';
-
 interface Props {
   confidence: number;
   caseIds: string[];
+  alertId?: string;
   newCaseStatus: CaseStatus;
   onSaved: () => void;
   isBlue?: boolean;
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
-  const { caseIds, onSaved, newCaseStatus, confidence } = props;
+  const { alertId, caseIds, onSaved, newCaseStatus, confidence } = props;
   const [isModalVisible, setModalVisible] = useState(false);
 
   return (
@@ -32,8 +32,9 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
           {confidence}% False positive
         </Tag>
       </Tooltip>
-      <CasesStatusChangeModal
-        entityIds={caseIds}
+      <AlertStatusChangeModal
+        entityIds={[alertId ?? '']}
+        caseId={caseIds[0]}
         isVisible={isModalVisible}
         newStatus={newCaseStatus}
         defaultReasons={newCaseStatus === 'CLOSED' ? ['False positive'] : []}

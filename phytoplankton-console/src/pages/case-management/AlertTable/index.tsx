@@ -376,6 +376,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       falsePositiveDetails.isFalsePositive &&
                       falsePositiveEnabled && (
                         <FalsePositiveTag
+                          alertId={entity.alertId}
                           caseIds={[entity.caseId].filter(notEmpty)}
                           confidence={falsePositiveDetails.confidenceScore}
                           newCaseStatus={'CLOSED'}
