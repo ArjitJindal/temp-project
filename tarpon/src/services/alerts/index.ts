@@ -623,8 +623,8 @@ export class AlertsService extends CaseAlertsCommonService {
       reviewAssignments: isStatusEscalatedL2
         ? uniqBy(
             [
-              ...reviewAssignments,
               ...(mainCaseAttributes.reviewAssignments ?? []),
+              ...reviewAssignments,
             ],
             'assigneeUserId'
           )

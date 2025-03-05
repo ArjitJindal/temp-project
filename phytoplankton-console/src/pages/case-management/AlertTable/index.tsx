@@ -67,7 +67,6 @@ import {
   commentsToString,
   findLastStatusForInReview,
   getAssignmentsToShow,
-  getEscalationLevel,
   getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
@@ -1176,7 +1175,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
         if (someEscalated && selectedAlertStatuses.size === 1) {
           const selectedEscalationLevels = new Set(
             Object.values(selectedItems).map((item) =>
-              getEscalationLevel(item.reviewAssignments ?? []),
+              statusEscalatedL2(item.alertStatus) ? 'L2' : 'L1',
             ),
           );
           if (selectedEscalationLevels.size > 1) {
