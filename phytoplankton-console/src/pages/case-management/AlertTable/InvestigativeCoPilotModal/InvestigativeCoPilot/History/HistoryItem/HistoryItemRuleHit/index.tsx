@@ -23,7 +23,11 @@ export default function HistoryItemRuleHit(props: Props) {
     logicEntityVariables,
     logicMlVariables,
     logicAggregationVariables,
+    ruleParameters,
   } = item;
+
+  // Extract individual parameters
+  const { fuzziness, screeningTypes } = ruleParameters || {};
 
   return (
     <div className={s.root}>
@@ -40,7 +44,26 @@ export default function HistoryItemRuleHit(props: Props) {
         <Form.Layout.Label title={'Rule action'}>
           <RuleActionStatus ruleAction={hitRulesDetails.ruleAction} />
         </Form.Layout.Label>
+        {!hitRulesDetails.ruleId?.startsWith('RC') && (
+          <>
+            <Form.Layout.Label title={'Fuzziness'}>
+              {fuzziness !== undefined ? fuzziness : 'N/A'}
+            </Form.Layout.Label>
+            <Form.Layout.Label title={'Screening Types'}>
+              {screeningTypes
+                ? screeningTypes.map((type, index) => (
+                    <React.Fragment key={index}>
+                      {type.replace(/_/g, ' ')}
+                      {index < screeningTypes.length - 1 ? ', ' : ''}
+                    </React.Fragment>
+                  ))
+                : 'N/A'}
+            </Form.Layout.Label>
+          </>
+        )}
       </div>
+
+      {/* Display Rule Logic and Summary for RC rules */}
       {ruleType && ruleLogic && hitRulesDetails.ruleId?.startsWith('RC') && (
         <>
           <div className={s.subtitle}>Rule logic</div>

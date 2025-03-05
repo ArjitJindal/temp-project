@@ -118,6 +118,7 @@ export function usePreloadedHistory(
         const isV8RuleInstance = v8Enabled && (ruleInstance?.logic || ruleInstance?.riskLevelLogic);
 
         let logic: any;
+        let parameters: any;
         if (
           isV8RuleInstance &&
           riskEnabled &&
@@ -125,12 +126,15 @@ export function usePreloadedHistory(
           ruleInstance.riskLevelLogic?.[riskLevel]
         ) {
           logic = ruleInstance.riskLevelLogic?.[riskLevel];
+          parameters = ruleInstance.riskLevelParameters?.[riskLevel];
         } else {
           logic = ruleInstance.logic;
+          parameters = ruleInstance.parameters;
         }
 
         result.ruleType = ruleInstance?.type;
         result.ruleLogic = logic;
+        result.ruleParameters = parameters;
         result.logicAggregationVariables = ruleInstance.logicAggregationVariables ?? [];
         result.logicEntityVariables = ruleInstance.logicEntityVariables ?? [];
         result.logicMlVariables = ruleInstance.logicMachineLearningVariables ?? [];

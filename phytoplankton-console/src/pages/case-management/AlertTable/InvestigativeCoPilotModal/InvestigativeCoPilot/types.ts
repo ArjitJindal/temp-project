@@ -3,6 +3,7 @@ import {
   HitRulesDetails,
   LogicAggregationVariable,
   LogicEntityVariableInUse,
+  RuleInstance,
   RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
@@ -41,6 +42,7 @@ export interface QuestionResponseRuleHit extends QuestionResponseBase {
   questionType: 'RULE_HIT';
   hitRulesDetails: HitRulesDetails;
   ruleLogic?: any;
+  ruleParameters?: RuleInstance['parameters'];
   ruleSummary?: string;
   ruleType?: RuleType;
   logicAggregationVariables?: LogicAggregationVariable[];
