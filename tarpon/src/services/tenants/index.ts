@@ -322,6 +322,29 @@ export class TenantService {
             ? { marketType: tenantData.sanctionsMarketType }
             : undefined,
         }),
+
+        ...(tenantData.sanctionsMarketType ||
+        tenantData.sanctionsScreeningTypes ||
+        tenantData.sanctionsEntityTypes
+          ? {
+              sanctions: {
+                ...(tenantData.sanctionsMarketType && {
+                  marketType: tenantData.sanctionsMarketType,
+                }),
+                providerScreeningTypes: [
+                  {
+                    provider: 'comply-advantage',
+                    ...(tenantData.sanctionsScreeningTypes && {
+                      screeningTypes: tenantData.sanctionsScreeningTypes,
+                    }),
+                    ...(tenantData.sanctionsEntityTypes && {
+                      entityTypes: tenantData.sanctionsEntityTypes,
+                    }),
+                  },
+                ],
+              },
+            }
+          : {}),
       }
 
       const dynamoDb = this.dynamoDb

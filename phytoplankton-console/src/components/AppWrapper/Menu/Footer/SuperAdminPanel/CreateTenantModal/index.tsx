@@ -1,7 +1,9 @@
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Typography } from 'antd';
 import { isValidEmail } from '@flagright/lib/utils';
 import { featureDescriptions } from '../../../Footer/SuperAdminPanel/index';
+import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
 import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
@@ -13,6 +15,7 @@ import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
+import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -28,6 +31,8 @@ interface FormDetails {
   featureFlags: Feature[];
   demoMode: boolean;
   sanctionsMarketType?: SanctionsSettingsMarketType;
+  sanctionsScreeningTypes?: string[];
+  sanctionsEntityTypes?: string[];
   siloDataMode: boolean;
 }
 
@@ -92,7 +97,14 @@ export const CreateTenantModal = (props: Props) => {
     const auth0DisplayName = formDetails.auth0DisplayName.replaceAll(' ', '');
     const auth0Domain = formDetails.auth0Domain.replaceAll(' ', '');
     const emailsOfAdmins = formDetails.emailsOfAdmins.map((email) => email.replaceAll(' ', ''));
-    const { featureFlags, demoMode, sanctionsMarketType, siloDataMode } = formDetails;
+    const {
+      featureFlags,
+      demoMode,
+      sanctionsMarketType,
+      siloDataMode,
+      sanctionsScreeningTypes,
+      sanctionsEntityTypes,
+    } = formDetails;
 
     if (tenantId && tenantId.endsWith('-test')) {
       message.error('Tenant id should not end with -test');
@@ -128,6 +140,8 @@ export const CreateTenantModal = (props: Props) => {
           adminEmails: emailsOfAdmins,
           features: demoMode ? [...featureFlags, 'DEMO_MODE'] : featureFlags,
           sanctionsMarketType,
+          sanctionsScreeningTypes,
+          sanctionsEntityTypes,
           siloDataMode,
         },
       });
@@ -192,6 +206,26 @@ export const CreateTenantModal = (props: Props) => {
             type: 'string',
             title: 'ComplyAdvantage market type',
             enum: SANCTIONS_SETTINGS_MARKET_TYPES,
+          },
+          sanctionsScreeningTypes: {
+            type: 'array',
+            title: 'Screening types',
+            uniqueItems: true,
+            items: {
+              type: 'string',
+              enum: SANCTIONS_SEARCH_TYPES,
+              enumNames: SANCTIONS_SEARCH_TYPES.map((type) => humanizeAuto(type)),
+            },
+          },
+          sanctionsEntityTypes: {
+            type: 'array',
+            title: 'Required entities data',
+            uniqueItems: true,
+            items: {
+              type: 'string',
+              enum: SANCTIONS_ENTITY_TYPES,
+              enumNames: SANCTIONS_ENTITY_TYPES.map((type) => humanizeAuto(type)),
+            },
           },
         }),
         ...(currentEnv !== 'prod' && {

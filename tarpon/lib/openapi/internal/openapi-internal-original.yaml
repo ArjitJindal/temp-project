@@ -14647,6 +14647,14 @@ components:
           type: number
         sanctionsMarketType:
           $ref: '#/components/schemas/SanctionsSettingsMarketType'
+        sanctionsScreeningTypes:
+          type: array
+          items:
+            type: string
+        sanctionsEntityTypes:
+          type: array
+          items:
+            type: string
         siloDataMode:
           type: boolean
       required:

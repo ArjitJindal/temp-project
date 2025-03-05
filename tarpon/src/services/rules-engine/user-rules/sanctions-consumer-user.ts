@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
 import {
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_SCHEMA,
   RULE_STAGE_SCHEMA,
+  GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -24,7 +24,11 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
     return {
       type: 'object',
       properties: {
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({
+          uiSchema: {
+            subtype: 'GENERIC_SANCTIONS_SCREENING_TYPES',
+          },
+        }),
         fuzziness: FUZZINESS_SCHEMA,
         ruleStages: RULE_STAGE_SCHEMA({
           description:
