@@ -159,7 +159,7 @@
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "aws-cdk": "~2.177.0",
-    "aws-cdk-lib": "~2.177.0",
+    "aws-cdk-lib": "~2.178.1",
     "cheerio": "^1.0.0",
     "constructs": "^10.4.2",
     "cross-env": "^7.0.0",
