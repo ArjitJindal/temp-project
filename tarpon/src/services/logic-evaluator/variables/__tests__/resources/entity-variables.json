@@ -1857,5 +1857,8 @@
   "USER:sarDetails__BOTH",
   "USER:userPreviousCRALevel__SENDER",
   "USER:userPreviousCRALevel__RECEIVER",
-  "USER:userPreviousCRALevel__BOTH"
+  "USER:userPreviousCRALevel__BOTH",
+  "USER:currentTimestamp__SENDER",
+  "USER:currentTimestamp__RECEIVER",
+  "USER:currentTimestamp__BOTH"
 ]

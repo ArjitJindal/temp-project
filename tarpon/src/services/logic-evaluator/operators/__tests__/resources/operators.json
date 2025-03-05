@@ -12,5 +12,7 @@
   "op:regexmatch",
   "op:!regexmatch",
   "op:between_time",
-  "op:!between_time"
+  "op:!between_time",
+  "op:time_difference_greater_than",
+  "op:time_difference_lesser_than"
 ]

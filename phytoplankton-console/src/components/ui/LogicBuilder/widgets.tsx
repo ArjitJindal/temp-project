@@ -112,11 +112,11 @@ function WidgetWrapper(props: {
       </div>
     );
   }
-
   const showLabel = widgetFactoryProps.config?.settings.showLabels !== false;
   if (!showLabel) {
     return <>{props.children}</>;
   }
+
   return (
     <Label label={'Value'} testId={'value-source'}>
       {props.children}
@@ -281,6 +281,14 @@ const customBooleanWidget: CoreWidgets['boolean'] = {
 
 const customDateAndTimeWidget: CoreWidgets['datetime'] = {
   type: `datetime`,
+  // This fixes the default JsonLogic conversion, when datetime converted to
+  // ISO-string, even if function parameter are not datetime
+  jsonLogic: (value) => {
+    return value;
+  },
+  jsonLogicImport: (value) => {
+    return value;
+  },
   factory: (props) => {
     const dayjsValue = props.value ? dayjs(props.value as any) : undefined;
 

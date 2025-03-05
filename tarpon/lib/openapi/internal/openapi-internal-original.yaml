@@ -8110,6 +8110,8 @@ components:
         - op:!between_time
         - op:regexmatch
         - op:!regexmatch
+        - op:time_difference_greater_than
+        - op:time_difference_lesser_than
     LogicFunction:
       title: LogicFunction
       type: object

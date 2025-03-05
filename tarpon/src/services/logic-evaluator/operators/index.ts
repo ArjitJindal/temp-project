@@ -15,6 +15,10 @@ import { LogicOperator } from './types'
 import { NOT_REGEX_MATCH_OPERATOR, REGEX_MATCH_OPERATOR } from './regex-match'
 import { HAS_ITEMS_OPERATOR } from './hasItems'
 import { CUSTOM_BUILT_IN_LOGIC_OPERATORS } from './custom-built-in-operators'
+import {
+  TIME_DIFFERENCE_GREATER_THAN,
+  TIME_DIFFERENCE_LESSER_THAN,
+} from './time-difference-comparison'
 
 const _LOGIC_OPERATORS: LogicOperator[] = [
   MATCH_LIST_OPERATOR,
@@ -31,6 +35,8 @@ const _LOGIC_OPERATORS: LogicOperator[] = [
   NOT_REGEX_MATCH_OPERATOR,
   BETWEEN_TIME_OPERATOR,
   NOT_BETWEEN_TIME_OPERATOR,
+  TIME_DIFFERENCE_GREATER_THAN,
+  TIME_DIFFERENCE_LESSER_THAN,
 ]
 
 export const LOGIC_OPERATORS: LogicOperator[] = _LOGIC_OPERATORS.map(

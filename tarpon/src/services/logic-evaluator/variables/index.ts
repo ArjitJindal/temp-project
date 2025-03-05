@@ -58,6 +58,7 @@ import {
   PNB_CUSTOM_TAGS_KEYS_VARIABLES,
   FIRST_DIGITAL_CUSTOM_TAGS_KEYS_VARIABLES,
 } from './custom-tag-keys'
+import { CURRENT_TIMESTAMP } from './current-timestamp'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -217,6 +218,7 @@ const USER_DERIVED_VARIABLES: Array<
   BUSINESS_USER_CREATION_AGE_YEARS,
   SAR_DETAILS,
   USER_PREVIOUS_CRA_LEVEL,
+  CURRENT_TIMESTAMP,
 ]
 
 const TIMESTAMP_VARIABLES = [
