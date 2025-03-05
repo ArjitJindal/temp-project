@@ -99,7 +99,8 @@ export function generateUserRequestBody(userId: string): any {
 
 export function getCleanText(text: string): string {
   return text
-    .replace(/^\d+\.\s/gm, '')
-    .replace(/[-*\n*]/g, '')
-    .replace(/\s+/g, '');
+    .replace(/^\d+\.\s*/gim, '')
+    .replace(/[-*\r\n\u2028\u2029]+/g, '')
+    .replace(/\s+/g, '')
+    .toLowerCase();
 }

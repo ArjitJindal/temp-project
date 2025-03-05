@@ -59,7 +59,7 @@ export function ResetUserMfa(props: ResetMFAProps) {
   return (
     <>
       <Button
-        testName="accounts-delete-button"
+        testName="reset-mfa-button"
         type="TETRIARY"
         onClick={handleDelete}
         isDisabled={isDisabled(item)}
