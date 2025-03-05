@@ -25,6 +25,7 @@ import {
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
 import { StackConstants } from '@lib/constants'
+import { CurrencyCode } from 'flagright/api'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 import {
   createRuleInstancesLocally,
@@ -57,7 +58,7 @@ import {
 } from '@/core/utils/context'
 import { isV2RuleInstance } from '@/services/rules-engine/utils'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import dayjs from '@/utils/dayjs'
+import dayjs, { Dayjs } from '@/utils/dayjs'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { V8_MIGRATED_RULES } from '@/services/rules-engine/v8-migrations'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -87,6 +88,7 @@ import { TransactionRiskScoringResult } from '@/@types/openapi-public/Transactio
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
+import { CurrencyService } from '@/services/currency'
 /**
  * Custom query
  */
@@ -558,10 +560,11 @@ program
   .requiredOption('--env <string>', 'dev | sandbox | prod')
   .option(
     '--query <string>',
-    'rule-stats | features | validate-v2-to-v8-rules | validate-v2-to-v8-risk-factors'
+    'rule-stats | features | validate-v2-to-v8-rules | validate-v2-to-v8-risk-factors | sales-flagright-report'
   )
   // validate-v2-to-v8-rules options
-  .option('--start-date <string>', 'YYYY-MM-DD')
+  .option('--start-date <string>', 'YYYY-MM-DD', 'Start date')
+  .option('--end-date <string>', 'YYYY-MM-DD', 'End date')
   .option('--limit <number>', 'Number of entities to verify')
   .option('--tenant-ids <string>', 'Comma-separated list of tenant IDs')
   .option(
@@ -570,12 +573,100 @@ program
   )
   .parse()
 
-const { env, query, startDate, limit, tenantIds, ruleInstanceIds } =
+const { env, query, startDate, endDate, limit, tenantIds, ruleInstanceIds } =
   program.opts()
 
 if (!['dev', 'sandbox', 'prod'].includes(env)) {
   console.error(`Allowed --env options: dev, sandbox prod`)
   exit(1)
+}
+
+const exchangeRates = memoize(async () => {
+  return await new CurrencyService().getExchangeRates()
+})
+
+const globalMetricsData = {
+  totalTransactionsProcessed: 0,
+  totalAmountOfTransactionsProcessedInUSD: 0,
+  totalUserProfiles: 0,
+}
+
+async function salesFlagrightReport(
+  mongoDb: Db,
+  tenantId: string,
+  { startDate, endDate }: { startDate: Dayjs; endDate: Dayjs }
+) {
+  const totalTransactionsProcessedPromise = mongoDb
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
+    .countDocuments({
+      createdAt: { $gte: startDate.valueOf(), $lte: endDate.valueOf() },
+    })
+
+  const amountOfTransactionsProcessedPerCurrencyPromise = mongoDb
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
+    .aggregate<{
+      _id: CurrencyCode
+      total: number
+    }>([
+      {
+        $match: {
+          timestamp: { $gte: startDate.valueOf(), $lte: endDate.valueOf() },
+        },
+      },
+      {
+        $project: {
+          amountDetails: {
+            $cond: {
+              if: { $ne: ['$originAmountDetails', null] },
+              then: '$originAmountDetails',
+              else: '$destinationAmountDetails',
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$amountDetails.transactionCurrency',
+          total: { $sum: '$amountDetails.transactionAmount' },
+        },
+      },
+    ])
+    .toArray()
+
+  const totalUserProfilesPromise = mongoDb
+    .collection<InternalUser>(USERS_COLLECTION(tenantId))
+    .countDocuments({
+      createdAt: { $gte: startDate.valueOf(), $lte: endDate.valueOf() },
+    })
+
+  const [
+    totalTransactionsProcessed,
+    amountOfTransactionsProcessedPerCurrency,
+    totalUserProfiles,
+  ] = await Promise.all([
+    totalTransactionsProcessedPromise,
+    amountOfTransactionsProcessedPerCurrencyPromise,
+    totalUserProfilesPromise,
+  ])
+
+  const currencyExchangeRates = await exchangeRates()
+  const totalAmountOfTransactionsProcessedInUSD =
+    amountOfTransactionsProcessedPerCurrency.reduce((acc, curr) => {
+      if (!curr._id || !currencyExchangeRates[curr._id]) {
+        console.log(`No currency for transaction ${curr.total}`)
+        return acc
+      }
+
+      const exchangeRate = currencyExchangeRates[curr._id]
+      // ALL exchange rates are comparable to USD
+      return acc + curr.total / exchangeRate
+    }, 0)
+
+  return {
+    totalTransactionsProcessed,
+    totalAmountOfTransactionsProcessedInUSD,
+    totalUserProfiles,
+  }
 }
 
 async function runReadOnlyQueryForEnv(env: Env) {
@@ -616,6 +707,43 @@ async function runReadOnlyQueryForEnv(env: Env) {
         printRuleStats(result.ruleStats, result.filterStats)
       }
     }
+  } else if (query === 'sales-flagright-report') {
+    /**
+     * To get data for a specific date range, run:
+     * npm run cross-tenant-query:prod -- --query=sales-flagright-report --start-date=2025-01-01 --end-date=2025-02-01
+     */
+    const metricsDataPerRegion = {
+      totalTransactionsProcessed: 0,
+      totalAmountOfTransactionsProcessedInUSD: 0,
+      totalUserProfiles: 0,
+    }
+    for (const tenant of tenantInfos) {
+      const startDateFormatted = dayjs(startDate, 'YYYY-MM-DD')
+      const endDateFormatted = dayjs(endDate, 'YYYY-MM-DD')
+      const result = await salesFlagrightReport(mongoDb, tenant.tenant.id, {
+        startDate: startDateFormatted,
+        endDate: endDateFormatted,
+      })
+      console.info(
+        `\nTenant: ${tenant.tenant.name} (ID: ${tenant.tenant.id}) (region: ${tenant.tenant.region})`
+      )
+      console.log(render(result))
+      metricsDataPerRegion.totalTransactionsProcessed +=
+        result.totalTransactionsProcessed
+      metricsDataPerRegion.totalAmountOfTransactionsProcessedInUSD +=
+        result.totalAmountOfTransactionsProcessedInUSD
+      metricsDataPerRegion.totalUserProfiles += result.totalUserProfiles
+    }
+    console.log(`Region: ${env}`)
+    console.log(render(metricsDataPerRegion))
+    globalMetricsData.totalTransactionsProcessed +=
+      metricsDataPerRegion.totalTransactionsProcessed
+    globalMetricsData.totalAmountOfTransactionsProcessedInUSD +=
+      metricsDataPerRegion.totalAmountOfTransactionsProcessedInUSD
+    globalMetricsData.totalUserProfiles +=
+      metricsDataPerRegion.totalUserProfiles
+    console.log(`Global:`)
+    console.log(render(globalMetricsData))
   } else {
     for (const tenant of tenantInfos) {
       let result: any
@@ -671,6 +799,11 @@ async function main() {
   if (query === 'rule-stats') {
     console.info('\n================ All Tenants ================')
     printRuleStats(globalRuleStats, globalFilterStats)
+  }
+
+  if (query === 'sales-flagright-report') {
+    console.info('\n================ All Tenants ================')
+    console.log(render(globalMetricsData))
   }
 }
 
