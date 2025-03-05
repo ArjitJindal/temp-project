@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Config, Operator } from '@react-awesome-query-builder/core'
 import { JSONSchemaType } from 'ajv'
+import { AsyncLogicEngine } from 'json-logic-engine'
 import { CustomBuiltInLogicOperatorKey } from './custom-built-in-operators'
 import { LogicOperatorType } from '@/@types/openapi-internal/LogicOperatorType'
 
@@ -13,8 +14,11 @@ export type InternalCustomOperatorKeys =
   | CustomBuiltInLogicOperatorKey
   | 'op:hasItems'
   | 'op:equalArray'
-export type LogicOperator<LHS = any, RHS = any> = {
+
+export type CustomOperator<LHS = any, RHS = any, Result = any> = {
   key: LogicOperatorType | InternalCustomOperatorKeys
+  traverse?: boolean
+  deterministic?: boolean
   uiDefinition: Operator<Config>
   // NOTE: The order of the parameters is important. Same order will be used in the UI
   // and the same order will be used in the run function
@@ -23,6 +27,13 @@ export type LogicOperator<LHS = any, RHS = any> = {
     lhs: LHS,
     rhs: RHS,
     parameters?: any,
-    context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }
-  ) => Promise<boolean>
+    context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient },
+    internalContext?: { engine: AsyncLogicEngine; executionContext: object }
+  ) => Promise<Result>
 }
+
+export type LogicOperator<LHS = any, RHS = any> = CustomOperator<
+  LHS,
+  RHS,
+  boolean
+>

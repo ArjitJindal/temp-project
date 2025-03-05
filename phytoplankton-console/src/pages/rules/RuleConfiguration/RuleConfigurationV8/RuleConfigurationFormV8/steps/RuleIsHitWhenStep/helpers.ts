@@ -166,6 +166,7 @@ export function useLogicBuilderConfig(
                   ...entityVariable,
                   uiDefinition: {
                     ...entityVariable.uiDefinition,
+                    fieldName: v.key,
                     label: v.name || entityVariable.uiDefinition.label,
                   },
                   key: v.key,

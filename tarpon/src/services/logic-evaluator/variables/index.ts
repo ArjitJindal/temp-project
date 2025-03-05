@@ -219,8 +219,29 @@ const USER_DERIVED_VARIABLES: Array<
   USER_PREVIOUS_CRA_LEVEL,
 ]
 
+const TIMESTAMP_VARIABLES = [
+  'timestamp',
+  'originPaymentDetails.etaTimestamp',
+  'destinationPaymentDetails.etaTimestamp',
+  'timestamp',
+  'createdTimestamp',
+  'activatedTimestamp',
+  'lastTransactionTimestamp',
+  'legalDocuments.$i.documentIssuedDate',
+  'legalDocuments.$i.documentExpirationDate',
+  'savedPaymentDetails.$i.etaTimestamp',
+  'createdTimestamp',
+  'activatedTimestamp',
+  'lastTransactionTimestamp',
+  'shareHolders.$i.legalDocuments.$i.documentIssuedDate',
+  'shareHolders.$i.legalDocuments.$i.documentExpirationDate',
+  'directors.$i.legalDocuments.$i.documentIssuedDate',
+  'directors.$i.legalDocuments.$i.documentExpirationDate',
+  'savedPaymentDetails.$i.etaTimestamp',
+]
+
 function isTimestampVariable(key: string): boolean {
-  return key.toLowerCase().endsWith('timestamp')
+  return TIMESTAMP_VARIABLES.includes(key)
 }
 
 function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {

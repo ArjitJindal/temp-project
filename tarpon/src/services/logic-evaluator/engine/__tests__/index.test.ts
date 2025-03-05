@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { AggregationRepository } from '../aggregation-repository'
-import { TransactionLogicData } from '..'
+import { getJsonLogicEngine, TransactionLogicData } from '..'
 import { createAggregationVariable } from '../test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
@@ -40,6 +40,453 @@ const bulkVerifyTransactions =
   require('@/test-utils/rule-test-utils').bulkVerifyTransactions
 
 dynamoDbSetupHook()
+
+describe('Logic engine', () => {
+  const jsonLogicEngine = getJsonLogicEngine()
+  describe('Basic functions', () => {
+    test('simple math', async () => {
+      const result = await jsonLogicEngine.run({ '+': [2, 2] })
+      expect(result).toEqual(4)
+    })
+  })
+  describe('By examples', () => {
+    const cases = [
+      {
+        logic: {
+          and: [
+            {
+              some: [
+                {
+                  var: 'entity:01',
+                },
+                {
+                  '==': [
+                    {
+                      var: 'documentIssuedDate',
+                    },
+                    {
+                      var: 'entity:02',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        data: {
+          'entity:01': [
+            {
+              documentIssuedDate: 123,
+            },
+            {
+              documentIssuedDate: 789,
+            },
+          ],
+          'entity:02': 123,
+        },
+        expected: true,
+      },
+      {
+        logic: {
+          and: [
+            {
+              some: [
+                {
+                  var: 'entity:01',
+                },
+                {
+                  or: [
+                    {
+                      '==': [
+                        {
+                          var: 'documentIssuedDate',
+                        },
+                        {
+                          var: 'entity:02',
+                        },
+                      ],
+                    },
+                    {
+                      '<': [
+                        {
+                          var: 'documentExpirationDate',
+                        },
+                        {
+                          var: 'entity:02',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        data: {
+          'entity:01': [
+            {
+              documentIssuedDate: 123,
+            },
+            {
+              documentIssuedDate: 789,
+            },
+          ],
+          'entity:02': 789,
+        },
+        expected: true,
+      },
+      {
+        logic: {
+          filter: [
+            {
+              var: 'entity:01',
+            },
+            {
+              '==': [
+                {
+                  var: 'documentIssuedDate',
+                },
+                {
+                  var: 'entity:02',
+                },
+              ],
+            },
+          ],
+        },
+        data: {
+          'entity:01': [
+            {
+              documentIssuedDate: 123,
+            },
+            {
+              documentIssuedDate: 789,
+            },
+          ],
+          'entity:02': 789,
+        },
+        expected: [
+          {
+            documentIssuedDate: 789,
+          },
+        ],
+      },
+      {
+        logic: {
+          and: [
+            {
+              '==': [
+                {
+                  reduce: [
+                    {
+                      filter: [
+                        {
+                          var: 'entity:01',
+                        },
+                        {
+                          '==': [
+                            {
+                              var: 'documentIssuedDate',
+                            },
+                            {
+                              var: 'entity:02',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      '+': [
+                        1,
+                        {
+                          var: 'accumulator',
+                        },
+                      ],
+                    },
+                    0,
+                  ],
+                },
+                1,
+              ],
+            },
+          ],
+        },
+        data: {
+          'entity:01': [
+            {
+              documentIssuedDate: 123,
+            },
+            {
+              documentIssuedDate: 789,
+            },
+          ],
+          'entity:02': 789,
+        },
+        expected: true,
+      },
+      {
+        logic: {
+          reduce: [
+            {
+              filter: [
+                {
+                  var: 'entity:01',
+                },
+                {
+                  and: [
+                    {
+                      '==': [
+                        {
+                          var: 'documentIssuedDate',
+                        },
+                        {
+                          var: 'entity:02',
+                        },
+                      ],
+                    },
+                    {
+                      some: [
+                        {
+                          var: 'tags',
+                        },
+                        {
+                          '==': [
+                            {
+                              var: 'key',
+                            },
+                            {
+                              var: 'entity:03',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              '+': [
+                1,
+                {
+                  var: 'accumulator',
+                },
+              ],
+            },
+            0,
+          ],
+        },
+        expected: 1,
+        data: {
+          'entity:01': [
+            {
+              documentIssuedDate: 123,
+              tags: [{ key: 'v2' }],
+            },
+            {
+              documentIssuedDate: 789,
+              tags: [{ key: 'v2' }],
+            },
+            {
+              documentIssuedDate: 789,
+              tags: [{ key: 'v1' }],
+            },
+          ],
+          'entity:02': 789,
+          'entity:03': 'v2',
+        },
+      },
+    ]
+    for (let i = 0; i < cases.length; i++) {
+      const { logic, expected, data = {} } = cases[i]
+      test(`case #${i}`, async () => {
+        const result = await jsonLogicEngine.run(logic, data)
+        expect(result).toEqual(expected)
+      })
+    }
+  })
+  describe('Array build-in operations customisation', () => {
+    describe('all', () => {
+      it('Default logic', async () => {
+        {
+          const logic = {
+            all: [{ var: 'array' }, { '<=': [{ var: '' }, 3] }],
+          }
+          expect(
+            await jsonLogicEngine.run(logic, {
+              array: [1, 2, 3],
+            })
+          ).toBe(true)
+        }
+        {
+          const logic = {
+            all: [{ var: 'array' }, { '<=': [{ var: '' }, 2] }],
+          }
+          expect(
+            await jsonLogicEngine.run(logic, {
+              array: [1, 2, 3],
+            })
+          ).toBe(false)
+        }
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          all: [
+            { var: 'array' },
+            { '<=': [{ var: 'x' }, { var: 'toCompare' }] },
+          ],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+            toCompare: 3,
+          })
+        ).toBe(true)
+        // expect(
+        //   await jsonLogicEngine.run(logic, {
+        //     array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+        //     toCompare: 2,
+        //   })
+        // ).toBe(false)
+      })
+    })
+    describe('some', () => {
+      it('Default logic', async () => {
+        {
+          const logic = {
+            some: [[1, 2, 3], { '==': [{ var: '' }, 3] }],
+          }
+          expect(await jsonLogicEngine.run(logic)).toBe(true)
+        }
+        {
+          const logic = {
+            some: [[1, 2, 3], { '==': [{ var: '' }, 4] }],
+          }
+          expect(await jsonLogicEngine.run(logic)).toBe(false)
+        }
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          some: [
+            { var: 'array' },
+            { '==': [{ var: 'x' }, { var: 'toCompare' }] },
+          ],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+            toCompare: 3,
+          })
+        ).toBe(true)
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+            toCompare: 4,
+          })
+        ).toBe(false)
+      })
+    })
+    describe('none', () => {
+      it('Default logic', async () => {
+        {
+          const logic = {
+            none: [[1, 2, 3], { '==': [{ var: '' }, 4] }],
+          }
+          expect(await jsonLogicEngine.run(logic)).toBe(true)
+        }
+        {
+          const logic = {
+            none: [[1, 2, 3], { '==': [{ var: '' }, 3] }],
+          }
+          expect(await jsonLogicEngine.run(logic)).toBe(false)
+        }
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          none: [
+            { var: 'array' },
+            { '==': [{ var: 'x' }, { var: 'toCompare' }] },
+          ],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+            toCompare: 4,
+          })
+        ).toBe(true)
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }],
+            toCompare: 3,
+          })
+        ).toBe(false)
+      })
+    })
+    describe('filter', () => {
+      it('Default logic', async () => {
+        const logic = {
+          filter: [[1, 2, 3, 4, 5], { '<': [{ var: '' }, 4] }],
+        }
+        expect(await jsonLogicEngine.run(logic)).toEqual([1, 2, 3])
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          filter: [{ var: 'array' }, { '<': [{ var: 'x' }, 4] }],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }, { x: 5 }],
+          })
+        ).toEqual([{ x: 1 }, { x: 2 }, { x: 3 }])
+      })
+    })
+    describe('map', () => {
+      it('Default logic', async () => {
+        const logic = {
+          map: [[1, 2, 3, 4, 5], { '*': [{ var: '' }, 2] }],
+        }
+        expect(await jsonLogicEngine.run(logic)).toEqual([2, 4, 6, 8, 10])
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          map: [{ var: 'array' }, { '*': [{ var: 'x' }, 2] }],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            array: [{ x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }, { x: 5 }],
+          })
+        ).toEqual([2, 4, 6, 8, 10])
+      })
+    })
+    describe('reduce', () => {
+      it('Default logic', async () => {
+        const logic = {
+          reduce: [
+            [1, 2, 3, 4, 5],
+            { '*': [{ var: 'accumulator' }, { var: 'current' }] },
+            10,
+          ],
+        }
+        expect(await jsonLogicEngine.run(logic)).toEqual(1200)
+      })
+      it('Using global variables', async () => {
+        const logic = {
+          reduce: [
+            [1, 2, 3],
+            {
+              '*': [{ var: 'accumulator' }, { var: 'current' }, { var: 'mul' }],
+            },
+            1,
+          ],
+        }
+        expect(
+          await jsonLogicEngine.run(logic, {
+            mul: 10,
+          })
+        ).toEqual(6000) // 1 * 10 * 2 * 10 * 3 * 10
+      })
+    })
+  })
+})
 
 describe('Entity variable', () => {
   test('executes the json logic - hit', async () => {

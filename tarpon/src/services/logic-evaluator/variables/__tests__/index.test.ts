@@ -168,12 +168,12 @@ describe('List of entity variables', () => {
               },
               documentIssuedDate: {
                 label: 'document issued date',
-                type: 'number',
+                type: 'datetime',
                 valueSources: ['value', 'field', 'func'],
               },
               documentExpirationDate: {
                 label: 'document expiration date',
-                type: 'number',
+                type: 'datetime',
                 valueSources: ['value', 'field', 'func'],
               },
               documentIssuedCountry: {

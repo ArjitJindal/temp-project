@@ -134,14 +134,18 @@ const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
 export const getJsonLogicEngine = memoizeOne(
   (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
     const jsonLogicEngine = new AsyncLogicEngine()
+    const runContext = {
+      engine: jsonLogicEngine,
+    }
     LOGIC_FUNCTIONS.concat(INTERNAL_LOGIC_FUNCTIONS)
       .filter((v) => v.run)
       .forEach((v) => jsonLogicEngine.addMethod(v.key, v.run))
-    CUSTOM_INTERNAL_OPERATORS.concat(LOGIC_OPERATORS).forEach((v) =>
-      jsonLogicEngine.addMethod(
-        v.key,
-        memoize(
-          (values) => {
+    CUSTOM_INTERNAL_OPERATORS.concat(LOGIC_OPERATORS).forEach((v) => {
+      jsonLogicEngine.addMethod(v.key, {
+        traverse: v.traverse,
+        deterministic: v.deterministic,
+        asyncMethod: memoize(
+          (values, executionContext) => {
             const cardinality = v.uiDefinition.cardinality ?? 1
             const lhs = values[0]
             const rhs = values.slice(1, cardinality + 1)
@@ -150,13 +154,18 @@ export const getJsonLogicEngine = memoizeOne(
               lhs,
               rhs.length === 1 ? rhs[0] : rhs,
               parameters,
-              context
+              context,
+              {
+                ...runContext,
+                executionContext,
+              }
             )
           },
-          (v) => generateChecksum(v)
-        )
-      )
-    )
+          (values, executionContext) =>
+            generateChecksum({ values, executionContext })
+        ),
+      })
+    })
     return jsonLogicEngine
   },
   isEqual
