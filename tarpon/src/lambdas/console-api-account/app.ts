@@ -132,6 +132,10 @@ export const accountsHandler = lambdaApi()(
         token,
       }
     })
+
+    handlers.registerResetAccountMfa(async (ctx, request) => {
+      return await accountsService.resetMfa(ctx.tenantId, request.accountId)
+    })
     return await handlers.handle(event)
   }
 )

@@ -1,4 +1,7 @@
-import { GetOrganizations200ResponseOneOfInner } from 'auth0'
+import {
+  GetOrganizations200ResponseOneOfInner,
+  UserEnrollmentStatusEnum,
+} from 'auth0'
 import * as createHttpError from 'http-errors'
 import {
   Auth0TenantMetadata,
@@ -203,6 +206,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
         }
       )
     )
+
     return userToAccount(patchedUser)
   }
 
@@ -345,6 +349,30 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users
     await userManager.delete({ id: account.id })
+  }
+
+  async resetMfa(accountId: string): Promise<void> {
+    const managementClient = await getAuth0ManagementClient(this.auth0Domain)
+    const userManager = managementClient.users
+    const gaurdianManager = managementClient.guardian
+    const enrollments = await auth0AsyncWrapper(() =>
+      userManager.getEnrollments({
+        id: accountId,
+      })
+    )
+
+    await Promise.all(
+      enrollments.map((enrollment) => {
+        if (
+          enrollment.id &&
+          enrollment.status === UserEnrollmentStatusEnum.confirmed
+        ) {
+          return gaurdianManager.deleteGuardianEnrollment({
+            id: enrollment.id,
+          })
+        }
+      })
+    )
   }
 
   async getTenantsInternal(

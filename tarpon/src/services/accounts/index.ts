@@ -857,6 +857,16 @@ export class AccountsService {
     ])
   }
 
+  async resetMfa(tenantId: string, accountId: string) {
+    const user = await this.getAccount(accountId)
+
+    if (!user || !user.email) {
+      throw new NotFound('User not found')
+    }
+
+    await this.auth0.resetMfa(accountId)
+  }
+
   private clearAccountCache(id?: string) {
     if (id) {
       const fn = this.getAccountInternal as unknown as {

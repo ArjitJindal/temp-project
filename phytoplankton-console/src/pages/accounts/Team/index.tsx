@@ -1,10 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
+import { ResetUserMfa } from '../components/ResetUserMfa';
 import s from './index.module.less';
 import {
+  isAtLeast,
   parseUserRole,
   useAccountsQueryResult,
   useAuth0User,
@@ -353,6 +355,17 @@ export default function Team() {
               >
                 Edit
               </Button>
+              <ResetUserMfa
+                item={item}
+                user={user}
+                onSuccess={() => {
+                  invalidateUsers();
+                  accountsResult.refetch();
+                }}
+                isDisabled={(item) =>
+                  item.blocked || item.id === user.userId || !isAtLeast(user, UserRole.ADMIN)
+                }
+              />
               <DeleteUser
                 item={item}
                 user={user}

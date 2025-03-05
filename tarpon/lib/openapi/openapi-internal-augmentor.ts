@@ -59,6 +59,8 @@ export const ConsoleApiPathToLambda: any = {
   '/accounts/{accountId}/deactivate':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/accounts/{accountId}/reset-mfa':
+    StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/me': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/post-login': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/roles': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,

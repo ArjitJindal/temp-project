@@ -3907,6 +3907,26 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
       operationId: get-accounts
+  /accounts/{accountId}/reset-mfa:
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    delete:
+      summary: Reset - Account - MFA
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+        '404':
+          description: Account not found
+      operationId: reset-account-mfa
+      x-flagright:
+        permissions:
+          - accounts:overview:write
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
