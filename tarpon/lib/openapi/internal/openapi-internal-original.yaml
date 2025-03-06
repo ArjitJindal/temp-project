@@ -10477,8 +10477,6 @@ components:
         - productsSold
         - transactionIds
         - rules
-        - ruleHitNames
-        - ruleHitDescriptions
         - originUserName
         - destinationUserName
         - originTransactionAmount

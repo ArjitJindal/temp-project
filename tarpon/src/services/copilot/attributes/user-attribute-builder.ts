@@ -1,6 +1,6 @@
+import { AttributeSet } from './attribute-set'
 import {
   AttributeBuilder,
-  AttributeSet,
   BuilderKey,
   InputData,
 } from '@/services/copilot/attributes/builder'

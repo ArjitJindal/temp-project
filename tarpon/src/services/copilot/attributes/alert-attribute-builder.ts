@@ -1,15 +1,11 @@
-import { compact, uniq, uniqBy } from 'lodash'
-import {
-  AttributeBuilder,
-  AttributeSet,
-  BuilderKey,
-  InputData,
-} from './builder'
-
-import { mapRuleAttributes } from './utils/ruleAttributeMapper'
+import { compact, isEmpty, isNil, omitBy, uniqBy } from 'lodash'
+import { ruleNarratives } from '../rule-narratives'
+import { AttributeBuilder, BuilderKey, InputData } from './builder'
+import { AttributeSet, RuleAttribute } from './attribute-set'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { getUserName } from '@/utils/helpers'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
+import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
 
 export class AlertAttributeBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
@@ -17,17 +13,15 @@ export class AlertAttributeBuilder implements AttributeBuilder {
   }
 
   build(attributes: AttributeSet, inputData: InputData) {
-    if (!inputData._alerts?.length) {
+    const alerts = inputData._alerts || []
+
+    if (!alerts?.length) {
       return
     }
 
     attributes.setAttribute(
       'alertComments',
-      compact(
-        (inputData._alerts || [])
-          .map((a) => a.comments?.map((c) => c.body))
-          .flat()
-      ) || []
+      compact(alerts.map((a) => a.comments?.map((c) => c.body)).flat()) || []
     )
 
     if (!attributes.getAttribute('reasons')) {
@@ -37,44 +31,38 @@ export class AlertAttributeBuilder implements AttributeBuilder {
     if (inputData._alerts?.[0]) {
       attributes.setAttribute(
         'alertGenerationDate',
-        new Date(
-          inputData._alerts?.[0]?.createdTimestamp || 0
-        ).toLocaleDateString()
+        new Date(alerts?.[0]?.createdTimestamp || 0).toLocaleDateString()
       )
     }
 
     attributes.setAttribute('alertActionDate', new Date().toLocaleDateString())
 
-    attributes.setAttribute(
-      'rules',
-      mapRuleAttributes(inputData.ruleInstances || [])
-    )
-
-    const alertRuleHitNames = inputData._alerts?.map((a) => a.ruleName || '')
-
-    alertRuleHitNames.push(
-      ...(inputData.ruleInstances?.map((ri) => ri.ruleNameAlias || '') || [])
-    )
-
-    if (alertRuleHitNames.length) {
-      attributes.setAttribute('ruleHitNames', uniq(alertRuleHitNames))
-    }
-
-    const alertRuleHitDescriptions = inputData._alerts?.map(
-      (a) => a.ruleDescription || ''
-    )
-
-    alertRuleHitDescriptions.push(
-      ...(inputData.ruleInstances?.map((ri) => ri.ruleDescriptionAlias || '') ||
-        [])
-    )
-
-    if (alertRuleHitDescriptions.length) {
-      attributes.setAttribute(
-        'ruleHitDescriptions',
-        uniq(alertRuleHitDescriptions)
+    const rules: RuleAttribute[] = alerts.map((a) => {
+      const ruleInstance = inputData.ruleInstances?.find(
+        (ri) => ri.id === a.ruleInstanceId
       )
-    }
+      const rule = RULES_LIBRARY.find((r) => r.id === ruleInstance?.ruleId)
+
+      return omitBy(
+        {
+          id: ruleInstance?.ruleId || a.ruleId,
+          checksFor: ruleInstance?.checksFor,
+          types: rule?.types,
+          typologies: rule?.typologies,
+          sampleUseCases: rule?.sampleUseCases,
+          logic: ruleInstance?.logic,
+          logicAggregationVariables: ruleInstance?.logicAggregationVariables,
+          name: ruleInstance?.ruleNameAlias || a.ruleName,
+          narrative:
+            ruleNarratives.find((rn) => rn.id === ruleInstance?.ruleId)
+              ?.narrative || '',
+          nature: ruleInstance?.nature || a.ruleNature,
+        },
+        (value) => isNil(value) || isEmpty(value)
+      )
+    })
+
+    attributes.setAttribute('rules', uniqBy(rules, 'id'))
 
     if (inputData.sanctionsHits?.length) {
       const name = getUserName(inputData.user)
@@ -91,7 +79,6 @@ export class AlertAttributeBuilder implements AttributeBuilder {
         matchTypeDetails: sh.entity.matchTypeDetails,
         mediaSources: sh.entity.mediaSources?.map((ms) => ({
           name: ms.name,
-          media: ms.media?.map((m) => ({ title: m.title })),
         })),
       }))
 

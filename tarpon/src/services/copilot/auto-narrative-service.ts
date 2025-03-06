@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai'
 import { compact } from 'lodash'
-import { AttributeSet } from './attributes/builder'
+import { AttributeSet } from './attributes/attribute-set'
 import { BaseNarrativeService } from './narratives'
 import { CaseNarrativeService } from './narratives/case'
 import { AlertNarrativeService } from './narratives/alerts'
@@ -8,7 +8,7 @@ import { SarNarrativeService } from './narratives/sar'
 import { TransactionNarrativeService } from './narratives/transactions'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
-import { prompt } from '@/utils/openai'
+import { ModelVersion, prompt } from '@/utils/openai'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 import { NarrativeMode } from '@/@types/openapi-internal/NarrativeMode'
@@ -162,13 +162,17 @@ export class AutoNarrativeService {
     attributes: AttributeSet,
     service?: BaseNarrativeService<any>
   ): Promise<NarrativeResponse> {
+    let serialisedAttributes = ''
     if (service) {
+      const attributesCopy = await attributes.copy()
       const disabledAttributes = service.disabledAttributes()
       disabledAttributes.forEach((attr) => {
-        attributes.deleteAttribute(attr)
+        attributesCopy.deleteAttribute(attr)
       })
+      serialisedAttributes = await attributesCopy.serialise()
+    } else {
+      serialisedAttributes = await attributes.serialise()
     }
-    const serialisedAttributes = await attributes.serialise()
 
     const promptWithContext = promptMessages.concat([
       {
@@ -181,7 +185,9 @@ export class AutoNarrativeService {
 
     for (let i = 0; i < 3; i++) {
       try {
-        response = await prompt(promptWithContext)
+        response = await prompt(promptWithContext, {
+          model: ModelVersion.GPT4O_MINI,
+        })
         break
       } catch (e) {
         logger.error(e)

@@ -1,4 +1,4 @@
-import { AttributeSet } from '../../attributes/builder'
+import { AttributeSet } from '../../attributes/attribute-set'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 

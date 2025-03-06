@@ -1,4 +1,4 @@
-import { AttributeSet } from '../attributes/builder'
+import { AttributeSet } from '../attributes/attribute-set'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'

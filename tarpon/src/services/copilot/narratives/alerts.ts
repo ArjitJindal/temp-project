@@ -1,4 +1,4 @@
-import { AttributeSet } from '../attributes/builder'
+import { AttributeSet } from '../attributes/attribute-set'
 import { getStatusToPrefix, isScreening } from './utils'
 import {
   reasonNarrativesCasesAlerts,
@@ -79,8 +79,18 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
   }
 
   public disabledAttributes(): AIAttribute[] {
-    if (isScreening(this.attributes)) {
+    const allRulesCount = this.attributes.getAttribute('rules')?.length
+    const screeningRulesCount = this.attributes
+      .getAttribute('rules')
+      ?.filter((rule) => rule.nature === 'SCREENING').length
+
+    if (allRulesCount === screeningRulesCount) {
       return [
+        'minOriginAmount',
+        'minDestinationAmount',
+        'transactionIds',
+        'averageDestinationAmount',
+        'averageOriginAmount',
         'maxOriginAmount',
         'maxDestinationAmount',
         'destinationTransactionAmount',
@@ -100,6 +110,11 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
         'transactionReference',
       ]
     }
+
+    if (screeningRulesCount) {
+      return []
+    }
+
     return ['sanctionsHitDetails']
   }
 }

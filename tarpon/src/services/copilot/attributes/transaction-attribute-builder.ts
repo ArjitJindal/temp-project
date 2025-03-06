@@ -1,9 +1,5 @@
-import {
-  AttributeBuilder,
-  AttributeSet,
-  BuilderKey,
-  InputData,
-} from './builder'
+import { AttributeBuilder, BuilderKey, InputData } from './builder'
+import { AttributeSet } from './attribute-set'
 import dayjs from '@/utils/dayjs'
 import { getContext } from '@/core/utils/context'
 import { getUserName } from '@/utils/helpers'

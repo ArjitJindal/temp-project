@@ -1,14 +1,13 @@
 import getSymbolFromCurrency from 'currency-symbol-map'
 import { round as lodashRound } from 'lodash'
+import { AttributeSet } from './attribute-set'
 import {
   AttributeBuilder,
-  AttributeSet,
   BuilderKey,
   InputData,
 } from '@/services/copilot/attributes/builder'
 import { traceable } from '@/core/xray'
 import { CurrencyService } from '@/services/currency'
-
 @traceable
 export class TransactionsBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {

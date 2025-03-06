@@ -8,6 +8,7 @@ import { compact, uniq } from 'lodash'
 import { CurrencyService } from '../currency'
 import { AlertsService } from '../alerts'
 import { SanctionsHitsRepository } from '../sanctions/repositories/sanctions-hits-repository'
+import { AttributeSet } from './attributes/attribute-set'
 import { CaseService } from '@/services/cases'
 import { UserService } from '@/services/users'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -16,7 +17,6 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import {
   AttributeGenerator,
-  AttributeSet,
   DefaultAttributeBuilders,
 } from '@/services/copilot/attributes/builder'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'

@@ -1,4 +1,4 @@
-import { AttributeSet } from '../attributes/builder'
+import { AttributeSet } from '../attributes/attribute-set'
 import { getStatusToPrefix, isScreening } from './utils'
 import {
   reasonNarrativesCasesAlerts,
@@ -35,7 +35,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
         ? 'business'
         : 'customer'
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return ` This is a ${customerType} and this ${this.type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${reasons}.`
+    return `This is a ${customerType} and this ${this.type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${reasons}. Do not replace placeholders if you don't have information about them.`
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
@@ -78,8 +78,18 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
   }
 
   public disabledAttributes(): AIAttribute[] {
-    if (isScreening(this.attributes)) {
+    const allRulesCount = this.attributes.getAttribute('rules')?.length
+    const screeningRulesCount = this.attributes
+      .getAttribute('rules')
+      ?.filter((rule) => rule.nature === 'SCREENING').length
+
+    if (allRulesCount === screeningRulesCount) {
       return [
+        'minOriginAmount',
+        'minDestinationAmount',
+        'transactionIds',
+        'averageDestinationAmount',
+        'averageOriginAmount',
         'maxOriginAmount',
         'maxDestinationAmount',
         'destinationTransactionAmount',
@@ -99,6 +109,12 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
         'transactionReference',
       ]
     }
+
+    if (screeningRulesCount) {
+      return []
+    }
+
     return ['sanctionsHitDetails']
   }
+  e
 }

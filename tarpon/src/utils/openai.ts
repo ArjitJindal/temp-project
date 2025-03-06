@@ -10,6 +10,7 @@ export enum ModelVersion {
   GPT3 = 'gpt-3.5-turbo',
   GPT4 = 'gpt-4-turbo-preview',
   GPT4O = 'gpt-4o',
+  GPT4O_MINI = 'gpt-4o-mini',
 }
 const modelVersion: ModelVersion = ModelVersion.GPT4O
 
@@ -51,6 +52,7 @@ export async function prompt(
     ...options,
     messages,
     model: options?.model ?? modelVersion,
+    store: false,
     temperature: options?.temperature ?? 0.5,
   })
 

@@ -1,4 +1,4 @@
-import { AttributeSet } from '../attributes/builder'
+import { AttributeSet } from '../attributes/attribute-set'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 
