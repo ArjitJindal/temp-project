@@ -24,9 +24,10 @@ import { envIs } from '@/utils/env'
 import { getSecret } from '@/utils/secrets-manager'
 import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TriageQueueTicket } from '@/@types/triage'
-
-const ENGINEERING_HELP_CHANNEL_ID = 'C03BN4GQALA'
-const ENGINEERING_GROUP_ID = 'S03EY0EMJQN'
+import {
+  ENGINEERING_HELP_CHANNEL_ID,
+  ENGINEERING_ON_CALL_GROUP_ID,
+} from '@/utils/slack'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -220,10 +221,9 @@ export async function notifyTriageIssues() {
   if (isQaEnv()) {
     return
   }
-  console.log('Notifying triage issues')
-  // only run between 8AM IST to 8PM IST
+  // only run between 7AM IST to 11PM IST
   const now = dayjs().tz('Asia/Kolkata')
-  if (now.hour() <= 8 || now.hour() >= 20) {
+  if (now.hour() <= 7 || now.hour() >= 23) {
     return
   }
 
@@ -274,7 +274,7 @@ export async function notifyTriageIssues() {
     return !isAlreadyNotified
   })
 
-  const headerText = `Hey <!subteam^${ENGINEERING_GROUP_ID}>! Here are the pending issues in triage queue marked as **Urgent**. Please pick them as soon as possible.`
+  const headerText = `Hey <!subteam^${ENGINEERING_ON_CALL_GROUP_ID}>! Here are the pending issues in triage queue marked as **Urgent**. Please pick them as soon as possible.`
 
   const issueText = issuesToNotify
     .map(

@@ -3,6 +3,8 @@ import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
 import { isQaEnv } from '@flagright/lib/qa'
+import { WebClient } from '@slack/web-api'
+import axios from 'axios'
 import { sendCaseCreatedAlert } from '../slack-app/app'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -23,6 +25,12 @@ import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TriageQueueTicket } from '@/@types/triage'
+import { getSecret } from '@/utils/secrets-manager'
+import {
+  ENGINEERING_GROUP_ID,
+  ENGINEERING_ON_CALL_GROUP_ID,
+  INCIDENTS_BUGS_CHANNEL_ID,
+} from '@/utils/slack'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -266,5 +274,62 @@ async function optimizeClickhouseTable(
       }`,
       error
     )
+  }
+}
+
+export async function getSlackUsers() {
+  const slack = await getSecret<{ token: string }>('slackCreds')
+  const zendutyKey = await getSecret<{ apiKey: string }>('zenduty')
+  const slackClient = new WebClient(slack.token)
+
+  const ENGINEERING_ONCALL_NAME = 'Engineering On Call'
+  const ZENDUTY_TEAM_ID = '8609ccb8-52f0-4c4c-baf0-7aeaf624228a'
+
+  const schedulesResponse = await axios.get<
+    { escalation_policy: { name: string }; users: { email: string }[] }[]
+  >(`https://www.zenduty.com/api/account/teams/${ZENDUTY_TEAM_ID}/oncall/`, {
+    headers: { Authorization: `Token ${zendutyKey.apiKey}` },
+  })
+
+  const currentOncallEmail = schedulesResponse.data
+    .find(
+      (schedule) => schedule.escalation_policy.name === ENGINEERING_ONCALL_NAME
+    )
+    ?.users.map((user) => user.email)
+
+  const slackUsers = await slackClient.users.list({ limit: 1000 })
+
+  const oncallUsers = slackUsers.members?.filter((user) =>
+    currentOncallEmail?.includes(user.profile?.email ?? '')
+  )
+
+  const oncallUsersIds = compact(oncallUsers?.map((user) => user.id))
+
+  const currentOncallSlackUsers = await slackClient.usergroups.users.list({
+    usergroup: ENGINEERING_ON_CALL_GROUP_ID,
+  })
+
+  const isOnCallUpdated = currentOncallSlackUsers.users?.some(
+    (user) => !oncallUsersIds.includes(user)
+  )
+
+  await slackClient.usergroups.users.update({
+    usergroup: ENGINEERING_ON_CALL_GROUP_ID,
+    users: compact(oncallUsers?.map((user) => user.id)).join(','),
+  })
+
+  if (isOnCallUpdated) {
+    const slackUser = slackUsers.members?.filter(
+      (user) => user.id && oncallUsersIds.includes(user.id)
+    )
+
+    const slackUserNames = slackUser?.map((user) => user.profile?.real_name)
+
+    await slackClient.chat.postMessage({
+      channel: INCIDENTS_BUGS_CHANNEL_ID,
+      text: `<!subteam^${ENGINEERING_GROUP_ID}> ${slackUserNames?.join(
+        ', '
+      )} is on call check on <!subteam^${ENGINEERING_ON_CALL_GROUP_ID}>`,
+    })
   }
 }
