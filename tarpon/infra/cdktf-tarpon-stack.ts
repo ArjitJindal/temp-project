@@ -17,17 +17,21 @@ const codebuildIps = ['3.72.188.71', '18.157.106.33', '18.153.172.163'].map(
   })
 )
 
-const flagrightVPNIp = [
+const prodVpnIp = [
   {
     source: '217.180.56.115',
     description: 'Flagright VPN IP',
   },
 ]
 
-const allIps: { source: string; description: string }[] = [
-  ...codebuildIps,
-  ...flagrightVPNIp,
+const sandboxVpnIp = [
+  {
+    source: '185.128.24.83',
+    description: 'Sandbox VPN IP',
+  },
 ]
+
+const allIps: { source: string; description: string }[] = [...codebuildIps]
 
 export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {
@@ -126,6 +130,12 @@ export class CdktfTarponStack extends TerraformStack {
           secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
         }
       )
+
+    if (config.stage === 'sandbox') {
+      allIps.push(...sandboxVpnIp)
+    } else if (config.stage === 'prod') {
+      allIps.push(...prodVpnIp)
+    }
 
     const clickhouseService = new clickhouse.service.Service(
       this,
