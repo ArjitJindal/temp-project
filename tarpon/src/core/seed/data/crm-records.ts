@@ -67,6 +67,7 @@ export class NangoRecordSampler extends BaseSampler<NangoRecord> {
       data: fullCrmRecord,
       id: ticketId.toString(),
       model: model,
+      email: userEmail,
     }
   }
 }

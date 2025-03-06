@@ -2,6 +2,7 @@ import { compact } from 'lodash'
 import { Document, WithId } from 'mongodb'
 import { logger } from '../logger'
 import { getCases } from './data/cases'
+import { getCrmRecords } from './data/crm-records'
 import {
   CLICKHOUSE_DEFINITIONS,
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -106,6 +107,13 @@ export const seedClickhouse = async (tenantId: string) => {
           .flatMap((a) => a)
 
         await batchInsertToClickhouse(tenantId, table.table, compact(alerts))
+      },
+    },
+    {
+      table: 'NANGO_RECORDS',
+      sync: async (tableName: TableName, table: ClickhouseTableDefinition) => {
+        const data = getCrmRecords()
+        await batchInsertToClickhouse(tenantId, table.table, data)
       },
     },
   ]
