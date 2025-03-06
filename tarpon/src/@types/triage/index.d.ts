@@ -4,4 +4,5 @@ export type TriageQueueTicket = {
   url: string
   identifier: string
   createdTimestamp: number
+  notifiedAt: number
 }

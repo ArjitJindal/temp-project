@@ -216,10 +216,11 @@ async function deleteOldWebhookRetryEvents(tenantIds: string[]) {
   }
 }
 
-async function notifyTriageIssues() {
+export async function notifyTriageIssues() {
   if (isQaEnv()) {
     return
   }
+  console.log('Notifying triage issues')
   // only run between 8AM IST to 8PM IST
   const now = dayjs().tz('Asia/Kolkata')
   if (now.hour() <= 8 || now.hour() >= 20) {
@@ -234,7 +235,7 @@ async function notifyTriageIssues() {
     .collection<TriageQueueTicket>(TRIAGE_QUEUE_TICKETS_COLLECTION())
 
   const triageQueueTicketsAlreadyNotified = await collection
-    .find({ createdTimestamp: { $gte: dayjs().subtract(4, 'hour').valueOf() } })
+    .find({ notifiedAt: { $gte: dayjs().subtract(4, 'hour').valueOf() } })
     .toArray()
 
   const linearClient = new LinearClient({
@@ -262,22 +263,23 @@ async function notifyTriageIssues() {
     priority: issue.priority,
     url: `https://linear.app/flagright/issue/${issue.identifier}`,
     createdTimestamp: dayjs(issue.createdAt).valueOf(),
+    notifiedAt: Date.now(),
   }))
 
-  // remove issues from triage queue tickets which are already in the issues array
-  const issuesToNotify = issues.filter(
-    (issue) =>
-      !triageQueueTicketsAlreadyNotified.some(
-        (ticket) => ticket.identifier === issue.identifier
-      )
-  )
+  const issuesToNotify = issues.filter((issue) => {
+    const isAlreadyNotified = triageQueueTicketsAlreadyNotified.some(
+      (ticket) => ticket.identifier === issue.identifier
+    )
+
+    return !isAlreadyNotified
+  })
 
   const headerText = `Hey <!subteam^${ENGINEERING_GROUP_ID}>! Here are the pending issues in triage queue marked as **Urgent**. Please pick them as soon as possible.`
 
   const issueText = issuesToNotify
     .map(
       (issue, index) =>
-        `*${index + 1}.* ${issue.title} [${issue.url}](${issue.url})`
+        `*${index + 1}.* ${issue.title} ([${issue.identifier}](${issue.url}))`
     )
     .join('\n')
 
@@ -303,7 +305,10 @@ async function notifyTriageIssues() {
   if (slackResponse.ok) {
     await Promise.all(
       issuesToNotify.map(async (issue) => {
-        await collection.replaceOne({ identifier: issue.identifier }, issue)
+        await collection.replaceOne(
+          { identifier: issue.identifier },
+          { ...issue, notifiedAt: dayjs().valueOf() }
+        )
       })
     )
   }
