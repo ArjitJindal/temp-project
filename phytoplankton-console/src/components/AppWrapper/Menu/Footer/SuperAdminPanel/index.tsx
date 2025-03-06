@@ -72,7 +72,7 @@ export const featureDescriptions: Record<
   DEMO_MODE: { title: 'Demo mode', description: 'Enables demo mode' },
   SIMULATOR: { title: 'Simulator', description: 'Enables simulator for rules & risk levels' },
   CRM: {
-    title: "CRM (Experimental Don't Use)",
+    title: 'CRM (Demo use only)',
     description: 'Enables CRM data Freshdesk Nango integration',
   },
   ENTITY_LINKING: { title: 'Ontology', description: 'Enables Ontology (entity linking)' },
