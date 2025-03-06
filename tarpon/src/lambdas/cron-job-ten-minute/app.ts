@@ -235,7 +235,9 @@ export async function notifyTriageIssues() {
     .collection<TriageQueueTicket>(TRIAGE_QUEUE_TICKETS_COLLECTION())
 
   const triageQueueTicketsAlreadyNotified = await collection
-    .find({ notifiedAt: { $gte: dayjs().subtract(4, 'hour').valueOf() } })
+    .find({
+      notifiedAt: { $gte: dayjs().subtract(4, 'hour').valueOf() },
+    })
     .toArray()
 
   const linearClient = new LinearClient({
@@ -307,7 +309,8 @@ export async function notifyTriageIssues() {
       issuesToNotify.map(async (issue) => {
         await collection.replaceOne(
           { identifier: issue.identifier },
-          { ...issue, notifiedAt: dayjs().valueOf() }
+          { ...issue, notifiedAt: dayjs().valueOf() },
+          { upsert: true }
         )
       })
     )

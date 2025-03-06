@@ -33,19 +33,26 @@ import {
 } from '@/utils/slack'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
+  if (envIs('dev')) {
+    try {
+      await clearTriageQueueTickets()
+    } catch (e) {
+      logger.error(
+        `Failed to clear triage queue tickets: ${(e as Error)?.message}`,
+        e
+      )
+    }
+
+    try {
+      await updateOncallUsers()
+    } catch (e) {
+      logger.error(`Failed to update oncall users: ${(e as Error)?.message}`, e)
+    }
+  }
   const tenantInfos = await TenantService.getAllTenants(
     process.env.ENV as Stage,
     process.env.REGION as FlagrightRegion
   )
-
-  try {
-    await clearTriageQueueTickets()
-  } catch (e) {
-    logger.error(
-      `Failed to clear triage queue tickets: ${(e as Error)?.message}`,
-      e
-    )
-  }
 
   try {
     await createApiUsageJobs(tenantInfos)
@@ -277,7 +284,7 @@ async function optimizeClickhouseTable(
   }
 }
 
-export async function getSlackUsers() {
+export async function updateOncallUsers() {
   const slack = await getSecret<{ token: string }>('slackCreds')
   const zendutyKey = await getSecret<{ apiKey: string }>('zenduty')
   const slackClient = new WebClient(slack.token)
