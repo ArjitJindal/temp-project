@@ -335,9 +335,24 @@ export class CdkTarponStack extends cdk.Stack {
       true,
       true
     )
-    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TARPON_RULE)
-    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.HAMMERHEAD, tarponStream)
-    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TRANSIENT, undefined, true)
+    this.createDynamodbTable(
+      DYNAMODB_TABLE_NAMES.TARPON_RULE,
+      undefined,
+      undefined,
+      true
+    )
+    this.createDynamodbTable(
+      DYNAMODB_TABLE_NAMES.HAMMERHEAD,
+      tarponStream,
+      undefined,
+      true
+    )
+    this.createDynamodbTable(
+      DYNAMODB_TABLE_NAMES.TRANSIENT,
+      undefined,
+      true,
+      true
+    )
 
     const siloTables: ITable[] = []
 
@@ -353,7 +368,9 @@ export class CdkTarponStack extends cdk.Stack {
 
       const siloHammerheadTable = this.createDynamodbTable(
         StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
-        tarponStream
+        tarponStream,
+        undefined,
+        true
       )
 
       siloTables.push(siloTarponTable, siloHammerheadTable)
