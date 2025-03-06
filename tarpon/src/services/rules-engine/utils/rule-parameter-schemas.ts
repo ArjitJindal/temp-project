@@ -964,11 +964,32 @@ export const GENERIC_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
+export const STOPWORDS_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'array',
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS', 'DOW_JONES'],
+    }),
+    items: {
+      type: 'string',
+    },
+    title: options?.title || 'Stopwords configuration',
+    description:
+      options?.description ||
+      `Specify stopwords to be ignored in fuzziness calculations, ensuring accurate matching by excluding specified terms from names.`,
+  } as const)
+
+export const STOPWORDS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...STOPWORDS_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const FUZZINESS_SETTINGS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
     ...uiSchema(options?.uiSchema, {
-      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS'],
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS', 'DOW_JONES'],
       subtype: 'FUZZINESS_SETTINGS',
     }),
     title: options?.title || 'Fuzziness settings',

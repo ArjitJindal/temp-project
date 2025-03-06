@@ -650,23 +650,47 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return calculateLevenshteinDistancePercentage
   }
 
+  public processNameWithStopwords = (name: string, stopwords?: Set<string>) => {
+    if (!stopwords) {
+      return name
+    }
+    const normalizedText = name.replace(/\.(?!\s)/g, '. ')
+    const words = normalizedText.split(' ')
+    const filteredWords = words.filter((word) => {
+      const lowerCaseWord = word.toLowerCase()
+      return !stopwords.has(lowerCaseWord)
+    })
+
+    return filteredWords.join(' ')
+  }
+
   private filterResults(
     results: SanctionsEntity[],
     request: SanctionsSearchRequest,
     fuzzinessSettings: FuzzinessSetting | undefined
   ): SanctionsEntity[] {
-    const keepSpaces = Boolean(
-      !fuzzinessSettings?.sanitizeInputForFuzziness ||
-        fuzzinessSettings?.similarTermsConsideration
-    )
-    const searchTerm =
+    const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
+    const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
       fuzzinessSettings?.similarTermsConsideration
-        ? sanitizeString(request.searchTerm.toLowerCase(), keepSpaces)
-        : request.searchTerm.toLowerCase()
-    return results.filter((entity) => {
-      const values = uniq([entity.name, ...(entity.aka || [])])
 
+    const stopwordSet = request.stopwords
+      ? new Set(request.stopwords.map((word) => word.toLowerCase()))
+      : undefined
+    const modifiedTerm = this.processNameWithStopwords(
+      request.searchTerm,
+      stopwordSet
+    )
+      .toLowerCase()
+      .trim()
+    const searchTerm = shouldSanitizeString
+      ? sanitizeString(modifiedTerm, keepSpaces)
+      : modifiedTerm
+
+    return results.filter((entity) => {
+      const values = uniq([entity.name, ...(entity.aka || [])]).map((name) =>
+        this.processNameWithStopwords(name, stopwordSet)
+      )
       if (
         request.fuzzinessRange?.upperBound === 100 ||
         request.fuzziness === 1
@@ -677,11 +701,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           if (value.toLowerCase() === searchTerm) {
             return true
           }
-          value =
-            fuzzinessSettings?.sanitizeInputForFuzziness ||
-            fuzzinessSettings?.similarTermsConsideration
-              ? sanitizeString(value, keepSpaces)
-              : value
+          value = shouldSanitizeString
+            ? sanitizeString(value, keepSpaces)
+            : value
           const evaluatingFunction =
             this.getFuzzinessFunction(fuzzinessSettings)
           const percentageSimilarity = evaluatingFunction(searchTerm, value)

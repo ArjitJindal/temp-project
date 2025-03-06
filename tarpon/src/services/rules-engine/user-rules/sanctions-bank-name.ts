@@ -7,11 +7,13 @@ import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
+  STOPWORDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -29,6 +31,7 @@ export type SanctionsBankUserRuleParameters = {
   ongoingScreening: boolean
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
+  stopwords?: string[]
 }
 
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
@@ -43,6 +46,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
             'It will do a screening every 24hrs of all the existing bank names after it is enabled.',
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
       required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -50,8 +54,13 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
   }
 
   public async computeRule() {
-    const { fuzziness, screeningTypes, ongoingScreening, fuzzinessSetting } =
-      this.parameters
+    const {
+      fuzziness,
+      screeningTypes,
+      ongoingScreening,
+      fuzzinessSetting,
+      stopwords,
+    } = this.parameters
 
     if (this.ongoingScreeningMode && !ongoingScreening) {
       return
@@ -110,6 +119,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 monitoring: { enabled: ongoingScreening },
                 ...getEntityTypeForSearch(provider, 'BANK'),
                 ...getFuzzinessSettings(provider, fuzzinessSetting),
+                ...getStopwordSettings(provider, stopwords),
               },
               hitContext
             )

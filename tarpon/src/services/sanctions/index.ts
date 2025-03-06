@@ -196,7 +196,10 @@ export class SanctionsService {
     const providerName = providerOverrides?.providerName || getDefaultProvider()
 
     // Normalize search term
-    request.searchTerm = startCase(request.searchTerm.toLowerCase())
+    request.searchTerm =
+      providerName === 'comply-advantage'
+        ? startCase(request.searchTerm.toLowerCase())
+        : request.searchTerm
     if (
       !request.searchTerm ||
       (request.yearOfBirth &&

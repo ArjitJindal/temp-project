@@ -4,10 +4,11 @@ import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  STOPWORDS_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
-import { getFuzzinessSettings } from '../utils/rule-utils'
+import { getFuzzinessSettings, getStopwordSettings } from '../utils/rule-utils'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -28,6 +29,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
+  stopwords?: string[]
 }
 
 @traceable
@@ -41,6 +43,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
       required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -56,8 +59,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     const namesToSearch = getPaymentDetailsName(paymentDetails)
 
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
-    const fuzziness = this.parameters.fuzziness
-    const fuzzinessSetting = this.parameters.fuzzinessSetting
+    const { fuzziness, fuzzinessSetting, stopwords } = this.parameters
     const provider = getDefaultProvider()
     const data = await Promise.all(
       namesToSearchFiltered.map(
@@ -80,6 +82,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
                 enabled: false,
               },
               ...getFuzzinessSettings(provider, fuzzinessSetting),
+              ...getStopwordSettings(provider, stopwords),
             },
             hitContext
           )

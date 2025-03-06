@@ -12859,6 +12859,10 @@ components:
           $ref: '#/components/schemas/SanctionsEntityType'
         fuzzinessSettings:
           $ref: '#/components/schemas/FuzzinessSetting'
+        stopwords:
+          type: array
+          items:
+            type: string
       required:
         - searchTerm
     PepRank:

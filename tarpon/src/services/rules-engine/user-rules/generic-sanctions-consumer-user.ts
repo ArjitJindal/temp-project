@@ -6,15 +6,18 @@ import {
   FUZZINESS_SETTINGS_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   GENERIC_SCREENING_VALUES_SCHEMA,
+  STOPWORDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
+import { getStopwordSettings } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
 export type GenericSanctionsConsumerUserRuleParameters = {
@@ -27,6 +30,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   screeningValues?: GenericScreeningValues[]
   // PEPRank?: PepRank //Open-sanctions does not provide PEP rank data
   fuzzinessSetting: FuzzinessSettingOptions
+  stopwords?: string[]
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -54,6 +58,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         }),
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
       required: ['fuzzinessRange', 'fuzzinessSetting'],
     }
@@ -67,6 +72,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       screeningValues,
       // PEPRank,
       fuzzinessSetting,
+      stopwords,
     } = this.parameters
     const user = this.user as User
     if (
@@ -83,6 +89,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       ? dayjs(user.userDetails.dateOfBirth).year()
       : undefined
     const name = formatConsumerName(user.userDetails.name)
+    console.log('IN RULE', name)
     if (!name) {
       return
     }
@@ -95,6 +102,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
+    const provider = getDefaultProvider()
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -133,6 +141,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           levenshteinDistanceDefault:
             fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
         },
+        ...getStopwordSettings(provider, stopwords),
       },
       hitContext,
       undefined

@@ -6,12 +6,14 @@ import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
+  STOPWORDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
@@ -38,6 +40,7 @@ export type SanctionsBusinessUserRuleParameters = {
   fuzziness: number
   ongoingScreening: boolean
   fuzzinessSetting: FuzzinessSettingOptions
+  stopwords?: string[]
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -65,6 +68,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
             'It will do a screening every 24hrs of all the existing business users including shareholders and directors after it is enabled.',
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
       required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -78,6 +82,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       screeningTypes,
       ongoingScreening,
       fuzzinessSetting,
+      stopwords,
     } = this.parameters
 
     if (
@@ -143,6 +148,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
               ...getFuzzinessSettings(provider, fuzzinessSetting),
+              ...getStopwordSettings(provider, stopwords),
             },
             hitContext
           )

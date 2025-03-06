@@ -7,10 +7,11 @@ import {
   SANCTIONS_SCREENING_VALUES_SCHEMA,
   PEP_RANK_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
+  STOPWORDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
-import { getFuzzinessSettings } from '../utils/rule-utils'
+import { getFuzzinessSettings, getStopwordSettings } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -31,6 +32,7 @@ export type DowJonesConsumerUserRuleParameters = {
   screeningValues?: ScreeningValues[]
   PEPRank?: PepRank
   fuzzinessSetting: FuzzinessSettingOptions
+  stopwords?: string[]
 }
 
 export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerUserRuleParameters> {
@@ -57,6 +59,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         }),
         PEPRank: PEP_RANK_SCHEMA({}),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
       required: ['fuzzinessRange', 'fuzzinessSetting'],
     }
@@ -70,6 +73,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       screeningValues,
       PEPRank,
       fuzzinessSetting,
+      stopwords,
     } = this.parameters
     const user = this.user as User
     if (
@@ -130,6 +134,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
         ...getFuzzinessSettings(provider, fuzzinessSetting),
+        ...getStopwordSettings(provider, stopwords),
       },
       hitContext,
       undefined

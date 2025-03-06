@@ -87,3 +87,19 @@ export function getFuzzinessSettings(
       }
     : {}
 }
+
+export function getStopwordSettings(
+  provider: SanctionsDataProviderName,
+  stopwords?: string[]
+): {
+  stopwords?: string[]
+} {
+  if (provider === 'comply-advantage') {
+    return {}
+  }
+  return stopwords?.length
+    ? {
+        stopwords,
+      }
+    : {}
+}

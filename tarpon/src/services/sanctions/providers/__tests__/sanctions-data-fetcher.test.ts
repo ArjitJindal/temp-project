@@ -1,5 +1,6 @@
 import { MongoClient, Collection } from 'mongodb'
 import { intersection, sample } from 'lodash'
+import { sanitizeString } from '@flagright/lib/utils/string'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'
 import data from './ongoing_search_results.json'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -185,5 +186,117 @@ describe('SanctionsDataFetcher Integration Tests', () => {
       allowDocumentMatches: true,
     })
     expect(searchResult3.data?.length).toBe(0)
+  })
+
+  test('remove stopwords from search term', async () => {
+    const data = {
+      stopwords: [
+        'bin.',
+        'bin',
+        'b.',
+        'binti',
+        'binti.',
+        'bt',
+        'bt.',
+        'bte',
+        'bte.',
+        'a/l',
+        'al',
+        'a/p',
+        'ap',
+        'anak',
+        'ak',
+        'ak.',
+        's/o',
+        'so',
+        'd/o',
+        'do',
+        'bn',
+        'bti',
+        'bnti',
+        'b',
+        'mr.',
+        'miss',
+      ],
+      names: [
+        'AIZA AISYAH BINTI SABRI',
+        'ANGELA A/P NANGGAU',
+        'SURIA SONIA AHIP ABDULLAH',
+        'SITI SAMAH BTE ANGKONG',
+        'NUR AZIZAH AK YUSOK',
+        'YEW JIA YI @ LIAW JIA YI',
+        'LEE YU ER',
+        'JOEMNAH @ ELLVIAH BINTI SANADON',
+        'NORJIJAH MAKOPIN',
+        'FLORENCE ANAK JANGAN',
+        'MAG DALENA BIDANG ANAK JUGAH',
+        'PUGANESHWARI A/P RAJU',
+        'MANJULA MANI',
+        'SHAHIRA BINTI SAIP',
+        'ABIGAIL THIEN MAY-JIUAN',
+        'VIEZYECI HEBRON',
+        'SUCHADA OUI HUI QING',
+        'MANORD A/L AI RONG',
+        'BINTILANI BIN BANNAHARI',
+        'MADRUS BIN HAJI IBRAHIM',
+        'NATHANIEL NOEL ANAK ANDREW LIBIS',
+        'MACKRISLANCE CADELAC ANAK SIWEN',
+        'MOHD SHAHRILLIZEM BIN MUJIN',
+        'AHMAD B HJ TAZIROH',
+        'DAYRYL LIANON @ FRANCIS',
+        'PHILLIP YOMORONG',
+        'MUHAMMAD HARIS ARIFFIN BIN BAH HAU',
+        'BONIFACE ABUN ANAK GERANG',
+        'NGADAMIN BIN MAT YASIR',
+        'Mr.  Donald Trump',
+        'Miss Sonia gandhi',
+        'SYLVIA BINTI.TATI @ SHEILA EMILY SITAIM',
+      ],
+      result: [
+        'aiza aisyah sabri',
+        'angela nanggau',
+        'suria sonia ahip abdullah',
+        'siti samah angkong',
+        'nur azizah yusok',
+        'yew jia yi liaw jia yi',
+        'lee yu er',
+        'joemnah ellviah sanadon',
+        'norjijah makopin',
+        'florence jangan',
+        'mag dalena bidang jugah',
+        'puganeshwari raju',
+        'manjula mani',
+        'shahira saip',
+        'abigail thien may-jiuan',
+        'viezyeci hebron',
+        'suchada oui hui qing',
+        'manord ai rong',
+        'bintilani bannahari',
+        'madrus haji ibrahim',
+        'nathaniel noel andrew libis',
+        'mackrislance cadelac siwen',
+        'mohd shahrillizem mujin',
+        'ahmad hj taziroh',
+        'dayryl lianon francis',
+        'phillip yomorong',
+        'muhammad haris ariffin bah hau',
+        'boniface abun gerang',
+        'ngadamin mat yasir',
+        'donald trump',
+        'sonia gandhi',
+        'sylvia tati sheila emily sitaim',
+      ],
+    }
+    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const stopwordSet = new Set(data.stopwords)
+    for (let index = 0; index < data.names.length; index++) {
+      const name = data.names[index]
+      const modifiedTerm = sanctionsFetcher
+        .processNameWithStopwords(name, stopwordSet)
+        .toLowerCase()
+        .trim()
+      const searchTerm = sanitizeString(modifiedTerm, true)
+      expect(searchTerm).toBe(data.result[index])
+    }
   })
 })
