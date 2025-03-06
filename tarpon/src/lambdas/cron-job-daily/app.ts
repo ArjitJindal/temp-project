@@ -2,6 +2,7 @@ import { chunk, compact, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
+import { isQaEnv } from '@flagright/lib/qa'
 import { sendCaseCreatedAlert } from '../slack-app/app'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -19,12 +20,24 @@ import {
 } from '@/utils/clickhouse/definition'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
+import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { TriageQueueTicket } from '@/@types/triage'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
     process.env.ENV as Stage,
     process.env.REGION as FlagrightRegion
   )
+
+  try {
+    await clearTriageQueueTickets()
+  } catch (e) {
+    logger.error(
+      `Failed to clear triage queue tickets: ${(e as Error)?.message}`,
+      e
+    )
+  }
 
   try {
     await createApiUsageJobs(tenantInfos)
@@ -151,6 +164,19 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
       })
     }
   }
+}
+
+async function clearTriageQueueTickets() {
+  if (isQaEnv()) {
+    return
+  }
+
+  const mongoDb = await getMongoDbClient()
+  const collection = mongoDb
+    .db()
+    .collection<TriageQueueTicket>(TRIAGE_QUEUE_TICKETS_COLLECTION())
+
+  await collection.deleteMany({})
 }
 
 async function checkDormantUsers(tenantInfos: TenantInfo[]) {

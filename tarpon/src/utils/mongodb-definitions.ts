@@ -346,6 +346,9 @@ export const SANCTIONS_COLLECTION = (tenantId: string) => {
 export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-provider-searches`
 }
+export const TRIAGE_QUEUE_TICKETS_COLLECTION = () => {
+  return 'flagright-triage-queue-tickets'
+}
 
 /** Collection to log Requests and Responses to GPT */
 export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {

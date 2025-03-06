@@ -1,3 +1,7 @@
+import { LinearClient } from '@linear/sdk'
+import { WebClient } from '@slack/web-api'
+import { isQaEnv } from '@flagright/lib/qa'
+import slackifyMarkdown from 'slackify-markdown'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -16,6 +20,13 @@ import {
   shouldRun,
 } from '@/utils/sla-scheduler'
 import { SLAService } from '@/services/sla/sla-service'
+import { envIs } from '@/utils/env'
+import { getSecret } from '@/utils/secrets-manager'
+import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TriageQueueTicket } from '@/@types/triage'
+
+const ENGINEERING_HELP_CHANNEL_ID = 'C03BN4GQALA'
+const ENGINEERING_GROUP_ID = 'S03EY0EMJQN'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -172,6 +183,9 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
     await handleRiskScoringTriggerBatchJob(tenantIds)
     await deleteOldWebhookRetryEvents(tenantIds)
     await handleFinCenReportStatusBatchJob(tenantIds)
+    if (envIs('dev')) {
+      await notifyTriageIssues()
+    }
   } catch (error) {
     logger.error('Error in 10 minute cron job handler', error)
     throw error
@@ -198,6 +212,99 @@ async function deleteOldWebhookRetryEvents(tenantIds: string[]) {
     logger.error(
       `Failed to delete old webhook retry events: ${(e as Error)?.message}`,
       e
+    )
+  }
+}
+
+async function notifyTriageIssues() {
+  if (isQaEnv()) {
+    return
+  }
+  // only run between 8AM IST to 8PM IST
+  const now = dayjs().tz('Asia/Kolkata')
+  if (now.hour() <= 8 || now.hour() >= 20) {
+    return
+  }
+
+  const linear = await getSecret<{ apiKey: string }>('linear')
+  const slack = await getSecret<{ token: string }>('slackCreds')
+  const mongoDb = await getMongoDbClient()
+  const collection = mongoDb
+    .db()
+    .collection<TriageQueueTicket>(TRIAGE_QUEUE_TICKETS_COLLECTION())
+
+  const triageQueueTicketsAlreadyNotified = await collection
+    .find({ createdTimestamp: { $gte: dayjs().subtract(4, 'hour').valueOf() } })
+    .toArray()
+
+  const linearClient = new LinearClient({
+    apiKey: linear.apiKey,
+  })
+
+  const slackClient = new WebClient(slack.token)
+
+  const states = await linearClient.workflowStates({
+    filter: {
+      name: { eq: 'Triage' },
+    },
+  })
+
+  const issuesResponse = await linearClient.issues({
+    filter: {
+      state: { id: { eq: states.nodes[0].id } },
+      priority: { eq: 1 },
+    },
+  })
+
+  const issues: TriageQueueTicket[] = issuesResponse.nodes.map((issue) => ({
+    identifier: issue.identifier,
+    title: issue.title,
+    priority: issue.priority,
+    url: `https://linear.app/flagright/issue/${issue.identifier}`,
+    createdTimestamp: dayjs(issue.createdAt).valueOf(),
+  }))
+
+  // remove issues from triage queue tickets which are already in the issues array
+  const issuesToNotify = issues.filter(
+    (issue) =>
+      !triageQueueTicketsAlreadyNotified.some(
+        (ticket) => ticket.identifier === issue.identifier
+      )
+  )
+
+  const headerText = `Hey <!subteam^${ENGINEERING_GROUP_ID}>! Here are the pending issues in triage queue marked as **Urgent**. Please pick them as soon as possible.`
+
+  const issueText = issuesToNotify
+    .map(
+      (issue, index) =>
+        `*${index + 1}.* ${issue.title} [${issue.url}](${issue.url})`
+    )
+    .join('\n')
+
+  if (!issuesToNotify.length) {
+    return
+  }
+
+  const slackResponse = await slackClient.chat.postMessage({
+    channel: ENGINEERING_HELP_CHANNEL_ID,
+    blocks: [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: slackifyMarkdown(headerText) },
+      },
+      { type: 'divider' },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: slackifyMarkdown(issueText) },
+      },
+    ],
+  })
+
+  if (slackResponse.ok) {
+    await Promise.all(
+      issuesToNotify.map(async (issue) => {
+        await collection.replaceOne({ identifier: issue.identifier }, issue)
+      })
     )
   }
 }
