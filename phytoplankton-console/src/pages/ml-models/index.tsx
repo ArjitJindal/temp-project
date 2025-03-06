@@ -10,7 +10,7 @@ import { CommonParams, TableColumn, TableRefType } from '@/components/library/Ta
 import { RuleMLModel } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { ID, STRING } from '@/components/library/Table/standardDataTypes';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -96,7 +96,7 @@ export const MlModelsPage = () => {
                 <Tag color="blue">
                   <Tooltip title="Explainable model will show alert explainability reasons after hit.">
                     <div className={s.tag}>
-                      <BrainIcon height={12} /> Explainable model
+                      <AiForensicsLogo size={'SMALL'} /> Explainable model
                     </div>
                   </Tooltip>
                 </Tag>

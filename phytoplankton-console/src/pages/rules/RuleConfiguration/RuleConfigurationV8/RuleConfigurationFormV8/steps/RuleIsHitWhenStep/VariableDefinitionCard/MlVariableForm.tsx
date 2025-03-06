@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Tag from '@/components/library/Tag';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
 
 type FormRuleMlVariable = {
@@ -116,7 +116,7 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
                               </div>
                               <Tag color="blue">
                                 <div className={s.tag}>
-                                  <BrainIcon height={12} /> Explainable model
+                                  <AiForensicsLogo size={'SMALL'} /> Explainable model
                                 </div>
                               </Tag>
                             </div>

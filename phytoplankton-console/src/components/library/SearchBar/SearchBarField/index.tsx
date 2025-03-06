@@ -2,7 +2,7 @@ import cn from 'clsx';
 import { useMemo, useRef } from 'react';
 import { isEmpty } from 'lodash';
 import s from './index.module.less';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import BackIcon from '@/components/ui/icons/Remix/system/arrow-left-line.react.svg';
 import EqualizerLineIcon from '@/components/ui/icons/Remix/media/equalizer-line.react.svg';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
@@ -65,7 +65,7 @@ export default function SearchBarField<FilterParams extends object = object>(
               }}
             />
           )}
-          <BrainIcon className={s.icon} />
+          <AiForensicsLogo />
         </div>
       ) : (
         <SearchLineIcon className={cn(s.icon, s.leftIcon)} />

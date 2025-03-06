@@ -42,6 +42,7 @@ import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard'
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -325,7 +326,7 @@ export function useAlertTabs(props: Props): TabItem[] {
       .map((tab): TabItem | null => {
         if (tab === AlertTabs.AI_FORENSICS) {
           return {
-            title: 'AI Forensics',
+            title: <AiForensicsLogo variant={'FULL'} />,
             key: tab,
             children: <AiForensicsTab alert={alert} caseUserId={caseUserId} />,
           };

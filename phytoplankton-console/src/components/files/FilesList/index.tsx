@@ -9,7 +9,7 @@ import { FileInfo } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { P } from '@/components/ui/Typography';
 import Button from '@/components/library/Button';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 interface Props {
   files: FileInfo[];
@@ -31,7 +31,7 @@ export default function FilesList(props: Props) {
       {!!(summarizationEnabled && isSomeFilesWithSummary) && (
         <div className={s.fileListHeader}>
           <div className={s.headerText}>
-            <BrainIcon className={s.icon} />
+            <AiForensicsLogo />
             <P bold variant="m">
               AI attachment summary ({files.length})
             </P>

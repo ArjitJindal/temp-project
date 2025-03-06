@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 interface Props {
   alertId: string;
@@ -40,7 +40,7 @@ export default function AiAlertSummary(props: Props) {
     <div className={s.root}>
       <div className={s.header}>
         <div className={s.title}>
-          <BrainIcon height={16} /> <span>AI alert summary</span>
+          <AiForensicsLogo /> <span>AI alert summary</span>
         </div>
         <div className={s.extraControls}>
           <CommentPopover commentSubmitMutation={commentSubmitMutation} summary={summary} />

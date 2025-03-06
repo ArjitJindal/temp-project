@@ -60,7 +60,11 @@ export default function PageTabs(props: Props) {
 
         return (
           <AntTabs.TabPane
-            tab={<span data-sentry-allow={true}>{title}</span>}
+            tab={
+              <span data-sentry-allow={true} className={s.tabTitleWrapper}>
+                {title}
+              </span>
+            }
             key={key}
             closable={isClosable}
             disabled={isDisabled ?? !isEnabled ?? false}

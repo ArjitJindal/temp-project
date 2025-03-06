@@ -47,6 +47,7 @@ export default function HitsTab(props: Props) {
       selectionInfo={selectionInfo}
       selectionActions={selectionActions}
       fitHeight={fitHeight}
+      showComment={true}
     />
   );
 }

@@ -35,7 +35,7 @@ import {
   TableRefType,
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
@@ -823,7 +823,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                           }
                         }}
                       >
-                        <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
+                        <AiForensicsLogo /> Forensics
                       </Button>
                     </Link>
                   )}

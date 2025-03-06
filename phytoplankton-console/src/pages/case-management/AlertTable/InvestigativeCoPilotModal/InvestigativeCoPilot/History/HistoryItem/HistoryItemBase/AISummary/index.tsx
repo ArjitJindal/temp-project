@@ -1,6 +1,6 @@
 import React from 'react';
 import s from './index.module.less';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
 
@@ -16,7 +16,7 @@ export default function AISummary(props: Props) {
     <div className={s.root}>
       <div className={s.header}>
         <div className={s.title}>
-          <BrainIcon className={s.brainIcon} />
+          <AiForensicsLogo />
           AI Summary
         </div>
         {(addToNarrative != null || onChangeAddToNarrative != null) && (

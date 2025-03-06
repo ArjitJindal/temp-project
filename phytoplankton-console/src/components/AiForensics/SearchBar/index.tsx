@@ -10,7 +10,6 @@ import Form from '@/components/library/Form';
 import { getOr } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import TextInput from '@/components/library/TextInput';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import BrainIconWhite from '@/components/ui/icons/brain-icon.react.svg';
 import ShineIcon from '@/components/ui/icons/shining-stars.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
@@ -22,6 +21,7 @@ import {
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 type FormValues = {
   searchString: string;
@@ -166,7 +166,7 @@ export const SearchBar = (props: Props) => {
           }}
           disabled={!searchInputText}
         >
-          <BrainIcon height={16} />
+          <AiForensicsLogo />
         </button>
         {history.length === 0 && (
           <>

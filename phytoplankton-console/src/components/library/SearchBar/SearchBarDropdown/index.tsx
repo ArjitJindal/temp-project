@@ -10,7 +10,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { H5, H6 } from '@/components/ui/Typography';
 import COLORS from '@/components/ui/colors';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import { getBranding } from '@/utils/branding';
 
 export interface Item {
@@ -53,7 +53,7 @@ const AskAI = (props: { onClick: () => void }) => {
         props.onClick();
       }}
     >
-      <BrainIcon className={s.icon} />
+      <AiForensicsLogo />
       <H5 bold>Ask {getBranding().companyName} AI</H5>
     </div>
   );

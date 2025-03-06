@@ -6,7 +6,7 @@ import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,
 } from '@/components/CommentEditor';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 
@@ -65,7 +65,7 @@ export default function CommentPopover(props: Props) {
         </div>
       }
     >
-      <BrainIcon className={s.brainIcon} />
+      <AiForensicsLogo />
     </Popover>
   );
 }

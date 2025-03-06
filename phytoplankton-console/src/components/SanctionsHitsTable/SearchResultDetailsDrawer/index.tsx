@@ -8,7 +8,7 @@ import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
-import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import {
   CountryCode,
   SanctionsEntity,
@@ -242,7 +242,7 @@ export function AISummarySection(props: { score: number; comment: string }) {
       <div className={s.aiScoreHeader}>
         <div className={s.aiScoreTitle}>
           <div className={s.icon}>
-            <BrainIcon />
+            <AiForensicsLogo />
           </div>
           AI Score
         </div>
