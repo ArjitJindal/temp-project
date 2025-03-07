@@ -13,7 +13,7 @@ import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
-import { isSuperAdmin, useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useHasPermissions } from '@/utils/user-utils';
 import Select from '@/components/library/Select';
 import Label from '@/components/ui/Form/Layout/Label';
 import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
@@ -24,13 +24,11 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsS
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
 export const SanctionsSettings = () => {
-  const permissions = useHasPermissions([
-    'settings:add-ons:read',
+  const addOnsPermissions = useHasPermissions(['settings:add-ons:read']);
+  const screeningPermissions = useHasPermissions([
     'settings:screening:read',
     'settings:screening:write',
   ]);
-  const user = useAuth0User();
-  const superAdmin = isSuperAdmin(user);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const branding = getBranding();
   const hasNoSanctionsProviders = useHasNoSanctionsProviders();
@@ -97,10 +95,9 @@ export const SanctionsSettings = () => {
         searchTypes={ACURIS_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setAcurisScreeningTypes}
         isLoading={updateTenantSettingsMutation.isLoading}
-        isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
-        hasPermissions={permissions}
+        hasPermissions={screeningPermissions}
       />
 
       <SanctionsProviderSettings
@@ -110,10 +107,9 @@ export const SanctionsSettings = () => {
         searchTypes={OPEN_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setOpenSanctionsScreeningTypes}
         isLoading={updateTenantSettingsMutation.isLoading}
-        isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
-        hasPermissions={permissions}
+        hasPermissions={screeningPermissions}
       />
 
       <SanctionsProviderSettings
@@ -123,10 +119,9 @@ export const SanctionsSettings = () => {
         searchTypes={DOW_JONES_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setDowJonesScreeningTypes}
         isLoading={updateTenantSettingsMutation.isLoading}
-        isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
-        hasPermissions={permissions}
+        hasPermissions={screeningPermissions}
       />
       <SettingsCard
         title={
@@ -155,7 +150,7 @@ export const SanctionsSettings = () => {
                   onClick={() => {
                     handleDownload();
                   }}
-                  isDisabled={!permissions}
+                  isDisabled={!addOnsPermissions}
                 >
                   Download List
                 </Button>
@@ -165,7 +160,7 @@ export const SanctionsSettings = () => {
         ) : (
           <>
             <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
-              <Button isDisabled={!permissions} type="PRIMARY">
+              <Button isDisabled={!addOnsPermissions} type="PRIMARY">
                 Request access
               </Button>
             </a>
@@ -183,7 +178,6 @@ const SanctionsProviderSettings = ({
   searchTypes,
   onScreeningTypesChange,
   isLoading,
-  isSuperAdmin,
   onSave,
   isSanctionsEnabled,
   hasPermissions,
@@ -191,7 +185,6 @@ const SanctionsProviderSettings = ({
   if (!hasFeature || !isSanctionsEnabled) {
     return null;
   }
-
   return (
     <SettingsCard title={`${title} settings`}>
       <div className={s.sanctionsSettingsRoot}>
@@ -202,7 +195,7 @@ const SanctionsProviderSettings = ({
               label: humanizeAuto(type),
               value: type,
             }))}
-            isDisabled={!isSuperAdmin || !hasPermissions}
+            isDisabled={!hasPermissions}
             onChange={(values) =>
               onScreeningTypesChange({
                 screeningTypes: values ?? [],
@@ -220,7 +213,7 @@ const SanctionsProviderSettings = ({
               label: humanizeAuto(type),
               value: type,
             }))}
-            isDisabled={!isSuperAdmin || !hasPermissions}
+            isDisabled={!hasPermissions}
             onChange={(values) =>
               onScreeningTypesChange({
                 screeningTypes: screeningTypes.screeningTypes,
@@ -235,7 +228,7 @@ const SanctionsProviderSettings = ({
           type="PRIMARY"
           onClick={() => onSave(screeningTypes)}
           className={s.sanctionsSettingsButton}
-          isDisabled={isLoading || !isSuperAdmin || !hasPermissions}
+          isDisabled={isLoading || !hasPermissions}
         >
           Save
         </Button>
