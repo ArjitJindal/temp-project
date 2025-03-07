@@ -91,7 +91,7 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
     'All basic types',
     {
       'ui:schema': {
-        'ui:order': ['number', 'string', 'boolean'],
+        'ui:order': ['number', 'number_with_limits', 'string', 'boolean'],
       },
       type: 'object',
       properties: {
@@ -110,8 +110,17 @@ const SAMPLE_SCHEMAS: [string, ExtendedSchema][] = [
           title: 'Example string property',
           description: 'Example description',
         },
+        number_with_limits: {
+          multipleOf: 10,
+          description: 'Example of a number field with minimum and maximum values',
+          maximum: 100,
+          'ui:schema': {},
+          type: 'number',
+          title: 'Example number property with limits',
+          minimum: 0,
+        },
       },
-      required: ['boolean', 'number', 'string'],
+      required: ['boolean', 'number', 'number_with_limits', 'string'],
     },
   ],
   [
