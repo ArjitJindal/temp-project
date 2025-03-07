@@ -5,6 +5,7 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { SearchResultTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import { SanctionsScreeningActivity } from './activity';
+import s from './style.module.less';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -14,9 +15,9 @@ import { P } from '@/components/ui/Typography';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs } from '@/utils/dayjs';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-
 import { AllParams } from '@/components/library/Table/types';
 import { BooleanString, SanctionsScreeningEntity } from '@/apis';
+
 export type SanctionsType = 'manual' | 'rule';
 type TableSearchParams = AllParams<{
   entity?: SanctionsScreeningEntity[];
@@ -75,8 +76,8 @@ const SanctionsPage: React.FC = () => {
             title: 'Manual screening',
             children: (
               <PageWrapperContentContainer>
-                <P grey={true}>
-                  Manually screen individuals or entities against Sanctions/PEP/AML lists and view
+                <P grey={true} className={s.paragraph}>
+                  Manually screen individuals or entities against Sanctions/PEP/AM lists and view
                   detailed match results.
                 </P>
                 <SearchResultTable searchId={searchId} setSearchTerm={setSearchTerm} />
@@ -88,7 +89,7 @@ const SanctionsPage: React.FC = () => {
             title: 'Activity',
             children: (
               <PageWrapperContentContainer>
-                <P grey={true}>
+                <P grey={true} className={s.paragraph}>
                   View screening history and results from both rule-based and manual screening
                   activities.
                 </P>
@@ -132,7 +133,7 @@ const SanctionsPage: React.FC = () => {
             title: 'Whitelist',
             children: (
               <PageWrapperContentContainer>
-                <P grey={true}>
+                <P grey={true} className={s.paragraph}>
                   Manage whitelisted entities that are excluded from screening hits.
                 </P>
                 <WhitelistTab />

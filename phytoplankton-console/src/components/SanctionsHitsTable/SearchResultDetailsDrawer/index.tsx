@@ -11,6 +11,7 @@ import Section from './Section';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import {
   CountryCode,
+  GenericSanctionsSearchType,
   SanctionsEntity,
   SanctionsEntityType,
   SanctionsHit,
@@ -579,7 +580,15 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     ];
 
     return tabs
-      .filter((tab) => tab.sources.length > 0)
+      .filter((tab) => {
+        const searchType = tab.name
+          .toUpperCase()
+          .replace(/\s+/g, '_') as GenericSanctionsSearchType;
+        return (
+          tab.name === 'Sources' ||
+          (tab.sources.length > 0 && entity.sanctionSearchTypes?.includes(searchType))
+        );
+      })
       .map((tab) => {
         return {
           key: tab.name,
@@ -665,6 +674,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     entity.sanctionsSources,
     pdfMode,
     entity.otherSources,
+    entity.sanctionSearchTypes,
   ]);
 }
 

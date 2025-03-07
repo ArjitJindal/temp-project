@@ -105,7 +105,7 @@ export function trueFalseMutualExclusivity(values) {
     v.toString().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'),
   );
   if (normalizedValues?.includes('true_positive') && normalizedValues?.includes('false_positive')) {
-    return 'Cannot select both True Positive and False Positive';
+    return 'Select either True positive or False positive.';
   }
   return null;
 }

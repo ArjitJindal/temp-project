@@ -65,6 +65,7 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       narrativeRef?.current?.reset();
       formRef.current?.resetFields(initialFormState.values);
       setFormState(initialFormState);
+      setHasUncheckedWhitelist(false);
     }
   }, [initialFormState, preNewStatus, newStatus]);
 

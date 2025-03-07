@@ -1704,7 +1704,11 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       <SanctionsHitStatusChangeModal
         entityIds={selectedSanctionHitsIds}
         isVisible={isStatusChangeModalVisible}
-        onClose={() => setStatusChangeModalVisible(false)}
+        onClose={() => {
+          setStatusChangeModalVisible(false);
+          queryResults.refetch();
+          reloadTable();
+        }}
         newStatus={statusChangeModalState ?? 'CLEARED'}
         updateMutation={adaptMutationVariables(changeHitsStatusMutation, (formValues) =>
           updateSanctionsData(formValues, selectedSanctionHits),
