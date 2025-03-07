@@ -35,7 +35,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
         ? 'business'
         : 'customer'
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return ` This is a ${customerType} and this ${this.type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${reasons}.`
+    return ` This is a ${customerType} and this ${this.type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${reasons}. Do not replace placeholders if you don't have information about them.`
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
