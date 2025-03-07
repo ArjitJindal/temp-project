@@ -100,6 +100,7 @@ export const SanctionsSettings = () => {
         isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
+        hasPermissions={permissions}
       />
 
       <SanctionsProviderSettings
@@ -112,6 +113,7 @@ export const SanctionsSettings = () => {
         isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
+        hasPermissions={permissions}
       />
 
       <SanctionsProviderSettings
@@ -124,6 +126,7 @@ export const SanctionsSettings = () => {
         isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
+        hasPermissions={permissions}
       />
       <SettingsCard
         title={
@@ -183,6 +186,7 @@ const SanctionsProviderSettings = ({
   isSuperAdmin,
   onSave,
   isSanctionsEnabled,
+  hasPermissions,
 }) => {
   if (!hasFeature || !isSanctionsEnabled) {
     return null;
@@ -198,7 +202,7 @@ const SanctionsProviderSettings = ({
               label: humanizeAuto(type),
               value: type,
             }))}
-            isDisabled={!isSuperAdmin}
+            isDisabled={!isSuperAdmin || !hasPermissions}
             onChange={(values) =>
               onScreeningTypesChange({
                 screeningTypes: values ?? [],
@@ -216,7 +220,7 @@ const SanctionsProviderSettings = ({
               label: humanizeAuto(type),
               value: type,
             }))}
-            isDisabled={!isSuperAdmin}
+            isDisabled={!isSuperAdmin || !hasPermissions}
             onChange={(values) =>
               onScreeningTypesChange({
                 screeningTypes: screeningTypes.screeningTypes,
@@ -231,7 +235,7 @@ const SanctionsProviderSettings = ({
           type="PRIMARY"
           onClick={() => onSave(screeningTypes)}
           className={s.sanctionsSettingsButton}
-          isDisabled={isLoading || !isSuperAdmin}
+          isDisabled={isLoading || !isSuperAdmin || !hasPermissions}
         >
           Save
         </Button>
