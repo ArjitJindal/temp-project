@@ -1434,6 +1434,7 @@ export class AlertsService extends CaseAlertsCommonService {
         webhookTasks.push({
           event: 'ALERT_CLOSED',
           triggeredBy: 'MANUAL',
+          entityId: alertId,
           payload: {
             alertId,
             reasons: reason,
@@ -1943,6 +1944,7 @@ export class AlertsService extends CaseAlertsCommonService {
         return {
           event: 'ALERT_OPENED',
           triggeredBy: 'SYSTEM',
+          entityId: alert.alertId as string,
           payload: {
             alertId: alert.alertId,
             status: alert.alertStatus,

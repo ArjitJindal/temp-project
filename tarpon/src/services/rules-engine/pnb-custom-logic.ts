@@ -1609,6 +1609,7 @@ export async function handleInternalTagUpdateForPNB({
       await sendWebhookTasks(userRepository.tenantId, [
         {
           event: 'CRA_RISK_LEVEL_UPDATED',
+          entityId: user.userId,
           payload: {
             riskLevel: getRiskLevelForPNB(previousRiskLevel, currentRiskLevel, {
               ...user,

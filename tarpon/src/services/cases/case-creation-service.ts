@@ -223,6 +223,7 @@ export class CaseCreationService {
       cases.map((case_) => ({
         event: 'CASE_OPENED',
         triggeredBy: 'SYSTEM',
+        entityId: case_.caseId as string,
         payload: {
           caseObject: case_,
           status: 'OPEN',

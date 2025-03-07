@@ -818,6 +818,7 @@ export class UserService {
 
       webhookTasks.push({
         event: 'USER_STATE_UPDATED',
+        entityId: newUser.userId,
         payload: webhookUserStateDetails,
         triggeredBy: isManual ? 'MANUAL' : 'SYSTEM',
       })
@@ -834,6 +835,7 @@ export class UserService {
 
       webhookTasks.push({
         event: 'KYC_STATUS_UPDATED',
+        entityId: newUser.userId,
         payload: webhookKYCStatusDetails,
         triggeredBy: isManual ? 'MANUAL' : 'SYSTEM',
       })
@@ -1581,6 +1583,7 @@ export class UserService {
     if (newOrUpdatedTags?.length) {
       webhookTasks.push({
         event: 'USER_TAGS_UPDATED',
+        entityId: user.userId,
         payload: {
           userId: user.userId,
           tags: newOrUpdatedTags,
@@ -1695,6 +1698,7 @@ export class UserService {
       sendWebhookTasks(this.userRepository.tenantId, [
         {
           event: 'PEP_STATUS_UPDATED',
+          entityId: user.userId,
           payload: {
             userId: user.userId,
             pepStatus: updateRequest.pepStatus,

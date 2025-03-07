@@ -5,6 +5,7 @@ import { traceable } from '@/core/xray'
 import { DefaultApiGetWebhooksWebhookIdDeliveriesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
+import { prefixRegexMatchFilterForArray } from '@/utils/mongodb-utils'
 
 @traceable
 export class WebhookDeliveryRepository {
@@ -82,6 +83,20 @@ export class WebhookDeliveryRepository {
 
     if (params.filterEventType != null) {
       query.event = params.filterEventType as WebhookEventType
+    }
+
+    if (params.searchEntityId && params.searchEntityId.length > 0) {
+      if (!params.entityIdExactMatch) {
+        const searchEntityIdRegex = prefixRegexMatchFilterForArray(
+          params.searchEntityId,
+          true
+        )
+        query.entityId = searchEntityIdRegex
+      } else {
+        query.entityId = {
+          $in: params.searchEntityId,
+        }
+      }
     }
 
     return query

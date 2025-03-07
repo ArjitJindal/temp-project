@@ -519,6 +519,7 @@ export class ListService {
     const webhookTask: ThinWebhookDeliveryTask<ListUpdatedDetails> = {
       event: 'LIST_UPDATED',
       triggeredBy: 'SYSTEM',
+      entityId: listId,
       payload: {
         listId,
         action,

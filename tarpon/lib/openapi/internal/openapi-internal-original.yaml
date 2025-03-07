@@ -4597,6 +4597,16 @@ paths:
           in: query
           name: sortField
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: searchEntityId
+        - schema:
+            type: boolean
+          in: query
+          name: entityIdExactMatch
+        - schema:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
@@ -11624,6 +11634,8 @@ components:
           type: number
         requestFinishedAt:
           type: number
+        entityId:
+          type: string
         success:
           type: boolean
         event:
@@ -11644,6 +11656,7 @@ components:
         - event
         - eventCreatedAt
         - request
+        - entityId
     ConsoleActionReasonPutRequest:
       title: ActionReasonPutRequest
       type: object

@@ -136,6 +136,7 @@ describe('Webhook delivery', () => {
 
         const deliveryTask: WebhookDeliveryTask = {
           event: 'USER_STATE_UPDATED',
+          entityId: 'entity_id',
           payload: { statusReason: 'reason', status: 'DELETED' },
           _id: 'task_id',
           tenantId: TEST_TENANT_ID,
@@ -174,7 +175,7 @@ describe('Webhook delivery', () => {
           requestFinishedAt: expect.any(Number),
           request: {
             headers: expectedReceivedHeaders,
-            body: JSON.stringify(receivedPayload),
+            body: receivedPayload,
           },
         })
         expect(attempt.response?.status).toEqual(200)
@@ -200,6 +201,7 @@ describe('Webhook delivery', () => {
 
       const deliveryTask: WebhookDeliveryTask = {
         event: 'USER_STATE_UPDATED',
+        entityId: 'entity_id',
         payload: {},
         _id: 'task_id',
         tenantId: TEST_TENANT_ID,
@@ -225,7 +227,7 @@ describe('Webhook delivery', () => {
         requestFinishedAt: expect.any(Number),
         request: {
           headers: getExpectedRequestHeaders(expectedPayload),
-          body: JSON.stringify(expectedPayload),
+          body: expectedPayload,
         },
         response: null,
       })
@@ -371,6 +373,7 @@ describe('Webhook delivery', () => {
       await webhookDeliveryRepository.addWebhookDeliveryAttempt({
         _id: '1',
         deliveryTaskId: deliveryTask._id,
+        entityId: 'entity_id',
         webhookId: ACTIVE_WEBHOOK_ID,
         webhookUrl: webhookUrl,
         requestStartedAt: dayjs().subtract(1, 'day').valueOf(),
@@ -417,6 +420,7 @@ describe('Webhook delivery', () => {
       await webhookDeliveryRepository.addWebhookDeliveryAttempt({
         _id: '1',
         deliveryTaskId: deliveryTask._id,
+        entityId: 'entity_id',
         webhookId: ACTIVE_WEBHOOK_ID,
         webhookUrl: webhookUrl,
         requestStartedAt: dayjs().subtract(12, 'hour').valueOf(),

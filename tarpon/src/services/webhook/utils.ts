@@ -64,7 +64,7 @@ const sqs = getSQSClient()
 
 export type ThinWebhookDeliveryTask<T extends object = object> = Pick<
   WebhookDeliveryTask<T>,
-  'event' | 'payload' | 'triggeredBy'
+  'event' | 'payload' | 'triggeredBy' | 'entityId'
 >
 
 export async function retryWebhookTasks<T extends object = object>(

@@ -21,6 +21,8 @@ import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { CloseMessage } from '@/components/library/Message';
 import RestartLineIcon from '@/components/ui/icons/Remix/system/restart-line.react.svg';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 
 interface Props {
   webhookId: string;
@@ -31,6 +33,7 @@ interface Params extends CommonParams {
   event?: WebhookEventType;
   eventCreatedAt?: [string, string];
   requestStartedAt?: [string, string];
+  searchEntityId?: string;
 }
 
 export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => {
@@ -109,6 +112,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         filterEventDeliveredAtBeforeTimestamp: params.requestStartedAt?.[1]
           ? dayjs(params.requestStartedAt[1]).valueOf()
           : undefined,
+        searchEntityId: params.searchEntityId ? [params.searchEntityId] : [],
       });
 
       return attempts;
@@ -207,6 +211,16 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
     }),
   ]);
 
+  const extraFilters: ExtraFilterProps<Params>[] = [
+    {
+      title: 'Entity ID',
+      key: 'searchEntityId',
+      renderer: { kind: 'string' },
+      showFilterByDefault: true,
+      icon: <SearchIcon />,
+    },
+  ];
+
   return (
     <>
       <QueryResultsTable<WebhookDeliveryAttempt, Params>
@@ -216,6 +230,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         pagination={true}
         params={params}
         onChangeParams={setParams}
+        extraFilters={extraFilters}
       />
       <Modal
         isOpen={Boolean(selectedWebhookDelivery)}

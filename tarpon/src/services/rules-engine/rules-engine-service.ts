@@ -2042,6 +2042,7 @@ export class RulesEngineService {
       txns.map((txn) => ({
         event: 'TRANSACTION_STATUS_UPDATED',
         triggeredBy: 'MANUAL',
+        entityId: txn?.transactionId as string,
         payload: {
           transactionId: txn?.transactionId as string,
           status: action,
@@ -2102,6 +2103,7 @@ const sendStatusChangeWebhook = async (
 ) => {
   const webhookTask: ThinWebhookDeliveryTask = {
     event: 'TRANSACTION_STATUS_UPDATED',
+    entityId: transactionId,
     triggeredBy: 'SYSTEM',
     payload: {
       transactionId,

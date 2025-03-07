@@ -103,6 +103,7 @@ export async function drsScoreEventHandler(
       await sendWebhookTasks(tenantId, [
         {
           event: 'CRA_RISK_LEVEL_UPDATED',
+          entityId: newDrsScore.userId,
           payload: {
             riskLevel,
             userId: newDrsScore.userId,

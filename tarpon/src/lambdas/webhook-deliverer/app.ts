@@ -287,6 +287,7 @@ export async function deliverWebhookEvent(
     } else {
       logger.warn(`Failed to deliver event`)
     }
+    const requestBody = JSON.parse(fetchOptions.body)
     await webhookDeliveryRepository.addWebhookDeliveryAttempt({
       _id: uuidv4(),
       deliveryTaskId: webhookDeliveryTask._id,
@@ -296,10 +297,11 @@ export async function deliverWebhookEvent(
       requestFinishedAt,
       success,
       event: webhookDeliveryTask.event,
+      entityId: webhookDeliveryTask.entityId,
       eventCreatedAt: webhookDeliveryTask.createdAt,
       request: {
         headers: fetchOptions.headers,
-        body: fetchOptions.body,
+        body: requestBody,
       },
       response: response && {
         status: response.status,

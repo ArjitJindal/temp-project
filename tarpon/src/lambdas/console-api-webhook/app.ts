@@ -142,6 +142,7 @@ export const webhookConfigurationHandler = lambdaApi()(
       const webhookDeliveryTask: WebhookDeliveryTask = {
         _id: webhookDeliveryTaskId,
         webhookId: webhookLatestDeliveryAttempt.webhookId,
+        entityId: webhookLatestDeliveryAttempt.entityId,
         tenantId: tenantId,
         event: webhookLatestDeliveryAttempt.event,
         createdAt: requestBody.createdTimestamp,

@@ -72,6 +72,7 @@ export class PnbBackfillWebhookDeliveriesBatchJobRunner extends BatchJobRunner {
       await sendWebhookTasks<CRARiskLevelUpdatedDetails>(job.tenantId, [
         {
           event: 'CRA_RISK_LEVEL_UPDATED',
+          entityId: item.userId,
           payload: {
             riskLevel,
             userId: item.userId,

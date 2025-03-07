@@ -479,6 +479,7 @@ export class CaseService extends CaseAlertsCommonService {
       cases.map((case_) => ({
         event: 'CASE_CLOSED' as WebhookEventType,
         triggeredBy: 'MANUAL',
+        entityId: case_.caseId as string,
         payload: {
           caseId: case_.caseId,
           reasons: updateRequest.reason,

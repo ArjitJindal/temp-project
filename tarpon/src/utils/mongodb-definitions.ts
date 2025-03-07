@@ -708,6 +708,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { webhookId: 1, success: 1 },
           { webhookId: 1, eventCreatedAt: 1 },
           { webhookId: 1, deliveredAt: 1 },
+          { entityId: 1 },
         ].map((index) => ({ index })),
     },
     [SANCTIONS_SEARCHES_COLLECTION(tenantId)]: {
