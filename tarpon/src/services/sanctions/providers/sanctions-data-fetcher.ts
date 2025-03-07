@@ -563,6 +563,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     const searchScoreThreshold =
       request.fuzzinessRange?.upperBound === 100 ? 3 : 5
+    const stopwordSet = request.stopwords?.length
+      ? new Set(request.stopwords.map((word) => word.toLowerCase()))
+      : undefined
     const results = await client
       .db()
       .collection(
@@ -585,7 +588,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               must: [
                 {
                   text: {
-                    query: sanitizeString(request.searchTerm),
+                    query: this.processNameWithStopwords(
+                      sanitizeString(request.searchTerm),
+                      stopwordSet
+                    ),
                     path: ['name', 'aka'],
                     fuzzy: {
                       maxEdits: 2,
@@ -634,7 +640,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     const fuzzinessSettings = request?.fuzzinessSettings
     const filteredResults = this.hydrateHitsWithMatchTypes(
-      this.filterResults(results, request, fuzzinessSettings),
+      this.filterResults(results, request, fuzzinessSettings, stopwordSet),
       request
     )
 
@@ -667,16 +673,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private filterResults(
     results: SanctionsEntity[],
     request: SanctionsSearchRequest,
-    fuzzinessSettings: FuzzinessSetting | undefined
+    fuzzinessSettings: FuzzinessSetting | undefined,
+    stopwordSet: Set<string> | undefined
   ): SanctionsEntity[] {
     const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
     const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
       fuzzinessSettings?.similarTermsConsideration
 
-    const stopwordSet = request.stopwords
-      ? new Set(request.stopwords.map((word) => word.toLowerCase()))
-      : undefined
     const modifiedTerm = this.processNameWithStopwords(
       request.searchTerm,
       stopwordSet
