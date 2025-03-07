@@ -412,49 +412,7 @@ export const createRuleHitRateAlarm = (
     new SnsAction(zendutyCloudWatchTopic)
   )
 }
-export const createLambdaInitDurationAlarm = (
-  context: Construct,
-  betterUptimeTopic: Topic,
-  zendutyCloudWatchTopic: Topic,
-  lambdaName: string,
-  duration: Duration
-) => {
-  if (isDevUserStack) {
-    return null
-  }
-  const lambdaInitDurationAlarm = new Alarm(
-    context,
-    `${lambdaName}InitDuration`,
-    {
-      comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-      threshold: duration.toSeconds() * 1000,
-      evaluationPeriods: 6,
-      datapointsToAlarm: 3,
-      treatMissingData: TreatMissingData.NOT_BREACHING,
-      alarmName: `Lambda-${lambdaName}InitDuration`,
-      alarmDescription: `Covers Duration in ${lambdaName} in the AWS account. 
-    Alarm triggers when Maximum Duration exceedes ${duration.toSeconds()}s for 3 consecutive data points in 30 mins (Checked every 5 minutes). `,
-      metric: new Metric({
-        label: 'Lambda Maximum Duration',
-        namespace: 'LambdaInsights',
-        metricName: 'init_duration',
-        dimensionsMap: {
-          FunctionName: lambdaName,
-        },
-      }).with({
-        period: Duration.seconds(300),
-        statistic: 'Maximum',
-      }),
-    }
-  )
 
-  lambdaInitDurationAlarm.addAlarmAction(
-    new SnsAction(betterUptimeTopic),
-    new SnsAction(zendutyCloudWatchTopic)
-  )
-
-  return lambdaInitDurationAlarm
-}
 export const createLambdaThrottlingAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
@@ -538,58 +496,6 @@ export const createLambdaMemoryUtilizationAlarm = (
         }),
       },
     }),
-  }).addAlarmAction(
-    new SnsAction(betterUptimeTopic),
-    new SnsAction(zendutyCloudWatchTopic)
-  )
-}
-
-export const createGlueJobFailedAlarm = (
-  context: Construct,
-  betterUptimeTopic: Topic,
-  zendutyCloudWatchTopic: Topic,
-  glueJobName: string
-) => {
-  if (isDevUserStack) {
-    return null
-  }
-  const glueJobFailedMetric = new Metric({
-    namespace: 'AWS/Glue',
-    metricName: 'GlueJobRunFailed',
-    dimensionsMap: {
-      JobName: glueJobName,
-    },
-    statistic: 'sum',
-    period: Duration.minutes(5),
-  })
-
-  const glueJobErroredMetric = new Metric({
-    namespace: 'AWS/Glue',
-    metricName: 'GlueJobRunError',
-    dimensionsMap: {
-      JobName: glueJobName,
-    },
-    statistic: 'sum',
-    period: Duration.minutes(5),
-  })
-
-  new Alarm(context, `${glueJobName}GlueJobFailedAlarm`, {
-    metric: glueJobFailedMetric,
-    threshold: 1,
-    evaluationPeriods: 1,
-    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-    alarmDescription: `Alarm if Glue job ${glueJobName} fails`,
-  }).addAlarmAction(
-    new SnsAction(betterUptimeTopic),
-    new SnsAction(zendutyCloudWatchTopic)
-  )
-
-  new Alarm(context, `${glueJobName}GlueJobErroredAlarm`, {
-    metric: glueJobErroredMetric,
-    threshold: 1,
-    evaluationPeriods: 1,
-    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-    alarmDescription: `Alarm if Glue job ${glueJobName} encounters an error`,
   }).addAlarmAction(
     new SnsAction(betterUptimeTopic),
     new SnsAction(zendutyCloudWatchTopic)

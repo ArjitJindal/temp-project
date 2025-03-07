@@ -22,7 +22,6 @@ import {
   createKinesisAlarm,
   createLambdaConsumerIteratorAgeAlarm,
   createLambdaDurationAlarm,
-  createLambdaInitDurationAlarm,
   createLambdaErrorPercentageAlarm,
   createLambdaMemoryUtilizationAlarm,
   createLambdaThrottlingAlarm,
@@ -32,7 +31,6 @@ import {
   dynamoTableOperations,
   createCanarySuccessPercentageAlarm,
   createRuleHitRateAlarm,
-  createGlueJobFailedAlarm,
   createStateMachineAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
@@ -108,13 +106,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         lambdaName,
         Duration.seconds(LAMBDAS[lambdaName].expectedMaxSeconds)
       )
-      createLambdaInitDurationAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        this.zendutyCloudWatchTopic,
-        lambdaName,
-        Duration.seconds(5)
-      )
+
       // Disable error alarm for now as there's no way to differentiate system error or client side error
       // (we should still get alerted in Sentry for system error)
       if (lambdaName !== StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME) {
@@ -306,19 +298,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         )
       }
     }
-
-    createGlueJobFailedAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      this.zendutyCloudWatchTopic,
-      'stream'
-    )
-    createGlueJobFailedAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      this.zendutyCloudWatchTopic,
-      'optimize'
-    )
 
     createStateMachineAlarm(
       this,
