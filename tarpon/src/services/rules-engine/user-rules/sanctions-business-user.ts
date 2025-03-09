@@ -4,9 +4,9 @@ import { isEmpty } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
+  GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -61,7 +61,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           uniqueItems: true,
           nullable: true,
         },
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:

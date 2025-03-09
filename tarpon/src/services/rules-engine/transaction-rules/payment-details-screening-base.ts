@@ -3,7 +3,7 @@ import { uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -44,7 +44,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       properties: {
         transactionAmountThreshold:
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),

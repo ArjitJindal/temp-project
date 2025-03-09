@@ -2,12 +2,12 @@ import { JSONSchemaType } from 'ajv'
 
 import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
-  SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_RANGE_SCHEMA,
   SANCTIONS_SCREENING_VALUES_SCHEMA,
   PEP_RANK_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
+  GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -40,7 +40,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
     return {
       type: 'object',
       properties: {
-        screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
+        screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzzinessRange: FUZZINESS_RANGE_SCHEMA({
           uiSchema: {
             requiredFeatures: ['DOW_JONES'],

@@ -22,6 +22,7 @@ import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType
 import { SanctionsDataProviderName } from '@/apis';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
+import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 
 export const SanctionsSettings = () => {
   const addOnsPermissions = useHasPermissions(['settings:add-ons:read']);
@@ -45,6 +46,11 @@ export const SanctionsSettings = () => {
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const hasFeatureComplyAdvantage =
+    useFeatureEnabled('SANCTIONS') &&
+    !hasFeatureAcuris &&
+    !hasFeatureOpenSanctions &&
+    !hasFeatureDowJones;
   const getSettings = (
     provider: SanctionsDataProviderName,
     defaultScreeningTypes,
@@ -73,6 +79,12 @@ export const SanctionsSettings = () => {
     useState<SanctionsSettingsProviderScreeningTypes>(
       getSettings('dowjones', DOW_JONES_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
     );
+
+  const [complyAdvantageScreeningTypes, setComplyAdvantageScreeningTypes] =
+    useState<SanctionsSettingsProviderScreeningTypes>(
+      getSettings('comply-advantage', SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
+    );
+
   const handleTypesChange = (value: SanctionsSettingsProviderScreeningTypes) => {
     updateTenantSettingsMutation.mutate({
       sanctions: {
@@ -122,6 +134,19 @@ export const SanctionsSettings = () => {
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
         hasPermissions={screeningPermissions}
+      />
+
+      <SanctionsProviderSettings
+        title="Comply Advantage"
+        hasFeature={hasFeatureComplyAdvantage}
+        screeningTypes={complyAdvantageScreeningTypes}
+        searchTypes={SANCTIONS_SEARCH_TYPES}
+        onScreeningTypesChange={setComplyAdvantageScreeningTypes}
+        isLoading={updateTenantSettingsMutation.isLoading}
+        isSuperAdmin={superAdmin}
+        onSave={handleTypesChange}
+        isSanctionsEnabled={isSanctionsEnabled}
+        hasPermissions={permissions}
       />
       <SettingsCard
         title={
