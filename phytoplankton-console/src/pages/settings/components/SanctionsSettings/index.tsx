@@ -143,10 +143,9 @@ export const SanctionsSettings = () => {
         searchTypes={SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setComplyAdvantageScreeningTypes}
         isLoading={updateTenantSettingsMutation.isLoading}
-        isSuperAdmin={superAdmin}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}
-        hasPermissions={permissions}
+        hasPermissions={screeningPermissions}
       />
       <SettingsCard
         title={
