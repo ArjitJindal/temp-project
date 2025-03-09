@@ -65,7 +65,7 @@ describe('Case Creation test', () => {
         // eslint-disable-next-line cypress/no-unnecessary-waiting
         cy.wait(waitTime); // Give it some time to create the case
         cy.visit(
-          '/case-management/cases?caseStatus=OPEN%2CREOPENED%2CCLOSED%2CESCALATED%2CIN_REVIEW%2CIN_PROGRESS',
+          '/case-management/cases?page=1&pageSize=20&sort=-createdTimestamp&showCases=ALL&caseStatus=OPEN',
         );
         cy.intercept('GET', '**/cases**').as('case');
 

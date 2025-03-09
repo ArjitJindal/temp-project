@@ -16,6 +16,7 @@ describe('SAR Generate', () => {
     );
 
     cy.intercept('GET', '**/report-types').as('sarCountries');
+    cy.waitNothingLoading();
     cy.get('a[data-cy="alert-id"]', { timeout: 15000 }).should('be.visible').eq(0).click();
 
     const SarCountrywithReports = [
