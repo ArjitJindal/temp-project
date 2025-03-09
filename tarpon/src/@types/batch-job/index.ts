@@ -10,6 +10,7 @@ import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
 import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
 import { SanctionsSettingsProviderScreeningTypes } from '../openapi-internal/SanctionsSettingsProviderScreeningTypes'
+import { SanctionsEntityType } from '../openapi-internal/SanctionsEntityType'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -199,6 +200,18 @@ export type SanctionsDataFetchBatchJob = {
   settings?: SanctionsSettingsProviderScreeningTypes[]
   parameters: {
     from?: string
+    entityType?: SanctionsEntityType
+  }
+}
+
+export type DeltaSanctionsDataFetchBatchJob = {
+  type: 'DELTA_SANCTIONS_DATA_FETCH'
+  tenantId: string
+  providers: SanctionsDataProviderName[]
+  settings?: SanctionsSettingsProviderScreeningTypes[]
+  parameters: {
+    from?: string
+    ongoingScreeningTenantIds?: string[]
   }
 }
 
@@ -440,6 +453,7 @@ export type BatchJob =
   | FixLocksForKrs
   | FixArsBreakdownBatchJob
   | ClickhouseDataBackfillBatchJob
+  | DeltaSanctionsDataFetchBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

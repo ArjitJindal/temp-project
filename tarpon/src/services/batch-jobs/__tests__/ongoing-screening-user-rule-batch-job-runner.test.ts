@@ -466,12 +466,14 @@ describe('preprocessUsers', () => {
         name: 'John Doe',
         aka: ['Jonathan Doe'],
         documents: [{ id: 'doc1', formattedId: 'doc001' }],
+        provider: 'comply-advantage',
       },
       {
         id: 's2',
         name: 'Jane Smith',
         aka: [],
         documents: [{ id: 'doc2' }],
+        provider: 'comply-advantage',
       },
     ])
 

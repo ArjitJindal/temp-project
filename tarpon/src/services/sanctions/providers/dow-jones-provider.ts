@@ -10,6 +10,7 @@ import { compact, intersection, replace, uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { getUniqueStrings } from './utils'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
   SanctionsProviderResponse,
@@ -229,7 +230,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       'sanctions',
     ])
     const dowJonesSettings = sanctions?.providerScreeningTypes?.find(
-      (type) => type.provider === 'dowjones'
+      (type) => type.provider === SanctionsDataProviders.DOW_JONES
     )
     let types: DowJonesSanctionsSearchType[] | undefined
     let entityTypes: SanctionsEntityType[] | undefined
@@ -259,7 +260,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     screeningTypes: DowJonesSanctionsSearchType[],
     entityTypes: SanctionsEntityType[]
   ) {
-    super('dowjones', tenantId)
+    super(SanctionsDataProviders.DOW_JONES, tenantId)
     this.authHeader =
       'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     this.screeningTypes = screeningTypes

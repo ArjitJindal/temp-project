@@ -9,6 +9,10 @@ import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils
 import { ListRepository } from '../list/repositories/list-repository'
 import { getUsersForPNB } from '../rules-engine/pnb-custom-logic'
 import { mergeRules } from '../rules-engine/utils/rule-utils'
+import {
+  getDefaultProviders,
+  getSanctionsCollectionName,
+} from '../sanctions/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -20,7 +24,11 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
-import { tenantHasEitherFeatures, tenantHasFeature } from '@/core/utils/context'
+import {
+  hasFeature,
+  tenantHasEitherFeatures,
+  tenantHasFeature,
+} from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -28,7 +36,6 @@ import dayjs from '@/utils/dayjs'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import {
-  DELTA_SANCTIONS_COLLECTION,
   getSearchIndexName,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -166,12 +173,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       inputUserCursor ?? this.userRepository?.getAllUsersCursor()
     //TODO: remove feature flag PNB we have search index for user collection
     if (
-      (await tenantHasFeature(this.tenantId as string, 'PNB')) &&
-      (await tenantHasEitherFeatures(this.tenantId as string, [
+      await tenantHasEitherFeatures(this.tenantId as string, [
         'DOW_JONES',
         'OPEN_SANCTIONS',
         'ACURIS',
-      ]))
+      ])
     ) {
       let maxFuzziness = 0
       ruleInstances.forEach((r) => {
@@ -368,7 +374,14 @@ export async function preprocessUsers(
   to?: string,
   ruleInstances?: RuleInstance[]
 ) {
-  const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
+  const providers = getDefaultProviders()
+  const deltaSanctionsCollectionName = getSanctionsCollectionName(
+    {
+      provider: providers[0],
+    },
+    tenantId,
+    'delta'
+  )
   const sanctionsCollection = client
     .db()
     .collection<SanctionsEntity>(deltaSanctionsCollectionName)
@@ -376,7 +389,11 @@ export async function preprocessUsers(
     .db()
     .collection<InternalUser>(USERS_COLLECTION(tenantId))
 
-  let match: any = {}
+  let match: any = {
+    provider: {
+      $in: providers,
+    },
+  }
   if (from) {
     match = { id: { $gte: from } }
   }
@@ -387,7 +404,7 @@ export async function preprocessUsers(
   const allNames: Set<string> = new Set()
   const targetUserIds = new Set<string>()
 
-  if (await tenantHasFeature(tenantId, 'PNB')) {
+  if (hasFeature('PNB') && (await tenantHasFeature(tenantId, 'PNB'))) {
     const { targetUserIds: pnbTargetUserIds, allNames: pnbAllNames } =
       await getUsersForPNB(
         getUsersFromLists,

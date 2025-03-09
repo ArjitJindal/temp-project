@@ -3,8 +3,10 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
+withFeatureHook(['SANCTIONS'])
 
 const SUBJECT_1 = {
   userId: 'test_business_user_id',

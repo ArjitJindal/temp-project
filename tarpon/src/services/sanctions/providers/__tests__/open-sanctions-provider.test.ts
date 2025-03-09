@@ -3,6 +3,9 @@ import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanc
 import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+
+withFeatureHook(['SANCTIONS', 'OPEN_SANCTIONS'])
 
 describe('OpenSanctionsProvider', () => {
   it('should filter URLs based on the given date', async () => {

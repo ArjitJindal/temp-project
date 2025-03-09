@@ -1,6 +1,8 @@
 import { compact, concat, startCase, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
-import { getUniqueStrings, shouldLoadScreeningData } from './utils'
+import { COLLECTIONS_MAP } from '../utils'
+import { getUniqueStrings } from './utils'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
   SanctionsRepository,
@@ -16,7 +18,6 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/Op
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
-import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 type OpenSanctionsLine = {
   op: string
@@ -148,7 +149,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         'sanctions',
       ])
       const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
-        (type) => type.provider === 'open-sanctions'
+        (type) => type.provider === SanctionsDataProviders.OPEN_SANCTIONS
       )
       if (openSanctionSettings) {
         types = openSanctionSettings.screeningTypes as OpenSanctionsSearchType[]
@@ -158,7 +159,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     return new OpenSanctionsProvider(
       tenantId,
       types ?? OPEN_SANCTIONS_SEARCH_TYPES,
-      entityTypes ?? SANCTIONS_ENTITY_TYPES
+      entityTypes ?? COLLECTIONS_MAP[SanctionsDataProviders.OPEN_SANCTIONS]
     )
   }
 
@@ -167,15 +168,20 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     types: OpenSanctionsSearchType[],
     entityTypes: SanctionsEntityType[]
   ) {
-    super('open-sanctions', tenantId)
+    super(SanctionsDataProviders.OPEN_SANCTIONS, tenantId)
     this.types = types
     this.entityTypes = entityTypes
   }
 
-  async fullLoad(repo: SanctionsRepository, version: string) {
-    if (!shouldLoadScreeningData(this.types, this.entityTypes)) {
+  async fullLoad(
+    repo: SanctionsRepository,
+    version: string,
+    entityType?: SanctionsEntityType
+  ) {
+    if (!entityType) {
       return
     }
+    this.entityTypes = [entityType]
     return this.processUrl(
       repo,
       version,
@@ -183,9 +189,14 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     )
   }
 
-  async delta(repo: SanctionsRepository, version: string, from: Date) {
-    if (!shouldLoadScreeningData(this.types, this.entityTypes)) {
-      return
+  async delta(
+    repo: SanctionsRepository,
+    version: string,
+    from: Date,
+    entityType?: SanctionsEntityType
+  ) {
+    if (entityType) {
+      this.entityTypes = [entityType]
     }
     const metadata = await fetch(
       'https://data.opensanctions.org/datasets/latest/default/index.json'
@@ -251,13 +262,17 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
           throw new Error(`Unknown operation ${parsedLine.op}`)
       }
       if (entities.length > 1000) {
-        await repo.save('open-sanctions', entities, version)
+        await repo.save(
+          SanctionsDataProviders.OPEN_SANCTIONS,
+          entities,
+          version
+        )
         logger.info(`Saved ${entities.length} entities`)
         entities = []
       }
     })
     if (entities.length) {
-      await repo.save('open-sanctions', entities, version)
+      await repo.save(SanctionsDataProviders.OPEN_SANCTIONS, entities, version)
       logger.info(`Saved ${entities.length} entities`)
       entities = []
     }
@@ -278,13 +293,17 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         entities.push(['add', sanctionsEntity])
       }
       if (entities.length > 1000) {
-        await repo.save('open-sanctions', entities, version)
+        await repo.save(
+          SanctionsDataProviders.OPEN_SANCTIONS,
+          entities,
+          version
+        )
         logger.info(`Saved ${entities.length} entities`)
         entities = []
       }
     })
     if (entities.length) {
-      await repo.save('open-sanctions', entities, version)
+      await repo.save(SanctionsDataProviders.OPEN_SANCTIONS, entities, version)
       logger.info(`Saved ${entities.length} entities`)
       entities = []
     }
@@ -513,7 +532,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
               return 'PEP'
           }
         })
-      ).filter((type) => this.types.includes(type))
+      )
     )
     if (sanctionSearchTypes.length === 0) {
       return undefined

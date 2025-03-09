@@ -3,6 +3,7 @@ import { intersection, sample } from 'lodash'
 import { sanitizeString } from '@flagright/lib/utils/string'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'
 import data from './ongoing_search_results.json'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -12,7 +13,9 @@ import {
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
+withFeatureHook(['SANCTIONS', 'DOW_JONES'])
 // Mock getContext
 jest.mock('@/core/utils/context', () => ({
   getContext: jest.fn(),
@@ -21,7 +24,7 @@ jest.mock('@/core/utils/context', () => ({
 // Extend the SanctionsDataFetcher for testing purposes
 class TestSanctionsDataFetcher extends SanctionsDataFetcher {
   constructor(tenantId: string) {
-    super('dowjones', tenantId)
+    super(SanctionsDataProviders.DOW_JONES, tenantId)
   }
   // Implement abstract methods as no-op for this test
   async fullLoad() {}

@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
-import { compact, isEmpty, isEqual } from 'lodash'
+import { isEmpty, isEqual } from 'lodash'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   JWTAuthorizerResult,
@@ -38,14 +38,17 @@ import {
   tenantSettings,
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { CrmService } from '@/services/crm'
 import { NangoService } from '@/services/nango'
-import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import {
+  COLLECTIONS_MAP,
+  getDefaultProviders,
+  isSanctionsDataFetchTenantSpecific,
+} from '@/services/sanctions/utils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -301,13 +304,6 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerPostTenantsTriggerBatchJob(async (ctx, request) => {
       assertCurrentUserRole('root')
       const tenantId = ctx.tenantId
-      const tenantRepository = new TenantRepository(tenantId, {
-        dynamoDb: getDynamoDbClientByEvent(event),
-      })
-      const settings = await tenantRepository.getTenantSettings([
-        'sanctions',
-        'features',
-      ])
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
@@ -348,20 +344,32 @@ export const tenantsHandler = lambdaApi()(
           break
         }
         case 'SANCTIONS_DATA_FETCH': {
-          const providers = compact(
-            settings.features?.map(
-              (feature) => FEATURE_FLAG_PROVIDER_MAP[feature]
-            )
-          )
+          const providers = getDefaultProviders()
           if (!providers) {
             throw new createHttpError.BadRequest('No providers found')
           }
-          await sendBatchJobCommand({
-            type: 'SANCTIONS_DATA_FETCH',
-            tenantId: tenantId,
-            parameters: {},
-            providers: providers,
-          })
+          for (const provider of providers) {
+            if (isSanctionsDataFetchTenantSpecific([provider])) {
+              await sendBatchJobCommand({
+                type: 'SANCTIONS_DATA_FETCH',
+                tenantId: tenantId,
+                parameters: {},
+                providers: [provider],
+              })
+            } else if (COLLECTIONS_MAP[provider]) {
+              const entityTypes = COLLECTIONS_MAP[provider]
+              for (const entityType of entityTypes) {
+                await sendBatchJobCommand({
+                  type: 'SANCTIONS_DATA_FETCH',
+                  tenantId: 'flagright',
+                  parameters: {
+                    entityType,
+                  },
+                  providers: [provider],
+                })
+              }
+            }
+          }
           break
         }
         case 'SYNC_AUTH0_DATA': {

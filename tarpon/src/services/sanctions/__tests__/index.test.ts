@@ -17,9 +17,11 @@ import {
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { generateChecksum, getSortedObject } from '@/utils/object'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
+withFeatureHook(['SANCTIONS'])
 
 const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
   (acc, x) => acc + x.content.length,

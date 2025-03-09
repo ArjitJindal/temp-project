@@ -315,17 +315,14 @@ export const createMongoDBCollections = async (
 export const createGlobalMongoDBCollections = async (
   mongoClient: MongoClient
 ) => {
-  const indexDefinitions = getGlobalCollectionIndexes()
+  const indexDefinitions = await getGlobalCollectionIndexes(mongoClient)
   await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
 }
 
-const shouldBuildSearchIndex = (tenantId: string) => {
+const shouldBuildSearchIndex = (tenantId?: string) => {
   return (
     envIsNot('test') &&
-    !isDemoTenant(tenantId) &&
-    (hasFeature('DOW_JONES') ||
-      hasFeature('OPEN_SANCTIONS') ||
-      hasFeature('ACURIS'))
+    (!tenantId || (!isDemoTenant(tenantId) && hasFeature('DOW_JONES')))
   )
 }
 
@@ -349,7 +346,7 @@ const createMongoDBCollectionsInternal = async (
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
-    if (tenantId && definition.getSearchIndex) {
+    if (definition.getSearchIndex) {
       if (shouldBuildSearchIndex(tenantId)) {
         await createSearchIndex(
           db,

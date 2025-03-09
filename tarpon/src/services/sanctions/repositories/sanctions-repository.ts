@@ -30,7 +30,11 @@ export class MongoSanctionsRepository implements SanctionsRepository {
         case 'add':
           return {
             updateOne: {
-              filter: { id: entity.id, provider },
+              filter: {
+                id: entity.id,
+                provider,
+                entityType: entity.entityType,
+              },
               update: {
                 $setOnInsert: {
                   createdAt: Date.now(),
@@ -50,7 +54,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
               filter: {
                 id: entity.id,
                 provider,
-                deletedAt: { $exists: false },
+                entityType: entity.entityType,
               },
               update: {
                 $set: {

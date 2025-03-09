@@ -30,6 +30,7 @@ import { FailingBatchJobRunner } from './failing-batch-job-runner'
 import { FixArsBreakdownBatchJobRunner } from './fix-ars-breakdown-batch-job-runner'
 import { ClickhouseDataBatchJobRunner } from './clickhouse-data-batch-job-runner'
 import { FixLocksForKrsBatchJobRunner } from './fix-locks-for-krs-batch-job-runner'
+import { DeltaSanctionsDataFetchBatchJobRunner } from './delta-sanctions-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -113,6 +114,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     CLICKHOUSE_DATA_BACKFILL: (jobId) =>
       new ClickhouseDataBatchJobRunner(jobId),
     FIX_LOCKS_FOR_KRS: (jobId) => new FixLocksForKrsBatchJobRunner(jobId),
+    DELTA_SANCTIONS_DATA_FETCH: (jobId) =>
+      new DeltaSanctionsDataFetchBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

@@ -22,7 +22,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
@@ -118,7 +118,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     if (!entities.length) {
       return
     }
-    const provider = getDefaultProvider()
+    const providers = getDefaultProviders()
 
     const hitResult: RuleHitResult = []
     const sanctionsDetails = (
@@ -144,11 +144,11 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               fuzziness: fuzziness / 100,
               monitoring: { enabled: ongoingScreening },
               ...getEntityTypeForSearch(
-                provider,
+                providers,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
-              ...getFuzzinessSettings(provider, fuzzinessSetting),
-              ...getStopwordSettings(provider, stopwords),
+              ...getFuzzinessSettings(providers, fuzzinessSetting),
+              ...getStopwordSettings(providers, stopwords),
             },
             hitContext
           )

@@ -4,9 +4,9 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
+import { SanctionsSearchRequestEntityType } from '@/@types/openapi-internal/SanctionsSearchRequestEntityType'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -49,18 +49,13 @@ export function mergeRules<T extends { ruleInstanceId: string }>(
 }
 
 export function getEntityTypeForSearch(
-  provider: SanctionsDataProviderName,
-  entity: SanctionsEntityType
+  providers: SanctionsDataProviderName[],
+  entity: SanctionsSearchRequestEntityType
 ): {
-  entityType?: SanctionsEntityType
+  entityType?: SanctionsSearchRequestEntityType
 } {
-  if (provider === 'comply-advantage') {
+  if (providers.includes('comply-advantage')) {
     return {}
-  }
-  if (provider === 'acuris' && entity === 'BANK') {
-    return {
-      entityType: 'BUSINESS',
-    }
   }
   return {
     entityType: entity,
@@ -68,10 +63,10 @@ export function getEntityTypeForSearch(
 }
 
 export function getFuzzinessSettings(
-  provider: SanctionsDataProviderName,
+  providers: SanctionsDataProviderName[],
   fuzzinessSetting?: FuzzinessSettingOptions
 ): { fuzzinessSettings?: FuzzinessSetting } {
-  if (provider === 'comply-advantage') {
+  if (providers.includes('comply-advantage')) {
     return {}
   }
   return fuzzinessSetting
@@ -89,12 +84,12 @@ export function getFuzzinessSettings(
 }
 
 export function getStopwordSettings(
-  provider: SanctionsDataProviderName,
+  providers: SanctionsDataProviderName[],
   stopwords?: string[]
 ): {
   stopwords?: string[]
 } {
-  if (provider === 'comply-advantage') {
+  if (providers.includes('comply-advantage')) {
     return {}
   }
   return stopwords?.length

@@ -118,6 +118,7 @@ export const jobDecisionHandler = async (
     FAILING_BATCH_JOB: 'LAMBDA',
     FIX_LOCKS_FOR_KRS: 'FARGATE',
     FIX_ARS_BREAKDOWN: 'FARGATE',
+    DELTA_SANCTIONS_DATA_FETCH: 'FARGATE',
   }
 
   return {

@@ -5,6 +5,7 @@ import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
 import axios from 'axios'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { sendCaseCreatedAlert } from '../slack-app/app'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -21,7 +22,13 @@ import {
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
-import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
+import {
+  COLLECTIONS_MAP,
+  FEATURE_FLAG_PROVIDER_MAP,
+  getTargetProviders,
+  getTenantSpecificProviders,
+  isSanctionsDataFetchTenantSpecific,
+} from '@/services/sanctions/utils'
 import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TriageQueueTicket } from '@/@types/triage'
@@ -33,6 +40,7 @@ import {
 } from '@/utils/slack'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
+  const dynamoDb = getDynamoDbClient()
   if (envIs('dev')) {
     try {
       await clearTriageQueueTickets()
@@ -59,10 +67,11 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   } catch (e) {
     logger.error(`Failed to create API usage jobs: ${(e as Error)?.message}`, e)
   }
+  const commonDataTenantIds: string[] = []
   await Promise.all(
-    tenantInfos.map(async (tenant) => {
+    tenantInfos.flatMap(async (tenant) => {
       const tenantRepository = new TenantRepository(tenant.tenant.id, {
-        dynamoDb: getDynamoDbClient(),
+        dynamoDb,
       })
       const { features } = await tenantRepository.getTenantSettings([
         'features',
@@ -70,23 +79,70 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       const providers = compact(
         features?.map((feature) => FEATURE_FLAG_PROVIDER_MAP[feature])
       )
-      if (providers.length) {
-        return sendBatchJobCommand({
-          type: 'SANCTIONS_DATA_FETCH',
-          tenantId: tenant.tenant.id,
-          providers: providers,
-          parameters: {
-            from: dayjs().subtract(1, 'day').toISOString(),
-          },
-        })
+      if (providers.length && isSanctionsDataFetchTenantSpecific(providers)) {
+        return [
+          sendBatchJobCommand({
+            type: 'SANCTIONS_DATA_FETCH',
+            tenantId: tenant.tenant.id,
+            providers: getTenantSpecificProviders(providers),
+            parameters: {
+              from: dayjs().subtract(1, 'day').toISOString(),
+            },
+          }),
+          sendBatchJobCommand({
+            type: 'DELTA_SANCTIONS_DATA_FETCH',
+            tenantId: tenant.tenant.id,
+            providers: getTenantSpecificProviders(providers),
+            parameters: {
+              from: dayjs().subtract(1, 'day').toISOString(),
+              ongoingScreeningTenantIds: [tenant.tenant.id],
+            },
+          }),
+        ]
+      } else if (providers.length) {
+        commonDataTenantIds.push(tenant.tenant.id)
+        return []
       } else {
-        return sendBatchJobCommand({
-          type: 'ONGOING_SCREENING_USER_RULE',
-          tenantId: tenant.tenant.id,
-        })
+        return [
+          sendBatchJobCommand({
+            type: 'ONGOING_SCREENING_USER_RULE',
+            tenantId: tenant.tenant.id,
+          }),
+        ]
       }
     })
   )
+  const mongoDb = await getMongoDbClient()
+  const providers = await getTargetProviders(mongoDb)
+  const batchJobCommands: Promise<void>[] = []
+  for (const provider of providers) {
+    const entityTypes = COLLECTIONS_MAP[provider]
+    for (const entityType of entityTypes) {
+      batchJobCommands.push(
+        sendBatchJobCommand({
+          type: 'SANCTIONS_DATA_FETCH',
+          tenantId: 'flagright',
+          providers: [provider],
+          parameters: {
+            from: dayjs().subtract(1, 'day').toISOString(),
+            entityType: entityType,
+          },
+        })
+      )
+    }
+  }
+  await Promise.all([
+    ...batchJobCommands,
+    sendBatchJobCommand({
+      type: 'DELTA_SANCTIONS_DATA_FETCH',
+      tenantId: 'flagright',
+      providers: providers,
+      parameters: {
+        from: dayjs().subtract(1, 'day').toISOString(),
+        ongoingScreeningTenantIds: commonDataTenantIds,
+      },
+    }),
+  ])
 
   try {
     const tenantsToDeactivate = await TenantService.getTenantsToDelete()
@@ -117,7 +173,7 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   }
 
   try {
-    await checkDormantUsers(tenantInfos)
+    await checkDormantUsers(tenantInfos, dynamoDb)
   } catch (e) {
     logger.error(`Failed to check dormant users: ${(e as Error)?.message}`, e)
   }
@@ -194,8 +250,10 @@ async function clearTriageQueueTickets() {
   await collection.deleteMany({})
 }
 
-async function checkDormantUsers(tenantInfos: TenantInfo[]) {
-  const dynamoDb = getDynamoDbClient()
+async function checkDormantUsers(
+  tenantInfos: TenantInfo[],
+  dynamoDb: DynamoDBClient
+) {
   for await (const tenant of tenantInfos) {
     const accountsService = new AccountsService(
       { auth0Domain: tenant.auth0Domain },

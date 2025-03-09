@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequest } from 'http-errors'
-import { isEmpty, omit, round, startCase } from 'lodash'
+import { intersection, isEmpty, omit, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { AlertsRepository } from '../alerts/repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
@@ -41,6 +41,7 @@ import {
   iterateCursorItems,
 } from '@/utils/pagination'
 import {
+  GenericSanctionsSearchType,
   RuleStage,
   SanctionsDataProviderName,
   SanctionsEntity,
@@ -53,7 +54,10 @@ import {
 } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import {
+  DEFAULT_PROVIDER_TYEPS_MAP,
+  getDefaultProviders,
+} from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
@@ -184,6 +188,26 @@ export class SanctionsService {
     return true
   }
 
+  private getSanctionsSearchType(
+    types: GenericSanctionsSearchType[] | undefined,
+    providers: SanctionsDataProviderName[]
+  ): GenericSanctionsSearchType[] {
+    const providerScreeningTypes =
+      getContext()?.settings?.sanctions?.providerScreeningTypes
+    return intersection(
+      uniq(
+        providers.flatMap((p) => {
+          const providerSettings = providerScreeningTypes?.find(
+            (t) => t.provider === p
+          )
+          return (providerSettings?.screeningTypes ??
+            DEFAULT_PROVIDER_TYEPS_MAP[p]) as GenericSanctionsSearchType[]
+        })
+      ),
+      types ?? SANCTIONS_SEARCH_TYPES
+    )
+  }
+
   public async search(
     request: SanctionsSearchRequest,
     context?: SanctionsHitContext & {
@@ -192,8 +216,8 @@ export class SanctionsService {
     providerOverrides?: ProviderConfig
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
-
-    const providerName = providerOverrides?.providerName || getDefaultProvider()
+    const providers = getDefaultProviders()
+    const providerName = providerOverrides?.providerName || providers[0]
 
     // Normalize search term
     request.searchTerm =
@@ -202,6 +226,7 @@ export class SanctionsService {
         : request.searchTerm
     if (
       !request.searchTerm ||
+      !providerName ||
       (request.yearOfBirth &&
         (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
     ) {
@@ -218,10 +243,7 @@ export class SanctionsService {
       request.fuzziness,
       providerName
     )
-    request.types = request.types?.length
-      ? request.types
-      : SANCTIONS_SEARCH_TYPES
-
+    request.types = this.getSanctionsSearchType(request.types, providers)
     let searchId: string = uuidv4()
     let providerSearchId: string
     let createdAt: number | undefined = undefined

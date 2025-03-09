@@ -1,4 +1,5 @@
-import { compact } from 'lodash'
+import { compact, intersection } from 'lodash'
+import { SanctionsDataProviders } from '../types'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -6,6 +7,11 @@ import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { notEmpty } from '@/utils/array'
 import { SanctionsNameMatchedMatchTypesEnum } from '@/@types/openapi-internal/SanctionsNameMatched'
+import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
+import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
+import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
+import { getContext } from '@/core/utils/context'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -153,4 +159,105 @@ export function getUniqueStrings(arr: string[]): string[] {
   }
 
   return Array.from(uniqueMap.values())
+}
+
+export function sanitizeAcurisEntities(
+  entities: SanctionsEntity[]
+): SanctionsEntity[] {
+  const SCREENING_TYPES_TO_TYPES = {
+    PEP: [
+      'Current PEP',
+      'Former PEP',
+      'Linked to PEP (PEP by Association)',
+      'Profile Of Interest',
+    ],
+    SANCTIONS: ['Current Sanctions', 'Former Sanctions'],
+    ADVERSE_MEDIA: ['Reputational Risk Exposure'],
+    REGULATORY_ENFORCEMENT_LIST: ['Regulatory Enforcement List'],
+  }
+  const sanctions = getContext()?.settings?.sanctions
+  const acurisSettings = sanctions?.providerScreeningTypes?.find(
+    (type) => type.provider === SanctionsDataProviders.ACURIS
+  )
+  const screeningTypes =
+    (acurisSettings?.screeningTypes as AcurisSanctionsSearchType[]) ??
+    ACURIS_SANCTIONS_SEARCH_TYPES
+  const processedEntities: SanctionsEntity[] = []
+  for (const entity of entities) {
+    const sanctionSearchTypes = intersection(
+      screeningTypes,
+      entity.sanctionSearchTypes
+    )
+    const screeningTypesToTypesList = Object.entries(SCREENING_TYPES_TO_TYPES)
+      .filter(([key, _value]) =>
+        sanctionSearchTypes.includes(key as AcurisSanctionsSearchType)
+      )
+      .flatMap(([_key, value]) => value)
+    const processedEntity = {
+      ...entity,
+      sanctionSearchTypes,
+      sanctionsSources: sanctionSearchTypes.includes('SANCTIONS')
+        ? entity.sanctionsSources
+        : [],
+      pepSources: sanctionSearchTypes.includes('PEP') ? entity.pepSources : [],
+      mediaSources: sanctionSearchTypes.includes('ADVERSE_MEDIA')
+        ? entity.mediaSources
+        : [],
+      otherSources: sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
+        ? entity.otherSources
+        : [],
+      isActiveSanctioned: sanctionSearchTypes.includes('SANCTIONS')
+        ? entity.isActiveSanctioned
+        : undefined,
+      isActivePep: sanctionSearchTypes.includes('PEP')
+        ? entity.isActivePep
+        : undefined,
+      types: entity.types?.filter((type) =>
+        screeningTypesToTypesList.includes(type)
+      ),
+      associates: entity.associates?.map((a) => {
+        return {
+          ...a,
+          sanctionsSearchTypes: intersection(
+            screeningTypes,
+            a.sanctionsSearchTypes
+          ),
+        }
+      }),
+    }
+    if (processedEntity.sanctionSearchTypes?.length) {
+      processedEntities.push(processedEntity)
+    }
+  }
+  return processedEntities
+}
+
+export function sanitizeOpenSanctionsEntities(
+  entities: SanctionsEntity[]
+): SanctionsEntity[] {
+  const sanctions = getContext()?.settings?.sanctions
+  const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
+    (type) => type.provider === SanctionsDataProviders.OPEN_SANCTIONS
+  )
+  const types =
+    (openSanctionSettings?.screeningTypes as OpenSanctionsSearchType[]) ??
+    OPEN_SANCTIONS_SEARCH_TYPES
+  const processedEntities: SanctionsEntity[] = []
+  for (const entity of entities) {
+    const screeningTypes = intersection(entity.sanctionSearchTypes, types)
+    const processedEntity = {
+      ...entity,
+      sanctionSearchTypes: screeningTypes,
+      associates: entity.associates?.map((a) => {
+        return {
+          ...a,
+          sanctionsSearchTypes: intersection(types, a.sanctionsSearchTypes),
+        }
+      }),
+    }
+    if (processedEntity.sanctionSearchTypes?.length) {
+      processedEntities.push(processedEntity)
+    }
+  }
+  return processedEntities
 }

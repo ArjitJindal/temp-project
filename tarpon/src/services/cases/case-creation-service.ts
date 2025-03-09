@@ -95,7 +95,7 @@ import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanct
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -844,7 +844,7 @@ export class CaseCreationService {
     update: boolean
   ): Promise<RuleHitMeta> {
     const sanctionsDetailsList = ruleHitMeta?.sanctionsDetails ?? []
-
+    const defaultProvider = getDefaultProviders()?.[0]
     const updatedSanctionsDetailsList = await Promise.all(
       sanctionsDetailsList.map(
         async (sanctionsDetail): Promise<SanctionsDetails | undefined> => {
@@ -856,7 +856,7 @@ export class CaseCreationService {
           if (update) {
             const { updatedIds, newIds } =
               await this.sanctionsHitsRepository.mergeHits(
-                searchResult?.provider || getDefaultProvider(),
+                searchResult?.provider || defaultProvider,
                 sanctionsDetail.searchId,
                 rawHits,
                 sanctionsDetail.hitContext
@@ -867,7 +867,7 @@ export class CaseCreationService {
             }
           } else {
             const hits = await this.sanctionsHitsRepository.addHits(
-              searchResult?.provider || getDefaultProvider(),
+              searchResult?.provider || defaultProvider,
               sanctionsDetail.searchId,
               rawHits,
               sanctionsDetail.hitContext

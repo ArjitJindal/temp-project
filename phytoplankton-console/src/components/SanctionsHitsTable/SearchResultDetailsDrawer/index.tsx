@@ -345,9 +345,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.nationality && entity.nationality.length > 0 && (
             <Form.Layout.Label
               key={entity.nationality?.join(',')}
-              title={
-                isHitEntityPerson(entity.entityType) ? 'Nationality' : 'Country of incorporation'
-              }
+              title={isHitEntityPerson(entity.entityType) ? 'Nationality' : 'Countries'}
             >
               {compact(entity.nationality)
                 ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
@@ -369,11 +367,13 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                 .join(', ')}
             </Form.Layout.Label>
           )}
-          {
+          {isHitEntityPerson(entity.entityType) ? (
             <Form.Layout.Label key={entity.gender} title={'Gender'}>
               {entity.gender ?? '-'}
             </Form.Layout.Label>
-          }
+          ) : (
+            <></>
+          )}
           {entity.aka && entity.aka?.length > 0 && (
             <Form.Layout.Label title={'Aliases'}>
               <div className={s.aliases}>

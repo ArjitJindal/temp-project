@@ -8,7 +8,11 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
-import { getFuzzinessSettings, getStopwordSettings } from '../utils/rule-utils'
+import {
+  getEntityTypeForSearch,
+  getFuzzinessSettings,
+  getStopwordSettings,
+} from '../utils/rule-utils'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -20,7 +24,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 
 export type PaymentDetailsScreeningRuleParameters = {
   transactionAmountThreshold?: {
@@ -59,8 +63,8 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     const namesToSearch = getPaymentDetailsName(paymentDetails)
 
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
+    const providers = getDefaultProviders()
     const { fuzziness, fuzzinessSetting, stopwords } = this.parameters
-    const provider = getDefaultProvider()
     const data = await Promise.all(
       namesToSearchFiltered.map(
         async ({ name, entityType }): Promise<SanctionsDetails | undefined> => {
@@ -81,8 +85,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               monitoring: {
                 enabled: false,
               },
-              ...getFuzzinessSettings(provider, fuzzinessSetting),
-              ...getStopwordSettings(provider, stopwords),
+              ...getFuzzinessSettings(providers, fuzzinessSetting),
+              ...getEntityTypeForSearch(providers, 'EXTERNAL_USER'),
+              ...getStopwordSettings(providers, stopwords),
             },
             hitContext
           )

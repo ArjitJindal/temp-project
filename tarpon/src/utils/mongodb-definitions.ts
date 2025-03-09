@@ -1,8 +1,13 @@
-import { Document } from 'mongodb'
+import { Document, MongoClient } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { getAllGlobalSanctionsCollectionDefinition } from '@/services/sanctions/utils'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
-export const SANCTIONS_SEARCH_INDEX_DEFINITION: Document = {
+export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
+  isDelta?: boolean
+): Document => ({
   mappings: {
     dynamic: false,
     fields: {
@@ -57,9 +62,75 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION: Document = {
       entityType: {
         type: 'string',
       },
+      ...(isDelta
+        ? {
+            provider: {
+              type: 'string',
+            },
+          }
+        : {}),
     },
   },
-}
+})
+
+export const SANCTIONS_INDEX_DEFINITION: Array<{
+  index: { [key: string]: any }
+  unique?: boolean
+}> = [
+  {
+    index: {
+      provider: 1,
+      version: 1,
+      id: 1,
+      entityType: 1,
+    },
+  },
+  {
+    index: {
+      provider: 1,
+      version: 1,
+      id: 1,
+    },
+    unique: true,
+  },
+  {
+    index: {
+      'documents.formattedId': 1,
+    },
+  },
+  {
+    index: {
+      'documents.id': 1,
+    },
+  },
+  {
+    index: {
+      nationality: 1,
+    },
+  },
+  {
+    index: {
+      gender: 1,
+    },
+  },
+  {
+    index: {
+      'occupations.rank': 1,
+    },
+  },
+  {
+    index: {
+      'associates.ranks': 1,
+    },
+  },
+  {
+    index: {
+      yearOfBirth: 1,
+    },
+  },
+  { index: { version: 1 } },
+  { index: { updatedAt: -1 } },
+]
 
 export const MONGO_TABLE_SUFFIX_MAP = {
   TRANSACTIONS: 'transactions',
@@ -348,6 +419,17 @@ export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
 }
 export const TRIAGE_QUEUE_TICKETS_COLLECTION = () => {
   return 'flagright-triage-queue-tickets'
+}
+
+export const SANCTIONS_GLOBAL_COLLECTION = (
+  provider: SanctionsDataProviderName,
+  entityType: SanctionsEntityType
+) => {
+  return `sanctions-${provider}-${entityType.toLowerCase()}`
+}
+
+export const DELTA_SANCTIONS_GLOBAL_COLLECTION = () => {
+  return 'delta-sanctions'
 }
 
 /** Collection to log Requests and Responses to GPT */
@@ -754,62 +836,8 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       ],
     },
     [DELTA_SANCTIONS_COLLECTION(tenantId)]: {
-      getIndexes: () => [
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-            deletedAt: 1,
-          },
-        },
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-          },
-          unique: true,
-        },
-        {
-          index: {
-            'documents.formattedId': 1,
-          },
-        },
-        {
-          index: {
-            'documents.id': 1,
-          },
-        },
-        {
-          index: {
-            nationality: 1,
-          },
-        },
-        {
-          index: {
-            gender: 1,
-          },
-        },
-        {
-          index: {
-            'occupations.rank': 1,
-          },
-        },
-        {
-          index: {
-            'associates.ranks': 1,
-          },
-        },
-        {
-          index: {
-            yearOfBirth: 1,
-          },
-        },
-        { index: { version: 1 } },
-        { index: { updatedAt: -1 } },
-      ],
-      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION,
+      getIndexes: () => SANCTIONS_INDEX_DEFINITION,
+      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION(true),
     },
     [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: {
       getIndexes: () =>
@@ -910,73 +938,25 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       ],
     },
     [SANCTIONS_COLLECTION(tenantId)]: {
-      getIndexes: () => [
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-            deletedAt: 1,
-          },
-        },
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-          },
-          unique: true,
-        },
-        {
-          index: {
-            'documents.formattedId': 1,
-          },
-        },
-        {
-          index: {
-            'documents.id': 1,
-          },
-        },
-        {
-          index: {
-            nationality: 1,
-          },
-        },
-        {
-          index: {
-            gender: 1,
-          },
-        },
-        {
-          index: {
-            'occupations.rank': 1,
-          },
-        },
-        {
-          index: {
-            'associates.ranks': 1,
-          },
-        },
-        {
-          index: {
-            yearOfBirth: 1,
-          },
-        },
-        { index: { version: 1 } },
-        { index: { updatedAt: -1 } },
-      ],
-      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION,
+      getIndexes: () => SANCTIONS_INDEX_DEFINITION,
+      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION(false),
     },
   }
 }
 
-export const getGlobalCollectionIndexes = (): {
+export const getGlobalCollectionIndexes = async (
+  mongoClient: MongoClient
+): Promise<{
   [collectionName: string]: {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
     getSearchIndex?: () => Document
   }
-} => {
-  return {}
+}> => {
+  const globalSanctionsCollectionDeinitions =
+    await getAllGlobalSanctionsCollectionDefinition(mongoClient)
+  return {
+    ...globalSanctionsCollectionDeinitions,
+  }
 }
 
 export const getSearchIndexName = (collectionName: string) => {

@@ -19,7 +19,7 @@ import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 
 const caConcurrencyLimit = pLimit(10)
@@ -87,7 +87,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
       .filter(Boolean) as BankInfo[]
 
-    const provider = getDefaultProvider()
+    const providers = getDefaultProviders()
 
     const bankInfosToCheck = uniqBy(
       bankInfos.filter((bankInfo) => bankInfo.bankName),
@@ -117,9 +117,9 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 types: screeningTypes,
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: ongoingScreening },
-                ...getEntityTypeForSearch(provider, 'BANK'),
-                ...getFuzzinessSettings(provider, fuzzinessSetting),
-                ...getStopwordSettings(provider, stopwords),
+                ...getEntityTypeForSearch(providers, 'BANK'),
+                ...getFuzzinessSettings(providers, fuzzinessSetting),
+                ...getStopwordSettings(providers, stopwords),
               },
               hitContext
             )

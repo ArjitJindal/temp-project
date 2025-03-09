@@ -1,17 +1,20 @@
 import { uniq } from 'lodash'
 import { token_similarity_sort_ratio } from 'fuzzball'
 import { sanitizeString } from '@flagright/lib/utils'
-import { getNameMatches, getSecondaryMatches } from './utils'
+import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
+import { SanctionsDataProviders } from '../types'
+import {
+  getNameMatches,
+  getSecondaryMatches,
+  sanitizeAcurisEntities,
+  sanitizeOpenSanctionsEntities,
+} from './utils'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import {
-  DELTA_SANCTIONS_COLLECTION,
-  SANCTIONS_COLLECTION,
-  getSearchIndexName,
-} from '@/utils/mongodb-definitions'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -23,6 +26,7 @@ import { traceable } from '@/core/xray'
 import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -36,12 +40,17 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     this.tenantId = tenantId
   }
 
-  abstract fullLoad(repo: SanctionsRepository, version: string): Promise<void>
+  abstract fullLoad(
+    repo: SanctionsRepository,
+    version: string,
+    entityType?: SanctionsEntityType
+  ): Promise<void>
 
   abstract delta(
     repo: SanctionsRepository,
     version: string,
-    from: Date
+    from: Date,
+    entityType?: SanctionsEntityType
   ): Promise<void>
 
   public static getFuzzinessEvaluationResult(
@@ -242,7 +251,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (request.entityType) {
+    if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
       if (request.orFilters?.includes('entityType')) {
         orConditions.push({
           entityType: request.entityType,
@@ -298,19 +307,34 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ...(orConditions.length > 0 ? { $or: orConditions } : {}),
       ...(andConditions.length > 0 ? { $and: andConditions } : {}),
     }
-
-    const results = await db
-      .collection(
-        request.isOngoingScreening
-          ? DELTA_SANCTIONS_COLLECTION(this.tenantId)
-          : SANCTIONS_COLLECTION(this.tenantId)
+    const providers = getDefaultProviders()
+    const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
+    const entityTypes =
+      request.entityType === 'EXTERNAL_USER'
+        ? ['PERSON', 'BUSINESS', 'BANK']
+        : [request.entityType]
+    const collectionNames = uniq(
+      providers.flatMap((p) => {
+        return entityTypes.map((entityType) =>
+          getSanctionsCollectionName(
+            {
+              provider: p,
+              entityType: entityType,
+            },
+            nonDemoTenantId,
+            request.isOngoingScreening ? 'delta' : 'full'
+          )
+        )
+      })
+    )
+    const results = await Promise.all(
+      collectionNames.map((c) =>
+        db.collection(c).find<SanctionsEntity>(match).limit(500).toArray()
       )
-      .find<SanctionsEntity>(match)
-      .limit(500)
-      .toArray()
+    )
 
     return this.searchRepository.saveSearch(
-      this.hydrateHitsWithMatchTypes(results, request),
+      this.hydrateHitsWithMatchTypes(results.flat(), request),
       request
     )
   }
@@ -321,7 +345,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   ): Promise<SanctionsProviderResponse> {
     const client = await getMongoDbClient()
     const match = {}
-
+    const providers = getDefaultProviders()
     const andFilters: any[] = []
     const orFilters: any[] = []
 
@@ -462,7 +486,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
-    if (request.entityType) {
+    if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
       const matchEntityType = [
         {
           text: {
@@ -561,86 +585,118 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       }
     }
+    if (request.isOngoingScreening) {
+      const matchProvider = providers.flatMap((provider) => ({
+        text: {
+          query: provider,
+          path: 'provider',
+        },
+      }))
+      if (request.orFilters?.includes('provider')) {
+        orFilters.push(...matchProvider)
+      } else {
+        andFilters.push({
+          compound: {
+            should: matchProvider,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
     const searchScoreThreshold =
       request.fuzzinessRange?.upperBound === 100 ? 3 : 5
     const stopwordSet = request.stopwords?.length
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
-    const results = await client
-      .db()
-      .collection(
-        request.isOngoingScreening
-          ? DELTA_SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
-          : SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
-      )
-      .aggregate<SanctionsEntity>([
-        {
-          $search: {
-            index: request.isOngoingScreening
-              ? getSearchIndexName(
-                  DELTA_SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
-                )
-              : getSearchIndexName(
-                  SANCTIONS_COLLECTION(getNonDemoTenantId(this.tenantId))
-                ),
-            concurrent: true,
-            compound: {
-              must: [
-                {
-                  text: {
-                    query: this.processNameWithStopwords(
-                      sanitizeString(request.searchTerm),
-                      stopwordSet
-                    ),
-                    path: ['name', 'aka'],
-                    fuzzy: {
-                      maxEdits: 2,
-                      maxExpansions: 100,
-                      prefixLength: 0,
-                    },
-                  },
-                },
-              ],
-              filter: [
-                ...(orFilters.length > 0
-                  ? [
-                      {
-                        compound: {
-                          should: orFilters,
-                          minimumShouldMatch: 1,
+    const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
+    const entityTypes =
+      request.entityType === 'EXTERNAL_USER' || request.manualSearch
+        ? ['PERSON', 'BUSINESS', 'BANK']
+        : [request.entityType]
+    const collectionNames = uniq(
+      providers.flatMap((p) => {
+        return entityTypes.map((entityType) =>
+          getSanctionsCollectionName(
+            {
+              provider: p,
+              entityType: entityType,
+            },
+            nonDemoTenantId,
+            request.isOngoingScreening ? 'delta' : 'full'
+          )
+        )
+      })
+    )
+    const results = await Promise.all(
+      collectionNames.map((c) =>
+        client
+          .db()
+          .collection(c)
+          .aggregate<SanctionsEntity>([
+            {
+              $search: {
+                index: getSearchIndexName(c),
+                concurrent: true,
+                compound: {
+                  must: [
+                    {
+                      text: {
+                        query: sanitizeString(request.searchTerm),
+                        path: ['name', 'aka'],
+                        fuzzy: {
+                          maxEdits: 2,
+                          maxExpansions: 100,
+                          prefixLength: 0,
                         },
                       },
-                    ]
-                  : []),
-                ...andFilters,
-              ],
+                    },
+                  ],
+                  filter: [
+                    ...(orFilters.length > 0
+                      ? [
+                          {
+                            compound: {
+                              should: orFilters,
+                              minimumShouldMatch: 1,
+                            },
+                          },
+                        ]
+                      : []),
+                    ...andFilters,
+                  ],
+                },
+              },
             },
-          },
-        },
-        {
-          $limit: limit,
-        },
-        {
-          $addFields: {
-            searchScore: { $meta: 'searchScore' },
-          },
-        },
-        {
-          // A minumum searchScore of 3 was encountered by trial and error
-          // whilst using atlas search console
-          $match: {
-            ...match,
-            searchScore: {
-              $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
+            {
+              $limit: limit,
             },
-          },
-        },
-      ])
-      .toArray()
-
+            {
+              $addFields: {
+                searchScore: { $meta: 'searchScore' },
+              },
+            },
+            {
+              // A minumum searchScore of 3 was encountered by trial and error
+              // whilst using atlas search console
+              $match: {
+                ...match,
+                searchScore: {
+                  $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
+                },
+              },
+            },
+          ])
+          .toArray()
+      )
+    )
     const fuzzinessSettings = request?.fuzzinessSettings
     const filteredResults = this.hydrateHitsWithMatchTypes(
-      this.filterResults(results, request, fuzzinessSettings, stopwordSet),
+      this.filterResults(
+        results.flat(),
+        request,
+        fuzzinessSettings,
+        stopwordSet
+      ),
       request
     )
 
@@ -741,17 +797,39 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         isMigration || request.manualSearch ? 500 : 200
       )
     }
+    const data = result.data?.map(
+      (entity: SanctionsEntity): SanctionsEntity => ({
+        ...entity,
+        matchTypeDetails: [
+          SanctionsDataFetcher.deriveMatchingDetails(request, entity),
+        ],
+      })
+    )
     return {
       ...result,
-      data: result.data?.map(
-        (entity: SanctionsEntity): SanctionsEntity => ({
-          ...entity,
-          matchTypeDetails: [
-            SanctionsDataFetcher.deriveMatchingDetails(request, entity),
-          ],
-        })
-      ),
+      data: await this.sanitizeEntities(data),
     }
+  }
+
+  private async sanitizeEntities(data: SanctionsEntity[] | undefined) {
+    const providers = getDefaultProviders().filter(
+      (p) =>
+        p === SanctionsDataProviders.OPEN_SANCTIONS ||
+        p === SanctionsDataProviders.ACURIS
+    )
+    if (!providers.length || !data) {
+      return data
+    }
+    const acurisEntities = data.filter(
+      (e) => e.provider === SanctionsDataProviders.ACURIS
+    )
+    const openSanctionsEntities = data.filter(
+      (e) => e.provider === SanctionsDataProviders.OPEN_SANCTIONS
+    )
+    return [
+      ...sanitizeAcurisEntities(acurisEntities),
+      ...sanitizeOpenSanctionsEntities(openSanctionsEntities),
+    ]
   }
 
   provider(): SanctionsDataProviderName {

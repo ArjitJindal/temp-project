@@ -19,7 +19,7 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 
 type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
 export type DowJonesConsumerUserRuleParameters = {
@@ -102,7 +102,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
-    const provider = getDefaultProvider()
+    const providers = getDefaultProviders()
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -133,8 +133,8 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
             }
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
-        ...getFuzzinessSettings(provider, fuzzinessSetting),
-        ...getStopwordSettings(provider, stopwords),
+        ...getFuzzinessSettings(providers, fuzzinessSetting),
+        ...getStopwordSettings(providers, stopwords),
       },
       hitContext,
       undefined

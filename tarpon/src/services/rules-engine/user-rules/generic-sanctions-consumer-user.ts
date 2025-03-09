@@ -17,7 +17,7 @@ import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSan
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { getDefaultProvider } from '@/services/sanctions/utils'
+import { getDefaultProviders } from '@/services/sanctions/utils'
 
 export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
 export type GenericSanctionsConsumerUserRuleParameters = {
@@ -89,7 +89,6 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       ? dayjs(user.userDetails.dateOfBirth).year()
       : undefined
     const name = formatConsumerName(user.userDetails.name)
-    console.log('IN RULE', name)
     if (!name) {
       return
     }
@@ -102,7 +101,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
-    const provider = getDefaultProvider()
+    const providers = getDefaultProviders()
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -141,7 +140,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           levenshteinDistanceDefault:
             fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
         },
-        ...getStopwordSettings(provider, stopwords),
+        ...getStopwordSettings(providers, stopwords),
       },
       hitContext,
       undefined
