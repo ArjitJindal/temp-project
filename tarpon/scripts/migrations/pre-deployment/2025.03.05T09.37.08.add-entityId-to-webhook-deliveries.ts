@@ -40,17 +40,27 @@ async function migrateTenant(tenant: Tenant) {
   let count = 0
   for await (const doc of cursor) {
     if (doc.request?.body) {
-      const jsonBody = JSON.parse(doc.request.body)
-      const entityId = extractEntityId(jsonBody)
+      try {
+        // Handle both cases where body might be a string or already an object
+        const jsonBody =
+          typeof doc.request.body === 'string'
+            ? JSON.parse(doc.request.body)
+            : doc.request.body
 
-      if (entityId) {
-        await collection.updateOne(
-          { _id: doc._id },
-          {
-            $set: { entityId },
-          }
-        )
-        count++
+        const entityId = extractEntityId(jsonBody)
+
+        if (entityId) {
+          await collection.updateOne(
+            { _id: doc._id },
+            {
+              $set: { entityId },
+            }
+          )
+          count++
+        }
+      } catch (error) {
+        console.error(`Failed to process document ${doc._id}: ${error}`)
+        continue
       }
     }
   }
