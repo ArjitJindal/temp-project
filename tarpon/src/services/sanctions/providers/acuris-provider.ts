@@ -546,12 +546,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
             ) && sanctionSearchTypes.includes('SANCTIONS')
         )
         .map((evidence) => {
-          const evidenceName = entity.sanEntries.current.find((sanEntry) =>
+          const matchingSanEntry = entity.sanEntries.current.find((sanEntry) =>
             sanEntry.events.some((event) =>
               event.evidenceIds.includes(evidence.evidenceId)
             )
-          )?.regime.name
-          return this.getOtherSources(evidence, evidenceName)
+          )
+          const evidenceName = matchingSanEntry?.regime.name
+          const description = matchingSanEntry?.regime.body
+          return this.getOtherSources(evidence, evidenceName, description)
         }),
       pepSources: entity.evidences
         .filter(
@@ -655,12 +657,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
           )
         )
         .map((evidence) => {
-          const evidenceName = entity.sanEntries.current.find((sanEntry) =>
+          const matchingSanEntry = entity.sanEntries.current.find((sanEntry) =>
             sanEntry.events.some((event) =>
               event.evidenceIds.includes(evidence.evidenceId)
             )
-          )?.regime.name
-          return this.getOtherSources(evidence, evidenceName)
+          )
+          const evidenceName = matchingSanEntry?.regime.name
+          const description = matchingSanEntry?.regime.body
+          return this.getOtherSources(evidence, evidenceName, description)
         }),
       associates: entity.businessLinks.map((link) => ({
         name: this.getEntityName(link, entityType),
@@ -785,7 +789,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
 
   private getOtherSources(
     evidence: AcurisEvidence,
-    evidenceName?: string
+    evidenceName?: string,
+    description?: string
   ): SanctionsSource {
     const url = evidence.originalUrl || evidence.assetUrl
     const name = evidenceName || evidence.title || url
@@ -795,6 +800,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ? new Date(evidence.captureDateIso).valueOf()
         : undefined,
       name,
+      description,
       fields: [
         {
           name: 'Title',

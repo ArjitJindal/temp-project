@@ -17,6 +17,7 @@ interface Props {
   children: React.ReactNode;
   hasUpdates: boolean;
   pdfMode?: boolean;
+  description?: string;
 }
 
 export default function ListingCard(props: Props) {
@@ -28,6 +29,7 @@ export default function ListingCard(props: Props) {
     isExpandedByDefault = false,
     hasUpdates,
     pdfMode,
+    description,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = compact(listedTime);
@@ -53,6 +55,7 @@ export default function ListingCard(props: Props) {
           {title}
           {hasUpdates && <UpdatedTag />}
         </div>
+        {description && <div>{description}</div>}
         {nonEmptyTime.length > 0 && (
           <Small className={s.listedTime}>
             {nonEmptyTime

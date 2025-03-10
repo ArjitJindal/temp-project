@@ -620,6 +620,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
                     key={source?.name}
                     countries={source.countryCodes || []}
                     title={sourceTitle || ''}
+                    description={source?.description}
                     listedTime={[source?.createdAt, source?.endedAt]}
                     isExpandedByDefault={pdfMode}
                     hasUpdates={TMP_TABS_HAS_UPDATES}
