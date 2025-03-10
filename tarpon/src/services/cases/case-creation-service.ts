@@ -108,6 +108,7 @@ import {
   getCaseAuditLogMetadata,
 } from '@/utils/audit-log'
 import { isDemoTenant } from '@/utils/tenant'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 
 type CaseSubject =
   | {
@@ -893,10 +894,11 @@ export class CaseCreationService {
 
   private getNewUserCase(
     direction: RuleHitDirection,
-    user: InternalConsumerUser | InternalBusinessUser
+    user: InternalConsumerUser | InternalBusinessUser,
+    status: CaseStatus = 'OPEN'
   ): Case {
     const caseEntity: Case = {
-      caseStatus: 'OPEN',
+      caseStatus: status,
       caseType: 'SYSTEM',
       subjectType: 'USER',
       caseUsers: {
@@ -910,10 +912,11 @@ export class CaseCreationService {
 
   private getNewPaymentCase(
     direction: RuleHitDirection,
-    paymentDetails: PaymentDetails
+    paymentDetails: PaymentDetails,
+    status: CaseStatus = 'OPEN'
   ): Case {
     const caseEntity: Case = {
-      caseStatus: 'OPEN',
+      caseStatus: status,
       caseType: 'SYSTEM',
       subjectType: 'PAYMENT',
       paymentDetails: {
@@ -1292,10 +1295,23 @@ export class CaseCreationService {
               params.checkListTemplates
             )
             logger.debug('Create a new case for a transaction')
+
+            // Check if all alerts are closed
+            const allAlertsClosed = newAlerts.every(
+              (alert) => alert.alertStatus === 'CLOSED'
+            )
+            const initialStatus: CaseStatus = allAlertsClosed
+              ? 'CLOSED'
+              : 'OPEN'
+
             result.push({
               ...(subject.type === 'USER'
-                ? this.getNewUserCase(direction, subject.user)
-                : this.getNewPaymentCase(direction, subject.paymentDetails)),
+                ? this.getNewUserCase(direction, subject.user, initialStatus)
+                : this.getNewPaymentCase(
+                    direction,
+                    subject.paymentDetails,
+                    initialStatus
+                  )),
               createdTimestamp:
                 availableAfterTimestamp ?? params.createdTimestamp,
               latestTransactionArrivalTimestamp:
