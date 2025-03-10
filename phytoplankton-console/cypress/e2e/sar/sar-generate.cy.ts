@@ -11,13 +11,15 @@ describe('SAR Generate', () => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS, features: { SAR: true } });
   });
   it('should open SAR report form', () => {
+    cy.intercept('GET', '**/alerts**').as('alerts');
     cy.visit(
       '/case-management/cases?page=1&pageSize=100&sort=-createdTimestamp&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
     );
-
     cy.intercept('GET', '**/report-types').as('sarCountries');
+    cy.wait('@alerts').its('response.statusCode').should('be.oneOf', [200, 304]);
     cy.waitNothingLoading();
-    cy.get('a[data-cy="alert-id"]', { timeout: 15000 }).should('be.visible').eq(0).click();
+    cy.get('a[data-cy="alert-id"]', { timeout: 15000 }).should('be.visible');
+    cy.get('a[data-cy="alert-id"]').eq(0).click();
 
     const SarCountrywithReports = [
       {
