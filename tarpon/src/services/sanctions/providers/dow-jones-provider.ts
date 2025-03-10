@@ -876,7 +876,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const { sanctionSearchTypes, pepRcaMatchTypes } =
           this.getScreeningTypesForPerson(person)
         const name = this.getNames(person.NameDetails?.Name, true)?.[0]
-        if (!name || !sanctionSearchTypes?.length) {
+        if (!name) {
           return
         }
 
@@ -934,6 +934,11 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             person.DateDetails?.Date,
             'Date of Birth'
           ),
+          profileImagesUrls: person.Images?.Image
+            ? Array.isArray(person.Images.Image)
+              ? person.Images.Image.map((img) => img['@_URL'])
+              : [person.Images.Image['@_URL']]
+            : undefined,
         }
 
         return [

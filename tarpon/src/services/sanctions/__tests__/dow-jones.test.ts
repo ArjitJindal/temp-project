@@ -72,6 +72,10 @@ describe('DowJonesProvider', () => {
             matchTypes: ['Organised Crime'],
             dateMatched: true,
             nationality: ['IN'],
+            profileImagesUrls: [
+              'http://www.jubl.com/Uploads/image/471imguf_Priyavrat_Bhartia.jpg',
+              'http://www.digicontent.co.in/wp-content/uploads/2021/08/priyavrat-bhartia.jpg',
+            ],
             documents: [
               {
                 name: 'Others',
@@ -159,6 +163,11 @@ Jubilant Pharmova Ltd.`,
                 rank: 'LEVEL_1',
                 title: 'Deceased',
               },
+            ],
+            profileImagesUrls: [
+              'http://rcainfo.mondoblog.org/files/2011/05/patasse-photo.jpg',
+              'https://cdn-s-www.estrepublicain.fr/images/F0DDA775-5B37-4A03-969B-363BC9E96EBB/NW_detail_M/title-1576680650.jpg',
+              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRopsmW70IMhJgZj3_-f2bQhkpaDJKH_WdqPg&usqp=CAU',
             ],
             types: [
               'Politically Exposed Person (PEP)',
@@ -368,6 +377,11 @@ Patasse passed away on April 5, 2011.`,
                 title:
                   "President, Central African People's Liberation Movement (MLPC)",
               },
+            ],
+            profileImagesUrls: [
+              'http://www.alwihdainfo.com/photo/art/grande/6418242-9683160.jpg',
+              'https://www.jeuneafrique.com/medias/2018/04/23/vf14120117400000-592x296-1524478838.jpg',
+              'https://www.jeuneafrique.com/medias/2020/08/26/jad20200826-ass-conf-centreafrique-zinguele-640x320-1598521402.jpg',
             ],
             dateMatched: true,
             matchTypes: ['PEP'],

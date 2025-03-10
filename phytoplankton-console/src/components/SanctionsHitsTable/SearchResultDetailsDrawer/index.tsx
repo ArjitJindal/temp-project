@@ -568,6 +568,15 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
         hasUpdates: TMP_TABS_HAS_UPDATES,
         sources: entity.mediaSources || [],
       },
+      {
+        name: 'Images',
+        hasUpdates: TMP_TABS_HAS_UPDATES,
+        sources:
+          entity.profileImagesUrls?.map((url) => ({
+            name: url,
+            url: url,
+          })) || [],
+      },
       ...(entity.otherSources?.length
         ? entity.otherSources
             .filter((source) => source.value)
@@ -675,6 +684,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     pdfMode,
     entity.otherSources,
     entity.sanctionSearchTypes,
+    entity.profileImagesUrls,
   ]);
 }
 
