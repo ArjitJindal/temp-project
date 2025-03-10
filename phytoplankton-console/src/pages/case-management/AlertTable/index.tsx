@@ -1605,7 +1605,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   ];
 
   const exportPermissions = useHasPermissions(['case-management:export:read']);
-
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>
@@ -1631,23 +1630,57 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   alert={alert ?? null}
                   escalatedTransactionIds={props.escalatedTransactionIds || []}
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
-                  selectedSanctionsHitsIds={selectedSanctionHitsIds}
+                  selectedSanctionsHitsIds={
+                    selectedSanctionHits[alert.alertId ?? '']?.map(({ id }) => id) ?? []
+                  }
                   onTransactionSelect={(alertId, transactionIds) => {
                     resetSelection({
                       keepTxns: true,
-                      keepAlerts: selectedAlerts.includes(alertId),
+                      keepAlerts: true,
                     });
-                    setSelectedTxns((prevSelectedTxns) => ({
-                      ...prevSelectedTxns,
-                      [alertId]: [...transactionIds],
-                    }));
+                    setSelectedTxns((prevSelectedTxns) => {
+                      if (transactionIds.length === 0) {
+                        // when minimizing an alert, removing it key from selected txn, avoid repetition of ids
+                        if (alertId in prevSelectedTxns) {
+                          delete prevSelectedTxns[alertId];
+                          return prevSelectedTxns;
+                        } else {
+                          return prevSelectedTxns;
+                        }
+                      }
+                      return {
+                        ...prevSelectedTxns,
+                        [alertId]: transactionIds,
+                      };
+                    });
+                    if (transactionIds.length > 0) {
+                      // if a alert is selected, selecting a txn should partially select alert
+                      setSelectedAlerts((prevSelectedAlerts) =>
+                        prevSelectedAlerts.filter((id) => id !== alertId),
+                      );
+                    }
                   }}
                   onSanctionsHitSelect={(alertId, sanctionsHitsIds, status) => {
                     resetSelection({});
-                    setSelectedSanctionHits((prevState) => ({
-                      ...prevState,
-                      [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
-                    }));
+                    setSelectedSanctionHits((prevState) => {
+                      if (sanctionsHitsIds.length === 0) {
+                        if (alertId in prevState) {
+                          delete prevState[alertId];
+                          return prevState;
+                        } else {
+                          return prevState;
+                        }
+                      }
+                      return {
+                        ...prevState,
+                        [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
+                      };
+                    });
+                    if (sanctionsHitsIds.length > 0) {
+                      setSelectedAlerts((prevSelectedAlerts) =>
+                        prevSelectedAlerts.filter((id) => id !== alertId),
+                      );
+                    }
                   }}
                   onSanctionsHitsChangeStatus={(sanctionsHitsIds, newStatus) => {
                     if (alert.alertId != null) {
@@ -1665,9 +1698,14 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             : undefined
         }
         fixedExpandedContainer={true}
-        partiallySelectedIds={Object.entries(selectedTxns)
-          .filter(([id, txns]) => !selectedAlerts.includes(id) && txns.length > 0)
-          .map(([id]) => id)}
+        partiallySelectedIds={[
+          ...Object.entries(selectedTxns)
+            .filter(([id, txns]) => !selectedAlerts.includes(id) && txns.length > 0)
+            .map(([id]) => id),
+          ...Object.entries(selectedSanctionHits)
+            .filter(([id, sanction]) => !selectedAlerts.includes(id) && sanction.length > 0)
+            .map(([id]) => id),
+        ]}
         selection={(row) => {
           if (qaMode) {
             return !row.content?.ruleQaStatus;
