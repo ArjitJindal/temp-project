@@ -1,8 +1,8 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 import dayjs from '@/utils/dayjs'
 
 export const TIMESTAMP_DIFF_SECONDS: LogicFunction<number> = {
-  key: 'timestamp_diff_seconds',
+  key: LogicFunctionKey.TIMESTAMP_DIFF_SECONDS,
   group: 'datetime',
   uiDefinition: {
     label: 'Time difference (seconds)',

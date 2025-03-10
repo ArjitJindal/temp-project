@@ -1,8 +1,8 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 import dayjs from '@/utils/dayjs'
 
 export const LOCAL_TIME_IN_HOUR: LogicFunction<number> = {
-  key: 'local_time_in_hour',
+  key: LogicFunctionKey.LOCAL_TIME_IN_HOUR,
   group: 'number',
   uiDefinition: {
     label: 'local time in hour',

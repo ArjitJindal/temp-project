@@ -1,4 +1,4 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 
 const arraylen = (inputArray: any[]) => {
   if (!Array.isArray(inputArray)) {
@@ -8,7 +8,7 @@ const arraylen = (inputArray: any[]) => {
 }
 
 export const NUMBER_OF_ITEMS: LogicFunction<number> = {
-  key: 'number_of_items',
+  key: LogicFunctionKey.NUMBER_OF_ITEMS,
   group: 'number',
   uiDefinition: {
     label: 'Number of Items',
@@ -26,7 +26,7 @@ export const NUMBER_OF_ITEMS: LogicFunction<number> = {
   },
 }
 export const NUMBER_OF_OBJECTS: LogicFunction<number> = {
-  key: 'number_of_objects',
+  key: LogicFunctionKey.NUMBER_OF_OBJECTS,
   group: 'number',
   uiDefinition: {
     label: 'Number of Objects',

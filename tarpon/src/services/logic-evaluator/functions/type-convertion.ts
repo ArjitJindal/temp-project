@@ -1,7 +1,7 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 
 export const NUMBER_TO_STRING: LogicFunction<string> = {
-  key: 'number_to_string',
+  key: LogicFunctionKey.NUMBER_TO_STRING,
   group: 'number',
   uiDefinition: {
     label: 'Number to String',
@@ -20,7 +20,7 @@ export const NUMBER_TO_STRING: LogicFunction<string> = {
 }
 
 export const STRING_TO_NUMBER: LogicFunction<number> = {
-  key: 'string_to_number',
+  key: LogicFunctionKey.STRING_TO_NUMBER,
   group: 'string',
   uiDefinition: {
     label: 'String to Number',

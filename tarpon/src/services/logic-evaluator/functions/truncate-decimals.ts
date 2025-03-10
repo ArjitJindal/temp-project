@@ -1,7 +1,7 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 
 export const TRUNCATE_DECIMAL: LogicFunction<number> = {
-  key: 'truncate_decimal',
+  key: LogicFunctionKey.TRUNCATE_DECIMAL,
   group: 'number',
   uiDefinition: {
     label: 'Truncate Decimal',

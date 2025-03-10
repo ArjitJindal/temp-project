@@ -1,7 +1,7 @@
-import { LogicFunction } from './types'
+import { LogicFunction, LogicFunctionKey } from './types'
 
 export const LOWERCASE: LogicFunction<string> = {
-  key: 'lowercase',
+  key: LogicFunctionKey.LOWERCASE,
   group: 'string',
   uiDefinition: {
     label: 'Lowercase',
@@ -19,7 +19,7 @@ export const LOWERCASE: LogicFunction<string> = {
   },
 }
 export const UPPERCASE: LogicFunction<string> = {
-  key: 'uppercase',
+  key: LogicFunctionKey.UPPERCASE,
   group: 'string',
   uiDefinition: {
     label: 'Uppercase',
