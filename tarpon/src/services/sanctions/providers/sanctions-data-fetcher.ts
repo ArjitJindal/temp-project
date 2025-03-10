@@ -668,7 +668,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               },
             },
             {
-              $limit: limit,
+              $limit: providers.includes(SanctionsDataProviders.DOW_JONES)
+                ? limit
+                : limit + 50, // Will remove the condition after analysing the effect in latency, because Dow jones is used in prod.
             },
             {
               $addFields: {
