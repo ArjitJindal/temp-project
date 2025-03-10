@@ -26,7 +26,6 @@ export const accountsHandler = lambdaApi()(
     const dynamoDb = getDynamoDbClientByEvent(event)
     const sessionsService = new SessionsService(tenantId, dynamoDb)
     const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
-    const organization = await accountsService.getAccountTenant(userId)
     const handlers = new Handlers()
 
     handlers.registerGetPostLogin(async () => {
@@ -46,10 +45,14 @@ export const accountsHandler = lambdaApi()(
         { auth0Domain, useCache: true },
         { dynamoDb }
       )
+      const organization = await accountsService.getAccountTenant(userId)
+
       return await accountsService.getTenantAccounts(organization)
     })
 
     handlers.registerAccountsInvite(async (ctx, request) => {
+      const organization = await accountsService.getAccountTenant(userId)
+
       const response = await accountsService.inviteAccount(
         organization,
         request.AccountInvitePayload
@@ -70,6 +73,8 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsDelete(async (ctx, request) => {
+      const organization = await accountsService.getAccountTenant(userId)
+
       const accountId = request.accountId
       const reassignTo = request.AccountDeletePayload.reassignTo
 
@@ -89,6 +94,7 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsEdit(async (ctx, request) => {
+      const organization = await accountsService.getAccountTenant(userId)
       return await accountsService.patchUserHandler(request, organization)
     })
 
