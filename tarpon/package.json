@@ -47,7 +47,7 @@
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
     "dev:databases": "docker compose up",
     "dev:databases:init": "AUTH0_DOMAIN=dev-flagright.eu.auth0.com ENV=local AWS_REGION=eu-central-1 ts-node ./scripts/init-local-db.ts",
-    "dev:databases:reset": "rm -rf .local-mongodb-data/ .local-dynamodb-data/ && mkdir .local-mongodb-data && mkdir .local-dynamodb-data",
+    "dev:databases:reset": "docker compose down -v",
     "dev:api": "yarn start-local-api",
     "dev:api:public": "API=PUBLIC yarn start-local-api",
     "dev:api:public-management": "API=PUBLIC_MANAGEMENT yarn start-local-api",
