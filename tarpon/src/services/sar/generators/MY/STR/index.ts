@@ -45,14 +45,8 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
 
   private async genericPopulatedParameters(
     subject:
-      | {
-          type: 'CASE'
-          case: Case
-        }
-      | {
-          type: 'USER'
-          user: InternalBusinessUser | InternalConsumerUser
-        },
+      | { type: 'CASE'; case: Case }
+      | { type: 'USER'; user: InternalBusinessUser | InternalConsumerUser },
     transactions: InternalTransaction[],
     _reporter: Account
   ) {
@@ -136,6 +130,22 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
         if (caseUser.type === 'CONSUMER') {
           const { userDetails } = caseUser
 
+          const dob = caseUser.userDetails?.dateOfBirth
+          // NRIC of a person in malaysia starts with YYMMDD followed by 7 digits
+          const prefixOfNRIC = dob ? dayjs(dob).format('YYMMDD') : undefined
+          if (prefixOfNRIC) {
+            const legalDocuments = caseUser.legalDocuments
+            if (legalDocuments) {
+              const document = legalDocuments.find((document) => {
+                return document.documentNumber.startsWith(prefixOfNRIC)
+              })
+              if (document) {
+                customerAndAccountDetails.customerInformation.identificationNoNric =
+                  document.documentNumber
+              }
+            }
+          }
+
           customerAndAccountDetails.customerInformation.gender =
             userDetails?.gender === 'M'
               ? 'MALE'
@@ -183,6 +193,16 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
           streetAddress: address.addressLines.join('; '),
           state: address.state,
           nationality: address.country,
+          zipCode: address.postcode,
+          city: address.city,
+        }
+
+        customerAndAccountDetails.customerInformation.residentialAddress = {
+          streetAddress: address.addressLines.join('; '),
+          state: address.state,
+          nationality: address.country,
+          zipCode: address.postcode,
+          city: address.city,
         }
       }
     } else if (paymentDetails != null) {
