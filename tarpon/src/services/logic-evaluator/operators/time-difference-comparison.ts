@@ -24,12 +24,12 @@ export const getTimeDifferenceComparisonOperator = (
     const threshold = parameters[0]
 
     if (!Number.isFinite(lhs) || !Number.isFinite(rhs)) {
-      logger.error('Invalid timestamps: both timestamps must be finite numbers')
+      logger.warn('Invalid timestamps: both timestamps must be finite numbers')
       return false
     }
 
     if (!Number.isFinite(threshold)) {
-      logger.error('Invalid threshold parameter: must be a finite number')
+      logger.warn('Invalid threshold parameter: must be a finite number')
       return false
     }
 
