@@ -306,20 +306,33 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     tenant: Pick<Tenant, 'id'>,
     account: Account
   ): Promise<void> {
-    await this.dynamoClient.send(
-      new PutCommand({
-        TableName:
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Item: {
-          ...account,
-          ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
-            this.auth0Domain,
-            this.getNonDemoTenantId(tenant.id),
-            account.id
-          ),
-        },
-      })
-    )
+    await Promise.all([
+      this.dynamoClient.send(
+        new PutCommand({
+          TableName:
+            StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+          Item: {
+            ...account,
+            ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+              this.auth0Domain,
+              this.getNonDemoTenantId(tenant.id),
+              account.id
+            ),
+          },
+        })
+      ),
+      this.dynamoClient.send(
+        new PutCommand({
+          TableName:
+            StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+          Item: {
+            ...account,
+            tenantId: tenant.id,
+            ...DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
+          },
+        })
+      ),
+    ])
   }
 
   async deleteAccountFromOrganization(
