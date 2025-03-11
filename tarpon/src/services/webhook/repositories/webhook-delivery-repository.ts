@@ -48,6 +48,85 @@ export class WebhookDeliveryRepository {
       .limit(1)
       .next()
   }
+  private async getWebhookDeliveryAttemptsAggregation(
+    webhookId: string,
+    params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
+  ): Promise<any[]> {
+    const matchStage: any = {
+      $match: { webhookId },
+    }
+
+    if (params.filterStatus != null) {
+      matchStage.$match.success = params.filterStatus === 'true'
+    }
+
+    if (
+      params.filterEventCreatedAtAfterTimestamp != null ||
+      params.filterEventCreatedAtBeforeTimestamp != null
+    ) {
+      matchStage.$match.eventCreatedAt = {}
+      if (params.filterEventCreatedAtAfterTimestamp != null) {
+        matchStage.$match.eventCreatedAt.$gte =
+          params.filterEventCreatedAtAfterTimestamp
+      }
+      if (params.filterEventCreatedAtBeforeTimestamp != null) {
+        matchStage.$match.eventCreatedAt.$lte =
+          params.filterEventCreatedAtBeforeTimestamp
+      }
+    }
+
+    if (
+      params.filterEventDeliveredAtAfterTimestamp != null ||
+      params.filterEventDeliveredAtBeforeTimestamp != null
+    ) {
+      matchStage.$match.deliveredAt = {}
+      if (params.filterEventDeliveredAtAfterTimestamp != null) {
+        matchStage.$match.deliveredAt.$gte =
+          params.filterEventDeliveredAtAfterTimestamp
+      }
+      if (params.filterEventDeliveredAtBeforeTimestamp != null) {
+        matchStage.$match.deliveredAt.$lte =
+          params.filterEventDeliveredAtBeforeTimestamp
+      }
+    }
+
+    if (params.filterEventType != null) {
+      matchStage.$match.event = params.filterEventType as WebhookEventType
+    }
+
+    return [
+      matchStage,
+      {
+        $group: {
+          _id: '$deliveryTaskId',
+          parent: { $first: '$$ROOT' },
+          attempts: { $push: '$$ROOT' },
+          hasSuccess: { $max: { $cond: ['$success', 1, 0] } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          deliveryTaskId: '$_id',
+          webhookId: '$parent.webhookId',
+          webhookUrl: '$parent.webhookUrl',
+          requestStartedAt: '$parent.requestStartedAt',
+          requestFinishedAt: '$parent.requestFinishedAt',
+          event: '$parent.event',
+          eventCreatedAt: '$parent.eventCreatedAt',
+          request: '$parent.request',
+          response: '$parent.response',
+          overallSuccess: { $gt: ['$hasSuccess', 0] },
+          attempts: {
+            $sortArray: {
+              input: '$attempts',
+              sortBy: { requestStartedAt: -1 },
+            },
+          },
+        },
+      },
+    ]
+  }
 
   private async getWebhookDeliveryAttemptsFilter(
     webhookId: string,
@@ -85,6 +164,10 @@ export class WebhookDeliveryRepository {
       query.event = params.filterEventType as WebhookEventType
     }
 
+    if (params.manualRetry != null) {
+      query.manualRetry = params.manualRetry === 'true'
+    }
+
     if (params.searchEntityId && params.searchEntityId.length > 0) {
       if (!params.entityIdExactMatch) {
         const searchEntityIdRegex = prefixRegexMatchFilterForArray(
@@ -98,7 +181,6 @@ export class WebhookDeliveryRepository {
         }
       }
     }
-
     return query
   }
 
@@ -110,20 +192,21 @@ export class WebhookDeliveryRepository {
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
     )
-
-    const query = await this.getWebhookDeliveryAttemptsFilter(webhookId, params)
-
+    const pipeline = await this.getWebhookDeliveryAttemptsAggregation(
+      webhookId,
+      params
+    )
     const skip =
       ((params.page || 1) - 1) * (params.pageSize || DEFAULT_PAGE_SIZE)
-
     const limit = params.pageSize || DEFAULT_PAGE_SIZE
-
-    return collection
-      .find(query)
-      .sort({ requestStartedAt: -1 })
-      .limit(limit)
-      .skip(skip)
-      .toArray()
+    pipeline.push(
+      { $sort: { requestStartedAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    )
+    return (await collection
+      .aggregate(pipeline)
+      .toArray()) as WebhookDeliveryAttempt[]
   }
 
   public async getWebhookDeliveryCount(
@@ -134,8 +217,10 @@ export class WebhookDeliveryRepository {
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
     )
-    const query = await this.getWebhookDeliveryAttemptsFilter(webhookId, params)
-
+    const query = await this.getWebhookDeliveryAttemptsFilter(webhookId, {
+      ...params,
+      manualRetry: 'false',
+    })
     return collection.countDocuments(query)
   }
 

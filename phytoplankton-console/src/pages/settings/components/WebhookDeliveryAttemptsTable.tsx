@@ -3,6 +3,8 @@ import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { message } from 'antd';
 import { useMutation } from '@tanstack/react-query';
+import s from './style.module.less';
+import WebhookActionMenu from './WebhookActionMenu';
 import { WebhookDeliveryAttempt, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors, { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
@@ -20,6 +22,7 @@ import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { CloseMessage } from '@/components/library/Message';
+import Table from '@/components/library/Table';
 import RestartLineIcon from '@/components/ui/icons/Remix/system/restart-line.react.svg';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
@@ -39,7 +42,8 @@ interface Params extends CommonParams {
 export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => {
   const api = useApi();
   const [selectedWebhookDelivery, setSelectedWebhookDelivery] = useState<WebhookDeliveryAttempt>();
-
+  const [showDeliveryAttemptsModal, setShowDeliveryAttemptsModal] = useState(false);
+  const [deliveryAttempts, setDeliveryAttempts] = useState<WebhookDeliveryAttempt[]>([]);
   let hide: CloseMessage | undefined;
 
   const resendMutation = useMutation<
@@ -71,16 +75,6 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         hide = message.loading('Sending webhook...');
       },
     },
-  );
-
-  const handleReplayWebhook = useCallback(
-    (event: WebhookDeliveryAttempt) => {
-      if (!event.deliveryTaskId) {
-        return;
-      }
-      resendMutation.mutate({ deliveryTaskId: event.deliveryTaskId });
-    },
-    [resendMutation],
   );
 
   const [params, setParams] = useState<Params>({
@@ -118,23 +112,38 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       return attempts;
     },
   );
-
+  const handleReplayWebhook = useCallback(
+    (event: WebhookDeliveryAttempt) => {
+      if (!event.deliveryTaskId) {
+        return;
+      }
+      resendMutation.mutate(
+        { deliveryTaskId: event.deliveryTaskId },
+        {
+          onSuccess: () => {
+            webhookResults.refetch();
+          },
+        },
+      );
+    },
+    [resendMutation, webhookResults],
+  );
   const helper = new ColumnHelper<WebhookDeliveryAttempt>();
 
   const columns: TableColumn<WebhookDeliveryAttempt>[] = helper.list([
-    helper.simple<'success'>({
-      key: 'success',
+    helper.simple<'overallSuccess'>({
+      key: 'overallSuccess',
       title: 'Status',
       filtering: true,
       defaultWidth: 64,
       type: {
-        render: (success) =>
-          success ? (
+        render: (overallSuccess) =>
+          overallSuccess ? (
             <CheckCircleOutlined style={{ color: Colors.successColor.base }} />
           ) : (
             <CloseCircleOutlined style={{ color: Colors.errorColor.base }} />
           ),
-        stringify: (success) => (success ? 'Success' : 'Failed'),
+        stringify: (overallSuccess) => (overallSuccess ? 'Success' : 'Failed'),
         autoFilterDataType: {
           kind: 'select',
           options: [
@@ -195,18 +204,27 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       title: 'Actions',
       defaultSticky: 'RIGHT',
       render: (_, { item: entity }) => (
-        <Button
-          type="SECONDARY"
-          size="SMALL"
-          onClick={() => handleReplayWebhook(entity)}
-          icon={<RestartLineIcon />}
-          isLoading={
-            resendMutation.isLoading &&
-            resendMutation.variables?.deliveryTaskId === entity.deliveryTaskId
-          }
-        >
-          Replay
-        </Button>
+        <div className={s.actionsContainer}>
+          <Button
+            type="SECONDARY"
+            size="SMALL"
+            onClick={() => handleReplayWebhook(entity)}
+            icon={<RestartLineIcon />}
+            isLoading={
+              resendMutation.isLoading &&
+              resendMutation.variables?.deliveryTaskId === entity.deliveryTaskId
+            }
+          >
+            Replay
+          </Button>
+          <div className={s.actionIconsContainer}>
+            <WebhookActionMenu
+              deliveryAttempts={entity?.attempts ?? []}
+              setShowDeliveryAttemptsModal={setShowDeliveryAttemptsModal}
+              setDeliveryAttempts={setDeliveryAttempts}
+            />
+          </div>
+        </div>
       ),
     }),
   ]);
@@ -261,6 +279,69 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
             {JSON.stringify(selectedWebhookDelivery?.response, null, 4)}
           </pre>
         </Label>
+      </Modal>
+      <Modal
+        isOpen={showDeliveryAttemptsModal}
+        title="Delivery attempts"
+        onCancel={() => setShowDeliveryAttemptsModal(false)}
+        hideFooter
+      >
+        <Table<WebhookDeliveryAttempt>
+          sizingMode="FULL_WIDTH"
+          pagination={false}
+          toolsOptions={false}
+          hideFilters={true}
+          tableId="delivery-attempts"
+          rowKey="deliveryTaskId"
+          columns={helper.list([
+            helper.simple<'success'>({
+              key: 'success',
+              title: 'Status',
+              filtering: true,
+              // defaultWidth: 64,
+              type: {
+                render: (success) =>
+                  success ? (
+                    <CheckCircleOutlined style={{ color: Colors.successColor.base }} />
+                  ) : (
+                    <CloseCircleOutlined style={{ color: Colors.errorColor.base }} />
+                  ),
+                stringify: (success) => (success ? 'Success' : 'Failed'),
+                autoFilterDataType: {
+                  kind: 'select',
+                  options: [
+                    { value: 'Success', label: 'Success' },
+                    { value: 'Failed', label: 'Failed' },
+                  ],
+                  mode: 'SINGLE',
+                  displayMode: 'select',
+                },
+              },
+            }),
+            helper.simple<'requestStartedAt'>({
+              key: 'requestStartedAt',
+              title: 'Delivered At',
+              type: DATE_TIME,
+              filtering: true,
+            }),
+            helper.display({
+              title: 'Response',
+              render: (_, { item: entity }) => (
+                <Button
+                  type="SECONDARY"
+                  size="SMALL"
+                  onClick={() => setSelectedWebhookDelivery(entity)}
+                >
+                  View
+                </Button>
+              ),
+            }),
+          ])}
+          data={{
+            total: deliveryAttempts.length,
+            items: deliveryAttempts,
+          }}
+        />
       </Modal>
     </>
   );

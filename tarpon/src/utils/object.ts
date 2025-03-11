@@ -104,3 +104,12 @@ export function removeEmptyKeys<T>(obj: T): T {
   }
   return obj
 }
+
+export function isJsonString(str: string) {
+  try {
+    JSON.parse(str)
+  } catch (e) {
+    return false
+  }
+  return true
+}

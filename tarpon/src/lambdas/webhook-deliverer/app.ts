@@ -88,7 +88,10 @@ export async function simpleSendWebhookRequest(
     webhookDeliveryTask.tenantId,
     mongoDb
   )
-
+  const webhookDeliveryRepository = new WebhookDeliveryRepository(
+    webhookDeliveryTask.tenantId,
+    mongoDb
+  )
   const webhook = await webhookRepository.getWebhook(
     webhookDeliveryTask.webhookId
   )
@@ -109,7 +112,6 @@ export async function simpleSendWebhookRequest(
   const requestTimeoutSec = process.env.WEBHOOK_REQUEST_TIMEOUT_SEC
     ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
     : 10
-
   const fetchOptions = {
     ...(await buildWebhookRequest(
       settings,
@@ -118,8 +120,46 @@ export async function simpleSendWebhookRequest(
     )),
     signal: timeoutSignal(requestTimeoutSec * 1000),
   }
+  const requestStartedAt = Date.now()
+  let response: Response | undefined = undefined
+  try {
+    response = await abortableFetch(fetch).fetch(
+      webhook.webhookUrl,
+      fetchOptions
+    )
+    return response
+  } catch (e) {
+    logger.error(e)
+    throw e
+  } finally {
+    const requestFinishedAt = Date.now()
+    const success = response
+      ? response.status >= 200 && response.status < 300
+      : false
 
-  return await abortableFetch(fetch).fetch(webhook.webhookUrl, fetchOptions)
+    await webhookDeliveryRepository.addWebhookDeliveryAttempt({
+      _id: uuidv4(),
+      deliveryTaskId: webhookDeliveryTask._id,
+      webhookId: webhookDeliveryTask.webhookId,
+      webhookUrl: webhook.webhookUrl,
+      requestStartedAt,
+      requestFinishedAt,
+      success,
+      event: webhookDeliveryTask.event,
+      eventCreatedAt: webhookDeliveryTask.createdAt,
+      request: {
+        headers: fetchOptions.headers,
+        body: fetchOptions.body,
+      },
+      entityId: webhookDeliveryTask.entityId,
+      response: response && {
+        status: response.status,
+        headers: JSON.stringify(response.headers),
+        body: await response.text(),
+      },
+      manualRetry: true,
+    })
+  }
 }
 
 export async function deliverWebhookEvent(
@@ -308,6 +348,7 @@ export async function deliverWebhookEvent(
         headers: JSON.stringify(response.headers),
         body: await response.text(),
       },
+      manualRetry: false,
     })
   }
 }

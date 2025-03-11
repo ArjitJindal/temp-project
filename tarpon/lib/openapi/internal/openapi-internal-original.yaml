@@ -4634,6 +4634,10 @@ paths:
             type: string
           in: query
           name: filterEventType
+        - schema:
+            type: string
+          in: query
+          name: manualRetry
   /webhook-deliveries/{deliveryTaskId}/resend:
     parameters:
       - schema:
@@ -11647,6 +11651,14 @@ components:
           type: object
         response:
           type: object
+        manualRetry:
+          type: boolean
+        attempts:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryAttempt'
+        overallSuccess:
+          type: boolean
       required:
         - deliveryTaskId
         - webhookId

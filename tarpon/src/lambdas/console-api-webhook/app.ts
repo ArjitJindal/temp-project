@@ -19,6 +19,7 @@ import { WebhookSecrets } from '@/@types/openapi-internal/WebhookSecrets'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { envIs } from '@/utils/env'
 import { WebhookDeliveryTask } from '@/@types/webhook'
+import { isJsonString } from '@/utils/object'
 
 export const webhookConfigurationHandler = lambdaApi()(
   async (
@@ -132,7 +133,9 @@ export const webhookConfigurationHandler = lambdaApi()(
       }
 
       const requestBody = JSON.parse(
-        webhookLatestDeliveryAttempt.request.body || '{}'
+        isJsonString(webhookLatestDeliveryAttempt.request.body)
+          ? webhookLatestDeliveryAttempt.request.body
+          : '{}'
       ) as {
         createdTimestamp: number
         data: any
