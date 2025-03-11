@@ -595,6 +595,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
           .replace(/\s+/g, '_') as GenericSanctionsSearchType;
         return (
           (tab.name === 'Sources' && tab.sources.length > 0) ||
+          (tab.name === 'Images' && tab.sources.length > 0) ||
           (tab.sources.length > 0 && entity.sanctionSearchTypes?.includes(searchType))
         );
       })
