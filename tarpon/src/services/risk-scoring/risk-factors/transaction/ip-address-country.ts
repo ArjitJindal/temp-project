@@ -16,6 +16,8 @@ const IP_ADDRESS_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'COUNTRY',
 })
 
 export const TRANSACTION_IP_ADDRESS_COUNTRY_RISK_FACTOR =

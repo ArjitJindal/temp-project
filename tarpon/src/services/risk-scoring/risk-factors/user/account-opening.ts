@@ -18,6 +18,8 @@ const REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR = (
   valueType: 'LITERAL',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'STRING',
 })
 
 export const CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR =

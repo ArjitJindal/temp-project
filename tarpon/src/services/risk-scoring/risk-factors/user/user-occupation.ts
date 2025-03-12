@@ -16,6 +16,8 @@ const USER_OCCUPATION_RISK_FACTOR = (
   valueType: 'LITERAL',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'STRING',
 })
 
 export const CONSUMER_USER_OCCUPATION_RISK_FACTOR =

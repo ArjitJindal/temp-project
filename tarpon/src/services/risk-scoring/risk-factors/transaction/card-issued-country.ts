@@ -16,6 +16,8 @@ const CARD_ISSUED_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'COUNTRY',
 })
 
 export const TRANSACTION_CARD_ISSUED_COUNTRY_RISK_FACTOR =

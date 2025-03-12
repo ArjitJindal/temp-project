@@ -16,6 +16,8 @@ const CUSTOMER_REGISTRATION_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'COUNTRY',
 })
 
 export const BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR =

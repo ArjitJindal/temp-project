@@ -16,6 +16,8 @@ const THREE_DS_DONE_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'BOOLEAN',
 })
 
 export const TRANSACTION_3DS_DONE_RISK_FACTOR =

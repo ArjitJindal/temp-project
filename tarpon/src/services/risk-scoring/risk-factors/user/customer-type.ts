@@ -20,6 +20,8 @@ const CUSTOMER_TYPE_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'CONSUMER_USER_TYPE',
 })
 
 export const CONSUMER_TYPE_RISK_FACTOR =

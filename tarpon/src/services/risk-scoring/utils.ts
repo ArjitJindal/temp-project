@@ -8,6 +8,7 @@ import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 type OptionRequirements = Record<RiskLevel, number>
 
@@ -31,6 +32,16 @@ export const getAgeFromTimestamp = (timestamp: number) => {
 
 export const getAgeInDaysFromTimestamp = (timestamp: number) => {
   return dayjs().diff(dayjs(timestamp), 'day')
+}
+
+export const v2v8IdMapper = (type: RiskEntityType): string => {
+  const typeMapping: Record<RiskEntityType, string> = {
+    CONSUMER_USER: 'CDRF',
+    BUSINESS: 'BDRF',
+    TRANSACTION: 'TDRF',
+  }
+
+  return typeMapping[type] || 'DRF'
 }
 
 export const getRiskScoreBoundsFromLevel = (

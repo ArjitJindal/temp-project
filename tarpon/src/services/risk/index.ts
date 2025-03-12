@@ -8,10 +8,7 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import {
-  createV8FactorFromV2,
-  generateV2FactorId,
-} from '../risk-scoring/risk-factors'
+import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -151,9 +148,9 @@ export class RiskService {
     // Update the v8 risk factor to keep the logic in sync
     await this.createOrUpdateRiskFactor(
       v8Factor,
-      generateV2FactorId(
-        parameterAttributeRiskValues.parameter,
-        parameterAttributeRiskValues.riskEntityType
+      await this.getV2RiskFactorID(
+        parameterAttributeRiskValues.riskEntityType,
+        parameterAttributeRiskValues.parameter
       )
     )
     return {
@@ -177,6 +174,15 @@ export class RiskService {
       result: newParameterRiskItemValue,
       actionTypeOverride: oldParameterRiskItemValue ? 'UPDATE' : 'CREATE',
     }
+  }
+
+  async getV2RiskFactorID(riskEntityType: string, parameter: string) {
+    const riskFactors = await this.riskRepository.getAllRiskFactors()
+    const matchingRiskFactor = riskFactors.find(
+      (factor) =>
+        factor.type === riskEntityType && factor.parameter === parameter
+    )
+    return matchingRiskFactor?.id
   }
 
   async getRiskAssignment(userId: string) {

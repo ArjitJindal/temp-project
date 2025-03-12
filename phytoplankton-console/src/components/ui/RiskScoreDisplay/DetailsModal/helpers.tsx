@@ -2,11 +2,10 @@ import React from 'react';
 import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import {
-  DataType,
   ParameterName,
   RiskLevelTableItem,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import { RiskEntityType, TransactionType } from '@/apis';
+import { RiskEntityType, RiskFactorDataType, TransactionType } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { PaymentMethod, getPaymentMethodTitle } from '@/utils/payments';
@@ -47,7 +46,7 @@ export const CONSTANT_RENDERER: ParameterRenderer<string> = (value) => {
   };
 };
 
-export const PARAMETER_RENDERERS: Record<DataType, ParameterRenderer<any>> = {
+export const PARAMETER_RENDERERS: Record<RiskFactorDataType, ParameterRenderer<any>> = {
   STRING: DEFAULT_RENDERER,
   CURRENCY: ((value) => {
     const valueLabel = CURRENCIES.find((x) => x.value === value)?.label ?? value;
@@ -92,7 +91,7 @@ export const PARAMETER_RENDERERS: Record<DataType, ParameterRenderer<any>> = {
     };
   },
   BOOLEAN: DEFAULT_RENDERER,
-  _3DS_STATUS: DEFAULT_RENDERER,
+  CARD_3DS_STATUS: DEFAULT_RENDERER,
   SOURCE_OF_FUNDS: DEFAULT_RENDERER,
   AMOUNT_RANGE: DEFAULT_RENDERER,
 };

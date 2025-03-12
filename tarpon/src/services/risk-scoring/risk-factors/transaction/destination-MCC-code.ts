@@ -16,6 +16,8 @@ const DESTINATION_MCC_CODE_RISK_FACTOR = (
   valueType: 'LITERAL',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: true,
+  dataType: 'STRING',
 })
 
 export const TRANSACTION_DESTINATION_MCC_CODE_RISK_FACTOR =

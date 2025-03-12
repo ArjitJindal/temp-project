@@ -1,0 +1,68 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+.topHeader {
+  display: flex;
+  flex-direction: column;
+}
+
+.description {
+  grid-column: span 3;
+}
+
+.risk {
+}
+
+.weight {
+  grid-column: span 3;
+  min-width: 200px;
+}
+
+.table {
+  display: grid;
+  grid-gap: 2rem;
+  grid-template-columns: auto min-content 130px min-content;
+  align-items: center;
+}
+
+.headerTable {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  align-items: center;
+  gap: 3rem;
+}
+
+.header {
+  font-weight: bold;
+}
+
+.deleteButton {
+  opacity: 0.25;
+}
+
+.footer {
+  display: flex;
+  gap: 1rem;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+}
+
+.row {
+  display: contents;
+}
+
+.newItemRow {
+  display: contents;
+}

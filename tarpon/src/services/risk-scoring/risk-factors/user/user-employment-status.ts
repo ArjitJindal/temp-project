@@ -16,6 +16,8 @@ const USER_EMPLOYMENT_STATUS_RISK_FACTOR = (
   valueType: 'MULTIPLE',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'CONSUMER_EMPLOYMENT_STATUS',
 })
 
 export const CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR =

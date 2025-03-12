@@ -16,6 +16,8 @@ const CUSTOMER_REGISTRATION_STATUS_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'USER_REGISTRATION_STATUS',
 })
 
 export const BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR =

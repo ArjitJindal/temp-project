@@ -16,6 +16,8 @@ const ORIGIN_CURRENCY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'CURRENCY',
 })
 
 export const TRANSACTION_ORIGIN_CURRENCY_RISK_FACTOR =

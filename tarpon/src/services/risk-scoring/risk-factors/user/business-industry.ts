@@ -17,6 +17,8 @@ const CUSTOMER_INDUSTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'BUSINESS_INDUSTRY',
 })
 
 export const BUSINESS_INDUSTRY_RISK_FACTOR =

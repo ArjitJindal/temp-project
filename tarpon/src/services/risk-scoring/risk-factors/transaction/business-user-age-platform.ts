@@ -17,6 +17,8 @@ const BUSINESS_USER_AGE_PLATFORM_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'DAY_RANGE',
 })
 
 export const TRANSACTION_BUSINESS_USER_AGE_PLATFORM_RISK_FACTOR =

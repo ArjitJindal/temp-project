@@ -7,7 +7,6 @@ import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import {
-  DataType,
   ParameterName,
   ParameterValues,
   RiskLevelTable,
@@ -20,6 +19,7 @@ import {
   RiskValueType,
   ParameterValueContent,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import type { RiskFactorDataType as DataType } from '@/apis';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { businessType, consumerType } from '@/utils/customer-type';
 import {
@@ -113,7 +113,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   CONSUMER_EMPLOYMENT_STATUS: 'MULTIPLE',
   USER_REGISTRATION_STATUS: 'MULTIPLE',
   BANK_NAMES: 'MULTIPLE',
-  _3DS_STATUS: 'LITERAL',
+  CARD_3DS_STATUS: 'LITERAL',
   SOURCE_OF_FUNDS: 'MULTIPLE',
   AMOUNT_RANGE: 'AMOUNT_RANGE',
 };
@@ -623,7 +623,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     title: 'Destination user SAR filed',
     description: 'Risk value based on whether a SAR was filed for the destination user',
     entity: 'TRANSACTION',
-    dataType: '_3DS_STATUS',
+    dataType: 'CARD_3DS_STATUS',
     isDerived: true,
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
@@ -986,7 +986,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       </div>
     );
   }) as InputRenderer<'TIME_RANGE'>,
-  _3DS_STATUS: ((props) => {
+  CARD_3DS_STATUS: ((props) => {
     return <SingleSelect options={_3DS_DONE_OPTIONS} {...props} />;
   }) as InputRenderer<'LITERAL'>,
   BOOLEAN: ((props) => {
@@ -1308,7 +1308,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </div>
     );
   }) as ValueRenderer<'TIME_RANGE'>,
-  _3DS_STATUS: (({ value }) => {
+  CARD_3DS_STATUS: (({ value }) => {
     return (
       <span>{value?.content === true ? 'Yes' : value?.content === false ? 'No' : 'Unknown'}</span>
     );

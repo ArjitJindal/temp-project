@@ -404,7 +404,6 @@ export type FixLocksForKrs = {
   type: 'FIX_LOCKS_FOR_KRS'
   tenantId: string
 }
-
 export type FixArsBreakdownBatchJob = {
   type: 'FIX_ARS_BREAKDOWN'
   tenantId: string

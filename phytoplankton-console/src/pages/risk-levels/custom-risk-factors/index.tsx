@@ -80,7 +80,7 @@ export type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
 export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
   const api = useApi();
-  const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
+  const queryResult = useQuery(RISK_FACTORS_V8(type, true), async () => {
     const entityType =
       type === 'consumer'
         ? 'CONSUMER_USER'
@@ -91,6 +91,7 @@ export const CustomRiskFactors = (props: Props) => {
         : undefined;
     return await api.getAllRiskFactors({
       entityType: entityType,
+      includeV2: true,
     });
   });
 
@@ -171,6 +172,7 @@ export const CustomRiskFactors = (props: Props) => {
     columnHelper.simple<'id'>({
       title: 'Risk factor ID',
       key: 'id',
+      defaultWidth: 100,
       type: {
         render: (id) => {
           return (
@@ -189,23 +191,24 @@ export const CustomRiskFactors = (props: Props) => {
     columnHelper.simple<'name'>({
       title: 'Risk factor name',
       key: 'name',
+      defaultWidth: 300,
       type: STRING,
     }),
     columnHelper.simple<'description'>({
       title: 'Risk factor description',
       key: 'description',
       type: STRING,
-      defaultWidth: 300,
+      defaultWidth: 600,
     }),
     columnHelper.simple<'updatedAt'>({
       title: 'Last updated at',
       key: 'updatedAt',
       type: DATE_TIME,
+      defaultWidth: 200,
     }),
     columnHelper.derived<boolean>({
       id: 'enabled',
       title: 'Enabled',
-      defaultSticky: 'RIGHT',
       value: (row) => row.status === 'ACTIVE',
       defaultWidth: 70,
       type: {
@@ -233,7 +236,6 @@ export const CustomRiskFactors = (props: Props) => {
     columnHelper.display({
       id: 'actions',
       title: 'Action',
-      defaultSticky: 'RIGHT',
       defaultWidth: 250,
       enableResizing: false,
       render: (entity) => {

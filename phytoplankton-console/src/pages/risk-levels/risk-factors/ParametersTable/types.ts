@@ -15,6 +15,7 @@ import {
   RiskScoreValueLevel,
   RiskScoreValueScore,
   RiskFactorParameter,
+  RiskFactorDataType,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -108,7 +109,7 @@ export interface RiskLevelTableItem {
   description: string;
   entity: RiskEntityType;
   isDerived: boolean;
-  dataType: DataType;
+  dataType: RiskFactorDataType;
   parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
   riskValue?: RiskScoreValueLevel | RiskScoreValueScore;
@@ -119,25 +120,3 @@ export interface RiskLevelTableItem {
 }
 
 export type RiskLevelTable = RiskLevelTableItem[];
-export type DataType =
-  | 'STRING'
-  | 'RANGE'
-  | 'DAY_RANGE'
-  | 'COUNTRY'
-  | 'CURRENCY'
-  | 'PAYMENT_METHOD'
-  | 'CONSUMER_USER_TYPE'
-  | 'BUSINESS_USER_TYPE'
-  | 'TRANSACTION_TYPES'
-  | 'RESIDENCE_TYPES'
-  | 'TIME_RANGE'
-  | 'BUSINESS_INDUSTRY'
-  | 'BOOLEAN'
-  | 'BUSINESS_USER_SEGMENT'
-  | 'CONSUMER_USER_SEGMENT'
-  | 'CONSUMER_EMPLOYMENT_STATUS'
-  | 'USER_REGISTRATION_STATUS'
-  | 'BANK_NAMES'
-  | '_3DS_STATUS'
-  | 'SOURCE_OF_FUNDS'
-  | 'AMOUNT_RANGE';

@@ -11074,6 +11074,10 @@ components:
             $ref: '#/components/schemas/RiskParameterLevelKeyValue'
         parameter:
           $ref: '#/components/schemas/RiskFactorParameter'
+        isDerived:
+          type: boolean
+        dataType:
+          $ref: '#/components/schemas/RiskFactorDataType'
         targetIterableParameter:
           type: string
           enum:
@@ -11087,6 +11091,31 @@ components:
             - TIME_RANGE
             - DAY_RANGE
             - AMOUNT_RANGE
+    RiskFactorDataType:
+      title: RiskFactorDataType
+      type: string
+      enum:
+        - RANGE
+        - STRING
+        - DAY_RANGE
+        - COUNTRY
+        - CURRENCY
+        - PAYMENT_METHOD
+        - CONSUMER_USER_TYPE
+        - BUSINESS_USER_TYPE
+        - TRANSACTION_TYPES
+        - RESIDENCE_TYPES
+        - TIME_RANGE
+        - BUSINESS_INDUSTRY
+        - BOOLEAN
+        - BUSINESS_USER_SEGMENT
+        - CONSUMER_USER_SEGMENT
+        - CONSUMER_EMPLOYMENT_STATUS
+        - USER_REGISTRATION_STATUS
+        - BANK_NAMES
+        - CARD_3DS_STATUS
+        - SOURCE_OF_FUNDS
+        - AMOUNT_RANGE
     RiskFactorsPostRequest:
       title: RiskFactorsPostRequest
       type: object
@@ -11318,6 +11347,7 @@ components:
         - PNB
         - MULTI_LEVEL_ESCALATION
         - RISK_SCORING_V8_FOR_V2
+        - RISK_FACTORS_UI_MERGE
         - STRICT_FILE_SECURITY
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH

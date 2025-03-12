@@ -17,6 +17,8 @@ const CUSTOMER_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'COUNTRY',
 })
 
 export const BUSINESS_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR =

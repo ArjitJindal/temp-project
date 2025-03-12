@@ -16,6 +16,8 @@ const TRANSACTION_TYPE_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'TRANSACTION_TYPES',
 })
 
 export const TRANSACTION_TRANSACTION_TYPE_RISK_FACTOR =

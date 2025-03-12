@@ -16,6 +16,8 @@ const ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'AMOUNT_RANGE',
 })
 
 export const TRANSACTION_ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR =

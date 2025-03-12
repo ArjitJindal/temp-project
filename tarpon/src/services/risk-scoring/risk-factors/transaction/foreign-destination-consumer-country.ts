@@ -17,6 +17,8 @@ const FOREIGN_DESTINATION_CONSUMER_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'RESIDENCE_TYPES',
 })
 
 export const TRANSACTION_FOREIGN_DESTINATION_CONSUMER_COUNTRY_RISK_FACTOR =

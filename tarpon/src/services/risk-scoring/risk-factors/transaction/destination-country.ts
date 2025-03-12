@@ -16,6 +16,8 @@ const DESTINATION_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'COUNTRY',
 })
 
 export const TRANSACTION_DESTINATION_COUNTRY_RISK_FACTOR =

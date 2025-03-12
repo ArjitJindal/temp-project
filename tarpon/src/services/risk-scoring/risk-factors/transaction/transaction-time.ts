@@ -16,6 +16,8 @@ const TRANSACTION_TIME_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'TIME_RANGE',
 })
 
 export const TRANSACTION_TIME_FOR_RISK_FACTOR =

@@ -16,6 +16,8 @@ const USER_SEGMENT_RISK_FACTOR = (
   valueType: 'MULTIPLE',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'CONSUMER_USER_SEGMENT',
 })
 const BUSINESSUSER_SEGMENT_RISK_FACTOR = (
   entityType: RiskEntityType

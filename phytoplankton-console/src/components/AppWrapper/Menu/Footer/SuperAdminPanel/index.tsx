@@ -132,6 +132,11 @@ export const featureDescriptions: Record<
     description: 'Enables Rules engine V8 sync rebuild',
     tag: FeatureTag.ENG,
   },
+  RISK_FACTORS_UI_MERGE: {
+    title: 'Risk factors merge',
+    description: 'Enables risk factors merge',
+    tag: FeatureTag.ENG,
+  },
   PNB: {
     title: 'PNB',
     description: 'Enables PNB specific features',

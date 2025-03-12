@@ -16,6 +16,8 @@ const ORIGIN_COUNTRY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'COUNTRY',
 })
 
 export const TRANSACTION_ORIGIN_COUNTRY_RISK_FACTOR =

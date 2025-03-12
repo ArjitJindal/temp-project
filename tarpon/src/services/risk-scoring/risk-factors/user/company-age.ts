@@ -16,6 +16,8 @@ const COMPANY_AGE_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'RANGE',
   type: entityType,
+  isDerived: true,
+  dataType: 'RANGE',
 })
 
 export const BUSINESS_COMPANY_AGE_RISK_FACTOR =

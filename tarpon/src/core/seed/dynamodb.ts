@@ -3,7 +3,6 @@ import { isEmpty, isEqual, pick, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
-import { riskFactors } from './data/risk-factors'
 import { getCases } from './data/cases'
 import { getCrmRecords } from './data/crm-records'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -37,7 +36,9 @@ import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 import { NangoRepository } from '@/services/nango/repository'
+import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { v2v8IdMapper } from '@/services/risk-scoring/utils'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -225,8 +226,27 @@ export async function seedDynamo(
   }
 
   logger.info('Create risk factors')
-  for (const riskFactor of riskFactors()) {
-    await riskRepo.createOrUpdateRiskFactor(riskFactor)
+  // Initialize counters for each type
+
+  const typeCounters = {
+    CONSUMER_USER: 1,
+    BUSINESS: 1,
+    TRANSACTION: 1,
+    DEFAULT: 1,
+  }
+
+  for (const riskFactor of RISK_FACTORS) {
+    const counter = typeCounters[riskFactor.type] || typeCounters.DEFAULT
+    typeCounters[riskFactor.type] =
+      (typeCounters[riskFactor.type] || typeCounters.DEFAULT) + 1
+
+    await riskRepo.createOrUpdateRiskFactor({
+      id: `${v2v8IdMapper(riskFactor.type)}-${String(counter).padStart(
+        3,
+        '0'
+      )}`,
+      ...riskFactor,
+    })
   }
   if (isDemoTenant(tenantId)) {
     const nonDemoTenantId = tenantId.replace(/-test$/, '')

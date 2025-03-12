@@ -16,6 +16,8 @@ const ORIGIN_PAYMENT_METHOD_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'PAYMENT_METHOD',
 })
 
 export const TRANSACTION_ORIGIN_PAYMENT_METHOD_RISK_FACTOR =

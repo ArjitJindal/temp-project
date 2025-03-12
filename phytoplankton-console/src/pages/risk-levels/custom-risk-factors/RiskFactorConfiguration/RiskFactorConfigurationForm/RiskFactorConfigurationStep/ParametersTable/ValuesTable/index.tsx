@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import cn from 'clsx';
+import style from './style.module.less';
 import {
   Entity,
   ParameterName,
   ParameterValues,
   RiskLevelTableItem,
   RiskValueContent,
-} from '../types';
+} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import {
   DEFAULT_RISK_VALUE,
   INPUT_RENDERERS,
@@ -18,11 +19,20 @@ import {
   VALUE_RENDERERS,
   PARAMETER_VALUES_FORM_VALIDATIONS,
   validate,
-} from '../consts';
-import style from './style.module.less';
-import { RiskLevel, RiskParameterValue, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
+} from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import {
+  RiskLevel,
+  RiskParameterValueLiteral,
+  RiskParameterValueRange,
+  RiskParameterValueMultiple,
+  RiskParameterValueTimeRange,
+  RiskParameterValueDayRange,
+  RiskParameterValueAmountRange,
+  RiskScoreValueLevel,
+  RiskScoreValueScore,
+} from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { AsyncResource, getOr, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
+import { getOr } from '@/utils/asyncResource';
 import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
@@ -34,41 +44,43 @@ import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
-import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
+
 interface Props {
-  item: RiskLevelTableItem;
-  currentValuesRes: AsyncResource<ParameterValues>;
+  parameter: RiskLevelTableItem;
+  values: ParameterValues;
+  setValues: (values: ParameterValues) => void;
+  entity: Entity;
+  defaultRiskValue: RiskScoreValueLevel | RiskScoreValueScore;
+  weight: number;
+  setDefaultRiskValue: (val: RiskScoreValueLevel | RiskScoreValueScore) => void;
+  setWeight: (val: number) => void;
   onSave: (
     parameter: ParameterName,
-    newValues: ParameterValues,
+    values: ParameterValues,
     entity: Entity,
-    defaultRiskLevel: RiskScoreValueLevel | RiskScoreValueScore,
+    defaultRiskValue: RiskScoreValueLevel | RiskScoreValueScore,
     weight: number,
   ) => void;
-  currentDefaultValue: AsyncResource<RiskScoreValueLevel | RiskScoreValueScore>;
-  currentWeight: AsyncResource<number>;
   canEditParameters?: boolean;
+  initialValues?: ParameterValues;
 }
 
-export default function ValuesTable(props: Props) {
+function ValuesTable(props: Props) {
   const {
-    currentValuesRes,
-    item,
-    onSave,
-    currentDefaultValue,
-    currentWeight,
+    parameter,
+    values,
+    setValues,
+    defaultRiskValue,
+    weight,
+    setDefaultRiskValue,
+    setWeight,
     canEditParameters = true,
+    initialValues,
   } = props;
 
-  const { parameter, dataType, entity } = item;
-  const lastValues = useLastSuccessValue(currentValuesRes, []);
-  const lastDefaultRiskValue = useLastSuccessValue(currentDefaultValue, DEFAULT_RISK_VALUE);
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
-  const lastWeight = useLastSuccessValue(currentWeight, 1);
-  const [values, setValues] = useState(lastValues);
-  const [defaultRiskValue, setDefaultRiskValue] = useState(lastDefaultRiskValue);
-  const [weight, setWeight] = useState(lastWeight);
+
   const api = useApi();
   const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
   const defaultCurrency = getOr(queryData.data, {}).defaultValues?.currency ?? 'USD';
@@ -76,44 +88,33 @@ export default function ValuesTable(props: Props) {
     useHasPermissions(['risk-scoring:risk-factors:write']) && canEditParameters;
 
   useEffect(() => {
-    setValues(lastValues);
-  }, [lastValues]);
-
-  useEffect(() => {
-    setWeight(lastWeight);
-  }, [lastWeight]);
-
-  useEffect(() => {
-    setDefaultRiskValue(lastDefaultRiskValue);
-  }, [lastDefaultRiskValue]);
-  const isEqual = equal(
-    { values, defaultRiskValue, weight },
-    { values: lastValues, defaultRiskValue: lastDefaultRiskValue, weight: lastWeight },
-  );
-
-  const loading = isLoading(currentValuesRes);
+    if ((!values || values.length === 0) && initialValues && initialValues.length > 0) {
+      setValues(initialValues);
+    }
+  }, [initialValues, values, setValues]);
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
   const [newRiskValue, setNewRiskValue] = useState<RiskScoreValueLevel | RiskScoreValueScore>();
   const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
   const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
-  const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
-    setValues(cb);
-  }, []);
+
+  const isEqual = equal(
+    { values, defaultRiskValue, weight },
+    { values: initialValues || [], defaultRiskValue, weight },
+  );
 
   const handleAdd = () => {
     if (newValue && newRiskValue != null) {
-      handleUpdateValues((oldValues) => [
-        ...oldValues,
+      const updatedValues = [
+        ...values,
         {
-          parameterValue: {
-            content: newValue,
-          },
+          parameterValue: { content: newValue },
           riskValue: newRiskValue,
         },
-      ]);
+      ];
+      setValues(updatedValues);
       let initialNewValue: RiskValueContent | null = null;
-      if (dataType === 'RANGE') {
+      if (parameter.dataType === 'RANGE') {
         if (newValue?.kind === 'RANGE') {
           initialNewValue = { kind: 'RANGE', start: newValue.end, end: 100 };
         }
@@ -123,27 +124,25 @@ export default function ValuesTable(props: Props) {
     }
   };
 
-  const handleSave = () => {
-    if (!parameter || !entity) {
-      console.error('Missing required parameters for save');
-      return;
-    }
-
-    onSave(parameter, values, entity, defaultRiskValue, weight);
-  };
-
   const handleCancel = () => {
-    setValues(lastValues);
-    setDefaultRiskValue(lastDefaultRiskValue);
-    setWeight(lastWeight);
+    if (initialValues) {
+      setValues(initialValues);
+    } else {
+      setValues([]);
+      setDefaultRiskValue(DEFAULT_RISK_VALUE);
+      setWeight(1);
+    }
   };
 
-  const dataTypeValidations = PARAMETER_VALUES_FORM_VALIDATIONS[dataType] ?? [];
-
-  const newValueValidationMessage: string | null = validate(dataType, dataTypeValidations, {
-    newValue: newValue,
-    previousValues: values.map((x) => x.parameterValue.content),
-  });
+  const dataTypeValidations = PARAMETER_VALUES_FORM_VALIDATIONS[parameter.dataType] ?? [];
+  const newValueValidationMessage: string | null = validate(
+    parameter.dataType,
+    dataTypeValidations,
+    {
+      newValue: newValue,
+      previousValues: values.map((x) => x.parameterValue.content),
+    },
+  );
 
   const newValueInfoMessage = NEW_VALUE_INFOS.reduce<string | null>(
     (acc, information): string | null => {
@@ -153,7 +152,7 @@ export default function ValuesTable(props: Props) {
       return information({
         newValue: newValue,
         newRiskValue: newRiskValue ?? null,
-        newParameterName: parameter,
+        newParameterName: parameter.parameter,
         previousValues: values,
         defaultCurrency: defaultCurrency,
       });
@@ -161,44 +160,49 @@ export default function ValuesTable(props: Props) {
     null,
   );
 
-  const handleSetDefaultValues = useCallback(() => {
-    if (item.dataType === 'COUNTRY') {
+  const handleSetDefaultValues = () => {
+    if (parameter.dataType === 'COUNTRY') {
       setValues(DEFAULT_COUNTRY_RISK_VALUES);
     }
-  }, [setValues, item.dataType]);
+  };
 
-  const handleClearValues = useCallback(() => {
+  const handleClearValues = () => {
     setValues([]);
-  }, [setValues]);
+  };
 
   const handleRemoveValue = useCallback(
     (value: string) => {
-      const newValues = values.map(({ parameterValue: { content }, riskValue }) => {
-        if (content.kind !== 'MULTIPLE') {
-          return { parameterValue: { content }, riskValue };
+      const newVals = values.map(({ parameterValue, riskValue }) => {
+        if (parameterValue.content.kind !== 'MULTIPLE') {
+          return { parameterValue, riskValue };
         }
-        content.values = content.values.filter(({ content: val }) => val !== value);
-        return { parameterValue: { content }, riskValue };
+        parameterValue.content.values = parameterValue.content.values.filter(
+          ({ content: val }: any) => val !== value,
+        );
+        return { parameterValue, riskValue };
       });
-
-      handleUpdateValues(() =>
-        newValues.filter(({ parameterValue: { content } }) =>
-          content.kind === 'MULTIPLE' ? content.values.length > 0 : true,
+      setValues(
+        newVals.filter(({ parameterValue }) =>
+          parameterValue.content.kind === 'MULTIPLE'
+            ? parameterValue.content.values.length > 0
+            : true,
         ),
       );
     },
-    [values, handleUpdateValues],
+    [values, setValues],
   );
+
   const configSetting = useSettings();
   const aliasForVeryHigh = configSetting?.riskLevelAlias
     ? levelToAlias('VERY_HIGH', configSetting?.riskLevelAlias)
     : 'VERY_HIGH';
+
   return (
-    <div className={cn(style.root, loading && CY_LOADING_FLAG_CLASS)}>
+    <div className={cn(style.root)}>
       <div className={style.table}>
         <div className={style.topHeader}>
           <div className={style.header}>Weight</div>
-          <P grey fontWeight="normal" className={style.description}>
+          <P grey variant="m" fontWeight="normal" className={style.description}>
             Weights range from 0 (no impact) to 1 (maximum impact) and determine the risk factor's
             influence on the overall risk score. If a weight is not assigned, the system defaults it
             to 1.
@@ -222,13 +226,11 @@ export default function ValuesTable(props: Props) {
               max: 1,
               step: 0.01,
               htmlAttrs: { style: { width: '3rem', textAlign: 'center' } },
-              isDisabled: loading || !hasWritePermissions,
+              isDisabled: !hasWritePermissions,
             }}
-            isDisabled={loading || !hasWritePermissions}
+            isDisabled={!hasWritePermissions}
           />
         </div>
-        <div /> {/* Empty div to align with the rest of the table */}
-        <div /> {/* Empty div to align with the rest of the table */}
         <div className={style.topHeader}>
           <div className={style.header}>Default risk level</div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
@@ -240,7 +242,7 @@ export default function ValuesTable(props: Props) {
         <div className={style.risk}>
           <div className={style.header}>Risk level</div>
           <RiskLevelSwitch
-            isDisabled={loading || !hasWritePermissions}
+            isDisabled={!hasWritePermissions}
             value={
               defaultRiskValue.type === 'RISK_LEVEL'
                 ? defaultRiskValue.value
@@ -269,16 +271,16 @@ export default function ValuesTable(props: Props) {
             min={0}
             max={100}
             step={0.01}
-            isDisabled={loading || !hasWritePermissions}
+            isDisabled={!hasWritePermissions}
           />
         </div>
-        <div /> {/* Empty div to align with the rest of the table */}
+        <div />
         <div className={style.header}>Value</div>
         <div className={style.header}>Risk level</div>
         <div className={style.header}>Risk score (0-100)</div>
         <div className={style.header}>
-          {item.dataType === 'COUNTRY' && (
-            <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
+          {parameter.dataType === 'COUNTRY' && (
+            <Button onClick={handleSetDefaultValues} size="small" type="primary" block>
               Load default
             </Button>
           )}
@@ -286,16 +288,10 @@ export default function ValuesTable(props: Props) {
         {values.map(({ parameterValue, riskValue }, index) => {
           const handleChangeRiskLevel = (newRiskLevel: RiskLevel | undefined) => {
             if (newRiskLevel != null) {
-              handleUpdateValues((values) =>
-                values.map((x) =>
-                  x.parameterValue === parameterValue
-                    ? {
-                        ...x,
-                        riskValue: {
-                          type: 'RISK_LEVEL',
-                          value: newRiskLevel,
-                        },
-                      }
+              setValues(
+                values.map((x, i) =>
+                  i === index
+                    ? { ...x, riskValue: { type: 'RISK_LEVEL', value: newRiskLevel } }
                     : x,
                 ),
               );
@@ -304,16 +300,10 @@ export default function ValuesTable(props: Props) {
 
           const handleChangeRiskScore = (newRiskScore: number | undefined) => {
             if (newRiskScore != null) {
-              handleUpdateValues((values) =>
-                values.map((x) =>
-                  x.parameterValue === parameterValue
-                    ? {
-                        ...x,
-                        riskValue: {
-                          type: 'RISK_SCORE',
-                          value: newRiskScore,
-                        },
-                      }
+              setValues(
+                values.map((x, i) =>
+                  i === index
+                    ? { ...x, riskValue: { type: 'RISK_SCORE', value: newRiskScore } }
                     : x,
                 ),
               );
@@ -321,36 +311,38 @@ export default function ValuesTable(props: Props) {
           };
 
           const handleDeleteKey = () => {
-            handleUpdateValues((values) =>
-              values.filter((x) => x.parameterValue !== parameterValue),
-            );
+            setValues(values.filter((_, i) => i !== index));
           };
 
           return (
-            <div className={style.row} key={index} data-cy={`value-row value-row-${index}`}>
+            <div className={style.row} key={index}>
               <div>
-                {VALUE_RENDERERS[dataType]({
+                {VALUE_RENDERERS[parameter.dataType]({
                   value: parameterValue.content,
-                  onChange: (newValue: unknown) => {
-                    handleUpdateValues((values: ParameterValues) => {
-                      return values?.map((oldValue, i) => {
-                        if (i !== index) {
-                          return oldValue;
-                        }
-                        return {
-                          ...oldValue,
-                          parameterValue: {
-                            content: newValue as RiskParameterValue['content'],
-                          },
-                        };
-                      });
-                    });
+                  onChange: (
+                    newValue?:
+                      | RiskParameterValueLiteral
+                      | RiskParameterValueRange
+                      | RiskParameterValueMultiple
+                      | RiskParameterValueTimeRange
+                      | RiskParameterValueDayRange
+                      | RiskParameterValueAmountRange,
+                  ) => {
+                    if (newValue) {
+                      setValues(
+                        values.map((oldValue, i) =>
+                          i !== index
+                            ? oldValue
+                            : { ...oldValue, parameterValue: { content: newValue } },
+                        ),
+                      );
+                    }
                   },
                   handleRemoveValue,
                 })}
               </div>
               <RiskLevelSwitch
-                isDisabled={loading || !hasWritePermissions}
+                isDisabled={!hasWritePermissions}
                 value={
                   riskValue.type === 'RISK_LEVEL'
                     ? riskValue.value
@@ -365,18 +357,15 @@ export default function ValuesTable(props: Props) {
                     : getRiskScoreFromLevel(riskClassificationValues, riskValue.value)
                 }
                 onChange={handleChangeRiskScore}
-                isDisabled={loading || !hasWritePermissions}
+                isDisabled={!hasWritePermissions}
                 min={0}
                 max={100}
                 step={0.01}
               />
               <Button
-                data-cy="delete-risk-factor"
                 className={style.deleteButton}
                 type="text"
-                disabled={
-                  loading || (onlyDeleteLast && index !== values.length - 1) || !hasWritePermissions
-                }
+                disabled={(onlyDeleteLast && index !== values.length - 1) || !hasWritePermissions}
                 onClick={handleDeleteKey}
               >
                 <DeleteFilled />
@@ -384,10 +373,10 @@ export default function ValuesTable(props: Props) {
             </div>
           );
         })}
-        <div className={style.newItemRow} data-cy="new-item-form">
+        <div className={style.newItemRow}>
           <div>
-            {INPUT_RENDERERS[dataType]({
-              disabled: loading || !hasWritePermissions,
+            {INPUT_RENDERERS[parameter.dataType]({
+              disabled: !hasWritePermissions,
               value: newValue,
               existedValues: values.map((x) => x.parameterValue.content),
               onChange: setNewValue,
@@ -399,7 +388,7 @@ export default function ValuesTable(props: Props) {
           {shouldShowNewValueInput && (
             <>
               <RiskLevelSwitch
-                isDisabled={loading || !hasWritePermissions}
+                isDisabled={!hasWritePermissions}
                 value={
                   newRiskValue?.type === 'RISK_LEVEL'
                     ? newRiskValue.value
@@ -414,7 +403,7 @@ export default function ValuesTable(props: Props) {
                 }}
               />
               <NumberInput
-                isDisabled={loading || !hasWritePermissions}
+                isDisabled={!hasWritePermissions}
                 value={
                   newRiskValue?.type === 'RISK_SCORE'
                     ? newRiskValue.value
@@ -432,9 +421,7 @@ export default function ValuesTable(props: Props) {
                 step={0.01}
               />
               <Button
-                data-cy="add-risk-factor"
                 disabled={
-                  loading ||
                   !newValue ||
                   newRiskValue == null ||
                   newValueValidationMessage != null ||
@@ -461,24 +448,15 @@ export default function ValuesTable(props: Props) {
         children="Please note the risk level will automatically convert to risk score. You can also manually update the risk score and it will be considered in risk algorithm calculation."
       />
       <div className={style.footer}>
-        <Button disabled={loading || isEqual || !hasWritePermissions} onClick={handleCancel}>
+        <Button disabled={isEqual || !hasWritePermissions} onClick={handleCancel}>
           Cancel
         </Button>
-        <Button
-          data-cy="save-risk-factor"
-          disabled={loading || !hasWritePermissions || isEqual || newValueValidationMessage != null}
-          onClick={handleSave}
-          type="primary"
-        >
-          Save
-        </Button>
-        <Button
-          disabled={loading || values.length === 0 || !hasWritePermissions}
-          onClick={handleClearValues}
-        >
+        <Button disabled={values.length === 0 || !hasWritePermissions} onClick={handleClearValues}>
           Clear all
         </Button>
       </div>
     </div>
   );
 }
+
+export default ValuesTable;

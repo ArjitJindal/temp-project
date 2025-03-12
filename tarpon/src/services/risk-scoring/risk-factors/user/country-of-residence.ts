@@ -16,6 +16,8 @@ const COUNTRY_OF_RESIDENCE_RISK_FACTOR = (
   valueType: 'MULTIPLE',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'COUNTRY',
 })
 
 export const CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR =

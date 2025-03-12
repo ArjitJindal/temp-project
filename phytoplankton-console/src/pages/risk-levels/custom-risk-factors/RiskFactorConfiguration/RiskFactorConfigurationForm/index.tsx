@@ -1,5 +1,5 @@
 import { ConfigProvider } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useImperativeHandle } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import { BasicDetailsFormValues, BasicDetailsStep } from './BasicDetailsStep';
@@ -14,8 +14,31 @@ import { useId } from '@/utils/hooks';
 import * as Card from '@/components/ui/Card';
 import { StepperSteps } from '@/components/library/Stepper';
 import NestedForm from '@/components/library/Form/NestedForm';
-import { RiskLevel } from '@/apis';
+import {
+  RiskFactor,
+  RiskLevel,
+  RiskFactorParameter,
+  RiskEntityType,
+  RiskScoreValueLevel,
+  RiskScoreValueScore,
+} from '@/apis';
 import { message } from '@/components/library/Message';
+import {
+  ParameterName,
+  ParameterValues,
+} from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+
+interface LiftedParameters {
+  parameter: RiskFactorParameter;
+  values: ParameterValues;
+  setValues: (values: ParameterValues) => void;
+  entity: RiskEntityType;
+  defaultRiskValue: RiskScoreValueLevel | RiskScoreValueScore;
+  weight: number;
+  setDefaultRiskValue: (value: RiskScoreValueLevel | RiskScoreValueScore) => void;
+  setWeight: (value: number) => void;
+  onSave: () => void;
+}
 
 interface RiskFactorConfigurationFormProps {
   type: 'consumer' | 'business' | 'transaction';
@@ -27,21 +50,25 @@ interface RiskFactorConfigurationFormProps {
   id?: string;
   formInitialValues?: RiskFactorConfigurationFormValues;
   newRiskId?: string;
+  liftedParameters?: LiftedParameters;
 }
 
 export interface RiskFactorConfigurationFormValues {
   basicDetailsStep: BasicDetailsFormValues;
   riskFactorConfigurationStep: Partial<RiskFactorConfigurationStepFormValues>;
+  v2Props?: {
+    parameter: ParameterName;
+    item: RiskFactor;
+  };
 }
 
-const BASIC_DETAILS_STEP = 'basicDetailsStep';
-const RISK_FACTOR_CONFIGURATION_STEP = 'riskFactorConfigurationStep';
-
+export const BASIC_DETAILS_STEP = 'basicDetailsStep';
+export const RISK_FACTOR_CONFIGURATION_STEP = 'riskFactorConfigurationStep';
 export const STEPS = [BASIC_DETAILS_STEP, RISK_FACTOR_CONFIGURATION_STEP];
 
 function RiskFactorConfigurationForm(
   props: RiskFactorConfigurationFormProps,
-  ref: React.Ref<FormRef<any>>,
+  forwardedRef: React.Ref<any>,
 ) {
   const {
     showValidationError = false,
@@ -52,6 +79,7 @@ function RiskFactorConfigurationForm(
     onSubmit,
     formInitialValues,
     newRiskId,
+    liftedParameters,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const INITIAL_VALUES = useMemo(() => {
@@ -86,35 +114,45 @@ function RiskFactorConfigurationForm(
       },
     };
   }, []);
-  const STEPS = useMemo(
+  const stepsWithValidation = useMemo(
     () =>
-      [
-        {
-          key: BASIC_DETAILS_STEP,
-          title: 'Basic details',
+      STEPS.map((key) => {
+        let title = '';
+        let description = '';
+        if (key === BASIC_DETAILS_STEP) {
+          title = 'Basic details';
+          description = 'Define risk factor name and description and other details.';
+        } else if (key === RISK_FACTOR_CONFIGURATION_STEP) {
+          title = 'Risk factor configuration';
+          description =
+            'Configure risk level, risk score and risk weights for the defined risk factors';
+        }
+        return {
+          key,
+          title,
+          description,
           isOptional: false,
-          description: 'Define risk factor name and description and other details.',
-        },
-        {
-          key: RISK_FACTOR_CONFIGURATION_STEP,
-          title: 'Risk factor configuration',
-          isOptional: false,
-          description:
-            'Configure risk level, risk score and risk weights for the defined risk factors',
-        },
-      ].map((step) => ({
-        ...step,
-        isInvalid:
-          (showValidationError || alwaysShowErrors) &&
-          validateField(fieldValidators?.[step.key], formState?.[step.key]) != null,
-      })),
+          isInvalid:
+            (showValidationError || alwaysShowErrors) &&
+            validateField(fieldValidators?.[key], formState?.[key]) != null,
+        };
+      }),
     [alwaysShowErrors, fieldValidators, formState, showValidationError],
   );
+
+  const internalFormRef = useRef<FormRef<any>>(null);
+
+  useImperativeHandle(forwardedRef, () => ({
+    submit: () => internalFormRef.current?.submit(),
+    validate: () => internalFormRef.current?.validate(),
+    getValues: () => internalFormRef.current?.getValues(),
+  }));
+
   const handleSubmit = (
     formValues: RiskFactorConfigurationFormValues,
     { isValid }: { isValid: boolean },
   ) => {
-    if (isValid) {
+    if (isValid || formValues.v2Props) {
       onSubmit(formValues);
     } else {
       message.warn('Please, make sure that all required fields are filled and values are valid!');
@@ -130,7 +168,7 @@ function RiskFactorConfigurationForm(
       <Form<RiskFactorConfigurationFormValues>
         key={formId}
         id={formId}
-        ref={ref}
+        ref={internalFormRef}
         className={s.root}
         initialValues={INITIAL_VALUES}
         onSubmit={handleSubmit}
@@ -145,7 +183,7 @@ function RiskFactorConfigurationForm(
             <Card.Section>
               <StepperSteps
                 layout="VERTICAL"
-                steps={STEPS}
+                steps={stepsWithValidation}
                 active={activeStepKey}
                 onChange={onActiveStepChange}
               />
@@ -154,11 +192,13 @@ function RiskFactorConfigurationForm(
           <div className={cn(s.stepperContent)}>
             <div className={cn(readonly ? s.readOnlyFormContent : '')}>
               <NestedForm<RiskFactorConfigurationFormValues> name={activeStepKey}>
-                <StepSubform
+                <StepSubformWithRef
                   activeStepKey={activeStepKey}
                   readOnly={readonly}
                   type={type}
                   newRiskId={newRiskId}
+                  v2Props={formInitialValues?.v2Props}
+                  liftedParameters={liftedParameters}
                 />
               </NestedForm>
             </div>
@@ -169,15 +209,21 @@ function RiskFactorConfigurationForm(
   );
 }
 
-export default React.forwardRef(RiskFactorConfigurationForm);
-
-function StepSubform(props: {
-  activeStepKey: string;
-  readOnly: boolean;
-  type: 'consumer' | 'business' | 'transaction';
-  newRiskId?: string;
-}) {
-  const { activeStepKey, readOnly, type, newRiskId } = props;
+const StepSubform = (
+  props: {
+    activeStepKey: string;
+    readOnly: boolean;
+    type: 'consumer' | 'business' | 'transaction';
+    newRiskId?: string;
+    v2Props?: {
+      parameter: ParameterName;
+      item: RiskFactor;
+    };
+    liftedParameters?: LiftedParameters;
+  },
+  ref: React.Ref<any>,
+) => {
+  const { activeStepKey, readOnly, type, newRiskId, v2Props, liftedParameters } = props;
   const ruleType = type === 'transaction' ? 'TRANSACTION' : 'USER';
   const entity =
     type === 'transaction'
@@ -190,7 +236,19 @@ function StepSubform(props: {
     return <BasicDetailsStep newRiskId={newRiskId} />;
   }
   if (activeStepKey === RISK_FACTOR_CONFIGURATION_STEP) {
-    return <RiskFactorConfigurationStep readOnly={readOnly} ruleType={ruleType} entity={entity} />;
+    return (
+      <RiskFactorConfigurationStep
+        readOnly={readOnly}
+        ruleType={ruleType}
+        entity={entity}
+        v2Props={v2Props}
+        liftedParameters={liftedParameters}
+        ref={ref}
+      />
+    );
   }
   return <></>;
-}
+};
+
+const StepSubformWithRef = React.forwardRef(StepSubform);
+export default React.forwardRef(RiskFactorConfigurationForm);

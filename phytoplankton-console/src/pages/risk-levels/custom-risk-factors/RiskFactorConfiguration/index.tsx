@@ -2,22 +2,38 @@ import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
+import { ParameterName, ParameterValues } from '../../risk-factors/ParametersTable/types';
 import s from './style.module.less';
 import RiskFactorConfigurationForm, {
   RiskFactorConfigurationFormValues,
   STEPS,
 } from './RiskFactorConfigurationForm';
+import { BasicDetailsFormValues } from './RiskFactorConfigurationForm/BasicDetailsStep';
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
 import { useHasPermissions } from '@/utils/user-utils';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
-import { RiskClassificationScore, RiskFactor, RiskFactorsPostRequest } from '@/apis';
+import {
+  RiskClassificationScore,
+  RiskFactor,
+  RiskFactorParameter,
+  RiskFactorsPostRequest,
+  RiskScoreValueLevel,
+  RiskScoreValueScore,
+} from '@/apis';
 import { makeUrl } from '@/utils/routing';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { NEW_RISK_FACTOR_ID } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import {
+  DEFAULT_RISK_VALUE,
+  ALL_RISK_PARAMETERS,
+} from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import { Entity } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
@@ -46,6 +62,7 @@ export const RiskFactorConfiguration = (props: Props) => {
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
+
   const isMutable = useMemo(() => ['CREATE', 'EDIT', 'DUPLICATE'].includes(mode), [mode]);
   const formInitialValues = riskItem ? deserializeRiskItem(riskItem) : undefined;
   const navigateToRiskFactors = () => {
@@ -63,6 +80,72 @@ export const RiskFactorConfiguration = (props: Props) => {
     const newRiskId = await api.getNewRiskFactorId({ riskId: id });
     return newRiskId.riskFactorId;
   });
+
+  const [parameter] = useState<RiskFactorParameter>(
+    (riskItem?.parameter as RiskFactorParameter) || ('' as RiskFactorParameter),
+  );
+  const [values, setValues] = useState<ParameterValues>(riskItem?.riskLevelAssignmentValues || []);
+  const [entity] = useState<Entity>(riskItem?.type || 'TRANSACTION');
+  const [defaultRiskValueState, setDefaultRiskValueState] = useState<
+    RiskScoreValueLevel | RiskScoreValueScore
+  >(
+    riskItem?.defaultRiskScore
+      ? { type: 'RISK_SCORE', value: riskItem.defaultRiskScore }
+      : DEFAULT_RISK_VALUE,
+  );
+  const [weight, setWeight] = useState<number>(riskItem?.defaultWeight || 1);
+
+  const handleSaveParameters = async () => {
+    const riskLevelTableItem = ALL_RISK_PARAMETERS.find(
+      (param) => param.parameter === parameter && param.entity === entity,
+    );
+    if (!riskLevelTableItem) {
+      message.fatal('Unable to find matching risk parameter configuration.');
+      return;
+    }
+    const settings = {
+      isActive: true,
+      values: values,
+      defaultValue: defaultRiskValueState,
+      weight: weight,
+    };
+    const hideSavingMessage = message.loading('Saving parameters...');
+    try {
+      await api.postPulseRiskParameter({
+        PostPulseRiskParameters: {
+          parameterAttributeRiskValues: {
+            isActive: settings.isActive,
+            isDerived: riskLevelTableItem.isDerived,
+            parameter: parameter as RiskFactorParameter,
+            parameterType: riskLevelTableItem.parameterType,
+            targetIterableParameter: riskLevelTableItem.targetIterableParameter,
+            riskEntityType: riskLevelTableItem.entity,
+            riskLevelAssignmentValues: settings.values,
+            defaultValue: settings.defaultValue as RiskScoreValueLevel | RiskScoreValueScore,
+            weight: settings.weight,
+          },
+        },
+      });
+      message.success('Parameters saved successfully.');
+    } catch (e) {
+      message.fatal(`Unable to save parameter! ${getErrorMessage(e)}`, e);
+    } finally {
+      hideSavingMessage();
+    }
+  };
+
+  const liftedParameters = {
+    parameter,
+    values,
+    setValues,
+    entity,
+    defaultRiskValue: defaultRiskValueState,
+    weight,
+    setDefaultRiskValue: setDefaultRiskValueState,
+    setWeight,
+    onSave: handleSaveParameters,
+  };
+
   return (
     <>
       <AsyncResourceRenderer resource={queryResult.data}>
@@ -73,12 +156,14 @@ export const RiskFactorConfiguration = (props: Props) => {
             readonly={!canWriteRiskFactors || mode === 'READ'}
             onActiveStepChange={setActiveStepKey}
             onSubmit={(formValues) => {
+              handleSaveParameters();
               onSubmit(formValues, riskItem);
             }}
             id={id}
             type={riskItemType}
             formInitialValues={formInitialValues}
             newRiskId={mode === 'EDIT' || mode === 'READ' ? id : riskFactorId}
+            liftedParameters={riskItem && riskItem.parameter ? liftedParameters : undefined}
           />
         )}
       </AsyncResourceRenderer>
@@ -186,19 +271,31 @@ export const RiskFactorConfiguration = (props: Props) => {
 };
 
 export function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormValues {
+  const basicDetailsStep = {
+    name: riskItem.name,
+    description: riskItem.description,
+    defaultWeight: riskItem.defaultWeight,
+    defaultRiskValue: riskItem.defaultRiskScore ?? 'HIGH',
+  };
+  const riskFactorConfigurationStep = {
+    baseCurrency: riskItem.baseCurrency,
+    aggregationVariables: riskItem.logicAggregationVariables,
+    riskLevelLogic: riskItem.riskLevelLogic,
+    entityVariables: riskItem.logicEntityVariables,
+  };
+  if (riskItem.parameter) {
+    return {
+      basicDetailsStep: basicDetailsStep as BasicDetailsFormValues,
+      riskFactorConfigurationStep: riskFactorConfigurationStep,
+      v2Props: {
+        parameter: riskItem.parameter as ParameterName,
+        item: riskItem,
+      },
+    };
+  }
   return {
-    basicDetailsStep: {
-      name: riskItem.name,
-      description: riskItem.description,
-      defaultWeight: riskItem.defaultWeight,
-      defaultRiskValue: riskItem.defaultRiskScore ?? 'HIGH',
-    },
-    riskFactorConfigurationStep: {
-      baseCurrency: riskItem.baseCurrency,
-      aggregationVariables: riskItem.logicAggregationVariables,
-      riskLevelLogic: riskItem.riskLevelLogic,
-      entityVariables: riskItem.logicEntityVariables,
-    },
+    basicDetailsStep: basicDetailsStep as BasicDetailsFormValues,
+    riskFactorConfigurationStep,
   };
 }
 

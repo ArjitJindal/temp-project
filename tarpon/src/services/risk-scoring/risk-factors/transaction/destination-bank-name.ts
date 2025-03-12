@@ -17,6 +17,8 @@ const DESTINATION_BANK_NAME_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: true,
+  dataType: 'BANK_NAMES',
 })
 
 export const TRANSACTION_DESTINATION_BANK_NAME_RISK_FACTOR =

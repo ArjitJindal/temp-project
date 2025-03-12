@@ -16,6 +16,8 @@ const CUSTOMER_AGE_RISK_FACTOR = (
   valueType: 'RANGE',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: true,
+  dataType: 'RANGE',
 })
 
 export const CONSUMER_CUSTOMER_AGE_RISK_FACTOR =

@@ -16,6 +16,8 @@ const DESTINATION_CURRENCY_RISK_FACTOR = (
   status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  isDerived: false,
+  dataType: 'CURRENCY',
 })
 
 export const TRANSACTION_DESTINATION_CURRENCY_RISK_FACTOR =

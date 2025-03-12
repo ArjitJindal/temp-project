@@ -16,6 +16,8 @@ const SOURCE_OF_FUNDS_RISK_FACTOR = (
   valueType: 'MULTIPLE',
   type: entityType,
   status: 'INACTIVE',
+  isDerived: false,
+  dataType: 'SOURCE_OF_FUNDS',
 })
 
 export const CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR =
