@@ -70,14 +70,18 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
   }, [initialFormState, preNewStatus, newStatus]);
 
   useEffect(() => {
-    if (formState.values.reasons?.includes('TRUE_POSITIVE') && !hasUncheckedWhitelist) {
-      formRef.current?.setValues({
-        ...formState.values,
-        whitelistHits: false,
-      });
-      setHasUncheckedWhitelist(true);
+    if (formState.values.reasons?.includes('TRUE_POSITIVE')) {
+      if (!hasUncheckedWhitelist) {
+        formRef.current?.setValues({
+          ...formState.values,
+          whitelistHits: false,
+        });
+        setHasUncheckedWhitelist(true);
+      }
+    } else if (hasUncheckedWhitelist) {
+      setHasUncheckedWhitelist(false);
     }
-  }, [formState.values, formState.values.reasons, hasUncheckedWhitelist]);
+  }, [formState.values.reasons]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formRef = useRef<FormRef<FormValues>>(null);
   const narrativeRef = useRef<NarrativeRef>(null);
