@@ -38,9 +38,6 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { levelToAlias, useRiskClassificationScores } from '@/utils/risk-levels';
-import { useApi } from '@/api';
-import { SETTINGS } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
@@ -81,9 +78,8 @@ function ValuesTable(props: Props) {
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
 
-  const api = useApi();
-  const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
-  const defaultCurrency = getOr(queryData.data, {}).defaultValues?.currency ?? 'USD';
+  const configSetting = useSettings();
+  const defaultCurrency = configSetting?.defaultValues?.currency ?? 'USD';
   const hasWritePermissions =
     useHasPermissions(['risk-scoring:risk-factors:write']) && canEditParameters;
 
@@ -192,7 +188,6 @@ function ValuesTable(props: Props) {
     [values, setValues],
   );
 
-  const configSetting = useSettings();
   const aliasForVeryHigh = configSetting?.riskLevelAlias
     ? levelToAlias('VERY_HIGH', configSetting?.riskLevelAlias)
     : 'VERY_HIGH';

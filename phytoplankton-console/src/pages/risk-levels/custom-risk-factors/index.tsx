@@ -191,20 +191,20 @@ export const CustomRiskFactors = (props: Props) => {
     columnHelper.simple<'name'>({
       title: 'Risk factor name',
       key: 'name',
-      defaultWidth: 300,
+      defaultWidth: 250,
       type: STRING,
     }),
     columnHelper.simple<'description'>({
       title: 'Risk factor description',
       key: 'description',
       type: STRING,
-      defaultWidth: 600,
+      defaultWidth: 400,
     }),
     columnHelper.simple<'updatedAt'>({
       title: 'Last updated at',
       key: 'updatedAt',
       type: DATE_TIME,
-      defaultWidth: 200,
+      defaultWidth: 150,
     }),
     columnHelper.derived<boolean>({
       id: 'enabled',
@@ -236,7 +236,7 @@ export const CustomRiskFactors = (props: Props) => {
     columnHelper.display({
       id: 'actions',
       title: 'Action',
-      defaultWidth: 250,
+      defaultWidth: 150,
       enableResizing: false,
       render: (entity) => {
         return (
