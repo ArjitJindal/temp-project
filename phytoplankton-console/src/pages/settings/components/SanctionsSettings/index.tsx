@@ -25,7 +25,6 @@ import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesS
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 
 export const SanctionsSettings = () => {
-  const addOnsPermissions = useHasPermissions(['settings:add-ons:read']);
   const screeningPermissions = useHasPermissions([
     'settings:screening:read',
     'settings:screening:write',
@@ -174,7 +173,7 @@ export const SanctionsSettings = () => {
                   onClick={() => {
                     handleDownload();
                   }}
-                  isDisabled={!addOnsPermissions}
+                  isDisabled={!isSanctionsEnabled}
                 >
                   Download List
                 </Button>
@@ -184,7 +183,7 @@ export const SanctionsSettings = () => {
         ) : (
           <>
             <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
-              <Button isDisabled={!addOnsPermissions} type="PRIMARY">
+              <Button isDisabled={!isSanctionsEnabled} type="PRIMARY">
                 Request access
               </Button>
             </a>
