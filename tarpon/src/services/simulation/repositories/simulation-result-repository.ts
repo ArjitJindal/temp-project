@@ -1,5 +1,5 @@
 import { AggregationCursor, Filter, MongoClient, Document } from 'mongodb'
-
+import pMap from 'p-map'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
@@ -9,6 +9,12 @@ import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/Simulatio
 import { SimulationRiskLevelsAndRiskFactorsResultResponse } from '@/@types/openapi-internal/SimulationRiskLevelsAndRiskFactorsResultResponse'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
+import { isDemoMode } from '@/utils/demo'
+
+type SimulationResult =
+  | SimulationRiskLevelsResult
+  | SimulationRiskFactorsResult
+  | SimulationV8RiskFactorsResult
 
 @traceable
 export class SimulationResultRepository {
@@ -30,29 +36,31 @@ export class SimulationResultRepository {
       return
     }
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >(SIMULATION_RESULT_COLLECTION(this.tenantId))
+    const collection = db.collection<SimulationResult>(
+      SIMULATION_RESULT_COLLECTION(this.tenantId)
+    )
 
-    await collection.insertMany(results)
+    if (isDemoMode()) {
+      await pMap(
+        results as SimulationResult[],
+        async (result) => {
+          await collection.replaceOne(
+            { taskId: result.taskId, userId: result.userId },
+            result,
+            { upsert: true }
+          )
+        },
+        { concurrency: 100 }
+      )
+    } else {
+      await collection.insertMany(results)
+    }
   }
 
   private async getSimulationConditions(
     params: OptionalPagination<DefaultApiGetSimulationTaskIdResultRequest>
-  ): Promise<
-    Filter<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >[]
-  > {
-    const conditions: Filter<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >[] = []
+  ): Promise<Filter<SimulationResult>[]> {
+    const conditions: Filter<SimulationResult>[] = []
 
     if (params.taskId) {
       conditions.push({ taskId: params.taskId })
@@ -105,11 +113,9 @@ export class SimulationResultRepository {
     params: DefaultApiGetSimulationTaskIdResultRequest
   ): Promise<number> {
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >(SIMULATION_RESULT_COLLECTION(this.tenantId))
+    const collection = db.collection<SimulationResult>(
+      SIMULATION_RESULT_COLLECTION(this.tenantId)
+    )
     const conditions = await this.getSimulationConditions(params)
     const count = await collection.countDocuments(
       conditions.length > 0 ? { $and: conditions } : {},
@@ -152,27 +158,17 @@ export class SimulationResultRepository {
 
   private getDenormalizedSimulation(pipeline: Document[]) {
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >(SIMULATION_RESULT_COLLECTION(this.tenantId))
-    return collection.aggregate<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >(pipeline, { allowDiskUse: true })
+    const collection = db.collection<SimulationResult>(
+      SIMULATION_RESULT_COLLECTION(this.tenantId)
+    )
+    return collection.aggregate<SimulationResult>(pipeline, {
+      allowDiskUse: true,
+    })
   }
 
   private async getSimulationCursor(
     params: OptionalPagination<DefaultApiGetSimulationTaskIdResultRequest>
-  ): Promise<
-    AggregationCursor<
-      | SimulationRiskLevelsResult
-      | SimulationRiskFactorsResult
-      | SimulationV8RiskFactorsResult
-    >
-  > {
+  ): Promise<AggregationCursor<SimulationResult>> {
     const { preLimitPipeline, postLimitPipeline } =
       await this.getSimulationMongoPipeline(params)
 

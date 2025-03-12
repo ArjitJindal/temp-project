@@ -1733,11 +1733,19 @@ export class UserRepository {
   }
 
   public getUsersCursor(
-    filter: Filter<InternalUser> = {}
+    filter: Filter<InternalUser> = {},
+    projection?: Document
   ): FindCursor<WithId<InternalUser>> {
-    return this.mongoDb
+    const collection = this.mongoDb
       .db()
       .collection<InternalUser>(USERS_COLLECTION(this.tenantId))
-      .find(filter)
+
+    const cursor = collection.find(filter)
+
+    if (projection) {
+      cursor.project(projection)
+    }
+
+    return cursor
   }
 }

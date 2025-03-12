@@ -13,9 +13,7 @@ export const demoRuleSimulation: SimulationBeaconJob = {
     ruleId: 'R-2',
     casePriority: 'P2',
     parameters: {
-      transactionAmountThreshold: {
-        USD: 10000,
-      },
+      transactionAmountThreshold: { USD: 10000 },
     },
     action: 'SUSPEND',
     type: 'TRANSACTION',
@@ -23,32 +21,11 @@ export const demoRuleSimulation: SimulationBeaconJob = {
     ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
     filters: {},
     riskLevelParameters: {
-      VERY_HIGH: {
-        transactionAmountThreshold: {
-          USD: 10000,
-        },
-      },
-      HIGH: {
-        transactionAmountThreshold: {
-          USD: 10000,
-        },
-      },
-      MEDIUM: {
-        transactionAmountThreshold: {
-          USD: 10000,
-        },
-      },
-      LOW: {
-        transactionAmountThreshold: {
-          USD: 10000,
-        },
-      },
-      VERY_LOW: {
-        transactionAmountThreshold: {
-          ADA: 1000,
-          USD: 10000,
-        },
-      },
+      VERY_HIGH: { transactionAmountThreshold: { USD: 10000 } },
+      HIGH: { transactionAmountThreshold: { USD: 10000 } },
+      MEDIUM: { transactionAmountThreshold: { USD: 10000 } },
+      LOW: { transactionAmountThreshold: { USD: 10000 } },
+      VERY_LOW: { transactionAmountThreshold: { ADA: 1000, USD: 10000 } },
     },
     riskLevelActions: {
       VERY_HIGH: 'SUSPEND',
@@ -75,20 +52,14 @@ export const demoRuleSimulation: SimulationBeaconJob = {
         type: 'BEACON',
         name: 'Iteration 1',
         description: '',
-        sampling: {
-          transactionsCount: 10000,
-        },
+        sampling: { transactionsCount: 10000 },
         ruleInstance: {
           ruleRunMode: 'LIVE',
           ruleExecutionMode: 'SYNC',
           id: 'a25685ad',
           ruleId: 'R-2',
           casePriority: 'P2',
-          parameters: {
-            transactionAmountThreshold: {
-              USD: 10000,
-            },
-          },
+          parameters: { transactionAmountThreshold: { USD: 10000 } },
           action: 'SUSPEND',
           type: 'TRANSACTION',
           ruleNameAlias: 'Transaction amount too high',
@@ -96,31 +67,11 @@ export const demoRuleSimulation: SimulationBeaconJob = {
             'Transaction amount is >= x in USD or equivalent',
           filters: {},
           riskLevelParameters: {
-            VERY_HIGH: {
-              transactionAmountThreshold: {
-                USD: 10000,
-              },
-            },
-            HIGH: {
-              transactionAmountThreshold: {
-                USD: 10000,
-              },
-            },
-            MEDIUM: {
-              transactionAmountThreshold: {
-                USD: 10000,
-              },
-            },
-            LOW: {
-              transactionAmountThreshold: {
-                USD: 10000,
-              },
-            },
-            VERY_LOW: {
-              transactionAmountThreshold: {
-                USD: 10000,
-              },
-            },
+            VERY_HIGH: { transactionAmountThreshold: { USD: 10000 } },
+            HIGH: { transactionAmountThreshold: { USD: 10000 } },
+            MEDIUM: { transactionAmountThreshold: { USD: 10000 } },
+            LOW: { transactionAmountThreshold: { USD: 10000 } },
+            VERY_LOW: { transactionAmountThreshold: { USD: 10000 } },
           },
           riskLevelActions: {
             VERY_HIGH: 'FLAG',
@@ -156,23 +107,11 @@ export const demoRuleSimulation: SimulationBeaconJob = {
           transactionsHit: 38,
         },
       },
-      latestStatus: {
-        status: 'SUCCESS',
-        timestamp: 1702397946185,
-      },
+      latestStatus: { status: 'SUCCESS', timestamp: 1702397946185 },
       statuses: [
-        {
-          status: 'PENDING',
-          timestamp: 1702397945484,
-        },
-        {
-          status: 'IN_PROGRESS',
-          timestamp: 1702397945489,
-        },
-        {
-          status: 'SUCCESS',
-          timestamp: 1702397946185,
-        },
+        { status: 'PENDING', timestamp: 1702397945484 },
+        { status: 'IN_PROGRESS', timestamp: 1702397945489 },
+        { status: 'SUCCESS', timestamp: 1702397946185 },
       ],
       name: 'Iteration 1',
       description: '',

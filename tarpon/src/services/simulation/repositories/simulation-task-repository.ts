@@ -1,7 +1,11 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { omit, random } from 'lodash'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
+import { demoRiskFactorsSimulation } from '../utils/demo-risk-factors-simulation'
+import { demoRiskFactorsV8Simulation } from '../utils/demo-risk-factors-v8-simulation'
+import { SimulationResultRepository } from './simulation-result-repository'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
@@ -34,6 +38,12 @@ import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/Simulation
 import { SimulationV8RiskFactorsIteration } from '@/@types/openapi-internal/SimulationV8RiskFactorsIteration'
 import { SimulationV8RiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsStatisticsResult'
 import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
+import { getUserName } from '@/utils/helpers'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest
@@ -199,56 +209,26 @@ export class SimulationTaskRepository {
         } as SimulationRiskFactorsJob
       }
 
-      if (isDemoTenant(this.tenantId) && simulationRequest.type === 'BEACON') {
-        const demoJob = demoRuleSimulation
-        demoJob.jobId = jobId
-        demoJob.createdAt = now
-        demoJob.createdBy = createdByUser?.id
-        demoJob.internal = isCurrentUserAtLeastRole('root')
-
-        demoJob.defaultRuleInstance = simulationRequest.defaultRuleInstance
-
-        demoJob.iterations = simulationRequest.parameters.map(
-          (parameter, index) => {
-            return {
-              ...demoJob.iterations[0],
-              taskId: taskIds[index],
-              type: 'BEACON',
-              name: parameter.name,
-              description: parameter.description,
-              parameters: {
-                ruleInstance: parameter.ruleInstance,
-                sampling: {
-                  transactionsCount: TXN_COUNT,
-                },
-                name: parameter.name,
-                description: parameter.description,
-                type: parameter.type,
-              },
-              statistics: {
-                current: {
-                  falsePositivesCases: random(1, 10),
-                  totalCases: 11,
-                  transactionsHit: 100,
-                  usersHit: 11,
-                },
-                simulated: {
-                  falsePositivesCases: random(1, 10),
-                  totalCases: 22,
-                  transactionsHit: 200,
-                  usersHit: 22,
-                },
-              },
-            } as SimulationBeaconIteration
-          }
-        )
-
-        await collection.insertOne({
-          _id: demoJob.jobId as any,
-          ...demoJob,
-        })
-
-        return { jobId: demoJob.jobId, taskIds }
+      if (isDemoTenant(this.tenantId)) {
+        if (simulationRequest.type === 'BEACON') {
+          return this.createBeaconSimulationJob(
+            jobId,
+            taskIds,
+            simulationRequest as SimulationBeaconParametersRequest
+          )
+        } else if (simulationRequest.type === 'RISK_FACTORS_V8') {
+          return this.createRiskFactorsV8SimulationJob(
+            jobId,
+            taskIds,
+            simulationRequest as SimulationV8RiskFactorsParametersRequest
+          )
+        } else if (simulationRequest.type === 'RISK_FACTORS') {
+          return this.createRiskFactorsSimulationJob(
+            jobId,
+            taskIds,
+            simulationRequest as SimulationRiskFactorsParametersRequest
+          )
+        }
       }
 
       await collection.insertOne({
@@ -258,6 +238,311 @@ export class SimulationTaskRepository {
     }
 
     return { jobId, taskIds }
+  }
+
+  private async getUserResults(taskIds: string[]) {
+    const dynamoDb = getDynamoDbClient()
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb,
+    })
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+
+    const users = userRepository.getUsersCursor(
+      {},
+      {
+        userId: 1,
+        type: 1,
+        userDetails: { name: 1 },
+        legalEntity: { companyGeneralDetails: { legalName: 1 } },
+        krsScore: 1,
+        drsScore: 1,
+      }
+    )
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
+
+    const usersData = await users.toArray()
+
+    const usersResult: SimulationV8RiskFactorsResult[] = usersData.map(
+      (user) => {
+        const randomKrsScore = random(1, 100)
+        const randomDrsScore = random(1, 100)
+
+        const simulatedKrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          randomKrsScore
+        )
+        const simulatedDrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          randomDrsScore
+        )
+
+        const currentKrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          user.krsScore?.krsScore ?? 0
+        )
+        const currentDrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          user.drsScore?.drsScore ?? 0
+        )
+        return {
+          taskId: taskIds[0],
+          type: 'RISK_FACTORS_V8',
+          userId: user.userId,
+          userType: user.type,
+          userName: getUserName(user),
+          current: {
+            krs: { riskLevel: currentKrsRiskLevel, riskScore: randomKrsScore },
+            drs: { riskLevel: currentDrsRiskLevel, riskScore: randomDrsScore },
+          },
+          simulated: {
+            krs: {
+              riskLevel: simulatedKrsRiskLevel,
+              riskScore: randomKrsScore,
+            },
+            drs: {
+              riskLevel: simulatedDrsRiskLevel,
+              riskScore: randomDrsScore,
+            },
+          },
+        }
+      }
+    )
+
+    return usersResult
+  }
+
+  private getStats(
+    usersResult: SimulationV8RiskFactorsResult[]
+  ):
+    | SimulationV8RiskFactorsStatisticsResult
+    | SimulationRiskFactorsStatisticsResult {
+    return {
+      current: RISK_LEVELS.flatMap((riskLevel) => {
+        return [
+          {
+            count: usersResult.filter(
+              (user) => user.current?.krs?.riskLevel === riskLevel
+            ).length,
+            riskLevel,
+            riskType: 'KRS',
+          },
+          {
+            count: usersResult.filter(
+              (user) => user.current?.drs?.riskLevel === riskLevel
+            ).length,
+            riskLevel,
+            riskType: 'DRS',
+          },
+          {
+            count: random(1, 1000),
+            riskLevel,
+            riskType: 'ARS',
+          },
+        ]
+      }),
+      simulated: RISK_LEVELS.flatMap((riskLevel) => {
+        return [
+          {
+            count: usersResult.filter(
+              (user) => user.simulated?.krs?.riskLevel === riskLevel
+            ).length,
+            riskLevel,
+            riskType: 'KRS',
+          },
+          {
+            count: usersResult.filter(
+              (user) => user.simulated?.drs?.riskLevel === riskLevel
+            ).length,
+            riskLevel,
+            riskType: 'DRS',
+          },
+          {
+            count: random(1, 1000),
+            riskLevel,
+            riskType: 'ARS',
+          },
+        ]
+      }),
+    }
+  }
+
+  private async createRiskFactorsSimulationJob(
+    jobId: string,
+    taskIds: string[],
+    simulationRequest: SimulationRiskFactorsParametersRequest
+  ) {
+    const now = Date.now()
+    const demoJob: SimulationRiskFactorsJob = demoRiskFactorsSimulation
+    const createdByUser = getContext()?.user as Account
+    demoJob.jobId = jobId
+    demoJob.createdAt = now
+    demoJob.createdBy = createdByUser?.id
+    demoJob.internal = isCurrentUserAtLeastRole('root')
+    const usersResult = await this.getUserResults(taskIds)
+
+    demoJob.iterations = simulationRequest.parameters.map(
+      (parameter, index) => {
+        const parameters: SimulationRiskFactorsIteration['parameters'] = {
+          type: 'RISK_FACTORS',
+          parameterAttributeRiskValues: parameter.parameterAttributeRiskValues,
+          description: parameter.description ?? '',
+          name: parameter.name,
+        }
+        const iteration: SimulationRiskFactorsIteration = {
+          ...demoJob.iterations[0],
+          taskId: taskIds[index],
+          type: 'RISK_FACTORS',
+          name: parameter.name,
+          description: parameter.description,
+          parameters,
+          statistics: this.getStats(
+            usersResult
+          ) as SimulationRiskFactorsStatisticsResult,
+          latestStatus: demoJob.iterations[0].latestStatus as TaskStatusChange,
+          progress: demoJob.iterations[0].progress,
+          statuses: demoJob.iterations[0].statuses as TaskStatusChange[],
+          createdAt: now,
+          totalEntities: usersResult.length,
+        }
+
+        return iteration
+      }
+    )
+
+    const simulationResultRepository = new SimulationResultRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    await simulationResultRepository.saveSimulationResults(usersResult)
+
+    return { jobId: demoJob.jobId, taskIds }
+  }
+
+  private async createRiskFactorsV8SimulationJob(
+    jobId: string,
+    taskIds: string[],
+    simulationRequest: SimulationV8RiskFactorsParametersRequest
+  ) {
+    const now = Date.now()
+    const demoJob = demoRiskFactorsV8Simulation
+    const createdByUser = getContext()?.user as Account
+    demoJob.jobId = jobId
+    demoJob.createdAt = now
+    demoJob.createdBy = createdByUser?.id
+    demoJob.internal = isCurrentUserAtLeastRole('root')
+
+    const simulationResultRepository = new SimulationResultRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    const usersResult = await this.getUserResults(taskIds)
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<SimulationAllJobs>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
+    )
+
+    demoJob.iterations = simulationRequest.parameters.map(
+      (parameter, index) => {
+        const iteration: SimulationV8RiskFactorsIteration = {
+          ...demoJob.iterations[0],
+          taskId: taskIds[index],
+          type: 'RISK_FACTORS_V8',
+          name: parameter.name,
+          description: parameter.description,
+          parameters: {
+            type: 'RISK_FACTORS_V8',
+            description: parameter.description ?? '',
+            name: parameter.name,
+            parameters: parameter.parameters,
+            jobId: jobId,
+          },
+          statistics: this.getStats(usersResult),
+          latestStatus: demoJob.iterations[0].latestStatus,
+          progress: demoJob.iterations[0].progress,
+          statuses: demoJob.iterations[0].statuses,
+        }
+
+        return iteration
+      }
+    )
+
+    await collection.insertOne({
+      _id: demoJob.jobId as any,
+      ...demoJob,
+    })
+
+    await simulationResultRepository.saveSimulationResults(usersResult)
+
+    return { jobId: demoJob.jobId, taskIds }
+  }
+
+  private async createBeaconSimulationJob(
+    jobId: string,
+    taskIds: string[],
+    simulationRequest: SimulationBeaconParametersRequest
+  ) {
+    const now = Date.now()
+    const demoJob = demoRuleSimulation
+    const createdByUser = getContext()?.user as Account
+    demoJob.jobId = jobId
+    demoJob.createdAt = now
+    demoJob.createdBy = createdByUser?.id
+    demoJob.internal = isCurrentUserAtLeastRole('root')
+
+    demoJob.defaultRuleInstance = simulationRequest.defaultRuleInstance
+
+    demoJob.iterations = simulationRequest.parameters.map(
+      (parameter, index) => {
+        return {
+          ...demoJob.iterations[0],
+          taskId: taskIds[index],
+          type: 'BEACON',
+          name: parameter.name,
+          description: parameter.description,
+          parameters: {
+            ruleInstance: parameter.ruleInstance,
+            sampling: {
+              transactionsCount: TXN_COUNT,
+            },
+            name: parameter.name,
+            description: parameter.description,
+            type: parameter.type,
+          },
+          statistics: {
+            current: {
+              falsePositivesCases: random(1, 10),
+              totalCases: 11,
+              transactionsHit: 100,
+              usersHit: 11,
+            },
+            simulated: {
+              falsePositivesCases: random(1, 10),
+              totalCases: 22,
+              transactionsHit: 200,
+              usersHit: 22,
+            },
+          },
+        } as SimulationBeaconIteration
+      }
+    )
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<SimulationAllJobs>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
+    )
+
+    await collection.insertOne({
+      _id: demoJob.jobId as any,
+      ...demoJob,
+    })
+
+    return { jobId: demoJob.jobId, taskIds }
   }
 
   public async updateStatistics<T extends SimulationStatisticsResult>(

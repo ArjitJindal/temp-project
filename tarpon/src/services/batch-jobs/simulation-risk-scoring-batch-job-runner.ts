@@ -139,7 +139,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
         )
         this.userResultsSaved = totalUserResults
         await Promise.all([
-          await simulationTaskRepository.updateTaskStatus(
+          simulationTaskRepository.updateTaskStatus(
             parameters.taskId,
             'IN_PROGRESS',
             progress

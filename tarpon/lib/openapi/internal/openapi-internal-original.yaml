@@ -14482,15 +14482,12 @@ components:
           properties:
             type:
               $ref: '#/components/schemas/SimulationV8RiskFactorsType'
-            parameters:
-              $ref: '#/components/schemas/SimulationV8RiskFactorsParameters'
             iterations:
               type: array
               items:
                 $ref: '#/components/schemas/SimulationV8RiskFactorsIteration'
           required:
             - type
-            - parameters
             - iterations
     SimulationV8RiskFactorsParameters:
       title: SimulationV8RiskFactorsParameters
