@@ -55,7 +55,8 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
     this.usersRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
     this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
     this.riskScoringService = new RiskScoringService(tenantId, {

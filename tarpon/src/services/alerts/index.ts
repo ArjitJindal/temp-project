@@ -299,7 +299,8 @@ export class AlertsService extends CaseAlertsCommonService {
   ): Promise<AlertEscalationAuditLogReturnData> {
     const transactionsRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.dynamoDb
     )
     const accountsService = AccountsService.getInstance(this.dynamoDb, true)
     const accounts = await accountsService.getAllActiveAccounts()

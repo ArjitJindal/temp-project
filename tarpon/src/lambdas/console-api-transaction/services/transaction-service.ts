@@ -65,7 +65,8 @@ export class TransactionService {
   ) {
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      connections.mongoDb
+      connections.mongoDb,
+      connections.dynamoDb
     )
     this.s3 = s3
     this.tmpBucketName = tmpBucketName

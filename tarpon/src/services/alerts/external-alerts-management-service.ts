@@ -69,7 +69,8 @@ export class ExternalAlertManagementService {
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      connections.mongoDb
+      connections.mongoDb,
+      connections.dynamoDb
     )
     this.alertsTransformer = new CasesAlertsTransformer(tenantId, connections)
     this.alertsInternalService = new AlertsService(

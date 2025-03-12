@@ -111,7 +111,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     const hitResult: RuleHitResult = []
     const transactionAmountHit = await isTransactionAmountAboveThreshold(
       transactionAmounts,
-      transactionVolumeThreshold
+      transactionVolumeThreshold,
+      this.dynamoDb
     )
     let falsePositiveDetails
     if (this.ruleInstance.falsePositiveCheckEnabled) {
@@ -194,7 +195,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       afterTimestamp,
       beforeTimestamp
     )
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
     if (userAggregationData) {
       const amount = this.transaction.originAmountDetails
         ? await currencyService.getTargetCurrencyAmount(
@@ -217,7 +218,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     let totalAmount: TransactionAmountDetails =
       await getTransactionsTotalAmount(
         [this.transaction.originAmountDetails],
-        this.getTargetCurrency()
+        this.getTargetCurrency(),
+        this.dynamoDb
       )
 
     if (this.shouldUseRawData()) {
@@ -242,7 +244,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
             )
             .map((transaction) => transaction.originAmountDetails)
             .concat(totalAmount),
-          this.getTargetCurrency()
+          this.getTargetCurrency(),
+          this.dynamoDb
         )
       }
     }
@@ -301,7 +304,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
             (
               await getTransactionsTotalAmount(
                 group.map((t) => t.originAmountDetails),
-                this.getTargetCurrency()
+                this.getTargetCurrency(),
+                this.dynamoDb
               )
             ).transactionAmount
         )
@@ -362,7 +366,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction, {
       matchPaymentDetails: this.parameters.destinationMatchPaymentMethodDetails,
     })
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
     if (!receiverKeyId) {
       return targetAggregationData ?? {}
     }

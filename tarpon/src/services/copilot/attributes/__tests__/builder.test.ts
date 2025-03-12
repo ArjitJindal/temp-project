@@ -7,6 +7,7 @@ import {
 import { CurrencyService } from '@/services/currency'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 describe('Attribute generator', () => {
   test('Attributes are built correctly', async () => {
@@ -27,6 +28,8 @@ describe('Attribute generator', () => {
     ])
     const user = await userSampler.getSample(undefined, 'test', false, 'AF')
     const originUserId = user.userId
+    const dynamoDb = getDynamoDbClient()
+    const currencyService = new CurrencyService(dynamoDb)
 
     const attributes = await attributeGenerator.getAttributes({
       transactions: [
@@ -53,7 +56,7 @@ describe('Attribute generator', () => {
       ],
       user,
       reasons: [],
-      exchangeRates: (await new CurrencyService().getExchangeData()).rates,
+      exchangeRates: (await currencyService.getExchangeData()).rates,
     })
     expect(attributes.getAttribute('transactionsCount')).toEqual(5)
   })

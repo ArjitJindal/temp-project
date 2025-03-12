@@ -1,10 +1,12 @@
 import { MongoDbConsumer } from '..'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const getService = async () => {
   const mongoDbClient = await getMongoDbClient()
-  return new MongoDbConsumer(mongoDbClient)
+  const dynamoDb = getDynamoDbClient()
+  return new MongoDbConsumer(mongoDbClient, dynamoDb)
 }
 
 describe('Fetch Table Details', () => {

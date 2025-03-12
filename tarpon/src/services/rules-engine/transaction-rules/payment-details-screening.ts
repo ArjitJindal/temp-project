@@ -20,7 +20,8 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
             (threshold) => ({
               min: threshold,
             })
-          )
+          ),
+          this.dynamoDb
         )
       : true
 

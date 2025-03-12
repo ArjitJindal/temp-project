@@ -38,6 +38,7 @@ export class TransactionAmountHistoricalRuleFilter extends TransactionRuleFilter
   public async predicate(): Promise<boolean> {
     return transactionAmountRuleFilterPredicate(
       this.transaction,
+      this.dynamoDb,
       this.parameters.transactionAmountRangeHistorical
     )
   }

@@ -37,7 +37,8 @@ export default class FirstPaymentRule extends TransactionRule<
           this.transaction.originAmountDetails,
           mapValues(transactionAmountThreshold, (threshold) => ({
             min: threshold,
-          }))
+          })),
+          this.dynamoDb
         )
       : true
     const isFirstPayment =

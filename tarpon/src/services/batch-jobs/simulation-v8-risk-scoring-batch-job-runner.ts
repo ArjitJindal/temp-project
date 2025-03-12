@@ -111,7 +111,8 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     )
     this.transactionRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      dynamoDb
     )
     this.riskRepository = new RiskRepository(this.tenantId, {
       mongoDb: this.mongoDb,

@@ -49,7 +49,7 @@ export interface TransactionLogicVariable<ReturnType = unknown>
       | TransactionWithRiskDetails
       | AuxiliaryIndexTransaction
       | undefined,
-    context?: LogicVariableContext
+    context: LogicVariableContext
   ) => Promise<ReturnType>
   sourceField: keyof TransactionWithRiskDetails
 }

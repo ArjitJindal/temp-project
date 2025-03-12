@@ -67,6 +67,7 @@ export class RiskScoringV8Service {
   private mongoDb: MongoClient | undefined
   private batchJobRepository?: BatchJobRepository
   private riskClassificationValues?: RiskClassificationScore[]
+  private dynamoDb: DynamoDBDocumentClient
   constructor(
     tenantId: string,
     logicEvaluator: LogicEvaluator,
@@ -76,6 +77,7 @@ export class RiskScoringV8Service {
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb: connections.dynamoDb,
     })
+    this.dynamoDb = connections.dynamoDb
     this.logicEvaluator = logicEvaluator
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
@@ -796,7 +798,8 @@ export class RiskScoringV8Service {
     const userCursor = userRepository.getAllUsersCursor()
     const transactionsRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      await this.getMongo()
+      await this.getMongo(),
+      this.dynamoDb
     )
     let batchUserIds: string[] = []
 

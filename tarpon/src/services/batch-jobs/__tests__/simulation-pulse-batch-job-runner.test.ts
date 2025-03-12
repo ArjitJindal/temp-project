@@ -211,7 +211,8 @@ describe('Simulation (Pulse) batch job runner', () => {
     ])
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
     await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({

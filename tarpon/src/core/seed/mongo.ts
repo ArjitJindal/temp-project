@@ -199,7 +199,8 @@ export async function seedMongo(
   const mongoDb = await getMongoDbClient()
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
 
   for (const alert of alerts) {

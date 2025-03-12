@@ -204,7 +204,8 @@ export class CaseService extends CaseAlertsCommonService {
     )
     this.transactionsRepository = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.caseRepository.dynamoDb
     )
     this.linkerService = new LinkerService(this.tenantId)
     this.hasFeatureSla = hasFeature('ALERT_SLA') && hasFeature('PNB')
@@ -262,7 +263,8 @@ export class CaseService extends CaseAlertsCommonService {
 
     const transactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.caseRepository.dynamoDb
     )
 
     if (!case_.data.length) {

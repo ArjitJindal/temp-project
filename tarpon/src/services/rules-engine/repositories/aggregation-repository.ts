@@ -285,7 +285,7 @@ export class AggregationRepository {
     const currentTotalTransactionsAmount: TransactionAmountDetails =
       transactionsAmount.get('ALL') ?? defaultTransactionAmount
     const targetCurrency = currentTotalTransactionsAmount.transactionCurrency
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
     const targetAmount = await currencyService.getTargetCurrencyAmount(
       transactionAmountDetails,
       targetCurrency

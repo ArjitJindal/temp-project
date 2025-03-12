@@ -61,6 +61,7 @@ import {
 } from '@/services/sar/generators/US/SAR/helpers/postprocessing'
 import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
 import { CurrencyService } from '@/services/currency'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -132,7 +133,8 @@ export class UsSarReportGenerator implements ReportGenerator {
       string,
       InternalConsumerUser | InternalBusinessUser
     > = {}
-    const currencyService = new CurrencyService()
+    const dynamoDb = getDynamoDbClient()
+    const currencyService = new CurrencyService(dynamoDb)
 
     for (const transaction of transactions) {
       if (transaction.originUser != null) {

@@ -24,6 +24,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import dayjsLib from '@flagright/lib/utils/dayjs'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import { filterOutInternalRules } from '../pnb-custom-logic'
@@ -79,6 +80,7 @@ import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -90,11 +92,17 @@ export class MongoDbTransactionRepository
   implements RulesEngineTransactionRepositoryInterface
 {
   mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
   tenantId: string
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    mongoDb: MongoClient,
+    dynamoDb: DynamoDBDocumentClient
+  ) {
     this.mongoDb = mongoDb
     this.tenantId = tenantId
+    this.dynamoDb = dynamoDb
   }
 
   public static async fromEvent(
@@ -104,8 +112,9 @@ export class MongoDbTransactionRepository
   ) {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClientByEvent(event)
 
-    return new MongoDbTransactionRepository(tenantId, mongoDb)
+    return new MongoDbTransactionRepository(tenantId, mongoDb, dynamoDb)
   }
 
   async addTransactionToMongo(
@@ -1156,7 +1165,8 @@ export class MongoDbTransactionRepository
     referenceCurrency: Currency
   ): Promise<number> {
     let amount = 0
-    const currencyService = new CurrencyService()
+
+    const currencyService = new CurrencyService(this.dynamoDb)
 
     if (transaction.originAmountDetails != null) {
       if (

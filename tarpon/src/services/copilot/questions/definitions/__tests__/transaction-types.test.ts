@@ -2,15 +2,21 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 withFeaturesToggled([], ['CLICKHOUSE_ENABLED'], () => {
+  const dynamoDb = getDynamoDbClient()
   describe('Transaction types', () => {
     test('One transaction type returned', async () => {
       await testQuestion(
         TransactionType,
         {},
         async (tenantId, mongoDb) => {
-          const tr = new MongoDbTransactionRepository(tenantId, mongoDb)
+          const tr = new MongoDbTransactionRepository(
+            tenantId,
+            mongoDb,
+            dynamoDb
+          )
           await tr.addTransactionToMongo({
             executedRules: [],
             hitRules: [],

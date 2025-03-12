@@ -35,7 +35,8 @@ export function notHitRule(
 
 export async function getTransactionsRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
-  return new MongoDbTransactionRepository(tenantId, mongoDb)
+  const dynamoDb = getDynamoDbClient()
+  return new MongoDbTransactionRepository(tenantId, mongoDb, dynamoDb)
 }
 
 export async function getCaseRepo(tenantId: string) {

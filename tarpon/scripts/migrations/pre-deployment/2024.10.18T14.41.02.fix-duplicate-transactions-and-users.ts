@@ -35,7 +35,8 @@ const fixDuplicateTransactions = async (tenant: Tenant) => {
   )
   const mongoTransactionRepo = new MongoDbTransactionRepository(
     tenant.id,
-    mongoClient
+    mongoClient,
+    dynamoDbClient
   )
   const riskScoringService = new RiskScoringService(tenant.id, {
     dynamoDb: dynamoDbClient,

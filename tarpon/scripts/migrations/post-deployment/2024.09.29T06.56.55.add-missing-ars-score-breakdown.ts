@@ -31,7 +31,8 @@ async function migrateTenant(tenant: Tenant) {
   })
   const mongoDbTransactionRepository = new MongoDbTransactionRepository(
     tenant.id,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
   let hasNextPage = true
   let start: string | undefined

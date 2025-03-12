@@ -4,6 +4,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
@@ -18,8 +19,10 @@ export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
     ) as MongoConsumerMessage[]
 
     const mongoClient = await getMongoDbClient()
-
-    await new MongoDbConsumer(mongoClient).handleMongoConsumerMessage(events)
+    const dynamoDb = getDynamoDbClient()
+    await new MongoDbConsumer(mongoClient, dynamoDb).handleMongoConsumerMessage(
+      events
+    )
   }
 )
 
@@ -27,6 +30,8 @@ export async function handleMongoConsumerSQSMessage(
   events: MongoConsumerMessage[]
 ) {
   const mongoClient = await getMongoDbClient()
-
-  await new MongoDbConsumer(mongoClient).handleMongoConsumerMessage(events)
+  const dynamoDb = getDynamoDbClient()
+  await new MongoDbConsumer(mongoClient, dynamoDb).handleMongoConsumerMessage(
+    events
+  )
 }

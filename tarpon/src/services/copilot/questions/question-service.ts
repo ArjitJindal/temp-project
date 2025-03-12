@@ -205,7 +205,8 @@ export class QuestionService {
       (await tenantSettings(tenantId))?.defaultValues?.currency ?? 'USD'
 
     // Preloading currency data so we don't have to make all the questions async.
-    const cs = new CurrencyService()
+
+    const cs = new CurrencyService(this.dynamoClient)
     const exchangeData = await cs.getExchangeData()
 
     const convert = (amount: number, target: CurrencyCode) =>

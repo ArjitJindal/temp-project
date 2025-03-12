@@ -63,7 +63,8 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       this.transaction.originAmountDetails,
       mapValues(transactionAmountThreshold, (threshold) => ({
         min: threshold,
-      }))
+      })),
+      this.dynamoDb
     )
 
     const hitResult: RuleHitResult = []

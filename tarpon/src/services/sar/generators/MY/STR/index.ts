@@ -31,6 +31,7 @@ import { neverReturn } from '@/utils/lang'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 // @traceable
 export class MalaysianSTRReportGenerator implements ReportGenerator {
@@ -50,7 +51,8 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
     transactions: InternalTransaction[],
     _reporter: Account
   ) {
-    const currencyService = new CurrencyService()
+    const dynamoDb = getDynamoDbClient()
+    const currencyService = new CurrencyService(dynamoDb)
 
     const customerAndAccountDetails = {
       customerInformation: {

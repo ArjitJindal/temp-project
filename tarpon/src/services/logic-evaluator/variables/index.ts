@@ -68,8 +68,6 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { Amount } from '@/@types/openapi-public/Amount'
 
-const currencyService = new CurrencyService()
-
 export const VARIABLE_NAMESPACE_SEPARATOR = ':'
 const ORIGIN_TRANSACTION_AMOUNT_KEY = 'originAmountDetails.transactionAmount'
 const DESTINATION_TRANSACTION_AMOUNT_KEY =
@@ -271,7 +269,7 @@ function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
 
 const loadAmount = async (
   amountDetails: TransactionAmountDetails | undefined,
-  context?: LogicVariableContext
+  context: LogicVariableContext
 ): Promise<number | undefined> => {
   if (!amountDetails) {
     return
@@ -279,6 +277,11 @@ const loadAmount = async (
   if (!context?.baseCurrency) {
     logger.warn('Missing base currency for transaction amount variable!')
   }
+  if (!context?.dynamoDb) {
+    logger.error('Missing DynamoDB in context')
+    return
+  }
+  const currencyService = new CurrencyService(context?.dynamoDb)
   const amount = await currencyService.getTargetCurrencyAmount(
     amountDetails,
     context?.baseCurrency ?? 'USD'

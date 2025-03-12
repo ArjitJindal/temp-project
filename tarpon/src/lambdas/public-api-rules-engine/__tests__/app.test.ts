@@ -1453,7 +1453,8 @@ describe('Public API - Verify Transction and Transaction Event with V2 Risk scor
 
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
 
     const mongoTransactionResult =

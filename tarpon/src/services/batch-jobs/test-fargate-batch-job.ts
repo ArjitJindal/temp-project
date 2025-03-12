@@ -4,6 +4,7 @@ import { TestFargateJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { tenantSettings } from '@/core/utils/context'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class TestFargateBatchJobRunner extends BatchJobRunner {
   protected async run(job: TestFargateJob): Promise<void> {
@@ -16,9 +17,11 @@ export class TestFargateBatchJobRunner extends BatchJobRunner {
 
     // Test MongoDB connection
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const transactionRepository = new MongoDbTransactionRepository(
       job.tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
 
     const transactions = await transactionRepository.getAllTransactionsCount()

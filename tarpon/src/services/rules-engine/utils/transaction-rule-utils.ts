@@ -1,6 +1,7 @@
 import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
 import { groupBy, inRange, last, mapValues } from 'lodash'
 import memoizeOne from 'memoize-one'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -24,13 +25,15 @@ export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
   thresholds: {
     [currency: string]: number
-  }
+  },
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<{ thresholdHit: ThresholdHit | null; isHit: boolean }> {
   const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
     mapValues(thresholds, (threshold) => ({
       min: threshold,
-    }))
+    })),
+    dynamoDb
   )
   return { thresholdHit: result, isHit: result != null }
 }
@@ -39,13 +42,15 @@ export async function isTransactionAmountBelowThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
   thresholds: {
     [currency: string]: number
-  }
+  },
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<boolean> {
   const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
     mapValues(thresholds, (threshold) => ({
       max: threshold,
-    }))
+    })),
+    dynamoDb
   )
   return result != null
 }
@@ -59,13 +64,14 @@ export async function checkTransactionAmountBetweenThreshold(
       min?: number
       max?: number
     }
-  }
+  },
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<ThresholdHit | null> {
   if (!transactionAmountDefails || Object.keys(thresholds).length === 0) {
     return null
   }
 
-  const currencyService = new CurrencyService()
+  const currencyService = new CurrencyService(dynamoDb)
 
   const transactionCurrency = transactionAmountDefails.transactionCurrency
   const convertedTransactionAmount = thresholds[transactionCurrency]
@@ -90,14 +96,15 @@ export async function checkTransactionAmountBetweenThreshold(
 
 export async function getTransactionsTotalAmount(
   amountDetailsList: (TransactionAmountDetails | undefined)[],
-  targetCurrency: CurrencyCode
+  targetCurrency: CurrencyCode,
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<TransactionAmountDetails> {
   let totalAmount: TransactionAmountDetails = {
     transactionAmount: 0,
     transactionCurrency: targetCurrency,
   }
 
-  const currencyService = new CurrencyService()
+  const currencyService = new CurrencyService(dynamoDb)
 
   for (const amountDetails of amountDetailsList) {
     if (amountDetails) {

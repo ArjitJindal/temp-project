@@ -51,7 +51,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const userRepository = new UserRepository(tenantId, { mongoDb })
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
 
     this.rulesEngineService = rulesEngineService

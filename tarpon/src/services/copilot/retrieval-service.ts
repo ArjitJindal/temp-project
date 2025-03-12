@@ -39,7 +39,7 @@ export class RetrievalService {
   private readonly ruleInstanceRepository: RuleInstanceRepository
   private readonly attributeBuilder: AttributeGenerator
   private readonly sanctionsHitsRepository: SanctionsHitsRepository
-
+  private readonly currencyService: CurrencyService
   public static async new(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -72,9 +72,11 @@ export class RetrievalService {
       AlertsService.fromEvent(event),
       SanctionsHitsRepository.fromEvent(event),
     ])
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb: getDynamoDbClientByEvent(event),
+      dynamoDb,
     })
+    const currencyService = new CurrencyService(dynamoDb)
     return new this(
       caseService,
       userService,
@@ -83,7 +85,8 @@ export class RetrievalService {
       ruleInstanceRepository,
       enabledAttributes,
       alertService,
-      sanctionsHitsRepository
+      sanctionsHitsRepository,
+      currencyService
     )
   }
 
@@ -95,7 +98,8 @@ export class RetrievalService {
     ruleInstanceRepository: RuleInstanceRepository,
     enabledAttributes: AIAttribute[],
     alertService: AlertsService,
-    sanctionsHitsRepository: SanctionsHitsRepository
+    sanctionsHitsRepository: SanctionsHitsRepository,
+    currencyService: CurrencyService
   ) {
     this.caseService = caseService
     this.userService = userService
@@ -108,6 +112,7 @@ export class RetrievalService {
     )
     this.alertService = alertService
     this.sanctionsHitsRepository = sanctionsHitsRepository
+    this.currencyService = currencyService
   }
 
   async getAttributes(
@@ -151,7 +156,7 @@ export class RetrievalService {
         undefined
       : undefined
 
-    const exchangeRates = await new CurrencyService().getExchangeData()
+    const exchangeRates = await this.currencyService.getExchangeData()
 
     return await this.attributeBuilder.getAttributes({
       currentTransaction,
@@ -184,7 +189,7 @@ export class RetrievalService {
         transaction.destinationUserId
       )
     }
-    const exchangeRates = await new CurrencyService().getExchangeData()
+    const exchangeRates = await this.currencyService.getExchangeData()
     const _alerts = await this.alertService.getAlertsByIds(
       transaction?.alertIds ?? []
     )
@@ -233,7 +238,7 @@ export class RetrievalService {
       _case.alerts || []
     )
 
-    const exchangeRates = await new CurrencyService().getExchangeData()
+    const exchangeRates = await this.currencyService.getExchangeData()
 
     return await this.attributeBuilder.getAttributes({
       transactions,
@@ -292,7 +297,7 @@ export class RetrievalService {
       ),
     ])
 
-    const exchangeRates = await new CurrencyService().getExchangeRates()
+    const exchangeRates = await this.currencyService.getExchangeRates()
 
     const isAnyScreeningRule = ruleInstances.some(
       (ri) => ri.nature === 'SCREENING'

@@ -6,9 +6,10 @@ import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 export abstract class Aggregator {
   tenantId: string
   aggregationRepository: AggregationRepository
-
+  dynamoDb: DynamoDBDocumentClient
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
+    this.dynamoDb = dynamoDb
     this.aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
   }
 

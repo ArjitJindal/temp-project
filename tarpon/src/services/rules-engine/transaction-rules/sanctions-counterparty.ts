@@ -20,7 +20,8 @@ export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
             (threshold) => ({
               min: threshold,
             })
-          )
+          ),
+          this.dynamoDb
         )
       : true
 

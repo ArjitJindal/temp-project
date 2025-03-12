@@ -180,7 +180,8 @@ export class ReportService {
 
     const txpRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.dynamoDb
     )
 
     const transactions = await txpRepo.getTransactions({
@@ -259,7 +260,8 @@ export class ReportService {
 
     const txpRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.dynamoDb
     )
 
     const transactions = await txpRepo.getTransactions({

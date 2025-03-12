@@ -31,7 +31,8 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
       this.transaction.originAmountDetails,
       mapValues(transactionAmountThreshold, (threshold) => ({
         min: threshold,
-      }))
+      })),
+      this.dynamoDb
     )
 
     const hitResult: RuleHitResult = []

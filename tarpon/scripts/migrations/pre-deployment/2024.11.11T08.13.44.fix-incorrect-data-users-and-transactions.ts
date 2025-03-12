@@ -26,7 +26,8 @@ async function migrateTenant(tenant: Tenant) {
   )
   const mongoTransactionRepository = new MongoDbTransactionRepository(
     tenant.id,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
   const db = mongoDb.db()
 

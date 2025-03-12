@@ -1,4 +1,5 @@
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from '../../../test-resources/mocked-currency-exchange-rates'
+import { getDynamoDbClient } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CurrencyService, useDbCache } from '@/services/currency'
 import * as ApiFetch from '@/utils/api-fetch'
@@ -7,7 +8,8 @@ dynamoDbSetupHook()
 
 describe('Test Currency Utils', () => {
   useDbCache()
-  const currencyService = new CurrencyService()
+  const dynamoDb = getDynamoDbClient()
+  const currencyService = new CurrencyService(dynamoDb)
 
   beforeAll(async () => {
     jest.resetAllMocks()

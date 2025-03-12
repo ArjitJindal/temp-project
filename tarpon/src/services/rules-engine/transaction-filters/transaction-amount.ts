@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 
 import { isEmpty } from 'lodash'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
   TransactionAmountRange,
@@ -12,6 +13,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export async function transactionAmountRuleFilterPredicate(
   transaction: Transaction,
+  dynamoDb: DynamoDBDocumentClient,
   transactionAmountRange?: TransactionAmountRange
 ) {
   if (!transactionAmountRange || isEmpty(transactionAmountRange)) {
@@ -20,12 +22,14 @@ export async function transactionAmountRuleFilterPredicate(
 
   const isOriginAmountInRange = await checkTransactionAmountBetweenThreshold(
     transaction.originAmountDetails,
-    transactionAmountRange
+    transactionAmountRange,
+    dynamoDb
   )
   const isDestinationAmountInRange =
     await checkTransactionAmountBetweenThreshold(
       transaction.destinationAmountDetails,
-      transactionAmountRange
+      transactionAmountRange,
+      dynamoDb
     )
   return Boolean(isOriginAmountInRange || isDestinationAmountInRange)
 }
@@ -62,6 +66,7 @@ export class TransactionAmountRuleFilter extends TransactionRuleFilter<Transacti
     }
     return transactionAmountRuleFilterPredicate(
       this.transaction,
+      this.dynamoDb,
       this.parameters.transactionAmountRange
     )
   }

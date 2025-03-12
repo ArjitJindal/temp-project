@@ -124,7 +124,8 @@ async function getServices(tenantId: string) {
 
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
   return {
     caseCreationService,

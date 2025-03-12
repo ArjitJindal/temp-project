@@ -1004,7 +1004,8 @@ describe('Verify Transaction for Simulation', () => {
     expect(dynamoDbData.Count).toBe(0)
     const transactionRepository = new MongoDbTransactionRepository(
       TEST_TENANT_ID,
-      await getMongoDbClient()
+      await getMongoDbClient(),
+      dynamoDb
     )
     expect(
       await transactionRepository.getInternalTransactionById(testTransactionId)
@@ -1031,7 +1032,8 @@ describe('Verify Transaction for Simulation', () => {
     const mongoDb = await getMongoDbClient()
     const transactionRepository = new MongoDbTransactionRepository(
       TEST_TENANT_ID,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
     const transactionEventRepository = new TransactionEventRepository(
       TEST_TENANT_ID,
@@ -3541,7 +3543,8 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
 
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
 
     const mongoTransactionResult =

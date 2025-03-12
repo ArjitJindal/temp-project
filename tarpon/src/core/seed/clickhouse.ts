@@ -17,6 +17,7 @@ import {
 } from '@/utils/clickhouse/utils'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 type TableName = keyof typeof CLICKHOUSE_DEFINITIONS
 
@@ -30,6 +31,7 @@ type TableSyncer = {
 
 export const seedClickhouse = async (tenantId: string) => {
   const client = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const db = client.db()
 
   if (isClickhouseEnabledInRegion()) {
@@ -56,7 +58,7 @@ export const seedClickhouse = async (tenantId: string) => {
       }
     })
     await Promise.all(promises)
-    const mongoConsumerService = new MongoDbConsumer(client)
+    const mongoConsumerService = new MongoDbConsumer(client, dynamoDb)
     await createTenantDatabase(tenantId)
     await Promise.all(
       ClickHouseTables.map(async (table) => {

@@ -297,11 +297,13 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       const receivingCount = receivingTransactions.length
       const sendingAmount = await getTransactionsTotalAmount(
         sendingTransactions.map((t) => t.originAmountDetails),
-        targetCurrency
+        targetCurrency,
+        this.dynamoDb
       )
       const receivingAmount = await getTransactionsTotalAmount(
         receivingTransactions.map((t) => t.destinationAmountDetails),
-        targetCurrency
+        targetCurrency,
+        this.dynamoDb
       )
       result.sendingTransactionsAmount.set('ALL', sendingAmount)
       result.sendingTransactionsCount.set('ALL', sendingCount)
@@ -320,7 +322,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           const totalCount = sendingGroups[paymentMethod].length
           const totalAmount = await getTransactionsTotalAmount(
             sendingTransactions.map((t) => t.originAmountDetails),
-            targetCurrency
+            targetCurrency,
+            this.dynamoDb
           )
           result.sendingTransactionsAmount.set(
             paymentMethod as PaymentMethod,
@@ -337,7 +340,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           const totalCount = receivingGroups[paymentMethod].length
           const totalAmount = await getTransactionsTotalAmount(
             receivingTransactions.map((t) => t.destinationAmountDetails),
-            targetCurrency
+            targetCurrency,
+            this.dynamoDb
           )
           result.receivingTransactionsAmount.set(
             paymentMethod as PaymentMethod,
@@ -369,7 +373,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         [maximumTransactionLimit.amountCurrency]: this.getLimit(
           maximumTransactionLimit.amountValue
         ),
-      }
+      },
+      this.dynamoDb
     )
     if (transactionAmountHit.isHit) {
       const { thresholdHit } = transactionAmountHit
@@ -419,11 +424,16 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
         stats.receivingTransactionsAmount.get('ALL')
       const totalAmount = await getTransactionsTotalAmount(
         [currentSendingTotalAmount, currentReceivingTotalAmount, amountDetails],
-        amountDetails?.transactionCurrency ?? 'USD'
+        amountDetails?.transactionCurrency ?? 'USD',
+        this.dynamoDb
       )
-      const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
-        [limit.amountCurrency]: this.getLimit(limit.amountValue),
-      })
+      const hitInfo = await isTransactionAmountAboveThreshold(
+        totalAmount,
+        {
+          [limit.amountCurrency]: this.getLimit(limit.amountValue),
+        },
+        this.dynamoDb
+      )
       if (hitInfo.isHit) {
         transactionLimitResults.push({
           hitDescription: `${
@@ -460,11 +470,16 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
             [currentSendingAmount, currentReceivingAmount, amountDetails],
-            amountDetails?.transactionCurrency ?? 'USD'
+            amountDetails?.transactionCurrency ?? 'USD',
+            this.dynamoDb
           )
-          const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
-            [limit.amountCurrency]: this.getLimit(limit.amountValue),
-          })
+          const hitInfo = await isTransactionAmountAboveThreshold(
+            totalAmount,
+            {
+              [limit.amountCurrency]: this.getLimit(limit.amountValue),
+            },
+            this.dynamoDb
+          )
           if (hitInfo.isHit) {
             transactionLimitResults.push({
               hitDescription: `${party} reached the ${granularityToAdverb(
@@ -495,7 +510,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             stats.receivingTransactionsAmount.get(paymentMethod)
           const totalAmount = await getTransactionsTotalAmount(
             [currentSendingAmount, currentReceivingAmount, amountDetails],
-            amountDetails?.transactionCurrency ?? 'USD'
+            amountDetails?.transactionCurrency ?? 'USD',
+            this.dynamoDb
           )
           const currentSendingCount =
             stats.sendingTransactionsCount.get(paymentMethod) ?? 0
@@ -511,7 +527,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
             averageAmount,
             {
               [limit.amountCurrency]: this.getLimit(limit.amountValue),
-            }
+            },
+            this.dynamoDb
           )
           if (hitInfo.isHit) {
             transactionLimitResults.push({

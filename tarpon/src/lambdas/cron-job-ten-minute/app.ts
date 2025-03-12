@@ -172,8 +172,10 @@ async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   try {
     const now = getTimeFromRegion()
+    const dynamoDb = getDynamoDbClient()
+    const currencyService = new CurrencyService(dynamoDb)
     // Hack to ensure we query the currency data for viper.
-    await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
+    await currencyService.getCurrencyExchangeRate('USD', 'EUR')
     const tenantIds = await TenantService.getAllTenantIds()
     await handleDashboardRefreshBatchJob(tenantIds)
 

@@ -71,7 +71,8 @@ type RiskScoreAuditLogReturnData = AuditLogReturnData<
 
 async function matchParameterValue(
   valueToMatch: unknown,
-  parameterValue: RiskParameterValue
+  parameterValue: RiskParameterValue,
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<boolean> {
   switch (parameterValue.content.kind) {
     case 'LITERAL': {
@@ -126,7 +127,7 @@ async function matchParameterValue(
     }
     case 'AMOUNT_RANGE': {
       const transactionAmountDetails = valueToMatch as TransactionAmountDetails
-      const currencyService = new CurrencyService()
+      const currencyService = new CurrencyService(dynamoDb)
       const convertedAmount = (
         await currencyService.getTargetCurrencyAmount(
           transactionAmountDetails,
@@ -145,7 +146,8 @@ async function matchParameterValue(
 
 async function getIterableAttributeRiskLevel(
   parameterAttributeDetails: ParameterAttributeRiskValues,
-  entity: User | Business | Transaction
+  entity: User | Business | Transaction,
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<{
   value: unknown
   riskValue: RiskScoreValueLevel | RiskScoreValueScore
@@ -174,7 +176,8 @@ async function getIterableAttributeRiskLevel(
         targetIterableParameter,
         value,
         riskLevelAssignmentValues,
-        parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
+        parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
+        dynamoDb
       )
 
       if (individualRiskValue.riskValue.type === 'RISK_LEVEL') {
@@ -195,7 +198,8 @@ async function getIterableAttributeRiskLevel(
       for (const riskLevelAssignmentValue of riskLevelAssignmentValues) {
         const isMatch = await matchParameterValue(
           value,
-          riskLevelAssignmentValue.parameterValue
+          riskLevelAssignmentValue.parameterValue,
+          dynamoDb
         )
 
         if (isMatch) {
@@ -238,11 +242,16 @@ async function getDerivedAttributeRiskLevel(
   derivedValue: any,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
   isNullableAllowed: boolean | undefined,
-  defaultValue: RiskScoreValueLevel | RiskScoreValueScore = DEFAULT_RISK_VALUE
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore = DEFAULT_RISK_VALUE,
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<RiskScoreValueLevel | RiskScoreValueScore> {
   if (derivedValue != null || isNullableAllowed) {
     for (const { parameterValue, riskValue } of riskLevelAssignmentValues) {
-      const isMatch = await matchParameterValue(derivedValue, parameterValue)
+      const isMatch = await matchParameterValue(
+        derivedValue,
+        parameterValue,
+        dynamoDb
+      )
       if (isMatch) {
         return riskValue
       }
@@ -258,7 +267,8 @@ async function getSchemaAttributeRiskLevel(
     | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
-  defaultValue: RiskScoreValueLevel | RiskScoreValueScore
+  defaultValue: RiskScoreValueLevel | RiskScoreValueScore,
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<{
   value: unknown
   riskValue: RiskScoreValueLevel | RiskScoreValueScore
@@ -270,7 +280,11 @@ async function getSchemaAttributeRiskLevel(
   if (endValue) {
     resultValue = endValue
     for (const { parameterValue, riskValue } of riskLevelAssignmentValues) {
-      const isMatch = await matchParameterValue(endValue, parameterValue)
+      const isMatch = await matchParameterValue(
+        endValue,
+        parameterValue,
+        dynamoDb
+      )
 
       if (isMatch) {
         resultRiskValue = riskValue
@@ -554,7 +568,8 @@ export class RiskScoringService {
       })
       const transactionRepository = new MongoDbTransactionRepository(
         this.tenantId,
-        this.mongoDb
+        this.mongoDb,
+        this.dynamoDb
       )
       const transaction = await transactionRepository.getTransactionById(
         transactionId
@@ -756,7 +771,8 @@ export class RiskScoringService {
               derivedValue,
               parameterAttributeDetails.riskLevelAssignmentValues,
               parameterAttributeDetails.isNullableAllowed,
-              parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
+              parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
+              this.dynamoDb
             ),
           }))
         )
@@ -775,14 +791,16 @@ export class RiskScoringService {
             parameterAttributeDetails.parameter,
             entity,
             parameterAttributeDetails.riskLevelAssignmentValues,
-            parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE
+            parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
+            this.dynamoDb
           ),
         ]
       } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {
         matchedRiskLevels = [
           await getIterableAttributeRiskLevel(
             parameterAttributeDetails,
-            entity
+            entity,
+            this.dynamoDb
           ),
         ]
       }
@@ -1040,7 +1058,8 @@ export class RiskScoringService {
   ): Promise<void> {
     const transactionsRepo = new MongoDbTransactionRepository(
       this.tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.dynamoDb
     )
     const transactions: FindCursor<TransactionWithRulesResult> =
       await transactionsRepo.getTransactionsWithoutArsScoreCursor({

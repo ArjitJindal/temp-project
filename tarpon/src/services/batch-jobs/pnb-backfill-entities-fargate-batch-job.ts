@@ -71,7 +71,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       tenantId,
       this.dynamoDb
     )
-    this.mongoDbConsumer = new MongoDbConsumer(this.mongoDb)
+    this.mongoDbConsumer = new MongoDbConsumer(this.mongoDb, this.dynamoDb)
     this.userRepository = new UserRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,

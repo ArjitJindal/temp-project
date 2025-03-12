@@ -78,7 +78,8 @@ export class RuleInstanceService {
     this.ruleRepository = new RuleRepository(tenantId, connections)
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      this.mongoDb
+      this.mongoDb,
+      this.dynamoDb
     )
     this.usersRepository = new UserRepository(tenantId, {
       mongoDb: this.mongoDb,

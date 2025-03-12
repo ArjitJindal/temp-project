@@ -3,11 +3,12 @@ import { syncClickhouseTableWithMongo } from '../utils/clickhouse'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const up = async () => {
   logger.info('Starting MongoDB to Clickhouse sync migration')
   const mongoClient = await getMongoDbClient()
-
+  const dynamoDb = getDynamoDbClient()
   const tenantId = '0789ad73b8'
   // Sync each table with retry logic
   for (const table of ClickHouseTables) {
@@ -17,7 +18,8 @@ export const up = async () => {
       )
 
       await backOff(
-        () => syncClickhouseTableWithMongo(mongoClient, tenantId, table),
+        () =>
+          syncClickhouseTableWithMongo(mongoClient, dynamoDb, tenantId, table),
         {
           numOfAttempts: 3,
           maxDelay: 10000,

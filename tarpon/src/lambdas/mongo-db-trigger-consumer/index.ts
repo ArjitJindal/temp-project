@@ -8,6 +8,7 @@ import {
 } from 'mongodb'
 import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -54,10 +55,9 @@ export type MongoConsumerMessage = {
 export class MongoDbConsumer {
   private mongoClient: MongoClient
   private currencyService: CurrencyService
-
-  constructor(mongoClient: MongoClient) {
+  constructor(mongoClient: MongoClient, dynamoDb: DynamoDBDocumentClient) {
     this.mongoClient = mongoClient
-    this.currencyService = new CurrencyService()
+    this.currencyService = new CurrencyService(dynamoDb)
   }
 
   private findClickhouseTableDefinition = memoize(

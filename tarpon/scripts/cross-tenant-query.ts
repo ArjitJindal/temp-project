@@ -323,7 +323,8 @@ async function validateV2ToV8Rules(
   const mongoDb = await getMongoDbClient(false)
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
   const userRepository = new UserRepository(tenantId, { mongoDb })
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
@@ -581,8 +582,9 @@ if (!['dev', 'sandbox', 'prod'].includes(env)) {
   exit(1)
 }
 
-const exchangeRates = memoize(async () => {
-  return await new CurrencyService().getExchangeRates()
+const exchangeRates = memoize(async (dynamoDb: DynamoDBDocumentClient) => {
+  const currencyService = new CurrencyService(dynamoDb)
+  return await currencyService.getExchangeRates()
 })
 
 const globalMetricsData = {
@@ -593,6 +595,7 @@ const globalMetricsData = {
 
 async function salesFlagrightReport(
   mongoDb: Db,
+  dynamoDb: DynamoDBDocumentClient,
   tenantId: string,
   { startDate, endDate }: { startDate: Dayjs; endDate: Dayjs }
 ) {
@@ -649,7 +652,7 @@ async function salesFlagrightReport(
     totalUserProfilesPromise,
   ])
 
-  const currencyExchangeRates = await exchangeRates()
+  const currencyExchangeRates = await exchangeRates(dynamoDb)
   const totalAmountOfTransactionsProcessedInUSD =
     amountOfTransactionsProcessedPerCurrency.reduce((acc, curr) => {
       if (!curr._id || !currencyExchangeRates[curr._id]) {
@@ -720,10 +723,15 @@ async function runReadOnlyQueryForEnv(env: Env) {
     for (const tenant of tenantInfos) {
       const startDateFormatted = dayjs(startDate, 'YYYY-MM-DD')
       const endDateFormatted = dayjs(endDate, 'YYYY-MM-DD')
-      const result = await salesFlagrightReport(mongoDb, tenant.tenant.id, {
-        startDate: startDateFormatted,
-        endDate: endDateFormatted,
-      })
+      const result = await salesFlagrightReport(
+        mongoDb,
+        dynamoDb,
+        tenant.tenant.id,
+        {
+          startDate: startDateFormatted,
+          endDate: endDateFormatted,
+        }
+      )
       console.info(
         `\nTenant: ${tenant.tenant.name} (ID: ${tenant.tenant.id}) (region: ${tenant.tenant.region})`
       )

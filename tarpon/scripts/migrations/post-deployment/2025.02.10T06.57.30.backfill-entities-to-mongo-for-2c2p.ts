@@ -272,7 +272,8 @@ async function handleTransaction(
   )
   const mongoTransactionsRepository = new MongoDbTransactionRepository(
     tenantId,
-    mongoDb
+    mongoDb,
+    dynamoDb
   )
   const transactionEventRepository = new TransactionEventRepository(tenantId, {
     dynamoDb,

@@ -163,7 +163,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
 
     const result = await isTransactionAmountAboveThreshold(
       totalAmount,
-      transactionVolumeThreshold
+      transactionVolumeThreshold,
+      this.dynamoDb
     )
     if (!result.isHit) {
       return
@@ -172,7 +173,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     if (!isEmpty(transactionVolumeUpperThreshold)) {
       const result = await isTransactionAmountAboveThreshold(
         totalAmount,
-        transactionVolumeUpperThreshold
+        transactionVolumeUpperThreshold,
+        this.dynamoDb
       )
 
       if (result.isHit) {
@@ -330,7 +332,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       const currentUserId =
         direction === 'origin' ? this.getReceiverKeyId() : this.getSenderKeyId()
 
-      const currencyService = new CurrencyService()
+      const currencyService = new CurrencyService(this.dynamoDb)
 
       const currentAmount =
         currentAmountDetails &&
@@ -390,13 +392,15 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
   ): Promise<AggregationResult> {
     const sendingAmount = await getTransactionsTotalAmount(
       sendingTransactions.map((transaction) => transaction.originAmountDetails),
-      this.getTargetCurrency()
+      this.getTargetCurrency(),
+      this.dynamoDb
     )
     const receivingAmount = await getTransactionsTotalAmount(
       receivingTransactions.map(
         (transaction) => transaction.destinationAmountDetails
       ),
-      this.getTargetCurrency()
+      this.getTargetCurrency(),
+      this.dynamoDb
     )
     const totalAmount = sumTransactionAmountDetails(
       sendingAmount,
@@ -479,7 +483,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           sendingAmount: (
             await getTransactionsTotalAmount(
               group.map((t) => t.originAmountDetails),
-              this.getTargetCurrency()
+              this.getTargetCurrency(),
+              this.dynamoDb
             )
           ).transactionAmount,
           ...(this.parameters.transactionsCounterPartiesThreshold
@@ -501,7 +506,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
           receivingAmount: (
             await getTransactionsTotalAmount(
               group.map((t) => t.destinationAmountDetails),
-              this.getTargetCurrency()
+              this.getTargetCurrency(),
+              this.dynamoDb
             )
           ).transactionAmount,
           ...(this.parameters.transactionsCounterPartiesThreshold
@@ -531,7 +537,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
       return null
     }
 
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
 
     const targetAmount = await currencyService.getTargetCurrencyAmount(
       targetAmountDetails,

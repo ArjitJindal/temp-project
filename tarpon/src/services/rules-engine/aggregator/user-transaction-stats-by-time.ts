@@ -91,7 +91,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
     const mongoClient = await getMongoDbClient()
     const transactionRepository = new MongoDbTransactionRepository(
       this.tenantId,
-      mongoClient
+      mongoClient,
+      this.dynamoDb
     )
     const now = dayjs(options?.now)
     const cursor = transactionRepository.getTransactionsCursor({
@@ -184,7 +185,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
           transaction.originAmountDetails,
           aggregation.sendingTransactionsAmount.get('ALL'),
         ],
-        transaction.originAmountDetails.transactionCurrency
+        transaction.originAmountDetails.transactionCurrency,
+        this.dynamoDb
       )
 
       aggregation.sendingTransactionsCount.set(
@@ -198,7 +200,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
             transaction.originAmountDetails,
             aggregation.sendingTransactionsAmount.get(paymentMethod),
           ],
-          transaction.originAmountDetails.transactionCurrency
+          transaction.originAmountDetails.transactionCurrency,
+          this.dynamoDb
         )
         aggregation.sendingTransactionsCount.set(
           paymentMethod,
@@ -220,7 +223,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
           transaction.destinationAmountDetails,
           aggregation.receivingTransactionsAmount.get('ALL'),
         ],
-        transaction.destinationAmountDetails.transactionCurrency
+        transaction.destinationAmountDetails.transactionCurrency,
+        this.dynamoDb
       )
 
       aggregation.receivingTransactionsCount.set(
@@ -234,7 +238,8 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
             transaction.destinationAmountDetails,
             aggregation.receivingTransactionsAmount.get(paymentMethod),
           ],
-          transaction.destinationAmountDetails.transactionCurrency
+          transaction.destinationAmountDetails.transactionCurrency,
+          this.dynamoDb
         )
         aggregation.receivingTransactionsCount.set(
           paymentMethod,

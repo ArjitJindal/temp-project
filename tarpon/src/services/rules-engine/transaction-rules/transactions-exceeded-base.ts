@@ -310,7 +310,7 @@ export default abstract class TransactionsDeviationBaseRule<
   private async getData(
     direction: 'origin' | 'destination'
   ): Promise<AggregationResult | undefined> {
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
     const {
       afterTimestamp: afterTimestampP1,
       beforeTimestamp: beforeTimestampP1,
@@ -516,16 +516,26 @@ export default abstract class TransactionsDeviationBaseRule<
         totalCount: period1AmountDetails.length,
         totalAmount:
           aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT'
-            ? (await getTransactionsTotalAmount(period1AmountDetails, currency))
-                .transactionAmount
+            ? (
+                await getTransactionsTotalAmount(
+                  period1AmountDetails,
+                  currency,
+                  this.dynamoDb
+                )
+              ).transactionAmount
             : undefined,
       },
       period2: {
         totalCount: period2AmountDetails.length,
         totalAmount:
           aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT'
-            ? (await getTransactionsTotalAmount(period2AmountDetails, currency))
-                .transactionAmount
+            ? (
+                await getTransactionsTotalAmount(
+                  period2AmountDetails,
+                  currency,
+                  this.dynamoDb
+                )
+              ).transactionAmount
             : undefined,
       },
     }
@@ -637,7 +647,7 @@ export default abstract class TransactionsDeviationBaseRule<
       data.receivingCount = (data.receivingCount ?? 0) + 1
     }
 
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
 
     if (aggregationType === 'AMOUNT' || aggregationType === 'DAILY_AMOUNT') {
       if (direction === 'origin' && this.transaction.originAmountDetails) {
@@ -685,7 +695,8 @@ export default abstract class TransactionsDeviationBaseRule<
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.originAmountDetails),
-                    this.getMultiplierThresholds().currency
+                    this.getMultiplierThresholds().currency,
+                    this.dynamoDb
                   )
                 ).transactionAmount
               : undefined,
@@ -702,7 +713,8 @@ export default abstract class TransactionsDeviationBaseRule<
               ? (
                   await getTransactionsTotalAmount(
                     group.map((t) => t.destinationAmountDetails),
-                    this.getMultiplierThresholds().currency
+                    this.getMultiplierThresholds().currency,
+                    this.dynamoDb
                   )
                 ).transactionAmount
               : undefined,

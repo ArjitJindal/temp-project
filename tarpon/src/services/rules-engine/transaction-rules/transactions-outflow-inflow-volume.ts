@@ -117,7 +117,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     if (!amountDetails) {
       return null
     }
-    const currencyService = new CurrencyService()
+    const currencyService = new CurrencyService(this.dynamoDb)
     const amount = await currencyService.getTargetCurrencyAmount(
       amountDetails,
       this.getTargetCurrency()
@@ -338,7 +338,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
         userAggregationData,
         (data) => data.inflowTransactionAmount ?? 0
       )
-      const currencyService = new CurrencyService()
+      const currencyService = new CurrencyService(this.dynamoDb)
 
       const [outflowTransactionAmount, inflowTransactionAmount] =
         await Promise.all([
@@ -479,8 +479,16 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     const inflowTransactionCount = receivingTransactions.length
 
     const [outflowAmountTotal, inflowAmountTotal] = await Promise.all([
-      getTransactionsTotalAmount(outflowAmounts, this.getTargetCurrency()),
-      getTransactionsTotalAmount(inflowAmounts, this.getTargetCurrency()),
+      getTransactionsTotalAmount(
+        outflowAmounts,
+        this.getTargetCurrency(),
+        this.dynamoDb
+      ),
+      getTransactionsTotalAmount(
+        inflowAmounts,
+        this.getTargetCurrency(),
+        this.dynamoDb
+      ),
     ])
 
     const outflow3dsDoneTransactionCount = sendingTransactions.filter(
@@ -515,7 +523,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
 
           const outflowAmountTotal = await getTransactionsTotalAmount(
             outflowAmounts,
-            this.getTargetCurrency()
+            this.getTargetCurrency(),
+            this.dynamoDb
           )
 
           const outflow3dsDoneTransactionCount = sendingTransactions.filter(
@@ -539,7 +548,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
 
           const inflowAmountTotal = await getTransactionsTotalAmount(
             inflowAmounts,
-            this.getTargetCurrency()
+            this.getTargetCurrency(),
+            this.dynamoDb
           )
 
           const inflow3dsDoneTransactionCount = receivingTransactions.filter(

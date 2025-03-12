@@ -800,7 +800,8 @@ export class LogicEvaluator {
         ? new DynamoDbTransactionRepository(this.tenantId, this.dynamoDb)
         : new MongoDbTransactionRepository(
             this.tenantId,
-            await getMongoDbClient()
+            await getMongoDbClient(),
+            this.dynamoDb
           )
     const generator = getTransactionsGenerator(
       userIdentifier.userId,

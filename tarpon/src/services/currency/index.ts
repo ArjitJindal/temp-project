@@ -1,5 +1,6 @@
 import { isEmpty, mapValues, set } from 'lodash'
 import * as Sentry from '@sentry/serverless'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'
 import { apiFetch } from '@/utils/api-fetch'
@@ -67,8 +68,8 @@ export const CURRENCY_CODES_WITH_NO_EXCHANGE_RATE: CurrencyCode[] = [
 export class CurrencyService {
   repository: CurrencyRepository
 
-  constructor() {
-    this.repository = new CurrencyRepository()
+  constructor(dynamoDb: DynamoDBDocumentClient) {
+    this.repository = new CurrencyRepository(dynamoDb)
   }
 
   public static parseCoinbaseResponse(

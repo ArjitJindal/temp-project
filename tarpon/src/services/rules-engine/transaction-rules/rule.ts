@@ -113,7 +113,8 @@ export abstract class TransactionRule<
     } else if (mode === 'MONGODB' && mongoDb) {
       this.transactionRepository = new MongoDbTransactionRepository(
         tenantId,
-        mongoDb
+        mongoDb,
+        dynamoDb
       )
     } else {
       throw new Error('dynamodb / mongodb is not configured correctlly')

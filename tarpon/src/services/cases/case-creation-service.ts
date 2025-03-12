@@ -190,7 +190,8 @@ export class CaseCreationService {
     )
     this.transactionRepository = new MongoDbTransactionRepository(
       tenantID,
-      connections.mongoDb
+      connections.mongoDb,
+      connections.dynamoDb
     )
     if (s3 && s3Config) {
       this.caseService = new CaseService(

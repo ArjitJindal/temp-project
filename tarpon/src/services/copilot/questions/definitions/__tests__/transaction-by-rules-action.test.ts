@@ -1,8 +1,10 @@
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { TransactionByRulesAction } from '@/services/copilot/questions/definitions/transaction-by-rules-action'
 import { testQuestion } from '@/services/copilot/questions/definitions/__tests__/util'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 describe('Transaction by rules action', () => {
+  const dynamoDb = getDynamoDbClient()
   test('One transaction returned', async () => {
     await testQuestion(
       TransactionByRulesAction,
@@ -11,7 +13,7 @@ describe('Transaction by rules action', () => {
         to: new Date('2020-02-01T12:00:00').valueOf(),
       },
       async (tenantId, mongoDb) => {
-        const tr = new MongoDbTransactionRepository(tenantId, mongoDb)
+        const tr = new MongoDbTransactionRepository(tenantId, mongoDb, dynamoDb)
         await tr.addTransactionToMongo({
           executedRules: [],
           hitRules: [

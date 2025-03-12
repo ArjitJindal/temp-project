@@ -32,7 +32,8 @@ export async function arsScoreEventHandler(
 
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
-    mongoDb
+    mongoDb,
+    dbClients.dynamoDb
   )
 
   arsScore = omit(arsScore, DYNAMO_KEYS) as ArsScore

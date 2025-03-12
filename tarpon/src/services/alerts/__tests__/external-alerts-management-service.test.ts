@@ -47,7 +47,8 @@ describe('End to End External Alerts Management Service', () => {
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
-      mongoDb
+      mongoDb,
+      dynamoDb
     )
     const caseId = 'C-1234'
     const alertId = 'AL-1234'

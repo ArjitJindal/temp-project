@@ -67,15 +67,15 @@ type PreAggregationTask =
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private setDeduplicationIds = new Set<string>()
-
+  private dynamoDb!: DynamoDBDocumentClient
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
-    const dynamoDb = getDynamoDbClient()
+    this.dynamoDb = getDynamoDbClient()
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
-      dynamoDb,
+      dynamoDb: this.dynamoDb,
     })
     const riskRepository = new RiskRepository(job.tenantId, {
-      dynamoDb,
+      dynamoDb: this.dynamoDb,
       mongoDb: await getMongoDbClient(),
     })
     if (entity?.type === 'RULE') {
@@ -168,7 +168,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           )
         }
 
-        await this.internalBulkSendMesasges(dynamoDb, messages)
+        await this.internalBulkSendMesasges(this.dynamoDb, messages)
       }
     }
 
@@ -200,7 +200,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
-        await getMongoDbClient()
+        await getMongoDbClient(),
+        this.dynamoDb
       )
       return await transactionsRepo.getUniqueUserIds(direction, timeRange)
     },
@@ -216,7 +217,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
-        await getMongoDbClient()
+        await getMongoDbClient(),
+        this.dynamoDb
       )
 
       return await transactionsRepo.getUniquePaymentDetails(

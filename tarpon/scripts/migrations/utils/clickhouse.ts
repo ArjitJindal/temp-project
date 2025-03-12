@@ -1,5 +1,6 @@
 import { chunk } from 'lodash'
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
 import {
@@ -10,6 +11,7 @@ import { logger } from '@/core/logger'
 
 export async function syncClickhouseTableWithMongo(
   mongoClient: MongoClient,
+  dynamoDb: DynamoDBDocumentClient,
   tenantId: string,
   table: ClickhouseTableDefinition
 ) {
@@ -26,7 +28,7 @@ export async function syncClickhouseTableWithMongo(
   const clickhouseTable = table.table
   const startTime = Date.now()
   let estimatedTimeLeft = 0
-  const mongoDbConsumer = new MongoDbConsumer(mongoClient)
+  const mongoDbConsumer = new MongoDbConsumer(mongoClient, dynamoDb)
 
   for await (const doc of cursor) {
     batch.push(doc)
@@ -57,7 +59,8 @@ export async function syncClickhouseTableWithMongo(
   }
 
   const trasformedData = await new MongoDbConsumer(
-    mongoClient
+    mongoClient,
+    dynamoDb
   ).updateInsertMessages(mongoTable, batch)
   await batchInsertToClickhouse(tenantId, clickhouseTable, trasformedData)
 }
@@ -65,11 +68,12 @@ export async function syncClickhouseTableWithMongo(
 export async function syncClickhouseTablesWithMongo(
   tenantId: string,
   tables: ClickhouseTableDefinition[],
-  mongoClient: MongoClient
+  mongoClient: MongoClient,
+  dynamoDb: DynamoDBDocumentClient
 ) {
   await Promise.all(
     tables.map((table) =>
-      syncClickhouseTableWithMongo(mongoClient, tenantId, table)
+      syncClickhouseTableWithMongo(mongoClient, dynamoDb, tenantId, table)
     )
   )
 }

@@ -92,7 +92,8 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
       async (transactionAmountDetails) =>
         (await checkTransactionAmountBetweenThreshold(
           transactionAmountDetails,
-          this.parameters.lowTransactionValues
+          this.parameters.lowTransactionValues,
+          this.dynamoDb
         )) != null
     )
 

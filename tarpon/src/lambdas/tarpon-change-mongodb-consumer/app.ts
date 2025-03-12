@@ -219,7 +219,11 @@ export const transactionHandler = async (
 
   const { mongoDb, dynamoDb } = dbClients
 
-  const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
+  const transactionsRepo = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb,
+    dynamoDb
+  )
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
