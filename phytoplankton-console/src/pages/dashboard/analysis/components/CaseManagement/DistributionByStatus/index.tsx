@@ -31,6 +31,8 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
+import { useRuleOptions } from '@/utils/rules';
+import Select from '@/components/library/Select';
 
 type StatusType =
   | 'OPEN'
@@ -62,9 +64,11 @@ export default function DistributionByStatus(props: WidgetProps) {
     granularityValues.MONTH as GranularityValuesType,
   );
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
+  const [selectedRules, setSelectedRules] = useState<string[]>([]);
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
+  const ruleOptions = useRuleOptions();
 
   const [start, end] = dateRange ?? [];
   const startTimestamp = start?.startOf('day').valueOf();
@@ -75,6 +79,7 @@ export default function DistributionByStatus(props: WidgetProps) {
     startTimestamp,
     endTimestamp,
     granularity,
+    ruleInstanceIds: selectedRules.length > 0 ? selectedRules : undefined,
   };
 
   const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
@@ -95,10 +100,25 @@ export default function DistributionByStatus(props: WidgetProps) {
     return result;
   });
 
+  const handleRulesChange = (newSelectedRules: string[] | undefined) => {
+    setSelectedRules(newSelectedRules || []);
+  };
+
   return (
     <Widget
       {...props}
       extraControls={[
+        <div key="rule-filter" style={{ display: 'flex', alignItems: 'center', marginRight: 16 }}>
+          <Select
+            mode="MULTIPLE"
+            allowClear
+            style={{ minWidth: 200 }}
+            placeholder="Filter by Rules"
+            options={ruleOptions}
+            value={selectedRules}
+            onChange={handleRulesChange}
+          />
+        </div>,
         <GranularDatePicker
           timeWindowType={timeWindowType}
           setTimeWindowType={setTimeWindowType}

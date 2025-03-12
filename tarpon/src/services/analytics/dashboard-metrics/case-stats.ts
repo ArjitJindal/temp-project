@@ -356,7 +356,8 @@ export class CaseStatsDashboardMetric {
     startTimestamp: number,
     endTimestamp: number,
     granularity?: GranularityValuesType,
-    entity?: 'CASE' | 'ALERT'
+    entity?: 'CASE' | 'ALERT',
+    ruleInstanceIds?: string[]
   ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
     if (isClickhouseEnabled()) {
       return this.getAlertAndCaseStatusDistributionStatisticsClickhouse(
@@ -364,7 +365,8 @@ export class CaseStatsDashboardMetric {
         startTimestamp,
         endTimestamp,
         granularity,
-        entity
+        entity,
+        ruleInstanceIds
       )
     }
     const db = await getMongoDbClientDb()
@@ -403,15 +405,28 @@ export class CaseStatsDashboardMetric {
         mongoTimeFormat = HOUR_DATE_FORMAT
       }
     }
+    const matchConditions: Record<string, any>[] = []
+    let dateField = 'createdTimestamp'
+    if (entity === 'ALERT') {
+      dateField = 'alerts.createdTimestamp'
+    }
+    matchConditions.push({
+      [dateField]: {
+        $gte: startTimestamp,
+        $lt: endTimestamp,
+      },
+    })
+    if (ruleInstanceIds) {
+      matchConditions.push({
+        'alerts.ruleInstanceId': { $in: ruleInstanceIds },
+      })
+    }
     if (entity === 'CASE') {
       statusDistributionData = await casesCollection
         .aggregate([
           {
             $match: {
-              createdTimestamp: {
-                $gte: startTimestamp,
-                $lt: endTimestamp,
-              },
+              $and: matchConditions,
             },
           },
           {
@@ -471,10 +486,7 @@ export class CaseStatsDashboardMetric {
         .aggregate([
           {
             $match: {
-              'alerts.createdTimestamp': {
-                $gte: startTimestamp,
-                $lt: endTimestamp,
-              },
+              $and: matchConditions,
             },
           },
           {
@@ -577,7 +589,8 @@ export class CaseStatsDashboardMetric {
     startTimestamp: number,
     endTimestamp: number,
     granularity: GranularityValuesType = 'HOUR',
-    entity: 'CASE' | 'ALERT' = 'CASE'
+    entity: 'CASE' | 'ALERT' = 'CASE',
+    ruleInstanceIds?: string[]
   ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
     const clickhouseClient = await getClickhouseClient(tenantId)
     let timeFormat: string
@@ -613,6 +626,7 @@ export class CaseStatsDashboardMetric {
         timeFormat = HOUR_DATE_FORMAT
       }
     }
+    const idField = entity === 'CASE' ? 'caseId' : 'alerts.alertId'
     const statusField = entity === 'CASE' ? 'caseStatus' : 'alerts.alertStatus'
     const timestampField =
       entity === 'CASE' ? 'timestamp' : 'alerts.createdTimestamp'
@@ -621,11 +635,16 @@ export class CaseStatsDashboardMetric {
       SELECT 
         formatDateTime(fromUnixTimestamp64Milli(${timestampField}), '${timeFormat}') as time_label,
         ${statusField} as status,
-        count(*) as count
+        count(distinct(${idField})) as count
       FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
-      ${entity === 'ALERT' ? 'ARRAY JOIN alerts' : ''}
+      ${entity === 'ALERT' || ruleInstanceIds ? 'ARRAY JOIN alerts' : ''}
       WHERE ${timestampField} >= ${startTimestamp}
         AND ${timestampField} < ${endTimestamp}
+        ${
+          ruleInstanceIds
+            ? `AND alerts.ruleInstanceId IN ('${ruleInstanceIds.join("','")}')`
+            : ''
+        }
       GROUP BY 
         time_label,
         status

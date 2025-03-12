@@ -311,14 +311,16 @@ export class DashboardStatsRepository {
     startTimestamp: number,
     endTimestamp: number,
     granularity?: GranularityValuesType,
-    entity?: 'CASE' | 'ALERT'
+    entity?: 'CASE' | 'ALERT',
+    ruleInstanceIds?: string[]
   ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
     return CaseStatsDashboardMetric.getAlertAndCaseStatusDistributionStatistics(
       this.tenantId,
       startTimestamp,
       endTimestamp,
       granularity,
-      entity
+      entity,
+      ruleInstanceIds
     )
   }
 

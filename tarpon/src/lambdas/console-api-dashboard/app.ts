@@ -236,14 +236,21 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsAlertAndCaseStatusDistributionStats(
       async (ctx, request) => {
-        const { startTimestamp, endTimestamp, entity, granularity } = request
+        const {
+          startTimestamp,
+          endTimestamp,
+          entity,
+          granularity,
+          ruleInstanceIds,
+        } = request
 
         const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
         return await dashboardStatsRepository.getAlertAndCaseStatusDistributionStatistics(
           start,
           end,
           granularity,
-          entity
+          entity,
+          ruleInstanceIds
         )
       }
     )

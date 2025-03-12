@@ -3264,6 +3264,12 @@ paths:
               - DAY
           in: query
           name: granularity
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: ruleInstanceIds
     parameters: []
   /dashboard_stats/alert_priority_distribution:
     get:
