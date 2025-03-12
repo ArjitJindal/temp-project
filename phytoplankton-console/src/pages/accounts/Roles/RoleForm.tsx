@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { startCase } from 'lodash';
-import { getDemoRoleName, getSantiziedRoleName, isDemoRole } from '../utils';
+import { getDemoRoleName, getSantiziedRoleName, isDemoRole, formatRoleName } from '../utils';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -105,7 +104,7 @@ export default function RoleForm(props: RoleFormProps) {
         } else {
           await api.updateRole({ roleId: role?.id, AccountRole: { ...accountRole, id: role?.id } });
         }
-        message.success(`${startCase(roleName)} role saved`);
+        message.success(`${formatRoleName(roleName)} role saved`);
         onChange(false, true);
       } catch (e) {
         message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
@@ -178,7 +177,7 @@ export default function RoleForm(props: RoleFormProps) {
     >
       {!isEditing && (
         <>
-          <h3 className={s.title}>{startCase(getSantiziedRoleName(role?.name))}</h3>
+          <h3 className={s.title}>{formatRoleName(role?.name)}</h3>
           <h4>{role?.description}</h4>
         </>
       )}

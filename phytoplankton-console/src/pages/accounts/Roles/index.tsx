@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { startCase } from 'lodash';
 import { Card } from 'antd';
 import { LockFilled } from '@ant-design/icons';
 import s from './index.module.less';
 import { exportRolesDetails } from './utils';
+import { getSantiziedRoleName, formatRoleName } from '@/pages/accounts/utils';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { AccountRole } from '@/apis';
@@ -33,10 +33,6 @@ export default function Roles() {
     </div>
   );
 }
-
-const getSantiziedRoleName = (roleName: string) => {
-  return roleName.replaceAll('demo-', '');
-};
 
 const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () => any }) => {
   const [key, setKey] = useState<string>(roles[0]?.id || '');
@@ -78,7 +74,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
         }
         items={roles.map((r) => ({
           key: r.id,
-          title: startCase(getSantiziedRoleName(r.name)),
+          title: formatRoleName(r.name),
           icon: isValidManagedRoleName(getSantiziedRoleName(r.name)) && (
             <span className={s.icon}>
               <LockFilled />
