@@ -208,18 +208,31 @@ export class AutoNarrativeService {
     }
   }
 
+  private cleanString(string: string): string {
+    return string.replace(/(?<!\n)\n(?!\n)/g, '\n\n').replace(/\s*\n\s*/g, '\n')
+  }
+
   async formatNarrative(
     narrative: string,
     attributes: AttributeSet
   ): Promise<NarrativeResponse> {
-    return await this.generate(
+    const formattedNarrative = this.cleanString(narrative)
+
+    const response = await this.generate(
       [
         {
           role: 'system',
-          content: `Please correct any spelling or grammatical errors in the following text and make it sound professional: "${narrative}"`,
+          content: `Please correct any spelling or grammatical errors in the following text and make it sound professional and if input is in markdown format, please keep it in markdown format and do not use \`\`\`markdown\`\`\` also keep narrative format intact don't use any html tags: "${formattedNarrative}"`,
         },
       ],
       attributes
     )
+
+    const formattedResponse = this.cleanString(response.narrative)
+
+    return {
+      narrative: formattedResponse,
+      attributes: response.attributes,
+    }
   }
 }
