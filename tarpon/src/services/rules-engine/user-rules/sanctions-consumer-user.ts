@@ -29,7 +29,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
             subtype: 'GENERIC_SANCTIONS_SCREENING_TYPES',
           },
         }),
-        fuzziness: FUZZINESS_SCHEMA,
+        fuzziness: FUZZINESS_SCHEMA(),
         ruleStages: RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',

@@ -841,12 +841,14 @@ export const PERCENT_OPTIONAL_SCHEMA = (options: PercentSchemaOptions) =>
     nullable: true,
   } as const)
 
-export const FUZZINESS_SCHEMA = PERCENT_SCHEMA({
-  title: 'Fuzziness',
-  description:
-    'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
-  multipleOf: 10,
-})
+export const FUZZINESS_SCHEMA = (options: PercentSchemaOptions = {}) =>
+  PERCENT_SCHEMA({
+    title: 'Fuzziness',
+    description:
+      'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
+    multipleOf: 10,
+    ...options,
+  })
 
 export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({

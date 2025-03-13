@@ -40,7 +40,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       type: 'object',
       properties: {
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: FUZZINESS_SCHEMA,
+        fuzziness: FUZZINESS_SCHEMA(),
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing bank names after it is enabled.',

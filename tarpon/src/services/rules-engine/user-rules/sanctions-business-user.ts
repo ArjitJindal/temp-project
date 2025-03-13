@@ -62,7 +62,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           nullable: true,
         },
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: FUZZINESS_SCHEMA,
+        fuzziness: FUZZINESS_SCHEMA(),
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing business users including shareholders and directors after it is enabled.',

@@ -45,7 +45,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         transactionAmountThreshold:
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: FUZZINESS_SCHEMA,
+        fuzziness: FUZZINESS_SCHEMA({
+          multipleOf: 1,
+        }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
       },
