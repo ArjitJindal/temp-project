@@ -2,6 +2,7 @@ import { StringLike } from '@visx/scale';
 import { BarChartData, ColorsMap } from './types';
 import StackedBarChart from './StackedBarChart';
 import GroupedBarChart from './GroupedBarChart';
+import { Configuration } from './helpers';
 import { AsyncResource } from '@/utils/asyncResource';
 import { neverThrow } from '@/utils/lang';
 import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
@@ -26,6 +27,7 @@ export interface Props<Category extends StringLike, Series extends StringLike> {
   formatSeries?: Formatter<Series>;
   formatCategory?: Formatter<Category>;
   formatValue?: Formatter<number>;
+  configuration?: Configuration;
 }
 
 export default function BarChart<

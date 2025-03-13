@@ -7,9 +7,74 @@ import { ALL_CHART_COLORS } from '@/components/ui/colors';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { Formatter } from '@/components/charts/shared/formatting';
 
-export const SKELETON_TICK_COMPONENT = () => {
-  return null;
+export const SKELETON_TICK_COMPONENT = () => null;
+
+export enum ChartParts {
+  BAR = 'bar',
+  AXIS = 'axis',
+  SPACE = 'space',
+}
+
+export enum ToolTipOptions {
+  VALUE = 'VALUE',
+  CATEGORY = 'CATEGORY',
+}
+
+export interface EntityConfiguration {
+  shouldRender: boolean;
+  renderWholeGroupData: boolean;
+  toolTipType: ToolTipOptions;
+}
+
+export type BarEntityConfiguration = Omit<EntityConfiguration, 'toolTipType'>;
+export type AxisEntityConfiguration = EntityConfiguration;
+export type SpaceEntityConfiguration = Omit<EntityConfiguration, 'renderWholeGroupData'>;
+
+type ConfigurationMap = {
+  [ChartParts.BAR]: BarEntityConfiguration;
+  [ChartParts.AXIS]: AxisEntityConfiguration;
+  [ChartParts.SPACE]: SpaceEntityConfiguration;
 };
+
+const DEFAULT_CONFIGURATIONS = {
+  [ChartParts.BAR]: {
+    shouldRender: true,
+    renderWholeGroupData: false,
+    defaultToolTip: ToolTipOptions.VALUE,
+  },
+  [ChartParts.AXIS]: {
+    shouldRender: true,
+    renderWholeGroupData: false,
+    defaultToolTip: ToolTipOptions.CATEGORY,
+  },
+  [ChartParts.SPACE]: {
+    shouldRender: true,
+    renderWholeGroupData: false,
+    defaultToolTip: ToolTipOptions.CATEGORY,
+  },
+};
+
+export type Configuration = {
+  [K in ChartParts]: ConfigurationMap[K];
+};
+
+export const getEntityConfiguration = <T extends ChartParts>(
+  type: T,
+  configuration: Partial<EntityConfiguration> = {},
+): ConfigurationMap[T] =>
+  ({
+    ...DEFAULT_CONFIGURATIONS[type],
+    ...configuration,
+  } as ConfigurationMap[T]);
+
+export const DEFAULT_CHART_CONFIGURATION = Object.fromEntries(
+  Object.values(ChartParts).map((part) => [part, getEntityConfiguration(part)]),
+) as Configuration;
+
+export interface Highlighted {
+  category: string | null;
+  series: string | null;
+}
 
 export function useColorScale<Category extends StringLike, Series extends StringLike>(
   data: BarChartData<Category, Series>,
@@ -57,9 +122,4 @@ export function usePreparedCustomColoring<Category extends StringLike, Series ex
     }
     return undefined;
   }, [data, customBarColors, showSkeleton, formatSeries, formatCategory]);
-}
-
-export interface Highlighted {
-  category: string | null;
-  series: string | null;
 }

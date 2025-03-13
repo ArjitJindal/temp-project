@@ -3,6 +3,12 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import BarChart from '@/components/charts/BarChart';
 import { success } from '@/utils/asyncResource';
 import COLORS from '@/components/ui/colors';
+import {
+  ChartParts,
+  Configuration,
+  getEntityConfiguration,
+  ToolTipOptions,
+} from '@/components/charts/BarChart/helpers';
 
 export interface Props {
   data: any[];
@@ -19,6 +25,17 @@ const colors = {
 
 const GroupedColumn = React.memo((props: Props) => {
   const { data } = props;
+  const configuration: Configuration = {
+    [ChartParts.BAR]: getEntityConfiguration<ChartParts.BAR>(ChartParts.BAR, {
+      renderWholeGroupData: true,
+    }),
+    [ChartParts.AXIS]: getEntityConfiguration<ChartParts.AXIS>(ChartParts.AXIS, {
+      shouldRender: false,
+    }),
+    [ChartParts.SPACE]: getEntityConfiguration<ChartParts.SPACE>(ChartParts.SPACE, {
+      toolTipType: ToolTipOptions.VALUE,
+    }),
+  };
   return (
     <BarChart<string, string>
       colors={{}}
@@ -33,6 +50,7 @@ const GroupedColumn = React.memo((props: Props) => {
         }
       }}
       hideLegend={true}
+      configuration={configuration}
       // dodgePadding={0}
       // seriesField="label"
       // yAxis={{ grid: null, minLimit: 0, maxLimit: props.max }}
