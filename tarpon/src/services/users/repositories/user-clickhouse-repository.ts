@@ -15,9 +15,9 @@ import {
   offsetPaginateClickhouse,
 } from '@/utils/pagination'
 import {
-  executeClickhouseQuery,
   getSortedData,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { hasFeature } from '@/core/utils/context'
 import {
@@ -25,6 +25,11 @@ import {
   AllUsersTableItem,
   RiskClassificationScore,
 } from '@/@types/openapi-internal/all'
+
+type UserCasesCount = {
+  casesCount: number
+  userId: string
+}
 
 export class UserClickhouseRepository {
   private tenantId: string
@@ -125,10 +130,10 @@ export class UserClickhouseRepository {
         LIMIT ${COUNT_QUERY_LIMIT}
       `
 
-      const casesCount = await executeClickhouseQuery<{
-        userId: string
-        casesCount: number
-      }>(this.tenantId, casesCountQuery, {})
+      const casesCount = await executeClickhouseQuery<UserCasesCount[]>(
+        this.tenantId,
+        casesCountQuery
+      )
 
       result = {
         ...result,

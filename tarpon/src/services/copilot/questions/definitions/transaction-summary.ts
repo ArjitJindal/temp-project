@@ -18,8 +18,8 @@ import { executeSql } from '@/utils/viper'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getContext } from '@/core/utils/context'
 import {
-  executeClickhouseQuery,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 
 type TransactionSummary = {
@@ -64,19 +64,17 @@ export const TransactionSummary: PropertiesQuestion<
         and timestamp between {{ from }} and {{ to }}
       `
 
-      const response = await executeClickhouseQuery<{
-        count: number
-        min: number
-        max: number
-        total: number
-        avg: number
-      }>(getContext()?.tenantId as string, query, {
-        userId,
-        from: period.from?.toString() ?? '',
-        to: period.to?.toString() ?? '',
-        userIdKey:
-          direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId',
-      })
+      const response = await executeClickhouseQuery<TransactionSummary>(
+        getContext()?.tenantId as string,
+        query,
+        {
+          userId,
+          from: period.from?.toString() ?? '',
+          to: period.to?.toString() ?? '',
+          userIdKey:
+            direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId',
+        }
+      )
 
       result = response[0]
     } else {

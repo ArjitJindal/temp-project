@@ -98,9 +98,8 @@ export class AlertsRepository {
     afterTimestamp: number,
     beforeTimestamp: number
   ) {
-    const clickhouseRepository = new ClickhouseAlertRepository(
-      await getClickhouseClient(this.tenantId)
-    )
+    const clickhouse = await getClickhouseClient(this.tenantId)
+    const clickhouseRepository = new ClickhouseAlertRepository(clickhouse)
     const result = await clickhouseRepository.getAlertsForInvestigationTimes(
       ruleInstanceId,
       afterTimestamp,
@@ -119,9 +118,8 @@ export class AlertsRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     if (isClickhouseEnabled() && hasFeature('ALERTS_DYNAMO_POC')) {
-      const clickhouseRepository = new ClickhouseAlertRepository(
-        await getClickhouseClient(this.tenantId)
-      )
+      const clickhouse = await getClickhouseClient(this.tenantId)
+      const clickhouseRepository = new ClickhouseAlertRepository(clickhouse)
 
       const { data, total } = await clickhouseRepository.getAlerts(params)
 

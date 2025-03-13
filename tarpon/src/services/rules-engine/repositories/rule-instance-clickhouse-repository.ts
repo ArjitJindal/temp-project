@@ -2,6 +2,8 @@ import { ClickHouseClient } from '@clickhouse/client'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 
 @traceable
 export class RuleInstanceClickhouseRepository {
@@ -72,17 +74,18 @@ export class RuleInstanceClickhouseRepository {
         FULL OUTER JOIN run_stats USING (time)
         ORDER BY time
       `
-      const results = await this.clickhouseClient.query({
+
+      const rows = await executeClickhouseQuery<
+        Array<{
+          time: string
+          hitCount: number
+          hitUsersCount: number
+          runCount: number
+        }>
+      >(this.clickhouseClient, {
         query: hitStatsQuery,
         format: 'JSONEachRow',
       })
-
-      const rows = await results.json<{
-        time: string
-        hitCount: number
-        hitUsersCount: number
-        runCount: number
-      }>()
 
       const stats = rows.reduce(
         (acc, row) => ({
@@ -128,16 +131,17 @@ export class RuleInstanceClickhouseRepository {
       FULL OUTER JOIN hit_stats h ON r.date = h.date
       ORDER BY date
     `
-      const results = await this.clickhouseClient.query({
+
+      const rows = await executeClickhouseQuery<
+        Array<{
+          date: string
+          hitCount: number
+          runCount: number
+        }>
+      >(this.clickhouseClient, {
         query,
         format: 'JSONEachRow',
       })
-
-      const rows = await results.json<{
-        date: string
-        hitCount: number
-        runCount: number
-      }>()
 
       const stats = rows.reduce(
         (acc, row) => ({
@@ -170,15 +174,10 @@ export class RuleInstanceClickhouseRepository {
       GROUP BY date
       ORDER BY date
     `
-    const results = await this.clickhouseClient.query({
-      query,
-      format: 'JSONEachRow',
-    })
 
-    return results.json<{
-      date: string
-      alertsCreated: number
-      falsePositiveAlerts: number
-    }>()
+    return await executeClickhouseQuery<RuleInstanceAlertsStats[]>(
+      this.clickhouseClient,
+      { query, format: 'JSONEachRow' }
+    )
   }
 }

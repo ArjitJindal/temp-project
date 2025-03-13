@@ -23,7 +23,18 @@ import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
+import { DashboardStatsAlertPriorityDistributionStatsAlertPriorityData } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStatsAlertPriorityData'
+
+type ReturnType =
+  Array<DashboardStatsAlertPriorityDistributionStatsAlertPriorityData>
+
+type StatusDistributionData = {
+  time_label: string
+  status: string
+  count: number
+}
 
 @traceable
 export class CaseStatsDashboardMetric {
@@ -183,11 +194,10 @@ export class CaseStatsDashboardMetric {
         ORDER BY reason ASC
       `
 
-      const results = await clickhouse.query({ query, format: 'JSONEachRow' })
-      closingReasonsData = await results.json<{
-        reason: string
-        value: number
-      }>()
+      closingReasonsData = await executeClickhouseQuery<ReturnType>(
+        clickhouse,
+        { query, format: 'JSONEachRow' }
+      )
     } else if (entity === 'ALERT') {
       const query = `
         SELECT 
@@ -210,11 +220,10 @@ export class CaseStatsDashboardMetric {
         GROUP BY reason
         ORDER BY reason ASC
       `
-      const results = await clickhouse.query({ query, format: 'JSONEachRow' })
-      closingReasonsData = await results.json<{
-        reason: string
-        value: number
-      }>()
+      closingReasonsData = await executeClickhouseQuery<ReturnType>(
+        clickhouse,
+        { query, format: 'JSONEachRow' }
+      )
     }
 
     return {
@@ -334,15 +343,12 @@ export class CaseStatsDashboardMetric {
       GROUP BY priority
       ORDER BY priority
     `
-    const result = await clickhouse.query({
+    const alertPriorityData = await executeClickhouseQuery<
+      Array<DashboardStatsAlertPriorityDistributionStatsAlertPriorityData>
+    >(clickhouse, {
       query,
       format: 'JSONEachRow',
     })
-
-    const alertPriorityData = await result.json<{
-      priority: string
-      value: number
-    }>()
 
     return {
       alertPriorityData: alertPriorityData.map((row) => ({
@@ -650,15 +656,9 @@ export class CaseStatsDashboardMetric {
         status
       ORDER BY time_label
     `
-    const response = await clickhouseClient.query({
-      query,
-      format: 'JSONEachRow',
-    })
-    const statusDistributionData = await response.json<{
-      time_label: string
-      status: string
-      count: number
-    }>()
+    const statusDistributionData = await executeClickhouseQuery<
+      StatusDistributionData[]
+    >(clickhouseClient, { query, format: 'JSONEachRow' })
 
     const statusByTimeLabel = statusDistributionData.reduce((acc, row) => {
       if (!acc[row.time_label]) {

@@ -13,11 +13,15 @@ import {
   HOUR_DATE_FORMAT_JS,
   paginatePipeline,
 } from '@/utils/mongodb-utils'
-import { DashboardStatsTeamSLAItemResponse } from '@/@types/openapi-internal/all'
+import {
+  DashboardStatsTeamSLAItem,
+  DashboardStatsTeamSLAItemResponse,
+} from '@/@types/openapi-internal/all'
 import dayjs from '@/utils/dayjs'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 
 @traceable
@@ -241,7 +245,7 @@ export class TeamSLAStatsDashboardMetric {
     const query = `
     WITH grouped_data AS (
       SELECT
-          assignment.assigneeUserId AS account,
+          assignment.assigneeUserId AS accountId,
           countIf(sla.policyStatus = 'OK') AS OK,
           countIf(sla.policyStatus = 'BREACHED') AS BREACHED,
           countIf(sla.policyStatus = 'WARNING') AS WARNING
@@ -257,10 +261,10 @@ export class TeamSLAStatsDashboardMetric {
           ? `AND (${timeRangeCondition.join(' AND ')})`
           : ''
       }
-      GROUP BY account
+      GROUP BY accountId
     )
     SELECT 
-    account,
+    accountId,
     OK,
     BREACHED,
     WARNING,
@@ -272,20 +276,16 @@ export class TeamSLAStatsDashboardMetric {
     }
     `
 
-    const results = await clickhouseClient.query({
+    const items = await executeClickhouseQuery<
+      Array<DashboardStatsTeamSLAItem & { total: number }>
+    >(clickhouseClient, {
       query,
       format: 'JSONEachRow',
     })
-    const items = await results.json<{
-      account: string
-      OK: number
-      BREACHED: number
-      WARNING: number
-      total: number
-    }>()
+
     return {
       items: items.map((item) => ({
-        accountId: item.account,
+        accountId: item.accountId,
         OK: Number(item.OK),
         BREACHED: Number(item.BREACHED),
         WARNING: Number(item.WARNING),

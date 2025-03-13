@@ -24,9 +24,11 @@ import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/Dash
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DashboardStatsRulesCount } from '@/@types/openapi-internal/DashboardStatsRulesCount'
 
 function getRuleStatsConditions(startDateText: string, endDateText: string) {
   return [
@@ -409,17 +411,12 @@ export class RuleHitsStatsDashboardMetric {
       ORDER BY hitCount DESC
       LIMIT ${limit} OFFSET ${offset}
     `
-    const data = await client.query({
+    const items = await executeClickhouseQuery<
+      Array<DashboardStatsRulesCount & { totalCount: number }>
+    >(client, {
       query: finalQuery,
       format: 'JSONEachRow',
     })
-    const items = await data.json<{
-      ruleId: string
-      ruleInstanceId: string
-      hitCount: number
-      openAlertsCount: number
-      totalCount: number
-    }>()
 
     return {
       data: items.map((item) => ({

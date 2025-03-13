@@ -18,6 +18,7 @@ import { BooleanString } from '@/@types/openapi-internal/BooleanString'
 import {
   getClickhouseClient,
   sendMessageToMongoConsumer,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
@@ -143,12 +144,12 @@ export class SanctionsScreeningDetailsRepository {
     SETTINGS output_format_json_quote_64bit_integers = 0
     `
 
-    const data = await clickhouseClient.query({
+    const result = await executeClickhouseQuery<
+      Array<SanctionsScreeningEntityStats>
+    >(clickhouseClient, {
       query,
       format: 'JSONEachRow',
     })
-
-    const result = await data.json<SanctionsScreeningEntityStats>()
 
     return {
       data: SANCTIONS_SCREENING_ENTITYS.map((entity) => {

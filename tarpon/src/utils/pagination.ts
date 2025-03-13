@@ -10,8 +10,8 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { addNewSubsegment } from '@/core/xray'
-import { logger } from '@/core/logger'
+
+import { executeClickhouseQuery } from './clickhouse/utils'
 
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -273,57 +273,17 @@ export async function offsetPaginateClickhouse<T>(
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 
-  const [segment, segment2] = await Promise.all([
-    addNewSubsegment('Query time for clickhouse', 'find'),
-    addNewSubsegment('Query time for clickhouse', 'overall'),
-  ])
-
-  const start = Date.now()
-
-  logger.info('Running query', { countQuery, findQuery: findSql })
-
-  const [result, countResult] = await Promise.all([
-    client.query({ query: findSql, format: 'JSONEachRow' }),
-    client.query({ query: countQuery, format: 'JSONEachRow' }),
-  ])
-
-  const end = Date.now()
-
-  const clickHouseSummary = JSON.parse(
-    result.response_headers['x-clickhouse-summary'] as string
-  )
-  const clickhouseQueryExecutionTime = clickHouseSummary['elapsed_ns'] / 1000000
-
-  const queryTimeData = {
-    ...clickHouseSummary,
-    networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
-    clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
-    totalLatency: `${end - start}ms`,
-  }
-
-  logger.info('Query time data', queryTimeData)
-  segment?.addMetadata('Query time data', queryTimeData)
-  segment?.close()
-
   const [items, count] = await Promise.all([
-    result.json<Record<string, string | number>>(),
-    countResult.json<{ count: number }>(),
+    executeClickhouseQuery<Record<string, string | number>[]>(client, {
+      query: findSql,
+      format: 'JSONEachRow',
+    }),
+
+    executeClickhouseQuery<Array<{ count: number }>>(client, {
+      query: countQuery,
+      format: 'JSONEachRow',
+    }),
   ])
-
-  const end2 = Date.now()
-
-  const overallStats = {
-    ...clickHouseSummary,
-    overallTime: `${end2 - start}ms`,
-    networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
-    systemLatency: `${end2 - end}ms`,
-    clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
-  }
-
-  segment2?.addMetadata('Overall stats', overallStats)
-  segment2?.close()
-
-  logger.info('Overall stats', overallStats)
 
   return {
     items: callbackMap

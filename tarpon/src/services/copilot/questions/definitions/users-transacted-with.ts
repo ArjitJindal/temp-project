@@ -16,8 +16,8 @@ import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/comm
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getContext } from '@/core/utils/context'
 import {
-  executeClickhouseQuery,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 
 type Row = {
@@ -99,15 +99,13 @@ export const UsersTransactedWith: TableQuestion<
       `
 
       const [data, totalData] = await Promise.all([
-        executeClickhouseQuery<Row>(
+        executeClickhouseQuery<Row[]>(
           getContext()?.tenantId ?? '',
-          clickhouseQuery,
-          {}
+          clickhouseQuery
         ),
-        executeClickhouseQuery<{ count: number }>(
+        executeClickhouseQuery<{ count: number }[]>(
           getContext()?.tenantId ?? '',
-          paginationQuery,
-          {}
+          paginationQuery
         ),
       ])
 

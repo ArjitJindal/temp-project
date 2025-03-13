@@ -41,10 +41,6 @@ export async function paginatedClickhouseQuery<T>(
     `select count(*) as total from ( ${clickhouseQuery} )`,
     params
   )
-  const totalQuery = client.query({
-    query: finalTotalQueryString,
-    format: 'JSONEachRow',
-  })
 
   const queryString = `${clickhouseQuery} limit :limit offset :offset`
 
@@ -53,7 +49,10 @@ export async function paginatedClickhouseQuery<T>(
     limit: pageSizeOrDefault,
     offset: offset,
   })
-
+  const totalQuery = client.query({
+    query: finalTotalQueryString,
+    format: 'JSONEachRow',
+  })
   const query = client.query({
     query: finalQueryString,
     format: 'JSONEachRow',

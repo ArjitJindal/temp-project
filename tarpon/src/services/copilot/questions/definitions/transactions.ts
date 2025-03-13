@@ -160,8 +160,8 @@ LEFT JOIN users ON transactions.originUserId = users.userId
   })
 
   const [transactions, total] = await Promise.all([
-    executeClickhouseQuery<any>(ctx.tenantId, formattedQuery, {}),
-    executeClickhouseQuery<{ total: number }>(ctx.tenantId, countQuery, {}),
+    executeClickhouseQuery<any[]>(ctx.tenantId, formattedQuery),
+    executeClickhouseQuery<{ total: number }[]>(ctx.tenantId, countQuery),
   ])
 
   const items = transactions.map((t) => {

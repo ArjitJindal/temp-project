@@ -16,6 +16,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
@@ -48,15 +49,12 @@ export const TransactionType: BarchartQuestion<Period> = {
       SETTINGS output_format_json_quote_64bit_integers = 0
     `
 
-      const results = await clickhouseClient.query({
+      return await executeClickhouseQuery<
+        Array<{ type: InternalTransaction['type']; count: number }>
+      >(clickhouseClient, {
         query,
         format: 'JSONEachRow',
       })
-
-      return results.json<{
-        type: InternalTransaction['type']
-        count: number
-      }>()
     }
 
     const getMongoResults = async (): Promise<

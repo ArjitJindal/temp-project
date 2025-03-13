@@ -25,6 +25,7 @@ import { getContext } from '@/core/utils/context'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 
 export const getClickhouseQuery = (
@@ -180,12 +181,13 @@ async function getClickhouseData(
 
   const tenantId = getContext()?.tenantId as string
   const clickhouseClient = await getClickhouseClient(tenantId)
-  const queryResult = await clickhouseClient.query({
+  const result = await executeClickhouseQuery<
+    Array<{ date: string; agg: number }>
+  >(clickhouseClient, {
     query,
     format: 'JSONEachRow',
   })
 
-  const result = await queryResult.json<{ date: string; agg: number }>()
   return result.map((row) => ({
     time: dayjs(row.date).valueOf(),
     value: currency ? ctx.convert(row.agg, currency) : row.agg,

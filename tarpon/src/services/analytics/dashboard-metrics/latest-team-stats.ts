@@ -17,6 +17,7 @@ import { shouldUseReviewAssignments } from '@/utils/helpers'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { getLatestTeamStatsClickhouseQuery } from '@/utils/clickhouse/queries/latest-team-stats-clickhouse'
 
@@ -564,16 +565,12 @@ export class LatestTeamStatsDashboardMetric {
     }
     `
 
-    const queryResult = await client.query({ query, format: 'JSONEachRow' })
-    const result = await queryResult.json<{
-      accountId: string
-      open: number
-      inReview: number
-      inProgress: number
-      escalated: number
-      onHold: number
-      total_count: number
-    }>()
+    const result = await executeClickhouseQuery<
+      Array<DashboardLatestTeamStatsItem & { total_count: number }>
+    >(client, {
+      query,
+      format: 'JSONEachRow',
+    })
 
     const total = Number(result[0]?.total_count ?? 0)
     return {

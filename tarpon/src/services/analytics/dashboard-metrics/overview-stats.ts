@@ -14,6 +14,7 @@ import { traceable } from '@/core/xray'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { getInvestigationTimes } from '@/utils/clickhouse/materialised-views-queries'
@@ -157,6 +158,8 @@ export class OverviewStatsDashboardMetric {
     tenantId: string,
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
+    type ClickhouseCountResult = Array<{ count: number }>
+
     const clickhouseClient = await getClickhouseClient(tenantId)
 
     const casesCountQuery = `
@@ -183,19 +186,15 @@ export class OverviewStatsDashboardMetric {
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
     ] = await Promise.all([
-      clickhouseClient
-        .query({
-          query: casesCountQuery,
-          format: 'JSONEachRow',
-        })
-        .then((r) => r.json<{ count: number }>()),
+      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+        query: casesCountQuery,
+        format: 'JSONEachRow',
+      }),
 
-      clickhouseClient
-        .query({
-          query: alertsCountQuery,
-          format: 'JSONEachRow',
-        })
-        .then((r) => r.json<{ count: number }>()),
+      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+        query: alertsCountQuery,
+        format: 'JSONEachRow',
+      }),
 
       // hasFeature('SAR')
       //   ? clickhouseClient
@@ -251,12 +250,13 @@ export class OverviewStatsDashboardMetric {
       GROUP BY tuple()
     `
 
-    const queryResult = await clickhouseClient.query({
+    const result = await executeClickhouseQuery<
+      Array<{ avgInvestigationTime: number }>
+    >(clickhouseClient, {
       query,
       format: 'JSONEachRow',
     })
 
-    const result = await queryResult.json<{ avgInvestigationTime: number }>()
     return result[0]?.avgInvestigationTime ?? 0
   }
 }

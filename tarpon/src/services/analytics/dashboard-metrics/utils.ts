@@ -10,8 +10,8 @@ import {
 import dayjs from '@/utils/dayjs'
 import { AccountsService } from '@/services/accounts'
 import {
-  executeClickhouseQuery,
   getTimeformatsByGranularity,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 
 export function withUpdatedAt(
@@ -355,7 +355,7 @@ export const executeTimeBasedClickhouseQuery = async <
     }
   `
 
-  let data = await executeClickhouseQuery<T>(tenantId, query, {})
+  let data = await executeClickhouseQuery<T[]>(tenantId, query)
 
   if (!countOnly) {
     data = data.map((item) => {

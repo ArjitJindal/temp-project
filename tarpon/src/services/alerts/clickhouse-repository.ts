@@ -4,9 +4,14 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
 
 export interface AlertClickhouse extends Alert {
   caseStatus?: string
+}
+
+type StatusChanges = {
+  statusChanges: CaseStatusChange[]
 }
 
 export class ClickhouseAlertRepository {
@@ -22,13 +27,12 @@ export class ClickhouseAlertRepository {
     beforeTimestamp: number
   ) {
     const query = `SELECT alerts.statusChanges as statusChanges FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} array join alerts WHERE alerts.ruleInstanceId = '${ruleInstanceId}' AND alerts.createdTimestamp >= ${afterTimestamp} AND alerts.createdTimestamp <= ${beforeTimestamp}`
-    const result = await this.clickhouseClient.query({
-      query,
-      format: 'JSONEachRow',
-    })
-    const statusChangesData = await result.json<{
-      statusChanges: CaseStatusChange[]
-    }>()
+
+    const statusChangesData = await executeClickhouseQuery<StatusChanges[]>(
+      this.clickhouseClient,
+      { query, format: 'JSONEachRow' }
+    )
+
     return statusChangesData
   }
 

@@ -25,6 +25,7 @@ import { traceable } from '@/core/xray'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { getHitsByUserStatsClickhouseQuery } from '@/utils/clickhouse/queries/hits-by-user-stats-clickhouse'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
@@ -445,6 +446,7 @@ export class HitsByUserStatsDashboardMetric {
     } else {
       processedQuery = queries[0]
     }
+
     const finalQuery = `
       WITH base_data as (${processedQuery}),
       aggregated_data AS (
@@ -487,18 +489,10 @@ export class HitsByUserStatsDashboardMetric {
       ORDER BY rulesHitCount DESC
       LIMIT 10
     `
-    const result = await clickhouse.query({
-      query: finalQuery,
-      format: 'JSONEachRow',
-    })
-    const items = await result.json<{
-      userId: string
-      userName: string
-      userType: string
-      openAlertsCount: number
-      rulesRunCount: number
-      rulesHitCount: number
-    }>()
+    const items = await executeClickhouseQuery<DashboardStatsHitsPerUserData[]>(
+      clickhouse,
+      { query: finalQuery, format: 'JSONEachRow' }
+    )
 
     return items.map((item) => {
       return {

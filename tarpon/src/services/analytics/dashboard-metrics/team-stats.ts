@@ -26,6 +26,7 @@ import { traceable } from '@/core/xray'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
+  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { getMaterialisedViewQuery } from '@/utils/clickhouse/materialised-views-queries'
 
@@ -1115,29 +1116,16 @@ export class TeamStatsDashboardMetric {
         GROUP BY accountId
       )`
 
-    const [result, countResult] = await Promise.all([
-      clickhouseClient.query({
+    const [items, count] = await Promise.all([
+      executeClickhouseQuery<Array<DashboardTeamStatsItem>>(clickhouseClient, {
         query,
         format: 'JSONEachRow',
       }),
-      clickhouseClient.query({
+
+      executeClickhouseQuery<Array<{ count: number }>>(clickhouseClient, {
         query: countQuery,
         format: 'JSONEachRow',
       }),
-    ])
-
-    const [items, count] = await Promise.all([
-      result.json<{
-        accountId: string
-        closedBy: number
-        assignedTo: number
-        investigationTime: string
-        caseIds: string[][]
-        closedBySystem: number
-        inProgress: number
-        escalatedBy: number
-      }>(),
-      countResult.json<{ count: number }>(),
     ])
 
     return {
