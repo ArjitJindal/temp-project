@@ -320,11 +320,16 @@ export function useAlertTabs(props: Props): TabItem[] {
   const userQueryResult = useConsoleUser(caseUserId);
 
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const tabs: TabItem[] = useMemo(() => {
     return tabList
       .map((tab): TabItem | null => {
         if (tab === AlertTabs.AI_FORENSICS) {
+          if (!isAiForensicsEnabled || !isClickhouseEnabled) {
+            return null;
+          }
           return {
             title: <AiForensicsLogo variant={'FULL'} />,
             key: tab,
@@ -500,6 +505,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionActions,
     fitTablesHeight,
     sanctionsDetailsFilter,
+    isAiForensicsEnabled,
+    isClickhouseEnabled,
   ]);
 
   return tabs;
