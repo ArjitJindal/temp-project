@@ -40,7 +40,7 @@ describe('Approval of payments', () => {
     allowTransaction();
 
     cy.get('[data-cy="status-button"]').click();
-    cy.contains('li.ant-dropdown-menu-item', 'Allowed').should('be.visible').click();
+    cy.contains('li.ant-dropdown-menu-item', 'Approved').should('be.visible').click();
     cy.get('h2').first().click();
     cy.wait('@bulk-approval-request', { timeout: 15000 })
       .its('response.statusCode')
