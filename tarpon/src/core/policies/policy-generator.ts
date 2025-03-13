@@ -19,20 +19,6 @@ export default class PolicyBuilder {
     this.statements = []
   }
 
-  athena() {
-    this.statements.push({
-      Effect: 'Allow',
-      Action: ['athena:*'],
-      Resource: ['*'],
-      Condition: {
-        StringEquals: {
-          'athena:queryPartitionValue': `tenant=${this.tenantId.toLowerCase()}`,
-        },
-      },
-    })
-    return this
-  }
-
   dynamoDb() {
     this.statements.push({
       Effect: 'Allow',
@@ -44,6 +30,7 @@ export default class PolicyBuilder {
             `${this.tenantId}*`,
             `${SHARED_PARTITION_KEY_PREFIX}*`,
             `${SHARED_AUTH0_PARTITION_KEY_PREFIX}*`,
+            `${getNonDemoTenantId(this.tenantId)}*`,
           ],
         },
       },
@@ -61,22 +48,6 @@ export default class PolicyBuilder {
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],
-        },
-      },
-    })
-    // this is policy for accessing session from demo mode
-    this.statements.push({
-      Effect: 'Allow',
-      Action: [
-        'dynamodb:GetItem',
-        'dynamodb:DeleteItem',
-        'dynamodb:Query',
-        'dynamodb:PutItem',
-      ], // only four operation are perfomed on Transient Table
-      Resource: ['arn:aws:dynamodb:*:*:table/Transient/*'],
-      Condition: {
-        'ForAllValues:StringLike': {
-          'dynamodb:LeadingKeys': [`${getNonDemoTenantId(this.tenantId)}*`],
         },
       },
     })
