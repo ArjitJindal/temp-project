@@ -5,3 +5,37 @@
   background: @fr-colors-navyBlue;
   border-color: @fr-colors-navyBlue;
 }
+
+.tooltip {
+  color: @fr-colors-v2-gray-10 !important;
+}
+
+.tooltipTitle {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  align-items: center;
+}
+
+.tooltipTitleLeft {
+  display: flex;
+  align-items: center;
+}
+
+.tooltipList {
+  padding-left: 16px !important;
+  margin-bottom: 0 !important;
+}
+
+:global {
+  .ant-tooltip-inner {
+    width: 350px !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    transform: translate(220px, -24px) !important;
+  }
+
+  .ant-tooltip-arrow {
+    display: none !important;
+  }
+}
