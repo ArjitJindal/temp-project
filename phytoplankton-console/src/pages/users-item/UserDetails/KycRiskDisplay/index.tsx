@@ -5,6 +5,7 @@ import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   userId: string;
@@ -14,6 +15,7 @@ export default function KycRiskDisplay({ userId }: Props) {
   const api = useApi();
 
   const queryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => api.getKrsValue({ userId }));
+  const isKycPermissionEnabled = useHasPermissions(['users:user-kyc-risk-score-details:read']);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
@@ -21,7 +23,7 @@ export default function KycRiskDisplay({ userId }: Props) {
         result && (
           <RiskScoreDisplay
             values={
-              result?.krsScore != null
+              result?.krsScore != null && isKycPermissionEnabled
                 ? [
                     {
                       score: result.krsScore,

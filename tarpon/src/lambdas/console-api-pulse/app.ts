@@ -10,6 +10,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { hasPermission } from '@/utils/auth0-utils'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -181,10 +182,17 @@ export const riskLevelAndScoreHandler = lambdaApi({
     const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
     const handlers = new Handlers()
 
-    handlers.registerGetKrsValue(
-      async (ctx, request) =>
-        await riskService.getKrsScoreFromDynamo(request.userId)
-    )
+    handlers.registerGetKrsValue(async (ctx, request) => {
+      const result = await riskService.getKrsScoreFromDynamo(request.userId)
+      const isKycPermissionEnabled = hasPermission(
+        'users:user-kyc-risk-score-details:read'
+      )
+      if (isKycPermissionEnabled) {
+        return result
+      }
+      delete result?.factorScoreDetails
+      return result
+    })
 
     handlers.registerGetArsValue(
       async (ctx, request) =>

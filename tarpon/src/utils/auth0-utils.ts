@@ -12,9 +12,17 @@ import dayjs from './dayjs'
 import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'
 import { Tenant } from '@/services/accounts/repository'
 import { Account } from '@/@types/openapi-internal/Account'
+import { Permission } from '@/@types/openapi-internal/Permission'
+import { getContext } from '@/core/utils/context'
 export type Auth0ManagementAPICreds = {
   clientId: string
   clientSecret: string
+}
+
+export function hasPermission(permission: Permission): boolean {
+  const userPermissions = getContext()?.authz?.permissions
+  const hasPermission = userPermissions?.get(permission)
+  return hasPermission ?? false
 }
 
 const cacheAuth0ManagementAPICreds: {
