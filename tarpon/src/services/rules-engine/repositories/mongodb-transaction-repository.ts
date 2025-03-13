@@ -185,6 +185,30 @@ export class MongoDbTransactionRepository
     return transaction
   }
 
+  public getApproveTransactionsMongoQuery(): Filter<InternalTransaction> {
+    return {
+      $and: [
+        { status: 'ALLOW' },
+        {
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: '$hitRules',
+                    as: 'rule',
+                    cond: { $eq: ['$$rule.isShadow', false] }, // Filter rules where isShadow is false
+                  },
+                },
+              },
+              0, // Ensure at least one rule has isShadow: false
+            ],
+          },
+        },
+      ],
+    }
+  }
+
   public getTransactionsMongoQuery(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
     additionalFilters: Filter<InternalTransaction>[] = []
@@ -299,10 +323,6 @@ export class MongoDbTransactionRepository
         ),
       })
     }
-
-    if (params.filterOutStatus != null) {
-      conditions.push({ status: { $ne: params.filterOutStatus } })
-    }
     if (params.filterOutCaseStatus != null) {
       conditions.push({
         caseStatus: { $nin: [params.filterOutCaseStatus] },
@@ -319,7 +339,13 @@ export class MongoDbTransactionRepository
       })
     }
     if (params.filterStatus != null) {
-      conditions.push({ status: { $in: params.filterStatus } })
+      if (params.filterStatus.includes('ALLOW')) {
+        params.filterStatus.splice(params.filterStatus.indexOf('ALLOW'), 1)
+        conditions.push(this.getApproveTransactionsMongoQuery())
+      }
+      if (params.filterStatus.length > 0) {
+        conditions.push({ status: { $in: params.filterStatus } })
+      }
     }
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })

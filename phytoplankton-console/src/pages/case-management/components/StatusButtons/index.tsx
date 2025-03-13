@@ -1,5 +1,4 @@
 import React from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
@@ -40,9 +39,15 @@ export default function StatusButtons(props: Props) {
   );
 }
 
+enum RuleActionToHumanized {
+  SUSPEND = 'Suspended',
+  ALLOW = 'Approved',
+  BLOCK = 'Blocked',
+}
+
 function useOptions(): DropdownOption<RuleAction>[] {
   return (['SUSPEND', 'ALLOW', 'BLOCK'] as const).map((status) => ({
     value: status,
-    label: `${humanizeConstant(status)}ed`,
+    label: RuleActionToHumanized[status],
   }));
 }
