@@ -4,13 +4,21 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 const generatePolicyId = (index: number): string => `SLA-${index.toString()}`
 
+const SLA_POLICY_NAMES = {
+  STANDARD_10_DAY: 'Standard 10-Day Response',
+  STANDARD_5_DAY: 'Standard 5-Day Response',
+  PRIORITY_CASES: 'Priority Cases Handler',
+  EXTENDED_INVESTIGATION: 'Extended Investigation Cases',
+} as const
+
 const createBasicPolicy = (
   index: number,
   breachTime: number,
-  warningTime: number
+  warningTime: number,
+  policyName: string
 ): SLAPolicy => ({
   id: generatePolicyId(index),
-  name: `SLA Policy ${index}`,
+  name: policyName,
   type: 'ALERT',
   description: 'This is a basic SLA policy.',
   policyConfiguration: {
@@ -31,12 +39,14 @@ const createBasicPolicy = (
 const createAdvancedPolicy = (
   index: number,
   breachTime: number,
-  warningTime: number
+  warningTime: number,
+  policyName: string
 ): SLAPolicy => ({
-  ...createBasicPolicy(index, breachTime, warningTime),
+  ...createBasicPolicy(index, breachTime, warningTime, policyName),
   description: 'This is an advanced SLA policy.',
   policyConfiguration: {
-    ...createBasicPolicy(index, breachTime, warningTime).policyConfiguration,
+    ...createBasicPolicy(index, breachTime, warningTime, policyName)
+      .policyConfiguration,
     accountRoles: ['admin'],
     statusDetails: {
       statuses: ['OPEN', 'IN_PROGRESS'],
@@ -49,10 +59,10 @@ const createAdvancedPolicy = (
 })
 
 export const getSLAPolicies = memoize((): SLAPolicy[] => [
-  createBasicPolicy(1, 10, 5),
-  createBasicPolicy(2, 5, 2),
-  createAdvancedPolicy(3, 10, 5),
-  createAdvancedPolicy(4, 15, 7),
+  createBasicPolicy(1, 10, 5, SLA_POLICY_NAMES.STANDARD_10_DAY),
+  createBasicPolicy(2, 5, 2, SLA_POLICY_NAMES.STANDARD_5_DAY),
+  createAdvancedPolicy(3, 10, 5, SLA_POLICY_NAMES.PRIORITY_CASES),
+  createAdvancedPolicy(4, 15, 7, SLA_POLICY_NAMES.EXTENDED_INVESTIGATION),
 ])
 
 export const getSLAPolicyById = memoize((id: string): SLAPolicy | undefined => {

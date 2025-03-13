@@ -47,6 +47,7 @@ import {
   RULE_QUEUES_COLLECTION,
   REASONS_COLLECTION,
   USER_EVENTS_COLLECTION,
+  NARRATIVE_TEMPLATE_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { users } from '@/core/seed/data/users'
@@ -80,6 +81,7 @@ import {
   DEFAULT_ESCALATION_REASONS,
   getDefaultReasonsData,
 } from '@/services/tenants/reasons-service'
+import { getNarrativeTemplates } from '@/core/seed/data/narrative'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -104,6 +106,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [CRM_SUMMARY_COLLECTION, () => getSummaries()],
   [SIMULATION_TASK_COLLECTION, () => getSimulations()],
   [CHECKLIST_TEMPLATE_COLLECTION, () => getChecklistTemplates()],
+  [NARRATIVE_TEMPLATE_COLLECTION, () => getNarrativeTemplates()],
   [NOTIFICATIONS_COLLECTION, () => getNotifications()],
   [ARS_SCORES_COLLECTION, () => getArsScores()],
   [ALERTS_QA_SAMPLING_COLLECTION, () => getQASamples()],
