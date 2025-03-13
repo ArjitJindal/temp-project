@@ -95,9 +95,11 @@ export class AttributeSet extends Map<
     }
     return this.set(key, value)
   }
+
   deleteAttribute(key: AIAttribute) {
     this.delete(key)
   }
+
   async serialise(): Promise<string> {
     const attributes = new AttributeSet(this.enabledAttributes, this)
     const originalAttributes = [...this.entries()]
@@ -113,9 +115,25 @@ export class AttributeSet extends Map<
       }
     })
 
-    let serialisedAttributes = JSON.stringify(
-      Object.fromEntries(attributes.entries())
+    const cleanAttributes = Object.fromEntries(
+      Object.entries(attributes.entries()).filter(([_, value]) => {
+        if (Array.isArray(value)) {
+          return value.length > 0
+        }
+
+        if (typeof value === 'object') {
+          return Object.keys(value).length > 0
+        }
+
+        if (typeof value === 'string') {
+          return value?.trim()?.length > 0
+        }
+
+        return value !== undefined && value !== null
+      })
     )
+
+    let serialisedAttributes = JSON.stringify(cleanAttributes)
 
     // For disabled attributes that we can obfuscate, obfuscate.
     originalAttributes.forEach(([attributeName, value]) => {
