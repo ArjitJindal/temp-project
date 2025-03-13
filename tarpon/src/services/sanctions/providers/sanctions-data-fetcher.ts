@@ -329,7 +329,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
     const results = await Promise.all(
       collectionNames.map((c) =>
-        db.collection(c).find<SanctionsEntity>(match).limit(500).toArray()
+        db
+          .collection<SanctionsEntity>(c)
+          .find(match, {
+            projection: {
+              rawResponse: 0,
+            },
+          })
+          .limit(500)
+          .toArray()
       )
     )
 
@@ -685,6 +693,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 searchScore: {
                   $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
                 },
+              },
+            },
+            {
+              $project: {
+                rawResponse: 0,
               },
             },
           ])
