@@ -147,16 +147,16 @@ export const getRuleSimulation = (): Array<
         progress: 1,
         statistics: {
           current: {
-            totalCases: 5,
-            falsePositivesCases: 1,
-            usersHit: 5,
-            transactionsHit: 3,
+            totalCases: 459,
+            falsePositivesCases: 5,
+            usersHit: 350,
+            transactionsHit: 2946,
           },
           simulated: {
-            totalCases: 1929,
-            falsePositivesCases: 1,
-            usersHit: 1929,
-            transactionsHit: 2843,
+            totalCases: 429,
+            falsePositivesCases: 3,
+            usersHit: 329,
+            transactionsHit: 2823,
           },
         },
         latestStatus: {
@@ -280,10 +280,10 @@ export const getRuleSimulation = (): Array<
             transactionsHit: 3,
           },
           simulated: {
-            totalCases: 0,
-            falsePositivesCases: 0,
-            usersHit: 0,
-            transactionsHit: 0,
+            totalCases: 9,
+            falsePositivesCases: 2,
+            usersHit: 5,
+            transactionsHit: 29,
           },
         },
         latestStatus: {
@@ -421,16 +421,16 @@ export const getRuleSimulation = (): Array<
         progress: 1,
         statistics: {
           current: {
-            totalCases: 5,
-            falsePositivesCases: 1,
-            usersHit: 5,
-            transactionsHit: 5,
+            totalCases: 15,
+            falsePositivesCases: 3,
+            usersHit: 15,
+            transactionsHit: 45,
           },
           simulated: {
-            totalCases: 0,
-            falsePositivesCases: 0,
-            usersHit: 0,
-            transactionsHit: 0,
+            totalCases: 9,
+            falsePositivesCases: 2,
+            usersHit: 5,
+            transactionsHit: 29,
           },
         },
         latestStatus: {
