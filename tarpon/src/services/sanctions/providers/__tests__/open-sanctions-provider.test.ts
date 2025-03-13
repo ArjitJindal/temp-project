@@ -1,9 +1,11 @@
+import { getSanctionsCollectionName } from '../../utils'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 withFeatureHook(['SANCTIONS', 'OPEN_SANCTIONS'])
 
@@ -115,12 +117,27 @@ describe('OpenSanctionsProvider', () => {
       OPEN_SANCTIONS_SEARCH_TYPES,
       ['PERSON']
     )
-    const repo = new MongoSanctionsRepository(
-      DELTA_SANCTIONS_COLLECTION(tenantId)
+    const client = await getMongoDbClient()
+    const collectionName = getSanctionsCollectionName(
+      {
+        provider: 'open-sanctions',
+      },
+      tenantId,
+      'delta'
     )
+    await client.db().createCollection(collectionName)
+    const collection = client.db().collection(collectionName)
+    await collection.createIndex({
+      provider: 1,
+      version: 1,
+      id: 1,
+      entityType: 1,
+    })
+    const repo = new MongoSanctionsRepository(collectionName)
     // Get the current date
     const yesterday = new Date()
     yesterday.setDate(new Date().getDate() - 1)
     await openSanctionsProvider.delta(repo, '2024-01-01', yesterday)
+    await client.db().dropCollection(collectionName)
   })
 })

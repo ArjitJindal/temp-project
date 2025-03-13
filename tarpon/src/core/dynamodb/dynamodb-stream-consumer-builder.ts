@@ -482,10 +482,6 @@ export class StreamConsumerBuilder {
       await Promise.all(
         Object.entries(groups).map(async (entry) => {
           const tenantId = entry[0]
-          if (tenantId === '7fd46ed8d7' && envIs('sandbox')) {
-            // Skip pnb-sit events from kinesis consumer
-            return
-          }
           const tenantUpdates = entry[1]
           await this.handleKinesisDynamoUpdates(tenantId, tenantUpdates)
         })
