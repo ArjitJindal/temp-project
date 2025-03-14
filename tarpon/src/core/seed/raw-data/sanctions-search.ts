@@ -16,6 +16,7 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsMatchType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
+import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 
 const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
   RU: 'Russian Federation',
@@ -185,6 +186,9 @@ export const sanctionsSearchHit = (
   entity?: string
 ): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
   const id = uuid4()
+  if (!entity) {
+    entity = rng.r(9).pickRandom(SANCTIONS_SCREENING_ENTITYS)
+  }
   const selectedCountryCodes = rng.randomSubsetOfSize(
     COUNTRY_CODES,
     3
@@ -326,6 +330,9 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
     transactionId?: string,
     entity?: string
   ): SanctionsSearchHit {
+    if (!entity) {
+      entity = this.rng.r(9).pickRandom(SANCTIONS_SCREENING_ENTITYS)
+    }
     const searchId = uuid4()
     const screeningDetails: SanctionsScreeningDetails = {
       searchId,
@@ -360,7 +367,9 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
       provider: 'comply-advantage',
       request: {
         searchTerm: name,
-        fuzziness: Number(this.sanctionsRng.r(2).randomFloat(10).toFixed(1)),
+        fuzziness: Number(
+          (this.sanctionsRng.r(2).randomFloat() * 1.1).toFixed(1)
+        ),
         types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
@@ -397,6 +406,9 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
     transactionId?: string,
     entity?: string
   ): SanctionsSearchHit {
+    if (!entity) {
+      entity = this.rng.r(9).pickRandom(SANCTIONS_SCREENING_ENTITYS)
+    }
     const searchId = uuid4()
     const screeningDetails: SanctionsScreeningDetails = {
       searchId,
@@ -432,7 +444,9 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
       provider: 'comply-advantage',
       request: {
         searchTerm: userName,
-        fuzziness: Number(this.sanctionsRng.r(2).randomFloat(10).toFixed(1)),
+        fuzziness: Number(
+          (this.sanctionsRng.r(2).randomFloat() * 1.1).toFixed(1)
+        ),
         types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
