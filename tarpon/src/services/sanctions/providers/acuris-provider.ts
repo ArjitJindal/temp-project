@@ -135,7 +135,7 @@ interface AcurisEntity {
   evidences: AcurisEvidence[]
   sanEntries: {
     current: SanctionEntry[]
-    previous: SanctionEntry[]
+    former: SanctionEntry[]
   }
   relEntries: {
     category: string
@@ -539,18 +539,30 @@ export class AcurisProvider extends SanctionsDataFetcher {
       sanctionsSources: entity.evidences
         .filter(
           ({ evidenceId }) =>
-            entity.sanEntries.current.some((sanEntry) =>
+            (entity.sanEntries.current.some((sanEntry) =>
               sanEntry.events.some((event) =>
                 event.evidenceIds.includes(evidenceId)
               )
-            ) && sanctionSearchTypes.includes('SANCTIONS')
+            ) ||
+              entity.sanEntries.former.some((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidenceId)
+                )
+              )) &&
+            sanctionSearchTypes.includes('SANCTIONS')
         )
         .map((evidence) => {
-          const matchingSanEntry = entity.sanEntries.current.find((sanEntry) =>
-            sanEntry.events.some((event) =>
-              event.evidenceIds.includes(evidence.evidenceId)
+          const matchingSanEntry =
+            entity.sanEntries.current.find((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidence.evidenceId)
+              )
+            ) ??
+            entity.sanEntries.former.find((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidence.evidenceId)
+              )
             )
-          )
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
           return this.getOtherSources(evidence, evidenceName, description)
@@ -561,6 +573,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
             (entity.pepEntries.current.some((pepEntry) =>
               pepEntry.evidenceIds.includes(evidenceId)
             ) ||
+              entity.pepEntries.former.some((pepEntry) =>
+                pepEntry.evidenceIds.includes(evidenceId)
+              ) ||
               entity.poiEntries
                 .flatMap(({ evidenceIds }) => evidenceIds)
                 .includes(evidenceId) ||
@@ -570,9 +585,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
             sanctionSearchTypes.includes('PEP')
         )
         .map((evidence) => {
-          const evidenceName = entity.pepEntries.current.find((pepEntry) =>
-            pepEntry.evidenceIds.includes(evidence.evidenceId)
-          )?.segment
+          const evidenceName =
+            entity.pepEntries.current.find((pepEntry) =>
+              pepEntry.evidenceIds.includes(evidence.evidenceId)
+            )?.segment ??
+            entity.pepEntries.former.find((pepEntry) =>
+              pepEntry.evidenceIds.includes(evidence.evidenceId)
+            )?.segment
           return this.getOtherSources(evidence, evidenceName)
         }),
       associates: entity.individualLinks.map((link) => ({
@@ -649,19 +668,31 @@ export class AcurisProvider extends SanctionsDataFetcher {
       // pick evidence name from current.regime.name
       sanctionSearchTypes,
       sanctionsSources: entity.evidences
-        .filter(({ evidenceId }) =>
-          entity.sanEntries.current.some((sanEntry) =>
-            sanEntry.events.some((event) =>
-              event.evidenceIds.includes(evidenceId)
+        .filter(
+          ({ evidenceId }) =>
+            entity.sanEntries.current.some((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidenceId)
+              )
+            ) ||
+            entity.sanEntries.former.some((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidenceId)
+              )
             )
-          )
         )
         .map((evidence) => {
-          const matchingSanEntry = entity.sanEntries.current.find((sanEntry) =>
-            sanEntry.events.some((event) =>
-              event.evidenceIds.includes(evidence.evidenceId)
+          const matchingSanEntry =
+            entity.sanEntries.current.find((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidence.evidenceId)
+              )
+            ) ??
+            entity.sanEntries.former.find((sanEntry) =>
+              sanEntry.events.some((event) =>
+                event.evidenceIds.includes(evidence.evidenceId)
+              )
             )
-          )
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
           return this.getOtherSources(evidence, evidenceName, description)
