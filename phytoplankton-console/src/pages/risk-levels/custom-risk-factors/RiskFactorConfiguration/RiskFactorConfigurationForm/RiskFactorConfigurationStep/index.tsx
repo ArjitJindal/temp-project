@@ -58,7 +58,7 @@ const RiskFactorConfigurationStep = forwardRef((props: Props) => {
 
   if (!props.v2Props) {
     return (
-      <>
+      <div className={s.root}>
         <VariableDefinitionCard
           ruleType={props.ruleType}
           readOnly={props.readOnly}
@@ -81,7 +81,7 @@ const RiskFactorConfigurationStep = forwardRef((props: Props) => {
           riskLevelLogic={riskLevelLogic}
           baseCurrencyFieldState={baseCurrencyFieldState}
         />
-      </>
+      </div>
     );
   }
 

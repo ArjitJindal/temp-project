@@ -1,5 +1,5 @@
 import { ConfigProvider } from 'antd';
-import React, { useMemo, useState, useRef, useImperativeHandle } from 'react';
+import React, { useMemo, useState, useRef, useImperativeHandle, useEffect } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import { BasicDetailsFormValues, BasicDetailsStep } from './BasicDetailsStep';
@@ -27,6 +27,8 @@ import {
   ParameterName,
   ParameterValues,
 } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import ExpandContainer from '@/components/utils/ExpandContainer';
+import NameAndDescription from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/NameAndDescription';
 
 interface LiftedParameters {
   parameter: RiskFactorParameter;
@@ -82,6 +84,8 @@ function RiskFactorConfigurationForm(
     liftedParameters,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
+  const [showTopCard, setShowTopCard] = useState(false);
+
   const INITIAL_VALUES = useMemo(() => {
     if (formInitialValues) {
       return formInitialValues;
@@ -100,6 +104,16 @@ function RiskFactorConfigurationForm(
   const formId = useId(`form-`);
 
   const [formState, setFormState] = useState<RiskFactorConfigurationFormValues>(INITIAL_VALUES);
+
+  const isRiskFactorNameDefined =
+    !!formState?.basicDetailsStep.name && !!formState?.basicDetailsStep.description;
+
+  useEffect(() => {
+    setShowTopCard(
+      (showTopCard) =>
+        showTopCard || (activeStepKey !== BASIC_DETAILS_STEP && isRiskFactorNameDefined),
+    );
+  }, [activeStepKey, isRiskFactorNameDefined]);
 
   const fieldValidators: FieldValidators<RiskFactorConfigurationFormValues> = useMemo(() => {
     return {
@@ -178,6 +192,14 @@ function RiskFactorConfigurationForm(
           setFormState(values);
         }}
       >
+        <ExpandContainer isCollapsed={!showTopCard}>
+          {isRiskFactorNameDefined && (
+            <NameAndDescription
+              ruleName={formState.basicDetailsStep.name}
+              ruleDescription={formState.basicDetailsStep.description}
+            />
+          )}
+        </ExpandContainer>
         <div className={s.stepper}>
           <Card.Root className={s.steps}>
             <Card.Section>
