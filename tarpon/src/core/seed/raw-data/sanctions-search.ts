@@ -247,6 +247,7 @@ export const sanctionsSearchHit = (
       mediaSources.length > 0 && 'adverse-media',
       pepSources.length > 0 && 'pep',
     ]) as string[],
+    sanctionSearchTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
   }
 
   const status = rng.r(8).pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
@@ -292,6 +293,7 @@ export const sanctionsSearchHit = (
           COUNTRY_CODES,
           rng.r(12).randomIntInclusive(1, 3)
         ) as CountryCode[],
+      sanctionSearchTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
     },
   }
 
