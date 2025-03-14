@@ -1,7 +1,7 @@
 import { sum } from 'lodash'
 import { LogicVariableAggregator } from './types'
 
-interface StdDevSample {
+export interface StdDevSample {
   sumOfSquares: number
   count: number
   sum: number

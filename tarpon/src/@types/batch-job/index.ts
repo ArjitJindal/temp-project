@@ -409,6 +409,11 @@ export type FixArsBreakdownBatchJob = {
   tenantId: string
 }
 
+export type BackFillActionProcessing = {
+  type: 'BACKFILL_ACTION_PROCESSING'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -453,6 +458,7 @@ export type BatchJob =
   | FixArsBreakdownBatchJob
   | ClickhouseDataBackfillBatchJob
   | DeltaSanctionsDataFetchBatchJob
+  | BackFillActionProcessing
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

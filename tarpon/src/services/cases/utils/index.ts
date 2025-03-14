@@ -9,6 +9,11 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { AlertCreationIntervalDaily } from '@/@types/openapi-internal/AlertCreationIntervalDaily'
+import { ActionReason } from '@/@types/openapi-internal/ActionReason'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import { generateChecksum } from '@/utils/object'
+import { envIs } from '@/utils/env'
 
 export function calculateCaseAvailableDate(
   now: number,
@@ -136,4 +141,42 @@ export function getDerivedStatus(
     default:
       return status as DerivedStatus
   }
+}
+
+export type ActionProcessingRecord = {
+  entity: Alert
+  reason: ActionReason
+  action: CaseStatus
+  tenantId: string
+}
+
+export async function sendActionProcessionTasks(
+  tasks: ActionProcessingRecord[]
+) {
+  if (envIs('local', 'test')) {
+    const { actionProcessingHandler } = await import(
+      '@/lambdas/action-processing/app'
+    )
+    if (
+      envIs('local') ||
+      process.env.__ACTION_PROCESSING_ENABLED__ === 'true'
+    ) {
+      await actionProcessingHandler({
+        Records: tasks.map((task) => ({
+          body: JSON.stringify(task),
+        })),
+      })
+    }
+    return
+  }
+  const sqsClient = getSQSClient()
+  const messages = tasks.map((task) => ({
+    MessageBody: JSON.stringify(task),
+    MessageDeduplicationId: generateChecksum(task.entity.alertId),
+  }))
+  await bulkSendMessages(
+    sqsClient,
+    process.env.ACTION_PROCESSING_QUEUE_URL as string,
+    messages
+  )
 }

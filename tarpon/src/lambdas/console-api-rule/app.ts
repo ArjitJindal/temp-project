@@ -17,6 +17,7 @@ import { RuleInstanceService } from '@/services/rules-engine/rule-instance-servi
 import { getS3ClientByEvent } from '@/utils/s3'
 import { envIs } from '@/utils/env'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RuleThresholdOptimizer } from '@/services/rule-threshold'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -159,6 +160,19 @@ export const ruleInstanceHandler = lambdaApi()(
     handlers.registerGetRulesWithAlerts(async () => {
       return await ruleInstanceService.getDistinctRuleInstanceIdsWithAlerts()
     })
+
+    handlers.registerGetRuleInstanceRuleInstanceIdRecommendation(
+      async (ctx, request) => {
+        const { ruleInstanceId } = request
+        const ruleThresholdOptimizer = new RuleThresholdOptimizer(tenantId, {
+          dynamoDb,
+          mongoDb,
+        })
+        return await ruleThresholdOptimizer.getRecommendedThresholdData(
+          ruleInstanceId
+        )
+      }
+    )
 
     return await handlers.handle(event)
   }

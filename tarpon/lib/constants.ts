@@ -312,6 +312,9 @@ export const StackConstants = {
   MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'MongoDbChangeCaptureQueueConsumerFunction'
   ),
+  ACTION_PROCESSING_FUNCTION_NAME: getResourceNameForTarpon(
+    'ActionProcessingFunction'
+  ),
 }
 
 export const SQSQueues: {
@@ -361,6 +364,9 @@ export const SQSQueues: {
   },
   MONGO_UPDATE_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoUpdateConsumerQueue') + '.fifo',
+  },
+  ACTION_PROCESSING_QUEUE: {
+    name: getResourceName('ActionPostProcessingQueue'),
   },
 }
 

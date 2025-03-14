@@ -481,6 +481,14 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#roles-by-namespace:${namespace}#${auth0Domain}`,
     SortKeyID: roleId,
   }),
+  RULE_INSTANCE_THRESHOLD_OPTIMIZATION_DATA: (
+    tenantId: string,
+    ruleInstanceId: string,
+    version: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#instance-threshold-data:${ruleInstanceId}`,
+    SortKeyID: version, // To use version in future
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

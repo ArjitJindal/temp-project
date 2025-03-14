@@ -52,7 +52,11 @@ import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
-import { isAlertAvailable } from '@/services/cases/utils'
+import {
+  ActionProcessingRecord,
+  isAlertAvailable,
+  sendActionProcessionTasks,
+} from '@/services/cases/utils'
 import {
   getMongoDbClient,
   sendMessageToMongoUpdateConsumer,
@@ -1379,6 +1383,22 @@ export class AlertsService extends CaseAlertsCommonService {
 
     if (statusUpdateRequest.alertStatus === 'CLOSED' && !externalRequest) {
       await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+    }
+    if (statusUpdateRequest.alertStatus === 'CLOSED') {
+      await sendActionProcessionTasks(
+        alerts.map(
+          (val): ActionProcessingRecord => ({
+            entity: val,
+            reason: {
+              reasons: statusUpdateRequest.reason,
+              comment: statusUpdateRequest.comment ?? '',
+              timestamp: Date.now(),
+            },
+            action: 'CLOSED',
+            tenantId: this.tenantId,
+          })
+        )
+      )
     }
 
     const auditLogEntities = await Promise.all(

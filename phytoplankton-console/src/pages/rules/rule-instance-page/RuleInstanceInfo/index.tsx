@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
 import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
-import { getRuleInstanceDisplayId, isShadowRule, useUpdateRuleInstance } from '../../utils';
+import {
+  getRuleInstanceDisplayId,
+  isShadowRule,
+  isV8RuleInstance,
+  useUpdateRuleInstance,
+} from '../../utils';
 import { canSimulate } from '../../my-rules';
 import { RuleStatusSwitch } from '../../components/RuleStatusSwitch';
 import s from './styles.module.less';
 import { RuleInstanceAnalytics } from './RuleInstanceAnalytics';
+import RuleThresholdRecommendation from './components/RuleThresholdRecommendation';
 import { RuleInstance } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import PriorityTag from '@/components/library/PriorityTag';
@@ -37,6 +43,8 @@ interface Props {
 export const RuleInstanceInfo = (props: Props) => {
   const { ruleInstance: _ruleInstance } = props;
   const [ruleInstance, setRuleInstance] = useState(_ruleInstance);
+  const api = useApi();
+
   const handleRuleInstanceUpdate = useCallback(async (ruleInstance: RuleInstance) => {
     const ruleInstanceId = ruleInstance.id;
     if (!ruleInstanceId) {
@@ -51,7 +59,7 @@ export const RuleInstanceInfo = (props: Props) => {
       : 0;
   const navigate = useNavigate();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
-  const api = useApi();
+
   const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useLocalStorageState(
     'SIMULATION_RULES',
     false,
@@ -292,6 +300,16 @@ export const RuleInstanceInfo = (props: Props) => {
                 </Button>
               )}
             </Confirm>
+            {isV8RuleInstance(true, ruleInstance) ? (
+              <RuleThresholdRecommendation
+                id={ruleInstance.id ?? ''}
+                entityVariables={ruleInstance.logicEntityVariables}
+                aggregationVariables={ruleInstance.logicAggregationVariables}
+                type={ruleInstance.type}
+              />
+            ) : (
+              <></>
+            )}
           </div>
         </Card.Section>
       </Card.Root>

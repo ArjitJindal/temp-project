@@ -200,6 +200,13 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
+    const actionProcessingQueue = this.createQueue(
+      SQSQueues.ACTION_PROCESSING_QUEUE.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+      }
+    )
     const slackAlertQueue = this.createQueue(
       SQSQueues.SLACK_ALERT_QUEUE_NAME.name,
       {
@@ -548,6 +555,7 @@ export class CdkTarponStack extends cdk.Stack {
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
+        ACTION_PROCESSING_QUEUE_URL: actionProcessingQueue.queueUrl,
       },
     }
 
@@ -914,6 +922,24 @@ export class CdkTarponStack extends cdk.Stack {
     notificationsConsumerAlias.addEventSource(
       new SqsEventSource(notificationQueue, {
         maxConcurrency: 5,
+      })
+    )
+
+    /* Action Processing */
+
+    const { alias: actionProcessingFunction } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.ACTION_PROCESSING_FUNCTION_NAME,
+      }
+    )
+
+    actionProcessingFunction.addEventSource(
+      new SqsEventSource(actionProcessingQueue, {
+        reportBatchItemFailures: true,
+        batchSize: 20,
+        maxBatchingWindow: Duration.seconds(2),
       })
     )
 

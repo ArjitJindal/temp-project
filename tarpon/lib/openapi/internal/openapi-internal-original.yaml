@@ -282,6 +282,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuleInstanceStats'
+  /rule_instance/{ruleInstanceId}/recommendations:
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    get:
+      summary: Rule Instance - threshold recommendations
+      operationId: get-rule-instance-ruleInstanceId-recommendation
+      x-flagright:
+        permissions:
+          - rules:my-rules:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleThresholdRecommendations'
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -16758,6 +16778,31 @@ components:
       required:
         - amount
         - currency
+    RuleThresholdRecommendations:
+      type: object
+      properties:
+        ruleInstanceId:
+          type: string
+        varsThresholdData:
+          type: array
+          items:
+            $ref: '#/components/schemas/VarThresholdData'
+        isReady:
+          type: boolean
+      required:
+        - ruleInstanceId
+        - varsThresholdData
+        - isReady
+    VarThresholdData:
+      type: object
+      properties:
+        varKey:
+          type: string
+        threshold:
+          type: number
+      required:
+        - varKey
+        - threshold
   securitySchemes:
     Authorization:
       type: http

@@ -446,3 +446,5 @@ export const MACHINE_LEARNING_MODELS = (params?: AnyParameters) => [
 ];
 
 export const ACTION_REASONS = (type?: ReasonType) => ['action-reasons', type];
+
+export const THRESHOLD_RECOMMENDATIONS = () => ['threshold-recommendations'];

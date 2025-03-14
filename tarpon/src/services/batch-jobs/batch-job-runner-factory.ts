@@ -116,6 +116,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     FIX_LOCKS_FOR_KRS: (jobId) => new FixLocksForKrsBatchJobRunner(jobId),
     DELTA_SANCTIONS_DATA_FETCH: (jobId) =>
       new DeltaSanctionsDataFetchBatchJobRunner(jobId),
+    BACKFILL_ACTION_PROCESSING: (jobId) =>
+      new BackfillAsyncRuleRunsBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }
