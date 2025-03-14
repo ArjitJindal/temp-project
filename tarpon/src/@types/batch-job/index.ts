@@ -414,6 +414,11 @@ export type BackFillActionProcessing = {
   tenantId: string
 }
 
+export type OptimizeClickhouseBatchJob = {
+  type: 'OPTIMIZE_CLICKHOUSE'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -459,6 +464,7 @@ export type BatchJob =
   | ClickhouseDataBackfillBatchJob
   | DeltaSanctionsDataFetchBatchJob
   | BackFillActionProcessing
+  | OptimizeClickhouseBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

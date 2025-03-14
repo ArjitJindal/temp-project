@@ -146,7 +146,7 @@ LEFT JOIN users ON transactions.originUserId = users.userId
 
   const countQuery = replacePlaceholders(
     `
-    SELECT count(*) from transactions 
+    SELECT count(id) from transactions 
     WHERE timestamp between :from and :to and ${clickhouseWhere(ctx)}
     `,
     {

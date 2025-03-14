@@ -269,7 +269,7 @@ export async function offsetPaginateClickhouse<T>(
     where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
-  const countQuery = `SELECT COUNT(*) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 

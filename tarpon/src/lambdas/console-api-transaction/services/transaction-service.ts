@@ -113,7 +113,7 @@ export class TransactionService {
   ): Promise<TransactionsResponseOffsetPaginated> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
-      new ClickhouseTransactionsRepository(this.tenantId, clickhouseClient)
+      new ClickhouseTransactionsRepository(clickhouseClient)
 
     const data = await clickhouseTransactionsRepository.getTransactions(params)
 

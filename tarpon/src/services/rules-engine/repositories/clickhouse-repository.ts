@@ -23,11 +23,9 @@ import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
 @traceable
 export class ClickhouseTransactionsRepository {
-  private tenantId: string
   private clickhouseClient: ClickHouseClient
 
-  constructor(tenantId: string, clickhouseClient: ClickHouseClient) {
-    this.tenantId = tenantId
+  constructor(clickhouseClient: ClickHouseClient) {
     this.clickhouseClient = clickhouseClient
   }
 

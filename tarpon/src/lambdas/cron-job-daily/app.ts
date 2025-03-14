@@ -16,12 +16,6 @@ import { envIs } from '@/utils/env'
 import { AccountsService } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { tenantHasFeature } from '@/core/utils/context'
-import {
-  ClickhouseTableDefinition,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import {
   COLLECTIONS_MAP,
   FEATURE_FLAG_PROVIDER_MAP,
@@ -57,6 +51,7 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       logger.error(`Failed to update oncall users: ${(e as Error)?.message}`, e)
     }
   }
+
   const tenantInfos = await TenantService.getAllTenants(
     process.env.ENV as Stage,
     process.env.REGION as FlagrightRegion
@@ -185,16 +180,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   if (envIs('dev')) {
     await cleanUpStaleQaEnvs()
   }
-
-  // Remove once pick relevant fields is done
-  try {
-    await optimizeClickhouseTables(tenantInfos)
-  } catch (e) {
-    logger.error(
-      `Failed to optimize clickhouse tables: ${(e as Error)?.message}`,
-      e
-    )
-  }
 })
 
 async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
@@ -284,61 +269,6 @@ async function checkDormantUsers(
         }
       }
     }
-  }
-}
-
-async function optimizeClickhouseTables(tenantInfos: TenantInfo[]) {
-  for await (const tenant of tenantInfos) {
-    const isPnb = await tenantHasFeature(tenant.tenant.id, 'PNB')
-    if (isPnb) {
-      const tablesToOptimize = ClickHouseTables.filter(
-        (table) => table.optimize
-      )
-
-      for await (const table of tablesToOptimize) {
-        await optimizeClickhouseTable(tenant.tenant.id, table)
-      }
-    }
-  }
-}
-
-async function optimizeClickhouseTable(
-  tenantId: string,
-  table: ClickhouseTableDefinition
-) {
-  const tableName = table.table
-  logger.info(`Optimizing ${tableName} for ${tenantId}`)
-  const clickhouseClient = await getClickhouseClient(tenantId)
-
-  try {
-    await Promise.all([
-      clickhouseClient.exec({
-        query: `OPTIMIZE TABLE ${tableName} FINAL`,
-        clickhouse_settings: { wait_end_of_query: 0, wait_for_async_insert: 0 },
-      }),
-      clickhouseClient.exec({
-        query: `DELETE FROM ${tableName} WHERE timestamp = 0`,
-        clickhouse_settings: { wait_end_of_query: 0, wait_for_async_insert: 0 },
-      }),
-      ...(table.materializedViews
-        ? Object.values(table.materializedViews).flatMap((view) => [
-            clickhouseClient.exec({
-              query: `OPTIMIZE TABLE ${view.table} FINAL`,
-              clickhouse_settings: {
-                wait_end_of_query: 0,
-                wait_for_async_insert: 0,
-              },
-            }),
-          ]) // If Risk Scores are updated before the user then timestamp might be 0 hence fixing that
-        : []),
-    ])
-  } catch (error) {
-    logger.info(
-      `Failed to optimize ${tableName} for ${tenantId}: ${
-        (error as Error)?.message
-      }`,
-      error
-    )
   }
 }
 
