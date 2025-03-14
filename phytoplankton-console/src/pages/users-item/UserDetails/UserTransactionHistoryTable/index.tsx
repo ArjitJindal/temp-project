@@ -369,6 +369,7 @@ export function Content(props: { userId: string }) {
 
   return (
     <QueryResultsTable<DataItem>
+      tableId={'user-transaction-history'}
       rowKey="rowKey"
       params={params}
       onChangeParams={setParams}
