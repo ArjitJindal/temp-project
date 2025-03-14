@@ -26,7 +26,7 @@ export default function (): JSX.Element {
           }}
         />
         <Component
-          size="LARGE"
+          size="X2"
           placeholder={'Large size'}
           value={value}
           onChange={(newValue) => {

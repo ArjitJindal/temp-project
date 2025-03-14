@@ -1,13 +1,13 @@
-import { test, describe, expect } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 
 import React, { useState } from 'react';
 import { render, screen, userEvent } from 'testing-library-wrapper';
 import TextArea, { Props } from '..';
 import TextAreaStyles from '../styles.module.less';
 import {
-  COLORS_V2_ALERT_CRITICAL,
-  COLORS_V2_PRIMARY_FLAGRIGHTBLUE,
-  COLORS_V2_STATE_DISABLED,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY,
 } from '@/components/ui/colors';
 
 describe('Different states', () => {
@@ -16,7 +16,7 @@ describe('Different states', () => {
     const inputEl = getInput();
     expect(inputEl).toBeDisabled();
     const borderColor = getBorderColor();
-    expect(borderColor).toBeColor(COLORS_V2_STATE_DISABLED);
+    expect(borderColor).toBeColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
   });
   test.each([false, true])('Focused state when error is %p', async (isError) => {
     render(<RenderTextArea isError={isError} />);
@@ -24,18 +24,18 @@ describe('Different states', () => {
     await userEvent.click(input);
     const borderColor = getBorderColor();
     if (isError) {
-      expect(borderColor).toEqual(COLORS_V2_ALERT_CRITICAL);
+      expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
     } else {
-      expect(borderColor).toEqual(COLORS_V2_PRIMARY_FLAGRIGHTBLUE);
+      expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION);
     }
   });
   test.each([false, true])('Error state when disabled is %p', (isDisabled) => {
     render(<RenderTextArea isError={true} isDisabled={isDisabled} />);
     const borderColor = getBorderColor();
     if (isDisabled) {
-      expect(borderColor).not.toEqual(COLORS_V2_ALERT_CRITICAL);
+      expect(borderColor).not.toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
     } else {
-      expect(borderColor).toEqual(COLORS_V2_ALERT_CRITICAL);
+      expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
     }
   });
 });
@@ -74,7 +74,7 @@ function getInput() {
 }
 
 function getBorderColor(): string {
-  const rootEl = screen.getByClassName(TextAreaStyles.root);
+  const rootEl = screen.getByClassName(TextAreaStyles.input);
   const style = window.getComputedStyle(rootEl);
-  return style.getPropertyValue('border-color');
+  return style.getPropertyValue('border-color').toUpperCase();
 }

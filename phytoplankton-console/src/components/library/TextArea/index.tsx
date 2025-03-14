@@ -1,6 +1,7 @@
 import { Input } from 'antd';
 import { TextAreaRef } from 'antd/lib/input/TextArea';
 import cn from 'clsx';
+import React from 'react';
 import s from './styles.module.less';
 import { InputProps } from '@/components/library/Form';
 
@@ -12,6 +13,8 @@ export interface Props extends InputProps<string> {
   placeholder?: string;
   ref?: React.Ref<TextAreaRef>;
   minHeight?: string;
+  isSuccess?: boolean;
+  description?: string;
 }
 
 export default function TextArea(props: Props) {
@@ -28,21 +31,32 @@ export default function TextArea(props: Props) {
     onFocus,
     onBlur,
     minHeight,
+    isSuccess,
+    description,
   } = props;
   return (
-    <Input.TextArea
-      value={value ?? ''}
-      onChange={(e) => onChange?.(e.target.value)}
-      showCount={showCount}
-      maxLength={maxLength}
-      rows={rows}
-      placeholder={placeholder}
-      className={cn(s.root, className, isError && s.isError, !showCount && s.bareInput)}
-      disabled={isDisabled}
-      ref={props.ref}
-      onFocus={onFocus ? () => onFocus() : undefined}
-      onBlur={onBlur ? () => onBlur() : undefined}
-      style={{ minHeight }}
-    />
+    <div className={s.root}>
+      <Input.TextArea
+        value={value ?? ''}
+        onChange={(e) => onChange?.(e.target.value)}
+        showCount={showCount}
+        maxLength={maxLength}
+        rows={rows}
+        placeholder={placeholder}
+        className={cn(
+          s.input,
+          className,
+          isError && s.isError,
+          isSuccess && s.isSuccess,
+          !showCount && s.bareInput,
+        )}
+        disabled={isDisabled}
+        ref={props.ref}
+        onFocus={onFocus || undefined}
+        onBlur={onBlur || undefined}
+        style={{ minHeight }}
+      />
+      {description && <div className={s.description}>{description}</div>}
+    </div>
   );
 }

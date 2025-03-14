@@ -104,7 +104,7 @@ export default function CreationIntervalInput(props: Props) {
             value={value?.day}
             min={1}
             max={31}
-            size="LARGE"
+            size="X2"
             onChange={(newValue) => {
               if (newValue != null) {
                 onChange?.({

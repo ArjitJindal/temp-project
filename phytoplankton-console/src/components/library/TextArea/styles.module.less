@@ -8,23 +8,47 @@
 }
 
 .root {
+  display: flex;
+  flex-direction: column;
+}
+
+.input {
+  display: flex;
+  position: relative;
+  flex: 1;
+
+  &::after {
+    font-size: @figma-vars--primitives-typographyFontSizeM;
+    color: @figma-vars--tokens-colorTextSecondary;
+    position: absolute;
+    top: -@figma-vars--tokens-spacingSpacing3xs;
+    right: 0;
+    transform: translateY(-100%);
+    line-height: @figma-vars--primitives-typographyFontLineHeightS;
+  }
+
   #textarea({
+    font-size: @figma-vars--primitives-typographyFontSizeM;
+    line-height: @figma-vars--primitives-typographyFontLineHeightM;
     outline: none !important;
     box-shadow: none !important;
     transition: none !important;
+    border-radius: @figma-vars--tokens-borderRadiusBorderradiusM;
+    padding: @figma-vars--tokens-spacingSpacingM;
 
     &, &:hover {
-      border: 1px solid @fr-colors-v2-gray-2;
+      border: 1px solid @figma-vars--tokens-colorStrokeTertiary;
+    }
+
+    &::placeholder {
+      color: @figma-vars--tokens-colorTextSecondary;
     }
 
     &:disabled {
       pointer-events: none;
-      border-color: @fr-colors-v2-state-disabled;
-      background: @fr-colors-v2-gray-1;
-
-      &::placeholder {
-        color: fade(@fr-colors-v2-state-disabled, 85%);
-      }
+      border-color: @figma-vars--tokens-colorStrokeTertiary;
+      background: @figma-vars--tokens-colorBackgroundDisabled;
+      color: @figma-vars--tokens-colorTextSecondary;
     }
   });
 
@@ -32,7 +56,7 @@
     &:not(:disabled) {
       #textarea({
         &:focus {
-          border-color: @fr-colors-v2-primary-flagrightBlue;
+          border-color: @figma-vars--tokens-colorStrokeAction;
         }
       });
     }
@@ -44,13 +68,27 @@
         &,
         &:hover,
         &:focus {
-          border-color: @fr-colors-v2-alert-critical;
+          border-color: @figma-vars--tokens-colorStrokeError;
         }
-      }
-
-      &::placeholder {
-        color: @fr-colors-v2-gray-6;
       }
     });
   }
+
+  &.isSuccess {
+    #textarea({
+      &:not(:disabled) {
+        &,
+        &:hover,
+        &:focus {
+          border-color: @figma-vars--tokens-colorStrokeSuccess;
+        }
+      }
+    });
+  }
+}
+
+.description {
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  color: @figma-vars--tokens-colorTextSecondary;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
 }

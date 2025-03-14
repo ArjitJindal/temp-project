@@ -211,3 +211,5 @@ export function getLabelColor(backgroundColor: string): string {
 }
 
 export default COLORS;
+
+export * from './figma-vars';
