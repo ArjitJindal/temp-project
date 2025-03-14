@@ -37,7 +37,7 @@ const RuleHitInsightsTag: React.FC<Props> = ({ percentage, runs, showPercentage 
             : percentage > 0
             ? 'Moderate hit rate'
             : 'No hits'}
-          {showPercentage && ` - ${percentage}%`}
+          {showPercentage && ` - ${percentage.toFixed(2)}%`}
         </Tag>
       </span>
     </Tooltip>
