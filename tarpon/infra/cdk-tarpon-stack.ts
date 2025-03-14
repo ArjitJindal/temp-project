@@ -636,6 +636,7 @@ export class CdkTarponStack extends cdk.Stack {
             batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
             mongoUpdateConsumerQueue.queueArn,
+            actionProcessingQueue.queueArn,
           ],
         }),
         new PolicyStatement({
