@@ -57,7 +57,6 @@ export const featureDescriptions: Record<
   },
   RISK_LEVELS: { title: 'Risk levels', description: 'Enable risk levels' },
   RISK_SCORING: { title: ' Risk scoring', description: 'Enables risk scoring' },
-  AUDIT_LOGS: { title: 'Audit logs', description: 'Enables audit log' },
   SLACK_ALERTS: { title: 'Slack alerts', description: 'Enables slack alerts for cases' },
   NARRATIVE_COPILOT: {
     title: 'Narrative copilot',

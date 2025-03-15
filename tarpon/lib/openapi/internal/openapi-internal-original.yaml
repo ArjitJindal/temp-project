@@ -11344,7 +11344,6 @@ components:
         - ALERT_DETAILS_PAGE
         - RISK_LEVELS
         - RISK_SCORING
-        - AUDIT_LOGS
         - SLACK_ALERTS
         - NARRATIVE_COPILOT
         - AI_FORENSICS

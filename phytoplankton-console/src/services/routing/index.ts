@@ -48,7 +48,6 @@ export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskScoringV8Enabled = useFeatureEnabled('RISK_SCORING_V8');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
-  const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const isRiskScoringV8EnabledForV2 = useFeatureEnabled('RISK_SCORING_V8_FOR_V2');
@@ -759,8 +758,6 @@ export function useRoutes(): RouteItem[] {
         name: 'auditlog',
         position: 'top',
         permissions: ['audit-log:export:read'],
-        disabled: !isAuditLogEnabled,
-        associatedFeatures: ['AUDIT_LOGS'],
         component: AuditLogPage,
       },
       ...(hasMachineLearningFeature
@@ -838,7 +835,6 @@ export function useRoutes(): RouteItem[] {
     isSarEnabled,
     lastActiveList,
     isSanctionsEnabled,
-    isAuditLogEnabled,
     lastActiveSanctionsTab,
     isAtLeastAdminUser,
     hasAuditLogPermission,
