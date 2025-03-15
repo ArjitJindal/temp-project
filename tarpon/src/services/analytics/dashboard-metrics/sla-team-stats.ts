@@ -270,7 +270,7 @@ export class TeamSLAStatsDashboardMetric {
     WARNING,
     (SELECT count(*) FROM grouped_data) AS total
     FROM grouped_data
-    ORDER BY account ASC
+    ORDER BY accountId ASC
     ${
       pageSize ? `LIMIT ${pageSize} OFFSET ${((page || 1) - 1) * pageSize}` : ''
     }
