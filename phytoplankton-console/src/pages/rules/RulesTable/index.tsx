@@ -18,6 +18,10 @@ import { RULE_ACTION_VALUES } from '@/utils/rules';
 import RuleChecksForTag from '@/components/library/RuleChecksForTag';
 import { getOr } from '@/utils/asyncResource';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import { OverviewToolTip } from '@/components/OverviewToolTip';
+import Tag from '@/components/library/Tag';
+import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 
 interface RulesTableParams extends CommonParams {}
 
@@ -52,12 +56,42 @@ function canSimulate(rule: Rule) {
   return rule.type === 'TRANSACTION';
 }
 
+const ruleUsageReasons: string[] = [
+  'Top used rule this month',
+  'Used by companies similar to us',
+  'Used by companies in the same region',
+  'Best performing rule this month',
+  'Used by companies with similar risk profiles',
+  'Used by companies in the same industry vertical',
+  'Used by companies of similar size/complexity',
+  'Adopted by companies with similar transaction patterns',
+  'Used by companies of similar license',
+  'Top performing rule by SAR conversion rate',
+  'Rule with highest efficiency score',
+  'Fastest growing rule adoption across network',
+  'Emerging typology coverage',
+];
+
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
+  const random3Reasons = useMemo(() => {
+    return ruleUsageReasons.sort(() => Math.random() - 0.5).slice(0, 3);
+  }, []);
+
+  const [demoMode] = useDemoMode();
+  const isDemoMode = getOr(demoMode, false);
+
+  const RData = () => {
+    return (
+      <Tag className={style.recommendedTag} icon={<CheckMark className={style.icon} />}>
+        <span>Recommended</span>
+      </Tag>
+    );
+  };
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
     return helper.list([
@@ -82,13 +116,21 @@ export const RulesTable: React.FC<Props> = (props) => {
                   <span className={style.root}>
                     {id}{' '}
                     {id && recommendedRules.includes(id) ? (
-                      <RecommendedTag
-                        tooltipTitle={`Recommended tag helps you securely and anonymously collaborate with other fintechs globally. ${branding.companyName} system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones.`}
-                      />
+                      <>
+                        {isDemoMode ? (
+                          <OverviewToolTip reasons={random3Reasons} right={<RData />}>
+                            <RData />
+                          </OverviewToolTip>
+                        ) : (
+                          <RecommendedTag
+                            tooltipTitle={`Recommended tag helps you securely and anonymously collaborate with other fintechs globally. ${branding.companyName} system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones.`}
+                          />
+                        )}
+                      </>
                     ) : (
                       ''
                     )}
-                  </span>
+                  </span>{' '}
                 </a>
                 <span style={{ fontSize: '12px', whiteSpace: 'normal' }}>{entity.name}</span>
               </>
@@ -219,7 +261,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         },
       }),
     ]);
-  }, [simulationMode, onViewRule, canWriteRules, onEditRule]);
+  }, [simulationMode, onViewRule, canWriteRules, onEditRule, isDemoMode, random3Reasons]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,

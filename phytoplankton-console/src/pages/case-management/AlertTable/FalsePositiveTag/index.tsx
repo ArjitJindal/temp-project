@@ -6,8 +6,7 @@ import { CaseStatus } from '@/apis';
 import Tag from '@/components/library/Tag';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
-import COLORS from '@/components/ui/colors';
-import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import { OverviewToolTip } from '@/components/OverviewToolTip';
 
 interface Props {
   confidence: number;
@@ -58,37 +57,24 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
     return reasons.sort(() => Math.random() - 0.5).slice(0, 3);
   }, []);
 
-  const title = useMemo(() => {
-    if (demoMode) {
-      return (
-        <div className={s.tooltip}>
-          <div className={s.tooltipTitle}>
-            <div className={s.tooltipTitleLeft}>
-              <AiForensicsLogo size="SMALL" variant="OVERVIEW" />
-            </div>
-            <div className={s.tooltipTitleRight}>
-              <FalsePostiveLabel confidence={confidence} />
-            </div>
-          </div>
-          <ul className={s.tooltipList}>
-            {random3Reasons.map((value) => (
-              <li key={value}>{value}</li>
-            ))}
-          </ul>
-        </div>
-      );
-    }
-
-    return <div>Accuracy increases as you close more cases.</div>;
-  }, [demoMode, random3Reasons, confidence]);
-
   return (
     <>
-      <Tooltip overlay={title} color={COLORS.white} placement="bottomRight">
-        <div>
-          <FalsePostiveLabel confidence={confidence} onClick={() => setModalVisible(true)} />
-        </div>
-      </Tooltip>
+      {demoMode ? (
+        <OverviewToolTip
+          reasons={random3Reasons}
+          right={<FalsePostiveLabel confidence={confidence} />}
+        >
+          <div>
+            <FalsePostiveLabel confidence={confidence} onClick={() => setModalVisible(true)} />
+          </div>
+        </OverviewToolTip>
+      ) : (
+        <Tooltip overlay="Accuracy increases as you close more cases.">
+          <div>
+            <FalsePostiveLabel confidence={confidence} onClick={() => setModalVisible(true)} />
+          </div>
+        </Tooltip>
+      )}
       <AlertStatusChangeModal
         entityIds={[alertId ?? '']}
         caseId={caseIds[0]}
