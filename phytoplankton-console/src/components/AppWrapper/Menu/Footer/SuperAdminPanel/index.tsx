@@ -149,7 +149,6 @@ export const featureDescriptions: Record<
     title: 'Risk Scoring V8 for V2',
     description:
       'Enables both V2 and V8 engines together (requires: Risk scoring & Risk scoring V8)',
-    tag: FeatureTag.ENG,
   },
   STRICT_FILE_SECURITY: {
     title: 'Strict file security',
