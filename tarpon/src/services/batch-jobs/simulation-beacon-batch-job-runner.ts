@@ -1,7 +1,10 @@
 import pMap from 'p-map'
 import PQueue from 'p-queue'
-import { chain, chunk, compact, uniq, uniqBy } from 'lodash'
+import { chain, chunk, compact, memoize, uniq, uniqBy } from 'lodash'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RulesEngineService } from '@/services/rules-engine'
@@ -20,6 +23,12 @@ import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationBeaconSampling } from '@/@types/openapi-internal/SimulationBeaconSampling'
+import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { getUserName } from '@/utils/helpers'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
 
 const MAX_TRANSACTIONS = 10000
 
@@ -33,8 +42,10 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private transactionRepository?: MongoDbTransactionRepository
   private rulesEngineService?: RulesEngineService
   private casesRepository?: CaseRepository
+  private simulationResultRepository?: SimulationResultRepository
   private userRepository?: UserRepository
   private executionDetails: SimulatedTransactionHit[] = []
+  private riskRepository?: RiskRepository
 
   protected async run(job: SimulationBeaconBatchJob): Promise<void> {
     const { tenantId, awsCredentials, parameters } = job
@@ -48,18 +59,29 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     )
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
     const caseRepository = new CaseRepository(tenantId, { mongoDb })
-    const userRepository = new UserRepository(tenantId, { mongoDb })
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
       mongoDb,
       dynamoDb
     )
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    const simulationResultRepository = new SimulationResultRepository(
+      tenantId,
+      mongoDb
+    )
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb,
+    })
 
     this.rulesEngineService = rulesEngineService
     this.casesRepository = caseRepository
     this.transactionRepository = transactionRepository
+    this.simulationResultRepository = simulationResultRepository
     this.userRepository = userRepository
-
+    this.riskRepository = riskRepository
     await simulationRepository.updateTaskStatus(
       parameters.taskId,
       'IN_PROGRESS'
@@ -104,6 +126,14 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
             ),
           ])
         }
+      )
+      const riskClassificationValues =
+        await this.riskRepository?.getRiskClassificationValues()
+
+      await this.insertSimulationResults(
+        this.executionDetails,
+        parameters,
+        riskClassificationValues
       )
       await simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS')
     } catch (error) {
@@ -554,5 +584,142 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       }
     })
     return users.size
+  }
+
+  private user = memoize(
+    async (
+      userId: string
+    ): Promise<InternalConsumerUser | InternalBusinessUser | undefined> => {
+      return this.userRepository?.getMongoUser(userId, undefined, {
+        projection: {
+          userId: 1,
+          userDetails: { name: 1 },
+          type: 1,
+          legalEntity: { companyGeneralDetails: { legalName: 1 } },
+          drsScore: 1,
+        },
+      }) as Promise<InternalConsumerUser | InternalBusinessUser | undefined>
+    }
+  )
+
+  private async insertSimulationResults(
+    executionDetails: SimulatedTransactionHit[],
+    parameters: SimulationBeaconParameters & { taskId: string },
+    riskClassificationValues: RiskClassificationScore[]
+  ): Promise<void> {
+    const simulationTransactionResults: SimulationBeaconTransactionResult[] = []
+    for (const executionDetail of executionDetails) {
+      const currentTransaction = executionDetail.transaction
+      const [originUser, destinationUser] = await Promise.all([
+        currentTransaction.originUserId
+          ? this.user(currentTransaction.originUserId)
+          : Promise.resolve(undefined),
+        currentTransaction.destinationUserId
+          ? this.user(currentTransaction.destinationUserId)
+          : Promise.resolve(undefined),
+      ])
+
+      const transactionResult: SimulationBeaconTransactionResult = {
+        taskId: parameters.taskId,
+        transactionId: currentTransaction.transactionId,
+        hit: executionDetail.executedRules.ruleHit ? 'HIT' : 'NO_HIT',
+        action: currentTransaction.status,
+        type: 'BEACON_TRANSACTION',
+        timestamp: currentTransaction.timestamp,
+        transactionType: currentTransaction.type,
+        originAmountDetails: currentTransaction.originAmountDetails,
+        destinationAmountDetails: currentTransaction.destinationAmountDetails,
+        originUser: originUser
+          ? {
+              userId: originUser.userId,
+              userName: getUserName(originUser),
+              userType: originUser.type,
+              riskScore: originUser.drsScore?.drsScore,
+              riskLevel: getRiskLevelFromScore(
+                riskClassificationValues,
+                originUser.drsScore?.drsScore ?? null
+              ),
+            }
+          : undefined,
+        destinationUser: destinationUser
+          ? {
+              userId: destinationUser.userId,
+              userName: getUserName(destinationUser),
+              userType: destinationUser.type,
+              riskScore: destinationUser.drsScore?.drsScore,
+              riskLevel: getRiskLevelFromScore(
+                riskClassificationValues,
+                destinationUser.drsScore?.drsScore ?? null
+              ),
+            }
+          : undefined,
+        destinationPaymentDetails: currentTransaction.destinationPaymentDetails
+          ? {
+              paymentMethod:
+                currentTransaction.destinationPaymentDetails.method,
+              paymentMethodId:
+                currentTransaction.destinationPaymentMethodId ?? '',
+            }
+          : undefined,
+        originPaymentDetails: currentTransaction.originPaymentDetails
+          ? {
+              paymentMethod: currentTransaction.originPaymentDetails.method,
+              paymentMethodId: currentTransaction.originPaymentMethodId ?? '',
+            }
+          : undefined,
+        riskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          currentTransaction.arsScore?.arsScore ?? null
+        ),
+        riskScore: currentTransaction.arsScore?.arsScore,
+      }
+      simulationTransactionResults.push(transactionResult)
+    }
+
+    const users = await this.getSimulationUserHits(
+      simulationTransactionResults,
+      parameters
+    )
+
+    await this.simulationResultRepository?.saveSimulationResults(users)
+    await this.simulationResultRepository?.saveSimulationResults(
+      simulationTransactionResults
+    )
+  }
+
+  private async getSimulationUserHits(
+    transactionResults: SimulationBeaconTransactionResult[],
+    parameters: SimulationBeaconParameters & { taskId: string }
+  ): Promise<SimulationBeaconResultUser[]> {
+    const users = new Map<string, SimulationBeaconResultUser>()
+    for (const result of transactionResults) {
+      const isTransactionHit = result.hit === 'HIT'
+      const { originUser, destinationUser } = result
+
+      const processUser = (
+        user: typeof originUser | typeof destinationUser
+      ) => {
+        if (!user) {
+          return
+        }
+        const userId = user.userId
+        if (!users.has(userId)) {
+          if (users.get(userId)?.hit === 'HIT' && !isTransactionHit) {
+            return
+          }
+          users.set(userId, {
+            ...user,
+            hit: isTransactionHit ? 'HIT' : 'NO_HIT',
+            taskId: parameters.taskId,
+            type: 'BEACON_USER',
+          })
+        }
+      }
+
+      processUser(originUser)
+      processUser(destinationUser)
+    }
+
+    return Array.from(users.values())
   }
 }

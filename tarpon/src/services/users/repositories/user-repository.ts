@@ -857,7 +857,8 @@ export class UserRepository {
 
   public async getMongoUser(
     userId: string,
-    userType?: 'BUSINESS' | 'CONSUMER'
+    userType?: 'BUSINESS' | 'CONSUMER',
+    options?: { projection?: Document }
   ): Promise<InternalUser | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
@@ -866,10 +867,15 @@ export class UserRepository {
 
     const matchCondition: Filter<InternalBusinessUser | InternalConsumerUser> =
       { userId }
+
     if (userType) {
       matchCondition.type = userType
     }
-    return await collection.findOne(matchCondition as Filter<InternalUser>)
+
+    return await collection.findOne(
+      matchCondition as Filter<InternalUser>,
+      options
+    )
   }
 
   public async getMongoUsersByIds(

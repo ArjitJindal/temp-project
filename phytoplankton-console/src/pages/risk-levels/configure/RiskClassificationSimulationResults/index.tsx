@@ -179,13 +179,18 @@ const IterationComponent = (props: IterationProps) => {
     SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
     async () => {
       if (iteration?.taskId) {
-        return await api.getSimulationTaskIdResult({
+        const response = await api.getSimulationTaskIdResult({
           taskId: iteration.taskId,
           page: params.page,
           pageSize: params.pageSize,
           sortField: params.sort?.[0]?.[0] ?? 'userId',
           sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
         });
+
+        return {
+          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
+          total: response.total,
+        };
       } else {
         return {
           items: [],

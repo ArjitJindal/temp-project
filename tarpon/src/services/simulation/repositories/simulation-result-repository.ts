@@ -6,15 +6,23 @@ import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/Simulation
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/SimulationRiskFactorsResult'
-import { SimulationRiskLevelsAndRiskFactorsResultResponse } from '@/@types/openapi-internal/SimulationRiskLevelsAndRiskFactorsResultResponse'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
-import { isDemoMode } from '@/utils/demo'
+import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
+import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
+import { isDemoTenant } from '@/utils/tenant'
 
 type SimulationResult =
   | SimulationRiskLevelsResult
   | SimulationRiskFactorsResult
   | SimulationV8RiskFactorsResult
+  | SimulationBeaconResultUser
+  | SimulationBeaconTransactionResult
+
+type SimulationResultReturnType = {
+  total: number
+  items: SimulationResult[]
+}
 
 @traceable
 export class SimulationResultRepository {
@@ -27,28 +35,27 @@ export class SimulationResultRepository {
   }
 
   public async saveSimulationResults(
-    results:
-      | SimulationRiskLevelsResult[]
-      | SimulationRiskFactorsResult[]
-      | SimulationV8RiskFactorsResult[]
+    results: SimulationResult[]
   ): Promise<void> {
     if (results.length === 0) {
       return
     }
+
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationResult>(
+    const collection = db.collection(
       SIMULATION_RESULT_COLLECTION(this.tenantId)
     )
 
-    if (isDemoMode()) {
+    if (isDemoTenant(this.tenantId)) {
       await pMap(
-        results as SimulationResult[],
+        results,
         async (result) => {
-          await collection.replaceOne(
-            { taskId: result.taskId, userId: result.userId },
-            result,
-            { upsert: true }
-          )
+          const filter =
+            'userId' in result
+              ? { taskId: result.taskId, userId: result.userId }
+              : { taskId: result.taskId, transactionId: result.transactionId }
+
+          await collection.findOneAndReplace(filter, result, { upsert: true })
         },
         { concurrency: 100 }
       )
@@ -64,6 +71,60 @@ export class SimulationResultRepository {
 
     if (params.taskId) {
       conditions.push({ taskId: params.taskId })
+    }
+
+    if (params.filterTransactionId) {
+      conditions.push({ transactionId: params.filterTransactionId })
+    }
+
+    if (params.filterUserId) {
+      conditions.push({
+        $or: [
+          { 'originUser.userId': params.filterUserId },
+          { 'destinationUser.userId': params.filterUserId },
+          { userId: params.filterUserId },
+        ],
+      })
+    }
+
+    if (params.filterOriginPaymentMethod) {
+      conditions.push({
+        'originPaymentDetails.paymentMethod': params.filterOriginPaymentMethod,
+      })
+    }
+
+    if (params.filterDestinationPaymentMethod) {
+      conditions.push({
+        'destinationPaymentDetails.paymentMethod':
+          params.filterDestinationPaymentMethod,
+      })
+    }
+
+    if (params.filterTransactionType) {
+      conditions.push({
+        transactionType: params.filterTransactionType,
+      })
+    }
+
+    if (params.filterHitStatus) {
+      conditions.push({
+        hit: params.filterHitStatus,
+      })
+    }
+
+    if (params.filterStartTimestamp && params.filterEndTimestamp) {
+      conditions.push({
+        timestamp: {
+          $gte: params.filterStartTimestamp,
+          $lte: params.filterEndTimestamp,
+        },
+      })
+    }
+
+    if (params.filterRuleAction) {
+      conditions.push({
+        action: params.filterRuleAction,
+      })
     }
 
     if (params.filterId) {
@@ -85,6 +146,12 @@ export class SimulationResultRepository {
     ) {
       conditions.push({
         'simulated.krs.riskLevel': { $in: params.filterSimulationKrsLevel },
+      })
+    }
+
+    if (params.filterType) {
+      conditions.push({
+        type: params.filterType,
       })
     }
 
@@ -180,13 +247,10 @@ export class SimulationResultRepository {
 
   public async getSimulationResults(
     params: DefaultApiGetSimulationTaskIdResultRequest
-  ): Promise<SimulationRiskLevelsAndRiskFactorsResultResponse> {
-    const cursor = await this.getSimulationCursor(params)
-    const total = this.getSimulationCount(params)
-
+  ): Promise<SimulationResultReturnType> {
     return {
-      total: await total,
-      items: await cursor.toArray(),
+      total: await this.getSimulationCount(params),
+      items: await (await this.getSimulationCursor(params)).toArray(),
     }
   }
 }

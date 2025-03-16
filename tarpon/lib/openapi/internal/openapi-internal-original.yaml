@@ -6748,6 +6748,49 @@ paths:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
         in: query
         name: filterSimulationDrsLevel
+      - schema:
+          type: string
+          enum:
+            - BEACON_TRANSACTION
+            - BEACON_USER
+        in: query
+        name: filterType
+      - schema:
+          type: string
+        in: query
+        name: filterTransactionId
+      - schema:
+          type: string
+        in: query
+        name: filterUserId
+      - schema:
+          type: number
+        in: query
+        name: filterStartTimestamp
+      - schema:
+          type: number
+        in: query
+        name: filterEndTimestamp
+      - schema:
+          type: string
+        in: query
+        name: filterOriginPaymentMethod
+      - schema:
+          type: string
+        in: query
+        name: filterDestinationPaymentMethod
+      - schema:
+          type: string
+        in: query
+        name: filterTransactionType
+      - schema:
+          type: string
+        in: query
+        name: filterHitStatus
+      - schema:
+          type: string
+        in: query
+        name: filterRuleAction
   /simulation/stats:
     get:
       summary: Get simulation tasks count
@@ -14887,6 +14930,106 @@ components:
               type: number
             riskLevel:
               $ref: '#/components/schemas/RiskLevel'
+    SimulationBeaconUser:
+      title: SimulationBeaconUser
+      type: object
+      properties:
+        userId:
+          type: string
+        userName:
+          type: string
+        userType:
+          $ref: '#/components/schemas/UserType'
+        riskScore:
+          type: number
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - userId
+        - userName
+        - userType
+    SimulationBeaconResultUser:
+      title: SimulationBeaconResultUser
+      allOf:
+        - $ref: '#/components/schemas/SimulationBeaconUser'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - BEACON_USER
+            taskId:
+              type: string
+            hit:
+              $ref: '#/components/schemas/SimulationBeaconHit'
+      required:
+        - taskId
+        - type
+        - userId
+        - userName
+        - userType
+        - hit
+    SimulationBeaconPaymentDetails:
+      title: SimulationBeaconPaymentDetails
+      type: object
+      properties:
+        paymentMethod:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+        paymentMethodId:
+          type: string
+      required:
+        - paymentMethod
+        - paymentMethodId
+    SimulationBeaconTransactionResult:
+      title: SimulationBeaconTransactionResult
+      type: object
+      properties:
+        taskId:
+          type: string
+        type:
+          type: string
+          enum:
+            - BEACON_TRANSACTION
+        transactionType:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+        timestamp:
+          type: number
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        transactionId:
+          type: string
+        originUser:
+          $ref: '#/components/schemas/SimulationBeaconUser'
+        destinationUser:
+          $ref: '#/components/schemas/SimulationBeaconUser'
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        riskScore:
+          type: number
+        originAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        destinationAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        originPaymentDetails:
+          $ref: '#/components/schemas/SimulationBeaconPaymentDetails'
+        destinationPaymentDetails:
+          $ref: '#/components/schemas/SimulationBeaconPaymentDetails'
+        hit:
+          $ref: '#/components/schemas/SimulationBeaconHit'
+      required:
+        - taskId
+        - type
+        - transactionId
+        - tranasctionType
+        - hit
+        - timestamp
+        - action
+    SimulationBeaconHit:
+      title: SimulationBeaconHit
+      type: string
+      enum:
+        - HIT
+        - NO_HIT
     SimulationRiskLevelsResult:
       title: SimulationRiskLevelsResult
       type: object
@@ -15017,7 +15160,10 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SimulationRiskLevelsAndRiskFactorsResult'
+            oneOf:
+              - $ref: '#/components/schemas/SimulationRiskLevelsAndRiskFactorsResult'
+              - $ref: '#/components/schemas/SimulationBeaconTransactionResult'
+              - $ref: '#/components/schemas/SimulationBeaconResultUser'
         total:
           type: number
       required:

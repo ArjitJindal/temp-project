@@ -63,6 +63,10 @@ function replaceSimulationGetResponse(paths) {
       .replace(
         "import { SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType } from './SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType';",
         'import { SimulationRiskLevelsType } from "../models/SimulationRiskLevelsType"; import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationRiskFactorsType } from "../models/SimulationRiskFactorsType"; import { SimulationV8RiskFactorsType } from "../models/SimulationV8RiskFactorsType";',
+      )
+      .replace(
+        "import { SimulationRiskLevelsAndRiskFactorsResult | SimulationBeaconTransactionResult | SimulationBeaconResultUser } from './SimulationRiskLevelsAndRiskFactorsResult | SimulationBeaconTransactionResult | SimulationBeaconResultUser';",
+        '',
       );
 
     fs.writeFileSync(path, newText);
@@ -122,6 +126,7 @@ fi`);
   replaceSimulationGetResponse([
     'src/apis/apis/DefaultApi.ts',
     'src/apis/models/SimulationGetResponse.ts',
+    'src/apis/models/SimulationRiskLevelsAndRiskFactorsResultResponse.ts',
   ]);
 
   exec('npx prettier --write src/apis');

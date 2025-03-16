@@ -29,7 +29,6 @@ import {
   TableRefType,
   TableRow,
 } from '@/components/library/Table/types';
-import { makeUrl } from '@/utils/routing';
 import { getUserLink } from '@/utils/api/users';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
@@ -45,6 +44,7 @@ import {
   RULE_ACTION_STATUS,
   STRING,
   TAGS,
+  TRANSACTION_ID,
   TRANSACTION_STATE,
   TRANSACTION_TYPE,
 } from '@/components/library/Table/standardDataTypes';
@@ -55,7 +55,6 @@ import { dayjs } from '@/utils/dayjs';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
-import Tag from '@/components/library/Tag';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
@@ -224,7 +223,7 @@ export const getStatus = (
   return undefined;
 };
 
-const getAmountFromPayment = (
+export const getAmountFromPayment = (
   payment: TransactionTableItemPayment | null | undefined,
 ): Amount | undefined => {
   if (payment == null) {
@@ -336,30 +335,7 @@ export default function TransactionsTable(props: Props) {
         key: 'transactionId',
         filtering: true,
         pinFilterToLeft: true,
-        type: {
-          ...STRING,
-          render: (value: string | undefined) => {
-            return (
-              <div style={{ overflowWrap: 'anywhere' }}>
-                <Id to={makeUrl(`/transactions/item/:id`, { id: value })} testName="transaction-id">
-                  {value}
-                </Id>
-                {escalatedTransactions &&
-                  value != null &&
-                  escalatedTransactions?.indexOf(value) > -1 && (
-                    <>
-                      <br />
-                      <Tag color="blue">Escalated</Tag>
-                    </>
-                  )}
-              </div>
-            );
-          },
-          link: (value) => makeUrl(`/transactions/item/:id`, { id: value }),
-          stringify(value) {
-            return `${value}`;
-          },
-        },
+        type: TRANSACTION_ID(escalatedTransactions),
       }),
       ...alertColumns,
       ...(isRiskScoringEnabled

@@ -212,7 +212,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     }),
     async () => {
       if (iteration?.taskId) {
-        return await api.getSimulationTaskIdResult({
+        const response = await api.getSimulationTaskIdResult({
           taskId: iteration.taskId,
           page: params.page,
           pageSize: params.pageSize,
@@ -224,6 +224,10 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
           filterId: params.userId,
         });
+        return {
+          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
+          total: response.total,
+        };
       } else {
         return {
           items: [],

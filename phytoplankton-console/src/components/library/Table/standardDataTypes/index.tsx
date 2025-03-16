@@ -941,3 +941,26 @@ export const SIMULATION_STATUS = {
     );
   },
 };
+
+export const TRANSACTION_ID = (escalatedTransactions?: string[]) => ({
+  ...STRING,
+  render: (value: string | undefined) => {
+    return (
+      <div style={{ overflowWrap: 'anywhere' }}>
+        <Id to={makeUrl(`/transactions/item/:id`, { id: value })} testName="transaction-id">
+          {value}
+        </Id>
+        {escalatedTransactions && value != null && escalatedTransactions?.indexOf(value) > -1 && (
+          <>
+            <br />
+            <Tag color="blue">Escalated</Tag>
+          </>
+        )}
+      </div>
+    );
+  },
+  link: (value) => makeUrl(`/transactions/item/:id`, { id: value }),
+  stringify(value) {
+    return `${value}`;
+  },
+});

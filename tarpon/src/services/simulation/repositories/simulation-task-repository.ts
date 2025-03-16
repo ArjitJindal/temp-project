@@ -1,6 +1,6 @@
 import { Filter, MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import { omit, random } from 'lodash'
+import { memoize, omit, random } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
 import { demoRiskFactorsSimulation } from '../utils/demo-risk-factors-simulation'
@@ -44,6 +44,11 @@ import { getUserName } from '@/utils/helpers'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
+import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest
@@ -482,6 +487,21 @@ export class SimulationTaskRepository {
     return { jobId: demoJob.jobId, taskIds }
   }
 
+  private user = memoize((userId: string) => {
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    return userRepository.getMongoUser(userId, undefined, {
+      projection: {
+        userId: 1,
+        type: 1,
+        userDetails: { name: 1 },
+        legalEntity: { companyGeneralDetails: { legalName: 1 } },
+        drsScore: 1,
+      },
+    })
+  })
+
   private async createBeaconSimulationJob(
     jobId: string,
     taskIds: string[],
@@ -541,6 +561,143 @@ export class SimulationTaskRepository {
       _id: demoJob.jobId as any,
       ...demoJob,
     })
+
+    const dynamoDb = getDynamoDbClient()
+    const mongoTransactionsRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb,
+      dynamoDb
+    )
+
+    const transactions = mongoTransactionsRepository.getTransactionsCursor({
+      pageSize: 10000,
+    })
+    const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
+    const transactionsData: SimulationBeaconTransactionResult[] = []
+    const users = new Map<string, SimulationBeaconResultUser>()
+
+    for await (const transaction of transactions) {
+      const [destinationUser, originUser] = await Promise.all([
+        transaction.destinationUserId
+          ? this.user(transaction.destinationUserId)
+          : Promise.resolve(undefined),
+        transaction.originUserId
+          ? this.user(transaction.originUserId)
+          : Promise.resolve(undefined),
+      ])
+
+      const originMethod = transaction.originPaymentDetails?.method
+      const destinationMethod = transaction.destinationPaymentDetails?.method
+      const isTransactionHit = Math.random() > 0.5
+      const taskId = taskIds[0]
+      const data: SimulationBeaconTransactionResult = {
+        transactionId: transaction.transactionId,
+        action: transaction.status,
+        hit: isTransactionHit ? 'HIT' : 'NO_HIT',
+        taskId,
+        type: 'BEACON_TRANSACTION',
+        timestamp: transaction.timestamp,
+        destinationAmountDetails: transaction.destinationAmountDetails,
+        originAmountDetails: transaction.originAmountDetails,
+        ...(destinationMethod
+          ? {
+              destinationPaymentDetails: {
+                paymentMethod: destinationMethod,
+                paymentMethodId: transaction.destinationPaymentMethodId ?? '',
+              },
+            }
+          : {}),
+        ...(originMethod
+          ? {
+              originPaymentDetails: {
+                paymentMethod: originMethod,
+                paymentMethodId: transaction.originPaymentMethodId ?? '',
+              },
+            }
+          : {}),
+        ...(destinationUser
+          ? {
+              destinationUser: {
+                userId: destinationUser.userId,
+                userName: getUserName(destinationUser),
+                userType: destinationUser.type,
+                riskLevel: getRiskLevelFromScore(
+                  riskClassificationValues,
+                  destinationUser.drsScore?.drsScore ?? null
+                ),
+                riskScore: destinationUser.drsScore?.drsScore,
+              },
+            }
+          : {}),
+        ...(originUser
+          ? {
+              originUser: {
+                userId: originUser.userId,
+                userName: getUserName(originUser),
+                userType: originUser.type,
+                riskLevel: getRiskLevelFromScore(
+                  riskClassificationValues,
+                  originUser.drsScore?.drsScore ?? null
+                ),
+                riskScore: originUser.drsScore?.drsScore,
+              },
+            }
+          : {}),
+        riskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          transaction.arsScore?.arsScore ?? null
+        ),
+        transactionType: transaction.type,
+        riskScore: transaction.arsScore?.arsScore,
+      }
+
+      transactionsData.push(data)
+
+      const processUser = (
+        user: InternalConsumerUser | InternalBusinessUser | undefined
+      ) => {
+        if (!user) {
+          return
+        }
+        const userId = user.userId
+        if (!users.has(userId)) {
+          users.set(userId, {
+            userId,
+            riskLevel: getRiskLevelFromScore(
+              riskClassificationValues,
+              user.drsScore?.drsScore ?? null
+            ),
+            riskScore: user.drsScore?.drsScore,
+            hit: isTransactionHit ? 'HIT' : 'NO_HIT',
+            taskId,
+            type: 'BEACON_USER',
+            userName: getUserName(user),
+            userType: user.type,
+          })
+        }
+      }
+
+      if (destinationUser) {
+        processUser(destinationUser)
+      }
+      if (originUser) {
+        processUser(originUser)
+      }
+    }
+
+    const simulationResultRepository = new SimulationResultRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    await Promise.all([
+      simulationResultRepository.saveSimulationResults(transactionsData),
+      simulationResultRepository.saveSimulationResults(
+        Array.from(users.values())
+      ),
+    ])
 
     return { jobId: demoJob.jobId, taskIds }
   }

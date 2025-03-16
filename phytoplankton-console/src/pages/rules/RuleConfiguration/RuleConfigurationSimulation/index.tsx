@@ -8,6 +8,8 @@ import RuleConfigurationFormV8, {
 } from '../RuleConfigurationV8/RuleConfigurationFormV8';
 import s from './style.module.less';
 import { SimulationStatistics } from './SimulationStatistics';
+import { SimulationTransactionsHit } from './SimulationResults/Transactions';
+import { SimulationUsersHit } from './SimulationResults/Users';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleConfigurationForm, {
   RULE_CONFIGURATION_STEPS,
@@ -276,8 +278,18 @@ export function RuleConfigurationSimulation(props: Props) {
   );
   const iterations = useMemo(() => {
     return jobId && isSuccess(jobResult.data)
-      ? jobResult.data?.value.iterations.map((iteration) => iteration.parameters) ?? []
-      : newIterations;
+      ? jobResult.data?.value.iterations.map((iteration) => {
+          return {
+            ...iteration.parameters,
+            taskId: iteration.taskId,
+          };
+        }) ?? []
+      : newIterations.map((iteration) => {
+          return {
+            ...iteration,
+            taskId: undefined,
+          };
+        });
   }, [jobId, jobResult.data, newIterations]);
   const iterationResults = useMemo(() => {
     if (jobId && isSuccess(jobResult.data)) {
@@ -363,9 +375,16 @@ export function RuleConfigurationSimulation(props: Props) {
                       {iterationResults.length > 0 ? (
                         <SimulationStatistics iteration={iterationResults[i]} />
                       ) : undefined}
+                      {iterations[i].taskId && (
+                        <SimulationTransactionsHit taskId={iterations[i].taskId as string} />
+                      )}
+                      {iterations[i].taskId && (
+                        <SimulationUsersHit taskId={iterations[i].taskId as string} />
+                      )}
                       <H4>Changed rule parameters</H4>
                     </div>
                   )}
+
                   {v8Mode ? (
                     <RuleConfigurationFormV8
                       mode={'CREATE'}
