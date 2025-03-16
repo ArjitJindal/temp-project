@@ -13,6 +13,7 @@ import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
 import { riskFactors } from './data/risk-factors'
 import { getUserEvents } from './data/user_events'
+import { ruleInstances } from './data/rules'
 import {
   allCollections,
   createGlobalMongoDBCollections,
@@ -82,6 +83,7 @@ import {
   getDefaultReasonsData,
 } from '@/services/tenants/reasons-service'
 import { getNarrativeTemplates } from '@/core/seed/data/narrative'
+import { isV2RuleInstance } from '@/services/rules-engine/utils'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -157,6 +159,10 @@ export async function seedMongo(
     ['RiskFactor', riskFactors().length],
     ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
     ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
+    [
+      'RC',
+      ruleInstances().filter((instance) => !isV2RuleInstance(instance)).length,
+    ],
   ]
 
   for (const counter of counters) {

@@ -8,6 +8,7 @@ import {
 } from '../logic-evaluator/variables'
 import {
   DispositionState,
+  NumericOperatorPair,
   RuleVarsOptimzationData,
   StdDevSampleByKey,
   VarData,
@@ -27,7 +28,7 @@ export function getNumericVarKeys(logic: any): string[] {
   const varkeys: string[] = []
   traverse(logic, (key, value, path) => {
     if (ARITHMETIC_OPERATORS.includes(key)) {
-      // To do Handle Higher order functions (ex: some, none, all etc)
+      // To do Handle Higher order functions (ex: some, none, all etc), handle numeric var inside a func
       // To do handle between using three params
       if (
         !isArray(value) ||
@@ -44,6 +45,33 @@ export function getNumericVarKeys(logic: any): string[] {
     }
   })
   return varkeys
+}
+
+export function getNumericVarKeyData(logic: any): NumericOperatorPair[] {
+  const varkeysData: NumericOperatorPair[] = []
+  traverse(logic, (key, value, path) => {
+    if (ARITHMETIC_OPERATORS.includes(key)) {
+      // To do Handle Higher order functions (ex: some, none, all etc), handle numeric var inside a func
+      // To do handle between using three params
+      if (
+        !isArray(value) ||
+        value.length != 2 ||
+        HIGHER_ORDER_OPERATORS.some((val) => path.includes(val))
+      ) {
+        return
+      }
+      const lhs = value[0]
+      const rhs = value[1]
+      if (typeof rhs === 'number' && typeof lhs === 'object' && 'var' in lhs) {
+        varkeysData.push({
+          varKey: lhs.var,
+          operator: key,
+          value: rhs,
+        })
+      }
+    }
+  })
+  return varkeysData
 }
 
 export function processTransactionVars(

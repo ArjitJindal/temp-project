@@ -5,16 +5,19 @@ import { CaseRepository } from '../cases/repository'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { AlertsRepository } from '../alerts/repository'
+import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { DispositionState, VarData, VarOptimizationData } from './types'
 import { RuleThresholdOptimizerRepository } from './repository'
 import {
   augmentVarData,
   FP_REASONS,
+  getNumericVarKeyData,
   getNumericVarKeys,
   mergeData,
   processTransactionVars,
   sanitizeVarData,
 } from './utils'
+import { generateDemoThresholdData } from './demo-threshold-recommendation'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
@@ -26,6 +29,7 @@ import { logger } from '@/core/logger'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RuleThresholdRecommendations } from '@/@types/openapi-internal/RuleThresholdRecommendations'
 import { VarThresholdData } from '@/@types/openapi-internal/VarThresholdData'
+import { isDemoMode } from '@/utils/demo'
 
 const MIN_DISPOSED_LIMIT = 15
 
@@ -71,6 +75,29 @@ export class RuleThresholdOptimizer {
   public async getRecommendedThresholdData(
     ruleInstanceId: string
   ): Promise<RuleThresholdRecommendations> {
+    const isDemo = isDemoMode()
+    if (isDemo) {
+      const ruleInstanceService = new RuleInstanceService(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
+      const [ruleInstance, currentInstanceStats] = await Promise.all([
+        ruleInstanceService.getRuleInstanceById(ruleInstanceId),
+        ruleInstanceService.getRuleInstanceStats(ruleInstanceId, {
+          afterTimestamp: 0,
+          beforeTimestamp: Date.now(),
+        }),
+      ])
+      const data = getNumericVarKeyData(ruleInstance?.logic)
+      const newThresholdsData = data.map((value) => {
+        return generateDemoThresholdData(value, currentInstanceStats)
+      })
+      return {
+        ruleInstanceId: ruleInstanceId,
+        varsThresholdData: newThresholdsData,
+        isReady: true,
+      }
+    }
     const pipeline = await this.alertsRepository.getAlertsPipeline(
       {
         filterRuleInstanceId: [ruleInstanceId],
@@ -123,6 +150,11 @@ export class RuleThresholdOptimizer {
       threshold: parseFloat(
         (TpMean + (TpMean - FpMean) * (TpStdDev / (FpStdDev + 1))).toFixed(4)
       ),
+      // Todo: Update the logic to calculate these values
+      falsePositivesReduced: 1,
+      timeReduced: 1000,
+      transactionsHit: 1,
+      usersHit: 1,
     }
   }
 

@@ -17,3 +17,9 @@ export type RuleVarsOptimzationData = {
   variablesOptimizationData: VarOptimizationData[]
   updatedAt: number
 }
+
+export type NumericOperatorPair = {
+  varKey: string
+  operator: string
+  value: number
+}

@@ -1,7 +1,7 @@
 import React, { Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { usePrevious } from 'ahooks';
+import { useLocalStorageState, usePrevious } from 'ahooks';
 import RuleConfigurationFormV8, {
   RuleConfigurationFormV8Values,
   STEPS,
@@ -41,11 +41,17 @@ import {
   SimulationBeaconParameters,
   SimulationIteration,
   SimulationPostResponse,
+  VarThresholdData,
 } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import Button from '@/components/library/Button';
 import Tabs from '@/components/library/Tabs';
 import { Progress } from '@/components/Simulation/Progress';
+import {
+  EMPTY_THRESHOLD_DATA,
+  updateCurrentInstance,
+  UPDATED_VAR_DATA_KEY,
+} from '@/utils/ruleThreshold';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
@@ -82,10 +88,18 @@ export function RuleConfigurationSimulation(props: Props) {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const steps = v8Mode ? STEPS : RULE_CONFIGURATION_STEPS;
   const [activeStepKey, setActiveStepKey] = useState(steps[0]);
+  const [simulationVarUpdatedData] = useLocalStorageState<VarThresholdData>(
+    UPDATED_VAR_DATA_KEY,
+    EMPTY_THRESHOLD_DATA,
+  );
+  const updatedDefaultInstance = simulationVarUpdatedData.varKey
+    ? updateCurrentInstance(ruleInstance, simulationVarUpdatedData)
+    : ruleInstance;
+  localStorage.removeItem('UPDATED_VAR_DATA');
   const [newIterations, setNewIterations] = useState<SimulationBeaconParameters[]>([
     {
       ...DEFAULT_ITERATION,
-      ruleInstance,
+      ruleInstance: updatedDefaultInstance,
     },
   ]);
   const [createdJobId, setCreatedJobId] = useState<string | undefined>();

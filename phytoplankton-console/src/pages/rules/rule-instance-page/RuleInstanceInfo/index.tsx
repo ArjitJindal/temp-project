@@ -302,7 +302,7 @@ export const RuleInstanceInfo = (props: Props) => {
             </Confirm>
             {isV8RuleInstance(true, ruleInstance) ? (
               <RuleThresholdRecommendation
-                id={ruleInstance.id ?? ''}
+                ruleInstance={ruleInstance}
                 entityVariables={ruleInstance.logicEntityVariables}
                 aggregationVariables={ruleInstance.logicAggregationVariables}
                 type={ruleInstance.type}

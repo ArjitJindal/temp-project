@@ -16799,9 +16799,21 @@ components:
           type: string
         threshold:
           type: number
+        falsePositivesReduced:
+          type: number
+        timeReduced:
+          type: number
+        transactionsHit:
+          type: number
+        usersHit:
+          type: number
       required:
         - varKey
         - threshold
+        - falsePositivesReduced
+        - timeReduced
+        - transactionsHit
+        - usersHit
   securitySchemes:
     Authorization:
       type: http

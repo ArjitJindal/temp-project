@@ -9,7 +9,6 @@ import { StackConstants } from '@lib/constants'
 import { RuleVarsOptimzationData } from './types'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { logger } from '@/core/logger'
 
 @traceable
 export class RuleThresholdOptimizerRepository {
@@ -22,7 +21,6 @@ export class RuleThresholdOptimizerRepository {
   public async getRuleInstanceThresholdData(
     ruleInstanceId: string
   ): Promise<RuleVarsOptimzationData | undefined> {
-    logger.debug(`rCId:${ruleInstanceId}, tenantId:${this.tenantId}`)
     const command: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.RULE_INSTANCE_THRESHOLD_OPTIMIZATION_DATA(

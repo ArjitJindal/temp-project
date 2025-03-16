@@ -44,7 +44,718 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   // TODO: r*RuleInstance objects can be wrapped in a Sampler class
   const rng = new RandomNumberGenerator(RULES_SEED)
   const ruleFilterSampler = new RuleFilterSampler(rng.randomInt())
-
+  const customRuleInstances: RuleInstance[] = [
+    {
+      id: 'RC-1',
+      type: 'TRANSACTION',
+      ruleId: 'RC-1',
+      ruleNameAlias: 'High average transaction amount ',
+      ruleDescriptionAlias:
+        'Average transaction amount in a day exceeds threshold',
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'agg:67498060',
+              },
+              20,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [],
+      logicAggregationVariables: [
+        {
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
+          timeWindow: {
+            start: {
+              granularity: 'day',
+              units: 1,
+            },
+            end: {
+              granularity: 'now',
+              units: 0,
+            },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1741948155801,
+          key: 'agg:67498060',
+          baseCurrency: 'USD',
+        },
+      ],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1741948155800,
+      updatedAt: 1741948155800,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: ['UNEXPECTED_BEHAVIOR'],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: [],
+      createdBy: rng.r(1).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+    {
+      id: 'RC-2',
+      type: 'TRANSACTION',
+      ruleId: 'RC-2',
+      ruleNameAlias: 'Mutiple high value transactions ',
+      ruleDescriptionAlias: 'Multiple high value transactions in 1 week',
+      baseCurrency: 'USD',
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'entity:81652f7f',
+              },
+              5000,
+            ],
+          },
+          {
+            '>': [
+              {
+                var: 'agg:413d04d2',
+              },
+              30,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:81652f7f',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+      ],
+      logicAggregationVariables: [
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: {
+              granularity: 'week',
+              rollingBasis: true,
+              units: 1,
+            },
+            end: {
+              granularity: 'now',
+              rollingBasis: true,
+              units: 0,
+            },
+          },
+          filtersLogic: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                  },
+                  5000,
+                ],
+              },
+            ],
+          },
+          userDirection: 'SENDER_OR_RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING_RECEIVING',
+          includeCurrentEntity: true,
+          version: 1742082863218,
+          key: 'agg:413d04d2',
+          baseCurrency: 'USD',
+        },
+      ],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1742082863217,
+      updatedAt: 1742082863217,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        frozenStatuses: [],
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: [],
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+    {
+      id: 'RC-3',
+      type: 'TRANSACTION',
+      ruleId: 'RC-3',
+      ruleNameAlias: 'New User High-Risk Transaction',
+      ruleDescriptionAlias: 'New user sending/receiving large amounts',
+      baseCurrency: 'USD',
+      logic: {
+        or: [
+          {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:20381d40',
+                  },
+                  500,
+                ],
+              },
+              {
+                '<': [
+                  {
+                    var: 'entity:d97048e1',
+                  },
+                  60,
+                ],
+              },
+            ],
+          },
+          {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:59ea8d82',
+                  },
+                  500,
+                ],
+              },
+              {
+                '<': [
+                  {
+                    var: 'entity:8f0e3a71',
+                  },
+                  60,
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        LOW: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:59ea8d82',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+        {
+          key: 'entity:20381d40',
+          entityKey: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+        },
+        {
+          key: 'entity:8f0e3a71',
+          entityKey: 'CONSUMER_USER:creationAgeDays__SENDER',
+        },
+        {
+          key: 'entity:d97048e1',
+          entityKey: 'CONSUMER_USER:creationAgeDays__RECEIVER',
+        },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1742084034299,
+      updatedAt: 1742084034299,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        frozenStatuses: [],
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: [],
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+  ]
   const r1RuleInstance: RuleInstance[] = [
     {
       id: 'R-1.7',
@@ -1170,6 +1881,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r169RuleInstanceShadow,
     ...r8RuleInstanceShadow,
     ...r30RuleInstanceShadow,
+    ...customRuleInstances,
   ]
 
   return data

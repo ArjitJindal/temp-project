@@ -44,7 +44,6 @@ export class CurrencyRepository {
         Key: keys,
       })
     )
-    console.log(JSON.stringify(command.ConsumedCapacity))
     return command.Item as CurrencyExchangeUSDType
   }
 
