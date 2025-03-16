@@ -21,6 +21,10 @@ import {
   useChangeSanctionsHitsStatusMutation,
   useSanctionHitsQuery,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import {
+  useLinkingState,
+  useUserEntityFollow,
+} from '@/pages/users-item/UserDetails/Linking/UserGraph';
 
 interface Props {
   item: QuestionResponseEmbedded;
@@ -29,6 +33,9 @@ interface Props {
 export default function HistoryItemEmbedded({ item }: Props) {
   const userId = item.variables?.find((v) => v.name === 'userId')?.value;
   const alertId = item.variables?.find((v) => v.name === 'alertId')?.value;
+
+  const linkingState = useLinkingState(userId);
+  const handleFollow = useUserEntityFollow(linkingState);
 
   if (
     (item.questionId === COPILOT_QUESTIONS.OPEN_HITS ||
@@ -49,7 +56,21 @@ export default function HistoryItemEmbedded({ item }: Props) {
     <Card.Section key={JSON.stringify(item.variables)}>
       {item.questionId === COPILOT_QUESTIONS.ONTOLOGY && typeof userId === 'string' && (
         <div style={{ height: '400px' }}>
-          <Linking userId={userId} />
+          <Linking
+            userId={userId}
+            scope={linkingState.scope}
+            onScopeChange={linkingState.setScope}
+            entityNodes={linkingState.entityNodes}
+            entityEdges={linkingState.entityEdges}
+            txnNodes={linkingState.txnNodes}
+            txnEdges={linkingState.txnEdges}
+            followed={linkingState.followed}
+            onFollow={handleFollow}
+            entityFilters={linkingState.entityFilters}
+            setEntityFilters={linkingState.setEntityFilters}
+            txnFilters={linkingState.txnFilters}
+            setTxnFilters={linkingState.setTxnFilters}
+          />
         </div>
       )}
       {item.questionId === COPILOT_QUESTIONS.RECOMMENDATION && typeof alertId === 'string' && (

@@ -9,6 +9,7 @@ import CRMMonitoring from './UserDetails/CRMMonitoring';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import { useConsoleUser } from './UserDetails/utils';
+import { useLinkingState, useUserEntityFollow } from './UserDetails/Linking/UserGraph';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import {
@@ -146,6 +147,9 @@ export default function UserItem() {
 
   const queryResult = useConsoleUser(id);
 
+  const linkingState = useLinkingState(id ?? '');
+  const handleFollow = useUserEntityFollow(linkingState);
+
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(user) => (
@@ -228,7 +232,23 @@ export default function UserItem() {
                     {
                       title: <div className={s.icon}>Ontology</div>,
                       key: 'ontology',
-                      children: <Linking userId={user.userId} />,
+                      children: (
+                        <Linking
+                          userId={id ?? ''}
+                          scope={linkingState.scope}
+                          onScopeChange={linkingState.setScope}
+                          entityNodes={linkingState.entityNodes}
+                          entityEdges={linkingState.entityEdges}
+                          txnNodes={linkingState.txnNodes}
+                          txnEdges={linkingState.txnEdges}
+                          followed={linkingState.followed}
+                          onFollow={handleFollow}
+                          entityFilters={linkingState.entityFilters}
+                          setEntityFilters={linkingState.setEntityFilters}
+                          txnFilters={linkingState.txnFilters}
+                          setTxnFilters={linkingState.setTxnFilters}
+                        />
+                      ),
                       isClosable: false,
                       isDisabled: false,
                       captureEvents: true,

@@ -51,6 +51,10 @@ import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import {
+  useLinkingState,
+  useUserEntityFollow,
+} from '@/pages/users-item/UserDetails/Linking/UserGraph';
 
 export interface ActivityLogFilterParams {
   filterActivityBy?: string[];
@@ -240,6 +244,8 @@ function useTabs(
       },
     },
   );
+  const linkingState = useLinkingState(user?.userId ?? '');
+  const handleFollow = useUserEntityFollow(linkingState);
 
   return [
     isPaymentSubject && {
@@ -303,7 +309,23 @@ function useTabs(
       isEntityLinkingEnabled && {
         title: <div className={style.icon}>Ontology</div>,
         key: 'ontology',
-        children: user.userId ? <Linking userId={user.userId} /> : undefined,
+        children: user.userId ? (
+          <Linking
+            userId={user.userId ?? ''}
+            scope={linkingState.scope}
+            onScopeChange={linkingState.setScope}
+            entityNodes={linkingState.entityNodes}
+            entityEdges={linkingState.entityEdges}
+            txnNodes={linkingState.txnNodes}
+            txnEdges={linkingState.txnEdges}
+            followed={linkingState.followed}
+            onFollow={handleFollow}
+            entityFilters={linkingState.entityFilters}
+            setEntityFilters={linkingState.setEntityFilters}
+            txnFilters={linkingState.txnFilters}
+            setTxnFilters={linkingState.setTxnFilters}
+          />
+        ) : undefined,
         isClosable: false,
         isDisabled: false,
         captureEvents: true,

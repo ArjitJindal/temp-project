@@ -42,6 +42,10 @@ import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard'
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
+import {
+  useLinkingState,
+  useUserEntityFollow,
+} from '@/pages/users-item/UserDetails/Linking/UserGraph';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 export enum AlertTabs {
@@ -323,6 +327,9 @@ export function useAlertTabs(props: Props): TabItem[] {
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
+  const linkingState = useLinkingState(caseUserId);
+  const handleFollow = useUserEntityFollow(linkingState);
+
   const tabs: TabItem[] = useMemo(() => {
     return tabList
       .map((tab): TabItem | null => {
@@ -449,7 +456,23 @@ export function useAlertTabs(props: Props): TabItem[] {
           return {
             title: 'Ontology',
             key: tab,
-            children: <Linking userId={caseUserId} />,
+            children: (
+              <Linking
+                userId={caseUserId}
+                scope={linkingState.scope}
+                onScopeChange={linkingState.setScope}
+                entityNodes={linkingState.entityNodes}
+                entityEdges={linkingState.entityEdges}
+                txnNodes={linkingState.txnNodes}
+                txnEdges={linkingState.txnEdges}
+                followed={linkingState.followed}
+                onFollow={handleFollow}
+                entityFilters={linkingState.entityFilters}
+                setEntityFilters={linkingState.setEntityFilters}
+                txnFilters={linkingState.txnFilters}
+                setTxnFilters={linkingState.setTxnFilters}
+              />
+            ),
             captureEvents: true,
           };
         }
@@ -505,6 +528,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionActions,
     fitTablesHeight,
     sanctionsDetailsFilter,
+    handleFollow,
+    linkingState,
     isAiForensicsEnabled,
     isClickhouseEnabled,
   ]);

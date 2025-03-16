@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { uniqBy } from 'lodash';
 import { EdgeArrowPosition, EdgeInterpolation } from 'reagraph';
+import { uniqBy } from 'lodash';
 import s from '../index.module.less';
 import { EntityLinkingGraph } from '../EntityLinkingGraph';
-import { ScopeSelectorValue } from '../entity_linking';
 import * as Card from '@/components/ui/Card';
 import { Graph, GraphEdges, GraphNodes } from '@/apis';
 import Spinner from '@/components/library/Spinner';
 import { dayjs } from '@/utils/dayjs';
+import { useApi } from '@/api';
+import { isSuccess } from '@/utils/asyncResource';
+import { useQuery } from '@/utils/queries/hooks';
 
 export type GraphParams = (
   user: string,
@@ -21,13 +23,18 @@ export type GraphParams = (
 interface Props {
   scope: ScopeSelectorValue;
   userId: string;
-  getGraph: GraphParams;
+  nodes: GraphNodes[];
+  edges: GraphEdges[];
+  followed: string[];
+  onFollow: (userId: string) => void;
+  filters: GraphFilters;
+  setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
   isFollowEnabled: (id: string) => boolean;
 }
 
-const DEFAULT_PAST_DAYS = 30;
+export const DEFAULT_PAST_DAYS = 30;
 export type EntitiesEnum = 'all' | 'user' | 'payment-identifier';
 
 // entities
@@ -36,32 +43,9 @@ export interface GraphFilters {
 }
 
 export default function UserGraph(props: Props) {
-  const [userId, setUserId] = useState(props.userId);
-  const [entity, setEntity] = useState<Graph>();
-  const [followed, setFollowed] = useState([props.userId]);
   const [linkCount, setLinkCount] = useState<number>(0);
   const [entities, setEntities] = useState<EntitiesEnum>('all');
-  const { getGraph } = props;
-
-  const [nodes, setNodes] = useState<GraphNodes[]>([]);
-  const [edges, setEdges] = useState<GraphEdges[]>([]);
-
-  useEffect(() => {
-    const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
-    getGraph(userId, {
-      afterTimestamp: DEFAULT_AFTER_TIMESTAMP,
-      beforeTimestamp: undefined,
-    })
-      .then(setEntity)
-      .then(() => setFollowed((followed) => [userId, ...followed]));
-  }, [getGraph, userId]);
-
-  useEffect(() => {
-    if (entity) {
-      setNodes((nodes) => (entity.nodes ? uniqBy([...nodes, ...entity.nodes], 'id') : nodes));
-      setEdges((edges) => (entity.edges ? uniqBy([...edges, ...entity.edges], 'id') : edges));
-    }
-  }, [entity]);
+  const { nodes, edges, userId } = props;
 
   const filteredEdges = useMemo(() => {
     return edges.filter((edge) => {
@@ -102,39 +86,39 @@ export default function UserGraph(props: Props) {
 
   const filteredNodes = useMemo(() => {
     return nodes.filter((node) => {
-      if (node.id === `user:${props.userId}`) {
+      if (node.id === `user:${userId}`) {
         return true;
       }
 
       return filteredEdges.some((edge) => edge.source === node.id || edge.target === node.id);
     });
-  }, [nodes, filteredEdges, props.userId]);
+  }, [nodes, filteredEdges, userId]);
 
   return (
     <>
-      {entity && (
+      {filteredEdges && (
         <Card.Section>
           <div className={s.graphContainer}>
             <EntityLinkingGraph
-              linkCount={linkCount}
-              setLinkCount={setLinkCount}
+              scope={props.scope}
+              userId={props.userId}
               entities={entities}
               setEntities={setEntities}
+              linkCount={linkCount}
+              setLinkCount={setLinkCount}
               nodes={filteredNodes}
               edges={filteredEdges}
-              followed={followed}
-              onFollow={(userId) => {
-                setUserId(userId);
-              }}
+              followed={props.followed}
+              onFollow={props.onFollow}
               extraHints={[`Ontology displays data for the last ${DEFAULT_PAST_DAYS} days only`]}
               edgeInterpolation={props.edgeInterpolation}
               edgeArrowPosition={props.edgeArrowPosition}
-              {...props}
+              isFollowEnabled={props.isFollowEnabled}
             />
           </div>
         </Card.Section>
       )}
-      {!entity && (
+      {!filteredEdges && (
         <Card.Section>
           <div className={s.spinContainer}>
             <Spinner />
@@ -144,3 +128,102 @@ export default function UserGraph(props: Props) {
     </>
   );
 }
+
+export type ScopeSelectorValue = 'ENTITY' | 'TXN';
+export const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
+export function useUserEntity(
+  userId: string,
+  filters?: {
+    afterTimestamp: number | undefined;
+    beforeTimestamp: number | undefined;
+  },
+) {
+  const api = useApi();
+  const queryResult = useQuery(['user-entity', userId, filters], () =>
+    api.getUserEntity({ userId, ...(filters || {}) }),
+  );
+  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+}
+
+export function useTxnEntity(
+  userId: string,
+  filters?: { afterTimestamp: number | undefined; beforeTimestamp: number | undefined },
+) {
+  const api = useApi();
+  const queryResult = useQuery(['txn-entity', userId, filters], () =>
+    api.getTxnLinking({ userId, ...filters }),
+  );
+  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+}
+export function useLinkingState(userId: string, initialScope: ScopeSelectorValue = 'ENTITY') {
+  const [scope, setScope] = useState<ScopeSelectorValue>(initialScope);
+  const [entityNodes, setEntityNodes] = useState<GraphNodes[]>([]);
+  const [entityEdges, setEntityEdges] = useState<GraphEdges[]>([]);
+  const [txnNodes, setTxnNodes] = useState<GraphNodes[]>([]);
+  const [txnEdges, setTxnEdges] = useState<GraphEdges[]>([]);
+  const [entityFilters, setEntityFilters] = useState<GraphFilters>({ entities: ['all'] });
+  const [txnFilters, setTxnFilters] = useState<GraphFilters>({ entities: ['all'] });
+  const [followed, setFollowed] = useState([userId]);
+
+  const filters = { afterTimestamp: DEFAULT_AFTER_TIMESTAMP, beforeTimestamp: undefined };
+
+  const entityData = useUserEntity(userId, filters);
+  const txnData = useTxnEntity(userId, filters);
+
+  useEffect(() => {
+    if (entityData) {
+      setEntityNodes(entityData.nodes || []);
+      setEntityEdges(entityData.edges || []);
+    }
+    if (txnData) {
+      setTxnNodes(txnData.nodes || []);
+      setTxnEdges(txnData.edges || []);
+    }
+  }, [entityData, txnData]);
+
+  return {
+    scope,
+    setScope,
+    entityNodes,
+    setEntityNodes,
+    entityEdges,
+    setEntityEdges,
+    txnNodes,
+    setTxnNodes,
+    txnEdges,
+    setTxnEdges,
+    entityFilters,
+    setEntityFilters,
+    txnFilters,
+    setTxnFilters,
+    followed,
+    setFollowed,
+  };
+}
+
+export const useUserEntityFollow = (linkingState: any) => {
+  const api = useApi();
+
+  const handleFollow = async (userId: string) => {
+    try {
+      const data = await (linkingState.scope === 'ENTITY'
+        ? api.getUserEntity({ userId })
+        : api.getTxnLinking({ userId }));
+
+      if (data) {
+        if (linkingState.scope === 'ENTITY') {
+          linkingState.setEntityNodes((nodes) => uniqBy([...nodes, ...(data.nodes || [])], 'id'));
+          linkingState.setEntityEdges((edges) => uniqBy([...edges, ...(data.edges || [])], 'id'));
+        } else {
+          linkingState.setTxnNodes((nodes) => uniqBy([...nodes, ...(data.nodes || [])], 'id'));
+          linkingState.setTxnEdges((edges) => uniqBy([...edges, ...(data.edges || [])], 'id'));
+        }
+        linkingState.setFollowed((prev) => [userId, ...prev]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch entity data:', error);
+    }
+  };
+
+  return handleFollow;
+};

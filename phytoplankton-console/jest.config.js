@@ -31,7 +31,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@flagright/(.*)$': '<rootDir>/../$1',
     '^(.+\\.module\\.(?:less|css))$': '$1',
-    '^.+\\.(less|css)$': 'identity-obj-proxy',
+    '^.+\\.(less|css|ttf)$': 'identity-obj-proxy',
   },
   transform: {
     '^.+\\.module\\.less$': './jest/jest-react-less-modules-transformer.js',
