@@ -723,15 +723,7 @@ export class UsSarReportGenerator implements ReportGenerator {
               logger.info(`Ack file (Inbox/): ${ackFileContent}`)
             } catch (e) {
               logger.warn(`Failed to get ack file from Inbox/`)
-              logger.info(
-                await sftp.fastGet(
-                  path.join(remoteCwd, `inbox/${remoteFilename}`),
-                  `${remoteCwd}inbox/${remoteFilename}`,
-                  localAckFile
-                )
-              )
-              const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
-              logger.info(`Ack file (inbox/): ${ackFileContent}`)
+              logger.error(e)
             }
           },
           {

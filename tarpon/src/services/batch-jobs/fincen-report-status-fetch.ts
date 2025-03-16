@@ -62,6 +62,10 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
       'US',
       timeNow - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
     )
+    logger.info(
+      'USA Pending report',
+      filteredUsaReports.map((report) => report.id)
+    )
     const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
     logger.info('USA Pending report', filteredUsaReports.length)
     // 2. fetch result from sftp server
@@ -72,7 +76,13 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
         const { result, statusInfo } = await parseReportXMLResponse(status)
         const currentStatus =
           fincenStatusMapper(statusInfo as FincenReportStatus) ?? report.status
-        logger.info(report.id, 'new status', currentStatus)
+        logger.info(
+          report.id,
+          'Current status',
+          report.status,
+          'New status',
+          currentStatus
+        )
         if (currentStatus !== report.status) {
           // 4. if the result differ then update the report status and store the parsed xml in mongodb
           logger.info(

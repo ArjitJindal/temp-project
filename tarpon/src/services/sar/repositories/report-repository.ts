@@ -256,9 +256,11 @@ export class ReportRepository {
     }
     if (params.lastAckFetchTime) {
       conditions.push({
-        lastAckFetchTime: {
-          $gte: params.lastAckFetchTime,
-        },
+        $or: [
+          { lastAckFetchTime: { $gte: params.lastAckFetchTime } },
+          { lastAckFetchTime: { $exists: false } },
+          { lastAckFetchTime: null },
+        ],
       })
     }
     return conditions.length
