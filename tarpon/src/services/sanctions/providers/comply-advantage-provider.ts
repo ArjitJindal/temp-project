@@ -1,4 +1,4 @@
-import { groupBy, intersection, uniq } from 'lodash'
+import { compact, groupBy, intersection, uniq } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -122,17 +122,20 @@ export function complyAdvantageDocToEntity(
   const doc = hit.doc
   const fieldData = extractInformationFromFields(hit.doc.fields ?? [])
   const sources = getSources(doc)
-  const sanctionSearchTypes = uniq(
-    hit.match_types?.map((mt): SanctionsSearchType => {
-      if (mt.includes('media')) {
-        return 'ADVERSE_MEDIA'
-      }
-      if (mt.includes('pep')) {
-        return 'PEP'
-      }
-      return 'SANCTIONS'
-    })
+  const sanctionSearchTypes = compact(
+    uniq(
+      hit.match_types_details?.flatMap((mt) =>
+        mt.aml_types?.map((t) =>
+          t.includes('media')
+            ? 'ADVERSE_MEDIA'
+            : t.includes('pep')
+            ? 'PEP'
+            : 'SANCTIONS'
+        )
+      )
+    )
   )
+
   const sanctionsEntity: SanctionsEntity = {
     id: doc.id as string,
     name: doc.name as string,
