@@ -9,15 +9,12 @@ import {
   currencyVars,
   GRANULARITIES,
   humanReadablePeriod,
-  transactionPaymentIdentifierQuerySQL,
   Period,
   periodDefaults,
   periodVars,
   TimeGranularity,
-  timeXAxis,
   paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
-import { executeSql } from '@/utils/viper'
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { notEmpty } from '@/utils/array'
@@ -85,10 +82,8 @@ export const getClickhouseQuery = (
 export const transactionAggregationQuestion = (
   questionId: QuestionId,
   title: string,
-  aggregationExpression: (granularity: TimeGranularity) => string,
   clickhouseAggregationExpression: (granularity: TimeGranularity) => string,
-  showCurrency = false,
-  joins = ''
+  showCurrency = false
 ): TimeseriesQuestion<
   Period & {
     granularity: TimeGranularity
@@ -105,26 +100,17 @@ export const transactionAggregationQuestion = (
     ctx,
     { granularity, currency, showUserLimit, ...period }
   ) => {
-    let values: { time: number; value: number }[] = []
-
-    if (isClickhouseEnabled()) {
-      values = await getClickhouseData(
-        ctx,
-        period,
-        granularity,
-        clickhouseAggregationExpression,
-        currency ?? 'USD'
-      )
-    } else {
-      values = await getSQLData(
-        ctx,
-        period,
-        granularity,
-        aggregationExpression,
-        currency ?? 'USD',
-        joins
-      )
+    if (!isClickhouseEnabled()) {
+      throw new Error('Clickhouse is not enabled')
     }
+
+    const values = await getClickhouseData(
+      ctx,
+      period,
+      granularity,
+      clickhouseAggregationExpression,
+      currency ?? 'USD'
+    )
 
     const userLimitValues = getUserLimitValues(
       ctx,
@@ -194,45 +180,6 @@ async function getClickhouseData(
   }))
 }
 
-async function getSQLData(
-  ctx: InvestigationContext,
-  period: Period,
-  granularity: TimeGranularity,
-  aggregationExpression: (granularity: TimeGranularity) => string,
-  currency: CurrencyCode,
-  joins: string
-) {
-  const sqlExpression = timeXAxis(granularity)
-  const condition = ctx.userId
-    ? `t.originUserId = :userId OR t.destinationUserId = :userId`
-    : transactionPaymentIdentifierQuerySQL(ctx.paymentIdentifier)
-
-  const rows = await executeSql<{
-    timestamp: number
-    date: string
-    agg: number
-  }>(
-    getSQLQuery(
-      sqlExpression,
-      aggregationExpression,
-      granularity,
-      condition,
-      joins
-    ),
-    {
-      userId: ctx.userId,
-      from: dayjs(period.from).format('YYYY-MM-DD'),
-      to: dayjs(period.to).format('YYYY-MM-DD'),
-      ...ctx.paymentIdentifier,
-    }
-  )
-
-  return rows.map((row) => ({
-    time: row.timestamp,
-    value: currency ? ctx.convert(row.agg, currency) : row.agg,
-  }))
-}
-
 function getUserLimitValues(ctx, granularity, showUserLimit, values, currency) {
   if (!showUserLimit) {
     return null
@@ -252,65 +199,22 @@ function getUserLimitValues(ctx, granularity, showUserLimit, values, currency) {
   return null
 }
 
-function getSQLQuery(
-  sqlExpression: string,
-  aggregationExpression: (granularity: TimeGranularity) => string,
-  granularity: TimeGranularity,
-  condition: string,
-  joins: string
-) {
-  return `
-    , DateSeries AS (
-      SELECT
-        date_trunc('${sqlExpression}', date) AS period_start
-      FROM
-        (
-          SELECT 
-           date_add('day', row_number() OVER () - 1, DATE :from) AS date
-          FROM 
-           unnest(sequence(1, (date_diff('day', DATE :from, DATE :to) + 1))) AS t(day_number)
-        )
-      GROUP BY
-        date_trunc('${sqlExpression}', date)
-    )
-    SELECT
-      date_format(any_value(ds.period_start), 'yyyy-MM-dd') as date,
-      any_value(ds.period_start) as timestamp,
-      round(${aggregationExpression(granularity)}, 2) as agg
-    FROM
-      DateSeries ds
-      LEFT JOIN transactions t ON date_trunc('${sqlExpression}', t.date) = ds.period_start
-      ${joins}
-      AND (
-        ${condition}
-      )
-    GROUP BY
-      ds.period_start
-    ORDER BY
-      ds.period_start ASC
-  `
-}
-
 const TrsScore = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRS_SCORE,
   'TRS score distribution',
-  () => 'avg(ar.arsScore)',
   () => 'avg(arsScore_arsScore)',
-  false,
-  'left join action_risk_values ar on ar.transactionId = t.transactionId'
+  false
 )
 
 const TransactionCount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TRANSACTION_COUNT,
   'Transaction count',
-  () => 'count(t.transactionId)',
   () => 'count()'
 )
 
 const MaxTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MAX_TRANSACTION_AMOUNT,
   'Max transaction amount',
-  () => 'max(transactionAmountUSD)',
   () => 'max(originAmountDetails_amountInUsd)',
   true
 )
@@ -318,14 +222,12 @@ const MaxTransactionAmount = transactionAggregationQuestion(
 const MinTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MIN_TRANSACTION_AMOUNT,
   'Min transaction amount',
-  () => 'min(transactionAmountUSD)',
   () => 'min(originAmountDetails_amountInUsd)',
   true
 )
 const AverageTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.AVERAGE_TRANSACTION_AMOUNT,
   'Average transaction amount',
-  () => 'avg(transactionAmountUSD)',
   () => 'avg(originAmountDetails_amountInUsd)',
   true
 )
@@ -333,7 +235,6 @@ const AverageTransactionAmount = transactionAggregationQuestion(
 const MedianTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.MEDIAN_TRANSACTION_AMOUNT,
   'Median transaction amount',
-  () => 'approx_percentile(transactionAmountUSD, 0.5)',
   () => 'median(originAmountDetails_amountInUsd)',
   true
 )
@@ -341,7 +242,6 @@ const MedianTransactionAmount = transactionAggregationQuestion(
 const TotalTransactionAmount = transactionAggregationQuestion(
   COPILOT_QUESTIONS.TOTAL_TRANSACTION_AMOUNT,
   'Total transaction amount',
-  () => 'sum(transactionAmountUSD)',
   () => 'sum(originAmountDetails_amountInUsd)',
   true
 )

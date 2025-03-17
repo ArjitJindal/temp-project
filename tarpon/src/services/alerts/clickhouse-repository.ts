@@ -30,7 +30,7 @@ export class ClickhouseAlertRepository {
 
     const statusChangesData = await executeClickhouseQuery<StatusChanges[]>(
       this.clickhouseClient,
-      { query, format: 'JSONEachRow' }
+      query
     )
 
     return statusChangesData

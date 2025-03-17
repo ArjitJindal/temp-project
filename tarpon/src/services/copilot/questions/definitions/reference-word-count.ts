@@ -6,12 +6,13 @@ import {
   periodVars,
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
-import {
-  paginatedClickhouseQuery,
-  paginatedSqlQuery,
-} from '@/services/copilot/questions/definitions/common/pagination'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { paginatedClickhouseQuery } from '@/services/copilot/questions/definitions/common/pagination'
+import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+
+type ReferenceWordCountRow = {
+  word: string
+  count: number
+}
 
 export const ReferenceWordCount: TableQuestion<Period> = {
   type: 'TABLE',
@@ -26,15 +27,12 @@ export const ReferenceWordCount: TableQuestion<Period> = {
     { userId, username },
     { page, pageSize, ...period }
   ) => {
-    let data: { word: string; count: number }[] = []
-    let count = 0
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
-      const client = await getClickhouseClient(getContext()?.tenantId as string)
-      const { rows, total } = await paginatedClickhouseQuery<{
-        word: string
-        count: number
-      }>(
-        client,
+    if (!isClickhouseEnabled()) {
+      throw new Error('Clickhouse is not enabled')
+    }
+
+    const { rows, total } =
+      await paginatedClickhouseQuery<ReferenceWordCountRow>(
         `SELECT
           lower(word) AS word,
           count(*) AS count
@@ -45,8 +43,8 @@ export const ReferenceWordCount: TableQuestion<Period> = {
               word
           FROM transactions FINAL
           ARRAY JOIN splitByString(' ', reference) AS word
-          WHERE (originUserId = :userId or destinationUserId = :userId)
-          ${period ? `AND timestamp between :from and :to` : ''}
+          WHERE (originUserId = '{{ userId }}' or destinationUserId = '{{ userId }}')
+          ${period ? `AND timestamp between {{ from }} and {{ to }}` : ''}
       ) AS words
       WHERE length(word) > 1
           GROUP BY word
@@ -59,57 +57,15 @@ export const ReferenceWordCount: TableQuestion<Period> = {
         pageSize
       )
 
-      data = rows
-      count = total
-    } else {
-      const { rows, total } = await paginatedSqlQuery<{
-        word: string
-        count: number
-      }>(
-        `
-    select
-      lower(word) as word,
-      count(*) as count
-    from
-      (
-        select
-          transactionId,
-          reference,
-          word
-        from
-          transactions
-      cross join unnest(split(reference, ' ')) AS t (word)
-      where 
-   originUserId = :userId or destinationUserId = :userId
-      ) words
-    where
-      length(word) > 1
-    group by
-      word
-    order by
-      count desc
-    `,
-        {
-          userId,
-          ...sqlPeriod(period),
-        },
-        page,
-        pageSize
-      )
-
-      data = rows
-      count = total
-    }
-
     return {
       data: {
-        items: data.map((r) => [r.word, r.count]),
-        total: count,
+        items: rows.map((r) => [r.word, r.count]),
+        total,
       },
-      summary: data.length
+      summary: rows.length
         ? `The top word used by ${username} in their transaction references was ${
-            data.at(0)?.word
-          }, appearing ${data.at(0)?.count} times.`
+            rows.at(0)?.word
+          }, appearing ${rows.at(0)?.count} times.`
         : ``,
     }
   },

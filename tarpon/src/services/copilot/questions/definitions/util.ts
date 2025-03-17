@@ -300,32 +300,3 @@ export function paymentIdentifierQueryClickhouse(
 
   return `(${originConditions}) OR (${destinationConditions})`
 }
-
-export function transactionPaymentIdentifierQuerySQL(
-  paymentIdentifier?: PaymentDetails,
-  direction?: 'ORIGIN' | 'DESTINATION'
-) {
-  if (!paymentIdentifier) {
-    return ''
-  }
-  const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
-  const originConditions = keys
-    .filter((key) => paymentIdentifier[key])
-    .map((key) => {
-      return `t.originPaymentDetails.${key} = :${key}`
-    })
-    .join(' AND ')
-  const destinationConditions = keys
-    .filter((key) => paymentIdentifier[key])
-    .map((key) => {
-      return `t.destinationPaymentDetails.${key} = :${key}`
-    })
-    .join(' AND ')
-  if (direction === 'ORIGIN') {
-    return originConditions
-  }
-  if (direction === 'DESTINATION') {
-    return destinationConditions
-  }
-  return `(${originConditions}) OR (${destinationConditions})`
-}

@@ -1,66 +1,44 @@
-import { ClickHouseClient } from '@clickhouse/client'
-import { executeSql, replacePlaceholders } from '@/utils/viper'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { getContext } from '@/core/utils/context'
 
-export async function paginatedSqlQuery<T>(
-  sqlQuery: string,
-  params: any,
-  page?: number,
-  pageSize?: number
-): Promise<{ rows: T[]; total: number }> {
-  const pageOrDefault = page || 1
-  const pageSizeOrDefault = pageSize || DEFAULT_PAGE_SIZE
-  const rowsQuery = executeSql<T>(`${sqlQuery} offset :offset limit :limit`, {
-    ...params,
-    limit: pageSizeOrDefault,
-    offset: (pageOrDefault - 1) * pageSizeOrDefault,
-  })
-  const totalQuery = executeSql<{
-    total: number
-  }>(`select count(*) as total from ( ${sqlQuery} )`, {
-    ...params,
-  })
-
-  return {
-    rows: await rowsQuery,
-    total: (await totalQuery)[0].total,
-  }
-}
-
-export async function paginatedClickhouseQuery<T>(
-  client: ClickHouseClient,
+export async function paginatedClickhouseQuery<T extends object>(
   clickhouseQuery: string,
   params: { [key: string]: string | number },
   page?: number,
   pageSize?: number
 ): Promise<{ rows: T[]; total: number }> {
   const pageOrDefault = page || 1
+  const updatedParams = Object.fromEntries(
+    Object.entries(params).map(([key, value]) => [key, String(value)])
+  )
+  const tenantId = getContext()?.tenantId as string
   const pageSizeOrDefault = pageSize || DEFAULT_PAGE_SIZE
   const offset = (pageOrDefault - 1) * pageSizeOrDefault
-  const finalTotalQueryString = replacePlaceholders(
-    `select count(*) as total from ( ${clickhouseQuery} )`,
-    params
+  const finalTotalQueryString = `select count(*) as total from ( ${clickhouseQuery} )`
+  const totalQuery = executeClickhouseQuery<{ total: number }[]>(
+    tenantId,
+    finalTotalQueryString,
+    {
+      ...updatedParams,
+      limit: pageSizeOrDefault.toString(),
+      offset: offset.toString(),
+    }
   )
 
-  const queryString = `${clickhouseQuery} limit :limit offset :offset`
+  const queryString = `${clickhouseQuery} limit {{ limit }} offset {{ offset }}`
 
-  const finalQueryString = replacePlaceholders(queryString, {
+  const finalQueryString = queryString
+
+  const query = executeClickhouseQuery<T[]>(tenantId, finalQueryString, {
     ...params,
-    limit: pageSizeOrDefault,
-    offset: offset,
-  })
-  const totalQuery = client.query({
-    query: finalTotalQueryString,
-    format: 'JSONEachRow',
-  })
-  const query = client.query({
-    query: finalQueryString,
-    format: 'JSONEachRow',
+    limit: pageSizeOrDefault.toString(),
+    offset: offset.toString(),
   })
 
   const [totalQueryResult, queryResult] = await Promise.all([totalQuery, query])
-  const total = (await totalQueryResult.json<{ total: number }>())[0].total
-  const rows = await queryResult.json<T>()
+  const total = totalQueryResult[0].total
+  const rows = queryResult
   return {
     rows: rows,
     total: total,
