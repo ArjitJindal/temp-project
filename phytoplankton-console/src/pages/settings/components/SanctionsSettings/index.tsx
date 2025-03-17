@@ -1,5 +1,6 @@
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useState } from 'react';
+import KYC6Logo from 'src/branding/KYC6.svg';
 import s from './styles.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
@@ -39,6 +40,15 @@ export const SanctionsSettings = () => {
       'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+September+2024.xlsx';
     downloadLink(downloadUrl, 'SanctionsList-September-2024.xlsx');
   };
+
+  const handleKYC6Download = () => {
+    message.success('KYC6 download started');
+
+    const downloadUrl1 =
+      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Acuris_Risk_Intelligence.zip';
+    downloadLink(downloadUrl1, 'Acuris_Risk_Intelligence.zip');
+  };
+
   const updateTenantSettingsMutation = useUpdateTenantSettings();
 
   const settings = useSettings();
@@ -149,7 +159,7 @@ export const SanctionsSettings = () => {
       <SettingsCard
         title={
           isSanctionsEnabled
-            ? 'Sanctions list (as of 30th September 2024)'
+            ? 'Screening Sources (as of January 2025)'
             : 'Sanctions/PEP/Adverse media screening'
         }
         description={isSanctionsEnabled ? '' : 'Screen individuals and entities in a single API.'}
@@ -180,6 +190,30 @@ export const SanctionsSettings = () => {
               </div>
             </div>
           </>
+        ) : hasFeatureAcuris ? (
+          <div className={s.sanctionsModal}>
+            <div className={s.sanctionsLayout}>
+              <img src={KYC6Logo} alt="KYC6" style={{ height: '40px', width: 'auto' }} />
+            </div>
+            <div className={s.sanctionsText}>
+              KYC6 provides a comprehensive dataset for screening, due diligence, and compliance
+              requirements. Their global data sources are continuously updated to reflect the
+              evolving risks faced by corporations and financial institutions when dealing with
+              global counterparties. The dataset includes millions of profiles on high-risk
+              individuals and corporations worldwide.
+            </div>
+            <div className={s.sanctionsDownloadButton}>
+              <Button
+                type="PRIMARY"
+                onClick={() => {
+                  handleKYC6Download();
+                }}
+                isDisabled={!isSanctionsEnabled}
+              >
+                Download List
+              </Button>
+            </div>
+          </div>
         ) : (
           <>
             <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
