@@ -831,6 +831,13 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               );
             },
           }),
+          helper.simple<'checkerAction'>({
+            title: 'Checker action',
+            key: 'checkerAction',
+            hideInTable: true,
+            exporting: true,
+            filtering: false,
+          }),
           helper.simple<'comments'>({
             title: 'Comments',
             key: 'comments',

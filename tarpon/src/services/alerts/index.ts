@@ -103,6 +103,7 @@ import {
 } from '@/@types/audit-log'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { ReviewerActionEnum } from '@/@types/openapi-internal/ReviewerActionEnum'
 
 type AlertViewAuditLogReturnData = AuditLogReturnData<Alert>
 
@@ -142,6 +143,7 @@ type AlertCommentDeleteAuditLogReturnData = AuditLogReturnData<void, Comment>
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
+  accountsService: AccountsService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -182,6 +184,7 @@ export class AlertsService extends CaseAlertsCommonService {
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
     this.dynamoDb = alertsRepository.dynamoDb
+    this.accountsService = AccountsService.getInstance(this.dynamoDb)
 
     this.caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -1150,6 +1153,33 @@ export class AlertsService extends CaseAlertsCommonService {
     return this.alertsRepository.getAlertsByIds(alertIds)
   }
 
+  private getCheckerAction(
+    oldStatus: CaseStatus | undefined,
+    reviwerAction?: ReviewerActionEnum
+  ) {
+    if (!oldStatus || !reviwerAction) {
+      return '-'
+    }
+    if (oldStatus === 'IN_REVIEW_CLOSED') {
+      if (reviwerAction === 'APPROVED') {
+        return 'Closure approved'
+      }
+      if (reviwerAction === 'DECLINED') {
+        return 'Closure rejected'
+      }
+    }
+    if (oldStatus === 'IN_REVIEW_ESCALATED') {
+      if (reviwerAction === 'APPROVED') {
+        return 'Escalation approved'
+      }
+      if (reviwerAction === 'DECLINED') {
+        return 'Escalation rejected'
+      }
+    }
+
+    return '-'
+  }
+
   @auditLog('ALERT', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     alertIds: string[],
@@ -1263,12 +1293,31 @@ export class AlertsService extends CaseAlertsCommonService {
       statusEscalated(alert.alertStatus)
     )
 
+    const checkerAction: { [alertId: string]: string } = {}
+
+    alerts.forEach((alert) => {
+      const alertId = alert.alertId
+      if (alertId) {
+        const action =
+          userAccount?.isReviewer && alert.lastStatusChange
+            ? this.getCheckerAction(
+                alert.lastStatusChange.caseStatus,
+                statusUpdateRequest.reviewerAction
+              )
+            : alert.checkerAction
+            ? alert.checkerAction
+            : '-'
+        checkerAction[alertId] = action
+      }
+    })
+
     await withTransaction(async () => {
       const [response] = await Promise.all([
         this.alertsRepository.updateStatus(
           alertIds,
           caseIds,
           statusChange,
+          checkerAction,
           undefined
         ),
         this.saveComments(alertIds, caseIds, {

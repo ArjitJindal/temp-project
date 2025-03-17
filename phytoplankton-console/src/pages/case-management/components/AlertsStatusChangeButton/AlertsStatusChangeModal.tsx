@@ -94,7 +94,15 @@ export default function AlertsStatusChangeModal(props: Props) {
       await api.alertsStatusChange({
         AlertsStatusUpdateRequest: {
           alertIds: props.entityIds,
-          updates,
+          updates: {
+            ...updates,
+            reviewerAction:
+              props.newStatusActionLabel === 'Approve'
+                ? 'APPROVED'
+                : props.newStatusActionLabel === 'Decline'
+                ? 'DECLINED'
+                : undefined,
+          },
         },
       });
       props.entityIds.forEach((alertId) => {
@@ -117,7 +125,7 @@ export default function AlertsStatusChangeModal(props: Props) {
         return;
       }
     },
-    [props.entityIds, api, currentUser?.reviewerId, queryClient, users],
+    [api, props.entityIds, props.newStatusActionLabel, currentUser?.reviewerId, queryClient, users],
   );
 
   const updateMutation = useMutation<unknown, unknown, FormValues>(
