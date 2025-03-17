@@ -85,7 +85,6 @@ const report: Report = {
               ElectronicAddressTypeCode: 'E',
             },
           ],
-          ActivityPartyTypeCode: '33',
           PartyName: {
             '0': {
               PartyNameTypeCode: 'L',
@@ -121,7 +120,6 @@ const report: Report = {
               ElectronicAddressTypeCode: 'E',
             },
           ],
-          ActivityPartyTypeCode: '33',
           PartyName: [
             {
               PartyNameTypeCode: 'L',
@@ -155,7 +153,6 @@ const report: Report = {
       },
       financialInstitutions: [
         {
-          ActivityPartyTypeCode: '34',
           PartyName: {
             PartyNameTypeCode: 'L',
             EntityLastNameUnknownIndicator: 'Y',

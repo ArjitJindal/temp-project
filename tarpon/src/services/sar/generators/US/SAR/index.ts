@@ -354,7 +354,8 @@ export class UsSarReportGenerator implements ReportGenerator {
      * Transmitter
      */
     // Augment ActivityPartyTypeCode
-    reportParams.report.transmitter.ActivityPartyTypeCode = 35
+    reportParams.report.transmitter.ActivityPartyTypeCode =
+      ActivityPartyTypeCodes.TRANSMITTER
     // Augment PartyNameTypeCode
     reportParams.report.transmitter.PartyName = [
       {
@@ -384,7 +385,8 @@ export class UsSarReportGenerator implements ReportGenerator {
      * Transmitter contact
      */
     // Augment ActivityPartyTypeCode
-    reportParams.report.transmitterContact.ActivityPartyTypeCode = 37
+    reportParams.report.transmitterContact.ActivityPartyTypeCode =
+      ActivityPartyTypeCodes.TRANSMITTER_CONTACT
     // Augment PartyNameTypeCode
     reportParams.report.transmitterContact.PartyName = [
       {
@@ -397,7 +399,8 @@ export class UsSarReportGenerator implements ReportGenerator {
      * Filing institution
      */
     // Augment ActivityPartyTypeCode
-    reportParams.report.filingInstitution.ActivityPartyTypeCode = 30
+    reportParams.report.filingInstitution.ActivityPartyTypeCode =
+      ActivityPartyTypeCodes.FILING_INSTITUTION
     // Augment PartyNameTypeCode
     reportParams.report.filingInstitution.PartyName = [
       {
@@ -432,8 +435,9 @@ export class UsSarReportGenerator implements ReportGenerator {
      * Contact office
      */
     // Augment ActivityPartyTypeCode
+    reportParams.report.contactOffice.ActivityPartyTypeCode =
+      ActivityPartyTypeCodes.CONTACT_OFFICE
     // Augment PartyNameTypeCode
-    reportParams.report.contactOffice.ActivityPartyTypeCode = 8
     reportParams.report.contactOffice.PartyName = {
       ...reportParams.report.contactOffice.PartyName,
       PartyNameTypeCode: 'L',
@@ -446,7 +450,8 @@ export class UsSarReportGenerator implements ReportGenerator {
       reportParams.transactionMetadata?.financialInstitutions ?? []
     ).map((financialInstitution: any) => {
       // Augment ActivityPartyTypeCode
-      financialInstitution.ActivityPartyTypeCode = 34
+      financialInstitution.ActivityPartyTypeCode =
+        ActivityPartyTypeCodes.FINANCIAL_INSTITUTION
       // Augment PartyNameTypeCode
       financialInstitution.PartyName = [
         {
@@ -482,6 +487,8 @@ export class UsSarReportGenerator implements ReportGenerator {
     reportParams.transactionMetadata.subjects = (
       reportParams.transactionMetadata?.subjects ?? []
     ).map((subject: any) => {
+      // Augment ActivityPartyTypeCode
+      subject.ActivityPartyTypeCode = ActivityPartyTypeCodes.SUBJECT
       // Augment PartyNameTypeCode
       subject.PartyName = [
         subject.PartyName
