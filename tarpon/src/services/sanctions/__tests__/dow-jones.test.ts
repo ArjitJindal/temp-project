@@ -66,6 +66,8 @@ describe('DowJonesProvider', () => {
             sanctionSearchTypes: ['ADVERSE_MEDIA'], // RCAs are not sanctions
             entityType: 'PERSON',
             gender: 'Male',
+            isActivePep: true,
+            isActiveSanctioned: false,
             aka: [],
             countries: ['India'],
             countryCodes: ['IN'],
@@ -155,7 +157,9 @@ Jubilant Pharmova Ltd.`,
             name: 'Ange-Félix Patassé',
             entityType: 'PERSON',
             nationality: ['CF'],
-            sanctionSearchTypes: ['ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
+            sanctionSearchTypes: ['PEP', 'ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
+            isActivePep: false,
+            isActiveSanctioned: false,
             gender: 'Male',
             occupations: [
               {
@@ -164,6 +168,7 @@ Jubilant Pharmova Ltd.`,
                 title: 'Deceased',
               },
             ],
+
             profileImagesUrls: [
               'http://rcainfo.mondoblog.org/files/2011/05/patasse-photo.jpg',
               'https://cdn-s-www.estrepublicain.fr/images/F0DDA775-5B37-4A03-969B-363BC9E96EBB/NW_detail_M/title-1576680650.jpg',
@@ -260,7 +265,7 @@ Patasse passed away on April 5, 2011.`,
             yearOfBirth: ['1937'],
             dateOfBirths: ['1937-01-25'],
             dateMatched: true,
-            matchTypes: ['Corruption'],
+            matchTypes: ['PEP', 'Corruption'],
             screeningSources: [
               {
                 createdAt: 1026518400000,
@@ -360,6 +365,8 @@ Patasse passed away on April 5, 2011.`,
           'add',
           {
             id: '10184',
+            isActivePep: true,
+            isActiveSanctioned: false,
             name: 'Martin Ziguélé',
             entityType: 'PERSON',
             gender: 'Male',

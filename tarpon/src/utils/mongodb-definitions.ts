@@ -62,6 +62,12 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
       entityType: {
         type: 'string',
       },
+      isActivePep: {
+        type: 'boolean',
+      },
+      isActiveSanctioned: {
+        type: 'boolean',
+      },
       ...(isDelta
         ? {
             provider: {

@@ -850,6 +850,19 @@ export const FUZZINESS_SCHEMA = (options: PercentSchemaOptions = {}) =>
     ...options,
   })
 
+export const IS_ACTIVE_SCHEMA = {
+  type: 'boolean',
+  nullable: true,
+  title: 'Only apply to active screening entities',
+  description: `Entities that are still actively on a watchlist are considered 'Active entities'`,
+  ...uiSchema(
+    {},
+    {
+      requiredFeatures: ['DOW_JONES', 'ACURIS'],
+    }
+  ),
+} as const
+
 export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({
     type: 'object',

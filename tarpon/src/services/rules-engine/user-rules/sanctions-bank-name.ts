@@ -8,11 +8,13 @@ import {
   FUZZINESS_SETTINGS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  IS_ACTIVE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getIsActiveParameters,
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
@@ -32,6 +34,7 @@ export type SanctionsBankUserRuleParameters = {
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
+  isActive?: boolean
 }
 
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
@@ -47,6 +50,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
+        isActive: IS_ACTIVE_SCHEMA,
       },
       required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -60,6 +64,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       ongoingScreening,
       fuzzinessSetting,
       stopwords,
+      isActive,
     } = this.parameters
 
     if (this.ongoingScreeningMode && !ongoingScreening) {
@@ -120,6 +125,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 ...getEntityTypeForSearch(providers, 'BANK'),
                 ...getFuzzinessSettings(providers, fuzzinessSetting),
                 ...getStopwordSettings(providers, stopwords),
+                ...getIsActiveParameters(providers, screeningTypes, isActive),
               },
               hitContext
             )

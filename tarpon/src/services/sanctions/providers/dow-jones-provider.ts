@@ -562,11 +562,19 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     )
   }
 
-  private getSanctionReferences(sanctionsReferences) {
+  private isActiveSanctioned(sanctionsReferences) {
+    return Boolean(
+      this.getActiveSanctionReferences(sanctionsReferences)?.length
+    )
+  }
+
+  private getActiveSanctionReferences(sanctionsReferences) {
     return (
       sanctionsReferences
         ?.flatMap((sr) => sr?.Reference)
-        .filter((sr) => !sr['@_toDay']) ?? []
+        .filter(
+          (sr) => !sr['@_toDay'] && !sr['@_toMonth'] && !sr['@_toYear']
+        ) ?? []
     )
   }
 
@@ -574,14 +582,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     pepRcaMatchTypes: string[]
     sanctionSearchTypes: SanctionsSearchType[]
   } {
-    const sanctionsReferences = this.getSanctionReferences(
+    const sanctionsReferences = this.getActiveSanctionReferences(
       person.SanctionsReferences
-    )
-
-    const inactivePEP = Boolean(
-      person.DateDetails?.Date?.find((date: any) =>
-        this.isInactivePEP(date, 'Inactive as of (PEP)')
-      )
     )
 
     const inactiveRCA = Boolean(
@@ -601,7 +603,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       .filter(Boolean)
     if (
       descriptionValues?.includes('1') &&
-      !inactivePEP &&
       this.screeningTypes.includes('PEP')
     ) {
       sanctionSearchTypes.push('PEP')
@@ -615,10 +616,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       pepRcaMatchTypes.push('RCA')
     }
     if (descriptionValues?.includes('3')) {
-      if (
-        description2Values?.includes('1') &&
-        (!sanctionsReferences || sanctionsReferences.length > 0)
-      ) {
+      if (description2Values?.includes('1')) {
         sanctionSearchTypes.push('SANCTIONS')
       }
       if (
@@ -674,7 +672,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
 
   private getCountries(codes): string[] {
-    return codes?.map((c) => COUNTRIES[c]) ?? []
+    return compact(codes?.map((c) => COUNTRIES[c]))
   }
 
   private getDocuments(idNumberTypes) {
@@ -879,7 +877,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         if (!name) {
           return
         }
-
+        const isActivePep = !person.DateDetails?.Date?.find((date: any) =>
+          this.isInactivePEP(date, 'Inactive as of (PEP)')
+        )
         const countryCodes = this.getCountryCodes(person)
         const countries = this.getCountries(countryCodes)
         const countryOfNationality = this.getCountryCodes(person, true)
@@ -939,6 +939,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               ? person.Images.Image.map((img) => img['@_URL'])
               : [person.Images.Image['@_URL']]
             : undefined,
+          isActivePep,
+          isActiveSanctioned: this.isActiveSanctioned(
+            person.SanctionsReferences
+          ),
         }
 
         return [
@@ -1067,9 +1071,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
 
   private getEntitySanctionsSearchType(entity): SanctionsSearchType[] {
-    const sanctionsReferences = this.getSanctionReferences(
-      entity.SanctionsReferences
-    )
     const descriptions = this.getDescriptions(entity)
     const description2Values = compact(
       descriptions?.map((d) => d['@_Description2'])
@@ -1078,8 +1079,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     if (
       description2Values?.some((d) =>
         ENTITY_SANCTIONS_DESCRIPTION2_VALUES.includes(d)
-      ) &&
-      (!sanctionsReferences || sanctionsReferences.length)
+      )
     ) {
       sanctionsSearchTypes.push('SANCTIONS')
     }
@@ -1162,6 +1162,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           yearOfBirth: this.getYearFromDates(
             entity.DateDetails?.Date,
             'Date of Registration'
+          ),
+          isActiveSanctioned: this.isActiveSanctioned(
+            entity.SanctionsReferences
           ),
         }
 

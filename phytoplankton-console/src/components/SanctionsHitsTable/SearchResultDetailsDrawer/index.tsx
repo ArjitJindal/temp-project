@@ -347,9 +347,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               key={entity.nationality?.join(',')}
               title={isHitEntityPerson(entity.entityType) ? 'Nationality' : 'Countries'}
             >
-              {compact(entity.nationality)
-                ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
-                .join(', ')}
+              {compact(entity.nationality?.map((code) => COUNTRIES[code])).length > 0
+                ? compact(entity.nationality?.map((code) => COUNTRIES[code])).join(', ')
+                : 'Not known'}
             </Form.Layout.Label>
           )}
           {occupationTitles.length > 0 && (
@@ -463,6 +463,17 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               {occupationCodes.join(', ')}
             </Form.Layout.Label>
           )}
+          {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
+            <Form.Layout.Label title={'PEP status'}>
+              {entity.isActivePep === true ? 'Active' : 'Inactive'}
+            </Form.Layout.Label>
+          )}
+          {entity.sanctionSearchTypes?.includes('SANCTIONS') &&
+            entity.isActiveSanctioned != null && (
+              <Form.Layout.Label title={'Sanctioned status'}>
+                {entity.isActiveSanctioned === true ? 'Active' : 'Inactive'}
+              </Form.Layout.Label>
+            )}
           {entity.isDeseased && (
             <Form.Layout.Label title={'Deseased'}>
               {entity.isDeseased ? 'Yes' : 'No'}

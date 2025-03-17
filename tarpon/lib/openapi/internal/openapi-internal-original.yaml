@@ -13010,6 +13010,10 @@ components:
           type: array
           items:
             type: string
+        isActivePep:
+          type: boolean
+        isActiveSanctioned:
+          type: boolean
       required:
         - searchTerm
     PepRank:

@@ -251,6 +251,50 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
+    if (request.isActivePep) {
+      const isActivePepCondition = {
+        $or: [
+          {
+            isActivePep: {
+              $in: [true, null],
+            },
+          },
+          {
+            sanctionsSearchTypes: {
+              $ne: 'PEP',
+            },
+          },
+        ],
+      }
+      if (request.orFilters?.includes('isActivePep')) {
+        orConditions.push(isActivePepCondition)
+      } else {
+        andConditions.push(isActivePepCondition)
+      }
+    }
+
+    if (request.isActiveSanctioned) {
+      const isActiveSanctionedCondition = {
+        $or: [
+          {
+            isActiveSanctioned: {
+              $in: [true, null],
+            },
+          },
+          {
+            sanctionsSearchTypes: {
+              $ne: 'SANCTIONS',
+            },
+          },
+        ],
+      }
+      if (request.orFilters?.includes('isActiveSanctioned')) {
+        orConditions.push(isActiveSanctionedCondition)
+      } else {
+        andConditions.push(isActiveSanctionedCondition)
+      }
+    }
+
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
       if (request.orFilters?.includes('entityType')) {
         orConditions.push({
@@ -492,6 +536,98 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           ]),
         },
       })
+    }
+
+    if (request.isActivePep) {
+      const activeMatch = [
+        {
+          compound: {
+            should: [
+              {
+                compound: {
+                  should: [
+                    {
+                      equals: {
+                        value: true,
+                        path: 'isActivePep',
+                      },
+                    },
+                    {
+                      equals: {
+                        value: null,
+                        path: 'isActivePep',
+                      },
+                    },
+                  ],
+                  minimumShouldMatch: 1,
+                },
+              },
+              {
+                compound: {
+                  mustNot: {
+                    equals: {
+                      value: 'PEP',
+                      path: 'sanctionSearchTypes',
+                    },
+                  },
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
+      if (request.orFilters?.includes('isActivePep')) {
+        orFilters.push(...activeMatch)
+      } else {
+        andFilters.push(...activeMatch)
+      }
+    }
+
+    if (request.isActiveSanctioned) {
+      const activeMatch = [
+        {
+          compound: {
+            should: [
+              {
+                compound: {
+                  should: [
+                    {
+                      equals: {
+                        value: true,
+                        path: 'isActiveSanctioned',
+                      },
+                    },
+                    {
+                      equals: {
+                        value: null,
+                        path: 'isActiveSanctioned',
+                      },
+                    },
+                  ],
+                  minimumShouldMatch: 1,
+                },
+              },
+              {
+                compound: {
+                  mustNot: {
+                    equals: {
+                      value: 'SANCTIONS',
+                      path: 'sanctionSearchTypes',
+                    },
+                  },
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
+      if (request.orFilters?.includes('isActiveSanctioned')) {
+        orFilters.push(...activeMatch)
+      } else {
+        andFilters.push(...activeMatch)
+      }
     }
 
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {

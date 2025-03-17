@@ -7,6 +7,7 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsSearchRequestEntityType } from '@/@types/openapi-internal/SanctionsSearchRequestEntityType'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -97,4 +98,30 @@ export function getStopwordSettings(
         stopwords,
       }
     : {}
+}
+
+export function getIsActiveParameters(
+  providers: SanctionsDataProviderName[],
+  sanctionsSearchType?: Array<GenericSanctionsSearchType>,
+  isActive?: boolean
+): {
+  isActivePep?: boolean
+  isActiveSanctioned?: boolean
+} {
+  if (providers.includes('comply-advantage') || !isActive) {
+    return {}
+  }
+
+  return {
+    ...(sanctionsSearchType?.includes('PEP')
+      ? {
+          isActivePep: isActive,
+        }
+      : {}),
+    ...(sanctionsSearchType?.includes('SANCTIONS')
+      ? {
+          isActiveSanctioned: isActive,
+        }
+      : {}),
+  }
 }
