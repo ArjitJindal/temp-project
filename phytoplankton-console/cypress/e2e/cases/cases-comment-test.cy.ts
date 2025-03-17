@@ -39,7 +39,7 @@ describe('Add a comment to a case', () => {
       },
     );
     cy.message('Uploading...').should('exist');
-    cy.message('Uploading...').should('not.exist');
+    cy.message().should('not.exist');
     cy.get('button[data-cy="add-comment-button"]').click();
     cy.message('Comment successfully added!').should('exist');
     cy.get('[data-cy="comment-editor"]').should('not.be.visible');

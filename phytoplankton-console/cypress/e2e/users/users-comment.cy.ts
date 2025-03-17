@@ -34,7 +34,7 @@ describe('Add a comment to a user', () => {
       },
     );
     cy.message('Uploading...').should('exist');
-    cy.message('Uploading...').should('not.exist');
+    cy.message().should('not.exist');
     cy.get('button[data-cy="add-comment-button"]').click();
     cy.message('Comment successfully added!').should('exist');
     cy.get('[data-cy="comment-editor"]').should('not.be.visible');
@@ -46,8 +46,7 @@ describe('Add a comment to a user', () => {
     // Click on download all button and check if the files are downloaded successfully
     cy.get("button[data-cy='download-all-button']").click();
     cy.message('Downloading attachments').should('exist');
-    cy.message('Downloading attachments').should('not.exist');
-    cy.message('Unable to complete the download').should('not.exist');
+    cy.message().should('not.exist');
 
     cy.get('[data-cy="comment"]')
       .then(($elements) => {
@@ -62,7 +61,7 @@ describe('Add a comment to a user', () => {
         cy.get('[data-cy="attached-file"] a')
           .invoke('attr', 'href')
           .then((actionLink) => {
-            cy.request(actionLink!).then((response) => {
+            cy.request(actionLink as string).then((response) => {
               expect(response.body).to.eq(fileContent);
             });
           })

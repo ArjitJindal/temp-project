@@ -94,9 +94,7 @@ describe('Escalate a case from case-details', () => {
         cy.message(
           `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
         ).should('exist');
-        cy.message(
-          `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
-        ).should('not.exist');
+        cy.message().should('not.exist');
 
         // cy.checkNotification([
         //   `‘cypress+custom@flagright.com’ escalated a case ‘${caseId}’ to you.`,

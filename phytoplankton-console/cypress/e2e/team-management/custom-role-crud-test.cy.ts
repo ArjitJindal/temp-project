@@ -22,7 +22,7 @@ describe('Custom Role - CRUD Test', () => {
     cy.get('input[placeholder="Enter a description"]').type('Custom test role description');
     cy.contains('Save').click();
     cy.message(`${roleName} role saved`).should('exist');
-    cy.message(`${roleName} role saved`).should('not.exist');
+    cy.message().should('not.exist');
     cy.waitNothingLoading();
 
     //update a custom role
@@ -33,7 +33,7 @@ describe('Custom Role - CRUD Test', () => {
     );
     cy.contains('Save').click();
     cy.message(`${roleName} role saved`).should('exist');
-    cy.message(`${roleName} role saved`).should('not.exist');
+    cy.message().should('not.exist');
     cy.waitNothingLoading();
 
     //delete a custom role
@@ -41,7 +41,7 @@ describe('Custom Role - CRUD Test', () => {
     cy.get('button[data-cy="edit-role"]').click();
     cy.get('button[data-cy="delete-role"]').click();
     cy.message(`${roleName} was deleted.`).should('exist');
-    cy.message(`${roleName} was deleted.`).should('not.exist');
+    cy.message().should('not.exist');
     cy.waitNothingLoading();
 
     cy.get('div[data-cy="roles-menu-item"]').contains(`${roleName}`).should('not.exist');

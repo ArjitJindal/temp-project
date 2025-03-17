@@ -186,10 +186,11 @@ export function MessageBody(props: {
         !isVisible && s.isHidden,
       )}
       data-sentry-allow={type === 'ERROR'}
+      data-cy="toast-body"
     >
       <div className={s.iconWrapper}>{icon}</div>
-      <div className={s.messageText} data-cy="ant-message-popup">
-        <div className={s.messageTitle}>
+      <div className={s.messageText}>
+        <div className={s.messageTitle} data-cy={'toast-message-title'}>
           {title}
           {link && (
             <Link className={s.messageLink} to={link}>

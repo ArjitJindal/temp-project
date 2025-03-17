@@ -43,7 +43,7 @@ declare global {
        * Looks for a popup message by a text
        * @param text
        */
-      message(text: string): Chainable<Element>;
+      message(text?: string): Chainable<Element>;
       logout(): Chainable<Promise<Element>>;
       setPermissions(permissions: string[]): Chainable<Promise<Element>>;
       apiHandler(props: {

@@ -188,8 +188,11 @@ Cypress.Commands.add('caseAlertAction', (action: string) => {
     .click();
 });
 
-Cypress.Commands.add('message', (text: string) => {
-  cy.get('.ant-message').contains(text);
+Cypress.Commands.add('message', (text?: string) => {
+  cy.get('[data-cy="toast-message-title"]').as('message');
+  if (text) {
+    cy.get('@message').contains(text);
+  }
 });
 
 Cypress.Commands.add('navigateToPage', (url: string, pageTitle: string) => {

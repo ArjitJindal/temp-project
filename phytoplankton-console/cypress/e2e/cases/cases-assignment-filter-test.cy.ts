@@ -27,7 +27,7 @@ describe('Using Assignment filter and assigning cases', () => {
                 .first()
                 .click({ force: true });
               cy.message('Assignees updated successfully').should('exist');
-              cy.message('Assignees updated successfully').should('not.exist');
+              cy.message().should('not.exist');
             }
           })
           .then(() => {
