@@ -35,9 +35,13 @@ async function migrateTenant(tenant: Tenant) {
 
   const cursor = collection.find({
     entityId: { $exists: false },
+    requestStartedAt: { $gte: Date.now() - 30 * 24 * 60 * 60 * 1000 },
   })
 
   let count = 0
+  const BATCH_SIZE = 1000 // Adjust based on your needs
+  let bulkOperations: any[] = []
+
   for await (const doc of cursor) {
     if (doc.request?.body) {
       try {
@@ -50,13 +54,19 @@ async function migrateTenant(tenant: Tenant) {
         const entityId = extractEntityId(jsonBody)
 
         if (entityId) {
-          await collection.updateOne(
-            { _id: doc._id },
-            {
-              $set: { entityId },
-            }
-          )
+          bulkOperations.push({
+            updateOne: {
+              filter: { _id: doc._id },
+              update: { $set: { entityId } },
+            },
+          })
           count++
+
+          if (bulkOperations.length >= BATCH_SIZE) {
+            await collection.bulkWrite(bulkOperations, { ordered: false })
+            console.log(`Processed ${count} documents for tenant ${tenant.id}`)
+            bulkOperations = []
+          }
         }
       } catch (error) {
         console.error(`Failed to process document ${doc._id}: ${error}`)
@@ -64,7 +74,12 @@ async function migrateTenant(tenant: Tenant) {
       }
     }
   }
-  console.log(`Updated ${count} documents for tenant ${tenant.id}`)
+
+  if (bulkOperations.length > 0) {
+    await collection.bulkWrite(bulkOperations, { ordered: false })
+  }
+
+  console.log(`Updated total ${count} documents for tenant ${tenant.id}`)
 }
 
 export const up = async () => {
