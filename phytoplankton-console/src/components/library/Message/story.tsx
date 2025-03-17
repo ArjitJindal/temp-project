@@ -3,6 +3,8 @@ import { CloseMessage, message, MessageBody } from './index';
 import { UseCase } from '@/pages/storybook/components';
 import Button from '@/components/library/Button';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
+import Toggle from '@/components/library/Toggle';
+import Label from '@/components/library/Label';
 
 export default function (): JSX.Element {
   const [closeFunction, setCloseFunction] = useState<CloseMessage | null>(null);
@@ -77,21 +79,21 @@ export default function (): JSX.Element {
       <UseCase title="Different types">
         <Button
           onClick={() => {
-            message.success('Success message');
+            message.success(`Success message (${new Date().toISOString()})`);
           }}
         >
           Success
         </Button>
         <Button
           onClick={() => {
-            message.error('Error message');
+            message.error(`Error message (${new Date().toISOString()})`);
           }}
         >
           Error
         </Button>
         <Button
           onClick={() => {
-            message.warn('Warning message');
+            message.warn(`Warning message (${new Date().toISOString()})`);
           }}
         >
           Warning
@@ -118,6 +120,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title="Loading">
         <Button
+          isDisabled={closeFunction != null}
           onClick={() => {
             setCloseFunction(() => message.loading('Some message here...'));
           }}
@@ -129,11 +132,33 @@ export default function (): JSX.Element {
           onClick={() => {
             if (closeFunction != null) {
               closeFunction();
+              setCloseFunction(null);
             }
           }}
         >
           Close
         </Button>
+      </UseCase>
+      <UseCase title="In/out animation" initialState={{ visible: true }}>
+        {([state, setState]) => {
+          return (
+            <>
+              <Label label={'Visible'} position={'RIGHT'}>
+                <Toggle
+                  value={state.visible}
+                  onChange={(value) => {
+                    setState({ visible: value });
+                  }}
+                />
+              </Label>
+              <MessageBody isVisible={state.visible} type={'INFO'} title={'Some title'}>
+                {'Very long, long, long, long, long, long, long, long, long, long, long,' +
+                  ' long, long, long, long, long, long, long, long, long, long, long, long,' +
+                  ` long, long, long, long title`}
+              </MessageBody>
+            </>
+          );
+        }}
       </UseCase>
     </>
   );

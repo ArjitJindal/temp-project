@@ -1,7 +1,7 @@
 import React from 'react';
-import { message as AntMessage } from 'antd';
 import cn from 'clsx';
 import * as Sentry from '@sentry/react';
+import toast, { ToastPosition } from 'react-hot-toast';
 import s from './index.module.less';
 import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
@@ -20,6 +20,7 @@ type ShowNotificationOptions = {
   onClose?: () => void;
   link?: string;
   linkTitle?: string;
+  position?: ToastPosition;
 };
 
 export type ShowNotification = (
@@ -50,7 +51,7 @@ export const success: ShowNotification = (
 export const fatal: ShowNotificationWithOptionalError = (
   message: React.ReactNode,
   error: any | unknown,
-  options?: Omit<ShowNotificationOptions, 'duration'>,
+  options?: Omit<ShowNotificationOptions, 'duration' | 'position'>,
 ) => {
   if (!errorsCaptured.includes(message?.toString() || '') && process.env.ENV_NAME !== 'local') {
     errorsCaptured.push(message?.toString() || ''); // prevent duplicate errors
@@ -66,7 +67,7 @@ export const fatal: ShowNotificationWithOptionalError = (
 
 export const error: ShowNotification = (
   message: React.ReactNode,
-  options?: Omit<ShowNotificationOptions, 'duration'>,
+  options?: Omit<ShowNotificationOptions, 'duration' | 'position'>,
 ) => {
   return open(message, 'ERROR', {
     ...options,
@@ -76,17 +77,18 @@ export const error: ShowNotification = (
 
 export const loading: ShowNotification = (
   message: React.ReactNode,
-  options?: Omit<ShowNotificationOptions, 'duration'>,
+  options?: Omit<ShowNotificationOptions, 'duration' | 'position'>,
 ) => {
   return open(message, 'LOADING', {
     ...options,
+    position: 'top-center',
     duration: 0,
   });
 };
 
 export const warn: ShowNotification = (
   message: React.ReactNode,
-  options?: Omit<ShowNotificationOptions, 'duration'>,
+  options?: Omit<ShowNotificationOptions, 'duration' | 'position'>,
 ) => {
   return open(message, 'WARNING', {
     ...options,
@@ -111,23 +113,43 @@ function open(
   type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
   options?: ShowNotificationOptions,
 ): CloseMessage {
-  const close = AntMessage.open({
-    content: (
-      <MessageBody
-        type={type}
-        title={title}
-        onClose={() => {
-          options?.onClose?.();
-          close();
-        }}
-      >
-        {options?.details}
-      </MessageBody>
-    ),
-    duration: options?.duration ?? 5,
-    className: s.root,
-  });
-  return close;
+  let defaultDuration;
+  switch (type) {
+    case 'INFO':
+    case 'SUCCESS':
+      defaultDuration = 3500;
+      break;
+    case 'ERROR':
+    case 'WARNING':
+      defaultDuration = 6000;
+      break;
+    case 'LOADING':
+      defaultDuration = Number.POSITIVE_INFINITY;
+  }
+  const toastId = toast(
+    (t) => {
+      return (
+        <MessageBody
+          isVisible={t.visible}
+          type={type}
+          title={title}
+          onClose={() => {
+            toast.dismiss(t.id);
+            options?.onClose?.();
+          }}
+        >
+          {options?.details}
+        </MessageBody>
+      );
+    },
+    {
+      position: options?.position,
+      duration: options?.duration ?? defaultDuration ?? 5000,
+    },
+  );
+  return () => {
+    toast.dismiss(toastId);
+  };
 }
 
 export function MessageBody(props: {
@@ -137,8 +159,10 @@ export function MessageBody(props: {
   linkTitle?: string;
   children?: React.ReactNode;
   onClose?: () => void;
+  isVisible?: boolean;
 }) {
-  const { type, title, children, link, linkTitle, onClose } = props;
+  const { type, title, children, link, linkTitle, onClose, isVisible } = props;
+
   let icon: React.ReactNode | undefined = undefined;
   let isClosable = true;
   if (type === 'INFO') {
@@ -154,7 +178,15 @@ export function MessageBody(props: {
   }
 
   return (
-    <div className={cn(s.message, s[`type-${type}`])} data-sentry-allow={type === 'ERROR'}>
+    <div
+      className={cn(
+        s.message,
+        s[`type-${type}`],
+        isVisible != null && s.isAnimationEnabled,
+        !isVisible && s.isHidden,
+      )}
+      data-sentry-allow={type === 'ERROR'}
+    >
       <div className={s.iconWrapper}>{icon}</div>
       <div className={s.messageText} data-cy="ant-message-popup">
         <div className={s.messageTitle}>

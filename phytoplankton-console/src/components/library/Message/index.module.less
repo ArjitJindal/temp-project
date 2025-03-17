@@ -54,6 +54,14 @@
   border-radius: @figma-vars--tokens-spacingSpacing3xs;
   position: relative;
 
+  &.isAnimationEnabled {
+    transform-origin: 50% 100%;
+    animation: Message_show @default-animation-speed @default-animation-function forwards;
+    &.isHidden {
+      animation: Message_hide @default-animation-speed @default-animation-function forwards;
+    }
+  }
+
   &::before {
     display: block;
     content: ' ';
@@ -110,6 +118,26 @@
     .icon {
       display: none;
     }
+  }
+}
+
+@keyframes Message_show {
+  0% {
+    transform: scaleY(0) scaleX(0.85) translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes Message_hide {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 

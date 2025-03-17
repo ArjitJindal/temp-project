@@ -16,6 +16,7 @@ import SessionTimeoutProvider from './SessionTimeoutDetector';
 import ActiveSessionProvider from './ActiveSessionsProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
+import ToastsProvider from '@/components/AppWrapper/Providers/ToastsProvider';
 
 interface Props {
   children?: React.ReactNode;
@@ -28,6 +29,7 @@ const withProviders =
     components.reduceRight((acc, Comp) => <Comp>{acc}</Comp>, children);
 
 const StoryBookProviders = withProviders(
+  ToastsProvider,
   ApiProviderMock,
   AntConfigProvider,
   QueryClientProvider,
@@ -36,6 +38,7 @@ const StoryBookProviders = withProviders(
   SideBarProvider,
 );
 const AllProviders = withProviders(
+  ToastsProvider,
   AuthProvider,
   AntConfigProvider,
   QueryClientProvider,
