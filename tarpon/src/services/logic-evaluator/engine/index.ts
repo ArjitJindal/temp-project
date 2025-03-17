@@ -511,7 +511,7 @@ export class LogicEvaluator {
             })
           )
         },
-        { cacheKeyFn: generateChecksum }
+        { cacheKeyFn: generateChecksum, batch: false }
       )
     },
     // Don't take dynamoDb into account
@@ -562,6 +562,7 @@ export class LogicEvaluator {
           cacheKeyFn: ({ direction, aggVariable }) => {
             return `${direction}-${getAggVarHash(aggVariable)}`
           },
+          batch: false,
         }
       )
     },
