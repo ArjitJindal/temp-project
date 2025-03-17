@@ -82,10 +82,7 @@ const main = async () => {
     stdio: 'inherit',
   })
   execSync('npm run cdktf:init', { stdio: 'inherit' })
-  execSync(
-    `ASSUME_ROLE_ARN="" cdktf deploy --quiet ${config.stackName} --auto-approve`,
-    { stdio: 'inherit' }
-  )
+  execSync(`npm run deploy:cdktf ${stage}:${region}`, { stdio: 'inherit' })
 }
 
 void main().catch((e) => {

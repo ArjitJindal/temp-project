@@ -18,6 +18,7 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
 - AWS CLI - [Install AWS CLI](https://aws.amazon.com/cli/)
 - CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
+- CDKTF CLI - [Install the CDKTF CLI](https://developer.hashicorp.com/terraform/cdktf/cli-reference/cli-configuration)
 - Terraform - [Install the Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
 - Node.js - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
 - Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
