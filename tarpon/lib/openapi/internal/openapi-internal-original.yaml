@@ -11543,12 +11543,12 @@ components:
         - risk-scoring:risk-factors:read
         - risk-scoring:risk-factors:write
         - risk-scoring:risk-algorithms:read
+        - risk-scoring:risk-score-details:read
         - users:user-overview:read
         - users:user-overview:write
         - users:user-comments:write
         - users:user-details:read
         - users:user-pep-status:write
-        - users:user-kyc-risk-score-details:read
         - users:user-tags:write
         - users:user-manual-risk-levels:write
         - dashboard:download-data:read

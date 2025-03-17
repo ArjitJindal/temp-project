@@ -185,19 +185,30 @@ export const riskLevelAndScoreHandler = lambdaApi({
     handlers.registerGetKrsValue(async (ctx, request) => {
       const result = await riskService.getKrsScoreFromDynamo(request.userId)
       const isKycPermissionEnabled = hasPermission(
-        'users:user-kyc-risk-score-details:read'
+        'risk-scoring:risk-score-details:read'
       )
       if (isKycPermissionEnabled) {
         return result
       }
+      delete result?.components
       delete result?.factorScoreDetails
       return result
     })
 
-    handlers.registerGetArsValue(
-      async (ctx, request) =>
-        await riskService.getArsScoreFromDynamo(request.transactionId)
-    )
+    handlers.registerGetArsValue(async (ctx, request) => {
+      const isKycPermissionEnabled = hasPermission(
+        'risk-scoring:risk-score-details:read'
+      )
+      const result = await riskService.getArsScoreFromDynamo(
+        request.transactionId
+      )
+      if (isKycPermissionEnabled) {
+        return result
+      }
+      delete result?.components
+      delete result?.factorScoreDetails
+      return result
+    })
 
     handlers.registerGetTrsScores(async (ctx, request) => {
       const result = await riskService.getAverageArsScore(request.userId)
@@ -208,6 +219,15 @@ export const riskLevelAndScoreHandler = lambdaApi({
       const dynamoResult = await riskService.getDrsScoreFromDynamo(
         request.userId
       )
+      const isKycPermissionEnabled = hasPermission(
+        'risk-scoring:risk-score-details:read'
+      )
+      if (isKycPermissionEnabled && dynamoResult) {
+        return [dynamoResult]
+      }
+      delete dynamoResult?.components
+      delete dynamoResult?.factorScoreDetails
+
       if (dynamoResult) {
         return [dynamoResult]
       }

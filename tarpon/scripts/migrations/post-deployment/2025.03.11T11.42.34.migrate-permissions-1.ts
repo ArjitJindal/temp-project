@@ -12,7 +12,7 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
     if (role.permissions.includes('users:user-details:read')) {
       await rolesService.updateRolePermissions(role.id, [
         ...role.permissions,
-        'users:user-kyc-risk-score-details:read',
+        'risk-scoring:risk-score-details:read',
       ])
     }
   }
