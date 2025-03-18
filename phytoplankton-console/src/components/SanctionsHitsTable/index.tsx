@@ -194,7 +194,6 @@ export default function SanctionsHitsTable(props: Props) {
           ...STRING,
           defaultWrapMode: 'WRAP',
         },
-        defaultWidth: 500,
         enableResizing: false,
       }),
   ]);

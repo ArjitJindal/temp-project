@@ -16,7 +16,7 @@ import {
   ToolRenderer,
 } from './types';
 import Header from './Header';
-import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE, SPACER_COLUMN_ID } from './consts';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from './consts';
 import Sorter from './Sorter';
 import { PersistedSettingsProvider, usePersistedSettingsContext } from './internal/settings';
 import { useTanstackTable } from './internal/helpers';
@@ -290,165 +290,19 @@ function Table<Item extends object, Params extends object = CommonParams>(
         enableHorizontalScroll={sizingMode === 'SCROLL'}
       >
         {(containerWidth) => {
-          const showSizer = sizingMode === 'SCROLL' && containerWidth > table.getTotalSize();
-          const showSkeleton = shouldShowSkeleton(dataRes);
-          const rows = table.getRowModel().rows;
           return (
-            <table
-              data-cy={cyId}
-              className={cn(
-                s.table,
-                fitHeight === true && s.fitHeight,
-                isLoading(dataRes) && CY_LOADING_FLAG_CLASS,
-              )}
-              style={{
-                width: sizingMode === 'SCROLL' ? table.getTotalSize() : '100%',
-              }}
-            >
-              <thead className={s.tableHead}>
-                {table
-                  .getHeaderGroups()
-                  .filter((headerGroup) =>
-                    headerGroup.headers.some((header) => !header.isPlaceholder),
-                  )
-                  .map((headerGroup) => {
-                    const leftPinned = headerGroup.headers
-                      .filter((header) => header.column.getIsPinned() === 'left')
-                      .map((header) => ({ id: header.id, size: header.getSize() }));
-                    const rightPinned = headerGroup.headers
-                      .filter((header) => header.column.getIsPinned() === 'right')
-                      .map((header) => ({ id: header.id, size: header.getSize() }));
-                    return (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header, i) => {
-                          const isPinned = header.column.getIsPinned();
-                          let offset = 0;
-                          if (isPinned === 'right') {
-                            const pinnedIndex = rightPinned.findIndex(({ id }) => id === header.id);
-                            offset = rightPinned
-                              .slice(pinnedIndex + 1)
-                              .reduce((acc, x) => acc + x.size, 0);
-                          } else if (isPinned === 'left') {
-                            const pinnedIndex = leftPinned.findIndex(({ id }) => id === header.id);
-                            offset = leftPinned
-                              .slice(0, pinnedIndex)
-                              .reduce((acc, x) => acc + x.size, 0);
-                          }
-
-                          return header.column.id === SPACER_COLUMN_ID && !showSizer ? (
-                            <React.Fragment key={header.id}></React.Fragment>
-                          ) : (
-                            <Th
-                              key={header.id}
-                              index={i}
-                              header={header}
-                              pinOffset={offset}
-                              rowHeightMode={rowHeightMode}
-                            />
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-              </thead>
-              <tbody
-                data-cy={`${cyId}${!isLoading(dataRes) ? '-body' : ''}`}
-                className={cn(
-                  s.tableBody,
-                  !showSkeleton && isLoading(dataRes) && s.isLoading,
-                  showSkeleton && s.showSkeleton,
-                )}
-                aria-label="Table body"
-              >
-                {isFailed(dataRes) ? (
-                  <tr>
-                    <td colSpan={table.getAllFlatColumns().length} className={s.error}>
-                      <Alert type="ERROR">{dataRes.message}</Alert>
-                    </td>
-                  </tr>
-                ) : (
-                  <>
-                    {!showSkeleton && !isLoading(dataRes) && rows.length === 0 && (
-                      <tr>
-                        <td
-                          className={s.noData}
-                          style={{ paddingLeft: containerWidth / 2 }}
-                          colSpan={table.getAllFlatColumns().length}
-                        >
-                          {'No data to display'}
-                        </td>
-                      </tr>
-                    )}
-                    {rows.map((row, index) => {
-                      const visibleCells = row.getVisibleCells();
-
-                      const leftPinned = visibleCells
-                        .filter((cell) => cell.column.getIsPinned() === 'left')
-                        .map((cell) => ({ id: cell.id, size: cell.column.getSize() }));
-                      const rightPinned = visibleCells
-                        .filter((cell) => cell.column.getIsPinned() === 'right')
-                        .map((cell) => ({ id: cell.id, size: cell.column.getSize() }));
-
-                      return (
-                        <React.Fragment key={index}>
-                          <tr id={`row_${index}`} data-cy={`${cyId}-data-row`}>
-                            {visibleCells.map((cell, i) => {
-                              const isPinned = cell.column.getIsPinned();
-                              let offset = 0;
-                              if (isPinned === 'right') {
-                                const pinnedIndex = rightPinned.findIndex(
-                                  ({ id }) => id === cell.id,
-                                );
-                                offset = rightPinned
-                                  .slice(pinnedIndex + 1)
-                                  .reduce((acc, x) => acc + x.size, 0);
-                              } else if (isPinned === 'left') {
-                                const pinnedIndex = leftPinned.findIndex(
-                                  ({ id }) => id === cell.id,
-                                );
-                                offset = leftPinned
-                                  .slice(0, pinnedIndex)
-                                  .reduce((acc, x) => acc + x.size, 0);
-                              }
-
-                              return cell.column.id === SPACER_COLUMN_ID && !showSizer ? (
-                                <React.Fragment key={cell.id}></React.Fragment>
-                              ) : (
-                                <Td<Item>
-                                  key={i}
-                                  index={i}
-                                  cell={cell}
-                                  offset={offset}
-                                  rowHeightMode={rowHeightMode}
-                                />
-                              );
-                            })}
-                          </tr>
-                          {row.getIsExpanded() && (
-                            <tr>
-                              <td colSpan={visibleCells.length + 1} className={s.tdExpanded}>
-                                <div
-                                  className={cn(
-                                    s.tdExpandedContent,
-                                    fixedExpandedContainer && s.fixedExpandedContainer,
-                                  )}
-                                  style={{
-                                    maxWidth: fixedExpandedContainer ? containerWidth : undefined,
-                                  }}
-                                  data-cy="expanded-content"
-                                >
-                                  {renderExpanded?.(row.original.content)}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </>
-                )}
-              </tbody>
-            </table>
+            <ScrollContainerChild
+              containerWidth={containerWidth}
+              columns={columns}
+              table={table}
+              dataRes={dataRes}
+              cyId={cyId}
+              sizingMode={sizingMode}
+              fitHeight={fitHeight}
+              rowHeightMode={rowHeightMode}
+              fixedExpandedContainer={fixedExpandedContainer}
+              renderExpanded={renderExpanded}
+            />
           );
         }}
       </ScrollContainer>
@@ -495,8 +349,10 @@ function Td<Item>(props: {
   index: number;
   offset: number;
   rowHeightMode: RowHeightMode;
+  isLastColumn: boolean;
+  remainingSpace: number;
 }) {
-  const { cell, index, offset, rowHeightMode } = props;
+  const { cell, index, offset, rowHeightMode, isLastColumn, remainingSpace } = props;
   const { column } = cell;
   const isPinned = column.getIsPinned();
   const columnId = column.id;
@@ -523,7 +379,7 @@ function Td<Item>(props: {
         item.itemIndex % 2 === 0 && s.isOdd,
       )}
       style={{
-        ...getSizingProps(cell.column, rowHeightMode),
+        ...getSizingProps(cell.column, rowHeightMode, isLastColumn, remainingSpace),
         ...getPinnedStyles(column.getIsPinned(), index, offset),
       }}
       rowSpan={rowSpan}
@@ -537,22 +393,214 @@ function Td<Item>(props: {
   );
 }
 
+interface ScrollContainerChildProps<Item extends object> {
+  table: TanTable.Table<TableRow<Item>>;
+  dataRes: AsyncResource<TableData<Item>>;
+  containerWidth: number;
+  cyId: string;
+  sizingMode: 'SCROLL' | 'FULL_WIDTH';
+  fitHeight: number | boolean;
+  rowHeightMode: RowHeightMode;
+  fixedExpandedContainer: boolean;
+  renderExpanded?: (item: Item) => JSX.Element;
+  columns: TableColumn<Item>[];
+}
+
+function ScrollContainerChild<Item extends object>(props: ScrollContainerChildProps<Item>) {
+  const {
+    table,
+    dataRes,
+    cyId,
+    containerWidth,
+    sizingMode,
+    fitHeight,
+    rowHeightMode,
+    fixedExpandedContainer,
+    renderExpanded,
+  } = props;
+  const showSkeleton = shouldShowSkeleton(dataRes);
+  const rows = table.getRowModel().rows;
+
+  const totalSize = table.getTotalSize();
+  const remainingWidth =
+    sizingMode === 'SCROLL' && totalSize < containerWidth ? containerWidth - totalSize - 5 : 0;
+
+  return (
+    <table
+      data-cy={cyId}
+      className={cn(
+        s.table,
+        fitHeight === true && s.fitHeight,
+        isLoading(dataRes) && CY_LOADING_FLAG_CLASS,
+      )}
+      style={{
+        width: sizingMode === 'SCROLL' ? totalSize + remainingWidth : '100%',
+      }}
+    >
+      <thead className={s.tableHead}>
+        {table
+          .getHeaderGroups()
+          .filter((headerGroup) => headerGroup.headers.some((header) => !header.isPlaceholder))
+          .map((headerGroup) => {
+            const leftPinned = headerGroup.headers
+              .filter((header) => header.column.getIsPinned() === 'left')
+              .map((header) => ({ id: header.id, size: header.getSize() }));
+            const rightPinned = headerGroup.headers
+              .filter((header) => header.column.getIsPinned() === 'right')
+              .map((header) => ({ id: header.id, size: header.getSize() }));
+            const lastUnpinnedIndex = headerGroup.headers.findLastIndex(
+              (header) => !header.column.getIsPinned(),
+            );
+
+            return (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header, i) => {
+                  const isPinned = header.column.getIsPinned();
+                  let offset = 0;
+                  if (isPinned === 'right') {
+                    const pinnedIndex = rightPinned.findIndex(({ id }) => id === header.id);
+                    offset = rightPinned.slice(pinnedIndex + 1).reduce((acc, x) => acc + x.size, 0);
+                  } else if (isPinned === 'left') {
+                    const pinnedIndex = leftPinned.findIndex(({ id }) => id === header.id);
+                    offset = leftPinned.slice(0, pinnedIndex).reduce((acc, x) => acc + x.size, 0);
+                  }
+
+                  return (
+                    <Th
+                      key={header.id}
+                      index={i}
+                      header={header}
+                      pinOffset={offset}
+                      rowHeightMode={rowHeightMode}
+                      isLastColumn={i === lastUnpinnedIndex}
+                      remainingSpace={remainingWidth}
+                    />
+                  );
+                })}
+              </tr>
+            );
+          })}
+      </thead>
+      <tbody
+        data-cy={`${cyId}${!isLoading(dataRes) ? '-body' : ''}`}
+        className={cn(
+          s.tableBody,
+          !showSkeleton && isLoading(dataRes) && s.isLoading,
+          showSkeleton && s.showSkeleton,
+        )}
+        aria-label="Table body"
+      >
+        {isFailed(dataRes) ? (
+          <tr>
+            <td colSpan={table.getAllFlatColumns().length} className={s.error}>
+              <Alert type="ERROR">{dataRes.message}</Alert>
+            </td>
+          </tr>
+        ) : (
+          <>
+            {!showSkeleton && !isLoading(dataRes) && rows.length === 0 && (
+              <tr>
+                <td
+                  className={s.noData}
+                  style={{ paddingLeft: containerWidth / 2 }}
+                  colSpan={table.getAllFlatColumns().length}
+                >
+                  {'No data to display'}
+                </td>
+              </tr>
+            )}
+            {rows.map((row, index) => {
+              const visibleCells = row.getVisibleCells();
+
+              const leftPinned = visibleCells
+                .filter((cell) => cell.column.getIsPinned() === 'left')
+                .map((cell) => ({ id: cell.id, size: cell.column.getSize() }));
+              const rightPinned = visibleCells
+                .filter((cell) => cell.column.getIsPinned() === 'right')
+                .map((cell) => ({ id: cell.id, size: cell.column.getSize() }));
+              const lastUnpinnedIndex = visibleCells.findLastIndex(
+                (header) => !header.column.getIsPinned(),
+              );
+
+              return (
+                <React.Fragment key={index}>
+                  <tr id={`row_${index}`} data-cy={`${cyId}-data-row`}>
+                    {visibleCells.map((cell, i) => {
+                      const isPinned = cell.column.getIsPinned();
+                      let offset = 0;
+                      if (isPinned === 'right') {
+                        const pinnedIndex = rightPinned.findIndex(({ id }) => id === cell.id);
+                        offset = rightPinned
+                          .slice(pinnedIndex + 1)
+                          .reduce((acc, x) => acc + x.size, 0);
+                      } else if (isPinned === 'left') {
+                        const pinnedIndex = leftPinned.findIndex(({ id }) => id === cell.id);
+                        offset = leftPinned
+                          .slice(0, pinnedIndex)
+                          .reduce((acc, x) => acc + x.size, 0);
+                      }
+
+                      return (
+                        <Td<Item>
+                          key={i}
+                          index={i}
+                          cell={cell}
+                          offset={offset}
+                          rowHeightMode={rowHeightMode}
+                          isLastColumn={i === lastUnpinnedIndex}
+                          remainingSpace={remainingWidth}
+                        />
+                      );
+                    })}
+                  </tr>
+                  {row.getIsExpanded() && (
+                    <tr>
+                      <td colSpan={visibleCells.length + 1} className={s.tdExpanded}>
+                        <div
+                          className={cn(
+                            s.tdExpandedContent,
+                            fixedExpandedContainer && s.fixedExpandedContainer,
+                          )}
+                          style={{
+                            maxWidth: fixedExpandedContainer ? containerWidth : undefined,
+                          }}
+                          data-cy="expanded-content"
+                        >
+                          {renderExpanded?.(row.original.content)}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </>
+        )}
+      </tbody>
+    </table>
+  );
+}
+
 function Th<Item>(props: {
   index: number;
   header: TanTable.Header<Item, unknown>;
   pinOffset: number;
   rowHeightMode: RowHeightMode;
+  isLastColumn: boolean;
+  remainingSpace: number;
 }) {
-  const { index, header, pinOffset, rowHeightMode } = props;
+  const { index, header, pinOffset, rowHeightMode, remainingSpace, isLastColumn } = props;
   const column = header.column;
   const isSortable = column.getCanSort();
   const isSorted = column.getIsSorted();
   const isPinned = column.getIsPinned();
-  const isResizable = column.getCanResize();
+  const isResizable = column.getCanResize() && !(isLastColumn && remainingSpace > 0);
 
   return (
     <th
-      aria-label={`"${column.columnDef.header ?? 'unknown'}" column header`}
+      aria-label={`"${
+        typeof column.columnDef.header === 'string' ? column.columnDef.header : 'unknown'
+      }" column header`}
       className={cn(
         s.th,
         isPinned && s[`pinned-${isPinned}`],
@@ -566,7 +614,7 @@ function Th<Item>(props: {
         }
       }}
       style={{
-        ...getSizingProps(column, rowHeightMode),
+        ...getSizingProps(column, rowHeightMode, isLastColumn, remainingSpace),
         ...getPinnedStyles(column.getIsPinned(), index, pinOffset),
       }}
     >
@@ -620,14 +668,17 @@ function getPinnedStyles(isPinned: boolean | 'left' | 'right', index: number, pi
   };
 }
 
-function getSizingProps<Item>(column: TanTable.Column<Item>, rowHeightMode: RowHeightMode) {
-  if (column.id === SPACER_COLUMN_ID) {
-    return {};
-  }
+function getSizingProps<Item>(
+  column: TanTable.Column<Item>,
+  rowHeightMode: RowHeightMode,
+  isLastColumn: boolean,
+  remainingSpace: number,
+) {
   const size = column.getSize();
+  const adjustedSize = isLastColumn ? size + remainingSpace : size;
   return {
-    width: size,
-    maxWidth: size,
+    width: adjustedSize,
+    maxWidth: adjustedSize,
     height: rowHeightMode === 'FIXED' ? '64px' : undefined,
     maxHeight: rowHeightMode === 'FIXED' ? '64px' : undefined,
   };

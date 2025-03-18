@@ -31,8 +31,7 @@ export const DEFAULT_PARAMS_STATE: CommonParams = {
 
 export const SELECT_COLUMN_ID = 'SELECT_COLUMN_ID';
 export const EXPAND_COLUMN_ID = 'EXPAND_COLUMN_ID';
-export const SPACER_COLUMN_ID = 'SPACER_COLUMN_ID';
-export const SPECIAL_COLUMN_IDS = [EXPAND_COLUMN_ID, SELECT_COLUMN_ID, SPACER_COLUMN_ID];
+export const SPECIAL_COLUMN_IDS = [EXPAND_COLUMN_ID, SELECT_COLUMN_ID];
 
 export const DEFAULT_COLUMN_WRAP_MODE = 'WRAP';
 
@@ -130,10 +129,4 @@ export const EXPAND_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
       />
     );
   },
-});
-
-export const SPACER_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRow<Item>, any> => ({
-  id: SPACER_COLUMN_ID,
-  size: 0,
-  enableResizing: false,
 });

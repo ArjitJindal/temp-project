@@ -45,7 +45,6 @@ import {
   EXPAND_COLUMN_ID,
   SELECT_COLUMN,
   SELECT_COLUMN_ID,
-  SPACER_COLUMN,
 } from '../consts';
 import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { ExternalStateContext } from './externalState';
@@ -363,7 +362,6 @@ export function useTanstackTable<
       ...(isAnythingSelectable ? [SELECT_COLUMN<Item>()] : []),
       ...columnDefs.filter((column) => column.id && columnOrderRestrictions.includes(column.id)),
       ...columnDefs.filter((column) => column.id && !columnOrderRestrictions.includes(column.id)),
-      SPACER_COLUMN<Item>(),
     ],
     [isAnythingExpandable, isAnythingSelectable, columnDefs, columnOrderRestrictions],
   );
