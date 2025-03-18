@@ -407,12 +407,6 @@ export const AccountDetails = {
           },
         },
       },
-      required: [
-        'name',
-        'identificationNoNricPassport',
-        'cmsrlLicenseNoUtcOrPrcFimmNo',
-        'contactNumber',
-      ],
     },
   },
   required: ['accountNo', 'accountOpeningDate', 'accountStatus'],
