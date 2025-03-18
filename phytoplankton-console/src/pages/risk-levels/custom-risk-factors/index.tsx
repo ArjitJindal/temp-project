@@ -6,7 +6,7 @@ import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPag
 import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
 import ActionMenu from '../custom-risk-factors/components/ActionMenu';
 import s from './style.module.less';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import * as Card from '@/components/ui/Card';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -29,6 +29,7 @@ import { RuleStatusSwitch } from '@/pages/rules/components/RuleStatusSwitch';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 export default function () {
+  const hasMergeRiskFactorsEnabled = useFeatureEnabled('RISK_FACTORS_UI_MERGE');
   const isSimulationMode = localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
   const { type = isSimulationMode ? 'simulation' : 'consumer' } = useParams();
   return (
@@ -39,7 +40,7 @@ export default function () {
         simulationDefaultUrl="/risk-levels/custom-risk-factors/simulation"
         breadcrumbs={[
           {
-            title: 'Custom Risk factors',
+            title: hasMergeRiskFactorsEnabled ? 'Risk factors' : 'Custom Risk factors',
             to: `/risk-levels/custom-risk-factors/${isSimulationMode ? 'simulation' : ''}`,
           },
           type === 'consumer' &&
@@ -80,6 +81,7 @@ export type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
 export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
   const api = useApi();
+  const hasMergeRiskFactorsEnabled = useFeatureEnabled('RISK_FACTORS_UI_MERGE');
   const queryResult = useQuery(RISK_FACTORS_V8(type, true), async () => {
     const entityType =
       type === 'consumer'
@@ -91,7 +93,7 @@ export const CustomRiskFactors = (props: Props) => {
         : undefined;
     return await api.getAllRiskFactors({
       entityType: entityType,
-      includeV2: true,
+      includeV2: hasMergeRiskFactorsEnabled,
     });
   });
 
