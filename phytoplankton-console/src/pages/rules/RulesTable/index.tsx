@@ -72,26 +72,35 @@ const ruleUsageReasons: string[] = [
   'Emerging typology coverage',
 ];
 
+const RData = () => {
+  return (
+    <Tag className={style.recommendedTag} icon={<CheckMark className={style.icon} />}>
+      <span>Recommended</span>
+    </Tag>
+  );
+};
+
+const Random3Reasons = () => {
+  const random3Reasons = useMemo(() => {
+    return ruleUsageReasons.sort(() => Math.random() - 0.5).slice(0, 3);
+  }, []);
+
+  return (
+    <OverviewToolTip reasons={random3Reasons} right={<RData />}>
+      <RData />
+    </OverviewToolTip>
+  );
+};
+
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
-  const random3Reasons = useMemo(() => {
-    return ruleUsageReasons.sort(() => Math.random() - 0.5).slice(0, 3);
-  }, []);
-
   const [demoMode] = useDemoMode();
   const isDemoMode = getOr(demoMode, false);
 
-  const RData = () => {
-    return (
-      <Tag className={style.recommendedTag} icon={<CheckMark className={style.icon} />}>
-        <span>Recommended</span>
-      </Tag>
-    );
-  };
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const helper = new ColumnHelper<Rule>();
     return helper.list([
@@ -118,9 +127,7 @@ export const RulesTable: React.FC<Props> = (props) => {
                     {id && recommendedRules.includes(id) ? (
                       <>
                         {isDemoMode ? (
-                          <OverviewToolTip reasons={random3Reasons} right={<RData />}>
-                            <RData />
-                          </OverviewToolTip>
+                          <Random3Reasons />
                         ) : (
                           <RecommendedTag
                             tooltipTitle={`Recommended tag helps you securely and anonymously collaborate with other fintechs globally. ${branding.companyName} system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones.`}
@@ -261,7 +268,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         },
       }),
     ]);
-  }, [simulationMode, onViewRule, canWriteRules, onEditRule, isDemoMode, random3Reasons]);
+  }, [simulationMode, onViewRule, canWriteRules, onEditRule, isDemoMode]);
 
   const [params, setParams] = useState<RulesTableParams>({
     ...DEFAULT_PARAMS_STATE,
