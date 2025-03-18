@@ -10,7 +10,6 @@ import {
 } from '@/services/sar/generators'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { Report } from '@/@types/openapi-internal/Report'
-// import { traceable } from '@/core/xray'
 import dayjs from '@/utils/dayjs'
 import {
   generatePdf,
@@ -33,7 +32,6 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
-// @traceable
 export class MalaysianSTRReportGenerator implements ReportGenerator {
   getType(): InternalReportType {
     return {
@@ -131,6 +129,8 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
       if (caseUser != null && 'type' in caseUser) {
         if (caseUser.type === 'CONSUMER') {
           const { userDetails } = caseUser
+
+          customerAndAccountDetails.accountDetails.accountNo = caseUser.userId
 
           const dob = caseUser.userDetails?.dateOfBirth
           // NRIC of a person in malaysia starts with YYMMDD followed by 7 digits

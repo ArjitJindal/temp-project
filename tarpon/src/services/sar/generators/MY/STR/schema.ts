@@ -415,12 +415,7 @@ export const AccountDetails = {
       ],
     },
   },
-  required: [
-    'accountNo',
-    'accountOpeningDate',
-    'accountStatus',
-    'fundManagerAgentSalesPersonMarketingRepresentative',
-  ],
+  required: ['accountNo', 'accountOpeningDate', 'accountStatus'],
 }
 
 export const schema = {
