@@ -192,7 +192,6 @@ function getTable(
             escalatedTransactionIds={[]}
             params={params}
             onChangeParams={handleChangeParams}
-            showAssignedToFilter={false}
             showUserFilters
           />
         </Authorized>

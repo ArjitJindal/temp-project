@@ -84,8 +84,6 @@ function RiskFactorConfigurationForm(
     liftedParameters,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
-  const [showTopCard, setShowTopCard] = useState(false);
-
   const INITIAL_VALUES = useMemo(() => {
     if (formInitialValues) {
       return formInitialValues;
@@ -104,6 +102,7 @@ function RiskFactorConfigurationForm(
   const formId = useId(`form-`);
 
   const [formState, setFormState] = useState<RiskFactorConfigurationFormValues>(INITIAL_VALUES);
+  const [showTopCard, setShowTopCard] = useState(false);
 
   const isRiskFactorNameDefined =
     !!formState?.basicDetailsStep.name && !!formState?.basicDetailsStep.description;

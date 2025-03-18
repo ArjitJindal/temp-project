@@ -53,8 +53,9 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
-      'Operations',
       'Reason',
+      'Status changed by',
+      'Operations',
     ];
 
     await renderComponent({ showUserFilters: false });
@@ -85,8 +86,9 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
-      'Operations',
       'Reason',
+      'Status changed by',
+      'Operations',
     ];
 
     await renderComponent({ showUserFilters: true });
@@ -116,8 +118,9 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
-      'Operations',
       'Reason',
+      'Status changed by',
+      'Operations',
     ];
 
     await renderComponent({ showUserFilters: false, features: ['ALERT_SLA'] });
@@ -146,6 +149,7 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
+      'Status changed by',
       'Operations',
     ];
 
@@ -181,8 +185,9 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
-      'Operations',
       'Reason',
+      'Status changed by',
+      'Operations',
     ];
 
     const mockParams = {
@@ -219,8 +224,8 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Queue',
       'Proposed action',
       'Proposed by',
-      'Operations',
       'Reason',
+      'Operations',
     ];
 
     const mockParams = {
@@ -257,8 +262,9 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Last updated',
       'Assigned to',
       'Queue',
-      'Operations',
       'Reason',
+      'Status changed by',
+      'Operations',
     ];
 
     const mockParams = {

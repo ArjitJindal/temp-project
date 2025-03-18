@@ -700,6 +700,106 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 }),
               ]
             : []) as TableColumn<TableAlertItem>[]),
+          helper.simple<'checkerAction'>({
+            title: 'Checker action',
+            key: 'checkerAction',
+            hideInTable: true,
+            exporting: true,
+            filtering: false,
+          }),
+          helper.simple<'comments'>({
+            title: 'Comments',
+            key: 'comments',
+            hideInTable: true,
+            filtering: false,
+            type: {
+              stringify: (value) => commentsToString(value ?? [], users).trim(),
+            },
+          }),
+          showReason &&
+            helper.derived<TableAlertItem['lastStatusChangeReasons'] | null>({
+              title: 'Reason',
+              id: 'reason',
+              filtering: false,
+              value: (value) => {
+                const { lastStatusChangeReasons, alertStatus } = value;
+                if (
+                  alertStatus == null ||
+                  alertStatus === 'OPEN' ||
+                  alertStatus === 'OPEN_IN_PROGRESS' ||
+                  alertStatus === 'OPEN_ON_HOLD' ||
+                  alertStatus === 'REOPENED'
+                ) {
+                  return null;
+                }
+                if (
+                  alertStatus === 'CLOSED' ||
+                  statusEscalated(alertStatus) ||
+                  statusEscalatedL2(alertStatus) ||
+                  statusInReview(alertStatus)
+                ) {
+                  return lastStatusChangeReasons;
+                }
+                return neverReturn(alertStatus, lastStatusChangeReasons);
+              },
+              type: {
+                render: (lastStatusChangeReasons) => {
+                  if (lastStatusChangeReasons == null) {
+                    return <></>;
+                  }
+                  if (
+                    !lastStatusChangeReasons ||
+                    (lastStatusChangeReasons.reasons.length == 0 &&
+                      !lastStatusChangeReasons.otherReason)
+                  ) {
+                    return <></>;
+                  }
+                  return (
+                    <StatusChangeReasonsDisplay
+                      reasons={lastStatusChangeReasons.reasons}
+                      otherReason={lastStatusChangeReasons.otherReason}
+                    />
+                  );
+                },
+                stringify: (lastStatusChangeReasons) => {
+                  if (lastStatusChangeReasons == null) {
+                    return '';
+                  }
+                  return [
+                    ...(lastStatusChangeReasons?.reasons ?? []),
+                    lastStatusChangeReasons?.otherReason,
+                  ]
+                    .filter(notEmpty)
+                    .join('; ');
+                },
+              },
+            }),
+          ...(!isInReview
+            ? [
+                helper.simple<'lastStatusChange.userId'>({
+                  title: 'Status changed by',
+                  key: 'lastStatusChange.userId',
+                  defaultWidth: 300,
+                  enableResizing: false,
+                  type: {
+                    stringify: (value) => {
+                      return `${value === undefined ? '' : users[value]?.name ?? value}`;
+                    },
+                    render: (userId, _) => {
+                      return userId ? (
+                        <ConsoleUserAvatar
+                          userId={userId}
+                          users={users}
+                          loadingUsers={loadingUsers}
+                        />
+                      ) : (
+                        <>-</>
+                      );
+                    },
+                  },
+                }),
+              ]
+            : []),
           helper.display({
             title: 'Operations',
             enableResizing: false,
@@ -831,80 +931,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               );
             },
           }),
-          helper.simple<'checkerAction'>({
-            title: 'Checker action',
-            key: 'checkerAction',
-            hideInTable: true,
-            exporting: true,
-            filtering: false,
-          }),
-          helper.simple<'comments'>({
-            title: 'Comments',
-            key: 'comments',
-            hideInTable: true,
-            filtering: false,
-            type: {
-              stringify: (value) => commentsToString(value ?? [], users).trim(),
-            },
-          }),
-          showReason &&
-            helper.derived<TableAlertItem['lastStatusChangeReasons'] | null>({
-              title: 'Reason',
-              id: 'reason',
-              filtering: false,
-              value: (value) => {
-                const { lastStatusChangeReasons, alertStatus } = value;
-                if (
-                  alertStatus == null ||
-                  alertStatus === 'OPEN' ||
-                  alertStatus === 'OPEN_IN_PROGRESS' ||
-                  alertStatus === 'OPEN_ON_HOLD' ||
-                  alertStatus === 'REOPENED'
-                ) {
-                  return null;
-                }
-                if (
-                  alertStatus === 'CLOSED' ||
-                  statusEscalated(alertStatus) ||
-                  statusEscalatedL2(alertStatus) ||
-                  statusInReview(alertStatus)
-                ) {
-                  return lastStatusChangeReasons;
-                }
-                return neverReturn(alertStatus, lastStatusChangeReasons);
-              },
-              type: {
-                render: (lastStatusChangeReasons) => {
-                  if (lastStatusChangeReasons == null) {
-                    return <></>;
-                  }
-                  if (
-                    !lastStatusChangeReasons ||
-                    (lastStatusChangeReasons.reasons.length == 0 &&
-                      !lastStatusChangeReasons.otherReason)
-                  ) {
-                    return <></>;
-                  }
-                  return (
-                    <StatusChangeReasonsDisplay
-                      reasons={lastStatusChangeReasons.reasons}
-                      otherReason={lastStatusChangeReasons.otherReason}
-                    />
-                  );
-                },
-                stringify: (lastStatusChangeReasons) => {
-                  if (lastStatusChangeReasons == null) {
-                    return '';
-                  }
-                  return [
-                    ...(lastStatusChangeReasons?.reasons ?? []),
-                    lastStatusChangeReasons?.otherReason,
-                  ]
-                    .filter(notEmpty)
-                    .join('; ');
-                },
-              },
-            }),
         ].filter(notEmpty),
       );
     };

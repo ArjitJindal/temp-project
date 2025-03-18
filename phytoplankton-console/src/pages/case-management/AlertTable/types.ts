@@ -15,4 +15,5 @@ export interface TableAlertItem extends Omit<Alert, 'transactionIds' | 'ruleChec
     reasons: string[];
     otherReason: string | null;
   };
+  checkerAction?: string;
 }
