@@ -14,7 +14,7 @@ export function generateDemoThresholdData(
     ? 1 + changePercentage
     : 1 - changePercentage
   const newThreshold = Math.ceil(data.value * adjustmentFactor)
-  const falsePositivesReduced = Math.ceil(changePercentage * 100 * 10)
+  const falsePositivesReduced = Math.ceil(changePercentage * 100 * 5)
   const transactionsHit = Math.ceil(
     (currentStats.transactionsHit ?? 0) * (1 - changePercentage)
   )
