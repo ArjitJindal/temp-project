@@ -20,6 +20,39 @@ import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 import { WALLET_NETWORKS } from '@/@types/openapi-public-custom/WalletNetwork'
 
+const RANDOM_IPS = [
+  '126.239.220.152',
+  '116.219.120.142',
+  '3.124.91.35',
+  '3.66.58.17',
+  '3.70.73.47',
+  '3.67.28.78',
+  '3.76.95.10',
+  '35.156.181.187',
+  '18.132.155.115',
+  '18.134.212.219',
+  '35.177.249.136',
+  '13.251.166.15',
+  '18.143.88.142',
+  '46.137.237.47',
+  '18.139.42.183',
+  '3.1.188.28',
+  '3.1.234.194',
+  '13.234.102.242',
+  '3.109.243.84',
+  '43.205.70.199',
+  '35.155.123.185',
+  '44.237.56.178',
+  '52.11.98.137',
+  '3.104.94.7',
+  '54.79.45.195',
+  '3.28.175.208',
+  '3.28.224.220',
+  '51.112.26.119',
+  '106.219.120.147',
+  '26.1.230.222',
+]
+
 const TRANSACTION_REFERENCES = [
   'Urgent',
   'Verification',
@@ -232,7 +265,7 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
 export class DeviceDataSampler extends BaseSampler<DeviceData> {
   generateSample(): DeviceData {
     return {
-      ipAddress: [...new Array(4)].map(() => this.rng.randomInt(256)).join('.'),
+      ipAddress: this.rng.pickRandom(RANDOM_IPS),
       batteryLevel: Number(this.rng.randomFloat(100).toFixed(1)),
       deviceLatitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),
       deviceLongitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),

@@ -2,6 +2,11 @@ import * as ipLocationAPI from '@maxmind/geoip2-node'
 import { IpLookupProvider, IpLocation, ResolutionType } from '../types'
 import { getSecretByName } from '@/utils/secrets-manager'
 
+enum GeoIpError {
+  NOT_FOUND = 'IP_ADDRESS_NOT_FOUND',
+  RESERVED = 'IP_ADDRESS_RESERVED',
+}
+
 export class GeoIp2Provider implements IpLookupProvider {
   ipLocationClient?: ipLocationAPI.WebServiceClient
   source = 'GeoIp2'
@@ -34,16 +39,18 @@ export class GeoIp2Provider implements IpLookupProvider {
       }
       return result
     } catch (error) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'IP_ADDRESS_NOT_FOUND'
-      ) {
-        return {
-          country: 'unknown',
-          continent: 'unknown',
-          city: resolutionType === 'CITY' ? 'unknown' : undefined,
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (
+          error.code === GeoIpError.NOT_FOUND ||
+          error.code === GeoIpError.RESERVED
+        ) {
+          const errorText =
+            error.code === GeoIpError.NOT_FOUND ? 'unknown' : 'reserved'
+          return {
+            country: errorText,
+            continent: errorText,
+            city: resolutionType === 'CITY' ? errorText : undefined,
+          }
         }
       }
       throw new Error(`[${(error as any)?.code}] ${(error as any)?.message}`)
