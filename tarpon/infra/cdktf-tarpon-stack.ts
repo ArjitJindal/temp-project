@@ -156,7 +156,7 @@ export class CdktfTarponStack extends TerraformStack {
         ...(config.stage !== 'dev' && {
           minTotalMemoryGb: config.clickhouse.minTotalMemoryGb || 24,
           maxTotalMemoryGb: config.clickhouse.maxTotalMemoryGb || 24,
-          numReplicas: 3,
+          numReplicas: config.clickhouse.numReplicas || 3,
         }),
       }
     )

@@ -134,6 +134,7 @@ export type Config = {
     ipAccess?: { source: string; description: string }[]
     minTotalMemoryGb?: number
     maxTotalMemoryGb?: number
+    numReplicas?: number
   }
   application: {
     MONGO_ATLAS_PROJECT?: string
