@@ -185,6 +185,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       originalFalsePositiveUsers,
       totalTransactions,
       transactionsHit,
+      usersHit,
     ] = await Promise.all([
       this.transactionRepository?.getUsersCount(filters) ?? 0, // Count of Users in that particular time range ran by transactions
       defaultRuleInstance.id
@@ -194,12 +195,10 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       defaultRuleInstance.id
         ? this.actualTransactionsHitCount(defaultRuleInstance.id, filters)
         : 0,
+      defaultRuleInstance.id
+        ? this.getActualUsersHit(defaultRuleInstance.id)
+        : 0,
     ])
-
-    const usersHit = defaultRuleInstance.id
-      ? this.getActualUsersHit(defaultRuleInstance.id, actualTransactionsRan)
-          .length
-      : 0
 
     const falsePositiveCasesCountSimulated =
       this.getSimulatedTransactionsFalsePositiveCount(
@@ -265,25 +264,11 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       .value()
   }
 
-  private getActualUsersHit(
-    ruleInstanceId: string,
-    transactions: InternalTransaction[]
-  ): string[] {
-    return chain(transactions)
-      .flatMap((transaction) => {
-        const executedRule = transaction.executedRules.find(
-          (executedRule) => executedRule.ruleInstanceId === ruleInstanceId
-        )
-
-        if (!executedRule) {
-          return []
-        }
-
-        return this.extractHitUserIds(executedRule, transaction)
-      })
-      .uniq()
-      .compact()
-      .value()
+  private async getActualUsersHit(ruleInstanceId: string): Promise<number> {
+    const usersHit = await this.casesRepository?.getAllUsersCountByRuleInstance(
+      ruleInstanceId
+    )
+    return usersHit ?? 0
   }
 
   private extractHitUserIds(
