@@ -23,6 +23,8 @@ const IGNORED = [
   'Synthetics',
   'SyntheticsLogger',
   'superagent-proxy',
+  '@airbnb/node-memwatch',
+  'bindings',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
@@ -188,6 +190,59 @@ async function main() {
       `${ROOT_DIR}/node_modules/@foliojs-fork/pdfkit/js/data/${file}`,
       `${OUT_DIR}/fargate/data/${file}`
     )
+  }
+
+  // Copy native modules
+  console.log('Copying native modules...')
+  try {
+    const memwatchPath = path.resolve(
+      ROOT_DIR,
+      'node_modules/@airbnb/node-memwatch'
+    )
+
+    // Copy the entire module for each lambda
+    for (const lambdaName of lambdaNames) {
+      // Copy memwatch
+      const destDir = path.join(
+        OUT_DIR,
+        'lambdas',
+        lambdaName,
+        'node_modules/@airbnb/node-memwatch'
+      )
+      await fs.ensureDir(destDir)
+      await fs.copy(memwatchPath, destDir)
+
+      // ADDED: Also copy the bindings module
+      const bindingsPath = path.resolve(ROOT_DIR, 'node_modules/bindings')
+      const bindingsDestDir = path.join(
+        OUT_DIR,
+        'lambdas',
+        lambdaName,
+        'node_modules/bindings'
+      )
+      await fs.ensureDir(bindingsDestDir)
+      await fs.copy(bindingsPath, bindingsDestDir)
+
+      // Also copy file-uri-to-path
+      const fileUriToPathPath = path.resolve(
+        ROOT_DIR,
+        'node_modules/file-uri-to-path'
+      )
+      const fileUriToPathDestDir = path.join(
+        OUT_DIR,
+        'lambdas',
+        lambdaName,
+        'node_modules/file-uri-to-path'
+      )
+      await fs.ensureDir(fileUriToPathDestDir)
+      await fs.copy(fileUriToPathPath, fileUriToPathDestDir)
+
+      console.log(
+        `  Copied memwatch, bindings, and file-uri-to-path to ${destDir}`
+      )
+    }
+  } catch (error) {
+    console.warn('Warning: Failed to copy native modules:', error.message)
   }
 
   console.timeEnd('Total build time')
