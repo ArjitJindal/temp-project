@@ -72,11 +72,13 @@ export class V8LogicToText {
   constructor(
     private readonly logic: any,
     private readonly logicEntityVariables: LogicEntityVariableInUse[],
-    private readonly logicAggregatorVariables: LogicAggregationVariable[]
+    private readonly logicAggregatorVariables: LogicAggregationVariable[],
+    private readonly listNames?: Map<string, string>
   ) {
     this.logic = logic
     this.logicEntityVariables = logicEntityVariables
     this.logicAggregatorVariables = logicAggregatorVariables
+    this.listNames = listNames
   }
 
   private varLabelWithoutNamespace(label: string): string {
@@ -234,6 +236,16 @@ export class V8LogicToText {
       }
 
       if (key in staticOperators) {
+        if (key === 'op:inlist' || key === 'op:!inlist') {
+          const [value, listIds] = logic[key]
+          const listNames = listIds.map(
+            (listId: string) => this.listNames?.get(listId) ?? listId
+          )
+          return `${this.toText(value)} ${staticOperators[key]} ${this.toText(
+            listNames
+          )}`
+        }
+
         return `${this.toText(logic[key][0])} ${
           staticOperators[key]
         } ${this.toText(logic[key][1])}`
