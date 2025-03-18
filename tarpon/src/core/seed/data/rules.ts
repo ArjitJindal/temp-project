@@ -52,6 +52,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'High average transaction amount ',
       ruleDescriptionAlias:
         'Average transaction amount in a day exceeds threshold',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+
       logic: {
         and: [
           {
@@ -190,9 +192,15 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           type: 'INSTANTLY',
         },
         alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
       },
       checksFor: [],
       createdBy: rng.r(1).pickRandom(getAccounts()).id,
+
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
       alertCreationOnHit: true,
@@ -204,6 +212,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'Mutiple high value transactions ',
       ruleDescriptionAlias: 'Multiple high value transactions in 1 week',
       baseCurrency: 'USD',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       logic: {
         and: [
           {
@@ -409,6 +418,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           type: 'INSTANTLY',
         },
         alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
       },
       checksFor: [],
       createdBy: rng.r(4).pickRandom(getAccounts()).id,
@@ -423,6 +436,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'New User High-Risk Transaction',
       ruleDescriptionAlias: 'New user sending/receiving large amounts',
       baseCurrency: 'USD',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       logic: {
         or: [
           {
@@ -748,6 +762,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           type: 'INSTANTLY',
         },
         alertCreatedFor: ['USER'],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
       },
       checksFor: [],
       createdBy: rng.r(3).pickRandom(getAccounts()).id,
@@ -764,6 +779,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'First transaction of a user',
       ruleDescriptionAlias: 'First transaction of a user',
       filters: ruleFilterSampler.getSample(),
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       parameters: {
         transactionAmountThreshold: {
           USD: rng.randomIntInclusive(1000, 10000),
@@ -832,6 +848,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           USD: rng.randomIntInclusive(100, 50000),
         },
       } as TransactionAmountRuleParameters,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       riskLevelParameters: {
         VERY_LOW: ruleFilterSampler.getSample(),
         VERY_HIGH: ruleFilterSampler.getSample(),
@@ -1546,6 +1563,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
       checksFor: ['Transaction amount', 'Time'],
       createdBy: rng.pickRandom(getAccounts()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
@@ -1644,6 +1662,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         'Average transactions number exceed past period average number',
       ruleDescriptionAlias:
         'Average transactions number exceed past period average number',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       filters: {},
       parameters: {
         period2: { granularity: 'day', units: 2 },
