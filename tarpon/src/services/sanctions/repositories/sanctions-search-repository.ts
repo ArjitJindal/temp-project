@@ -263,6 +263,53 @@ export class SanctionsSearchRepository {
     }
   }
 
+  public async getSearchResultPaginated(
+    searchId: string,
+    page: number,
+    pageSize: number
+  ): Promise<SanctionsSearchHistory | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsSearchHistory>(
+      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    )
+
+    const startIndex = (page - 1) * pageSize
+
+    const aggregationPipeline = [
+      { $match: { _id: searchId } },
+      {
+        $addFields: {
+          totalHits: { $size: { $ifNull: ['$response.data', []] } },
+        },
+      },
+      {
+        $project: {
+          response: {
+            data: { $slice: ['$response.data', startIndex, pageSize] },
+            page: { $literal: page },
+            pageSize: { $literal: pageSize },
+            totalPages: { $ceil: { $divide: ['$totalHits', pageSize] } },
+            hitsCount: '$totalHits',
+            providerSearchId: 1,
+            createdAt: 1,
+            searchId: 1,
+          },
+          requestHash: 1,
+          request: 1,
+          provider: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          _id: 1,
+        },
+      },
+    ]
+
+    const results = await collection
+      .aggregate<SanctionsSearchHistory>(aggregationPipeline)
+      .toArray()
+    return results[0] || null
+  }
+
   public async getSearchResult(
     searchId: string
   ): Promise<SanctionsSearchHistory | null> {
@@ -270,7 +317,7 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({ _id: searchId as any })
+    return await collection.findOne({ _id: searchId })
   }
 
   public async getSearchResultByIds(

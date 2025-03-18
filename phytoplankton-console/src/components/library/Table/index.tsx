@@ -253,10 +253,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     }
   }, [Rows, expandedRowId, rowExpanded]);
 
-  const showPagination =
-    typeof pagination === 'boolean'
-      ? pagination
-      : pagination === 'HIDE_FOR_ONE_PAGE' && getPageCount(params, data) > 1;
+  const showPagination = pagination && getPageCount(params, data) > 1;
 
   const cyId = tableId != null ? `table-${tableId}` : `table`;
 

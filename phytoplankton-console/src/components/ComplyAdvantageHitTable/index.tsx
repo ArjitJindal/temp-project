@@ -294,7 +294,7 @@ export default function SanctionsSearchTable(props: Props) {
         rowKey="id"
         columns={columns}
         hideFilters={isEmbedded}
-        pagination={'HIDE_FOR_ONE_PAGE'}
+        pagination
         externalHeader={isEmbedded}
         toolsOptions={{
           reload: false,

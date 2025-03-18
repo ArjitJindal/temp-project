@@ -80,13 +80,25 @@ describe('Sanctions Service', () => {
           method: 'PATCH',
         },
       ])
-      expect(await service.getSearchHistory(response.searchId)).toEqual({
+      const page = 1
+      const pageSize = 20
+      const startIndex = (page - 1) * pageSize
+      const endIndex = startIndex + pageSize
+      expect(
+        await service.getSearchHistory(response.searchId, page, pageSize)
+      ).toEqual({
         _id: response.searchId,
         provider: 'comply-advantage',
         createdAt: expect.any(Number),
         updatedAt: expect.any(Number),
-        request,
-        response: response,
+        request: request,
+        response: {
+          ...response,
+          page,
+          pageSize,
+          totalPages: Math.ceil((response.data?.length ?? 0) / pageSize),
+          data: response.data?.slice(startIndex, endIndex) ?? [],
+        },
         requestHash: generateChecksum(
           getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
         ),

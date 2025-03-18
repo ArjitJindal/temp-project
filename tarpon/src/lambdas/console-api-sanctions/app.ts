@@ -39,7 +39,11 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerGetSanctionsSearchSearchId(
       async (ctx, request) =>
-        await sanctionsService.getSearchHistory(request.searchId)
+        await sanctionsService.getSearchHistory(
+          request.searchId,
+          request.page,
+          request.pageSize
+        )
     )
 
     handlers.registerGetSanctionsScreeningActivityStats(

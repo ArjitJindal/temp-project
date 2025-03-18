@@ -131,7 +131,7 @@ export default function TransactionEventsTable(props: Props) {
       params={params}
       onChangeParams={setParams}
       columns={columns}
-      pagination={'HIDE_FOR_ONE_PAGE'}
+      pagination
       toolsOptions={false}
     />
   );

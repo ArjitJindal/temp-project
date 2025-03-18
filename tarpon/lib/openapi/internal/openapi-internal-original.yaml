@@ -6419,6 +6419,14 @@ paths:
             type: string
           in: query
           name: userId
+        - schema:
+            type: number
+          in: query
+          name: page
+        - schema:
+            type: number
+          in: query
+          name: pageSize
       operationId: get-sanctions-search-$-searchId
   /sanctions/hits/search:
     get:
@@ -13010,6 +13018,12 @@ components:
           type: array
           items:
             type: string
+        page:
+          type: number
+          default: 1
+        pageSize:
+          type: number
+          default: 20
         isActivePep:
           type: boolean
         isActiveSanctioned:
@@ -13081,6 +13095,12 @@ components:
           type: boolean
         request:
           $ref: '#/components/schemas/SanctionsSearchRequest'
+        page:
+          type: number
+        pageSize:
+          type: number
+        totalPages:
+          type: number
       required:
         - hitsCount
         - searchId

@@ -45,20 +45,25 @@ export function SearchResultTable(props: Props) {
   const api = useApi();
   const currentUser = useAuth0User();
 
+  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+
   const historyItemQueryResults = useQuery(
-    SANCTIONS_SEARCH_HISTORY(searchId),
+    SANCTIONS_SEARCH_HISTORY(searchId, { page: params.page, pageSize: params.pageSize }),
     () => {
       if (searchId == null) {
         throw new Error(`Unable to get search, searchId is empty!`);
       }
-      return api.getSanctionsSearchSearchId({ searchId: searchId });
+      return api.getSanctionsSearchSearchId({
+        searchId: searchId,
+        page: params.page,
+        pageSize: params.pageSize,
+      });
     },
     { enabled: searchId != null },
   );
 
   const historyItem = getOr(historyItemQueryResults.data, null);
 
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   useEffect(() => {
     if (historyItem) {
       setParams((params) => ({
@@ -84,7 +89,11 @@ export function SearchResultTable(props: Props) {
   const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
   const searchEnabled = !!searchParams.searchTerm;
   const newSearchQueryResults = useQuery(
-    SANCTIONS_SEARCH(searchParams),
+    SANCTIONS_SEARCH({
+      ...searchParams,
+      pageSize: params.pageSize,
+      page: params.page,
+    }),
     () => {
       return api.postSanctions({
         SanctionsSearchRequest: {
@@ -97,6 +106,8 @@ export function SearchResultTable(props: Props) {
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
           manualSearch: true,
+          page: params.page,
+          pageSize: params.pageSize,
         },
       });
     },
@@ -109,6 +120,8 @@ export function SearchResultTable(props: Props) {
               `/screening/manual-screening/:searchId`,
               {
                 searchId: data.searchId,
+                page: params.page,
+                pageSize: params.pageSize,
               },
               {},
             ),
@@ -128,20 +141,19 @@ export function SearchResultTable(props: Props) {
   const newQueryResult: QueryResult<TableData<SanctionsEntity>> = useMemo(() => {
     let items;
     let refetch;
-    if (isSuccess(newSearchQueryResults.data)) {
-      items = newSearchQueryResults.data.value.data;
-      refetch = newSearchQueryResults.refetch;
-    } else if (isSuccess(historyItemQueryResults.data)) {
+    let count;
+    if (isSuccess(historyItemQueryResults.data)) {
       if (!historyItemQueryResults.data.value) {
         message.error('No search results found for this search id');
       }
       items = historyItemQueryResults.data.value?.response?.data;
+      count = historyItemQueryResults.data.value?.response?.hitsCount;
       refetch = historyItemQueryResults.refetch;
     }
     const dataRes: AsyncResource<TableData<SanctionsEntity>> =
       items != null
         ? success({
-            total: items.length,
+            total: count,
             items: items,
           })
         : isLoading(newSearchQueryResults.data) || isLoading(historyItemQueryResults.data)
@@ -155,7 +167,7 @@ export function SearchResultTable(props: Props) {
 
   const pageSize =
     getOr(
-      map(newQueryResult.data, (x) => x.total),
+      map(newQueryResult.data, (x) => x.items.length),
       null,
     ) ?? DEFAULT_PAGE_SIZE;
 

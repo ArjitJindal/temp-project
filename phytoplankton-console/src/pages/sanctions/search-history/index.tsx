@@ -137,7 +137,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         onChangeParams={setParams}
         columns={columns}
         fitHeight
-        pagination={true}
+        pagination
         extraFilters={extraFilters}
         extraTools={[
           () => (

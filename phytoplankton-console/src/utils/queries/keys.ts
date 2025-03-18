@@ -155,8 +155,8 @@ export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'search',
   { params },
 ];
-export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey =>
-  ['sanctions', 'search', searchId].filter(Boolean);
+export const SANCTIONS_SEARCH_HISTORY = (searchId?: string, params?: AnyParameters): QueryKey =>
+  ['sanctions', 'search', searchId, params].filter(Boolean);
 export const SANCTIONS_SCREENING_STATS = (dateRange: any): QueryKey => [
   'sanctions-screening-stats',
   dateRange,

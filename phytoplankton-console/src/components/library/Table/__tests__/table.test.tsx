@@ -156,26 +156,6 @@ describe('Pagination', () => {
     expect(await findPagination()).not.toBeInTheDocument();
   });
 
-  test('Force show pagination even for a single page', async () => {
-    const items = dataSource(PAGE_SIZE, 1);
-    render(
-      <Table<Person>
-        pagination={true}
-        rowKey={'id'}
-        data={{ items: [items[0]], total: 1 }}
-        columns={[
-          helper.simple({
-            key: 'id',
-            title: 'ID',
-          }),
-        ]}
-      />,
-    );
-
-    // ASSERT
-    expect(await findPagination()).toBeInTheDocument();
-  });
-
   test('Pagination should appear when there are more than one page', async () => {
     const items = dataSource(PAGE_SIZE, 1);
     render(

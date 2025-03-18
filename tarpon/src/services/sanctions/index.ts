@@ -23,7 +23,6 @@ import {
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
@@ -62,7 +61,7 @@ import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
-
+import { logger } from '@/core/logger'
 const DEFAULT_FUZZINESS = 0.5
 
 export type ProviderConfig = {
@@ -215,6 +214,19 @@ export class SanctionsService {
     },
     providerOverrides?: ProviderConfig
   ): Promise<SanctionsSearchResponse> {
+    const page = request.page ?? 1
+    const pageSize = request.pageSize ?? 20
+
+    if (page < 1 || pageSize < 1) {
+      return {
+        providerSearchId: 'invalid_search',
+        data: [],
+        hitsCount: 0,
+        searchId: 'invalid_search',
+        createdAt: Date.now(),
+      }
+    }
+
     await this.initialize()
     const providers = getDefaultProviders()
     const providerName = providerOverrides?.providerName || providers[0]
@@ -392,10 +404,16 @@ export class SanctionsService {
   }
 
   public async getSearchHistory(
-    searchId: string
+    searchId: string,
+    page?: number,
+    pageSize?: number
   ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
-    return await this.sanctionsSearchRepository.getSearchResult(searchId)
+    return await this.sanctionsSearchRepository.getSearchResultPaginated(
+      searchId,
+      page ?? 1,
+      pageSize ?? 20
+    )
   }
 
   public async getSanctionsScreeningStats(timeRange?: {

@@ -214,7 +214,7 @@ export default function SanctionsHitsTable(props: Props) {
         rowKey="sanctionsHitId"
         columns={columns}
         hideFilters={true}
-        pagination={'HIDE_FOR_ONE_PAGE'}
+        pagination
         externalHeader={false}
         toolsOptions={false}
         fitHeight={fitHeight}
