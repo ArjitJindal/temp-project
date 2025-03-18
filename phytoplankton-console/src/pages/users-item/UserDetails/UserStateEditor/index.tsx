@@ -8,15 +8,17 @@ import { UserState } from '@/apis/models/UserState';
 import { CommentType, useHasPermissions } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { AsyncResource, isSuccess } from '@/utils/asyncResource';
+import Skeleton from '@/components/library/Skeleton';
 
 interface Props {
   title: string;
-  user: InternalConsumerUser | InternalBusinessUser;
+  userRes: AsyncResource<InternalConsumerUser | InternalBusinessUser>;
   onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function UserStateEditor(props: Props) {
-  const { user, title, onNewComment } = props;
+  const { userRes, title, onNewComment } = props;
   const [modalVisible, setModalVisible] = useState(false);
   const [newUserStatus, setnewUserStatus] = useState('');
   const [userStatusChanged, setUserStatusChanged] = useState(false);
@@ -39,19 +41,25 @@ export default function UserStateEditor(props: Props) {
         )}
       </div>
       <p>
-        {humanizeConstant(userStatusChanged ? newUserStatus : user.userStateDetails?.state ?? '')}
+        <Skeleton res={userRes}>
+          {(user) =>
+            humanizeConstant(userStatusChanged ? newUserStatus : user.userStateDetails?.state ?? '')
+          }
+        </Skeleton>
       </p>
-      <UserChangeModal
-        isVisible={modalVisible}
-        onOkay={(userStatus: UserState | '', comment: Comment): void => {
-          setUserStatusChanged(true);
-          setnewUserStatus(userStatus);
-          onNewComment(comment, CommentType.COMMENT);
-        }}
-        onClose={() => setModalVisible(false)}
-        title="Update user status "
-        user={user}
-      />
+      {isSuccess(userRes) && (
+        <UserChangeModal
+          isVisible={modalVisible}
+          onOkay={(userStatus: UserState | '', comment: Comment): void => {
+            setUserStatusChanged(true);
+            setnewUserStatus(userStatus);
+            onNewComment(comment, CommentType.COMMENT);
+          }}
+          onClose={() => setModalVisible(false)}
+          title="Update user status "
+          user={userRes.value}
+        />
+      )}
     </div>
   );
 }

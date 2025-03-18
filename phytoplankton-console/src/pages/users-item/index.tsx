@@ -35,9 +35,10 @@ import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
 import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
 import { CommentType } from '@/utils/user-utils';
+import Alert from '@/components/library/Alert';
 
 export default function UserItem() {
-  const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
+  const { list, id: userId, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
   const api = useApi();
 
   const queryClient = useQueryClient();
@@ -48,7 +49,7 @@ export default function UserItem() {
 
   const handleNewTags = (tags: UserTag[]) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(id),
+      USERS_ITEM(userId),
       (user) => {
         if (user == null) {
           return user;
@@ -64,7 +65,7 @@ export default function UserItem() {
   const handleNewComment = (newComment: Comment, commentType: CommentType, personId?: string) => {
     if (commentType === CommentType.COMMENT) {
       queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(id),
+        USERS_ITEM(userId),
         (user) => {
           if (user == null) {
             return user;
@@ -78,7 +79,7 @@ export default function UserItem() {
     }
     if (commentType === CommentType.USER) {
       queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(id),
+        USERS_ITEM(userId),
         (user) => {
           if (user == null) {
             return user;
@@ -93,7 +94,7 @@ export default function UserItem() {
     }
     if (commentType === CommentType.SHAREHOLDERDIRECTOR && personId) {
       queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(id),
+        USERS_ITEM(userId),
         (user) => {
           if (user == null) {
             return user;
@@ -126,14 +127,14 @@ export default function UserItem() {
   };
 
   const handleAddCommentReply = async (commentFormValues: FormValues) => {
-    if (id == null) {
+    if (userId == null) {
       throw new Error(`User ID is not defined`);
     }
     const commentData = {
       CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
     };
     return await api.postUsersCommentsReply({
-      userId: id,
+      userId: userId,
       commentId: commentFormValues.parentCommentId ?? '',
       ...commentData,
     });
@@ -145,74 +146,80 @@ export default function UserItem() {
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
 
-  const queryResult = useConsoleUser(id);
-
-  const linkingState = useLinkingState(id ?? '');
+  const queryResult = useConsoleUser(userId);
+  const linkingState = useLinkingState(userId ?? '');
   const handleFollow = useUserEntityFollow(linkingState);
 
+  if (userId == null) {
+    return <Alert type={'ERROR'}>User id not defined</Alert>;
+  }
+
+  const userRes = queryResult.data;
+
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
-      {(user) => (
-        <PageWrapper
-          disableHeaderPadding
-          header={
-            <Card.Root noBorder>
-              <Header
-                headerStickyElRef={setHeaderStickyElRef}
-                user={user}
-                onNewComment={handleNewComment}
-                onNewTags={handleNewTags}
-              />
-            </Card.Root>
-          }
-        >
-          <PageTabs
-            sticky={entityHeaderHeight}
-            activeKey={tab}
-            onChange={(newTab) => {
-              navigate(
-                keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id, list, tab: newTab })),
+    <PageWrapper
+      disableHeaderPadding
+      header={
+        <Card.Root noBorder>
+          <Header
+            headerStickyElRef={setHeaderStickyElRef}
+            userId={userId}
+            userRes={userRes}
+            onNewComment={handleNewComment}
+            onNewTags={handleNewTags}
+          />
+        </Card.Root>
+      }
+    >
+      <PageTabs
+        sticky={entityHeaderHeight}
+        activeKey={tab}
+        onChange={(newTab) => {
+          navigate(
+            keepBackUrl(makeUrl('/users/list/:list/:id/:tab', { id: userId, list, tab: newTab })),
+            {
+              replace: true,
+            },
+          );
+        }}
+        eventData={{
+          page: 'user-details',
+        }}
+        items={[
+          {
+            title: 'User details',
+            key: 'user-details',
+            children: <UserDetails userId={userId} onNewComment={handleNewComment} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+          {
+            title: 'User events',
+            key: 'user-events',
+            children: <UserEvents userId={userId} />,
+          },
+          {
+            title: 'Alerts',
+            key: 'alerts',
+            children: <AlertsCard userId={userId} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+          ...(isCrmEnabled
+            ? [
                 {
-                  replace: true,
-                },
-              );
-            }}
-            eventData={{
-              page: 'user-details',
-            }}
-            items={[
-              {
-                title: 'User details',
-                key: 'user-details',
-                children: <UserDetails userId={user.userId} onNewComment={handleNewComment} />,
-                isClosable: false,
-                isDisabled: false,
-              },
-              {
-                title: 'User events',
-                key: 'user-events',
-                children: <UserEvents userId={user.userId} />,
-              },
-              {
-                title: 'Alerts',
-                key: 'alerts',
-                children: <AlertsCard userId={user.userId} />,
-                isClosable: false,
-                isDisabled: false,
-              },
-              ...(isCrmEnabled
-                ? [
-                    {
-                      title: (
-                        <div className={s.icon}>
-                          {' '}
-                          <BrainIcon /> <span>&nbsp; CRM data</span>
-                        </div>
-                      ),
-                      key: 'crm-monitoring',
-                      children: (
+                  title: (
+                    <div className={s.icon}>
+                      {' '}
+                      <BrainIcon /> <span>&nbsp; CRM data</span>
+                    </div>
+                  ),
+                  key: 'crm-monitoring',
+                  children: (
+                    <AsyncResourceRenderer resource={userRes}>
+                      {(user) => (
                         <CRMMonitoring
-                          userId={user.userId}
+                          userId={userId}
                           userEmail={
                             user.type === 'CONSUMER'
                               ? user?.contactDetails?.emailIds?.[0] ?? ''
@@ -221,70 +228,76 @@ export default function UserItem() {
                           user={user}
                           model={'FreshDeskTicket'}
                         />
-                      ),
-                      isClosable: false,
-                      isDisabled: false,
-                    },
-                  ]
-                : []),
-              ...(isEntityLinkingEnabled
-                ? [
-                    {
-                      title: <div className={s.icon}>Ontology</div>,
-                      key: 'ontology',
-                      children: (
-                        <Linking
-                          userId={id ?? ''}
-                          scope={linkingState.scope}
-                          onScopeChange={linkingState.setScope}
-                          entityNodes={linkingState.entityNodes}
-                          entityEdges={linkingState.entityEdges}
-                          txnNodes={linkingState.txnNodes}
-                          txnEdges={linkingState.txnEdges}
-                          followed={linkingState.followed}
-                          onFollow={handleFollow}
-                          entityFilters={linkingState.entityFilters}
-                          setEntityFilters={linkingState.setEntityFilters}
-                          txnFilters={linkingState.txnFilters}
-                          setTxnFilters={linkingState.setTxnFilters}
-                        />
-                      ),
-                      isClosable: false,
-                      isDisabled: false,
-                      captureEvents: true,
-                    },
-                  ]
-                : []),
-              {
-                title: 'Expected transaction limits',
-                key: 'expected-transaction-limits',
-                children: (
-                  <Card.Root>
-                    <ExpectedTransactionLimits user={user} />
-                  </Card.Root>
-                ),
-                isClosable: false,
-                isDisabled: false,
-              },
-              {
-                title: 'Transaction history',
-                key: 'transaction-history',
-                children: <UserTransactionHistoryTable userId={user.userId} />,
-                isClosable: false,
-                isDisabled: false,
-              },
-              {
-                title: 'Transaction insights',
-                key: 'transaction-insights',
-                children: <InsightsCard userId={user.userId} />,
-                isClosable: false,
-                isDisabled: false,
-                captureEvents: true,
-              },
-              {
-                title: 'Activity',
-                key: 'activity',
-                children: (
+                      )}
+                    </AsyncResourceRenderer>
+                  ),
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
+          ...(isEntityLinkingEnabled
+            ? [
+                {
+                  title: <div className={s.icon}>Ontology</div>,
+                  key: 'ontology',
+                  children: (
+                    <Linking
+                      userId={userId}
+                      scope={linkingState.scope}
+                      onScopeChange={linkingState.setScope}
+                      entityNodes={linkingState.entityNodes}
+                      entityEdges={linkingState.entityEdges}
+                      txnNodes={linkingState.txnNodes}
+                      txnEdges={linkingState.txnEdges}
+                      followed={linkingState.followed}
+                      onFollow={handleFollow}
+                      entityFilters={linkingState.entityFilters}
+                      setEntityFilters={linkingState.setEntityFilters}
+                      txnFilters={linkingState.txnFilters}
+                      setTxnFilters={linkingState.setTxnFilters}
+                    />
+                  ),
+                  isClosable: false,
+                  isDisabled: false,
+                  captureEvents: true,
+                },
+              ]
+            : []),
+          {
+            title: 'Expected transaction limits',
+            key: 'expected-transaction-limits',
+            children: (
+              <Card.Root>
+                <AsyncResourceRenderer resource={userRes}>
+                  {(user) => <ExpectedTransactionLimits user={user} />}
+                </AsyncResourceRenderer>
+              </Card.Root>
+            ),
+            isClosable: false,
+            isDisabled: false,
+          },
+          {
+            title: 'Transaction history',
+            key: 'transaction-history',
+            children: <UserTransactionHistoryTable userId={userId} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+          {
+            title: 'Transaction insights',
+            key: 'transaction-insights',
+            children: <InsightsCard userId={userId} />,
+            isClosable: false,
+            isDisabled: false,
+            captureEvents: true,
+          },
+          {
+            title: 'Activity',
+            key: 'activity',
+            children: (
+              <AsyncResourceRenderer resource={userRes}>
+                {(user) => (
                   <UserActivityCard
                     user={user}
                     comments={{
@@ -292,39 +305,43 @@ export default function UserItem() {
                       onCommentAdded: handleNewComment,
                     }}
                   />
-                ),
-                isClosable: false,
-                isDisabled: false,
-              },
-              ...(isSanctionsEnabled
-                ? [
-                    {
-                      title: 'Screening whitelist',
-                      key: 'screening-whitelist',
-                      children: <SanctionsWhitelist user={user} />,
-                      isClosable: false,
-                      isDisabled: false,
-                    },
-                  ]
-                : []),
-            ].map((item) => ({
-              ...item,
-              children: (
-                <div
-                  className={s.sizeWrapper}
-                  style={{
-                    minHeight: `calc(100vh - ${
-                      entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
-                    }px)`,
-                  }}
-                >
-                  {item.children}
-                </div>
-              ),
-            }))}
-          />
-        </PageWrapper>
-      )}
-    </AsyncResourceRenderer>
+                )}
+              </AsyncResourceRenderer>
+            ),
+            isClosable: false,
+            isDisabled: false,
+          },
+          ...(isSanctionsEnabled
+            ? [
+                {
+                  title: 'Screening whitelist',
+                  key: 'screening-whitelist',
+                  children: (
+                    <AsyncResourceRenderer resource={userRes}>
+                      {(user) => <SanctionsWhitelist user={user} />}
+                    </AsyncResourceRenderer>
+                  ),
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
+        ].map((item) => ({
+          ...item,
+          children: (
+            <div
+              className={s.sizeWrapper}
+              style={{
+                minHeight: `calc(100vh - ${
+                  entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
+                }px)`,
+              }}
+            >
+              {item.children}
+            </div>
+          ),
+        }))}
+      />
+    </PageWrapper>
   );
 }

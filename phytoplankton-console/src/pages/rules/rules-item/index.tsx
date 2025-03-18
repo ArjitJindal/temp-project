@@ -19,6 +19,7 @@ export default function RulesItemPage() {
   const { id: ruleInstanceId = 'rules-library', mode = 'read' } = useParams<
     'tab' | 'id' | 'mode'
   >();
+  const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
   const api = useApi();
   const ruleInstanceResult = useQuery<RuleInstance>(
     GET_RULE_INSTANCE(ruleInstanceId),
@@ -46,45 +47,9 @@ export default function RulesItemPage() {
     return rule;
   });
 
-  return (
-    <AsyncResourceRenderer resource={ruleInstanceResult.data}>
-      {(ruleInstance) => (
-        <AsyncResourceRenderer resource={ruleResult.data}>
-          {(rule) => <Content rule={rule} ruleInstance={ruleInstance} mode={mode} />}
-        </AsyncResourceRenderer>
-      )}
-    </AsyncResourceRenderer>
-  );
-}
+  const ruleInstanceRes = ruleInstanceResult.data;
+  const ruleRes = ruleResult.data;
 
-function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: string }) {
-  const { rule, ruleInstance, mode } = props;
-  const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
-  const navigate = useNavigate();
-  const ruleInstanceTitle = getRuleInstanceTitle(ruleInstance);
-  let title: string;
-  if (isSimulationEnabled) {
-    title = 'Simulate';
-  } else if (mode === 'edit') {
-    title = `Edit rule`;
-  } else if (mode === 'duplicate') {
-    title = `Duplicate rule`;
-  } else {
-    title = ruleInstanceTitle;
-  }
-  title = title.replace('Copy of ', '');
-  const formType: Mode = useMemo((): Mode => {
-    if (mode === 'edit') {
-      return 'EDIT';
-    }
-    if (mode === 'create') {
-      return 'CREATE';
-    }
-    if (mode === 'duplicate') {
-      return 'DUPLICATE';
-    }
-    return 'READ';
-  }, [mode]);
   return (
     <PageWrapper
       header={
@@ -98,29 +63,84 @@ function Content(props: { rule: Rule | null; ruleInstance: RuleInstance; mode: s
               title: 'My rules',
               to: '/rules/my-rules',
             },
-            {
-              title: title,
-              to: makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: mode }),
-            },
+            map(ruleInstanceRes, (ruleInstance) => {
+              const ruleInstanceTitle = getRuleInstanceTitle(ruleInstance);
+              let title: string;
+              if (isSimulationEnabled) {
+                title = 'Simulate';
+              } else if (mode === 'edit') {
+                title = `Edit rule`;
+              } else if (mode === 'duplicate') {
+                title = `Duplicate rule`;
+              } else {
+                title = ruleInstanceTitle;
+              }
+              title = title.replace('Copy of ', '');
+              return {
+                title: title,
+                to: makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: mode }),
+              };
+            }),
           ]}
         />
       }
     >
-      <RuleConfiguration
-        isSimulation={isSimulationEnabled}
-        rule={rule ?? undefined}
-        ruleInstance={ruleInstance}
-        type={formType}
-        onRuleInstanceUpdated={() => {
-          navigate(makeUrl(`/rules/my-rules`));
+      <AsyncResourceRenderer resource={ruleInstanceRes}>
+        {(ruleInstance) => {
+          return (
+            <AsyncResourceRenderer resource={ruleRes}>
+              {(rule) => (
+                <Content
+                  rule={rule}
+                  ruleInstance={ruleInstance}
+                  mode={mode}
+                  isSimulationEnabled={isSimulationEnabled}
+                />
+              )}
+            </AsyncResourceRenderer>
+          );
         }}
-        onCancel={() => {
-          navigate(makeUrl(`/rules/my-rules`));
-        }}
-        onChangeToEditMode={() => {
-          navigate(makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: 'edit' }));
-        }}
-      />
+      </AsyncResourceRenderer>
     </PageWrapper>
+  );
+}
+
+function Content(props: {
+  rule: Rule | null;
+  ruleInstance: RuleInstance;
+  mode: string;
+  isSimulationEnabled: boolean;
+}) {
+  const { rule, ruleInstance, mode, isSimulationEnabled } = props;
+  const navigate = useNavigate();
+
+  const formType: Mode = useMemo((): Mode => {
+    if (mode === 'edit') {
+      return 'EDIT';
+    }
+    if (mode === 'create') {
+      return 'CREATE';
+    }
+    if (mode === 'duplicate') {
+      return 'DUPLICATE';
+    }
+    return 'READ';
+  }, [mode]);
+  return (
+    <RuleConfiguration
+      isSimulation={isSimulationEnabled}
+      rule={rule ?? undefined}
+      ruleInstance={ruleInstance}
+      type={formType}
+      onRuleInstanceUpdated={() => {
+        navigate(makeUrl(`/rules/my-rules`));
+      }}
+      onCancel={() => {
+        navigate(makeUrl(`/rules/my-rules`));
+      }}
+      onChangeToEditMode={() => {
+        navigate(makeUrl(`/rules/my-rules/:id/:mode`, { id: ruleInstance.id, mode: 'edit' }));
+      }}
+    />
   );
 }

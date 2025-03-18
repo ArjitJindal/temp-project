@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import SubHeader from './SubHeader';
 import StatusChangeMenu from './StatusChangeMenu';
+import SubHeader from './SubHeader';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -17,27 +17,43 @@ import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsS
 import { SarButton } from '@/components/Sar';
 import CreateCaseConfirmModal from '@/pages/case-management/AlertTable/CreateCaseConfirmModal';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  AsyncResource,
+  getOr,
+  isLoading as isAsyncResourceLoading,
+  map,
+} from '@/utils/asyncResource';
 
 interface Props {
-  isLoading: boolean;
-  alertItem: Alert;
+  alertItemRes: AsyncResource<Alert>;
   onReload: () => void;
   onCommentAdded: (newComment: Comment, groupId: string) => void;
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
 }
 
 export default function Header(props: Props) {
-  const { isLoading, alertItem, headerStickyElRef, onCommentAdded } = props;
-  const { caseId } = alertItem;
-  const caseQueryResults = useQuery(CASES_ITEM(caseId ?? ''), (): Promise<Case> => {
-    if (caseId == null) {
-      throw new Error(`Alert case id could not be empty`);
-    }
-    return api.getCase({ caseId });
-  });
+  const { alertItemRes, headerStickyElRef, onCommentAdded } = props;
+  const alertItem = getOr(
+    map(alertItemRes, (alertItem) => alertItem),
+    undefined,
+  );
+  const { alertId, caseId, alertStatus } = alertItem ?? {};
+  const isLoading = isAsyncResourceLoading(alertItemRes);
+  const caseQueryResults = useQuery(
+    CASES_ITEM(caseId ?? ''),
+    (): Promise<Case> => {
+      if (caseId == null) {
+        throw new Error(`Alert case id could not be empty`);
+      }
+      return api.getCase({ caseId });
+    },
+    {
+      enabled: !isLoading,
+    },
+  );
   const api = useApi();
   const client = useQueryClient();
-  const actions = useActions(alertItem, caseId);
+  const actionsRes = useActions(alertItemRes, props.onReload);
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
@@ -46,41 +62,46 @@ export default function Header(props: Props) {
           title: 'Cases',
           to: '/case-management/cases',
         },
-        {
+        map(alertItemRes, (alertItem) => ({
           title: alertItem.caseId ?? 'Unknown case',
           to: alertItem.caseId ? getCaseUrl(alertItem.caseId) : undefined,
-        },
-        {
+        })),
+        map(alertItemRes, (alertItem) => ({
           title: 'Alerts',
           to: alertItem.caseId ? getCaseUrl(alertItem.caseId, 'alerts') : undefined,
-        },
-        {
+        })),
+        map(alertItemRes, (alertItem) => ({
           title: alertItem.alertId ?? 'Unknown alert',
           to:
             alertItem.caseId && alertItem.alertId
               ? getAlertUrl(alertItem.caseId, alertItem.alertId, true)
               : undefined,
-        },
+        })),
       ]}
-      chips={[
-        <PriorityTag key={`alert-priority-tag`} priority={alertItem.priority} />,
-        alertItem.alertStatus && (
-          <CaseStatusTag key={`alert-status-tag`} caseStatus={alertItem.alertStatus} />
+      chips={getOr(
+        map(alertItemRes, (alertItem) =>
+          [
+            <PriorityTag key={`alert-priority-tag`} priority={alertItem.priority} />,
+            alertItem.alertStatus && (
+              <CaseStatusTag key={`alert-status-tag`} caseStatus={alertItem.alertStatus} />
+            ),
+          ].filter(notEmpty),
         ),
-      ].filter(notEmpty)}
+        [],
+      )}
       buttons={[
         <CommentButton
           key={'comment'}
           disabled={isLoading}
           onSuccess={(newComment) => {
-            onCommentAdded(newComment, alertItem.alertId ?? '');
+            onCommentAdded(newComment, alertId ?? '');
           }}
           submitRequest={async (commentFormValues) => {
-            if (alertItem.alertId == null) {
+            if (alertId == null) {
               throw new Error(`Alert ID is not defined`);
             }
             return await api.createAlertsComment({
-              alertId: alertItem.alertId ?? '',
+              alertId: alertId ?? '',
               CommentRequest: {
                 body: sanitizeComment(commentFormValues.comment),
                 files: commentFormValues.files,
@@ -91,59 +112,69 @@ export default function Header(props: Props) {
         />,
         <AlertsStatusChangeButton
           key={'status-change-button'}
-          status={alertItem.alertStatus}
-          ids={alertItem.alertId ? [alertItem.alertId] : []}
+          status={alertStatus}
+          ids={alertId ? [alertId] : []}
           transactionIds={{}}
           onSaved={() => {
-            client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
+            client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
           }}
           haveModal={true}
         />,
-        ...actions,
-        <StatusChangeMenu
-          key={'status-change-menu'}
-          alertItem={alertItem}
-          isDisabled={isLoading}
-          onReload={props.onReload}
-        />,
+        ...getOr(actionsRes, []),
       ]}
-      subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItem={alertItem} />}
+      subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItemRes={alertItemRes} />}
     />
   );
 }
 
-function useActions(alertItem: Alert, caseId: string | undefined): React.ReactNode[] {
+function useActions(
+  alertItemRes: AsyncResource<Alert>,
+  onReload: () => void,
+): AsyncResource<React.ReactNode[]> {
   const isSarEnabled = useFeatureEnabled('SAR');
   const client = useQueryClient();
 
-  const result: React.ReactNode[] = [];
-  const alertId = alertItem.alertId;
+  return map(alertItemRes, (alertItem) => {
+    const { caseId } = alertItem;
+    const result: React.ReactNode[] = [];
+    const alertId = alertItem.alertId;
 
-  if (alertId == null) {
-    return result;
-  }
-
-  // SAR report button
-  {
-    if (isSarEnabled && caseId != null) {
-      result.push(<SarButton caseId={caseId} alertIds={[alertId]} />);
+    if (alertId == null) {
+      return result;
     }
-  }
 
-  // Create new case modal
-  {
-    if (caseId) {
+    // SAR report button
+    {
+      if (isSarEnabled && caseId != null) {
+        result.push(<SarButton caseId={caseId} alertIds={[alertId]} />);
+      }
+    }
+
+    // Create new case modal
+    {
+      if (caseId) {
+        result.push(
+          <CreateCaseConfirmModal
+            selectedEntities={[alertId]}
+            caseId={caseId}
+            onResetSelection={() => {
+              client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
+            }}
+          />,
+        );
+      }
+    }
+    {
       result.push(
-        <CreateCaseConfirmModal
-          selectedEntities={[alertId]}
-          caseId={caseId}
-          onResetSelection={() => {
-            client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
-          }}
+        <StatusChangeMenu
+          key={'status-change-menu'}
+          alertItem={alertItem}
+          isDisabled={false}
+          onReload={onReload}
         />,
       );
     }
-  }
 
-  return result;
+    return result;
+  });
 }

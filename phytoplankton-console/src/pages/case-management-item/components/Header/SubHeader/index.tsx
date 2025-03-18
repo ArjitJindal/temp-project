@@ -26,28 +26,32 @@ import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { UserTrsRiskDisplay } from '@/pages/users-item/UserDetails/UserTrsRiskDisplay';
+import { AsyncResource, getOr } from '@/utils/asyncResource';
+import Skeleton from '@/components/library/Skeleton';
 
 interface Props {
-  caseItem: Case;
+  caseId: string;
+  caseItemRes: AsyncResource<Case>;
 }
 
 export default function SubHeader(props: Props) {
-  const { caseItem } = props;
-  const { caseId } = caseItem;
+  const { caseId, caseItemRes } = props;
+  const caseItem = getOr(caseItemRes, undefined);
+  const caseUsers = caseItem?.caseUsers;
+  const subjectType = caseItem?.caseUsers ?? 'USER';
 
   const api = useApi();
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
-  const { subjectType = 'USER', caseUsers } = caseItem;
   const isUserSubject = subjectType === 'USER';
   let caseUser;
   if (isUserSubject && caseUsers) {
     caseUser = caseUsers?.origin ?? caseUsers?.destination;
   }
-  const isCaseEscalated = statusEscalated(caseItem.caseStatus);
+  const isCaseEscalated = statusEscalated(caseItem?.caseStatus);
   const otherStatuses = useMemo(
-    () => isOnHoldOrInProgressOrEscalated(caseItem.caseStatus as CaseStatus),
-    [caseItem.caseStatus],
+    () => isOnHoldOrInProgressOrEscalated(caseItem?.caseStatus as CaseStatus | undefined),
+    [caseItem?.caseStatus],
   );
 
   const queryClient = useQueryClient();
@@ -142,34 +146,45 @@ export default function SubHeader(props: Props) {
       )?.reason;
 
     return reason?.join(', ');
-  }, [caseItem]);
+  }, [caseItem?.statusChanges]);
 
   return (
     <div className={s.root}>
       <div className={s.attributes}>
-        {caseItem.subjectType === 'PAYMENT'
-          ? paymentSubjectLabels(caseItem)
-          : userSubjectLabels(caseItem)}
+        {caseItem &&
+          (caseItem.subjectType === 'PAYMENT'
+            ? paymentSubjectLabels(caseItem)
+            : userSubjectLabels(caseItem))}
         <Form.Layout.Label title={'Created at'}>
-          {dayjs(caseItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          <Skeleton res={caseItemRes}>
+            {(caseItem) =>
+              dayjs(caseItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
+            }
+          </Skeleton>
         </Form.Layout.Label>
 
         <Form.Layout.Label title={'Last updated'}>
-          {dayjs(caseItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          <Skeleton res={caseItemRes}>
+            {(caseItem) => dayjs(caseItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          </Skeleton>
         </Form.Layout.Label>
 
         <Form.Layout.Label title={'Assigned to'}>
-          <AssigneesDropdown
-            assignments={getAssignmentsToShow(caseItem) ?? []}
-            editing={
-              !(statusInReview(caseItem.caseStatus) || otherStatuses) && hasEditingPermission
-            }
-            onChange={handleUpdateAssignments}
-            fixSelectorHeight
-          />
+          <Skeleton res={caseItemRes}>
+            {(caseItem) => (
+              <AssigneesDropdown
+                assignments={getAssignmentsToShow(caseItem) ?? []}
+                editing={
+                  !(statusInReview(caseItem?.caseStatus) || otherStatuses) && hasEditingPermission
+                }
+                onChange={handleUpdateAssignments}
+                fixSelectorHeight
+              />
+            )}
+          </Skeleton>
         </Form.Layout.Label>
 
-        {caseItem.caseStatus === 'CLOSED' && caseItem.lastStatusChange && (
+        {caseItem?.caseStatus === 'CLOSED' && caseItem?.lastStatusChange && (
           <Form.Layout.Label title={'Closure reason'}>
             <div>
               {caseItem?.lastStatusChange?.reason
@@ -179,13 +194,13 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         )}
 
-        {caseItem.caseType === 'MANUAL' && manualCaseReason && (
+        {caseItem?.caseType === 'MANUAL' && manualCaseReason && (
           <Form.Layout.Label title={'Open reason'}>
             <div>{manualCaseReason}</div>
           </Form.Layout.Label>
         )}
 
-        {statusEscalated(caseItem.caseStatus) && caseItem.lastStatusChange && (
+        {statusEscalated(caseItem?.caseStatus) && caseItem?.lastStatusChange && (
           <Form.Layout.Label title={'Escalation reason'}>
             <div>
               {caseItem?.lastStatusChange?.reason
@@ -195,7 +210,7 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         )}
 
-        {caseItem.caseHierarchyDetails?.parentCaseId && (
+        {caseItem?.caseHierarchyDetails?.parentCaseId && (
           <Form.Layout.Label title={'Parent case ID'}>
             <Id
               to={makeUrl(`/case-management/case/:caseId`, {
@@ -208,7 +223,7 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         )}
 
-        {caseItem.caseHierarchyDetails?.childCaseIds && (
+        {caseItem?.caseHierarchyDetails?.childCaseIds && (
           <Form.Layout.Label title={'Child case ID(s)'}>
             {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId, index) => (
               <Id
@@ -223,7 +238,7 @@ export default function SubHeader(props: Props) {
             ))}
           </Form.Layout.Label>
         )}
-        {caseItem.caseType === 'EXTERNAL' && caseItem.creationReason && (
+        {caseItem?.caseType === 'EXTERNAL' && caseItem?.creationReason && (
           <Form.Layout.Label title={'Creation reason'}>
             {caseItem.creationReason?.reasons.join(', ')}
           </Form.Layout.Label>

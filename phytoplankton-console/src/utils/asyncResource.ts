@@ -69,6 +69,17 @@ export function isFailed<T>(resource: AsyncResource<T>): resource is Failed<T> {
   return resource.kind === 'FAILED';
 }
 
+export function isAsyncResource<T>(value: unknown): value is AsyncResource {
+  if (value == null || value == null || typeof value !== 'object') {
+    return false;
+  }
+  const resource = value as AsyncResource<T>;
+  if (isInit(resource) || isLoading(resource) || isSuccess(resource) || isFailed(resource)) {
+    return true;
+  }
+  return neverReturn(resource, false);
+}
+
 export function match<T, R>(
   asyncResource: AsyncResource<T>,
   callbacks: {

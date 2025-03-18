@@ -18,7 +18,7 @@ export default function KycRiskDisplay({ userId }: Props) {
   const isKycPermissionEnabled = useHasPermissions(['risk-scoring:risk-score-details:read']);
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
+    <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
       {(result) =>
         result && (
           <RiskScoreDisplay

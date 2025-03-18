@@ -4,10 +4,11 @@ import s from './index.module.less';
 import Breadcrumbs, { BreadcrumbItem } from '@/components/library/Breadcrumbs';
 import Sticky from '@/components/utils/Sticky';
 import * as Card from '@/components/ui/Card';
+import { AsyncResource } from '@/utils/asyncResource';
 
 interface Props {
   stickyElRef?: React.RefCallback<HTMLDivElement>;
-  breadcrumbItems: BreadcrumbItem[];
+  breadcrumbItems: (BreadcrumbItem | AsyncResource<BreadcrumbItem>)[];
   chips?: React.ReactNode[];
   buttons?: React.ReactNode[];
   subHeader?: React.ReactNode;

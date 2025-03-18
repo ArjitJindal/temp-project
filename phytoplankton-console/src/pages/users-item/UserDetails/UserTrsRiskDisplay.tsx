@@ -1,3 +1,4 @@
+import React from 'react';
 import { useApi } from '@/api';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
@@ -15,7 +16,7 @@ export const UserTrsRiskDisplay: React.FC<Props> = ({ userId }) => {
   const queryResult = useQuery(USER_TRS_RISK_SCORES(userId), () => api.getTrsScores({ userId }));
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
+    <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
       {(result) => (
         <RiskScoreDisplay
           icon={<User3LineIcon />}

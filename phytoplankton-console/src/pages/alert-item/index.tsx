@@ -7,7 +7,6 @@ import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { isLoading } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { Alert, Comment } from '@/apis';
@@ -46,27 +45,28 @@ function AlertItemPage() {
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
 
+  const alertItemRes = alertQueryResults.data;
+
   return (
-    <AsyncResourceRenderer resource={alertQueryResults.data}>
-      {(alertItem) => (
-        <PageWrapper
-          header={
-            <Card.Root>
-              <Header
-                isLoading={isLoading(alertQueryResults.data)}
-                headerStickyElRef={setHeaderStickyElRef}
-                alertItem={alertItem}
-                onReload={onReload}
-                onCommentAdded={handleCommentAdded}
-              />
-            </Card.Root>
-          }
-          disableHeaderPadding
-        >
+    <PageWrapper
+      header={
+        <Card.Root>
+          <Header
+            headerStickyElRef={setHeaderStickyElRef}
+            alertItemRes={alertItemRes}
+            onReload={onReload}
+            onCommentAdded={handleCommentAdded}
+          />
+        </Card.Root>
+      }
+      disableHeaderPadding
+    >
+      <AsyncResourceRenderer resource={alertItemRes}>
+        {(alertItem) => (
           <AlertDetails alertItem={alertItem} headerStickyElRef={headerStickyElRef} />
-        </PageWrapper>
-      )}
-    </AsyncResourceRenderer>
+        )}
+      </AsyncResourceRenderer>
+    </PageWrapper>
   );
 }
 

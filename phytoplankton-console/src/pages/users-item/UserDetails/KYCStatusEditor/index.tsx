@@ -8,15 +8,17 @@ import { KYCStatus } from '@/apis/models/KYCStatus';
 import { CommentType, useHasPermissions } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Skeleton from '@/components/library/Skeleton';
+import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 
 interface Props {
   title: string;
-  user: InternalConsumerUser | InternalBusinessUser;
+  userRes: AsyncResource<InternalConsumerUser | InternalBusinessUser>;
   onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function KycStatusEditor(props: Props) {
-  const { user, title, onNewComment } = props;
+  const { userRes, title, onNewComment } = props;
   const [modalVisible, setModalVisible] = useState(false);
   const [kycChanged, setKycChanged] = useState(false);
   const [newKycStatus, setnewKycStatus] = useState('');
@@ -38,18 +40,26 @@ export default function KycStatusEditor(props: Props) {
           ''
         )}
       </div>
-      <p>{humanizeConstant(kycChanged ? newKycStatus : user.kycStatusDetails?.status ?? '')}</p>
-      <KYCChangeModal
-        isVisible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        title="Update KYC status"
-        user={user}
-        onOkay={(kycStatus: KYCStatus | '', comment: Comment): void => {
-          setKycChanged(true);
-          setnewKycStatus(kycStatus);
-          onNewComment(comment, CommentType.COMMENT);
-        }}
-      />
+      <p>
+        <Skeleton res={userRes}>
+          {(user) =>
+            humanizeConstant(kycChanged ? newKycStatus : user.kycStatusDetails?.status ?? '')
+          }
+        </Skeleton>
+      </p>
+      {isSuccess(userRes) && (
+        <KYCChangeModal
+          isVisible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          title="Update KYC status"
+          user={userRes.value}
+          onOkay={(kycStatus: KYCStatus | '', comment: Comment): void => {
+            setKycChanged(true);
+            setnewKycStatus(kycStatus);
+            onNewComment(comment, CommentType.COMMENT);
+          }}
+        />
+      )}
     </div>
   );
 }

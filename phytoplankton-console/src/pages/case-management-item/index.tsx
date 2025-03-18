@@ -8,14 +8,13 @@ import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import { useNewUpdatesMessage, useQuery } from '@/utils/queries/hooks';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { ALERT_LIST, CASES_ITEM, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { ALERT_LIST, CASE_AUDIT_LOGS_LIST, CASES_ITEM } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
-import { isSuccess, isLoading } from '@/utils/asyncResource';
+import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
@@ -101,35 +100,33 @@ function CaseManagementItemPage() {
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
 
+  const caseItemRes = queryResults.data;
+
   return (
-    <AsyncResourceRenderer resource={queryResults.data}>
-      {(caseItem) => (
-        <PageWrapper
-          header={
-            <Card.Root>
-              <Header
-                isLoading={isLoading(queryResults.data)}
-                headerStickyElRef={setHeaderStickyElRef}
-                caseItem={caseItem}
-                onReload={onReload}
-                onCommentAdded={handleCommentAdded}
-              />
-            </Card.Root>
-          }
-          disableHeaderPadding
-        >
-          <CaseDetails
-            caseItem={caseItem}
-            headerStickyElRef={headerStickyElRef}
-            expandedAlertId={expandedAlertId ? expandedAlertId : ''}
-            comments={{
-              handleAddComment: handleAddCommentReply,
-              onCommentAdded: handleCommentAdded,
-            }}
+    <PageWrapper
+      header={
+        <Card.Root>
+          <Header
+            caseId={caseId}
+            caseItemRes={caseItemRes}
+            headerStickyElRef={setHeaderStickyElRef}
+            onReload={onReload}
+            onCommentAdded={handleCommentAdded}
           />
-        </PageWrapper>
-      )}
-    </AsyncResourceRenderer>
+        </Card.Root>
+      }
+      disableHeaderPadding
+    >
+      <CaseDetails
+        caseItemRes={caseItemRes}
+        headerStickyElRef={headerStickyElRef}
+        expandedAlertId={expandedAlertId ? expandedAlertId : ''}
+        comments={{
+          handleAddComment: handleAddCommentReply,
+          onCommentAdded: handleCommentAdded,
+        }}
+      />
+    </PageWrapper>
   );
 }
 

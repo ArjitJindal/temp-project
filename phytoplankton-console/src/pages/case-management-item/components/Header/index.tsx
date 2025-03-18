@@ -27,10 +27,11 @@ import { useBackUrl } from '@/utils/backUrl';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { SarButton } from '@/components/Sar';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { AsyncResource, getOr, isLoading, map } from '@/utils/asyncResource';
 
 interface Props {
-  isLoading: boolean;
-  caseItem: Case;
+  caseId: string;
+  caseItemRes: AsyncResource<Case>;
   onReload: () => void;
   onCommentAdded: (newComment: Comment, groupId: string) => void;
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
@@ -127,8 +128,8 @@ const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
 };
 
 export default function Header(props: Props) {
-  const { isLoading, caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
-  const { caseId } = caseItem;
+  const { caseId, caseItemRes, onReload, headerStickyElRef, onCommentAdded } = props;
+  const caseItem = getOr(caseItemRes, undefined);
   const backUrl = useBackUrl();
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const navigate = useNavigate();
@@ -140,7 +141,7 @@ export default function Header(props: Props) {
   const queryClient = useQueryClient();
 
   const previousStatus = useMemo(() => {
-    return findLastStatusForInReview(caseItem.statusChanges ?? []);
+    return findLastStatusForInReview(caseItem?.statusChanges ?? []);
   }, [caseItem]);
 
   const handleStatusChangeSuccess = (updatedStatus?: CaseStatus) => {
@@ -155,18 +156,25 @@ export default function Header(props: Props) {
     }
   };
 
-  const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
-  const isEscalated = useMemo(() => statusEscalated(caseItem.caseStatus), [caseItem]);
-  const isEscalatedL2 = useMemo(() => statusEscalatedL2(caseItem.caseStatus), [caseItem]);
-  const canMutateCases = useMemo(
-    () =>
-      canMutateEscalatedCases(
-        { [caseItem.caseId ?? '']: caseItem },
-        user.userId,
-        isMultiLevelEscalationEnabled,
-      ),
-    [caseItem, isMultiLevelEscalationEnabled, user.userId],
-  );
+  const caseStatus = caseItem?.caseStatus;
+
+  const { isReview, isEscalated, isEscalatedL2 } = useMemo(() => {
+    return {
+      isReview: statusInReview(caseStatus),
+      isEscalated: statusEscalated(caseStatus),
+      isEscalatedL2: statusEscalatedL2(caseStatus),
+    };
+  }, [caseStatus]);
+  const canMutateCases = useMemo(() => {
+    if (caseItem == null) {
+      return false;
+    }
+    return canMutateEscalatedCases(
+      { [caseId ?? '']: caseItem },
+      user.userId,
+      isMultiLevelEscalationEnabled,
+    );
+  }, [caseId, caseItem, isMultiLevelEscalationEnabled, user.userId]);
   const statusChangeMutation = useMutation(
     async (newStatus: CaseStatus) => {
       if (caseId == null) {
@@ -208,12 +216,12 @@ export default function Header(props: Props) {
           title: 'Cases',
           to: '/case-management/cases',
         },
-        {
+        map(caseItemRes, (caseItem) => ({
           title: caseItem.caseId ?? '',
-        },
+        })),
       ]}
       chips={[
-        ...(caseItem.caseType === 'MANUAL' || caseItem.caseType === 'EXTERNAL'
+        ...(caseItem?.caseType === 'MANUAL' || caseItem?.caseType === 'EXTERNAL'
           ? [
               <CaseGenerationMethodTag
                 method={caseItem.caseType}
@@ -221,10 +229,10 @@ export default function Header(props: Props) {
               />,
             ]
           : []),
-        ...(caseItem.caseStatus
+        ...(caseStatus
           ? [
               <CaseStatusWithDropDown
-                caseStatus={caseItem.caseStatus}
+                caseStatus={caseStatus}
                 statusChanges={caseItem.statusChanges ?? []}
                 previousStatus={previousStatus}
                 assignments={caseItem.assignments ?? []}
@@ -239,8 +247,8 @@ export default function Header(props: Props) {
       ]}
       buttons={[
         <CommentButton
-          key={`comment-button-${caseItem.caseId}`}
-          disabled={isLoading}
+          key={`comment-button-${caseId}`}
+          disabled={isLoading(caseItemRes)}
           onSuccess={(newComment) => {
             onCommentAdded(newComment, caseId ?? '');
           }}
@@ -258,41 +266,44 @@ export default function Header(props: Props) {
           }}
           requiredPermissions={['case-management:case-overview:write']}
         />,
-        <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
-        ...(caseId != null
-          ? [
-              <SarButton
-                caseId={caseId}
-                alertIds={[]}
-                transactionIds={[]}
-                key={`sar-button-${caseItem.caseId}`}
-              />,
-            ]
-          : []),
-        ...(!isReview && caseId
-          ? [
-              <StatusChangeButton
-                caseItem={caseItem}
-                caseId={caseId}
-                userAccount={userAccount}
-                canMutateCases={canMutateCases}
-                isReopenEnabled={isReopenEnabled}
-                isLoading={isLoading}
-                handleStatusChangeSuccess={handleStatusChangeSuccess}
-                isEscalated={isEscalated}
-                isEscalatedL2={isEscalatedL2}
-                key={`status-change-button-${caseItem.caseId}`}
-              />,
-            ]
-          : []),
-        <StatusChangeMenu
-          isDisabled={isLoading}
-          caseItem={caseItem}
-          onReload={handleStatusChangeSuccess}
-          key={`status-change-menu-${caseItem.caseId}`}
-        />,
+        ...getOr(
+          map(caseItemRes, (caseItem) => [
+            <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
+            <SarButton
+              caseId={caseId}
+              alertIds={[]}
+              transactionIds={[]}
+              key={`sar-button-${caseId}`}
+            />,
+            ...(!isReview && caseId
+              ? [
+                  <StatusChangeButton
+                    caseItem={caseItem}
+                    caseId={caseId}
+                    userAccount={userAccount}
+                    canMutateCases={canMutateCases}
+                    isReopenEnabled={isReopenEnabled}
+                    isLoading={isLoading(caseItemRes)}
+                    handleStatusChangeSuccess={handleStatusChangeSuccess}
+                    isEscalated={isEscalated}
+                    isEscalatedL2={isEscalatedL2}
+                    key={`status-change-button-${caseItem.caseId}`}
+                  />,
+                ]
+              : []),
+            <StatusChangeMenu
+              isDisabled={isLoading(caseItemRes)}
+              caseItem={caseItem}
+              onReload={handleStatusChangeSuccess}
+              key={`status-change-menu-${caseItem.caseId}`}
+            />,
+          ]),
+          [],
+        ),
       ]}
-      subHeader={<SubHeader caseItem={caseItem} key={`sub-header-${caseItem.caseId}`} />}
+      subHeader={
+        <SubHeader caseId={caseId} caseItemRes={caseItemRes} key={`sub-header-${caseId}`} />
+      }
     />
   );
 }

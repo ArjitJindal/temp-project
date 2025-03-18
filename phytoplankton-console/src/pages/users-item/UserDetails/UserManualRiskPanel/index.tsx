@@ -150,32 +150,38 @@ export default function UserManualRiskPanel(props: Props) {
         isDisabled={
           isLocked || isLoading(syncState) || isFailed(syncState) || !canUpdateManualRiskLevel
         }
-        value={getOr(
-          map(
-            syncState,
-            ({ manualRiskLevel, derivedRiskLevel }) =>
-              manualRiskLevel || derivedRiskLevel || undefined,
-          ),
-          defaultRiskLevel,
-        )}
+        value={
+          !isSuccess(queryResult.data)
+            ? undefined
+            : getOr(
+                map(
+                  syncState,
+                  ({ manualRiskLevel, derivedRiskLevel }) =>
+                    manualRiskLevel || derivedRiskLevel || undefined,
+                ),
+                defaultRiskLevel,
+              )
+        }
         onChange={handleChangeRiskLevel}
       />
 
-      <Tooltip
-        title={
-          isLocked
-            ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
-            : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
-        }
-        placement="bottomLeft"
-        arrowPointAtCenter
-      >
-        {isLocked ? (
-          <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
-        ) : (
-          <UnlockIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
-        )}
-      </Tooltip>
+      {isSuccess(queryResult.data) && (
+        <Tooltip
+          title={
+            isLocked
+              ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
+              : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
+          }
+          placement="bottomLeft"
+          arrowPointAtCenter
+        >
+          {isLocked ? (
+            <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+          ) : (
+            <UnlockIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
+          )}
+        </Tooltip>
+      )}
     </div>
   );
 }

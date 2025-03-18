@@ -9,17 +9,18 @@ import Id from '@/components/ui/Id';
 import { getUserName } from '@/utils/api/users';
 import { SarButton } from '@/components/Sar';
 import { CommentType } from '@/utils/user-utils';
+import { AsyncResource, isSuccess, map } from '@/utils/asyncResource';
 
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
-  user: InternalConsumerUser | InternalBusinessUser;
+  userId: string;
+  userRes: AsyncResource<InternalConsumerUser | InternalBusinessUser>;
   onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   onNewTags: (tags: UserTag[]) => void;
 }
 
 export default function Header(props: Props) {
-  const { user, headerStickyElRef, onNewComment, onNewTags } = props;
-  const userId = user.userId;
+  const { userId, userRes, headerStickyElRef, onNewComment, onNewTags } = props;
 
   const api = useApi();
 
@@ -36,12 +37,12 @@ export default function Header(props: Props) {
           title: 'Users',
           to: '/users',
         },
-        {
+        map(userRes, (user) => ({
           title: getUserName(user),
-        },
+        })),
       ]}
       buttons={[
-        <SarButton userId={user.userId} key="sar-button" />,
+        <SarButton userId={userId} key="sar-button" />,
         <CommentButton
           onSuccess={(createdComment) => onNewComment(createdComment, CommentType.COMMENT)}
           submitRequest={async (commentFormValues) => {
@@ -59,14 +60,18 @@ export default function Header(props: Props) {
           requiredPermissions={['users:user-comments:write']}
           key="comment-button"
         />,
-        <HeaderMenu
-          onNewTags={onNewTags}
-          onNewComment={onNewComment}
-          user={user}
-          key="header-menu"
-        />,
+        isSuccess(userRes) ? (
+          <HeaderMenu
+            onNewTags={onNewTags}
+            onNewComment={onNewComment}
+            user={userRes.value}
+            key="header-menu"
+          />
+        ) : (
+          <></>
+        ),
       ]}
-      subHeader={<SubHeader onNewComment={onNewComment} user={user} />}
+      subHeader={<SubHeader onNewComment={onNewComment} userId={userId} userRes={userRes} />}
     />
   );
 }

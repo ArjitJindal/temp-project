@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
-import { ListHeader, Permission } from '@/apis';
+import { ListHeader, ListType, Permission } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
@@ -21,6 +21,8 @@ import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
 } from '@/apis/types/ObjectParamAPI';
+import { AsyncResource, getOr, map } from '@/utils/asyncResource';
+import { notEmpty } from '@/utils/array';
 
 interface ExistedTableItemData {
   value: string;
@@ -51,7 +53,9 @@ export type UserListTableRef = React.Ref<{
 }>;
 
 interface Props {
-  listHeader: ListHeader;
+  listId: string;
+  listType: ListType;
+  listHeaderRes: AsyncResource<ListHeader>;
   clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
   onImportCsv: () => void;
 }
@@ -69,8 +73,7 @@ type ExternalState = {
 const helper = new ColumnHelper<TableItem>();
 
 export default function ItemsTable(props: Props) {
-  const { listHeader, clearListMutation, onImportCsv } = props;
-  const { listId, listType } = listHeader;
+  const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
 
   const api = useApi();
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
@@ -227,190 +230,191 @@ export default function ItemsTable(props: Props) {
     onDelete: handleDeleteUser,
   };
 
+  const listSubtype = getOr(
+    map(listHeaderRes, ({ subtype }) => subtype),
+    null,
+  );
   const columns = useMemo(() => {
-    return helper.list([
-      helper.derived<string | string[]>({
-        title: getListSubtypeTitle(listHeader.subtype),
-        value: (item) => item.value,
-        type: {
-          render: (value, context) => {
-            const { item: entity } = context;
-            const externalState: ExternalState = context.external as ExternalState;
+    return helper.list(
+      [
+        listSubtype != null &&
+          helper.derived<string | string[]>({
+            title: getListSubtypeTitle(listSubtype),
+            value: (item) => item.value,
+            type: {
+              render: (value, context) => {
+                const { item: entity } = context;
+                const externalState: ExternalState = context.external as ExternalState;
 
-            const [newUserData, setNewUserData] = externalState.newUserData;
+                const [newUserData, setNewUserData] = externalState.newUserData;
 
-            if (entity.type === 'NEW') {
-              return (
-                <NewValueInput
-                  key={String(isAddUserLoading)}
-                  value={newUserData.value}
-                  onChange={(value) => {
-                    setNewUserData((prevState) => ({
-                      ...prevState,
-                      value: value ?? [],
-                    }));
-                  }}
-                  onChangeMeta={(meta) => {
-                    setNewUserData((prevState) => ({
-                      ...prevState,
-                      meta,
-                    }));
-                  }}
-                  listSubtype={listHeader.subtype}
-                />
-              );
-            } else if (listHeader.subtype === 'COUNTRY' && value != null) {
-              const valueArray = Array.isArray(value) ? value : [value];
-              return (
-                <>
-                  {valueArray.map((code) => (
-                    <CountryDisplay key={code} isoCode={code} />
-                  ))}
-                </>
-              );
-            }
-            return <>{value}</>;
+                if (entity.type === 'NEW') {
+                  return (
+                    <NewValueInput
+                      key={String(isAddUserLoading)}
+                      value={newUserData.value}
+                      onChange={(value) => {
+                        setNewUserData((prevState) => ({
+                          ...prevState,
+                          value: value ?? [],
+                        }));
+                      }}
+                      onChangeMeta={(meta) => {
+                        setNewUserData((prevState) => ({
+                          ...prevState,
+                          meta,
+                        }));
+                      }}
+                      listSubtype={listSubtype}
+                    />
+                  );
+                } else if (listSubtype === 'COUNTRY' && value != null) {
+                  const valueArray = Array.isArray(value) ? value : [value];
+                  return (
+                    <>
+                      {valueArray.map((code) => (
+                        <CountryDisplay key={code} isoCode={code} />
+                      ))}
+                    </>
+                  );
+                }
+                return <>{value}</>;
+              },
+            },
+          }),
+        ...(listSubtype === 'USER_ID'
+          ? helper.list([
+              helper.simple<'meta.userFullName'>({
+                title: 'User name',
+                key: 'meta.userFullName',
+              }),
+            ])
+          : []),
+        helper.derived<string | string[]>({
+          title: 'Reason for adding to list',
+          value: (item) => item.reason,
+
+          type: {
+            render: (reason, context) => {
+              const { item: entity } = context;
+              const externalState: ExternalState = context.external as ExternalState;
+              const [newUserData, setNewUserData] = externalState.newUserData;
+              const [editUserData, setEditUserData] = externalState.editUserData;
+              const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
+
+              if (entity.type === 'NEW') {
+                return (
+                  <Input
+                    disabled={isAddUserLoading}
+                    value={newUserData.reason}
+                    onChange={(e) => {
+                      setNewUserData((prevState) => ({
+                        ...prevState,
+                        reason: e.target.value,
+                      }));
+                    }}
+                  />
+                );
+              } else if (entity.value === editUserData?.value) {
+                return (
+                  <Input
+                    disabled={isUserDeleteLoading}
+                    value={editUserData.reason}
+                    onChange={(e) => {
+                      setEditUserData({
+                        ...editUserData,
+                        reason: e.target.value,
+                      });
+                    }}
+                  />
+                );
+              }
+              return <>{reason}</>;
+            },
+            defaultWrapMode: 'WRAP',
           },
-        },
-      }),
-      ...(listHeader.subtype === 'USER_ID'
-        ? helper.list([
-            helper.simple<'meta.userFullName'>({
-              title: 'User name',
-              key: 'meta.userFullName',
-            }),
-          ])
-        : []),
-      helper.derived<string | string[]>({
-        title: 'Reason for adding to list',
-        value: (item) => item.reason,
-
-        type: {
-          render: (reason, context) => {
-            const { item: entity } = context;
+        }),
+        helper.display({
+          title: 'Actions',
+          defaultWidth: 170,
+          render: (entity, context) => {
             const externalState: ExternalState = context.external as ExternalState;
-            const [newUserData, setNewUserData] = externalState.newUserData;
             const [editUserData, setEditUserData] = externalState.editUserData;
+            const [isEditUserLoading] = externalState.isEditUserLoading;
             const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-
+            const { onAdd, onSave, onDelete } = externalState;
             if (entity.type === 'NEW') {
               return (
-                <Input
-                  disabled={isAddUserLoading}
-                  value={newUserData.reason}
-                  onChange={(e) => {
-                    setNewUserData((prevState) => ({
-                      ...prevState,
-                      reason: e.target.value,
-                    }));
-                  }}
-                />
+                <div className={s.actions}>
+                  <Button
+                    type="PRIMARY"
+                    isLoading={isAddUserLoading}
+                    isDisabled={!isNewUserValid}
+                    onClick={onAdd}
+                    requiredPermissions={requiredWritePermissions}
+                  >
+                    Add
+                  </Button>
+                </div>
               );
-            } else if (entity.value === editUserData?.value) {
-              return (
-                <Input
-                  disabled={isUserDeleteLoading}
-                  value={editUserData.reason}
-                  onChange={(e) => {
-                    setEditUserData({
-                      ...editUserData,
-                      reason: e.target.value,
-                    });
-                  }}
-                />
-              );
-            }
-            return <>{reason}</>;
-          },
-          defaultWrapMode: 'WRAP',
-        },
-      }),
-      helper.display({
-        title: 'Actions',
-        defaultWidth: 170,
-        render: (entity, context) => {
-          const externalState: ExternalState = context.external as ExternalState;
-          const [editUserData, setEditUserData] = externalState.editUserData;
-          const [isEditUserLoading] = externalState.isEditUserLoading;
-          const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-          const { onAdd, onSave, onDelete } = externalState;
-          if (entity.type === 'NEW') {
-            return (
-              <div className={s.actions}>
-                <Button
-                  type="PRIMARY"
-                  isLoading={isAddUserLoading}
-                  isDisabled={!isNewUserValid}
-                  onClick={onAdd}
-                  requiredPermissions={requiredWritePermissions}
-                >
-                  Add
-                </Button>
-              </div>
-            );
-          } else if (entity.type === 'EXISTED') {
-            if (editUserData?.value === entity.value) {
+            } else if (entity.type === 'EXISTED') {
+              if (editUserData?.value === entity.value) {
+                return (
+                  <div className={s.actions}>
+                    <Button
+                      size="SMALL"
+                      type="PRIMARY"
+                      onClick={onSave}
+                      isDisabled={isEditUserLoading || !isEditUserValid}
+                      requiredPermissions={requiredWritePermissions}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="SMALL"
+                      type="SECONDARY"
+                      isDisabled={isEditUserLoading}
+                      onClick={() => {
+                        setEditUserData(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                );
+              }
               return (
                 <div className={s.actions}>
                   <Button
                     size="SMALL"
-                    type="PRIMARY"
-                    onClick={onSave}
-                    isDisabled={isEditUserLoading || !isEditUserValid}
+                    type="SECONDARY"
+                    isDisabled={isUserDeleteLoading}
+                    onClick={() => {
+                      setEditUserData(entity);
+                    }}
                     requiredPermissions={requiredWritePermissions}
                   >
-                    Save
+                    Edit
                   </Button>
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isDisabled={isEditUserLoading}
+                    isLoading={isUserDeleteLoading}
                     onClick={() => {
-                      setEditUserData(null);
+                      onDelete(entity.value ?? '');
                     }}
+                    requiredPermissions={requiredWritePermissions}
                   >
-                    Cancel
+                    Remove
                   </Button>
                 </div>
               );
             }
-            return (
-              <div className={s.actions}>
-                <Button
-                  size="SMALL"
-                  type="SECONDARY"
-                  isDisabled={isUserDeleteLoading}
-                  onClick={() => {
-                    setEditUserData(entity);
-                  }}
-                  requiredPermissions={requiredWritePermissions}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="SMALL"
-                  type="SECONDARY"
-                  isLoading={isUserDeleteLoading}
-                  onClick={() => {
-                    onDelete(entity.value ?? '');
-                  }}
-                  requiredPermissions={requiredWritePermissions}
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          }
-        },
-      }),
-    ]);
-  }, [
-    isAddUserLoading,
-    isEditUserValid,
-    isNewUserValid,
-    listHeader.subtype,
-    requiredWritePermissions,
-  ]);
+          },
+        }),
+      ].filter(notEmpty),
+    );
+  }, [isAddUserLoading, isEditUserValid, isNewUserValid, listSubtype, requiredWritePermissions]);
 
   return (
     <>

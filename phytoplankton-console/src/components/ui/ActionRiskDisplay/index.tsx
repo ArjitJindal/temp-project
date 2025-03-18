@@ -21,7 +21,7 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
   const isArsPermissionEnabled = useHasPermissions(['risk-scoring:risk-score-details:read']);
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
+    <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
       {(result) =>
         result && (
           <RiskScoreDisplay

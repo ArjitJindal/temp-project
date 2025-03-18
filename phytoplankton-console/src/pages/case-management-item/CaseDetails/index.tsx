@@ -75,7 +75,7 @@ export const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
 };
 
 interface Props {
-  caseItem: Case;
+  caseItemRes: AsyncResource<Case>;
   expandedAlertId?: string;
   headerStickyElRef: HTMLDivElement | null;
   comments: CommentsHandlers;
@@ -90,16 +90,17 @@ interface CommentsHandlers {
 }
 
 function CaseDetails(props: Props) {
-  const { caseItem, headerStickyElRef, expandedAlertId, comments } = props;
+  const { caseItemRes, headerStickyElRef, expandedAlertId, comments } = props;
   useScrollToFocus();
   const navigate = useNavigate();
 
-  const alertIds = (caseItem.alerts ?? [])
+  const caseItem = getOr(caseItemRes, undefined);
+  const alertIds = (caseItem?.alerts ?? [])
     .map(({ alertId }) => alertId)
     .filter((alertId): alertId is string => typeof alertId === 'string');
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
-  const tabs = useTabs(caseItem, expandedAlertId, alertIds, comments);
+  const tabs = useTabs(caseItemRes, expandedAlertId, alertIds, comments);
   const { tab = tabs[0].key } = useParams<'list' | 'id' | 'tab'>();
   return (
     <>
@@ -109,7 +110,7 @@ function CaseDetails(props: Props) {
         onChange={(newTab) => {
           navigate(
             keepBackUrl(
-              makeUrl('/case-management/case/:id/:tab', { id: caseItem.caseId, tab: newTab }),
+              makeUrl('/case-management/case/:id/:tab', { id: caseItem?.caseId, tab: newTab }),
             ),
             { replace: true },
           );
@@ -166,20 +167,21 @@ function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
 }
 
 function useTabs(
-  caseItem: Case,
+  caseItemRes: AsyncResource<Case>,
   expandedAlertId: string | undefined,
   alertIds: string[],
   comments: CommentsHandlers,
 ): TabItem[] {
-  const { subjectType = 'USER' } = caseItem;
+  const caseItem = getOr(caseItemRes, undefined);
+  const subjectType = caseItem?.subjectType;
   const api = useApi();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const isUserSubject = subjectType === 'USER';
   const isPaymentSubject = subjectType === 'PAYMENT';
   const paymentDetails =
-    caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination ?? undefined;
-  const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
+    caseItem?.paymentDetails?.origin ?? caseItem?.paymentDetails?.destination ?? undefined;
+  const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
@@ -195,8 +197,8 @@ function useTabs(
     { commentId: string; groupId: string }
   >(
     async (variables) => {
-      if (caseItem.caseId == null) {
-        throw new Error(`Case is is null`);
+      if (caseItem?.caseId == null) {
+        throw new Error(`Case is null`);
       }
       const { commentId, groupId } = variables;
       if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
@@ -227,7 +229,7 @@ function useTabs(
             }
             return comments.filter((comment) => comment.id !== commentId);
           });
-        } else if (caseItem.caseId) {
+        } else if (caseItem?.caseId) {
           queryClient.setQueryData<Case>(
             CASES_ITEM(caseItem.caseId),
             (caseItem: Case | undefined) => {
@@ -262,20 +264,22 @@ function useTabs(
       isClosable: false,
       isDisabled: false,
     },
-    caseItem.caseType !== 'MANUAL' && {
-      title: 'Alerts',
-      key: 'alerts',
-      children: (
-        <AlertsCard
-          caseItem={caseItem}
-          expandedAlertId={expandedAlertId}
-          title={UI_SETTINGS.cards.ALERTS.title}
-        />
-      ),
-      isClosable: false,
-      isDisabled: false,
-    },
-    caseItem.caseId &&
+    caseItem &&
+      caseItem?.caseType !== 'MANUAL' && {
+        title: 'Alerts',
+        key: 'alerts',
+        children: (
+          <AlertsCard
+            caseItem={caseItem}
+            expandedAlertId={expandedAlertId}
+            title={UI_SETTINGS.cards.ALERTS.title}
+          />
+        ),
+        isClosable: false,
+        isDisabled: false,
+      },
+    caseItem &&
+      caseItem.caseId &&
       user &&
       caseItem.caseType === 'MANUAL' && {
         title: 'Case transactions',
@@ -431,8 +435,8 @@ function useTabs(
                   ...alertCommentsGroups,
                   {
                     title: 'Case comments',
-                    id: caseItem.caseId ?? '-',
-                    comments: caseItem.comments ?? [],
+                    id: caseItem?.caseId ?? '-',
+                    comments: caseItem?.comments ?? [],
                   },
                 ]),
               }}

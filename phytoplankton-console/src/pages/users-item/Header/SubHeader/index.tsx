@@ -9,15 +9,16 @@ import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { CommentType } from '@/utils/user-utils';
+import { AsyncResource } from '@/utils/asyncResource';
 
 interface Props {
-  user: InternalConsumerUser | InternalBusinessUser;
+  userId: string;
+  userRes: AsyncResource<InternalConsumerUser | InternalBusinessUser>;
   onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function SubHeader(props: Props) {
-  const { user, onNewComment } = props;
-  const userId = user.userId;
+  const { userId, userRes, onNewComment } = props;
 
   return (
     <div className={s.root}>
@@ -36,15 +37,15 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         </Feature>
         <div className={s['row-items']}>
-          <KycStatusEditor onNewComment={onNewComment} title={'KYC status'} user={user} />
-          <UserStateEditor onNewComment={onNewComment} title={'User status'} user={user} />
+          <KycStatusEditor onNewComment={onNewComment} title={'KYC status'} userRes={userRes} />
+          <UserStateEditor onNewComment={onNewComment} title={'User status'} userRes={userRes} />
         </div>
       </div>
       <Feature name={['RISK_SCORING', 'RISK_LEVELS']} fallback={''}>
         <div className={s.risks}>
-          <KycRiskDisplay userId={user.userId} />
-          <UserTrsRiskDisplay userId={user.userId} />
-          <DynamicRiskDisplay userId={user.userId} />
+          <KycRiskDisplay userId={userId} />
+          <UserTrsRiskDisplay userId={userId} />
+          <DynamicRiskDisplay userId={userId} />
         </div>
       </Feature>
     </div>

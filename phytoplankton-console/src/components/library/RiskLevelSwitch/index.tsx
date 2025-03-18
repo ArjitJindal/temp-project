@@ -18,12 +18,12 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
     <div className={cn(s.root, componentIsDisabled && s.isDisabled)} data-sentry-allow={true}>
       {RISK_LEVELS.map((level) => {
         const isCurrent = level === value;
-        const isDisabled = disabledLevels?.includes(level) ?? componentIsDisabled;
+        const isDisabled = disabledLevels?.includes(level) || componentIsDisabled;
         return (
           <label
             data-cy={`risk-level-${level}`}
             key={level}
-            className={cn(s.button, isReadonly && s.isReadonly)}
+            className={cn(s.button, isReadonly && s.isReadonly, isDisabled && s.isDisabled)}
             style={
               isCurrent
                 ? {

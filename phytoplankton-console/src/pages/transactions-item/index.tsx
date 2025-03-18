@@ -14,7 +14,7 @@ import Button from '@/components/library/Button';
 
 //utils and hooks
 import { makeUrl } from '@/utils/routing';
-import { getOr } from '@/utils/asyncResource';
+import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import { InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import PageTabs from '@/components/ui/PageTabs';
@@ -105,71 +105,79 @@ export default function TransactionsItem() {
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
 
+  const transactionRes = queryResult.data;
+
+  if (transactionId == null) {
+    throw new Error('Transaction id is not passed');
+  }
+
   return (
-    <AsyncResourceRenderer<InternalTransaction> resource={queryResult.data}>
-      {(transaction) => (
-        <PageWrapper
-          disableHeaderPadding
-          header={
-            <Card.Root>
-              <EntityHeader
-                stickyElRef={setHeaderStickyElRef}
-                breadcrumbItems={[
-                  { title: 'Transactions', to: '/transactions' },
-                  { title: transaction.transactionId },
-                ]}
-                subHeader={<SubHeader transaction={transaction} />}
-                buttons={[
-                  <Button
-                    type="TETRIARY"
-                    isDisabled={isLoading}
-                    onClick={async () => {
-                      await handleReportDownload(transaction, ruleAlertMap);
-                    }}
-                    key="transactions-download-button"
-                  >
-                    <DownloadLineIcon height={16} /> Export
-                  </Button>,
-                ]}
-              />
-            </Card.Root>
-          }
-        >
-          <PageTabs
-            sticky={entityHeaderHeight}
-            activeKey={tab}
-            onChange={(newTab) => {
-              navigate(
-                keepBackUrl(
-                  makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
-                ),
-                { replace: true },
-              );
-            }}
-            items={[
-              {
-                title: 'Transaction details',
-                key: 'transaction-details',
-                children: (
-                  <div className={s.transactionDetails}>
-                    <SenderReceiverDetails transaction={transaction} />
-                    <TransactionTags transaction={transaction} />
-                  </div>
-                ),
-                isClosable: false,
-                isDisabled: false,
-              },
-              {
-                title: 'Transaction events',
-                key: 'transaction-events',
-                children: <TransactionEventsCard transactionId={transaction.transactionId} />,
-                isClosable: false,
-                isDisabled: false,
-              },
+    <PageWrapper
+      disableHeaderPadding
+      header={
+        <Card.Root>
+          <EntityHeader
+            stickyElRef={setHeaderStickyElRef}
+            breadcrumbItems={[
+              { title: 'Transactions', to: '/transactions' },
+              map(transactionRes, (transaction) => ({ title: transaction.transactionId })),
+            ]}
+            subHeader={<SubHeader transactionRes={transactionRes} transactionId={transactionId} />}
+            buttons={[
+              <Button
+                type="TETRIARY"
+                isDisabled={isLoading || !isSuccess(transactionRes)}
+                onClick={async () => {
+                  if (isSuccess(transactionRes)) {
+                    await handleReportDownload(transactionRes.value, ruleAlertMap);
+                  }
+                }}
+                key="transactions-download-button"
+              >
+                <DownloadLineIcon height={16} /> Export
+              </Button>,
             ]}
           />
-        </PageWrapper>
-      )}
-    </AsyncResourceRenderer>
+        </Card.Root>
+      }
+    >
+      <PageTabs
+        sticky={entityHeaderHeight}
+        activeKey={tab}
+        onChange={(newTab) => {
+          navigate(
+            keepBackUrl(makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab })),
+            { replace: true },
+          );
+        }}
+        items={[
+          {
+            title: 'Transaction details',
+            key: 'transaction-details',
+            children: (
+              <div className={s.transactionDetails}>
+                <AsyncResourceRenderer resource={transactionRes}>
+                  {(transaction) => (
+                    <>
+                      <SenderReceiverDetails transaction={transaction} />
+                      <TransactionTags transaction={transaction} />
+                    </>
+                  )}
+                </AsyncResourceRenderer>
+              </div>
+            ),
+            isClosable: false,
+            isDisabled: false,
+          },
+          {
+            title: 'Transaction events',
+            key: 'transaction-events',
+            children: <TransactionEventsCard transactionId={transactionId} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+        ]}
+      />
+    </PageWrapper>
   );
 }

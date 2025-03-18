@@ -8,20 +8,21 @@ import Id from '@/components/ui/Id';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
-import { AsyncResource } from '@/utils/asyncResource';
+import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import Spinner from '@/components/library/Spinner';
+import Skeleton from '@/components/library/Skeleton';
 
 interface Props {
   caseItemRes: AsyncResource<Case>;
-  alertItem: Alert;
+  alertItemRes: AsyncResource<Alert>;
 }
 
 export default function SubHeader(props: Props) {
-  const { alertItem, caseItemRes } = props;
+  const { alertItemRes, caseItemRes } = props;
 
   const renderLabels = (caseItem: Case | null) => {
     if (caseItem == null) {
@@ -38,22 +39,32 @@ export default function SubHeader(props: Props) {
           {renderLabels}
         </AsyncResourceRenderer>
         <Form.Layout.Label title={'Assigned to'}>
-          <AlertAssigneesDropdown alertItem={alertItem} />
+          <Skeleton res={alertItemRes}>
+            {(alertItem) => <AlertAssigneesDropdown alertItem={alertItem} />}
+          </Skeleton>
         </Form.Layout.Label>
         <Form.Layout.Label title={'Alert queue'}>
-          <RuleQueueTag queueId={alertItem.ruleQueueId} />
+          <Skeleton res={alertItemRes}>
+            {(alertItem) => <RuleQueueTag queueId={alertItem.ruleQueueId} />}
+          </Skeleton>
         </Form.Layout.Label>
         <Form.Layout.Label title={'Created at'}>
-          {dayjs(alertItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          <Skeleton res={alertItemRes}>
+            {(alertItem) =>
+              dayjs(alertItem.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
+            }
+          </Skeleton>
         </Form.Layout.Label>
         <Form.Layout.Label title={'Last updated'}>
-          {dayjs(alertItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          <Skeleton res={alertItemRes}>
+            {(alertItem) => dayjs(alertItem.updatedAt).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+          </Skeleton>
         </Form.Layout.Label>
-        {alertItem.lastStatusChange && (
+        {isSuccess(alertItemRes) && alertItemRes.value.lastStatusChange && (
           <Form.Layout.Label title={'Status change reasons'}>
             <StatusChangeReasonsDisplay
-              reasons={alertItem.lastStatusChange.reason}
-              otherReason={alertItem.lastStatusChange.otherReason}
+              reasons={alertItemRes.value.lastStatusChange.reason}
+              otherReason={alertItemRes.value.lastStatusChange.otherReason}
             />
           </Form.Layout.Label>
         )}

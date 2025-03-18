@@ -8,7 +8,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { GET_RULE } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { Rule } from '@/apis';
-import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
@@ -31,17 +30,9 @@ export default function RulesLibraryItemPage() {
     return rule;
   });
 
-  return (
-    <AsyncResourceRenderer resource={ruleResult.data}>
-      {(rule) => <Content mode="CREATE" ruleId={ruleId} rule={rule} />}
-    </AsyncResourceRenderer>
-  );
-}
-
-function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
-  const { ruleId, rule, mode } = props;
-  const navigate = useNavigate();
   const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  const navigate = useNavigate();
+
   return (
     <PageWrapper
       header={
@@ -68,17 +59,21 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
         />
       }
     >
-      <RuleConfiguration
-        rule={rule ?? undefined}
-        isSimulation={isSimulationEnabled}
-        type={mode}
-        onRuleInstanceUpdated={() => {
-          navigate(makeUrl(`/rules/my-rules`));
-        }}
-        onCancel={() => {
-          navigate(makeUrl(`/rules/rules-library`));
-        }}
-      />
+      <AsyncResourceRenderer resource={ruleResult.data}>
+        {(rule) => (
+          <RuleConfiguration
+            rule={rule ?? undefined}
+            isSimulation={isSimulationEnabled}
+            type={'CREATE'}
+            onRuleInstanceUpdated={() => {
+              navigate(makeUrl(`/rules/my-rules`));
+            }}
+            onCancel={() => {
+              navigate(makeUrl(`/rules/rules-library`));
+            }}
+          />
+        )}
+      </AsyncResourceRenderer>
     </PageWrapper>
   );
 }
