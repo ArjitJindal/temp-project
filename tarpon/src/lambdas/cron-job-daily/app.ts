@@ -28,6 +28,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TriageQueueTicket } from '@/@types/triage'
 import { getSecret } from '@/utils/secrets-manager'
 import {
+  CUSTOMER_ON_CALL_GROUP_ID,
   ENGINEERING_GROUP_ID,
   ENGINEERING_ON_CALL_GROUP_ID,
   INCIDENTS_BUGS_CHANNEL_ID,
@@ -277,8 +278,11 @@ export async function updateOncallUsers() {
   const zendutyKey = await getSecret<{ apiKey: string }>('zenduty')
   const slackClient = new WebClient(slack.token)
 
-  const ENGINEERING_ONCALL_NAME = 'Engineering On Call'
   const ZENDUTY_TEAM_ID = '8609ccb8-52f0-4c4c-baf0-7aeaf624228a'
+  const ONCALL_GROUPS: { name: string; groupId: string }[] = [
+    { name: 'Engineering On Call', groupId: ENGINEERING_ON_CALL_GROUP_ID },
+    { name: 'Customer On Call', groupId: CUSTOMER_ON_CALL_GROUP_ID },
+  ]
 
   const schedulesResponse = await axios.get<
     { escalation_policy: { name: string }; users: { email: string }[] }[]
@@ -286,45 +290,40 @@ export async function updateOncallUsers() {
     headers: { Authorization: `Token ${zendutyKey.apiKey}` },
   })
 
-  const currentOncallEmail = schedulesResponse.data
-    .find(
-      (schedule) => schedule.escalation_policy.name === ENGINEERING_ONCALL_NAME
-    )
-    ?.users.map((user) => user.email)
-
   const slackUsers = await slackClient.users.list({ limit: 1000 })
 
-  const oncallUsers = slackUsers.members?.filter((user) =>
-    currentOncallEmail?.includes(user.profile?.email ?? '')
-  )
+  for (const { name, groupId } of ONCALL_GROUPS) {
+    const oncallEmails = schedulesResponse.data
+      .find((schedule) => schedule.escalation_policy.name === name)
+      ?.users.map((user) => user.email)
 
-  const oncallUsersIds = compact(oncallUsers?.map((user) => user.id))
+    const oncallUsers = slackUsers.members?.filter((user) =>
+      oncallEmails?.includes(user.profile?.email ?? '')
+    )
+    const oncallUserIds = compact(oncallUsers?.map((user) => user.id))
 
-  const currentOncallSlackUsers = await slackClient.usergroups.users.list({
-    usergroup: ENGINEERING_ON_CALL_GROUP_ID,
-  })
+    const currentOncallSlackUsers = await slackClient.usergroups.users.list({
+      usergroup: groupId,
+    })
 
-  const isOnCallUpdated = currentOncallSlackUsers.users?.some(
-    (user) => !oncallUsersIds.includes(user)
-  )
-
-  await slackClient.usergroups.users.update({
-    usergroup: ENGINEERING_ON_CALL_GROUP_ID,
-    users: compact(oncallUsers?.map((user) => user.id)).join(','),
-  })
-
-  if (isOnCallUpdated) {
-    const slackUser = slackUsers.members?.filter(
-      (user) => user.id && oncallUsersIds.includes(user.id)
+    const isOnCallUpdated = currentOncallSlackUsers.users?.some(
+      (user) => !oncallUserIds.includes(user)
     )
 
-    const slackUserNames = slackUser?.map((user) => user.profile?.real_name)
-
-    await slackClient.chat.postMessage({
-      channel: INCIDENTS_BUGS_CHANNEL_ID,
-      text: `<!subteam^${ENGINEERING_GROUP_ID}> ${slackUserNames?.join(
-        ', '
-      )} is on call check on <!subteam^${ENGINEERING_ON_CALL_GROUP_ID}>`,
+    await slackClient.usergroups.users.update({
+      usergroup: groupId,
+      users: oncallUserIds.join(','),
     })
+
+    if (isOnCallUpdated) {
+      const slackUserNames = oncallUsers?.map((user) => user.profile?.real_name)
+
+      await slackClient.chat.postMessage({
+        channel: INCIDENTS_BUGS_CHANNEL_ID,
+        text: `<!subteam^${ENGINEERING_GROUP_ID}> ${slackUserNames?.join(
+          ', '
+        )} is on call check on <!subteam^${groupId}>`,
+      })
+    }
   }
 }
