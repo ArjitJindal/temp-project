@@ -1,5 +1,6 @@
 import process from 'process'
 import { Subsegment } from 'aws-xray-sdk-core'
+import { StackConstants } from '@lib/constants'
 import { logger } from '@/core/logger'
 import { envIsNot } from '@/utils/env'
 
@@ -9,7 +10,9 @@ const ALLOWED_SPECIAL_CHAR_REGEX = /[`,~!#$^*()|?;'"<>{}[\]/]/g
 
 const xrayDisabled =
   envIsNot('dev', 'sandbox', 'prod') ||
-  !process.env.AWS_LAMBDA_FUNCTION_NAME?.includes('Api')
+  (!process.env.AWS_LAMBDA_FUNCTION_NAME?.includes('Api') &&
+    process.env.AWS_LAMBDA_FUNCTION_NAME !==
+      StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME)
 
 let xrayInitialized = false
 
