@@ -562,7 +562,6 @@ const tarponBuilder = new StreamConsumerBuilder(
     )
   )
   // Hammerhead Head change handlers
-  .setConcurrentGroupBy((update) => update.entityId ?? '')
   .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore, dbClients) =>
     arsScoreEventHandler(tenantId, newArsScore, dbClients)
   )
