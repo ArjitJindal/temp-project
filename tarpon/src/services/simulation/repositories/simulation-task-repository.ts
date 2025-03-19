@@ -422,6 +422,16 @@ export class SimulationTaskRepository {
       this.mongoDb
     )
 
+    const db = this.mongoDb.db()
+    const collection = db.collection<SimulationAllJobs>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
+    )
+
+    await collection.insertOne({
+      _id: demoJob.jobId as any,
+      ...demoJob,
+    })
+
     await simulationResultRepository.saveSimulationResults(usersResult)
 
     return { jobId: demoJob.jobId, taskIds }
