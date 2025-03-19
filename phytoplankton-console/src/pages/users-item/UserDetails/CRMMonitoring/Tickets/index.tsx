@@ -30,38 +30,38 @@ export default function Tickets(props: Props) {
                   <div className={s.panelHeaderComplete}>
                     <div className={s.panelHeaderLeft}>
                       <span className={s.panelHeading}>
-                        {item.subject ? item.subject : 'No subject'}
+                        {item.data.subject ? item.data.subject : 'No subject'}
                       </span>
                       <span className={s.greyText}>
-                        {item.updated_at
-                          ? `Last updated - ${dayjs(item.updated_at).format(
+                        {item.data.updatedAt
+                          ? `Last updated - ${dayjs(item.data.updatedAt).format(
                               DEFAULT_DATE_TIME_FORMAT,
-                            )} (${getRemainingDays(item.updated_at)})`
-                          : `Created at - ${dayjs(item.updated_at).format(
+                            )} (${getRemainingDays(item.data.updatedAt)})`
+                          : `Created at - ${dayjs(item.data.updatedAt).format(
                               DEFAULT_DATE_TIME_FORMAT,
-                            )} (${getRemainingDays(item.created_at)})`}
+                            )} (${getRemainingDays(item.data.createdAt)})`}
                       </span>
                     </div>
                     <CompanyHeader
-                      link={`https://flagright.freshdesk.com/support/tickets/${item.id}`}
+                      link={`https://flagright.freshdesk.com/support/tickets/${item.data.id}`}
                       model={model ?? 'FreshDeskTicket'}
                     />{' '}
                   </div>
                 </div>
               </div>
             }
-            key={item.id}
+            key={item.data.id}
           >
             {hasConversations(item) && (
               <>
                 <div className={s.conversations}>
                   <TicketConversation conversations={getFirstConversation(item)} user={user} />
-                  <TicketConversation conversations={item.conversations ?? []} user={user} />
+                  <TicketConversation conversations={item.data.conversations ?? []} user={user} />
                 </div>
                 <div>
-                  {item.attachments && (
+                  {item.data.attachments && (
                     <div className={s.attachments}>
-                      {item.attachments.map((attachment, i) => (
+                      {item.data.attachments.map((attachment, i) => (
                         <span style={{ cursor: 'pointer' }} key={i}>
                           <PaperClipOutlined /> {attachment.name}{' '}
                         </span>

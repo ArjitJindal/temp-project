@@ -17,6 +17,7 @@ function listSubDirectories(directoryPath: string) {
 }
 
 async function prepareSchemas(OUTPUT_DIR: string) {
+  console.log('Preparing schemas...')
   try {
     const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
     const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
@@ -57,6 +58,7 @@ async function prepareSchemas(OUTPUT_DIR: string) {
       internalDir,
       'openapi-internal-original.yaml'
     )
+    const nangoSchemaFile = path.resolve(internalDir, 'nango-models.yaml')
     const internalSchemaText = (
       await fs.readFile(internalSchemaFile)
     ).toString()
@@ -70,6 +72,9 @@ async function prepareSchemas(OUTPUT_DIR: string) {
       let internalSchemaYaml = parse(internalSchemaText)
       internalSchemaYaml = await localizeRefs(internalSchemaYaml)
 
+      const nangoSchemaText = (await fs.readFile(nangoSchemaFile)).toString()
+      const nangoSchemaYaml = parse(nangoSchemaText)
+
       // Merge all models from public schema to internal schema
       // todo: check for override
       internalSchemaYaml.components.schemas = {
@@ -78,6 +83,7 @@ async function prepareSchemas(OUTPUT_DIR: string) {
         ...pick(publicManagementSchemaYaml.components.schemas, [
           'ActionReason',
         ]),
+        ...nangoSchemaYaml.components.schemas,
       }
       internalSchemaYaml.components.schemas = flattenSchemas(
         internalSchemaYaml.components.schemas
@@ -143,7 +149,11 @@ async function validateSchemas(openapiDir: string) {
 async function main() {
   const OUTPUT_DIR = './dist/openapi'
   mkdirp.sync(OUTPUT_DIR)
+  console.info('Syncing Nango models...')
+  execSync(`rm -rf src/@types/nango/models.d.ts`)
+  execSync(`yarn sync:nango:models`)
   await prepareSchemas(OUTPUT_DIR)
+  fs.removeSync(path.resolve(OUTPUT_DIR, 'internal', 'nango-models.yaml'))
   await validateSchemas(OUTPUT_DIR)
   console.log('Preparation completed.')
 }

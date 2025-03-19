@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import s from './index.module.less';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { FreshdeskTicketConversation } from '@/apis/models/FreshdeskTicketConversation';
+import { InternalBusinessUser, InternalConsumerUser, NangoConversation } from '@/apis';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { getAvatarText } from '@/utils/user-utils';
 import { getUserName } from '@/utils/api/users';
 
 interface Props {
-  conversations: Array<FreshdeskTicketConversation>;
+  conversations: Array<NangoConversation>;
   user?: InternalConsumerUser | InternalBusinessUser;
 }
 
@@ -35,39 +34,39 @@ export default function TicketConversation(props: Props) {
           <div className={s.header}>
             <div className={s.left}>
               <div className={s.avatar}>
-                {item.from_email?.includes('support@flagright') ? 'F' : avatarText}
+                {item.fromEmail?.includes('support@flagright') ? 'F' : avatarText}
               </div>
               <div className={s.commentHeader}>
                 <span className={s.bold}>
-                  {item.from_email?.includes('support@flagright') ? 'Flagright' : getUserName(user)}
+                  {item.fromEmail?.includes('support@flagright') ? 'Flagright' : getUserName(user)}
                 </span>
                 <div className={s.emailContainer}>
-                  {item.to_email && (
+                  {item.toEmail && (
                     <div>
                       <span className={s.greyText}>to:</span>
-                      <span className={s.emailText}>{item.to_email},</span>
+                      <span className={s.emailText}>{item.toEmail},</span>
                     </div>
                   )}
-                  {item.cc_emails && item.cc_emails.length > 0 && (
+                  {item.ccEmails && item.ccEmails.length > 0 && (
                     <div>
                       <span className={s.greyText}>CC:</span>
-                      {expandedEmails.includes(key) || item.cc_emails.length <= 2 ? (
-                        item.cc_emails.map((email, i) => (
+                      {expandedEmails.includes(key) || item.ccEmails.length <= 2 ? (
+                        item.ccEmails.map((email, i) => (
                           <span className={s.emailText} key={i}>
                             {email}
-                            {i < getCcEmailCount(item.cc_emails) - 1 ? ', ' : ''}
+                            {i < getCcEmailCount(item.ccEmails) - 1 ? ', ' : ''}
                           </span>
                         ))
                       ) : (
                         <>
                           <span className={s.emailText}>
-                            {item.cc_emails[0]}, {item.cc_emails[1]}
+                            {item.ccEmails[0]}, {item.ccEmails[1]}
                           </span>
                           <button
                             className={s.expandButton}
                             onClick={() => setExpandedEmails([...expandedEmails, key])}
                           >
-                            {` (+${item.cc_emails.length - 2})`}
+                            {` (+${item.ccEmails.length - 2})`}
                           </button>
                         </>
                       )}
@@ -77,11 +76,11 @@ export default function TicketConversation(props: Props) {
               </div>
             </div>
             <span className={s.greyText}>
-              {dayjs(item.created_at).format(DEFAULT_DATE_TIME_FORMAT)}
+              {dayjs(item.createdAt).format(DEFAULT_DATE_TIME_FORMAT)}
             </span>
           </div>
           <div className={s.emailBody}>
-            {item && <MarkdownViewer value={clearMarkdown(item.body_text || '')} />}
+            {item && <MarkdownViewer value={clearMarkdown(item.bodyText || '')} />}
           </div>
         </div>
       ))}

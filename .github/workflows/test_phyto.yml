@@ -43,6 +43,9 @@ jobs:
         run: yarn install --immutable
       - run: yarn install --immutable
         working-directory: "tarpon"
+      - name: Install nango
+        run: npm install -g nango
+        working-directory: "tarpon"
       - run: npm run openapi:prepare
         working-directory: "tarpon"
       - run: yarn install --immutable

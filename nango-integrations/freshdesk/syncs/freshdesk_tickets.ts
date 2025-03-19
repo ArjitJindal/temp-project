@@ -1,8 +1,4 @@
-import type {
-  FreshDeskTicket,
-  NangoSync,
-  ProxyConfiguration,
-} from '../../models'
+import type { Ticket, NangoSync, ProxyConfiguration } from '../../models'
 
 export interface FreshdeskApiTicket {
   cc_emails: string[]
@@ -87,7 +83,7 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
   for await (const freshdeskTicket of nango.paginate<FreshdeskApiTicket>(
     config
   )) {
-    const tickets: FreshDeskTicket[] = await Promise.all(
+    const tickets: Ticket[] = await Promise.all(
       freshdeskTicket.map(async (ticket) => {
         const getTicket = await nango.get({
           endpoint: `/api/v2/tickets/${ticket.id}?include=conversations`,
@@ -96,47 +92,47 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
 
         const ticketData = getTicket.data as FreshdeskApiTicket
 
-        const ticketSchema: FreshDeskTicket = {
-          created_at: new Date(ticket.created_at).valueOf(),
-          updated_at: new Date(ticket.updated_at).valueOf(),
-          is_escalated: ticket.is_escalated,
+        const ticketSchema: Ticket = {
+          createdAt: new Date(ticket.created_at).valueOf(),
+          updatedAt: new Date(ticket.updated_at).valueOf(),
+          isEscalated: ticket.is_escalated,
           priority: ticket.priority,
-          requester_id: ticket.requester_id,
-          responder_id: ticket.responder_id,
+          requesterId: ticket.requester_id.toString(),
+          responderId: ticket.responder_id.toString(),
           source: ticket.source,
           subject: ticket.subject,
-          to_emails: ticket.to_emails,
+          toEmails: ticket.to_emails,
           id: ticket.id.toString(),
           type: ticket.type,
-          cc_emails: ticket.cc_emails,
-          fwd_emails: ticket.fwd_emails,
-          reply_cc_emails: ticket.reply_cc_emails,
+          ccEmails: ticket.cc_emails,
+          fwdEmails: ticket.fwd_emails,
+          replyCcEmails: ticket.reply_cc_emails,
           tags: ticket.tags,
           email: ticket.requester.email,
-          description_text: ticketData.description_text,
+          descriptionText: ticketData.description_text,
           conversations:
             ticketData.conversations?.map((conversation) => ({
-              body_text: conversation.body_text || null,
-              from_email: conversation.from_email || null,
-              to_email: conversation.to_email || null,
-              cc_emails: conversation.cc_emails || null,
-              created_at:
+              bodyText: conversation.body_text || null,
+              fromEmail: conversation.from_email || null,
+              toEmail: conversation.to_email || null,
+              ccEmails: conversation.cc_emails || null,
+              createdAt:
                 conversation.created_at !== null
                   ? new Date(conversation.created_at).valueOf()
                   : null,
-              updated_at:
+              updatedAt:
                 conversation.updated_at !== null
                   ? new Date(conversation.updated_at).valueOf()
                   : null,
             })) || [],
           attachments:
             ticketData.attachments?.map((attachment) => ({
-              content_type: attachment.content_type,
+              contentType: attachment.content_type,
               size: attachment.size,
-              updated_at: attachment.updated_at,
+              updatedAt: new Date(attachment.updated_at).valueOf(),
               name: attachment.name,
               id: attachment.id,
-              attachment_url: attachment.attachment_url,
+              attachmentUrl: attachment.attachment_url,
             })) || [],
         }
 
@@ -144,6 +140,6 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
       })
     )
 
-    await nango.batchSave(tickets, 'FreshDeskTicket')
+    await nango.batchSave(tickets, 'CRMTicket')
   }
 }

@@ -60,13 +60,19 @@ jobs:
       - name: Build Flagright Lib
         run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
         working-directory: "lib"
-      - run: yarn install --immutable
+      - name: Install tarpon dependencies
+        run: yarn install --immutable
         working-directory: "tarpon"
-      - run: yarn run openapi:format && yarn run openapi:prepare
+      - name: Install nango
+        run: npm install -g nango
+      - name: Format and prepare openapi
+        run: yarn run openapi:format && yarn run openapi:prepare
         working-directory: "tarpon"
-      - run: yarn run build:local
+      - name: Build tarpon
+        run: yarn run build:local
         working-directory: "tarpon"
-      - run: yarn run tsc:ci
+      - name: Typecheck tarpon
+        run: yarn run tsc:ci
         working-directory: "tarpon"
       - run: yarn run lint:ci
         working-directory: "tarpon"

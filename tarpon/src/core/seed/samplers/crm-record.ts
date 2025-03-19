@@ -1,9 +1,8 @@
 import { BaseSampler } from './base'
 import { emailDomains } from './users'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
-import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { FreshdeskTicketAttachment } from '@/@types/openapi-internal/FreshdeskTicketAttachment'
-import { FreshdeskTicketConversation } from '@/@types/openapi-internal/FreshdeskTicketConversation'
+import { NangoConversation } from '@/@types/openapi-internal/NangoConversation'
+import { NangoAttachments } from '@/@types/openapi-internal/NangoAttachments'
 
 const TICKET_TYPES = ['RESISTANT', 'COMPLIANCE', 'OTHER']
 
@@ -29,55 +28,55 @@ const ATTACHMENT_NAMES = [
   'invoice.ppt',
   'invoice.pptx',
 ]
-const TICKET_DESCRIPTIONS: { description_text?: string; subject?: string }[] = [
+const TICKET_DESCRIPTIONS: { descriptionText?: string; subject?: string }[] = [
   {
     subject: 'Login Issue',
-    description_text:
+    descriptionText:
       'User reports being unable to log in despite entering the correct credentials. Password reset attempts also fail.',
   },
   {
     subject: 'Payment Failure',
-    description_text:
+    descriptionText:
       "Customer attempted to process payment via credit card but received an 'Invalid Transaction' error.",
   },
   {
     subject: 'Feature Request: Dark Mode',
-    description_text:
+    descriptionText:
       'User suggests adding a dark mode option for better usability during nighttime browsing.',
   },
   {
     subject: 'Bug: App Crashes on Startup',
-    description_text:
+    descriptionText:
       'Multiple users report that the mobile app crashes immediately upon launching after the latest update.',
   },
   {
     subject: 'Slow Website Performance',
-    description_text:
+    descriptionText:
       'Website takes longer than usual to load pages, especially on the checkout page.',
   },
   {
     subject: 'Email Notifications Not Received',
-    description_text:
+    descriptionText:
       'User has not been receiving order confirmation or support emails despite correct email settings.',
   },
   {
     subject: 'Request for Refund',
-    description_text:
+    descriptionText:
       'Customer mistakenly purchased the wrong plan and requests a refund per the 30-day money-back policy.',
   },
   {
     subject: 'Two-Factor Authentication Issue',
-    description_text:
+    descriptionText:
       'User enabled 2FA but is not receiving the authentication code on their registered device.',
   },
   {
     subject: 'Order Not Delivered',
-    description_text:
+    descriptionText:
       'Customer placed an order 10 days ago, but tracking information has not been updated, and the package has not arrived.',
   },
   {
     subject: 'Unable to Reset Password',
-    description_text:
+    descriptionText:
       'User reports that the password reset link sent via email does not work and redirects to a blank page.',
   },
 ]
@@ -120,66 +119,63 @@ export const generateRandomEmailBody = () => {
 export class CrmRecordSampler extends BaseSampler<
   Omit<CRMRecord, 'conversations' | 'attachments'>
 > {
-  protected generateSample([ticketId, userEmail, created_at, model]) {
+  protected generateSample([ticketId, userEmail, createdAt, model]): CRMRecord {
     return {
       model: model,
-      subject: this.rng.pickRandom(TICKET_DESCRIPTIONS).subject,
-      fwd_emails: generateRandomEmails(),
-      created_at: created_at,
-      timestamp: this.sampleTimestamp(),
-      reply_cc_emails: generateRandomEmails(),
-      priority: this.rng.randomInt(10),
-      source: this.rng.randomInt(100),
-      is_escalated: this.rng.randomBool(),
-      email: userEmail,
-      updated_at: this.rng.randomTimestamp(),
-      PartitionKeyId: DynamoDbKeys.NANGO_RECORD(
-        'flagright-test',
-        model,
-        ticketId
-      ).PartitionKeyID,
-      description_text:
-        TICKET_DESCRIPTIONS[this.rng.randomInt(TICKET_DESCRIPTIONS.length)]
-          .description_text || ' ',
-      responder_id: this.rng.randomInt(1000000),
-      requester_id: this.rng.randomInt(1000000),
-      id: ticketId,
-      cc_emails: generateRandomEmails(),
-      Sort_Key_id: ticketId,
-      to_emails: generateRandomEmails(),
-      type: this.rng.pickRandom(TICKET_TYPES),
+      data: {
+        subject: this.rng.pickRandom(TICKET_DESCRIPTIONS).subject,
+        fwdEmails: generateRandomEmails(),
+        createdAt,
+        replyCcEmails: generateRandomEmails(),
+        priority: this.rng.randomInt(10),
+        source: this.rng.randomInt(100),
+        isEscalated: this.rng.randomBool(),
+        email: userEmail,
+        updatedAt: this.rng.randomTimestamp(),
+        attachments: [],
+        conversations: [],
+        tags: [],
+        descriptionText:
+          TICKET_DESCRIPTIONS[this.rng.randomInt(TICKET_DESCRIPTIONS.length)]
+            .descriptionText || ' ',
+        responderId: this.rng.randomInt(1000000).toString(),
+        requesterId: this.rng.randomInt(1000000).toString(),
+        id: ticketId,
+        ccEmails: generateRandomEmails(),
+        toEmails: generateRandomEmails(),
+        type: this.rng.pickRandom(TICKET_TYPES),
+      },
     }
   }
 }
 
-export class ConversationSampler extends BaseSampler<FreshdeskTicketConversation> {
-  protected generateSample([from_email]) {
+export class ConversationSampler extends BaseSampler<NangoConversation> {
+  protected generateSample(fromEmail: string): NangoConversation {
     const email = this.rng.pickRandom([
-      from_email,
+      fromEmail,
       '"Flagright " <support@flagright.freshdesk.com>',
     ])
 
     return {
-      created_at: this.rng.randomTimestamp(),
-      to_email: generateRandomEmails()[0],
-      from_email: email,
-      updated_at: this.rng.randomTimestamp().toString(),
-      body_text: generateRandomEmailBody(),
-      cc_emails: generateRandomEmails(),
+      createdAt: this.rng.randomTimestamp(),
+      toEmail: generateRandomEmails()[0],
+      fromEmail: email,
+      updatedAt: this.rng.randomTimestamp(),
+      bodyText: generateRandomEmailBody(),
+      ccEmails: generateRandomEmails(),
     }
   }
 }
 
-export class AttachmentSampler extends BaseSampler<FreshdeskTicketAttachment> {
-  protected generateSample() {
+export class AttachmentSampler extends BaseSampler<NangoAttachments> {
+  protected generateSample(): NangoAttachments {
     return {
-      content_type: this.rng.pickRandom(ATTACHMENT_CONTENT_TYPES),
+      attachmentUrl: 'https://www.flagright.com/',
+      contentType: this.rng.pickRandom(ATTACHMENT_CONTENT_TYPES),
       size: this.rng.randomInt(400000),
-      updated_at: this.rng.randomTimestamp().toString(),
+      updatedAt: this.rng.randomTimestamp(),
       name: this.rng.pickRandom(ATTACHMENT_NAMES),
-      created_at: this.rng.randomTimestamp().toString(),
       id: this.rng.randomInt(10000),
-      attachment_url: 'https://www.flagright.com/',
     }
   }
 }

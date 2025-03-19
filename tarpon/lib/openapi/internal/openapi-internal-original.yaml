@@ -16804,6 +16804,11 @@ components:
         - totalRows
         - successRows
         - failedRows
+    CRMTicketType:
+      title: CRMTicketType
+      type: string
+      enum:
+        - CRM_TICKET
     CrmModelType:
       title: CrmModelType
       description: Define all different crm model types here
@@ -16829,118 +16834,20 @@ components:
       title: CRMRecord
       type: object
       oneOf:
-        - $ref: '#/components/schemas/FreshdeskTicket'
-    FreshdeskTicket:
-      title: FreshdeskTicket
+        - $ref: '#/components/schemas/CRMTicket'
+    CRMTicket:
+      title: CRMTicket
       description: Data field in the Crm ticket object
       type: object
       additionalProperties: {}
       properties:
         model:
-          $ref: '#/components/schemas/CrmModelType'
-        subject:
-          type: string
-        fwd_emails:
-          type: array
-          items:
-            type: string
-        created_at:
-          type: integer
-          nullable: true
-        timestamp:
-          type: integer
-          format: int64
-        reply_cc_emails:
-          type: array
-          items:
-            type: string
-        priority:
-          type: number
-        source:
-          type: number
-        is_escalated:
-          type: boolean
-        email:
-          type: string
-        updated_at:
-          type: integer
-          nullable: true
-        PartitionKeyId:
-          type: string
-        conversations:
-          type: array
-          items:
-            $ref: '#/components/schemas/FreshdeskTicketConversation'
-        attachments:
-          type: array
-          items:
-            $ref: '#/components/schemas/FreshdeskTicketAttachment'
-        description_text:
-          type: string
-        responder_id:
-          type: integer
-          format: int64
-        requester_id:
-          type: integer
-          format: int64
-        id:
-          type: string
-        cc_emails:
-          type: array
-          items:
-            type: string
-        SortKeyId:
-          type: string
-        to_emails:
-          type: array
-          items:
-            type: string
-          nullable: true
-        type:
-          type: string
-          nullable: true
+          $ref: '#/components/schemas/CRMTicketType'
+        data:
+          $ref: ../nango-models.yaml#/components/schemas/NangoTicket
       required:
-        - id
         - model
-    FreshdeskTicketConversation:
-      title: CrmTicketConversation
-      type: object
-      properties:
-        created_at:
-          type: integer
-          nullable: true
-        to_email:
-          type: string
-        from_email:
-          type: string
-        updated_at:
-          type: string
-          nullable: true
-        body_text:
-          type: string
-        cc_emails:
-          type: array
-          items:
-            type: string
-            nullable: true
-    FreshdeskTicketAttachment:
-      title: FreshdeskTicketAttachment
-      type: object
-      properties:
-        content_type:
-          type: string
-        size:
-          type: number
-        updated_at:
-          type: string
-        name:
-          type: string
-        created_at:
-          type: string
-        id:
-          type: number
-        attachment_url:
-          type: string
+        - data
     AlertTransactionsStats:
       type: object
       properties:

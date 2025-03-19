@@ -9,8 +9,8 @@ import { users } from './users'
 import { NANGO_RECORDS_SEED } from './seeds'
 import { NangoModels, NangoRecord } from '@/@types/nango'
 import { CrmModelType } from '@/@types/openapi-internal/CrmModelType'
-import { FreshdeskTicketConversation } from '@/@types/openapi-internal/FreshdeskTicketConversation'
-import { FreshdeskTicketAttachment } from '@/@types/openapi-internal/FreshdeskTicketAttachment'
+import { NangoConversation } from '@/@types/openapi-internal/NangoConversation'
+import { NangoAttachments } from '@/@types/openapi-internal/NangoAttachments'
 
 export const RECORD_COUNT = 2
 export const CONVERSATION_COUNT = 3
@@ -31,13 +31,13 @@ export class NangoRecordSampler extends BaseSampler<NangoRecord> {
     this.attachmentSampler = new AttachmentSampler(seed)
   }
 
-  protected generateSample(userEmail) {
+  protected generateSample(userEmail: string) {
     const ticketId = this.counter
     this.counter++
     const created_at = this.rng.randomTimestamp()
     const model = this.rng.pickRandom(MODEL_TYPE) as NangoModels
-    const conversations: FreshdeskTicketConversation[] = []
-    const attachments: FreshdeskTicketAttachment[] = []
+    const conversations: NangoConversation[] = []
+    const attachments: NangoAttachments[] = []
 
     const crmRecord = this.crmRecordSampler.getSample(undefined, [
       ticketId,
@@ -53,7 +53,8 @@ export class NangoRecordSampler extends BaseSampler<NangoRecord> {
     }
 
     for (let index = 0; index < ATTACHMENT_COUNT; index++) {
-      attachments.push(this.attachmentSampler.getSample(undefined))
+      const attachment = this.attachmentSampler.getSample()
+      attachments.push(attachment)
     }
 
     const fullCrmRecord = {

@@ -77,7 +77,8 @@
     "validate:lithuania:str": "SAR_TYPE=STR ts-node --transpileOnly src/services/sar/generators/LT/scripts/validate.ts",
     "validate:lithuania:ctr": "SAR_TYPE=CTR ts-node --transpileOnly src/services/sar/generators/LT/scripts/validate.ts",
     "semgrep": "semgrep scan --config ../rule.yaml --error",
-    "json-schema-generator": "ts-node scripts/json-schema-generator.ts"
+    "json-schema-generator": "ts-node scripts/json-schema-generator.ts",
+    "sync:nango:models": "ts-node scripts/sync-nango-models.ts"
   },
   "repository": {
     "type": "git",

@@ -2,6 +2,7 @@ node_modules
 cdk.out
 dist
 src/@types/openapi*
+lib/openapi/internal/nango-models.yaml
 *.mustache
 *.sh
 *.png
