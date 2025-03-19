@@ -199,6 +199,11 @@ async function main() {
       ROOT_DIR,
       'node_modules/@airbnb/node-memwatch'
     )
+    const bindingsPath = path.resolve(ROOT_DIR, 'node_modules/bindings')
+    const fileUriToPathPath = path.resolve(
+      ROOT_DIR,
+      'node_modules/file-uri-to-path'
+    )
 
     // Copy the entire module for each lambda
     for (const lambdaName of lambdaNames) {
@@ -213,7 +218,6 @@ async function main() {
       await fs.copy(memwatchPath, destDir)
 
       // ADDED: Also copy the bindings module
-      const bindingsPath = path.resolve(ROOT_DIR, 'node_modules/bindings')
       const bindingsDestDir = path.join(
         OUT_DIR,
         'lambdas',
@@ -224,10 +228,6 @@ async function main() {
       await fs.copy(bindingsPath, bindingsDestDir)
 
       // Also copy file-uri-to-path
-      const fileUriToPathPath = path.resolve(
-        ROOT_DIR,
-        'node_modules/file-uri-to-path'
-      )
       const fileUriToPathDestDir = path.join(
         OUT_DIR,
         'lambdas',
@@ -241,6 +241,38 @@ async function main() {
         `  Copied memwatch, bindings, and file-uri-to-path to ${destDir}`
       )
     }
+
+    // Copy memwatch dependencies to fargate as well
+    console.log('Copying native modules to fargate...')
+
+    // Copy memwatch
+    const fargateMemwatchDestDir = path.join(
+      OUT_DIR,
+      'fargate',
+      'node_modules/@airbnb/node-memwatch'
+    )
+    await fs.ensureDir(fargateMemwatchDestDir)
+    await fs.copy(memwatchPath, fargateMemwatchDestDir)
+
+    // Copy bindings
+    const fargateBindingsDestDir = path.join(
+      OUT_DIR,
+      'fargate',
+      'node_modules/bindings'
+    )
+    await fs.ensureDir(fargateBindingsDestDir)
+    await fs.copy(bindingsPath, fargateBindingsDestDir)
+
+    // Copy file-uri-to-path
+    const fargateFileUriToPathDestDir = path.join(
+      OUT_DIR,
+      'fargate',
+      'node_modules/file-uri-to-path'
+    )
+    await fs.ensureDir(fargateFileUriToPathDestDir)
+    await fs.copy(fileUriToPathPath, fargateFileUriToPathDestDir)
+
+    console.log(`  Copied memwatch, bindings, and file-uri-to-path to fargate`)
   } catch (error) {
     console.warn('Warning: Failed to copy native modules:', error.message)
   }
