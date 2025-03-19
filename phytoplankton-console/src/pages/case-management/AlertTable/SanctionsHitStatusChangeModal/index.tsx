@@ -68,7 +68,6 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       setHasUncheckedWhitelist(false);
     }
   }, [initialFormState, preNewStatus, newStatus]);
-
   useEffect(() => {
     if (formState.values.reasons?.includes('TRUE_POSITIVE')) {
       if (!hasUncheckedWhitelist) {
@@ -78,6 +77,11 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         });
         setHasUncheckedWhitelist(true);
       }
+    } else if (formState.values.reasons?.includes('FALSE_POSITIVE')) {
+      formRef.current?.setValues({
+        ...formState.values,
+        whitelistHits: true,
+      });
     } else if (hasUncheckedWhitelist) {
       setHasUncheckedWhitelist(false);
     }
