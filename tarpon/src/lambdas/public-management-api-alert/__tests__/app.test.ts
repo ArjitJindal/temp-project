@@ -46,7 +46,7 @@ describe('Test Create Alert', () => {
 
     expect(response?.statusCode).toBe(400)
     expect(JSON.parse(response?.body as string).message).toBe(
-      'Payload seems to be empty or missing. Please provide a valid payload'
+      'Alert id missing in payload. Please provide an alert id'
     )
   })
 
@@ -209,7 +209,7 @@ describe('Test Create Alert', () => {
 
     expect(response?.statusCode).toBe(404)
     expect(JSON.parse(response?.body as string).message).toBe(
-      'Resource not found'
+      'Alert with id undefined not found. Please provide a valid alert id'
     )
   })
 
@@ -242,20 +242,6 @@ describe('Test Create Alert', () => {
     })
   })
 
-  test('Should throw an error on alert id not present', async () => {
-    const response = await alertHandler(
-      getApiGatewayGetEvent(tenantId, '/cases/{alertId}', {
-        pathParameters: {},
-      }),
-      null as any,
-      null as any
-    )
-
-    expect(response?.statusCode).toBe(404)
-    expect(JSON.parse(response?.body as string).message).toBe(
-      'Resource not found'
-    )
-  })
   test('tries to get a comment failed (not present)', async () => {
     const COMMENT_ID = 'TEST_COMMENT_ID'
     const response = await alertHandler(

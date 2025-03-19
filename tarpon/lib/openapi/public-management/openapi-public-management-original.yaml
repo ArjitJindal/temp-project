@@ -155,6 +155,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstanceUpdatable'
+        required: true
       description: >-
         ### Create Rule Instance
 
@@ -254,6 +255,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstanceUpdatable'
+        required: true
       description: >
         ### Update Rule Instance
 
@@ -356,6 +358,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseCreationRequest'
+        required: true
     get:
       security:
         - x-api-key: []
@@ -367,9 +370,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CasesListResponse'
+                $ref: '#/components/schemas/CasesListResponse'
       parameters:
         - schema:
             type: string
@@ -480,6 +481,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseUpdateable'
+        required: true
       description: '### Update Case'
   /cases/{caseId}/statuses:
     parameters:
@@ -514,6 +516,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseStatusChangeRequest'
+        required: true
       description: >-
         ### Update Case Status 
 
@@ -565,6 +568,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertCreationRequest'
+        required: true
   /alerts/{alertId}:
     parameters:
       - schema:
@@ -614,6 +618,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertUpdatable'
+        required: true
       description: '### Update Alert'
   /alerts/{alertId}/comments:
     get:
@@ -820,6 +825,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertStatusChangeRequest'
+        required: true
       description: >-
         ### Update Alert Status 
 
@@ -850,6 +856,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PresignedPostRequest'
+        required: true
       description: >-
         ### Generate Pre-Signed URL for File Uploads
 

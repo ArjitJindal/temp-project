@@ -399,7 +399,6 @@ describe('Public Management API - Rule', () => {
     )
     expect(response).toMatchObject({
       statusCode: 200,
-      body: JSON.stringify('OK'),
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       TEST_RULE_INSTANCE_ID

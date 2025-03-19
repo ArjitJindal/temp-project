@@ -11,7 +11,6 @@ import {
   pick,
   uniq,
 } from 'lodash'
-
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
@@ -38,6 +37,8 @@ import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/Ale
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { S3Config } from '@/services/aws/s3-service'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { InlineResponse2001 } from '@/@types/openapi-public-management/InlineResponse2001'
+import { ExternalRequestCaseStatus } from '@/@types/openapi-public-management/ExternalRequestCaseStatus'
 
 type AlertAuditLogCreateReturn = AuditLogReturnData<
   Alert,
@@ -551,7 +552,7 @@ export class ExternalAlertManagementService {
   public async updateAlertStatus(
     updateRequest: AlertStatusChangeRequest,
     alertId: string
-  ) {
+  ): Promise<InlineResponse2001> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     const status = updateRequest.status
     if (!alert) {
@@ -588,6 +589,9 @@ export class ExternalAlertManagementService {
         skipReview: true,
       }
     )
-    return { alertStatus: (await this.getAlert(alertId)).alertStatus }
+    return {
+      alertStatus: (await this.getAlert(alertId))
+        .alertStatus as ExternalRequestCaseStatus,
+    }
   }
 }

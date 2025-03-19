@@ -25,13 +25,12 @@ import { CasesListResponse } from '@/@types/openapi-public-management/CasesListR
 import { getStatuses } from '@/utils/case'
 import { cursorPaginate, DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
-import { Status } from '@/@types/openapi-public-management/Status'
 import { Priority } from '@/@types/openapi-public-management/Priority'
-import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { S3Config } from '@/services/aws/s3-service'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { ExternalRequestCaseStatus } from '@/@types/openapi-public-management/ExternalRequestCaseStatus'
 
 type CaseCreateAuditLogReturnData = AuditLogReturnData<
   Case,
@@ -250,6 +249,10 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
   public async getCaseById(caseId: string): Promise<Case> {
     const case_ = await this.caseRepository.getCaseById(caseId)
 
+    if (!caseId) {
+      throw new createHttpError.NotFound('Resource not found')
+    }
+
     if (!case_) {
       throw new createHttpError.NotFound('Case not found')
     }
@@ -279,9 +282,12 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
 
   @auditLog('CASE', 'API_UPDATE', 'UPDATE')
   public async updateCase(
-    caseId: string,
+    caseId: string | undefined,
     casePatchRequest: CaseUpdateable
   ): Promise<CaseUpdateAuditLogReturnData> {
+    if (!caseId) {
+      throw new createHttpError.NotFound('Resource not found')
+    }
     const internalCase = await this.caseRepository.getCaseById(caseId)
     if (!internalCase) {
       throw new createHttpError.NotFound(
@@ -360,7 +366,7 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
   public async updateCaseStatus(
     updateRequest: CaseStatusChangeRequest,
     caseId: string
-  ) {
+  ): Promise<{ caseStatus: ExternalRequestCaseStatus }> {
     const internalCase = await this.caseRepository.getCaseById(caseId)
     if (!internalCase) {
       throw new createHttpError.NotFound('Case not found')
@@ -400,11 +406,14 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
         skipReview: true,
       }
     )
-    return { caseStatus: (await this.getCaseById(caseId)).caseStatus }
+    return {
+      caseStatus: (await this.getCaseById(caseId))
+        .caseStatus as ExternalRequestCaseStatus,
+    }
   }
 
   public validateAndTransformGetCasesRequest(
-    queryObj: Record<string, string | undefined>
+    queryObj: DefaultApiGetCasesRequest
   ): DefaultApiGetCasesRequest {
     if (queryObj.filterAfterCreatedTimestamp) {
       const afterTimestamp = Number(queryObj.filterAfterCreatedTimestamp)
@@ -449,13 +458,9 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
       filterBeforeCreatedTimestamp: queryObj.filterBeforeCreatedTimestamp
         ? Number(queryObj.filterBeforeCreatedTimestamp)
         : undefined,
-      filterCaseStatus: queryObj.filterCaseStatus
-        ? (queryObj.filterCaseStatus.split(',') as Status[])
-        : undefined,
+      filterCaseStatus: queryObj.filterCaseStatus,
       filterPriority: queryObj.filterPriority as Priority,
-      filterCaseSource: queryObj.filterCaseSource
-        ? (queryObj.filterCaseSource.split(',') as CaseType[])
-        : undefined,
+      filterCaseSource: queryObj.filterCaseSource,
       pageSize: queryObj.pageSize
         ? Number(queryObj.pageSize)
         : DEFAULT_PAGE_SIZE,
@@ -497,8 +502,14 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     delete (data as any)?.limit
 
     return {
-      ...data,
+      count: data.count,
       items: casesItems,
+      hasNext: data.hasNext,
+      hasPrev: data.hasPrev,
+      next: data.next,
+      prev: data.prev,
+      last: data.last,
+      pageSize: data.pageSize,
     }
   }
 }

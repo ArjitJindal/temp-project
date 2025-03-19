@@ -3,18 +3,15 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import createHttpError from 'http-errors'
-import { isEmpty } from 'lodash'
 import { CaseConfig } from '../console-api-case/app'
-import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ExternalCaseManagementService } from '@/services/cases/external-case-management-service'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { CaseStatusChangeRequest } from '@/@types/openapi-public-management/CaseStatusChangeRequest'
 import { DefaultApiGetCasesRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { Handlers } from '@/@types/openapi-public-management-custom/DefaultApi'
 
 export const caseHandler = lambdaApi()(
   async (
@@ -36,66 +33,38 @@ export const caseHandler = lambdaApi()(
       getCredentialsFromEvent(event)
     )
 
-    if (event.httpMethod === 'POST' && event.resource === '/cases') {
-      const payload = JSON.parse(event.body || '{}') as CaseCreationRequest
+    const handlers = new Handlers()
 
-      if (!payload || isEmpty(payload)) {
-        throw new createHttpError.BadRequest(
-          'Payload seems to be empty or missing. Please provide a valid payload'
-        )
-      }
-
+    handlers.registerPostCases(async (ctx, request) => {
+      const payload = request.CaseCreationRequest
       const response = await caseService.createCase(payload)
       return response.result
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/cases/{caseId}' &&
-      event.pathParameters?.caseId
-    ) {
-      const caseId = event.pathParameters.caseId
+    })
+
+    handlers.registerGetCasesCaseId(async (ctx, request) => {
+      const caseId = request.caseId
       return await caseService.getCaseById(caseId)
-    } else if (
-      event.resource === '/cases/{caseId}' &&
-      event.httpMethod === 'PATCH' &&
-      event.pathParameters?.caseId
-    ) {
-      const caseId = event.pathParameters.caseId
+    })
 
-      const payload = JSON.parse(
-        event.body || '{}'
-      ) as Partial<CaseCreationRequest>
-
-      if (!payload || isEmpty(payload)) {
-        throw new createHttpError.BadRequest(
-          'Payload seems to be empty or missing. Please provide a valid payload'
-        )
-      }
+    handlers.registerPatchCasesCaseId(async (ctx, request) => {
+      const caseId = request.caseId
+      const payload = request.CaseUpdateable
       const response = await caseService.updateCase(caseId, payload)
       return response.result
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/cases/{caseId}/statuses' &&
-      event.pathParameters?.caseId
-    ) {
-      const caseId = event.pathParameters.caseId
-      const payload = JSON.parse(event.body || '{}') as CaseStatusChangeRequest
+    })
 
-      if (!payload || isEmpty(payload)) {
-        throw new createHttpError.BadRequest(
-          'Payload seems to be empty or missing. Please provide a valid payload'
-        )
-      }
-
+    handlers.registerPostCasesCaseIdStatuses(async (ctx, request) => {
+      const caseId = request.caseId
+      const payload = request.CaseStatusChangeRequest
       return await caseService.updateCaseStatus(payload, caseId)
-    } else if (event.httpMethod === 'GET' && event.resource === '/cases') {
+    })
+
+    handlers.registerGetCases(async (ctx, request) => {
       const query: DefaultApiGetCasesRequest =
-        caseService.validateAndTransformGetCasesRequest(
-          event.queryStringParameters || {}
-        )
-
+        caseService.validateAndTransformGetCasesRequest(request)
       return await caseService.getCases(query)
-    }
+    })
 
-    throw new createHttpError.NotFound('Resource not found')
+    return handlers.handle(event)
   }
 )

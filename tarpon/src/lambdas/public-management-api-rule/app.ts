@@ -8,7 +8,6 @@ import { toPublicRule } from './utils'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { RuleInstanceUpdatable } from '@/@types/openapi-public-management/RuleInstanceUpdatable'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleInstance as PublicRuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import {
@@ -19,6 +18,8 @@ import {
 import { mergeObjects } from '@/utils/object'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { Handlers } from '@/@types/openapi-public-management-custom/DefaultApi'
+import { Rule as PublicRule } from '@/@types/openapi-public-management/Rule'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -26,18 +27,17 @@ export const ruleHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
-    const tenantId = (event.requestContext.authorizer?.principalId ||
-      event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-    const ruleService = new RuleService(tenantId, { dynamoDb, mongoDb })
 
-    if (event.httpMethod === 'GET' && event.resource === '/rules') {
-      return (await ruleService.getAllRules()).map((rule) => toPublicRule(rule))
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/rule-filters-schema'
-    ) {
+    const handlers = new Handlers()
+
+    handlers.registerGetRules(async (ctx) => {
+      const ruleService = new RuleService(ctx.tenantId, { dynamoDb, mongoDb })
+      return (await ruleService.getAllRules()) as Array<PublicRule>
+    })
+
+    handlers.registerGetRuleFiltersSchema(async () => {
       const filters = [
         ...Object.values(USER_FILTERS),
         ...Object.values(TRANSACTION_FILTERS),
@@ -47,20 +47,19 @@ export const ruleHandler = lambdaApi()(
         type: 'object',
         properties: mergeObjects({}, ...filters),
       }
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/rules/{ruleId}' &&
-      event.pathParameters?.ruleId
-    ) {
-      const ruleId = event.pathParameters.ruleId
+    })
+
+    handlers.registerGetRulesRuleId(async (ctx, request) => {
+      const ruleId = request.ruleId
+      const ruleService = new RuleService(ctx.tenantId, { dynamoDb, mongoDb })
       const rule = await ruleService.getRuleById(ruleId)
       if (!rule) {
         throw new NotFound(`Rule ${ruleId} not found`)
       }
       return toPublicRule(rule)
-    }
+    })
 
-    throw new Error('Unhandled request')
+    return handlers.handle(event)
   }
 )
 
@@ -93,42 +92,32 @@ export const ruleInstanceHandler = lambdaApi()(
       mongoDb,
     })
 
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/rule-instances/{ruleInstanceId}' &&
-      event.pathParameters?.ruleInstanceId &&
-      event.body
-    ) {
+    const handlers = new Handlers()
+
+    handlers.registerPostRuleInstancesRuleInstanceId(async (ctx, request) => {
       const ruleInstance = await getRuleInstanceOrThrow(
         ruleInstanceService,
-        event.pathParameters.ruleInstanceId
+        request.ruleInstanceId
       )
-      const ruleInstanceUpdatable = JSON.parse(
-        event.body
-      ) as RuleInstanceUpdatable
 
       const newRuleInstance: RuleInstance = {
         ...ruleInstance,
-        ...ruleInstanceUpdatable,
+        ...request.RuleInstanceUpdatable,
         ruleRunMode: 'LIVE',
         ruleExecutionMode: 'SYNC',
       }
-      return ruleInstanceService.createRuleInstance(newRuleInstance)
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.resource === '/rule-instances/{ruleInstanceId}' &&
-      event.pathParameters?.ruleInstanceId
-    ) {
-      const ruleInstanceId = event.pathParameters?.ruleInstanceId
+      return (await ruleInstanceService.createRuleInstance(
+        newRuleInstance
+      )) as PublicRuleInstance
+    })
 
+    handlers.registerDeleteRuleInstancesRuleInstanceId(async (ctx, request) => {
+      const ruleInstanceId = request.ruleInstanceId
       await ruleInstanceService.deleteRuleInstance(ruleInstanceId)
-      return 'OK'
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/rule-instances' &&
-      event.body
-    ) {
-      const ruleInstance = JSON.parse(event.body) as RuleInstanceUpdatable
+    })
+
+    handlers.registerPostRuleInstances(async (ctx, request) => {
+      const ruleInstance = request.RuleInstanceUpdatable as RuleInstance
       if (!ruleInstance.ruleId) {
         throw new BadRequest('ruleId is required')
       }
@@ -146,14 +135,13 @@ export const ruleInstanceHandler = lambdaApi()(
         ruleRunMode: 'LIVE',
         ruleExecutionMode: 'SYNC',
       })
-      return newRuleInstance
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/rule-instances'
-    ) {
-      return (await ruleInstanceService.getAllRuleInstances()) as ReadonlyArray<PublicRuleInstance>
-    }
+      return newRuleInstance as PublicRuleInstance
+    })
 
-    throw new Error('Unhandled request')
+    handlers.registerGetRuleInstances(async () => {
+      return (await ruleInstanceService.getAllRuleInstances()) as Array<PublicRuleInstance>
+    })
+
+    return handlers.handle(event)
   }
 )

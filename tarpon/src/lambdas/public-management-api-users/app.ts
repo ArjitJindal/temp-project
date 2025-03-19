@@ -4,10 +4,9 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import createHttpError from 'http-errors'
-import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { UserService } from '@/services/users'
-import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
+import { Handlers } from '@/@types/openapi-public-management-custom/DefaultApi'
 
 export const userHandler = lambdaApi()(
   async (
@@ -16,52 +15,39 @@ export const userHandler = lambdaApi()(
     >
   ) => {
     const userService = await UserService.fromEvent(event)
-    if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId
-    ) {
-      const userId = event.pathParameters?.userId
+    const handlers = new Handlers()
+
+    handlers.registerGetUserComments(async (ctx, request) => {
+      const userId = request.userId
       return await userService.getUserCommentsExternal(userId)
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId
-    ) {
-      const userId = event.pathParameters?.userId
-      const payload = JSON.parse(event.body || '{}') as CommentRequest
+    })
+
+    handlers.registerPostUserComment(async (ctx, request) => {
+      const userId = request.userId
+      const payload = request.CommentRequest
       return await userService.saveUserCommentExternal(userId, payload)
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/users/{userId}/comments/{commentId}' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.commentId
-    ) {
-      const userId = event.pathParameters?.userId
-      const commentId = event.pathParameters?.commentId
+    })
+
+    handlers.registerGetUserComment(async (ctx, request) => {
+      const userId = request.userId
+      const commentId = request.commentId
       return await userService.getUserComment(userId, commentId)
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.resource === '/users/{userId}/comments/{commentId}' &&
-      event.pathParameters?.userId &&
-      event.pathParameters?.commentId
-    ) {
-      const userId = event.pathParameters?.userId
-      const commentId = event.pathParameters?.commentId
-      return await userService.deleteUserComment(userId, commentId)
-    } else if (
-      event.httpMethod === 'GET' &&
-      event.resource === '/users/search'
-    ) {
-      const query =
-        event.queryStringParameters as DefaultApiGetUsersSearchRequest
-      const { name, email } = query
-      if (!name && !email) {
+    })
+
+    handlers.registerDeleteUserComment(async (ctx, request) => {
+      const userId = request.userId
+      const commentId = request.commentId
+      await userService.deleteUserComment(userId, commentId)
+    })
+
+    handlers.registerGetUsersSearch(async (ctx, request) => {
+      if (!request.name && !request.email) {
         throw new createHttpError.BadRequest('Please provide a valid query')
       }
 
-      return await userService.searchUsers(query)
-    }
-    return 'Unhandled request'
+      return await userService.searchUsers(request)
+    })
+
+    return handlers.handle(event)
   }
 )
