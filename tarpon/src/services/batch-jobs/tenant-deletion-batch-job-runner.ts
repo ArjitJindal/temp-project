@@ -378,10 +378,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteNangoRecords.bind(this),
         order: 16,
       },
-      CRM_INTEGRATIONS: {
-        method: this.deleteCRMCredentials.bind(this),
-        order: 17,
-      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -407,18 +403,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         'Nango Record'
       )
     }
-  }
-
-  private
-
-  private async deleteCRMCredentials(tenantId: string) {
-    await dangerouslyDeletePartition(
-      this.dynamoDb(),
-      tenantId,
-      DynamoDbKeys.CRM_INTEGRATIONS(tenantId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
-      'CRM Integrations'
-    )
   }
 
   private async deleteAggregationVariables(tenantId: string) {

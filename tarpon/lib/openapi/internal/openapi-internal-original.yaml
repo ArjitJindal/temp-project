@@ -3508,33 +3508,36 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantTriggerBatchJobRequest'
         required: true
-  /tenants/crm-integrations:
-    post:
-      summary: Tenant - Set CRM Integrations
-      operationId: post-tenants-crm-integrations
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CRMIntegrations'
-        required: true
+  /tenants/nango-connections:
     get:
-      summary: Tenant - Get CRM Integrations
-      operationId: get-tenants-crm-integrations
+      summary: Tenant - Get Nango Connections
+      operationId: get-tenants-nango-connections
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CRMIntegrations'
-      description: ''
-    patch:
-      summary: Tenant - Patch CRM Integrations
-      operationId: patch-tenants-crm-integrations
+                $ref: '#/components/schemas/NangoConnection'
+    post:
+      summary: Tenant - Post Nango Connections
+      operationId: post-tenants-nango-connections
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NangoPostConnectResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NangoPostConnect'
+        required: true
+    delete:
+      summary: Tenant - Delete Nango Connection
+      operationId: delete-tenants-nango-connections
       responses:
         '200':
           description: OK
@@ -3542,7 +3545,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CRMIntegrationsPatchPayload'
+              $ref: '#/components/schemas/NangoPostConnect'
         required: true
   /tenant/apiKeys:
     get:
@@ -10708,31 +10711,49 @@ components:
           type: number
         webhookSettings:
           $ref: '#/components/schemas/WebhookSettings'
-    CRMIntegrations:
+    NangoPostConnect:
+      title: NangoPostConnect
       type: object
       properties:
-        freshdesk:
-          type: object
-          properties:
-            subdomain:
-              type: string
-            apiKey:
-              type: string
-            connectionId:
-              type: string
-          required:
-            - subdomain
-            - apiKey
-    CRMIntegrationsPatchPayload:
-      title: CRMIntegrationsPatchPayload
+        connectionId:
+          type: string
+        providerConfigKey:
+          type: string
+      required:
+        - connectionId
+        - providerConfigKey
+    NangoPostConnectResponse:
+      title: NangoPostConnectResponse
       type: object
       properties:
-        integrationsToDelete:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+    NangoConnection:
+      title: NangoConnection
+      type: object
+      properties:
+        token:
+          type: string
+        expiresAt:
+          type: number
+        currentIntegrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/NangoPostConnect'
+        allowedIntegrations:
           type: array
           items:
             type: string
-            enum:
-              - freshdesk
+      required:
+        - token
+        - expiresAt
+        - currentIntegrations
+        - allowedIntegrations
     WebhookRetryOnlyFor:
       type: string
       enum:

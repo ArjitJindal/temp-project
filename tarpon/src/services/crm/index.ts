@@ -1,9 +1,6 @@
 import { Engagement, Note, Task } from '@mergeapi/merge-sdk-typescript/dist/crm'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { v4 as uuidv4 } from 'uuid'
-import { NangoService } from '../nango'
-import { CrmRepository } from './repository'
 import { CrmAccountResponse } from '@/@types/openapi-internal/CrmAccountResponse'
 import { traceable } from '@/core/xray'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -17,7 +14,6 @@ import { CrmSummary } from '@/@types/openapi-internal/CrmSummary'
 import { CrmAccountResponseEngagements } from '@/@types/openapi-internal/CrmAccountResponseEngagements'
 import { CrmAccountResponseNotes } from '@/@types/openapi-internal/CrmAccountResponseNotes'
 import { CrmAccountResponseTasks } from '@/@types/openapi-internal/CrmAccountResponseTasks'
-import { CRMIntegrations } from '@/@types/openapi-internal/CRMIntegrations'
 
 @traceable
 export class CrmService {
@@ -98,63 +94,5 @@ export class CrmService {
     }
 
     return { engagements, notes, tasks, summary }
-  }
-
-  public async manageIntegrations(integrations: CRMIntegrations) {
-    const keys = Object.keys(integrations) as (keyof CRMIntegrations)[]
-    const nangoService = new NangoService(this.dynamoDb)
-    const connectionId = uuidv4()
-    let isConnectionIdSet = false
-    for await (const key of keys) {
-      switch (key) {
-        case 'freshdesk':
-          if (!integrations.freshdesk) {
-            throw new Error('Freshdesk integrations are required')
-          }
-
-          await nangoService.addCredentials(
-            this.tenantId,
-            connectionId,
-            'freshdesk',
-            {
-              connection_config: {
-                subdomain: integrations.freshdesk.subdomain,
-              },
-              username: integrations.freshdesk.apiKey,
-            }
-          )
-
-          integrations.freshdesk.connectionId = connectionId
-          isConnectionIdSet = true
-          break
-      }
-
-      if (isConnectionIdSet) {
-        break
-      }
-    }
-
-    if (!isConnectionIdSet) {
-      throw new Error('Failed to set connectionId')
-    }
-
-    await this.storeIntegrations(integrations)
-  }
-
-  public async getIntegrations() {
-    return await new CrmRepository(
-      this.tenantId,
-      this.dynamoDb
-    ).getIntegrations()
-  }
-
-  public async storeIntegrations(integrations: CRMIntegrations) {
-    const repository = new CrmRepository(this.tenantId, this.dynamoDb)
-    const getIntegrations = await repository.getIntegrations()
-
-    return await repository.storeIntegrations({
-      ...getIntegrations,
-      ...integrations,
-    })
   }
 }

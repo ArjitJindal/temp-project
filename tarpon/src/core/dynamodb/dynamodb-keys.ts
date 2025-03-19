@@ -364,10 +364,6 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#settings`,
     SortKeyID: 'settings',
   }),
-  CRM_INTEGRATIONS: (tenantId: string) => ({
-    PartitionKeyID: `${tenantId}#crm-integrations`,
-    SortKeyID: 'integrations',
-  }),
   /** Hammerhead keys */
   // Attributes: refer to Rule
   RISK_CLASSIFICATION: (tenantId: string, version?: string) => ({

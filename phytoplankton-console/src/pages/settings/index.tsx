@@ -30,6 +30,7 @@ import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { ReasonsSettings } from './components/ReasonsSettings';
+import { CRMSettings } from './components/CRMSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -179,6 +180,9 @@ export default function SettingsPage() {
               <>
                 <FlagrightAISettings />
                 <FlagrightMLSettings />
+                <Feature name="CRM_FRESHDESK">
+                  <CRMSettings />
+                </Feature>
               </>
             ),
           },

@@ -451,3 +451,4 @@ export const THRESHOLD_RECOMMENDATIONS = (instanceId: string) => [
   'threshold-recommendations',
   instanceId,
 ];
+export const NANGO_CONNECTIONS = (): QueryKey => ['nango-connections'];

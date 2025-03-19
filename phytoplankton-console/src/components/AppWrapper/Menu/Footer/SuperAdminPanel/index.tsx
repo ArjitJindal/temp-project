@@ -16,7 +16,6 @@ import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import {
   BatchJobNames,
-  CRMIntegrations,
   Feature,
   SanctionsSettingsMarketType,
   Tenant,
@@ -36,10 +35,9 @@ import Select, { Option } from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { getOr, isSuccess } from '@/utils/asyncResource';
+import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
-import { useDeepEqualEffect } from '@/utils/hooks';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -182,15 +180,10 @@ export const featureDescriptions: Record<
   },
 };
 
-const isEnvLocal = process.env.ENV_NAME === 'local';
-
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const settings = useSettings();
-  const crmIntegrations = useQuery(['crmIntegrations'], () => api.getTenantsCrmIntegrations());
-  const currentCrmSettings = getOr(crmIntegrations.data, undefined);
-  const [crmSettings, setCrmSettings] = useState<CRMIntegrations | undefined>(currentCrmSettings);
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(settings.features?.sort());
   const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
@@ -206,19 +199,12 @@ export default function SuperAdminPanel() {
     failedToDeleteContainer: true,
   });
 
-  useDeepEqualEffect(() => {
-    if (currentCrmSettings) {
-      setCrmSettings(currentCrmSettings);
-    }
-  }, [currentCrmSettings]);
-
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
   const hasExternalSanctionsProvider =
     features?.includes('ACURIS') ||
     features?.includes('OPEN_SANCTIONS') ||
     features?.includes('DOW_JONES');
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
-  const isCrmToBeEnabled = features?.includes('CRM');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
 
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
@@ -498,89 +484,6 @@ export default function SuperAdminPanel() {
             >
               Reset current API key view count
             </Button>
-            {isCrmToBeEnabled && (
-              <>
-                <Label label="Freshdesk settings">
-                  <Label level={2} label="Subdomain" required={{ value: true, showHint: true }}>
-                    <Input
-                      value={crmSettings?.freshdesk?.subdomain}
-                      disabled={!!currentCrmSettings?.freshdesk?.subdomain || isEnvLocal}
-                      onChange={(event) => {
-                        setCrmSettings({
-                          freshdesk: {
-                            apiKey: crmSettings?.freshdesk?.apiKey ?? '',
-                            subdomain: event.target.value,
-                          },
-                        });
-                      }}
-                    />
-                  </Label>
-                  <Label level={2} label="API key" required={{ value: true, showHint: true }}>
-                    <Input
-                      value={crmSettings?.freshdesk?.apiKey}
-                      disabled={!!currentCrmSettings?.freshdesk?.apiKey || isEnvLocal}
-                      onChange={(event) => {
-                        setCrmSettings({
-                          freshdesk: {
-                            subdomain: crmSettings?.freshdesk?.subdomain ?? '',
-                            apiKey: event.target.value,
-                          },
-                        });
-                      }}
-                    />
-                  </Label>
-                </Label>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <Button
-                    type="DANGER"
-                    onClick={async () => {
-                      if (isEnvLocal) {
-                        message.error('Cannot reset Freshdesk integration in local environment');
-                        return;
-                      }
-                      const instance = message.loading('Resetting Freshdesk integration...');
-                      await api.patchTenantsCrmIntegrations({
-                        CRMIntegrationsPatchPayload: { integrationsToDelete: ['freshdesk'] },
-                      });
-                      instance();
-                      message.success('Freshdesk integration reset', {
-                        duration: 5,
-                      });
-                      setCrmSettings(undefined);
-                    }}
-                    isDisabled={isEnvLocal}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    type="DANGER"
-                    onClick={async () => {
-                      if (isEnvLocal) {
-                        message.error('Cannot save Freshdesk integration in local environment');
-                        return;
-                      }
-                      const instance = message.loading('Saving Freshdesk integration...');
-                      await api.postTenantsCrmIntegrations({
-                        CRMIntegrations: {
-                          freshdesk: {
-                            subdomain: crmSettings?.freshdesk?.subdomain ?? '',
-                            apiKey: crmSettings?.freshdesk?.apiKey ?? '',
-                          },
-                        },
-                      });
-                      instance();
-                      message.success('Freshdesk integration saved', {
-                        duration: 5,
-                      });
-                      setCrmSettings(undefined);
-                    }}
-                    isDisabled={isEnvLocal}
-                  >
-                    Save
-                  </Button>
-                </div>
-              </>
-            )}
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <Label label="ComplyAdvantage settings">
                 <Label level={2} label="Market type" required={{ value: true, showHint: true }}>

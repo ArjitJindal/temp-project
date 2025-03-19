@@ -39,7 +39,6 @@ import {
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { CrmService } from '@/services/crm'
 import { NangoService } from '@/services/nango'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
@@ -512,22 +511,6 @@ export const tenantsHandler = lambdaApi()(
       return await slaPolicyService.getSLAPolicyId()
     })
 
-    handlers.registerPostTenantsCrmIntegrations(async (ctx, request) => {
-      const crmService = new CrmService(
-        ctx.tenantId,
-        getDynamoDbClientByEvent(event)
-      )
-      return await crmService.manageIntegrations(request.CRMIntegrations)
-    })
-
-    handlers.registerGetTenantsCrmIntegrations(async (ctx) => {
-      const crmService = new CrmService(
-        ctx.tenantId,
-        getDynamoDbClientByEvent(event)
-      )
-      return await crmService.getIntegrations()
-    })
-
     handlers.registerGetCrmTickets(async (ctx, request) => {
       const nangoService = new NangoService(getDynamoDbClientByEvent(event))
 
@@ -546,16 +529,25 @@ export const tenantsHandler = lambdaApi()(
       )
     })
 
-    handlers.registerPatchTenantsCrmIntegrations(async (ctx, request) => {
-      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+    /* Action Reasons */
 
-      await nangoService.deleteCredentials(
+    handlers.registerGetTenantsNangoConnections(async () => {
+      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+      return await nangoService.createConnectSession()
+    })
+
+    handlers.registerPostTenantsNangoConnections(async (ctx, request) => {
+      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+      return await nangoService.postConnectSession(
         ctx.tenantId,
-        request.CRMIntegrationsPatchPayload.integrationsToDelete ?? []
+        request.NangoPostConnect
       )
     })
 
-    /* Action Reasons */
+    handlers.registerDeleteTenantsNangoConnections(async (ctx, request) => {
+      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+      return await nangoService.deleteConnection(request.NangoPostConnect)
+    })
 
     handlers.registerGetActionReasons(async (ctx, request) => {
       const reasonsService = new ReasonsService(tenantId, mongoDb)

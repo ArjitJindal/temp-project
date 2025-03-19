@@ -52,6 +52,7 @@ export default {
   'menu.settings.addons': 'Add-ons',
   'menu.settings.developers': 'Developers',
   'menu.settings.screening': 'Screening',
+  'menu.settings.crm': 'CRM',
   'menu.auditlog': 'Audit log',
   'menu.risk-levels': 'Risk scoring',
   'menu.risk-levels.configure': 'Risk levels',

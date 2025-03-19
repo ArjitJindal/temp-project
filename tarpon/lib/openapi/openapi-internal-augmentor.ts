@@ -18,7 +18,7 @@ const env = (process.env.ENV || 'prod').split(':')[0]
 export const ConsoleApiPathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
-  '/tenants/crm-integrations': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/nango-connections': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/narrative-template':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/narrative-template/{narrativeTemplateId}':
