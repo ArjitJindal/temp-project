@@ -23,7 +23,10 @@ import style from './style.module.less';
 import { RiskLevel, RiskParameterValue, RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { AsyncResource, getOr, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
-import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
+import {
+  DEFAULT_COUNTRY_RISK_VALUES,
+  DEFAULT_CPI_COUNTRY_RISK_VALUES,
+} from '@/utils/defaultCountriesRiskLevel';
 import { useHasPermissions } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -35,6 +38,8 @@ import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
+import Dropdown from '@/components/library/Dropdown';
+
 interface Props {
   item: RiskLevelTableItem;
   currentValuesRes: AsyncResource<ParameterValues>;
@@ -161,11 +166,18 @@ export default function ValuesTable(props: Props) {
     null,
   );
 
-  const handleSetDefaultValues = useCallback(() => {
-    if (item.dataType === 'COUNTRY') {
-      setValues(DEFAULT_COUNTRY_RISK_VALUES);
-    }
-  }, [setValues, item.dataType]);
+  const handleSetDefaultValues = useCallback(
+    (valueType: string) => {
+      if (item.dataType === 'COUNTRY') {
+        if (valueType === 'FATF') {
+          setValues(DEFAULT_COUNTRY_RISK_VALUES);
+        } else if (valueType === 'CPI') {
+          setValues(DEFAULT_CPI_COUNTRY_RISK_VALUES);
+        }
+      }
+    },
+    [setValues, item.dataType],
+  );
 
   const handleClearValues = useCallback(() => {
     setValues([]);
@@ -278,9 +290,18 @@ export default function ValuesTable(props: Props) {
         <div className={style.header}>Risk score (0-100)</div>
         <div className={style.header}>
           {item.dataType === 'COUNTRY' && (
-            <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
-              Load default
-            </Button>
+            <Dropdown
+              options={[
+                { value: 'FATF', label: 'FATF list' },
+                { value: 'CPI', label: 'Corruption Index list' },
+              ]}
+              arrow={'LINE'}
+              onSelect={(option) => handleSetDefaultValues(option.value)}
+            >
+              <Button type="primary" size="small" block>
+                Load default lists
+              </Button>
+            </Dropdown>
           )}
         </div>
         {values.map(({ parameterValue, riskValue }, index) => {
