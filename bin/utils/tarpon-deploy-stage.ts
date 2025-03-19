@@ -55,13 +55,12 @@ export const tarponDeployStage = (
             'rm dist/lambdas/**/*.js.map',
             ...installTerraform,
             deployCommand,
-            ...(config.stage === 'dev'
+            ...(config.stage === 'dev' || config.region === 'eu-1'
               ? [
                   'npm install -g nango',
                   'cd ../nango-integrations',
                   'yarn install',
                   'npm run generate',
-                  // Nango deployment
                   `npm run deploy:${config.stage}`,
                 ]
               : []),
