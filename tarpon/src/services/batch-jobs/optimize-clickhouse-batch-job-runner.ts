@@ -15,9 +15,8 @@ export class OptimizeClickhouseBatchJobRunner extends BatchJobRunner {
       for (const table of ClickHouseTables) {
         const clickhouseClient = await getClickhouseClient(tenant.tenant.id)
         try {
-          await clickhouseClient.exec({
+          await clickhouseClient.command({
             query: `OPTIMIZE TABLE ${table.table} FINAL`,
-            clickhouse_settings: { async_insert: 1, wait_for_async_insert: 0 },
           })
         } catch (e) {
           logger.warn(
@@ -31,7 +30,7 @@ export class OptimizeClickhouseBatchJobRunner extends BatchJobRunner {
             clickhouse_settings: { async_insert: 1, wait_for_async_insert: 0 },
           })
         } catch (e) {
-          logger.error(
+          logger.warn(
             `Failed to delete clickhouse table: ${(e as Error)?.message}`,
             e
           )
