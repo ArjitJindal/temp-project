@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, startCase } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -100,6 +101,8 @@ export default function SanctionsHitsTable(props: Props) {
     handleChangeCursor,
   );
 
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+
   const helper = new ColumnHelper<SanctionsHit>();
   const columns: TableColumn<SanctionsHit>[] = helper.list([
     // Data fields
@@ -116,6 +119,11 @@ export default function SanctionsHitsTable(props: Props) {
         ),
       },
     }),
+    hasFeatureDowJones &&
+      helper.simple<'entity.id'>({
+        title: 'Entity ID',
+        key: 'entity.id',
+      }),
     helper.simple<'entity.name'>({
       title: 'Name',
       key: 'entity.name',
