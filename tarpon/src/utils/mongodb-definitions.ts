@@ -1,7 +1,10 @@
 import { Document, MongoClient } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { getAllGlobalSanctionsCollectionDefinition } from '@/services/sanctions/utils'
+import {
+  getAllGlobalSanctionsCollectionDefinition,
+  shouldBuildSearchIndexForUsers,
+} from '@/services/sanctions/utils'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
@@ -627,26 +630,85 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
 
         return [...indexes1, ...indexes2, uniqueUserIdIndex, ...indexes3]
       },
-      getSearchIndex:
-        tenantId === 'pnb'
-          ? () => ({
-              mappings: {
-                dynamic: false,
-                fields: {
-                  userDetails: {
-                    type: 'document',
-                    fields: {
-                      name: {
-                        type: 'document',
-                        fields: {
-                          firstName: {
-                            type: 'string',
+      getSearchIndex: shouldBuildSearchIndexForUsers()
+        ? () => ({
+            mappings: {
+              dynamic: false,
+              fields: {
+                userDetails: {
+                  type: 'document',
+                  fields: {
+                    name: {
+                      type: 'document',
+                      fields: {
+                        firstName: {
+                          type: 'string',
+                        },
+                        middleName: {
+                          type: 'string',
+                        },
+                        lastName: {
+                          type: 'string',
+                        },
+                      },
+                    },
+                  },
+                },
+                legalEntity: {
+                  type: 'document',
+                  fields: {
+                    companyGeneralDetails: {
+                      type: 'document',
+                      fields: {
+                        legalName: {
+                          type: 'string',
+                        },
+                      },
+                    },
+                  },
+                },
+                shareHolders: {
+                  type: 'document',
+                  fields: {
+                    generalDetails: {
+                      type: 'document',
+                      fields: {
+                        name: {
+                          type: 'document',
+                          fields: {
+                            firstName: {
+                              type: 'string',
+                            },
+                            middleName: {
+                              type: 'string',
+                            },
+                            lastName: {
+                              type: 'string',
+                            },
                           },
-                          middleName: {
-                            type: 'string',
-                          },
-                          lastName: {
-                            type: 'string',
+                        },
+                      },
+                    },
+                  },
+                },
+                directors: {
+                  type: 'document',
+                  fields: {
+                    generalDetails: {
+                      type: 'document',
+                      fields: {
+                        name: {
+                          type: 'document',
+                          fields: {
+                            firstName: {
+                              type: 'string',
+                            },
+                            middleName: {
+                              type: 'string',
+                            },
+                            lastName: {
+                              type: 'string',
+                            },
                           },
                         },
                       },
@@ -654,8 +716,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
                   },
                 },
               },
-            })
-          : undefined,
+            },
+          })
+        : undefined,
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {
       getIndexes: () =>

@@ -2,6 +2,7 @@ import pMap from 'p-map'
 import { Collection, FindCursor, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { backOff } from 'exponential-backoff'
+import { compact } from 'lodash'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
@@ -404,7 +405,7 @@ export async function preprocessUsers(
   const allNames: Set<string> = new Set()
   const targetUserIds = new Set<string>()
 
-  if (hasFeature('PNB') && (await tenantHasFeature(tenantId, 'PNB'))) {
+  if (hasFeature('PNB')) {
     const { targetUserIds: pnbTargetUserIds, allNames: pnbAllNames } =
       await getUsersForPNB(
         getUsersFromLists,
@@ -448,7 +449,12 @@ export async function preprocessUsers(
   }
 
   const allNamesArray = Array.from(allNames)
-  await processNames(allNamesArray, targetUserIds, usersCollection, tenantId)
+  await processNames(
+    compact(allNamesArray),
+    targetUserIds,
+    usersCollection,
+    tenantId
+  )
 
   return targetUserIds
 }
@@ -474,6 +480,13 @@ async function processNames(
                   'userDetails.name.firstName',
                   'userDetails.name.middleName',
                   'userDetails.name.lastName',
+                  'legalEntity.companyGeneralDetails.legalName',
+                  'directors.generalDetails.name.firstName',
+                  'directors.generalDetails.name.middleName',
+                  'directors.generalDetails.name.lastName',
+                  'shareHolders.generalDetails.name.firstName',
+                  'shareHolders.generalDetails.name.middleName',
+                  'shareHolders.generalDetails.name.lastName',
                 ],
                 fuzzy: {
                   maxEdits: 2,

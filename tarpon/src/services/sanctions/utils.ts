@@ -19,6 +19,7 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/Op
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
+import { envIs } from '@/utils/env'
 export const COLLECTIONS_MAP: {
   [key: string]: SanctionsEntityType[]
 } = {
@@ -169,4 +170,13 @@ export async function getAllGlobalSanctionsCollectionDefinition(
     return acc
   }, {})
   return definition
+}
+
+export function shouldBuildSearchIndexForUsers() {
+  return (
+    (hasFeature('ACURIS') ||
+      hasFeature('DOW_JONES') ||
+      hasFeature('OPEN_SANCTIONS')) &&
+    envIs('prod')
+  )
 }

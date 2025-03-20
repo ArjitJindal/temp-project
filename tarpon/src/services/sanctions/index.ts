@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { BadRequest } from 'http-errors'
 import { intersection, isEmpty, omit, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
+import { sanitizeString } from '@flagright/lib/utils'
 import { AlertsRepository } from '../alerts/repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import {
@@ -238,6 +239,8 @@ export class SanctionsService {
         : request.searchTerm
     if (
       !request.searchTerm ||
+      (providerName !== 'comply-advantage' &&
+        !sanitizeString(request.searchTerm)) ||
       !providerName ||
       (request.yearOfBirth &&
         (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
