@@ -34,7 +34,6 @@ models:
     descriptionText: string | null
     conversations: Conversation[] | null
     attachments: Attachments[] | null
-    model: string
   Conversation:
     bodyText: string | null
     fromEmail: string | null
