@@ -26,6 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
+import { logger } from '@/core/logger'
 
 type TableDetails = {
   tenantId: string
@@ -102,11 +103,12 @@ export class MongoDbConsumer {
             collectionName,
             records
           )
+          logger.info(`Fetched documents: ${documentsToReplace.length}`)
           const updatedDocuments = await this.updateInsertMessages(
             mongoCollectionName,
             documentsToReplace
           )
-
+          logger.info(`Updated documents: ${updatedDocuments.length}`)
           await batchInsertToClickhouse(
             tenantId,
             clickhouseTable.table,
@@ -143,10 +145,13 @@ export class MongoDbConsumer {
     onlyId: boolean = false
   ): Promise<WithId<Document>[]> {
     const mongoCollection = this.mongoClient.db().collection(collectionName)
+    logger.info(`Fetching documents from collection: ${collectionName}`)
     const filters = this.buildFilters(records)
+    logger.info(`Filters: ${JSON.stringify(filters)}`)
     const documents: FindCursor<WithId<Document>> = mongoCollection.find({
       $or: filters,
     })
+    logger.info(`Fetched Documents`)
 
     if (onlyId) {
       documents.project({ _id: 1 })
@@ -193,6 +198,11 @@ export class MongoDbConsumer {
   private async updateTransactionInsertMessages(
     records: WithId<Document>[]
   ): Promise<WithId<Document>[]> {
+    logger.info(
+      `Updating transaction insert messages: ${
+        records.length
+      }, and ids: ${records.map((record) => record._id).join(',')}`
+    )
     return await pMap(
       records,
       async (record) => {
