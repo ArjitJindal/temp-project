@@ -1,9 +1,10 @@
 import type { UserOptions } from 'jspdf-autotable';
 import type { jsPDF } from 'jspdf';
 import { getBranding } from '@/utils/branding';
+import { notNullish } from '@/utils/array';
 
 interface Props {
-  pdfRef?: HTMLElement;
+  pdfRef?: HTMLElement | HTMLElement[];
   fileName: string;
   reportTitle?: string;
   tableOptions?: TableOptions[];
@@ -23,6 +24,7 @@ const DownloadAsPDF = async (props: Props) => {
   await import('./NotoSans-Regular');
   await import('./NotoSans-SemiBold');
   const { pdfRef, fileName, tableOptions, reportTitle } = props;
+  const inputArray = (Array.isArray(pdfRef) ? pdfRef : [pdfRef]).filter(notNullish);
   try {
     const Logo = getBranding().logoDark;
     const logoImage = new Image();
@@ -47,27 +49,32 @@ const DownloadAsPDF = async (props: Props) => {
       doc.setFontSize(12);
     }
 
-    if (pdfRef) {
-      position += reportTitle ? 16 : 0;
-      const input = pdfRef;
-
+    if (inputArray.length > 0) {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(input);
+      for (let i = 0; i < inputArray.length; i++) {
+        const input = inputArray[i];
+        if (i > 0) {
+          doc.addPage();
+          position = 0;
+        }
+        position += reportTitle ? 16 : 0;
+        const canvas = await html2canvas(input);
 
-      const imgData = canvas.toDataURL('image/png');
-      imgHeight = (canvas.height * PAGE_WIDTH) / canvas.width;
-      let heightLeft = imgHeight;
+        const imgData = canvas.toDataURL('image/png');
+        imgHeight = (canvas.height * PAGE_WIDTH) / canvas.width;
+        let heightLeft = imgHeight;
 
-      // Add the first page
-      doc.addImage(imgData, 'PNG', 10, position, PAGE_WIDTH, imgHeight);
-      heightLeft -= PAGE_HEIGHT - position;
-
-      // Add pages from 2 to n
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        doc.addPage();
+        // Add the first page
         doc.addImage(imgData, 'PNG', 10, position, PAGE_WIDTH, imgHeight);
-        heightLeft -= PAGE_HEIGHT;
+        heightLeft -= PAGE_HEIGHT - position;
+
+        // Add pages from 2 to n
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', 10, position, PAGE_WIDTH, imgHeight);
+          heightLeft -= PAGE_HEIGHT;
+        }
       }
     }
 

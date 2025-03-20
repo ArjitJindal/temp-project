@@ -1,6 +1,8 @@
 import s from './index.module.less';
 import BarChart from '@/components/charts/BarChart';
 import { success } from '@/utils/asyncResource';
+import { SeriesTooltipBody } from '@/components/charts/shared/SeriesTooltip';
+import { DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
 
 type ValueType =
   | 'Before'
@@ -22,6 +24,7 @@ interface Props {
   beforeFalsePositiveColor?: string;
   afterColor: string;
   afterFalsePositiveColor?: string;
+  pdfMode?: boolean;
 }
 
 export function DeltaChart(props: Props) {
@@ -33,23 +36,27 @@ export function DeltaChart(props: Props) {
     beforeFalsePositiveColor,
     afterColor,
     afterFalsePositiveColor,
+    pdfMode,
   } = props;
+  const data = [
+    ...beforeValues.map((v) => ({ category: 'Before', value: v.value ?? 0, series: v.type })),
+    ...afterValues.map((v) => ({ category: 'After', value: v.value ?? 0, series: v.type })),
+  ];
+  const colors = {
+    Before: beforeColor,
+    After: afterColor,
+    'True positive (before)': beforeColor,
+    'True positive (after)': afterColor,
+    'False positive (before)': beforeFalsePositiveColor,
+    'False positive (after)': afterFalsePositiveColor,
+  };
   return (
     <div className={s.root}>
+      {pdfMode && <div className={s.title}>{title}</div>}
       <BarChart<string, ValueType>
         grouping={'STACKED'}
-        data={success([
-          ...beforeValues.map((v) => ({ category: 'Before', value: v.value ?? 0, series: v.type })),
-          ...afterValues.map((v) => ({ category: 'After', value: v.value ?? 0, series: v.type })),
-        ])}
-        colors={{
-          Before: beforeColor,
-          After: afterColor,
-          'True positive (before)': beforeColor,
-          'True positive (after)': afterColor,
-          'False positive (before)': beforeFalsePositiveColor,
-          'False positive (after)': afterFalsePositiveColor,
-        }}
+        data={success(data)}
+        colors={colors}
         customBarColors={(_, series: ValueType, defaultColor) => {
           let result;
           if (series === 'Before') {
@@ -69,7 +76,16 @@ export function DeltaChart(props: Props) {
         }}
         hideLegend={true}
       />
-      <div className={s.title}>{title}</div>
+      {pdfMode && (
+        <SeriesTooltipBody
+          items={data.map((x) => ({
+            color: colors[x.series],
+            label: x.series,
+            value: DEFAULT_NUMBER_FORMATTER(x.value),
+          }))}
+        />
+      )}
+      {!pdfMode && <div className={s.title}>{title}</div>}
     </div>
   );
 }

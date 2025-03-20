@@ -106,12 +106,12 @@ export const HeaderMenu = (props: Props) => {
         tableOptions: getUserReportTables(user, riskScores, tenantSettings),
         reportTitle: 'User report',
       });
+      message.success('Report successfully downloaded');
     } catch (err) {
       message.fatal('Unable to complete the download!', err);
     } finally {
       setLoading(false);
       hideMessage && hideMessage();
-      message.success('Report successfully downloaded');
     }
   };
 

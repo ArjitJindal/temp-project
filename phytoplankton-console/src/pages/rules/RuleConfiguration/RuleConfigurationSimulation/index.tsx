@@ -54,6 +54,7 @@ import {
   updateCurrentInstance,
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
+import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
@@ -328,8 +329,80 @@ export function RuleConfigurationSimulation(props: Props) {
       handleDeleteIteration(parseInt(key));
     }
   };
+
+  const [pdfRef, setPdfRef] = useState<HTMLElement | null>(null);
+  const handleReportDownload = async () => {
+    const hideMessage = message.loading('Downloading report...');
+
+    if (pdfRef == null) {
+      return;
+    }
+
+    try {
+      if (pdfRef) {
+        await DownloadAsPDF({
+          pdfRef: Array.from(pdfRef.children)
+            .map((x) => (x instanceof HTMLElement ? x : null))
+            .filter(notEmpty),
+          fileName: `rule-simulation-result-${ruleInstance.id}-report.pdf`,
+          reportTitle: 'Simulation result report',
+        });
+      }
+      message.success('Report successfully downloaded');
+    } catch (err) {
+      message.fatal('Unable to complete the download!', err);
+    } finally {
+      hideMessage();
+    }
+  };
+
+  const allSimulationsDone = iterations.every((iteration, i) => {
+    return (iterationResults[i]?.latestStatus?.status ?? 'SUCCESS') === 'SUCCESS';
+  });
+
   return (
     <div className={s.root}>
+      <div className={s.pdfTarget}>
+        <div ref={setPdfRef}>
+          {iterations.map((iteration, i) => {
+            return (
+              <div key={i}>
+                {iterationResults.length > 0 && iterationResults[i].progress < 0.1 ? (
+                  <div className={s.loadingCard}>
+                    <Progress
+                      simulationStartedAt={iterationResults[i]?.createdAt}
+                      width="HALF"
+                      progress={(iterationResults[i]?.progress ?? 0) * 100}
+                      message="Running the simulation on subset of transactions & generating results for you."
+                      status={iterationResults[i]?.latestStatus?.status ?? 'SUCCESS'}
+                      totalEntities={iterationResults[i]?.totalEntities ?? 0}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      breakBefore: 'page',
+                    }}
+                  >
+                    {jobId && (
+                      <div>
+                        <Label label={iteration.name}>{iteration.description}</Label>
+                      </div>
+                    )}
+                    {jobId && (
+                      <div className={s.result} ref={setPdfRef}>
+                        {iterationResults.length > 0 ? (
+                          <SimulationStatistics pdfMode={true} iteration={iterationResults[i]} />
+                        ) : undefined}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
       <Tabs
         type="editable-card"
         activeKey={`${activeTabIndex}`}
@@ -450,22 +523,27 @@ export function RuleConfigurationSimulation(props: Props) {
         ].filter(notEmpty)}
       />
       <div className={s.footer}>
-        {jobId ? (
-          <div>{/* placeholder invisible component */}</div>
-        ) : (
-          <StepButtons
-            nextDisabled={activeStepIndex === steps.length - 1}
-            prevDisabled={activeStepIndex === 0}
-            onNext={() => {
-              const nextStep = steps[activeStepIndex + 1];
-              setActiveStepKey(nextStep);
-            }}
-            onPrevious={() => {
-              const prevStep = steps[activeStepIndex - 1];
-              setActiveStepKey(prevStep);
-            }}
-          />
-        )}
+        <div className={s.footerButtons}>
+          {!jobId && (
+            <StepButtons
+              nextDisabled={activeStepIndex === steps.length - 1}
+              prevDisabled={activeStepIndex === 0}
+              onNext={() => {
+                const nextStep = steps[activeStepIndex + 1];
+                setActiveStepKey(nextStep);
+              }}
+              onPrevious={() => {
+                const prevStep = steps[activeStepIndex - 1];
+                setActiveStepKey(prevStep);
+              }}
+            />
+          )}
+          {isShowingResults && allSimulationsDone && (
+            <Button onClick={handleReportDownload} type={'TETRIARY'}>
+              PDF report
+            </Button>
+          )}
+        </div>
         <div className={s.footerButtons}>
           <Button type="TETRIARY" onClick={onCancel}>
             Cancel

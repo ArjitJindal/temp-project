@@ -10,11 +10,12 @@ import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.sv
 import { Progress } from '@/components/Simulation/Progress';
 
 interface SimulationStatisticsProps {
+  pdfMode?: boolean;
   iteration: SimulationBeaconIteration;
 }
 
 export function SimulationStatistics(props: SimulationStatisticsProps) {
-  const { iteration } = props;
+  const { iteration, pdfMode } = props;
   const { current, simulated } = iteration.statistics;
   const beforeCaseTruePositives =
     current?.totalCases != null && current?.falsePositivesCases != null
@@ -72,6 +73,7 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 beforeFalsePositiveColor={COLORS.brandBlue.base}
                 afterColor={COLORS.navyBlue.shade}
                 afterFalsePositiveColor={COLORS.brandBlue.shade}
+                pdfMode={pdfMode}
               />
             </Col>
             <Col span={8}>
@@ -87,6 +89,7 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterValues={[{ value: simulated?.transactionsHit, type: 'After' }]}
                 beforeColor={COLORS.orange.base}
                 afterColor={COLORS.lightOrange.base}
+                pdfMode={pdfMode}
               />
             </Col>
             <Col span={8}>
@@ -102,6 +105,7 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterValues={[{ value: simulated?.usersHit, type: 'After' }]}
                 beforeColor={COLORS.green.base}
                 afterColor={COLORS.lightGreen.base}
+                pdfMode={pdfMode}
               />
             </Col>
           </Row>
