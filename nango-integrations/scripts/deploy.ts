@@ -1,4 +1,4 @@
-import { exec } from 'child_process'
+import { execSync } from 'child_process'
 import { getSecret } from '../utils/secrets'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
@@ -45,8 +45,8 @@ export function envIs(...envs: Env[]) {
 
 export const execAsync = (enviroment: 'dev' | 'sandbox' | 'prod') => {
   return new Promise((resolve) => {
-    exec(`nango deploy ${enviroment}`, (err, stdout, stderr) => {
-      resolve({ err, stdout, stderr })
+    execSync(`nango deploy ${enviroment}`, {
+      stdio: 'inherit',
     })
   })
 }
@@ -61,9 +61,16 @@ export const deploy = async () => {
     apiKey: string
   }>('nango')
 
+  // if script does not complete within 10 minutes, throw an error
+  const timeout = setTimeout(
+    () => {
+      throw new Error('Script did not complete within 10 minutes')
+    },
+    10 * 60 * 1000
+  )
+
   if (envIs('local') || envIs('dev')) {
     process.env.NANGO_SECRET_KEY_DEV = secret.apiKey
-    console.log(secret.apiKey)
     await execAsync('dev')
   } else if (envIs('sandbox')) {
     process.env.NANGO_SECRET_KEY_SANDBOX = secret.apiKey
@@ -74,6 +81,8 @@ export const deploy = async () => {
   } else {
     throw new Error('Invalid environment')
   }
+
+  clearTimeout(timeout)
 }
 
 if (require.main === module) {

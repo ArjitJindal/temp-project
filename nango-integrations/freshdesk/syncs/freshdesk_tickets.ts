@@ -134,12 +134,13 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
               id: attachment.id,
               attachmentUrl: attachment.attachment_url,
             })) || [],
+          model: 'FreshdeskTicket',
         }
 
         return ticketSchema
       })
     )
 
-    await nango.batchSave(tickets, 'CRMTicket')
+    await nango.batchSave(tickets, 'FreshdeskTicket')
   }
 }

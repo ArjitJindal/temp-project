@@ -12,6 +12,8 @@ integrations:
         runs: every 10 mins
         output: Ticket
 models:
+  FreshdeskTicket:
+    __extends: Ticket
   Ticket:
     id: string
     type: string | null
@@ -32,6 +34,7 @@ models:
     descriptionText: string | null
     conversations: Conversation[] | null
     attachments: Attachments[] | null
+    model: string
   Conversation:
     bodyText: string | null
     fromEmail: string | null
