@@ -134,7 +134,6 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
               id: attachment.id,
               attachmentUrl: attachment.attachment_url,
             })) || [],
-          model: 'FreshdeskTicket',
         }
 
         return ticketSchema

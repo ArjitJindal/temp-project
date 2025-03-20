@@ -44,10 +44,8 @@ export function envIs(...envs: Env[]) {
 }
 
 export const execAsync = (enviroment: 'dev' | 'sandbox' | 'prod') => {
-  return new Promise((resolve) => {
-    execSync(`nango deploy ${enviroment}`, {
-      stdio: 'inherit',
-    })
+  return execSync(`nango deploy ${enviroment}`, {
+    stdio: 'inherit',
   })
 }
 
@@ -64,20 +62,20 @@ export const deploy = async () => {
   // if script does not complete within 10 minutes, throw an error
   const timeout = setTimeout(
     () => {
-      throw new Error('Script did not complete within 10 minutes')
+      throw new Error('Script did not complete within 2 minutes')
     },
-    10 * 60 * 1000
+    2 * 60 * 1000
   )
 
   if (envIs('local') || envIs('dev')) {
     process.env.NANGO_SECRET_KEY_DEV = secret.apiKey
-    await execAsync('dev')
+    execAsync('dev')
   } else if (envIs('sandbox')) {
     process.env.NANGO_SECRET_KEY_SANDBOX = secret.apiKey
-    await execAsync('sandbox')
+    execAsync('sandbox')
   } else if (envIs('prod')) {
     process.env.NANGO_SECRET_KEY_PROD = secret.apiKey
-    await execAsync('prod')
+    execAsync('prod')
   } else {
     throw new Error('Invalid environment')
   }
