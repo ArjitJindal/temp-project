@@ -18,7 +18,6 @@ import { BooleanString } from '@/@types/openapi-internal/BooleanString'
 import {
   getClickhouseClient,
   sendMessageToMongoConsumer,
-  executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
@@ -109,14 +108,21 @@ export class SanctionsScreeningDetailsRepository {
 
     const updatedData = await db
       .collection<SanctionsScreeningDetails>(sanctionsScreeningCollectionName)
-      .updateOne(filter, update, { upsert: true })
+      .findOneAndUpdate(filter, update, {
+        upsert: true,
+        returnDocument: 'after',
+      })
 
-    await sendMessageToMongoConsumer({
-      collectionName: sanctionsScreeningCollectionName,
-      documentKey: { type: 'id', value: String(updatedData.upsertedId) },
-      operationType: 'update',
-      clusterTime: Date.now(),
-    })
+    const _id = updatedData.value?._id
+
+    if (!_id) {
+      await sendMessageToMongoConsumer({
+        collectionName: sanctionsScreeningCollectionName,
+        documentKey: { type: 'id', value: String(_id) },
+        operationType: 'update',
+        clusterTime: Date.now(),
+      })
+    }
   }
 
   private async getSanctionsScreeningStatsClickhouse(timestampRange?: {
@@ -144,12 +150,12 @@ export class SanctionsScreeningDetailsRepository {
     SETTINGS output_format_json_quote_64bit_integers = 0
     `
 
-    const result = await executeClickhouseQuery<
-      Array<SanctionsScreeningEntityStats>
-    >(clickhouseClient, {
+    const data = await clickhouseClient.query({
       query,
       format: 'JSONEachRow',
     })
+
+    const result = await data.json<SanctionsScreeningEntityStats>()
 
     return {
       data: SANCTIONS_SCREENING_ENTITYS.map((entity) => {

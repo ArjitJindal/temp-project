@@ -73,50 +73,53 @@ export class MongoDbConsumer {
     const { messagesToReplace, messagesToDelete } =
       this.segregateMessages(events)
 
-    await Promise.all([
-      this.handleMessagesReplace(messagesToReplace),
-      this.handleMessagesDelete(messagesToDelete),
-    ])
+    await this.handleMessagesReplace(messagesToReplace)
+    await this.handleMessagesDelete(messagesToDelete)
   }
 
   public async handleMessagesReplace(
     messagesToReplace: Dictionary<MongoConsumerMessage[]>
   ) {
-    return Promise.all(
-      Object.entries(messagesToReplace).map(
-        async ([collectionName, records]) => {
-          const tableDetails = this.fetchTableDetails(collectionName)
-          if (!tableDetails) {
-            return
-          }
+    for (const [collectionName, records] of Object.entries(messagesToReplace)) {
+      const tableDetails = this.fetchTableDetails(collectionName)
 
-          const { tenantId, clickhouseTable, mongoCollectionName } =
-            tableDetails
+      if (!tableDetails) {
+        return
+      }
 
-          const isTenantDeleted = await this.isTenantDeleted(tenantId)
+      const { tenantId, clickhouseTable, mongoCollectionName } = tableDetails
 
-          if (isTenantDeleted) {
-            return
-          }
+      const isTenantDeleted = await this.isTenantDeleted(tenantId)
 
-          const documentsToReplace = await this.fetchDocuments(
-            collectionName,
-            records
-          )
-          logger.info(`Fetched documents: ${documentsToReplace.length}`)
-          const updatedDocuments = await this.updateInsertMessages(
-            mongoCollectionName,
-            documentsToReplace
-          )
-          logger.info(`Updated documents: ${updatedDocuments.length}`)
-          await batchInsertToClickhouse(
-            tenantId,
-            clickhouseTable.table,
-            updatedDocuments
-          )
-        }
+      if (isTenantDeleted) {
+        return
+      }
+
+      const documentsToReplace = await this.fetchDocuments(
+        collectionName,
+        records
       )
-    )
+
+      if (documentsToReplace.length === 0) {
+        logger.info(`No documents to replace for ${collectionName}`)
+        continue
+      }
+
+      logger.info(
+        `Fetched documents: ${documentsToReplace.length} from ${collectionName}`
+      )
+
+      const updatedDocuments = await this.updateInsertMessages(
+        mongoCollectionName,
+        documentsToReplace
+      )
+
+      await batchInsertToClickhouse(
+        tenantId,
+        clickhouseTable.table,
+        updatedDocuments
+      )
+    }
   }
 
   public fetchTableDetails(tableName: string): TableDetails | false {
@@ -129,6 +132,7 @@ export class MongoDbConsumer {
     }
 
     const tenantId = tableName.replace(`-${tableSuffix}`, '')
+
     return {
       tenantId,
       collectionName: tableName,
@@ -145,13 +149,13 @@ export class MongoDbConsumer {
     onlyId: boolean = false
   ): Promise<WithId<Document>[]> {
     const mongoCollection = this.mongoClient.db().collection(collectionName)
-    logger.info(`Fetching documents from collection: ${collectionName}`)
     const filters = this.buildFilters(records)
-    logger.info(`Filters: ${JSON.stringify(filters)}`)
+
+    logger.info(`Filters: ${JSON.stringify(filters)} from ${collectionName}`)
+
     const documents: FindCursor<WithId<Document>> = mongoCollection.find({
       $or: filters,
     })
-    logger.info(`Fetched Documents`)
 
     if (onlyId) {
       documents.project({ _id: 1 })
