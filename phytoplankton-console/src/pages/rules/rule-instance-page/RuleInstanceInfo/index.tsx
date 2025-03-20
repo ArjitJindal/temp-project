@@ -275,6 +275,16 @@ export const RuleInstanceInfo = (props: Props) => {
                 )}
               </Confirm>
             )}
+            {isV8RuleInstance(true, ruleInstance) ? (
+              <RuleThresholdRecommendation
+                ruleInstance={ruleInstance}
+                entityVariables={ruleInstance.logicEntityVariables}
+                aggregationVariables={ruleInstance.logicAggregationVariables}
+                type={ruleInstance.type}
+              />
+            ) : (
+              <></>
+            )}
             <Confirm
               title={`Are you sure you want to delete this ${getRuleInstanceDisplayId(
                 ruleInstance.ruleId,
@@ -300,16 +310,6 @@ export const RuleInstanceInfo = (props: Props) => {
                 </Button>
               )}
             </Confirm>
-            {isV8RuleInstance(true, ruleInstance) ? (
-              <RuleThresholdRecommendation
-                ruleInstance={ruleInstance}
-                entityVariables={ruleInstance.logicEntityVariables}
-                aggregationVariables={ruleInstance.logicAggregationVariables}
-                type={ruleInstance.type}
-              />
-            ) : (
-              <></>
-            )}
           </div>
         </Card.Section>
       </Card.Root>
