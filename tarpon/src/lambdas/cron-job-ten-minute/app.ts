@@ -28,6 +28,7 @@ import {
   ENGINEERING_HELP_CHANNEL_ID,
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
+import { isValidSARRequest } from '@/utils/helpers'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -139,23 +140,26 @@ async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
     const dynamoDb = getDynamoDbClient()
     await Promise.all(
       tenantIds.map(async (id) => {
-        const reportRepository = new ReportRepository(
-          // 1. get all sla reports that have submitting and submit accept status
-          id,
-          mongoDb,
-          dynamoDb
-        )
-        const hasUsReports = await reportRepository.hasValidJurisdictionReports(
-          ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
-          'US',
-          Date.now() - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
-        )
-        logger.info('USA report to fetch', hasUsReports)
-        if (hasUsReports) {
-          await sendBatchJobCommand({
-            type: 'FINCEN_REPORT_STATUS_REFRESH',
-            tenantId: id,
-          })
+        if (isValidSARRequest(id)) {
+          const reportRepository = new ReportRepository(
+            // 1. get all sla reports that have submitting and submit accept status
+            id,
+            mongoDb,
+            dynamoDb
+          )
+          const hasUsReports =
+            await reportRepository.hasValidJurisdictionReports(
+              ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
+              'US',
+              Date.now() - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
+            )
+          logger.info(`${id}: USA report to fetch ${hasUsReports}`)
+          if (hasUsReports) {
+            await sendBatchJobCommand({
+              type: 'FINCEN_REPORT_STATUS_REFRESH',
+              tenantId: id,
+            })
+          }
         }
       })
     )
@@ -186,6 +190,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
     await handleRiskScoringTriggerBatchJob(tenantIds)
     await deleteOldWebhookRetryEvents(tenantIds)
     await handleFinCenReportStatusBatchJob(tenantIds)
+
     if (envIs('dev')) {
       await notifyTriageIssues()
     }

@@ -62,6 +62,7 @@ import {
 import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
 import { CurrencyService } from '@/services/currency'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { isValidSARRequest } from '@/utils/helpers'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -655,7 +656,7 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   public async getAckFileContent(report: Report) {
-    if (this.tenantId.startsWith('flagright')) {
+    if (isValidSARRequest(this.tenantId)) {
       const creds = await getSecretByName('fincenCreds')
       const sftp = new SftpClient()
       try {
@@ -690,7 +691,8 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   public async submit(report: Report) {
-    if (this.tenantId.startsWith('flagright')) {
+    //TODO: allow for all tenant after testing is completed
+    if (isValidSARRequest(this.tenantId)) {
       const creds = await getSecretByName('fincenCreds')
       const sftp = new SftpClient()
       try {
