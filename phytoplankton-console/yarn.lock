@@ -3405,6 +3405,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nangohq/frontend@npm:^0.57.1":
+  version: 0.57.1
+  resolution: "@nangohq/frontend@npm:0.57.1"
+  dependencies:
+    "@nangohq/types": "npm:0.57.1"
+  checksum: 86fa4b582e36ac03994e9ae11e240bde2e211ce791ff200b46a2e7c02f60194e3274876e782e2664cf0ede2cda3262cc1f973ce6b5455b98806e77b020f9c0ba
+  languageName: node
+  linkType: hard
+
+"@nangohq/types@npm:0.57.1":
+  version: 0.57.1
+  resolution: "@nangohq/types@npm:0.57.1"
+  dependencies:
+    axios: "npm:^1.8.2"
+    json-schema: "npm:0.4.0"
+    type-fest: "npm:4.32.0"
+  checksum: 9b9d444a8203d30ce2cdf5c597dd21c8991328dfada35ef802f937f10d3660b712123e986c1654347fd93236f281b38609261b34e6a0a4e96e8c9c3de7580d90
+  languageName: node
+  linkType: hard
+
 "@nestjs/axios@npm:0.1.0":
   version: 0.1.0
   resolution: "@nestjs/axios@npm:0.1.0"
@@ -7226,6 +7246,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^1.8.2":
+  version: 1.8.4
+  resolution: "axios@npm:1.8.4"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 450993c2ba975ffccaf0d480b68839a3b2435a5469a71fa2fb0b8a55cdb2c2ae47e609360b9c1e2b2534b73dfd69e2733a1cf9f8215bee0bcd729b72f801b0ce
+  languageName: node
+  linkType: hard
+
 "babel-jest@npm:^26.6.3":
   version: 26.6.3
   resolution: "babel-jest@npm:26.6.3"
@@ -10857,6 +10888,16 @@ __metadata:
     debug:
       optional: true
   checksum: da5932b70e63944d38eecaa16954bac4347036f08303c913d166eda74809d8797d38386e3a0eb1d2fe37d2aaff2764cce8e9dbd99459d860cf2cdfa237923b5f
+  languageName: node
+  linkType: hard
+
+"follow-redirects@npm:^1.15.6":
+  version: 1.15.9
+  resolution: "follow-redirects@npm:1.15.9"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 5829165bd112c3c0e82be6c15b1a58fa9dcfaede3b3c54697a82fe4a62dd5ae5e8222956b448d2f98e331525f05d00404aba7d696de9e761ef6e42fdc780244f
   languageName: node
   linkType: hard
 
@@ -15668,6 +15709,7 @@ __metadata:
     "@cypress/skip-test": "npm:^2.6.1"
     "@fingerprintjs/fingerprintjs": "npm:^4.5.0"
     "@flagright/lib": "link:../lib"
+    "@nangohq/frontend": "npm:^0.57.1"
     "@openapitools/openapi-generator-cli": "npm:^2.7.0"
     "@react-awesome-query-builder/ui": "npm:^6.6.2"
     "@rjsf/antd": "npm:^4.2.2"
@@ -19506,6 +19548,13 @@ __metadata:
   version: 4.0.8
   resolution: "type-detect@npm:4.0.8"
   checksum: 8fb9a51d3f365a7de84ab7f73b653534b61b622aa6800aecdb0f1095a4a646d3f5eb295322127b6573db7982afcd40ab492d038cf825a42093a58b1e1353e0bd
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:4.32.0":
+  version: 4.32.0
+  resolution: "type-fest@npm:4.32.0"
+  checksum: e2e877055487d109eba99afc58211db4a480837ff7b243c7de0b3e2ac29fdce55ab55e201c64cb1a8b2aeffce7e8f60ae3ce3a2f7e6fb68261d62743e54288ba
   languageName: node
   linkType: hard
 
