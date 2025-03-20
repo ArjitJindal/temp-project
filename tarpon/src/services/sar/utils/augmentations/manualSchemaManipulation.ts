@@ -25,12 +25,31 @@ export function removeActivityBlockOrder(jsonSchema: any) {
 }
 
 export function manualValidation(jsonSchema: any) {
+  if (!jsonSchema || typeof jsonSchema !== 'object') {
+    return jsonSchema
+  }
+
+  if (!jsonSchema['definitions']) {
+    jsonSchema['definitions'] = {}
+  }
+
   jsonSchema['definitions']['RawZIPCodeType'] = {
     type: 'string',
     maxLength: 9,
     pattern: '^[a-zA-Z0-9]+$',
   }
-  jsonSchema['definitions']['AddressType']['properties']['RawZIPCode']['$ref'] =
-    '#/definitions/RawZIPCodeType'
+
+  if (!jsonSchema['definitions']['AddressType']) {
+    return jsonSchema
+  }
+
+  if (!jsonSchema['definitions']['AddressType']['properties']) {
+    jsonSchema['definitions']['AddressType']['properties'] = {}
+  }
+
+  jsonSchema['definitions']['AddressType']['properties']['RawZIPCode'] = {
+    $ref: '#/definitions/RawZIPCodeType',
+  }
+
   return jsonSchema
 }

@@ -43,11 +43,12 @@ export const apiFetch = async <T>(
       stack: new Error().stack,
     })
   }
-
   subsegment?.close()
 
   return {
     statusCode: response.status,
-    result: await response.json(),
+    result: response.headers.get('content-type')?.includes('application/json')
+      ? await response.json()
+      : await response.text(),
   }
 }
