@@ -66,9 +66,14 @@ jobs:
         run: yarn install --immutable
         if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
-      - run: yarn install --immutable
+      - name: Install dependencies for phytoplankton-console
+        run: yarn install --immutable
         if: steps.check.outputs.triggered == 'true'
         working-directory: "phytoplankton-console"
+      - name: Install dependencies for nango-integrations
+        run: yarn install --immutable
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "nango-integrations"
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:

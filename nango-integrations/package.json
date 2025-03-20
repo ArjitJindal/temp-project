@@ -14,6 +14,7 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.716.0",
     "@flagright/lib": "link:../lib",
-    "@tsconfig/node18": "^18.2.4"
+    "@tsconfig/node18": "^18.2.4",
+    "nango": "^0.57.1"
   }
 }
