@@ -385,13 +385,22 @@ Cypress.Commands.add('assertSkeletonLoader', () => {
   cy.get("[data-cy='skeleton']").should('not.exist');
 });
 
+function replaceStraightQuotes(text) {
+  let toggle = true;
+  return text.replace(/'/g, () => {
+    const quote = toggle ? '‘' : '’';
+    toggle = !toggle;
+    return quote;
+  });
+}
+
 Cypress.Commands.add('checkNotification', (statements: string[]) => {
   cy.loginByRole('admin');
   cy.get('div[data-cy="notifications"]').click();
   cy.waitNothingLoading();
   cy.get('div[data-cy="notification-message"]').then(($elements) => {
-    const texts = $elements.map((index, el) => Cypress.$(el).text()).get();
-    const found = statements.every((statement) => texts.includes(statement));
+    const texts = $elements.map((_index, el) => Cypress.$(el).text()).get();
+    const found = statements.every((statement) => texts.includes(replaceStraightQuotes(statement)));
     expect(found).to.be.true;
   });
 });
