@@ -44,17 +44,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@airbnb/node-memwatch@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@airbnb/node-memwatch@npm:3.0.0"
-  dependencies:
-    bindings: "npm:^1.5.0"
-    nan: "npm:^2.22.0"
-    node-gyp: "npm:latest"
-  checksum: 5b6c08a28e97ffd46bde9148258068c71ef403b530dd614b47ebcffd59c9600c7dde66dd86ae789900a0fff1ffe4e4c68dad120870e73eda2f8df6959730f6de
-  languageName: node
-  linkType: hard
-
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.2.1
   resolution: "@ampproject/remapping@npm:2.2.1"
@@ -7895,15 +7884,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/bindings@npm:^1":
-  version: 1.5.5
-  resolution: "@types/bindings@npm:1.5.5"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 0205bd031677e9af479437b4f358d4ea96d9d1a7d57132657915201d9a8be968d5f8341f526cc79481142fe9456f82e093cf62a0b2bcf6c3cfd4577962603b22
-  languageName: node
-  linkType: hard
-
 "@types/body-parser@npm:*":
   version: 1.19.5
   resolution: "@types/body-parser@npm:1.19.5"
@@ -9667,15 +9647,6 @@ __metadata:
   version: 2.2.0
   resolution: "binary-extensions@npm:2.2.0"
   checksum: ccd267956c58d2315f5d3ea6757cf09863c5fc703e50fbeb13a7dc849b812ef76e3cf9ca8f35a0c48498776a7478d7b4a0418e1e2b8cb9cb9731f2922aaad7f8
-  languageName: node
-  linkType: hard
-
-"bindings@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "bindings@npm:1.5.0"
-  dependencies:
-    file-uri-to-path: "npm:1.0.0"
-  checksum: 593d5ae975ffba15fbbb4788fe5abd1e125afbab849ab967ab43691d27d6483751805d98cb92f7ac24a2439a8a8678cd0131c535d5d63de84e383b0ce2786133
   languageName: node
   linkType: hard
 
@@ -12480,17 +12451,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-uri-to-path@npm:1, file-uri-to-path@npm:1.0.0":
+"file-uri-to-path@npm:1":
   version: 1.0.0
   resolution: "file-uri-to-path@npm:1.0.0"
   checksum: b648580bdd893a008c92c7ecc96c3ee57a5e7b6c4c18a9a09b44fb5d36d79146f8e442578bc0e173dc027adf3987e254ba1dfd6e3ec998b7c282873010502144
-  languageName: node
-  linkType: hard
-
-"file-uri-to-path@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "file-uri-to-path@npm:2.0.0"
-  checksum: 604c269718708a87e4014c537613b2216192f4e56096fb9f63817b4117760234371ea79a23747fd7f7dbbbb7e4ea7322242bcce5a875f5e39f977a19f123d4d4
   languageName: node
   linkType: hard
 
@@ -16482,15 +16446,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.22.0":
-  version: 2.22.2
-  resolution: "nan@npm:2.22.2"
-  dependencies:
-    node-gyp: "npm:latest"
-  checksum: bee49de633650213970596ffbdf036bfe2109ff283a40f7742c3aa6d1fc15b9836f62bfee82192b879f56ab5f9fa9a1e5c58a908a50e5c87d91fb2118ef70827
-  languageName: node
-  linkType: hard
-
 "nanoid@npm:^3.3.8":
   version: 3.3.8
   resolution: "nanoid@npm:3.3.8"
@@ -19213,7 +19168,6 @@ __metadata:
   dependencies:
     "@actions/core": "npm:^1.10.1"
     "@actions/github": "npm:^6.0.0"
-    "@airbnb/node-memwatch": "npm:^3.0.0"
     "@aws-sdk/client-api-gateway": "npm:^3.749.0"
     "@aws-sdk/client-athena": "npm:^3.687.0"
     "@aws-sdk/client-cloudformation": "npm:^3.245.0"
@@ -19260,7 +19214,6 @@ __metadata:
     "@types/ajv": "npm:^1.0.0"
     "@types/aws-lambda": "npm:^8.10.89"
     "@types/aws-synthetics-puppeteer": "npm:^3.1.9"
-    "@types/bindings": "npm:^1"
     "@types/command-line-args": "npm:^5.2.0"
     "@types/csvtojson": "npm:^2.0.3"
     "@types/ejs": "npm:^3.1.1"
@@ -19302,7 +19255,6 @@ __metadata:
     aws-xray-sdk-core: "npm:^3.3.8"
     axios: "npm:^1.7.9"
     base-x: "npm:^3.0.9"
-    bindings: "npm:^1.5.0"
     body-parser: "npm:^1.20.0"
     builtin-modules: "npm:^3.3.0"
     cdktf: "npm:^0.20.5"
@@ -19331,7 +19283,6 @@ __metadata:
     fern-api: "npm:^0.30.3"
     fetch-retry: "npm:^5.0.6"
     file-type: "npm:16.5.4"
-    file-uri-to-path: "npm:^2.0.0"
     flagright: "npm:^1.6.42"
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"

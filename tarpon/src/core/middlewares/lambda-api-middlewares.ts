@@ -7,7 +7,6 @@ import { localDev } from './local-dev'
 import { initSentryLambda } from './init-sentry-lambda'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 import { requestLoggerMiddleware } from './request-logger'
-import { apiMemwatchMiddleware } from './api-memwatch-middleware'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
@@ -21,7 +20,6 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     localDev(),
     apiContextProvider(),
     xrayMiddleware(),
-    apiMemwatchMiddleware(),
     bgProcessingMiddleware(),
     responseHeaderHandler(),
     httpErrorHandler(),
