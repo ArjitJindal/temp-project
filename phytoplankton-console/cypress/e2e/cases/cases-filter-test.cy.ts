@@ -55,22 +55,37 @@ describe('Filter according to case id (optimized)', () => {
   });
 
   it('should filter according to rule name', () => {
+    cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
+    cy.intercept('GET', '**/rule_instances**').as('rules');
     cy.visit('/case-management/cases');
 
-    cy.get('[data-cy="segmented-control-all-alerts"]').click();
-    cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
-    cy.get('li[data-cy="OPEN"]').first().click();
-    cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
-    cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
-    cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
-    const ruleName = 'First transaction of a user';
-    cy.get('.ant-popover .ant-select-selector').first().click().type(`${ruleName}{enter}`);
-    cy.get('td[data-cy="ruleName"]')
-      .contains(ruleName)
-      .should('exist')
-      .each((ele) => {
-        cy.wrap(ele).should('exist').invoke('text').should('include', ruleName);
+    cy.wait('@getRuleWithAlerts').then((interception) => {
+      expect(interception.response?.statusCode).to.eq(200);
+    });
+    let ruleName = '';
+    cy.wait('@rules').then((interception) => {
+      expect(interception.response?.statusCode).to.eq(200);
+      const rules = interception.response?.body;
+      rules.forEach((rule) => {
+        if (rule.ruleNameAlias) {
+          ruleName = rule.ruleNameAlias;
+        }
       });
+      expect(ruleName).to.not.equal('');
+      cy.get('[data-cy="segmented-control-all-alerts"]').click();
+      cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
+      cy.get('li[data-cy="OPEN"]').first().click();
+      cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
+      cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
+      cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
+      cy.get('.ant-popover .ant-select-selector').first().click().type(`${ruleName}{enter}`);
+      cy.get('td[data-cy="ruleName"]')
+        .contains(ruleName)
+        .should('exist')
+        .each((ele) => {
+          cy.wrap(ele).should('exist').invoke('text').should('include', ruleName);
+        });
+    });
   });
 
   it('should assign single and multiple cases', () => {
