@@ -106,8 +106,6 @@ export function SearchResultTable(props: Props) {
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
           manualSearch: true,
-          page: params.page,
-          pageSize: params.pageSize,
         },
       });
     },
@@ -142,12 +140,14 @@ export function SearchResultTable(props: Props) {
     let items;
     let refetch;
     let count;
+    let pageSize;
     if (isSuccess(historyItemQueryResults.data)) {
       if (!historyItemQueryResults.data.value) {
         message.error('No search results found for this search id');
       }
       items = historyItemQueryResults.data.value?.response?.data;
       count = historyItemQueryResults.data.value?.response?.hitsCount;
+      pageSize = historyItemQueryResults.data.value?.response?.pageSize;
       refetch = historyItemQueryResults.refetch;
     }
     const dataRes: AsyncResource<TableData<SanctionsEntity>> =
@@ -155,6 +155,7 @@ export function SearchResultTable(props: Props) {
         ? success({
             total: count,
             items: items,
+            pageSize: pageSize,
           })
         : isLoading(newSearchQueryResults.data) || isLoading(historyItemQueryResults.data)
         ? loading()
@@ -167,7 +168,7 @@ export function SearchResultTable(props: Props) {
 
   const pageSize =
     getOr(
-      map(newQueryResult.data, (x) => x.items.length),
+      map(newQueryResult.data, (x) => x.pageSize),
       null,
     ) ?? DEFAULT_PAGE_SIZE;
 

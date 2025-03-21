@@ -299,7 +299,7 @@ export default function SanctionsSearchTable(props: Props) {
         toolsOptions={{
           reload: false,
         }}
-        fitHeight={isEmbedded ? 300 : false}
+        fitHeight
         cursor={queryResult.cursor}
         readOnlyFilters={readOnly}
       />

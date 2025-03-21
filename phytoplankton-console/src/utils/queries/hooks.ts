@@ -87,6 +87,7 @@ export type PaginatedData<T> = {
   totalPages?: number;
   items: Array<T>;
   next?: string;
+  pageSize?: number;
 };
 
 export type CursorPaginatedData<T> = PaginatedData<T> & {
