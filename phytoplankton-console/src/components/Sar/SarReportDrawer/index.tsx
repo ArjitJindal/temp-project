@@ -41,6 +41,7 @@ export const REPORT_STEP = 'REPORT_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const CUSTOMER_AND_ACCOUNT_DETAILS_STEP = 'CUSTOMER_AND_ACCOUNT_DETAILS_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
+export const CURRENCY_TRANSACTION_STEP = 'CURRENCY_TRANSACTION_STEP';
 export const INDICATOR_STEP = 'INDICATOR_STEP';
 export const ATTACHMENTS_STEP = 'ATTACHMENTS_STEP';
 
@@ -107,6 +108,11 @@ export default function SarReportDrawer(props: Props) {
           key: INDICATOR_STEP,
           title: 'Indicators',
           description: 'Select one or more indicators that are relevant to your report',
+        },
+        !isEmpty(props.initialReport.schema?.currencyTransactionSchema) && {
+          key: CURRENCY_TRANSACTION_STEP,
+          title: 'Transaction activity details',
+          description: 'Enter details of transactions that you want to report',
         },
         !(props.initialReport.schema?.settings?.disableAttachmentsStep === true) && {
           key: ATTACHMENTS_STEP,

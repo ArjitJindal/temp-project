@@ -8,6 +8,7 @@ import NestedForm from '@/components/library/Form/NestedForm';
 import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 import {
   ATTACHMENTS_STEP,
+  CURRENCY_TRANSACTION_STEP,
   CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
   INDICATOR_STEP,
   REPORT_STEP,
@@ -29,6 +30,9 @@ export type FormState = Partial<{
   [TRANSACTION_METADATA_STEP]: unknown;
   [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: unknown;
   [TRANSACTION_STEP]: {
+    id: string;
+  }[];
+  [CURRENCY_TRANSACTION_STEP]: {
     id: string;
   }[];
   [INDICATOR_STEP]: {
@@ -86,6 +90,11 @@ export default function SarReportDrawerForm(props: Props) {
           },
         ]
       : []),
+    {
+      name: CURRENCY_TRANSACTION_STEP,
+      isRequired: false,
+      schema: report.schema?.currencyTransactionSchema,
+    },
   ].filter((x) => x.schema != null);
 
   const fieldValidators = makeValidators(orderedProps, {
@@ -176,6 +185,16 @@ export default function SarReportDrawerForm(props: Props) {
                   )}
                 </GenericFormField>
               )}
+              {activeStepKey === CURRENCY_TRANSACTION_STEP && (
+                <ReportStep
+                  settings={settings}
+                  parametersSchema={report.schema?.currencyTransactionSchema}
+                  validationResult={
+                    validationResult?.fieldValidationErrors?.[CURRENCY_TRANSACTION_STEP]
+                  }
+                  alwaysShowErrors={alwaysShowErrors}
+                />
+              )}
               {activeStepKey === ATTACHMENTS_STEP && (
                 <AttachmentsStep reportTypeId={report.reportTypeId} />
               )}
@@ -199,6 +218,7 @@ function deserializeFormState(reportTemplate: Report): FormState {
     [INDICATOR_STEP]: {
       selection: reportTemplate?.parameters.indicators ?? [],
     },
+    [CURRENCY_TRANSACTION_STEP]: reportTemplate?.parameters.currencyTransaction,
     [ATTACHMENTS_STEP]: {
       files: reportTemplate?.attachments ?? undefined,
     },
@@ -217,6 +237,7 @@ export function serializeFormState(originalReport: Report, formState: FormState)
         id: transaction.id,
         transaction,
       })),
+      currencyTransaction: formState[CURRENCY_TRANSACTION_STEP],
     },
     attachments: formState.ATTACHMENTS_STEP?.files,
   };

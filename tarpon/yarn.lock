@@ -66,6 +66,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apidevtools/json-schema-ref-parser@npm:^11.9.3":
+  version: 11.9.3
+  resolution: "@apidevtools/json-schema-ref-parser@npm:11.9.3"
+  dependencies:
+    "@jsdevtools/ono": "npm:^7.1.3"
+    "@types/json-schema": "npm:^7.0.15"
+    js-yaml: "npm:^4.1.0"
+  checksum: 3d3618dbb611d1296b99bdee4ff0dde664dad47632d30e0310c6d10de8081f6378ccb58329ea4e03103eca9347d5143671d03f0527b1c3f0916d95f8c09215e2
+  languageName: node
+  linkType: hard
+
 "@aws-cdk/asset-awscli-v1@npm:^2.2.208":
   version: 2.2.213
   resolution: "@aws-cdk/asset-awscli-v1@npm:2.2.213"
@@ -8090,7 +8101,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/json-schema@npm:^7.0.11, @types/json-schema@npm:^7.0.12, @types/json-schema@npm:^7.0.6, @types/json-schema@npm:^7.0.9":
+"@types/json-schema@npm:^7.0.11, @types/json-schema@npm:^7.0.12, @types/json-schema@npm:^7.0.15, @types/json-schema@npm:^7.0.6, @types/json-schema@npm:^7.0.9":
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: 1a3c3e06236e4c4aab89499c428d585527ce50c24fe8259e8b3926d3df4cfbbbcf306cfc73ddfb66cbafc973116efd15967020b0f738f63e09e64c7d260519e7
@@ -19168,6 +19179,7 @@ __metadata:
   dependencies:
     "@actions/core": "npm:^1.10.1"
     "@actions/github": "npm:^6.0.0"
+    "@apidevtools/json-schema-ref-parser": "npm:^11.9.3"
     "@aws-sdk/client-api-gateway": "npm:^3.749.0"
     "@aws-sdk/client-athena": "npm:^3.687.0"
     "@aws-sdk/client-cloudformation": "npm:^3.245.0"

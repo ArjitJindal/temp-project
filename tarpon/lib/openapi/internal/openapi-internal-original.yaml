@@ -15393,6 +15393,8 @@ components:
           type: object
         transactionSchema:
           type: object
+        currencyTransactionSchema:
+          type: object
         indicators:
           type: array
           items:
@@ -15594,6 +15596,8 @@ components:
                 type: string
               transaction:
                 type: object
+        currencyTransaction:
+          type: object
     ReportTypesResponse:
       title: ReportTypesResponse
       type: object

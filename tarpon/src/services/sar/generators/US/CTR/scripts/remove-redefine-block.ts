@@ -3,40 +3,39 @@ import path from 'path'
 import xml2js, { Builder } from 'xml2js'
 import { apiFetch } from '@/utils/api-fetch'
 
-const tempFolder = './temp'
-
-export const removeFolder = () => {
+export const removeFolder = (tempFolder: string) => {
   if (fs.existsSync(tempFolder)) {
     fs.rmSync(tempFolder, { recursive: true, force: true })
   }
 }
 
-const createFolder = () => {
+const createFolder = (tempFolder: string) => {
   if (!fs.existsSync(tempFolder)) {
     fs.mkdirSync(tempFolder)
   }
 }
 
 export const removeRedefine = async (
+  tempFolder: string,
   pathToXML: string
 ): Promise<{ parentFolder: string; base: string; dependency: string[] }> => {
   return new Promise((resolve, reject) => {
     // ensure the xml file exists
-    createFolder()
+    createFolder(tempFolder)
 
     const absolutePathForTempFolder = path.resolve(tempFolder)
 
     // Read XML file
     fs.readFile(pathToXML, 'utf-8', async (err, data) => {
       if (err) {
-        removeFolder()
+        removeFolder(tempFolder)
         reject('Error reading XML file:' + err)
       }
 
       // Convert XML to JavaScript object
       xml2js.parseString(data, async (err, result) => {
         if (err) {
-          removeFolder()
+          removeFolder(tempFolder)
           reject('Error reading XML file:' + err)
         }
 

@@ -1,5 +1,6 @@
 import { KenyaSARReportGenerator } from './KE/SAR'
 import { UsSarReportGenerator } from './US/SAR'
+import { UsCtrReportGenerator } from './US/CTR'
 import { Report } from '@/@types/openapi-internal/Report'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -65,6 +66,7 @@ const reportGenerators = [
   LithuaniaSTRReportGenerator,
   LithuaniaCTRReportGenerator,
   UsSarReportGenerator,
+  UsCtrReportGenerator,
   MalaysianSTRReportGenerator,
 ]
 export const REPORT_GENERATORS = new Map<string, ReportGenerator>(

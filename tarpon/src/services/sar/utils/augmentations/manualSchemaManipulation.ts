@@ -53,3 +53,52 @@ export function manualValidation(jsonSchema: any) {
 
   return jsonSchema
 }
+
+const enumType = 'Indicator'
+const phoneType = 'PhoneNumberType'
+const countryType = 'RawCountryCodeText'
+const stateType = 'RawStateCodeText'
+const emailType = 'ElectronicAddressType'
+export function agumentUiSchema(jsonSchema: any) {
+  if (!jsonSchema) {
+    return
+  }
+  Object.entries(jsonSchema).forEach(([key, value]: [string, any]) => {
+    if (key.includes(enumType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_INDICATOR',
+      }
+    }
+    if (key === phoneType || value?.['$ref']?.includes(phoneType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_PHONE_NUMBER',
+      }
+    }
+    if (key === countryType || value?.['$ref']?.includes(countryType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'COUNTRY',
+      }
+    }
+    if (key === stateType || value?.['$ref']?.includes(stateType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'COUNTRY_REGION',
+        'ui:countryField': 'RawCountryCodeText',
+      }
+    }
+    if (key === emailType || value?.['$ref']?.includes(emailType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+      }
+    }
+
+    // Recursively apply if nested
+    if (value?.properties) {
+      agumentUiSchema(value.properties)
+    }
+    if (value?.allOf && value?.allOf[1] && value?.allOf[1].properties) {
+      agumentUiSchema(value?.allOf[1].properties)
+    }
+  })
+
+  return jsonSchema
+}

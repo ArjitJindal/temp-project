@@ -6,11 +6,13 @@ import path from 'path'
 import { isObject, keys, omit, pick } from 'lodash'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
-import { AttributeInfos } from './attribute-infos'
-import { removeFolder, removeRedefine } from './remove-redefine-block'
+import $RefParser from '@apidevtools/json-schema-ref-parser'
+import { AttributeInfos } from '../../SAR/scripts/attribute-infos'
+
 import {
   removeActivityBlockOrder,
   manualValidation,
+  agumentUiSchema,
 } from '@/services/sar/utils/augmentations/manualSchemaManipulation'
 import { removeUnnecessaryOneOf } from '@/services/sar/utils/augmentations/removeUnnecessaryOneOf'
 
@@ -69,84 +71,64 @@ function augmentJsonSchema(
   return object
 }
 
-let filesToDelete = 0
-
 async function main() {
-  try {
-    const { base, dependency } = await removeRedefine(
-      path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema.xsd')
-    )
-    const XML_SCHEMA = fs.readFileSync(base, 'utf8')
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '@',
-    })
-    const xml = parser.parse(XML_SCHEMA)
+  const XML_SCHEMA = fs.readFileSync(
+    path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema.xsd'),
+    'utf8'
+  )
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '@',
+  })
+  const xml = parser.parse(XML_SCHEMA)
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Xsd2JsonSchema = require('xsd2jsonschema').Xsd2JsonSchema
-    const xs2js = new Xsd2JsonSchema()
-
-    const schemas: { [key: string]: string } = { schema: XML_SCHEMA }
-    for (let i = 0; i < dependency.length; i++) {
-      const path = dependency[i]
-      schemas[i] = fs.readFileSync(path, 'utf8')
-      filesToDelete++
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Xsd2JsonSchema = require('xsd2jsonschema').Xsd2JsonSchema
+  const xs2js = new Xsd2JsonSchema()
+  const convertedSchemas = xs2js.processAllSchemas({
+    schemas: { schema: XML_SCHEMA },
+  })
+  let jsonSchema = convertedSchemas['schema'].getJsonSchema()
+  // EFilingBatchXML is the root element. We only need to keep 'EFilingBatchXML' in 'properties'.
+  jsonSchema.properties = pick(jsonSchema.properties, 'EFilingBatchXML')
+  jsonSchema = omit(jsonSchema, 'anyOf')
+  jsonSchema = augmentJsonSchema(
+    xml,
+    jsonSchema,
+    AttributeInfos as any as {
+      [key: string]: { title: string; description: string }
     }
+  )
+  // manually manipulating the jsonSchema to add required behavior
+  jsonSchema = removeActivityBlockOrder(jsonSchema)
+  jsonSchema = manualValidation(jsonSchema)
+  jsonSchema['definitions'] = agumentUiSchema(jsonSchema['definitions'])
+  fs.writeFileSync(
+    path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema.ts'),
+    `export const FincenJsonSchema = ${JSON.stringify(jsonSchema, null, 2)}`
+  )
 
-    const convertedSchemas = xs2js.processAllSchemas({
-      schemas,
-    })
-    let jsonSchema = convertedSchemas['schema'].getJsonSchema()
-
-    // EFilingBatchXML is the root element. We only need to keep 'EFilingBatchXML' in 'properties'.
-    jsonSchema.properties = pick(jsonSchema.properties, 'EFilingBatchXML')
-    jsonSchema = omit(jsonSchema, 'anyOf')
-    jsonSchema = augmentJsonSchema(
-      xml,
-      jsonSchema,
-      AttributeInfos as any as {
-        [key: string]: { title: string; description: string }
-      }
-    )
-
-    Object.keys(schemas).forEach((key) => {
-      fs.writeFileSync(
-        `${key}.json`,
-        JSON.stringify(convertedSchemas[key].getJsonSchema(), null, 2)
-          .split('FORWARD_REFERENCE')
-          .join(''),
-        'utf8'
-      )
-    })
-
-    // manually manipulating the jsonSchema to add required behavior
-    jsonSchema = removeActivityBlockOrder(jsonSchema)
-    jsonSchema = manualValidation(jsonSchema)
-    const stringifiedJson = JSON.stringify(jsonSchema, null, 2)
-    // stringifiedJson = stringifiedJson.split('FORWARD_REFERENCE').join('')
-
-    fs.writeFileSync(
-      path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema.ts'),
-      `export const FincenJsonSchema = ${stringifiedJson}`
-    )
-    // TODO: the modified xml have path external link, update script to download it locaaly and updat ethe include path
-    const ts = await compile(JSON.parse(stringifiedJson), 'EFL_CTRXBatchSchema')
+  void compile(jsonSchema, 'EFL_CTRXBatchSchema').then((ts) => {
     fs.writeFileSync(
       path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema.type.ts'),
       ts
     )
-  } catch (error) {
-    console.error(error)
-  } finally {
-    fs.unlinkSync('schema.json')
-    for (let i = 0; i < filesToDelete; i++) {
-      fs.unlinkSync(`${i}.json`)
-    }
-    removeFolder()
-  }
+  })
+
+  const stringifiedJson = await resolveSchema(jsonSchema)
+
+  fs.writeFileSync(
+    path.join(__dirname, '..', 'resources', 'EFL_CTRXBatchSchema_Resolved.ts'),
+    `export const FincenJsonSchemaResolved = ${stringifiedJson}`
+  )
+}
+
+async function resolveSchema(schema: string) {
+  const dereferencedSchema = await $RefParser.dereference(schema)
+  delete dereferencedSchema.properties
+  return JSON.stringify(dereferencedSchema)
 }
 
 main()
   .then(() => console.log('Execution completed'))
-  .catch((e) => console.log(e))
+  .catch((e) => console.error(e))
