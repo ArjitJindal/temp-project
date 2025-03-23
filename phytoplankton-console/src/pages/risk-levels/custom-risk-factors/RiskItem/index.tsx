@@ -25,7 +25,7 @@ export default function () {
   const isSimulationMode = window.localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
   const { type = 'consumer', mode = 'read', id, key } = useParams();
   return (
-    <Feature name="RISK_SCORING_V8" fallback={'Not enabled'}>
+    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper
         storageKey={'SIMULATION_CUSTOM_RISK_FACTORS'}
         nonSimulationDefaultUrl="/risk-levels/custom-risk-factors/"
@@ -130,7 +130,6 @@ const RiskItem = (props: Props) => {
       type={type}
       id={id}
       riskClassificationValues={riskClassificationValues}
-      navigateToRiskFactors={navigateToRiskFactors}
       mode={mode}
     />
   );
@@ -218,12 +217,12 @@ interface RiskItemFormProps {
   type: 'consumer' | 'business' | 'transaction';
   id?: string;
   riskClassificationValues: RiskClassificationScore[];
-  navigateToRiskFactors: () => void;
   mode: string;
 }
 
 function RiskItemForm(props: RiskItemFormProps) {
-  const { type, id, riskClassificationValues, navigateToRiskFactors, mode } = props;
+  const { type, id, riskClassificationValues, mode } = props;
+  const navigate = useNavigate();
   const api = useApi();
   const queryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
     if (id) {
@@ -231,6 +230,16 @@ function RiskItemForm(props: RiskItemFormProps) {
     }
     return null;
   });
+
+  const navigateToRiskFactor = (riskFactorId: string) => {
+    navigate(
+      makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
+        type,
+        id: riskFactorId,
+      }),
+    );
+  };
+
   const queryClient = useQueryClient();
   const updateRiskFactorMutation = useMutation(
     async ({
@@ -251,7 +260,7 @@ function RiskItemForm(props: RiskItemFormProps) {
     },
     {
       onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactors();
+        navigateToRiskFactor(newRiskFactor.id);
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor updated - ${newRiskFactor.id}`);
       },
@@ -273,7 +282,7 @@ function RiskItemForm(props: RiskItemFormProps) {
     },
     {
       onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactors();
+        navigateToRiskFactor(newRiskFactor.id);
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor created - ${newRiskFactor.id}`);
       },
