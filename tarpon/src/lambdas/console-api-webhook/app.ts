@@ -20,6 +20,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { envIs } from '@/utils/env'
 import { WebhookDeliveryTask } from '@/@types/webhook'
 import { isJsonString } from '@/utils/object'
+import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 
 export const webhookConfigurationHandler = lambdaApi()(
   async (
@@ -123,24 +124,20 @@ export const webhookConfigurationHandler = lambdaApi()(
       const webhookDeliveryTaskId = request.deliveryTaskId
       // fetch the webhook delivery attempt from the database
       const webhookLatestDeliveryAttempt =
-        await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+        (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
           webhookDeliveryTaskId
-        )
+        )) as WebhookDeliveryAttempt
       if (!webhookLatestDeliveryAttempt) {
         throw new NotFound(
           `Webhook delivery attempt ${webhookDeliveryTaskId} not found`
         )
       }
 
-      const requestBody = JSON.parse(
-        isJsonString(webhookLatestDeliveryAttempt.request.body)
-          ? webhookLatestDeliveryAttempt.request.body
-          : '{}'
-      ) as {
-        createdTimestamp: number
-        data: any
-        triggeredBy: 'MANUAL' | 'SYSTEM'
-      }
+      const requestBody = isJsonString(
+        webhookLatestDeliveryAttempt.request.body
+      )
+        ? JSON.parse(webhookLatestDeliveryAttempt.request.body)
+        : webhookLatestDeliveryAttempt.request.body
 
       const webhookDeliveryTask: WebhookDeliveryTask = {
         _id: webhookDeliveryTaskId,

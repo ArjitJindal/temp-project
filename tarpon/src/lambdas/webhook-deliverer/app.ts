@@ -31,6 +31,7 @@ import {
   getNotExpiredSecrets,
   getWebhookSecrets,
 } from '@/services/webhook/utils'
+import { isJsonString } from '@/utils/object'
 
 export class ClientServerError extends Error {}
 
@@ -149,7 +150,9 @@ export async function simpleSendWebhookRequest(
       eventCreatedAt: webhookDeliveryTask.createdAt,
       request: {
         headers: fetchOptions.headers,
-        body: fetchOptions.body,
+        body: isJsonString(fetchOptions.body)
+          ? JSON.parse(fetchOptions.body)
+          : fetchOptions.body,
       },
       entityId: webhookDeliveryTask.entityId,
       response: response && {
