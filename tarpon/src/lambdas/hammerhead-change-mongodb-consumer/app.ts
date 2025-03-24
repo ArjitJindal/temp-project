@@ -17,6 +17,7 @@ import { User } from '@/@types/openapi-internal/User'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { mergeUserTags } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
+import { addNewSubsegment } from '@/core/xray'
 
 export async function arsScoreEventHandler(
   tenantId: string,
@@ -27,6 +28,10 @@ export async function arsScoreEventHandler(
   if (!arsScore || isDemoTenant(tenantId) || !transactionId) {
     return
   }
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'arsScoreEventHandler'
+  )
   const { mongoDb } = dbClients
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
 
@@ -42,6 +47,7 @@ export async function arsScoreEventHandler(
     riskRepository.addArsValueToMongo(arsScore),
     transactionRepository.updateArsScore(transactionId, arsScore), // If transaction id does not exist, it will not result in an error
   ])
+  subSegment?.close()
 }
 
 export async function drsScoreEventHandler(
@@ -53,7 +59,10 @@ export async function drsScoreEventHandler(
   if (!newDrsScore) {
     return
   }
-
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'drsScoreEventHandler'
+  )
   const riskRepository = new RiskRepository(tenantId, dbClients)
   const userRepository = new UserRepository(tenantId, dbClients)
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
@@ -122,6 +131,7 @@ export async function drsScoreEventHandler(
       ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
       : undefined,
   ])
+  subSegment?.close()
 }
 
 export async function krsScoreEventHandler(
@@ -132,6 +142,10 @@ export async function krsScoreEventHandler(
   if (!krsScore || isDemoTenant(tenantId)) {
     return
   }
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'krsScoreEventHandler'
+  )
   const { mongoDb } = dbClients
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
@@ -144,6 +158,7 @@ export async function krsScoreEventHandler(
       ? userRepository.updateKrsScoreOfUserMongo(krsScore.userId, krsScore)
       : undefined,
   ])
+  subSegment?.close()
 }
 
 export async function avgArsScoreEventHandler(
@@ -154,6 +169,10 @@ export async function avgArsScoreEventHandler(
   if (!newAvgArs) {
     return
   }
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'avgArsScoreEventHandler'
+  )
   const { mongoDb } = dbClients
 
   const userRepository = new UserRepository(tenantId, { mongoDb })
@@ -164,4 +183,5 @@ export async function avgArsScoreEventHandler(
     newAvgArs.userId,
     omit(newAvgArs)
   )
+  subSegment?.close()
 }

@@ -10,6 +10,7 @@ import {
 } from '../utils/context'
 import { logger } from '../logger'
 import { NangoRecord } from '../../@types/nango'
+import { addNewSubsegment, traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
@@ -141,6 +142,7 @@ type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
 
+@traceable
 export class StreamConsumerBuilder {
   name: string
   fanOutSqsQueue: string
@@ -269,7 +271,7 @@ export class StreamConsumerBuilder {
     return this
   }
 
-  private async handleDynamoDbUpdates(
+  public async handleDynamoDbUpdates(
     updates: DynamoDbEntityUpdate[],
     dbClients: DbClients
   ) {
@@ -280,6 +282,10 @@ export class StreamConsumerBuilder {
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
+          const acquireLockSubSegment = await addNewSubsegment(
+            'StreamConsumer',
+            `handleDynamoDbUpdates lock ${update.entityId} ${update.type}`
+          )
           if (update.entityId && envIsNot('test', 'local')) {
             await acquireLock(dbClients.dynamoDb, update.entityId, {
               startingDelay: 500,
@@ -293,13 +299,14 @@ export class StreamConsumerBuilder {
               await releaseLock(dbClients.dynamoDb, update.entityId)
             }
           }
+          acquireLockSubSegment?.close()
         }
         await this.handleDynamoDbUpdateGroup(groupUpdates, dbClients)
       })
     )
   }
 
-  private async handleDynamoDbUpdateGroup(
+  public async handleDynamoDbUpdateGroup(
     groupUpdates: DynamoDbEntityUpdate[],
     dbClients: DbClients
   ) {
@@ -332,7 +339,7 @@ export class StreamConsumerBuilder {
     }
   }
 
-  private async handleDynamoDbUpdate(
+  public async handleDynamoDbUpdate(
     update: DynamoDbEntityUpdate,
     dbClients: DbClients
   ): Promise<any> {

@@ -57,7 +57,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { NangoRecord } from '@/@types/nango'
-import { traceable } from '@/core/xray'
+import { addNewSubsegment, traceable } from '@/core/xray'
 
 @traceable
 export class TarponChangeMongoDbConsumer {
@@ -169,6 +169,7 @@ export class TarponChangeMongoDbConsumer {
     if (!newUser || !newUser.userId) {
       return
     }
+    const subSegment = await addNewSubsegment('StreamConsumer', 'handleUser')
     updateLogMetadata({ userId: newUser.userId })
 
     logger.info(`Processing User`)
@@ -292,6 +293,7 @@ export class TarponChangeMongoDbConsumer {
         parameters: { userIds: [internalUser.userId] },
       })
     }
+    subSegment?.close()
   }
 
   async handleTransaction(
@@ -306,6 +308,10 @@ export class TarponChangeMongoDbConsumer {
     ) {
       return
     }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction'
+    )
     updateLogMetadata({ transactionId: transaction.transactionId })
     logger.info(`Processing Transaction`)
 
@@ -334,17 +340,33 @@ export class TarponChangeMongoDbConsumer {
     const settings = await tenantSettings(tenantId)
     const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
     const v8RiskScoringEnabled = settings.features?.includes('RISK_SCORING_V8')
+    const arsScoreSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction arsScore'
+    )
     const arsScore =
       isRiskScoringEnabled || v8RiskScoringEnabled
         ? await riskScoringService.getArsScore(transaction.transactionId)
         : undefined
 
+    arsScoreSubSegment?.close()
+
     if ((v8RiskScoringEnabled || isRiskScoringEnabled) && !arsScore) {
       logger.error(`ARS score not found for transaction. Recalculating async`)
     }
 
+    const existingTransactionSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction existingTransaction'
+    )
     const existingTransaction = await transactionsRepo.getTransactionById(
       transaction.transactionId
+    )
+    existingTransactionSubSegment?.close()
+
+    const transactionInMongoSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction transactionInMongo'
     )
     const [transactionInMongo, ruleInstances, deployingRuleInstances] =
       await Promise.all([
@@ -363,16 +385,22 @@ export class TarponChangeMongoDbConsumer {
         ),
         ruleInstancesRepo.getDeployingRuleInstances(),
       ])
+    transactionInMongoSubSegment?.close()
+
     const riskService = new RiskService(tenantId, {
       dynamoDb,
       mongoDb,
     })
+    const deployingFactorsSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction deployingFactors'
+    )
     const deployingFactors = v8RiskScoringEnabled
       ? (await riskService.getAllRiskFactors()).filter(
           (factor) => factor.status === 'DEPLOYING'
         )
       : []
-
+    deployingFactorsSubSegment?.close()
     // Update rule aggregation data for the transactions created when the rule is still deploying
     if (deployingRuleInstances.length > 0 || deployingFactors.length > 0) {
       const transactionEventRepository = new TransactionEventRepository(
@@ -381,10 +409,22 @@ export class TarponChangeMongoDbConsumer {
           dynamoDb,
         }
       )
+
+      const transactionEventsSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction transactionEvents'
+      )
       const transactionEvents =
         await transactionEventRepository.getTransactionEvents(
           transaction.transactionId
         )
+
+      transactionEventsSubSegment?.close()
+
+      const v8AggregationSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction v8Aggregation'
+      )
       await Promise.all([
         ...deployingRuleInstances.map(async (ruleInstance) => {
           if (!runOnV8Engine(ruleInstance)) {
@@ -406,6 +446,7 @@ export class TarponChangeMongoDbConsumer {
           )
         }),
       ])
+      v8AggregationSubSegment?.close()
     }
 
     const caseCreationService = new CaseCreationService(tenantId, {
@@ -417,9 +458,14 @@ export class TarponChangeMongoDbConsumer {
 
     const timestampBeforeCasesCreation = Date.now()
 
+    const transactionUsersSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction transactionUsers'
+    )
     const transactionUsers = await caseCreationService.getTransactionSubjects(
       transaction
     )
+    transactionUsersSubSegment?.close()
 
     const ruleWithAdvancedOptions = ruleInstances.filter(
       (ruleInstance) =>
@@ -427,23 +473,32 @@ export class TarponChangeMongoDbConsumer {
         !isEmpty(ruleInstance.riskLevelsTriggersOnHit)
     )
 
+    const casesSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction cases'
+    )
     const cases = await caseCreationService.handleTransaction(
       transactionInMongo,
       ruleInstances as RuleInstance[],
       transactionUsers
     )
-
+    casesSubSegment?.close()
     const { ORIGIN, DESTINATION } = transactionUsers ?? {}
     if (
       ruleWithAdvancedOptions?.length &&
       (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
     ) {
+      const userServiceSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction handleUserStatusUpdateTrigger'
+      )
       await userService.handleUserStatusUpdateTrigger(
         transaction.hitRules,
         ruleInstances as RuleInstance[],
         ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
         DESTINATION?.type === 'USER' ? DESTINATION?.user : null
       )
+      userServiceSubSegment?.close()
     }
 
     // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
@@ -457,6 +512,10 @@ export class TarponChangeMongoDbConsumer {
             mongoDb,
           }
         )
+        const drsScoreSubSegment = await addNewSubsegment(
+          'StreamConsumer',
+          'handleTransaction drsScore'
+        )
         const [originDrsScore, destinationDrsScore] = await Promise.all([
           ORIGIN?.type === 'USER'
             ? riskScoringV8Service.getDrsScore(ORIGIN.user.userId)
@@ -465,38 +524,60 @@ export class TarponChangeMongoDbConsumer {
             ? riskScoringV8Service.getDrsScore(DESTINATION.user.userId)
             : Promise.resolve(undefined),
         ])
+        drsScoreSubSegment?.close()
+
+        const updateDrsScoreSubSegment = await addNewSubsegment(
+          'StreamConsumer',
+          'handleTransaction updateDrsScore'
+        )
         await casesRepo.updateDynamicRiskScores(
           pick(transaction, ['transactionId', 'hitRules']),
           originDrsScore?.drsScore,
           destinationDrsScore?.drsScore
         )
+        updateDrsScoreSubSegment?.close()
         logger.info(`DRS Updated in Cases`)
       } else {
         logger.info(`Calculating ARS & DRS`)
-
+        const updateDynamicRiskScoresSubSegment = await addNewSubsegment(
+          'StreamConsumer',
+          'handleTransaction updateDynamicRiskScores'
+        )
         const { originDrsScore, destinationDrsScore } =
           await riskScoringService.updateDynamicRiskScores(
             transaction,
             !arsScore
           )
-
+        updateDynamicRiskScoresSubSegment?.close()
         logger.info(`Calculation of ARS & DRS Completed`)
 
+        const casesUpdateSubSegment = await addNewSubsegment(
+          'StreamConsumer',
+          'handleTransaction casesUpdateDrsScore'
+        )
         await casesRepo.updateDynamicRiskScores(
           pick(transaction, ['transactionId', 'hitRules']),
           originDrsScore,
           destinationDrsScore
         )
+        casesUpdateSubSegment?.close()
 
         logger.info(`DRS Updated in Cases`)
       }
     }
+
+    const handleNewCasesSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction handleNewCases'
+    )
 
     await caseCreationService.handleNewCases(
       tenantId,
       timestampBeforeCasesCreation,
       cases
     )
+    handleNewCasesSubSegment?.close()
+    subSegment?.close()
   }
 
   async handleUserEvent(
@@ -507,6 +588,10 @@ export class TarponChangeMongoDbConsumer {
     if (!userEvent || !userEvent.eventId) {
       return
     }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleUserEvent'
+    )
 
     updateLogMetadata({
       userId: userEvent.userId,
@@ -524,6 +609,7 @@ export class TarponChangeMongoDbConsumer {
         createdAt: Date.now(),
       }
     )
+    subSegment?.close()
   }
 
   async handleAlert(
@@ -534,6 +620,8 @@ export class TarponChangeMongoDbConsumer {
     if (!alert || !alert.alertId || dbClients) {
       return
     }
+    const subSegment = await addNewSubsegment('StreamConsumer', 'handleAlert')
+    subSegment?.close()
   }
 
   async handleAlertComment(
@@ -544,6 +632,11 @@ export class TarponChangeMongoDbConsumer {
     if (!alertComment || !alertComment.id) {
       return
     }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleAlertComment'
+    )
+    subSegment?.close()
 
     // TODO: Implement if required
   }
@@ -557,6 +650,11 @@ export class TarponChangeMongoDbConsumer {
     if (!alertFile || !alertFile.s3Key) {
       return
     }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleAlertFile'
+    )
+    subSegment?.close()
 
     // TODO: Implement if required
   }
@@ -566,6 +664,12 @@ export class TarponChangeMongoDbConsumer {
     newNangoRecord: Omit<NangoRecord & object, 'data'>,
     dbClients: DbClients
   ): Promise<void> {
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleNangoRecord'
+    )
+    subSegment?.close()
+
     await new NangoRepository(
       tenantId,
       dbClients.dynamoDb
@@ -580,6 +684,10 @@ export class TarponChangeMongoDbConsumer {
     if (!transactionEvent || !transactionEvent.eventId) {
       return
     }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransactionEvent'
+    )
 
     updateLogMetadata({
       transactionId: transactionEvent.transactionId,
@@ -596,6 +704,7 @@ export class TarponChangeMongoDbConsumer {
         createdAt: Date.now(),
       }
     )
+    subSegment?.close()
   }
 
   async handleRuleStats(
@@ -603,6 +712,10 @@ export class TarponChangeMongoDbConsumer {
     executedRules: Array<ExecutedRulesResult>,
     dbClients: DbClients
   ): Promise<void> {
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleRuleStats'
+    )
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb: dbClients.dynamoDb,
     })
@@ -614,6 +727,7 @@ export class TarponChangeMongoDbConsumer {
           .map((r) => r.ruleInstanceId),
       },
     ])
+    subSegment?.close()
   }
 }
 
@@ -626,7 +740,17 @@ export const ruleStatsHandler = async (
   executedRules: Array<ExecutedRulesResult>,
   dbClients: DbClients
 ): Promise<void> => {
-  return consumer.handleRuleStats(tenantId, executedRules, dbClients)
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'ruleStatsHandler'
+  )
+  const result = await consumer.handleRuleStats(
+    tenantId,
+    executedRules,
+    dbClients
+  )
+  subSegment?.close()
+  return result
 }
 
 export const transactionEventHandler = async (
@@ -634,7 +758,12 @@ export const transactionEventHandler = async (
   transactionEvent: TransactionEvent | undefined,
   dbClients: DbClients
 ): Promise<void> => {
+  const subSegment = await addNewSubsegment(
+    'StreamConsumer',
+    'transactionEventHandler'
+  )
   await consumer.handleTransactionEvent(tenantId, transactionEvent, dbClients)
+  subSegment?.close()
 }
 
 // Update the exported lambda handlers to use the class methods
