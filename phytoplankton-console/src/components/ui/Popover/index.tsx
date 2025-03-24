@@ -1,6 +1,6 @@
-import { Popover as PopoverAntd } from 'antd';
+import { Popover as PopoverAntd, PopoverProps } from 'antd';
 
-interface Props {
+interface Props extends PopoverProps {
   color?: string;
   content: React.ReactNode;
   title?: string;
@@ -10,9 +10,9 @@ interface Props {
 }
 
 export const Popover = (props: Props): JSX.Element => {
-  const { color, content, title, trigger = 'hover', children } = props;
+  const { color, content, title, trigger = 'hover', children, ...rest } = props;
   return (
-    <PopoverAntd content={content} title={title} color={color} trigger={trigger}>
+    <PopoverAntd content={content} title={title} color={color} trigger={trigger} {...rest}>
       <div>{children}</div>
     </PopoverAntd>
   );

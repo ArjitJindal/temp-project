@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Popover } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
+import Popover from '@/components/ui/Popover';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,
@@ -45,9 +45,7 @@ export default function CommentPopover(props: Props) {
   return (
     <Popover
       trigger="click"
-      placement="bottomRight"
-      visible={isPopoverVisible}
-      onVisibleChange={setPopoverVisible}
+      placement="bottomLeft"
       content={
         <div className={s.commentPopover}>
           <CommentEditor
@@ -55,7 +53,7 @@ export default function CommentPopover(props: Props) {
             ref={commentEditorRef}
             values={commentFormValues}
             submitRes={commentSubmitRes}
-            hideNarrativeTemplateSelect={true}
+            hideNarrativeTemplateSelect
             submitButtonTitle="Add to narrative"
             onChangeValues={setCommentFormValues}
             onSubmit={(values) => {
@@ -65,7 +63,9 @@ export default function CommentPopover(props: Props) {
         </div>
       }
     >
-      <AiForensicsLogo />
+      <div>
+        <AiForensicsLogo />
+      </div>
     </Popover>
   );
 }

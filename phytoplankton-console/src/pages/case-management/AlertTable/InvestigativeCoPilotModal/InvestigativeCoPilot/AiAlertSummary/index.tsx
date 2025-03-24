@@ -43,7 +43,11 @@ export default function AiAlertSummary(props: Props) {
           <AiForensicsLogo /> <span>AI alert summary</span>
         </div>
         <div className={s.extraControls}>
-          <CommentPopover commentSubmitMutation={commentSubmitMutation} summary={summary} />
+          <CommentPopover
+            commentSubmitMutation={commentSubmitMutation}
+            summary={summary}
+            key={alertId}
+          />
           <ReloadButton onClick={onReload} />
           <DownloadButton
             onDownload={async () => {
