@@ -16,6 +16,7 @@ import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import {
   BatchJobNames,
+  CrmIntegrationNames,
   Feature,
   SanctionsSettingsMarketType,
   Tenant,
@@ -38,6 +39,7 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
+import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -172,12 +174,6 @@ export const featureDescriptions: Record<
     description: 'Enables alerts Dynamo POC (Experimental)',
     tag: FeatureTag.ENG,
   },
-
-  CRM_FRESHDESK: {
-    title: 'CRM Freshdesk Integration',
-    description: 'Enables CRM Freshdesk Integration',
-    tag: FeatureTag.WIP,
-  },
 };
 
 export default function SuperAdminPanel() {
@@ -205,9 +201,13 @@ export default function SuperAdminPanel() {
     features?.includes('OPEN_SANCTIONS') ||
     features?.includes('DOW_JONES');
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
+  const isCrmToBeEnabled = features?.includes('CRM');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
 
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
+  const [crmIntegrationName, setCrmIntegrationName] = useState<CrmIntegrationNames | undefined>(
+    settings.crmIntegrationName ?? undefined,
+  );
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList(), {
@@ -336,6 +336,7 @@ export default function SuperAdminPanel() {
       ...(features && { features }),
       ...(limits && { limits }),
       sanctions: sanctionsSettings,
+      crmIntegrationName,
     });
   };
   const showModal = () => {
@@ -484,6 +485,18 @@ export default function SuperAdminPanel() {
             >
               Reset current API key view count
             </Button>
+            {isCrmToBeEnabled && (
+              <Label label="Select a CRM">
+                <Select
+                  options={CRM_INTEGRATION_NAMESS.map((name) => ({
+                    label: humanizeConstant(name),
+                    value: name,
+                  }))}
+                  value={crmIntegrationName}
+                  onChange={(v) => v && setCrmIntegrationName(v)}
+                />
+              </Label>
+            )}
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <Label label="ComplyAdvantage settings">
                 <Label level={2} label="Market type" required={{ value: true, showHint: true }}>

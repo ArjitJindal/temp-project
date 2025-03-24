@@ -3,6 +3,9 @@ import { InternalConsumerUser, InternalBusinessUser } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
+import SalesForceIcon from '@/components/ui/icons/salesforce.react.svg';
+import FreshdeskIcon from '@/components/ui/icons/freshdesk.react.svg';
+import ZendeskIcon from '@/components/ui/icons/zendesk.react.svg';
 
 export const useConsoleUser = (
   id?: string,
@@ -14,4 +17,21 @@ export const useConsoleUser = (
     }
     return api.getUsersItem({ userId: id });
   });
+};
+
+export const CRM_ICON_MAP = {
+  FRESHDESK: FreshdeskIcon,
+  SALESFORCE: SalesForceIcon,
+  ZENDESK: ZendeskIcon,
+} as const;
+
+export const getModelName = (model) => {
+  switch (model) {
+    case 'SalesforceTicket':
+      return 'Salesforce';
+    case 'FreshDeskTicket':
+      return 'Freshdesk';
+    default:
+      return 'Zendesk';
+  }
 };

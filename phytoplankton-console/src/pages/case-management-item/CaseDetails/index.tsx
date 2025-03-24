@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
@@ -26,14 +27,13 @@ import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
-import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import Linking from '@/pages/users-item/UserDetails/Linking';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
 import { notEmpty } from '@/utils/array';
@@ -51,6 +51,8 @@ import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import Tooltip from '@/components/library/Tooltip';
+import { CRM_ICON_MAP } from '@/pages/users-item/UserDetails/utils';
 import {
   useLinkingState,
   useUserEntityFollow,
@@ -185,6 +187,7 @@ function useTabs(
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
+  const settings = useSettings();
 
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
@@ -296,17 +299,23 @@ function useTabs(
         isDisabled: false,
       },
     user &&
-      isCrmEnabled && {
-        title: (
-          <div className={style.icon}>
-            {' '}
-            <BrainIcon /> <span>&nbsp; CRM data</span>
-          </div>
-        ),
+      isCrmEnabled &&
+      settings.crmIntegrationName && {
+        title: humanizeAuto(settings.crmIntegrationName),
         key: 'crm-monitoring',
         children: user.userId ? <CRMMonitoring userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,
+        Icon: settings.crmIntegrationName
+          ? React.createElement(
+              CRM_ICON_MAP[settings.crmIntegrationName as keyof typeof CRM_ICON_MAP],
+            )
+          : null,
+        TrailIcon: (
+          <Tooltip title="Connected">
+            <div className={style.connected} />
+          </Tooltip>
+        ),
       },
     isUserSubject &&
       user &&

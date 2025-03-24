@@ -53,7 +53,16 @@ export default function PageTabs(props: Props) {
       tabBarExtraContent={tabBarExtraContent}
     >
       {items?.map((item: TabItemWithPermissions) => {
-        const { title, key, children, isClosable, isDisabled, requiredPermissions } = item;
+        const {
+          title,
+          key,
+          children,
+          isClosable,
+          isDisabled,
+          requiredPermissions,
+          Icon,
+          TrailIcon,
+        } = item;
         const isEnabled = requiredPermissions?.length
           ? requiredPermissions.some((permission) => permissions.get(permission))
           : true;
@@ -61,8 +70,10 @@ export default function PageTabs(props: Props) {
         return (
           <AntTabs.TabPane
             tab={
-              <span data-sentry-allow={true} className={s.tabTitleWrapper}>
-                {title}
+              <span className={cn(s.tab_span)} data-sentry-allow={true}>
+                {Icon && <div className={cn(s.icon, s.center)}>{Icon}</div>}
+                <span>{title}</span>
+                {TrailIcon && <div className={cn(s.center)}>{TrailIcon}</div>}
               </span>
             }
             key={key}

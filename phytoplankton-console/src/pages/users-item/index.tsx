@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import ExpectedTransactionLimits from './UserDetails/shared/TransactionLimits';
 import UserDetails from './UserDetails';
 import Header from './Header';
@@ -8,7 +9,7 @@ import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
-import { useConsoleUser } from './UserDetails/utils';
+import { CRM_ICON_MAP, useConsoleUser } from './UserDetails/utils';
 import { useLinkingState, useUserEntityFollow } from './UserDetails/Linking/UserGraph';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
@@ -29,12 +30,12 @@ import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTran
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
 import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
 import { CommentType } from '@/utils/user-utils';
+import Tooltip from '@/components/library/Tooltip';
 import Alert from '@/components/library/Alert';
 
 export default function UserItem() {
@@ -43,9 +44,9 @@ export default function UserItem() {
 
   const queryClient = useQueryClient();
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
-  const hasFreshdeskEnabled = useFeatureEnabled('CRM_FRESHDESK');
-  const isCrmEnabled = useFeatureEnabled('CRM') || hasFreshdeskEnabled;
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const settings = useSettings();
+  const isCrmEnabled = useFeatureEnabled('CRM');
 
   const handleNewTags = (tags: UserTag[]) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
@@ -205,21 +206,16 @@ export default function UserItem() {
             isClosable: false,
             isDisabled: false,
           },
-          ...(isCrmEnabled
+          ...(isCrmEnabled && settings.crmIntegrationName
             ? [
                 {
-                  title: (
-                    <div className={s.icon}>
-                      {' '}
-                      <BrainIcon /> <span>&nbsp; CRM data</span>
-                    </div>
-                  ),
+                  title: humanizeAuto(settings.crmIntegrationName),
                   key: 'crm-monitoring',
                   children: (
                     <AsyncResourceRenderer resource={userRes}>
                       {(user) => (
                         <CRMMonitoring
-                          userId={userId}
+                          userId={user.userId}
                           userEmail={
                             user.type === 'CONSUMER'
                               ? user?.contactDetails?.emailIds?.[0] ?? ''
@@ -233,6 +229,16 @@ export default function UserItem() {
                   ),
                   isClosable: false,
                   isDisabled: false,
+                  Icon: settings.crmIntegrationName
+                    ? React.createElement(
+                        CRM_ICON_MAP[settings.crmIntegrationName as keyof typeof CRM_ICON_MAP],
+                      )
+                    : null,
+                  TrailIcon: (
+                    <Tooltip title="Connected">
+                      <div className={s.connected} />
+                    </Tooltip>
+                  ),
                 },
               ]
             : []),

@@ -9618,6 +9618,13 @@ components:
         - SYNC_AUTH0_DATA
         - FAILING_BATCH_JOB
         - DELTA_SANCTIONS_DATA_FETCH
+    CrmIntegrationNames:
+      title: CrmIntegrationNames
+      type: string
+      enum:
+        - FRESHDESK
+        - SALESFORCE
+        - ZENDESK
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount
@@ -10711,6 +10718,8 @@ components:
           type: number
         webhookSettings:
           $ref: '#/components/schemas/WebhookSettings'
+        crmIntegrationName:
+          $ref: '#/components/schemas/CrmIntegrationNames'
     NangoPostConnect:
       title: NangoPostConnect
       type: object
@@ -11455,7 +11464,6 @@ components:
         - CONCURRENT_DYNAMODB_CONSUMER
         - ALERTS_DYNAMO_POC
         - ACURIS
-        - CRM_FRESHDESK
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

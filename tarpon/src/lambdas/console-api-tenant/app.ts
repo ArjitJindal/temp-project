@@ -86,6 +86,7 @@ const assertSettings = (settings: TenantSettings) => {
     isAiEnabled: ['settings:add-ons:write'],
     isMlEnabled: ['settings:add-ons:write'],
     webhookSettings: ['settings:developers:write'],
+    crmIntegrationName: ['settings:users:write'],
   }
 
   let hasPermission = true

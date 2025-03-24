@@ -133,6 +133,12 @@ export function useFeaturesEnabled(features: FeatureName[]): boolean {
   return features.every((feature) => enabledFeatures.includes(feature));
 }
 
+export function useFreshdeskCrmEnabled(): boolean {
+  const settings = useSettings();
+  const crmFeatureEnabled = useFeatureEnabled('CRM');
+  return settings.crmIntegrationName === 'FRESHDESK' && crmFeatureEnabled;
+}
+
 export function Feature(props: {
   name: FeatureName | FeatureName[];
   children: React.ReactNode;

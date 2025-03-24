@@ -33,7 +33,10 @@ import { ReasonsSettings } from './components/ReasonsSettings';
 import { CRMSettings } from './components/CRMSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  useFreshdeskCrmEnabled,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import Alert from '@/components/library/Alert';
@@ -180,9 +183,7 @@ export default function SettingsPage() {
               <>
                 <FlagrightAISettings />
                 <FlagrightMLSettings />
-                <Feature name="CRM_FRESHDESK">
-                  <CRMSettings />
-                </Feature>
+                {useFreshdeskCrmEnabled() && <CRMSettings />}
               </>
             ),
           },

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getModelName } from '../utils';
 import s from './index.module.less';
 import SalesForceIcon from '@/components/ui/icons/Remix/logos/salesforce.react.svg';
 import ExternalLinkIcon from '@/components/ui/icons/external-link-icon.react.svg';
@@ -10,17 +11,6 @@ interface Props {
   link: string;
   model?: CrmModelType;
 }
-
-const getModelName = (model) => {
-  switch (model) {
-    case 'SalesforceTicket':
-      return 'Salesforce';
-    case 'FreshDeskTicket':
-      return 'Freshdesk';
-    default:
-      return 'Zendesk';
-  }
-};
 
 const CompanyHeader = (props: Props) => {
   const { link, model } = props;
