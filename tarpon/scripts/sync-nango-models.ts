@@ -64,11 +64,20 @@ const main = () => {
   }
 
   for (const [modelName, fields] of Object.entries(nangoYaml.models)) {
-    const properties: any = {}
+    let newFields = fields
+    let properties: any = {}
 
     const required: string[] = []
 
-    for (const [field, fieldType] of Object.entries(fields as any)) {
+    const extendsModel = (fields as any).__extends
+
+    if (extendsModel) {
+      const extendsModelFields = nangoYaml.models[extendsModel]
+      properties = { ...properties, ...extendsModelFields }
+      newFields = extendsModelFields
+    }
+
+    for (const [field, fieldType] of Object.entries(newFields as any)) {
       const type = fieldType as string
       properties[field] = convertFieldType(type)
       if (!type.includes(' | null')) {
