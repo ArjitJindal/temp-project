@@ -277,6 +277,7 @@ function RiskItemForm(props: RiskItemFormProps) {
           type,
           riskClassificationValues,
           id,
+          riskFactorFormValues?.v2Props,
         ),
       });
     },

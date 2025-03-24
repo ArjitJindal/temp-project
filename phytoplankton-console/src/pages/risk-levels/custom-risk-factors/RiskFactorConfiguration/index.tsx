@@ -156,7 +156,9 @@ export const RiskFactorConfiguration = (props: Props) => {
             readonly={!canWriteRiskFactors || mode === 'READ'}
             onActiveStepChange={setActiveStepKey}
             onSubmit={(formValues) => {
-              handleSaveParameters();
+              if (formValues.v2Props) {
+                handleSaveParameters();
+              }
               onSubmit(formValues, riskItem);
             }}
             id={id}
@@ -304,8 +306,12 @@ export function serializeRiskItem(
   type: 'consumer' | 'business' | 'transaction',
   riskClassificationValues: RiskClassificationScore[],
   riskFactorId?: string,
+  v2Props?: {
+    parameter: ParameterName;
+    item: RiskFactor;
+  },
 ): RiskFactorsPostRequest {
-  return {
+  const baseRequest = {
     name: riskFactorFormValues.basicDetailsStep.name ?? '',
     description: riskFactorFormValues.basicDetailsStep.description ?? '',
     status: 'ACTIVE',
@@ -325,5 +331,15 @@ export function serializeRiskItem(
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
     type: type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
     riskFactorId,
-  };
+  } as RiskFactorsPostRequest;
+  if (v2Props) {
+    return {
+      ...baseRequest,
+      parameter: v2Props.parameter,
+      dataType: v2Props.item.dataType,
+      valueType: v2Props.item.valueType,
+      riskLevelAssignmentValues: v2Props.item.riskLevelAssignmentValues,
+    } as RiskFactorsPostRequest;
+  }
+  return baseRequest;
 }
