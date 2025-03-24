@@ -70,9 +70,10 @@ export function agumentUiSchema(jsonSchema: any) {
       }
     }
     if (key === phoneType || value?.['$ref']?.includes(phoneType)) {
-      value['ui:schema'] = {
-        'ui:subtype': 'FINCEN_PHONE_NUMBER',
-      }
+      // TODO: fix for STR
+      // value['ui:schema'] = {
+      //   'ui:subtype': 'FINCEN_PHONE_NUMBER',
+      // }
     }
     if (key === countryType || value?.['$ref']?.includes(countryType)) {
       value['ui:schema'] = {
@@ -85,10 +86,11 @@ export function agumentUiSchema(jsonSchema: any) {
         'ui:countryField': 'RawCountryCodeText',
       }
     }
+    // TODO: fix for CTR
     if (key === emailType || value?.['$ref']?.includes(emailType)) {
-      value['ui:schema'] = {
-        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-      }
+      // value['ui:schema'] = {
+      //   'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+      // }
     }
 
     // Recursively apply if nested

@@ -2,7 +2,7 @@ export const FincenJsonSchemaResolved = {
   $id: 'schema.json',
   $schema: 'http://json-schema.org/draft-07/schema#',
   title:
-    'This JSON Schema file was generated from schema on Sat Mar 22 2025 00:02:47 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
+    'This JSON Schema file was generated from schema on Sun Mar 23 2025 16:44:10 GMT+0530 (India Standard Time).  For more information please see http://www.xsd2jsonschema.org',
   description:
     "Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'",
   type: 'object',
@@ -282,9 +282,6 @@ export const FincenJsonSchemaResolved = {
         },
       },
       type: 'object',
-      'ui:schema': {
-        'ui:subtype': 'FINCEN_PHONE_NUMBER',
-      },
     },
     ElectronicAddressType: {
       required: [],
@@ -299,9 +296,6 @@ export const FincenJsonSchemaResolved = {
         },
       },
       type: 'object',
-      'ui:schema': {
-        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-      },
     },
     AccountType: {
       required: [],
@@ -1186,9 +1180,6 @@ export const FincenJsonSchemaResolved = {
                               title: 'Telephone number',
                               description:
                                 'This is the container for information about the telephone number of the party',
-                              'ui:schema': {
-                                'ui:subtype': 'FINCEN_PHONE_NUMBER',
-                              },
                               required: [],
                               properties: {
                                 PhoneNumberExtensionText: {
@@ -1402,9 +1393,6 @@ export const FincenJsonSchemaResolved = {
                               title: 'Electronic address',
                               description:
                                 'This is the container for information about the subject`s e-mail address or website URL (Uniform Resource Locator). ',
-                              'ui:schema': {
-                                'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-                              },
                               required: [],
                               properties: {
                                 ElectronicAddressText: {
@@ -2063,9 +2051,6 @@ export const FincenJsonSchemaResolved = {
                         title: 'Telephone number',
                         description:
                           'This is the container for information about the telephone number of the party',
-                        'ui:schema': {
-                          'ui:subtype': 'FINCEN_PHONE_NUMBER',
-                        },
                         required: [],
                         properties: {
                           PhoneNumberExtensionText: {
@@ -2276,9 +2261,6 @@ export const FincenJsonSchemaResolved = {
                         title: 'Electronic address',
                         description:
                           'This is the container for information about the subject`s e-mail address or website URL (Uniform Resource Locator). ',
-                        'ui:schema': {
-                          'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-                        },
                         required: [],
                         properties: {
                           ElectronicAddressText: {
@@ -2832,9 +2814,6 @@ export const FincenJsonSchemaResolved = {
               title: 'Telephone number',
               description:
                 'This is the container for information about the telephone number of the party',
-              'ui:schema': {
-                'ui:subtype': 'FINCEN_PHONE_NUMBER',
-              },
               required: [],
               properties: {
                 PhoneNumberExtensionText: {
@@ -3044,9 +3023,6 @@ export const FincenJsonSchemaResolved = {
               title: 'Electronic address',
               description:
                 'This is the container for information about the subject`s e-mail address or website URL (Uniform Resource Locator). ',
-              'ui:schema': {
-                'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
-              },
               required: [],
               properties: {
                 ElectronicAddressText: {

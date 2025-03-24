@@ -126,7 +126,7 @@ async function main() {
 async function resolveSchema(schema: string) {
   const dereferencedSchema = await $RefParser.dereference(schema)
   delete dereferencedSchema.properties
-  return JSON.stringify(dereferencedSchema)
+  return JSON.stringify(dereferencedSchema, null, 2)
 }
 
 main()

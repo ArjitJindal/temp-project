@@ -95,7 +95,6 @@ function pickResolvedEntityFields(
     // Append remaining picked fields (not in overrides)
     const remaining = omit(picked, Object.keys(overrides))
     Object.assign(result, remaining)
-    console.log(entityName, result)
     return {
       type: 'object',
       properties: result,
@@ -106,34 +105,24 @@ function pickResolvedEntityFields(
   }
 }
 
+const legalPartyName = pickEntityFields(
+  'PartyNameType',
+  ['RawPartyFullName'],
+  ['RawPartyFullName']
+)
+
+const alternateParyName = pickEntityFields(
+  'PartyNameType',
+  ['PartyNameTypeCode', 'RawPartyFullName'],
+  ['PartyNameTypeCode', 'RawPartyFullName'],
+  {
+    PartyNameTypeCode: pickPartyNameTypeCodeSubset(['AKA', 'DBA']),
+  }
+)
+
 function pickPartyIdentificationTypeCodeSubset(codes: string[]) {
   const newValidatePartyIdentificationCodeType = cloneDeep(
     FincenJsonSchema.definitions.ValidatePartyIdentificationCodeType
-  )
-  const enumIndexes = newValidatePartyIdentificationCodeType.enum
-    .map((e, index) => (codes.includes(e) ? index : null))
-    .filter(isNumber)
-  newValidatePartyIdentificationCodeType.enum =
-    newValidatePartyIdentificationCodeType.enum.filter((_e, index) =>
-      enumIndexes.includes(index)
-    )
-  newValidatePartyIdentificationCodeType.enumNames =
-    newValidatePartyIdentificationCodeType.enumNames.filter((_e, index) =>
-      enumIndexes.includes(index)
-    )
-  return {
-    ...newValidatePartyIdentificationCodeType,
-    ...omit(
-      FincenJsonSchema.definitions.PartyIdentificationType.properties
-        .PartyIdentificationTypeCode,
-      '$ref'
-    ),
-  }
-}
-
-function pickActivityPartyTypeCodeSubset(codes: string[]) {
-  const newValidatePartyIdentificationCodeType = cloneDeep(
-    FincenJsonSchema.definitions.ValidateActivityPartyCodeType
   )
   const enumIndexes = newValidatePartyIdentificationCodeType.enum
     .map((e, index) => (codes.includes(e) ? index : null))
@@ -180,220 +169,6 @@ function pickPartyNameTypeCodeSubset(codes: string[]) {
   }
 }
 
-const UserNotes = {
-  description:
-    'Use this field for any descriptive information you may require. This information will be returned in the acknowledgement file.',
-  ...FincenJsonSchema.definitions.RestrictString9,
-}
-
-export const Transmitter = {
-  type: 'object',
-  title: 'Transmitter',
-  description:
-    'This is the person (individual or entity) handling the data accumulation and formatting of the batch file.',
-  'ui:schema': {
-    'ui:group': 'Transmitter information',
-  },
-  properties: {
-    TransmitterName: {
-      ...pickEntityFields(
-        'PartyNameType',
-        ['PartyNameTypeCode', 'RawPartyFullName'],
-        ['PartyNameTypeCode', 'RawPartyFullName']
-      ),
-      title: 'Transmitter name',
-      description:
-        'Enter the full name of the individual or organization that is transmitting the reports in this file.',
-    },
-    TransmitterAddress: pickEntityFields(
-      'AddressType',
-      [
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-      ],
-      [
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-      ]
-    ),
-    TransmitterTelephoneNumber: pickEntityFields(
-      'PhoneNumberType',
-      ['PhoneNumberExtensionText', 'PhoneNumberText'],
-      ['PhoneNumberText']
-    ),
-    TransmitterContactName: {
-      ...pickEntityFields(
-        'PartyNameType',
-        ['PartyNameTypeCode', 'RawPartyFullName'],
-        ['PartyNameTypeCode', 'RawPartyFullName']
-      ),
-      title: 'Transmitter contact name',
-      description: 'Enter the name of an official contact for the transmitter.',
-    },
-    TransmitterTin: {
-      //4
-      ...pickEntityFields(
-        'PartyIdentificationType',
-        ['PartyIdentificationNumberText'],
-        ['PartyIdentificationNumberText']
-      ),
-      title: 'Transmitter TIN',
-    },
-    TransmitterControlCode: {
-      //28
-      ...pickEntityFields(
-        'PartyIdentificationType',
-        ['PartyIdentificationNumberText'],
-        ['PartyIdentificationNumberText']
-      ),
-      title: 'Transmitter Control Code (TCC)',
-    },
-    UserNotes: {
-      ...UserNotes,
-      title: 'Notes',
-      description:
-        'Use this field for any descriptive information you may require',
-    },
-  },
-  required: [
-    'TransmitterName',
-    'TransmitterAddress',
-    'TransmitterTelephoneNumber',
-    'TransmitterContactName',
-    'TransmitterTin',
-    'TransmitterControlCode',
-  ],
-}
-
-// Search '37 = Transmitter Contact' in the pdf
-export const TransmitterContact = {
-  type: 'object',
-  title: 'Transmitter contact',
-  description: 'This is the official contact for the transmitter.',
-  'ui:schema': {
-    'ui:group': 'Transmitter contact information',
-  },
-  properties: {
-    PartyName: pickEntityFields(
-      'PartyNameType',
-      ['PartyNameTypeCode', 'RawPartyFullName'],
-      ['PartyNameTypeCode', 'RawPartyFullName']
-    ),
-  },
-  required: ['PartyName'],
-}
-
-// Search '30 = Filing institution' in the pdf
-export const FilingInstitution = {
-  type: 'object',
-  title: 'Parent Financial Institution',
-  description:
-    'This is the entity responsible for filing the FinCEN SAR, such as a reporting financial institution or a holding or other parent company filling for its subsidiaries.',
-  'ui:schema': {
-    'ui:group': 'Parent Financial Institution Information',
-  },
-  properties: {
-    InstitutionName: {
-      ...pickEntityFields(
-        // Legal Name
-        'PartyNameType',
-        ['RawPartyFullName'],
-        ['RawPartyFullName']
-      ),
-      title: 'Institution Legal Name',
-      description:
-        'Enter the full legal name of the parent financial institution.',
-    },
-    Address: pickEntityFields(
-      'AddressType',
-      [
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-      ],
-      [
-        'RawCityText',
-        'RawCountryCodeText',
-        'RawStateCodeText',
-        'RawStreetAddress1Text',
-        'RawZIPCode',
-      ]
-    ),
-    InstituionTin: {
-      // SSN or EIN
-      ...pickEntityFields(
-        'PartyIdentificationType',
-        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
-        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
-        {
-          PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
-            '1',
-            '2',
-          ]),
-        }
-      ),
-      title: 'Institution TIN',
-      description:
-        'Enter the parent financial institution’s EIN. If the financial institution does not have an EIN, enter the SSN of the institution’s principal owner. Do not enter hyphens, slashes, alpha characters, or invalid entries such as all nines, all zeros, or“123456789”',
-    },
-    TransmitterControlCode: {
-      // TCC
-      ...pickEntityFields(
-        'PartyIdentificationType',
-        ['PartyIdentificationNumberText'],
-        ['PartyIdentificationNumberText']
-      ),
-      title: 'Transmitter Control Code (TCC)',
-    },
-    UserNotes: {
-      ...UserNotes,
-      title: 'Notes on institution',
-    },
-  },
-  required: [
-    'InstitutionName',
-    'Address',
-    'InstituionTin',
-    'TransmitterControlCode',
-  ],
-}
-
-export const ContactOffice = {
-  type: 'object',
-  title: 'Contact for Assistance',
-  description:
-    'This is the administrative office that should be contacted to obtain additional information about the FinCEN SAR.',
-  'ui:schema': {
-    'ui:group': 'Contact for Assistance Information',
-  },
-  properties: {
-    ContactOfficeName: {
-      ...pickEntityFields(
-        'PartyNameType',
-        ['RawPartyFullName'],
-        ['RawPartyFullName']
-      ),
-      title: 'Administrative officer name',
-      description:
-        'This is the administrative office that should be contacted to obtain additional information about the FinCEN CTR.',
-    },
-    PhoneNumber: pickEntityFields(
-      'PhoneNumberType',
-      ['PhoneNumberExtensionText', 'PhoneNumberText'],
-      ['PhoneNumberText']
-    ),
-  },
-  required: ['ContactOfficeName', 'PhoneNumber'],
-}
-
 const InstituteTypeSubType = (
   pickResolvedEntityFields(
     'Party',
@@ -430,6 +205,195 @@ const InstituteTypeSubType = (
   )?.properties as any
 ).OrganizationClassificationTypeSubtype
 
+// 35 Transmitter
+export const Transmitter = {
+  type: 'object',
+  title: 'Transmitter',
+  description:
+    'This is the person (individual or entity) handling the data accumulation and formatting of the batch file.',
+  'ui:schema': {
+    'ui:group': 'Transmitter information',
+  },
+  properties: {
+    TransmitterName: {
+      ...legalPartyName,
+      title: 'Transmitter name',
+      description:
+        'Enter the full name of the individual or organization that is transmitting the reports in this file.',
+    },
+    TransmitterAddress: pickEntityFields(
+      'AddressType',
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ],
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ]
+    ),
+    TransmitterTelephoneNumber: pickEntityFields(
+      'PhoneNumberType',
+      ['PhoneNumberText'],
+      ['PhoneNumberText']
+    ),
+    TransmitterTin: {
+      //4
+      ...pickEntityFields(
+        'PartyIdentificationType',
+        ['PartyIdentificationNumberText'],
+        ['PartyIdentificationNumberText']
+      ),
+      title: 'Transmitter TIN',
+    },
+  },
+  required: [
+    'TransmitterName',
+    'TransmitterAddress',
+    'TransmitterTelephoneNumber',
+    'TransmitterTin',
+  ],
+}
+
+// 37 = Transmitter Contact
+export const TransmitterContact = {
+  type: 'object',
+  title: 'Transmitter contact',
+  description: 'This is the official contact for the transmitter.',
+  'ui:schema': {
+    'ui:group': 'Transmitter contact information',
+  },
+  properties: {
+    PartyName: {
+      ...legalPartyName,
+      title: 'Legal name',
+    },
+  },
+  required: ['PartyName'],
+}
+
+// 30 = Filing institution
+export const FilingInstitution = {
+  type: 'object',
+  title: 'Parent Financial Institution',
+  description:
+    'This is the entity responsible for filing the FinCEN SAR, such as a reporting financial institution or a holding or other parent company filling for its subsidiaries.',
+  'ui:schema': {
+    'ui:group': 'Parent Financial Institution Information',
+  },
+  properties: {
+    InstitutionName: {
+      ...legalPartyName,
+      title: 'Institution Legal Name',
+      description:
+        'Enter the full legal name of the parent financial institution.',
+    },
+    InstitutionAlternateName: {
+      ...alternateParyName,
+      title: 'Aleternate Institution name',
+    },
+    Address: pickEntityFields(
+      'AddressType',
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ],
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ]
+    ),
+    InstituionEin: {
+      //  EIN
+      ...pickEntityFields(
+        'PartyIdentificationType',
+        ['PartyIdentificationNumberText'],
+        ['PartyIdentificationNumberText']
+      ),
+      title: 'Institution EIN',
+      description:
+        "Enter the parent financial institution's EIN. Do not enter hyphens, slashes, alpha characters, or invalid entries such as all nines, all zeros, or '123456789'",
+    },
+    FinancialInstitutionIdentification: {
+      ...pickResolvedEntityFields(
+        'PartyIdentificationType',
+        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
+        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
+        {
+          PartyIdentificationTypeCode: {
+            ...pickPartyIdentificationTypeCodeSubset([
+              '9',
+              '1',
+              '2',
+              '7',
+              '3',
+              '4',
+              '6',
+              '14',
+            ]),
+            required: true,
+            description: 'Institution identification code',
+          },
+          PartyIdentificationNumberText: {
+            description:
+              'A 10-digit unique identifier for the branch where the transaction occurred. If the code has fewer than 10 digits, add leading zeros',
+          },
+        }
+      ),
+      title: 'Financial Institution Identification (code)',
+    },
+    InstituteTypeSubType: {
+      ...InstituteTypeSubType,
+      title: 'Institution type/subtype',
+    },
+  },
+  required: [
+    'InstitutionName',
+    'Address',
+    'InstituionEin',
+    'FinancialInstitutionIdentification',
+    'InstituteTypeSubType',
+  ],
+}
+
+// 8 = Contact for assistance
+export const ContactOffice = {
+  type: 'object',
+  title: 'Contact for Assistance',
+  description:
+    'This is the administrative office that should be contacted to obtain additional information about the FinCEN SAR.',
+  'ui:schema': {
+    'ui:group': 'Contact for Assistance Information',
+  },
+  properties: {
+    ContactOfficeName: {
+      ...legalPartyName,
+      title: 'Administrative officer name',
+      description:
+        'This is the administrative office that should be contacted to obtain additional information about the FinCEN CTR.',
+    },
+    PhoneNumber: pickEntityFields(
+      'PhoneNumberType',
+      ['PhoneNumberExtensionText', 'PhoneNumberText'],
+      ['PhoneNumberText']
+    ),
+  },
+  required: ['ContactOfficeName', 'PhoneNumber'],
+}
+
+// 34 = Transaction location
 export const TransactionLocation = {
   type: 'object',
   title: 'Financial Institution Where Transaction(s) Take Place',
@@ -451,8 +415,8 @@ export const TransactionLocation = {
     FederalRegulator: {
       ...pickResolvedEntityFields(
         'PartyIdentificationType',
-        ['PrimaryRegulatorTypeCode', 'PartyIdentificationNumberText'],
-        ['PrimaryRegulatorTypeCode', 'PartyIdentificationNumberText'],
+        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
+        ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
         {
           PartyIdentificationTypeCode: {
             ...pickPartyIdentificationTypeCodeSubset([
@@ -478,18 +442,12 @@ export const TransactionLocation = {
         "Enter the financial institution Primary Federal Regulator code for the federal regulator or BSA examiner with primary responsibility for enforcing the institution's Bank Secrecy Act compliance.",
     },
     LegalName: {
-      ...pickEntityFields(
-        // legal name
-        'PartyNameType',
-        ['RawPartyFullName'],
-        ['RawPartyFullName']
-      ),
+      ...legalPartyName,
       title: 'Institution legal name',
       description: 'Enter the financial institution legal name',
     },
     AlternateName: {
       ...pickEntityFields(
-        // legal name
         'PartyNameType',
         ['PartyNameTypeCode', 'RawPartyFullName'],
         ['PartyNameTypeCode', 'RawPartyFullName'],
@@ -563,9 +521,9 @@ export const TransactionLocation = {
     'LocationCode',
     'FederalRegulator',
     'LegalName',
-    'EIN',
     'Address',
     'InstituteTypeSubType',
+    'FinancialInstitutionID',
   ],
 }
 // [
@@ -592,60 +550,124 @@ export const TransactionLocation = {
 //         'Account',
 //       ],
 
+const legalNameForPersonInvolved = {
+  type: 'object',
+  properties: pick(
+    (pickResolvedEntityFields('Party', ['PartyName'], [])?.properties as any)
+      .PartyName.items.properties,
+    [
+      'RawEntityIndividualLastName',
+      'RawIndividualFirstName',
+      'RawIndividualMiddleName',
+      'RawIndividualNameSuffixText',
+    ]
+  ),
+}
+
+const alternateNameForPersonInvolved = {
+  type: 'object',
+  properties: merge(
+    pick(
+      (pickResolvedEntityFields('Party', ['PartyName'], [])?.properties as any)
+        .PartyName.items.properties,
+      [
+        'RawEntityIndividualLastName',
+        'RawIndividualFirstName',
+        'RawIndividualMiddleName',
+        'RawIndividualNameSuffixText',
+      ]
+    ),
+    {
+      PartyNameTypeCode: {
+        title: 'Party name type (code)',
+        description:
+          'This element identifies the type of name recorded for the party; specifically, legal name, doing business as (DBA) name, or also known as (AKA) name.',
+        enum: ['AKA', 'DBA'],
+        type: 'string',
+        enumNames: ['Also known as (AKA)', 'Doing business as (DBA)'],
+      },
+    }
+  ),
+}
+
+const addressForPersonInvolved = {
+  type: 'object',
+  properties: pick(
+    (pickResolvedEntityFields('Party', ['Address'], [])?.properties as any)
+      .Address.properties,
+    [
+      'RawCityText',
+      'RawCountryCodeText',
+      'RawStateCodeText',
+      'RawStreetAddress1Text',
+      'RawZIPCode',
+    ]
+  ),
+}
+
+const formOfIndentification = {
+  type: 'object',
+  properties: merge(
+    pick(
+      (
+        pickResolvedEntityFields('Party', ['PartyIdentification'], [])
+          ?.properties as any
+      ).PartyIdentification.items.properties,
+      [
+        'PartyIdentificationTypeCode',
+        'OtherIssuerCountryText',
+        'OtherIssuerStateText',
+        'OtherPartyIdentificationTypeText',
+        'PartyIdentificationNumberText',
+      ]
+    ),
+    {
+      PartyIdentificationTypeCode: {
+        ...pickPartyIdentificationTypeCodeSubset([
+          '5', // Driver's License
+          '6', // Passport
+          '7', // Alien registration
+          '8', // Other
+        ]),
+        title: 'Form of identification',
+        description:
+          'Select the form of identification used to verify the identity',
+      },
+    }
+  ),
+}
+
 export const PersonInvolvedInTransaction = {
   ...pickResolvedEntityFields(
     'Party',
     [
-      'ActivityPartyTypeCode',
-      'BirthDateUnknownIndicator',
       'IndividualBirthDateText',
       'IndividualEntityCashInAmountText',
       'IndividualEntityCashOutAmountText',
       'MultipleTransactionsPersonsIndividualsIndicator',
-      'PartyAsEntityOrganizationIndicator',
-      'PrimaryRegulatorTypeCode',
-      'PartyName',
-      'Address',
       'PhoneNumber',
-      'PartyIdentification',
       'PartyOccupationBusiness',
       'ElectronicAddress',
       'Account',
     ],
     [
-      'ActivityPartyTypeCode',
-      'IndividualBirthDateText',
+      'PartyName',
       'IndividualEntityCashInAmountText',
       'IndividualEntityCashOutAmountText',
-      'PrimaryRegulatorTypeCode',
-      'PartyName',
-      'Address',
-      'PhoneNumber',
-      'PartyIdentification',
-      'PartyOccupationBusiness',
-      'ElectronicAddress',
       'Account',
-      'Gender',
     ],
     {
-      ActivityPartyTypeCode: {
-        ...pickActivityPartyTypeCodeSubset(['50', '17', '23', '58']),
-        title: 'Person Involved Type',
+      PartyName: {
+        ...legalNameForPersonInvolved,
+        title: 'Legal name of the person',
       },
-      BirthDateUnknownIndicator: {},
-      IndividualBirthDateText: {},
-      IndividualEntityCashInAmountText: {},
-      IndividualEntityCashOutAmountText: {},
-      MultipleTransactionsPersonsIndividualsIndicator: {},
-      PartyAsEntityOrganizationIndicator: {
-        required: true,
-        requiredWhen: {
-          entity: 'PersonInvolvedType',
-          values: ['23', '58'],
-        },
+      AlertnatePartyName: {
+        ...alternateNameForPersonInvolved,
+        title: 'Alternate name of the peson',
       },
-      PrimaryRegulatorTypeCode: {},
-      PartyName: {},
+      IndividualBirthDateText: {
+        description: 'This element identifies the date of birth of the party.',
+      },
       Gender: {
         type: 'string',
         'ui:schema': {
@@ -655,17 +677,53 @@ export const PersonInvolvedInTransaction = {
           'ui:unknownIndicatorField': 'UnknownGenderIndicator',
         },
       },
-      Address: {},
       PhoneNumber: {
         title: 'Phone Number',
       },
-      ElectronicAddress: {
-        'ui:schema': {
-          'ui:subtype': 'FINCEN_PHONE_NUMBER',
-        },
+      ElectronicAddress: {},
+      Address: {
+        ...addressForPersonInvolved,
+        title: 'Address',
       },
-      PartyIdentification: {},
+      TIN: {
+        ...pickResolvedEntityFields(
+          'PartyIdentificationType',
+          ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
+          ['PartyIdentificationTypeCode', 'PartyIdentificationNumberText'],
+          {
+            PartyIdentificationTypeCode: {
+              ...pickPartyIdentificationTypeCodeSubset(['1', '2', '9']),
+              required: true,
+              description: 'Identification code',
+            },
+            PartyIdentificationNumberText: {
+              description:
+                'A 10-digit unique identifier for the branch where the transaction occurred. If the code has fewer than 10 digits, add leading zeros',
+            },
+          }
+        ),
+        title: 'Tax Payer Indentification',
+      },
+      FormOfIdentification: {
+        ...formOfIndentification,
+        title: 'Form of identification',
+      },
       PartyOccupationBusiness: {},
+      IndividualEntityCashInAmountText: {
+        title: 'Cash In',
+        description:
+          'Party cash in amount (text). This element identifies the cash in amount associated with the party',
+      },
+      IndividualEntityCashOutAmountText: {
+        title: 'Cash out',
+        decription:
+          'Party cash out amount (text). This element identifies the cash out amount associated with the party.',
+      },
+      MultipleTransactionsPersonsIndividualsIndicator: {
+        title: 'Multiple transactions (indicator).',
+        description:
+          'This element declares that multiple cash transactions of any amount totaling more than $10,000 as cash in or more than $10,000 as cash out (cash in and cash out transactions should not be combined) were conducted in a single business day by or for the person recorded in Part I.',
+      },
       Account: {
         oneOf: null,
         type: 'object',
@@ -700,7 +758,7 @@ export const PersonInvolvedInTransaction = {
 
 export const CurrencyTransactionActivity = {
   ...pickResolvedEntityFields(
-    'CurrencyTransactionActivityType',
+    'CurrencyTransactionActivity',
     [
       'AggregateTransactionIndicator',
       'ArmoredCarServiceIndicator',
@@ -711,8 +769,80 @@ export const CurrencyTransactionActivity = {
       'TotalCashInReceiveAmountText',
       'TotalCashOutAmountText',
       'TransactionDateText',
+      'CurrencyTransactionActivityDetail',
     ],
-    []
+    [
+      'TotalCashInReceiveAmountText',
+      'TotalCashOutAmountText',
+      'TransactionDateText',
+      'CurrencyTransactionActivityDetail',
+    ],
+    {
+      AggregateTransactionIndicator: {
+        title: 'Aggregate transactions (indicator)',
+        description:
+          'This element declares that the financial institution did not identify any transactor(s) because the FinCEN CTR reports aggregated transactions all below the reporting requirement with at least one transaction involving a teller. "Aggregated transactions" is not the same as "Multiple transactions," which can involve transactions that are above the reporting requirement where a transactor is known and may involve transactions none of which involved a teller.',
+      },
+      ArmoredCarServiceIndicator: {
+        title: 'Armored car (FI contract) (indicator)',
+        description:
+          'This element declares that a reported transaction involved a pick-up or delivery of currency by an armored car service under contract to the financial institution(s) where transactions take place (i.e. transaction location) or the filing institution.',
+      },
+      ATMIndicator: {
+        title: 'ATM (indicator)',
+        description:
+          'This element declares that a reported transaction occurred at an automated teller machine (ATM).',
+      },
+      MailDepositShipmentIndicator: {
+        title: 'Mail deposit or shipment (indicator)',
+        description:
+          'This element declares that a reported transaction was made by mail deposit or shipment.',
+      },
+      NightDepositIndicator: {
+        title: 'Night deposit (indicator)',
+        description:
+          'This element declares that a reported transaction involved a night deposit of cash.',
+      },
+      SharedBranchingIndicator: {
+        title: 'Shared branching (indicator)',
+        description:
+          'This element declares that the transaction was conducted on behalf of or at a location of another financial institution that is a member of a co-operative network.',
+      },
+      TotalCashInReceiveAmountText: {
+        title: 'Total cash in amount (text)',
+        description:
+          'This element identifies the total cash in amount involved in the transaction(s) if that amount is greater than $10,000. NOTE: The amount can be less than or equal to $10,000 in a corrected CTR that is being filed to correct the amount reported in a previous CTR',
+      },
+      TotalCashOutAmountText: {
+        title: 'Total cash out amount (text)',
+        description:
+          'This element identifies the total cash out amount involved in the transaction or aggregated transactions if that amount is greater than $10,000. NOTE: The amount can be less than or equal to $10,000 in a corrected CTR that is being filed to correct the amount reported in a previous CTR.',
+      },
+      TransactionDateText: {
+        title: 'Transaction date (text)',
+        description:
+          'This element identifies the date in which the transaction(s) associated with the FinCEN CTR take place.',
+      },
+      CurrencyTransactionActivityDetail: {
+        title: 'Activity subtotal amount and type (header)',
+        description:
+          'This is the container for cash-in/out amount details (including foreign cash transactions amounts) associated with the FinCEN CTR activity.',
+        properties: {
+          CurrencyTransactionActivityDetailTypeCode: {
+            title: 'Currency Transaction Activity Detail Type (Code)',
+          },
+          DetailTransactionAmountText: {
+            title: 'Detail Transaction Amount',
+          },
+          OtherCurrencyTransactionActivityDetailText: {
+            title: 'Other Currency Transaction Activity Detail',
+          },
+          OtherForeignCurrencyCountryText: {
+            title: 'Other Foreign Currency Country',
+          },
+        },
+      },
+    }
   ),
   title: 'Currency Transaction Activity',
   description:
@@ -733,13 +863,54 @@ export const TransactionLocations = {
   },
 }
 
+const PersonConductingTransactionOnOwnBehalf = {
+  ...PersonInvolvedInTransaction,
+  type: 'object',
+  title: 'Person conducting transaction on own behalf',
+  'ui:schema': {
+    'ui:group': 'Person conducting transaction on own behalf',
+  },
+}
+
+const PersonConductingTransactionForAnother = {
+  ...PersonInvolvedInTransaction,
+  type: 'object',
+  title: 'Person conducting transaction for another',
+  'ui:schema': {
+    'ui:group': 'Person conducting transaction for another',
+  },
+}
+
+const PersonOnWhoseBehalfThisTransactionWasConducted = {
+  ...PersonInvolvedInTransaction,
+  type: 'object',
+  title: 'Person on whose behalf this transaction was conducted',
+  'ui:schema': {
+    'ui:group': 'Person on whose behalf this transaction was conducted',
+  },
+}
+
+const CommonCarrier = {
+  ...PersonInvolvedInTransaction,
+  type: 'object',
+  title: 'Common carrier',
+  'ui:schema': {
+    'ui:group': 'Common carrier',
+  },
+}
+
 export const PersonsInvolvedInTransactions = {
-  type: 'array',
+  type: 'object',
   title: 'Persons Involved In Transactions',
   description:
     'These are the persons (individual or entity) involved in the transactions associated with the FinCEN CTR',
   'ui:schema': {
     'ui:group': 'Person involved in transaction',
   },
-  items: PersonInvolvedInTransaction,
+  properties: {
+    PersonConductingTransactionOnOwnBehalf,
+    PersonConductingTransactionForAnother,
+    PersonOnWhoseBehalfThisTransactionWasConducted,
+    CommonCarrier,
+  },
 }

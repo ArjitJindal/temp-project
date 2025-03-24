@@ -309,7 +309,7 @@ export type NarrativeDescription = string
 /**
  * Schema tag attributes: xmlns='www.fincen.gov/base' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:vc='http://www.w3.org/2007/XMLSchema-versioning' targetNamespace='www.fincen.gov/base' elementFormDefault='qualified' attributeFormDefault='unqualified' vc:minVersion='1.1'
  */
-export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnSatMar222025000247GMT0530IndiaStandardTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
+export interface ThisJSONSchemaFileWasGeneratedFromSchemaOnSunMar232025164410GMT0530IndiaStandardTimeForMoreInformationPleaseSeeHttpWwwXsd2JsonschemaOrg {
   EFilingBatchXML?: BatchAcknowledgement
   [k: string]: unknown
 }
