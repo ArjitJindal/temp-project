@@ -288,8 +288,8 @@ export class StreamConsumerBuilder {
           )
           if (update.entityId && envIsNot('test', 'local')) {
             await acquireLock(dbClients.dynamoDb, update.entityId, {
-              startingDelay: 500,
-              maxDelay: 1000,
+              startingDelay: 100,
+              maxDelay: 5000,
             })
           }
           try {

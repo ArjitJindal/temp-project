@@ -1184,7 +1184,7 @@ export class LogicEvaluator {
 
     await acquireLock(this.dynamoDb, lockKey, {
       startingDelay: 100,
-      maxDelay: 500,
+      maxDelay: 5000,
       ttlSeconds: 15,
     })
     await this.updateAggregationVariableInternal(
