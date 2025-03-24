@@ -14,16 +14,16 @@ export class OptimizeClickhouseBatchJobRunner extends BatchJobRunner {
     for (const tenant of allTenants) {
       for (const table of ClickHouseTables) {
         const clickhouseClient = await getClickhouseClient(tenant.tenant.id)
-        try {
-          await clickhouseClient.command({
-            query: `OPTIMIZE TABLE ${table.table} FINAL`,
-          })
-        } catch (e) {
-          logger.warn(
-            `Failed to optimize clickhouse table: ${(e as Error)?.message}`,
-            e
-          )
-        }
+        // try {
+        //   await clickhouseClient.command({
+        //     query: `OPTIMIZE TABLE ${table.table} FINAL`,
+        //   })
+        // } catch (e) {
+        //   logger.warn(
+        //     `Failed to optimize clickhouse table: ${(e as Error)?.message}`,
+        //     e
+        //   )
+        // }
         try {
           await clickhouseClient.exec({
             query: `DELETE from ${table.table} where timestamp = 0`,
