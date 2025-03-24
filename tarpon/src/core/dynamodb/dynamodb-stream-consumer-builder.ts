@@ -281,7 +281,10 @@ export class StreamConsumerBuilder {
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
           if (update.entityId && envIsNot('test', 'local')) {
-            await acquireLock(dbClients.dynamoDb, update.entityId)
+            await acquireLock(dbClients.dynamoDb, update.entityId, {
+              startingDelay: 500,
+              maxDelay: 1000,
+            })
           }
           try {
             await this.handleDynamoDbUpdate(update, dbClients)
