@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
@@ -20,7 +21,9 @@ async function migrateTenant(tenant: Tenant) {
       (feature) => (feature as string) !== 'CRM_FRESHDESK'
     ),
   }
-  await tenantService.createOrUpdateTenantSettings(newTenantSettings)
+  if (!isEmpty(newTenantSettings)) {
+    await tenantService.createOrUpdateTenantSettings(newTenantSettings)
+  }
 }
 
 export const up = async () => {
