@@ -1,3 +1,4 @@
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { MoreOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import { ManualCaseCreationButton } from '../ManualCaseCreationButton';
@@ -51,6 +52,7 @@ export const HeaderMenu = (props: Props) => {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelEnabled = useFeatureEnabled('RISK_LEVELS');
   const api = useApi();
+  const settings = useSettings();
   const drsQueryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => {
     return isRiskScoringEnabled ? api.getDrsValue({ userId }) : null;
   });
@@ -104,7 +106,7 @@ export const HeaderMenu = (props: Props) => {
       await DownloadAsPDF({
         fileName: `user-${user.userId}-report.pdf`,
         tableOptions: getUserReportTables(user, riskScores, tenantSettings),
-        reportTitle: 'User report',
+        reportTitle: `${firstLetterUpper(settings.userAlias)} report`,
       });
       message.success('Report successfully downloaded');
     } catch (err) {

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
@@ -36,7 +36,7 @@ import UserStateTag from '@/components/library/Tag/UserStateTag';
 import { PaginatedData, useQuery } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
@@ -109,6 +109,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     setSecondModalVisibility,
   } = props;
 
+  const settings = useSettings();
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
@@ -211,7 +212,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         icon: <CalendarLineIcon />,
       }),
       helper.simple<'userId'>({
-        title: 'User ID',
+        title: `${firstLetterUpper(settings.userAlias)} ID`,
         key: 'userId',
         defaultWidth: 200,
         type: {
@@ -230,7 +231,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         },
       }),
       helper.simple<'user'>({
-        title: 'User name',
+        title: `${firstLetterUpper(settings.userAlias)} name`,
         id: '_userName',
         key: 'user',
         type: CASE_USER_NAME,
@@ -243,7 +244,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         sorting: true,
       }),
       helper.simple<'user.userStateDetails.state'>({
-        title: 'User status',
+        title: `${firstLetterUpper(settings.userAlias)} status`,
         key: 'user.userStateDetails.state',
         id: 'userStates',
         filtering: true,
@@ -276,7 +277,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
               param: 'riskLevels',
               value: (entity): RiskLevel | undefined => entity?.userRiskLevel,
               type: RISK_LEVEL,
-              title: 'User risk level',
+              title: `${firstLetterUpper(settings.userAlias)} risk level`,
             } as DerivedColumn<TableItem, RiskLevel>),
           ]
         : []) as TableColumn<TableItem>[]),
@@ -638,6 +639,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     updateFirstModalState,
     setFirstModalVisibility,
     userAccount?.escalationLevel,
+    settings.userAlias,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');

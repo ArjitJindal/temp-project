@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { startCase } from 'lodash';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { SimulationBeaconHit, SimulationBeaconTransactionResult } from '@/apis';
@@ -25,7 +26,7 @@ import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import { CommonParams } from '@/components/library/Table/types';
 import { dayjs } from '@/utils/dayjs';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface SimulationTransactionsHitProps {
   taskId: string;
 }
@@ -42,6 +43,7 @@ interface TableParams extends CommonParams {
 
 export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps) => {
   const { taskId } = props;
+  const settings = useSettings();
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -127,7 +129,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     }),
     helper.simple<'originUser.userId'>({
       key: 'originUser.userId',
-      title: 'Origin user ID',
+      title: `Origin ${settings.userAlias} ID`,
       type: {
         render: (userId, { item: entity }) => {
           const user = entity.originUser;
@@ -152,7 +154,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     }),
     helper.simple<'originUser.userName'>({
       key: 'originUser.userName',
-      title: 'Origin user name',
+      title: `Origin ${settings.userAlias} name`,
       type: STRING,
     }),
     helper.simple<'originPaymentDetails.paymentMethod'>({
@@ -185,7 +187,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     }),
     helper.simple<'destinationUser.userId'>({
       key: 'destinationUser.userId',
-      title: 'Destination user ID',
+      title: `Destination ${settings.userAlias} ID`,
       type: {
         render: (userId, { item: entity }) => {
           const user = entity.destinationUser;
@@ -209,7 +211,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     }),
     helper.simple<'destinationUser.userName'>({
       key: 'destinationUser.userName',
-      title: 'Destination user name',
+      title: `Destination ${settings.userAlias} name`,
       type: STRING,
     }),
     helper.simple<'destinationPaymentDetails.paymentMethod'>({
@@ -256,7 +258,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
           extraFilters={[
             {
               key: 'userId',
-              title: 'User ID/name',
+              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
                   userId={params.userId ?? null}

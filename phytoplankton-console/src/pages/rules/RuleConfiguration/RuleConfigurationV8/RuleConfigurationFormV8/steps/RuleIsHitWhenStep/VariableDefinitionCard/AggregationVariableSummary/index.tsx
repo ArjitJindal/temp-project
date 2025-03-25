@@ -9,6 +9,7 @@ import {
   varLabelWithoutNamespace,
 } from '../helpers';
 import { LogicEntityVariable, RuleType } from '@/apis';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   ruleType: RuleType;
@@ -21,6 +22,7 @@ export default function AggregationVariableSummary({
   variableFormValues,
   entityVariables,
 }: Props) {
+  const settings = useSettings();
   const {
     type,
     userDirection,
@@ -74,7 +76,7 @@ export default function AggregationVariableSummary({
         ? 'receiver '
         : 'sender or receiver '
       : '';
-  const userLabel = type === 'USER_TRANSACTIONS' ? 'user' : 'payment ID';
+  const userLabel = type === 'USER_TRANSACTIONS' ? settings.userAlias : 'payment ID';
   const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
 
   const textComponents = [

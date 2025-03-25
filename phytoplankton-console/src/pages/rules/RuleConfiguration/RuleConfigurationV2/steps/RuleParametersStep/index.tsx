@@ -114,9 +114,9 @@ function RiskBasedThresholds(props: Props) {
               <InputField<any>
                 name={riskLevel}
                 label={'Rule actions'}
-                description={`Select the action to perform if this rule is hit for users of ${toLower(
-                  getRiskLevelLabel(riskLevel, settings),
-                )} risk level`}
+                description={`Select the action to perform if this rule is hit for ${
+                  settings.userAlias
+                }s of ${toLower(getRiskLevelLabel(riskLevel, settings))} risk level`}
               >
                 {(inputProps) => <RuleActionSelector {...inputProps} />}
               </InputField>

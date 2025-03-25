@@ -15,6 +15,7 @@ import Alert from '@/components/library/Alert';
 import { getInitialFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/EntityVariableForm';
 import { neverReturn } from '@/utils/lang';
 import { AggregationVariableFormContent } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/AggregationVariableForm';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   ruleType: RuleType;
@@ -75,6 +76,7 @@ function EntityVariableInfo(props: {
   entityVariables: LogicEntityVariable[];
 }) {
   const { variable, ruleType, entityVariables } = props;
+  const settings = useSettings();
   const formValues = getInitialFormValues(ruleType, variable, entityVariables);
 
   const entityVariable = entityVariables.find((x) => x.key === variable?.entityKey);
@@ -96,7 +98,7 @@ function EntityVariableInfo(props: {
       case 'USER':
       case 'CONSUMER_USER':
       case 'BUSINESS_USER':
-        entityTypeLabel = 'user';
+        entityTypeLabel = settings.userAlias?.toLowerCase() ?? 'user';
         break;
       case 'PAYMENT_DETAILS':
         entityTypeLabel = 'payment details';

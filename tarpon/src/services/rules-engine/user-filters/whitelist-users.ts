@@ -22,9 +22,9 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
       properties: {
         whitelistUsers: {
           type: 'object',
-          title: 'Whitelist users',
+          title: 'Whitelist {{userAlias}}s',
           description:
-            'Add user IDs or Whitelist IDs to exclude users from this rule when run',
+            'Add {{userAlias}} IDs or Whitelist IDs to exclude {{userAlias}}s from this rule when run',
           properties: {
             listIds: {
               type: 'array',
@@ -38,7 +38,7 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
             },
             userIds: {
               type: 'array',
-              title: 'User IDs',
+              title: '{{UserAlias}} IDs',
               items: { type: 'string' },
               uniqueItems: true,
               nullable: true,

@@ -1,5 +1,5 @@
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { ListSubtype, ListType } from '@/apis';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
+import { ListSubtype, ListType, TenantSettings } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
 export function parseListType(pathname): ListType {
@@ -35,10 +35,10 @@ const LIST_SUBTYPES: ListSubtype[] = [
 export const BLACKLIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
 export const WHITELIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
 
-export function getListSubtypeTitle(subtype: ListSubtype) {
+export function getListSubtypeTitle(subtype: ListSubtype, tenantSettings: TenantSettings) {
   switch (subtype) {
     case 'USER_ID':
-      return 'User ID';
+      return `${firstLetterUpper(tenantSettings.userAlias)} ID`;
     case 'CARD_FINGERPRINT_NUMBER':
       return 'Card fingerprint number';
     case 'IBAN_NUMBER':

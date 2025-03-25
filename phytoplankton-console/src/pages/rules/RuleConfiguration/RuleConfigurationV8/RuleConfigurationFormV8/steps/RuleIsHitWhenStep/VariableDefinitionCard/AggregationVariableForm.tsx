@@ -1,5 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { round } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/constants';
@@ -54,10 +55,7 @@ interface AggregationVariableFormProps {
   onUpdate: (newAggregationVariable: LogicAggregationVariable) => void;
   onCancel: () => void;
 }
-const TYPE_OPTIONS: Array<{ value: LogicAggregationType; label: string }> = [
-  { value: 'USER_TRANSACTIONS', label: 'User ID' },
-  { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
-];
+
 const USER_DIRECTION_OPTIONS: Array<{ value: LogicAggregationUserDirection; label: string }> = [
   { value: 'SENDER', label: 'Sender' },
   { value: 'RECEIVER', label: 'Receiver' },
@@ -213,6 +211,11 @@ export const AggregationVariableFormContent: React.FC<
   const [formValues, setFormValues] = formValuesState;
   const [aggregateByLastN, setAggregateByLastN] = useState(!!formValues.lastNEntities);
   const settings = useSettings();
+
+  const TYPE_OPTIONS: Array<{ value: LogicAggregationType; label: string }> = [
+    { value: 'USER_TRANSACTIONS', label: `${firstLetterUpper(settings.userAlias)} ID` },
+    { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
+  ];
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
       .filter((v) => v.entity === 'TRANSACTION' && !isTransactionOriginOrDestinationVariable(v.key))
@@ -511,7 +514,9 @@ export const AggregationVariableFormContent: React.FC<
         )}
         <Label
           label={`Check for ${
-            formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
+            formValues.type === 'USER_TRANSACTIONS'
+              ? `${settings.userAlias} transactions`
+              : 'transactions'
           }'s past transaction direction`}
           required={{ value: true, showHint: !readOnly }}
         >

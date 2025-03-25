@@ -1,7 +1,7 @@
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils/risk';
 import { round } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RuleAlertMap } from '..';
 import { InternalTransaction, RiskClassificationScore, TenantSettings } from '@/apis';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -64,7 +64,7 @@ const getTransactionWidgetsProps = (
       value: `${transaction.reference ?? '-'}`,
     },
     {
-      title: 'Alert created for User ID',
+      title: `Alert created for ${firstLetterUpper(tenantSettings.userAlias)} ID`,
       value: `${alertCreatedForUserIds.join(', ')}`,
       id: { cellId: 'link' },
     },

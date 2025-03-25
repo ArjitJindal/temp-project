@@ -1,5 +1,5 @@
 import React from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { ConsumerUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
@@ -15,14 +15,14 @@ import { getUserLink } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 
-export function getConsumerUserColumns(): TableColumn<ConsumerUserTableItem>[] {
+export function getConsumerUserColumns(userAlias?: string): TableColumn<ConsumerUserTableItem>[] {
   const helper = new ColumnHelper<ConsumerUserTableItem>();
 
   return helper.list([
     helper.simple<'userId'>({
-      title: 'User ID',
+      title: `${firstLetterUpper(userAlias)} ID`,
       key: 'userId',
-      tooltip: 'Unique identification of user.',
+      tooltip: `Unique identification of ${userAlias}.`,
       type: {
         render: (userId, { item: entity }) => {
           return (
@@ -68,7 +68,7 @@ export function getConsumerUserColumns(): TableColumn<ConsumerUserTableItem>[] {
       id: 'kycStatus',
       type: USER_KYC_STATUS_TAG,
       key: 'kycStatus',
-      tooltip: 'KYC status of user.',
+      tooltip: `KYC status of ${userAlias}.`,
     }),
 
     helper.simple<'kycStatusReason'>({
@@ -76,11 +76,11 @@ export function getConsumerUserColumns(): TableColumn<ConsumerUserTableItem>[] {
       key: 'kycStatusReason',
     }),
     helper.simple<'userState'>({
-      title: 'User status',
+      title: `${firstLetterUpper(userAlias)} status`,
       type: USER_STATE_TAG,
       key: 'userState',
       id: 'userStatus',
-      tooltip: 'Status of user.',
+      tooltip: `Status of ${userAlias}.`,
     }),
     helper.simple<'pepDetails'>({
       title: 'PEP status',

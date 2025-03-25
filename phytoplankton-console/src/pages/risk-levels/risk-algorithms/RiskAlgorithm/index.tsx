@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from 'antd';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
 import { Link } from 'react-router-dom';
@@ -7,12 +8,14 @@ import { InlineMath } from 'react-katex';
 import styles from './style.module.less';
 import { getBranding } from '@/utils/branding';
 import { H4, P } from '@/components/ui/Typography';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const branding = getBranding();
 
 const { Divider } = ProCard;
 const RiskAlgorithmTable: React.FC = () => {
   const [responsive, setResponsive] = useState(false);
+  const settings = useSettings();
 
   return (
     <>
@@ -24,9 +27,9 @@ const RiskAlgorithmTable: React.FC = () => {
               <H4 bold>How is the score calculated when there is no data?</H4>
               <P variant="m">
                 When there is no data available for a risk factor, {branding.companyName} system
-                defaults to very high risk. For example, for a user for whom there's no data on
-                country of nationality, {branding.companyName} systems assume the risk level of very
-                high risk for that parameter.
+                defaults to very high risk. For example, for a ${settings.userAlias} for whom
+                there's no data on country of nationality, {branding.companyName} systems assume the
+                risk level of very high risk for that parameter.
               </P>
             </li>
             <li>
@@ -106,7 +109,7 @@ const RiskAlgorithmTable: React.FC = () => {
             bordered
             bodyStyle={{ border: 10 }}
           >
-            <ProCard.TabPane key=" tab1 " tab="Consumer users">
+            <ProCard.TabPane key=" tab1 " tab={`Consumer ${settings.userAlias}s`}>
               <RcResizeObserver
                 key="resize-observer"
                 onResize={(offset) => {
@@ -182,7 +185,7 @@ const RiskAlgorithmTable: React.FC = () => {
                         <div className={styles.header}>Result</div>
                         <div> </div>
                         <div>
-                          User has a{' '}
+                          ${humanizeAuto(settings.userAlias ?? 'User')} has a{' '}
                           <strong>
                             KRS score of 53.4
                             <br />
@@ -196,7 +199,7 @@ const RiskAlgorithmTable: React.FC = () => {
               </RcResizeObserver>
             </ProCard.TabPane>
 
-            <ProCard.TabPane key=" tab2 " tab="Business users">
+            <ProCard.TabPane key=" tab2 " tab={`Business ${settings.userAlias}s`}>
               <pre className={styles.pre}>
                 <div className={styles.header}>Formula</div>
                 <div> </div>
@@ -249,7 +252,7 @@ const RiskAlgorithmTable: React.FC = () => {
               <span className={styles.KRSheader}>Transaction Risk Score (TRS)</span>
               <div className={styles.KRSsubheader}>
                 Risk score of your customer’s transaction activity. TRS changes corresponding to
-                user activity.
+                {settings.userAlias} activity.
               </div>
             </>
           }

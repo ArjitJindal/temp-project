@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ConfigProvider } from 'antd';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import dayjs from '@flagright/lib/utils/dayjs';
 import TransactionIcon from '../transaction-icon.react.svg';
 import s from './style.module.less';
@@ -33,7 +34,7 @@ import {
 } from '@/components/library/JsonSchemaEditor/utils';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ChangeJsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
 import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
 import * as Card from '@/components/ui/Card';
@@ -102,6 +103,7 @@ const RuleConfigurationForm = (
     onActiveStepKeyChange,
     setIsValuesSame,
   } = props;
+  const settings = useSettings();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const defaultInitialValues = useDefaultInitialValues(rule);
   const orderedProps = useOrderedProps(rule?.parametersSchema);
@@ -185,7 +187,11 @@ const RuleConfigurationForm = (
           null,
         description: 'Add additional segmentation and targeting logic by introducing filters',
         tabs: [
-          { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
+          {
+            key: 'user_details',
+            icon: <User3LineIcon />,
+            title: `${firstLetterUpper(settings.userAlias)} details`,
+          },
           { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
           ...(rule?.type === 'TRANSACTION'
             ? [
@@ -230,6 +236,7 @@ const RuleConfigurationForm = (
       rule?.type,
       isRiskLevelsEnabled,
       isAlertCreationEnabled,
+      settings.userAlias,
     ],
   );
 

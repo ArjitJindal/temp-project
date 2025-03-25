@@ -1,5 +1,6 @@
 import { Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import cn from 'clsx';
 import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
@@ -26,7 +27,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_DRS, USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import { useHasPermissions } from '@/utils/user-utils';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   userId: string;
 }
@@ -36,6 +37,7 @@ export default function UserManualRiskPanel(props: Props) {
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const settings = useSettings();
   const canUpdateManualRiskLevel = useHasPermissions(['users:user-manual-risk-levels:write']);
   const drsScore = useMemo(() => {
     if (isSuccess(queryResult.data)) {
@@ -65,12 +67,12 @@ export default function UserManualRiskPanel(props: Props) {
         console.error(e);
         // todo: i18n
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.fatal('Unable to get user risk level!', e);
+        message.fatal(`Unable to get ${settings.userAlias} risk level`, e);
       });
     return () => {
       isCanceled = true;
     };
-  }, [userId, api]);
+  }, [userId, api, settings.userAlias]);
 
   const defaultRiskScore = useRiskScore(DEFAULT_RISK_LEVEL);
   const defaultRiskLevel =
@@ -98,11 +100,12 @@ export default function UserManualRiskPanel(props: Props) {
         },
       })
       .then(async (response) => {
+        const userAlias = firstLetterUpper(settings.userAlias);
         if (isLocked) {
-          message.success('User risk level unlocked successfully!');
+          message.success(`${userAlias} risk level unlocked successfully!`);
           setSyncState(success(response));
         } else {
-          message.success('User risk level locked successfully!');
+          message.success(`${userAlias} risk level locked successfully!`);
           setSyncState(success(response));
         }
         setIsLocked(!isLocked);
@@ -131,7 +134,7 @@ export default function UserManualRiskPanel(props: Props) {
         })
         .then(async (response) => {
           // todo: i18n
-          message.success('User risk updates successfully!');
+          message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully!`);
           setSyncState(success(response));
           await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
         })
@@ -139,7 +142,7 @@ export default function UserManualRiskPanel(props: Props) {
           console.error(e);
           // todo: i18n
           setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-          message.fatal('Unable to update user risk level!', e);
+          message.fatal(`Unable to update ${settings.userAlias} risk level!`, e);
         });
     }
   };
@@ -169,8 +172,8 @@ export default function UserManualRiskPanel(props: Props) {
         <Tooltip
           title={
             isLocked
-              ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
-              : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
+              ? `Click here to unlock the assigned risk level. This lets the system automatically update the ${settings.userAlias} risk level again`
+              : `Click here to lock ${settings.userAlias} risk level. This prevents the system from changing the ${settings.userAlias} risk level automatically.`
           }
           placement="bottomLeft"
           arrowPointAtCenter

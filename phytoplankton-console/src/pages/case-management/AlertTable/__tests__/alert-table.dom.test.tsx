@@ -75,7 +75,7 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Created at',
       'Alert age',
       '#TX',
-      'User id',
+      'User ID',
       'User name',
       'Rule name',
       'Rule description',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Params } from '../TransactionsSelector';
 import { FIXED_API_PARAMS } from '..';
 import TransactionsTable, {
@@ -15,7 +16,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { dayjs } from '@/utils/dayjs';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import ProductTypeSearchButton from '@/pages/transactions/components/ProductTypeSearchButton';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   userId: string;
   selectorParams: Params;
@@ -23,6 +24,7 @@ interface Props {
 
 export default function TransactionsList(props: Props) {
   const { userId, selectorParams } = props;
+  const settings = useSettings();
   // todo: reset table params when selector params changed
   const [tableParams, setTableParams] = useState<TransactionsTableParams>({
     timestamp: [
@@ -70,7 +72,7 @@ export default function TransactionsList(props: Props) {
       extraFilters={[
         {
           key: 'userId',
-          title: 'User ID/name',
+          title: `${firstLetterUpper(settings.userAlias)} ID/name`,
           renderer: ({ params, setParams }) => (
             <UserSearchButton
               userId={params.userId ?? null}

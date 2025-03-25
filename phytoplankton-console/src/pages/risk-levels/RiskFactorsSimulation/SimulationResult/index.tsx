@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
-import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { capitalizeWords, firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import cn from 'clsx';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
@@ -53,6 +53,7 @@ interface Props {
 const SIMULATION_REFETCH_INTERVAL = 10;
 
 export const SimulationResult = (props: Props) => {
+  const settings = useSettings();
   const { jobId } = props;
   const location = useLocation();
   const isCustomRiskFactors = location.pathname.includes('custom-risk-factors');
@@ -151,7 +152,7 @@ export const SimulationResult = (props: Props) => {
               }}
               res={updateResouce}
               title="Are you sure you want to update risk factors?"
-              text="This will update risk scores for all the upcoming users and can't be undone."
+              text={`This will update risk scores for all the upcoming ${settings.userAlias}s and can't be undone.`}
             >
               {({ onClick }) => (
                 <Button type="PRIMARY" onClick={onClick}>
@@ -237,9 +238,10 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     },
   );
   const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
+  const userAlias = firstLetterUpper(settings.userAlias);
   const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([
     helper.simple<'userId'>({
-      title: 'User ID',
+      title: `${userAlias} ID`,
       key: 'userId',
       defaultWidth: 200,
       type: {
@@ -258,7 +260,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       },
     }),
     helper.simple<'userName'>({
-      title: 'User name',
+      title: `${userAlias} name`,
       key: 'userName',
       type: {
         render: (userName, { item: entity }) => {
@@ -276,7 +278,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       },
     }),
     helper.simple<'userType'>({
-      title: 'User type',
+      title: `${userAlias} type`,
       key: 'userType',
       type: {
         render: (userType) => {
@@ -434,7 +436,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   const filter: ExtraFilterProps<TableSearchParams>[] = denseArray([
     {
       key: 'userId',
-      title: 'User ID',
+      title: `${userAlias} ID`,
       showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
@@ -513,7 +515,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           simulationStartedAt={iteration.createdAt ?? 0}
           width="FULL"
           progress={iteration.progress * 100}
-          message="Running the simulation for a random sample of users & generating results for you."
+          message={`Running the simulation for a random sample of ${settings.userAlias}s & generating results for you.`}
           status={iteration.latestStatus.status}
           totalEntities={iteration.totalEntities}
         />
@@ -522,14 +524,14 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       <div className={s.graphs}>
         <Card.Root noBorder>
           <Card.Section>
-            <span className={s.title}>Users distribution based on KRS</span>
+            <span className={s.title}>{`${userAlias}s distribution based on KRS`}</span>
             <GroupedColumn data={krsGraphdata} max={Math.ceil(maxKRS + maxKRS * 0.2)} />
           </Card.Section>
         </Card.Root>
         {isCustomRiskFactors && (
           <Card.Root noBorder>
             <Card.Section>
-              <span className={s.title}>Users distribution based on CRA</span>
+              <span className={s.title}>{`${userAlias}s distribution based on CRA`}</span>
               <GroupedColumn data={drsGraphData} max={Math.ceil(maxDRS + maxDRS * 0.2)} />
             </Card.Section>
           </Card.Root>
@@ -544,7 +546,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       <Card.Root noBorder>
         <Card.Section>
           <span className={s.title}>
-            User's updated {isCustomRiskFactors ? '' : 'KRS'} risk levels
+            {`${userAlias}'s updated ${isCustomRiskFactors ? '' : 'KRS'} risk levels`}
           </span>
           <QueryResultsTable<SimulationRiskLevelsAndRiskFactorsResult>
             columns={columns}
@@ -586,7 +588,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         progress={iteration.progress * 100}
         message={
           pathname.includes('simulation-result')
-            ? 'Running the simulation for a random sample of users & generating results for you.'
+            ? `Running the simulation for a random sample of ${settings.userAlias}s & generating results for you.`
             : 'Loading simulation results for you.'
         }
         status={iteration.latestStatus.status}

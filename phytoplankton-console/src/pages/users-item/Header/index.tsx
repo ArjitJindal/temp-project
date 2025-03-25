@@ -1,4 +1,5 @@
 import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import SubHeader from './SubHeader';
 import { HeaderMenu } from './HeaderMenu';
 import { Comment, InternalBusinessUser, InternalConsumerUser, UserTag } from '@/apis';
@@ -10,7 +11,7 @@ import { getUserName } from '@/utils/api/users';
 import { SarButton } from '@/components/Sar';
 import { CommentType } from '@/utils/user-utils';
 import { AsyncResource, isSuccess, map } from '@/utils/asyncResource';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
   userId: string;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function Header(props: Props) {
+  const settings = useSettings();
   const { userId, userRes, headerStickyElRef, onNewComment, onNewTags } = props;
 
   const api = useApi();
@@ -34,7 +36,7 @@ export default function Header(props: Props) {
       ]}
       breadcrumbItems={[
         {
-          title: 'Users',
+          title: firstLetterUpper(settings.userAlias),
           to: '/users',
         },
         map(userRes, (user) => ({

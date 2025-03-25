@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
@@ -174,6 +174,7 @@ function useTabs(
   alertIds: string[],
   comments: CommentsHandlers,
 ): TabItem[] {
+  const settings = useSettings();
   const caseItem = getOr(caseItemRes, undefined);
   const subjectType = caseItem?.subjectType;
   const api = useApi();
@@ -187,7 +188,6 @@ function useTabs(
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
-  const settings = useSettings();
 
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
@@ -261,7 +261,7 @@ function useTabs(
       isDisabled: false,
     },
     isUserSubject && {
-      title: 'User details',
+      title: `${firstLetterUpper(settings.userAlias)} details`,
       key: 'user-details',
       children: <UserDetails userId={user?.userId} />,
       isClosable: false,

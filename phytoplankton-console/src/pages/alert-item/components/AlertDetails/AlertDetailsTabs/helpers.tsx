@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
@@ -37,7 +38,7 @@ import { TransactionsTableParams } from '@/pages/transactions/components/Transac
 import UserDetails from '@/pages/users-item/UserDetails';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Linking from '@/pages/users-item/UserDetails/Linking';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
@@ -271,6 +272,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     fitTablesHeight,
     sanctionsDetailsFilter,
   } = props;
+  const settings = useSettings();
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
@@ -433,7 +435,7 @@ export function useAlertTabs(props: Props): TabItem[] {
         }
         if (tab === AlertTabs.USER_DETAILS) {
           return {
-            title: 'User details',
+            title: `${firstLetterUpper(settings.userAlias)} details`,
             key: tab,
             children: <UserDetails userId={caseUserId} />,
           };
@@ -532,6 +534,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     linkingState,
     isAiForensicsEnabled,
     isClickhouseEnabled,
+    settings.userAlias,
   ]);
 
   return tabs;

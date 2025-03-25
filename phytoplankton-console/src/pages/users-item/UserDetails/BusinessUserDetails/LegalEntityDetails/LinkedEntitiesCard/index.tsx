@@ -7,6 +7,7 @@ import { USERS_ENTITY } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { makeUrl } from '@/utils/routing';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   user: InternalBusinessUser;
@@ -14,7 +15,7 @@ interface Props {
 
 export default function LinkedEntities(props: Props) {
   const { user } = props;
-
+  const settings = useSettings();
   const api = useApi();
 
   const queryResult = useQuery<Graph>(USERS_ENTITY(user.userId), async (): Promise<Graph> => {
@@ -37,7 +38,7 @@ export default function LinkedEntities(props: Props) {
             title={'Linked entities'}
             items={[
               {
-                label: 'Parent user ID’s',
+                label: `Parent ${settings.userAlias} ID’s`,
                 value: parentUserId ? (
                   <div>
                     <Link
@@ -56,7 +57,7 @@ export default function LinkedEntities(props: Props) {
               ...(childIds && childIds.length > 0
                 ? [
                     {
-                      label: 'Child user ID’s',
+                      label: `Child ${settings.userAlias} ID’s`,
                       value: (
                         <div>
                           {childIds.map((childId, i) => (

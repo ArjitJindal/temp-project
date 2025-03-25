@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { queryAdapter } from './helpers/queryAdapter';
@@ -14,7 +15,7 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
 import { USERS } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { NavigationState } from '@/utils/queries/types';
 import { useDeepEqualEffect } from '@/utils/hooks';
 
@@ -217,6 +218,7 @@ export default function UsersList() {
   const { list = 'consumer' } = useParams<'list' | 'id'>() as {
     list: 'business' | 'consumer' | 'all';
   };
+  const settings = useSettings();
   const navigate = useNavigate();
   const i18n = useI18n();
   const [_, setLocalStorageActiveTab] = useLocalStorageState('user-active-tab', list);
@@ -224,16 +226,26 @@ export default function UsersList() {
     setLocalStorageActiveTab(list);
   }, [setLocalStorageActiveTab, list]);
   return (
-    <PageWrapper title={i18n('menu.users.lists')}>
+    <PageWrapper
+      title={i18n('menu.users.lists').replace('Users', `${firstLetterUpper(settings.userAlias)}s`)}
+    >
       <PageTabs
         activeKey={list}
         onChange={(key) => {
           navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
         }}
         items={[
-          { title: 'All users', key: 'all', children: <UsersTab type={list} /> },
-          { title: 'Consumer users', key: 'consumer', children: <UsersTab type={list} /> },
-          { title: 'Business users', key: 'business', children: <UsersTab type={list} /> },
+          { title: `All ${settings.userAlias}s`, key: 'all', children: <UsersTab type={list} /> },
+          {
+            title: `Consumer ${settings.userAlias}s`,
+            key: 'consumer',
+            children: <UsersTab type={list} />,
+          },
+          {
+            title: `Business ${settings.userAlias}s`,
+            key: 'business',
+            children: <UsersTab type={list} />,
+          },
         ]}
       />
     </PageWrapper>

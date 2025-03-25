@@ -1,5 +1,4 @@
-import React from 'react';
-import { capitalizeWords } from '@flagright/lib/utils/humanize';
+import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { BusinessUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -8,14 +7,14 @@ import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import Tag from '@/components/library/Tag';
 
-export function getBusinessUserColumns(): TableColumn<BusinessUserTableItem>[] {
+export function getBusinessUserColumns(userAlias?: string): TableColumn<BusinessUserTableItem>[] {
   const helper = new ColumnHelper<BusinessUserTableItem>();
 
   return [
     helper.simple<'userId'>({
-      title: 'User ID',
+      title: `${firstLetterUpper(userAlias)} ID`,
       key: 'userId',
-      tooltip: 'Unique identification of user.',
+      tooltip: `Unique identification of ${userAlias}.`,
       type: {
         render: (userId, { item: entity }) => {
           return (
@@ -49,7 +48,7 @@ export function getBusinessUserColumns(): TableColumn<BusinessUserTableItem>[] {
       },
     }),
     helper.simple<'userRegistrationStatus'>({
-      title: 'User registration status',
+      title: `${firstLetterUpper(userAlias)} registration status`,
       key: 'userRegistrationStatus',
       type: {
         render: (status) => {

@@ -36,10 +36,10 @@ const getUserWidgetsProps = (
 
   const krsLabel = krsRiskLevel ? getRiskLevelLabel(krsRiskLevel, tenantSettings) : '-';
   const drsLabel = craRiskLevel ? `${getRiskLevelLabel(craRiskLevel, tenantSettings)} ` : '-';
-
+  const userAlias = humanizeAuto(tenantSettings.userAlias ?? 'User');
   const userDetails: ReportItem[] = [
     {
-      title: 'User ID',
+      title: `${userAlias} ID`,
       value: user.userId,
       id: { cellId: 'link' },
     },
@@ -73,7 +73,7 @@ const getUserWidgetsProps = (
       value: humanizeAuto(user.kycStatusDetails?.status ?? '-'),
     },
     {
-      title: 'User status',
+      title: `${userAlias} status`,
       value: humanizeAuto(user.userStateDetails?.state ?? '-'),
     },
     ...(kycRiskScore !== null

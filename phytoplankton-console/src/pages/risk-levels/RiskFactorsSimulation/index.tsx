@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import {
   ALL_RISK_PARAMETERS,
   BUSINESS_RISK_PARAMETERS,
@@ -44,6 +45,7 @@ import {
   SimulationV8RiskFactorsParametersRequest,
 } from '@/apis';
 import Tabs from '@/components/library/Tabs';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type ParameterValue = {
   [key in Entity]?: {
@@ -420,7 +422,7 @@ interface FormProps {
 const RiskFactorsSimulationForm = (props: FormProps) => {
   const { allIterations, currentIterationIndex, onChangeIterationInfo, isV8 } = props;
   const iteration: FormValues = allIterations[currentIterationIndex - 1];
-
+  const settings = useSettings();
   const formId = useId();
   return (
     <Form<FormValues>
@@ -474,7 +476,7 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
           </div>
           <InputField<FormValues, 'samplingSize'>
             name={'samplingSize'}
-            label={'User sampling size'}
+            label={`${humanizeAuto(settings.userAlias ?? 'User')} sampling size`}
             labelProps={{ required: true }}
           >
             {(inputProps) => (
@@ -486,15 +488,14 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
                   {
                     value: 'RANDOM',
                     label: 'Random sample',
-                    description: 'Run the simulation on a randomly selected subset of users.',
+                    description: `Run the simulation on a randomly selected subset of ${settings.userAlias}s.`,
                   },
                   ...(!isV8
                     ? [
                         {
                           value: 'ALL' as 'ALL' | 'RANDOM',
-                          label: 'All users',
-                          description:
-                            'Run the simulation for all users. It may take time to process results, check progress under simulation history.',
+                          label: `All ${settings.userAlias}s`,
+                          description: `Run the simulation for all ${settings.userAlias}s. It may take time to process results, check progress under simulation history.`,
                         },
                       ]
                     : []),

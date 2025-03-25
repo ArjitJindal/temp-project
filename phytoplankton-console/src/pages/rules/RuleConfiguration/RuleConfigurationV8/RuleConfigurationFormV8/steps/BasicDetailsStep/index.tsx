@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { compact } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useLocalStorageState } from 'ahooks';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
@@ -17,7 +17,7 @@ import {
 } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS, RULE_TYPE_OPTIONS } from '@/pages/rules/utils';
+import { getRuleTypeOptions, RULE_LABELS_OPTIONS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
@@ -29,7 +29,7 @@ import { Dayjs, dayjs } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { USER_RULE_SCHEDULE_UNITS } from '@/apis/models-custom/UserRuleScheduleUnit';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 
 export interface BasicDetailsFormValues {
@@ -71,6 +71,7 @@ interface Props {
 
 export default function BasicDetailsStep(props: Props) {
   const { rule, newRuleId, simulationMode, isRuleTypeSet } = props;
+  const settings = useSettings();
   const [ruleNature, setRuleNature] = useState<RuleNature | undefined>(
     rule?.defaultNature ?? INITIAL_VALUES.ruleNature,
   );
@@ -148,7 +149,10 @@ export default function BasicDetailsStep(props: Props) {
                 <SelectionGroup<RuleType>
                   mode="SINGLE"
                   optionFixedWidth={425}
-                  options={RULE_TYPE_OPTIONS.map((v) => ({ ...v, isDisabled: isRuleTypeSet }))}
+                  options={getRuleTypeOptions(settings).map((v) => ({
+                    ...v,
+                    isDisabled: isRuleTypeSet,
+                  }))}
                   {...inputProps}
                   isDisabled={isRuleTypeSet}
                   onChange={(value) => {
@@ -207,7 +211,10 @@ export default function BasicDetailsStep(props: Props) {
                         inputProps.value?.schedule ? 'SCHEDULE' : undefined,
                       ])}
                       options={[
-                        { label: 'User is created/updated', value: 'ENTITY_UPDATE' },
+                        {
+                          label: `${firstLetterUpper(settings.userAlias)} is created/updated`,
+                          value: 'ENTITY_UPDATE',
+                        },
                         { label: 'Periodically', value: 'SCHEDULE' },
                       ]}
                       onChange={(v) => {

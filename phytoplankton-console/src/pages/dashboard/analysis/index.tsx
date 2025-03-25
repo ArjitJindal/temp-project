@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import { kebabCase } from 'lodash';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
 import PaymentMethodDistributionWidget from './components/Transactions/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
@@ -28,7 +28,7 @@ import QaAlertStatsByChecklistReason from './components/Qa/QaAlertStatsByCheckli
 import QaAlertsByAssignee from './components/Qa/QaAlertsByAssignee';
 import TeamSLAPerformanceCard from './components/TeamSLAPerformanceCard';
 import PageWrapper from '@/components/PageWrapper';
-import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
 import Button from '@/components/library/Button';
 import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.react.svg';
@@ -130,228 +130,233 @@ interface Widgets {
   QUALITY_ASSURANCE: WidgetGroup;
 }
 
-const WIDGETS: Widgets = {
-  OVERVIEW: {
-    groupTitle: 'Overview',
-    items: [
-      {
-        id: 'OVERVIEW',
-        title: 'Overview',
-        component: Overview,
-      },
-    ],
-  },
-  CONSUMER_USERS: {
-    groupTitle: 'Consumer users',
-    items: [
-      {
-        id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-        title: 'Users distribution by risk levels',
-        component: RiskLevelBreakdownCard,
-        width: 'FULL',
-        userType: 'CONSUMER',
-        requiredFeatures: ['RISK_SCORING'],
-      },
-      {
-        id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
-        title: 'Users breakdown by risk levels',
-        component: RiskLevelDistributionCard,
-        width: 'HALF',
-        userType: 'CONSUMER',
-        requiredFeatures: ['RISK_SCORING'],
-      },
+const getWidgets = (userAlias?: string) => {
+  const userAliasCapitalized = firstLetterUpper(userAlias);
+  const WIDGETS: Widgets = {
+    OVERVIEW: {
+      groupTitle: 'Overview',
+      items: [
+        {
+          id: 'OVERVIEW',
+          title: 'Overview',
+          component: Overview,
+        },
+      ],
+    },
+    CONSUMER_USERS: {
+      groupTitle: `Consumer ${userAlias}s`,
+      items: [
+        {
+          id: 'CONSUMER_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+          title: `${userAliasCapitalized}s distribution by risk levels`,
+          component: RiskLevelBreakdownCard,
+          width: 'FULL',
+          userType: 'CONSUMER',
+          requiredFeatures: ['RISK_SCORING'],
+        },
+        {
+          id: 'CONSUMER_USERS_BREAKDOWN_BY_RISK_LEVEL',
+          title: `${userAliasCapitalized}s breakdown by risk levels`,
+          component: RiskLevelDistributionCard,
+          width: 'HALF',
+          userType: 'CONSUMER',
+          requiredFeatures: ['RISK_SCORING'],
+        },
 
-      {
-        id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
-        title: 'Top users by rule hits',
-        component: TopUsersHitCard,
-        width: 'HALF',
-        userType: 'CONSUMER',
-      },
-      {
-        id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
-        title: 'Users distribution by KYC status',
-        component: KYCStatusDistributionCard,
-        width: 'HALF',
-        userType: 'CONSUMER',
-      },
-      {
-        id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
-        title: 'Users distribution by user status',
-        component: UserStatusDistributionCard,
-        width: 'HALF',
-        userType: 'CONSUMER',
-      },
-    ],
-  },
-  BUSINESS_USERS: {
-    groupTitle: 'Business users',
-    items: [
-      {
-        id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
-        title: 'Users distribution by risk levels',
-        component: RiskLevelBreakdownCard,
-        width: 'FULL',
-        userType: 'BUSINESS',
-        requiredFeatures: ['RISK_SCORING'],
-      },
-      {
-        id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
-        title: 'Users breakdown by risk levels',
-        component: RiskLevelDistributionCard,
-        width: 'HALF',
-        userType: 'BUSINESS',
-        requiredFeatures: ['RISK_SCORING'],
-      },
-      {
-        id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
-        title: 'Top users by rule hits',
-        component: TopUsersHitCard,
-        width: 'HALF',
-        userType: 'BUSINESS',
-      },
-      {
-        id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
-        title: 'Users distribution by KYC status',
-        component: KYCStatusDistributionCard,
-        width: 'HALF',
-        userType: 'BUSINESS',
-      },
-      {
-        id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
-        title: 'Users distribution by user status',
-        component: UserStatusDistributionCard,
-        width: 'HALF',
-        userType: 'BUSINESS',
-      },
-    ],
-  },
-  TRANSACTIONS: {
-    groupTitle: 'Transactions',
-    items: [
-      {
-        id: 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
-        title: 'Transactions breakdown by rule action',
-        component: TransactionsChartWidget,
-        width: 'FULL',
-      },
-      {
-        id: 'DISTRIBUTION_BY_PAYMENT_METHOD',
-        title: 'Distribution by payment method',
-        component: PaymentMethodDistributionWidget,
-        width: 'HALF',
-      },
-      {
-        id: 'DISTRIBUTION_BY_TRANSACTION_TYPE',
-        title: 'Distribution by transaction type',
-        component: DistributionByTransactionTypeWidget,
-        width: 'HALF',
-      },
-      {
-        id: 'TRANSACTIONS_BREAKDOWN_BY_TRS',
-        title: 'Transactions breakdown by TRS',
-        component: TransactionTRSChartCard,
-        requiredFeatures: ['RISK_SCORING'],
-      },
-    ],
-  },
-  RULES: {
-    groupTitle: 'Rules',
-    items: [
-      {
-        id: 'TOP_RULE_HITS_BY_COUNT',
-        title: 'Top rule hits by count',
-        component: Widget as (props) => JSX.Element,
-        children: <RuleHitCard />,
-        resizing: 'AUTO',
-      },
-      {
-        id: 'DISTRIBUTION_BY_RULE_PRIORITY',
-        title: 'Distribution by rule priority',
-        component: RulePrioritySplitCard,
-        width: 'HALF',
-      },
-      {
-        id: 'DISTRIBUTION_BY_RULE_ACTION',
-        title: 'Distribution by rule action',
-        component: RuleActionSplitCard,
-        width: 'HALF',
-      },
-    ],
-  },
+        {
+          id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
+          title: `Top ${userAlias}s by rule hits`,
+          component: TopUsersHitCard,
+          width: 'HALF',
+          userType: 'CONSUMER',
+        },
+        {
+          id: 'CONSUMER_USERS_DISTRIBUTION_BY_KYC_STATUS',
+          title: `${userAliasCapitalized}s distribution by KYC status`,
+          component: KYCStatusDistributionCard,
+          width: 'HALF',
+          userType: 'CONSUMER',
+        },
+        {
+          id: 'CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS',
+          title: `${userAliasCapitalized}s distribution by ${userAlias} status`,
+          component: UserStatusDistributionCard,
+          width: 'HALF',
+          userType: 'CONSUMER',
+        },
+      ],
+    },
+    BUSINESS_USERS: {
+      groupTitle: `Business ${userAlias}s`,
+      items: [
+        {
+          id: 'BUSINESS_USERS_DISTRIBUTION_BY_RISK_LEVEL',
+          title: `${userAliasCapitalized}s distribution by risk levels`,
+          component: RiskLevelBreakdownCard,
+          width: 'FULL',
+          userType: 'BUSINESS',
+          requiredFeatures: ['RISK_SCORING'],
+        },
+        {
+          id: 'BUSINESS_USERS_BREAKDOWN_BY_RISK_LEVEL',
+          title: `${userAliasCapitalized}s breakdown by risk levels`,
+          component: RiskLevelDistributionCard,
+          width: 'HALF',
+          userType: 'BUSINESS',
+          requiredFeatures: ['RISK_SCORING'],
+        },
+        {
+          id: 'TOP_BUSINESS_USERS_BY_RULE_HITS',
+          title: `Top ${userAlias}s by rule hits`,
+          component: TopUsersHitCard,
+          width: 'HALF',
+          userType: 'BUSINESS',
+        },
+        {
+          id: 'BUSINESS_USERS_DISTRIBUTION_BY_KYC_STATUS',
+          title: `${userAliasCapitalized}s distribution by KYC status`,
+          component: KYCStatusDistributionCard,
+          width: 'HALF',
+          userType: 'BUSINESS',
+        },
+        {
+          id: 'BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS',
+          title: `${userAliasCapitalized}s distribution by ${userAlias} status`,
+          component: UserStatusDistributionCard,
+          width: 'HALF',
+          userType: 'BUSINESS',
+        },
+      ],
+    },
+    TRANSACTIONS: {
+      groupTitle: 'Transactions',
+      items: [
+        {
+          id: 'TRANSACTIONS_BREAKDOWN_BY_RULE_ACTION',
+          title: 'Transactions breakdown by rule action',
+          component: TransactionsChartWidget,
+          width: 'FULL',
+        },
+        {
+          id: 'DISTRIBUTION_BY_PAYMENT_METHOD',
+          title: 'Distribution by payment method',
+          component: PaymentMethodDistributionWidget,
+          width: 'HALF',
+        },
+        {
+          id: 'DISTRIBUTION_BY_TRANSACTION_TYPE',
+          title: 'Distribution by transaction type',
+          component: DistributionByTransactionTypeWidget,
+          width: 'HALF',
+        },
+        {
+          id: 'TRANSACTIONS_BREAKDOWN_BY_TRS',
+          title: 'Transactions breakdown by TRS',
+          component: TransactionTRSChartCard,
+          requiredFeatures: ['RISK_SCORING'],
+        },
+      ],
+    },
+    RULES: {
+      groupTitle: 'Rules',
+      items: [
+        {
+          id: 'TOP_RULE_HITS_BY_COUNT',
+          title: 'Top rule hits by count',
+          component: Widget as (props) => JSX.Element,
+          children: <RuleHitCard />,
+          resizing: 'AUTO',
+        },
+        {
+          id: 'DISTRIBUTION_BY_RULE_PRIORITY',
+          title: 'Distribution by rule priority',
+          component: RulePrioritySplitCard,
+          width: 'HALF',
+        },
+        {
+          id: 'DISTRIBUTION_BY_RULE_ACTION',
+          title: 'Distribution by rule action',
+          component: RuleActionSplitCard,
+          width: 'HALF',
+        },
+      ],
+    },
 
-  CASE_MANAGEMENT: {
-    groupTitle: 'Case management',
-    items: [
-      {
-        id: 'DISTRIBUTION_BY_CLOSING_REASON',
-        title: 'Distribution by closing reason',
-        component: CaseClosingReasonCard,
-        width: 'HALF',
-      },
-      {
-        id: 'DISTRIBUTION_BY_ALERT_PRIORITY',
-        title: 'Distribution by open alert priority',
-        component: DistributionByAlertPriority,
-      },
-      {
-        id: 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
-        title: 'Distribution by status',
-        component: DistributionByStatus,
-      },
-    ],
-  },
+    CASE_MANAGEMENT: {
+      groupTitle: 'Case management',
+      items: [
+        {
+          id: 'DISTRIBUTION_BY_CLOSING_REASON',
+          title: 'Distribution by closing reason',
+          component: CaseClosingReasonCard,
+          width: 'HALF',
+        },
+        {
+          id: 'DISTRIBUTION_BY_ALERT_PRIORITY',
+          title: 'Distribution by open alert priority',
+          component: DistributionByAlertPriority,
+        },
+        {
+          id: 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS',
+          title: 'Distribution by status',
+          component: DistributionByStatus,
+        },
+      ],
+    },
 
-  TEAM_MANAGEMENT: {
-    groupTitle: 'Team performance',
-    items: [
-      {
-        id: 'TEAM_OVERVIEW',
-        title: 'Team overview',
-        component: TeamPerformanceCard,
-      },
-      {
-        id: 'TEAM_SLA_STATS',
-        title: 'SLA performance for closed alerts by',
-        component: TeamSLAPerformanceCard,
-        requiredFeatures: ['ALERT_SLA'],
-      },
-    ],
-  },
-  QUALITY_ASSURANCE: {
-    groupTitle: 'Quality assurance',
-    items: [
-      {
-        id: 'QA_OVERVIEW',
-        title: 'Overview',
-        component: QaOverview,
-        requiredFeatures: ['QA'],
-      },
-      {
-        id: 'QA_ALERTS_BY_ASSIGNEE',
-        title: "QA’d alerts overview by alerts' assignee",
-        component: QaAlertsByAssignee,
-        requiredFeatures: ['QA'],
-      },
-      {
-        id: 'QA_ALERTS_BY_RULE_HITS',
-        title: 'QA’d alerts overview by rule hit',
-        component: QaAlertsByRuleHits,
-        requiredFeatures: ['QA'],
-      },
-      {
-        id: 'QA_ALERT_STATS_BY_CHECKLIST_REASON',
-        title: 'QA’d alerts based on checklist reasons',
-        component: QaAlertStatsByChecklistReason,
-        requiredFeatures: ['QA'],
-      },
-    ],
-  },
+    TEAM_MANAGEMENT: {
+      groupTitle: 'Team performance',
+      items: [
+        {
+          id: 'TEAM_OVERVIEW',
+          title: 'Team overview',
+          component: TeamPerformanceCard,
+        },
+        {
+          id: 'TEAM_SLA_STATS',
+          title: 'SLA performance for closed alerts by',
+          component: TeamSLAPerformanceCard,
+          requiredFeatures: ['ALERT_SLA'],
+        },
+      ],
+    },
+    QUALITY_ASSURANCE: {
+      groupTitle: 'Quality assurance',
+      items: [
+        {
+          id: 'QA_OVERVIEW',
+          title: 'Overview',
+          component: QaOverview,
+          requiredFeatures: ['QA'],
+        },
+        {
+          id: 'QA_ALERTS_BY_ASSIGNEE',
+          title: "QA’d alerts overview by alerts' assignee",
+          component: QaAlertsByAssignee,
+          requiredFeatures: ['QA'],
+        },
+        {
+          id: 'QA_ALERTS_BY_RULE_HITS',
+          title: 'QA’d alerts overview by rule hit',
+          component: QaAlertsByRuleHits,
+          requiredFeatures: ['QA'],
+        },
+        {
+          id: 'QA_ALERT_STATS_BY_CHECKLIST_REASON',
+          title: 'QA’d alerts based on checklist reasons',
+          component: QaAlertStatsByChecklistReason,
+          requiredFeatures: ['QA'],
+        },
+      ],
+    },
+  };
+  return WIDGETS;
 };
 type DashboardSettings = Record<KeyValues, boolean>;
 
 function Analysis() {
   const features = useFeatures();
+  const settings = useSettings();
   const i18n = useI18n();
 
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -371,6 +376,8 @@ function Analysis() {
       ...dashboardSettings,
     };
   }, [dashboardSettings]);
+
+  const WIDGETS = useMemo(() => getWidgets(settings.userAlias), [settings.userAlias]);
 
   const renderWidgets = (widgets: WidgetGroup) => {
     return widgets.items
@@ -418,7 +425,7 @@ function Analysis() {
     >
       <WidgetGrid
         groups={Object.keys(WIDGETS).map((groupKey) => ({
-          groupTitle: humanizeConstant(groupKey),
+          groupTitle: humanizeConstant(WIDGETS[groupKey].groupTitle),
           items: renderWidgets(WIDGETS[groupKey]),
         }))}
       />

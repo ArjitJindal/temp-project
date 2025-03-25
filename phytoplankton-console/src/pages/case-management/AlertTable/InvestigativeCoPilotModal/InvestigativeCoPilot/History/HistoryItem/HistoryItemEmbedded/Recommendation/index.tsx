@@ -1,3 +1,4 @@
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { SarButton } from '@/components/Sar';
@@ -7,30 +8,31 @@ import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsS
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { ALERT_ITEM } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
-
 export const Recommendation = ({ alertId }: { alertId: string }) => {
+  const settings = useSettings();
   const api = useApi();
   const alertQuery = useQuery(ALERT_ITEM(alertId), async () => {
     return await api.getAlert({ alertId });
   });
   const isEscalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
+  const userAlias = firstLetterUpper(settings.userAlias);
   return (
     <>
       <h3>Significant observations</h3>
       <ul>
-        <li>User has been flagged by high velocity rule 8 times in the last 3 months.</li>
-        <li>User has had SARs filed on them twice in the last 6 months.</li>
-        <li>30% of users transaction amounts end in round numbers. This is higher than average.</li>
-        <li>User’s average transaction risk score is 72.8, which is classified as High Risk.</li>
-        <li>User’s transaction volume is 164% higher than average.</li>
+        <li>{`${userAlias} has been flagged by high velocity rule 8 times in the last 3 months.`}</li>
+        <li>{`${userAlias} has had SARs filed on them twice in the last 6 months.`}</li>
+        <li>{`30% of ${settings.userAlias}s transaction amounts end in round numbers. This is higher than average.`}</li>
+        <li>{`${userAlias}’s average transaction risk score is 72.8, which is classified as High Risk.`}</li>
+        <li>{`${userAlias}’s transaction volume is 164% higher than average.`}</li>
       </ul>
       <h3>Action items</h3>
       <ul>
-        <li>View past communications with the user in CRM.</li>
-        <li>Investigate linked transactions.</li>
+        <li>{`View past communications with the ${settings.userAlias} in CRM.`}</li>
+        <li>{`Investigate linked transactions.`}</li>
       </ul>
       <AsyncResourceRenderer resource={alertQuery.data}>
         {(alert) => (

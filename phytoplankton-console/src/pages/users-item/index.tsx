@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import ExpectedTransactionLimits from './UserDetails/shared/TransactionLimits';
 import UserDetails from './UserDetails';
 import Header from './Header';
@@ -152,7 +152,7 @@ export default function UserItem() {
   const handleFollow = useUserEntityFollow(linkingState);
 
   if (userId == null) {
-    return <Alert type={'ERROR'}>User id not defined</Alert>;
+    return <Alert type={'ERROR'}>{`${firstLetterUpper(settings.userAlias)} id not defined`}</Alert>;
   }
 
   const userRes = queryResult.data;
@@ -188,14 +188,14 @@ export default function UserItem() {
         }}
         items={[
           {
-            title: 'User details',
+            title: `${firstLetterUpper(settings.userAlias)} details`,
             key: 'user-details',
             children: <UserDetails userId={userId} onNewComment={handleNewComment} />,
             isClosable: false,
             isDisabled: false,
           },
           {
-            title: 'User events',
+            title: `${firstLetterUpper(settings.userAlias)} events`,
             key: 'user-events',
             children: <UserEvents userId={userId} />,
           },

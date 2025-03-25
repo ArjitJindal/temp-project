@@ -10,7 +10,7 @@ import { ListSubtype, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Drawer from '@/components/library/Drawer';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
@@ -55,7 +55,7 @@ const INITIAL_FORM_STATE: FormValues = {
 
 export default function NewListDrawer(props: Props) {
   const { isOpen, listType, onCancel, onSuccess } = props;
-
+  const settings = useSettings();
   const [formId] = useState(nanoid());
 
   const formRef = useRef<FormRef<FormValues>>(null);
@@ -170,7 +170,7 @@ export default function NewListDrawer(props: Props) {
                   })
                   .map((subtype) => ({
                     value: subtype,
-                    label: getListSubtypeTitle(subtype),
+                    label: getListSubtypeTitle(subtype, settings),
                   }))}
                 {...inputProps}
               />
@@ -191,7 +191,7 @@ export default function NewListDrawer(props: Props) {
                     {subtype !== 'USER_ID' && (
                       <InputField<FormValues, 'values'>
                         name="values"
-                        label={getListSubtypeTitle(subtype)}
+                        label={getListSubtypeTitle(subtype, settings)}
                       >
                         {(inputProps) => <NewValueInput listSubtype={subtype} {...inputProps} />}
                       </InputField>

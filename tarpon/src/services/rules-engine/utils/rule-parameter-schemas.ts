@@ -1042,10 +1042,10 @@ export const USER_KYC_STATUS_SCHEMA = (options?: SchemaOptions) =>
       subtype: 'KYC_STATUS',
     }),
     type: 'array',
-    title: options?.title || 'User KYC status',
+    title: options?.title || '{{UserAlias}} KYC status',
     description:
       options?.description ||
-      'Select one or more user KYC status to target transactions for those users',
+      'Select one or more {{userAlias}} KYC status to target transactions for those {{userAlias}}s',
     items: {
       type: 'string',
       enum: KYC_STATUSS,
@@ -1068,10 +1068,10 @@ export const USER_STATUS_SCHEMA = (options?: SchemaOptions) =>
       subtype: 'USER_STATUS',
     }),
     type: 'array',
-    title: options?.title || 'User status',
+    title: options?.title || '{{UserAlias}} status',
     description:
       options?.description ||
-      'Select one or more user status states to target transactions for those users',
+      'Select one or more {{userAlias}} status states to target transactions for those {{userAlias}}s',
     items: {
       type: 'string',
       enum: USER_STATES,

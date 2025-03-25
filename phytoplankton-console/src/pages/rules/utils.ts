@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { Option } from '@/components/library/SelectionGroup';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
@@ -12,6 +12,7 @@ import {
   RuleLabels,
   RuleNature,
   RuleType,
+  TenantSettings,
   TriggersOnHit,
 } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
@@ -84,20 +85,21 @@ export const RULE_NATURE_OPTIONS: Option<RuleNature>[] = RULE_NATURE_VALUES.map(
   label: RULE_NATURE_LABELS[value],
   value,
 }));
-export const RULE_TYPE_OPTIONS: Option<RuleType>[] = [
-  {
-    label: 'Transaction',
-    value: 'TRANSACTION',
-    description:
-      'The rule checks for transactions and user properties based on the defined rule logic. The rule is executed whenever a new transaction or transaction event occurs.',
-  },
-  {
-    label: 'User',
-    value: 'USER',
-    description:
-      'The rule checks user properties based on the defined rule logic. The rule is executed whenever a new user or new user event occurs. For ongoing screening, the rule is also executed for existing users.',
-  },
-];
+
+export const getRuleTypeOptions = (tenantSettings: TenantSettings): Option<RuleType>[] => {
+  return [
+    {
+      label: 'Transaction',
+      value: 'TRANSACTION',
+      description: `The rule checks for transactions and ${tenantSettings.userAlias} properties based on the defined rule logic. The rule is executed whenever a new transaction or transaction event occurs.`,
+    },
+    {
+      label: firstLetterUpper(tenantSettings.userAlias),
+      value: 'USER',
+      description: `The rule checks ${tenantSettings.userAlias} properties based on the defined rule logic. The rule is executed whenever a new ${tenantSettings.userAlias} or new ${tenantSettings.userAlias} event occurs. For ongoing screening, the rule is also executed for existing ${tenantSettings.userAlias}.`,
+    },
+  ];
+};
 
 export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS';
 
@@ -139,12 +141,18 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITY
   }),
 );
 
-export const ALERT_CREATED_FOR: { label: string; value: AlertCreatedForEnum }[] = (
-  ['USER', 'PAYMENT_DETAILS'] as AlertCreatedForEnum[]
-).map((alertCreatedFor) => ({
-  label: humanizeConstant(alertCreatedFor),
-  value: alertCreatedFor as AlertCreatedForEnum,
-}));
+export const getAlertCreatedFor = (
+  tenantSettings: TenantSettings,
+): { label: string; value: AlertCreatedForEnum }[] => {
+  const alertCreatedFor = ['USER', 'PAYMENT_DETAILS'] as AlertCreatedForEnum[];
+  return alertCreatedFor.map((alertCreatedFor) => ({
+    label:
+      alertCreatedFor === 'USER'
+        ? firstLetterUpper(tenantSettings.userAlias)
+        : humanizeConstant(alertCreatedFor),
+    value: alertCreatedFor as AlertCreatedForEnum,
+  }));
+};
 
 export function ruleInstanceToFormValues(
   isRiskLevelsEnabled: boolean,

@@ -1,3 +1,4 @@
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEmpty } from 'lodash';
 import { getBusinessUserColumns } from './business-user-columns';
@@ -9,7 +10,7 @@ import { UserSearchParams } from '.';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllUsersTableItem, RiskClassificationScore, RiskLevel } from '@/apis';
 import { TableColumn, TableData } from '@/components/library/Table/types';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   BOOLEAN,
@@ -37,11 +38,12 @@ type Props = {
 const extraFilters = (
   list: 'business' | 'consumer' | 'all',
   params: UserSearchParams,
+  userAlias: string,
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
       key: 'userId',
-      title: 'User ID/Name',
+      title: `${userAlias} ID/Name`,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
           userId={params.userId ?? null}
@@ -194,6 +196,7 @@ function getRiskScoringColumns(
 
 export const UsersTable = (props: Props) => {
   const { type, queryResults, params, handleChangeParams, fitHeight = false } = props;
+  const settings = useSettings();
 
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
@@ -211,10 +214,10 @@ export const UsersTable = (props: Props) => {
 
   const columns: TableColumn<AllUsersTableItem>[] =
     type === 'business'
-      ? (getBusinessUserColumns() as TableColumn<AllUsersTableItem>[])
+      ? (getBusinessUserColumns(settings.userAlias) as TableColumn<AllUsersTableItem>[])
       : type === 'consumer'
-      ? (getConsumerUserColumns() as TableColumn<AllUsersTableItem>[])
-      : (getAllUserColumns() as TableColumn<AllUsersTableItem>[]);
+      ? (getConsumerUserColumns(settings.userAlias) as TableColumn<AllUsersTableItem>[])
+      : (getAllUserColumns(settings.userAlias) as TableColumn<AllUsersTableItem>[]);
 
   if (isRiskScoringEnabled) {
     columns.push(...getRiskScoringColumns(riskClassificationValuesMap));
@@ -226,7 +229,7 @@ export const UsersTable = (props: Props) => {
     <QueryResultsTable<AllUsersTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type, params)}
+      extraFilters={extraFilters(type, params, firstLetterUpper(settings.userAlias))}
       columns={columns}
       queryResults={queryResults}
       params={params}

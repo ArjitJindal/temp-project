@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { humanizeConstant, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Mutation } from '@/utils/queries/types';
 import { TableColumn } from '@/components/library/Table/types';
 import {
@@ -28,6 +28,7 @@ import { makeUrl } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
 import { Option } from '@/components/library/Select';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DERIVED_ENTITY_TYPE_VALUES = [
   'CONSUMER_USER',
@@ -112,12 +113,13 @@ const ENTITY_TYPE_ADAPTER = {
 };
 
 export function useExtraFilters(singleUserMode: boolean) {
+  const settings = useSettings();
   return useMemo(
     (): ExtraFilterProps<SanctionsWhitelistTableParams>[] =>
       [
         !singleUserMode && {
           key: 'userId',
-          title: 'User ID/Name',
+          title: `${firstLetterUpper(settings.userAlias)} ID/Name`,
           showFilterByDefault: true,
           renderer: ({ params, setParams }) => (
             <UserSearchButton
@@ -151,7 +153,7 @@ export function useExtraFilters(singleUserMode: boolean) {
           ),
         },
       ].filter(notEmpty),
-    [singleUserMode],
+    [singleUserMode, settings.userAlias],
   );
 }
 
@@ -161,6 +163,7 @@ export function useColumns(
   selectedState: StatePair<SanctionsWhitelistEntity | undefined>,
 ): TableColumn<SanctionsWhitelistEntity>[] {
   const hasWritePermissions = useHasPermissions(['sanctions:search:write']);
+  const settings = useSettings();
   return useMemo(() => {
     const [_, setSelected] = selectedState;
     const helper = new ColumnHelper<SanctionsWhitelistEntity>();
@@ -168,7 +171,7 @@ export function useColumns(
     const columns: TableColumn<SanctionsWhitelistEntity>[] = [
       !singleUserMode &&
         helper.simple<'userId'>({
-          title: 'User / Payment details identifier',
+          title: `${firstLetterUpper(settings.userAlias)} / Payment details identifier`,
           key: 'userId',
           type: {
             render: (value, { item }) => {
@@ -256,5 +259,5 @@ export function useColumns(
     ].filter(notEmpty);
 
     return columns;
-  }, [singleUserMode, deleteMutation, hasWritePermissions, selectedState]);
+  }, [singleUserMode, deleteMutation, hasWritePermissions, selectedState, settings.userAlias]);
 }

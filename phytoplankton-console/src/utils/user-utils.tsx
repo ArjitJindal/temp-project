@@ -15,6 +15,7 @@ import {
   InternalConsumerUser,
   InternalBusinessUser,
 } from '@/apis';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export enum CommentType {
   COMMENT,
@@ -220,11 +221,12 @@ export function useInvalidateUsers() {
 
 export function useUserName(userId: string | null | undefined): string {
   const [users, isLoading] = useUsers();
+  const settings = useSettings();
   // todo: i18n
   if (isLoading || !userId) {
-    return userId ?? 'Unknown user';
+    return userId ?? `Unknown ${settings.userAlias}`;
   }
-  return users[userId]?.name ?? userId ?? 'Unknown user';
+  return users[userId]?.name ?? userId ?? `Unknown ${settings.userAlias}`;
 }
 
 export function useUser(userId: string | null | undefined): Account | null {

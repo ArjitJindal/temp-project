@@ -1,8 +1,13 @@
 import React from 'react';
 import cn from 'clsx';
-import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import {
+  firstLetterUpper,
+  humanizeAuto,
+  humanizeCamelCase,
+  humanizeSnakeCase,
+} from '@flagright/lib/utils/humanize';
 import { ExtendedSchema, PropertyItem } from '../types';
-import { getUiSchema, useOrderedProps } from '../utils';
+import { getUiSchema, useOrderedProps, replacePlaceholders } from '../utils';
 import PropertyInput from './PropertyInput';
 import s from './style.module.less';
 import { Props as LabelProps } from '@/components/library/Label';
@@ -12,7 +17,7 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
 import { dereferenceType } from '@/components/library/JsonSchemaEditor/schema-utils';
 import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
-import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   item: PropertyItem;
@@ -26,6 +31,7 @@ export default function Property(props: Props) {
   const { schema: _schema, name } = item;
 
   const settings = useJsonSchemaEditorSettings();
+  const tenantSettings = useSettings();
 
   const { rootSchema } = useJsonSchemaEditorContext();
   const schema = dereferenceType(_schema, rootSchema);
@@ -81,12 +87,26 @@ export default function Property(props: Props) {
   const canShowProperty = requiredFeatures?.length
     ? features.some((f) => requiredFeatures.includes(f))
     : true;
+
+  const getPlaceholderText = <T extends string | React.ReactNode>(
+    text: string | undefined,
+    defaultValue?: T,
+  ): T | undefined => {
+    if (typeof text === 'string') {
+      return replacePlaceholders(text, {
+        userAlias: tenantSettings.userAlias ?? 'user',
+        UserAlias: firstLetterUpper(tenantSettings.userAlias ?? 'user'),
+      }) as T;
+    }
+    return defaultValue;
+  };
+
   return canShowProperty ? (
     <PropertyContext.Provider value={{ item, label: humanizeFunction(name) }}>
       <InputField<any>
         name={name}
-        label={schema.title ?? humanizeFunction(name)}
-        description={schema.description}
+        label={getPlaceholderText<React.ReactNode>(schema.title, humanizeFunction(name))}
+        description={getPlaceholderText<string>(schema.description)}
         labelProps={{
           element: labelElement,
           position: labelPosition,

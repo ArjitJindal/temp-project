@@ -1,8 +1,9 @@
 import { ImportOutlined } from '@ant-design/icons';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { SideBarContext } from '../Providers/SidebarProvider';
-import { useFeaturesEnabled, useFeatureEnabled } from '../Providers/SettingsProvider';
+import { useFeaturesEnabled, useFeatureEnabled, useSettings } from '../Providers/SettingsProvider';
 import TeamOutlined from './icons/Team_Outlined.react.svg';
 import ListsIcon from './icons/lists.react.svg';
 import GavelIcon from './icons/gavel.react.svg';
@@ -148,6 +149,7 @@ function RenderItem(props: {
   isCollapsed: boolean;
   isNotificationsDrawerVisible: boolean;
 }) {
+  const settings = useSettings();
   const { i18n, isCollapsed, item, parentTranslationKey, isNotificationsDrawerVisible } = props;
   const disabledByFeature = !useFeaturesEnabled(item.associatedFeatures ?? []);
   const fullKey = `${parentTranslationKey}.${item.name}`;
@@ -175,7 +177,7 @@ function RenderItem(props: {
       disabledByFeature={disabledByFeature}
       isActiveHighlightingEnabled={isNotificationsDrawerVisible}
     >
-      {i18n(fullKey as TranslationId)}
+      {i18n(fullKey as TranslationId).replace('Users', `${firstLetterUpper(settings.userAlias)}s`)}
     </TopLevelLink>
   );
 }

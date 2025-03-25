@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Input } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
@@ -23,7 +24,7 @@ import {
 } from '@/apis/types/ObjectParamAPI';
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface ExistedTableItemData {
   value: string;
   reason: string;
@@ -74,6 +75,7 @@ const helper = new ColumnHelper<TableItem>();
 
 export default function ItemsTable(props: Props) {
   const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
+  const settings = useSettings();
 
   const api = useApi();
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
@@ -239,7 +241,7 @@ export default function ItemsTable(props: Props) {
       [
         listSubtype != null &&
           helper.derived<string | string[]>({
-            title: getListSubtypeTitle(listSubtype),
+            title: getListSubtypeTitle(listSubtype, settings),
             value: (item) => item.value,
             type: {
               render: (value, context) => {
@@ -285,7 +287,7 @@ export default function ItemsTable(props: Props) {
         ...(listSubtype === 'USER_ID'
           ? helper.list([
               helper.simple<'meta.userFullName'>({
-                title: 'User name',
+                title: `${firstLetterUpper(settings.userAlias)} name`,
                 key: 'meta.userFullName',
               }),
             ])
@@ -414,7 +416,14 @@ export default function ItemsTable(props: Props) {
         }),
       ].filter(notEmpty),
     );
-  }, [isAddUserLoading, isEditUserValid, isNewUserValid, listSubtype, requiredWritePermissions]);
+  }, [
+    isAddUserLoading,
+    isEditUserValid,
+    isNewUserValid,
+    listSubtype,
+    requiredWritePermissions,
+    settings,
+  ]);
 
   return (
     <>

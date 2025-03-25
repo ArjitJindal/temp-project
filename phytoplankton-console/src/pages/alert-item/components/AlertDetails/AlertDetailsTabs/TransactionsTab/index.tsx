@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
@@ -9,7 +10,7 @@ import { useCursorQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { dayjs } from '@/utils/dayjs';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import {
   Alert,
@@ -42,6 +43,7 @@ export default function TransactionsTab(props: Props) {
     fitHeight,
     sanctionsDetailsFilter,
   } = props;
+  const settings = useSettings();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
@@ -132,7 +134,7 @@ export default function TransactionsTab(props: Props) {
         extraFilters={[
           {
             key: 'userId',
-            title: 'User ID/name',
+            title: `${firstLetterUpper(settings.userAlias)} ID/name`,
             renderer: ({ params, setParams }) => (
               <UserSearchButton
                 userId={params.userId ?? null}

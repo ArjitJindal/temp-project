@@ -1,6 +1,6 @@
 import React from 'react';
 import pluralize from 'pluralize';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -18,6 +18,7 @@ import { Case } from '@/apis';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   alertId: string;
@@ -27,6 +28,7 @@ interface Props {
 export default function InvestigativeCoPilotAlertInfo(props: Props) {
   const { alertId, caseId } = props;
   const api = useApi();
+  const settings = useSettings();
 
   const caseQueryResults = useQuery(
     CASES_ITEM(caseId),
@@ -62,8 +64,10 @@ export default function InvestigativeCoPilotAlertInfo(props: Props) {
           <div className={s.alertInfo}>
             {user && 'type' in user && (
               <>
-                <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
-                <Form.Layout.Label title={'User ID'}>
+                <Form.Layout.Label title={firstLetterUpper(settings.userAlias)}>
+                  {caseUserName}
+                </Form.Layout.Label>
+                <Form.Layout.Label title={`${firstLetterUpper(settings.userAlias)} ID`}>
                   <UserLink user={user}>{caseUserId}</UserLink>
                 </Form.Layout.Label>
               </>

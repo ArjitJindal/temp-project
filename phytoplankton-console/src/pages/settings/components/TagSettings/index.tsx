@@ -199,7 +199,7 @@ function TagSettings() {
   return (
     <SettingsCard
       title="Tags"
-      description="Define custom tag keys here, with values added on the user details page. Note that only a maximum of 10 keys can be added."
+      description={`Define custom tag keys here, with values added on the ${settings.userAlias} details page. Note that only a maximum of 10 keys can be added.`}
     >
       <Table
         toolsOptions={false}

@@ -45,7 +45,7 @@ export default class ListScreeningConsumerUser extends UserRule<ListScreeningCon
           type: 'string',
           title: 'List ID',
           description:
-            'Provide a List ID against which user names will be checked',
+            'Provide a List ID against which {{userAlias}} names will be checked',
         },
       },
       required: ['fuzzinessRange'],

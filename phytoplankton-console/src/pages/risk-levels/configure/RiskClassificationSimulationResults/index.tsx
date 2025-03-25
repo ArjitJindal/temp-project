@@ -35,7 +35,7 @@ import COLORS from '@/components/ui/colors';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Progress } from '@/components/Simulation/Progress';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 type Props = {
   onClose: (toClose: boolean) => void;
   isVisible: boolean;
@@ -151,6 +151,7 @@ const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.
 
 const IterationComponent = (props: IterationProps) => {
   const { iteration } = props;
+  const settings = useSettings();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
@@ -236,7 +237,7 @@ const IterationComponent = (props: IterationProps) => {
           simulationStartedAt={iteration.createdAt ?? 0}
           width="FULL"
           progress={iteration.progress * 100}
-          message="Running the simulation for a sample of users & generating results for you."
+          message={`Running the simulation for a sample of ${settings.userAlias}s & generating results for you.`}
           status={iteration.latestStatus.status}
           totalEntities={iteration.totalEntities}
         />
@@ -244,7 +245,9 @@ const IterationComponent = (props: IterationProps) => {
       <P style={{ color: 'rgba(0, 0, 0, 0.85)' }}>{iteration?.description}</P>
       <div className={s.graphsParentContainer}>
         <div className={s.graphsContainer}>
-          <H5 style={{ marginBottom: '1.5rem' }}>Users distribution based on CRA</H5>
+          <H5 style={{ marginBottom: '1.5rem' }}>
+            {settings.userAlias}s distribution based on CRA
+          </H5>
           <GroupedColumn data={craGraphData} max={Math.ceil(maxCRA + maxCRA * 0.2)} />{' '}
           {/*Hack so that labels doesn't hide */}
         </div>
@@ -279,6 +282,7 @@ const IterationComponent = (props: IterationProps) => {
 export default function RiskClassificationSimulationResults(props: Props) {
   const { onClose, isVisible, result } = props;
   const api = useApi();
+  const settings = useSettings();
   function isAllIterationsCompleted(iterations: SimulationRiskLevelsIteration[]): boolean {
     return iterations.every(
       (iteration) =>
@@ -371,7 +375,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
             simulationStartedAt={iteration.createdAt}
             status={iteration.latestStatus.status}
             totalEntities={iteration.totalEntities}
-            message="Running simulation on sample of users to generate results"
+            message={`Running simulation on sample of ${settings.userAlias}s to generate results`}
           />
         </div>
       ) : (

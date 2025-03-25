@@ -108,7 +108,10 @@ export function firstLetterLower(str: string): string {
   return str[0].toLocaleLowerCase() + str.substring(1)
 }
 
-export function firstLetterUpper(str: string): string {
+export function firstLetterUpper(str?: string): string {
+  if (!str) {
+    return ''
+  }
   if (str.length < 1) {
     return str
   }

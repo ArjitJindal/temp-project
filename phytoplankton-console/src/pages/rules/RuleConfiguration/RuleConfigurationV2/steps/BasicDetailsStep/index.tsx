@@ -19,8 +19,8 @@ import {
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import {
-  ALERT_CREATED_FOR,
   AlertCreatedForEnum,
+  getAlertCreatedFor,
   RULE_CASE_PRIORITY,
   RULE_LABELS_OPTIONS,
   RULE_NATURE_OPTIONS,
@@ -30,7 +30,11 @@ import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import Checkbox from '@/components/library/Checkbox';
-import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleQueueInputField } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/RuleQueueInput';
 import CreationIntervalInput, {
   AlertCreationInterval,
@@ -301,6 +305,7 @@ function SimulationIterationDetails() {
 }
 
 function AlertCreationDetails() {
+  const settings = useSettings();
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <>
@@ -325,7 +330,7 @@ function AlertCreationDetails() {
           {(inputProps) => (
             <SelectionGroup<AlertCreatedForEnum>
               mode="MULTIPLE"
-              options={ALERT_CREATED_FOR}
+              options={getAlertCreatedFor(settings)}
               {...inputProps}
             />
           )}

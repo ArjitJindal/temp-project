@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { isEqual, round } from 'lodash';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { FROZEN_STATUSES, isShadowRule as checkShadowRule } from '../../utils';
 import s from './styles.module.less';
 import Widget from '@/components/library/Widget';
@@ -32,6 +33,7 @@ import {
 import { makeUrl } from '@/utils/routing';
 import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const HIT_RATE_SERIES = 'Hit rate (%)';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate (%)';
@@ -55,6 +57,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
   const { ruleInstance } = props;
   const api = useApi();
   const [timeRange, setTimeRange] = useState<WidgetRangePickerValue>(DEFAULT_TIME_RANGE);
+  const settings = useSettings();
 
   const handleDateReset = useCallback(() => {
     setTimeRange({
@@ -137,7 +140,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
               <OverviewCard
                 sections={[
                   {
-                    title: 'Users hit',
+                    title: `${firstLetterUpper(settings.userAlias)}s hit`,
                     value: map(dataRes, (data) => data.usersHit ?? 0),
                   },
                 ]}
@@ -284,7 +287,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
     });
     items.push({
       renderComponent: () => (
-        <Widget title="Users hit">
+        <Widget title={`${firstLetterUpper(settings.userAlias)}s hit`}>
           <HitTransactionUsersTable
             ruleInstance={ruleInstance}
             timeRange={{
@@ -298,7 +301,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
   } else if (isShadowRule && ruleInstance.type === 'USER') {
     items.push({
       renderComponent: () => (
-        <Widget title="Users hit">
+        <Widget title={`${firstLetterUpper(settings.userAlias)}s hit`}>
           <HitUsersTable
             ruleInstance={ruleInstance}
             timeRange={{

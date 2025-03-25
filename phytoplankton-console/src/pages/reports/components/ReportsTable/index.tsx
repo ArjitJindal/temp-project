@@ -35,6 +35,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { getErrorMessage } from '@/utils/lang';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface TableSearchParams extends CommonParams {
   id?: string;
@@ -49,6 +50,7 @@ interface TableSearchParams extends CommonParams {
 export type TableParams = AllParams<TableSearchParams>;
 
 export default function ReportsTable() {
+  const settings = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
   const parsedParams = useMemo(
@@ -166,7 +168,7 @@ export default function ReportsTable() {
           type: LONG_TEXT,
         }),
         helper.derived({
-          title: 'Case user ID',
+          title: `Case ${settings.userAlias} ID`,
           id: 'caseUserId',
           value: (report) => report.caseUser?.userId,
           type: {
@@ -184,7 +186,7 @@ export default function ReportsTable() {
           },
         }),
         helper.derived({
-          title: 'Case user name',
+          title: `Case ${settings.userAlias} name`,
           id: 'caseUserName',
           value: (report) => getUserName(report.caseUser),
           type: STRING,
@@ -287,7 +289,15 @@ export default function ReportsTable() {
           }),
       ].filter(notEmpty),
     );
-  }, [canWrite, deleteMutation, reportTypes, loadingUsers, users, setDisplayStatusInfoReport]);
+  }, [
+    canWrite,
+    deleteMutation,
+    reportTypes,
+    loadingUsers,
+    users,
+    setDisplayStatusInfoReport,
+    settings.userAlias,
+  ]);
 
   return (
     <>
@@ -335,7 +345,7 @@ export default function ReportsTable() {
           },
           {
             key: 'filterCaseUserId',
-            title: 'Case user ID',
+            title: `Case ${settings.userAlias} ID`,
             renderer: {
               kind: 'string',
             },

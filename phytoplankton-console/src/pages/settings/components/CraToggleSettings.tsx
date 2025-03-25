@@ -20,7 +20,10 @@ export default function CraToggleSettings() {
 
   return (
     <div>
-      <SettingsCard title="Risk scoring CRA" description="Turn on risk scoring CRA for all users">
+      <SettingsCard
+        title="Risk scoring CRA"
+        description={`Turn on risk scoring CRA for all ${settings.userAlias}s`}
+      >
         <div>
           <Toggle
             onChange={settings.riskScoringCraEnabled === false ? handleEnable : handleDisable}

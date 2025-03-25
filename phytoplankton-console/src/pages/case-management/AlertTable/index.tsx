@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
@@ -47,7 +48,7 @@ import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   ALERT_USER_ID,
   ASSIGNMENTS,
@@ -158,6 +159,8 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     updateModalState,
     setModalVisibility,
   } = props;
+  const settings = useSettings();
+  const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
   const slaEnabled = useFeatureEnabled('ALERT_SLA');
@@ -423,13 +426,13 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           ...(showUserColumns
             ? [
                 helper.simple<'caseUserId'>({
-                  title: 'User id',
+                  title: `${capitalizeUserAlias} ID`,
                   key: 'caseUserId',
                   type: ALERT_USER_ID,
                 }),
 
                 helper.simple<'caseUserName'>({
-                  title: 'User name',
+                  title: `${capitalizeUserAlias} name`,
                   key: 'caseUserName',
                 }),
               ]
@@ -988,6 +991,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     params,
     navigate,
     expandedAlertId,
+    capitalizeUserAlias,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

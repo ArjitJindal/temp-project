@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
@@ -7,7 +8,7 @@ import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
 import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 import { CASES_ITEM } from '@/utils/queries/keys';
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export default function SubHeader(props: Props) {
+  const settings = useSettings();
   const { caseId, caseItemRes } = props;
   const caseItem = getOr(caseItemRes, undefined);
   const caseUsers = caseItem?.caseUsers;
@@ -154,7 +156,7 @@ export default function SubHeader(props: Props) {
         {caseItem &&
           (caseItem.subjectType === 'PAYMENT'
             ? paymentSubjectLabels(caseItem)
-            : userSubjectLabels(caseItem))}
+            : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias)))}
         <Form.Layout.Label title={'Created at'}>
           <Skeleton res={caseItemRes}>
             {(caseItem) =>
@@ -342,15 +344,15 @@ function paymentSubjectLabels(caseItem: Case) {
   );
 }
 
-function userSubjectLabels(caseItem: Case) {
+function userSubjectLabels(caseItem: Case, userAlias: string) {
   const caseUser = (caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined) as
     | TableUser
     | undefined;
 
   return (
     <>
-      <Form.Layout.Label title={'User name'}>{getUserName(caseUser)}</Form.Layout.Label>
-      <Form.Layout.Label title={'User ID'}>
+      <Form.Layout.Label title={`${userAlias} name`}>{getUserName(caseUser)}</Form.Layout.Label>
+      <Form.Layout.Label title={`${userAlias} ID`}>
         <Id to={getUserLink(caseUser)} toNewTab alwaysShowCopy>
           {caseUser?.userId}
         </Id>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { OverviewCard } from '@/pages/dashboard/analysis/components/widgets/OverviewCard';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/time-line.react.svg';
@@ -8,13 +9,15 @@ import ArrowDownLineIcon from '@/components/ui/icons/Remix/system/arrow-down-lin
 import DownwardZigZagIcon from '@/components/ui/icons/downward-line-zig-zag.react.svg';
 import { VarThresholdData } from '@/apis';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   data: VarThresholdData;
 }
 
 export default function ExtendedRowRenderer(props: Props) {
   const { falsePositivesReduced, timeReduced, transactionsHit, usersHit } = props.data;
+  const settings = useSettings();
+
   return (
     <div className={s.metricGrid}>
       <OverviewCard
@@ -72,7 +75,7 @@ export default function ExtendedRowRenderer(props: Props) {
             title: (
               <div className={s.title}>
                 <User3LineIcon className={s.titleIcon} />
-                <>Users hit</>
+                <>{`${firstLetterUpper(settings.userAlias)}s hit`}</>
               </div>
             ),
             type: 'DISPLAY',

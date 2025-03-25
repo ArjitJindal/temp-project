@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { capitalizeWords } from '@flagright/lib/utils/humanize';
+import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { startCase } from 'lodash';
 import s from './index.module.less';
 import { SimulationBeaconResultUser } from '@/apis';
@@ -17,7 +17,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface SimulationUsersHitProps {
   taskId: string;
@@ -29,6 +29,7 @@ interface TableParams extends CommonParams {
 
 export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
   const { taskId } = props;
+  const settings = useSettings();
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
   });
@@ -36,10 +37,11 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
   const api = useApi();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const userAlias = firstLetterUpper(settings.userAlias);
   const columns = helper.list([
     helper.simple<'userId'>({
       key: 'userId',
-      title: 'User ID',
+      title: `${userAlias} ID`,
       type: {
         render: (userId, { item: entity }) => {
           return (
@@ -88,10 +90,10 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
       : []),
     helper.simple<'userName'>({
       key: 'userName',
-      title: 'User name',
+      title: `${userAlias} name`,
     }),
     helper.simple<'userType'>({
-      title: 'User type',
+      title: `${userAlias} type`,
       key: 'userType',
       type: {
         render: (userType) => {
@@ -140,7 +142,7 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
           extraFilters={[
             {
               key: 'userId',
-              title: 'User ID/name',
+              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
                   userId={params.userId ?? null}

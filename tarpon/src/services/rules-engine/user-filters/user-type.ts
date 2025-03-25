@@ -18,8 +18,9 @@ export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParamet
       type: 'object',
       properties: {
         userType: USER_TYPE_OPTIONAL_SCHEMA({
-          title: 'User type',
-          description: 'Select the type of users you want the rule to apply to',
+          title: '{{UserAlias}} type',
+          description:
+            'Select the type of {{userAlias}}s you want the rule to apply to',
           uiSchema: {
             group: 'user',
           },

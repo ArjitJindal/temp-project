@@ -1,5 +1,6 @@
 import cn from 'clsx';
 import { Tooltip } from 'antd';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import React from 'react';
 import s from './index.module.less';
@@ -22,11 +23,14 @@ import Money from '@/components/ui/Money';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
 import DeviceDataProps from '@/components/ui/DeviceDataProps';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-function getUnknownUserTooltipMessage(userId?: string) {
+function getUnknownUserTooltipMessage(userId?: string, userAlias?: string) {
   return userId
-    ? `User ${userId} doesn't exist in the system. Please call the user creation API to create the user in order to see the user info.`
-    : 'Please include origin/destination user ID when calling our transaction verification API and create the user with the user creation API';
+    ? `${firstLetterUpper(
+        userAlias,
+      )} ${userId} doesn't exist in the system. Please call the user creation API to create the ${userAlias} in order to see the ${userAlias} info.`
+    : `Please include origin/destination ${userAlias} ID when calling our transaction verification API and create the ${userAlias} with the user creation API`;
 }
 
 interface Props {
@@ -43,6 +47,8 @@ interface Props {
 export default function UserDetails(props: Props) {
   const { type, user, userId, amountDetails, paymentDetails, deviceData, currentRef, otherRef } =
     props;
+  const settings = useSettings();
+
   const isDestination = type === 'DESTINATION';
   return (
     <Card.Root className={cn(s.root, s[`type-${type}`])}>
@@ -66,8 +72,8 @@ export default function UserDetails(props: Props) {
             {user ? (
               getUserName(user)
             ) : (
-              <Tooltip title={getUnknownUserTooltipMessage(userId)}>
-                Unknown user <QuestionCircleOutlined />
+              <Tooltip title={getUnknownUserTooltipMessage(userId, settings.userAlias)}>
+                Unknown {settings.userAlias} <QuestionCircleOutlined />
               </Tooltip>
             )}
           </span>

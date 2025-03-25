@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -27,6 +27,7 @@ import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import Label from '@/components/library/Label';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   isVisible: boolean;
@@ -73,15 +74,16 @@ export default function UserChangeModal(props: Props) {
     }));
   }, [fileList]);
   const api = useApi();
+  const settings = useSettings();
 
   const queryClient = useQueryClient();
   let messageLoading: CloseMessage | undefined;
   const mutation = useMutation(
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, userStatus } = values;
-      messageLoading = message.loading('Changing User Status...');
+      messageLoading = message.loading(`Changing ${settings.userAlias} Status...`);
       if (userStatus === '' || userStatus == null) {
-        throw new Error('User Status Empty');
+        throw new Error(`${firstLetterUpper(settings.userAlias)} Status Empty`);
       }
       const newStateDetails: UserStateDetailsInternal = {
         state: userStatus,
@@ -113,7 +115,7 @@ export default function UserChangeModal(props: Props) {
     },
     {
       onSuccess: async (data) => {
-        message.success(`User status updated`);
+        message.success(`${firstLetterUpper(settings.userAlias)} status updated`);
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.userStatus, data.updatedComment);
         onClose();
@@ -121,7 +123,7 @@ export default function UserChangeModal(props: Props) {
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
       onError: (error: Error) => {
-        message.error(`Error Changing User Status: ${error.message}`);
+        message.error(`Error Changing ${settings.userAlias} Status: ${error.message}`);
         messageLoading?.();
       },
     },
@@ -157,7 +159,7 @@ export default function UserChangeModal(props: Props) {
         >
           <InputField<FormValues, 'userStatus'>
             name="userStatus"
-            label="User status"
+            label={`${firstLetterUpper(settings.userAlias)} status`}
             labelProps={{
               required: {
                 showHint: true,
@@ -235,7 +237,7 @@ export default function UserChangeModal(props: Props) {
                   <TextArea
                     {...inputProps}
                     rows={4}
-                    placeholder={`Write a narrative explaining the User Status change reason and findings, if any.`}
+                    placeholder={`Write a narrative explaining the ${settings.userAlias} Status change reason and findings, if any.`}
                   />
                 </>
               )}

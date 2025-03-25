@@ -7,7 +7,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { makeUrl } from '@/utils/routing';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 type UserPanelProps = {
   userId: string;
   followed: string[];
@@ -17,6 +17,7 @@ type UserPanelProps = {
 
 export const UserPanel = (props: UserPanelProps) => {
   const api = useApi();
+  const settings = useSettings();
   const { followed, onFollow, userId, isFollowEnabled } = props;
 
   const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
@@ -46,7 +47,7 @@ export const UserPanel = (props: UserPanelProps) => {
                 )
               }
             >
-              Go to user details
+              Go to {settings.userAlias} details
             </Button>
             {!followed.includes(user.userId) && isFollowEnabled && (
               <Button type="SECONDARY" onClick={() => onFollow(user.userId)}>

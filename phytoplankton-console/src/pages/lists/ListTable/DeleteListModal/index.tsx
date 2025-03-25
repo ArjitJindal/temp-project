@@ -9,7 +9,7 @@ import { ListHeader, ListType } from '@/apis';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   listType: ListType;
   list: ListHeader | null;
@@ -19,6 +19,7 @@ interface Props {
 
 export default function DeleteListModal(props: Props) {
   const api = useApi();
+  const settings = useSettings();
   const { list, onCancel, onSuccess } = props;
 
   const isOpen = list != null;
@@ -70,7 +71,7 @@ export default function DeleteListModal(props: Props) {
         </Typography.Paragraph>
       </div>
       <Typography.Paragraph style={{ color: COLORS.purpleGray.base }}>
-        Deleting this list will remove all <b>{list?.size}</b> users from this
+        Deleting this list will remove all <b>{list?.size}</b> {settings.userAlias}s from this{' '}
         {listType === 'WHITELIST' ? ' whitelist ' : ' blacklist'}. This cannot be undone so please
         consider this carefully.
       </Typography.Paragraph>

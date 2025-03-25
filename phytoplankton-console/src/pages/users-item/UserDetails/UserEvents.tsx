@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk';
 import { Typography } from 'antd';
 import s from './index.module.less';
@@ -16,6 +17,7 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type Props = {
   userId: string;
@@ -25,6 +27,7 @@ export const UserEvents = (props: Props) => {
   const { userId } = props;
   const helper = new ColumnHelper<InternalUserEvent>();
   const api = useApi();
+  const settings = useSettings();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -106,7 +109,7 @@ export const UserEvents = (props: Props) => {
         render: (item) => {
           if (!item?.updatedConsumerUserAttributes && !item?.updatedBusinessUserAttributes) {
             return (
-              <Tooltip title="No changes were made to the user details.">
+              <Tooltip title={`No changes were made to the ${settings.userAlias} details.`}>
                 <Typography.Text type={'secondary'}>View Changes</Typography.Text>
               </Tooltip>
             );
@@ -114,7 +117,7 @@ export const UserEvents = (props: Props) => {
           return (
             <AuditLogModal
               data={{
-                type: 'User',
+                type: firstLetterUpper(settings.userAlias),
                 oldImage: {},
                 newImage: item.updatedConsumerUserAttributes
                   ? item.updatedConsumerUserAttributes

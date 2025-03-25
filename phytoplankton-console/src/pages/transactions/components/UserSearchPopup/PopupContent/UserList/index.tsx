@@ -7,7 +7,7 @@ import { AsyncResource } from '@/utils/asyncResource';
 import { AllUsersTableItem } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Spinner from '@/components/library/Spinner';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   selectedUser: AllUsersTableItem | null;
   onSelectUser: (user: AllUsersTableItem) => void;
@@ -20,6 +20,7 @@ interface Props {
 
 export default function UserList(props: Props) {
   const { usersRes, selectedUser, search, onSelectUser } = props;
+  const settings = useSettings();
 
   // todo: i18n
   return (
@@ -41,7 +42,7 @@ export default function UserList(props: Props) {
         >
           {({ users, total }) => (
             <>
-              {renderMessage(users, total, search)}
+              {renderMessage(users, total, search, settings.userAlias)}
               {users.length > 0 && (
                 <List<AllUsersTableItem>
                   dataSource={users}
@@ -65,17 +66,26 @@ export default function UserList(props: Props) {
   );
 }
 
-function renderMessage(users: AllUsersTableItem[], total: number, search: string) {
+function renderMessage(
+  users: AllUsersTableItem[],
+  total: number,
+  search: string,
+  userAlias?: string,
+) {
   const length = users.length;
   if (length === 0) {
     return (
       <div className={s.nothingFound}>
-        We could not find a user with ID or name <b>{search}</b>
+        We could not find a {userAlias} with ID or name <b>{search}</b>
       </div>
     );
   }
   if (total > length) {
-    return <div className={s.subtitle}>More than {length} users found</div>;
+    return (
+      <div className={s.subtitle}>
+        More than {length} {pluralize(userAlias ?? '', length, true)} found
+      </div>
+    );
   }
-  return <div className={s.subtitle}>{pluralize('user', length, true)} found</div>;
+  return <div className={s.subtitle}>{pluralize(userAlias ?? '', length, true)} found</div>;
 }

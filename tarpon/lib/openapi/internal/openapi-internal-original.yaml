@@ -10622,6 +10622,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleActionAlias'
+        userAlias:
+          type: string
         transactionStateAlias:
           type: array
           items:

@@ -12,6 +12,7 @@ import { dayjs } from '@/utils/dayjs';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { DownloadButton } from '@/components/library/Widget';
 import { itemId } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/helpers';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   questionId: string;
@@ -27,6 +28,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
   const { commentSubmitMutation, item, children, isLoading, isUnread, onRefresh, questionId } =
     props;
   const { variableOptions, title } = item;
+  const settings = useSettings();
 
   const [initialVariablesState, setInitialVarsValues] = useState(
     item.variables?.reduce((acc, x) => ({ ...acc, [x.name]: x.value }), {}) ?? {},
@@ -61,6 +63,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
                       'createdById',
                       'variableOptions',
                     ]),
+                    settings,
                   ),
                 };
               }}

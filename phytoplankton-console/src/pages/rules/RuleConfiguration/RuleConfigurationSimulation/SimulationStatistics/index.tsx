@@ -1,4 +1,5 @@
 import { Col, Row } from 'antd';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { DeltaCard } from './DeltaCard';
 import { DeltaChart } from './DeltaChart';
 import COLORS from '@/components/ui/colors';
@@ -8,13 +9,14 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import { Progress } from '@/components/Simulation/Progress';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface SimulationStatisticsProps {
   pdfMode?: boolean;
   iteration: SimulationBeaconIteration;
 }
 
 export function SimulationStatistics(props: SimulationStatisticsProps) {
+  const settings = useSettings();
   const { iteration, pdfMode } = props;
   const { current, simulated } = iteration.statistics;
   const beforeCaseTruePositives =
@@ -95,12 +97,12 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
             <Col span={8}>
               <DeltaCard
                 icon={<User3LineIcon />}
-                title="Delta of users hit"
+                title={`Delta of ${settings.userAlias}s hit`}
                 beforeValue={iteration.statistics.current?.usersHit}
                 afterValue={iteration.statistics.simulated?.usersHit}
               />
               <DeltaChart
-                title="User's hit"
+                title={`${firstLetterUpper(settings.userAlias)}'s hit`}
                 beforeValues={[{ value: current?.usersHit, type: 'Before' }]}
                 afterValues={[{ value: simulated?.usersHit, type: 'After' }]}
                 beforeColor={COLORS.green.base}

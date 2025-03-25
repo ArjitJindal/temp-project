@@ -31,6 +31,7 @@ import ReRunTriggerSettings from './components/ReRunTriggerSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { ReasonsSettings } from './components/ReasonsSettings';
 import { CRMSettings } from './components/CRMSettings';
+import UserAliasSettings from './components/UserAliasSettings/UserAliasSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import {
@@ -128,6 +129,7 @@ export default function SettingsPage() {
                 <KYCUserStatusSettings />
                 <PepStatusConfigSettings />
                 <TagSettings />
+                <UserAliasSettings />
               </>
             ),
           },

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { capitalize } from 'lodash';
 import s from './styles.module.less';
 import { AllUsersTableItem, UserType } from '@/apis';
@@ -14,14 +15,14 @@ import {
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
 
-export function getAllUserColumns(): TableColumn<AllUsersTableItem>[] {
+export function getAllUserColumns(userAlias?: string): TableColumn<AllUsersTableItem>[] {
   const helper = new ColumnHelper<AllUsersTableItem>();
 
   return [
     helper.simple<'userId'>({
-      title: 'User ID',
+      title: `${firstLetterUpper(userAlias)} ID`,
       key: 'userId',
-      tooltip: 'Unique identification of user.',
+      tooltip: `Unique identification of ${userAlias}.`,
       type: {
         render: (userId, { item: entity }) => {
           return <Link to={getUserLink(entity) ?? '#'}>{userId}</Link>;
@@ -45,9 +46,9 @@ export function getAllUserColumns(): TableColumn<AllUsersTableItem>[] {
       },
     }),
     helper.simple<'type'>({
-      title: 'User type',
+      title: `${firstLetterUpper(userAlias)} type`,
       key: 'type',
-      tooltip: 'Type of user.',
+      tooltip: `Type of ${userAlias}.`,
       type: {
         render: (type: UserType | undefined) => {
           if (type == null) {
@@ -67,14 +68,14 @@ export function getAllUserColumns(): TableColumn<AllUsersTableItem>[] {
       id: 'kycStatus',
       type: USER_KYC_STATUS_TAG,
       key: 'kycStatus',
-      tooltip: 'KYC status of user.',
+      tooltip: `KYC status of ${userAlias}.`,
     }),
     helper.simple<'userState'>({
-      title: 'User status',
+      title: `${firstLetterUpper(userAlias)} status`,
       type: USER_STATE_TAG,
       key: 'userState',
       id: 'userStatus',
-      tooltip: 'Status of user.',
+      tooltip: `Status of ${userAlias}.`,
     }),
     helper.simple<'tags'>({
       title: 'Tags',

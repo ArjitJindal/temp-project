@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
@@ -15,6 +16,7 @@ import { getCurrentDomain } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -25,12 +27,14 @@ interface Props {
 
 export default function HitsPerUserCard(props: Props) {
   const { dateRange, direction } = props;
+  const settings = useSettings();
+  const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
 
   const helper = new ColumnHelper<TableItem>();
   const columns: TableColumn<TableItem>[] = helper.list([
     helper.simple<'userId'>({
       key: 'userId',
-      title: 'User ID',
+      title: `${capitalizeUserAlias} ID`,
       type: {
         render: (userId, { item: entity }) => {
           const { userType } = entity;

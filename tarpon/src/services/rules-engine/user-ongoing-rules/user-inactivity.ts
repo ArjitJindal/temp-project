@@ -17,7 +17,8 @@ export default class UserInactivity extends UserOngoingRule<UserInactivityRulePa
         inactivityDays: {
           type: 'integer',
           title: 'Inactivity period threshold (days)',
-          description: 'The number of days to consider a user inactive',
+          description:
+            'The number of days to consider a {{userAlias}} inactive',
         },
         checkDirection: {
           type: 'string',

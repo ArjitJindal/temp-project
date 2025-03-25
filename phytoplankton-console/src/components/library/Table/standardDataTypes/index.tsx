@@ -2,7 +2,12 @@ import React, { useMemo } from 'react';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { COUNTRIES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
-import { humanizeAuto, humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import {
+  firstLetterUpper,
+  humanizeAuto,
+  humanizeConstant,
+  humanizeSnakeCase,
+} from '@flagright/lib/utils/humanize';
 import { ColumnDataType, FullColumnDataType } from '../types';
 import { CloseMessage, message } from '../../Message';
 import PriorityTag from '../../PriorityTag';
@@ -35,6 +40,7 @@ import {
   TransactionState as ApiTransactionState,
   TransactionType,
   UserState,
+  TenantSettings,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -834,77 +840,79 @@ export const PRIORITY: ColumnDataType<Priority> = {
   },
 };
 
-export const FORENSICS_ENTITY_ID: ColumnDataType<string> = {
-  render: (value, { item }) => {
-    const entity = item as object;
-    const key = Object.keys(entity).find((key) => entity?.[key] === value);
-    switch (key) {
-      case 'User ID':
-        return (
-          <Id
-            to={addBackUrlToRoute(
-              makeUrl(`/users/list/:list/:id`, {
-                list: entity?.['User type'] === 'CONSUMER' ? 'consumer' : 'business',
-                id: value,
-              }),
-            )}
-            toNewTab
-          >
-            {value}
-          </Id>
-        );
-      case 'Alert ID':
-        return (
-          <FeatureEnabled name={'ALERT_DETAILS_PAGE'}>
-            {(alertPageEnabled) => (
-              <Id
-                to={addBackUrlToRoute(
-                  getAlertUrl(entity?.['Case ID'], value ?? '#', alertPageEnabled),
-                )}
-                toNewTab
-              >
-                {value}
-              </Id>
-            )}
-          </FeatureEnabled>
-        );
-      case 'Case ID':
-      case 'Related case':
-        return (
-          <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} toNewTab>
-            {value}
-          </Id>
-        );
-      case 'Transaction ID':
-        return (
-          <Id
-            to={addBackUrlToRoute(
-              makeUrl(`/transactions/item/:id`, {
-                id: value,
-              }),
-            )}
-            toNewTab
-          >
-            {value}
-          </Id>
-        );
-      case 'SAR ID':
-        return (
-          <Id
-            to={addBackUrlToRoute(
-              makeUrl(`/reports/:id`, {
-                id: value,
-              }),
-            )}
-            toNewTab
-          >
-            {value}
-          </Id>
-        );
-      default:
-        return <Id>{value}</Id>;
-    }
-  },
+export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
+  return {
+    render: (value, { item }) => {
+      const entity = item as object;
+      const key = Object.keys(entity).find((key) => entity?.[key] === value);
+      switch (key) {
+        case `${firstLetterUpper(tenantSettings?.userAlias ?? 'User')} ID`:
+          return (
+            <Id
+              to={addBackUrlToRoute(
+                makeUrl(`/users/list/:list/:id`, {
+                  list: entity?.['User type'] === 'CONSUMER' ? 'consumer' : 'business',
+                  id: value,
+                }),
+              )}
+              toNewTab
+            >
+              {value}
+            </Id>
+          );
+        case 'Alert ID':
+          return (
+            <FeatureEnabled name={'ALERT_DETAILS_PAGE'}>
+              {(alertPageEnabled) => (
+                <Id
+                  to={addBackUrlToRoute(
+                    getAlertUrl(entity?.['Case ID'], value ?? '#', alertPageEnabled),
+                  )}
+                  toNewTab
+                >
+                  {value}
+                </Id>
+              )}
+            </FeatureEnabled>
+          );
+        case 'Case ID':
+        case 'Related case':
+          return (
+            <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} toNewTab>
+              {value}
+            </Id>
+          );
+        case 'Transaction ID':
+          return (
+            <Id
+              to={addBackUrlToRoute(
+                makeUrl(`/transactions/item/:id`, {
+                  id: value,
+                }),
+              )}
+              toNewTab
+            >
+              {value}
+            </Id>
+          );
+        case 'SAR ID':
+          return (
+            <Id
+              to={addBackUrlToRoute(
+                makeUrl(`/reports/:id`, {
+                  id: value,
+                }),
+              )}
+              toNewTab
+            >
+              {value}
+            </Id>
+          );
+        default:
+          return <Id>{value}</Id>;
+      }
+    },
+  };
 };
 
 export const SIMULATION_STATUS = {

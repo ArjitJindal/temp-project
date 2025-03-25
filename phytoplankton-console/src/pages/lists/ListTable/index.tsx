@@ -19,6 +19,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -31,6 +32,7 @@ interface Props {
 
 function ListTable(props: Props, ref: ListTableRef) {
   const { listType, extraTools } = props;
+  const settings = useSettings();
   const api = useApi();
   const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
   const queryClient = useQueryClient();
@@ -111,7 +113,7 @@ function ListTable(props: Props, ref: ListTableRef) {
       key: 'subtype',
       title: 'List subtype',
       type: {
-        render: (subtype) => (subtype ? <>{getListSubtypeTitle(subtype)}</> : <></>),
+        render: (subtype) => (subtype ? <>{getListSubtypeTitle(subtype, settings)}</> : <></>),
       },
     }),
     helper.simple<'metadata.name'>({

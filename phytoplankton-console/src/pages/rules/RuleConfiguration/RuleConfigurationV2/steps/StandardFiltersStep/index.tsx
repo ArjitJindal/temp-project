@@ -1,3 +1,4 @@
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import StepHeader from '../../StepHeader';
 import { Rule } from '@/apis';
 import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
@@ -7,6 +8,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useApi } from '@/api';
 import { ExtendedSchema, PropertyItems } from '@/components/library/JsonSchemaEditor/types';
 import { getUiSchema, getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface FormValues extends Record<string, any> {}
 
@@ -81,11 +83,12 @@ export default function StandardFiltersStep(props: Props) {
 }
 
 function UserDetails(props: { propertyItems: PropertyItems }) {
+  const settings = useSettings();
   return (
     <>
       <StepHeader
-        title={'User details'}
-        description={'Add filters based on user profile attributes'}
+        title={`${firstLetterUpper(settings.userAlias)} details`}
+        description={`Add filters based on ${settings.userAlias} profile attributes`}
       />
       <PropertyList items={props.propertyItems} />
     </>
@@ -93,11 +96,12 @@ function UserDetails(props: { propertyItems: PropertyItems }) {
 }
 
 function GeographyDetails(props: { propertyItems: PropertyItems }) {
+  const settings = useSettings();
   return (
     <>
       <StepHeader
         title="Geography details"
-        description="Add filters based on user's geographical attributes."
+        description={`Add filters based on ${settings.userAlias}'s geographical attributes.`}
       />
       <PropertyList items={props.propertyItems} />
     </>

@@ -23,7 +23,7 @@ export const PepStatusConfigSettings = () => {
   return (
     <SettingsCard
       title="PEP status lock"
-      description="When enabled, prevents editing of PEP status on user details page."
+      description={`When enabled, prevents editing of PEP status on ${settings.userAlias} details page.`}
     >
       <Tooltip title={!permissions ? 'User must have permissions to update settings' : ''}>
         <Toggle

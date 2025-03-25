@@ -1,4 +1,4 @@
-import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { InternalConsumerUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
@@ -6,7 +6,7 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   user: InternalConsumerUser;
   columns?: number;
@@ -20,6 +20,7 @@ const GENDER_MAP = {
 
 export default function GeneralDetails(props: Props) {
   const { user, columns = 1 } = props;
+  const settings = useSettings();
   return (
     <EntityPropertiesCard
       title={'General details'}
@@ -67,7 +68,7 @@ export default function GeneralDetails(props: Props) {
           value: <GenericConstantTag>{user.userSegment}</GenericConstantTag>,
         },
         {
-          label: 'User category',
+          label: `${firstLetterUpper(settings.userAlias)} category`,
           value: user.userDetails?.userCategory ?? '-',
         },
         {

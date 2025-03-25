@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Link } from 'react-router-dom';
 import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
@@ -12,6 +13,7 @@ import InformationIcon from '@/components/ui/icons/Remix/system/information-line
 import COLORS from '@/components/ui/colors';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
 import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type Props = {
   alert: Alert;
@@ -22,6 +24,7 @@ type Props = {
 
 const DisplayCheckedTransactions = (props: Props) => {
   const { alert, caseUserId, visible: isModalVisible, setVisible: setIsModalVisible } = props;
+  const settings = useSettings();
   const [params, setParams] = useState<TransactionsTableParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -74,7 +77,7 @@ const DisplayCheckedTransactions = (props: Props) => {
           extraFilters={[
             {
               key: 'userId',
-              title: 'User ID/name',
+              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
                   userId={params.userId ?? null}
@@ -104,7 +107,7 @@ const DisplayCheckedTransactions = (props: Props) => {
         />
         <p className={s.info}>
           <InformationIcon height={12} width={12} /> This may show the transactions from closed
-          cases for the same user.
+          cases for the same {settings.userAlias}.
         </p>
       </div>
     </Modal>

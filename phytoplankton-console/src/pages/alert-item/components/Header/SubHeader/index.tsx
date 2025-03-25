@@ -1,4 +1,4 @@
-import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import AlertAssigneesDropdown from './AlertAssigneesDropdown';
 import { Alert, Case } from '@/apis';
@@ -15,6 +15,7 @@ import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import Spinner from '@/components/library/Spinner';
 import Skeleton from '@/components/library/Skeleton';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   caseItemRes: AsyncResource<Case>;
@@ -23,6 +24,7 @@ interface Props {
 
 export default function SubHeader(props: Props) {
   const { alertItemRes, caseItemRes } = props;
+  const settings = useSettings();
 
   const renderLabels = (caseItem: Case | null) => {
     if (caseItem == null) {
@@ -30,7 +32,7 @@ export default function SubHeader(props: Props) {
     }
     return caseItem.subjectType === 'PAYMENT'
       ? paymentSubjectLabels(caseItem)
-      : userSubjectLabels(caseItem);
+      : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias));
   };
   return (
     <div className={s.root}>
@@ -158,15 +160,15 @@ function paymentSubjectLabels(caseItem: Case) {
   );
 }
 
-function userSubjectLabels(caseItem: Case) {
+function userSubjectLabels(caseItem: Case, userAlias: string) {
   const caseUser = (caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined) as
     | TableUser
     | undefined;
 
   return (
     <>
-      <Form.Layout.Label title={'User name'}>{getUserName(caseUser)}</Form.Layout.Label>
-      <Form.Layout.Label title={'User ID'}>
+      <Form.Layout.Label title={`${userAlias} name`}>{getUserName(caseUser)}</Form.Layout.Label>
+      <Form.Layout.Label title={`${userAlias} ID`}>
         <Id to={getUserLink(caseUser)} toNewTab alwaysShowCopy>
           {caseUser?.userId}
         </Id>

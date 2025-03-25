@@ -14,7 +14,7 @@ export class UserStatusRuleFilter extends UserRuleFilter<UserStatusRuleFilterPar
       properties: {
         userStatus: USER_STATUS_OPTIONAL_SCHEMA({
           description:
-            'Add target user status to only run this rule for users with specified user status',
+            'Add target {{userAlias}} status to only run this rule for {{userAlias}}s with specified {{userAlias}} status',
           uiSchema: {
             group: 'user',
           },

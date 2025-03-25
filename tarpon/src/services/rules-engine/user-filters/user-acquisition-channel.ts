@@ -15,7 +15,7 @@ export class UserAcquisitionChannelRuleFilter extends UserRuleFilter<UserAcquisi
         acquisitionChannels: ACQUISITION_CHANNEL_OPTIONAL_SCHEMA({
           title: 'Acquisition channels',
           description:
-            'Add target acquisition channels to only run this rule for certain users',
+            'Add target acquisition channels to only run this rule for certain {{userAlias}}s',
           uiSchema: {
             group: 'user',
           },

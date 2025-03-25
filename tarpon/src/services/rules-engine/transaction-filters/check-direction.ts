@@ -15,9 +15,9 @@ export class CheckDirectionRuleFilter extends TransactionRuleFilter<CheckDirecti
         checkDirection: {
           type: 'string',
           enum: ['ORIGIN', 'DESTINATION'],
-          title: 'User direction to check',
+          title: '{{UserAlias}} direction to check',
           description:
-            'If set to ORIGIN, only origin user will be checked. If empty, both origin and destination users will be checked.',
+            'If set to ORIGIN, only origin {{userAlias}} will be checked. If empty, both origin and destination {{userAlias}}s will be checked.',
           nullable: true,
           ...uiSchema({ group: 'general' }),
         },

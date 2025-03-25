@@ -1,5 +1,9 @@
 import { UserOutlined } from '@ant-design/icons';
-import { humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import {
+  firstLetterUpper,
+  humanizeConstant,
+  humanizeSnakeCase,
+} from '@flagright/lib/utils/humanize';
 import { map, mapKeys, pickBy, range } from 'lodash';
 import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
@@ -30,7 +34,7 @@ import { isValidTableListViewEnum } from '@/apis/models-custom/TableListViewEnum
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
@@ -236,6 +240,7 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
 export const useCaseAlertFilters = (
   filterIds?: string[],
 ): ExtraFilterProps<TableSearchParams>[] => {
+  const settings = useSettings();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isAlertSlaEnabled = useFeatureEnabled('ALERT_SLA');
   const isCaseSlaEnabled = useFeatureEnabled('PNB');
@@ -291,7 +296,7 @@ export const useCaseAlertFilters = (
     },
     {
       key: 'userId',
-      title: 'User ID/Name',
+      title: `${firstLetterUpper(settings.userAlias)} ID/Name`,
       showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
         <UserSearchButton

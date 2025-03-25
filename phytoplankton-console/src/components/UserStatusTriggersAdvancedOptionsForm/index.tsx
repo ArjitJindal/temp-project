@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
@@ -24,6 +24,7 @@ import {
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
 import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
@@ -46,6 +47,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
   props: UserStatusTriggersAdvancedOptionsFormProps,
 ) => {
   const { type, ruleType } = props;
+  const settings = useSettings();
   const [isUserStateDetailsOpen, setIsUserStateDetailsOpen] = useState(false);
   const [isKYCStatusDetailsOpen, setIsKYCStatusDetailsOpen] = useState(false);
 
@@ -62,10 +64,8 @@ export const UserStatusTriggersAdvancedOptionsForm = (
       {type === 'RULE' && ruleType === 'TRANSACTION' && (
         <InputField<TriggersOnHit, 'usersToCheck'>
           name={'usersToCheck'}
-          label={'Users to update'}
-          description={
-            'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side state are updated.'
-          }
+          label={`${firstLetterUpper(settings.userAlias)}s to update`}
+          description={`Select ${settings.userAlias}s of a transaction direction below for which the ${settings.userAlias}/KYC status needs to be updated. If set to ORIGIN, then only ${settings.userAlias}s of origin side state are updated.`}
           labelProps={{
             required: {
               value: true,
@@ -89,7 +89,10 @@ export const UserStatusTriggersAdvancedOptionsForm = (
 
       <NestedForm<TriggersOnHit> name={'userStateDetails'}>
         <div className={type === 'RULE' ? s.stateDetails : s.stateDetailsSingle}>
-          <InputField<UserStateDetails, 'state'> name={'state'} label={'Update user state to'}>
+          <InputField<UserStateDetails, 'state'>
+            name={'state'}
+            label={`Update ${settings.userAlias?.toLowerCase()} state to`}
+          >
             {(inputProps) => (
               <Select<UserState>
                 options={USER_STATES.map((state) => ({

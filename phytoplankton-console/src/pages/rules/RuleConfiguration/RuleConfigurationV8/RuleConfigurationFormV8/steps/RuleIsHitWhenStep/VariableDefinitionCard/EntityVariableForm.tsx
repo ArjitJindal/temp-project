@@ -29,7 +29,7 @@ import Select from '@/components/library/Select';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
 import Alert from '@/components/library/Alert';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
 type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
 
@@ -56,13 +56,6 @@ interface EntityVariableFormProps {
   entity?: LogicEntityVariableEntityEnum;
 }
 
-const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
-  { value: 'TRANSACTION', label: 'Transaction' },
-  { value: 'USER', label: 'User' },
-];
-const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
-  { value: 'USER', label: 'User' },
-];
 const TX_DIRECTION_OPTIONS: Array<{ value: TransactionDirection; label: string }> = [
   { value: 'ORIGIN', label: 'Origin' },
   { value: 'DESTINATION', label: 'Destination' },
@@ -173,6 +166,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const [formValues, setFormValues] = useState<FormRuleEntityVariable>(
     getInitialFormValues(ruleType, variable, entityVariables),
   );
+  const settings = useSettings();
   const [searchKey, setSearchKey] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
@@ -181,6 +175,14 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       setSearchKey(undefined);
     }
   }, []);
+
+  const ENTITY_OPTIONS = [
+    { value: 'TRANSACTION', label: 'Transaction' },
+    { value: 'USER', label: firstLetterUpper(settings.userAlias) },
+    { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias}` },
+    { value: 'BUSINESS_USER', label: `Business ${settings.userAlias}` },
+  ];
+
   const allVariableOptions = useMemo(() => {
     const filteredEntityVariables =
       ruleType === 'USER'
@@ -386,11 +388,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             <Label label="Variable type" required={{ value: true, showHint: true }}>
               <SelectionGroup
                 value={formValues.type}
-                onChange={(type) => handleUpdateForm({ type })}
+                onChange={(type) => handleUpdateForm({ type: type as 'TRANSACTION' | 'USER' })}
                 mode={'SINGLE'}
-                options={
-                  ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS
-                }
+                options={ENTITY_OPTIONS}
                 testName="variable-type-v8"
                 isDisabled={readOnly}
               />
@@ -410,7 +410,10 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             {formValues.type === 'USER' && (
               <>
                 {ruleType === 'TRANSACTION' && (
-                  <Label label="User type" required={{ value: true, showHint: true }}>
+                  <Label
+                    label={`${firstLetterUpper(settings.userAlias)} type`}
+                    required={{ value: true, showHint: true }}
+                  >
                     <SelectionGroup
                       value={formValues.userType}
                       onChange={(userType) => handleUpdateForm({ userType })}
@@ -421,7 +424,10 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                     />
                   </Label>
                 )}
-                <Label label="User nature" required={{ value: false, showHint: true }}>
+                <Label
+                  label={`${firstLetterUpper(settings.userAlias)} nature`}
+                  required={{ value: false, showHint: true }}
+                >
                   <SelectionGroup
                     value={
                       isEntityUser

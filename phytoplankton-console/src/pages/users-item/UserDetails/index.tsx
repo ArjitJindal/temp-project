@@ -8,7 +8,7 @@ import { Small } from '@/components/ui/Typography';
 import * as Card from '@/components/ui/Card';
 import { CommentType } from '@/utils/user-utils';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   userId?: string;
   onNewComment?: (newComment: Comment, commentType: CommentType, personId?: string) => void;
@@ -16,11 +16,12 @@ interface Props {
 
 function UserDetails(props: Props) {
   const { userId, onNewComment } = props;
+  const settings = useSettings();
 
   return (
     <div className={s.root}>
       {userId == null ? (
-        <Small>No user details found</Small>
+        <Small>No {settings.userAlias} details found</Small>
       ) : (
         <Authorized required={['users:user-details:read']}>
           <UserDetailData userId={userId} onNewComment={onNewComment} />

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useLocation, useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import ProductTypeSearchButton from './components/ProductTypeSearchButton';
@@ -18,7 +19,7 @@ import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { NavigationState } from '@/utils/queries/types';
 import { dayjs } from '@/utils/dayjs';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionTableItem } from '@/apis';
 import { useDeepEqualEffect } from '@/utils/hooks';
 
@@ -28,6 +29,7 @@ const TableList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
+  const settings = useSettings();
 
   const parsedParams = useMemo(
     () => queryAdapter.deserializer(parseQueryString(location.search)),
@@ -144,7 +146,7 @@ const TableList = () => {
           extraFilters={[
             {
               key: 'userId',
-              title: 'User ID/name',
+              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
                   userId={params.userId ?? null}

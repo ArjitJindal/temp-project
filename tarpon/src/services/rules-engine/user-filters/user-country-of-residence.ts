@@ -17,7 +17,7 @@ export class UserCountryOfResidenceRuleFilter extends UserRuleFilter<UserCountry
         userResidenceCountries: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Residence countries',
           description:
-            "For business users, this field will filter based on shareholder and director country of residence. For consumer users, this field will filter based on the user's country of residence.",
+            "For business {{userAlias}}s, this field will filter based on shareholder and director country of residence. For consumer {{userAlias}}s, this field will filter based on the {{userAlias}}'s country of residence.",
           uiSchema: {
             group: 'geography',
           },

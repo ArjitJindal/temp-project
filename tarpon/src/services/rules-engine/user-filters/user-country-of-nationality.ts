@@ -17,7 +17,7 @@ export class UserCountryOfNationalityRuleFilter extends UserRuleFilter<UserCount
         userNationalityCountries: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Nationality countries',
           description:
-            "For business users, this field will filter based on shareholder and director country of nationality. For consumer users, this field will filter based on user's country of nationality.",
+            "For business {{userAlias}}s, this field will filter based on shareholder and director country of nationality. For consumer {{userAlias}}s, this field will filter based on the {{userAlias}}'s country of nationality.",
           uiSchema: {
             group: 'geography',
           },

@@ -14,19 +14,20 @@ import {
   TAG,
   MONEY_AMOUNT,
   MONEY_CURRENCY,
-  FORENSICS_ENTITY_ID,
   COUNTRIES_MULTIPLE,
   STRING_MULTIPLE,
+  getForneticsEntityId,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType, CommonParams } from '@/components/library/Table/types';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { TenantSettings } from '@/apis';
 interface Props {
   item: QuestionResponseTable;
   pageParams: CommonParams;
   onPageParams: (params: CommonParams) => void;
 }
 
-export const typeAssigner = (columnType: string | undefined) => {
+export const typeAssigner = (columnType: string | undefined, tenantSettings?: TenantSettings) => {
   let type: ColumnDataType<any> = UNKNOWN;
   if (!columnType) {
     return type;
@@ -54,7 +55,7 @@ export const typeAssigner = (columnType: string | undefined) => {
       break;
     }
     case 'ID': {
-      type = FORENSICS_ENTITY_ID;
+      type = getForneticsEntityId(tenantSettings);
       break;
     }
     case 'TRANSACTION_TYPE': {
@@ -90,7 +91,7 @@ export const typeAssigner = (columnType: string | undefined) => {
 };
 export default function HistoryItemTable(props: Props) {
   const { item, pageParams, onPageParams } = props;
-
+  const settings = useSettings();
   const columnHelper = new ColumnHelper();
 
   const paginate = item.rows?.length != item.total;
@@ -132,7 +133,7 @@ export default function HistoryItemTable(props: Props) {
         return columnHelper.simple({
           title: header.name,
           key: header.name,
-          type: typeAssigner(header.columnType),
+          type: typeAssigner(header.columnType, settings),
           ...(header.columnWidth ? { defaultWidth: header.columnWidth } : {}),
         });
       })}

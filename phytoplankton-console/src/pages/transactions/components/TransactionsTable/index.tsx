@@ -289,6 +289,8 @@ export default function TransactionsTable(props: Props) {
     canSelectRow,
   } = props;
 
+  const settings = useSettings();
+
   const ruleOptions = useRuleOptions();
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
@@ -418,7 +420,7 @@ export default function TransactionsTable(props: Props) {
           ]),
       helper.simple<'originUser.id'>({
         key: 'originUser.id',
-        title: 'Origin user ID',
+        title: `Origin ${settings.userAlias} ID`,
         tooltip: 'Origin is the Sender in a transaction',
         type: {
           ...STRING,
@@ -433,7 +435,7 @@ export default function TransactionsTable(props: Props) {
       }),
       helper.simple<'originUser.name'>({
         key: 'originUser.name',
-        title: 'Origin user name',
+        title: `Origin ${settings.userAlias} name`,
         type: STRING,
         tooltip: 'Origin is the Sender in a transaction',
       }),
@@ -469,7 +471,7 @@ export default function TransactionsTable(props: Props) {
       }),
       helper.simple<'destinationUser.id'>({
         key: 'destinationUser.id',
-        title: 'Destination user ID',
+        title: `Destination ${settings.userAlias} ID`,
         tooltip: 'Destination is the Receiver in a transaction',
         type: {
           ...STRING,
@@ -483,7 +485,7 @@ export default function TransactionsTable(props: Props) {
         },
       }),
       helper.simple<'destinationUser.name'>({
-        title: 'Destination user name',
+        title: `Destination ${settings.userAlias} name`,
         key: 'destinationUser.name',
         type: STRING,
         tooltip: 'Destination is the Receiver in a transaction',
@@ -535,12 +537,13 @@ export default function TransactionsTable(props: Props) {
       }),
     ]);
   }, [
-    isRiskScoringEnabled,
     alert,
-    showDetailsView,
     escalatedTransactions,
-    riskClassificationValues,
+    isRiskScoringEnabled,
     hideStatusFilter,
+    settings.userAlias,
+    showDetailsView,
+    riskClassificationValues,
   ]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [
@@ -585,7 +588,6 @@ export default function TransactionsTable(props: Props) {
     },
   ];
 
-  const settings = useSettings();
   const isTransactionsDownloadEnabled = useHasPermissions(['transactions:export:read']);
 
   return (

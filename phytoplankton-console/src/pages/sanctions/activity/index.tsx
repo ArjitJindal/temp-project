@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Row, Space } from 'antd';
 import s from './index.module.less';
 import { KpiCard } from './KpiCard';
@@ -21,7 +22,7 @@ import { useRules } from '@/utils/rules';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { SANCTIONS_SCREENING_ENTITYS } from '@/apis/models-custom/SanctionsScreeningEntity';
 import { BOOLEAN } from '@/components/library/Table/standardDataTypes';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type TableSearchParams = AllParams<{
   entity?: SanctionsScreeningEntity[];
@@ -33,10 +34,10 @@ type TableSearchParams = AllParams<{
   beforeTimestamp?: number;
 }>;
 
-function getEntityName(entity: SanctionsScreeningEntity) {
+function getEntityName(entity: SanctionsScreeningEntity, userAlias?: string) {
   switch (entity) {
     case 'USER':
-      return 'User';
+      return firstLetterUpper(userAlias);
     case 'BANK':
       return 'Bank name';
     case 'IBAN':
@@ -48,6 +49,7 @@ function getEntityName(entity: SanctionsScreeningEntity) {
 
 export const SanctionsScreeningActivity = ({ params, setParams }) => {
   const api = useApi({ debounce: 500 });
+  const settings = useSettings();
   const statsResult = useQuery(
     SANCTIONS_SCREENING_STATS({
       afterTimestamp: params.afterTimestamp,
@@ -141,12 +143,12 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
         filtering: true,
         defaultWidth: 100,
         type: {
-          render: (entity) => <>{entity ? getEntityName(entity) : '-'}</>,
-          stringify: (entity) => (entity ? getEntityName(entity) : '-'),
+          render: (entity) => <>{entity ? getEntityName(entity, settings.userAlias) : '-'}</>,
+          stringify: (entity) => (entity ? getEntityName(entity, settings.userAlias) : '-'),
           autoFilterDataType: {
             kind: 'select',
             options: SANCTIONS_SCREENING_ENTITYS.map((v) => ({
-              label: getEntityName(v),
+              label: getEntityName(v, settings.userAlias),
               value: v,
             })),
             mode: 'MULTIPLE',
@@ -249,7 +251,7 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
         },
       }),
     ]);
-  }, [ruleInstances, hasFeatureDowJones]);
+  }, [ruleInstances, hasFeatureDowJones, settings.userAlias]);
 
   return (
     <>
@@ -261,7 +263,11 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
           const externalUser = response.data?.find((v) => v.entity === 'EXTERNAL_USER');
           return (
             <div className={s.root}>
-              <KpiCard data={user ?? emptyState} title="Users" className={s['user']} />
+              <KpiCard
+                data={user ?? emptyState}
+                title={`${firstLetterUpper(settings.userAlias)}s`}
+                className={s['user']}
+              />
               <KpiCard data={bank ?? emptyState} title="Bank names" className={s['bank']} />
               <KpiCard
                 data={externalUser ?? emptyState}

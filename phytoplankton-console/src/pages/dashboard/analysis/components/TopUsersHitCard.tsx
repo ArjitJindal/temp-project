@@ -15,7 +15,7 @@ import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
 import { getUserLink } from '@/utils/api/users';
 import { getCurrentDomain } from '@/utils/routing';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
 }
@@ -24,6 +24,7 @@ type ScopeSelectorValue = 'ALL' | 'ORIGIN' | 'DESTINATION';
 
 const TopUsersHitCard = (props: Props) => {
   const { userType = 'BUSINESS' } = props;
+  const settings = useSettings();
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
     dayjs().subtract(1, 'week'),
@@ -112,7 +113,7 @@ const TopUsersHitCard = (props: Props) => {
           setSelectedSection(newValue);
         }}
         items={[
-          { value: 'ALL', label: `All users` },
+          { value: 'ALL', label: `All ${settings.userAlias}s` },
           { value: 'ORIGIN', label: `Senders` },
           { value: 'DESTINATION', label: `Receivers` },
         ]}

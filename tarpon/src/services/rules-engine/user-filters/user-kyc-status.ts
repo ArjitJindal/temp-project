@@ -14,7 +14,7 @@ export class UserKycStatusRuleFilter extends UserRuleFilter<UserKycStatusRuleFil
       properties: {
         kycStatus: USER_KYC_STATUS_OPTIONAL_SCHEMA({
           description:
-            'Add target KYC status to only run this rule for users with specified KYC status',
+            'Add target KYC status to only run this rule for {{userAlias}}s with specified KYC status',
           uiSchema: {
             group: 'user',
           },

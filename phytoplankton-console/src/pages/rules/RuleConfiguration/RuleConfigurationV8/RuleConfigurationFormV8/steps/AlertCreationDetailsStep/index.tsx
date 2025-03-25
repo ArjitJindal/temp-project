@@ -17,10 +17,10 @@ import {
   RuleInstanceAlertConfigDefaultAlertStatusEnum,
 } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
+import { AlertCreatedForEnum, RULE_CASE_PRIORITY, getAlertCreatedFor } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface FormValues {
   alertPriority: Priority;
@@ -51,6 +51,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 
 export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) {
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
+  const settings = useSettings();
   return (
     <Card.Root>
       <Card.Section>
@@ -78,15 +79,13 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                   <InputField<FormValues, 'alertCreatedFor'>
                     name={'alertCreatedFor'}
                     label={'Alert created for'}
-                    description={
-                      'Define whether the alert is created for a user ID or payment identifier such as bank account number, card fingerprint etc.'
-                    }
+                    description={`Define whether the alert is created for a ${settings.userAlias} ID or payment identifier such as bank account number, card fingerprint etc.`}
                     labelProps={{ required: true }}
                   >
                     {(inputProps) => (
                       <SelectionGroup<AlertCreatedForEnum>
                         mode="MULTIPLE"
-                        options={ALERT_CREATED_FOR}
+                        options={getAlertCreatedFor(settings)}
                         {...inputProps}
                       />
                     )}
@@ -106,17 +105,18 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                           { value: 'AUTO', label: 'Auto (based on the rule logic)' },
                           {
                             value: 'AUTO_ORIGIN',
-                            label:
-                              'Auto (based on the rule logic, but only create for origin user)',
+                            label: `Auto (based on the rule logic, but only create for origin ${settings.userAlias})`,
                           },
                           {
                             value: 'AUTO_DESTINATION',
-                            label:
-                              'Auto (based on the rule logic, but only create for destination user)',
+                            label: `Auto (based on the rule logic, but only create for destination ${settings.userAlias})`,
                           },
-                          { value: 'ORIGIN', label: 'Origin user' },
-                          { value: 'DESTINATION', label: 'Destination user' },
-                          { value: 'ALL', label: 'Both origin user and destination user' },
+                          { value: 'ORIGIN', label: `Origin ${settings.userAlias}` },
+                          { value: 'DESTINATION', label: `Destination ${settings.userAlias}` },
+                          {
+                            value: 'ALL',
+                            label: `Both origin ${settings.userAlias} and destination ${settings.userAlias}`,
+                          },
                         ]}
                         {...inputProps}
                         value={inputProps.value ?? 'AUTO'}

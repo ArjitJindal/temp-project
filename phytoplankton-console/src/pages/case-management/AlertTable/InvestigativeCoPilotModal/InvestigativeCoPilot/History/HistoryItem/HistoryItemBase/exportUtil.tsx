@@ -4,8 +4,9 @@ import { typeAssigner } from '../HistoryItemTable';
 import { CsvRow, csvValue, serialize } from '@/utils/csv';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { getComparisonItems } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison';
+import { TenantSettings } from '@/apis';
 
-export const formatData = (item: Partial<QuestionResponse>): string => {
+export const formatData = (item: Partial<QuestionResponse>, settings?: TenantSettings): string => {
   const result: CsvRow[] = [];
   if (!item.questionType) {
     return '';
@@ -35,7 +36,7 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       for (const row of item.rows) {
         const updatedRow: CsvRow = [];
         for (let index = 0; index < item.headers.length; index++) {
-          const columnType = typeAssigner(item.headers[index].columnType ?? '');
+          const columnType = typeAssigner(item.headers[index].columnType ?? '', settings);
           updatedRow.push(
             csvValue(
               columnType === undefined

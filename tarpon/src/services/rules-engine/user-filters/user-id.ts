@@ -13,9 +13,9 @@ export class UserIdRuleFilter extends UserRuleFilter<UserIdRuleFilterParameter> 
       properties: {
         userIds: {
           type: 'array',
-          title: 'Target user ID',
+          title: 'Target {{userAlias}} IDs',
           description:
-            'Add target user IDs to only run this rule for certain users',
+            'Add target {{userAlias}} IDs to only run this rule for certain {{userAlias}}s',
           items: { type: 'string' },
           uniqueItems: true,
           nullable: true,

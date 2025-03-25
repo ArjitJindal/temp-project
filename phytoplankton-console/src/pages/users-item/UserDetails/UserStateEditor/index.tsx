@@ -56,7 +56,7 @@ export default function UserStateEditor(props: Props) {
             onNewComment(comment, CommentType.COMMENT);
           }}
           onClose={() => setModalVisible(false)}
-          title="Update user status "
+          title={`Update ${settings.userAlias} status`}
           user={userRes.value}
         />
       )}

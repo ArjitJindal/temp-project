@@ -101,7 +101,7 @@ function useSettingsContext() {
 
 export function useSettings(): TenantSettings {
   const context = useSettingsContext();
-  return context.settings;
+  return { ...context.settings, userAlias: context.settings.userAlias || 'user' };
 }
 
 export function useReloadSettings() {

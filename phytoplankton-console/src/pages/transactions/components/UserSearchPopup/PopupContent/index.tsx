@@ -8,7 +8,7 @@ import LastSearchList from './LastSearchList';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
 import { AllUsersTableItem } from '@/apis';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   initialSearch: string;
   isVisible: boolean;
@@ -19,6 +19,7 @@ interface Props {
 
 export default function PopupContent(props: Props) {
   const { isVisible, initialSearch, onConfirm, onEnterInput } = props;
+  const settings = useSettings();
 
   const [search, setSearch] = useState(initialSearch);
 
@@ -52,7 +53,7 @@ export default function PopupContent(props: Props) {
       <div className={s.header}>
         <Input
           suffix={search === '' && <SearchLineIcon className={s.searchIcon} />}
-          placeholder="Search user name or ID"
+          placeholder={`Search ${settings.userAlias} name or ID`}
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
           onKeyDown={(e) => {

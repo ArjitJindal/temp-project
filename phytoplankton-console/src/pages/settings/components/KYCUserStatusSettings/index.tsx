@@ -1,3 +1,4 @@
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
@@ -20,12 +21,18 @@ export const KYCUserStatusSettings = () => {
     mutateTenantSettings.mutate({ kycUserStatusLock: true });
   };
 
+  const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
+
   return (
     <SettingsCard
-      title="KYC/user status lock"
-      description="When enabled, prevents editing of 'KYC status' and 'User status' fields on user details page."
+      title={`KYC/${capitalizeUserAlias} status lock`}
+      description={`When enabled, prevents editing of 'KYC status' and '${settings.userAlias} status' fields on ${settings.userAlias} details page.`}
     >
-      <Tooltip title={!permissions ? 'User must have permissions to update settings' : ''}>
+      <Tooltip
+        title={
+          !permissions ? `${capitalizeUserAlias} must have permissions to update settings` : ''
+        }
+      >
         <Toggle
           value={settings.kycUserStatusLock}
           onChange={settings.kycUserStatusLock ? handleDisable : handleEnable}

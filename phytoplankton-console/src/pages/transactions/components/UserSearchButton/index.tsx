@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import UserProfileIcon from './user_profile.react.svg';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { useApi } from '@/api';
@@ -6,7 +7,7 @@ import { getUserName } from '@/utils/api/users';
 import { getErrorMessage } from '@/utils/lang';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupContent';
-
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   userId: string | null;
   onConfirm: (userId: string | null) => void;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function UserSearchButton(props: Props) {
   const { userId, onConfirm, onUpdateFilterClose } = props;
+  const settings = useSettings();
   const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
   const currentUserId = user?.userId ?? null;
@@ -48,19 +50,21 @@ export default function UserSearchButton(props: Props) {
           return;
         }
         // todo: i18n
-        setUserRest(failed(`Unable to find user by id "${userId}". ${getErrorMessage(e)}`));
+        setUserRest(
+          failed(`Unable to find ${settings.userAlias} by id "${userId}". ${getErrorMessage(e)}`),
+        );
       });
 
     return () => {
       isCanceled = true;
     };
-  }, [api, userId, currentUserId]);
+  }, [api, userId, currentUserId, settings.userAlias]);
 
   const isEmpty = userId === null;
 
   return (
     <QuickFilterBase
-      title={'User ID/Name'}
+      title={`${firstLetterUpper(settings.userAlias)} ID/Name`}
       icon={<UserProfileIcon />}
       buttonText={user?.name ?? userId}
       onClear={
