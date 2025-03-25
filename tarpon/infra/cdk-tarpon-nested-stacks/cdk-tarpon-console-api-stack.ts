@@ -22,7 +22,10 @@ import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
 import { createApiGateway } from '../cdk-utils/cdk-apigateway-utils'
 import { createFunction } from '../cdk-utils/cdk-lambda-utils'
-import { createAPIGatewayThrottlingAlarm } from '../cdk-utils/cdk-cw-alarms-utils'
+import {
+  createAPIGatewayThrottlingAlarm,
+  createFinCENSTFPConnectionAlarm,
+} from '../cdk-utils/cdk-cw-alarms-utils'
 
 interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
@@ -343,6 +346,15 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
     })
+
+    createFinCENSTFPConnectionAlarm(
+      this,
+      betterUptimeCloudWatchTopic,
+      zendutyCloudWatchTopic,
+      consoleApiLogGroup,
+      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME,
+      StackConstants.CONSOLE_API_SAR_FUNCTION_NAME
+    )
 
     /**
      * Outputs

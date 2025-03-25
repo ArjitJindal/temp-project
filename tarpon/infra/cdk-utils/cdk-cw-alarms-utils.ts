@@ -12,6 +12,7 @@ import { Construct } from 'constructs'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
 import { isQaEnv } from '@flagright/lib/qa'
+import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
 
 export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
 const isDevUserStack = isQaEnv()
@@ -248,7 +249,7 @@ export const createAPIGatewayThrottlingAlarm = (
     datapointsToAlarm: 3,
     alarmName: `APIGateway-${restApiAlarmName}`,
     alarmDescription: `Covers throttling count in ${restApiName} in the AWS account. 
-    Alarm triggers when 15 requests get throttled for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    Alarm triggers when 15 requests get throttled for 3 consecutive data points in 15 mins (Checked every 5 minutes).`,
     metric: new Metric({
       label: `${restApiAlarmName} Throttling Count`,
       namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
@@ -592,6 +593,50 @@ export const createStateMachineAlarm = (
     evaluationPeriods: 1,
     comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
     alarmDescription: `Alarm if step function fails`,
+  }).addAlarmAction(
+    new SnsAction(betterUptimeTopic),
+    new SnsAction(zendutyCloudWatchTopic)
+  )
+}
+
+export const createFinCENSFTPConnectionFailureMetricFilter = (
+  context: Construct,
+  logGroup: ILogGroup,
+  restApiName: string
+) => {
+  new MetricFilter(context, `${restApiName}ConnectionFailedMetricFilter`, {
+    filterPattern: FilterPattern.literal(SFTP_CONNECTION_ERROR_PREFIX),
+    logGroup,
+    metricName: `${restApiName}ConnectionFailed`,
+    metricNamespace: TARPON_CUSTOM_METRIC_NAMESPACE,
+  })
+}
+
+export const createFinCENSTFPConnectionAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  zendutyCloudWatchTopic: Topic,
+  logGroup: ILogGroup,
+  restApiAlarmName: string,
+  restApiName: string
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  createFinCENSFTPConnectionFailureMetricFilter(context, logGroup, restApiName)
+  return new Alarm(context, restApiAlarmName, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    threshold: 1,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 2,
+    alarmName: 'FinCEN-SFTPConnectionError',
+    alarmDescription: `Triggers when the log group contains at least one "SFTPConnectionError:" message within a 5-minute period for ${restApiName}. Indicates possible connection failure to FinCEN SFTP.`,
+    metric: new Metric({
+      namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
+      metricName: `${restApiName}ConnectionFailed`,
+      statistic: 'sum',
+      period: Duration.minutes(5),
+    }),
   }).addAlarmAction(
     new SnsAction(betterUptimeTopic),
     new SnsAction(zendutyCloudWatchTopic)

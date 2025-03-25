@@ -162,5 +162,6 @@ export type Config = {
     POSTHOG_API_KEY?: string
     POSTHOG_HOST?: string
     FINCEN_SFTP_IP?: string
+    FINCEN_SFTP_PORT?: string
   }
 }

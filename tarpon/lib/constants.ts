@@ -239,6 +239,9 @@ export const StackConstants = {
   CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'ConsoleApiThrottlingCount'
   ),
+  CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME: getResourceName(
+    'ConsoleApiFinCENSFTPConnectionError'
+  ),
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskClassificationFunction'
   ),
@@ -373,3 +376,5 @@ export const SQSQueues: {
 export function getDeadLetterQueueName(queueName: string) {
   return `DeadLetter${queueName}`
 }
+
+export const SFTP_CONNECTION_ERROR_PREFIX = 'SFTPConnectionError:'

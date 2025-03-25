@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import { chunk, cloneDeep, isEqual, last, omit, pick } from 'lodash'
-import SftpClient from 'ssh2-sftp-client'
+
 import { backOff } from 'exponential-backoff'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
 import {
@@ -63,6 +63,7 @@ import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers
 import { CurrencyService } from '@/services/currency'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isValidSARRequest } from '@/utils/helpers'
+import { connectToSFTP } from '@/utils/sar'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -658,14 +659,8 @@ export class UsSarReportGenerator implements ReportGenerator {
   public async getAckFileContent(report: Report) {
     if (isValidSARRequest(this.tenantId)) {
       const creds = await getSecretByName('fincenCreds')
-      const sftp = new SftpClient()
+      const sftp = await connectToSFTP()
       try {
-        await sftp.connect({
-          host: process.env.FINCEN_SFTP_IP,
-          port: 10122,
-          username: creds.username,
-          password: creds.password,
-        })
         const remoteCwd = await sftp.cwd()
         logger.info(`Remote dir: ${remoteCwd}`)
         const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
@@ -694,14 +689,8 @@ export class UsSarReportGenerator implements ReportGenerator {
     //TODO: allow for all tenant after testing is completed
     if (isValidSARRequest(this.tenantId)) {
       const creds = await getSecretByName('fincenCreds')
-      const sftp = new SftpClient()
+      const sftp = await connectToSFTP()
       try {
-        await sftp.connect({
-          host: process.env.FINCEN_SFTP_IP,
-          port: 10122,
-          username: creds.username,
-          password: creds.password,
-        })
         const remoteCwd = await sftp.cwd()
         logger.info(`Remote dir: ${remoteCwd}`)
         const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
@@ -724,14 +713,15 @@ export class UsSarReportGenerator implements ReportGenerator {
             try {
               logger.info(
                 await sftp.fastGet(
-                  path.join(remoteCwd, `Inbox/${remoteFilename}`),
+                  path.join(remoteCwd, `acks/${remoteFilename}`),
                   localAckFile
                 )
               )
+              // TODO: what are we doing here. shouldn't we address the ack file
               const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
-              logger.info(`Ack file (Inbox/): ${ackFileContent}`)
+              logger.info(`Ack file (acks/): ${ackFileContent}`)
             } catch (e) {
-              logger.warn(`Failed to get ack file from Inbox/`)
+              logger.warn(`Failed to get ack file from acks/`)
               logger.error(e)
             }
           },

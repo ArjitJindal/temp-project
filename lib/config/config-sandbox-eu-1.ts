@@ -127,6 +127,8 @@ export const config: Config = {
     API_USAGE_GOOGLE_SHEET_ID: '1sHbFc5uOMw5NGnRZMcVQBUwslwjrA9qpP3dUk_Shr3w',
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     POSTHOG_API_KEY: 'phc_o3AIU7twnvMe1oXKZs8ZWYgVjVrI2BgJILpjvm0DWQY',
+    // TODO: wrong ip to update, after verfying if alerts are created
     FINCEN_SFTP_IP: '166.123.230.128',
+    FINCEN_SFTP_PORT: '2221',
   },
 }

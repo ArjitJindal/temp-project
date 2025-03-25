@@ -127,7 +127,8 @@ export const config: Config = {
     API_USAGE_GOOGLE_SHEET_ID: '1aR0OsWWHP_TDKHZoNvwmkxfCmApWPZDO_78EODig5Ps',
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
-    FINCEN_SFTP_IP: '166.123.230.35',
+    FINCEN_SFTP_IP: '164.95.10.142',
+    FINCEN_SFTP_PORT: '2222',
   },
   clickhouse: {
     awsPrivateLinkEndpointName:
