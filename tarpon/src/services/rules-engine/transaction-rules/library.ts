@@ -63,6 +63,8 @@ import { SamePaymentDetailsParameters } from '@/services/rules-engine/transactio
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { DowJonesConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/dowjones-consumer-user'
 import { ListScreeningConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/list-screening-consumer-user'
+import { SubjectIdentificationConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/subject-identification-consumer'
+import { SubjectIdentificationBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/subject-identification-business'
 
 export enum RuleChecksForField {
   FirstTransaction = '1st transaction',
@@ -1872,6 +1874,70 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases: 'A consumer user can be checked against a given list',
+    }
+  },
+  () => {
+    const defaultParameters: SubjectIdentificationConsumerUserRuleParameters = {
+      fuzzinessRange: {
+        upperBound: 20,
+        lowerBound: 20,
+      },
+      ongoingScreening: false,
+      listId: '',
+    }
+
+    return {
+      id: 'R-42',
+      name: '314(a) Subject Identification consumer',
+      type: 'USER',
+      description:
+        'Identifies potential matches between consumer customer data and subjects on the FinCEN 314(a) watch list using multi-factor comparison of names.',
+      descriptionTemplate:
+        'Identifies potential matches between consumer customer data and subjects on the FinCEN 314(a) watch list using multi-factor comparison of names.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'subject-identification-consumer',
+      labels: [],
+      checksFor: [RuleChecksForField.UserDetails, RuleChecksForField.Username],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['314A'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A consumer user can be checked against the FinCEN 314(a) watch list',
+    }
+  },
+  () => {
+    const defaultParameters: SubjectIdentificationBusinessUserRuleParameters = {
+      fuzzinessRange: {
+        upperBound: 20,
+        lowerBound: 20,
+      },
+      ongoingScreening: false,
+      listId: '',
+    }
+
+    return {
+      id: 'R-43',
+      name: '314(a) Subject Identification business',
+      type: 'USER',
+      description:
+        'Identifies potential matches between business customer data and subjects on the FinCEN 314(a) watch list using multi-factor comparison of names.',
+      descriptionTemplate:
+        'Identifies potential matches between business customer data and subjects on the FinCEN 314(a) watch list using multi-factor comparison of names.',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'subject-identification-business',
+      labels: [],
+      checksFor: [RuleChecksForField.UserDetails, RuleChecksForField.Username],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['314A'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A business user can be checked against the FinCEN 314(a) watch list',
     }
   },
   () => {
