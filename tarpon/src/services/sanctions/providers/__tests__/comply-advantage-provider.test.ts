@@ -198,6 +198,12 @@ describe('complyAdvantageDocToEntity', () => {
           ],
         },
       ],
+      otherSources: [
+        {
+          type: 'WARNINGS',
+          value: [],
+        },
+      ],
       rawResponse: hit,
     }
 

@@ -27,6 +27,7 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { traceable } from '@/core/xray'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { SanctionsEntityOtherSources } from '@/@types/openapi-internal/SanctionsEntityOtherSources'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -39,6 +40,7 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
   mediaSources?: SanctionsSource[]
   sanctionsSources?: SanctionsSource[]
   pepSources?: SanctionsSource[]
+  otherSources?: SanctionsEntityOtherSources[]
 } {
   if (!doc.sources) {
     return {}
@@ -49,6 +51,7 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
     mediaSources: string[]
     sanctionsSources: string[]
     pepSources: string[]
+    warningsSources: string[]
   }>(
     (groups, source) => {
       const amlTypes = (doc.source_notes[source]?.aml_types as string[]) || []
@@ -61,12 +64,12 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
         groups.pepSources.push(source)
       }
 
-      if (
-        amlTypes.some(
-          (type) => !type.includes('adverse-media') && !type.includes('pep')
-        )
-      ) {
+      if (amlTypes.some((type) => type.includes('sanctions'))) {
         groups.sanctionsSources.push(source)
+      }
+
+      if (amlTypes.some((type) => type.includes('warning'))) {
+        groups.warningsSources.push(source)
       }
 
       return groups
@@ -75,6 +78,7 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
       mediaSources: [],
       pepSources: [],
       sanctionsSources: [],
+      warningsSources: [],
     }
   )
 
@@ -113,6 +117,12 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
     sanctionsSources: groups.sanctionsSources.map((source) =>
       mapSource(source)
     ),
+    otherSources: [
+      {
+        type: 'WARNINGS',
+        value: groups.warningsSources.map((source) => mapSource(source)),
+      },
+    ],
   }
 }
 
@@ -130,6 +140,8 @@ export function complyAdvantageDocToEntity(
             ? 'ADVERSE_MEDIA'
             : t.includes('pep')
             ? 'PEP'
+            : t.includes('warning')
+            ? 'WARNINGS'
             : 'SANCTIONS'
         )
       )
