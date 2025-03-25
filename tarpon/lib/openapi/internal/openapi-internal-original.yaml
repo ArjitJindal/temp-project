@@ -11464,6 +11464,7 @@ components:
         - CONCURRENT_DYNAMODB_CONSUMER
         - ALERTS_DYNAMO_POC
         - ACURIS
+        - 314A
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -14138,6 +14139,8 @@ components:
         - BANK_NAMES
         - PRODUCT_TYPES
         - DEVICE_IDENTIFIER
+        - 314A_INDIVIDUAL
+        - 314A_BUSINESS
     ComplyAdvantageMatchType:
       title: ComplyAdvantageMatchType
       type: string

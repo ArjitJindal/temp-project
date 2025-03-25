@@ -10,6 +10,7 @@ import { ListSubtype, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Drawer from '@/components/library/Drawer';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
@@ -64,7 +65,7 @@ export default function NewListDrawer(props: Props) {
       formRef.current?.resetFields();
     }
   }, [isOpen]);
-
+  const is314aEnabled = useFeatureEnabled('314A');
   const api = useApi();
   const handleFinishMutation = useMutation<unknown, unknown, { values: FormValues }>(
     async (event) => {
@@ -156,12 +157,21 @@ export default function NewListDrawer(props: Props) {
           >
             {(inputProps) => (
               <Select
-                options={(listType === 'WHITELIST' ? WHITELIST_SUBTYPES : BLACKLIST_SUBTYPES).map(
-                  (subtype) => ({
+                options={(listType === 'WHITELIST' ? WHITELIST_SUBTYPES : BLACKLIST_SUBTYPES)
+                  .filter((subtype) => {
+                    if (
+                      !is314aEnabled &&
+                      (subtype === ('INDIVIDUAL_314' as ListSubtype) ||
+                        subtype === ('BUSINESS_314' as ListSubtype))
+                    ) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((subtype) => ({
                     value: subtype,
                     label: getListSubtypeTitle(subtype),
-                  }),
-                )}
+                  }))}
                 {...inputProps}
               />
             )}

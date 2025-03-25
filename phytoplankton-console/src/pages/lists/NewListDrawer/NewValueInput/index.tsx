@@ -6,6 +6,7 @@ import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
 import { AllUsersTableItem, ListSubtype, TransactionsUniquesField } from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
 import { useApi } from '@/api';
@@ -25,6 +26,7 @@ interface Props extends InputProps<string[]> {
 
 export default function NewValueInput(props: Props) {
   const { listSubtype, ...rest } = props;
+  const is314aEnabled = useFeatureEnabled('314A');
 
   if (listSubtype === 'USER_ID') {
     return <UserIdInput {...rest} />;
@@ -36,6 +38,14 @@ export default function NewValueInput(props: Props) {
 
   if (listSubtype === 'STRING') {
     return <Select<string> className={s.select} mode={'TAGS'} options={[]} {...rest} />;
+  }
+
+  if (
+    is314aEnabled &&
+    (listSubtype === ('INDIVIDUAL_314' as ListSubtype) ||
+      listSubtype === ('BUSINESS_314' as ListSubtype))
+  ) {
+    return <SearchInput listSubtype={listSubtype} {...rest} />;
   }
 
   return <SearchInput listSubtype={listSubtype} {...rest} />;
@@ -112,6 +122,10 @@ function SearchInput(
         return 'IP_ADDRESS';
       case 'DEVICE_IDENTIFIER':
         return 'DEVICE_IDENTIFIER';
+      case 'INDIVIDUAL_314' as ListSubtype:
+        return '314A_INDIVIDUAL';
+      case 'BUSINESS_314' as ListSubtype:
+        return '314A_BUSINESS';
       case 'STRING':
       case 'COUNTRY':
         throw new Error(`This value is not supported: ${listSubtype}`);
@@ -133,7 +147,6 @@ function SearchInput(
       return uniques.map((value) => ({ value: value, label: value }));
     },
   );
-
   return (
     <AntSelect<string[]>
       className={s.select}

@@ -28,6 +28,8 @@ const LIST_SUBTYPES: ListSubtype[] = [
   'DEVICE_IDENTIFIER',
   'COUNTRY',
   'STRING',
+  'INDIVIDUAL_314' as ListSubtype,
+  'BUSINESS_314' as ListSubtype,
 ];
 
 export const BLACKLIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
@@ -61,6 +63,10 @@ export function getListSubtypeTitle(subtype: ListSubtype) {
       return 'Custom';
     case 'COUNTRY':
       return 'Country';
+    case 'INDIVIDUAL_314' as ListSubtype:
+      return 'Individual (314a)';
+    case 'BUSINESS_314' as ListSubtype:
+      return 'Business (314a)';
   }
   return neverReturn(subtype, humanizeAuto(subtype));
 }

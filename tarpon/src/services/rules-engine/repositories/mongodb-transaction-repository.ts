@@ -968,6 +968,12 @@ export class MongoDbTransactionRepository
       case 'PRODUCT_TYPES':
         fieldPath = 'productType'
         break
+      case '314A_INDIVIDUAL':
+        fieldPath = '314A_INDIVIDUAL'
+        break
+      case '314A_BUSINESS':
+        fieldPath = '314A_BUSINESS'
+        break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }

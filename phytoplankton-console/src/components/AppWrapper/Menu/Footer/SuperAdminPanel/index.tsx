@@ -174,6 +174,12 @@ export const featureDescriptions: Record<
     description: 'Enables alerts Dynamo POC (Experimental)',
     tag: FeatureTag.ENG,
   },
+
+  '314A': {
+    title: '314A',
+    description: 'Enables 314A',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
