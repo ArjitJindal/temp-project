@@ -6,5 +6,6 @@
   "number_to_string",
   "lowercase",
   "uppercase",
-  "timestamp_diff_seconds"
+  "timestamp_diff_seconds",
+  "date_to_timestamp"
 ]

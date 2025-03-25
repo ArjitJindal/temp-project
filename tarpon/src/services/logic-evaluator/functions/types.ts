@@ -11,6 +11,7 @@ export enum LogicFunctionKey {
   NUMBER_TO_STRING = 'number_to_string',
   LOWERCASE = 'lowercase',
   UPPERCASE = 'uppercase',
+  DATE_TO_TIMESTAMP = 'date_to_timestamp',
 }
 
 export type LogicFunction<ReturnType = unknown> = {

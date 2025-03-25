@@ -60,6 +60,7 @@ const staticOperators: Record<StaticallyDescriptionGenerator, string> = {
   'op:similartowords': 'is similar to words',
   number_of_items: 'number of items',
   number_of_objects: 'number of objects',
+  date_to_timestamp: 'date to timestamp',
   local_time_in_hour: 'local time in hour',
   timestamp_diff_seconds: 'timestamp diff seconds',
   merge: 'merge',
