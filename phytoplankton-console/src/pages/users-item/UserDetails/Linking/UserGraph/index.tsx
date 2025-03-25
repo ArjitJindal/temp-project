@@ -10,6 +10,7 @@ import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type GraphParams = (
   user: string,
@@ -139,9 +140,13 @@ export function useUserEntity(
   },
 ) {
   const api = useApi();
-  const queryResult = useQuery(['user-entity', userId, filters], () =>
-    api.getUserEntity({ userId, ...(filters || {}) }),
+  const hasFeatureEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const queryResult = useQuery(
+    ['user-entity', userId, filters],
+    () => api.getUserEntity({ userId, ...(filters || {}) }),
+    { enabled: hasFeatureEnabled },
   );
+
   return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
 }
 
@@ -203,8 +208,11 @@ export function useLinkingState(userId: string, initialScope: ScopeSelectorValue
 
 export const useUserEntityFollow = (linkingState: any) => {
   const api = useApi();
-
+  const hasFeatureEnabled = useFeatureEnabled('ENTITY_LINKING');
   const handleFollow = async (userId: string) => {
+    if (!hasFeatureEnabled) {
+      return;
+    }
     try {
       const data = await (linkingState.scope === 'ENTITY'
         ? api.getUserEntity({ userId })
