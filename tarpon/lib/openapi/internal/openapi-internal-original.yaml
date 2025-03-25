@@ -13073,6 +13073,7 @@ components:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
+        - WARNINGS
     GenericSanctionsSearchType:
       title: GenericSanctionsSearchType
       type: string
@@ -13082,6 +13083,7 @@ components:
         - ADVERSE_MEDIA
         - REGULATORY_ENFORCEMENT_LIST
         - CRIME
+        - WARNINGS
     AcurisSanctionsSearchType:
       title: AcurisSanctionsSearchType
       type: string

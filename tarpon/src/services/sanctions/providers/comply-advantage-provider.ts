@@ -188,6 +188,8 @@ const SANDBOX_PROFILES = {
     '1e99cb5e-36d2-422b-be1f-0024999b92b7',
   [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
     'd563b827-7baa-4a0c-a2ae-7e38e5051cf2',
+  [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA', 'WARNINGS'])]:
+    'fda44006-9e6b-4028-8f4b-d13b0d1fa122',
 }
 const SEARCH_PROFILE_IDS: Record<
   'prod' | 'sandbox',
@@ -208,6 +210,8 @@ const SEARCH_PROFILE_IDS: Record<
         '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d',
       [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
         '15cb1d65-7f06-4eb3-84f5-f0cb9f1d4c8f',
+      [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA', 'WARNINGS'])]:
+        '5a4c7e72-2aa0-4238-ad82-27c1f797f96e',
     },
     FIRST_WORLD: {
       [getSearchTypesKey(['SANCTIONS'])]:
@@ -223,6 +227,8 @@ const SEARCH_PROFILE_IDS: Record<
         'f1f5c970-991e-4c68-856b-1f4cfd790968',
       [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
         'a8eea736-c654-48a3-97d9-62ea43ef3031',
+      [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA', 'WARNINGS'])]:
+        '5a4c7e72-2aa0-4238-ad82-27c1f797f96e',
     },
   },
   sandbox: {

@@ -36,6 +36,8 @@ function toComplyAdvantageType(type: SanctionsSearchType) {
       return 'pep'
     case 'ADVERSE_MEDIA':
       return 'adverse-media'
+    case 'WARNINGS':
+      return 'warning'
   }
 }
 
