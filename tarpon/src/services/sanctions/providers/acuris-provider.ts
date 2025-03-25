@@ -538,18 +538,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : undefined,
       sanctionsSources: entity.evidences
         .filter(
-          ({ evidenceId }) =>
-            (entity.sanEntries.current.some((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidenceId)
-              )
-            ) ||
-              entity.sanEntries.former.some((sanEntry) =>
-                sanEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidenceId)
-                )
-              )) &&
-            sanctionSearchTypes.includes('SANCTIONS')
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'SANCTIONS'
+            ) && sanctionSearchTypes.includes('SANCTIONS')
         )
         .map((evidence) => {
           const matchingSanEntry =
@@ -569,20 +561,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
         }),
       pepSources: entity.evidences
         .filter(
-          ({ evidenceId }) =>
-            (entity.pepEntries.current.some((pepEntry) =>
-              pepEntry.evidenceIds.includes(evidenceId)
-            ) ||
-              entity.pepEntries.former.some((pepEntry) =>
-                pepEntry.evidenceIds.includes(evidenceId)
-              ) ||
-              entity.poiEntries
-                .flatMap(({ evidenceIds }) => evidenceIds)
-                .includes(evidenceId) ||
-              entity.pepByAssociationEntries
-                .flatMap((entry) => entry.evidenceIds)
-                .includes(evidenceId)) &&
-            sanctionSearchTypes.includes('PEP')
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
+            ) && sanctionSearchTypes.includes('PEP')
         )
         .map((evidence) => {
           const evidenceName =
@@ -602,12 +584,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ),
       })),
       mediaSources: entity.evidences
-        .filter(({ evidenceId }) =>
-          entity.rreEntries.some((rreEntry) =>
-            rreEntry.events.some((event) =>
-              event.evidenceIds.includes(evidenceId)
-            )
-          )
+        .filter(
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) =>
+                EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
+            ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
         )
         .map((evidence) => this.getMedia(evidence)),
       rawResponse: entity,
@@ -615,12 +597,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
           value: entity.evidences
-            .filter(({ evidenceId }) =>
-              entity.relEntries.some((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidenceId)
-                )
-              )
+            .filter(
+              ({ datasets }) =>
+                datasets.some(
+                  (dataset) =>
+                    EXTERNAL_TO_INTERNAL_TYPES[dataset] ===
+                    'REGULATORY_ENFORCEMENT_LIST'
+                ) && sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
             )
             .map((evidence) => {
               const evidenceName = entity.relEntries.find((relEntry) =>
@@ -669,17 +652,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
       sanctionSearchTypes,
       sanctionsSources: entity.evidences
         .filter(
-          ({ evidenceId }) =>
-            entity.sanEntries.current.some((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidenceId)
-              )
-            ) ||
-            entity.sanEntries.former.some((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidenceId)
-              )
-            )
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'SANCTIONS'
+            ) && sanctionSearchTypes.includes('SANCTIONS')
         )
         .map((evidence) => {
           const matchingSanEntry =
@@ -705,24 +681,25 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ),
       })),
       mediaSources: entity.evidences
-        .filter(({ evidenceId }) =>
-          entity.rreEntries.some((rreEntry) =>
-            rreEntry.events.some((event) =>
-              event.evidenceIds.includes(evidenceId)
-            )
-          )
+        .filter(
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) =>
+                EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
+            ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
         )
         .map((evidence) => this.getMedia(evidence)),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
           value: entity.evidences
-            .filter(({ evidenceId }) =>
-              entity.relEntries.some((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidenceId)
-                )
-              )
+            .filter(
+              ({ datasets }) =>
+                datasets.some(
+                  (dataset) =>
+                    EXTERNAL_TO_INTERNAL_TYPES[dataset] ===
+                    'REGULATORY_ENFORCEMENT_LIST'
+                ) && sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
             )
             .map((evidence) => {
               const evidenceName = entity.relEntries.find((relEntry) =>
