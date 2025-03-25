@@ -377,4 +377,4 @@ export function getDeadLetterQueueName(queueName: string) {
   return `DeadLetter${queueName}`
 }
 
-export const SFTP_CONNECTION_ERROR_PREFIX = 'SFTPConnectionError:'
+export const SFTP_CONNECTION_ERROR_PREFIX = 'SFTPConnectionError'
