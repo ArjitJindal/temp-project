@@ -56,9 +56,14 @@ export function RuleLogicBuilder(props: Props) {
       if (newState == null || newState.tree == null) {
         return;
       }
-      const currentJsonLogic = QbUtils.jsonLogicFormat(newState.tree, newState.config);
-      if (!isEqual(currentJsonLogic.logic, jsonLogic)) {
-        onChange?.(currentJsonLogic.logic as RuleLogic | undefined);
+      let currentJsonLogic;
+      try {
+        currentJsonLogic = QbUtils.jsonLogicFormat(newState.tree, newState.config);
+      } catch (e) {
+        console.warn(e);
+      }
+      if (!isEqual(currentJsonLogic?.logic, jsonLogic)) {
+        onChange?.(currentJsonLogic?.logic as RuleLogic | undefined);
       }
     },
     [jsonLogic, onChange],
