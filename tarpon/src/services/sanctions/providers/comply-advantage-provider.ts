@@ -64,7 +64,7 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
         groups.pepSources.push(source)
       }
 
-      if (amlTypes.some((type) => type.includes('sanctions'))) {
+      if (amlTypes.some((type) => type.includes('sanction'))) {
         groups.sanctionsSources.push(source)
       }
 
