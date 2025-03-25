@@ -679,8 +679,11 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   },
                 }),
                 helper.simple<'lastStatusChange.userId'>({
+                  id: 'proposed-by',
                   title: 'Proposed by',
                   key: 'lastStatusChange.userId',
+                  defaultWidth: 300,
+                  enableResizing: false,
                   type: {
                     stringify: (value) => {
                       return `${value === undefined ? '' : users[value]?.name ?? value}`;
@@ -774,32 +777,24 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 },
               },
             }),
-          ...(!isInReview
-            ? [
-                helper.simple<'lastStatusChange.userId'>({
-                  title: 'Status changed by',
-                  key: 'lastStatusChange.userId',
-                  defaultWidth: 300,
-                  enableResizing: false,
-                  type: {
-                    stringify: (value) => {
-                      return `${value === undefined ? '' : users[value]?.name ?? value}`;
-                    },
-                    render: (userId, _) => {
-                      return userId ? (
-                        <ConsoleUserAvatar
-                          userId={userId}
-                          users={users}
-                          loadingUsers={loadingUsers}
-                        />
-                      ) : (
-                        <>-</>
-                      );
-                    },
-                  },
-                }),
-              ]
-            : []),
+          helper.simple<'lastStatusChange.userId'>({
+            title: 'Status changed by',
+            key: 'lastStatusChange.userId',
+            defaultWidth: 300,
+            enableResizing: false,
+            type: {
+              stringify: (value) => {
+                return `${value === undefined ? '' : users[value]?.name ?? value}`;
+              },
+              render: (userId, _) => {
+                return userId ? (
+                  <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                ) : (
+                  <>-</>
+                );
+              },
+            },
+          }),
           helper.display({
             title: 'Operations',
             enableResizing: false,

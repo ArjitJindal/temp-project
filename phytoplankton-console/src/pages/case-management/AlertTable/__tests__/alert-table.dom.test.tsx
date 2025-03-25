@@ -225,6 +225,7 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
       'Proposed action',
       'Proposed by',
       'Reason',
+      'Status changed by',
       'Operations',
     ];
 
