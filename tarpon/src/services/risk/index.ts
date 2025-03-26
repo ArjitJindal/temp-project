@@ -275,7 +275,7 @@ export class RiskService {
     if (includeMigratedV2Factors) {
       return data
     }
-    return data.filter((riskFactor) => riskFactor.id.startsWith('RF'))
+    return data.filter((riskFactor) => !riskFactor.parameter)
   }
 
   async bulkCreateandReplaceRiskFactors(riskFactors: RiskFactorsPostRequest[]) {
