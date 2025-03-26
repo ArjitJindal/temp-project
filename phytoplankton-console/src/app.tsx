@@ -43,8 +43,22 @@ Sentry.init({
   environment: process.env.ENV_NAME,
   enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {
+    // Errors of these types are most probably caused by Outlook 365 scanning
+    // emails for links and crawl link targets, so we could ignoring them
+    // details: https://github.com/getsentry/sentry-javascript/issues/3440#issuecomment-865857552
+    if (
+      typeof hint.originalException === 'string' &&
+      /Object Not Found Matching Id:.+, MethodName:.+, ParamCount:.+/.test(hint.originalException)
+    ) {
+      return null;
+    }
+
     if (!(hint?.originalException instanceof Error)) {
       return event;
+    }
+
+    if (hint?.originalException.message.includes('ResizeObserver loop limit exceeded')) {
+      return null;
     }
 
     if (hint?.originalException.message.includes('ResizeObserver loop limit exceeded')) {
