@@ -7,6 +7,8 @@ import createHttpError from 'http-errors'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { UserService } from '@/services/users'
 import { Handlers } from '@/@types/openapi-public-management-custom/DefaultApi'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { NangoService } from '@/services/nango'
 
 export const userHandler = lambdaApi()(
   async (
@@ -46,6 +48,14 @@ export const userHandler = lambdaApi()(
       }
 
       return await userService.searchUsers(request)
+    })
+
+    handlers.registerPostCrmLink(async (ctx, request) => {
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const nangoService = new NangoService(ctx.tenantId, dynamoDb)
+      const crmRecordLinkRequest = request.CRMRecordLinkRequest
+      const crmRecords = await nangoService.linkCrmRecord(crmRecordLinkRequest)
+      return crmRecords
     })
 
     return handlers.handle(event)

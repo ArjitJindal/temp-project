@@ -119,32 +119,38 @@ export const generateRandomEmailBody = () => {
 export class CrmRecordSampler extends BaseSampler<
   Omit<CRMRecord, 'conversations' | 'attachments'>
 > {
-  protected generateSample([ticketId, userEmail, createdAt, model]): CRMRecord {
+  protected generateSample([ticketId, createdAt]): CRMRecord {
     return {
-      model: model,
+      recordType: 'TICKET',
+      crmName: 'FRESHDESK',
       data: {
-        subject: this.rng.pickRandom(TICKET_DESCRIPTIONS).subject,
-        fwdEmails: generateRandomEmails(),
-        createdAt,
-        replyCcEmails: generateRandomEmails(),
-        priority: this.rng.randomInt(10),
-        source: this.rng.randomInt(100),
-        isEscalated: this.rng.randomBool(),
-        email: userEmail,
-        updatedAt: this.rng.randomTimestamp(),
-        attachments: [],
-        conversations: [],
-        tags: [],
-        descriptionText:
-          TICKET_DESCRIPTIONS[this.rng.randomInt(TICKET_DESCRIPTIONS.length)]
-            .descriptionText || ' ',
-        responderId: this.rng.randomInt(1000000).toString(),
-        requesterId: this.rng.randomInt(1000000).toString(),
-        id: ticketId,
-        ccEmails: generateRandomEmails(),
-        toEmails: generateRandomEmails(),
-        type: this.rng.pickRandom(TICKET_TYPES),
+        record: {
+          subject: this.rng.pickRandom(TICKET_DESCRIPTIONS).subject,
+          fwdEmails: generateRandomEmails(),
+          createdAt,
+          replyCcEmails: generateRandomEmails(),
+          priority: this.rng.randomInt(10),
+          source: this.rng.randomInt(100),
+          isEscalated: this.rng.randomBool(),
+          email: generateRandomEmails()[0],
+          updatedAt: this.rng.randomTimestamp(),
+          attachments: [],
+          conversations: [],
+          tags: [],
+          descriptionText:
+            TICKET_DESCRIPTIONS[this.rng.randomInt(TICKET_DESCRIPTIONS.length)]
+              .descriptionText || ' ',
+          responderId: this.rng.randomInt(1000000).toString(),
+          requesterId: this.rng.randomInt(1000000).toString(),
+          id: ticketId,
+          ccEmails: generateRandomEmails(),
+          toEmails: generateRandomEmails(),
+          type: this.rng.pickRandom(TICKET_TYPES),
+        },
+        recordType: 'TICKET',
       },
+      id: ticketId,
+      timestamp: createdAt,
     }
   }
 }

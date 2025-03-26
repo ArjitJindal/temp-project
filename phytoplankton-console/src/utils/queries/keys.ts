@@ -2,10 +2,10 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
-import { ListType, ReasonType } from '@/apis';
+import { CrmName, ListType, ReasonType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
-import { CrmModelType } from '@/apis/models/CrmModelType';
+import { CRMModelType } from '@/apis/models/CRMModelType';
 
 type AnyParameters = unknown;
 
@@ -78,12 +78,13 @@ export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const CRM_ACCOUNT = (userId: string): QueryKey => ['crmaccount', userId];
 export const CRM_RECORDS = (
-  email: string,
-  model: CrmModelType,
   page?: number,
   pageSize?: number,
   sortOrder?: 'ascend' | 'descend',
-): QueryKey => ['crmrecords', email, model, page, pageSize, sortOrder];
+  recordType?: CRMModelType,
+  crmName?: CrmName,
+  userId?: string,
+): QueryKey => ['crmrecords', page, pageSize, sortOrder, recordType, crmName, userId];
 
 export const USER_ENTITY = (userId: string): QueryKey => ['userentity', userId];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];

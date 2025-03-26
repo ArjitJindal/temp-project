@@ -56,7 +56,7 @@ import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
 import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import { NangoRecord } from '@/@types/nango'
+import { CRM_MODEL_TYPES } from '@/@types/openapi-internal-custom/CRMModelType'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -109,6 +109,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ROLES_BY_NAME'
   | 'ROLES_BY_NAMESPACE'
   | 'RULE_INSTANCE_THRESHOLD_OPTIMIZATION_DATA'
+  | 'CRM_USER_RECORD_LINK'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
@@ -374,8 +375,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteAlertsData.bind(this),
         order: 15,
       },
-      NANGO_RECORD: {
-        method: this.deleteNangoRecords.bind(this),
+      CRM_RECORD: {
+        method: this.deleteCrmRecords.bind(this),
         order: 16,
       },
     }
@@ -391,16 +392,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async deleteNangoRecords(tenantId: string) {
-    const data: NangoRecord['model'][] = ['FreshDeskTicket']
-
-    for await (const model of data) {
+  private async deleteCrmRecords(tenantId: string) {
+    for (const model of CRM_MODEL_TYPES) {
       await dangerouslyDeletePartition(
         this.dynamoDb(),
         tenantId,
-        DynamoDbKeys.NANGO_RECORD(tenantId, model, '').PartitionKeyID,
+        DynamoDbKeys.CRM_RECORD(tenantId, model, '').PartitionKeyID,
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
-        'Nango Record'
+        'CRM Record'
       )
     }
   }

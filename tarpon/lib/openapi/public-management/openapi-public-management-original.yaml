@@ -1242,8 +1242,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+  /crm/link:
+    post:
+      security:
+        - x-api-key: []
+      summary: Link a CRM record to a user
+      description: Link a CRM record to a user
+      operationId: post-crm-link
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CRMRecordLinkRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CRMRecordLinkResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 components:
   schemas:
+    CRMRecordLinkRequest:
+      title: CRMRecordLinkRequest
+      type: object
+      properties:
+        userId:
+          type: string
+        crmRecordId:
+          type: string
+        recordType:
+          type: string
+          enum:
+            - TICKET
+        crmName:
+          type: string
+          enum:
+            - FRESHDESK
+      required:
+        - userId
+        - crmRecordId
+        - recordType
+        - crmName
+    CRMRecordLinkResponse:
+      title: CRMRecordLinkResponse
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
     List:
       title: List
       type: object

@@ -1,21 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import s from './index.module.less';
-import { InternalBusinessUser, InternalConsumerUser, NangoConversation } from '@/apis';
+import { NangoConversation } from '@/apis';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { getAvatarText } from '@/utils/user-utils';
-import { getUserName } from '@/utils/api/users';
 
 interface Props {
   conversations: Array<NangoConversation>;
-  user?: InternalConsumerUser | InternalBusinessUser;
 }
 
 export default function TicketConversation(props: Props) {
-  const { conversations, user } = props;
+  const { conversations } = props;
   const [expandedEmails, setExpandedEmails] = useState<number[]>([]);
-
-  const avatarText = useMemo(() => getAvatarText(user), [user]);
 
   const getCcEmailCount = (emails: Array<string> | undefined) => {
     if (!emails || emails === undefined) {
@@ -26,7 +22,6 @@ export default function TicketConversation(props: Props) {
   };
 
   const clearMarkdown = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{1}/g, '\n\n');
-
   return (
     <>
       {conversations.map((item, key) => (
@@ -34,11 +29,15 @@ export default function TicketConversation(props: Props) {
           <div className={s.header}>
             <div className={s.left}>
               <div className={s.avatar}>
-                {item.fromEmail?.includes('support@flagright') ? 'F' : avatarText}
+                {item.fromEmail?.includes('support@flagright')
+                  ? 'F'
+                  : getAvatarText(item.fromEmail || item.toEmail || '')}
               </div>
               <div className={s.commentHeader}>
                 <span className={s.bold}>
-                  {item.fromEmail?.includes('support@flagright') ? 'Flagright' : getUserName(user)}
+                  {item.fromEmail?.includes('support@flagright')
+                    ? 'Flagright'
+                    : item.fromEmail || item.toEmail || ''}
                 </span>
                 <div className={s.emailContainer}>
                   {item.toEmail && (

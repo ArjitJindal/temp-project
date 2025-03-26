@@ -1,6 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { Empty } from 'antd';
-import { Props } from '..';
+import { Props } from '../CRMRecords/index';
 import ScopeSelector from '../ScopeSelector';
 import s from '../index.module.less';
 import * as Card from '@/components/ui/Card';

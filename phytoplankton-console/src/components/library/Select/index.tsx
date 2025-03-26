@@ -84,6 +84,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     testId = `input select`,
     optionLabelProp,
     tooltip,
+    onSearch,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -265,6 +266,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         value={value}
         onChange={handleChange}
         onSearch={(searchString) => {
+          onSearch?.(searchString);
           setSearchValue(searchString);
           if (searchString.includes(SEPARATOR)) {
             applySearchStringValue(searchString, mode !== 'TAGS');

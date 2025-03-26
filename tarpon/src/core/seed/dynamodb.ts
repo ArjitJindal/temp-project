@@ -4,7 +4,7 @@ import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { getCases } from './data/cases'
-import { getCrmRecords } from './data/crm-records'
+import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { riskFactors } from './data/risk-factors'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { users } from '@/core/seed/data/users'
@@ -134,9 +134,11 @@ export async function seedDynamo(
   }
 
   const records = getCrmRecords()
-
+  const crmUserRecordLinks = getCrmUserRecordLinks()
   await nangoRepo.storeRecord(records)
-
+  for (const crmUserRecordLink of crmUserRecordLinks) {
+    await nangoRepo.linkCrmRecord(crmUserRecordLink)
+  }
   logger.info('Creating transactions...')
   for (const txn of getTransactions()) {
     const publicTxn = internalToPublic(txn)

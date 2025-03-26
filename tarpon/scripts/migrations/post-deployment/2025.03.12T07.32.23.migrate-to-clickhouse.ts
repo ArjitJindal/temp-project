@@ -22,7 +22,7 @@ export const up = async () => {
         ClickhouseTableNames.DrsScore,
         ClickhouseTableNames.ArsScore,
         ClickhouseTableNames.SanctionsScreeningDetails,
-        ClickhouseTableNames.NangoRecords,
+        ClickhouseTableNames.CrmRecords,
       ],
     },
   })

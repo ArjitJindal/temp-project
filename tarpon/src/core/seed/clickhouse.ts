@@ -2,7 +2,7 @@ import { compact } from 'lodash'
 import { Document, WithId } from 'mongodb'
 import { logger } from '../logger'
 import { getCases } from './data/cases'
-import { getCrmRecords } from './data/crm-records'
+import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import {
   CLICKHOUSE_DEFINITIONS,
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -97,7 +97,7 @@ export const seedClickhouse = async (tenantId: string) => {
   const tableSyncers: TableSyncer[] = [
     {
       table: 'ALERTS',
-      sync: async (tableName: TableName, table: ClickhouseTableDefinition) => {
+      sync: async (_: TableName, table: ClickhouseTableDefinition) => {
         const data = getCases()
         const alerts = data
           .map((c) =>
@@ -112,9 +112,16 @@ export const seedClickhouse = async (tenantId: string) => {
       },
     },
     {
-      table: 'NANGO_RECORDS',
+      table: 'CRM_RECORDS',
       sync: async (tableName: TableName, table: ClickhouseTableDefinition) => {
         const data = getCrmRecords()
+        await batchInsertToClickhouse(tenantId, table.table, data)
+      },
+    },
+    {
+      table: 'CRM_USER_RECORD_LINK',
+      sync: async (_: TableName, table: ClickhouseTableDefinition) => {
+        const data = getCrmUserRecordLinks()
         await batchInsertToClickhouse(tenantId, table.table, data)
       },
     },

@@ -1,23 +1,22 @@
 import { dayjs } from '@/utils/dayjs';
-import { CRMRecord } from '@/apis/models/CRMRecord';
-import { NangoConversation } from '@/apis';
+import { CRMTicket, NangoConversation } from '@/apis';
 
-export function getFirstConversation(item: CRMRecord): NangoConversation[] {
+export function getFirstConversation(item: CRMTicket): NangoConversation[] {
   return [
     {
-      bodyText: item.data.descriptionText,
-      fromEmail: item.data.email,
-      toEmail: item.data.toEmails?.[0] ?? undefined,
-      createdAt: item.data.createdAt,
-      updatedAt: item.data.updatedAt,
-      ccEmails: item.data.ccEmails ?? [],
+      bodyText: item.record.descriptionText,
+      fromEmail: item.record.email,
+      toEmail: item.record.toEmails?.[0] ?? undefined,
+      createdAt: item.record.createdAt,
+      updatedAt: item.record.updatedAt,
+      ccEmails: item.record.ccEmails ?? [],
     },
   ];
 }
 
-export function hasConversations(item: CRMRecord) {
+export function hasConversations(item: CRMTicket) {
   const firstConv = getFirstConversation(item);
-  const itemConv = item.data.conversations ?? [];
+  const itemConv = item.record.conversations ?? [];
   return firstConv.length > 0 || itemConv.length > 0;
 }
 

@@ -1,4 +1,4 @@
-export type NangoModels = 'FreshDeskTicket'
+export type NangoModels = 'FreshdeskTicket'
 
 export type NangoRecord = {
   timestamp: number

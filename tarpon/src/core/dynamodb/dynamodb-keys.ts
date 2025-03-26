@@ -24,7 +24,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
 import { generateChecksum } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
-import { NangoModels } from '@/@types/nango'
+import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -50,8 +50,10 @@ export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
-export const NANGO_RECORD_KEY_IDENTIFIER = '#nango-record'
-export const NANGO_RECORD_MODEL_KEY_IDENTIFIER = '#nango-record-model'
+
+export const CRM_RECORD_KEY_IDENTIFIER = '#crm-record'
+export const CRM_RECORD_MODEL_KEY_IDENTIFIER = '#crm-record-model'
+export const CRM_USER_RECORD_LINK_KEY_IDENTIFIER = '#crm-user-record-link'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -73,9 +75,19 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${ALERT_KEY_IDENTIFIER}`,
     SortKeyID: alertId,
   }),
-  NANGO_RECORD: (tenantId: string, modelName: NangoModels, id: string) => ({
-    PartitionKeyID: `${tenantId}${NANGO_RECORD_KEY_IDENTIFIER}${NANGO_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
+  CRM_RECORD: (tenantId: string, modelName: CRMModelType, id: string) => ({
+    PartitionKeyID: `${tenantId}${CRM_RECORD_KEY_IDENTIFIER}#${CRM_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
     SortKeyID: id,
+  }),
+  CRM_USER_RECORD_LINK: (
+    tenantId: string,
+    userId: string,
+    recordType: string,
+    crmName: string,
+    crmRecordId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}${CRM_USER_RECORD_LINK_KEY_IDENTIFIER}#userId:${userId}#recordType:${recordType}#crmName:${crmName}`,
+    SortKeyID: crmRecordId,
   }),
   ALERT_COMMENT: (tenantId: string, alertId: string, commentId: string) => ({
     PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_COMMENT_KEY_IDENTIFIER}`,

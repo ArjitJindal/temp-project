@@ -56,7 +56,8 @@ import { envIsNot } from '@/utils/env'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { NangoRecord } from '@/@types/nango'
+import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
+import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
 
 @traceable
@@ -146,8 +147,16 @@ export class TarponChangeMongoDbConsumer {
           (tenantId, alertId, commentId, oldAlertFile, newAlertFile) =>
             this.handleAlertFile(tenantId, alertId, commentId, newAlertFile)
         )
-        .setNangoRecordHandler((tenantId, newNangoRecords, dbClients) =>
-          this.handleNangoRecord(tenantId, newNangoRecords, dbClients)
+        .setCrmRecordHandler((tenantId, newCrmRecords, dbClients) =>
+          this.handleCrmRecord(tenantId, newCrmRecords, dbClients)
+        )
+        .setCrmUserRecordLinkHandler(
+          (tenantId, newCrmUserRecordLinks, dbClients) =>
+            this.handleCrmUserRecordLink(
+              tenantId,
+              newCrmUserRecordLinks,
+              dbClients
+            )
         )
     )
   }
@@ -612,6 +621,26 @@ export class TarponChangeMongoDbConsumer {
     subSegment?.close()
   }
 
+  async handleCrmRecord(
+    tenantId: string,
+    newCrmRecord: CRMRecord,
+    dbClients: DbClients
+  ): Promise<void> {
+    await new NangoRepository(
+      tenantId,
+      dbClients.dynamoDb
+    ).storeRecordsClickhouse([newCrmRecord])
+  }
+
+  async handleCrmUserRecordLink(
+    tenantId: string,
+    newCrmUserRecordLinks: CRMRecordLink,
+    dbClients: DbClients
+  ): Promise<void> {
+    const nangoRepository = new NangoRepository(tenantId, dbClients.dynamoDb)
+    await nangoRepository.linkCrmRecordClickhouse(newCrmUserRecordLinks)
+  }
+
   async handleAlert(
     tenantId: string,
     alert: Alert | undefined,
@@ -657,23 +686,6 @@ export class TarponChangeMongoDbConsumer {
     subSegment?.close()
 
     // TODO: Implement if required
-  }
-
-  async handleNangoRecord(
-    tenantId: string,
-    newNangoRecord: Omit<NangoRecord & object, 'data'>,
-    dbClients: DbClients
-  ): Promise<void> {
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleNangoRecord'
-    )
-    subSegment?.close()
-
-    await new NangoRepository(
-      tenantId,
-      dbClients.dynamoDb
-    ).storeRecordsClickhouse([newNangoRecord])
   }
 
   async handleTransactionEvent(
@@ -734,7 +746,6 @@ export class TarponChangeMongoDbConsumer {
 // Create a singleton instance
 const consumer = new TarponChangeMongoDbConsumer()
 
-// Export ruleStatsHandler for backward compatibility
 export const ruleStatsHandler = async (
   tenantId: string,
   executedRules: Array<ExecutedRulesResult>,
@@ -751,19 +762,6 @@ export const ruleStatsHandler = async (
   )
   subSegment?.close()
   return result
-}
-
-export const transactionEventHandler = async (
-  tenantId: string,
-  transactionEvent: TransactionEvent | undefined,
-  dbClients: DbClients
-): Promise<void> => {
-  const subSegment = await addNewSubsegment(
-    'StreamConsumer',
-    'transactionEventHandler'
-  )
-  await consumer.handleTransactionEvent(tenantId, transactionEvent, dbClients)
-  subSegment?.close()
 }
 
 // Update the exported lambda handlers to use the class methods

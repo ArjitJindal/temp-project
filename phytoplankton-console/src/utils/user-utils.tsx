@@ -6,15 +6,8 @@ import { ACCOUNT_LIST, ROLES_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
-import { getUserName } from './api/users';
 import { useApi } from '@/api';
-import {
-  Account,
-  AccountRole,
-  Permission,
-  InternalConsumerUser,
-  InternalBusinessUser,
-} from '@/apis';
+import { Account, AccountRole, Permission } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export enum CommentType {
@@ -303,16 +296,12 @@ export function getDisplayedUserInfo(account?: Account | null): { name: string; 
   return { name: getAccountUserName(account), avatar: account.picture };
 }
 
-export function getAvatarText(
-  user: InternalConsumerUser | InternalBusinessUser | undefined,
-): string {
-  if (!user) {
+export function getAvatarText(name: string): string {
+  if (!name) {
     return 'N';
   }
 
-  const userName = getUserName(user);
-
-  const words = userName.trim().split(/\s+/);
+  const words = name.trim().split(/\s+/);
   const firstInitial = words[0][0];
   const lastInitial = words.length > 1 ? words[words.length - 1][0] : '';
 

@@ -27,7 +27,11 @@ import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useFeatureEnabled,
+  useFreshdeskCrmEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
@@ -35,7 +39,7 @@ import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import Linking from '@/pages/users-item/UserDetails/Linking';
-import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
+import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
 import { notEmpty } from '@/utils/array';
 import { isExistedUser } from '@/utils/api/users';
 import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
@@ -57,6 +61,7 @@ import {
   useLinkingState,
   useUserEntityFollow,
 } from '@/pages/users-item/UserDetails/Linking/UserGraph';
+import CRMData from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
 
 export interface ActivityLogFilterParams {
   filterActivityBy?: string[];
@@ -193,6 +198,7 @@ function useTabs(
   const riskClassificationValues = getOr(riskClassificationQuery, []);
 
   const queryClient = useQueryClient();
+  const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -302,8 +308,14 @@ function useTabs(
       isCrmEnabled &&
       settings.crmIntegrationName && {
         title: humanizeAuto(settings.crmIntegrationName),
-        key: 'crm-monitoring',
-        children: user.userId ? <CRMMonitoring userId={user.userId} /> : undefined,
+        key: 'crm-records',
+        children: user.userId ? (
+          isFreshDeskCrmEnabled ? (
+            <CRMRecords userId={user.userId} />
+          ) : (
+            <CRMData userId={user.userId} />
+          )
+        ) : undefined,
         isClosable: false,
         isDisabled: false,
         Icon: settings.crmIntegrationName

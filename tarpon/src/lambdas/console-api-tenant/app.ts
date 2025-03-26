@@ -41,7 +41,6 @@ import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { NangoService } from '@/services/nango'
 import { ReasonsService } from '@/services/tenants/reasons-service'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import {
   COLLECTIONS_MAP,
@@ -512,33 +511,55 @@ export const tenantsHandler = lambdaApi()(
       return await slaPolicyService.getSLAPolicyId()
     })
 
-    handlers.registerGetCrmTickets(async (ctx, request) => {
-      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
-
-      const crmRecordParams = {
-        model: request.model ?? '',
-        email: request.email ?? '',
-        page: request.page ?? 1,
-        pageSize: request.pageSize ?? DEFAULT_PAGE_SIZE,
-        sortField: request.sortField ?? '',
-        sortOrder: request.sortOrder || 'ascend',
-      }
-
-      return await nangoService.getCrmNangoRecords(
+    handlers.registerGetCrmRecords(async (ctx, request) => {
+      const nangoService = new NangoService(
         ctx.tenantId,
-        crmRecordParams
+        getDynamoDbClientByEvent(event)
       )
+
+      return await nangoService.getCrmNangoRecords(request)
+    })
+
+    handlers.registerGetCrmRecordsSearch(async (ctx, request) => {
+      const nangoService = new NangoService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
+
+      return await nangoService.getCrmRecordsSearch(request)
+    })
+
+    handlers.registerPostCrmRecordLink(async (ctx, request) => {
+      const nangoService = new NangoService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
+
+      console.log('request', request)
+
+      await nangoService.linkCrmRecord({
+        crmName: request.CRMRecordLink.crmName,
+        recordType: request.CRMRecordLink.recordType,
+        crmRecordId: request.CRMRecordLink.id,
+        userId: request.CRMRecordLink.userId,
+      })
     })
 
     /* Action Reasons */
 
-    handlers.registerGetTenantsNangoConnections(async () => {
-      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+    handlers.registerGetTenantsNangoConnections(async (ctx) => {
+      const nangoService = new NangoService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
       return await nangoService.createConnectSession()
     })
 
     handlers.registerPostTenantsNangoConnections(async (ctx, request) => {
-      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+      const nangoService = new NangoService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
       return await nangoService.postConnectSession(
         ctx.tenantId,
         request.NangoPostConnect
@@ -546,7 +567,10 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerDeleteTenantsNangoConnections(async (ctx, request) => {
-      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+      const nangoService = new NangoService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
       return await nangoService.deleteConnection(request.NangoPostConnect)
     })
 

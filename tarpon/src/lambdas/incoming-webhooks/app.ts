@@ -224,7 +224,7 @@ export const webhooksHandler = lambdaApi()(
 
       logger.info(`Received Nango webhook event: ${JSON.stringify(request)}`)
 
-      const nangoService = new NangoService(dynamoDb)
+      const nangoService = new NangoService(FLAGRIGHT_TENANT_ID, dynamoDb)
 
       const { tenantId, region } = await nangoService.getConnectionMetadata(
         request.NangoWebhookEvent

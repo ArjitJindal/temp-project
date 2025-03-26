@@ -1,12 +1,11 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { memoize } from 'lodash'
-import { Nango } from '@nangohq/node'
-import axios from 'axios'
+import { Nango, RecordMetadata } from '@nangohq/node'
 import createHttpError from 'http-errors'
-import { NangoRepository, CrmRecordParams } from './repository'
+import { NangoRepository } from './repository'
 import { getSecret } from '@/utils/secrets-manager'
 import { NangoWebhookEvent } from '@/@types/openapi-internal/NangoWebhookEvent'
-import { NangoModels, NangoRecord } from '@/@types/nango'
+import { NangoModels } from '@/@types/nango'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { CrmGetResponse } from '@/@types/openapi-internal/CrmGetResponse'
@@ -15,27 +14,48 @@ import { NangoConnection } from '@/@types/openapi-internal/NangoConnection'
 import dayjs from '@/utils/dayjs'
 import { NangoPostConnectResponse } from '@/@types/openapi-internal/NangoPostConnectResponse'
 import { NangoPostConnect } from '@/@types/openapi-internal/NangoPostConnect'
+import {
+  DefaultApiGetCrmRecordsRequest,
+  DefaultApiGetCrmRecordsSearchRequest,
+} from '@/@types/openapi-internal/RequestParameters'
+import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
+import { CrmName } from '@/@types/openapi-internal/CrmName'
+import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
+import { NangoTicket } from '@/@types/openapi-internal/NangoTicket'
+import { CRMRecordLinkRequest } from '@/@types/openapi-public-management/CRMRecordLinkRequest'
+import { CRMRecordLinkResponse } from '@/@types/openapi-public-management/CRMRecordLinkResponse'
+import { CRMRecordSearch } from '@/@types/openapi-internal/CRMRecordSearch'
 
 type NangoModelData = {
   idKey: string
   timestampKey: string
 }
 
-export const NANGO_MODELS_DATA: Record<NangoModels, NangoModelData> = {
-  FreshDeskTicket: { idKey: 'id', timestampKey: 'created_at' },
+const NANGO_MODEL_TYPE_MAP: Record<
+  NangoModels,
+  { recordType: CRMModelType; crmName: CrmName }
+> = {
+  FreshdeskTicket: { recordType: 'TICKET', crmName: 'FRESHDESK' },
 }
 
-// Source: https://docs.nango.dev/reference/api/connection/post
-type CRMCredentials = {
-  connection_config: { [key: string]: string }
-  username: string
+export const NANGO_MODELS_DATA: Record<NangoModels, NangoModelData> = {
+  FreshdeskTicket: { idKey: 'id', timestampKey: 'created_at' },
 }
+
+type NangoListRecordsResponse<T> = {
+  records: (T & { _nango_metadata: RecordMetadata })[]
+  next_cursor: string | null
+}
+
+type IncomingRecord = NangoTicket
 
 @traceable
 export class NangoService {
-  private readonly dynamoDb: DynamoDBDocumentClient
-
-  constructor(dynamoDb: DynamoDBDocumentClient) {
+  constructor(
+    private readonly tenantId: string,
+    private readonly dynamoDb: DynamoDBDocumentClient
+  ) {
+    this.tenantId = tenantId
     this.dynamoDb = dynamoDb
   }
 
@@ -78,11 +98,7 @@ export class NangoService {
     return { tenantId, region }
   }
 
-  public async recieveWebhook(
-    tenantId: string,
-    webhook: NangoWebhookEvent,
-    _region: string
-  ) {
+  public async recieveWebhook(webhook: NangoWebhookEvent, _region: string) {
     const { connectionId, providerConfigKey, model, modifiedAfter } = webhook
     const nango = await this.nango()
 
@@ -90,7 +106,7 @@ export class NangoService {
       throw new Error(`Invalid webhook: ${JSON.stringify(webhook)}`)
     }
 
-    const repository = new NangoRepository(tenantId, this.dynamoDb)
+    const repository = new NangoRepository(this.tenantId, this.dynamoDb)
 
     if (!model) {
       throw new Error(
@@ -107,24 +123,33 @@ export class NangoService {
     let nextCursor: string | null = null
 
     do {
-      const records = await nango.listRecords({
-        connectionId,
-        providerConfigKey,
-        model,
-        modifiedAfter,
-        ...(nextCursor ? { fromCursorKey: nextCursor } : {}),
-      })
+      const records: NangoListRecordsResponse<IncomingRecord> =
+        await nango.listRecords<IncomingRecord>({
+          connectionId,
+          providerConfigKey,
+          model,
+          modifiedAfter,
+          ...(nextCursor ? { fromCursorKey: nextCursor } : {}),
+        })
 
       const data = records.records
 
       logger.info(`Received ${data.length} records`, { records })
+      const { modelType, crmName } = NANGO_MODEL_TYPE_MAP[model]
 
-      const nangoRecords: NangoRecord[] = data.map((record) => ({
-        id: record[NANGO_MODELS_DATA[model].idKey],
-        timestamp: record[NANGO_MODELS_DATA[model].timestampKey],
-        data: record,
-        model: model as NangoModels,
-      }))
+      const nangoRecords: CRMRecord[] = data.map((record: IncomingRecord) => {
+        const { idKey, timestampKey } = NANGO_MODELS_DATA[model]
+
+        const crmRecord: CRMRecord = {
+          data: { record: record, recordType: modelType },
+          timestamp: record[timestampKey],
+          id: record[idKey],
+          crmName,
+          recordType: modelType,
+        }
+
+        return crmRecord
+      })
 
       await repository.storeRecord(nangoRecords)
 
@@ -132,43 +157,10 @@ export class NangoService {
     } while (nextCursor)
   }
 
-  public async addCredentials(
-    tenantId: string,
-    connectionId: string,
-    providerConfigKey: string,
-    credentials: CRMCredentials
-  ) {
-    const nangoSecret = await this.nangoSecret()
-
-    try {
-      await axios.post(
-        `https://api.nango.dev/connection`,
-        {
-          ...credentials,
-          metadata: { tenantId, region: process.env.REGION || 'eu-1' },
-          connection_id: connectionId,
-          provider_config_key: providerConfigKey,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${nangoSecret}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
-    } catch (error) {
-      logger.error('Failed to add credentials with message', {
-        message: (error as Error).message,
-      })
-      throw error
-    }
-  }
-
   public async getCrmNangoRecords(
-    tenantId: string,
-    crmRecordParams: CrmRecordParams
+    crmRecordParams: DefaultApiGetCrmRecordsRequest
   ): Promise<CrmGetResponse> {
-    const repository = new NangoRepository(tenantId, this.dynamoDb)
+    const repository = new NangoRepository(this.tenantId, this.dynamoDb)
 
     return repository.getCrmRecords(crmRecordParams)
   }
@@ -176,11 +168,10 @@ export class NangoService {
   public async createConnectSession(): Promise<NangoConnection> {
     const nango = await this.nango()
     const listIntegrations = await nango.listIntegrations()
-    const tenantId = getContext()?.tenantId as string
     const tenantName = getContext()?.tenantName as string
     const user = getContext()?.user as ContextUser
     const listConnections = await nango.listConnections(undefined, undefined, {
-      endUserOrganizationId: tenantId,
+      endUserOrganizationId: this.tenantId,
     })
     const currentIntegrations = listConnections.connections.map(
       (connection) => connection.provider_config_key
@@ -195,7 +186,7 @@ export class NangoService {
         email: user?.email as string,
         display_name: user?.email as string,
       },
-      organization: { id: tenantId, display_name: tenantName },
+      organization: { id: this.tenantId, display_name: tenantName },
       allowed_integrations: integrationsAllowed.map(
         (integration) => integration.provider
       ),
@@ -257,5 +248,63 @@ export class NangoService {
     const nango = await this.nango()
     const { connectionId, providerConfigKey } = nangoPostConnect
     await nango.deleteConnection(providerConfigKey, connectionId)
+  }
+
+  public async linkCrmRecord(
+    linkRequest: CRMRecordLinkRequest
+  ): Promise<CRMRecordLinkResponse> {
+    const repository = new NangoRepository(this.tenantId, this.dynamoDb)
+
+    // model names valid for each crmName
+    const validModels = Object.entries(NANGO_MODEL_TYPE_MAP).map(
+      ([_, { crmName, recordType }]) => ({
+        recordType,
+        crmName,
+      })
+    )
+
+    const isValidModel = validModels.some(
+      (model) => model.recordType === linkRequest.recordType
+    )
+
+    if (!isValidModel) {
+      const message = `For record type ${
+        linkRequest.recordType
+      }, the following models are valid: ${validModels
+        .filter((model) => model.crmName === linkRequest.crmName)
+        .map((model) => model.recordType)
+        .join(', ')}`
+      throw new Error(message)
+    }
+
+    const crmRecord = await repository.getCrmRecordsFromDynamoDb(
+      [linkRequest.crmRecordId],
+      linkRequest.recordType
+    )
+
+    if (crmRecord.length === 0) {
+      throw new Error(`CRM record not found: ${linkRequest.crmRecordId}`)
+    }
+
+    await repository.linkCrmRecord({
+      crmName: linkRequest.crmName,
+      recordType: linkRequest.recordType,
+      id: linkRequest.crmRecordId,
+      userId: linkRequest.userId,
+      timestamp: dayjs().valueOf(),
+    })
+
+    return {
+      success: true,
+      message: 'CRM record linked successfully',
+    }
+  }
+
+  public async getCrmRecordsSearch(
+    crmRecordSearch: DefaultApiGetCrmRecordsSearchRequest
+  ): Promise<CRMRecordSearch[]> {
+    const repository = new NangoRepository(this.tenantId, this.dynamoDb)
+
+    return repository.getCrmRecordsSearch(crmRecordSearch)
   }
 }

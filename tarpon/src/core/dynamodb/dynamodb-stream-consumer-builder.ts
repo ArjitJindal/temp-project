@@ -9,7 +9,6 @@ import {
   withContext,
 } from '../utils/context'
 import { logger } from '../logger'
-import { NangoRecord } from '../../@types/nango'
 import { addNewSubsegment, traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
@@ -37,6 +36,8 @@ import { generateChecksum } from '@/utils/object'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
+import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -59,9 +60,14 @@ type TransactionsHandler = (
   newTransactions: TransactionWithRulesResult[],
   dbClients: DbClients
 ) => Promise<void>
-type NangoRecordHandler = (
+type CrmRecordHandler = (
   tenantId: string,
-  newNangoRecords: Omit<NangoRecord & object, 'data'>,
+  newCrmRecords: CRMRecord,
+  dbClients: DbClients
+) => Promise<void>
+type CrmUserRecordLinkHandler = (
+  tenantId: string,
+  crmRecordLink: CRMRecordLink,
   dbClients: DbClients
 ) => Promise<void>
 type TransactionEventHandler = (
@@ -162,7 +168,8 @@ export class StreamConsumerBuilder {
   alertHandler?: AlertHandler
   alertCommentHandler?: AlertCommentHandler
   alertFileHandler?: AlertFileHandler
-  nangoRecordHandler?: NangoRecordHandler
+  crmRecordHandler?: CrmRecordHandler
+  crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
 
   constructor(
     name: string,
@@ -264,10 +271,17 @@ export class StreamConsumerBuilder {
     return this
   }
 
-  public setNangoRecordHandler(
-    nangoRecordHandler: NangoRecordHandler
+  public setCrmRecordHandler(
+    crmRecordHandler: CrmRecordHandler
   ): StreamConsumerBuilder {
-    this.nangoRecordHandler = nangoRecordHandler
+    this.crmRecordHandler = crmRecordHandler
+    return this
+  }
+
+  public setCrmUserRecordLinkHandler(
+    crmUserRecordLinkHandler: CrmUserRecordLinkHandler
+  ): StreamConsumerBuilder {
+    this.crmUserRecordLinkHandler = crmUserRecordLinkHandler
     return this
   }
 
@@ -460,10 +474,19 @@ export class StreamConsumerBuilder {
         update.NewImage as FileInfo,
         dbClients
       )
-    } else if (update.type === 'NANGO_RECORD' && this.nangoRecordHandler) {
-      await this.nangoRecordHandler(
+    } else if (update.type === 'CRM_RECORD' && this.crmRecordHandler) {
+      await this.crmRecordHandler(
         update.tenantId,
-        update.NewImage as NangoRecord,
+        update.NewImage as CRMRecord,
+        dbClients
+      )
+    } else if (
+      update.type === 'CRM_USER_RECORD_LINK' &&
+      this.crmUserRecordLinkHandler
+    ) {
+      await this.crmUserRecordLinkHandler(
+        update.tenantId,
+        update.NewImage as CRMRecordLink,
         dbClients
       )
     }

@@ -129,7 +129,8 @@ export enum ClickhouseTableNames {
   ArsScore = 'ars_score',
   SanctionsScreeningDetails = 'sanctions_screening_details',
   Alerts = 'alerts',
-  NangoRecords = 'nango_records',
+  CrmRecords = 'crm_records',
+  CrmUserRecordLink = 'crm_user_record_link',
 }
 
 export const CLICKHOUSE_DEFINITIONS = {
@@ -192,8 +193,11 @@ export const CLICKHOUSE_DEFINITIONS = {
   ALERTS: {
     tableName: ClickhouseTableNames.Alerts,
   },
-  NANGO_RECORDS: {
-    tableName: ClickhouseTableNames.NangoRecords,
+  CRM_RECORDS: {
+    tableName: ClickhouseTableNames.CrmRecords,
+  },
+  CRM_USER_RECORD_LINK: {
+    tableName: ClickhouseTableNames.CrmUserRecordLink,
   },
 } as const
 
@@ -598,15 +602,29 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     ],
   },
   {
-    table: CLICKHOUSE_DEFINITIONS.NANGO_RECORDS.tableName,
+    table: CLICKHOUSE_DEFINITIONS.CRM_RECORDS.tableName,
     idColumn: 'id',
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
-    primaryKey: '(model, id)',
-    orderBy: '(model, id)',
+    primaryKey: '(recordType, crmName, id)',
+    orderBy: '(recordType, crmName, id)',
     materializedColumns: [
-      "model String MATERIALIZED JSON_VALUE(data, '$.model')",
-      "email String MATERIALIZED JSON_VALUE(data, '$.email')",
+      "recordType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'recordType')",
+      "crmName LowCardinality(String) MATERIALIZED JSONExtractString(data, 'crmName')",
+      "ticketSubject String MATERIALIZED JSONExtractString(data, 'data', 'record', 'subject')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.CRM_USER_RECORD_LINK.tableName,
+    idColumn: 'id',
+    timestampColumn: 'timestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(userId, crmName, recordType, id)',
+    orderBy: '(userId, crmName, recordType, id)',
+    materializedColumns: [
+      "recordType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'recordType')",
+      "crmName LowCardinality(String) MATERIALIZED JSONExtractString(data, 'crmName')",
+      "userId String MATERIALIZED JSONExtractString(data, 'userId')",
     ],
   },
 ] as const

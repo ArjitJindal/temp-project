@@ -6,11 +6,12 @@ import ExpectedTransactionLimits from './UserDetails/shared/TransactionLimits';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
-import CRMMonitoring from './UserDetails/CRMMonitoring';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import { CRM_ICON_MAP, useConsoleUser } from './UserDetails/utils';
 import { useLinkingState, useUserEntityFollow } from './UserDetails/Linking/UserGraph';
+import CRMRecords from './UserDetails/CRMMonitoring/CRMRecords';
+import CRMData from './UserDetails/CRMMonitoring/CRMResponse';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import {
@@ -30,7 +31,11 @@ import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTran
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useFeatureEnabled,
+  useFreshdeskCrmEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
 import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
@@ -41,6 +46,7 @@ import Alert from '@/components/library/Alert';
 export default function UserItem() {
   const { list, id: userId, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
   const api = useApi();
+  const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
 
   const queryClient = useQueryClient();
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
@@ -210,23 +216,14 @@ export default function UserItem() {
             ? [
                 {
                   title: humanizeAuto(settings.crmIntegrationName),
-                  key: 'crm-monitoring',
-                  children: (
-                    <AsyncResourceRenderer resource={userRes}>
-                      {(user) => (
-                        <CRMMonitoring
-                          userId={user.userId}
-                          userEmail={
-                            user.type === 'CONSUMER'
-                              ? user?.contactDetails?.emailIds?.[0] ?? ''
-                              : user.legalEntity.contactDetails?.emailIds?.[0] ?? ''
-                          }
-                          user={user}
-                          model={'FreshDeskTicket'}
-                        />
-                      )}
-                    </AsyncResourceRenderer>
-                  ),
+                  key: 'crm-records',
+                  children: userId ? (
+                    isFreshDeskCrmEnabled ? (
+                      <CRMRecords userId={userId} />
+                    ) : (
+                      <CRMData userId={userId} />
+                    )
+                  ) : undefined,
                   isClosable: false,
                   isDisabled: false,
                   Icon: settings.crmIntegrationName

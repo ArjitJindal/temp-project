@@ -19,7 +19,8 @@ import {
   ALERT_KEY_IDENTIFIER,
   ALERT_COMMENT_KEY_IDENTIFIER,
   ALERT_FILE_ID_IDENTIFIER,
-  NANGO_RECORD_KEY_IDENTIFIER,
+  CRM_RECORD_KEY_IDENTIFIER,
+  CRM_USER_RECORD_LINK_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -45,7 +46,8 @@ export type DynamoDbEntityType =
   | 'ALERT'
   | 'ALERT_COMMENT'
   | 'ALERT_FILE'
-  | 'NANGO_RECORD'
+  | 'CRM_RECORD'
+  | 'CRM_USER_RECORD_LINK'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -196,14 +198,23 @@ export function getDynamoDbEntityMetadata(
       type: 'ALERT_FILE',
       entityId: `ALERT:${entityId}`,
     }
-  } else if (partitionKeyId.includes(NANGO_RECORD_KEY_IDENTIFIER)) {
+  } else if (partitionKeyId.includes(CRM_RECORD_KEY_IDENTIFIER)) {
     const entityId = entity.id
     if (!entityId) {
       return null
     }
     return {
-      type: 'NANGO_RECORD',
-      entityId: `NANGO_RECORD:${entityId}`,
+      type: 'CRM_RECORD',
+      entityId: `CRM_RECORD:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(CRM_USER_RECORD_LINK_KEY_IDENTIFIER)) {
+    const entityId = entity.id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'CRM_USER_RECORD_LINK',
+      entityId: `CRM_USER_RECORD_LINK:${entityId}`,
     }
   }
   return null

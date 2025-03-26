@@ -7578,7 +7578,7 @@ paths:
   /crm-records:
     get:
       summary: Get crm tickets for a defined model and email
-      operationId: get-crm-tickets
+      operationId: get-crm-records
       responses:
         '200':
           description: OK
@@ -7588,34 +7588,76 @@ paths:
                 $ref: '#/components/schemas/CrmGetResponse'
       parameters:
         - schema:
-            $ref: '#/components/schemas/CrmModelType'
+            $ref: '#/components/schemas/CRMModelType'
           in: query
-          name: model
+          name: modelType
+          required: true
+        - schema:
+            $ref: '#/components/schemas/CrmName'
+          in: query
+          name: crmName
           required: true
         - schema:
             type: string
           in: query
-          name: email
-          required: true
+          name: userId
         - schema:
-            type: integer
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            $ref: '#/components/schemas/Page'
           in: query
           name: page
         - schema:
-            type: integer
+            $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
         - schema:
             type: string
-            enum:
-              - ascend
-              - descend
           in: query
-          name: sortOrder
+          name: sortField
+    post:
+      summary: Link a crm record to a user
+      operationId: post-crm-record-link
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CRMRecordLink'
+        required: true
+  /crm-records-search:
+    get:
+      summary: Search crm records
+      operationId: get-crm-records-search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CRMRecordSearch'
+      parameters:
         - schema:
             type: string
           in: query
-          name: sortField
+          name: search
+          required: true
+        - schema:
+            $ref: '#/components/schemas/CRMModelType'
+          in: query
+          name: modelType
+          required: true
+        - schema:
+            $ref: '#/components/schemas/CrmName'
+          in: query
+          name: crmName
+          required: true
 components:
   schemas:
     QuestionAutocompleteResponse:
@@ -16698,50 +16740,121 @@ components:
         - totalRows
         - successRows
         - failedRows
+    CRMModelType:
+      title: CRMModelType
+      type: string
+      enum:
+        - TICKET
     CRMTicketType:
       title: CRMTicketType
       type: string
       enum:
-        - CRM_TICKET
-    CrmModelType:
-      title: CrmModelType
-      description: Define all different crm model types here
-      type: string
-      enum:
-        - FreshDeskTicket
-        - SalesforceTicket
-        - ZendeskTicket
+        - TICKET
+    CRMRecordSearch:
+      title: CRMRecordSearch
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        recordType:
+          $ref: '#/components/schemas/CRMTicketType'
+        crmName:
+          $ref: '#/components/schemas/CrmName'
+      required:
+        - id
+        - name
+        - recordType
+        - crmName
     CrmGetResponse:
       title: CrmRecords
       type: object
       properties:
         items:
-          $ref: '#/components/schemas/CRMRecords'
+          type: array
+          items:
+            $ref: '#/components/schemas/CRMRecord'
         count:
           type: integer
-    CRMRecords:
-      title: CRMRecords
-      type: array
-      items:
-        $ref: '#/components/schemas/CRMRecord'
+      required:
+        - items
+        - count
+    CrmName:
+      title: CrmName
+      type: string
+      enum:
+        - FRESHDESK
+    CRMRecordBase:
+      title: CRMRecordBase
+      type: object
+      properties:
+        crmName:
+          $ref: '#/components/schemas/CrmName'
+        recordType:
+          $ref: '#/components/schemas/CRMTicketType'
+        timestamp:
+          type: number
+        id:
+          type: string
+      required:
+        - crmName
+        - recordType
+        - timestamp
+        - id
+    CRMRecordLink:
+      title: CRMRecordLink
+      type: object
+      properties:
+        id:
+          type: string
+        crmName:
+          $ref: '#/components/schemas/CrmName'
+        recordType:
+          $ref: '#/components/schemas/CRMTicketType'
+        userId:
+          type: string
+        timestamp:
+          type: number
+      required:
+        - crmName
+        - recordType
+        - userId
+        - timestamp
+        - id
+    CRMData:
+      title: CRMData
+      type: object
+      properties:
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/CRMTicket'
+      required:
+        - data
+    CRMTicket:
+      title: CRMTicket
+      type: object
+      properties:
+        recordType:
+          $ref: '#/components/schemas/CRMTicketType'
+        record:
+          $ref: ../nango-models.yaml#/components/schemas/NangoTicket
+      required:
+        - recordType
+        - record
     CRMRecord:
       title: CRMRecord
       type: object
-      oneOf:
-        - $ref: '#/components/schemas/CRMTicket'
-    CRMTicket:
-      title: CRMTicket
-      description: Data field in the Crm ticket object
-      type: object
-      additionalProperties: {}
-      properties:
-        model:
-          $ref: '#/components/schemas/CRMTicketType'
-        data:
-          $ref: ../nango-models.yaml#/components/schemas/NangoTicket
+      allOf:
+        - $ref: '#/components/schemas/CRMRecordBase'
+        - $ref: '#/components/schemas/CRMData'
       required:
+        - crmName
+        - recordType
         - model
         - data
+        - id
+        - timestamp
     AlertTransactionsStats:
       type: object
       properties:

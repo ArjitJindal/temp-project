@@ -38,7 +38,7 @@ export default function CRMCommunicationCard(props: Props) {
             )}
           </div>
         </div>
-        {link && <CompanyHeader link={link} />}
+        {link && <CompanyHeader link={link} crmName="FRESHDESK" />}
       </div>
       {title && <div className={styles.bold}>{title}</div>}
       <div className={styles.body}>{body && <MarkdownViewer value={body} />}</div>

@@ -202,11 +202,6 @@ export class MongoDbConsumer {
   private async updateTransactionInsertMessages(
     records: WithId<Document>[]
   ): Promise<WithId<Document>[]> {
-    logger.info(
-      `Updating transaction insert messages: ${
-        records.length
-      }, and ids: ${records.map((record) => record._id).join(',')}`
-    )
     return await pMap(
       records,
       async (record) => {

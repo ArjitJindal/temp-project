@@ -1,6 +1,5 @@
 import React from 'react';
 import SegmentedControl from '@/components/library/SegmentedControl';
-import { useFreshdeskCrmEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type ScopeSelectorValue = 'SUMMARY' | 'EMAILS' | 'TASKS' | 'NOTES' | 'TICKETS';
 
@@ -25,16 +24,12 @@ export default function ScopeSelector(props: Props) {
       onChange={(newValue) => {
         setSelectedSection(newValue);
       }}
-      items={
-        useFreshdeskCrmEnabled()
-          ? [{ value: 'TICKETS', label: 'Tickets' }]
-          : [
-              { value: 'SUMMARY', label: 'AI Summary' },
-              { value: 'EMAILS', label: `Emails (${emails})` },
-              { value: 'TASKS', label: `Tasks (${tasks})` },
-              { value: 'NOTES', label: `Notes (${notes})` },
-            ]
-      }
+      items={[
+        { value: 'SUMMARY', label: 'AI Summary' },
+        { value: 'EMAILS', label: `Emails (${emails})` },
+        { value: 'TASKS', label: `Tasks (${tasks})` },
+        { value: 'NOTES', label: `Notes (${notes})` },
+      ]}
     />
   );
 }
