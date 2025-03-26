@@ -1,5 +1,5 @@
 // Usage: ts-node src/services/sar/generators/US/CTR/scripts/xml-to-json.ts
-// It'll output the json schema file in resources/EFL_CTRXBatchSchema.ts
+// It'll output the json schema file in resources/EFL_CTRXBatchSchema.ts and resources/EFL_CTRXBatchSchema_Resolved.ts
 
 import fs from 'fs'
 import path from 'path'

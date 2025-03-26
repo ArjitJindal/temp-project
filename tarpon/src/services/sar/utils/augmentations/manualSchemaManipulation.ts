@@ -37,6 +37,7 @@ export function manualValidation(jsonSchema: any) {
     type: 'string',
     maxLength: 9,
     pattern: '^[a-zA-Z0-9]+$',
+    title: 'Raw ZIP code',
   }
 
   if (!jsonSchema['definitions']['AddressType']) {
@@ -54,15 +55,68 @@ export function manualValidation(jsonSchema: any) {
   return jsonSchema
 }
 
-const enumType = 'Indicator'
-const phoneType = 'PhoneNumberType'
-const countryType = 'RawCountryCodeText'
-const stateType = 'RawStateCodeText'
-const emailType = 'ElectronicAddressType'
+export function agumentEnumFintracStr() {}
+
+export function agumentUiSchemaFintracStr(jsonSchema: any) {
+  if (!jsonSchema) {
+    return
+  }
+  const enumType = 'indicator'
+  const phoneType = 'telephoneNumber'
+  const countryType = 'countrycode'
+  const stateType = 'statecode'
+  Object.entries(jsonSchema).forEach(([key, value]: [string, any]) => {
+    const lowerKey = key.toLowerCase()
+    if (lowerKey.includes(enumType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_INDICATOR',
+      }
+    }
+    if (lowerKey.includes(phoneType) || value?.['$ref']?.includes(phoneType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_PHONE_NUMBER',
+      }
+    }
+    if (
+      lowerKey.includes(countryType) ||
+      value?.['$ref']?.includes(countryType)
+    ) {
+      value['ui:schema'] = {
+        'ui:subtype': 'COUNTRY',
+      }
+    }
+    if (lowerKey.includes(stateType) || value?.['$ref']?.includes(stateType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'COUNTRY_REGION',
+        'ui:countryField': 'RawCountryCodeText',
+      }
+    }
+
+    // Recursively apply if nested
+    if (value?.properties) {
+      agumentUiSchemaFintracStr(value.properties)
+    }
+    if (value?.items?.allOf) {
+      value.items.allOf.forEach((value) => {
+        if (value['then'] && value['then']['properties']) {
+          agumentUiSchemaFintracStr(value['then']['properties'])
+        }
+      })
+    }
+  })
+
+  return jsonSchema
+}
+
 export function agumentUiSchema(jsonSchema: any) {
   if (!jsonSchema) {
     return
   }
+  const enumType = 'Indicator'
+  const phoneType = 'PhoneNumberType'
+  const countryType = 'RawCountryCodeText'
+  const stateType = 'RawStateCodeText'
+  const emailType = 'ElectronicAddressType'
   Object.entries(jsonSchema).forEach(([key, value]: [string, any]) => {
     if (key.includes(enumType)) {
       value['ui:schema'] = {
