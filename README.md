@@ -1,6 +1,7 @@
 # Orca
 
 - [`phytoplankton-console`](https://github.com/flagright/orca/tree/main/phytoplankton-console) - Frontend code for the console
+- [`nango-integrations`](https://github.com/flagright/orca/tree/main/nango-integrations) - Nango integrations for managing CRMs
 - [`tarpon`](https://github.com/flagright/orca/tree/main/tarpon) - Our backend API
 - [`raptor`](https://github.com/flagright/orca/tree/main/raptor) - Our ML stack
 - [`lib`](https://github.com/flagright/orca/tree/main/lib) - Shared code
