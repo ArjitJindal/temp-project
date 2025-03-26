@@ -30,6 +30,7 @@ import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
 import Alert from '@/components/library/Alert';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+
 type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
 type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
 
@@ -176,11 +177,12 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     }
   }, []);
 
-  const ENTITY_OPTIONS = [
+  const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
-    { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias}` },
-    { value: 'BUSINESS_USER', label: `Business ${settings.userAlias}` },
+  ];
+  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
+    { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
 
   const allVariableOptions = useMemo(() => {
@@ -390,7 +392,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 value={formValues.type}
                 onChange={(type) => handleUpdateForm({ type: type as 'TRANSACTION' | 'USER' })}
                 mode={'SINGLE'}
-                options={ENTITY_OPTIONS}
+                options={
+                  ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS
+                }
                 testName="variable-type-v8"
                 isDisabled={readOnly}
               />
