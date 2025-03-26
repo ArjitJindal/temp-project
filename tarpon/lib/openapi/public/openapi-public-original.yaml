@@ -4669,6 +4669,7 @@ components:
         - SANCTIONS
         - SANCTIONS_PEP
         - SANCTIONS_PEP_ADVERSE_MEDIA
+        - SANCTIONS_MANUAL_REVIEW
     TransactionEvent:
       description: Model for transaction-related events
       type: object

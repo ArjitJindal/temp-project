@@ -1865,6 +1865,7 @@ components:
         - SANCTIONS
         - SANCTIONS_PEP
         - SANCTIONS_PEP_ADVERSE_MEDIA
+        - SANCTIONS_MANUAL_REVIEW
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       type: object

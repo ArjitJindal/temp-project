@@ -120,7 +120,7 @@ function RuleDetails(props: Props) {
     setRuleLabels([]);
   }, [ruleNature]);
   const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
-
+  const isPnb = useFeatureEnabled('PNB');
   return (
     <>
       <StepHeader title={'Rule details'} description={'Define the basic details for this rule.'} />
@@ -196,7 +196,7 @@ function RuleDetails(props: Props) {
         >
           {(inputProps) => (
             <Select<RuleLabels>
-              options={RULE_LABELS_OPTIONS[ruleNature]}
+              options={RULE_LABELS_OPTIONS(isPnb)[ruleNature]}
               mode="MULTIPLE"
               {...inputProps}
               onChange={(value) => {

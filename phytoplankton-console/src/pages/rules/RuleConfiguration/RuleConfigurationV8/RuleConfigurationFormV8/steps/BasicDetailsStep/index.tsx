@@ -29,7 +29,11 @@ import { Dayjs, dayjs } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { USER_RULE_SCHEDULE_UNITS } from '@/apis/models-custom/UserRuleScheduleUnit';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
-import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 
 export interface BasicDetailsFormValues {
@@ -84,7 +88,7 @@ export default function BasicDetailsStep(props: Props) {
     'userRuleRunCondition',
   );
   const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
-
+  const isPnb = useFeatureEnabled('PNB');
   return (
     <div className={s.root}>
       {simulationMode && (
@@ -306,7 +310,7 @@ export default function BasicDetailsStep(props: Props) {
             >
               {(inputProps) => (
                 <Select<RuleLabels>
-                  options={ruleNature ? RULE_LABELS_OPTIONS[ruleNature] : []}
+                  options={ruleNature ? RULE_LABELS_OPTIONS(isPnb)[ruleNature] : []}
                   mode="MULTIPLE"
                   {...inputProps}
                   onChange={(value) => {

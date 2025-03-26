@@ -103,9 +103,11 @@ export const getRuleTypeOptions = (tenantSettings: TenantSettings): Option<RuleT
 
 export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS';
 
-export const RULE_LABELS_OPTIONS: {
+export const RULE_LABELS_OPTIONS = (
+  isPnb: boolean,
+): {
   [key in RuleNature]: { label: string; value: RuleLabels }[];
-} = {
+} => ({
   AML: [
     { label: 'Unexpected behavior', value: 'UNEXPECTED_BEHAVIOR' },
     { label: 'Illicit gains check', value: 'ILLICIT_GAINS_CHECK' },
@@ -124,6 +126,7 @@ export const RULE_LABELS_OPTIONS: {
     { label: 'Sanctions', value: 'SANCTIONS' },
     { label: 'Sanctions & PEP', value: 'SANCTIONS_PEP' },
     { label: 'Sanctions, PEP & Adverse media', value: 'SANCTIONS_PEP_ADVERSE_MEDIA' },
+    ...(isPnb ? [{ label: 'Manual review', value: 'SANCTIONS_MANUAL_REVIEW' as const }] : []),
   ],
   CTF: [
     { label: 'Unexpected behavior', value: 'UNEXPECTED_BEHAVIOR' },
@@ -132,7 +135,7 @@ export const RULE_LABELS_OPTIONS: {
     { label: 'EDD trigger', value: 'EDD_TRIGGER' },
     { label: 'KYC trigger', value: 'KYC_TRIGGER' },
   ],
-};
+});
 
 export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITYS.map(
   (priority) => ({
