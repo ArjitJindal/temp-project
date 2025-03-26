@@ -86,21 +86,27 @@ body {
       background-color: @fr-colors-v2-gray-5;
     }
   }
+}
 
-  &:not(:hover) {
-    & > ::-webkit-scrollbar,
-    & > ::-webkit-scrollbar-track,
-    & > ::-webkit-scrollbar-thumb {
-      background: transparent;
-    }
+// Table-specific scrollbar hover behavior
+table {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+    transition: width 0.5s ease, height 0.5s ease;
   }
 
   &:hover {
-    & > ::-webkit-scrollbar-track {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
       background: fade(@fr-colors-v2-gray-3, 50%);
     }
 
-    & > ::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {
       background-color: fade(@fr-colors-v2-gray-5, 50%);
 
       &:hover {
