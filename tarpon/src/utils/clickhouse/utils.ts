@@ -903,6 +903,10 @@ export async function executeClickhouseQuery<T extends object>(
       })
     }
 
+    if (envIs('local')) {
+      throw error
+    }
+
     if (options.throwOnError) {
       throw error
     } else {

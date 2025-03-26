@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'clsx';
 import { Select } from 'antd';
+import { RangeValue } from 'rc-picker/lib/interface';
 import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import TransactionCountChart from './Chart';
 import s from './styles.module.less';
@@ -25,6 +26,8 @@ import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/compon
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
+import { Dayjs } from '@/utils/dayjs';
+import DatePicker from '@/components/ui/DatePicker';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -36,6 +39,7 @@ export interface Params {
   currency: Currency;
   transactionsCount: number;
   aggregateBy: AggregateByField;
+  timeRange: RangeValue<Dayjs>;
 }
 
 interface Props {
@@ -119,6 +123,12 @@ export default function TransactionsSelector(props: Props) {
               })}
         </div>
         <div className={s.settings}>
+          <DatePicker.RangePicker
+            value={params.timeRange}
+            onChange={(value) => {
+              onChangeParams({ ...params, timeRange: value });
+            }}
+          />
           <Select<string>
             value={`${params.aggregateBy}`}
             onChange={(value) => {
@@ -241,6 +251,8 @@ function useStatsQuery(
         filterTransactionState: selectorParams.selectedTransactionStates,
         referenceCurrency: currency,
         aggregateBy: selectorParams.aggregateBy,
+        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
+        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
       });
 
       return response.data;

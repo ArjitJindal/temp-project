@@ -1,12 +1,17 @@
 import { ClickHouseClient } from '@clickhouse/client'
 import { compact } from 'lodash'
+import dayjsLib from '@flagright/lib/utils/dayjs'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
-import { DefaultApiGetTransactionsV2ListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetTransactionsStatsByTimeRequest,
+  DefaultApiGetTransactionsStatsByTypeRequest,
+  DefaultApiGetTransactionsV2ListRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { getSortedData } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery, getSortedData } from '@/utils/clickhouse/utils'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -20,6 +25,28 @@ import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { OriginFundsInfo } from '@/@types/openapi-internal/OriginFundsInfo'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
+
+type StatsByType = {
+  transactionType: string
+  average: number
+  count: number
+  sum: number
+  min: number
+  max: number
+  median: number
+}
+
+type MinMax = {
+  min: number
+  max: number
+}
+
+type StatsByTime = {
+  timedata: string
+  count: number
+  sum: number
+  aggregateBy: string
+}
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -336,5 +363,111 @@ export class ClickhouseTransactionsRepository {
       items: compact(sortedTransactions),
       count: data.count,
     }
+  }
+
+  public async getStatsByType(
+    params: DefaultApiGetTransactionsStatsByTypeRequest
+  ): Promise<StatsByType[]> {
+    const { pageSize, sortField, sortOrder } = params
+
+    const whereClause = await this.getTransactionsWhereConditions(params)
+
+    const query = `
+      WITH transactions AS (
+        SELECT type as transactionType, originAmountDetails_amountInUsd
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+        WHERE ${whereClause} ORDER BY ${sortField} ${
+      sortOrder === 'ascend' ? 'ASC' : 'DESC'
+    } LIMIT ${pageSize}
+      )
+      SELECT
+        transactionType,
+        avg(originAmountDetails_amountInUsd) as average,
+        count() as count,
+        sum(originAmountDetails_amountInUsd) as sum,
+        min(originAmountDetails_amountInUsd) as min,
+          max(originAmountDetails_amountInUsd) as max,
+        median(originAmountDetails_amountInUsd) as median
+      FROM transactions
+      GROUP BY transactionType
+    `
+
+    const result = await executeClickhouseQuery<StatsByType[]>(
+      this.clickhouseClient,
+      query
+    )
+
+    return result
+  }
+
+  public async getStatsByTime(
+    params: DefaultApiGetTransactionsStatsByTimeRequest
+  ): Promise<StatsByTime[]> {
+    const { pageSize, sortField, sortOrder } = params
+
+    const whereClause = await this.getTransactionsWhereConditions(params)
+
+    const minMaxQuery = `
+      WITH transactions AS (
+        SELECT timestamp
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+        WHERE ${whereClause} ORDER BY ${sortField} ${
+      sortOrder === 'ascend' ? 'ASC' : 'DESC'
+    } LIMIT ${pageSize}
+      )
+      SELECT min(timestamp) as min, max(timestamp) as max
+      FROM transactions
+    `
+
+    const minMaxResult = await executeClickhouseQuery<MinMax[]>(
+      this.clickhouseClient,
+      minMaxQuery
+    )
+
+    const { min, max } = minMaxResult[0]
+
+    const difference = max - min
+    const timezone = dayjsLib.tz.guess()
+
+    const duration = dayjsLib.duration(difference)
+
+    let clickhouseFormat: string
+    let labelFormat: string
+
+    if (duration.asMonths() > 1) {
+      clickhouseFormat = 'toStartOfMonth(toDateTime(timestamp / 1000))'
+      labelFormat = 'YYYY/MM'
+    } else if (duration.asDays() > 1) {
+      clickhouseFormat = 'toStartOfDay(toDateTime(timestamp / 1000))'
+      labelFormat = 'MM/DD'
+    } else {
+      clickhouseFormat = 'toStartOfHour(toDateTime(timestamp / 1000))'
+      labelFormat = 'MM/DD HH:00'
+    }
+
+    const query = `
+      SELECT
+        ${clickhouseFormat} as timedata,
+        count() as count,
+        sum(originAmountDetails_amountInUsd) as sum,
+        ${
+          params.aggregateBy === 'status' ? 'status' : 'transactionState'
+        } as aggregateBy
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      WHERE ${whereClause}
+      GROUP BY timedata, aggregateBy
+      ORDER BY timedata ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}
+      LIMIT ${pageSize}
+    `
+
+    const result = await executeClickhouseQuery<StatsByTime[]>(
+      this.clickhouseClient,
+      query
+    )
+
+    return result.map((x) => ({
+      ...x,
+      timedata: dayjsLib.tz(x.timedata, timezone).format(labelFormat),
+    }))
   }
 }

@@ -52,7 +52,11 @@ import {
   UNIQUE_TAGS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetTransactionsListRequest,
+  DefaultApiGetTransactionsStatsByTimeRequest,
+  DefaultApiGetTransactionsStatsByTypeRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import { duration } from '@/utils/dayjs'
@@ -1031,8 +1035,9 @@ export class MongoDbTransactionRepository
 
     return result
   }
+
   public async getStatsByType(
-    params: DefaultApiGetTransactionsListRequest,
+    params: DefaultApiGetTransactionsStatsByTypeRequest,
     referenceCurrency: Currency
   ): Promise<TransactionsStatsByTypesResponse['data']> {
     const db = this.mongoDb.db()
@@ -1052,7 +1057,7 @@ export class MongoDbTransactionRepository
       }
     } = {}
 
-    const cursor = await collection.find(query, {
+    const cursor = collection.find(query, {
       sort: { [sortField]: sortOrder },
       ...paginateFindOptions(params),
     })
@@ -1082,19 +1087,19 @@ export class MongoDbTransactionRepository
             : (transactionType as TransactionType),
         count,
         sum,
-        average: (sum / count || 0) ?? undefined,
-        min: acc.min ?? undefined,
-        max: acc.max ?? undefined,
+        average: sum / count || 0,
+        min: acc.min ?? 0,
+        max: acc.max ?? 0,
         median:
           (count % 2 === 1
             ? amounts[(count - 1) / 2]
-            : (amounts[count / 2] + amounts[count / 2 - 1]) / 2) || undefined,
+            : (amounts[count / 2] + amounts[count / 2 - 1]) / 2) || 0,
       }
     })
   }
 
   public async getStatsByTime(
-    params: DefaultApiGetTransactionsListRequest,
+    params: DefaultApiGetTransactionsStatsByTimeRequest,
     referenceCurrency: Currency,
     aggregateBy: 'status' | 'transactionState'
   ): Promise<TransactionsStatsByTimeResponse['data']> {
@@ -1140,13 +1145,13 @@ export class MongoDbTransactionRepository
     let labelFormat: string
     const dur = duration(difference)
     if (dur.asMonths() > 1) {
-      seriesFormat = 'YYYY/MM/01 00:00 Z'
+      seriesFormat = 'YYYY/MM/01 00:00 Z' // Start of the month
       labelFormat = 'YYYY/MM'
     } else if (dur.asDays() > 1) {
-      seriesFormat = 'YYYY/MM/DD 00:00 Z'
+      seriesFormat = 'YYYY/MM/DD 00:00 Z' // Start of the day
       labelFormat = 'MM/DD'
     } else {
-      seriesFormat = 'YYYY/MM/DD HH:00 Z'
+      seriesFormat = 'YYYY/MM/DD HH:00 Z' // Start of the hour
       labelFormat = 'MM/DD HH:00'
     }
 

@@ -15,6 +15,7 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { dayjs } from '@/utils/dayjs';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -38,6 +39,7 @@ export default function InsightsCard(props: Props) {
     transactionsCount: 10,
     currency: (settings?.defaultValues?.currency ?? 'USD') as unknown as Currency,
     aggregateBy: 'status' as AggregateByField,
+    timeRange: [dayjs().subtract(3, 'month'), dayjs()],
   });
   const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
 
@@ -95,6 +97,8 @@ function useStatsQuery(
         filterStatus: selectorParams.selectedRuleActions,
         filterTransactionState: selectorParams.selectedTransactionStates,
         referenceCurrency,
+        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
+        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
       });
       return response.data;
     },

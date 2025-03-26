@@ -1686,10 +1686,6 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
-          in: query
-          name: page
-        - schema:
             type: number
           in: query
           name: afterTimestamp
@@ -1697,46 +1693,6 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
-        - schema:
-            type: string
-          in: query
-          name: filterId
-        - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
-        - schema:
-            $ref: '#/components/schemas/CaseStatus'
-          in: query
-          name: filterOutCaseStatus
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRulesExecuted
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRulesHit
-        - schema:
-            type: string
-          in: query
-          name: transactionType
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterOriginCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCurrencies
         - schema:
             type: string
           in: query
@@ -1750,47 +1706,11 @@ paths:
           in: query
           name: filterUserId
         - schema:
-            type: string
-          in: query
-          name: filterOriginUserId
-        - schema:
-            type: string
-          in: query
-          name: filterDestinationUserId
-        - schema:
             type: array
             items:
               $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
-        - schema:
-            $ref: '#/components/schemas/CaseStatus'
-          in: query
-          name: filterCaseStatus
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: boolean
-          in: query
-          name: includeUsers
-        - schema:
-            type: boolean
-          in: query
-          name: includeEvents
-        - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterOriginPaymentMethod
-        - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterDestinationPaymentMethod
         - schema:
             type: array
             items:
@@ -1824,10 +1744,6 @@ paths:
           in: query
           name: pageSize
         - schema:
-            $ref: '#/components/schemas/Page'
-          in: query
-          name: page
-        - schema:
             type: number
           in: query
           name: afterTimestamp
@@ -1838,43 +1754,7 @@ paths:
         - schema:
             type: string
           in: query
-          name: filterId
-        - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
-        - schema:
-            $ref: '#/components/schemas/CaseStatus'
-          in: query
-          name: filterOutCaseStatus
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRulesExecuted
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRulesHit
-        - schema:
-            type: string
-          in: query
           name: transactionType
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterOriginCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCurrencies
         - schema:
             type: string
           in: query
@@ -1901,34 +1781,6 @@ paths:
               $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
-        - schema:
-            $ref: '#/components/schemas/CaseStatus'
-          in: query
-          name: filterCaseStatus
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: boolean
-          in: query
-          name: includeUsers
-        - schema:
-            type: boolean
-          in: query
-          name: includeEvents
-        - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterOriginPaymentMethod
-        - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterDestinationPaymentMethod
         - schema:
             type: array
             items:
@@ -9104,8 +8956,6 @@ components:
           items:
             type: object
             properties:
-              transactionState:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
               transactionType:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
               count:
@@ -9124,9 +8974,13 @@ components:
                 nullable: true
               median:
                 type: number
-                nullable: true
             required:
               - count
+              - sum
+              - average
+              - min
+              - max
+              - median
       required:
         - data
     TransactionsStatsByTimeResponse:

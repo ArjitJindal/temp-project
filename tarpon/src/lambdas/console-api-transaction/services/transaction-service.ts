@@ -8,11 +8,14 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import dayjsLib from '@flagright/lib/utils/dayjs'
 import { TransactionViewConfig } from '../app'
 import {
   DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseTransactionsRequest,
   DefaultApiGetTransactionsListRequest,
+  DefaultApiGetTransactionsStatsByTimeRequest,
+  DefaultApiGetTransactionsStatsByTypeRequest,
   DefaultApiGetTransactionsV2ListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -26,11 +29,14 @@ import {
   CursorPaginationResponse,
   OptionalPagination,
 } from '@/utils/pagination'
-import { Currency } from '@/services/currency'
+import { Currency, CurrencyService } from '@/services/currency'
 import { TransactionsResponse } from '@/@types/openapi-internal/TransactionsResponse'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
@@ -42,6 +48,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
+import { TransactionType } from '@/@types/openapi-internal/TransactionType'
 
 @traceable
 export class TransactionService {
@@ -355,9 +362,36 @@ export class TransactionService {
   }
 
   public async getStatsByType(
-    params: DefaultApiGetTransactionsListRequest,
+    params: DefaultApiGetTransactionsStatsByTypeRequest,
     referenceCurrency: Currency
   ): Promise<TransactionsStatsByTypesResponse['data']> {
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(this.tenantId)
+      const clickhouseTransactionsRepository =
+        new ClickhouseTransactionsRepository(clickhouseClient)
+
+      const data = await clickhouseTransactionsRepository.getStatsByType(params)
+      const currencyService = new CurrencyService(this.dynamoDb)
+      const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
+        referenceCurrency,
+        'USD'
+      )
+
+      return data.map((item) => ({
+        ...item,
+        sum: (item?.sum ?? 0) * exchangeRateWithUsd,
+        min: (item?.min ?? 0) * exchangeRateWithUsd,
+        max: (item?.max ?? 0) * exchangeRateWithUsd,
+        median: (item?.median ?? 0) * exchangeRateWithUsd,
+        average: (item?.average ?? 0) * exchangeRateWithUsd,
+        count: item?.count ?? 0,
+        transactionType:
+          item.transactionType === ''
+            ? undefined
+            : (item.transactionType as TransactionType),
+      }))
+    }
+
     return await this.transactionRepository.getStatsByType(
       params,
       referenceCurrency
@@ -365,10 +399,39 @@ export class TransactionService {
   }
 
   public async getStatsByTime(
-    params: DefaultApiGetTransactionsListRequest,
+    params: DefaultApiGetTransactionsStatsByTimeRequest,
     referenceCurrency: Currency,
     aggregateBy: 'status' | 'transactionState'
   ): Promise<TransactionsStatsByTimeResponse['data']> {
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(this.tenantId)
+      const clickhouseTransactionsRepository =
+        new ClickhouseTransactionsRepository(clickhouseClient)
+
+      const data = await clickhouseTransactionsRepository.getStatsByTime(params)
+      const currencyService = new CurrencyService(this.dynamoDb)
+      const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
+        referenceCurrency,
+        'USD'
+      )
+
+      return data
+        .sort((a, b) => dayjsLib(a.timedata).diff(dayjsLib(b.timedata)))
+        .map((item) => ({
+          ...item,
+          sum: (item?.sum ?? 0) * exchangeRateWithUsd,
+          label: item.timedata,
+          series: item.aggregateBy,
+          values: {
+            [item.aggregateBy]: {
+              sum: item.sum,
+              amount: item.sum,
+              count: item.count,
+            },
+          },
+        }))
+    }
+
     return await this.transactionRepository.getStatsByTime(
       params,
       referenceCurrency,
