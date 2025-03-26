@@ -84,6 +84,7 @@ import {
 } from '@/services/tenants/reasons-service'
 import { getNarrativeTemplates } from '@/core/seed/data/narrative'
 import { isV2RuleInstance } from '@/services/rules-engine/utils'
+import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -156,7 +157,7 @@ export async function seedMongo(
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],
     ['SLAPolicy', getSLAPolicies().length],
-    ['RiskFactor', riskFactors().length],
+    ['RiskFactor', riskFactors().length + RISK_FACTORS.length],
     ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
     ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
     [

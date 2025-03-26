@@ -15,6 +15,7 @@ import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-reposit
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import { extractParamValues } from './risk-factors'
+import { isDefaultRiskFactor } from './utils'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
@@ -40,6 +41,7 @@ import dayjs from '@/utils/dayjs'
 import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
+import { logger } from '@/core/logger'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
@@ -215,28 +217,36 @@ export class RiskScoringV8Service {
     riskData: LogicData,
     riskFactors: RiskFactor[]
   ) {
-    const v2FactorScoreDetails = factorScoreDetails.filter(
-      (val) => !val.riskFactorId.startsWith('RF')
-    )
-    const v2ScoreComponents = await Promise.all(
-      v2FactorScoreDetails.map(async (val) => {
-        return await this.convertToComponent(val, riskData, riskFactors)
-      })
-    )
-    // Saving V2 in both factorScoreDetails and components
+    // Create lookup map once
+    const riskFactorMap = new Map(riskFactors.map((rf) => [rf.id, rf]))
+
+    const v2FactorScoreDetails = factorScoreDetails.filter((val) => {
+      const rf = riskFactorMap.get(val.riskFactorId)
+      return isDefaultRiskFactor(rf)
+    })
+
+    const v2ScoreComponents = (await Promise.all(
+      v2FactorScoreDetails
+        .map(async (val) => {
+          return await this.convertToComponent(val, riskData, riskFactorMap)
+        })
+        .filter((val) => !!val)
+    )) as RiskScoreComponent[]
+
     return { v8FactorScoreDetails: factorScoreDetails, v2ScoreComponents }
   }
 
   private async convertToComponent(
     factorScoreDetail: RiskFactorScoreDetails,
     riskData: LogicData,
-    riskFactors: RiskFactor[]
-  ): Promise<RiskScoreComponent> {
-    const riskFactor = riskFactors.find(
-      (val) => val.id === factorScoreDetail.riskFactorId
-    )
+    riskFactorMap: Map<string, RiskFactor>
+  ): Promise<RiskScoreComponent | null> {
+    const riskFactor = riskFactorMap.get(factorScoreDetail.riskFactorId)
     if (!riskFactor || !riskFactor.parameter) {
-      throw new Error('V2 Risk factor not found for V8')
+      logger.error(
+        `V2 Risk factor not found for V8 (ID: ${factorScoreDetail.riskFactorId})`
+      )
+      return null
     }
     const value = await extractParamValues(
       riskFactor.parameter,

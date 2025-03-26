@@ -28,7 +28,7 @@ import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
-import { generateV2FactorId, RISK_FACTORS } from '../risk-scoring/risk-factors'
+import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -366,9 +366,9 @@ export class TenantService {
     })
     // initalising v2 risk factors in v8 for new tenant
     await Promise.all(
-      RISK_FACTORS.map(async (riskFactor) => {
+      RISK_FACTORS.map(async (riskFactor, index) => {
         await riskRepository.createOrUpdateRiskFactor({
-          id: generateV2FactorId(riskFactor.parameter, riskFactor.type),
+          id: `RF-${(index + 1).toString().padStart(3, '0')}`,
           ...riskFactor,
         })
       })

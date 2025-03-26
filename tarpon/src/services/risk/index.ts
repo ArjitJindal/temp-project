@@ -8,7 +8,9 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
+import { intersection, pick } from 'lodash'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
+import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -315,6 +317,7 @@ export class RiskService {
     }
     let currentRiskFactor: RiskFactor | null = null
     const isNewRiskFactor = riskFactorId ? false : true
+    const isDefaultFactor = isDefaultRiskFactor(riskFactor)
     const id =
       riskFactorId || riskFactor.riskFactorId
         ? riskFactorId && !riskFactor.riskFactorId
@@ -328,7 +331,16 @@ export class RiskService {
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
 
-    const DEFUALT_VALUES: RiskFactorsPostRequest = {
+    let migratedFactor: Partial<RiskFactor> | null = null
+
+    if (isDefaultFactor) {
+      migratedFactor = createMigratedFactor(
+        riskFactor,
+        riskClassificationValues
+      )
+    }
+
+    const DEFAULT_VALUES: RiskFactorsPostRequest = {
       defaultRiskLevel: DEFAULT_RISK_LEVEL,
       defaultRiskScore: getRiskScoreFromLevel(
         riskClassificationValues,
@@ -346,19 +358,22 @@ export class RiskService {
     const now = Date.now()
 
     const data: RiskFactor = {
-      ...(currentRiskFactor ?? DEFUALT_VALUES),
-      ...riskFactor,
+      ...(currentRiskFactor ?? DEFAULT_VALUES),
+      ...(isDefaultFactor ? migratedFactor : riskFactor),
       id,
       createdAt: currentRiskFactor?.createdAt ?? now,
       updatedAt: now,
     }
+
     const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
+
     await this.riskRepository.createOrUpdateRiskFactor(data)
+
     let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> = {
       entities: [
         {
           entityId: id,
-          newImage: data,
+          newImage: isDefaultFactor ? createDefaultFactorAuditData(data) : data,
         },
       ],
       result: data,
@@ -369,8 +384,12 @@ export class RiskService {
         entities: [
           {
             entityId: id,
-            newImage: data,
-            oldImage: oldRiskFactor,
+            newImage: isDefaultFactor
+              ? createDefaultFactorAuditData(data)
+              : data,
+            oldImage: isDefaultFactor
+              ? createDefaultFactorAuditData(oldRiskFactor)
+              : oldRiskFactor,
           },
         ],
         actionTypeOverride: 'UPDATE',
@@ -385,9 +404,11 @@ export class RiskService {
     this.riskRepository.getAllRiskFactors.cache.clear?.()
     return auditLogData
   }
+
   async getNewRiskFactorId(riskFactorId?: string, update = false) {
     return await this.riskRepository.getNewRiskFactorId(riskFactorId, update)
   }
+
   async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
     const data = await this.riskRepository.getRiskFactor(riskFactorId)
 
@@ -418,4 +439,42 @@ export class RiskService {
       ],
     }
   }
+}
+
+function createDefaultFactorAuditData(riskFactor: RiskFactor): RiskFactor {
+  return pick(riskFactor, [
+    ...intersection(
+      ParameterAttributeRiskValues.attributeTypeMap.map((v) => v.name),
+      RiskFactor.attributeTypeMap.map((v) => v.name)
+    ),
+    'type',
+    'id',
+    'defaultRiskScore',
+    'updatedAt',
+    'status',
+  ]) as RiskFactor
+}
+
+function createMigratedFactor(
+  riskFactor: RiskFactorsUpdateRequest,
+  riskClassificationValues: RiskClassificationScore[]
+): Partial<RiskFactor> {
+  return createV8FactorFromV2(
+    {
+      parameter: riskFactor.parameter as RiskFactorParameter,
+      riskEntityType: riskFactor.type ?? 'CONSUMER_USER',
+      riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues ?? [],
+      targetIterableParameter: riskFactor.targetIterableParameter,
+      isActive: riskFactor.status === 'ACTIVE',
+      isDerived: riskFactor.isDerived ?? false,
+      weight: riskFactor.defaultWeight ?? 1,
+      defaultValue: {
+        type: 'RISK_SCORE',
+        value:
+          riskFactor.defaultRiskScore ??
+          getRiskScoreFromLevel(riskClassificationValues, DEFAULT_RISK_LEVEL),
+      },
+    },
+    riskClassificationValues
+  )
 }

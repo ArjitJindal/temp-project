@@ -479,13 +479,6 @@ const getRiskFactorLogicByKeyAndType = memoize(
 
 export { getRiskFactorLogicByKeyAndType }
 
-export function generateV2FactorId(
-  parameter: string,
-  entityType: RiskEntityType
-): string {
-  return `${entityType}:${parameter}`
-}
-
 export function createV8FactorFromV2(
   v2Factor: ParameterAttributeRiskValues,
   riskClassification: RiskClassificationScore[]
