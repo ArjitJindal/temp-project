@@ -1,7 +1,7 @@
 import { Collection, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { uniq } from 'lodash'
+import { compact, uniq } from 'lodash'
 import { GenericSanctionsConsumerUserRuleParameters } from '../rules-engine/user-rules/generic-sanctions-consumer-user'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsDataProvider } from '../sanctions/providers/types'
@@ -9,8 +9,8 @@ import { OpenSanctionsProvider } from '../sanctions/providers/open-sanctions-pro
 import { SanctionsSearchRepository } from '../sanctions/repositories/sanctions-search-repository'
 import { CounterRepository } from '../counter/repository'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
+import { FEATURE_FLAG_PROVIDER_MAP } from '../sanctions/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { runSanctionsDataFetchJob } from './sanctions-data-fetch-job-runner'
 import { InHouseScreeningMigrationBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
@@ -31,6 +31,7 @@ import {
   getMigrationLastCompletedId,
   updateMigrationLastCompletedId,
 } from '@/utils/migration-progress'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   provider: SanctionsDataProviderName = 'open-sanctions'
@@ -79,19 +80,9 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   }
   protected async run(job: InHouseScreeningMigrationBatchJob) {
     const { parameters, tenantId } = job
-    const { providers, settings } = parameters
+    const { settings, providers } = parameters
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    await runSanctionsDataFetchJob(
-      {
-        type: 'SANCTIONS_DATA_FETCH',
-        tenantId,
-        providers,
-        settings,
-        parameters: {},
-      },
-      mongoDb
-    )
     await this.init(tenantId, mongoDb, dynamoDb)
     const lastCompletedId =
       (await getMigrationLastCompletedId(
@@ -111,12 +102,16 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
       await this.handleRuleInstance(r16Rule)
     }
     const tenantSettings = await this.tenantRepository?.getTenantSettings()
+    const features = compact(
+      Object.entries(FEATURE_FLAG_PROVIDER_MAP).map(([key, val]) => {
+        if (providers.includes(val)) {
+          return key as Feature
+        }
+        return null
+      })
+    )
     await this.tenantRepository?.createOrUpdateTenantSettings({
-      features: uniq([
-        ...(tenantSettings?.features || []),
-        'ACURIS',
-        'OPEN_SANCTIONS',
-      ]),
+      features: uniq([...(tenantSettings?.features || []), ...features]),
       sanctions: {
         ...(tenantSettings?.sanctions || {}),
         providerScreeningTypes: settings,
@@ -277,7 +272,7 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
       riskLevelActions: ruleInstance.riskLevelActions,
       id: ruleInstanceId,
       type: 'USER',
-      casePriority: 'P2',
+      casePriority: ruleInstance.casePriority,
       nature: 'SCREENING',
       labels: [],
       createdBy: 'SYSTEM',
