@@ -99,6 +99,11 @@ export const featureDescriptions: Record<
     title: 'Clickhouse (Beta)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
   },
+  CLICKHOUSE_MIGRATION: {
+    title: 'Clickhouse Migration',
+    description: 'Enables Clickhouse Migration',
+    tag: FeatureTag.WIP,
+  },
   MACHINE_LEARNING: { title: 'Machine learning', description: 'Enables machine learning features' },
   ALERT_SLA: { title: 'Alerts SLA', description: 'Enables Alert SLA' },
   RISK_SCORING_V8: {

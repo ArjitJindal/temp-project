@@ -11363,6 +11363,7 @@ components:
         - ALERTS_DYNAMO_POC
         - ACURIS
         - 314A
+        - CLICKHOUSE_MIGRATION
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
