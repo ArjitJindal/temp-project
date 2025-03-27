@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { flatten } from 'lodash';
+import { flatten, isEmpty } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
 import { humanizeAuto, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
@@ -181,15 +181,15 @@ function useTabs(
 ): TabItem[] {
   const settings = useSettings();
   const caseItem = getOr(caseItemRes, undefined);
-  const subjectType = caseItem?.subjectType;
   const api = useApi();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
-  const isUserSubject = subjectType === 'USER';
-  const isPaymentSubject = subjectType === 'PAYMENT';
   const paymentDetails =
     caseItem?.paymentDetails?.origin ?? caseItem?.paymentDetails?.destination ?? undefined;
   const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
+  const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
+  const isUserSubject = subjectType === 'USER';
+  const isPaymentSubject = subjectType === 'PAYMENT';
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
