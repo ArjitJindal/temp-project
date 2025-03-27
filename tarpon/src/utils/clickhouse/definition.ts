@@ -1,5 +1,13 @@
 import { invert, memoize, uniq } from 'lodash'
 import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
+import {
+  userStatsColumns,
+  userStatsMVQuery,
+} from './queries/user-stats-clickhouse'
+import {
+  transactionStatsColumns,
+  getTransactionStatsClickhouseMVQuery,
+} from './queries/transaction-stats-clickhouse'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
@@ -39,7 +47,7 @@ type BaseTableDefinition = {
       randomSeed?: number
     }
   }[]
-  engine: 'ReplacingMergeTree'
+  engine: 'ReplacingMergeTree' | 'AggregatingMergeTree' | 'SummingMergeTree'
   primaryKey: string
   orderBy: string
   partitionBy?: string
@@ -47,13 +55,19 @@ type BaseTableDefinition = {
   optimize?: boolean
 }
 
+type QueryCallback = (tenantId: string) => Promise<string>
+
 export type MaterializedViewDefinition = Omit<
   BaseTableDefinition,
   'idColumn' | 'timestampColumn' | 'projections' | 'materializedColumns'
 > & {
   viewName: string
   columns: string[]
-  query?: string
+  query?: string | QueryCallback
+  refresh?: {
+    interval: number
+    granularity: 'MINUTE' | 'HOUR' | 'DAY' | 'SECOND'
+  }
 }
 
 export type ProjectionsDefinition = {
@@ -145,6 +159,18 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: 'transactions_by_id_mv',
         table: 'transactions_by_id',
       },
+      TRANSACTION_MONTHLY_STATS: {
+        viewName: 'transactions_monthly_stats_mv',
+        table: 'transactions_monthly_stats',
+      },
+      TRANSACTION_HOURLY_STATS: {
+        viewName: 'transactions_hourly_stats_mv',
+        table: 'transactions_hourly_stats',
+      },
+      TRANSACTION_DAILY_STATS: {
+        viewName: 'transactions_daily_stats_mv',
+        table: 'transactions_daily_stats',
+      },
     },
   },
   USERS: {
@@ -157,6 +183,18 @@ export const CLICKHOUSE_DEFINITIONS = {
       BY_ID: {
         viewName: 'users_by_id_mv',
         table: 'users_by_id',
+      },
+      USER_MONTHLY_STATS: {
+        viewName: 'user_monthly_stats_mv',
+        table: 'user_monthly_stats',
+      },
+      USER_HOURLY_STATS: {
+        viewName: 'user_hourly_stats_mv',
+        table: 'user_hourly_stats',
+      },
+      USER_DAILY_STATS: {
+        viewName: 'user_daily_stats_mv',
+        table: 'user_daily_stats',
       },
     },
   },
@@ -330,6 +368,51 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         table:
           CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_MONTHLY_STATS.viewName,
+        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_MONTHLY_STATS.table,
+        query: getTransactionStatsClickhouseMVQuery(
+          'toStartOfMonth(toDateTime(timestamp / 1000))'
+        ),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_DAILY_STATS.viewName,
+        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_DAILY_STATS.table,
+        query: getTransactionStatsClickhouseMVQuery(
+          'toDate(toDateTime(timestamp / 1000))'
+        ),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_HOURLY_STATS.viewName,
+        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .TRANSACTION_HOURLY_STATS.table,
+        query: getTransactionStatsClickhouseMVQuery(
+          'toStartOfHour(toDateTime(timestamp / 1000))'
+        ),
+      },
     ],
     optimize: true,
   },
@@ -420,6 +503,54 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         engine: 'ReplacingMergeTree',
         primaryKey: 'id',
         orderBy: 'id',
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_MONTHLY_STATS
+            .viewName,
+        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
+        table:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_MONTHLY_STATS
+            .table,
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        query: (tenantId) =>
+          userStatsMVQuery(
+            'toStartOfMonth(toDateTime(timestamp / 1000))',
+            tenantId
+          ),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_DAILY_STATS
+            .viewName,
+        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
+        table:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_DAILY_STATS.table,
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        query: (tenantId) =>
+          userStatsMVQuery('toDate(toDateTime(timestamp / 1000))', tenantId),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_HOURLY_STATS
+            .viewName,
+        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
+
+        table:
+          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_HOURLY_STATS
+            .table,
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        query: (tenantId) =>
+          userStatsMVQuery(
+            'toStartOfHour(toDateTime(timestamp / 1000))',
+            tenantId
+          ),
       },
     ],
     mongoIdColumn: true,

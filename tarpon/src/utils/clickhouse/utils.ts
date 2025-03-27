@@ -358,7 +358,7 @@ export async function createOrUpdateClickHouseTable(
   await addMissingColumnsTable(client, tableName, table)
   await addMissingProjections(client, tableName, table)
   await addMissingIndexes(client, tableName, table, tenantId)
-  await createMaterializedViews(client, table)
+  await createMaterializedViews(client, table, tenantId)
 }
 
 async function createTableIfNotExists(
@@ -551,28 +551,32 @@ export const createMaterializedTableQuery = (
   `
 }
 
-export const createMaterializedViewQuery = (
+export const createMaterializedViewQuery = async (
   view: MaterializedViewDefinition,
-  tableName: string
+  tableName: string,
+  tenantId?: string
 ) => {
   return `
     CREATE MATERIALIZED VIEW IF NOT EXISTS ${view.viewName} TO ${view.table}
     AS ${
-      view.query ||
-      `(
-      SELECT ${view.columns
-        ?.filter((col) => !col.includes(' MATERIALIZED '))
-        ?.map((col) => col.split(' ')[0])
-        ?.join(', ')}
-      FROM ${tableName}
-    )`
+      typeof view.query === 'function'
+        ? await view.query(tenantId ?? '')
+        : view.query ||
+          `(
+          SELECT ${view.columns
+            ?.filter((col) => !col.includes(' MATERIALIZED '))
+            ?.map((col) => col.split(' ')[0])
+            ?.join(', ')}
+          FROM ${tableName}
+        )`
     }
   `
 }
 
 async function createMaterializedViews(
   client: ClickHouseClient,
-  table: ClickhouseTableDefinition
+  table: ClickhouseTableDefinition,
+  tenantId?: string
 ): Promise<void> {
   if (!table.materializedViews?.length) {
     return
@@ -581,7 +585,11 @@ async function createMaterializedViews(
   for (const view of table.materializedViews) {
     const createViewQuery = createMaterializedTableQuery(view)
     await client.query({ query: createViewQuery })
-    const matQuery = createMaterializedViewQuery(view, table.table)
+    const matQuery = await createMaterializedViewQuery(
+      view,
+      table.table,
+      tenantId
+    )
     await client.query({ query: matQuery })
     await addMissingColumns(client, view.table, view.columns)
   }
