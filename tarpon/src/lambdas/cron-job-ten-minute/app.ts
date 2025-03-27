@@ -29,6 +29,7 @@ import {
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
 import { isValidSARRequest } from '@/utils/helpers'
+import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -49,6 +50,9 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
     await Promise.all(
       tenantIds.map(async (tenantId) => {
         if (await tenantHasFeature(tenantId, 'MANUAL_DASHBOARD_REFRESH')) {
+          return
+        }
+        if (isClickhouseEnabled()) {
           return
         }
         return sendBatchJobCommand({
