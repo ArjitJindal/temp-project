@@ -415,7 +415,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                 ) : (
                   <div className={s.tags}>
                     {associations.map((assoc, i) => (
-                      <Tag color="gray" key={i}>
+                      <Tag color="gray" key={i} wrapText={false} trimText={false}>
                         <div className={s.associateInfo}>
                           <span>{assoc.name}</span>
                           {assoc.association ||
