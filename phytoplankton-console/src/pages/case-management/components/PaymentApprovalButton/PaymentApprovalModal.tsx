@@ -8,6 +8,7 @@ import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import Narrative, { FormValues, NarrativeFormValues, OTHER_REASON } from '@/components/Narrative';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface Props {
   visible: boolean;
@@ -16,6 +17,24 @@ interface Props {
   hide: () => void;
   onSuccess?: () => void;
 }
+interface CommentFormatProps {
+  comment: string;
+  reason: string[];
+  transactionId: string;
+  action: RuleAction;
+  reasonOther?: string;
+}
+
+const commentFormat = (props: CommentFormatProps) => {
+  const { comment, reason, transactionId, action, reasonOther } = props;
+  const otherIndex = reason.indexOf('Other');
+  if (otherIndex !== -1 && reasonOther) {
+    reason[otherIndex] = `Other: ${reasonOther}`;
+  }
+  return `A payment with Transaction ID: **${transactionId}** is ${
+    action === 'ALLOW' ? 'allowed' : 'blocked'
+  } due to following reasons: ${reason.join(', ')}.\n**Comments** - ${comment}`;
+};
 
 export default function PaymentApprovalModal(props: Props) {
   const { visible, action, transactionIds, hide, onSuccess } = props;
@@ -45,6 +64,33 @@ export default function PaymentApprovalModal(props: Props) {
         },
       });
 
+      const transactionsData = await Promise.all(
+        transactionIds.map(async (transactionId) => {
+          const transaction = await api.getTransaction({ transactionId });
+          return transaction;
+        }),
+      );
+
+      const commentPromises = transactionsData.flatMap((transaction) => {
+        const alertIds = transaction.alertIds ?? [];
+        return alertIds.map((alertId) =>
+          api.createAlertsComment({
+            alertId,
+            CommentRequest: {
+              body: commentFormat({
+                comment: sanitizeComment(values.comment ?? ''),
+                reason: values.reasons ?? [],
+                transactionId: transaction.transactionId,
+                action,
+                reasonOther: values.reasonOther,
+              }),
+              files: values.files?.length > 0 ? values.files : [],
+            },
+          }),
+        );
+      });
+
+      await Promise.all(commentPromises);
       return res;
     },
     {
