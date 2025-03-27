@@ -117,6 +117,11 @@ export const FincenJsonSchema = {
           title: 'Prior report BSA Identifier (number)',
           description:
             'The BSA Identifier (BSA ID) of the previously-filed FinCEN SAR when filing a correction/amendment and/or a continuing activity report. The value provided must adhere to the following requirements: 14-digit numeric BSA ID (if known); 14 consecutive zeros, i.e. “00000000000000” (if the BSA ID is unknown).',
+          'ui:schema': {
+            'ui:subtype': 'FINCEN_NUMBER',
+            'ui:maxDigits': 14,
+            'ui:allowNegatives': false,
+          },
         },
         FilingDateText: {
           $ref: '#/definitions/DateYYYYMMDDType',
@@ -855,16 +860,25 @@ export const FincenJsonSchema = {
           maximum: 9223372036854776000,
           minimum: -9223372036854776000,
           type: 'integer',
+          'ui:schema': {
+            'ui:subtype': 'FINCEN_NUMBER',
+          },
         },
         '@ActivityAttachmentCount': {
           maximum: 9223372036854776000,
           minimum: -9223372036854776000,
           type: 'integer',
+          'ui:schema': {
+            'ui:subtype': 'FINCEN_NUMBER',
+          },
         },
         '@AttachmentCount': {
           maximum: 9223372036854776000,
           minimum: -9223372036854776000,
           type: 'integer',
+          'ui:schema': {
+            'ui:subtype': 'FINCEN_NUMBER',
+          },
         },
       },
       type: 'object',
@@ -1193,6 +1207,9 @@ export const FincenJsonSchema = {
       maximum: 9223372036854776000,
       minimum: -9223372036854776000,
       type: 'integer',
+      'ui:schema': {
+        'ui:subtype': 'FINCEN_NUMBER',
+      },
     },
     RestrictString15: {
       maxLength: 15,

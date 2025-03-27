@@ -165,7 +165,7 @@ export default function SarReportDrawer(props: Props) {
         );
       },
       onError: (e) => {
-        message.fatal(`Failed to submit report: ${getErrorMessage(e)}`);
+        message.error(`Failed to submit report`, { details: getErrorMessage(e) });
       },
     },
   );

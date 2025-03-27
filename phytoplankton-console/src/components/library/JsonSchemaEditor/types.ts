@@ -132,6 +132,12 @@ export interface UiSchemaFincenGender extends UiSchemaCommon {
   'ui:unknownIndicatorField'?: string;
 }
 
+export interface UiSchemaFincenNumber extends UiSchemaCommon {
+  'ui:subtype': 'FINCEN_NUMBER';
+  'ui:maxDigits'?: number;
+  'ui:allowNegatives'?: boolean;
+}
+
 export interface UiSchemaWebhook extends UiSchemaCommon {
   'ui:subtype': 'WEBHOOK';
 }
@@ -162,6 +168,7 @@ export type UiSchema =
   | UiSchemaFincenPhoneNumber
   | UiSchemaElectronicAddress
   | UiSchemaFincenGender
+  | UiSchemaFincenNumber
   | UiSchemaWebhook
   | UiSchemaList
   | UiSchemaNumberRange

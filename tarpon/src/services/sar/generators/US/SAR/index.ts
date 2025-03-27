@@ -352,6 +352,26 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   private transform(reportParams: ReportParameters): object {
+    // If EFilingPriorDocumentNumber passed, InitialReportIndicator should not be set
+    if (reportParams.report.generalInfo?.EFilingPriorDocumentNumber) {
+      const ActivityAssociation =
+        reportParams.report.generalInfo.ActivityAssociation
+      if (ActivityAssociation?.InitialReportIndicator === 'Y') {
+        throw new Error(
+          `When "Prior report BSA Identifier" provided, "Type of filing / Initial report" can not be set to true`
+        )
+      }
+
+      if (
+        ActivityAssociation.ContinuingActivityReportIndicator !== 'Y' &&
+        ActivityAssociation.CorrectsAmendsPriorReportIndicator !== 'Y'
+      ) {
+        throw new Error(
+          `When "Prior report BSA Identifier" provided, "Type of filing / Continuing activity report" or "Type of filing / Corrects/Amends prior report" must be set`
+        )
+      }
+    }
+
     /**
      * Transmitter
      */
@@ -573,6 +593,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     const xmlContent = builder.build(this.transform(cloneDeep(reportParams)))
     // NOTE: In aws lambda, we can only write files to /tmp
     const outputFile = `${path.join('/tmp', 'input.xml')}`
+
     fs.writeFileSync(outputFile, xmlContent)
 
     // Reformat and add generated attributes
@@ -630,6 +651,7 @@ export class UsSarReportGenerator implements ReportGenerator {
 
   private callFinCenBinary(...args: string[]): string {
     const command = [FINCEN_BINARY, ...args].join(' ')
+
     try {
       const result = execSync(command, {
         cwd: __dirname,
