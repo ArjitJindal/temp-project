@@ -626,6 +626,10 @@ export class TarponChangeMongoDbConsumer {
     newCrmRecord: CRMRecord,
     dbClients: DbClients
   ): Promise<void> {
+    // if no demoTenant skip
+    if (isDemoTenant(tenantId) && envIsNot('local')) {
+      return
+    }
     await new NangoRepository(
       tenantId,
       dbClients.dynamoDb
@@ -637,6 +641,9 @@ export class TarponChangeMongoDbConsumer {
     newCrmUserRecordLinks: CRMRecordLink,
     dbClients: DbClients
   ): Promise<void> {
+    if (isDemoTenant(tenantId) && envIsNot('local')) {
+      return
+    }
     const nangoRepository = new NangoRepository(tenantId, dbClients.dynamoDb)
     await nangoRepository.linkCrmRecordClickhouse(newCrmUserRecordLinks)
   }
