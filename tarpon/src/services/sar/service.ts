@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
-import { BadRequest, NotFound } from 'http-errors'
+import { BadRequest, NotFound, InternalServerError } from 'http-errors'
 import { S3 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -356,73 +356,89 @@ export class ReportService {
 
   @auditLog('SAR', 'CREATION', 'CREATE')
   async completeReport(report: Report): Promise<SarCreationAuditLogReturnData> {
-    const generator = this.getReportGenerator(report.reportTypeId)
-    if (!generator) {
-      throw new BadRequest(
-        `No report generator found for ${report.reportTypeId}`
-      )
-    }
-    const { directSubmission } = generator.getType()
-    report.parameters =
-      generator?.getAugmentedReportParams(report) ?? report.parameters
-    report.id = report.id ?? (await this.reportRepository.getId())
-    report.status = 'COMPLETE' as ReportStatus
-    const generationResult = await generator.generate(report.parameters, report)
-    const now = Date.now()
-    if (generationResult?.type === 'STRING') {
-      report.revisions.push({
-        output: generationResult.value,
-        createdAt: now,
-      })
-    } else {
-      const key = `${this.tenantId}/${
-        report.id
-      }-report-${now}.${generationResult.contentType.toLowerCase()}`
-      const stream = generationResult.stream
-      const buffers: Buffer[] = []
-      for await (const data of stream) {
-        if (typeof data !== 'string') {
-          buffers.push(data)
-        }
+    try {
+      const generator = this.getReportGenerator(report.reportTypeId)
+      if (!generator) {
+        throw new BadRequest(
+          `No report generator found for ${report.reportTypeId}`
+        )
       }
-      const body = Buffer.concat(buffers)
-      const parallelUploadS3 = new Upload({
-        client: this.s3,
-        params: {
-          Bucket: this.s3Config.documentBucket,
-          Key: key,
-          Body: body,
-        },
-      })
-      await parallelUploadS3.done()
+      const { directSubmission } = generator.getType()
+      report.parameters =
+        generator?.getAugmentedReportParams(report) ?? report.parameters
+      report.id = report.id ?? (await this.reportRepository.getId())
+      report.status = 'COMPLETE' as ReportStatus
+      const generationResult = await generator.generate(
+        report.parameters,
+        report
+      )
+      const now = Date.now()
+      if (generationResult?.type === 'STRING') {
+        report.revisions.push({
+          output: generationResult.value,
+          createdAt: now,
+        })
+      } else {
+        const key = `${this.tenantId}/${
+          report.id
+        }-report-${now}.${generationResult.contentType.toLowerCase()}`
+        const stream = generationResult.stream
+        const buffers: Buffer[] = []
+        for await (const data of stream) {
+          if (typeof data !== 'string') {
+            buffers.push(data)
+          }
+        }
+        const body = Buffer.concat(buffers)
+        const parallelUploadS3 = new Upload({
+          client: this.s3,
+          params: {
+            Bucket: this.s3Config.documentBucket,
+            Key: key,
+            Body: body,
+          },
+        })
+        await parallelUploadS3.done()
 
-      report.revisions.push({
-        output: `s3:document:${key}`,
-        createdAt: now,
-      })
-    }
+        report.revisions.push({
+          output: `s3:document:${key}`,
+          createdAt: now,
+        })
+      }
 
-    if (directSubmission && generator.submit) {
-      logger.info('Submitting report')
-      report.status = 'SUBMITTING' as ReportStatus
-      report.statusInfo = await generator.submit(report)
-      logger.info('Submitted report')
-    }
+      if (directSubmission && generator.submit) {
+        logger.info('Submitting report')
+        report.status = 'SUBMITTING' as ReportStatus
+        report.statusInfo = await generator.submit(report)
+        logger.info('Submitted report')
+      }
 
-    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+      const savedReport = await this.reportRepository.saveOrUpdateReport(report)
 
-    await this.riskScoringService.handleReRunTriggers('SAR', {
-      userIds: [report.caseUserId],
-    }) // To rerun risk scores for user
-    return {
-      result: withSchema(savedReport),
-      entities: [
-        {
-          entityId: savedReport.id ?? '',
-          newImage: savedReport,
-          logMetadata: getReportAuditLogMetadata(savedReport),
-        },
-      ],
+      await this.riskScoringService.handleReRunTriggers('SAR', {
+        userIds: [report.caseUserId],
+      }) // To rerun risk scores for user
+      return {
+        result: withSchema(savedReport),
+        entities: [
+          {
+            entityId: savedReport.id ?? '',
+            newImage: savedReport,
+            logMetadata: getReportAuditLogMetadata(savedReport),
+          },
+        ],
+      }
+    } catch (e) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        (('code' in e && e.code === 'ERR_GENERIC_CLIENT') ||
+          ('message' in e &&
+            e.message === 'Connection attempt timed out after 15 seconds'))
+      ) {
+        throw new InternalServerError('Unable to connect to FinCen Server')
+      }
+      throw e
     }
   }
 

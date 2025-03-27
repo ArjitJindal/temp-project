@@ -1,3 +1,4 @@
+import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { UsSarReportGenerator } from '../sar/generators/US/SAR'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -47,6 +48,7 @@ export async function parseReportXMLResponse(xmlAcknowlegment: string) {
 }
 
 export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
+  FINCEN_BATCH_JOB_LOG_PREFIX = 'FINCEN_BATCH_JOBB'
   async run(job: FinCenReportStatusRefreshBatchJob) {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
@@ -69,38 +71,91 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
     const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
     logger.info('USA Pending report', filteredUsaReports.length)
     // 2. fetch result from sftp server
-    filteredUsaReports.forEach(async (report) => {
-      const status = await sarGenerator.getAckFileContent(report)
-      if (status && report.id) {
-        // 3. parse the xml and check if is different from previous status
-        const { result, statusInfo } = await parseReportXMLResponse(status)
-        const currentStatus =
-          fincenStatusMapper(statusInfo as FincenReportStatus) ?? report.status
-        logger.info(
-          report.id,
-          'Current status',
-          report.status,
-          'New status',
-          currentStatus
+
+    const batchSize = 5
+    let currentIndex = 0
+
+    try {
+      // Process reports in batches
+      while (currentIndex < filteredUsaReports.length) {
+        const endIndex = Math.min(
+          currentIndex + batchSize,
+          filteredUsaReports.length
         )
-        if (currentStatus !== report.status) {
-          // 4. if the result differ then update the report status and store the parsed xml in mongodb
-          logger.info(
-            report.id,
-            'updating status',
-            report.status,
-            '->',
-            currentStatus
-          )
-          await reportRepository.updateReportAck(
-            report.id,
-            currentStatus,
-            status,
-            result,
-            timeNow
-          )
-        }
+        const filteredUsaReportBatch = filteredUsaReports.slice(
+          currentIndex,
+          endIndex
+        )
+
+        logger.info(
+          `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Processing batch ${
+            currentIndex / batchSize + 1
+          }, reports ${currentIndex} to ${endIndex - 1}`
+        )
+
+        const promises = filteredUsaReportBatch.map((report) => {
+          return new Promise((resolve) => {
+            sarGenerator
+              .getAckFileContent(report)
+              .then((status) => {
+                if (status && report.id) {
+                  return parseReportXMLResponse(status).then(
+                    ({ result, statusInfo }) => {
+                      const currentStatus =
+                        fincenStatusMapper(statusInfo as FincenReportStatus) ??
+                        report.status
+                      logger.info(
+                        ` ${this.FINCEN_BATCH_JOB_LOG_PREFIX} Tenant Id,
+                          ${job.tenantId}
+                          ${report.id},
+                          'Current status',
+                          ${report.status},
+                          'New status',
+                          ${currentStatus}`
+                      )
+                      if (currentStatus !== report.status && report.id) {
+                        return reportRepository
+                          .updateReportAck(
+                            report.id,
+                            currentStatus,
+                            status,
+                            result,
+                            timeNow
+                          )
+                          .then(() => resolve(true))
+                      }
+                      resolve(true)
+                    }
+                  )
+                }
+                resolve(false)
+              })
+              .catch((error) => {
+                if (
+                  typeof error === 'object' &&
+                  error !== null &&
+                  (('code' in error && error.code === 'ERR_GENERIC_CLIENT') ||
+                    ('message' in error &&
+                      error.message ===
+                        'Connection attempt timed out after 15 seconds'))
+                ) {
+                  logger.error(`${SFTP_CONNECTION_ERROR_PREFIX} ${error}`)
+                }
+                logger.error(
+                  `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Error processing report ID: ${report.id}, Tenant ID: ${job.tenantId}, Error: ${error}`
+                )
+                resolve(false)
+              })
+          })
+        })
+
+        await Promise.all(promises)
+        currentIndex = endIndex
       }
-    })
+    } catch (error) {
+      logger.error(
+        `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Batch processing error for Tenant ID: ${job.tenantId}, Error: ${error}`
+      )
+    }
   }
 }

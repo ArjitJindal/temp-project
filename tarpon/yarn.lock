@@ -8427,6 +8427,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/ssh2-sftp-client@npm:^9.0.4":
+  version: 9.0.4
+  resolution: "@types/ssh2-sftp-client@npm:9.0.4"
+  dependencies:
+    "@types/ssh2": "npm:^1.0.0"
+  checksum: 40b4b097117f51157a43f545739eabe004b489638033ce091a12b68079dc9fb49c487ae00bdcd80364132d1b973e647fbc61e9ccbb2ff6da75f13e183e28e982
+  languageName: node
+  linkType: hard
+
+"@types/ssh2@npm:^1.0.0":
+  version: 1.15.4
+  resolution: "@types/ssh2@npm:1.15.4"
+  dependencies:
+    "@types/node": "npm:^18.11.18"
+  checksum: a4d37e28bf81c6bc41c785d78ee0208163af86294411f9662097f72bf91bb14647d4786f7a01a5c8e74594cfc1ccedcf9495bfdfb5541f2262a2cf433c94c5d9
+  languageName: node
+  linkType: hard
+
 "@types/stack-utils@npm:^2.0.0":
   version: 2.0.3
   resolution: "@types/stack-utils@npm:2.0.3"
@@ -19247,6 +19265,7 @@ __metadata:
     "@types/pdfmake": "npm:^0"
     "@types/pluralize": "npm:^0.0.30"
     "@types/progress": "npm:^2.0.5"
+    "@types/ssh2-sftp-client": "npm:^9.0.4"
     "@types/stopword": "npm:^2.0.3"
     "@types/unidecode": "npm:^0.1.1"
     "@types/unzipper": "npm:^0"

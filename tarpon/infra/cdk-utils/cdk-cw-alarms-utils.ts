@@ -627,15 +627,15 @@ export const createFinCENSTFPConnectionAlarm = (
   return new Alarm(context, restApiAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
     threshold: 1,
-    evaluationPeriods: 3,
-    datapointsToAlarm: 2,
-    alarmName: 'FinCEN-SFTPConnectionError',
-    alarmDescription: `Triggers when the log group contains at least one "SFTPConnectionError:" message within a 5-minute period for ${restApiName}. Indicates possible connection failure to FinCEN SFTP.`,
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
+    alarmName: 'FinCENSFTPConnectionError',
+    alarmDescription: `Triggers when the log group contains at least one "SFTPConnectionError:" message within a 10-minute period for ${restApiName}. Indicates possible connection failure to FinCEN SFTP.`,
     metric: new Metric({
-      namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
       metricName: `${restApiName}ConnectionFailed`,
+      namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
       statistic: 'sum',
-      period: Duration.minutes(5),
+      period: Duration.minutes(10),
     }),
   }).addAlarmAction(
     new SnsAction(betterUptimeTopic),

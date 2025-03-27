@@ -108,7 +108,10 @@ import { siloDataTenants } from '@flagright/lib/constants'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
-import { createAPIGatewayThrottlingAlarm } from './cdk-utils/cdk-cw-alarms-utils'
+import {
+  createAPIGatewayThrottlingAlarm,
+  createFinCENSTFPConnectionAlarm,
+} from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { createCanary } from './cdk-utils/cdk-synthetics-utils'
@@ -952,17 +955,24 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
       }
     )
-    const { alias: jobRunnerAlias } = createFunction(
-      this,
-      lambdaExecutionRole,
-      {
+    const { alias: jobRunnerAlias, func: batchJobRunnerHandler } =
+      createFunction(this, lambdaExecutionRole, {
         name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
         memorySize:
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-      }
+      })
+    const batchJobRunnerLogGroupName = batchJobRunnerHandler.logGroup
+    createFinCENSTFPConnectionAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      this.zendutyCloudWatchTopic,
+      batchJobRunnerLogGroupName,
+      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+        'Alarm',
+      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+        'Metric'
     )
-
     let ecsBatchJobTask: Chain | null = null
     if (!isQaEnv() || enableFargateBatchJob) {
       const fargateBatchJobTaskDefinition = createFargateTaskDefinition(

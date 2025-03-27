@@ -1,21 +1,29 @@
 import SftpClient from 'ssh2-sftp-client'
-import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
 import { getSecretByName } from './secrets-manager'
-import { logger } from '@/core/logger'
 
-export async function connectToSFTP() {
+export async function connectToSFTP(): Promise<SftpClient> {
   const creds = await getSecretByName('fincenCreds')
-  const sftp = new SftpClient()
-  try {
-    await sftp.connect({
-      host: process.env.FINCEN_SFTP_IP,
-      port: process.env.FINCEN_SFTP_PORT,
-      username: creds.username,
-      password: creds.password,
-    })
-    return sftp
-  } catch (e) {
-    logger.error(`${SFTP_CONNECTION_ERROR_PREFIX} ${e}`)
-    throw e
-  }
+  return new Promise((resolve, reject) => {
+    const sftp = new SftpClient()
+    const timeout = setTimeout(() => {
+      sftp.end().catch(() => {})
+      reject(new Error('Connection attempt timed out after 15 seconds'))
+    }, 15000)
+    sftp
+      .connect({
+        host: process.env.FINCEN_SFTP_IP,
+        port: Number(process.env.FINCEN_SFTP_PORT),
+        username: creds.username,
+        password: creds.password,
+        readyTimeout: 10000,
+      })
+      .then(() => {
+        clearTimeout(timeout)
+        resolve(sftp)
+      })
+      .catch((e) => {
+        clearTimeout(timeout)
+        reject(e)
+      })
+  })
 }
