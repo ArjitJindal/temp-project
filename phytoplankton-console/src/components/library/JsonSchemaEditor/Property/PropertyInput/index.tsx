@@ -118,7 +118,6 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'FUZZINESS_SETTINGS') {
     return <FuzzinessSettingsInput {...props} uiSchema={uiSchema} />;
   }
-
   const schemaType = schema.oneOf ? 'object' : schema.type;
   switch (schemaType) {
     case 'number':

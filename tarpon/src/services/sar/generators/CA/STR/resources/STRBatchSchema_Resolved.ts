@@ -88,6 +88,9 @@ export const FintracJsonSchemaResolved = {
         },
         politicallyExposedPersonIncludedIndicator: {
           type: 'boolean',
+          'ui:schema': {
+            'ui:subtype': 'FINCEN_INDICATOR',
+          },
           title:
             "Was an individual's information who you have determined to be a politically exposed person (PEP) included in this report?",
         },

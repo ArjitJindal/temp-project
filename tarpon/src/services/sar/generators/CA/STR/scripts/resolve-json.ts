@@ -15,6 +15,8 @@ async function main() {
     jsonSchema['definitions']
   )
 
+  jsonSchema['properties'] = agumentUiSchemaFintracStr(jsonSchema['properties'])
+
   void compile(jsonSchema, 'EFL_CTRXBatchSchema').then((ts) => {
     fs.writeFileSync(
       path.join(__dirname, '..', 'resources', 'STRBatchSchema.type.ts'),

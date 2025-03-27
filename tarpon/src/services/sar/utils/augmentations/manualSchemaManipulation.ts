@@ -65,6 +65,8 @@ export function agumentUiSchemaFintracStr(jsonSchema: any) {
   const phoneType = 'telephoneNumber'
   const countryType = 'countrycode'
   const stateType = 'statecode'
+  const emailType = 'emailaddress'
+  const urlType = 'url'
   Object.entries(jsonSchema).forEach(([key, value]: [string, any]) => {
     const lowerKey = key.toLowerCase()
     if (lowerKey.includes(enumType)) {
@@ -89,6 +91,19 @@ export function agumentUiSchemaFintracStr(jsonSchema: any) {
       value['ui:schema'] = {
         'ui:subtype': 'COUNTRY_REGION',
         'ui:countryField': 'RawCountryCodeText',
+      }
+    }
+    if (lowerKey.includes(emailType) || value?.['$ref']?.includes(emailType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+        'ui:value': 'EMAIL',
+      }
+    }
+
+    if (lowerKey.includes(urlType) || value?.['$ref']?.includes(urlType)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
+        'ui:value': 'URL',
       }
     }
 

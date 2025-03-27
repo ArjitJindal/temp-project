@@ -296,7 +296,7 @@ export const FilingInstitution = {
     },
     InstitutionAlternateName: {
       ...alternateParyName,
-      title: 'Aleternate Institution name',
+      title: 'Alternate Institution name',
     },
     Address: pickEntityFields(
       'AddressType',

@@ -38,6 +38,7 @@ export const useSarContext = <
 };
 
 export const REPORT_STEP = 'REPORT_STEP';
+export const DEFINITION_METADATA_STEP = 'DEFINITION_METADATA_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
 export const CUSTOMER_AND_ACCOUNT_DETAILS_STEP = 'CUSTOMER_AND_ACCOUNT_DETAILS_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
@@ -93,6 +94,11 @@ export default function SarReportDrawer(props: Props) {
           key: CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
           title: 'Customer & Account details',
           description: 'Enter customer information and account holder details',
+        },
+        !isEmpty(props.initialReport.schema?.definitionsSchema) && {
+          key: DEFINITION_METADATA_STEP,
+          title: 'Definitions',
+          description: 'Enter definitions of transactions that you want to report',
         },
         !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,

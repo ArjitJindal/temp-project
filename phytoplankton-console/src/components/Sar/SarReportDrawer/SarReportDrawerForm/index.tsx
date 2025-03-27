@@ -10,6 +10,7 @@ import {
   ATTACHMENTS_STEP,
   CURRENCY_TRANSACTION_STEP,
   CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
+  DEFINITION_METADATA_STEP,
   INDICATOR_STEP,
   REPORT_STEP,
   Step,
@@ -27,6 +28,9 @@ import { message } from '@/components/library/Message';
 
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;
+  [DEFINITION_METADATA_STEP]: {
+    id: string;
+  };
   [TRANSACTION_METADATA_STEP]: unknown;
   [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: unknown;
   [TRANSACTION_STEP]: {
@@ -67,6 +71,11 @@ export default function SarReportDrawerForm(props: Props) {
       name: REPORT_STEP,
       isRequired: false,
       schema: report.schema?.reportSchema,
+    },
+    {
+      name: DEFINITION_METADATA_STEP,
+      isRequired: false,
+      schema: report.schema?.definitionsSchema,
     },
     {
       name: TRANSACTION_METADATA_STEP,
@@ -150,6 +159,16 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
+              {activeStepKey === DEFINITION_METADATA_STEP && (
+                <ReportStep
+                  settings={settings}
+                  parametersSchema={report.schema?.definitionsSchema}
+                  validationResult={
+                    validationResult?.fieldValidationErrors?.[DEFINITION_METADATA_STEP]
+                  }
+                  alwaysShowErrors={alwaysShowErrors}
+                />
+              )}
               {activeStepKey == TRANSACTION_METADATA_STEP && (
                 <ReportStep
                   validationResult={
@@ -209,6 +228,7 @@ export default function SarReportDrawerForm(props: Props) {
 function deserializeFormState(reportTemplate: Report): FormState {
   return {
     [REPORT_STEP]: reportTemplate?.parameters.report,
+    [DEFINITION_METADATA_STEP]: reportTemplate?.parameters.definitions,
     [TRANSACTION_METADATA_STEP]: reportTemplate?.parameters.transactionMetadata,
     [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: reportTemplate?.parameters.customerAndAccountDetails,
     [TRANSACTION_STEP]: reportTemplate?.parameters.transactions?.map(({ id, transaction }) => ({
@@ -230,6 +250,7 @@ export function serializeFormState(originalReport: Report, formState: FormState)
     ...originalReport,
     parameters: {
       report: formState[REPORT_STEP],
+      definitions: formState[DEFINITION_METADATA_STEP],
       indicators: formState[INDICATOR_STEP]?.selection ?? [],
       transactionMetadata: formState[TRANSACTION_METADATA_STEP],
       customerAndAccountDetails: formState[CUSTOMER_AND_ACCOUNT_DETAILS_STEP],

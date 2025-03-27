@@ -74,6 +74,7 @@ export default function ObjectPropertyInput(props: Props) {
     showHint: settings.showOptionalMark,
   };
   const isInvalid = alwaysShowErrors && !isResultValid(validateField(subFieldValidator, value));
+  const showOneofInCollapsePropertyLayout = schema.showOneOfInCollapse ?? false; // control showing of one of in collapse
   return (
     <div className={s.children}>
       <FormContext.Provider value={subContext}>
@@ -91,15 +92,19 @@ export default function ObjectPropertyInput(props: Props) {
             }
             headerClassName={s.cardHeader}
           >
-            <PropertyList
-              items={properties}
-              labelProps={{
-                ...labelProps,
-                level: 2,
-              }}
-              collapseForNestedProperties
-              parentSchema={schema}
-            />
+            {showOneofInCollapsePropertyLayout && Array.isArray(schema.oneOf) ? (
+              <OneOf schemas={schema.oneOf} value={value} onChange={onChange} />
+            ) : (
+              <PropertyList
+                items={properties}
+                labelProps={{
+                  ...labelProps,
+                  level: 2,
+                }}
+                collapseForNestedProperties
+                parentSchema={schema}
+              />
+            )}
           </CollapsePropertiesLayout>
         ) : (
           <PropertyList
@@ -118,9 +123,11 @@ export default function ObjectPropertyInput(props: Props) {
             onChange={onChange}
           />
         )}
-        {Array.isArray(schema.oneOf) && schema.oneOf.every(isSchema) && (
-          <OneOf schemas={schema.oneOf} value={value} onChange={onChange} />
-        )}
+        {!showOneofInCollapsePropertyLayout &&
+          Array.isArray(schema.oneOf) &&
+          schema.oneOf.every(isSchema) && (
+            <OneOf schemas={schema.oneOf} value={value} onChange={onChange} />
+          )}
       </FormContext.Provider>
     </div>
   );

@@ -15304,6 +15304,8 @@ components:
           type: object
         transactionSchema:
           type: object
+        definitionsSchema:
+          type: object
         currencyTransactionSchema:
           type: object
         indicators:
@@ -15508,6 +15510,8 @@ components:
               transaction:
                 type: object
         currencyTransaction:
+          type: object
+        definitions:
           type: object
     ReportTypesResponse:
       title: ReportTypesResponse

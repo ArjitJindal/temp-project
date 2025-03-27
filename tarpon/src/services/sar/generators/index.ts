@@ -1,6 +1,7 @@
 import { KenyaSARReportGenerator } from './KE/SAR'
 import { UsSarReportGenerator } from './US/SAR'
 import { UsCtrReportGenerator } from './US/CTR'
+import { CanadaStrReportGenerator } from './CA/STR'
 import { Report } from '@/@types/openapi-internal/Report'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -62,6 +63,7 @@ export interface ReportGenerator {
 }
 
 const reportGenerators = [
+  CanadaStrReportGenerator,
   KenyaSARReportGenerator,
   LithuaniaSTRReportGenerator,
   LithuaniaCTRReportGenerator,
