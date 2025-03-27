@@ -231,11 +231,10 @@ function RiskItemForm(props: RiskItemFormProps) {
     return null;
   });
 
-  const navigateToRiskFactor = (riskFactorId: string) => {
+  const navigateToRiskFactor = () => {
     navigate(
-      makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
+      makeUrl(`/risk-levels/custom-risk-factors/:type`, {
         type,
-        id: riskFactorId,
       }),
     );
   };
@@ -260,7 +259,7 @@ function RiskItemForm(props: RiskItemFormProps) {
     },
     {
       onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactor(newRiskFactor.id);
+        navigateToRiskFactor();
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor updated - ${newRiskFactor.id}`);
       },
@@ -283,7 +282,7 @@ function RiskItemForm(props: RiskItemFormProps) {
     },
     {
       onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactor(newRiskFactor.id);
+        navigateToRiskFactor();
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor created - ${newRiskFactor.id}`);
       },
