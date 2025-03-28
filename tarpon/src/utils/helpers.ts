@@ -2,6 +2,7 @@ import { isValidEmail } from '@flagright/lib/utils'
 import { uniq } from 'lodash'
 import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
 import { envIs } from './env'
+import { isDemoTenant } from './tenant'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
@@ -205,5 +206,5 @@ export const getPaymentDetailsName = (
 }
 
 export const isValidSARRequest = (tenantId: string) => {
-  return tenantId.startsWith('flagright') && (envIs('sandbox') || envIs('prod'))
+  return !isDemoTenant(tenantId) && (envIs('sandbox') || envIs('prod'))
 }

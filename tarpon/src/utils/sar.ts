@@ -7,8 +7,8 @@ export async function connectToSFTP(): Promise<SftpClient> {
     const sftp = new SftpClient()
     const timeout = setTimeout(() => {
       sftp.end().catch(() => {})
-      reject(new Error('Connection attempt timed out after 15 seconds'))
-    }, 15000)
+      reject(new Error('Connection attempt timed out after 30 seconds'))
+    }, 30000)
     sftp
       .connect({
         host: process.env.FINCEN_SFTP_IP,

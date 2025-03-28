@@ -3,10 +3,14 @@ import fs from 'fs'
 import os from 'os'
 import { execSync } from 'child_process'
 import { XMLBuilder } from 'fast-xml-parser'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, last } from 'lodash'
 import { BadRequest } from 'http-errors'
+import * as Sentry from '@sentry/serverless'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
-import { ActivityPartyTypeCodesCTR } from '../SAR/helpers/constants'
+import {
+  ActivityPartyTypeCodesCTR,
+  FincenSubmissionDirectory,
+} from '../SAR/helpers/constants'
 import {
   ContactOffice,
   CurrencyTransactionActivity,
@@ -26,6 +30,9 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { Report } from '@/@types/openapi-internal/Report'
+import { isValidSARRequest } from '@/utils/helpers'
+import { getSecretByName } from '@/utils/secrets-manager'
+import { connectToSFTP } from '@/utils/sar'
 
 const FINCEN_BINARY = path.join(
   __dirname,
@@ -507,7 +514,31 @@ export class UsCtrReportGenerator implements ReportGenerator {
       throw e
     }
   }
-  async submit?(): Promise<string> {
-    return 'test'
+  public async submit(report: Report) {
+    if (isValidSARRequest(this.tenantId)) {
+      const creds = await getSecretByName('fincenCreds')
+      const sftp = await connectToSFTP()
+      const remoteCwd = await sftp.cwd()
+      const submissionsDir = remoteCwd + FincenSubmissionDirectory
+      const remoteFilename = `CTRXST.${dayjs(report.createdAt).format(
+        'YYYYMMDDhhmmss'
+      )}.${creds.username}.xml`
+      const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
+      fs.writeFileSync(localFilePath, last(report.revisions)?.output ?? '')
+
+      // uploading file to sftp
+      await sftp.fastPut(
+        localFilePath,
+        path.join(submissionsDir, remoteFilename)
+      )
+      await sftp.end()
+    }
+
+    Sentry.withScope((scope) => {
+      scope.setTags({ reportId: report.id })
+      scope.setFingerprint([this.tenantId, report.id ?? ''])
+      Sentry.captureMessage(`[${report.id}] New FinCEN CTR report submitted`)
+    })
+    return ''
   }
 }

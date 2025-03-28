@@ -6,9 +6,9 @@ import * as Sentry from '@sentry/serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import { chunk, cloneDeep, isEqual, last, omit, pick } from 'lodash'
-
-import { backOff } from 'exponential-backoff'
+import SftpClient from 'ssh2-sftp-client'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
+
 import {
   ContactOffice,
   FilingInstitution,
@@ -59,7 +59,11 @@ import {
   fixPartyIndicators,
   fixSuspiciousActivityIndicators,
 } from '@/services/sar/generators/US/SAR/helpers/postprocessing'
-import { ActivityPartyTypeCodes } from '@/services/sar/generators/US/SAR/helpers/constants'
+import {
+  ActivityPartyTypeCodes,
+  FincenAcknowlegementDirectory,
+  FincenSubmissionDirectory,
+} from '@/services/sar/generators/US/SAR/helpers/constants'
 import { CurrencyService } from '@/services/currency'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isValidSARRequest } from '@/utils/helpers'
@@ -678,25 +682,30 @@ export class UsSarReportGenerator implements ReportGenerator {
     return [...uniqueIPAddresses]
   }
 
-  public async getAckFileContent(report: Report) {
+  public async getAckFileContent(
+    sftp: SftpClient,
+    report: Report,
+    creds: { username: string }
+  ) {
     if (isValidSARRequest(this.tenantId)) {
-      const creds = await getSecretByName('fincenCreds')
-      const sftp = await connectToSFTP()
       const remoteCwd = await sftp.cwd()
-      logger.info(`Remote dir: ${remoteCwd}`)
-      const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
+      const ackDir = remoteCwd + FincenAcknowlegementDirectory
+      const reportType = report.reportTypeId.split('-')[1]
+      if (reportType !== 'SAR' && reportType !== 'CTR') {
+        await sftp.end()
+        return undefined
+      }
+      const remoteFilename = `${reportType}XST.${dayjs(report.createdAt).format(
         'YYYYMMDDhhmmss'
-      )}.${creds.username}.xml`
+      )}.${creds.username}.xml.MESSAGES.XML`
       const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
-      logger.info(
-        await sftp.fastGet(
-          path.join(remoteCwd, `Inbox/${remoteFilename}`),
-          localAckFile
-        )
-      )
-      await sftp.end()
+      const exists = await sftp.exists(path.join(ackDir, remoteFilename))
+      if (!exists) {
+        await sftp.end()
+        return undefined
+      }
+      await sftp.fastGet(path.join(ackDir, remoteFilename), localAckFile)
       const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
-      logger.info(`Ack file (Inbox/): ${ackFileContent}`)
       return ackFileContent
     }
   }
@@ -707,41 +716,17 @@ export class UsSarReportGenerator implements ReportGenerator {
       const creds = await getSecretByName('fincenCreds')
       const sftp = await connectToSFTP()
       const remoteCwd = await sftp.cwd()
-      logger.info(`Remote dir: ${remoteCwd}`)
+      const submissionsDir = remoteCwd + FincenSubmissionDirectory
       const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
         'YYYYMMDDhhmmss'
       )}.${creds.username}.xml`
       const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
       fs.writeFileSync(localFilePath, last(report.revisions)?.output ?? '')
 
-      logger.info(
-        await sftp.fastPut(localFilePath, path.join(remoteCwd, remoteFilename))
-      )
-      logger.info(`${remoteFilename} uploaded successfully`)
-
-      await backOff(
-        async () => {
-          const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
-          try {
-            logger.info(
-              await sftp.fastGet(
-                path.join(remoteCwd, `acks/${remoteFilename}`),
-                localAckFile
-              )
-            )
-            // TODO: what are we doing here. shouldn't we address the ack file
-            const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
-            logger.info(`Ack file (acks/): ${ackFileContent}`)
-          } catch (e) {
-            logger.warn(`Failed to get ack file from acks/`)
-            logger.error(e)
-          }
-        },
-        {
-          startingDelay: 1000,
-          maxDelay: 2000,
-          numOfAttempts: 3,
-        }
+      // uploading file to sftp
+      await sftp.fastPut(
+        localFilePath,
+        path.join(submissionsDir, remoteFilename)
       )
       await sftp.end()
     }

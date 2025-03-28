@@ -92,16 +92,19 @@ export class CanadaStrReportGenerator implements ReportGenerator {
       },
     }
   }
-  getAugmentedReportParams(_report?: Report): ReportParameters {
-    throw new Error('Method not implemented.')
+  getAugmentedReportParams(report: Report): ReportParameters {
+    return report.parameters
   }
-  generate(
+  async generate(
     _reportParams: ReportParameters,
     _report: Report
   ): Promise<GenerateResult> {
-    throw new Error('Method not implemented.')
+    return {
+      type: 'STRING',
+      value: '',
+    }
   }
-  submit?(_report: Report): Promise<string> {
-    throw new Error('Method not implemented.')
+  async submit(_report: Report): Promise<string> {
+    return ''
   }
 }

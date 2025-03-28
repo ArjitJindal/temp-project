@@ -1,4 +1,5 @@
 import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
+import SftpClient from 'ssh2-sftp-client'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { UsSarReportGenerator } from '../sar/generators/US/SAR'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -9,6 +10,8 @@ import { logger } from '@/core/logger'
 import { FincenReportStatus } from '@/@types/openapi-internal/FincenReportStatus'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { ask } from '@/utils/openai'
+import { connectToSFTP } from '@/utils/sar'
+import { getSecretByName } from '@/utils/secrets-manager'
 
 export function fincenStatusMapper(
   fincenReportStatus: FincenReportStatus
@@ -62,20 +65,20 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
     const filteredUsaReports = await reportRepository.getReportsByStatus(
       ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
       'US',
-      timeNow - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
-    )
-    logger.info(
-      'USA Pending report',
-      filteredUsaReports.map((report) => report.id)
+      timeNow - 1000 * 60 * 60 * 5 // 5 hour report update
     )
     const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
-    logger.info('USA Pending report', filteredUsaReports.length)
     // 2. fetch result from sftp server
-
     const batchSize = 5
     let currentIndex = 0
 
+    let sftp: SftpClient | undefined = undefined
     try {
+      sftp = await connectToSFTP()
+      const creds = await getSecretByName('fincenCreds')
+      if (!sftp) {
+        return
+      }
       // Process reports in batches
       while (currentIndex < filteredUsaReports.length) {
         const endIndex = Math.min(
@@ -87,75 +90,82 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
           endIndex
         )
 
-        logger.info(
-          `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Processing batch ${
-            currentIndex / batchSize + 1
-          }, reports ${currentIndex} to ${endIndex - 1}`
-        )
-
         const promises = filteredUsaReportBatch.map((report) => {
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
+            if (!sftp) {
+              resolve(false)
+              return
+            }
             sarGenerator
-              .getAckFileContent(report)
-              .then((status) => {
-                if (status && report.id) {
-                  return parseReportXMLResponse(status).then(
-                    ({ result, statusInfo }) => {
-                      const currentStatus =
-                        fincenStatusMapper(statusInfo as FincenReportStatus) ??
-                        report.status
-                      logger.info(
-                        ` ${this.FINCEN_BATCH_JOB_LOG_PREFIX} Tenant Id,
-                          ${job.tenantId}
-                          ${report.id},
-                          'Current status',
-                          ${report.status},
-                          'New status',
-                          ${currentStatus}`
-                      )
-                      if (currentStatus !== report.status && report.id) {
-                        return reportRepository
-                          .updateReportAck(
-                            report.id,
-                            currentStatus,
-                            status,
-                            result,
-                            timeNow
-                          )
-                          .then(() => resolve(true))
-                      }
-                      resolve(true)
+              .getAckFileContent(sftp, report, creds)
+              .then(async (status) => {
+                try {
+                  if (!status && report.id) {
+                    // handling report which were never on fincen
+                    await reportRepository.updateReportAck(
+                      report.id,
+                      'SUBMISSION_REJECTED',
+                      '',
+                      '',
+                      timeNow
+                    )
+                  }
+                  if (status && report.id) {
+                    const { result, statusInfo } = await parseReportXMLResponse(
+                      status
+                    )
+                    if (!statusInfo) {
+                      logger.warn(`Invalid status info for report ${report.id}`)
+                      return resolve(false)
                     }
-                  )
+
+                    const currentStatus =
+                      fincenStatusMapper(statusInfo as FincenReportStatus) ??
+                      report.status
+                    if (currentStatus !== report.status && report.id) {
+                      await reportRepository.updateReportAck(
+                        report.id,
+                        currentStatus,
+                        status,
+                        result,
+                        timeNow
+                      )
+                    }
+                  }
+                  resolve(true)
+                } catch (error) {
+                  logger.error(`Error processing report ${report.id}: ${error}`)
                 }
-                resolve(false)
               })
               .catch((error) => {
-                if (
-                  typeof error === 'object' &&
-                  error !== null &&
-                  (('code' in error && error.code === 'ERR_GENERIC_CLIENT') ||
-                    ('message' in error &&
-                      error.message ===
-                        'Connection attempt timed out after 15 seconds'))
-                ) {
-                  logger.error(`${SFTP_CONNECTION_ERROR_PREFIX} ${error}`)
-                }
-                logger.error(
-                  `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Error processing report ID: ${report.id}, Tenant ID: ${job.tenantId}, Error: ${error}`
-                )
-                resolve(false)
+                reject(error)
               })
           })
         })
-
         await Promise.all(promises)
         currentIndex = endIndex
       }
+      if (sftp) {
+        await sftp.end()
+      }
     } catch (error) {
+      if (sftp) {
+        await sftp.end()
+      }
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        (('code' in error && error.code === 'ERR_GENERIC_CLIENT') ||
+          ('message' in error &&
+            error.message === 'Connection attempt timed out after 30 seconds'))
+      ) {
+        logger.error(`${SFTP_CONNECTION_ERROR_PREFIX} ${error}`)
+        return
+      }
       logger.error(
         `${this.FINCEN_BATCH_JOB_LOG_PREFIX} Batch processing error for Tenant ID: ${job.tenantId}, Error: ${error}`
       )
+      return
     }
   }
 }

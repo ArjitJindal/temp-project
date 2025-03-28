@@ -12,7 +12,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { tenantHasFeature } from '@/core/utils/context'
-import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 import {
   getTimeFromRegion,
@@ -28,7 +27,6 @@ import {
   ENGINEERING_HELP_CHANNEL_ID,
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
-import { isValidSARRequest } from '@/utils/helpers'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
@@ -138,45 +136,6 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
   }
 }
 
-async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
-  try {
-    const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
-    await Promise.all(
-      tenantIds.map(async (id) => {
-        if (isValidSARRequest(id)) {
-          const reportRepository = new ReportRepository(
-            // 1. get all sla reports that have submitting and submit accept status
-            id,
-            mongoDb,
-            dynamoDb
-          )
-          const hasUsReports =
-            await reportRepository.hasValidJurisdictionReports(
-              ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
-              'US',
-              Date.now() - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
-            )
-          logger.info(`${id}: USA report to fetch ${hasUsReports}`)
-          if (hasUsReports) {
-            await sendBatchJobCommand({
-              type: 'FINCEN_REPORT_STATUS_REFRESH',
-              tenantId: id,
-            })
-          }
-        }
-      })
-    )
-  } catch (e) {
-    logger.error(
-      `Failed to handle FinCen report status batch job: ${
-        (e as Error)?.message
-      }`,
-      e
-    )
-  }
-}
-
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   try {
     const now = getTimeFromRegion()
@@ -193,7 +152,6 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
 
     await handleRiskScoringTriggerBatchJob(tenantIds)
     await deleteOldWebhookRetryEvents(tenantIds)
-    await handleFinCenReportStatusBatchJob(tenantIds)
 
     if (envIs('dev')) {
       await notifyTriageIssues()

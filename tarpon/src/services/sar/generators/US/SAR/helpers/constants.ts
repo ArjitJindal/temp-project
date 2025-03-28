@@ -21,3 +21,6 @@ export const ActivityPartyTypeCodesCTR = {
   PERSON_TXN_BEHALF: '23',
   COMMON_CARRIER: '58',
 }
+
+export const FincenSubmissionDirectory = 'submissions'
+export const FincenAcknowlegementDirectory = 'acks'

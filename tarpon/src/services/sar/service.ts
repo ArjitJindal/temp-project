@@ -26,7 +26,6 @@ import { formatCountry } from '@/utils/countries'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
-import { logger } from '@/core/logger'
 import { getContext } from '@/core/utils/context'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -404,10 +403,8 @@ export class ReportService {
       }
 
       if (directSubmission && generator.submit) {
-        logger.info('Submitting report')
         report.status = 'SUBMITTING' as ReportStatus
         report.statusInfo = await generator.submit(report)
-        logger.info('Submitted report')
       }
 
       const savedReport = await this.reportRepository.saveOrUpdateReport(report)
