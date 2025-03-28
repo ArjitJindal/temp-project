@@ -324,7 +324,8 @@ export class ListRepository {
   public async getListItems(
     listId: string,
     params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>,
-    version?: number
+    version?: number,
+    ignoreCount: boolean = false
   ): Promise<CursorPaginationResponse<ListItem>> {
     let requestedVersion = version
     if (!requestedVersion) {
@@ -385,7 +386,10 @@ export class ListRepository {
     const [nextPageFirstItem] = Items.slice(pageSize)
     const hasNextPage = nextPageFirstItem != null
 
-    const count = await this.countListValues(listId, requestedVersion)
+    const count = ignoreCount
+      ? 0
+      : await this.countListValues(listId, requestedVersion)
+
     return {
       next:
         hasNextPage && items.length === pageSize
@@ -429,7 +433,7 @@ export class ListRepository {
   public async match(
     listHeader: ListHeader,
     value: string,
-    method: 'EXACT' | 'PREFIX'
+    method: 'EXACT' | 'PREFIX' | 'CONTAINS'
   ): Promise<boolean> {
     const { listId, version } = listHeader
     const key = DynamoDbKeys.LIST_ITEM(this.tenantId, listId, version, value)
@@ -440,6 +444,8 @@ export class ListRepository {
     } else if (method === 'PREFIX') {
       KeyConditionExpression =
         'PartitionKeyID = :pk AND begins_with ( SortKeyID, :sk )'
+    } else if (method === 'CONTAINS') {
+      KeyConditionExpression = 'PartitionKeyID = :pk'
     } else {
       KeyConditionExpression = neverReturn(method, 'PartitionKeyID = :pk')
     }
@@ -447,10 +453,12 @@ export class ListRepository {
       new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         KeyConditionExpression,
-        FilterExpression:
-          'attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp',
+        FilterExpression: `(attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp) ${
+          method === 'CONTAINS' ? 'AND contains ( #key, :sk )' : ''
+        }`,
         ExpressionAttributeNames: {
           '#ttl': 'ttl',
+          ...(method === 'CONTAINS' ? { '#key': 'key' } : {}),
         },
         ExpressionAttributeValues: {
           ':pk': key.PartitionKeyID,

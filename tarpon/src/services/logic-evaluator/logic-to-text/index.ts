@@ -67,6 +67,10 @@ const staticOperators: Record<StaticallyDescriptionGenerator, string> = {
   'op:endswith': 'is end with',
   'op:time_difference_greater_than': 'time difference greater than',
   'op:time_difference_lesser_than': 'time difference lesser than',
+  'op:contains_in_lists': 'is contains in lists',
+  'op:!contains_in_lists': 'is not contains in lists',
+  'op:similar_to_in_lists': 'is similar to in lists',
+  'op:!similar_to_in_lists': 'is not similar to in lists',
 }
 
 export class V8LogicToText {

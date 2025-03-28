@@ -27,7 +27,15 @@ BUILT_IN_OPERATORS.not_equal.label = '≠';
 BUILT_IN_OPERATORS.greater_or_equal.label = '≥';
 BUILT_IN_OPERATORS.less_or_equal.label = '≤';
 
-export const MULTI_SELECT_LIST_OPERATORS: LogicOperatorType[] = ['op:inlist', 'op:!inlist'];
+export const MULTI_SELECT_LIST_OPERATORS: LogicOperatorType[] = [
+  'op:inlist',
+  'op:!inlist',
+  'op:contains_in_lists',
+  'op:similar_to_in_lists',
+  'op:!similar_to_in_lists',
+  'op:!contains_in_lists',
+];
+
 export const REGEX_MATCH_OPERATORS: LogicOperatorType[] = ['op:regexmatch', 'op:!regexmatch'];
 export const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
 export const SELECT_OPERATORS: Array<keyof CoreOperators> = [
