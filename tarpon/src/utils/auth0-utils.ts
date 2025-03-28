@@ -179,5 +179,7 @@ export function userToAccount(user: GetUsers200ResponseOneOfInner): Account {
     escalationReviewerId: app_metadata?.escalationReviewerId,
     isReviewer: app_metadata?.isReviewer,
     demoMode: user.user_metadata?.demoMode ?? false,
+    staffId: user.user_metadata?.staffId,
+    department: user.user_metadata?.department,
   }
 }

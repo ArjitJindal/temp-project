@@ -10378,6 +10378,10 @@ components:
           type: boolean
         demoMode:
           type: boolean
+        staffId:
+          type: string
+        department:
+          type: string
       required:
         - id
         - role
@@ -10396,6 +10400,12 @@ components:
       type: object
       properties:
         email:
+          type: string
+        name:
+          type: string
+        staffId:
+          type: string
+        department:
           type: string
         role:
           type: string
@@ -10422,6 +10432,12 @@ components:
       type: object
       properties:
         role:
+          type: string
+        name:
+          type: string
+        staffId:
+          type: string
+        department:
           type: string
         reviewerId:
           type: string

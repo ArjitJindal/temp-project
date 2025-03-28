@@ -136,12 +136,72 @@ export default function Team() {
   const isAccountPermissionsEnabled = useHasPermissions(['accounts:overview:write']);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const columnHelper = new ColumnHelper<Account>();
+
   const columns: TableColumn<Account>[] = columnHelper.list([
+    columnHelper.simple<'name'>({
+      key: 'name',
+      title: 'Name',
+      defaultWidth: 220,
+      type: {
+        render(name, context) {
+          return (
+            <div className={s.name}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {!name || context.item.email === context.item.name ? '-' : name}
+              </P>
+            </div>
+          );
+        },
+        stringify(value, item) {
+          return !value || item.email === item.name ? '-' : value;
+        },
+      },
+    }),
+    columnHelper.simple<'staffId'>({
+      key: 'staffId',
+      title: 'Staff ID',
+      defaultWidth: 220,
+      defaultVisibility: false,
+      type: {
+        render(staffId) {
+          return (
+            <div className={s.staffId}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {staffId}
+              </P>
+            </div>
+          );
+        },
+        stringify(value) {
+          return value || '-';
+        },
+      },
+    }),
+    columnHelper.simple<'department'>({
+      key: 'department',
+      title: 'Department',
+      defaultWidth: 220,
+      defaultVisibility: false,
+      type: {
+        render(department) {
+          return (
+            <div className={s.department}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {department}
+              </P>
+            </div>
+          );
+        },
+        stringify(value) {
+          return value || '-';
+        },
+      },
+    }),
     columnHelper.simple<'email'>({
       key: 'email',
       title: 'Email',
       sorting: true,
-      defaultWidth: 350,
+      defaultWidth: 250,
       type: {
         render(email, context) {
           return (
@@ -163,7 +223,7 @@ export default function Team() {
     columnHelper.simple<'role'>({
       key: 'role',
       title: 'Role',
-      defaultWidth: 200,
+      defaultWidth: 250,
       type: {
         render: (role, context) => {
           return (
@@ -195,7 +255,7 @@ export default function Team() {
     columnHelper.simple<'createdAt'>({
       key: 'createdAt',
       title: 'Created at',
-      defaultWidth: 300,
+      defaultWidth: 150,
       type: {
         render(createdAt, _context) {
           return (
@@ -216,7 +276,7 @@ export default function Team() {
     columnHelper.simple<'lastLogin'>({
       key: 'lastLogin',
       title: 'Last login',
-      defaultWidth: 300,
+      defaultWidth: 150,
       type: {
         render(lastLogin, _context) {
           return (
@@ -247,12 +307,13 @@ export default function Team() {
       },
       hideInTable: true,
       exporting: true,
+      defaultWidth: 220,
     }),
     columnHelper.simple<'emailVerified'>({
       key: 'emailVerified',
       title: 'Email verification',
       sorting: true,
-      defaultWidth: 220,
+      defaultWidth: 150,
       type: {
         render: (emailVerified, context) => {
           return (
@@ -308,6 +369,7 @@ export default function Team() {
       },
       hideInTable: true,
       exporting: true,
+      defaultWidth: 220,
     }),
   ]);
 

@@ -145,6 +145,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       userManager.create({
         connection: CONNECTION_NAME,
         email: account.email,
+        name: account.name,
         // NOTE: We need at least one upper case character
         password: generateRandomPassword(),
         app_metadata: {
@@ -155,6 +156,10 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           escalationLevel: account.escalationLevel,
           escalationReviewerId: account.escalationReviewerId,
         } as AppMetadata,
+        user_metadata: {
+          ...(account.department && { department: account.department }),
+          ...(account.staffId && { staffId: account.staffId }),
+        },
         verify_email: false,
       })
     )
@@ -188,6 +193,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       userManager.update(
         { id: accountId },
         {
+          ...(patchData.name && { name: patchData.name }),
           app_metadata: {
             ...patchedAppMetadata,
             // Specific Undefined Check Don't Change
@@ -201,6 +207,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           user_metadata: {
             ...user.user_metadata,
             ...patchData.user_metadata,
+            ...(patchData.staffId && { staffId: patchData.staffId }),
+            ...(patchData.department && { department: patchData.department }),
           },
           blocked: patchData.blocked,
         }

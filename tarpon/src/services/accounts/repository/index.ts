@@ -24,6 +24,9 @@ export type InternalUserCreate = {
   reviewerId?: string
   escalationLevel?: string
   escalationReviewerId?: string
+  name?: string
+  staffId?: string
+  department?: string
 }
 
 export type InternalAccountCreate =
@@ -57,6 +60,9 @@ export type PatchAccountData = {
   user_metadata?: { demoMode?: boolean }
   blockedReason?: Account['blockedReason'] | null
   role?: string
+  name?: string
+  staffId?: string
+  department?: string
 }
 
 @traceable

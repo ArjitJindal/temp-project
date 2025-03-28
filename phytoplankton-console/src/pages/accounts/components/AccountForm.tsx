@@ -9,7 +9,7 @@ import * as ArrayUtils from '@/utils/array';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
-import { Account, EscalationLevel } from '@/apis';
+import { Account, AccountPatchPayload, EscalationLevel } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
@@ -26,6 +26,7 @@ import Alert from '@/components/library/Alert';
 import { getOr } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
+import { ExpandContentButton } from '@/components/library/ExpandContentButton';
 
 interface Props {
   editAccount: Account | null;
@@ -37,10 +38,11 @@ interface Props {
 
 type ReviewPermission = 'MAKER' | 'CHECKER' | 'ESCALATION_L1' | 'ESCALATION_L2';
 
-type FormValues = Pick<Account, 'email' | 'role'> & {
+type FormValues = Pick<Account, 'email' | 'role' | 'staffId' | 'department'> & {
   reviewPermissions?: ReviewPermission;
   checker?: SecondPerson;
   escalationL2?: SecondPerson;
+  name?: string;
 };
 
 const defaultState: FormValues = {
@@ -85,6 +87,9 @@ export default function AccountForm(props: Props) {
         ...defaultState,
         role: editAccount?.role || 'admin',
         email: editAccount?.email || '',
+        name: editAccount?.name || '',
+        staffId: editAccount?.staffId || '',
+        department: editAccount?.department || '',
       };
 
       if (isEscalationsEnabled) {
@@ -159,6 +164,9 @@ export default function AccountForm(props: Props) {
 
         return await api.accountsInvite({
           AccountInvitePayload: {
+            name: payload.name,
+            staffId: payload.staffId,
+            department: payload.department,
             email: payload.email,
             role: payload.role,
             escalationLevel: escalationLevel,
@@ -207,7 +215,7 @@ export default function AccountForm(props: Props) {
           escalationLevel = 'L2';
         }
 
-        const accountPatchPayload = {
+        const accountPatchPayload: AccountPatchPayload = {
           role: payload.role,
           escalationLevel: escalationLevel,
           isReviewer: payload.reviewPermissions === 'CHECKER',
@@ -217,6 +225,9 @@ export default function AccountForm(props: Props) {
             payload.reviewPermissions === 'ESCALATION_L1'
               ? payload.escalationL2?.assignees?.[0]
               : undefined,
+          staffId: payload.staffId,
+          department: payload.department,
+          name: payload.name,
         };
 
         return await api.accountsEdit({
@@ -385,10 +396,31 @@ export default function AccountForm(props: Props) {
       >
         {({ valuesState: [values] }) => (
           <>
-            <InputField<FormValues, 'email'> name={'email'} label={'Email'}>
+            <InputField<FormValues, 'name'> name={'name'} label={'Name'}>
+              {(inputProps) => <TextInput {...inputProps} />}
+            </InputField>
+            <InputField<FormValues, 'email'>
+              name={'email'}
+              label={'Email'}
+              labelProps={{ required: { value: true, showHint: true } }}
+            >
               {(inputProps) => <TextInput {...inputProps} testName="accounts-email" />}
             </InputField>
-            <InputField<FormValues, 'role'> name={'role'} label={'Role'}>
+            <ExpandContentButton suffixText="advanced options">
+              <>
+                <InputField<FormValues, 'staffId'> name={'staffId'} label={'Staff ID'}>
+                  {(inputProps) => <TextInput {...inputProps} />}
+                </InputField>
+                <InputField<FormValues, 'department'> name={'department'} label={'Department'}>
+                  {(inputProps) => <TextInput {...inputProps} />}
+                </InputField>
+              </>
+            </ExpandContentButton>
+            <InputField<FormValues, 'role'>
+              name={'role'}
+              label={'Role'}
+              labelProps={{ required: { value: true, showHint: true } }}
+            >
               {(inputProps) => (
                 <RoleSelect
                   {...inputProps}
