@@ -81,7 +81,7 @@ async function main() {
 
   const allEntries = [...canaryEntries, ...lambdaEntries, ...fargateEntries]
 
-  for (const chunkEntries of chunk(allEntries, allEntries.length / 2)) {
+  for (const chunkEntries of chunk(allEntries, allEntries.length / 4)) {
     const bundleResults = await esbuild.build({
       platform: 'node',
       entryPoints: chunkEntries,

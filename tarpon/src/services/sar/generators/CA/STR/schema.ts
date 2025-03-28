@@ -1,5 +1,4 @@
 import { cloneDeep, merge, omit, pick } from 'lodash'
-import { CountryCode } from 'flagright/api'
 import { FintracJsonSchemaResolved } from './resources/STRBatchSchema_Resolved'
 import {
   ActivitySectorCode as ActivitySectorCodeEnum,
@@ -357,7 +356,7 @@ const StructuredAddress = {
       subProvinceSubLocality: { title: 'Sub Province locaclity' },
       postalZipCode: { title: 'Zip code' },
       countryCode: {
-        ...CountryCode,
+        ...CountryOfResidenceCodeEnum,
         title: 'Country (Code)',
       },
     }
@@ -372,7 +371,7 @@ const UnstructuredAddress = {
     ['countryCode', 'unstructured'],
     [],
     {
-      countryCode: { ...CountryCode, title: 'Country (Code)' },
+      countryCode: { ...CountryOfResidenceCodeEnum, title: 'Country (Code)' },
       unstructured: { title: 'Address' },
     }
   ),
