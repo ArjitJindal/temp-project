@@ -1,16 +1,9 @@
-import { KenyaSARReportGenerator } from './KE/SAR'
-import { UsSarReportGenerator } from './US/SAR'
-import { UsCtrReportGenerator } from './US/CTR'
-import { CanadaStrReportGenerator } from './CA/STR'
 import { Report } from '@/@types/openapi-internal/Report'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
-import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
-import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
-import { MalaysianSTRReportGenerator } from '@/services/sar/generators/MY/STR'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -61,23 +54,3 @@ export interface ReportGenerator {
   ): Promise<GenerateResult>
   submit?(report: Report): Promise<string>
 }
-
-const reportGenerators = [
-  CanadaStrReportGenerator,
-  KenyaSARReportGenerator,
-  LithuaniaSTRReportGenerator,
-  LithuaniaCTRReportGenerator,
-  UsSarReportGenerator,
-  UsCtrReportGenerator,
-  MalaysianSTRReportGenerator,
-]
-export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
-  reportGenerators.map((rg) => {
-    const generator = new rg()
-    const type = generator.getType()
-    const id = `${type.countryCode}-${type.type}`
-    return [id, generator]
-  })
-)
-
-export const UNIMPLEMENTED_GENERATORS: [CountryCode, string][] = [['KE', 'STR']]

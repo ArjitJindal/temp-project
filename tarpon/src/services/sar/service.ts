@@ -14,11 +14,8 @@ import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { CaseService } from '../cases'
 import { ReportRepository } from './repositories/report-repository'
+import { REPORT_GENERATORS, UNIMPLEMENTED_GENERATORS } from './utils/helper'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
-import {
-  REPORT_GENERATORS,
-  UNIMPLEMENTED_GENERATORS,
-} from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {

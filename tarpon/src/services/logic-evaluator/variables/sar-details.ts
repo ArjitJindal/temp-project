@@ -7,8 +7,8 @@ import { Business } from '@/@types/openapi-public/Business'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
-import { REPORT_GENERATORS } from '@/services/sar/generators'
 import { REPORT_STATUSS } from '@/@types/openapi-internal-custom/ReportStatus'
+import { REPORT_GENERATORS } from '@/services/sar/utils/helper'
 
 const SAR_REGION_OPTIONS = uniqBy(
   Array.from(REPORT_GENERATORS.keys()).map((key) => {
