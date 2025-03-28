@@ -8,6 +8,12 @@ export default function (): JSX.Element {
       <UseCase title="Basic case">
         <FilesDraggerInput />
       </UseCase>
+      <UseCase title="Custom accepted filed">
+        <FilesDraggerInput accept={['image/png', 'application/x-7z-compressed']} />
+      </UseCase>
+      <UseCase title="Custom info text">
+        <FilesDraggerInput info={'Custom info text here'} />
+      </UseCase>
     </>
   );
 }

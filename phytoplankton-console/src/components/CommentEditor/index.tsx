@@ -178,7 +178,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               });
               hideMessage();
             } catch (error) {
-              message.fatal(`Failed to upload the file: ${getErrorMessage(error)}`, error);
+              message.fatal(`Unable to upload the file. ${getErrorMessage(error)}`, error);
               if (onError) {
                 onError(new Error());
                 removeFile(fileS3Key);

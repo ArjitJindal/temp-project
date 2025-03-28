@@ -12,6 +12,15 @@ import FilesList from '@/components/files/FilesList';
 import { usePrevious } from '@/utils/hooks';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 import UploadIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
+import { notEmpty } from '@/utils/array';
+
+const DEFAULT_ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
 
 interface Props extends InputProps<FileInfo[]> {
   singleFile?: boolean;
@@ -29,12 +38,15 @@ export default function FilesDraggerInput(props: Props) {
     onChange,
     singleFile,
     size = 'SMALL',
-    info = 'Supported file types: PDF, JPG, PNG, XLSX, DOCX',
     listType = 'comment',
     required = false,
     setUploading,
-    accept,
+    accept = DEFAULT_ALLOWED_TYPES,
   } = props;
+  const acceptExtensions = accept.map((mimetype) => mime.getExtension(mimetype)).filter(notEmpty);
+  const info =
+    props.info ??
+    'Supported file types: ' + acceptExtensions.map((x) => x.toUpperCase()).join(', ');
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
 
@@ -54,15 +66,13 @@ export default function FilesDraggerInput(props: Props) {
     }
   }, [onChange, prevState, state]);
 
-  const acceptedTypes = accept?.map((mimetype) => '.' + mime.getExtension(mimetype));
-
   return (
     <div className={s.root}>
       <Upload.Dragger
         disabled={uploadingCount > 0}
         multiple={!singleFile}
         showUploadList={false}
-        accept={acceptedTypes?.join(',')}
+        accept={acceptExtensions.map((extension) => '.' + extension).join(',')}
         customRequest={async ({ file: f, onError, onSuccess }) => {
           setUploadingCount((count) => count + 1);
           setUploading?.(true);
@@ -71,20 +81,19 @@ export default function FilesDraggerInput(props: Props) {
           try {
             if (accept) {
               if (!file.type || !accept.includes(file.type)) {
-                throw new Error(`File type not allowed. Accepted types: ${accept.join(', ')}`);
+                message.error(
+                  `File type not allowed. Accepted types: ${acceptExtensions
+                    .map((x) => x.toUpperCase())
+                    .join(', ')}`,
+                );
+                return;
               }
             }
 
             if (listType === 'attachment') {
-              const allowedTypes = [
-                'image/jpeg',
-                'image/png',
-                'application/pdf',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              ];
-              if (!allowedTypes.includes(file.type)) {
-                throw new Error('Unsupported file type');
+              if (!DEFAULT_ALLOWED_TYPES.includes(file.type)) {
+                message.error('Unsupported file type');
+                return;
               }
             }
 
@@ -96,7 +105,7 @@ export default function FilesDraggerInput(props: Props) {
             setState((prevState) => [...(prevState ?? []), fileInfo]);
             hideMessage();
           } catch (error) {
-            message.fatal(`Failed to upload the file: ${getErrorMessage(error)}`, error);
+            message.fatal(`Unable to upload the file. ${getErrorMessage(error)}`, error);
             if (onError) {
               onError(new Error());
             }
