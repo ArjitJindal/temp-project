@@ -506,6 +506,21 @@ export const USER_RISK_PARAMETERS = [
   },
 ]
 
+export const DRS_CHANGE_PSEUDO_TX_IDS = [
+  'USER_UPDATED',
+  'FIRST_DRS',
+  'MANUAL_UPDATE',
+  'USER_UPDATE',
+]
+
+export function isNotArsChangeTxId(transactionId?: string) {
+  return DRS_CHANGE_PSEUDO_TX_IDS.includes(transactionId ?? '')
+}
+
+export function isManualDrsTxId(transactionId: string) {
+  return transactionId === 'MANUAL_UPDATE'
+}
+
 export const ALL_RISK_PARAMETERS = [
   ...USER_RISK_PARAMETERS,
   ...BUSINESS_RISK_PARAMETERS,

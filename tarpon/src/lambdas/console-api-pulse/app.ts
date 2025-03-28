@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { omit } from 'lodash'
 import { RiskService } from '@/services/risk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -232,6 +233,23 @@ export const riskLevelAndScoreHandler = lambdaApi({
         return [dynamoResult]
       }
       return null
+    })
+
+    handlers.registerGetDrsValues(async (ctx, request) => {
+      const isDetailsPermissionEnabled = hasPermission(
+        'risk-scoring:risk-score-details:read'
+      )
+      const result = await riskService.getDrsValuesFromMongo(request)
+      if (!isDetailsPermissionEnabled) {
+        const updatedData = result.items.map((val) =>
+          omit(val, ['components', 'factorScoreDetails'])
+        )
+        return {
+          total: result.total,
+          items: updatedData,
+        }
+      }
+      return result
     })
 
     return await handlers.handle(event)

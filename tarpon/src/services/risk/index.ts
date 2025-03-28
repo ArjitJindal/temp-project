@@ -24,6 +24,7 @@ import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPos
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -228,10 +229,6 @@ export class RiskService {
     }
   }
 
-  async getDrsValueFromMongo(userId: string) {
-    return await this.riskRepository.getDrsValueFromMongo(userId)
-  }
-
   async getKrsValueFromMongo(userId: string) {
     return await this.riskRepository.getKrsValueFromMongo(userId)
   }
@@ -242,6 +239,10 @@ export class RiskService {
 
   async getArsScoreFromDynamo(transactionId: string) {
     return await this.riskRepository.getArsScore(transactionId)
+  }
+
+  async getDrsValuesFromMongo(request: DefaultApiGetDrsValuesRequest) {
+    return await this.riskRepository.getDrsScoresForUser(request)
   }
 
   async getKrsScoreFromDynamo(userId: string) {

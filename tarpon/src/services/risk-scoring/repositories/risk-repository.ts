@@ -18,6 +18,7 @@ import { isEmpty, memoize, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
+  isNotArsChangeTxId,
 } from '@flagright/lib/utils/risk'
 import {
   hasFeature,
@@ -54,7 +55,11 @@ import { AggregationRepository } from '@/services/logic-evaluator/engine/aggrega
 import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
-import { getMongoDbClient, internalMongoReplace } from '@/utils/mongodb-utils'
+import {
+  getMongoDbClient,
+  internalMongoReplace,
+  paginateCursor,
+} from '@/utils/mongodb-utils'
 import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
 import {
@@ -65,6 +70,8 @@ import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { handleSmallNumber } from '@/utils/helpers'
 import { CounterRepository } from '@/services/counter/repository'
+import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
+import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -101,7 +108,6 @@ export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   },
 ]
 
-const RISK_SCORE_HISTORY_ITEMS_TO_SHOW = 5
 @traceable
 export class RiskRepository {
   tenantId: string
@@ -785,26 +791,6 @@ export class RiskRepository {
 
     return drsScore
   }
-  async getDrsValueFromMongo(userId: string): Promise<DrsScore[]> {
-    const db = this.mongoDb.db()
-    const drsValuesCollection = db.collection<DrsScore>(
-      DRS_SCORES_COLLECTION(this.tenantId)
-    )
-    const drsValues: WithId<DrsScore>[] = await drsValuesCollection
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(RISK_SCORE_HISTORY_ITEMS_TO_SHOW)
-      .toArray()
-    const riskClassificationValues = await this.getRiskClassificationValues()
-
-    return drsValues.map((drsValue) => ({
-      ...drsValue,
-      derivedRiskLevel: getRiskLevelFromScore(
-        riskClassificationValues,
-        drsValue.drsScore
-      ),
-    }))
-  }
 
   async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
     logger.debug(`Updating risk factor for V8.`)
@@ -990,6 +976,61 @@ export class RiskRepository {
       }
     }
   )
+
+  async getDrsScoresForUser(
+    request: DefaultApiGetDrsValuesRequest
+  ): Promise<DrsValuesResponse> {
+    const collection = this.mongoDb
+      .db()
+      .collection<DrsScore>(DRS_SCORES_COLLECTION(this.tenantId))
+    const cursor = collection
+      .find({ userId: request.userId })
+      .sort({ createdAt: -1 })
+
+    const result = await paginateCursor<
+      DefaultApiGetDrsValuesRequest,
+      DrsScore
+    >(cursor, request).toArray()
+
+    const count = await collection.countDocuments({ userId: request.userId })
+
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    const arsPromises = result.map((data) => {
+      const hasArs = !isNotArsChangeTxId(data.transactionId)
+      return hasArs && data.transactionId
+        ? this.getArsValueFromMongo(data.transactionId)
+        : Promise.resolve(null)
+    })
+
+    const arsScores = await Promise.all(arsPromises)
+
+    const enrichedData = result.map((data, index) => {
+      const arsScore = arsScores[index]
+      const arsData = arsScore
+        ? {
+            arsRiskLevel: getRiskLevelFromScore(
+              riskClassificationValues,
+              arsScore?.arsScore ?? null
+            ),
+            arsRiskScore: arsScore?.arsScore,
+          }
+        : {}
+
+      return {
+        ...data,
+        derivedRiskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          data.drsScore
+        ),
+        ...arsData,
+      }
+    })
+
+    return {
+      total: count,
+      items: enrichedData,
+    }
+  }
 
   async getDrsScores(userIds: string[]): Promise<DrsScore[]> {
     return (

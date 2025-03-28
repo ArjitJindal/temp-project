@@ -3985,6 +3985,38 @@ paths:
           name: userId
           required: true
           description: UserID of the user to get Dynamic Risk Score
+  /pulse/drs-values:
+    parameters: []
+    get:
+      summary: Dynamic Risk Values
+      operationId: get-drs-values
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-levels:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrsValuesResponse'
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user to get Dynamic Risk Score
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /pulse/average-ars-value:
     parameters:
       - schema:
@@ -16937,6 +16969,28 @@ components:
         - timeReduced
         - transactionsHit
         - usersHit
+    DrsValuesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtendedDrsScore'
+        total:
+          type: number
+      required:
+        - items
+        - total
+    ExtendedDrsScore:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/DrsScore'
+        - type: object
+          properties:
+            arsRiskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+            arsRiskScore:
+              type: number
   securitySchemes:
     Authorization:
       type: http

@@ -453,3 +453,9 @@ export const THRESHOLD_RECOMMENDATIONS = (instanceId: string) => [
   instanceId,
 ];
 export const NANGO_CONNECTIONS = (): QueryKey => ['nango-connections'];
+
+export const USER_DRS_VALUES = (userId: string, params: AnyParameters): QueryKey => [
+  'user-drs-values',
+  userId,
+  params,
+];
