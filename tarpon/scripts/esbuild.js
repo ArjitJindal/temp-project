@@ -3,7 +3,7 @@ const path = require('path')
 const esbuild = require('esbuild')
 const fs = require('fs-extra')
 const builtinModules = require('builtin-modules')
-
+const { chunk } = require('lodash')
 // These are transitive dependencies of our dependencies, which for some reasons
 // are not specified in dependencies or specified in devDependencies and are
 // not installed, but still used in code, so need to be declared as external
@@ -42,20 +42,6 @@ async function copyDirToDist(
   await fs.ensureDir(dest)
   await fs.copy(src, dest)
 }
-async function copyFilesToDist(
-  relativeSrc,
-  relativeDest,
-  validateDestPath = true
-) {
-  const src = path.join(ROOT_DIR, relativeSrc)
-  const dest = path.join(OUT_DIR, relativeDest)
-  const destDir = path.parse(dest).dir
-  if (validateDestPath && !(await fs.exists(destDir))) {
-    throw new Error(`${destDir} does not exist!`)
-  }
-  await fs.ensureDir(dest)
-  await fs.copyFile(src, dest)
-}
 
 async function copyDirsToDist(entries) {
   await Promise.all(
@@ -93,10 +79,9 @@ async function main() {
     'Helvetica-Oblique.afm',
   ]
 
-  for (const chunkEntries of [
-    [...canaryEntries, ...lambdaEntries.slice(0, lambdaEntries.length / 2)],
-    [...fargateEntries, ...lambdaEntries.slice(lambdaEntries.length / 2)],
-  ]) {
+  const allEntries = [...canaryEntries, ...lambdaEntries, ...fargateEntries]
+
+  for (const chunkEntries of chunk(allEntries, allEntries.length / 2)) {
     const bundleResults = await esbuild.build({
       platform: 'node',
       entryPoints: chunkEntries,
