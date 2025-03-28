@@ -2,8 +2,9 @@
 const path = require('path')
 const esbuild = require('esbuild')
 const fs = require('fs-extra')
-const builtinModules = require('builtin-modules')
 const { chunk } = require('lodash')
+const builtinModules = require('builtin-modules')
+
 // These are transitive dependencies of our dependencies, which for some reasons
 // are not specified in dependencies or specified in devDependencies and are
 // not installed, but still used in code, so need to be declared as external
@@ -79,27 +80,61 @@ async function main() {
     'Helvetica-Oblique.afm',
   ]
 
-  const allEntries = [...canaryEntries, ...lambdaEntries, ...fargateEntries]
+  const fileOutDirMap = {
+    'src/lambdas': {
+      entries: chunk(lambdaEntries, lambdaEntries.length / 4),
+      outDir: 'dist/lambdas',
+    },
+    'src/canaries': {
+      entries: canaryEntries.map((entry) => [entry]),
+      outDir: 'dist/canaries',
+    },
+    'src/fargate': {
+      entries: fargateEntries.map((entry) => [entry]),
+      outDir: 'dist/fargate',
+    },
+  }
 
-  for (const chunkEntries of chunk(allEntries, allEntries.length / 4)) {
-    const bundleResults = await esbuild.build({
-      platform: 'node',
-      entryPoints: chunkEntries,
-      bundle: true,
-      outdir: OUT_DIR,
-      target: 'node18.17.1',
-      format: 'cjs',
-      minify: true,
-      metafile: true,
-      logLevel: 'warning',
-      sourcemap: 'external',
-      minifyIdentifiers: false,
-      external: ['aws-sdk', ...builtinModules, ...IGNORED],
-      loader: { '.node': 'file' },
-      keepNames: true,
-    })
-    for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
-      console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
+  if (
+    lambdaEntries.length !== fileOutDirMap['src/lambdas'].entries.flat().length
+  ) {
+    throw new Error('Lambda entries length mismatch')
+  }
+
+  if (canaryEntries.length !== fileOutDirMap['src/canaries'].entries.length) {
+    throw new Error('Canary entries length mismatch')
+  }
+
+  if (fargateEntries.length !== fileOutDirMap['src/fargate'].entries.length) {
+    throw new Error('Fargate entries length mismatch')
+  }
+
+  for (const { entries, outDir } of Object.values(fileOutDirMap)) {
+    for (const chunkEntries of entries) {
+      const bundleResults = await esbuild.build({
+        platform: 'node',
+        entryPoints: chunkEntries,
+        bundle: true,
+        outdir:
+          chunkEntries.length === 1 && !chunkEntries[0].includes('fargate')
+            ? `${outDir}/${chunkEntries[0].split('/')[2]}`
+            : outDir,
+        target: 'node18.17.1',
+        format: 'cjs',
+        minify: true,
+        metafile: true,
+        logLevel: 'warning',
+        sourcemap: 'external',
+        minifyIdentifiers: false,
+        external: ['aws-sdk', ...builtinModules, ...IGNORED],
+        loader: { '.node': 'file' },
+        keepNames: true,
+      })
+      for (const [file, info] of Object.entries(
+        bundleResults.metafile.outputs
+      )) {
+        console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
+      }
     }
   }
 
