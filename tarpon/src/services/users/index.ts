@@ -1580,6 +1580,12 @@ export class UserService {
       return !oldTag || oldTag.value !== newTag.value
     })
 
+    // tags that are in user.tags but not in updateRequest.tags (deleted tags)
+    const deletedTags = user.tags?.filter(
+      (oldTag) =>
+        !updateRequest.tags?.some((newTag) => newTag.key === oldTag.key)
+    )
+
     if (newOrUpdatedTags?.length) {
       webhookTasks.push({
         event: 'USER_TAGS_UPDATED',
@@ -1591,6 +1597,19 @@ export class UserService {
         triggeredBy: 'MANUAL',
       })
     }
+
+    if (deletedTags?.length) {
+      webhookTasks.push({
+        event: 'USER_TAGS_DELETED',
+        entityId: user.userId,
+        payload: {
+          userId: user.userId,
+          tags: deletedTags,
+        },
+        triggeredBy: 'MANUAL',
+      })
+    }
+
     const commentBody = options?.tagDetailsRuleInstance
       ? `User API tags updated due to hit of rule ${options?.tagDetailsRuleInstance?.id}`
       : 'User API tags updated over the console'
