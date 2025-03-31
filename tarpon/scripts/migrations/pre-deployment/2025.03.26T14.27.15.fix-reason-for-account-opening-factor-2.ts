@@ -1,12 +1,17 @@
-import { cloneDeep, flatten, isArray, set } from 'lodash'
+import { cloneDeep, flatten, isArray, set, unset } from 'lodash'
 import { traverse } from '@flagright/lib/utils'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { envIs } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
+  if (envIs('sandbox:eu-1') && tenant.id === '59c6cf309a') {
+    // Skipping as ran from local
+    return
+  }
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const riskRepository = new RiskRepository(tenant.id, {
@@ -20,14 +25,18 @@ async function migrateTenant(tenant: Tenant) {
   for (const factor of affectedFactors) {
     const logicData = factor.riskLevelLogic?.map((val) => {
       const newLogic = cloneDeep(val.logic)
-      traverse(val, (key, value, path) => {
-        if (key === 'in') {
-          if (!isArray(value)) {
-            return
-          }
+      traverse(val.logic, (key, value, path) => {
+        if (key === 'logic') {
+          unset(newLogic, path)
+        } else if (key === 'in' && isArray(value) && !path.includes('logic')) {
+          const targetPath = [...path, '1']
+
+          // Ensure previous value is removed before setting new one
+          unset(newLogic, targetPath)
+
           set(
             newLogic,
-            [...path, '1'],
+            targetPath,
             isArray(value[1]) ? flatten(value[1]) : [value[1]]
           )
         }
