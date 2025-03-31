@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from 'react';
+import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
 import { Alert, InternalBusinessUser, InternalConsumerUser, RuleInstance } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -91,7 +92,7 @@ export function usePreloadedHistory(
   );
 
   const riskLevelRes = map(queryResult.data, (x) => {
-    return x.drsScore?.manualRiskLevel ?? x.drsScore?.derivedRiskLevel;
+    return x.drsScore?.manualRiskLevel ?? x.drsScore?.derivedRiskLevel ?? DEFAULT_RISK_LEVEL;
   });
 
   return useMemo((): (QuestionResponse | QuestionResponseSkeleton)[] => {
