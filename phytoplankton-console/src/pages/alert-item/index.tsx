@@ -39,7 +39,6 @@ function AlertItemPage() {
   };
 
   const onReload = () => {
-    alertQueryResults.refetch();
     queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
   };
 

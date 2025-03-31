@@ -1005,6 +1005,7 @@ export class AlertsRepository {
     const result = await collection
       .find({
         'alerts.alertId': { $in: alertIds },
+        'alerts.ruleChecklistTemplateId': { $ne: null },
         'alerts.ruleChecklist.qaStatus': null,
       })
       .project({ 'alerts.alertId': 1, 'alerts.ruleChecklist': 1 })

@@ -13,12 +13,11 @@ interface ConfirmModalProps {
   status: ChecklistStatus;
   alertIds: string[];
   caseId: string;
-  onResetSelection: () => void;
-  reload: () => void;
+  onSuccess: () => void;
 }
 
 export default function QaStatusChangeModal(props: ConfirmModalProps) {
-  const { status, alertIds, reload } = props;
+  const { status, alertIds, onSuccess } = props;
   const displayStatus = status === 'PASSED' ? 'pass' : 'fail';
   const [isOpen, setIsOpen] = useState(false);
   const api = useApi();
@@ -55,7 +54,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
           message.success(`${alertsText} marked as QA Pass successfully`);
         }
         narrativeRef?.current?.reset();
-        reload();
+        onSuccess();
         setIsOpen(false);
       },
       onError: (error) => {

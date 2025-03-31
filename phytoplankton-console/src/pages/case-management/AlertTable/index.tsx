@@ -1601,7 +1601,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   ];
 
   const qaModeSelectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
-    ({ selectedIds, params, onResetSelection, selectedItems }) => {
+    ({ selectedIds, params, selectedItems }) => {
       if (selectedTransactionIds.length || !isAllAlertsOfStatus(selectedItems, 'CLOSED')) {
         return;
       }
@@ -1612,13 +1612,12 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             status={'PASSED'}
             alertIds={selectedIds}
             caseId={params.caseId}
-            onResetSelection={onResetSelection}
-            reload={reloadTable}
+            onSuccess={reloadTable}
           />
         )
       );
     },
-    ({ selectedIds, params, onResetSelection, selectedItems }) => {
+    ({ selectedIds, params, selectedItems }) => {
       if (selectedTransactionIds.length || !isAllAlertsOfStatus(selectedItems, 'CLOSED')) {
         return;
       }
@@ -1628,8 +1627,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             status={'FAILED'}
             alertIds={selectedIds}
             caseId={params.caseId}
-            onResetSelection={onResetSelection}
-            reload={reloadTable}
+            onSuccess={reloadTable}
           />
         )
       );

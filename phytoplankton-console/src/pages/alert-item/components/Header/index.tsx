@@ -1,11 +1,12 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import StatusChangeMenu from './StatusChangeMenu';
 import SubHeader from './SubHeader';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
 import { getAlertUrl, getCaseUrl } from '@/utils/routing';
 import { useQuery } from '@/utils/queries/hooks';
 import CommentButton from '@/components/CommentButton';
@@ -23,6 +24,9 @@ import {
   isLoading as isAsyncResourceLoading,
   map,
 } from '@/utils/asyncResource';
+import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
+import { useQaMode } from '@/utils/qa-mode';
+import { useBackUrl } from '@/utils/backUrl';
 
 interface Props {
   alertItemRes: AsyncResource<Alert>;
@@ -37,7 +41,7 @@ export default function Header(props: Props) {
     map(alertItemRes, (alertItem) => alertItem),
     undefined,
   );
-  const { alertId, caseId, alertStatus } = alertItem ?? {};
+  const { alertId, caseId } = alertItem ?? {};
   const isLoading = isAsyncResourceLoading(alertItemRes);
   const caseQueryResults = useQuery(
     CASES_ITEM(caseId ?? ''),
@@ -52,7 +56,6 @@ export default function Header(props: Props) {
     },
   );
   const api = useApi();
-  const client = useQueryClient();
   const actionsRes = useActions(alertItemRes, props.onReload);
   return (
     <EntityHeader
@@ -110,16 +113,6 @@ export default function Header(props: Props) {
           }}
           requiredPermissions={['case-management:case-overview:write']}
         />,
-        <AlertsStatusChangeButton
-          key={'status-change-button'}
-          status={alertStatus}
-          ids={alertId ? [alertId] : []}
-          transactionIds={{}}
-          onSaved={() => {
-            client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
-          }}
-          haveModal={true}
-        />,
         ...getOr(actionsRes, []),
       ]}
       subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItemRes={alertItemRes} />}
@@ -131,8 +124,17 @@ function useActions(
   alertItemRes: AsyncResource<Alert>,
   onReload: () => void,
 ): AsyncResource<React.ReactNode[]> {
+  const [qaMode] = useQaMode();
   const isSarEnabled = useFeatureEnabled('SAR');
   const client = useQueryClient();
+  const backUrl = useBackUrl();
+  const queryClient = useQueryClient();
+
+  const navigate = useNavigate();
+  const handleSuccessQa = () => {
+    queryClient.invalidateQueries({ queryKey: ALERT_LIST() });
+    navigate(backUrl ?? '');
+  };
 
   return map(alertItemRes, (alertItem) => {
     const { caseId } = alertItem;
@@ -141,6 +143,43 @@ function useActions(
 
     if (alertId == null) {
       return result;
+    }
+
+    // QA-mode buttons
+    if (qaMode) {
+      if (caseId != null && alertItem.alertStatus === 'CLOSED' && !alertItem.ruleQaStatus) {
+        result.push(
+          <QaStatusChangeModal
+            status={'PASSED'}
+            alertIds={[alertId]}
+            caseId={caseId}
+            onSuccess={handleSuccessQa}
+          />,
+          <QaStatusChangeModal
+            status={'FAILED'}
+            alertIds={[alertId]}
+            caseId={caseId}
+            onSuccess={handleSuccessQa}
+          />,
+        );
+      }
+      return result;
+    }
+
+    // Comment button
+    {
+      result.push(
+        <AlertsStatusChangeButton
+          key={'status-change-button'}
+          status={alertItem.alertStatus}
+          ids={alertId ? [alertId] : []}
+          transactionIds={{}}
+          onSaved={() => {
+            client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
+          }}
+          haveModal={true}
+        />,
+      );
     }
 
     // SAR report button
@@ -157,9 +196,7 @@ function useActions(
           <CreateCaseConfirmModal
             selectedEntities={[alertId]}
             caseId={caseId}
-            onResetSelection={() => {
-              client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
-            }}
+            onResetSelection={onReload}
           />,
         );
       }

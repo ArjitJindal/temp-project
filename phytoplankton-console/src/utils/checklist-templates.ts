@@ -14,8 +14,11 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
     const ruleInstances = await api.getRuleInstances({});
     const ruleInstance = ruleInstances.find((ri) => ri.id === alert.ruleInstanceId);
 
-    if (!ruleInstance || !ruleInstance.checklistTemplateId) {
+    if (!ruleInstance) {
       throw new Error('Could not resolve alert rule instance');
+    }
+    if (!ruleInstance.checklistTemplateId) {
+      throw new Error('Rule instance doesnt have checklist assigned');
     }
     const template = await api.getChecklistTemplate({
       checklistTemplateId: ruleInstance.checklistTemplateId,
