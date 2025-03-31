@@ -272,7 +272,8 @@ export class SanctionsHitsRepository {
 
   async filterWhitelistedHits(
     rawHits: SanctionsEntity[],
-    hitContext?: SanctionsHitContext
+    hitContext?: SanctionsHitContext,
+    provider?: SanctionsDataProviderName
   ): Promise<SanctionsEntity[]> {
     const entityIds = rawHits.map((x) => x?.id).filter(notEmpty)
     const subject = {
@@ -284,7 +285,9 @@ export class SanctionsHitsRepository {
     const whitelistEntities =
       await this.sanctionsWhitelistEntityRepository.getWhitelistEntities(
         entityIds,
-        subject
+        subject,
+        Number.MAX_SAFE_INTEGER,
+        provider
       )
     return rawHits.filter(
       (x) =>

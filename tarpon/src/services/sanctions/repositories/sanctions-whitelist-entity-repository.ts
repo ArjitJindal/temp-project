@@ -113,9 +113,10 @@ export class SanctionsWhitelistEntityRepository {
   public async getWhitelistEntities(
     requestEntityIds: string[],
     subject: WhitelistSubject,
-    limit = Number.MAX_SAFE_INTEGER
+    limit = Number.MAX_SAFE_INTEGER,
+    providerOverride?: SanctionsDataProviderName
   ): Promise<SanctionsWhitelistEntity[]> {
-    const provider = getDefaultProviders()?.[0]
+    const provider = providerOverride ?? getDefaultProviders()?.[0]
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)

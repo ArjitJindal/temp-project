@@ -306,7 +306,8 @@ export class SanctionsService {
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
         sanctionsSearchResponse.data ?? [],
-        context
+        context,
+        providerName
       )
 
     const response: SanctionsSearchResponse = {
