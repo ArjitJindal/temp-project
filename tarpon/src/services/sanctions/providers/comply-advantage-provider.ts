@@ -134,16 +134,14 @@ export function complyAdvantageDocToEntity(
   const sources = getSources(doc)
   const sanctionSearchTypes = compact(
     uniq(
-      hit.match_types_details?.flatMap((mt) =>
-        mt.aml_types?.map((t) =>
-          t.includes('media')
-            ? 'ADVERSE_MEDIA'
-            : t.includes('pep')
-            ? 'PEP'
-            : t.includes('warning')
-            ? 'WARNINGS'
-            : 'SANCTIONS'
-        )
+      hit.doc.types?.map((t) =>
+        t.includes('media')
+          ? 'ADVERSE_MEDIA'
+          : t.includes('pep')
+          ? 'PEP'
+          : t.includes('warning')
+          ? 'WARNINGS'
+          : 'SANCTIONS'
       )
     )
   )
