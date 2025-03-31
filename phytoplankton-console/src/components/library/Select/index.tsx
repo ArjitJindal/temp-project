@@ -33,6 +33,7 @@ interface CommonProps<Value extends Comparable> {
   className?: string;
   innerRef?: React.RefObject<any>;
   isCopyable?: boolean;
+  isSearchable?: boolean;
   portaled?: boolean;
   dropdownMatchWidth?: boolean;
   autoTrim?: boolean;
@@ -85,6 +86,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     optionLabelProp,
     tooltip,
     onSearch,
+    isSearchable = true,
   } = props;
 
   const selectInput = useRef<HTMLDivElement | null>(null);
@@ -259,7 +261,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
           }
         }}
         filterOption={() => true}
-        showSearch={true}
+        showSearch={isSearchable}
         notFoundContent={props.notFoundContent}
         placement={props.dropdownPlacement ?? 'bottomLeft'}
         mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}

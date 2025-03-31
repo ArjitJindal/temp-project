@@ -181,7 +181,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
       {advancedOptions && (
         <ExpandContentButton suffixText={'advanced options'}>{advancedOptions}</ExpandContentButton>
       )}
-      <div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <InputField<FormValues<R>, 'comment'>
           name={'comment'}
           label={'Comment'}
@@ -203,59 +203,57 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
                   }
                 }}
               />
-              <div>
-                <MarkdownEditor
-                  editorHeight={250}
-                  ref={editorRef}
-                  initialValue={values.values.comment ? values.values.comment : ''}
-                  onChange={(value) => {
-                    inputProps.onChange?.(value);
-                  }}
-                  placeholder={placeholder}
-                  mentionsEnabled={isMentionsEnabled}
-                  mentionsList={Object.keys(users).map((userId) => ({
-                    label: users[userId].email,
-                    id: users[userId].id,
-                  }))}
-                />
-              </div>
+              <MarkdownEditor
+                editorHeight={'FULL'}
+                ref={editorRef}
+                initialValue={values.values.comment ? values.values.comment : ''}
+                onChange={(value) => {
+                  inputProps.onChange?.(value);
+                }}
+                placeholder={placeholder}
+                mentionsEnabled={isMentionsEnabled}
+                mentionsList={Object.keys(users).map((userId) => ({
+                  label: users[userId].email,
+                  id: users[userId].id,
+                }))}
+              />
             </>
           )}
         </InputField>
-        {infoText && (
-          <div className={s.infoDiv}>
-            <Alert type="INFO">{infoText}</Alert>
-          </div>
-        )}
-        {showCopilot && (
-          <GenericFormField<FormValues<R>, 'comment'> name="comment">
-            {(props) => (
-              <CopilotButtonContent
-                reasons={values.values.reasons ?? []}
-                otherReason={values.values.reasonOther}
-                narrative={props.value || ''}
-                setNarrativeValue={(value) => {
-                  props.onChange?.(value);
-                  editorRef.current?.editorRef.current
-                    ?.getInstance()
-                    .setMarkdown(value.replaceAll(/\n\n/gi, `\n`));
-                }}
-                entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
-                entityType={entityType}
-                additionalCopilotInfo={additionalCopilotInfo}
-                copilotDisabled={entityIds && entityIds?.length > 1 ? true : false}
-                copilotDisabledReason={
-                  entityType === 'CASE'
-                    ? 'AI copilot cannot be used when closing multiple cases simultaneously.'
-                    : entityType === 'ALERT'
-                    ? 'AI copilot cannot be used when closing multiple alerts simultaneously.'
-                    : ''
-                }
-              />
-            )}
-          </GenericFormField>
-        )}
       </div>
+      {infoText && (
+        <div className={s.infoDiv}>
+          <Alert type="INFO">{infoText}</Alert>
+        </div>
+      )}
+      {showCopilot && (
+        <GenericFormField<FormValues<R>, 'comment'> name="comment">
+          {(props) => (
+            <CopilotButtonContent
+              reasons={values.values.reasons ?? []}
+              otherReason={values.values.reasonOther}
+              narrative={props.value || ''}
+              setNarrativeValue={(value) => {
+                props.onChange?.(value);
+                editorRef.current?.editorRef.current
+                  ?.getInstance()
+                  .setMarkdown(value.replaceAll(/\n\n/gi, `\n`));
+              }}
+              entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
+              entityType={entityType}
+              additionalCopilotInfo={additionalCopilotInfo}
+              copilotDisabled={entityIds && entityIds?.length > 1 ? true : false}
+              copilotDisabledReason={
+                entityType === 'CASE'
+                  ? 'AI copilot cannot be used when closing multiple cases simultaneously.'
+                  : entityType === 'ALERT'
+                  ? 'AI copilot cannot be used when closing multiple alerts simultaneously.'
+                  : ''
+              }
+            />
+          )}
+        </GenericFormField>
+      )}
       <Label label={'Upload attachments'}>
         <FilesDraggerInput
           onChange={(value) => {

@@ -1,5 +1,15 @@
 @import 'src/components/ui/colors';
 
+:global {
+  .ant-modal {
+    max-width: calc(100vw - 160px) !important;
+  }
+
+  .ant-modal-content {
+    max-height: calc(100vh - 160px) !important;
+  }
+}
+
 .root {
   &.withTabs {
     :global {
@@ -96,7 +106,7 @@
   justify-content: space-between;
 }
 
-.headerLeft {
+.headerSection {
   display: flex;
   gap: 14px;
   align-items: center;

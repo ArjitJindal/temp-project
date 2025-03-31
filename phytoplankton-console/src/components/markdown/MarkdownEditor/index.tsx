@@ -18,7 +18,7 @@ interface Props {
   onChange: (value: string) => void;
   mentionsEnabled?: boolean;
   mentionsList?: Array<MentionItem>;
-  editorHeight?: number;
+  editorHeight?: number | 'FULL';
 }
 
 export default class MarkdownEditor extends React.Component<Props> {
@@ -153,6 +153,10 @@ export default class MarkdownEditor extends React.Component<Props> {
     return (
       <div
         className={s.root}
+        style={{
+          minHeight: 200,
+          height: this.props.editorHeight === 'FULL' ? undefined : 200,
+        }}
         onPasteCapture={(e) => {
           const clipboardData = e.clipboardData;
           const html = clipboardData.getData('text/html');
@@ -166,7 +170,7 @@ export default class MarkdownEditor extends React.Component<Props> {
         data-cy={'comment-textbox'}
       >
         <Editor
-          height={`${this.props.editorHeight ?? 200}px`}
+          height={'100%'}
           hideModeSwitch={true}
           previewStyle="vertical"
           initialEditType="wysiwyg"

@@ -8,6 +8,7 @@ import TextInput from '@/components/library/TextInput';
 import Confirm from '@/components/utils/Confirm';
 import { init, loading, success } from '@/utils/asyncResource';
 import Checkbox from '@/components/library/Checkbox';
+import Toggle from '@/components/library/Toggle';
 
 function Case1(): JSX.Element {
   const [isVisible, setVisible] = useState<boolean>(false);
@@ -225,12 +226,57 @@ function Case3(): JSX.Element {
   );
 }
 
+function Case4(): JSX.Element {
+  const [isVisible, setVisible] = useState<boolean>(false);
+  const [isResizable, setResizable] = useState<boolean | undefined>(true);
+  return (
+    <>
+      <UseCase title="Resizable">
+        <div
+          style={{
+            gap: '20px',
+            display: 'flex',
+          }}
+        >
+          <Label label={'Enable resizing'}>
+            <Toggle value={isResizable} onChange={setResizable} />
+          </Label>
+        </div>
+        <Button
+          onClick={() => {
+            setVisible(true);
+          }}
+        >
+          Show modal
+        </Button>
+        <Modal
+          id={'test-modal'}
+          title={'Test modal'}
+          isResizable={isResizable}
+          isOpen={isVisible}
+          onCancel={() => {
+            setVisible(false);
+          }}
+        >
+          <div>
+            ReactJS is a great choice for building modal components. It is a powerful and flexible
+            JavaScript library that allows developers to create user interfaces with ease. ReactJS
+            is a great choice for building modal components. It is a powerful and flexible
+            JavaScript library that allows developers to create user interfaces with ease.
+          </div>
+        </Modal>
+      </UseCase>
+    </>
+  );
+}
+
 export default function (): JSX.Element {
   return (
     <>
       <Case1 />
       <Case2 />
       <Case3 />
+      <Case4 />
       <UseCase
         title="Confirm modal"
         initialState={{

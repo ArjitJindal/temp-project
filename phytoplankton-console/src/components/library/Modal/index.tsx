@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
+import { useLocalStorageState } from 'ahooks';
 import s from './style.module.less';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
+import Select from '@/components/library/Select';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
 export type ModalHeight = 'AUTO' | 'FULL';
 
 interface Props {
+  id?: string;
   title?: React.ReactNode;
   subTitle?: React.ReactNode;
   icon?: React.ReactNode;
@@ -34,6 +37,7 @@ interface Props {
   hideOk?: boolean;
   maskClosable?: boolean;
   footerExtra?: React.ReactNode;
+  isResizable?: boolean;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -45,6 +49,7 @@ const WIDTH: { [K in ModalWidth]: number | string } = {
 
 export default function Modal(props: Props) {
   const {
+    id,
     icon,
     title,
     subTitle,
@@ -66,9 +71,15 @@ export default function Modal(props: Props) {
     hideOk = false,
     maskClosable = true,
     footerExtra,
+    isResizable = false,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
+  const [size, setSize] = useLocalStorageState<ModalWidth | undefined>(id ?? 'UNKNOWN_MODAL');
+
+  const derivedResizable: boolean = isResizable && id != null;
+  const derivedSize: ModalWidth = derivedResizable && size != null ? size : width;
+  const derivedHeight: ModalHeight = derivedSize === 'XL' ? 'FULL' : height;
 
   const withTabs = tabs.length > 1;
   return (
@@ -77,21 +88,35 @@ export default function Modal(props: Props) {
         s.root,
         withTabs && s.withTabs,
         disablePadding && s.disablePadding,
-        s[`height-${height}`],
+        s[`height-${derivedHeight}`],
       )}
       title={
         !hideHeader ? (
           <div className={s.header}>
             <div className={s.mainHeader}>
-              <div className={s.headerLeft}>
+              <div className={s.headerSection}>
                 {icon && <div className={s.icon}>{icon}</div>}
                 <Typography.Title data-cy="modal-title" level={3} className={s.title}>
                   {title}
                 </Typography.Title>
               </div>
-              <button className={s.close} onClick={onCancel} data-cy="modal-close">
-                <CloseCircleLineIcon />
-              </button>
+              <div className={s.headerSection}>
+                {derivedResizable && (
+                  <Select<ModalWidth>
+                    value={derivedSize}
+                    options={[
+                      { label: `Size: M`, value: 'M' },
+                      { label: `Size: L`, value: 'XL' },
+                    ]}
+                    isSearchable={false}
+                    allowClear={false}
+                    onChange={setSize}
+                  />
+                )}
+                <button className={s.close} onClick={onCancel} data-cy="modal-close">
+                  <CloseCircleLineIcon />
+                </button>
+              </div>
             </div>
             {subTitle && (
               <P grey variant="m" fontWeight="normal">
@@ -138,7 +163,7 @@ export default function Modal(props: Props) {
           </div>
         )
       }
-      width={WIDTH[width]}
+      width={WIDTH[derivedSize]}
       centered
       maskClosable={maskClosable}
     >

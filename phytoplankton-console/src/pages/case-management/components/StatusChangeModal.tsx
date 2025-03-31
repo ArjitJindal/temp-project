@@ -134,6 +134,8 @@ export default function StatusChangeModal(props: Props) {
   return (
     <>
       <Modal
+        id={'status-change-modal'}
+        isResizable={true}
         title={modalTitle}
         isOpen={isVisible && !showConfirmation}
         okProps={{
