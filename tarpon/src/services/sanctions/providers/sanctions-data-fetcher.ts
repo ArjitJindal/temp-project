@@ -1,5 +1,4 @@
 import { uniq } from 'lodash'
-import { token_similarity_sort_ratio } from 'fuzzball'
 import { sanitizeString } from '@flagright/lib/utils'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
@@ -9,6 +8,7 @@ import {
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
 } from './utils'
+import { token_similarity_sort_ratio } from '@/utils/fuzzball'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,

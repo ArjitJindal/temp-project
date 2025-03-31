@@ -12849,18 +12849,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuzzball@npm:^2.1.3":
-  version: 2.1.3
-  resolution: "fuzzball@npm:2.1.3"
-  dependencies:
-    heap: "npm:>=0.2.0"
-    setimmediate: "npm:^1.0.5"
-    string.fromcodepoint: "npm:^0.2.1"
-    string.prototype.codepointat: "npm:^0.2.0"
-  checksum: 8c10bfa954173c4b42513f8515274a8267eaae3837861a0b1c8279391db67b5fb071298f3f68a09f4effe64a8e7c5d2f040e70ebcba2cdaff17feebf1b1d39ca
-  languageName: node
-  linkType: hard
-
 "gauge@npm:^3.0.0":
   version: 3.0.2
   resolution: "gauge@npm:3.0.2"
@@ -13305,13 +13293,6 @@ __metadata:
   dependencies:
     function-bind: "npm:^1.1.2"
   checksum: c330f8d93f9d23fe632c719d4db3d698ef7d7c367d51548b836069e06a90fa9151e868c8e67353cfe98d67865bf7354855db28fa36eb1b18fa5d4a3f4e7f1c90
-  languageName: node
-  linkType: hard
-
-"heap@npm:>=0.2.0":
-  version: 0.2.7
-  resolution: "heap@npm:0.2.7"
-  checksum: 6374f6510af79bf47f2cfcee265bf608e6ed2b2694875974d1cb5654ddc98af05347dcf3a42ee9a7de318b576022d6f4d00fe06fa65a4a65c4c60638375eabfe
   languageName: node
   linkType: hard
 
@@ -18316,13 +18297,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"setimmediate@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "setimmediate@npm:1.0.5"
-  checksum: 76e3f5d7f4b581b6100ff819761f04a984fa3f3990e72a6554b57188ded53efce2d3d6c0932c10f810b7c59414f85e2ab3c11521877d1dea1ce0b56dc906f485
-  languageName: node
-  linkType: hard
-
 "setprototypeof@npm:1.2.0":
   version: 1.2.0
   resolution: "setprototypeof@npm:1.2.0"
@@ -18899,20 +18873,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"string.fromcodepoint@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "string.fromcodepoint@npm:0.2.1"
-  checksum: 6ba80f70c3e2a36dab87f5d68168936403295a73838564e701f5c861d397d77d9e97b0e2aa0f3c163a25a96c785dcc2145452b220753fb7b3e6c6fe431c9c411
-  languageName: node
-  linkType: hard
-
-"string.prototype.codepointat@npm:^0.2.0":
-  version: 0.2.1
-  resolution: "string.prototype.codepointat@npm:0.2.1"
-  checksum: bafa15844d7ea5bed24a01fa8954327c0c49226cefe68ab70573f1338f6a4680587db962724924f2cceb91abe408e11bd38c80095f25ee080f136a6c9d300f00
-  languageName: node
-  linkType: hard
-
 "string.prototype.padend@npm:^3.0.0":
   version: 3.1.5
   resolution: "string.prototype.padend@npm:3.1.5"
@@ -19318,7 +19278,6 @@ __metadata:
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"
     fs-extra: "npm:^11.2.0"
-    fuzzball: "npm:^2.1.3"
     get-port: "npm:^5.1.1"
     google-auth-library: "npm:^9.14.2"
     google-spreadsheet: "npm:^4.1.4"
