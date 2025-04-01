@@ -3,20 +3,25 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
-import { Assignment, Case, CaseStatus } from '@/apis';
+import { Assignment, Case } from '@/apis';
 import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
 import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
-import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import {
+  canAssignToUser,
+  createAssignments,
   getAssignmentsToShow,
-  isOnHoldOrInProgressOrEscalated,
   statusEscalated,
   statusInReview,
 } from '@/utils/case-utils';
@@ -50,11 +55,10 @@ export default function SubHeader(props: Props) {
   if (isUserSubject && caseUsers) {
     caseUser = caseUsers?.origin ?? caseUsers?.destination;
   }
+  const isCaseInReview = statusInReview(caseItem?.caseStatus);
   const isCaseEscalated = statusEscalated(caseItem?.caseStatus);
-  const otherStatuses = useMemo(
-    () => isOnHoldOrInProgressOrEscalated(caseItem?.caseStatus as CaseStatus | undefined),
-    [caseItem?.caseStatus],
-  );
+
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const queryClient = useQueryClient();
   const hasEditingPermission = useHasPermissions(['case-management:case-overview:write']);
@@ -73,7 +77,7 @@ export default function SubHeader(props: Props) {
           return;
         }
 
-        if (isCaseEscalated) {
+        if (isCaseInReview || isCaseEscalated) {
           await api.patchCasesReviewAssignment({
             CasesReviewAssignmentsUpdateRequest: {
               caseIds: [caseId],
@@ -130,14 +134,20 @@ export default function SubHeader(props: Props) {
 
   const handleUpdateAssignments = useCallback(
     (assignees: string[]) => {
-      const newAssignments = assignees.map((assigneeUserId) => ({
-        assignedByUserId: currentUserId,
-        assigneeUserId,
-        timestamp: Date.now(),
-      }));
-      handleUpdateCaseMutation.mutate(newAssignments);
+      const caseStatus = caseItem?.caseStatus ?? 'OPEN';
+      const [assignments, _] = createAssignments(
+        caseStatus,
+        assignees,
+        isMultiLevelEscalationEnabled,
+        currentUserId ?? '',
+      );
+      if (caseId == null) {
+        message.fatal('Case ID is null');
+        return;
+      }
+      handleUpdateCaseMutation.mutate(assignments);
     },
-    [handleUpdateCaseMutation, currentUserId],
+    [handleUpdateCaseMutation, currentUserId, caseItem, isMultiLevelEscalationEnabled, caseId],
   );
 
   const manualCaseReason = useMemo(() => {
@@ -176,8 +186,13 @@ export default function SubHeader(props: Props) {
             {(caseItem) => (
               <AssigneesDropdown
                 assignments={getAssignmentsToShow(caseItem) ?? []}
-                editing={
-                  !(statusInReview(caseItem?.caseStatus) || otherStatuses) && hasEditingPermission
+                editing={!(caseItem?.caseStatus === 'CLOSED') && hasEditingPermission}
+                customFilter={(account) =>
+                  canAssignToUser(
+                    caseItem?.caseStatus ?? 'OPEN',
+                    account,
+                    isMultiLevelEscalationEnabled,
+                  )
                 }
                 onChange={handleUpdateAssignments}
                 fixSelectorHeight

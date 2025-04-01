@@ -20,7 +20,6 @@ import {
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   AlertStatus,
-  Assignment,
   ChecklistStatus,
   SanctionsHitStatus,
 } from '@/apis';
@@ -63,9 +62,11 @@ import {
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
+  canAssignToUser,
   canMutateEscalatedCases,
   canReviewCases,
   commentsToString,
+  createAssignments,
   findLastStatusForInReview,
   getAssignmentsToShow,
   getNextStatusFromInReview,
@@ -74,10 +75,8 @@ import {
   isEscalatedCases,
   isEscalatedL2Cases,
   isInReviewCases,
-  isOnHoldOrInProgressOrEscalated,
   statusEscalated,
   statusEscalatedL2,
-  statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
@@ -533,40 +532,38 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
               },
               render: (assignments, { item: entity }) => {
-                const otherStatuses = isOnHoldOrInProgressOrEscalated(entity?.alertStatus);
                 return (
                   <AssigneesDropdown
                     assignments={getAssignmentsToShow(entity) ?? []}
-                    editing={
-                      !(
-                        statusInReview(entity.alertStatus) ||
-                        otherStatuses ||
-                        entity.alertStatus === 'CLOSED' ||
-                        qaMode
+                    editing={!(entity.alertStatus === 'CLOSED' || qaMode)}
+                    customFilter={(account) =>
+                      canAssignToUser(
+                        entity.alertStatus ?? 'OPEN',
+                        account,
+                        isMultiEscalationEnabled,
                       )
                     }
                     onChange={(assignees) => {
-                      const assignments: Assignment[] = assignees.map((assignee) => ({
-                        assigneeUserId: assignee,
-                        assignedByUserId: userId,
-                        timestamp: Date.now(),
-                      }));
+                      const [assignments, isReview] = createAssignments(
+                        entity.alertStatus ?? 'OPEN',
+                        assignees,
+                        isMultiEscalationEnabled,
+                        user.userId,
+                      );
 
-                      const alertId = entity?.alertId;
-
-                      if (alertId == null) {
+                      if (entity.alertId == null) {
                         message.fatal('Alert ID is null');
                         return;
                       }
 
-                      if (statusEscalated(entity.alertStatus)) {
+                      if (isReview) {
                         handleAlertsReviewAssignments({
-                          alertIds: [alertId],
+                          alertIds: [entity.alertId],
                           reviewAssignments: assignments,
                         });
                       } else {
                         handleAlertsAssignments({
-                          alertIds: [alertId],
+                          alertIds: [entity.alertId],
                           assignments,
                         });
                       }
@@ -1187,60 +1184,27 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
         Object.values(selectedItems).map((item) => item.alertStatus),
       );
 
-      if ([...selectedAlertStatuses].find((status) => statusInProgressOrOnHold(status))) {
-        return;
-      }
-
       // this is for multi-level escalation (PNB)
       // if any of the selected alerts have a different escalation level, then we don't allow the assignment
       if (isMultiEscalationEnabled) {
+        // ensure alerts are all escalated and of the same level
         const someEscalated = [...selectedAlertStatuses].some(
           (status) => statusEscalated(status) || statusEscalatedL2(status),
         );
-        // if 'ESCALATED' status is present then we need to make sure it's the only status
-        if (someEscalated && selectedAlertStatuses.size > 1) {
+        if (!someEscalated) {
+          return;
+        }
+        if (selectedAlertStatuses.size > 1) {
           return;
         }
 
-        // if 'ESCALATED' status is present and there's only one case, then
-        // reassignment to another user with the same escalation level is allowed
-        if (someEscalated && selectedAlertStatuses.size === 1) {
-          const selectedEscalationLevels = new Set(
-            Object.values(selectedItems).map((item) =>
-              statusEscalatedL2(item.alertStatus) ? 'L2' : 'L1',
-            ),
-          );
-          if (selectedEscalationLevels.size > 1) {
-            return;
-          }
+        // get the escalation level from selectedCaseStatuses[0]
+        const isL2Escalated = statusEscalatedL2(selectedAlertStatuses[0]);
+        const escalationLevel = isL2Escalated ? 'L2' : 'L1';
 
-          const escalationLevel = [...selectedEscalationLevels][0];
-
-          return (
-            <AssignToButton
-              userFilter={(account) => account?.escalationLevel === escalationLevel}
-              onSelect={(account) =>
-                handleAlertsReviewAssignments({
-                  alertIds: selectedIds,
-                  reviewAssignments: [
-                    {
-                      assigneeUserId: account.id,
-                      assignedByUserId: user.userId,
-                      timestamp: Date.now(),
-                      escalationLevel: escalationLevel,
-                    },
-                  ],
-                })
-              }
-              isDisabled={isDisabled}
-            />
-          );
-        }
-      }
-
-      if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
         return (
           <AssignToButton
+            userFilter={(account) => account?.escalationLevel === escalationLevel}
             onSelect={(account) =>
               handleAlertsReviewAssignments({
                 alertIds: selectedIds,
@@ -1249,24 +1213,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                     assigneeUserId: account.id,
                     assignedByUserId: user.userId,
                     timestamp: Date.now(),
-                  },
-                ],
-              })
-            }
-            isDisabled={isDisabled}
-          />
-        );
-      } else if (!selectedAlertStatuses.has('ESCALATED')) {
-        return (
-          <AssignToButton
-            onSelect={(account) =>
-              handleAlertAssignments({
-                alertIds: selectedIds,
-                assignments: [
-                  {
-                    assigneeUserId: account.id,
-                    assignedByUserId: user.userId,
-                    timestamp: Date.now(),
+                    escalationLevel: escalationLevel,
                   },
                 ],
               })
@@ -1275,6 +1222,38 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           />
         );
       }
+
+      // ensure alerts are all in the same status
+      if (selectedAlertStatuses.size > 1) {
+        return;
+      }
+      const alertStatus = selectedAlertStatuses[0];
+
+      return (
+        <AssignToButton
+          onSelect={(account) => {
+            const [assignments, isReview] = createAssignments(
+              alertStatus,
+              [account.id],
+              isMultiEscalationEnabled,
+              user.userId,
+            );
+
+            if (isReview) {
+              handleAlertsReviewAssignments({
+                alertIds: selectedIds,
+                reviewAssignments: assignments,
+              });
+            } else {
+              handleAlertAssignments({
+                alertIds: selectedIds,
+                assignments,
+              });
+            }
+          }}
+          isDisabled={isDisabled}
+        />
+      );
     },
     ({ selectedIds, selectedItems, params, isDisabled }) => {
       const selectedAlertStatuses = [

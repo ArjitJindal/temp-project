@@ -338,3 +338,117 @@ export function getEscalationLevel(assignments: Assignment[]): 'L1' | 'L2' | und
   }
   return undefined;
 }
+
+// tells if a user can be assigned to a case/alert based on the status and the user's escalation level
+export function canAssignToUser(
+  status: CaseStatus | AlertStatus,
+  user: Account,
+  isMultiLevelEscalationEnabled: boolean,
+): boolean {
+  const isItemInReview = statusInReview(status);
+
+  // if multilevel escalation is enabled
+  if (isMultiLevelEscalationEnabled) {
+    const isL2Escalated = statusEscalatedL2(status);
+    const isL1Escalated = statusEscalated(status);
+
+    if (isL2Escalated) {
+      return user.escalationLevel === 'L2';
+    }
+    if (isL1Escalated) {
+      return user.escalationLevel === 'L1';
+    }
+    if (isItemInReview) {
+      return user.isReviewer ?? false;
+    }
+    return true;
+  } else {
+    const isItemEscalated = statusEscalated(status);
+
+    if (isItemEscalated) {
+      return user.escalationLevel === 'L1';
+    }
+    if (isItemInReview) {
+      return user.isReviewer ?? false;
+    }
+    return true;
+  }
+}
+
+// return the new assignment object based on the case/alert status and
+// whether the assignment is to be stored in 'assignments' (false) or 'reviewAssignments' (true)
+export function createAssignments(
+  status: CaseStatus | AlertStatus,
+  assignees: string[],
+  isMultiLevelEscalationEnabled: boolean,
+  currentUserId: string,
+): [Assignment[], boolean] {
+  const isItemInReview = statusInReview(status);
+
+  if (isMultiLevelEscalationEnabled) {
+    const isL2Escalated = statusEscalatedL2(status);
+    const isL1Escalated = statusEscalated(status);
+
+    if (isL2Escalated) {
+      return [
+        assignees.map((assigneeId) => ({
+          assigneeUserId: assigneeId,
+          assignedByUserId: currentUserId,
+          timestamp: Date.now(),
+          escalationLevel: 'L2',
+        })),
+        true,
+      ];
+    }
+    if (isL1Escalated) {
+      return [
+        assignees.map((assigneeId) => ({
+          assigneeUserId: assigneeId,
+          assignedByUserId: currentUserId,
+          timestamp: Date.now(),
+          escalationLevel: 'L1',
+        })),
+        true,
+      ];
+    }
+    if (isItemInReview) {
+      return [
+        assignees.map((assigneeId) => ({
+          assigneeUserId: assigneeId,
+          assignedByUserId: currentUserId,
+          timestamp: Date.now(),
+        })),
+        true,
+      ];
+    }
+    return [
+      assignees.map((assigneeId) => ({
+        assigneeUserId: assigneeId,
+        assignedByUserId: currentUserId,
+        timestamp: Date.now(),
+      })),
+      false,
+    ];
+  } else {
+    const isItemEscalated = statusEscalated(status);
+
+    if (isItemEscalated || isItemInReview) {
+      return [
+        assignees.map((assigneeId) => ({
+          assigneeUserId: assigneeId,
+          assignedByUserId: currentUserId,
+          timestamp: Date.now(),
+        })),
+        true,
+      ];
+    }
+    return [
+      assignees.map((assigneeId) => ({
+        assigneeUserId: assigneeId,
+        assignedByUserId: currentUserId,
+        timestamp: Date.now(),
+      })),
+      false,
+    ];
+  }
+}

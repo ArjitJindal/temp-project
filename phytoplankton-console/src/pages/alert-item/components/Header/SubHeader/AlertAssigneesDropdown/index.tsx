@@ -1,27 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useApi } from '@/api';
 import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { ALERT_ITEM } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import {
-  getAssignmentsToShow,
-  getEscalationLevel,
-  isOnHoldOrInProgressOrEscalated,
-  statusEscalated,
-  statusEscalatedL2,
-  statusInProgressOrOnHold,
-  statusInReview,
-} from '@/utils/case-utils';
+import { canAssignToUser, createAssignments, getAssignmentsToShow } from '@/utils/case-utils';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import {
   Alert,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
-  CaseStatus,
 } from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   alertItem: Alert;
@@ -33,6 +24,7 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   const client = useQueryClient();
   const user = useAuth0User();
   const hasEditingPermission = useHasPermissions(['case-management:case-overview:write']);
+  const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const reviewAssignmentsToMutationAlerts = useMutation<
     unknown,
@@ -102,101 +94,42 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
     [assignmentsToMutationAlerts],
   );
 
-  const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
-
   const alertStatus = alertItem.alertStatus;
   const alertId = alertItem.alertId;
-
-  const otherStatuses = useMemo(
-    () => isOnHoldOrInProgressOrEscalated(alertStatus as CaseStatus),
-    [alertStatus],
-  );
 
   if (alertId == null) {
     return <></>;
   }
 
-  // const selectedAlertStatuses = new Set([alertStatus]);
-
-  if (statusInProgressOrOnHold(alertStatus)) {
-    return <></>;
-  }
-
-  // this is for multi-level escalation (PNB)
-  // if any of the selected alerts have a different escalation level, then we don't allow the assignment
-  if (isMultiEscalationEnabled) {
-    const isEscalated = statusEscalated(alertStatus) || statusEscalatedL2(alertStatus);
-
-    // if 'ESCALATED' status is present and there's only one case, then
-    // reassignment to another user with the same escalation level is allowed
-    if (isEscalated) {
-      const escalationLevel = getEscalationLevel(alertItem.reviewAssignments ?? []);
-
-      return (
-        <AssigneesDropdown
-          assignments={getAssignmentsToShow(alertItem) ?? []}
-          editing={
-            !(statusInReview(alertItem.alertStatus) || otherStatuses) && hasEditingPermission
-          }
-          onChange={(accounts) => {
-            for (const accountId of accounts) {
-              handleAlertsReviewAssignments({
-                alertIds: [alertId],
-                reviewAssignments: [
-                  {
-                    assigneeUserId: accountId,
-                    assignedByUserId: user.userId,
-                    timestamp: Date.now(),
-                    escalationLevel: escalationLevel,
-                  },
-                ],
-              });
-            }
-          }}
-          fixSelectorHeight
-        />
-      );
-    }
-  }
-
-  if (alertStatus === 'ESCALATED') {
-    return (
-      <AssigneesDropdown
-        assignments={getAssignmentsToShow(alertItem) ?? []}
-        editing={!(statusInReview(alertItem.alertStatus) || otherStatuses) && hasEditingPermission}
-        onChange={(accounts) => {
-          for (const accountId of accounts) {
-            handleAlertsReviewAssignments({
-              alertIds: [alertId],
-              reviewAssignments: [
-                {
-                  assigneeUserId: accountId,
-                  assignedByUserId: user.userId,
-                  timestamp: Date.now(),
-                },
-              ],
-            });
-          }
-        }}
-        fixSelectorHeight
-      />
-    );
-  }
   return (
     <AssigneesDropdown
       assignments={getAssignmentsToShow(alertItem) ?? []}
-      editing={!(statusInReview(alertItem.alertStatus) || otherStatuses) && hasEditingPermission}
+      editing={!(alertStatus === 'CLOSED') && hasEditingPermission}
+      customFilter={(account) =>
+        canAssignToUser(alertStatus ?? 'OPEN', account, isMultiEscalationEnabled)
+      }
       onChange={(accounts) => {
-        for (const accountId of accounts) {
+        const [assignments, isReview] = createAssignments(
+          alertStatus ?? 'OPEN',
+          accounts,
+          isMultiEscalationEnabled,
+          user?.userId ?? '',
+        );
+
+        if (alertId == null) {
+          message.fatal('Alert ID is null');
+          return;
+        }
+
+        if (isReview) {
+          handleAlertsReviewAssignments({
+            alertIds: [alertId],
+            reviewAssignments: assignments,
+          });
+        } else {
           handleAlertAssignments({
             alertIds: [alertId],
-            assignments: [
-              {
-                assigneeUserId: accountId,
-                assignedByUserId: user.userId,
-                timestamp: Date.now(),
-              },
-            ],
+            assignments,
           });
         }
       }}

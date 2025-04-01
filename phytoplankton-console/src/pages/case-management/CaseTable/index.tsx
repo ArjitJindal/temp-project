@@ -58,21 +58,20 @@ import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import {
+  canAssignToUser,
   canMutateEscalatedCases,
   canReviewCases,
   casesCommentsGenerator,
+  createAssignments,
   findLastStatusForInReview,
   getAssignmentsToShow,
-  getEscalationLevel,
   getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isEscalatedCases,
   isInReviewCases,
-  isOnHoldOrInProgressOrEscalated,
   statusEscalated,
   statusEscalatedL2,
-  statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
@@ -293,30 +292,35 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
             return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
           },
           render: (__, { item: entity }) => {
-            const isStatusInReview = statusInReview(entity.caseStatus);
-            const otherStatuses = isOnHoldOrInProgressOrEscalated(entity.caseStatus);
             return (
               <AssigneesDropdown
                 assignments={getAssignmentsToShow(entity) ?? []}
-                editing={!(isStatusInReview || otherStatuses) && !(entity.caseStatus === 'CLOSED')}
+                editing={!(entity.caseStatus === 'CLOSED')}
+                customFilter={(account) =>
+                  canAssignToUser(
+                    entity.caseStatus ?? 'OPEN',
+                    account,
+                    isMultiLevelEscalationEnabled,
+                  )
+                }
                 onChange={(assignees) => {
-                  const assignments = assignees.map((assigneeUserId) => ({
-                    assignedByUserId: user.userId,
-                    assigneeUserId,
-                    timestamp: Date.now(),
-                  }));
+                  const [assignments, isReview] = createAssignments(
+                    entity.caseStatus ?? 'OPEN',
+                    assignees,
+                    isMultiLevelEscalationEnabled,
+                    user.userId,
+                  );
 
                   if (!entity.caseId) {
                     message.fatal('Case ID is missing');
                     return;
                   }
 
-                  if (statusEscalated(entity.caseStatus)) {
+                  if (isReview) {
                     caseReviewAssignmentUpdateMutation.mutate({
                       caseIds: [entity.caseId],
                       reviewAssignments: assignments,
                     });
-                    return;
                   } else {
                     caseAssignmentUpdateMutation.mutate({
                       caseIds: [entity.caseId],
@@ -702,62 +706,29 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
             Object.values(selectedItems).map((item) => item.caseStatus),
           );
 
-          if ([...selectedCaseStatuses].find((status) => statusInProgressOrOnHold(status))) {
-            return;
-          }
-
           // this is for multi-level escalation (PNB)
           // if any of the selected cases have a different escalation level, then we don't allow the assignment
           if (isMultiLevelEscalationEnabled) {
+            // ensure cases are all escalated and of the same level
             const someEscalated = [...selectedCaseStatuses].some(
               (status) => statusEscalated(status) || statusEscalatedL2(status),
             );
-            // if 'ESCALATED' status is present then we need to make sure it's the only status
-            if (someEscalated && selectedCaseStatuses.size > 1) {
+            if (!someEscalated) {
+              return;
+            }
+            if (selectedCaseStatuses.size > 1) {
               return;
             }
 
-            // if 'ESCALATED' status is present and there's only one case, then
-            // reassignment to another user with the same escalation level is allowed
-            if (someEscalated && selectedCaseStatuses.size === 1) {
-              const selectedEscalationLevels = new Set(
-                Object.values(selectedItems).map((item) =>
-                  getEscalationLevel(item.reviewAssignments ?? []),
-                ),
-              );
-              if (selectedEscalationLevels.size > 1) {
-                return;
-              }
+            // get the escalation level from selectedCaseStatuses[0]
+            const isL2Escalated = statusEscalatedL2(selectedCaseStatuses[0]);
+            const escalationLevel = isL2Escalated ? 'L2' : 'L1';
 
-              const escalationLevel = [...selectedEscalationLevels][0];
-
-              return (
-                <AssignToButton
-                  isDisabled={isDisabled}
-                  userFilter={(account) => account?.escalationLevel === escalationLevel}
-                  onSelect={(account) => {
-                    casesReviewAssignmentUpdateMutation.mutate({
-                      caseIds: selectedIds,
-                      reviewAssignments: [
-                        {
-                          assignedByUserId: user.userId,
-                          assigneeUserId: account.id,
-                          timestamp: Date.now(),
-                          escalationLevel: escalationLevel,
-                        },
-                      ],
-                    });
-                  }}
-                />
-              );
-            }
-          }
-
-          return (
-            <AssignToButton
-              isDisabled={isDisabled}
-              onSelect={(account) => {
-                if (selectedCaseStatuses.has('ESCALATED') && selectedCaseStatuses.size === 1) {
+            return (
+              <AssignToButton
+                isDisabled={isDisabled}
+                userFilter={(account) => account?.escalationLevel === escalationLevel}
+                onSelect={(account) => {
                   casesReviewAssignmentUpdateMutation.mutate({
                     caseIds: selectedIds,
                     reviewAssignments: [
@@ -765,19 +736,41 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                         assignedByUserId: user.userId,
                         assigneeUserId: account.id,
                         timestamp: Date.now(),
+                        escalationLevel: escalationLevel,
                       },
                     ],
+                  });
+                }}
+              />
+            );
+          }
+
+          // ensure cases are all in the same status
+          if (selectedCaseStatuses.size > 1) {
+            return;
+          }
+          const caseStatus = selectedCaseStatuses[0];
+
+          return (
+            <AssignToButton
+              isDisabled={isDisabled}
+              onSelect={(account) => {
+                const [assignments, isReview] = createAssignments(
+                  caseStatus,
+                  [account.id],
+                  isMultiLevelEscalationEnabled,
+                  user.userId,
+                );
+
+                if (isReview) {
+                  casesReviewAssignmentUpdateMutation.mutate({
+                    caseIds: selectedIds,
+                    reviewAssignments: assignments,
                   });
                 } else {
                   casesAssignmentUpdateMutation.mutate({
                     caseIds: selectedIds,
-                    assignments: [
-                      {
-                        assignedByUserId: user.userId,
-                        assigneeUserId: account.id,
-                        timestamp: Date.now(),
-                      },
-                    ],
+                    assignments,
                   });
                 }
               }}
