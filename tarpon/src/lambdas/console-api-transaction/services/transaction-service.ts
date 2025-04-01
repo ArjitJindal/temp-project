@@ -8,7 +8,6 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import dayjsLib from '@flagright/lib/utils/dayjs'
 import { TransactionViewConfig } from '../app'
 import {
   DefaultApiGetAlertTransactionListRequest,
@@ -120,7 +119,7 @@ export class TransactionService {
   ): Promise<TransactionsResponseOffsetPaginated> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
-      new ClickhouseTransactionsRepository(clickhouseClient)
+      new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
 
     const data = await clickhouseTransactionsRepository.getTransactions(params)
 
@@ -368,7 +367,7 @@ export class TransactionService {
     if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(this.tenantId)
       const clickhouseTransactionsRepository =
-        new ClickhouseTransactionsRepository(clickhouseClient)
+        new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
 
       const data = await clickhouseTransactionsRepository.getStatsByType(params)
       const currencyService = new CurrencyService(this.dynamoDb)
@@ -406,30 +405,12 @@ export class TransactionService {
     if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(this.tenantId)
       const clickhouseTransactionsRepository =
-        new ClickhouseTransactionsRepository(clickhouseClient)
+        new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
 
-      const data = await clickhouseTransactionsRepository.getStatsByTime(params)
-      const currencyService = new CurrencyService(this.dynamoDb)
-      const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
-        referenceCurrency,
-        'USD'
+      return await clickhouseTransactionsRepository.getStatsByTime(
+        params,
+        referenceCurrency
       )
-
-      return data
-        .sort((a, b) => dayjsLib(a.timedata).diff(dayjsLib(b.timedata)))
-        .map((item) => ({
-          ...item,
-          sum: (item?.sum ?? 0) * exchangeRateWithUsd,
-          label: item.timedata,
-          series: item.aggregateBy,
-          values: {
-            [item.aggregateBy]: {
-              sum: item.sum,
-              amount: item.sum,
-              count: item.count,
-            },
-          },
-        }))
     }
 
     return await this.transactionRepository.getStatsByTime(

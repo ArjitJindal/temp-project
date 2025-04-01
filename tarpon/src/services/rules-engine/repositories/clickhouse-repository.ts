@@ -1,6 +1,7 @@
 import { ClickHouseClient } from '@clickhouse/client'
 import { compact } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import {
@@ -25,6 +26,8 @@ import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { OriginFundsInfo } from '@/@types/openapi-internal/OriginFundsInfo'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
+import { CurrencyService } from '@/services/currency'
+import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 
 type StatsByType = {
   transactionType: string
@@ -46,14 +49,19 @@ type StatsByTime = {
   count: number
   sum: number
   aggregateBy: string
+  timestamp: number
 }
 
 @traceable
 export class ClickhouseTransactionsRepository {
   private clickhouseClient: ClickHouseClient
-
-  constructor(clickhouseClient: ClickHouseClient) {
+  private dynamoDb: DynamoDBDocumentClient
+  constructor(
+    clickhouseClient: ClickHouseClient,
+    dynamoDb: DynamoDBDocumentClient
+  ) {
     this.clickhouseClient = clickhouseClient
+    this.dynamoDb = dynamoDb
   }
 
   private async getTransactionsWhereConditions(
@@ -138,7 +146,7 @@ export class ClickhouseTransactionsRepository {
     }
 
     if (params.filterStatus?.length) {
-      whereConditions.push(`status = '${params.filterStatus}'`)
+      whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
     }
 
     if (params.filterDestinationCurrencies?.length) {
@@ -401,8 +409,9 @@ export class ClickhouseTransactionsRepository {
   }
 
   public async getStatsByTime(
-    params: DefaultApiGetTransactionsStatsByTimeRequest
-  ): Promise<StatsByTime[]> {
+    params: DefaultApiGetTransactionsStatsByTimeRequest,
+    referenceCurrency: CurrencyCode
+  ): Promise<TransactionsStatsByTimeResponse['data']> {
     const { pageSize, sortField, sortOrder } = params
 
     const whereClause = await this.getTransactionsWhereConditions(params)
@@ -432,16 +441,20 @@ export class ClickhouseTransactionsRepository {
     const duration = dayjsLib.duration(difference)
 
     let clickhouseFormat: string
+    let seriesFormat: string
     let labelFormat: string
 
     if (duration.asMonths() > 1) {
       clickhouseFormat = 'toStartOfMonth(toDateTime(timestamp / 1000))'
+      seriesFormat = 'YYYY/MM/01 00:00 Z'
       labelFormat = 'YYYY/MM'
     } else if (duration.asDays() > 1) {
       clickhouseFormat = 'toStartOfDay(toDateTime(timestamp / 1000))'
+      seriesFormat = 'YYYY/MM/DD 00:00 Z'
       labelFormat = 'MM/DD'
     } else {
       clickhouseFormat = 'toStartOfHour(toDateTime(timestamp / 1000))'
+      seriesFormat = 'YYYY/MM/DD HH:00 Z'
       labelFormat = 'MM/DD HH:00'
     }
 
@@ -449,25 +462,59 @@ export class ClickhouseTransactionsRepository {
       SELECT
         ${clickhouseFormat} as timedata,
         count() as count,
+        timestamp,
         sum(originAmountDetails_amountInUsd) as sum,
         ${
           params.aggregateBy === 'status' ? 'status' : 'transactionState'
         } as aggregateBy
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE ${whereClause}
-      GROUP BY timedata, aggregateBy
+      GROUP BY timestamp, timedata, aggregateBy
       ORDER BY timedata ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}
       LIMIT ${pageSize}
     `
 
-    const result = await executeClickhouseQuery<StatsByTime[]>(
+    const data = await executeClickhouseQuery<StatsByTime[]>(
       this.clickhouseClient,
       query
     )
+    const currencyService = new CurrencyService(this.dynamoDb)
+    const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
+      referenceCurrency,
+      'USD'
+    )
+    const result: TransactionsStatsByTimeResponse['data'] = []
+    for await (const transaction of data) {
+      const series = dayjsLib
+        .tz(transaction.timestamp, timezone)
+        .format(seriesFormat)
+      const label = dayjsLib
+        .tz(transaction.timestamp, timezone)
+        .format(labelFormat)
 
-    return result.map((x) => ({
-      ...x,
-      timedata: dayjsLib.tz(x.timedata, timezone).format(labelFormat),
-    }))
+      const amount = (transaction.sum ?? 0) * exchangeRateWithUsd
+
+      let counters = result.find((x) => x.series === series)
+      if (counters == null) {
+        counters = {
+          series,
+          label,
+          values: {},
+        }
+        result.push(counters)
+      }
+      const key = transaction.aggregateBy
+      if (key) {
+        const ruleActionCounter = counters.values[key] ?? {
+          count: 0,
+          amount: 0,
+        }
+        counters.values[key] = ruleActionCounter
+
+        ruleActionCounter.count = ruleActionCounter.count + transaction.count
+        ruleActionCounter.amount = ruleActionCounter.amount + amount
+      }
+    }
+    return result
   }
 }
