@@ -54,6 +54,10 @@ import {
   MOCK_CA_SEARCH_RESPONSE,
 } from '@/test-utils/resources/mock-ca-search-response'
 import { SanctionsService } from '@/services/sanctions'
+import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -69,17 +73,24 @@ jest.mock('@/services/sanctions', () => {
             ): ReturnType<SearchMethodType> => {
               const [request] = params
               let rawComplyAdvantageResponse
+              let searchId = 'test-search-id'
+
               if (
                 request.searchTerm.toLowerCase().includes('huawei') ||
                 request.searchTerm.toLowerCase().includes('putin')
               ) {
                 rawComplyAdvantageResponse = MOCK_CA_SEARCH_RESPONSE
+
+                if (request.searchTerm.toLowerCase().includes('test-user-2')) {
+                  searchId = 'test-search-id-2'
+                }
               } else {
                 rawComplyAdvantageResponse = MOCK_CA_SEARCH_NO_HIT_RESPONSE
               }
+
               return {
                 hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
-                searchId: 'test-search-id',
+                searchId,
                 providerSearchId: 'test-provider-search-id',
                 createdAt: 1683301138980,
               }
@@ -1271,6 +1282,317 @@ describe('Screening user rules', () => {
         caseCreationResult?.[0].alerts?.[0].ruleHitMeta?.sanctionsDetails
       ).toHaveLength(1)
     }
+  })
+})
+
+describe('Screening counterparty alerts R-169', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setupRules(TEST_TENANT_ID, { ruleType: 'USER' })
+  setupUsers(TEST_TENANT_ID, [TEST_USER_1])
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: `R-169`,
+      ruleInstanceId: `R-169.1`,
+      type: 'TRANSACTION',
+      ruleImplementationName: 'sanctions-counterparty',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      alertConfig: { alertCreatedFor: ['USER'] },
+      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
+    },
+    {
+      id: `R-169`,
+      ruleInstanceId: `R-169.2`,
+      type: 'TRANSACTION',
+      ruleImplementationName: 'sanctions-counterparty',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      alertConfig: { alertCreatedFor: ['USER'] },
+      screeningAlertCreationLogic: 'SINGLE_ALERT',
+    },
+  ])
+
+  test('Create a new case for a user rule hit', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const transaction = getTestTransaction({
+      transactionId: '111',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: undefined,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Vladimir', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+        '3dsDone': true,
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Vladimir', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results).toHaveLength(1)
+    const [result] = results
+    const caseCreationResult = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+    )
+
+    expect(caseCreationResult[0].alerts).toHaveLength(2)
+
+    const transaction2 = getTestTransaction({
+      transactionId: '222',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: undefined,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results2 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      transaction2,
+    ])
+    expect(results2).toHaveLength(1)
+    const [result2] = results2
+    const caseCreationResult2 = await caseCreationService.handleTransaction(
+      {
+        ...transaction2,
+        ...result2,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result2),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction2,
+        ...result2,
+      })
+    )
+
+    expect(caseCreationResult2[0].alerts).toHaveLength(3)
+    const r1691Alerts = caseCreationResult2[0].alerts?.filter(
+      (alert) => alert.ruleInstanceId === 'R-169.1'
+    )
+    expect(r1691Alerts).toHaveLength(2)
+    expect(r1691Alerts?.[0].transactionIds).toEqual(['111'])
+    expect(r1691Alerts?.[1].transactionIds).toEqual(['222'])
+    const r1692Alerts = caseCreationResult2[0].alerts?.filter(
+      (alert) => alert.ruleInstanceId === 'R-169.2'
+    )
+    expect(r1692Alerts).toHaveLength(1)
+    expect(r1692Alerts?.[0].transactionIds).toEqual(['111', '222'])
+  })
+})
+
+describe('Screening counterparty alerts R-170', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: `R-170`,
+      ruleInstanceId: `R-170.1`,
+      type: 'TRANSACTION',
+      ruleImplementationName: 'payment-details-screening',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
+      alertConfig: { alertCreatedFor: ['PAYMENT_DETAILS'] },
+    },
+  ])
+
+  test('Create a new case for a payment details screening rule hit', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const transaction = getTestTransaction({
+      transactionId: '111',
+      originUserId: undefined,
+      destinationUserId: undefined,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Vladimir', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+        '3dsDone': true,
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results).toHaveLength(1)
+    const [result] = results
+    const caseCreationResult = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+    )
+
+    expect(caseCreationResult).toHaveLength(2) // Since we are creating two cases always hence
+    expect(caseCreationResult[0].alerts).toHaveLength(2)
+    expect(caseCreationResult[1].alerts).toHaveLength(2)
+
+    const transaction2 = getTestTransaction({
+      transactionId: '222',
+      originUserId: undefined,
+      destinationUserId: undefined,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results2 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      transaction2,
+    ])
+    expect(results2).toHaveLength(1)
+    const [result2] = results2
+    const caseCreationResult2 = await caseCreationService.handleTransaction(
+      {
+        ...transaction2,
+        ...result2,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result2),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction2,
+        ...result2,
+      })
+    )
+
+    expect(caseCreationResult2).toHaveLength(2) // Since we are creating two cases always hence
+    expect(caseCreationResult2[0].alerts).toHaveLength(3)
+    expect(caseCreationResult2[1].alerts).toHaveLength(3)
+
+    for (const caseItem of caseCreationResult2) {
+      for (const alert of caseItem.alerts ?? []) {
+        expect(alert.ruleHitMeta?.sanctionsDetails).toHaveLength(1)
+      }
+    }
+  })
+})
+
+describe('Screening business user R-128', () => {
+  const businessUser = getTestBusiness({
+    userId: 'business_user_id-128',
+    directors: [
+      { generalDetails: { name: { firstName: 'John', lastName: 'Putin' } } },
+      {
+        generalDetails: {
+          name: { firstName: 'test-user-2', lastName: 'Putin' },
+        },
+      },
+    ],
+  })
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-128',
+      ruleInstanceId: 'R-128.1',
+      type: 'USER',
+      ruleImplementationName: 'sanctions-business-user',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
+      alertConfig: { alertCreatedFor: ['USER'] },
+      parameters: {
+        entityTypes: ['DIRECTOR'],
+        fuzziness: 0.5,
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        ongoingScreening: false,
+      } as SanctionsBusinessUserRuleParameters,
+    },
+  ])
+  setupUsers(TEST_TENANT_ID, [businessUser])
+
+  test('Create a new case for a business user rule hit', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const results = await bulkVerifyUsers(TEST_TENANT_ID, [businessUser])
+    const mongoDbClient = await getMongoDbClient()
+    const sanctionsSearchesCollection = mongoDbClient
+      .db()
+      .collection<SanctionsSearchHistory>(
+        SANCTIONS_SEARCHES_COLLECTION(TEST_TENANT_ID)
+      )
+
+    const sanctionsEntity: SanctionsEntity = {
+      name: 'John Putin',
+      entityType: 'PERSON',
+      id: 'test-search-id',
+    }
+    await sanctionsSearchesCollection.insertOne({
+      _id: 'test-search-id',
+      response: {
+        data: [{ ...sanctionsEntity }],
+        createdAt: Date.now(),
+        hitsCount: 1,
+        providerSearchId: 'test-search-id',
+        searchId: 'test-search-id',
+      },
+      createdAt: Date.now(),
+      provider: 'comply-advantage',
+      request: { fuzziness: 0.5, searchTerm: 'John Putin' },
+    })
+    await sanctionsSearchesCollection.insertOne({
+      _id: 'test-search-id-2',
+      response: {
+        data: [
+          { ...sanctionsEntity, id: 'test-search-id-2', name: 'test-user-2' },
+        ],
+        createdAt: Date.now(),
+        hitsCount: 1,
+        providerSearchId: 'test-search-id-2',
+        searchId: 'test-search-id-2',
+      },
+      createdAt: Date.now(),
+      provider: 'comply-advantage',
+      request: { fuzziness: 0.5, searchTerm: 'test-user-2' },
+    })
+    const cases = await caseCreationService.handleUser({
+      type: 'BUSINESS',
+      ...businessUser,
+      ...results[0],
+    })
+    expect(cases).toHaveLength(1)
+    const [caseItem] = cases
+    expect(caseItem.alerts).toHaveLength(2)
+    expect(caseItem.alerts?.[0].ruleHitMeta?.sanctionsDetails).toHaveLength(1)
+    expect(caseItem.alerts?.[1].ruleHitMeta?.sanctionsDetails).toHaveLength(1)
   })
 })
 

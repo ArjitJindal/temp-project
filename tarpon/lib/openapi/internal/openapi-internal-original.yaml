@@ -8652,6 +8652,8 @@ components:
           enum:
             - SENDER
             - RECEIVER
+        screeningAlertCreationLogic:
+          $ref: '#/components/schemas/ScreeningAlertCreationLogic'
       required:
         - casePriority
         - nature
@@ -8660,6 +8662,12 @@ components:
         - type
         - ruleRunMode
         - ruleExecutionMode
+    ScreeningAlertCreationLogic:
+      title: ScreeningAlertCreationLogic
+      type: string
+      enum:
+        - PER_SEARCH_ALERT
+        - SINGLE_ALERT
     UserRuleRunCondition:
       title: UserRuleRunCondition
       type: object

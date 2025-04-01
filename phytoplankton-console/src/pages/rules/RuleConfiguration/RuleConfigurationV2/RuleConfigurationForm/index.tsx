@@ -393,6 +393,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         frozenStatuses: BASIC_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
         alertCreatedFor: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
         ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
+        screeningAlertCreationLogic: BASIC_DETAILS_STEP_INITIAL_VALUES.screeningAlertCreationLogic,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
       ruleParametersStep: ruleParametersStep,

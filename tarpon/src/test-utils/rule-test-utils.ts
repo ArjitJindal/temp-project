@@ -95,6 +95,7 @@ export async function createRule(
       checksFor: createdRule.checksFor,
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
+
       ...ruleInstance,
     })
 

@@ -24,6 +24,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
+import { COUNTERPARTY_RULES } from '@flagright/lib/constants'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
@@ -110,15 +111,11 @@ import {
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 
+const RULEINSTANCE_SEPARATOR = '~$~'
+
 type CaseSubject =
-  | {
-      type: 'USER'
-      user: InternalUser
-    }
-  | {
-      type: 'PAYMENT'
-      paymentDetails: PaymentDetails
-    }
+  | { type: 'USER'; user: InternalUser }
+  | { type: 'PAYMENT'; paymentDetails: PaymentDetails }
 
 type CaseAuditLogReturnData = AuditLogReturnData<
   Case,
@@ -137,6 +134,10 @@ type NewCaseAuditLogReturnData = AuditLogReturnData<
   Case | Partial<Case>,
   Case | Partial<Case>
 >
+
+type ExtendedHitRulesDetails = HitRulesDetails & {
+  compositeRuleInstanceId?: string
+}
 
 @traceable
 export class CaseCreationService {
@@ -536,7 +537,7 @@ export class CaseCreationService {
   }
 
   public async separateExistingAndNewAlerts(
-    hitRules: HitRulesDetails[],
+    hitRules: ExtendedHitRulesDetails[],
     ruleInstances: readonly RuleInstance[],
     alerts: Alert[],
     createdTimestamp: number,
@@ -548,7 +549,7 @@ export class CaseCreationService {
     const newRuleHits = hitRules.filter(
       (hitRule) =>
         !alerts.some((alert) =>
-          this.getFrozenStatusFilter(alert, hitRule, ruleInstances)
+          this.shouldNotCreateNewAlert(alert, hitRule, ruleInstances)
         )
     )
 
@@ -569,7 +570,11 @@ export class CaseCreationService {
     const existingAlerts = alerts.filter(
       (existingAlert) =>
         !newRuleHits.some((newRuleHits) =>
-          this.getFrozenStatusFilter(existingAlert, newRuleHits, ruleInstances)
+          this.shouldNotCreateNewAlert(
+            existingAlert,
+            newRuleHits,
+            ruleInstances
+          )
         )
     )
 
@@ -580,7 +585,7 @@ export class CaseCreationService {
   }
 
   private async getOrCreateAlertsForExistingCase(
-    hitRules: HitRulesDetails[],
+    hitRules: ExtendedHitRulesDetails[],
     alerts: Alert[] | undefined,
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
@@ -673,7 +678,7 @@ export class CaseCreationService {
           mongoDb: this.mongoDb,
           dynamoDb: this.caseRepository.dynamoDb,
         })
-        const newAlert = {
+        const newAlert: Alert = {
           _id: alertCount,
           alertId: `A-${alertCount}`,
           createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
@@ -766,12 +771,13 @@ export class CaseCreationService {
 
         const transactionBelongsToAlert = Boolean(
           transaction.hitRules.find((rule) =>
-            this.getFrozenStatusFilter(alert, rule, ruleInstances)
+            this.shouldNotCreateNewAlert(alert, rule, ruleInstances ?? [])
           )
         )
         if (!transactionBelongsToAlert) {
           return alert
         }
+
         const txnSet = new Set(alert.transactionIds).add(
           transaction.transactionId
         )
@@ -1084,6 +1090,13 @@ export class CaseCreationService {
     return checkListTemplates
   }
 
+  private generateCompositeRuleInstanceId(
+    ruleInstanceId: string,
+    searchTerm: string
+  ): string {
+    return `${ruleInstanceId}${RULEINSTANCE_SEPARATOR}${searchTerm}`
+  }
+
   private async getCasesBySubject(
     subject: CaseSubject,
     params: SubjectCasesQueryParams
@@ -1094,6 +1107,37 @@ export class CaseCreationService {
           subject.paymentDetails,
           params
         )
+  }
+
+  private flattenHitRules(
+    hitRules: HitRulesDetails[],
+    ruleInstances: readonly RuleInstance[]
+  ): ExtendedHitRulesDetails[] {
+    return hitRules.flatMap((hitRule) => {
+      const ruleInstance = ruleInstances.find(
+        (ruleInstance) => ruleInstance.id === hitRule.ruleInstanceId
+      )
+
+      if (ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT') {
+        return (
+          hitRule.ruleHitMeta?.sanctionsDetails?.map((x) => {
+            return {
+              ...hitRule,
+              compositeRuleInstanceId: this.generateCompositeRuleInstanceId(
+                hitRule.ruleInstanceId,
+                x.hitContext?.searchTerm ?? ''
+              ),
+              ruleHitMeta: {
+                ...hitRule.ruleHitMeta,
+                sanctionsDetails: [x],
+              },
+            }
+          }) ?? []
+        )
+      }
+
+      return [hitRule]
+    })
   }
 
   private async getOrCreateCases(
@@ -1117,6 +1161,15 @@ export class CaseCreationService {
     const ruleInstances = hitRuleInstances.filter(
       (r) => r.alertCreationOnHit !== false
     )
+    /**
+     * The logic to handle the R-169 and R-170 for counterparties
+     * - If they have PER_SEARCH_ALERT, we will create a composite ruleInstanceId which is combination of ruleInstanceId + search term
+     */
+    const flattenedHitRules: ExtendedHitRulesDetails[] = this.flattenHitRules(
+      params.hitRules,
+      ruleInstances
+    )
+
     const result: Case[] = []
     for (const { subject, direction } of hitSubjects) {
       if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {
@@ -1128,7 +1181,7 @@ export class CaseCreationService {
 
       try {
         // keep only user related hits
-        let filteredHitRules = params.hitRules.filter((hitRule) => {
+        let filteredHitRules = flattenedHitRules.filter((hitRule) => {
           if (
             !hitRule.ruleHitMeta?.hitDirections?.some(
               (hitDirection) => hitDirection === direction
@@ -1231,11 +1284,8 @@ export class CaseCreationService {
         }
         const cases = await this.getCasesBySubject(subject, casesParams)
 
-        for (const {
-          availableAfterTimestamp,
-          ruleInstances,
-          hitRules,
-        } of delayTimestampsGroups) {
+        for (const group of delayTimestampsGroups) {
+          const { availableAfterTimestamp, hitRules, ruleInstances } = group
           const existedCase = cases.find(
             (x) =>
               x.availableAfterTimestamp === availableAfterTimestamp ||
@@ -1651,6 +1701,17 @@ export class CaseCreationService {
     return data.map((user) => user.id)
   })
 
+  private shouldNotCreateNewAlert(
+    alert: Alert,
+    hitRule: ExtendedHitRulesDetails,
+    ruleInstances: readonly RuleInstance[]
+  ): boolean {
+    return (
+      this.getFrozenStatusFilter(alert, hitRule, ruleInstances) &&
+      this.searchTermAlreadyExists(alert, hitRule, ruleInstances)
+    )
+  }
+
   private getFrozenStatusFilter(
     alert: Alert,
     rule: HitRulesDetails,
@@ -1665,6 +1726,33 @@ export class CaseCreationService {
       )
     }
     return false
+  }
+
+  private searchTermAlreadyExists(
+    alert: Alert,
+    hitRule: ExtendedHitRulesDetails,
+    ruleInstances: readonly RuleInstance[]
+  ): boolean {
+    const ruleInstance = ruleInstances.find(
+      (x) => x.id === hitRule.ruleInstanceId
+    )
+
+    if (
+      COUNTERPARTY_RULES.includes(hitRule.ruleId ?? '') &&
+      ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT'
+    ) {
+      const isCounterpartyAlert = alert.ruleHitMeta?.sanctionsDetails?.find(
+        (x) =>
+          this.generateCompositeRuleInstanceId(
+            alert.ruleInstanceId,
+            x.hitContext?.searchTerm ?? ''
+          ) === hitRule.compositeRuleInstanceId
+      )
+
+      return isCounterpartyAlert != null
+    }
+
+    return true
   }
 
   async getRuleAlertAssignee(assignees?: string[], assignedRole?: string) {
