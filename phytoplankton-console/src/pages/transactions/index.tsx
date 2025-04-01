@@ -54,7 +54,7 @@ const TableList = () => {
       };
       navigate(makeUrl('/transactions/list', {}, queryAdapter.serializer(params)), {
         replace: true,
-        state: state,
+        state,
       });
     },
     [navigate],

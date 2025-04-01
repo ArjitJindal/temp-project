@@ -29,6 +29,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       'destinationAmountDetails.country':
         params['destinationAmountDetails.country']?.join(',') ?? '',
       includePaymentDetails: params.showDetailedView ? 'true' : 'false',
+      filterOriginPaymentMethodId: params['originPayment.paymentMethodId'],
+      filterDestinationPaymentMethodId: params['destinationPayment.paymentMethodId'],
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -55,8 +57,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       status: raw.status as RuleAction & 'all',
       originMethodFilter: raw.originMethodFilter as PaymentMethod,
       destinationMethodFilter: raw.destinationMethodFilter as PaymentMethod,
-      originPaymentMethodId: raw.originPaymentMethodId,
-      destinationPaymentMethodId: raw.destinationPaymentMethodId,
+      'originPayment.paymentMethodId': raw.filterOriginPaymentMethodId,
+      'destinationPayment.paymentMethodId': raw.filterDestinationPaymentMethodId,
       ruleInstancesHitFilter: raw.ruleInstancesHitFilter?.split(','),
       productType: raw.productType?.split(','),
       'originAmountDetails.country': raw['originAmountDetails.country']?.split(','),
