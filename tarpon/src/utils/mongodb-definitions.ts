@@ -93,13 +93,6 @@ export const SANCTIONS_INDEX_DEFINITION: Array<{
       id: 1,
       entityType: 1,
     },
-  },
-  {
-    index: {
-      provider: 1,
-      version: 1,
-      id: 1,
-    },
     unique: true,
   },
   {
