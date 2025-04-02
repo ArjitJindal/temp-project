@@ -438,7 +438,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const isFromFullExtract = Boolean(entityType)
     let hasMore = true
     let timestamp = isFromFullExtract
-      ? dayjs(from.getTime()).startOf('month').valueOf()
+      ? dayjs().startOf('month').valueOf()
       : from.getTime()
     for (const type of types) {
       while (hasMore) {
