@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Children } from 'react';
 import s from './index.module.less';
 import Tag, { TagColor } from '@/components/library/Tag';
 
@@ -14,13 +14,18 @@ export default function ViewModeTags(props: {
   color?: TagColor;
   children: React.ReactNode | React.ReactNode[] | undefined | null | false;
 }) {
+  const flattenedChildren = Children.toArray(props.children).filter(Boolean);
+
   return (
     <div className={s.root}>
-      {Array.isArray(props.children) ? (
-        props.children.map((child, i) => <ValueTag key={i}>{child}</ValueTag>)
-      ) : (
-        <ValueTag color={props.color}>{props.children ?? 'N/A'}</ValueTag>
-      )}
+      <ValueTag color={props.color}>
+        {flattenedChildren.map((node, i) => (
+          <React.Fragment key={i}>
+            {i !== 0 && ', '}
+            {node}
+          </React.Fragment>
+        ))}
+      </ValueTag>
     </div>
   );
 }
