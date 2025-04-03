@@ -71,7 +71,7 @@ export default function RuleAndCaseDetails(props: Props) {
               kind: 'select',
               mode: 'MULTIPLE',
               displayMode: 'select',
-              options: ruleOptions,
+              options: ruleOptions.filter(Boolean) as { value: string; label: string }[],
             },
           },
         ]}

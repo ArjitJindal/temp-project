@@ -114,7 +114,7 @@ export default function DistributionByStatus(props: WidgetProps) {
             allowClear
             style={{ minWidth: 200 }}
             placeholder="Filter by Rules"
-            options={ruleOptions}
+            options={ruleOptions.filter(Boolean) as { value: string; label: string }[]}
             value={selectedRules}
             onChange={handleRulesChange}
           />

@@ -139,16 +139,24 @@ export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams 
         rulesWithAlertsSet.has(instance.id as string),
       );
     }
-    return relevantRuleInstances.map((rulesInstance: RuleInstance) => {
-      const ruleName =
-        rulesInstance.ruleNameAlias ||
-        (rulesInstance.ruleId && rules.rules[rulesInstance.ruleId]?.name);
-      return {
-        value: rulesInstance.id ?? '',
-        label: [ruleName, rulesInstance.id, rulesInstance.ruleId && `(${rulesInstance.ruleId})`]
-          .filter(Boolean)
-          .join(' '),
-      };
-    });
+    return relevantRuleInstances
+      .map((rulesInstance: RuleInstance) => {
+        const ruleName =
+          rulesInstance.ruleNameAlias ||
+          (rulesInstance.ruleId && rules.rules[rulesInstance.ruleId]?.name);
+
+        // Only return an option if ruleName exists; added to fix the issue of rule instances without ruleNameAlias
+        if (!ruleName) {
+          return null;
+        }
+
+        return {
+          value: rulesInstance.id ?? '',
+          label: [ruleName, rulesInstance.id, rulesInstance.ruleId && `(${rulesInstance.ruleId})`]
+            .filter(Boolean)
+            .join(' '),
+        };
+      })
+      .filter(Boolean);
   }, [rules.ruleInstances, rules.rules, onlyWithAlerts, rulesWithAlertsData]);
 }

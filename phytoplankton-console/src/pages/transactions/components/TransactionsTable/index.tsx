@@ -584,7 +584,7 @@ export default function TransactionsTable(props: Props) {
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
-    },
+    } as ExtraFilterProps<TransactionsTableParams>,
   ];
 
   const isTransactionsDownloadEnabled = useHasPermissions(['transactions:export:read']);

@@ -124,7 +124,7 @@ export default function CaseTableWrapper(props: {
         params,
         queryResult: queryResults,
         onChangeParams,
-        rules: ruleOptions,
+        rules: ruleOptions.filter(Boolean) as { value: string; label: string }[],
         showAssignedToFilter: params.showCases === 'MY' ? false : true,
       }}
     >

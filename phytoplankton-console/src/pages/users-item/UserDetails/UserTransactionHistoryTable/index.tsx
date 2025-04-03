@@ -360,7 +360,7 @@ export function Content(props: { userId: string }) {
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'select',
-        options: ruleOptions,
+        options: ruleOptions.filter(Boolean) as { value: string; label: string }[],
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
