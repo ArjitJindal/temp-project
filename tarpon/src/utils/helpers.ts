@@ -144,6 +144,20 @@ type PaymentDetailsName = {
   entityType: SanctionsDetailsEntityType
 }
 
+export const getBankNameFromPaymentDetails = (
+  paymentDetails: PaymentDetails
+): string | undefined => {
+  switch (paymentDetails.method) {
+    case 'GENERIC_BANK_ACCOUNT':
+    case 'IBAN':
+    case 'ACH':
+    case 'SWIFT':
+      return paymentDetails.bankName
+    default:
+      return undefined
+  }
+}
+
 export const getPaymentDetailsName = (
   paymentDetails: PaymentDetails
 ): PaymentDetailsName[] => {

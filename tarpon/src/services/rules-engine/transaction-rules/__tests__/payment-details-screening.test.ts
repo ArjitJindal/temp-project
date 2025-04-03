@@ -102,6 +102,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         id: 'R-170',
         ruleImplementationName: 'payment-details-screening',
         defaultParameters: {
+          screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
           fuzziness: 50,
           transactionAmountThreshold: {

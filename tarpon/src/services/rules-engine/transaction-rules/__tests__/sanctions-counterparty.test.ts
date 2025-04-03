@@ -88,6 +88,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         id: 'R-169',
         ruleImplementationName: 'sanctions-counterparty',
         defaultParameters: {
+          screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
         } as PaymentDetailsScreeningRuleParameters,
@@ -143,6 +144,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         id: 'R-169',
         ruleImplementationName: 'sanctions-counterparty',
         defaultParameters: {
+          screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
         } as PaymentDetailsScreeningRuleParameters,
@@ -211,6 +213,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         id: 'R-169',
         ruleImplementationName: 'sanctions-counterparty',
         defaultParameters: {
+          screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
         } as PaymentDetailsScreeningRuleParameters,
@@ -275,6 +278,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         id: 'R-169',
         ruleImplementationName: 'sanctions-counterparty',
         defaultParameters: {
+          screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
           fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',

@@ -2,6 +2,7 @@ import { lowerCase, startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
+import { SCREENING_FIELDS } from '../transaction-rules/payment-details-screening-base'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import {
@@ -940,7 +941,21 @@ export const GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
     ...GENERIC_SANCTIONS_SCREENING_TYPES_SCHEMA(options),
     nullable: true,
   } as const)
-
+export const PAYMENT_DETAILS_SCREENING_FIELDS_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...uiSchema(options?.uiSchema),
+    type: 'array',
+    title: options?.title || 'Payment details screening fields',
+    description: options?.description,
+    items: {
+      type: 'string',
+      enum: SCREENING_FIELDS,
+      enumNames: SCREENING_FIELDS.map((type) => humanizeAuto(type)),
+    },
+    uniqueItems: true,
+  } as const)
 const SANCTIONS_SCREENING_VALUES = ['NRIC', 'NATIONALITY', 'YOB', 'GENDER']
 const PEP_RANK_VALUES: PepRank[] = ['LEVEL_1', 'LEVEL_2', 'LEVEL_3']
 export const SANCTIONS_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>

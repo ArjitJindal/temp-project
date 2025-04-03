@@ -277,6 +277,9 @@ export class MongoDbTransactionRepository
                 [`${prefix}.method`]: { $ne: 'CARD' },
                 [`${prefix}.name`]: params.filterPaymentDetailName,
               },
+              {
+                [`${prefix}.bankName`]: params.filterPaymentDetailName,
+              },
             ],
           },
         ],

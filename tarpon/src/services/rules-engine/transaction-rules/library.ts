@@ -1712,6 +1712,7 @@ const _RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: PaymentDetailsScreeningRuleParameters = {
+      screeningFields: ['NAME'],
       fuzziness: 20,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
@@ -1998,6 +1999,7 @@ const _RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: PaymentDetailsScreeningRuleParameters = {
+      screeningFields: ['NAME'],
       fuzziness: 20,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',

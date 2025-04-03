@@ -1169,8 +1169,10 @@ describe('Screening user rules', () => {
       id: `TRANSACTION-R-0`,
       type: 'TRANSACTION',
       ruleImplementationName: 'sanctions-counterparty',
-      parameters: {
-        hitDirections: ['ORIGIN'],
+      defaultParameters: {
+        screeningFields: ['NAME'],
+        screeningTypes: ['SANCTIONS'],
+        fuzziness: 50,
       },
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',

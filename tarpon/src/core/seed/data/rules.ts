@@ -1756,6 +1756,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-169',
       casePriority: 'P1',
       parameters: {
+        screeningFields: ['NAME'],
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
@@ -1830,6 +1831,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-169',
       casePriority: 'P1',
       parameters: {
+        screeningFields: ['NAME'],
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
