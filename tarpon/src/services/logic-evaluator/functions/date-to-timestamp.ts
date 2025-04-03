@@ -12,6 +12,7 @@ export const DATE_TO_TIMESTAMP: LogicFunction<number> = {
         label: 'Date',
         type: 'text',
         valueSources: ['value', 'field', 'func'],
+        tooltip: 'Date in YYYY-MM-DD format',
       },
     },
   },

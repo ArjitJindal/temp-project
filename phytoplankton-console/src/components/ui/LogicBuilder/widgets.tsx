@@ -73,7 +73,7 @@ function WidgetWrapper(props: {
   children: React.ReactNode;
 }) {
   const { widgetFactoryProps } = props;
-
+  const tooltip = widgetFactoryProps.fieldDefinition?.tooltip ?? '';
   if (isOperatorParameterField(widgetFactoryProps)) {
     const operator = getOperator(widgetFactoryProps);
     if (!operator || !operator.parameters) {
@@ -118,7 +118,19 @@ function WidgetWrapper(props: {
   }
 
   return (
-    <Label label={'Value'} testId={'value-source'}>
+    <Label
+      label={
+        <div className={s.label}>
+          Value
+          {tooltip && (
+            <Tooltip title={tooltip} placement="top">
+              <InformationLineIcon className={s.icon} />
+            </Tooltip>
+          )}
+        </div>
+      }
+      testId={'value-source'}
+    >
       {props.children}
     </Label>
   );
