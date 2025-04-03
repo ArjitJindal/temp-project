@@ -18,6 +18,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 export const PNB_INTERNAL_RULES: RuleInstance[] = [
   {
     id: 'pnb-internal-trigger-incomplete-risk-levels',
+    ruleId: 'pnb-internal-trigger-incomplete-risk-levels',
     type: 'USER',
     ruleNameAlias: 'PNB - Trigger to return incomplete risk levels',
     ruleDescriptionAlias: 'Trigger to return incomplete risk levels',
@@ -285,6 +286,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
   },
   {
     id: 'pnb-internal-trigger-incomplete-risk-levels-origin-user',
+    ruleId: 'pnb-internal-trigger-incomplete-risk-levels-origin-user',
     type: 'TRANSACTION',
     ruleNameAlias: 'PNB - Trigger to return incomplete risk levels origin user',
     ruleDescriptionAlias:
@@ -636,6 +638,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
   },
   {
     id: 'pnb-internal-trigger-incomplete-risk-levels-destination-user',
+    ruleId: 'pnb-internal-trigger-incomplete-risk-levels-destination-user',
     type: 'TRANSACTION',
     ruleNameAlias:
       'PNB - Trigger to return incomplete risk levels destination user',
@@ -987,6 +990,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
   },
   {
     id: 'pnb-internal-trigger-complete-risk-levels-origin-user',
+    ruleId: 'pnb-internal-trigger-complete-risk-levels-origin-user',
     type: 'TRANSACTION',
     ruleNameAlias: 'PNB - Trigger to return complete risk levels origin user',
     ruleDescriptionAlias: 'Trigger to return complete risk levels origin user',
@@ -1203,6 +1207,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
   },
   {
     id: 'pnb-internal-trigger-complete-risk-levels-destination-user',
+    ruleId: 'pnb-internal-trigger-complete-risk-levels-destination-user',
     type: 'TRANSACTION',
     ruleNameAlias:
       'PNB - Trigger to return complete risk levels destination user',
