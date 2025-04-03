@@ -120,6 +120,7 @@ export const FincenJsonSchema = {
           'ui:schema': {
             'ui:subtype': 'FINCEN_NUMBER',
             'ui:maxDigits': 14,
+            'ui:zeroPadLeft': true,
             'ui:allowNegatives': false,
           },
         },

@@ -135,6 +135,7 @@ export interface UiSchemaFincenGender extends UiSchemaCommon {
 export interface UiSchemaFincenNumber extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_NUMBER';
   'ui:maxDigits'?: number;
+  'ui:zeroPadLeft'?: boolean;
   'ui:allowNegatives'?: boolean;
 }
 
