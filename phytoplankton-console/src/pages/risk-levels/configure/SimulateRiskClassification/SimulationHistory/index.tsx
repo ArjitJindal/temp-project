@@ -76,7 +76,6 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
         queryResults={allSimulationsQueryResult}
         params={params}
         onChangeParams={setParams}
-        paginationBorder
         columns={helper.list([
           helper.simple<'jobId'>({
             title: 'Simulation ID',

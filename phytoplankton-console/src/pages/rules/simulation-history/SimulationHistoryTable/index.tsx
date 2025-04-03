@@ -47,7 +47,6 @@ export function SimulationHistoryTable(props: { rulesTab: string }) {
         queryResults={queryResults}
         params={params}
         onChangeParams={setParams}
-        paginationBorder
         pagination={true}
         columns={helper.list([
           helper.derived({

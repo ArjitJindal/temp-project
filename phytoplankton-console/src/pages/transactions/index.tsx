@@ -200,7 +200,6 @@ const TableList = () => {
           params={params}
           onChangeParams={handleChangeParams}
           fitHeight
-          paginationBorder={!isClickhouseEnabled}
           isExpandable
         />
       </PageWrapperContentContainer>

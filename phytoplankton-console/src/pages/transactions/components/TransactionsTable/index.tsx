@@ -202,7 +202,6 @@ type Props = {
   caseUserId?: string;
   isModalVisible?: boolean;
   setIsModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
-  paginationBorder?: boolean;
   escalatedTransactions?: string[];
   selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
   selectionInfo?: SelectionInfo;
@@ -618,7 +617,6 @@ export default function TransactionsTable(props: Props) {
       hideFilters={hideSearchForm}
       disableSorting={disableSorting}
       fitHeight={fitHeight}
-      paginationBorder
       fixedExpandedContainer={true}
       isExpandable={
         isExpandable ? (row) => isTransactionHasDetails(row.content, settings) : () => false

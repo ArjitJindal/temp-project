@@ -4,9 +4,9 @@
 .root {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 5px;
-  padding-top: 16px;
+  gap: @figma-vars--tokens-spacingSpacingXs;
+  padding: @figma-vars--tokens-spacingSpacingM;
+  justify-content: space-between;
 }
 
 .paginationRoot {
@@ -15,4 +15,79 @@
   margin-top: -2px !important;
   background: white;
   border-radius: 0 0 4px 4px;
+}
+
+.buttonsGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.navigationButton {
+  display: flex;
+  background: none;
+  border: none;
+  padding: @figma-vars--tokens-spacingSpacing3xs;
+  min-width: 32px;
+  min-height: 32px;
+  line-height: 1;
+  border-radius: @figma-vars--tokens-borderRadiusBorderradiusS;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: background-color;
+
+  &:disabled {
+    color: @figma-vars--tokens-colorTextDisabled;
+    pointer-events: none;
+  }
+
+  &.numberButton {
+    &.isActive {
+      font-weight: 600;
+
+      &:not(:disabled) {
+        background: @figma-vars--tokens-colorBackgroundInformationHue;
+        color: @figma-vars--tokens-colorTextAction;
+      }
+
+      &:disabled {
+        background: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+      }
+    }
+  }
+
+  &.iconButton {
+    color: @figma-vars--tokens-colorIconPrimary;
+
+    &:disabled {
+      color: @figma-vars--tokens-colorIconDisabled;
+    }
+  }
+
+  > svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.side {
+  display: flex;
+  gap: @figma-vars--tokens-spacingSpacingXs;
+  align-items: center;
+  flex: 1;
+
+  &.right {
+    justify-content: flex-end;
+  }
+}
+
+.resultsInfo {
+  min-width: 130px;
+
+  > span {
+    font-weight: bold;
+  }
 }

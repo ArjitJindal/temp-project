@@ -31,7 +31,6 @@ import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyn
 import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Alert from '@/components/library/Alert';
-import CursorPagination from '@/components/library/CursorPagination';
 import { Cursor } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
@@ -75,7 +74,6 @@ export interface Props<Item extends object, Params extends object = CommonParams
   externalHeader?: boolean;
   onPaginateData?: (params: PaginationParams) => Promise<TableData<Item>>;
   onReload?: () => void;
-  paginationBorder?: boolean;
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   externalState?: unknown;
@@ -119,7 +117,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     renderExpanded,
     defaultSorting,
     onReload,
-    paginationBorder = false,
     cursor,
     onExpandedMetaChange,
     isExpandable,
@@ -304,9 +301,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
         }}
       </ScrollContainer>
       {cursor && (
-        <CursorPagination
-          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
+        <Pagination
           cursorRes={cursor}
+          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
           isDisabled={isLoading(dataRes)}
           onPageChange={(pageSize) => handleChangeParamsPaginated({ ...params, pageSize })}
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
@@ -324,7 +321,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
             total={data.total ?? data.items.length}
             totalPages={data.totalPages}
             currentItems={data.items.length}
-            paginationBorder={paginationBorder}
           />
         )}
       </div>

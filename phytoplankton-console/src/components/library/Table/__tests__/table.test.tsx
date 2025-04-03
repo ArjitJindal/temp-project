@@ -2,7 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 import { act, render, screen, userEvent, within } from 'testing-library-wrapper';
 import '@testing-library/jest-dom';
 import { useState } from 'react';
-import { findByClass, findCheckbox, getByClass, getNotNull } from 'jest-utils';
+import { findCheckbox, getNotNull } from 'jest-utils';
 import Table from '..';
 import { ColumnHelper } from '../columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -207,16 +207,18 @@ describe('Pagination', () => {
     render(<TestComponent />);
 
     const pagination = getNotNull(await findPagination());
-    const listItems = await findByClass(pagination, 'ant-pagination-item');
+    const withinPagination = within(pagination);
+    const listItems = await withinPagination.findAllByTestId('pagination-page-number-button');
     const pagesCount = Math.ceil(TOTAL_ITEMS / PAGE_SIZE);
     expect(listItems).toHaveLength(pagesCount);
-    const withinPagination = within(pagination);
     const tbody = getNotNull(await findTableBody());
     for (let page = 1; page <= pagesCount; page += 1) {
       const pageItems = dataSource(PAGE_SIZE, page);
       // Click on the page and make sure it's active
-      await userEvent.click(await withinPagination.findByText(page));
-      const pageLink = await getByClass(pagination, 'ant-pagination-item-active');
+      const buttonByNumber = listItems.find((x) => x.textContent === `${page}`);
+      expect(buttonByNumber).not.toBeNull();
+      await userEvent.click(buttonByNumber as HTMLElement);
+      const pageLink = await withinPagination.findByRole('button', { current: true });
       expect(pageLink).toHaveTextContent(`${page}`);
       // Check if page contain proper items
       const rows = await within(tbody).findAllByRole('row');

@@ -103,7 +103,6 @@ const DisplayCheckedTransactions = (props: Props) => {
           ]}
           alert={alert}
           fitHeight={370}
-          paginationBorder
         />
         <p className={s.info}>
           <InformationIcon height={12} width={12} /> This may show the transactions from closed

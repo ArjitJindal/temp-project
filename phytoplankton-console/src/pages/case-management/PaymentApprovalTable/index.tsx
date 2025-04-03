@@ -57,7 +57,6 @@ export default function PaymentApprovalsTable(props: Props) {
       selectedIds={selectedIds}
       onSelect={setSelectedIds}
       isExpandable
-      paginationBorder
       hideStatusFilter={true}
       selectionInfo={
         selectedIds.length
