@@ -744,20 +744,30 @@ export class CaseService extends CaseAlertsCommonService {
           )
         }
 
+        let alertsStatusChange: AlertStatusUpdateRequest
+
         const otherReason = isReview
           ? `In Review Requested to be ${capitalize(
               updates.caseStatus?.replace('IN_REVIEW_', '')
             )}`
           : capitalize(updates.caseStatus)
-
-        const message = `Case of this alert was ${otherReason}`
-
-        const alertsStatusChange: AlertStatusUpdateRequest = {
-          alertStatus: updates.caseStatus,
-          comment: updates.comment,
-          otherReason: message,
-          reason: ['Other'],
-          files: updates.files,
+        if (updates.caseStatus === 'CLOSED') {
+          alertsStatusChange = {
+            alertStatus: updates.caseStatus,
+            comment: updates.comment,
+            reason: updates.reason || [],
+            otherReason: updates.otherReason,
+            files: updates.files,
+          }
+        } else {
+          const message = `Case of this alert was ${otherReason}`
+          alertsStatusChange = {
+            alertStatus: updates.caseStatus,
+            comment: updates.comment,
+            otherReason: message,
+            reason: ['Other'],
+            files: updates.files,
+          }
         }
 
         const alertIds = alerts.map((a) => a.alertId ?? '')

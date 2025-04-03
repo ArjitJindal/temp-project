@@ -822,25 +822,25 @@ describe('Post APIs Alerts Tests', () => {
       lastStatusChange: {
         userId: FLAGRIGHT_SYSTEM_USER,
         timestamp: expect.any(Number),
-        reason: ['Other'],
+        reason: ['False positive'], // Changed from 'Other' to match alert's reason
         caseStatus: 'CLOSED',
-        otherReason: 'All alerts of this case are Closed',
+        otherReason: 'some other reason', // Changed to match alert's otherReason
       },
       statusChanges: [
         {
           userId: FLAGRIGHT_SYSTEM_USER,
           timestamp: expect.any(Number),
-          reason: ['Other'],
+          reason: ['False positive'], // Changed from 'Other' to match alert's reason
           caseStatus: 'CLOSED',
-          otherReason: 'All alerts of this case are Closed',
+          otherReason: 'some other reason', // Changed to match alert's otherReason
         },
       ],
       comments: [
         {
           userId: FLAGRIGHT_SYSTEM_USER,
           body:
-            'Case status changed to Closed. Reason: All alerts of this case are Closed\n' +
-            'some comment',
+            'Case status changed to Closed. Reasons: False positive, some other reason\n' +
+            'some comment', // Updated to reflect the specific reasons
           files: [],
           id: expect.any(String),
           createdAt: expect.any(Number),
@@ -1060,17 +1060,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: null,
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: null,
             },
           ],
         },
@@ -1081,17 +1081,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: null,
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: null,
             },
           ],
         },
@@ -1395,17 +1395,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive', 'Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: 'This is a duplicate case',
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive', 'Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: 'This is a duplicate case',
             },
           ],
         },
@@ -1416,17 +1416,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive', 'Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: 'This is a duplicate case',
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive', 'Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: 'This is a duplicate case',
             },
           ],
         },
@@ -1477,17 +1477,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive', 'Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: 'This is a duplicate case',
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive', 'Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: 'This is a duplicate case',
             },
           ],
         },
@@ -1498,17 +1498,17 @@ describe('Case Service - Post Api Tests', () => {
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
             timestamp: expect.any(Number),
-            reason: ['Other'],
+            reason: ['False positive', 'Other'],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: 'This is a duplicate case',
           },
           statusChanges: [
             {
               userId: FLAGRIGHT_SYSTEM_USER,
               timestamp: expect.any(Number),
-              reason: ['Other'],
+              reason: ['False positive', 'Other'],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: 'This is a duplicate case',
             },
           ],
         },
@@ -1918,14 +1918,14 @@ describe('Test Review Approvals Send Back Flow', () => {
             },
             {
               userId: FLAGRIGHT_SYSTEM_USER,
-              body: 'Alert is Approved and its status is changed to Closed. Reasons: Case of this alert was Closed',
+              body: 'Alert is Approved and its status is changed to Closed',
             },
           ],
           lastStatusChange: {
             userId: FLAGRIGHT_SYSTEM_USER,
-            reason: ['Other'],
+            reason: [],
             caseStatus: 'CLOSED',
-            otherReason: 'Case of this alert was Closed',
+            otherReason: null,
           },
           statusChanges: [
             {
@@ -1937,9 +1937,9 @@ describe('Test Review Approvals Send Back Flow', () => {
             },
             {
               userId: FLAGRIGHT_SYSTEM_USER,
-              reason: ['Other'],
+              reason: [],
               caseStatus: 'CLOSED',
-              otherReason: 'Case of this alert was Closed',
+              otherReason: null,
             },
           ],
         },

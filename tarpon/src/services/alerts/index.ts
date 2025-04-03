@@ -1389,29 +1389,97 @@ export class AlertsService extends CaseAlertsCommonService {
         response.caseStatusToChange &&
         !isInProgressOrOnHold
       ) {
-        const otherReason = `All alerts of this case are ${startCase(
-          toLower(response?.caseStatusToChange ?? '')
-        )}`
+        if (response.caseStatusToChange === 'CLOSED') {
+          // Get all cases that need to be closed
+          const casesToUpdate = caseIdsWithAllAlertsSameStatus
+            .map((caseId) => cases.find((c) => c.caseId === caseId))
+            .filter(Boolean)
 
-        const caseUpdateStatus: CaseStatusUpdate = {
-          caseStatus: response.caseStatusToChange,
-          reason: ['Other'],
-          comment: statusUpdateRequest.comment,
-          otherReason,
-          files: statusUpdateRequest.files,
-        }
+          // Collect unique reasons from all alerts in these cases
+          const allReasons = new Set<string>()
+          let otherReason = ''
 
-        await caseService.updateStatus(
-          caseIdsWithAllAlertsSameStatus,
-          caseUpdateStatus,
-          {
-            bySystem: true,
-            cascadeAlertsUpdate: false,
-            account: userAccount,
-            updateChecklistStatus: false,
-            externalRequest: externalRequest,
+          // First check current alert's reason
+          if (statusUpdateRequest.reason?.length) {
+            statusUpdateRequest.reason.forEach(
+              (r) => r !== 'Other' && allReasons.add(r)
+            )
+            if (statusUpdateRequest.otherReason) {
+              otherReason = statusUpdateRequest.otherReason
+            }
           }
-        )
+
+          // Then check all other closed alerts in these cases
+          for (const c of casesToUpdate) {
+            const closedAlerts =
+              c?.alerts?.filter((a) => a.alertStatus === 'CLOSED') || []
+            for (const alert of closedAlerts) {
+              const lastChange = alert.statusChanges?.find(
+                (sc) => sc.caseStatus === 'CLOSED'
+              )
+              if (lastChange?.reason) {
+                lastChange.reason.forEach(
+                  (r) => r !== 'Other' && allReasons.add(r)
+                )
+              }
+              if (lastChange?.otherReason && !otherReason) {
+                otherReason = lastChange.otherReason
+              }
+            }
+          }
+
+          // Generate consolidated update request
+          const caseUpdateStatus: CaseStatusUpdate = {
+            caseStatus: 'CLOSED',
+            reason: allReasons.size
+              ? (Array.from(allReasons) as (string | 'Other')[])
+              : ['Other'],
+            comment: statusUpdateRequest.comment,
+            otherReason:
+              otherReason ||
+              (allReasons.size
+                ? undefined
+                : `All alerts of this case are closed`),
+            files: statusUpdateRequest.files,
+          }
+
+          await caseService.updateStatus(
+            caseIdsWithAllAlertsSameStatus,
+            caseUpdateStatus,
+            {
+              bySystem: true,
+              cascadeAlertsUpdate: false,
+              account: userAccount,
+              updateChecklistStatus: false,
+              externalRequest: externalRequest,
+            }
+          )
+        } else {
+          // Original behavior for non-CLOSED statuses
+          const otherReason = `All alerts of this case are ${startCase(
+            toLower(response?.caseStatusToChange ?? '')
+          )}`
+
+          const caseUpdateStatus: CaseStatusUpdate = {
+            caseStatus: response.caseStatusToChange,
+            reason: ['Other'],
+            comment: statusUpdateRequest.comment,
+            otherReason,
+            files: statusUpdateRequest.files,
+          }
+
+          await caseService.updateStatus(
+            caseIdsWithAllAlertsSameStatus,
+            caseUpdateStatus,
+            {
+              bySystem: true,
+              cascadeAlertsUpdate: false,
+              account: userAccount,
+              updateChecklistStatus: false,
+              externalRequest: externalRequest,
+            }
+          )
+        }
       }
 
       if (
