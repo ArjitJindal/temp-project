@@ -7,7 +7,7 @@ import { logger } from '@/core/logger'
 export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
   key: 'op:contains_in_lists',
   uiDefinition: {
-    label: 'Contains in Lists',
+    label: 'Contains (Lists)',
     valueTypes: ['text'],
     valueSources: ['value'],
   },
@@ -39,5 +39,5 @@ export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
 
 export const NOT_CONTAINS_IN_LISTS_OPERATOR = getNegatedOperator(
   CONTAINS_IN_LISTS_OPERATOR,
-  'Not Contains in Lists'
+  'Not Contains (Lists)'
 )

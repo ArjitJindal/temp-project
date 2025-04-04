@@ -9,7 +9,7 @@ import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 export const SIMILAR_TO_LISTS_OPERATOR: TextLogicOperator = {
   key: 'op:similar_to_in_lists',
   uiDefinition: {
-    label: 'Similar to (in lists)',
+    label: 'Similar to (Lists)',
     valueTypes: ['text', 'number'],
     valueSources: ['value'],
   },
@@ -66,5 +66,5 @@ export const SIMILAR_TO_LISTS_OPERATOR: TextLogicOperator = {
 
 export const NOT_SIMILAR_TO_LISTS_OPERATOR = getNegatedOperator(
   SIMILAR_TO_LISTS_OPERATOR,
-  'Not Similar to (in lists)'
+  'Not Similar to (Lists)'
 )
