@@ -3,7 +3,8 @@ import { createInterface } from 'readline'
 import { promisify } from 'util'
 import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
-import { COLLECTIONS_MAP } from '../utils'
+import { COLLECTIONS_MAP, getSanctionsCollectionName } from '../utils'
+import { MongoSanctionsRepository } from '../repositories/sanctions-repository'
 import { getUniqueStrings } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -428,16 +429,43 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ]
   }
 
+  private getFullExtractRepo(entityType: SanctionsEntityType) {
+    return new MongoSanctionsRepository(
+      getSanctionsCollectionName(
+        {
+          provider: SanctionsDataProviders.ACURIS,
+          entityType,
+        },
+        '', // Tenant independent
+        'full'
+      )
+    )
+  }
+
+  private getRepo(
+    personsRepo: MongoSanctionsRepository,
+    businessesRepo: MongoSanctionsRepository,
+    entityType: SanctionsEntityType
+  ) {
+    if (entityType === 'PERSON') {
+      return personsRepo
+    }
+    return businessesRepo
+  }
+
   async delta(
     repo: SanctionsRepository,
     version: string,
     from: Date,
-    entityType?: SanctionsEntityType
+    entityType?: SanctionsEntityType,
+    runFullLoad?: boolean
   ) {
     const types = this.getEntityTypesToLoad(entityType)
-    const isFromFullExtract = Boolean(entityType)
+    const fullExtractPersonRepo = this.getFullExtractRepo('PERSON')
+    const fullExtractBusinessRepo = this.getFullExtractRepo('BUSINESS')
     let hasMore = true
-    let timestamp = isFromFullExtract
+
+    let timestamp = runFullLoad
       ? dayjs().startOf('month').valueOf()
       : from.getTime()
     for (const type of types) {
@@ -466,14 +494,50 @@ export class AcurisProvider extends SanctionsDataFetcher {
             }
           }
           if (entities.length > 1000) {
-            await repo.save(SanctionsDataProviders.ACURIS, entities, version)
+            await Promise.all([
+              repo.save(SanctionsDataProviders.ACURIS, entities, version),
+              ...(!runFullLoad
+                ? [
+                    this.getRepo(
+                      fullExtractPersonRepo,
+                      fullExtractBusinessRepo,
+                      type as SanctionsEntityType
+                    ).save(
+                      SanctionsDataProviders.ACURIS,
+                      entities.filter(
+                        ([_, e]) =>
+                          e.entityType === (type as SanctionsEntityType)
+                      ),
+                      version
+                    ),
+                  ]
+                : []),
+            ])
             logger.info(`Processed ${entities.length} entities`)
             entities = []
           }
         }
         if (entities.length) {
           logger.info(`Processed ${entities.length} entities`)
-          await repo.save(SanctionsDataProviders.ACURIS, entities, version)
+          await Promise.all([
+            repo.save(SanctionsDataProviders.ACURIS, entities, version),
+            ...(!runFullLoad
+              ? [
+                  this.getRepo(
+                    fullExtractPersonRepo,
+                    fullExtractBusinessRepo,
+                    type as SanctionsEntityType
+                  ).save(
+                    SanctionsDataProviders.ACURIS,
+                    entities.filter(
+                      ([_, e]) => e.entityType === (type as SanctionsEntityType)
+                    ),
+                    version
+                  ),
+                ]
+              : []),
+          ])
+          entities = []
         }
         hasMore = Boolean(data.profiles?.length)
         timestamp = data.timestamp

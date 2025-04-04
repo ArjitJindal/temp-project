@@ -50,7 +50,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     repo: SanctionsRepository,
     version: string,
     from: Date,
-    entityType?: SanctionsEntityType
+    entityType?: SanctionsEntityType,
+    runFullLoad?: boolean
   ): Promise<void>
 
   public static getFuzzinessEvaluationResult(

@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { getSanctionsCollectionName } from '../sanctions/utils'
+import { SanctionsDataProviders } from '../sanctions/types'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetcher } from '@/services/sanctions/data-fetchers'
@@ -62,12 +63,16 @@ export async function runSanctionsDataFetchJob(
     }
 
     const repo = new MongoSanctionsRepository(sanctionsCollectionName)
-    await fetcher.delta(
-      repo,
-      version,
-      dayjs(job.parameters.from).toDate(),
-      job.parameters.entityType
-    )
+    if (provider !== SanctionsDataProviders.ACURIS || runFullLoad) {
+      // To avoid fetching delta for Acuris daily separately, instead it's fetched in delta load
+      await fetcher.delta(
+        repo,
+        version,
+        dayjs(job.parameters.from).toDate(),
+        job.parameters.entityType,
+        runFullLoad
+      )
+    }
 
     if (runFullLoad) {
       await client
