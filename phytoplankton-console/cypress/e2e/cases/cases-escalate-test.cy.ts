@@ -21,7 +21,7 @@ describe('Escalating and Sending back the cases', () => {
       .then((caseId) => {
         cy.caseAlertAction('Escalate');
         cy.intercept('POST', `**/cases/${caseId}/escalate`).as('escalate');
-        cy.multiSelect('.ant-modal', 'Fraud');
+        cy.multiSelect('.ant-modal-body', 'Fraud');
         cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
         cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
         cy.get('.ant-modal-footer button').eq(0).click();
@@ -34,7 +34,7 @@ describe('Escalating and Sending back the cases', () => {
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Send back');
         cy.intercept('PATCH', '**/cases/statusChange').as('case');
-        cy.multiSelect('.ant-modal', 'False positive');
+        cy.multiSelect('.ant-modal-body', 'False positive');
         cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
         cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
         cy.get('.ant-modal-footer button').eq(0).click();

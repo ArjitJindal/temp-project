@@ -107,7 +107,7 @@ describe('Closing and Re-Opening the cases', () => {
 
 function closeCase() {
   cy.intercept('PATCH', '**/cases/statusChange').as('case');
-  cy.multiSelect('.ant-modal', 'False positive');
+  cy.multiSelect('.ant-modal-body', 'False positive');
   cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
   cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
   cy.get('.ant-modal-footer button').eq(0).click();

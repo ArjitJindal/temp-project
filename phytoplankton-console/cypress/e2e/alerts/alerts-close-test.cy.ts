@@ -24,7 +24,7 @@ describe('Close Alerts from Table', () => {
     cy.get('td[data-cy="alertId"] a[data-cy="alert-id"]').first().invoke('text').as('alertIdValue');
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
-    cy.multiSelect('.ant-modal', 'False positive');
+    cy.multiSelect('.ant-modal-body', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title').click();
     cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
     cy.get('.ant-modal-footer button').eq(0).click();
