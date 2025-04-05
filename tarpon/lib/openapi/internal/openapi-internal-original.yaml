@@ -11603,6 +11603,8 @@ components:
         - accounts:overview:write
         - roles:overview:read
         - roles:overview:write
+        - screening:search-profiles:read
+        - screening:search-profiles:write
     CaseStatus:
       type: string
       title: CaseStatus
