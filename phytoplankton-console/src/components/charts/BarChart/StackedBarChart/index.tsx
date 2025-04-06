@@ -209,9 +209,7 @@ function Chart<Category extends StringLike, Series extends StringLike>(
   const { xScale, yScale } = derivedScales;
 
   const preparedData: PreparedDataItem[] = useMemo(() => {
-    const grouped = groupBy(data, (x) => {
-      return x.category;
-    });
+    const grouped = groupBy(data, (x) => x.category);
 
     return Object.entries(grouped).map(([category, items]) =>
       items.reduce(
@@ -383,6 +381,7 @@ function Chart<Category extends StringLike, Series extends StringLike>(
                   ))
                 }
               </BarStack>
+
               {!showSkeleton && <DefaultAxisLeft hideTicks hideAxisLine left={0} scale={yScale} />}
               <DefaultAxisBottom
                 showSkeleton={showSkeleton}

@@ -129,7 +129,8 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
         columns={columns}
         rowKey="accountId"
         sizingMode="FULL_WIDTH"
-        pagination={true}
+        pagination
+        externalHeader
         params={paginationParams}
         onChangeParams={setPaginationParams}
         toolsOptions={{

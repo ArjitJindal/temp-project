@@ -61,7 +61,7 @@ export function calcScales<X extends StringLike, Series extends StringLike>(
   const yScale = scaleLinear<number>({
     domain: [
       Math.min(0, ...data.map((item) => item.yValue)),
-      Math.max(1, ...data.map((item) => item.yValue)),
+      Math.max(...data.map((item) => item.yValue)),
     ],
     range: [yMax, 0],
     nice: true,

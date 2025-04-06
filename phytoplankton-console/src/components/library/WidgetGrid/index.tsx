@@ -21,19 +21,19 @@ export default function WidgetGrid(props: Props) {
   const { groups } = props;
   return (
     <div className={cn(s.root)}>
-      {groups.map(({ groupTitle, items }) =>
+      {groups.map(({ groupTitle, items }, index) =>
         items.length ? (
-          <div key={groupTitle} className={cn(s.group)}>
+          <div key={`${groupTitle}-${index}`} className={cn(s.group)}>
             <div className={s.groupTitle}>{groupTitle}</div>
             <div className={s.items}>
               {items.map((item, index) => {
                 const Component = item.component;
                 return Component ? (
-                  <ErrorBoundary key={item.props?.id || index}>
+                  <ErrorBoundary key={`${item.props?.id}-${index}`}>
                     <Component key={item.props?.id} {...item.props} />
                   </ErrorBoundary>
                 ) : (
-                  <ErrorBoundary key={item.props?.id || index}>
+                  <ErrorBoundary key={`${item.props?.id}-${index}`}>
                     {item.renderComponent?.()}
                   </ErrorBoundary>
                 );

@@ -23,7 +23,7 @@ export interface Paddings {
   left: number;
 }
 
-export const DEFAULT_PADDINGS: Paddings = { top: 16, right: 16, bottom: 32, left: 32 };
+export const DEFAULT_PADDINGS: Paddings = { top: 16, right: 16, bottom: 16, left: 16 };
 
 export const DEFAULT_X_AXIS_LABEL_ANGLE = -(Math.PI / 4);
 
@@ -92,3 +92,34 @@ export function adjustScalesAndPaddings<
     paddings: newPaddings,
   };
 }
+
+export const generateEvenTicks = (scale: ScaleLinear<number, number>, maxTicks = 10): number[] => {
+  const domain = scale.domain();
+  const min = Math.min(...domain);
+  const max = Math.max(...domain);
+  const range = max - min;
+
+  if (range < 1) {
+    return [min, max];
+  }
+
+  const roughStep = range / (maxTicks - 1);
+  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const normalizedStep = Math.ceil(roughStep / magnitude) * magnitude;
+
+  const start = Math.ceil(min / normalizedStep) * normalizedStep;
+  const end = Math.floor(max / normalizedStep) * normalizedStep;
+
+  const count = Math.min(maxTicks, Math.floor((end - start) / normalizedStep) + 1);
+
+  const ticks = Array.from({ length: count }, (_, i) => start + i * normalizedStep);
+
+  if (min < start - normalizedStep / 2) {
+    ticks.unshift(start - normalizedStep);
+  }
+  if (max > end + normalizedStep / 2) {
+    ticks.push(end + normalizedStep);
+  }
+
+  return ticks;
+};

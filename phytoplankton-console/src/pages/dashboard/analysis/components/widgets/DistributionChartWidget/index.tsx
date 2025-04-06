@@ -19,7 +19,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
 import { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
-import BarChart, { BarChartData } from '@/components/charts/BarChart';
+import BarChart, { BarChartData, GroupBy } from '@/components/charts/BarChart';
 
 interface Props<DataType, ValueType extends string, GroupType extends string> extends WidgetProps {
   groups: Array<{
@@ -28,7 +28,7 @@ interface Props<DataType, ValueType extends string, GroupType extends string> ex
     attributeDataPrefix: string;
     seriesLabel?: string;
   }>;
-  groupBy: 'VALUE' | 'TIME';
+  groupBy: GroupBy;
   valueColors: { [key in ValueType]: string };
   values: ValueType[];
   valueNames?: { [key in ValueType]: string };

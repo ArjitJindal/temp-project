@@ -35,7 +35,6 @@ import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.reac
 import Drawer from '@/components/library/Drawer';
 import Checkbox from '@/components/library/Checkbox';
 import WidgetGrid from '@/components/library/WidgetGrid';
-import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
 import { WidgetProps } from '@/components/library/Widget/types';
@@ -162,7 +161,6 @@ const getWidgets = (userAlias?: string) => {
           userType: 'CONSUMER',
           requiredFeatures: ['RISK_SCORING'],
         },
-
         {
           id: 'TOP_CONSUMER_USERS_BY_RULE_HITS',
           title: `Top ${userAlias}s by rule hits`,
@@ -263,8 +261,7 @@ const getWidgets = (userAlias?: string) => {
         {
           id: 'TOP_RULE_HITS_BY_COUNT',
           title: 'Top rule hits by count',
-          component: Widget as (props) => JSX.Element,
-          children: <RuleHitCard />,
+          component: RuleHitCard,
           resizing: 'AUTO',
         },
         {

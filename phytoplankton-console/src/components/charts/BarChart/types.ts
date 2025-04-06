@@ -17,3 +17,5 @@ export type BarChartData<
 export type ColorsMap = {
   [key: string]: string | undefined;
 };
+
+export type GroupBy = 'VALUE' | 'TIME';

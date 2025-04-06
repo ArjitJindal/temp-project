@@ -37,48 +37,37 @@ interface Props<Item extends object, Params extends object = CommonParams> {
   readOnlyFilters?: boolean;
 }
 
-export default function Header<Item extends object, Params extends object = CommonParams>(
-  props: Props<Item, Params>,
-) {
-  const {
-    table,
-    columns,
-    params,
-    onChangeParams,
-    extraFilters = [],
-    extraTools = [],
-    hideFilters = false,
-    toolsOptions = {},
-    externalHeader,
-    extraHeaderInfo,
-    onReload,
-    onPaginateData,
-    cursorPagination,
-    totalPages,
-    leftTools,
-    readOnlyFilters = false,
-  } = props;
-
-  const autoFilters = useAutoFilters(props.columns);
+export default function Header<Item extends object, Params extends object = CommonParams>({
+  table,
+  columns,
+  params,
+  onChangeParams,
+  extraFilters = [],
+  extraTools = [],
+  hideFilters = false,
+  toolsOptions = {},
+  externalHeader,
+  extraHeaderInfo,
+  onReload,
+  onPaginateData,
+  cursorPagination,
+  totalPages,
+  leftTools,
+  readOnlyFilters = false,
+}: Props<Item, Params>) {
+  const autoFilters = useAutoFilters(columns);
   const allFilters = useMemo(() => [...autoFilters, ...extraFilters], [autoFilters, extraFilters]);
 
-  const showFilters = allFilters.length > 0 && !hideFilters;
-  let showTools = true;
-  if (toolsOptions === false) {
-    showTools = false;
-  } else if (
-    toolsOptions.reload === false &&
-    toolsOptions.setting === false &&
-    toolsOptions.download === false &&
-    extraTools.length === 0
-  ) {
-    showTools = false;
-  }
+  const hasFilters = allFilters.length > 0 && !hideFilters;
+  const hasTools =
+    toolsOptions !== false &&
+    (toolsOptions.reload !== false ||
+      toolsOptions.setting !== false ||
+      toolsOptions.download !== false ||
+      extraTools.length > 0);
 
-  const showHeader = showFilters || showTools;
-
-  if (!showHeader) {
-    return <></>;
+  if (!hasFilters && !hasTools && !extraHeaderInfo) {
+    return null;
   }
 
   return (
@@ -86,42 +75,46 @@ export default function Header<Item extends object, Params extends object = Comm
       className={cn(
         s.container,
         externalHeader && s.externalHeader,
-        showFilters && s.filtersVisible,
+        hasFilters && s.filtersVisible,
       )}
     >
-      <div className={cn(s.root)}>
-        {showFilters ? (
-          <Filters<Params>
-            readOnly={readOnlyFilters}
-            filters={allFilters}
-            params={params}
-            onChangeParams={(newParams) => {
-              onChangeParams({
-                ...pickPaginatedParams(params),
-                ...newParams,
-              });
-            }}
-          />
-        ) : (
-          <>{leftTools ? <div className={s.left}>{leftTools}</div> : <div />}</>
-        )}
-        <div className={s.right}>
-          {toolsOptions != false && (
-            <Tools
-              options={toolsOptions}
-              extraTools={extraTools}
-              columns={columns}
-              table={table}
+      {(hasFilters || hasTools) && (
+        <div className={s.root}>
+          {hasFilters ? (
+            <Filters<Params>
+              readOnly={readOnlyFilters}
+              filters={allFilters}
               params={params}
-              onReload={onReload}
-              onPaginateData={onPaginateData}
-              cursorPagination={cursorPagination}
-              totalPages={totalPages}
+              onChangeParams={(newParams) =>
+                onChangeParams({
+                  ...pickPaginatedParams(params),
+                  ...newParams,
+                })
+              }
             />
+          ) : (
+            (leftTools || hasTools) && <div className={s.left}>{leftTools}</div>
+          )}
+
+          {hasTools && (
+            <div className={s.right}>
+              <Tools
+                options={toolsOptions}
+                extraTools={extraTools}
+                columns={columns}
+                table={table}
+                params={params}
+                onReload={onReload}
+                onPaginateData={onPaginateData}
+                cursorPagination={cursorPagination}
+                totalPages={totalPages}
+              />
+            </div>
           )}
         </div>
-      </div>
-      {extraHeaderInfo ? <div>{extraHeaderInfo}</div> : <></>}
+      )}
+
+      {extraHeaderInfo && <div>{extraHeaderInfo}</div>}
     </div>
   );
 }

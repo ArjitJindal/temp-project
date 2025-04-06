@@ -21,7 +21,7 @@ import { DashboardStatsUsersStats, RiskLevel } from '@/apis';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-
+import type { GroupBy } from '@/components/charts/BarChart/types';
 const RISK_LEVEL_COLORS = {
   VERY_LOW: COLORS_V2_PRIMARY_SHADES_BLUE_50,
   LOW: COLORS_V2_PRIMARY_SHADES_BLUE_100,
@@ -43,7 +43,7 @@ export function RiskLevelBreakdownCard(props: Props) {
   return <RiskLevelDistributionCardBase {...props} groupBy="TIME" showGranularity />;
 }
 
-function RiskLevelDistributionCardBase(props: Props & { groupBy: 'VALUE' | 'TIME' }) {
+function RiskLevelDistributionCardBase(props: Props & { groupBy: GroupBy }) {
   const { userType = 'CONSUMER', groupBy, showGranularity = false, ...restProps } = props;
   const [timeRange, setTimeRange] = useState<RangeValue<Dayjs>>([
     dayjs().subtract(1, 'year'),

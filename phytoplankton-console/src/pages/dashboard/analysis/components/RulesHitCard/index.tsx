@@ -15,8 +15,11 @@ import { RULES_HIT_STATS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsRulesCount } from '@/apis';
+import Widget from '@/components/library/Widget';
+import { WidgetProps } from '@/components/library/Widget/types';
+import ReloadButton from '@/components/library/Table/Header/Tools/ReloadButton';
 
-export default function RuleHitCard() {
+export default function RuleHitCard(props: WidgetProps) {
   const api = useApi();
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
@@ -95,20 +98,33 @@ export default function RuleHitCard() {
     },
   );
 
+  const handleReload = () => {
+    rulesHitResult.refetch();
+  };
+
   return (
-    <QueryResultsTable<DashboardStatsRulesCount>
-      rowKey="ruleInstanceId"
-      columns={columns}
-      extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-      queryResults={rulesHitResult}
-      pagination={true}
-      params={paginationParams}
-      onChangeParams={setPaginationParams}
-      sizingMode="FULL_WIDTH"
-      toolsOptions={{
-        setting: false,
-        reload: true,
-      }}
-    />
+    <Widget
+      {...props}
+      extraControls={[
+        <DatePicker.RangePicker
+          key="date-range-picker"
+          value={dateRange}
+          onChange={setDateRange}
+        />,
+        <ReloadButton key="reload-button" onClick={handleReload} />,
+      ]}
+    >
+      <QueryResultsTable<DashboardStatsRulesCount>
+        rowKey="ruleInstanceId"
+        columns={columns}
+        queryResults={rulesHitResult}
+        pagination
+        externalHeader
+        params={paginationParams}
+        onChangeParams={setPaginationParams}
+        sizingMode="FULL_WIDTH"
+        toolsOptions={false}
+      />
+    </Widget>
   );
 }
