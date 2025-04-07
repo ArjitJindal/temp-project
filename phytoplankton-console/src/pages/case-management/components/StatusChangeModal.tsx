@@ -13,7 +13,7 @@ import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import { useUsers } from '@/utils/user-utils';
+import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
 
@@ -86,7 +86,9 @@ export default function StatusChangeModal(props: Props) {
   const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
   const [showErrors, setAlwaysShowErrors] = useState(false);
   const [users] = useUsers();
+  const currentUser = useCurrentUser();
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
+  const multiLevelEscalation = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const updateRes = getMutationAsyncResource(updateMutation);
   const isFinishedSuccessfully = useFinishedSuccessfully(updateRes);
@@ -188,8 +190,23 @@ export default function StatusChangeModal(props: Props) {
         }}
         okText="Confirm"
         onOk={() => {
+          let commentPrefix = '';
+          if (currentUser?.reviewerId) {
+            commentPrefix = 'Maker Comment:';
+          } else if (currentUser?.isReviewer) {
+            commentPrefix = 'Checker Comment:';
+          } else if (multiLevelEscalation) {
+            if (currentUser?.escalationLevel === 'L1') {
+              commentPrefix = 'Escalation Reveiwer L1 Comment:';
+            } else if (currentUser?.escalationLevel === 'L2') {
+              commentPrefix = 'Escalation Reveiwer L2 Comment:';
+            }
+          }
+          if (!commentPrefix) {
+            commentPrefix = 'User Comment:';
+          }
           const sanitizedComment = formState.values.comment
-            ? `Checker Comment: ${sanitizeComment(formState.values.comment)}`
+            ? `${commentPrefix} ${sanitizeComment(formState.values.comment)}`
             : '';
           updateMutation.mutate({
             ...formState.values,
