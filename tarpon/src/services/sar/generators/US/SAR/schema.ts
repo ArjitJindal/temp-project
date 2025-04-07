@@ -271,26 +271,28 @@ export const Transmitter = {
   },
   properties: {
     PartyName: pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName']),
-    Address: arraySchema(
-      pickAddressFields(
-        [
-          'RawCityText',
-          'RawCountryCodeText',
-          'RawStateCodeText',
-          'RawStreetAddress1Text',
-          'RawZIPCode',
-        ],
-        [
-          'RawCityText',
-          'RawCountryCodeText',
-          'RawStateCodeText',
-          'RawStreetAddress1Text',
-          'RawZIPCode',
-        ]
-      )
+    Address: pickAddressFields(
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ],
+      [
+        'RawCityText',
+        'RawCountryCodeText',
+        'RawStateCodeText',
+        'RawStreetAddress1Text',
+        'RawZIPCode',
+      ]
     ),
-    PhoneNumber: arraySchema(
-      pickPhoneNumberFields(['PhoneNumberText'], ['PhoneNumberText'])
+    PhoneNumber: omit(
+      pickPhoneNumberFields(
+        ['PhoneNumberExtensionText', 'PhoneNumberText'],
+        ['PhoneNumberText']
+      ),
+      'ui:schema'
     ),
     FlagrightPartyIdentificationTin: {
       ...pickPartyIdentificationFields(
@@ -342,23 +344,21 @@ export const FilingInstitution = {
         ['RawPartyFullName']
       ),
       AlternateName: FlagrightAlternatePartyName,
-      Address: arraySchema(
-        pickAddressFields(
-          [
-            'RawCityText',
-            'RawCountryCodeText',
-            'RawStateCodeText',
-            'RawStreetAddress1Text',
-            'RawZIPCode',
-          ],
-          [
-            'RawCityText',
-            'RawCountryCodeText',
-            'RawStateCodeText',
-            'RawStreetAddress1Text',
-            'RawZIPCode',
-          ]
-        )
+      Address: pickAddressFields(
+        [
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+        ],
+        [
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+        ]
       ),
       FlagrightPartyIdentificationTin: {
         ...pickPartyIdentificationFields(
@@ -420,11 +420,12 @@ export const ContactOffice = {
   },
   properties: {
     PartyName: pickPartyNameFields(['RawPartyFullName'], ['RawPartyFullName']),
-    PhoneNumber: arraySchema(
+    PhoneNumber: omit(
       pickPhoneNumberFields(
         ['PhoneNumberExtensionText', 'PhoneNumberText'],
         ['PhoneNumberText']
-      )
+      ),
+      'ui:schema'
     ),
   },
   required: ['PartyName', 'PhoneNumber'],
@@ -485,30 +486,30 @@ export const FinancialInstitution = {
         []
       ),
       AlternateName: arraySchema(FlagrightAlternatePartyName),
-      Address: arraySchema(
-        pickAddressFields(
-          [
-            'CityUnknownIndicator',
-            'CountryCodeUnknownIndicator',
-            'RawCityText',
-            'RawCountryCodeText',
-            'RawStateCodeText',
-            'RawStreetAddress1Text',
-            'RawZIPCode',
-            'StreetAddressUnknownIndicator',
-            'ZIPCodeUnknownIndicator',
-          ],
-          []
-        )
+      Address: pickAddressFields(
+        [
+          'CityUnknownIndicator',
+          'CountryCodeUnknownIndicator',
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+          'StreetAddressUnknownIndicator',
+          'ZIPCodeUnknownIndicator',
+        ],
+        []
       ),
       FlagrightPartyIdentificationTin: {
         ...pickPartyIdentificationFields(
-          ['PartyIdentificationNumberText', 'TINUnknownIndicator'],
+          ['PartyIdentificationNumberText'],
           ['PartyIdentificationTypeCode'],
           {
             // ref: https://github.com/moov-io/fincen/blob/eeeed6e18ba6710474db14d0ec51441b26d75b1c/pkg/suspicious_activity/activity.go#L288
             PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '1',
               '2',
+              '9',
             ]),
           }
         ),
@@ -545,8 +546,8 @@ export const FinancialInstitution = {
     'PrimaryRegulatorTypeCode',
     'PartyName',
     'Address',
-    'FlagrightPartyIdentificationTin',
     'OrganizationClassificationTypeSubtype',
+    'FlagrightPartyIdentificationTin',
   ],
 }
 
@@ -687,6 +688,21 @@ export const Subject = {
           []
         )
       ),
+      FlagrightPartyIdentificationTin: {
+        ...pickPartyIdentificationFields(
+          ['PartyIdentificationNumberText'],
+          ['PartyIdentificationTypeCode'],
+          {
+            // ref: https://github.com/moov-io/fincen/blob/eeeed6e18ba6710474db14d0ec51441b26d75b1c/pkg/suspicious_activity/activity.go#L288
+            PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '1',
+              '2',
+              '9',
+            ]),
+          }
+        ),
+        title: 'TIN',
+      },
       PartyIdentification: arraySchema({
         ...pickPartyIdentificationFields(
           [
@@ -714,7 +730,7 @@ export const Subject = {
       }),
     }
   ),
-  required: ['Address', 'PartyIdentification'],
+  required: ['Address', 'FlagrightPartyIdentificationTin'],
 }
 
 export const SuspiciousActivity = {

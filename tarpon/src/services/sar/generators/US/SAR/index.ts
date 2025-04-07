@@ -489,7 +489,13 @@ export class UsSarReportGenerator implements ReportGenerator {
       ]
       // Augment PartyIdentificationTypeCode
       financialInstitution.PartyIdentification = [
-        financialInstitution.FlagrightPartyIdentificationTin,
+        financialInstitution.FlagrightPartyIdentificationTin
+          .PartyIdentificationNumberText
+          ? financialInstitution.FlagrightPartyIdentificationTin
+          : {
+              ...financialInstitution.FlagrightPartyIdentificationTin,
+              TINUnknownIndicator: 'Y',
+            },
         financialInstitution.FlagrightPartyIdentificationFinancialInstitutionIdentification,
         financialInstitution.FlagrightPartyIdentificationInternalControl
           ? {
@@ -525,7 +531,24 @@ export class UsSarReportGenerator implements ReportGenerator {
           : undefined,
         ...(subject.AlternateName ?? []),
       ].filter(Boolean)
-      return omit(subject, 'AlternateName')
+      const validPartyIdentification = [
+        subject.FlagrightPartyIdentificationTin.PartyIdentificationNumberText
+          ? subject.FlagrightPartyIdentificationTin
+          : {
+              ...subject.FlagrightPartyIdentificationTin,
+              TINUnknownIndicator: 'Y',
+            },
+      ]
+      subject.PartyIdentification.forEach((partyIdentification) => {
+        if (
+          partyIdentification.PartyIdentificationTypeCode &&
+          partyIdentification.PartyIdentificationNumberText
+        ) {
+          validPartyIdentification.push(partyIdentification)
+        }
+      })
+      subject.PartyIdentification = validPartyIdentification
+      return omit(subject, 'AlternateName', 'FlagrightPartyIdentificationTin')
     })
 
     const parties = [
@@ -690,14 +713,26 @@ export class UsSarReportGenerator implements ReportGenerator {
     if (isValidSARRequest(this.tenantId)) {
       const remoteCwd = await sftp.cwd()
       const ackDir = remoteCwd + FincenAcknowlegementDirectory
+      const submissionDir = remoteCwd + FincenSubmissionDirectory
       const reportType = report.reportTypeId.split('-')[1]
       if (reportType !== 'SAR' && reportType !== 'CTR') {
         await sftp.end()
         return undefined
       }
+      const submittedRemoteFilename = `${reportType}XST.${dayjs(
+        report.createdAt
+      ).format('YYYYMMDDhhmmss')}.${creds.username}.xml`
       const remoteFilename = `${reportType}XST.${dayjs(report.createdAt).format(
         'YYYYMMDDhhmmss'
       )}.${creds.username}.xml.MESSAGES.XML`
+      // check if submitted file exists in submission directory
+      const existsInSubmission = await sftp.exists(
+        path.join(submissionDir, submittedRemoteFilename)
+      )
+      if (existsInSubmission) {
+        // fincen has not yet processed the report, no need to check ack dir
+        return ''
+      }
       const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
       const exists = await sftp.exists(path.join(ackDir, remoteFilename))
       if (!exists) {
@@ -711,7 +746,6 @@ export class UsSarReportGenerator implements ReportGenerator {
   }
 
   public async submit(report: Report) {
-    //TODO: allow for all tenant after testing is completed
     if (isValidSARRequest(this.tenantId)) {
       const creds = await getSecretByName('fincenCreds')
       const sftp = await connectToSFTP()
@@ -736,6 +770,6 @@ export class UsSarReportGenerator implements ReportGenerator {
       scope.setFingerprint([this.tenantId, report.id ?? ''])
       Sentry.captureMessage(`[${report.id}] New FinCEN SAR report submitted`)
     })
-    return ''
+    return '' // todo update this
   }
 }

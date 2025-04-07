@@ -40,7 +40,7 @@ async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
             await reportRepository.hasValidJurisdictionReports(
               ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
               'US',
-              Date.now() - 1000 * 60 * 60 * 5
+              Date.now() - 1000 * 60 * 60
             )
           if (hasUsReports) {
             await sendBatchJobCommand({

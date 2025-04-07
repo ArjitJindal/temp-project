@@ -65,6 +65,9 @@ function fixPartyIdentificationIndicatorsForSubject(
     ...partyIdentification,
   }
   if (partyType != null) {
+    if (result.TINUnknownIndicator) {
+      return result // already handled case
+    }
     if (partyType === ActivityPartyTypeCodes.SUBJECT) {
       result.IdentificationPresentUnknownIndicator = indicator(
         !partyIdentification.OtherIssuerCountryText &&

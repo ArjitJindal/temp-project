@@ -65,7 +65,7 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
     const filteredUsaReports = await reportRepository.getReportsByStatus(
       ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
       'US',
-      timeNow - 1000 * 60 * 60 * 5 // 5 hour report update
+      timeNow - 1000 * 60 * 60 // 1 hour report update
     )
     const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
     // 2. fetch result from sftp server
@@ -93,8 +93,7 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
         const promises = filteredUsaReportBatch.map((report) => {
           return new Promise((resolve, reject) => {
             if (!sftp) {
-              resolve(false)
-              return
+              return resolve(false)
             }
             sarGenerator
               .getAckFileContent(sftp, report, creds)
@@ -115,7 +114,6 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
                       status
                     )
                     if (!statusInfo) {
-                      logger.warn(`Invalid status info for report ${report.id}`)
                       return resolve(false)
                     }
 
@@ -132,7 +130,7 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
                       )
                     }
                   }
-                  resolve(true)
+                  return resolve(true)
                 } catch (error) {
                   logger.error(`Error processing report ${report.id}: ${error}`)
                 }

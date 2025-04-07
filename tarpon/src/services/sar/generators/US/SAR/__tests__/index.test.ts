@@ -101,6 +101,10 @@ const report: Report = {
               CityUnknownIndicator: 'Y',
             },
           ],
+          FlagrightPartyIdentificationTin: {
+            PartyIdentificationNumberText: '547898569',
+            PartyIdentificationTypeCode: '2',
+          },
           PartyIdentification: [
             {
               PartyIdentificationTypeCode: '6',
@@ -131,6 +135,10 @@ const report: Report = {
               CityUnknownIndicator: 'Y',
             },
           ],
+          FlagrightPartyIdentificationTin: {
+            PartyIdentificationNumberText: '547898560',
+            PartyIdentificationTypeCode: '2',
+          },
           PartyIdentification: [
             {
               PartyIdentificationTypeCode: '999',
