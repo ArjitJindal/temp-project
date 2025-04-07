@@ -17,13 +17,13 @@ export default function RegistrationDetails(props: Props) {
       items={[
         {
           label: 'Registration identifier',
-          value: user.legalEntity.companyRegistrationDetails?.registrationIdentifier ?? '-',
+          value: user?.legalEntity?.companyRegistrationDetails?.registrationIdentifier ?? '-',
         },
         {
           label: 'Registered in',
-          value: user.legalEntity.companyRegistrationDetails?.registrationCountry ? (
+          value: user?.legalEntity?.companyRegistrationDetails?.registrationCountry ? (
             <CountryDisplay
-              isoCode={user.legalEntity.companyRegistrationDetails.registrationCountry}
+              isoCode={user?.legalEntity?.companyRegistrationDetails.registrationCountry}
             />
           ) : (
             '-'
@@ -31,17 +31,17 @@ export default function RegistrationDetails(props: Props) {
         },
         {
           label: 'Registered on',
-          value: user.legalEntity.companyRegistrationDetails?.dateOfRegistration
-            ? dayjs(user.legalEntity.companyRegistrationDetails.dateOfRegistration).format(
+          value: user?.legalEntity?.companyRegistrationDetails?.dateOfRegistration
+            ? dayjs(user?.legalEntity?.companyRegistrationDetails.dateOfRegistration).format(
                 DATE_TIME_FORMAT_WITHOUT_SECONDS,
               )
             : '-',
         },
         {
           label: 'Tax residence',
-          value: user.legalEntity.companyRegistrationDetails?.taxResidenceCountry ? (
+          value: user?.legalEntity?.companyRegistrationDetails?.taxResidenceCountry ? (
             <CountryDisplay
-              isoCode={user.legalEntity.companyRegistrationDetails.taxResidenceCountry}
+              isoCode={user?.legalEntity?.companyRegistrationDetails.taxResidenceCountry}
             />
           ) : (
             '-'
@@ -49,11 +49,11 @@ export default function RegistrationDetails(props: Props) {
         },
         {
           label: 'Tax ID',
-          value: user.legalEntity.companyRegistrationDetails?.taxIdentifier ?? '-',
+          value: user?.legalEntity?.companyRegistrationDetails?.taxIdentifier ?? '-',
         },
         {
           label: 'Legal entity type',
-          value: user.legalEntity.companyRegistrationDetails?.legalEntityType ?? '-',
+          value: user?.legalEntity?.companyRegistrationDetails?.legalEntityType ?? '-',
         },
       ]}
     />

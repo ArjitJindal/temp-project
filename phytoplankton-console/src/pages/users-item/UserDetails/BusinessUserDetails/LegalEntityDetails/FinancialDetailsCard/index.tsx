@@ -11,7 +11,7 @@ interface Props {
 export default function FinancialDetails(props: Props) {
   const { user } = props;
 
-  const financialDetails = user.legalEntity.companyFinancialDetails;
+  const financialDetails = user?.legalEntity?.companyFinancialDetails;
   return (
     <EntityPropertiesCard
       title={'Company financial details'}

@@ -34,8 +34,8 @@ export default function GeneralDetailsCard(props: Props) {
           label: 'Business industry',
           value: (
             <TagList>
-              {user.legalEntity.companyGeneralDetails?.businessIndustry
-                ? user.legalEntity.companyGeneralDetails?.businessIndustry.map((industry) => (
+              {user?.legalEntity?.companyGeneralDetails?.businessIndustry
+                ? user?.legalEntity?.companyGeneralDetails?.businessIndustry.map((industry) => (
                     <Tag key={industry}>{industry}</Tag>
                   ))
                 : '-'}
@@ -44,15 +44,15 @@ export default function GeneralDetailsCard(props: Props) {
         },
         {
           label: 'Main products and services',
-          value: user.legalEntity.companyGeneralDetails?.mainProductsServicesSold ?? '-',
+          value: user?.legalEntity?.companyGeneralDetails?.mainProductsServicesSold ?? '-',
         },
-        ...(user.legalEntity?.reasonForAccountOpening?.length
+        ...(user?.legalEntity?.reasonForAccountOpening?.length
           ? [
               {
                 label: 'Reason for opening account',
                 value: (
                   <TagList>
-                    {user.legalEntity?.reasonForAccountOpening.map((reason) => (
+                    {user?.legalEntity?.reasonForAccountOpening.map((reason) => (
                       <Tag key={reason}>{reason}</Tag>
                     ))}
                   </TagList>
@@ -60,13 +60,13 @@ export default function GeneralDetailsCard(props: Props) {
               },
             ]
           : []),
-        ...(user.legalEntity?.companyGeneralDetails?.alias?.length
+        ...(user?.legalEntity?.companyGeneralDetails?.alias?.length
           ? [
               {
                 label: 'Alias',
                 value: (
                   <TagList>
-                    {user.legalEntity?.companyGeneralDetails?.alias.map((alias) => (
+                    {user?.legalEntity?.companyGeneralDetails?.alias.map((alias) => (
                       <Tag key={alias}>{alias}</Tag>
                     ))}
                   </TagList>
@@ -78,21 +78,21 @@ export default function GeneralDetailsCard(props: Props) {
           label: 'Operating countries',
           value: (
             <TagList>
-              {user.legalEntity.companyGeneralDetails?.operatingCountries?.length
-                ? user.legalEntity.companyGeneralDetails.operatingCountries.map((country) => (
+              {user?.legalEntity?.companyGeneralDetails?.operatingCountries?.length
+                ? user?.legalEntity?.companyGeneralDetails?.operatingCountries?.map((country) => (
                     <CountryDisplay key={country} isoCode={country} />
                   ))
                 : '-'}
             </TagList>
           ),
         },
-        ...(user.legalEntity?.sourceOfFunds?.length
+        ...(user?.legalEntity?.sourceOfFunds?.length
           ? [
               {
                 label: 'Source of funds',
                 value: (
                   <TagList>
-                    {user.legalEntity?.sourceOfFunds.map((source) => (
+                    {user?.legalEntity?.sourceOfFunds.map((source) => (
                       <Tag key={source}>{source}</Tag>
                     ))}
                   </TagList>

@@ -37,7 +37,7 @@ export default function LegalEntityDetails(props: Props) {
         <EntityInfoGrid.ColumnGroup
           childrens={[
             <ContactDetailsCard
-              contactDetails={user.legalEntity.contactDetails}
+              contactDetails={user?.legalEntity?.contactDetails}
               key={'contact-details-card'}
             />,
             <MerchantCategoryCodeCard user={user} key="merchant-category-code-card" />,

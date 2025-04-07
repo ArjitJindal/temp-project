@@ -195,11 +195,13 @@ export class UsSarReportGenerator implements ReportGenerator {
         subjects.push({
           ...sharedDetails,
           ActivityPartyTypeCode: ActivityPartyTypeCodes.SUBJECT,
-          PartyName: [
-            partyNameByCompanyGeneralDetails(
-              user.legalEntity.companyGeneralDetails
-            ),
-          ],
+          PartyName: user?.legalEntity?.companyGeneralDetails
+            ? [
+                partyNameByCompanyGeneralDetails(
+                  user?.legalEntity?.companyGeneralDetails
+                ),
+              ]
+            : [],
         })
       }
     }
