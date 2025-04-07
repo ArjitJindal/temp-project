@@ -22,6 +22,24 @@
   margin-top: 16px;
 }
 
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.idContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .sanctionsSettingsRoot {
   display: flex;
   flex-direction: column;
@@ -31,4 +49,112 @@
 
 .sanctionsSettingsButton {
   width: fit-content;
+}
+
+.filterTextInput {
+  height: 32px;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+
+  .filtersSection {
+    margin-top: 24px;
+
+    .filtersSectionHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      h4 {
+        margin: 0;
+      }
+    }
+
+    .filtersSectionTitle {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 28px;
+      margin-bottom: 16px;
+    }
+
+    .filterInputRow {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+
+      .filterSelect,
+      .filterValue {
+        flex: 1;
+      }
+
+      button {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+.filtersList {
+  margin-top: 16px;
+}
+
+.filterSelect {
+  width: 100%;
+  height: 32px;
+}
+
+.filterSelectLabel,
+.filterValueLabel {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  margin-bottom: 4px;
+}
+
+.addFilterButton {
+  align-self: flex-end;
+  width: 90px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .filterLabel {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .filterValueDisplay {
+    flex: 1;
+  }
+
+  .filterDelete {
+    flex-shrink: 0;
+  }
+}
+
+.inputContainer {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.textInput {
+  flex: 1;
 }

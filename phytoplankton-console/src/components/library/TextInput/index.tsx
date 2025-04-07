@@ -21,6 +21,7 @@ export interface Props extends InputProps<string> {
   iconRight?: React.ReactNode;
   isSuccess?: boolean;
   description?: string;
+  className?: string;
 }
 
 export default function TextInput(props: Props) {
@@ -45,6 +46,7 @@ export default function TextInput(props: Props) {
     isSuccess,
     isLoading,
     description,
+    className,
   } = props;
   const defaultRef = useRef<HTMLInputElement>(null);
   const ref = innerRef === undefined ? defaultRef : innerRef;
@@ -63,7 +65,7 @@ export default function TextInput(props: Props) {
   const isFilled = value != null && value !== '';
 
   return (
-    <div className={s.root}>
+    <div className={cn(s.root, className)}>
       <div
         className={cn(
           s.inputWrapper,
@@ -74,6 +76,7 @@ export default function TextInput(props: Props) {
           isDisabled && s.isDisabled,
           isFocused && s.isFocused,
           isFilled && s.isFilled,
+          className,
         )}
       >
         {icon && <div className={cn(s.icon, s.iconLeft)}>{icon}</div>}

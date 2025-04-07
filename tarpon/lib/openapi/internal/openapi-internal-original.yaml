@@ -6138,6 +6138,100 @@ paths:
             schema:
               $ref: '#/components/schemas/SanctionHitsStatusUpdateRequest'
         required: true
+  /search-profiles:
+    post:
+      summary: Create a Search Profile
+      operationId: post-search-profiles
+      x-flagright:
+        permissions:
+          - screening:search-profiles:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+    get:
+      summary: Get search profiles
+      operationId: get-search-profiles
+      x-flagright:
+        permissions:
+          - screening:search-profiles:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSearchProfileResponse'
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterSearchProfileId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterSearchProfileName
+        - schema:
+            type: string
+            enum:
+              - ENABLED
+              - DISABLED
+          in: query
+          name: filterSearchProfileStatus
+  /search-profiles/{searchProfileId}:
+    patch:
+      summary: Update a Search Profile
+      operationId: update-search-profile
+      x-flagright:
+        permissions:
+          - screening:search-profiles:write
+      parameters:
+        - schema:
+            type: string
+          name: searchProfileId
+          in: path
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+    delete:
+      summary: Delete a Search Profile
+      operationId: delete-search-profile
+      x-flagright:
+        permissions:
+          - screening:search-profiles:write
+      parameters:
+        - schema:
+            type: string
+          name: searchProfileId
+          in: path
+          required: true
+      responses:
+        '204':
+          description: No Content
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -13025,6 +13119,81 @@ components:
           type: boolean
       required:
         - searchTerm
+    ListSearchProfileResponse:
+      title: ListSearchProfileResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchProfileResponse'
+    SearchProfileResponse:
+      title: SearchProfileResponse
+      type: object
+      properties:
+        searchProfileId:
+          type: string
+        searchProfileName:
+          type: string
+        searchProfileDescription:
+          type: string
+        isDefault:
+          type: boolean
+        fuzziness:
+          type: number
+          minimum: 0
+          maximum: 1
+        nationality:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+        searchProfileStatus:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+    SearchProfileRequest:
+      title: SearchProfileRequest
+      type: object
+      properties:
+        searchProfileName:
+          type: string
+        searchProfileDescription:
+          type: string
+        isDefault:
+          type: boolean
+        fuzziness:
+          type: number
+          minimum: 0
+          maximum: 1
+        nationality:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
+        searchProfileStatus:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+      required:
+        - searchProfileName
+        - searchProfileStatus
     PepRank:
       title: PepRank
       type: string

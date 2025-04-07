@@ -75,6 +75,11 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${ALERT_KEY_IDENTIFIER}`,
     SortKeyID: alertId,
   }),
+  // Attributes: refer to Search Profile
+  SEARCH_PROFILE: (tenantId: string, searchProfileId?: string) => ({
+    PartitionKeyID: `${tenantId}#search-profile`,
+    SortKeyID: searchProfileId,
+  }),
   CRM_RECORD: (tenantId: string, modelName: CRMModelType, id: string) => ({
     PartitionKeyID: `${tenantId}${CRM_RECORD_KEY_IDENTIFIER}#${CRM_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
     SortKeyID: id,

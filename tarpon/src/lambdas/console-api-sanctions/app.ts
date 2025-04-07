@@ -9,11 +9,19 @@ import { SanctionsService } from '@/services/sanctions'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import {
   DefaultApiDeleteSanctionsWhitelistRecordsRequest,
+  DefaultApiGetSearchProfilesRequest,
+  DefaultApiPostSearchProfilesRequest,
   DefaultApiSearchSanctionsHitsRequest,
+  DefaultApiUpdateSearchProfileRequest,
+  DefaultApiDeleteSearchProfileRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { AlertsService } from '@/services/alerts'
 import { UserService } from '@/services/users'
 import { CaseService } from '@/services/cases'
+import { SearchProfileService } from '@/services/search-profile'
+import { CounterRepository } from '@/services/counter/repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
@@ -202,6 +210,72 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       }
     )
 
+    handlers.registerPostSearchProfiles(
+      async (_ctx, request: DefaultApiPostSearchProfilesRequest) => {
+        const mongoDb = await getMongoDbClient()
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const searchProfileService = new SearchProfileService(
+          tenantId,
+          counterRepository
+        )
+        const dynamoDb = await getDynamoDbClient()
+        return await searchProfileService.createSearchProfile(
+          dynamoDb,
+          request.SearchProfileRequest
+        )
+      }
+    )
+
+    handlers.registerGetSearchProfiles(
+      async (_ctx, request: DefaultApiGetSearchProfilesRequest) => {
+        const mongoDb = await getMongoDbClient()
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const searchProfileService = new SearchProfileService(
+          tenantId,
+          counterRepository
+        )
+        const dynamoDb = await getDynamoDbClient()
+        return await searchProfileService.getSearchProfiles(
+          dynamoDb,
+          request.filterSearchProfileId,
+          request.filterSearchProfileName,
+          request.filterSearchProfileStatus
+        )
+      }
+    )
+
+    handlers.registerUpdateSearchProfile(
+      async (_ctx, request: DefaultApiUpdateSearchProfileRequest) => {
+        const mongoDb = await getMongoDbClient()
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const searchProfileService = new SearchProfileService(
+          tenantId,
+          counterRepository
+        )
+        const dynamoDb = await getDynamoDbClient()
+        return await searchProfileService.updateSearchProfile(
+          dynamoDb,
+          request.searchProfileId,
+          request.SearchProfileRequest
+        )
+      }
+    )
+
+    handlers.registerDeleteSearchProfile(
+      async (_ctx, request: DefaultApiDeleteSearchProfileRequest) => {
+        const mongoDb = await getMongoDbClient()
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const searchProfileService = new SearchProfileService(
+          tenantId,
+          counterRepository
+        )
+        const dynamoDb = await getDynamoDbClient()
+        return await searchProfileService.deleteSearchProfile(
+          dynamoDb,
+          request.searchProfileId
+        )
+      }
+    )
     return await handlers.handle(event)
   }
 )

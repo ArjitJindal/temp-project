@@ -29,10 +29,12 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
     );
   }
 
+  const isReadOnly = (renderer as any).readOnly ?? readOnly;
+
   return (
     <AutoFilter
-      readOnly={readOnly}
-      filter={{ ...filter, kind: 'AUTO', dataType: renderer }}
+      readOnly={isReadOnly}
+      filter={{ ...filter, kind: 'AUTO', dataType: { ...renderer, readOnly: isReadOnly } }}
       value={params?.[filter.key]}
       onChange={(value: unknown) => {
         onChangeParams({ ...params, [filter.key]: value });

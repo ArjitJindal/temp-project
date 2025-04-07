@@ -379,6 +379,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteCrmRecords.bind(this),
         order: 16,
       },
+      SEARCH_PROFILE: {
+        method: this.deleteSearchProfiles.bind(this),
+        order: 17,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -859,6 +863,18 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Risk Classification'
+    )
+  }
+
+  private async deleteSearchProfiles(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SEARCH_PROFILE(tenantId).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Search Profile'
     )
   }
 

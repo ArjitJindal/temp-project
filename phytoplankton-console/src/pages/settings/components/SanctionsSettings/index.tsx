@@ -1,7 +1,8 @@
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useState } from 'react';
 import KYC6Logo from 'src/branding/KYC6.svg';
 import s from './styles.module.less';
+import SearchProfileList from './SearchProfileList';
+import SanctionsProviderSettings from './SanctionProviderSettings';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useFeatureEnabled,
@@ -15,8 +16,6 @@ import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
 import { useHasPermissions } from '@/utils/user-utils';
-import Select from '@/components/library/Select';
-import Label from '@/components/ui/Form/Layout/Label';
 import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
@@ -24,7 +23,6 @@ import { SanctionsDataProviderName } from '@/apis';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
-
 export const SanctionsSettings = () => {
   const screeningPermissions = useHasPermissions([
     'settings:screening:read',
@@ -109,6 +107,7 @@ export const SanctionsSettings = () => {
   };
   return (
     <>
+      <SearchProfileList />
       <SanctionsProviderSettings
         title="Acuris"
         hasFeature={hasFeatureAcuris}
@@ -225,71 +224,5 @@ export const SanctionsSettings = () => {
         )}
       </SettingsCard>
     </>
-  );
-};
-
-const SanctionsProviderSettings = ({
-  title,
-  hasFeature,
-  screeningTypes,
-  searchTypes,
-  onScreeningTypesChange,
-  isLoading,
-  onSave,
-  isSanctionsEnabled,
-  hasPermissions,
-}) => {
-  if (!hasFeature || !isSanctionsEnabled) {
-    return null;
-  }
-  return (
-    <SettingsCard title={`${title} settings`}>
-      <div className={s.sanctionsSettingsRoot}>
-        <Label title={`Screening types for ${title}`} color="dark">
-          <Select
-            mode="MULTIPLE"
-            options={searchTypes.map((type) => ({
-              label: humanizeAuto(type),
-              value: type,
-            }))}
-            isDisabled={!hasPermissions}
-            onChange={(values) =>
-              onScreeningTypesChange({
-                screeningTypes: values ?? [],
-                entityTypes: screeningTypes.entityTypes,
-                provider: screeningTypes.provider,
-              })
-            }
-            value={screeningTypes.screeningTypes}
-          />
-        </Label>
-        <Label title="Required entities data" color="dark">
-          <Select
-            mode="MULTIPLE"
-            options={SANCTIONS_ENTITY_TYPES.map((type) => ({
-              label: humanizeAuto(type),
-              value: type,
-            }))}
-            isDisabled={!hasPermissions}
-            onChange={(values) =>
-              onScreeningTypesChange({
-                screeningTypes: screeningTypes.screeningTypes,
-                entityTypes: values ?? [],
-                provider: screeningTypes.provider,
-              })
-            }
-            value={screeningTypes.entityTypes}
-          />
-        </Label>
-        <Button
-          type="PRIMARY"
-          onClick={() => onSave(screeningTypes)}
-          className={s.sanctionsSettingsButton}
-          isDisabled={isLoading || !hasPermissions}
-        >
-          Save
-        </Button>
-      </div>
-    </SettingsCard>
   );
 };

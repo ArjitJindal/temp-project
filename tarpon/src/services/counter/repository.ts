@@ -14,6 +14,7 @@ export type CounterEntity =
   | 'RiskFactor'
   | 'ClosureReason'
   | 'EscalationReason'
+  | 'SearchProfile'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
@@ -25,6 +26,7 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'SLAPolicy',
   'ClosureReason',
   'EscalationReason',
+  'SearchProfile',
 ]
 
 export type EntityCounter = {

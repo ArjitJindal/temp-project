@@ -29,6 +29,7 @@ type WithSharedAutoFilterProps<T> = T & {
   autoWidth?: boolean;
   allowClear?: boolean;
   clearNotAllowedReason?: string;
+  readOnly?: boolean;
 };
 
 export type AutoFilterDataType =

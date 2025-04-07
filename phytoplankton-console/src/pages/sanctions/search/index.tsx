@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ComplyAdvantageHitTable from 'src/components/ComplyAdvantageHitTable';
 import { useQuery } from '@/utils/queries/hooks';
@@ -16,7 +16,7 @@ import {
 } from '@/utils/asyncResource';
 import { AllParams, TableData } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY } from '@/utils/queries/keys';
+import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY, SEARCH_PROFILES } from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
@@ -33,6 +33,7 @@ interface TableSearchParams {
   nationality?: Array<string>;
   occupationCode?: Array<OccupationCode>;
   documentId?: string;
+  searchProfileId?: string;
 }
 
 interface Props {
@@ -44,8 +45,59 @@ export function SearchResultTable(props: Props) {
   const { searchId, setSearchTerm } = props;
   const api = useApi();
   const currentUser = useAuth0User();
+  const hasSetDefaultProfile = useRef(false);
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+
+  const searchProfilesResult = useQuery(
+    SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
+    async () => {
+      try {
+        const response = await api.getSearchProfiles({
+          filterSearchProfileStatus: 'ENABLED',
+        });
+        return {
+          items: response.items || [],
+          total: response.items?.length || 0,
+        };
+      } catch (error) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+    },
+  );
+
+  useEffect(() => {
+    const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
+    const profiles = response.items || [];
+    const defaultProfile = Array.isArray(profiles)
+      ? profiles.find((profile) => profile.isDefault) || profiles[0]
+      : null;
+
+    if (defaultProfile?.searchProfileId && !hasSetDefaultProfile.current) {
+      setParams((current) => ({
+        ...current,
+        searchProfileId: defaultProfile.searchProfileId,
+        ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
+        ...(defaultProfile.types?.length
+          ? { types: defaultProfile.types as SanctionsSearchType[] }
+          : {}),
+        ...(defaultProfile.nationality?.length ? { nationality: defaultProfile.nationality } : {}),
+      }));
+      setSearchParams((current) => ({
+        ...current,
+        searchProfileId: defaultProfile.searchProfileId,
+        ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
+        ...(defaultProfile.types?.length
+          ? { types: defaultProfile.types as SanctionsSearchType[] }
+          : {}),
+        ...(defaultProfile.nationality?.length ? { nationality: defaultProfile.nationality } : {}),
+      }));
+      hasSetDefaultProfile.current = true;
+    }
+  }, [searchProfilesResult.data]);
 
   const historyItemQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId, { page: params.page, pageSize: params.pageSize }),
@@ -88,6 +140,25 @@ export function SearchResultTable(props: Props) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
   const searchEnabled = !!searchParams.searchTerm;
+
+  const selectedSearchProfileResult = useQuery(
+    ['selected-search-profile', searchParams.searchProfileId],
+    async () => {
+      if (!searchParams.searchProfileId) {
+        return null;
+      }
+      const response = await api.getSearchProfiles({
+        filterSearchProfileId: [searchParams.searchProfileId],
+      });
+      return response.items?.[0] || null;
+    },
+    {
+      enabled: !!searchParams.searchProfileId,
+    },
+  );
+
+  const selectedSearchProfile = getOr(selectedSearchProfileResult.data, null);
+
   const newSearchQueryResults = useQuery(
     SANCTIONS_SEARCH({
       ...searchParams,
@@ -98,11 +169,11 @@ export function SearchResultTable(props: Props) {
       return api.postSanctions({
         SanctionsSearchRequest: {
           searchTerm: searchParams.searchTerm ?? '',
-          fuzziness: searchParams.fuzziness,
+          fuzziness: selectedSearchProfile?.fuzziness ?? searchParams.fuzziness,
           countryCodes: searchParams.countryCodes,
           yearOfBirth: searchParams.yearOfBirth ? searchParams.yearOfBirth : undefined,
-          types: searchParams.types,
-          nationality: searchParams.nationality,
+          types: selectedSearchProfile?.types ?? searchParams.types,
+          nationality: selectedSearchProfile?.nationality ?? searchParams.nationality,
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
           manualSearch: true,

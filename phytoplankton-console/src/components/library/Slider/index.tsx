@@ -84,7 +84,7 @@ export default function Slider(props: Props) {
       )}
       {props.mode === 'SINGLE' && props.textInput && !isEmpty(props.textInput) && (
         <div style={{ marginLeft: '0.5rem' }}>
-          <NumberInput {...props} htmlAttrs={props.textInput.htmlAttrs} />
+          <NumberInput {...omit(props, ['className'])} htmlAttrs={props.textInput.htmlAttrs} />
         </div>
       )}
     </div>

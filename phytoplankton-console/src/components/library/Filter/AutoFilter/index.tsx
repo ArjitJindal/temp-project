@@ -27,6 +27,7 @@ interface SliderInputProps extends InputProps<number> {
 export function AutoFilter(props: Props): JSX.Element {
   const { filter, value, onChange, readOnly } = props;
   const { allowClear = true, clearNotAllowedReason, autoWidth } = filter.dataType;
+  const isReadOnly = (filter.dataType as any).readOnly ?? readOnly;
 
   const inputRef = useRef<any>(null);
   const sharedProps = {
@@ -39,7 +40,7 @@ export function AutoFilter(props: Props): JSX.Element {
     allowClear,
     autoWidth,
     clearNotAllowedReason,
-    readOnly,
+    readOnly: isReadOnly,
   };
 
   if (filter.dataType.kind === 'dateRange') {

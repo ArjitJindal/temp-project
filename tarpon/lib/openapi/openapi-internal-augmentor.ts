@@ -280,6 +280,9 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/activity/details':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/search-profiles': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/search-profiles/{searchProfileId}':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/simulation': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
   '/simulation/jobs/{jobId}':
     StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,

@@ -148,7 +148,6 @@ export const DEFAULT_ROLES: {
       'simulator:simulations:read',
       'notifications:all:read',
       'screening:search-profiles:read',
-      'screening:search-profiles:write',
     ],
     description:
       'Developer have unrestricted access to the developer section on the console,  under settings. They have read-only access to all other features.',

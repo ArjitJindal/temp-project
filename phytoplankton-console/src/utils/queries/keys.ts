@@ -459,3 +459,5 @@ export const USER_DRS_VALUES = (userId: string, params: AnyParameters): QueryKey
   userId,
   params,
 ];
+
+export const SEARCH_PROFILES = (params?: AnyParameters): QueryKey => ['search-profiles', params];

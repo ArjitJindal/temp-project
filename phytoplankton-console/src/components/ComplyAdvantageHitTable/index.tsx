@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { startCase, uniq } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeSnakeCase, humanizeAuto } from '@flagright/lib/utils/humanize';
@@ -30,7 +30,10 @@ import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
-
+import { useQuery } from '@/utils/queries/hooks';
+import { SEARCH_PROFILES } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import { getOr } from '@/utils/asyncResource';
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
   searchTerm?: string;
@@ -73,8 +76,27 @@ export default function SanctionsSearchTable(props: Props) {
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
+  const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
-
+  const searchProfileResult = useQuery(
+    SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
+    async () => {
+      try {
+        const response = await api.getSearchProfiles({
+          filterSearchProfileStatus: 'ENABLED',
+        });
+        return {
+          items: response.items || [],
+          total: response.items?.length || 0,
+        };
+      } catch (error) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+    },
+  );
   const helper = new ColumnHelper<SanctionsEntity>();
   const columns: TableColumn<SanctionsEntity>[] = helper.list([
     // Data fields
@@ -148,62 +170,11 @@ export default function SanctionsSearchTable(props: Props) {
     }),
   ]);
 
-  const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
-    {
-      title: 'Search term',
-      key: 'searchTerm',
-      renderer: {
-        kind: 'string',
-      },
-    },
-    {
-      title: 'Year of birth',
-      key: 'yearOfBirth',
-      renderer: {
-        kind: 'year',
-      },
-    },
-    {
-      title: 'Fuzziness',
-      description: '(The default value is 0.5)',
-      key: 'fuzziness',
-      renderer: {
-        kind: 'number',
-        displayAs: 'slider',
-        min: 0,
-        max: 1,
-        step: 0.1,
-        defaultValue: 0.5,
-      },
-    },
-  ];
-
-  if (isSanctionsEnabledWithDataProvider) {
-    extraFilters.push({
-      title: 'Nationality',
-      key: 'nationality',
-      renderer: {
-        kind: 'select',
-        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    });
-    extraFilters.push({
-      title: 'Document ID',
-      key: 'documentId',
-      renderer: {
-        kind: 'string',
-      },
-    });
-  }
-
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
 
-  // Generate options for each provider
   const acurisOptions = useMemo(() => {
     if (!hasFeatureAcuris) {
       return [];
@@ -262,6 +233,122 @@ export default function SanctionsSearchTable(props: Props) {
     value: option,
   }));
 
+  const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
+  const selectedProfile = searchProfiles.find(
+    (profile) => profile.searchProfileId === (params as any)?.searchProfileId,
+  );
+
+  const searchProfileId = useMemo(() => (params as any)?.searchProfileId, [params]);
+
+  const initializedProfileRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      searchProfileId &&
+      selectedProfile &&
+      initializedProfileRef.current !== searchProfileId &&
+      onChangeParams &&
+      params
+    ) {
+      initializedProfileRef.current = searchProfileId;
+      const updatedParams = { ...params };
+      const searchParams = updatedParams as any;
+      let hasChanges = false;
+      if (selectedProfile.fuzziness !== undefined) {
+        searchParams.fuzziness = selectedProfile.fuzziness;
+        hasChanges = true;
+      }
+      if (selectedProfile.types && selectedProfile.types.length > 0) {
+        searchParams.types = selectedProfile.types;
+        hasChanges = true;
+      }
+      if (selectedProfile.nationality && selectedProfile.nationality.length > 0) {
+        searchParams.nationality = selectedProfile.nationality;
+        hasChanges = true;
+      }
+
+      if (hasChanges) {
+        onChangeParams(updatedParams);
+      }
+    }
+  }, [searchProfileId, selectedProfile, onChangeParams, params]);
+
+  const readOnlyFilterKeys = selectedProfile
+    ? [
+        ...(selectedProfile.fuzziness !== undefined ? ['fuzziness'] : []),
+        ...(selectedProfile.types && selectedProfile.types.length > 0 ? ['types'] : []),
+        ...(selectedProfile.nationality && selectedProfile.nationality.length > 0
+          ? ['nationality']
+          : []),
+      ]
+    : [];
+
+  const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
+    {
+      title: 'Search term',
+      key: 'searchTerm',
+      renderer: {
+        kind: 'string',
+      },
+    },
+    {
+      title: 'Year of birth',
+      key: 'yearOfBirth',
+      renderer: {
+        kind: 'year',
+      },
+    },
+    {
+      title: 'Fuzziness',
+      description: '(The default value is 0.5)',
+      key: 'fuzziness',
+      renderer: {
+        kind: 'number',
+        displayAs: 'slider',
+        min: 0,
+        max: 1,
+        step: 0.1,
+        defaultValue: 0.5,
+      },
+    },
+  ];
+
+  if (searchProfiles.length > 0) {
+    extraFilters.unshift({
+      title: 'Search profile',
+      key: 'searchProfileId',
+      renderer: {
+        kind: 'select',
+        options: searchProfiles.map((profile) => ({
+          label: profile.searchProfileName ?? '',
+          value: profile.searchProfileId ?? '',
+        })),
+        mode: 'SINGLE',
+        displayMode: 'select',
+      },
+    });
+  }
+
+  if (isSanctionsEnabledWithDataProvider) {
+    extraFilters.push({
+      title: 'Nationality',
+      key: 'nationality',
+      renderer: {
+        kind: 'select',
+        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+      },
+    });
+    extraFilters.push({
+      title: 'Document ID',
+      key: 'documentId',
+      renderer: {
+        kind: 'string',
+      },
+    });
+  }
+
   if (!settings.sanctions?.customSearchProfileId) {
     extraFilters.push({
       title: 'Matched type',
@@ -274,6 +361,12 @@ export default function SanctionsSearchTable(props: Props) {
       },
     });
   }
+
+  extraFilters.forEach((filter) => {
+    const renderer = filter.renderer as any;
+    renderer.readOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
+    renderer.filterKey = filter.key;
+  });
 
   return (
     <>
