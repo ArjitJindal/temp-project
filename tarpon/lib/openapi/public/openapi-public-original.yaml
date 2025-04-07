@@ -3250,6 +3250,10 @@ components:
         - Crypto
         - Business
         - Employment
+        - Salary
+        - Real Estate Sale
+        - Real Estate Rental
+        - Company Exit
     ContactDetails:
       title: ContactDetails
       type: object
