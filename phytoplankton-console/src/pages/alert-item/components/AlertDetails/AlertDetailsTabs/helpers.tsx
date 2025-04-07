@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
+import styles from './index.module.less';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
 import TransactionsTab from './TransactionsTab';
@@ -38,16 +39,23 @@ import { TransactionsTableParams } from '@/pages/transactions/components/Transac
 import UserDetails from '@/pages/users-item/UserDetails';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Linking from '@/pages/users-item/UserDetails/Linking';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useFeatureEnabled,
+  useSettings,
+  useFreshdeskCrmEnabled,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
-import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
+import { CRM_ICON_MAP, useConsoleUser } from '@/pages/users-item/UserDetails/utils';
 import {
   useLinkingState,
   useUserEntityFollow,
 } from '@/pages/users-item/UserDetails/Linking/UserGraph';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
+import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
+import Tooltip from '@/components/library/Tooltip';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -61,6 +69,7 @@ export enum AlertTabs {
   ONTOLOGY = 'ontology',
   TRANSACTION_INSIGHTS = 'transaction-insights',
   EXPECTED_TRANSACTION_LIMITS = 'expected-transaction-limits',
+  CRM = 'crm',
 }
 
 const DEFAULT_TAB_LISTS: AlertTabs[] = [
@@ -69,6 +78,7 @@ const DEFAULT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.CHECKLIST,
   AlertTabs.COMMENTS,
   AlertTabs.USER_DETAILS,
+  AlertTabs.CRM,
   AlertTabs.ONTOLOGY,
   AlertTabs.TRANSACTION_INSIGHTS,
   AlertTabs.EXPECTED_TRANSACTION_LIMITS,
@@ -83,6 +93,7 @@ const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.TRANSACTIONS,
   AlertTabs.COMMENTS,
   AlertTabs.USER_DETAILS,
+  AlertTabs.CRM,
   AlertTabs.ONTOLOGY,
   AlertTabs.TRANSACTION_INSIGHTS,
   AlertTabs.EXPECTED_TRANSACTION_LIMITS,
@@ -272,7 +283,6 @@ export function useAlertTabs(props: Props): TabItem[] {
     fitTablesHeight,
     sanctionsDetailsFilter,
   } = props;
-  const settings = useSettings();
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
@@ -317,6 +327,13 @@ export function useAlertTabs(props: Props): TabItem[] {
   );
 
   const api = useApi();
+  const settings = useSettings();
+  const isCrmEnabled = useFeatureEnabled('CRM');
+  const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
+  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
+
   const caseQueryResult = useQuery(CASES_ITEM(alert.caseId ?? ''), () => {
     if (alert.caseId == null) {
       throw new Error(`Alert doesn't have case assigned`);
@@ -324,10 +341,6 @@ export function useAlertTabs(props: Props): TabItem[] {
     return api.getCase({ caseId: alert.caseId });
   });
   const userQueryResult = useConsoleUser(caseUserId);
-
-  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
-  const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
-  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const linkingState = useLinkingState(caseUserId);
   const handleFollow = useUserEntityFollow(linkingState);
@@ -503,6 +516,34 @@ export function useAlertTabs(props: Props): TabItem[] {
             isDisabled: false,
           };
         }
+        if (tab === AlertTabs.CRM) {
+          if (!isCrmEnabled || !settings.crmIntegrationName) {
+            return null;
+          }
+          return {
+            title: humanizeAuto(settings.crmIntegrationName),
+            key: tab,
+            children: caseUserId ? (
+              isFreshDeskCrmEnabled ? (
+                <CRMRecords userId={caseUserId} />
+              ) : (
+                <CRMDataComponent userId={caseUserId} />
+              )
+            ) : undefined,
+            isClosable: false,
+            isDisabled: false,
+            Icon: settings.crmIntegrationName
+              ? React.createElement(
+                  CRM_ICON_MAP[settings.crmIntegrationName as keyof typeof CRM_ICON_MAP],
+                )
+              : null,
+            TrailIcon: (
+              <Tooltip title="Connected">
+                <div className={styles.connected} />
+              </Tooltip>
+            ),
+          };
+        }
         return null;
       })
       .filter(notEmpty);
@@ -535,6 +576,9 @@ export function useAlertTabs(props: Props): TabItem[] {
     isAiForensicsEnabled,
     isClickhouseEnabled,
     settings.userAlias,
+    isCrmEnabled,
+    settings.crmIntegrationName,
+    isFreshDeskCrmEnabled,
   ]);
 
   return tabs;
