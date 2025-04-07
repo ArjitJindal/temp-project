@@ -8,6 +8,11 @@ import {
   transactionStatsColumns,
   getTransactionStatsClickhouseMVQuery,
 } from './queries/transaction-stats-clickhouse'
+import { ruleStatsTransactionsMVQuery } from './queries/rule-stats-clickhouse'
+import {
+  investigationTimesStatsColumns,
+  getCreateInvestigationTimesStatsClickhouseMVQuery,
+} from './queries/investgation-times-stats-clickhouse'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
@@ -190,6 +195,10 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: 'transactions_daily_stats_mv',
         table: 'transactions_daily_stats',
       },
+      RULE_STATS_HOURLY: {
+        viewName: 'rule_stats_hourly_transactions_mv',
+        table: 'rule_stats_hourly_transactions',
+      },
     },
   },
   USERS: {
@@ -225,6 +234,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   CASES: {
     tableName: ClickhouseTableNames.Cases,
+    materializedViews: {
+      INVESTIGATION_TIMES_HOURLY_STATS: {
+        viewName: 'cases_investigation_times_hourly_mv',
+        table: 'cases_investigation_times_hourly',
+      },
+    },
   },
   REPORTS: {
     tableName: ClickhouseTableNames.Reports,
@@ -431,6 +446,21 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
             .TRANSACTION_HOURLY_STATS.table,
         query: getTransactionStatsClickhouseMVQuery(
+          'toStartOfHour(toDateTime(timestamp / 1000))'
+        ),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .RULE_STATS_HOURLY.viewName,
+        columns: ['time DateTime', 'ruleId String', 'ruleInstanceId String'],
+        engine: 'SummingMergeTree',
+        primaryKey: 'time',
+        orderBy: '(time, ruleId, ruleInstanceId)',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
+            .RULE_STATS_HOURLY.table,
+        query: ruleStatsTransactionsMVQuery(
           'toStartOfHour(toDateTime(timestamp / 1000))'
         ),
       },
@@ -659,6 +689,23 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtract(x, 'qaAssignment', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')
         ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)))'),
         JSONExtractArrayRaw(data, 'alerts'))`,
+    ],
+    materializedViews: [
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .INVESTIGATION_TIMES_HOURLY_STATS.viewName,
+        columns: investigationTimesStatsColumns.map(
+          (c) => `${c.name} ${c.type}`
+        ),
+        engine: 'ReplacingMergeTree',
+        primaryKey: 'time',
+        orderBy: 'time',
+        table:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .INVESTIGATION_TIMES_HOURLY_STATS.table,
+        query: getCreateInvestigationTimesStatsClickhouseMVQuery,
+      },
     ],
   },
   {
