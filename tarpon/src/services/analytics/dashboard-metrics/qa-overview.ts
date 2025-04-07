@@ -15,6 +15,11 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
+import {
+  isClickhouseEnabled,
+  executeClickhouseQuery,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class QaOverviewStatsDashboardMetric {
@@ -120,12 +125,41 @@ export class QaOverviewStatsDashboardMetric {
       'HOUR'
     )
   }
+  public static async getFromClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsQaOverview> {
+    const query = `
+    SELECT 
+        count(*) AS totalAlertsForQa,
+        countIf(alerts.ruleQaStatus = 'PASSED') AS totalQaPassedAlerts,
+        countIf(alerts.ruleQaStatus = 'FAILED') AS totalQaFailedAlerts
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
+    ARRAY JOIN alerts
+    WHERE alerts.alertStatus = 'CLOSED' 
+        AND arrayExists(x -> coalesce(x.assigneeUserId, '') != '', alerts.qaAssignments) 
+        AND toDateTime(alerts.updatedAt / 1000) 
+            BETWEEN toDateTime(${startTimestamp / 1000}) AND toDateTime(${
+      endTimestamp / 1000
+    })
+    `
+
+    const data = await executeClickhouseQuery<DashboardStatsQaOverview>(
+      tenantId,
+      query
+    )
+    return data[0]
+  }
 
   public static async get(
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number
   ): Promise<DashboardStatsQaOverview> {
+    if (isClickhouseEnabled()) {
+      return this.getFromClickhouse(tenantId, startTimestamp, endTimestamp)
+    }
     const db = await getMongoDbClientDb()
     const collection = db.collection(
       DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY(tenantId)

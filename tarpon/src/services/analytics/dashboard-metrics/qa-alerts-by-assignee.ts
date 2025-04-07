@@ -15,6 +15,11 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
+import {
+  executeClickhouseQuery,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class QaAlertsByAssigneeStatsDashboardMetric {
@@ -125,12 +130,39 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
       'HOUR'
     )
   }
+  public static async getFromClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsQaAlertsCountByAssigneeData[]> {
+    const query = `
+    WITH 
+        arrayJoin(alerts) AS alert,
+        arrayJoin(alert.qaAssignments) AS qa
+    SELECT 
+        qa.assigneeUserId AS accountId,
+        count(*) AS alertsAssignedForQa,
+        sum(if(coalesce(alert.ruleQaStatus, '') != '', 1, 0)) AS alertsQaedByAssignee
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
+    WHERE 
+        alert.alertStatus = 'CLOSED'
+        AND qa.assigneeUserId != ''
+        AND toDateTime(alert.updatedAt / 1000) 
+            BETWEEN toDateTime(${startTimestamp} / 1000) 
+            AND toDateTime(${endTimestamp} / 1000)
+    GROUP BY qa.assigneeUserId
+    `
 
+    return await executeClickhouseQuery(tenantId, query)
+  }
   public static async get(
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number
   ): Promise<DashboardStatsQaAlertsCountByAssigneeData[]> {
+    if (isClickhouseEnabled()) {
+      return this.getFromClickhouse(tenantId, startTimestamp, endTimestamp)
+    }
     const db = await getMongoDbClientDb()
     const collection = db.collection(
       DASHBOARD_QA_ALERTS_BY_ASSIGNEE_STATS_COLLECTION_HOURLY(tenantId)
