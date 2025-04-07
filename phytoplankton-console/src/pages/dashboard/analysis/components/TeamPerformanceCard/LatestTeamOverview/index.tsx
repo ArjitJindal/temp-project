@@ -7,6 +7,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
+import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 
 interface Props {
   queryResult: QueryResult<PaginatedData<DashboardLatestTeamStatsItem>>;
@@ -16,6 +17,7 @@ interface Props {
 
 export default function LatestOverviewTable(props: Props) {
   const { queryResult, paginationParams, setPaginationParams } = props;
+  const [users, loadingUsers] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   const columns = useMemo(() => {
     const helper = new ColumnHelper<DashboardLatestTeamStatsItem>();
     return helper.list([
@@ -25,6 +27,10 @@ export default function LatestOverviewTable(props: Props) {
         defaultWidth: 250,
         type: {
           render: (accountId) => <AccountTag accountId={accountId} />,
+          stringify: (accountId) =>
+            (!loadingUsers && users != null && accountId
+              ? getDisplayedUserInfo(users[accountId]).name
+              : accountId) ?? '',
         },
       }),
       helper.simple({
@@ -58,7 +64,7 @@ export default function LatestOverviewTable(props: Props) {
         type: NUMBER,
       }),
     ]);
-  }, []);
+  }, [loadingUsers, users]);
   return (
     <QueryResultsTable<DashboardLatestTeamStatsItem>
       columns={columns}
@@ -70,9 +76,10 @@ export default function LatestOverviewTable(props: Props) {
       toolsOptions={{
         reload: false,
         setting: false,
-        download: false,
+        download: true,
       }}
       queryResults={queryResult}
+      externalHeader={true}
     />
   );
 }

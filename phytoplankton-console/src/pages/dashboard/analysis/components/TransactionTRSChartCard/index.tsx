@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
 import { formatDate } from '../../utils/date-utils';
@@ -9,10 +9,11 @@ import GranularDatePicker, {
   granularityValues,
   timeframe,
 } from '../widgets/GranularDatePicker/GranularDatePicker';
+import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
 import s from './index.module.less';
-import { Dayjs } from '@/utils/dayjs';
+import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { map, isSuccess } from '@/utils/asyncResource';
+import { map, isSuccess, getOr } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
@@ -28,7 +29,7 @@ import {
 } from '@/components/ui/colors';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-export default function TransactionTRSChartCard(props: WidgetProps) {
+export default function TransactionTRSChartCard(props: Partial<WidgetProps>) {
   const settings = useSettings();
 
   const [granularity, setGranularity] = useState<GranularityValuesType>(
@@ -65,9 +66,33 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
     return result;
   });
 
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+
   return (
     <Widget
-      {...props}
+      onDownload={(): Promise<{
+        fileName: string;
+        data: string;
+        pdfRef: MutableRefObject<HTMLInputElement>;
+      }> => {
+        const csvExportedData = exportDataForBarGraphs(
+          getOr(preparedDataRes, []),
+          'Date',
+          'Value',
+          'Risk level',
+          ['category'],
+          ['asc'],
+        );
+
+        return Promise.resolve({
+          fileName: `-transactions-by-trs-${dayjs().format('YYYY_MM_DD')}`,
+          data: csvExportedData,
+          pdfRef,
+          tableTitle: `Transactions by TRS (${dayjs(startTimestamp).format(
+            SHORT_DATE_TIME_FORMAT,
+          )} - ${dayjs(endTimestamp).format(SHORT_DATE_TIME_FORMAT)})`,
+        });
+      }}
       extraControls={[
         <GranularDatePicker
           timeWindowType={timeWindowType}
@@ -78,8 +103,9 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
           key="granular-date-picker"
         />,
       ]}
+      {...props}
     >
-      <div className={s.salesCard}>
+      <div className={s.salesCard} ref={pdfRef}>
         {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (

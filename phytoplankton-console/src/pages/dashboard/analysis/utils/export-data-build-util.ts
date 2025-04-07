@@ -37,8 +37,10 @@ export const exportDataForBarGraphs = (
   xField: string,
   yField?: string,
   seriesLabel?: string,
+  sortBy: string[] = ['value'],
+  sortDir: ('desc' | 'asc')[] = ['desc'],
 ): string => {
-  const parsedData = orderBy(data, 'value', 'desc').map((dataItem) => {
+  const parsedData = orderBy(data, sortBy, sortDir).map((dataItem) => {
     return seriesLabel === '' || seriesLabel === null
       ? {
           [xField]: dataItem.category ?? '',

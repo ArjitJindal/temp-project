@@ -105,7 +105,7 @@ const DEFAULT_VALUES = {
 type WidgetType = {
   id: string;
   title: string;
-  component: (props) => JSX.Element;
+  component: (props: Partial<WidgetProps>) => JSX.Element;
   width?: 'FULL' | 'HALF';
   userType?: 'CONSUMER' | 'BUSINESS';
   requiredFeatures?: string[];

@@ -112,7 +112,7 @@ export default function CompositeAccountsStatisticsTable(props: Props) {
       toolsOptions={{
         reload: false,
         setting: false,
-        download: false,
+        download: true,
       }}
       queryResults={map(updateQueryResult(queryResult), (data) => ({
         items: data,
@@ -129,6 +129,7 @@ export default function CompositeAccountsStatisticsTable(props: Props) {
           setPaginationParams={setPaginationParams}
         />
       )}
+      externalHeader={true}
     />
   );
 }

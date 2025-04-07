@@ -94,7 +94,7 @@ export default function CompositeLatestTeamOverview(props: Props) {
       toolsOptions={{
         reload: false,
         setting: false,
-        download: false,
+        download: true,
       }}
       pagination={true}
       params={paginationParams}

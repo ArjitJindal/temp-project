@@ -16,6 +16,7 @@ export const DEFAULT_DATE_FORMAT = 'll';
 export const DEFAULT_TIME_FORMAT = 'LTS';
 export const TIME_FORMAT_WITHOUT_SECONDS = 'LT';
 export const DEFAULT_DATE_TIME_FORMAT = 'll LTS';
+export const SHORT_DATE_TIME_FORMAT = 'l LT';
 export const YEAR_MONTH_DATE_FORMAT = 'YYYY-MM-DD';
 export const DATE_TIME_ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ[Z]';
 export const DATE_TIME_FORMAT_WITHOUT_SECONDS = 'll LT';

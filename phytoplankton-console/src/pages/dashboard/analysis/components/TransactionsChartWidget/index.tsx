@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Empty } from 'antd';
-import React, { useState } from 'react';
+import React, { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import GranularDatePicker, {
   DEFAULT_DATE_RANGE,
@@ -9,8 +9,9 @@ import GranularDatePicker, {
   timeframe,
 } from '../widgets/GranularDatePicker/GranularDatePicker';
 import { formatDate } from '../../utils/date-utils';
+import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import { Dayjs } from '@/utils/dayjs';
+import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import {
   getRuleActionLabel,
@@ -21,7 +22,7 @@ import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { RuleAction } from '@/apis';
-import { isSuccess, map } from '@/utils/asyncResource';
+import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 
 export default function TransactionsChartWidget(props: WidgetProps) {
@@ -78,8 +79,33 @@ export default function TransactionsChartWidget(props: WidgetProps) {
       }),
   );
 
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+
   return (
     <Widget
+      onDownload={(): Promise<{
+        fileName: string;
+        data: string;
+        pdfRef: MutableRefObject<HTMLInputElement>;
+      }> => {
+        const csvExportedData = exportDataForBarGraphs(
+          getOr(dataResource, []),
+          'Date',
+          'Value',
+          'Action',
+          ['category'],
+          ['asc'],
+        );
+
+        return Promise.resolve({
+          fileName: `transactions-by-rule-actions-${dayjs().format('YYYY_MM_DD')}`,
+          data: csvExportedData,
+          pdfRef,
+          tableTitle: `Transactions by rule action (${dayjs(startTimestamp).format(
+            SHORT_DATE_TIME_FORMAT,
+          )} - ${dayjs(endTimestamp).format(SHORT_DATE_TIME_FORMAT)})`,
+        });
+      }}
       extraControls={[
         <GranularDatePicker
           timeWindowType={timeWindowType}
@@ -93,7 +119,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
       resizing="AUTO"
       {...props}
     >
-      <>
+      <div ref={pdfRef}>
         {isSuccess(dataResource) && dataResource.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
@@ -113,7 +139,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
             }}
           />
         )}
-      </>
+      </div>
     </Widget>
   );
 }

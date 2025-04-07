@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { useState } from 'react';
+import { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
 import { useLocalStorageState } from 'ahooks';
@@ -12,10 +12,11 @@ import GranularDatePicker, {
   granularityValues,
   timeframe,
 } from '../../widgets/GranularDatePicker/GranularDatePicker';
+import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import s from './index.module.less';
-import { Dayjs } from '@/utils/dayjs';
+import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { map, isSuccess } from '@/utils/asyncResource';
+import { map, isSuccess, getOr } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
@@ -104,9 +105,33 @@ export default function DistributionByStatus(props: WidgetProps) {
     setSelectedRules(newSelectedRules || []);
   };
 
+  const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+
   return (
     <Widget
-      {...props}
+      onDownload={(): Promise<{
+        fileName: string;
+        data: string;
+        pdfRef: MutableRefObject<HTMLInputElement>;
+      }> => {
+        const csvExportedData = exportDataForBarGraphs(
+          getOr(preparedDataRes, []),
+          'Date',
+          'Value',
+          'Status',
+          ['category'],
+          ['asc'],
+        );
+
+        return Promise.resolve({
+          fileName: `distribution-by-status-${dayjs().format('YYYY_MM_DD')}`,
+          data: csvExportedData,
+          pdfRef,
+          tableTitle: `Distribution by status (${dayjs(startTimestamp).format(
+            SHORT_DATE_TIME_FORMAT,
+          )} - ${dayjs(endTimestamp).format(SHORT_DATE_TIME_FORMAT)})`,
+        });
+      }}
       extraControls={[
         <div key="rule-filter" style={{ display: 'flex', alignItems: 'center', marginRight: 16 }}>
           <Select
@@ -128,8 +153,9 @@ export default function DistributionByStatus(props: WidgetProps) {
           key="granular-date-picker"
         />,
       ]}
+      {...props}
     >
-      <div className={s.salesCard}>
+      <div className={s.salesCard} ref={pdfRef}>
         {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (

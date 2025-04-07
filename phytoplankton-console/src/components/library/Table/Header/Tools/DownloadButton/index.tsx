@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { get } from 'lodash';
-import { message, Popover, Radio } from 'antd';
+import { Popover, Radio } from 'antd';
 import type { CellStyle, CellObject } from 'xlsx-js-style';
 import {
   applyFieldAccessor,
@@ -32,6 +32,7 @@ import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 import { xlsxValue } from '@/utils/xlsx';
 import { getCurrentDomain } from '@/utils/routing';
 import Alert from '@/components/library/Alert';
+import { message } from '@/components/library/Message';
 
 const MAXIMUM_EXPORT_ITEMS = 100000;
 
@@ -94,7 +95,7 @@ function processTableCSVDownload<T extends object>(
   const rows = transformCSVTableRows(items, columnsToExport, props);
 
   const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
-  message.success(`Data export finished, downloading should start in a moment!`);
+  message.success(`Data export finished!`, { details: 'Download should start in a moment!' });
   download(fileName, serialize(rows));
 }
 

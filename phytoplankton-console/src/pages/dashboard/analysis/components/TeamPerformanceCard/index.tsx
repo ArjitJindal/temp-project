@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import s from './index.module.less';
@@ -16,7 +16,7 @@ import {
 } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
 import {
   AlertStatus,
@@ -63,7 +63,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
   };
   const api = useApi();
 
-  const dateRangeQueryResult = useQuery(
+  const dateRangeQueryResult = usePaginatedQuery(
     DASHBOARD_TEAM_STATS({
       page: paginationParams.page,
       pageSize: paginationParams.pageSize,
@@ -71,7 +71,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
       caseStatus: params.caseStatus,
       dateRange: params.dateRange,
     }),
-    async (): Promise<DashboardTeamStatsItemResponse> => {
+    async (p): Promise<DashboardTeamStatsItemResponse> => {
       const [start, end] = params.dateRange ?? [];
       let startTimestamp, endTimestamp;
       if (start != null && end != null) {
@@ -83,8 +83,8 @@ export default function TeamPerformanceCard(props: WidgetProps) {
         startTimestamp,
         endTimestamp,
         caseStatus: params.caseStatus,
-        page: paginationParams.page,
-        pageSize: paginationParams.pageSize,
+        page: p?.page ?? paginationParams.page,
+        pageSize: p?.pageSize ?? paginationParams.pageSize,
       });
 
       const updatedItems = response.items?.map((item: DashboardTeamStatsItem) => ({
@@ -102,17 +102,17 @@ export default function TeamPerformanceCard(props: WidgetProps) {
     },
   );
 
-  const latestQueryResult = useQuery(
+  const latestQueryResult = usePaginatedQuery(
     DASHBOARD_TEAM_STATS({
       page: paginationParams.page,
       pageSize: paginationParams.pageSize,
       scope: params.scope,
     }),
-    async (): Promise<DashboardLatestTeamStatsItemResponse> => {
+    async (p): Promise<DashboardLatestTeamStatsItemResponse> => {
       const response = await api.getDashboardLatestTeamStats({
         scope: params.scope,
-        page: paginationParams.page,
-        pageSize: paginationParams.pageSize,
+        page: p?.page ?? paginationParams.page,
+        pageSize: p?.pageSize ?? paginationParams.pageSize,
       });
 
       return {
