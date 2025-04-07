@@ -466,7 +466,7 @@ export class ListRepository {
           ':currentTimestamp': currentTimestamp,
           ':null': null,
         },
-        Limit: 1,
+        ...(method !== 'CONTAINS' ? { Limit: 1 } : {}),
       })
     )
     return Items.length > 0

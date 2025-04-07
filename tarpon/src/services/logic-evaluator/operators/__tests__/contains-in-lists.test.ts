@@ -54,4 +54,14 @@ describe('contains in lists operator', () => {
     )
     expect(result).toBe(false)
   })
+
+  test('should return true for second element in the list', async () => {
+    const result = await CONTAINS_IN_LISTS_OPERATOR.run(
+      'string_2',
+      [testListId1],
+      undefined,
+      { tenantId: TEST_TENANT_ID, dynamoDb }
+    )
+    expect(result).toBe(true)
+  })
 })
