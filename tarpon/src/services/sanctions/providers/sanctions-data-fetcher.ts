@@ -787,7 +787,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                     {
                       text: {
                         query: sanitizeString(request.searchTerm),
-                        path: ['name', 'aka'],
+                        path: ['name', 'normalizedAka'],
                         fuzzy: {
                           maxEdits: 2,
                           maxExpansions: 100,
