@@ -39,7 +39,7 @@ const NANGO_MODEL_TYPE_MAP: Record<
 }
 
 export const NANGO_MODELS_DATA: Record<NangoModels, NangoModelData> = {
-  FreshdeskTicket: { idKey: 'id', timestampKey: 'created_at' },
+  FreshdeskTicket: { idKey: 'id', timestampKey: 'createdAt' },
 }
 
 type NangoListRecordsResponse<T> = {
@@ -135,17 +135,17 @@ export class NangoService {
       const data = records.records
 
       logger.info(`Received ${data.length} records`, { records })
-      const { modelType, crmName } = NANGO_MODEL_TYPE_MAP[model]
+      const { recordType, crmName } = NANGO_MODEL_TYPE_MAP[model as NangoModels]
 
       const nangoRecords: CRMRecord[] = data.map((record: IncomingRecord) => {
         const { idKey, timestampKey } = NANGO_MODELS_DATA[model]
 
         const crmRecord: CRMRecord = {
-          data: { record: record, recordType: modelType },
+          data: { record: record, recordType },
           timestamp: record[timestampKey],
           id: record[idKey],
           crmName,
-          recordType: modelType,
+          recordType,
         }
 
         return crmRecord

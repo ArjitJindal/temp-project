@@ -1,4 +1,9 @@
-import type { Ticket, NangoSync, ProxyConfiguration } from '../../models'
+import type {
+  Ticket,
+  NangoSync,
+  ProxyConfiguration,
+  FreshdeskTicket,
+} from '../../models'
 
 export interface FreshdeskApiTicket {
   cc_emails: string[]
@@ -92,13 +97,17 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
 
         const ticketData = getTicket.data as FreshdeskApiTicket
 
-        const ticketSchema: Ticket = {
+        const ticketSchema: FreshdeskTicket = {
           createdAt: new Date(ticket.created_at).valueOf(),
           updatedAt: new Date(ticket.updated_at).valueOf(),
           isEscalated: ticket.is_escalated,
           priority: ticket.priority,
-          requesterId: ticket.requester_id.toString(),
-          responderId: ticket.responder_id.toString(),
+          requesterId: ticket?.requester_id
+            ? ticket.requester_id.toString()
+            : null,
+          responderId: ticket?.responder_id
+            ? ticket.responder_id.toString()
+            : null,
           source: ticket.source,
           subject: ticket.subject,
           toEmails: ticket.to_emails,

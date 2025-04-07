@@ -14,7 +14,7 @@ function createUuid() {
   return uuidv4().replace(/-/g, '')
 }
 
-function createNewApiKey(tenantId: string) {
+export function createNewApiKey(tenantId: string) {
   return base62.encode(
     Buffer.from(`${tenantId}.${createUuid()}${createUuid()}`)
   )

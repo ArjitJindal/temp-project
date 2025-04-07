@@ -10,7 +10,7 @@ integrations:
           path: /freshdesk/tickets
         sync_type: incremental
         runs: every 10 mins
-        output: Ticket
+        output: FreshdeskTicket
 models:
   FreshdeskTicket:
     __extends: Ticket
