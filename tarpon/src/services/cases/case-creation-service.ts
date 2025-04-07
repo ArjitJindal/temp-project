@@ -1691,7 +1691,8 @@ export class CaseCreationService {
   public getUsersByRole = memoize(async (assignedRole: string) => {
     const rolesService = RoleService.getInstance(this.caseRepository.dynamoDb)
     const accountsService = AccountsService.getInstance(
-      this.caseRepository.dynamoDb
+      this.caseRepository.dynamoDb,
+      true
     )
     const tenant = await accountsService.getTenantById(this.tenantId)
     if (!tenant) {
