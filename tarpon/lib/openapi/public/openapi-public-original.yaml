@@ -5096,6 +5096,7 @@ components:
         - UNEMPLOYED
         - EMPLOYED
         - SELF_EMPLOYED
+        - FREELANCER
         - STUDENT
         - FULL_TIME
         - PART_TIME
