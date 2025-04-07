@@ -170,7 +170,7 @@ Cypress.Commands.add('multiSelect', (preSelector, text) => {
   cy.get(
     `${preSelector} .ant-select > .ant-select-selector > .ant-select-selection-overflow`,
   ).click();
-  cy.get(`.ant-select .ant-select-selection-search input`)
+  cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
     .invoke('attr', 'id')
     .then((_) => {
       cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
@@ -178,6 +178,7 @@ Cypress.Commands.add('multiSelect', (preSelector, text) => {
         .type(`${text}`, { force: true });
       cy.get(`div[title="${text}"]`).click();
     });
+  cy.get(`${preSelector} .ant-select`).click();
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {

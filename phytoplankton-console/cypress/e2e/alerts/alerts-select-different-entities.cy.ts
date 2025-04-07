@@ -45,7 +45,9 @@ describe('Selection of entities', () => {
     selectRow('alerts-list', 0);
     testSelection(1, 'alert');
 
-    cy.get('*[data-cy="table-alerts-list-pagination-wrapper"]').contains('a', '2').click();
+    cy.get('*[data-cy="table-alerts-list-pagination-wrapper"]')
+      .contains('[data-cy="pagination-page-number-button"]', '2')
+      .click();
     testNoSelection();
   });
 });
