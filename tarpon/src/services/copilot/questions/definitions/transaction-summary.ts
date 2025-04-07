@@ -18,6 +18,7 @@ import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type TransactionSummary = {
   count: number
@@ -57,7 +58,7 @@ export const TransactionSummary: PropertiesQuestion<
         max(originAmountDetails_amountInUsd) as max,
         sum(originAmountDetails_amountInUsd) as total,
         avg(originAmountDetails_amountInUsd) as avg
-      FROM transactions FINAL
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE
         ${condition}
         and timestamp between {{ from }} and {{ to }}

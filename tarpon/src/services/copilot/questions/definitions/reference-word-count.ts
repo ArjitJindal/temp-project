@@ -8,6 +8,7 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedClickhouseQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type ReferenceWordCountRow = {
   word: string
@@ -41,7 +42,7 @@ export const ReferenceWordCount: TableQuestion<Period> = {
               id,
               reference,
               word
-          FROM transactions FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
           ARRAY JOIN splitByString(' ', reference) AS word
           WHERE (originUserId = '{{ userId }}' or destinationUserId = '{{ userId }}')
           ${period ? `AND timestamp between {{ from }} and {{ to }}` : ''}

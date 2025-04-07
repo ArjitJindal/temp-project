@@ -16,6 +16,7 @@ import {
   executeClickhouseQuery,
   isClickhouseEnabled,
 } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type Transaction = {
   transactionId: string
@@ -44,7 +45,7 @@ const clickhouseTransactionQuery = async (
 ) => {
   const transactionsQuery = `
   SELECT id as transactionId,type,timestamp,transactionState,originUserId,originAmountDetails_transactionAmount as originAmount,originAmountDetails_transactionCurrency as originCurrency,originAmountDetails_country as originCountry,destinationUserId,destinationAmountDetails_transactionAmount as destinationAmount,destinationAmountDetails_transactionCurrency as destinationCurrency,destinationAmountDetails_country as destinationCountry,reference
-    FROM transactions FINAL
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
     WHERE timestamp between {{ from }} and {{ to }} and ${clickhouseWhere(ctx)}
     `
 
@@ -71,7 +72,7 @@ const clickhouseTransactionQuery = async (
   `
 
   const countQuery = `
-    SELECT count(*) from transactions 
+    SELECT count(*) from ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
     WHERE timestamp between {{ from }} and {{ to }} and ${clickhouseWhere(ctx)}
   `
 

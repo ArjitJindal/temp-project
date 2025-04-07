@@ -24,6 +24,7 @@ import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export const getClickhouseQuery = (
   period: Period,
@@ -56,7 +57,7 @@ export const getClickhouseQuery = (
   SELECT
     toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
     round(${aggregationExpression(granularity)}, 2) as agg
-  FROM transactions FINAL
+  FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
   WHERE 
   (
     (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${

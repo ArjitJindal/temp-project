@@ -17,6 +17,7 @@ import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type Row = {
   userId: string
@@ -55,7 +56,7 @@ export const UsersTransactedWith: TableQuestion<
     const paginationQuery = `
       SELECT 
         COUNT(*) AS count
-      FROM transactions 
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
       WHERE 
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
@@ -67,7 +68,7 @@ export const UsersTransactedWith: TableQuestion<
           ${otherUserIdKey} AS userId,
           COUNT(*) AS count,
           SUM(originAmountDetails_amountInUsd) AS sum
-      FROM transactions 
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
       WHERE 
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
