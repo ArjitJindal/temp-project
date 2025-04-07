@@ -1,4 +1,5 @@
 import React from 'react';
+import { startCase } from 'lodash';
 import { SanctionsEntity } from '@/apis';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
@@ -15,7 +16,7 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
 
   return (
     <Drawer
-      title={hit?.name ?? ''}
+      title={startCase(hit?.name ?? '')}
       isVisible={Boolean(hit)}
       onChangeVisibility={(isShown) => {
         if (!isShown) {

@@ -5,7 +5,7 @@ import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { COLLECTIONS_MAP, getSanctionsCollectionName } from '../utils'
 import { MongoSanctionsRepository } from '../repositories/sanctions-repository'
-import { getUniqueStrings } from './utils'
+import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
@@ -563,10 +563,20 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const sanctionSearchTypes = uniq(
       entity.datasets.map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
     )
-
+    const name = this.getEntityName(entity, entityType)
+    const {
+      name: normalizedName,
+      aka,
+      normalizedAka,
+    } = getNameAndAka(
+      name.toLowerCase(),
+      entity.aliases.map((alias) =>
+        this.getEntityName(alias, entityType).toLowerCase()
+      )
+    )
     return {
       id: entity.qrCode,
-      name: this.getEntityName(entity, entityType),
+      name: normalizedName,
       entityType: entityType,
       types: compact(
         concat(
@@ -576,9 +586,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       sanctionSearchTypes,
       gender: entity.gender,
-      aka: getUniqueStrings(
-        entity.aliases.map((alias) => this.getEntityName(alias, entityType))
-      ),
+      normalizedAka,
+      aka,
       countries: compact(
         entity.nationalitiesIsoCodes.map(
           (code) => COUNTRIES[code as CountryCode]
@@ -597,9 +606,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
       isActiveSanctioned: sanctionSearchTypes.includes('SANCTIONS')
         ? Boolean(entity.sanEntries.current.length)
         : undefined,
-      isActivePep: sanctionSearchTypes.includes('PEP')
-        ? Boolean(entity.pepEntries.current.length)
-        : undefined,
+      isActivePep:
+        sanctionSearchTypes.includes('PEP') &&
+        entity.datasets.some((d) => d.startsWith('PEP'))
+          ? Boolean(entity.pepEntries.current.length)
+          : undefined,
       sanctionsSources: entity.evidences
         .filter(
           ({ datasets }) =>
@@ -689,6 +700,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       addresses: this.getAddresses(entity.addresses),
     }
   }
+
   private processBusinessEntity(
     entity: AcurisBusinessEntity,
     entityType: SanctionsEntityType
@@ -699,13 +711,16 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const countryCodes = uniq(
       entity.addresses?.map((a) => a.countryIsoCode)
     ) as CountryCode[]
+    const { name, aka, normalizedAka } = getNameAndAka(
+      entity.name.toLowerCase(),
+      entity.aliases.map((alias) => alias.alias.toLowerCase())
+    )
     return {
       id: entity.qrCode,
-      name: this.getEntityName(entity, entityType),
+      name: name,
       entityType: entityType,
-      aka: getUniqueStrings(
-        compact(entity.aliases.map((alias) => alias.alias))
-      ),
+      normalizedAka,
+      aka,
       types: compact(
         concat(
           entity.datasets.map((dataset) => ACURIS_TYPES[dataset]),

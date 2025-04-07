@@ -1,7 +1,7 @@
 import { compact, concat, startCase, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { COLLECTIONS_MAP } from '../utils'
-import { getUniqueStrings } from './utils'
+import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
@@ -317,15 +317,26 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     if (!this.entityTypes.includes('PERSON')) {
       return undefined
     }
-    return {
-      id: entity.id,
-      aka: getUniqueStrings(
+    const name = entity.caption ?? 'Unknown'
+    const {
+      name: normalizedName,
+      aka,
+      normalizedAka,
+    } = getNameAndAka(
+      name.toLowerCase(),
+      uniq(
         compact(
-          concat(properties.alias || [], properties.name || []).map((n) =>
+          concat(properties.alias || [], properties.name || [], name).map((n) =>
             n.toLowerCase()
           )
-        ).map((n) => startCase(n))
-      ),
+        )
+      )
+    )
+    return {
+      id: entity.id,
+      name: normalizedName,
+      aka,
+      normalizedAka,
       countryCodes: (properties.citizenship?.map((c) =>
         c.toUpperCase()
       ) as CountryCode[]) || ['ZZ'],
@@ -340,7 +351,6 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         ? startCase(properties.gender[0])
         : 'Unknown',
       matchTypes: [],
-      name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
       nationality: (properties.nationality?.map((c) =>
         c.toUpperCase()
       ) as CountryCode[]) || ['ZZ'],
@@ -440,17 +450,27 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         properties.jurisdiction || []
       )
     ).map((country) => country.toUpperCase() as CountryCode)
-    return {
-      id: entity.id,
-      name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
-      entityType: schema,
-      aka: getUniqueStrings(
+    const name = entity.caption ?? 'Unknown'
+    const {
+      name: normalizedName,
+      aka,
+      normalizedAka,
+    } = getNameAndAka(
+      name.toLowerCase(),
+      uniq(
         compact(
-          concat(properties.alias || [], properties.name || []).map((n) =>
+          concat(properties.alias || [], properties.name || [], name).map((n) =>
             n.toLowerCase()
           )
-        ).map((n) => startCase(n))
-      ),
+        )
+      )
+    )
+    return {
+      id: entity.id,
+      name: normalizedName,
+      entityType: schema,
+      aka,
+      normalizedAka,
       sanctionSearchTypes,
       types: concat(
         entity.datasets || [],

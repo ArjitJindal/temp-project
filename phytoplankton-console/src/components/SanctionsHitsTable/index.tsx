@@ -127,6 +127,9 @@ export default function SanctionsHitsTable(props: Props) {
     helper.simple<'entity.name'>({
       title: 'Name',
       key: 'entity.name',
+      type: {
+        render: (value) => <span>{startCase(value)}</span>,
+      },
     }),
     helper.derived<string[]>({
       title: 'Countries',

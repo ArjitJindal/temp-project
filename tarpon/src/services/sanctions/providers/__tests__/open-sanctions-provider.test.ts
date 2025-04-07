@@ -73,7 +73,7 @@ describe('OpenSanctionsProvider', () => {
 
     expect(result).toEqual({
       id: 'entity123',
-      aka: ['John Doe', 'Jd'],
+      aka: ['jd'],
       countries: ['United States of America'],
       countryCodes: ['US'],
       documents: [],
@@ -81,8 +81,9 @@ describe('OpenSanctionsProvider', () => {
       freetext: 'Note 1\nNote 2',
       gender: 'Male',
       matchTypes: [],
-      name: 'John Doe',
+      name: 'john doe',
       nationality: ['US'],
+      normalizedAka: ['jd'],
       sanctionSearchTypes: ['CRIME', 'SANCTIONS'],
       screeningSources: [
         { url: 'http://example.com', name: 'http://example.com' },

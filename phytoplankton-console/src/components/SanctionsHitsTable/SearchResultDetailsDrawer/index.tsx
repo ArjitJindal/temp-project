@@ -73,7 +73,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
   const hit = getOr(hitRes, undefined);
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
-  const pdfName = hit?.entity?.name;
+  const pdfName = startCase(hit?.entity?.name);
   const [isDownloading, setDownloading] = useState<boolean>(false);
   const handleDownloadClick = async () => {
     setDownloading(true);
@@ -288,7 +288,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
           {!entity.nameMatched && (
-            <Form.Layout.Label title={'Full name'}>{entity?.name}</Form.Layout.Label>
+            <Form.Layout.Label title={'Full name'}>{startCase(entity?.name)}</Form.Layout.Label>
           )}
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType?.toLowerCase())}
@@ -380,9 +380,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                 {entity.aka.map((aka, i) => (
                   <Popover
                     key={i}
-                    content={aka}
+                    content={startCase(aka)}
                     trigger="hover"
-                    children={<Tag color="gray">{aka}</Tag>}
+                    children={<Tag color="gray">{startCase(aka)}</Tag>}
                     wrapText={true}
                   />
                 ))}

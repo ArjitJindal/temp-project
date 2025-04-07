@@ -24,7 +24,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
-import { ID, STRING } from '@/components/library/Table/standardDataTypes';
+import { ID } from '@/components/library/Table/standardDataTypes';
 import { SanctionsEntity } from '@/apis';
 import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
@@ -91,7 +91,9 @@ export default function SanctionsSearchTable(props: Props) {
     helper.simple<'name'>({
       title: 'Name',
       key: 'name',
-      type: STRING,
+      type: {
+        render: (value) => <span>{startCase(value)}</span>,
+      },
     }),
     helper.derived<string[]>({
       title: 'Countries',

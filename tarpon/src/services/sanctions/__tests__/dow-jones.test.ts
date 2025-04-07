@@ -62,7 +62,7 @@ describe('DowJonesProvider', () => {
           'chg',
           {
             id: '11756174',
-            name: 'Priyavrat Bhartia',
+            name: 'priyavrat bhartia',
             sanctionSearchTypes: ['ADVERSE_MEDIA'], // RCAs are not sanctions
             entityType: 'PERSON',
             gender: 'Male',
@@ -74,6 +74,7 @@ describe('DowJonesProvider', () => {
             matchTypes: ['Organised Crime'],
             dateMatched: true,
             nationality: ['IN'],
+            normalizedAka: [],
             profileImagesUrls: [
               'http://www.jubl.com/Uploads/image/471imguf_Priyavrat_Bhartia.jpg',
               'http://www.digicontent.co.in/wp-content/uploads/2021/08/priyavrat-bhartia.jpg',
@@ -154,7 +155,7 @@ Jubilant Pharmova Ltd.`,
           'add',
           {
             id: '10183',
-            name: 'Ange-Félix Patassé',
+            name: 'ange-felix patasse',
             entityType: 'PERSON',
             nationality: ['CF'],
             sanctionSearchTypes: ['PEP', 'ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
@@ -178,7 +179,12 @@ Jubilant Pharmova Ltd.`,
               'Politically Exposed Person (PEP)',
               'Special Interest Person (SIP) - Corruption',
             ],
-            aka: ['Ange Felix Patasse', 'Ange-Felix Patasse'],
+            aka: [
+              'ange félix patassé',
+              'ange felix patasse',
+              'ange-félix patassé',
+            ],
+            normalizedAka: ['ange felix patasse'],
             freetext: `PROFILE CREATED: 28-Aug-2006
 UPDATE ADDED: 05-Sep-2006
 UPDATE ADDED: 07-Jun-2022
@@ -367,11 +373,12 @@ Patasse passed away on April 5, 2011.`,
             id: '10184',
             isActivePep: true,
             isActiveSanctioned: false,
-            name: 'Martin Ziguélé',
+            name: 'martin ziguele',
             entityType: 'PERSON',
             gender: 'Male',
             documents: [],
             nationality: ['CF'],
+            normalizedAka: ['martin zinguele'],
             occupations: [
               {
                 occupationCode: 'members_of_the_national_legislature',
@@ -393,7 +400,7 @@ Patasse passed away on April 5, 2011.`,
             dateMatched: true,
             matchTypes: ['PEP'],
             sanctionSearchTypes: ['PEP'],
-            aka: ['Martin Zinguele', 'Martin Ziguele'],
+            aka: ['martin zinguélé', 'martin zinguele', 'martin ziguélé'],
             countries: ['Central African Republic'],
             countryCodes: ['CF'],
             yearOfBirth: ['1957'],

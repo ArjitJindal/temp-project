@@ -13675,6 +13675,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsEntityAddress'
+        normalizedAka:
+          type: array
+          items:
+            type: string
       required:
         - id
         - name

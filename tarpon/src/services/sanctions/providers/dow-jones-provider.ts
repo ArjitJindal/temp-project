@@ -9,7 +9,7 @@ import unzipper from 'unzipper'
 import { compact, intersection, replace, uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
-import { getUniqueStrings } from './utils'
+import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
@@ -886,7 +886,16 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         const documents = this.getDocuments(person.IDNumberTypes)
         const occupations = this.getOccupations(person.RoleDetail)
-        const aka = this.getNames(person.NameDetails?.Name)
+        const {
+          name: normalizedName,
+          aka,
+          normalizedAka,
+        } = getNameAndAka(
+          name.toLowerCase(),
+          compact(this.getNames(person.NameDetails?.Name)).map((n) =>
+            n.toLowerCase()
+          )
+        )
 
         const referenceNumbersToReferenceNameMap =
           this.referenceNumbersToReferenceNameMap(
@@ -896,7 +905,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
-          name,
+          name: normalizedName,
           entityType: 'PERSON',
           matchTypes: [
             ...pepRcaMatchTypes,
@@ -921,7 +930,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           ),
           gender: person.Gender,
           dateMatched: true,
-          aka: aka ? getUniqueStrings(aka) : aka,
+          aka,
+          normalizedAka,
           countries,
           nationality: countryOfNationality,
           countryCodes,
@@ -1134,10 +1144,19 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const countryOfNationality = this.getCountryCodes(entity, true)
 
         const documents = this.getDocuments(entity.IDNumberTypes)
-        const aka = this.getEntityNames(entity.NameDetails.Name)
+        const {
+          name: normalizedName,
+          aka,
+          normalizedAka,
+        } = getNameAndAka(
+          name.toLowerCase(),
+          compact(this.getEntityNames(entity.NameDetails.Name)).map((n) =>
+            n.toLowerCase()
+          )
+        )
         const sanctionsEntity: SanctionsEntity = {
           id: entity['@_id'],
-          name,
+          name: normalizedName,
           entityType,
           matchTypes: [
             ...(descriptions
@@ -1155,7 +1174,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           screeningSources: this.getSourceDescriptions(
             entity.SourceDescription
           ),
-          aka: aka ? getUniqueStrings(aka) : aka,
+          aka,
+          normalizedAka,
           countries,
           nationality: countryOfNationality,
           countryCodes,

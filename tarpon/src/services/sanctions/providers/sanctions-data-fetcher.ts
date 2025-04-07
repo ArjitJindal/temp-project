@@ -5,6 +5,7 @@ import { SanctionsDataProviders } from '../types'
 import {
   getNameMatches,
   getSecondaryMatches,
+  normalize,
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
 } from './utils'
@@ -786,7 +787,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   must: [
                     {
                       text: {
-                        query: sanitizeString(request.searchTerm),
+                        query: normalize(sanitizeString(request.searchTerm)),
                         path: ['name', 'aka'],
                         fuzzy: {
                           maxEdits: 2,

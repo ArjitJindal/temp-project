@@ -1,4 +1,4 @@
-import { compact, intersection } from 'lodash'
+import { compact, intersection, uniq } from 'lodash'
 import { SanctionsDataProviders } from '../types'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
@@ -132,33 +132,63 @@ export function getSecondaryMatches(
   return []
 }
 
-function normalize(str: string): string {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
+const BASE_LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+const LETTERS_ACCENTS_MAP: Map<string, string> = new Map<string, string>()
 
-export function getUniqueStrings(arr: string[]): string[] {
-  const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
-  const uniqueMap: Map<string, string> = new Map()
-  for (const str of arr) {
-    const normalized = normalize(str)
-    let foundKey: string | null = null
-    for (const key of uniqueMap.keys()) {
-      if (collator.compare(key, normalized) === 0) {
-        foundKey = key
+export function normalize(
+  str: string,
+  collator: Intl.Collator = Intl.Collator('en', { sensitivity: 'base' })
+): string {
+  let result = ''
+
+  for (const char of str.toLowerCase()) {
+    let replaced = false
+    const normalizedChar = LETTERS_ACCENTS_MAP.get(char)
+    if (normalizedChar) {
+      result += normalizedChar
+      continue
+    }
+    for (const baseChar of BASE_LETTERS) {
+      if (collator.compare(char, baseChar) === 0) {
+        result += baseChar
+        LETTERS_ACCENTS_MAP.set(char, baseChar)
+        replaced = true
         break
       }
     }
-    if (foundKey) {
-      const value = uniqueMap.get(foundKey)
-      if (value && normalize(value) !== value) {
-        uniqueMap.set(foundKey, str)
-      }
-    } else {
-      uniqueMap.set(normalized, str)
+    if (!replaced) {
+      result += char
     }
   }
+  return result
+}
 
-  return Array.from(uniqueMap.values())
+export function getUniqueStrings(arr: string[]): string[] {
+  const collator = new Intl.Collator('en', { sensitivity: 'base' })
+  const strings: Set<string> = new Set<string>()
+  for (const str of arr) {
+    strings.add(normalize(str, collator))
+  }
+
+  return Array.from(strings)
+}
+
+export function getNameAndAka(
+  name: string,
+  aka: string[]
+): {
+  name: string
+  aka: string[]
+  normalizedAka: string[]
+} {
+  const normalizedName = normalize(name)
+  return {
+    name: normalizedName,
+    aka: uniq(compact([...aka, name]).filter((n) => n !== normalizedName)),
+    normalizedAka: getUniqueStrings(uniq(compact([...aka]))).filter(
+      (n) => n !== normalizedName
+    ),
+  }
 }
 
 export function sanitizeAcurisEntities(
