@@ -14,13 +14,14 @@ import { Report } from '@/@types/openapi-internal/Report'
 // - Uploads XML content to S3 if not already there
 // - Updates revision.output to store the S3 key
 // This migration precedes the ClickHouse sync update.
-const { DOCUMENT_BUCKET } = process.env as {
+const { DOCUMENT_BUCKET, AWS_REGION } = process.env as {
   DOCUMENT_BUCKET: string
+  AWS_REGION: string
 }
-async function uploadToS3(tenant: Tenant, key: string, body: Buffer | string) {
+async function uploadToS3(key: string, body: Buffer | string) {
   const parallelUploadS3 = new Upload({
     client: new S3Client({
-      region: tenant.region,
+      region: AWS_REGION,
     }),
     params: {
       Bucket: DOCUMENT_BUCKET,
@@ -46,7 +47,7 @@ async function migrateTenant(tenant: Tenant) {
             const match = revision.output.match(/^s3:(.+?):(.+)$/)
             if (!match) {
               const key = `${tenant.id}/${report.id}-report-${Date.now()}.xml`
-              await uploadToS3(tenant, key, Buffer.from(revision.output))
+              await uploadToS3(key, Buffer.from(revision.output))
               revision.output = `s3:document:${key}`
             }
           }
@@ -56,7 +57,7 @@ async function migrateTenant(tenant: Tenant) {
               const key = `${tenant.id}/${
                 report.id
               }-report-rawStatusInfo-${Date.now()}.xml`
-              await uploadToS3(tenant, key, report.rawStatusInfo)
+              await uploadToS3(key, report.rawStatusInfo)
               report.rawStatusInfo = `s3:document:${key}`
             }
           }
