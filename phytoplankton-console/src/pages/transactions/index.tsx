@@ -179,12 +179,6 @@ const TableList = () => {
               ),
             },
             {
-              title: 'Account Name',
-              key: 'filterPaymentDetailName',
-              renderer: { kind: 'string' },
-              showFilterByDefault: false,
-            },
-            {
               key: 'productType',
               title: 'Product Type',
               renderer: ({ params, setParams }) => (

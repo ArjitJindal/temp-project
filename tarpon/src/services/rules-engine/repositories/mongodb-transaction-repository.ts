@@ -241,32 +241,17 @@ export class MongoDbTransactionRepository
                       $eq: [
                         params.filterPaymentDetailName,
                         {
-                          $trim: {
-                            input: {
-                              $concat: [
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.firstName`,
-                                    '',
-                                  ],
-                                },
-                                ' ',
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.middleName`,
-                                    '',
-                                  ],
-                                },
-                                ' ',
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.lastName`,
-                                    '',
-                                  ],
-                                },
-                              ],
+                          $concat: [
+                            {
+                              $ifNull: [`$${prefix}.nameOnCard.firstName`, ''],
                             },
-                          },
+                            ' ',
+                            {
+                              $ifNull: [`$${prefix}.nameOnCard.middleName`, ''],
+                            },
+                            ' ',
+                            { $ifNull: [`$${prefix}.nameOnCard.lastName`, ''] },
+                          ],
                         },
                       ],
                     },

@@ -152,25 +152,6 @@ export enum ClickhouseTableNames {
   CrmUserRecordLink = 'crm_user_record_link',
 }
 
-export const gerneratePaymentDetailsName = (prefix: string) => {
-  return [
-    `${prefix}PaymentDetails_name String MATERIALIZED 
-    IF(JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'CARD',
-      trimBoth(
-        replaceRegexpAll(
-          concat(
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.firstName'), ''), ' ',
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.middleName'), ''), ' ',
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.lastName'), '')
-          ),
-          '\\s+', ' '
-        )
-      ),
-      COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name'), '')
-    )`,
-  ]
-}
-
 export const CLICKHOUSE_DEFINITIONS = {
   TRANSACTIONS: {
     tableName: ClickhouseTableNames.Transactions,
@@ -335,8 +316,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "destinationPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.destinationPaymentMethodId')",
       ...generatePaymentDetailColumns('origin'),
       ...generatePaymentDetailColumns('destination'),
-      ...gerneratePaymentDetailsName('origin'),
-      ...gerneratePaymentDetailsName('destination'),
       "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
       "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
       "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",
