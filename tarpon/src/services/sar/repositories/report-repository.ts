@@ -29,6 +29,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { SarDetails } from '@/@types/openapi-internal/SarDetails'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 
 @traceable
 export class ReportRepository {
@@ -199,13 +200,18 @@ export class ReportRepository {
         upsert: true,
       }
     )
+    await sendMessageToMongoConsumer({
+      documentKey: { type: 'id', value: newReport.id ?? '' },
+      operationType: 'update',
+      clusterTime: Date.now(),
+      collectionName: REPORT_COLLECTION(this.tenantId),
+    })
 
     await this.addOrUpdateSarItemsInDynamo(newReport.caseUserId, {
       reportId: newReport.id ?? '',
       status: newReport.status,
       region: newReport.reportTypeId?.split('-')[0] as CountryCode,
     })
-
     return newReport
   }
 
@@ -355,6 +361,16 @@ export class ReportRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
 
+    await sendMessageToMongoConsumer({
+      documentKey: {
+        type: 'filter',
+        value: { id: { $in: reportIds } },
+      },
+      operationType: 'delete',
+      clusterTime: Date.now(),
+      collectionName: REPORT_COLLECTION(this.tenantId),
+    })
+
     const reports = await collection
       .find({
         id: { $in: reportIds },
@@ -441,6 +457,12 @@ export class ReportRepository {
       status,
       region: '' as CountryCode, // As the id should be already present so we only update the status so region is not needed
     })
+    await sendMessageToMongoConsumer({
+      documentKey: { type: 'id', value: reportId },
+      operationType: 'update',
+      clusterTime: Date.now(),
+      collectionName: REPORT_COLLECTION(this.tenantId),
+    })
   }
 
   private async uploadReportRawStatusInfoToS3(key: string, xmlAck: string) {
@@ -492,6 +514,12 @@ export class ReportRepository {
       reportId,
       status,
       region: '' as CountryCode, // As the id should be already present so we only update the status so region is not needed
+    })
+    await sendMessageToMongoConsumer({
+      documentKey: { type: 'id', value: reportId },
+      operationType: 'update',
+      clusterTime: Date.now(),
+      collectionName: REPORT_COLLECTION(this.tenantId),
     })
   }
 }
