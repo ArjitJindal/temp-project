@@ -17,10 +17,12 @@ import { FalsePositiveTag } from './FalsePositiveTag';
 import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import {
+  Account,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   AlertStatus,
   ChecklistStatus,
+  Comment,
   SanctionsHitStatus,
 } from '@/apis';
 import { useApi } from '@/api';
@@ -143,6 +145,63 @@ interface Props<ModalProps> {
   expandedAlertId?: string;
   updateModalState: (newState: ModalProps) => void;
   setModalVisibility: (visibility: boolean) => void;
+}
+
+const getCommentForStatusChange = (body: string) => {
+  const match = body.match(/Alert status changed to \s*(.*) Reasons: \s*(.*) Comment: \s*(.*)/s);
+  return match && match.length === 4 ? match[3].trim() : undefined;
+};
+
+const isQAChange = (body: string) => {
+  return /^Alert QA status set to .*/.test(body);
+};
+
+const santiziedMakerComment = (comment?: Comment) => {
+  if (!comment) {
+    return comment;
+  }
+
+  // sure that this is a status change comment need to find maker comment by filtering
+  if (comment.type === 'STATUS_CHANGE') {
+    return getCommentForStatusChange(comment.body);
+  } else {
+    // not sure that this is status change comment or a comment on alert
+    // https://github.com/flagright/orca/pull/3118 implemented type in comment, comment before this has no distinguishing
+
+    if (!isQAChange(comment.body)) {
+      const santiziedComment = getCommentForStatusChange(comment.body);
+      if (!santiziedComment) {
+        return comment.body;
+      }
+      return santiziedComment;
+    }
+  }
+
+  return undefined;
+};
+
+export function getLatestMakerComment(
+  comments: Comment[],
+  accounts: { [accountId: string]: Account },
+): Comment | undefined {
+  let latestMakerComment: Comment | undefined = undefined,
+    commentTime = 0;
+
+  comments.forEach((comment) => {
+    // filtering a valid comment made by maker, which is not deleted
+    if (comment.id && comment.userId) {
+      const account = accounts[comment.userId];
+      if (account && account.reviewerId && comment.createdAt && !comment.deletedAt) {
+        const santiziedCommentBody = santiziedMakerComment(comment);
+        if (santiziedCommentBody && commentTime < comment.createdAt) {
+          commentTime = comment.createdAt;
+          latestMakerComment = { ...comment, body: santiziedCommentBody };
+        }
+      }
+    }
+  });
+
+  return latestMakerComment;
 }
 
 export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
@@ -709,6 +768,21 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             hideInTable: true,
             exporting: true,
             filtering: false,
+          }),
+          helper.simple<'comments'>({
+            title: 'Maker comment',
+            key: 'comments',
+            hideInTable: true,
+            exporting: true,
+            filtering: false,
+            type: {
+              stringify: (value) => {
+                const latestMakerComment = getLatestMakerComment(value ?? [], users);
+                return latestMakerComment && latestMakerComment.body
+                  ? latestMakerComment.body
+                  : '-';
+              },
+            },
           }),
           helper.simple<'comments'>({
             title: 'Comments',
