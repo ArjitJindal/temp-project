@@ -178,7 +178,7 @@ Cypress.Commands.add('multiSelect', (preSelector, text) => {
         .type(`${text}`, { force: true });
       cy.get(`div[title="${text}"]`).click();
     });
-  cy.get(`${preSelector} .ant-select`).click();
+  cy.get(`${preSelector} .ant-select`).first().click();
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {
