@@ -369,38 +369,33 @@ export class ReportService {
         report
       )
       const now = Date.now()
-      if (generationResult?.type === 'STRING') {
-        report.revisions.push({
-          output: generationResult.value,
-          createdAt: now,
-        })
-      } else {
-        const key = `${this.tenantId}/${
-          report.id
-        }-report-${now}.${generationResult.contentType.toLowerCase()}`
-        const stream = generationResult.stream
-        const buffers: Buffer[] = []
-        for await (const data of stream) {
-          if (typeof data !== 'string') {
-            buffers.push(data)
-          }
-        }
-        const body = Buffer.concat(buffers)
-        const parallelUploadS3 = new Upload({
-          client: this.s3,
-          params: {
-            Bucket: this.s3Config.documentBucket,
-            Key: key,
-            Body: body,
-          },
-        })
-        await parallelUploadS3.done()
 
-        report.revisions.push({
-          output: `s3:document:${key}`,
-          createdAt: now,
-        })
-      }
+      const fileExtension =
+        generationResult?.type === 'STRING'
+          ? 'xml'
+          : generationResult.contentType.toLowerCase()
+
+      const key = `${this.tenantId}/reports/${report.id}-${now}.${fileExtension}`
+
+      const body =
+        generationResult?.type === 'STRING'
+          ? Buffer.from(generationResult.value)
+          : await this.streamToBuffer(generationResult.stream)
+
+      const parallelUploadS3 = new Upload({
+        client: this.s3,
+        params: {
+          Bucket: this.s3Config.documentBucket,
+          Key: key,
+          Body: body,
+        },
+      })
+      await parallelUploadS3.done()
+
+      report.revisions.push({
+        output: `s3:document:${key}`,
+        createdAt: now,
+      })
 
       if (directSubmission && generator.submit) {
         report.status = 'SUBMITTING' as ReportStatus
@@ -487,5 +482,15 @@ export class ReportService {
       generator.tenantId = this.tenantId
     }
     return generator
+  }
+
+  private async streamToBuffer(stream: any): Promise<Buffer> {
+    const buffers: Buffer[] = []
+    for await (const data of stream) {
+      if (typeof data !== 'string') {
+        buffers.push(data)
+      }
+    }
+    return Buffer.concat(buffers)
   }
 }

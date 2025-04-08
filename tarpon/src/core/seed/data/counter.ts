@@ -1,6 +1,6 @@
 import { memoize } from 'lodash'
 import { getCases } from './cases'
-import { getReports } from './reports'
+import { reports } from './reports'
 import { ruleInstances } from './rules'
 import { riskFactors } from './risk-factors'
 import { getAlerts } from '@/core/seed/data/alerts'
@@ -23,7 +23,7 @@ export const getCounterCollectionData: () => EntityCounter[] = memoize(() => {
     },
     {
       entity: 'Report',
-      count: getReports().length + 1,
+      count: reports.length + 1,
     },
     {
       entity: 'RC',

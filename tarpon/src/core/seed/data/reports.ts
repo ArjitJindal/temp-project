@@ -3,21 +3,27 @@ import { ReportSampler } from '../samplers/report'
 import { getCases } from './cases'
 import { Report } from '@/@types/openapi-internal/Report'
 
-export const getReports: () => Report[] = memoize(() => {
-  const rData: Report[] = []
-  const reportSampler = new ReportSampler()
-  rData.push(
-    // Create a report every case
-    ...getCases().map((c, i) => {
-      const reportId = `RP-${i + 3}`
-      return reportSampler.getSample(
-        undefined,
-        reportId,
-        c.caseId || '',
-        c.caseUsers?.destination?.userId || c.caseUsers?.origin?.userId || ''
+export const reports: Report[] = []
+export const getReports: (tenantId: string) => Promise<Report[]> = memoize(
+  async (tenantId: string) => {
+    if (reports.length === 0) {
+      const reportSampler = new ReportSampler(tenantId)
+      reports.push(
+        ...(await Promise.all(
+          getCases().map(async (c, i) => {
+            const reportId = `RP-${i + 3}`
+            return await reportSampler.getSample(
+              undefined,
+              reportId,
+              c.caseId || '',
+              c.caseUsers?.destination?.userId ||
+                c.caseUsers?.origin?.userId ||
+                ''
+            )
+          })
+        ))
       )
-    })
-  )
-
-  return rData
-})
+    }
+    return reports
+  }
+)

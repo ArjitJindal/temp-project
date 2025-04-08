@@ -58,7 +58,7 @@ import {
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from '@/core/seed/data/sanctions'
-import { getReports } from '@/core/seed/data/reports'
+import { reports } from '@/core/seed/data/reports'
 import { getSimulations } from '@/core/seed/data/simulation'
 import {
   getNotes,
@@ -102,7 +102,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
     SANCTIONS_SCREENING_DETAILS_COLLECTION,
     () => getSanctionsScreeningDetails(),
   ],
-  [REPORT_COLLECTION, () => getReports()],
+  [REPORT_COLLECTION, () => reports],
   [CRM_ENGAGEMENTS_COLLECTION, () => getEngagements()],
   [CRM_TASKS_COLLECTION, () => getTasks()],
   [CRM_NOTES_COLLECTION, () => getNotes()],
@@ -153,7 +153,7 @@ export async function seedMongo(
     COUNTER_COLLECTION(tenantId)
   )
   const counters: [CounterEntity, number][] = [
-    ['Report', getReports().length],
+    ['Report', reports.length],
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],
     ['SLAPolicy', getSLAPolicies().length],

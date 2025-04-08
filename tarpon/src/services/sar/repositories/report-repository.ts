@@ -1,5 +1,5 @@
 import { Document, Filter, MongoClient, WithId } from 'mongodb'
-import { omit } from 'lodash'
+import { chunk, compact, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
@@ -8,6 +8,12 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+import { Upload } from '@aws-sdk/lib-storage'
+import {
+  S3Client,
+  DeleteObjectsCommand,
+  DeleteObjectsCommandInput,
+} from '@aws-sdk/client-s3'
 import { Report } from '@/@types/openapi-internal/Report'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import {
@@ -348,10 +354,56 @@ export class ReportRepository {
   public async deleteReports(reportIds: string[]) {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+
+    const reports = await collection
+      .find({
+        id: { $in: reportIds },
+        status: 'DRAFT',
+      })
+      .toArray()
+
+    const keys = reports.flatMap((report) => [
+      ...(report.revisions?.map((rev) => rev.output) ?? []),
+      ...(report.rawStatusInfo ? [report.rawStatusInfo] : []),
+    ])
+
+    await this.deleteS3Objects(keys)
+
     await collection.deleteMany({
       id: { $in: reportIds },
       status: 'DRAFT',
     })
+  }
+
+  private async deleteS3Objects(keys: string[]) {
+    if (!keys.length) {
+      return
+    }
+
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+    })
+    const bucket = process.env.DOCUMENT_BUCKET
+
+    if (!bucket) {
+      return
+    }
+
+    for (const batch of chunk(keys, 1000)) {
+      const deleteParams: DeleteObjectsCommandInput = {
+        Bucket: bucket,
+        Delete: {
+          Objects: compact(
+            batch.map((key) => {
+              const match = key.match(/^s3:document:(.+)$/)
+              return match ? { Key: match[1] } : null
+            })
+          ),
+          Quiet: true,
+        },
+      }
+      await s3Client.send(new DeleteObjectsCommand(deleteParams))
+    }
   }
 
   public async getLastGeneratedReport(
@@ -391,6 +443,23 @@ export class ReportRepository {
     })
   }
 
+  private async uploadReportRawStatusInfoToS3(key: string, xmlAck: string) {
+    const { DOCUMENT_BUCKET } = process.env as {
+      DOCUMENT_BUCKET: string
+    }
+    const parallelUploadS3 = new Upload({
+      client: new S3Client({
+        region: process.env.AWS_REGION,
+      }),
+      params: {
+        Bucket: DOCUMENT_BUCKET,
+        Key: key,
+        Body: xmlAck,
+      },
+    })
+    await parallelUploadS3.done()
+  }
+
   public async updateReportAck(
     reportId: string,
     status: ReportStatus,
@@ -400,12 +469,20 @@ export class ReportRepository {
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    const report = await this.getReport(reportId)
+    if (report?.rawStatusInfo) {
+      await this.deleteS3Objects([report.rawStatusInfo])
+    }
+    const key = `${
+      this.tenantId
+    }/reports/${reportId}-rawStatusInfo-${Date.now()}.xml`
+    await this.uploadReportRawStatusInfoToS3(key, xmlAck)
     await collection.updateOne(
       { id: reportId },
       {
         $set: {
           status,
-          rawStatusInfo: xmlAck,
+          rawStatusInfo: `s3:document:${key}`,
           statusInfo: parsedAck,
           lastAckFetchTime,
         },
