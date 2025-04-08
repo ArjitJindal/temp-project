@@ -72,12 +72,12 @@ import { User } from '@/@types/openapi-public/User'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import {
-  getContext,
   hasFeature,
   publishMetric,
   updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'

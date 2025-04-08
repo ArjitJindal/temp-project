@@ -18,7 +18,7 @@ import { SimulationRiskLevelsStatisticsResult } from '@/@types/openapi-internal/
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { SimulationRiskLevelsIteration } from '@/@types/openapi-internal/SimulationRiskLevelsIteration'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { SimulationGetResponse } from '@/@types/openapi-internal/SimulationGetResponse'
 import { SimulationPostResponse } from '@/@types/openapi-internal/SimulationPostResponse'

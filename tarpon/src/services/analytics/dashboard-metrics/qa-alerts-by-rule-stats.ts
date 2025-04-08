@@ -2,11 +2,8 @@ import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY,
@@ -119,19 +116,19 @@ export class QaAlertsByRuleStatsDashboardMetric {
     endTimestamp: number
   ): Promise<DashboardStatsQaAlertsCountByRuleData[]> {
     const query = `
-    WITH 
+    WITH
         arrayJoin(alerts) AS alert
-    SELECT 
+    SELECT
         alert.ruleId AS ruleId,
         alert.ruleInstanceId AS ruleInstanceId,
         count() AS alertsCount
     FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-    WHERE 
+    WHERE
         alert.alertStatus = 'CLOSED'
         AND coalesce(alert.ruleQaStatus, '') != ''
         AND alert.ruleId != ''
-        AND toDateTime(alert.updatedAt / 1000.0) 
-            BETWEEN toDateTime(${startTimestamp} / 1000) 
+        AND toDateTime(alert.updatedAt / 1000.0)
+            BETWEEN toDateTime(${startTimestamp} / 1000)
             AND toDateTime(${endTimestamp} / 1000)
     GROUP BY alert.ruleId, alert.ruleInstanceId
     ORDER BY alertsCount DESC

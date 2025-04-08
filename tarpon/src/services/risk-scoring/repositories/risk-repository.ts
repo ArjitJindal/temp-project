@@ -22,9 +22,9 @@ import {
 } from '@flagright/lib/utils/risk'
 import {
   hasFeature,
-  getContext,
   updateTenantRiskClassificationValues,
 } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   batchGet,

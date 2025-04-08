@@ -1,9 +1,8 @@
 import { LeveledLogMethod, createLogger, format, transports } from 'winston'
 import * as SentryLambda from '@sentry/serverless'
 import * as SentryNode from '@sentry/node'
-
 import { isPlainObject, wrap } from 'lodash'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 import { envIs } from '@/utils/env'
 
 const isLocal = process.env.ENV === 'local'

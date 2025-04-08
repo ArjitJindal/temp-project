@@ -1,7 +1,7 @@
 import { AttributeBuilder, BuilderKey, InputData } from './builder'
 import { AttributeSet } from './attribute-set'
 import dayjs from '@/utils/dayjs'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { getUserName } from '@/utils/helpers'
 
 export class CurrentTransactionBuilder implements AttributeBuilder {

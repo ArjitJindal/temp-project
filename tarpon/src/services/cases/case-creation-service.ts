@@ -71,11 +71,11 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
 import {
-  getContext,
   hasFeature,
   tenantSettings,
   tenantTimezone,
 } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { generateChecksum, uniqObjects } from '@/utils/object'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'

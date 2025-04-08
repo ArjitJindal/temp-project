@@ -4,7 +4,7 @@ import {
   AlertSLAStatusRefreshBatchJob,
   CaseSLAStatusRefreshBatchJob,
 } from '@/@types/batch-job'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

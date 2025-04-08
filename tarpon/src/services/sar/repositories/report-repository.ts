@@ -16,7 +16,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { Account } from '@/@types/openapi-internal/Account'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { CounterRepository } from '@/services/counter/repository'

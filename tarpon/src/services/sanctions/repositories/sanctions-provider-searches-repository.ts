@@ -1,7 +1,7 @@
 import { Collection } from 'mongodb'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { SANCTIONS_PROVIDER_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'

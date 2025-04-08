@@ -7,7 +7,7 @@ import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import {
   SANCTIONS_COLLECTION,
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
@@ -17,7 +17,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 withFeatureHook(['SANCTIONS', 'DOW_JONES'])
 // Mock getContext
-jest.mock('@/core/utils/context', () => ({
+jest.mock('@/core/utils/context-storage', () => ({
   getContext: jest.fn(),
 }))
 

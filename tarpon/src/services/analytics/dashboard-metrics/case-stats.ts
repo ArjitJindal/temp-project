@@ -1,6 +1,7 @@
 import { keyBy, sortBy, sum } from 'lodash'
 import { GranularityValuesType } from '../../dashboard/repositories/types'
 import { getTimeLabels } from '../../dashboard/utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   DAY_DATE_FORMAT,
   DAY_DATE_FORMAT_JS,
@@ -8,8 +9,7 @@ import {
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT,
   MONTH_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+} from '@/core/constants'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
@@ -178,7 +178,7 @@ export class CaseStatsDashboardMetric {
 
     if (entity === 'CASE') {
       const query = `
-        SELECT 
+        SELECT
           reason,
           count(*) as value
         FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
@@ -200,7 +200,7 @@ export class CaseStatsDashboardMetric {
       )
     } else if (entity === 'ALERT') {
       const query = `
-        SELECT 
+        SELECT
           reason,
           count(*) as value
         FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
@@ -638,7 +638,7 @@ export class CaseStatsDashboardMetric {
       entity === 'CASE' ? 'timestamp' : 'alerts.createdTimestamp'
 
     const query = `
-      SELECT 
+      SELECT
         formatDateTime(fromUnixTimestamp64Milli(${timestampField}), '${timeFormat}') as time_label,
         ${statusField} as status,
         count(distinct(${idField})) as count
@@ -651,7 +651,7 @@ export class CaseStatsDashboardMetric {
             ? `AND alerts.ruleInstanceId IN ('${ruleInstanceIds.join("','")}')`
             : ''
         }
-      GROUP BY 
+      GROUP BY
         time_label,
         status
       ORDER BY time_label

@@ -3,7 +3,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 import { Tenant } from '@/services/accounts/repository'
 

@@ -2,7 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { sortBy } from 'lodash'
 import * as createError from 'http-errors'
 import { ActiveSession, SessionsRepository } from './repository'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 export class SessionsService {
   private readonly repository: SessionsRepository

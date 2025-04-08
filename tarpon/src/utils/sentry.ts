@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import * as createError from 'http-errors'
 import { isEqual } from 'lodash'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { SENTRY_DSN } from '@/core/constants'
 
 export const SENTRY_INIT_CONFIG: Sentry.NodeOptions = {

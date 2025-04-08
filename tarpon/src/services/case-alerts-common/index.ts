@@ -12,7 +12,7 @@ import { envIs } from '@/utils/env'
 import { S3Config, S3Service } from '@/services/aws/s3-service'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isStatusInReview, statusEscalated } from '@/utils/helpers'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 @traceable
 export class CaseAlertsCommonService {

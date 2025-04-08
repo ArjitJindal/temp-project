@@ -13,7 +13,7 @@ import {
   paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import {
   isClickhouseEnabled,
   executeClickhouseQuery,

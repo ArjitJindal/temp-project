@@ -39,6 +39,14 @@ import {
   OptionalPaginationParams,
   PageSize,
 } from '@/utils/pagination'
+import {
+  HOUR_DATE_FORMAT,
+  DAY_DATE_FORMAT,
+  MONTH_DATE_FORMAT,
+  HOUR_DATE_FORMAT_JS,
+  DAY_DATE_FORMAT_JS,
+  MONTH_DATE_FORMAT_JS,
+} from '@/core/constants'
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 import { hasFeature } from '@/core/utils/context'
@@ -97,15 +105,6 @@ function buildResponse(statusCode: number, body: object): object {
     body: JSON.stringify(body),
   }
 }
-
-export const MONTH_DATE_FORMAT = '%Y-%m'
-export const DAY_DATE_FORMAT = '%Y-%m-%d'
-export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
-
-export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
-export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
-export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
-export const DATE_TIME_FORMAT_JS = 'YYYY-MM-DD HH:mm:ss'
 
 export function getDateFormatByGranularity(
   granularity: 'HOUR' | 'DAY' | 'MONTH'

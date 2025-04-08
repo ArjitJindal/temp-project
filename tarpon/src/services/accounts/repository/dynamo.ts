@@ -24,7 +24,7 @@ import {
 } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { getNonDemoTenantId } from '@/utils/tenant'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 
 type CacheAccount = Account & { tenantId: string }

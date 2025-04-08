@@ -27,3 +27,11 @@ export const ACCEPTED_FILE_EXTENSIONS_SET = new Set([
   '.eml',
   '.sar',
 ])
+export const MONTH_DATE_FORMAT = '%Y-%m'
+export const DAY_DATE_FORMAT = '%Y-%m-%d'
+export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
+
+export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
+export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
+export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
+export const DATE_TIME_FORMAT_JS = 'YYYY-MM-DD HH:mm:ss'

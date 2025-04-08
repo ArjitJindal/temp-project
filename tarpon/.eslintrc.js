@@ -52,4 +52,12 @@ module.exports = {
     project: './tsconfig.json',
     tsconfigRootDir: __dirname,
   },
+  overrides: [
+    {
+      files: ['src/utils/**/*.{js,ts,tsx}', 'src/core/**/*.{js,ts,tsx}'],
+      rules: {
+        'import/no-cycle': 'error',
+      },
+    },
+  ],
 }

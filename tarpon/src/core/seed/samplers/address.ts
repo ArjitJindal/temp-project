@@ -1,5 +1,5 @@
 import { memoize } from 'lodash'
-import { getCountriesData, streets } from '../data/address'
+import { getCountriesData, streets } from '../raw-data/address'
 import { BaseSampler } from './base'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { Address } from '@/@types/openapi-public/Address'

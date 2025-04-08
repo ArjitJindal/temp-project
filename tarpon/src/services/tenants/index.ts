@@ -45,11 +45,8 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
-import {
-  getContext,
-  tenantSettings,
-  updateTenantSettings,
-} from '@/core/utils/context'
+import { tenantSettings, updateTenantSettings } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { isDemoTenant } from '@/utils/tenant'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'

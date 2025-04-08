@@ -66,7 +66,8 @@ import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
@@ -894,7 +895,7 @@ export class LogicEvaluator {
             transaction.direction
           ) {
             /*
-            To use only transaction applied marker to check if transaction is applied, 
+            To use only transaction applied marker to check if transaction is applied,
             Note: Only marking last 3 days transaction in the rebuild which are applied.
              */
 

@@ -1,4 +1,5 @@
-import { getContext, publishMetric, withContext } from '@/core/utils/context'
+import { publishMetric, withContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 describe('Publish metric', () => {
   test('added to context for new namespace', async () => {

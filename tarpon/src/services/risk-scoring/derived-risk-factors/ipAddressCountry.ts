@@ -3,7 +3,7 @@ import { TransactionRiskFactorValueHandler } from '.'
 import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'
 import { GeoIPService } from '@/services/geo-ip'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<

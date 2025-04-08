@@ -14,7 +14,8 @@ import { prompt } from '@/utils/openai'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
-import { addSentryExtras, getContext } from '@/core/utils/context'
+import { addSentryExtras } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 const MAX_DISTANCE = 2
 const LIMIT = 30

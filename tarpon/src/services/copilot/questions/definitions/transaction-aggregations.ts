@@ -18,7 +18,7 @@ import {
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { notEmpty } from '@/utils/array'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
@@ -54,28 +54,28 @@ export const getClickhouseQuery = (
   const startOf = `toStartOf${startCase(sqlGranularity.toLowerCase())}`
 
   const query = `
-  SELECT
-    toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
-    round(${aggregationExpression(granularity)}, 2) as agg
-  FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-  WHERE 
-  (
-    (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${
-      period.from
-    }) AND toDateTime(timestamp / 1000) <= fromUnixTimestamp64Milli(${
+    SELECT
+      toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
+      round(${aggregationExpression(granularity)}, 2) as agg
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+    WHERE
+    (
+      (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${
+        period.from
+      }) AND toDateTime(timestamp / 1000) <= fromUnixTimestamp64Milli(${
     period.to
   }))
-    AND ${clickhouseCondition}
-  )
-  GROUP BY date
-  ORDER BY date ASC
-  WITH FILL FROM toDate(${startOf}(toDateTime(${
+      AND ${clickhouseCondition}
+    )
+    GROUP BY date
+    ORDER BY date ASC
+    WITH FILL FROM toDate(${startOf}(toDateTime(${
     period.from
   } / 1000))) TO toDate(${startOf}(toDateTime(${
     period.to
   } / 1000))) + INTERVAL 1 ${sqlGranularity} STEP INTERVAL 1 ${sqlGranularity}
-  SETTINGS output_format_json_quote_64bit_integers = 0
-`
+    SETTINGS output_format_json_quote_64bit_integers = 0
+  `
 
   return query
 }

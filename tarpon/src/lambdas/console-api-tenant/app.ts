@@ -32,11 +32,8 @@ import {
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
 import { getFullTenantId, isDemoTenant } from '@/utils/tenant'
-import {
-  addSentryExtras,
-  getContext,
-  tenantSettings,
-} from '@/core/utils/context'
+import { addSentryExtras, tenantSettings } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { NangoService } from '@/services/nango'

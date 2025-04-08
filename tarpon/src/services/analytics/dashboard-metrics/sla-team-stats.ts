@@ -7,12 +7,8 @@ import {
   CASES_COLLECTION,
   DASHBOARD_SLA_TEAM_STATS_HOURLY,
 } from '@/utils/mongodb-definitions'
-import {
-  getMongoDbClientDb,
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  paginatePipeline,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb, paginatePipeline } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   DashboardStatsTeamSLAItem,
   DashboardStatsTeamSLAItemResponse,
@@ -253,8 +249,8 @@ export class TeamSLAStatsDashboardMetric {
       ARRAY JOIN alerts AS alerts
       ARRAY JOIN alerts.assignments AS assignment
       ARRAY JOIN alerts.slaPolicyDetails AS sla
-      WHERE (alerts.alertStatus = 'CLOSED') 
-      AND (length(alerts.slaPolicyDetails) > 0) 
+      WHERE (alerts.alertStatus = 'CLOSED')
+      AND (length(alerts.slaPolicyDetails) > 0)
       AND (length(alerts.assignments) > 0)
       ${
         timeRangeCondition.length > 0
@@ -263,7 +259,7 @@ export class TeamSLAStatsDashboardMetric {
       }
       GROUP BY accountId
     )
-    SELECT 
+    SELECT
     accountId,
     OK,
     BREACHED,

@@ -18,13 +18,13 @@ import { DynamoAlertRepository } from './dynamo-repository'
 import { ClickhouseAlertRepository } from './clickhouse-repository'
 import {
   convertQueryToAggregationExpression,
-  DAY_DATE_FORMAT,
   getSkipAndLimit,
   internalMongoUpdateMany,
   internalMongoUpdateOne,
   paginatePipeline,
   prefixRegexMatchFilter,
 } from '@/utils/mongodb-utils'
+import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
   ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
@@ -39,7 +39,8 @@ import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListRespon
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'

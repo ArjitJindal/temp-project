@@ -1,4 +1,4 @@
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 let processInBackground = false
 

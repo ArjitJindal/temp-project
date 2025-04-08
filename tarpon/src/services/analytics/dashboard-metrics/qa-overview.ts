@@ -2,11 +2,8 @@ import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY,
@@ -131,15 +128,15 @@ export class QaOverviewStatsDashboardMetric {
     endTimestamp: number
   ): Promise<DashboardStatsQaOverview> {
     const query = `
-    SELECT 
+    SELECT
         count(*) AS totalAlertsForQa,
         countIf(alerts.ruleQaStatus = 'PASSED') AS totalQaPassedAlerts,
         countIf(alerts.ruleQaStatus = 'FAILED') AS totalQaFailedAlerts
     FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     ARRAY JOIN alerts
-    WHERE alerts.alertStatus = 'CLOSED' 
-        AND arrayExists(x -> coalesce(x.assigneeUserId, '') != '', alerts.qaAssignments) 
-        AND toDateTime(alerts.updatedAt / 1000) 
+    WHERE alerts.alertStatus = 'CLOSED'
+        AND arrayExists(x -> coalesce(x.assigneeUserId, '') != '', alerts.qaAssignments)
+        AND toDateTime(alerts.updatedAt / 1000)
             BETWEEN toDateTime(${startTimestamp / 1000}) AND toDateTime(${
       endTimestamp / 1000
     })

@@ -13,7 +13,7 @@ import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'
 import { Tenant } from '@/services/accounts/repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 export type Auth0ManagementAPICreds = {
   clientId: string
   clientSecret: string

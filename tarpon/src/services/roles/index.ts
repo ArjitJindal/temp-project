@@ -15,7 +15,7 @@ import {
 } from '@/utils/auth0-utils'
 import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 

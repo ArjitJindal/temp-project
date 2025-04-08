@@ -13,12 +13,6 @@ import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { envIs, envIsNot } from '../env'
 import {
-  DATE_TIME_FORMAT_JS,
-  DAY_DATE_FORMAT_JS,
-  HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT_JS,
-} from '../mongodb-utils'
-import {
   ClickHouseTables,
   MaterializedViewDefinition,
   ProjectionsDefinition,
@@ -27,7 +21,14 @@ import {
   IndexType,
   IndexOptions,
 } from './definition'
-import { getContext, hasFeature } from '@/core/utils/context'
+import {
+  DATE_TIME_FORMAT_JS,
+  DAY_DATE_FORMAT_JS,
+  HOUR_DATE_FORMAT_JS,
+  MONTH_DATE_FORMAT_JS,
+} from '@/core/constants'
+import { hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
@@ -525,7 +526,7 @@ async function addProjection(
   const columns = projection.definition.columns.join(', ')
   const projectionName = getProjectionName(tableName, projection)
   const addProjectionQuery = `
-    ALTER TABLE ${tableName} ADD PROJECTION ${projectionName} 
+    ALTER TABLE ${tableName} ADD PROJECTION ${projectionName}
     (SELECT ${columns} ${projection.definition.aggregator} BY ${projection.definition.aggregatorBy})
   `
   await client.query({ query: addProjectionQuery })

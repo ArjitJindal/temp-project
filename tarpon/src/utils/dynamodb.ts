@@ -38,7 +38,8 @@ import {
   DYNAMODB_WRITE_CAPACITY_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
-import { getContext, publishMetric } from '@/core/utils/context'
+import { publishMetric } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
 
 export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []

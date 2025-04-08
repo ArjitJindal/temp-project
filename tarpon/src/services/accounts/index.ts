@@ -22,7 +22,8 @@ import {
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { RoleService } from '@/services/roles'
-import { getContext, hasFeature, tenantSettings } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { isFlagrightInternalUser, isRoleAboveAdmin } from '@/@types/jwt'
 import {

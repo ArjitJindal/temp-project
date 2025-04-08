@@ -5,12 +5,8 @@ import {
 } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-  paginatePipeline,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb, paginatePipeline } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
@@ -363,7 +359,7 @@ export class RuleHitsStatsDashboardMetric {
     // data in a new table
 
     const transactionsQuery = `
-    SELECT 
+    SELECT
       arrayJoin(nonShadowHitRuleIdPairs).1 AS ruleInstanceId,
       arrayJoin(nonShadowHitRuleIdPairs).2 AS ruleId,
       count() as hitCount
@@ -375,7 +371,7 @@ export class RuleHitsStatsDashboardMetric {
     const alertsQuery = `
     WITH
       arrayJoin(alerts) as alert
-    SELECT 
+    SELECT
       alert.ruleInstanceId as ruleInstanceId,
       alert.ruleId as ruleId,
       countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
@@ -386,11 +382,11 @@ export class RuleHitsStatsDashboardMetric {
   `
 
     const finalQuery = `
-      WITH 
+      WITH
         transactions AS (${transactionsQuery}),
         alerts AS (${alertsQuery}),
         combined AS (
-          SELECT 
+          SELECT
             coalesce(NULLIF(t.ruleId, ''), NULLIF(a.ruleId, '')) as ruleId,
             coalesce(NULLIF(t.ruleInstanceId, ''), NULLIF(a.ruleInstanceId, '')) as ruleInstanceId,
             coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
@@ -401,7 +397,7 @@ export class RuleHitsStatsDashboardMetric {
         total_count AS (
           SELECT count(*) as total FROM combined
         )
-      SELECT 
+      SELECT
         ruleId,
         ruleInstanceId,
         hitCount,

@@ -2,11 +2,8 @@ import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_QA_ALERTS_BY_ASSIGNEE_STATS_COLLECTION_HOURLY,
@@ -136,19 +133,19 @@ export class QaAlertsByAssigneeStatsDashboardMetric {
     endTimestamp: number
   ): Promise<DashboardStatsQaAlertsCountByAssigneeData[]> {
     const query = `
-    WITH 
+    WITH
         arrayJoin(alerts) AS alert,
         arrayJoin(alert.qaAssignments) AS qa
-    SELECT 
+    SELECT
         qa.assigneeUserId AS accountId,
         count(*) AS alertsAssignedForQa,
         sum(if(coalesce(alert.ruleQaStatus, '') != '', 1, 0)) AS alertsQaedByAssignee
     FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-    WHERE 
+    WHERE
         alert.alertStatus = 'CLOSED'
         AND qa.assigneeUserId != ''
-        AND toDateTime(alert.updatedAt / 1000) 
-            BETWEEN toDateTime(${startTimestamp} / 1000) 
+        AND toDateTime(alert.updatedAt / 1000)
+            BETWEEN toDateTime(${startTimestamp} / 1000)
             AND toDateTime(${endTimestamp} / 1000)
     GROUP BY qa.assigneeUserId
     `

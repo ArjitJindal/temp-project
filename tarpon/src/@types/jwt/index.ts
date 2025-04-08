@@ -2,7 +2,8 @@ import { Forbidden } from 'http-errors'
 import { Credentials } from '@aws-sdk/client-sts'
 import { ManagedRoleName } from '../openapi-internal/ManagedRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { ContextUser, currentUser, getContext } from '@/core/utils/context'
+import { ContextUser, currentUser } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import {
   MANAGED_ROLE_NAMES,
   isValidManagedRoleName,

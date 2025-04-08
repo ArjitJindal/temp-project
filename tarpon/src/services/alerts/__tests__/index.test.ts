@@ -47,10 +47,10 @@ const TEST_ACCOUNT: Account = {
   escalationLevel: 'L1',
 }
 
-jest.mock('@/core/utils/context', () => {
+jest.mock('@/core/utils/context-storage', () => {
   const originalModule = jest.requireActual<
-    typeof import('@/core/utils/context')
-  >('@/core/utils/context')
+    typeof import('@/core/utils/context-storage')
+  >('@/core/utils/context-storage')
 
   return {
     ...originalModule,

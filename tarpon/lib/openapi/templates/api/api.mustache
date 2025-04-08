@@ -12,7 +12,7 @@ APIGatewayProxyWithLambdaAuthorizerEvent,
 import { Context } from '@/console-api/context'
 import { BadRequest } from "http-errors";
 import { fromGlobalContext } from '@/console-api/context'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 {{#operations}}
 {{#operation}}
 import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request} from "@/@types/openapi-{{api}}/RequestParameters";

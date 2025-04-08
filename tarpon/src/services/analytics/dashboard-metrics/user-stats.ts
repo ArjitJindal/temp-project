@@ -12,12 +12,12 @@ import {
   withUpdatedAt,
 } from './utils'
 import dayjs from '@/utils/dayjs'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   DAY_DATE_FORMAT_JS,
-  getMongoDbClientDb,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT_JS,
-} from '@/utils/mongodb-utils'
+} from '@/core/constants'
 import {
   DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_DAILY,
   DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_HOURLY,

@@ -2,7 +2,7 @@ import { OpenAI } from 'openai'
 import { getSecret } from './secrets-manager'
 import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 let openai: OpenAI | null = null
 

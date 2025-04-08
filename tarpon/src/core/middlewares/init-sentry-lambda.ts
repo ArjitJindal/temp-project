@@ -4,7 +4,7 @@ import {
   debugIntegration,
 } from '@sentry/integrations'
 import { isQaEnv } from '@flagright/lib/qa'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { envIs } from '@/utils/env'

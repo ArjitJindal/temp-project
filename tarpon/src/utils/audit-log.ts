@@ -7,7 +7,7 @@ import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum
 import { AuditLogType } from '@/@types/openapi-internal/AuditLogType'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Report } from '@/@types/openapi-internal/Report'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { publishAuditLog } from '@/services/audit-log'
 
 export type AuditLogEntity<

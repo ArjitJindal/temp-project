@@ -18,12 +18,12 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import {
-  getContext,
   hasFeature,
   initializeTenantContext,
   updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'

@@ -2,12 +2,8 @@ import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
-import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
-  getMongoDbClientDb,
-  lookupPipelineStage,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClientDb, lookupPipelineStage } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
@@ -427,7 +423,7 @@ export class HitsByUserStatsDashboardMetric {
     let processedQuery = ''
     if (queries.length > 1) {
       processedQuery = `
-        WITH originQuery AS (${queries[0]}), 
+        WITH originQuery AS (${queries[0]}),
         destinationQuery AS (${queries[1]})
         select
             coalesce(NULLIF(a.date, ''), NULLIF(t.date, '')) as date,
@@ -450,7 +446,7 @@ export class HitsByUserStatsDashboardMetric {
     const finalQuery = `
       WITH base_data as (${processedQuery}),
       aggregated_data AS (
-        SELECT 
+        SELECT
           userId,
           sum(openAlertsCount) as openAlertsCount,
           sum(rulesRunCount) as rulesRunCount,
@@ -461,7 +457,7 @@ export class HitsByUserStatsDashboardMetric {
         HAVING rulesHitCount > 0 AND rulesRunCount > 0
       ),
       user_data AS (
-        SELECT 
+        SELECT
           id,
           username as userName,
           type as userType
@@ -469,7 +465,7 @@ export class HitsByUserStatsDashboardMetric {
         WHERE id in (SELECT userId FROM aggregated_data)
       ),
       user_joined AS (
-        SELECT 
+        SELECT
           a.*,
           u.userName,
           u.userType
@@ -477,7 +473,7 @@ export class HitsByUserStatsDashboardMetric {
         JOIN user_data u ON a.userId = u.id
         ${userType ? `HAVING u.userType = '${userType}'` : ''}
       )
-      SELECT 
+      SELECT
         userId,
         any(userName) as userName,
         any(userType) as userType,

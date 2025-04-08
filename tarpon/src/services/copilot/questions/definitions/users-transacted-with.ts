@@ -12,12 +12,11 @@ import {
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type Row = {
   userId: string
@@ -54,48 +53,49 @@ export const UsersTransactedWith: TableQuestion<
     const derivedPageSize = pageSize || 20
     const derivedPage = page || 1
     const paginationQuery = `
-      SELECT 
+      SELECT
         COUNT(*) AS count
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
-      WHERE 
+      FROM transactions
+      WHERE
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
     `
 
     const clickhouseQuery = `
       WITH transactions_data AS (
-      SELECT 
+      SELECT
           ${otherUserIdKey} AS userId,
           COUNT(*) AS count,
           SUM(originAmountDetails_amountInUsd) AS sum
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
-      WHERE 
+      FROM transactions
+      WHERE
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
-      GROUP BY ${otherUserIdKey} 
-      ORDER BY 
-          count DESC 
-      LIMIT ${derivedPageSize} 
+      GROUP BY ${otherUserIdKey}
+      ORDER BY
+          count DESC
+      LIMIT ${derivedPageSize}
       OFFSET ${(derivedPage - 1) * derivedPageSize}
-  ), 
+  ),
   users_data AS (
-      SELECT 
-          username, 
-          type, 
+      SELECT
+          username,
+          type,
           id
-      FROM users 
+      FROM users
       WHERE id IN (SELECT userId FROM transactions_data)
-  ) 
-  SELECT 
+  )
+  SELECT
       transactions_data.userId as userId,
-      users_data.username as name, 
-      users_data.type as userType, 
+      users_data.username as name,
+      users_data.type as userType,
       transactions_data.count as count,
       transactions_data.sum as sum
-      FROM transactions_data 
-      LEFT JOIN users_data 
+      FROM transactions_data
+      LEFT JOIN users_data
           ON transactions_data.userId = users_data.id
       `
+
     const tenantId = getContext()?.tenantId ?? ''
     const [rows, total] = await Promise.all([
       executeClickhouseQuery<Row[]>(tenantId, clickhouseQuery, {}),

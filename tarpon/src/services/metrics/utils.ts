@@ -1,9 +1,6 @@
 import { ApiUsageMetrics } from './api-usage-metrics-service'
-import {
-  DAY_DATE_FORMAT,
-  MONTH_DATE_FORMAT_JS,
-  getMongoDbClient,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { DAY_DATE_FORMAT, MONTH_DATE_FORMAT_JS } from '@/core/constants'
 import { Metric } from '@/core/cloudwatch/metrics'
 import { METRICS_COLLECTION } from '@/utils/mongodb-definitions'
 import dayjs from '@/utils/dayjs'

@@ -37,7 +37,6 @@ import {
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Tag } from '@/@types/openapi-public/Tag'
 import {
-  DAY_DATE_FORMAT,
   getMongoDbClient,
   internalMongoUpdateOne,
   lookupPipelineStage,
@@ -46,6 +45,7 @@ import {
   paginatePipeline,
   prefixRegexMatchFilter,
 } from '@/utils/mongodb-utils'
+import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,

@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 import {
   assertPermissions,
   assertProductionAccess,

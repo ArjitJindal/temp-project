@@ -36,7 +36,8 @@ import {
   sendWebhookTasks,
   ThinWebhookDeliveryTask,
 } from '@/services/webhook/utils'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'

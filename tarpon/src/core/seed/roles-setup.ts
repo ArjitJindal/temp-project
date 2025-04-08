@@ -1,7 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import pMap from 'p-map'
 import { ManagementApiError } from 'auth0'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { RoleService } from '@/services/roles'
 import { getNonDemoTenantId } from '@/utils/tenant'

@@ -24,11 +24,8 @@ import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
-import {
-  DAY_DATE_FORMAT,
-  getMongoDbClient,
-  getMongoDbClientDb,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { DAY_DATE_FORMAT } from '@/core/constants'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'

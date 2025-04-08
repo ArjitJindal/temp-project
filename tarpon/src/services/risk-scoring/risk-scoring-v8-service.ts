@@ -33,7 +33,7 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReRunTrigger } from '@/@types/openapi-internal/ReRunTrigger'

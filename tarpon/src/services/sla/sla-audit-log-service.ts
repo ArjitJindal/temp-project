@@ -4,7 +4,7 @@ import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { traceable } from '@/core/xray'
 import { SLAPolicyStatus } from '@/@types/openapi-internal/SLAPolicyStatus'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 

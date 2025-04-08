@@ -4,7 +4,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import dayjs from '@/utils/dayjs'
-import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
+import { DAY_DATE_FORMAT_JS } from '@/core/constants'
 
 // Currently unused
 export const transactionMethods = [

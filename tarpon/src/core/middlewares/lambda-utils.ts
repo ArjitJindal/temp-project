@@ -1,5 +1,5 @@
 import { logger } from '../logger'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 
 let registered = false
 

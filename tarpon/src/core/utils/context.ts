@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'async_hooks'
 import * as Sentry from '@sentry/serverless'
 import { Extras } from '@sentry/types/types/extra'
 import { utils } from 'aws-xray-sdk-core'
@@ -16,6 +15,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
 import { isEmpty, isNil, mergeWith, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
+import { getContext, getContextStorage } from './context-storage'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
   cleanUpDynamoDbResources,
@@ -63,7 +63,6 @@ export type Context = LogMetaData & {
   auth0Domain?: string
 }
 
-const asyncLocalStorage = new AsyncLocalStorage<Context>()
 type APIGatewayEvent = APIGatewayProxyWithLambdaAuthorizerEvent<
   APIGatewayEventLambdaAuthorizerContext<
     Partial<Credentials & JWTAuthorizerResult>
@@ -184,7 +183,7 @@ export async function initializeTenantContext(tenantId: string) {
 }
 
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (context) {
     context.logMetadata = omitBy(
       {
@@ -198,7 +197,7 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
 }
 
 export function addSentryExtras(addedExtras: Extras) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (context) {
     context.sentryExtras = {
       ...context.sentryExtras,
@@ -212,14 +211,14 @@ export function addSentryExtras(addedExtras: Extras) {
 }
 
 export function updateTenantFeatures(features: Feature[]) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (context) {
     context.features = features
   }
 }
 
 export function updateTenantSettings(settings: TenantSettings) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (context) {
     context.settings = settings
     context.features = settings.features ?? []
@@ -229,7 +228,7 @@ export function updateTenantSettings(settings: TenantSettings) {
 export function updateTenantRiskClassificationValues(
   riskClassificationValues: RiskClassificationScore[]
 ) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (context) {
     context.riskClassificationValues = riskClassificationValues
   }
@@ -240,7 +239,7 @@ export function publishMetric(
   value: number,
   dimensions?: { [key: string]: string }
 ) {
-  const context = asyncLocalStorage.getStore()
+  const context = getContext()
   if (!context) {
     return
   }
@@ -341,14 +340,6 @@ export async function withContext<R>(
     await publishContextMetrics(ctx)
   }
   return result
-}
-
-export function getContextStorage(): AsyncLocalStorage<Context> {
-  return asyncLocalStorage
-}
-
-export function getContext(): Context | undefined {
-  return asyncLocalStorage.getStore()
 }
 
 export function currentUser(): ContextUser {

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { isQaEnv } from '@flagright/lib/qa'
-import { getContext } from '../utils/context'
+import { getContext } from '../utils/context-storage'
 import { envIs } from '@/utils/env'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
 

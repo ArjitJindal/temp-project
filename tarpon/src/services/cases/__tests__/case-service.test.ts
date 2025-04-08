@@ -18,7 +18,7 @@ import { AlertsRepository } from '@/services/alerts/repository'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import * as Context from '@/core/utils/context'
+import * as Context from '@/core/utils/context-storage'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import dayjs from '@/utils/dayjs'
@@ -119,10 +119,10 @@ dynamoDbSetupHook()
 enableLocalChangeHandler()
 withFeatureHook(['ADVANCED_WORKFLOWS'])
 
-jest.mock('@/core/utils/context', () => {
+jest.mock('@/core/utils/context-storage', () => {
   const originalModule = jest.requireActual<
-    typeof import('@/core/utils/context')
-  >('@/core/utils/context')
+    typeof import('@/core/utils/context-storage')
+  >('@/core/utils/context-storage')
 
   return {
     ...originalModule,

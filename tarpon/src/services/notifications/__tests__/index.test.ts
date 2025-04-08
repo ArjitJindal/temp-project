@@ -9,7 +9,7 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import * as Context from '@/core/utils/context'
+import * as Context from '@/core/utils/context-storage'
 import { NotificationsService } from '@/services/notifications'
 import { Account } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
@@ -117,7 +117,7 @@ describe('Test notifications service', () => {
 
     const roles: AccountRole[] = [role]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -126,7 +126,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user1, role: 'Admin' },
-    })
+    }))
 
     const users: Account[] = [
       { id: user1, email: 'user1@test.com', role: 'Admin' } as Account,
@@ -191,7 +191,7 @@ describe('Test notifications service', () => {
 
     const roles: AccountRole[] = [role1, role2]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -200,7 +200,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user1, role: 'Admin' },
-    })
+    }))
 
     const users: Account[] = [
       { id: user1, email: 'user1@test.com', role: 'Admin' } as Account,
@@ -258,7 +258,7 @@ describe('Test notifications service', () => {
 
     const roles: AccountRole[] = [role]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -267,7 +267,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user, role: 'Admin' },
-    })
+    }))
 
     const users: Account[] = [
       { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
@@ -352,7 +352,7 @@ describe('Test notifications service', () => {
       } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -361,7 +361,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
       user: users[0],
-    })
+    }))
 
     getSpyes(users, roles)
 
@@ -466,7 +466,7 @@ describe('Test notifications service', () => {
       } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -475,7 +475,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
       user: users[0],
-    })
+    }))
 
     getSpyes(users, roles)
 
@@ -541,7 +541,7 @@ describe('Test notifications service', () => {
     }
     const roles: AccountRole[] = [role]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -550,7 +550,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user, role: 'Admin' },
-    })
+    }))
 
     const users: Account[] = [
       { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
@@ -617,7 +617,7 @@ describe('Test notifications service', () => {
     }
     const roles: AccountRole[] = [role]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -626,7 +626,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user, role: 'Admin' },
-    })
+    }))
 
     const users: Account[] = [
       { id: user, email: `${user}@test.com`, role: 'Admin' } as Account,
@@ -705,7 +705,7 @@ describe('Test notifications service', () => {
       } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -714,7 +714,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
       user: users[0],
-    })
+    }))
 
     getSpyes(users, roles)
 
@@ -799,7 +799,7 @@ describe('Test notifications service', () => {
       } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -808,7 +808,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
       user: users[0],
-    })
+    }))
 
     getSpyes(users, roles)
 
@@ -881,7 +881,7 @@ describe('Test notifications service', () => {
       { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -890,7 +890,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user, role: 'Admin' },
-    })
+    }))
 
     getSpyes(users, roles)
 
@@ -953,7 +953,7 @@ describe('Test notifications service', () => {
       { id: user2, email: `${user2}@test.com`, role: 'Admin' } as Account,
     ]
 
-    getContextMocker.mockReturnValue({
+    getContextMocker.mockImplementation(() => ({
       tenantId,
       settings: {
         notificationsSubscriptions: {
@@ -962,7 +962,7 @@ describe('Test notifications service', () => {
       },
       features: ['NOTIFICATIONS'],
       user: { id: user, role: 'Admin' },
-    })
+    }))
 
     getSpyes(users, roles)
 

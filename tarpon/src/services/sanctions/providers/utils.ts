@@ -11,7 +11,7 @@ import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanct
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
 import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],

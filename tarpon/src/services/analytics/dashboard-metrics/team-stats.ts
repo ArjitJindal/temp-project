@@ -4,12 +4,11 @@ import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, updateRoles, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
-  HOUR_DATE_FORMAT,
-  HOUR_DATE_FORMAT_JS,
   getMongoDbClient,
   getMongoDbClientDb,
   paginatePipeline,
 } from '@/utils/mongodb-utils'
+import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_TEAM_ALERTS_STATS_HOURLY,

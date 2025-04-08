@@ -1,7 +1,7 @@
 import { BadRequest } from 'http-errors'
 import dayjs from '@/utils/dayjs'
 import { VariableOptions } from '@/services/copilot/questions/types'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'

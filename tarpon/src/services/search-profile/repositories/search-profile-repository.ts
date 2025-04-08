@@ -12,7 +12,7 @@ import { SearchProfileRequest } from '@/@types/openapi-internal/SearchProfileReq
 import { SearchProfileResponse } from '@/@types/openapi-internal/SearchProfileResponse'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { getContext } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 @traceable
 export class SearchProfileRepository {
