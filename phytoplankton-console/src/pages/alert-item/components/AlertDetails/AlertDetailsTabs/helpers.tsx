@@ -97,6 +97,7 @@ const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.ONTOLOGY,
   AlertTabs.TRANSACTION_INSIGHTS,
   AlertTabs.EXPECTED_TRANSACTION_LIMITS,
+  AlertTabs.ACTIVITY,
 ];
 
 export const TABS_TO_HIDE_IN_TABLE: AlertTabs[] = [
