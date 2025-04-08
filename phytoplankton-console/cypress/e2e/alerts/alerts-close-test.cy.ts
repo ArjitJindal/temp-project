@@ -24,11 +24,17 @@ describe('Close Alerts from Table', () => {
     cy.get('td[data-cy="alertId"] a[data-cy="alert-id"]').first().invoke('text').as('alertIdValue');
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
-    cy.multiSelect('.ant-modal-body', 'False positive');
-    cy.get('.ant-modal-root .ant-modal-title').click();
-    cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-    cy.get('.ant-modal-footer button').eq(0).click();
-    cy.get('button[data-cy="modal-ok"]').eq(1).click();
+    cy.get('.ant-modal-content:visible').within(() => {
+      cy.get('[data-cy="modal-title"]').should('contain', 'Close');
+      cy.selectOptionsByLabel('Reason', ['False positive']);
+      cy.get('.ant-modal-title').click();
+      cy.get('.toastui-editor-ww-container').type('This is a test');
+      cy.get('button').contains('Confirm').click();
+    });
+    cy.get('.ant-modal-content:visible').within(() => {
+      cy.get('[data-cy="modal-title"]').should('contain', 'Confirm action');
+      cy.get('button').contains('Confirm').click();
+    });
     cy.wait('@alert').its('response.statusCode').should('eq', 200);
 
     // Re-open the closed alert

@@ -21,24 +21,35 @@ describe('Escalating and Sending back the cases', () => {
       .then((caseId) => {
         cy.caseAlertAction('Escalate');
         cy.intercept('POST', `**/cases/${caseId}/escalate`).as('escalate');
-        cy.multiSelect('.ant-modal-body', 'Fraud');
-        cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-        cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-        cy.get('.ant-modal-footer button').eq(0).click();
-        cy.get('.ant-modal-footer button').eq(2).click();
+        cy.get('.ant-modal-content:visible').within(() => {
+          cy.get('[data-cy="modal-title"]').should('contain', 'Escalate');
+          cy.selectOptionsByLabel('Reason', ['Fraud']);
+          cy.get('.ant-modal-title', { timeout: 8000 }).click();
+          cy.get('.toastui-editor-ww-container').type('This is a test');
+          cy.get('.ant-modal-footer button').contains('Confirm').click();
+        });
+        cy.get('.ant-modal-content:visible').within(() => {
+          cy.get('[data-cy="modal-title"]').should('contain', 'Confirm action');
+          cy.get('.ant-modal-footer button').contains('Confirm').click();
+        });
         cy.wait('@escalate').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
         });
-
         cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED');
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Send back');
         cy.intercept('PATCH', '**/cases/statusChange').as('case');
-        cy.multiSelect('.ant-modal-body', 'False positive');
-        cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-        cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-        cy.get('.ant-modal-footer button').eq(0).click();
-        cy.get('.ant-modal-footer button').eq(2).click();
+        cy.get('.ant-modal-content:visible').within(() => {
+          cy.get('[data-cy="modal-title"]').should('contain', 'Send back');
+          cy.selectOptionsByLabel('Reason', ['False positive']);
+          cy.get('.ant-modal-title', { timeout: 8000 }).click();
+          cy.get('.toastui-editor-ww-container').type('This is a test');
+          cy.get('.ant-modal-footer button').contains('Confirm').click();
+        });
+        cy.get('.ant-modal-content:visible').within(() => {
+          cy.get('[data-cy="modal-title"]').should('contain', 'Confirm action');
+          cy.get('.ant-modal-footer button').contains('Confirm').click();
+        });
         cy.wait('@case').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
         });
