@@ -11518,6 +11518,7 @@ components:
         - ACURIS
         - 314A
         - CLICKHOUSE_MIGRATION
+        - CHAINALYSIS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

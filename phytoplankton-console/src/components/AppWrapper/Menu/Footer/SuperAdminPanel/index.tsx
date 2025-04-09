@@ -185,6 +185,11 @@ export const featureDescriptions: Record<
     description: 'Enables 314A',
     tag: FeatureTag.ENG,
   },
+  CHAINALYSIS: {
+    title: 'Chainalysis',
+    description: 'Enables Chainalysis',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
