@@ -105,7 +105,7 @@ export function generateNarrative(
     websites && websites?.length > 0
       ? `\nWebsites: ${websites?.join(',')}.`
       : ''
-  } 
+  }
 ${footer}`
 }
 
@@ -419,7 +419,8 @@ export class AlertSampler extends BaseSampler<Alert> {
           )
         : [],
       ruleNature: userRules()
-        .concat(transactionRules())
+        .concat(transactionRules(false)) // return normal transaction rules
+        .concat(transactionRules(true)) // return crypto transaction rules
         .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)
         ?.nature,
       slaPolicyDetails: slaPolicyDetails,

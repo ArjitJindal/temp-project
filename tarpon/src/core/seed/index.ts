@@ -2,7 +2,6 @@ import { logger } from '../logger'
 import { seedDynamo } from './dynamodb'
 import { seedMongo } from './mongo'
 import { fetchAndSetAccounts } from './account-setup'
-import { getUsers } from './data/users'
 import { seedClickhouse } from './clickhouse'
 import { removeDemoRoles } from './roles-setup'
 import { getReports } from './data/reports'
@@ -11,6 +10,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createTenantDatabase } from '@/utils/clickhouse/utils'
 import { envIsNot } from '@/utils/env'
+import { getUsers } from '@/core/seed/data/users'
 
 export async function seedDemoData(tenantId: string) {
   const dynamo = getDynamoDbClient()

@@ -110,6 +110,8 @@ export function createFunction(
         QA_SUBDOMAIN: process.env.QA_SUBDOMAIN as string,
         SEED_TRANSACTIONS_COUNT:
           context.config.stage === 'dev' ? '400' : '4000',
+        SEED_CRYPTO_TRANSACTIONS_COUNT:
+          context.config.stage === 'dev' ? '50' : '500',
       },
     },
     functionName: name,

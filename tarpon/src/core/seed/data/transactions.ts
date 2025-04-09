@@ -25,6 +25,7 @@ import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/Transaction
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import {
+  CryptoTransactionRuleSampler,
   transactionRules,
   TransactionRuleSampler,
 } from '@/core/seed/data/rules'
@@ -35,11 +36,16 @@ import { envIs } from '@/utils/env'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { getPaymentDetailsName } from '@/utils/helpers'
+import { hasFeature } from '@/core/utils/context'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
   : envIs('local')
   ? 500
+  : 50
+
+export const CRYPTO_TXN_COUNT = process.env.SEED_CRYPTO_TRANSACTIONS_COUNT
+  ? Number(process.env.SEED_CRYPTO_TRANSACTIONS_COUNT)
   : 50
 
 const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
@@ -57,12 +63,15 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     }
   >
   private transactionSampler: TransactionSampler
+  private cryptoTransactionSampler: CryptoTransactionSampler
   private tagSampler: TagSampler
   private transactionRiskScoreSampler: TransactionRiskScoreSampler
   private transactionPairs: TransactionPair[]
   private userTransactionCount: Map<string, number>
   private transactionIndex: number
   private ruleSampler: TransactionRuleSampler = new TransactionRuleSampler()
+  private cryptoTxnRuleSampler: CryptoTransactionRuleSampler =
+    new CryptoTransactionRuleSampler()
 
   constructor(seed: number) {
     super(seed)
@@ -118,16 +127,23 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     }
 
     this.transactionSampler = new TransactionSampler()
+    this.cryptoTransactionSampler = new CryptoTransactionSampler()
     this.tagSampler = new TagSampler()
     this.transactionRiskScoreSampler = new TransactionRiskScoreSampler()
   }
 
-  protected generateSample(transactionIdForRule: number): InternalTransaction {
+  protected generateSample(
+    transactionIdForRule: number,
+    isCryptoTransaction: boolean
+  ): InternalTransaction {
     const type = this.rng.pickRandom(TRANSACTION_TYPES)
 
     // Hack in some suspended transactions for payment approvals
-    const hitRules: ExecutedRulesResult[] =
-      this.ruleSampler.generateSample(transactionIdForRule)
+    const hitRules: ExecutedRulesResult[] = !isCryptoTransaction
+      ? this.ruleSampler.generateSample(transactionIdForRule)
+      : this.cryptoTxnRuleSampler.generateSample(
+          transactionIdForRule - TXN_COUNT + 1
+        )
 
     const numberoShadowRulesHit = (this.counter % 3) + 1
     const shadowRulesHit = hitRules
@@ -158,15 +174,17 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       this.userAccountMap.set(destinationUserId, destinationUserPaymentDetails)
     }
 
-    const transaction = this.transactionSampler.getSample(
-      this.rng.randomInt(),
-      {
-        originUserId,
-        destinationUserId,
-        originUserPaymentDetails,
-        destinationUserPaymentDetails,
-      }
-    )
+    const transaction = !isCryptoTransaction
+      ? this.transactionSampler.getSample(this.rng.randomInt(), {
+          originUserId,
+          destinationUserId,
+          originUserPaymentDetails,
+          destinationUserPaymentDetails,
+        })
+      : this.cryptoTransactionSampler.getSample(this.rng.randomInt(), {
+          originUserId,
+          destinationUserId,
+        })
 
     const getSanctionsSearch = (
       paymentDetails: PaymentDetails,
@@ -255,6 +273,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
 
         return hitRule
       })
+    const ruleHitIds = randomHitRules.map((ri) => ri.ruleInstanceId)
 
     const timestamp = this.sampleTimestamp()
 
@@ -276,8 +295,6 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
-      originDeviceData: transaction?.originDeviceData,
-      destinationDeviceData: transaction?.destinationDeviceData,
       transactionState: this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
@@ -291,138 +308,25 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
           transaction
         ),
       },
-      executedRules: transactionRules(
-        randomHitRules.map((r) => r.ruleInstanceId)
-      ),
-      originAmountDetails: {
-        country: this.rng.r(2).pickRandom(COUNTRIES),
-        transactionCurrency: this.rng.r(3).pickRandom(SAMPLE_CURRENCIES),
-        transactionAmount,
-      },
-      destinationAmountDetails: {
-        country: this.rng.r(4).pickRandom(COUNTRIES),
-        transactionCurrency: this.rng.r(5).pickRandom(SAMPLE_CURRENCIES),
-        transactionAmount,
-      },
-      tags: [this.tagSampler.getSample()],
-    }
-    return fullTransaction
-  }
-}
-export class FullCryptoTransactionSampler extends BaseSampler<InternalTransaction> {
-  private cryptoTransactionSampler: CryptoTransactionSampler
-  private transactionRiskScoreSampler: TransactionRiskScoreSampler
-  private transactionPairs: TransactionPair[]
-  private userTransactionCount: Map<string, number>
-  private transactionIndex: number
-  private ruleSampler: TransactionRuleSampler = new TransactionRuleSampler()
-
-  constructor(seed: number, counter: number) {
-    super(seed, counter)
-    this.transactionPairs = []
-    this.userTransactionCount = new Map<string, number>()
-    this.transactionIndex = 0
-    const userIds = users.map((u) => u.userId)
-
-    // Initialize transaction count for each user
-    userIds.forEach((id) => this.userTransactionCount.set(id, 0))
-
-    let attempts = 0
-    const maxAttempts = (TXN_COUNT + 10) * 5 // Safety limit to prevent infinite loops
-
-    while (
-      this.transactionPairs.length < TXN_COUNT + 10 &&
-      attempts < maxAttempts
-    ) {
-      attempts++
-
-      // Get users who have less than 6 transactions
-      const availableUsers = shuffle(
-        userIds.filter((id) => (this.userTransactionCount.get(id) || 0) < 6)
-      )
-
-      if (availableUsers.length < 2) {
-        break // Not enough users with remaining transaction capacity
-      }
-
-      // Pick first two users from shuffled list
-      const originUserId = availableUsers[0]
-      const destinationUserId = availableUsers[1]
-
-      // Add transaction pair
-      this.transactionPairs.push({ originUserId, destinationUserId })
-
-      // Update transaction counts
-      this.userTransactionCount.set(
-        originUserId,
-        (this.userTransactionCount.get(originUserId) || 0) + 1
-      )
-      this.userTransactionCount.set(
-        destinationUserId,
-        (this.userTransactionCount.get(destinationUserId) || 0) + 1
-      )
-    }
-
-    this.cryptoTransactionSampler = new CryptoTransactionSampler()
-    this.transactionRiskScoreSampler = new TransactionRiskScoreSampler()
-  }
-
-  protected generateSample(transactionIdForRule: number): InternalTransaction {
-    const type = this.rng.pickRandom(TRANSACTION_TYPES)
-
-    // Hack in some suspended transactions for payment approvals
-    const hitRules: ExecutedRulesResult[] =
-      this.ruleSampler.generateSample(transactionIdForRule)
-
-    if (this.transactionIndex >= this.transactionPairs.length) {
-      this.transactionIndex = 0
-    }
-
-    const { originUserId, destinationUserId } =
-      this.transactionPairs[this.transactionIndex++]
-
-    const transaction = this.cryptoTransactionSampler.getSample(
-      this.rng.randomInt(),
-      {
-        originUserId,
-        destinationUserId,
-      }
-    )
-
-    const transactionId = `T-${this.counter + 1}`
-
-    const timestamp = this.sampleTimestamp()
-
-    const fullTransaction: InternalTransaction = {
-      ...transaction,
-      type: type,
-      timestamp,
-      transactionId,
-      originUserId,
-      destinationUserId,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      status: getAggregatedRuleStatus(hitRules),
-      hitRules: hitRules,
-      destinationPaymentMethodId: getPaymentMethodId(
-        transaction?.destinationPaymentDetails
-      ),
-      originPaymentMethodId: getPaymentMethodId(
-        transaction?.originPaymentDetails
-      ),
-      transactionState: this.rng.pickRandom(TRANSACTION_STATES),
-      arsScore: {
-        transactionId,
-        createdAt: timestamp,
-        originUserId,
-        destinationUserId,
-        riskLevel: this.rng.pickRandom(RISK_LEVELS),
-        arsScore: Number(this.rng.randomFloat(100).toFixed(2)),
-        components: this.transactionRiskScoreSampler.getSample(
-          undefined,
-          transaction
-        ),
-      },
+      executedRules: transactionRules(isCryptoTransaction).map((r) => ({
+        ...r,
+        ruleHit: ruleHitIds.includes(r.ruleInstanceId) ? true : false,
+      })),
+      ...(!isCryptoTransaction && {
+        originDeviceData: transaction?.originDeviceData,
+        destinationDeviceData: transaction?.destinationDeviceData,
+        originAmountDetails: {
+          country: this.rng.r(2).pickRandom(COUNTRIES),
+          transactionCurrency: this.rng.r(3).pickRandom(SAMPLE_CURRENCIES),
+          transactionAmount,
+        },
+        destinationAmountDetails: {
+          country: this.rng.r(4).pickRandom(COUNTRIES),
+          transactionCurrency: this.rng.r(5).pickRandom(SAMPLE_CURRENCIES),
+          transactionAmount,
+        },
+        tags: [this.tagSampler.getSample()],
+      }),
     }
     return fullTransaction
   }
@@ -460,16 +364,19 @@ export function internalToPublic(
 export const getTransactions: () => InternalTransaction[] = memoize(() => {
   const fullTransactionSampler = new FullTransactionSampler(TRANSACTIONS_SEED)
   const transactions = [...Array(TXN_COUNT)].map((_, index) => {
-    return fullTransactionSampler.getSample(undefined, index)
+    return fullTransactionSampler.getSample(undefined, index, false)
   })
-  const cryptoTransactionSampler = new FullCryptoTransactionSampler(
-    TRANSACTIONS_SEED,
-    TXN_COUNT + 1
-  )
-  const cryptoTransactions = [...Array(10)].map((_, index) => {
-    return cryptoTransactionSampler.getSample(undefined, index + TXN_COUNT)
-  })
-  return [...transactions, ...cryptoTransactions]
+  if (hasFeature('CHAINALYSIS')) {
+    const cryptoTransactions = [...Array(CRYPTO_TXN_COUNT)].map((_, index) => {
+      return fullTransactionSampler.getSample(
+        undefined,
+        index + TXN_COUNT,
+        true
+      )
+    })
+    return [...transactions, ...cryptoTransactions]
+  }
+  return transactions
 })
 
 export const getTransactionUniqueTags = memoize(() => {

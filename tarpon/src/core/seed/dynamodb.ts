@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isEmpty, isEqual, pick, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
+import { hasFeature } from '../utils/context'
 import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
@@ -58,6 +59,37 @@ export async function seedDynamo(
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
   const nangoRepo = new NangoRepository(tenantId, dynamoDb)
 
+  if (isDemoTenant(tenantId)) {
+    const nonDemoTenantId = tenantId.replace(/-test$/, '')
+    const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
+      dynamoDb,
+    })
+    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings()
+    const demoSettings = await tenantRepo.getTenantSettings()
+    const mergedFeatureFlags = uniq([
+      ...(demoSettings.features ?? []),
+      ...(nonDemoSettings.features ?? []),
+      'AI_FORENSICS' as Feature,
+      'MACHINE_LEARNING' as Feature,
+    ])
+    const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
+      const keys = TenantSettings.attributeTypeMap
+        .map((key) => key.name)
+        .filter((key) => key !== 'features')
+      return keys as TenantSettingName[]
+    }
+    if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
+      logger.info('Setting tenant settings...')
+      await tenantRepo.deleteTenantSettings(getTenantSettingsKeysToDelete())
+      await tenantRepo.createOrUpdateTenantSettings({
+        ...nonDemoSettings,
+        isAiEnabled: true,
+        isMlEnabled: true,
+        features: mergedFeatureFlags,
+      })
+    }
+  }
+  logger.info(`Feature Chainalysis enabled ${hasFeature('CHAINALYSIS')}`)
   logger.info('Clear rule instances')
   await dangerouslyDeletePartition(
     dynamoDb,
@@ -237,36 +269,5 @@ export async function seedDynamo(
       id: `RF-${String(riskFactorCounter++).padStart(3, '0')}`,
       ...riskFactor,
     })
-  }
-
-  if (isDemoTenant(tenantId)) {
-    const nonDemoTenantId = tenantId.replace(/-test$/, '')
-    const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
-      dynamoDb,
-    })
-    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings()
-    const demoSettings = await tenantRepo.getTenantSettings()
-    const mergedFeatureFlags = uniq([
-      ...(demoSettings.features ?? []),
-      ...(nonDemoSettings.features ?? []),
-      'AI_FORENSICS' as Feature,
-      'MACHINE_LEARNING' as Feature,
-    ])
-    const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
-      const keys = TenantSettings.attributeTypeMap
-        .map((key) => key.name)
-        .filter((key) => key !== 'features')
-      return keys as TenantSettingName[]
-    }
-    if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
-      logger.info('Setting tenant settings...')
-      await tenantRepo.deleteTenantSettings(getTenantSettingsKeysToDelete())
-      await tenantRepo.createOrUpdateTenantSettings({
-        ...nonDemoSettings,
-        isAiEnabled: true,
-        isMlEnabled: true,
-        features: mergedFeatureFlags,
-      })
-    }
   }
 }

@@ -1,14 +1,9 @@
 import { v4 as uuid4 } from 'uuid'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, memoize } from 'lodash'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
-
-export const ruleQueues: RuleQueue[] = []
+import { hasFeature } from '@/core/utils/context'
 
 const ruleQueueInstance = (): RuleQueue[] => {
-  if (ruleQueues) {
-    return ruleQueues
-  }
-
   const highVelocityAlertQueue: RuleQueue = {
     id: uuid4(),
     name: 'High velocity alert',
@@ -34,20 +29,20 @@ const ruleQueueInstance = (): RuleQueue[] => {
     createdAt: Date.now(),
   }
   const chainalysisQueue: RuleQueue = {
-    id: uuid4(),
+    id: 'rulechainalysisQueue', // done this because of missing feature flags during seeding
     name: 'Chainalysis',
     description: 'A queue for handling Chainalysis alerts',
     createdAt: Date.now(),
   }
-  return [
+  const queues = [
     highVelocityAlertQueue,
     sanctionQueue,
     deviationAlertQueue,
     pofQueue,
-    chainalysisQueue,
   ]
+  return hasFeature('CHAINALYSIS') ? [...queues, chainalysisQueue] : queues
 }
 
-export function getRandomRuleQueues() {
+export const getRandomRuleQueues = memoize(() => {
   return cloneDeep(ruleQueueInstance())
-}
+})
