@@ -2,7 +2,13 @@ import { v4 as uuid4 } from 'uuid'
 import { cloneDeep } from 'lodash'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 
-const ruleQueueInstance: () => RuleQueue[] = () => {
+export const ruleQueues: RuleQueue[] = []
+
+const ruleQueueInstance = (): RuleQueue[] => {
+  if (ruleQueues) {
+    return ruleQueues
+  }
+
   const highVelocityAlertQueue: RuleQueue = {
     id: uuid4(),
     name: 'High velocity alert',
