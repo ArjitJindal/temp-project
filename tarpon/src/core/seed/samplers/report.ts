@@ -57,7 +57,7 @@ export const deleteXMLFileFromS3 = async (tenantId: string) => {
 
     logger.info(`Successfully deleted ${totalDeleted} objects from ${prefix}`)
   } catch (error) {
-    logger.error(`Error deleting old attachments: ${error}`)
+    logger.error(`Error deleting old report attachments: ${error}`)
     throw error
   }
 }

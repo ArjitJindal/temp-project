@@ -10,6 +10,7 @@ import { deleteXMLFileFromS3 } from './samplers/report'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createTenantDatabase } from '@/utils/clickhouse/utils'
+import { envIsNot } from '@/utils/env'
 
 export async function seedDemoData(tenantId: string) {
   const dynamo = getDynamoDbClient()
@@ -21,7 +22,9 @@ export async function seedDemoData(tenantId: string) {
   // necessary to get the users first before seeding the rest
   logger.info('Creating mock users...')
   await getUsers(tenantId)
-  await deleteXMLFileFromS3(tenantId)
+  if (envIsNot('local')) {
+    await deleteXMLFileFromS3(tenantId)
+  }
   await getReports(tenantId)
   await seedDynamo(dynamo, tenantId)
   await seedMongo(tenantId, mongoDb, dynamo)
