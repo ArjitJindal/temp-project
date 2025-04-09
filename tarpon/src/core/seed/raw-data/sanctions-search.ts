@@ -1,5 +1,5 @@
 import { v4 as uuid4 } from 'uuid'
-import { compact } from 'lodash'
+import { compact, isEmpty } from 'lodash'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { RandomNumberGenerator } from '../samplers/prng'
 import { SANCTION_SEARCH_SEED } from '../data/seeds'
@@ -17,6 +17,7 @@ import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/Sanction
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
+import { SanctionsEntityDelta } from '@/@types/openapi-internal/SanctionsEntityDelta'
 
 const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
   RU: 'Russian Federation',
@@ -176,6 +177,101 @@ const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
     : generateClearedComment(matchTypes ?? [], name, countries ?? [])
 }
 
+const getDelta = (
+  entity: SanctionsEntity,
+  rng: RandomNumberGenerator
+): SanctionsEntityDelta | undefined => {
+  const nonEmptyKeysInEntity = Object.keys(entity).filter(
+    (key) => !isEmpty(entity[key as keyof SanctionsEntity])
+  ) as (keyof SanctionsEntity)[]
+
+  const keys = SanctionsEntityDelta.attributeTypeMap
+    .map((key) => key.name)
+    .filter((key) =>
+      nonEmptyKeysInEntity.includes(key as keyof SanctionsEntity)
+    ) as (keyof SanctionsEntityDelta)[]
+
+  const pickAKeyToChange = rng.r(10).pickRandom(keys)
+
+  switch (pickAKeyToChange) {
+    case 'gender': {
+      // reverse the gender
+      return {
+        gender: entity.gender === 'male' ? 'female' : 'male',
+      }
+    }
+    case 'nationality': {
+      // reverse the nationality
+      const pickANewNationality = rng
+        .r(10)
+        .pickRandom(
+          COUNTRY_CODES.filter((code) => !entity?.nationality?.includes(code))
+        )
+
+      return {
+        nationality: [
+          ...(entity?.nationality ?? []),
+          pickANewNationality,
+        ] as CountryCode[],
+      }
+    }
+
+    case 'yearOfBirth': {
+      // change a year of birth and add 1-3 years
+      const firstYearOfBirth = entity.yearOfBirth?.[0]
+      // add 1-3 years
+      const newYearOfBirth =
+        rng.r(10).randomIntInclusive(1, 3) + parseInt(firstYearOfBirth ?? '0')
+
+      return {
+        yearOfBirth: entity.yearOfBirth
+          ?.filter((year) => year !== firstYearOfBirth)
+          ?.concat(newYearOfBirth.toString()) ?? [newYearOfBirth.toString()],
+      }
+    }
+
+    case 'pepSources': {
+      const relevantPepSources = rng.r(10).randomSubsetOfSize(PEP_SOURCES, 1)
+
+      return {
+        pepSources: relevantPepSources,
+      }
+    }
+
+    case 'sanctionsSources': {
+      const relevantSanctionsSources = rng
+        .r(10)
+        .randomSubsetOfSize(SANCTIONS_SOURCES, 1)
+
+      return {
+        sanctionsSources: relevantSanctionsSources,
+      }
+    }
+
+    case 'mediaSources': {
+      const mediaSources = rng
+        .r(10)
+        .pickRandom([
+          createMediaSource('Global News Database', rng),
+          createMediaSource('Company Adverse Media', rng),
+        ])
+
+      return {
+        mediaSources: [mediaSources],
+      }
+    }
+  }
+}
+
+const createMediaSource = (name: string, rng: RandomNumberGenerator) => {
+  const itemCount = rng.r(4).randomInt(3) + 1
+  const mediaItems = rng.r(5).randomSubsetOfSize(MEDIA, itemCount)
+  return {
+    name,
+    media: mediaItems,
+  }
+}
+
 export const sanctionsSearchHit = (
   rng: RandomNumberGenerator,
   searchId: string,
@@ -223,18 +319,10 @@ export const sanctionsSearchHit = (
       rng.r(2).randomIntInclusive(1, 3)
     )
 
-  const createMediaSource = (name: string) => {
-    const itemCount = rng.r(4).randomInt(3) + 1
-    const mediaItems = rng.r(5).randomSubsetOfSize(MEDIA, itemCount)
-    return {
-      name,
-      media: mediaItems,
-    }
-  }
   const name = `${userName}#${rng.r(6).randomInt(1000)}`
   const mediaSources = [
-    createMediaSource('Global News Database'),
-    createMediaSource('Company Adverse Media'),
+    createMediaSource('Global News Database', rng),
+    createMediaSource('Company Adverse Media', rng),
   ]
   const sanctionsEntity: SanctionsEntity = {
     id: rng.r(7).randomNumber().toString(36).substring(2, 8).toUpperCase(),
@@ -256,6 +344,35 @@ export const sanctionsSearchHit = (
 
   const status = rng.r(8).pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
 
+  const toGetDelta = rng.r(10).randomInt(9) === 0
+
+  const entityData: SanctionsEntity = {
+    id: id,
+    updatedAt: new Date().getTime(),
+    types: compact([
+      sanctionsSources.length > 0 && 'sanction',
+      mediaSources.length > 0 && 'adverse-media',
+      pepSources.length > 0 && 'pep',
+    ]),
+    name,
+    entityType: 'PERSON',
+    matchTypes,
+    sanctionsSources,
+    mediaSources,
+    pepSources,
+    countries: compact(selectedCountries),
+    gender: rng.r(10).pickRandom(['male', 'female']),
+    countryCodes: selectedCountryCodes,
+    yearOfBirth: [rng.r(11).randomIntInclusive(1900, 2024).toString()],
+    nationality: rng
+      .r(12)
+      .randomSubsetOfSize(
+        COUNTRY_CODES,
+        rng.r(12).randomIntInclusive(1, 3)
+      ) as CountryCode[],
+    sanctionSearchTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
+  }
+
   const hit: SanctionsHit = {
     provider: 'comply-advantage',
     searchId,
@@ -273,32 +390,8 @@ export const sanctionsSearchHit = (
       ...(transactionId != null ? { transactionId } : {}),
       entity: entity as SanctionsScreeningEntity,
     },
-    entity: {
-      id: id,
-      updatedAt: new Date().getTime(),
-      types: compact([
-        sanctionsSources.length > 0 && 'sanction',
-        mediaSources.length > 0 && 'adverse-media',
-        pepSources.length > 0 && 'pep',
-      ]),
-      name,
-      entityType: 'PERSON',
-      matchTypes,
-      sanctionsSources,
-      mediaSources,
-      pepSources,
-      countries: compact(selectedCountries),
-      gender: rng.r(10).pickRandom(['male', 'female']),
-      countryCodes: selectedCountryCodes,
-      yearOfBirth: [rng.r(11).randomIntInclusive(1900, 2024).toString()],
-      nationality: rng
-        .r(12)
-        .randomSubsetOfSize(
-          COUNTRY_CODES,
-          rng.r(12).randomIntInclusive(1, 3)
-        ) as CountryCode[],
-      sanctionSearchTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
-    },
+    entity: entityData,
+    delta: toGetDelta ? getDelta(entityData, rng) : undefined,
   }
 
   const comment = commentGenerator(rng, hit)

@@ -13,6 +13,7 @@ interface Props {
   children?: React.ReactNode;
   className?: string;
   tooltip?: string;
+  isChangedIcon?: boolean;
 }
 
 export default function Label(props: Props) {
@@ -25,6 +26,7 @@ export default function Label(props: Props) {
     children,
     className = '',
     tooltip,
+    isChangedIcon = false,
   } = props;
   return (
     <div className={cn(s.root, s[variant], s[`orientation-${orientation}`], className)}>
@@ -38,6 +40,7 @@ export default function Label(props: Props) {
             </Tooltip>
           </div>
         )}
+        {isChangedIcon && <div className={s.isChangedIcon} />}
       </div>
       {children}
     </div>

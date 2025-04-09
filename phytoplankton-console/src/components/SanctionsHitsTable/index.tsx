@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { compact, startCase } from 'lodash';
+import { compact, isEmpty, startCase } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
@@ -114,7 +114,7 @@ export default function SanctionsHitsTable(props: Props) {
         render: (value, { item: entity }) => (
           <div className={s.idWrapper}>
             <Id onClick={() => setSelectedSearchHit(success(entity))}>{value}</Id>
-            {TMP_IS_UPDATED && <UpdatedTag />}
+            {(TMP_IS_UPDATED || !isEmpty(entity.delta)) && <UpdatedTag />}
           </div>
         ),
       },

@@ -105,7 +105,7 @@ export class MongoDbConsumer {
         continue
       }
 
-      logger.info(
+      logger.debug(
         `Fetched documents: ${documentsToReplace.length} from ${collectionName}`
       )
 
@@ -151,7 +151,7 @@ export class MongoDbConsumer {
     const mongoCollection = this.mongoClient.db().collection(collectionName)
     const filters = this.buildFilters(records)
 
-    logger.info(`Filters: ${JSON.stringify(filters)} from ${collectionName}`)
+    logger.debug(`Filters: ${JSON.stringify(filters)} from ${collectionName}`)
 
     const documents: FindCursor<WithId<Document>> = mongoCollection.find({
       $or: filters,

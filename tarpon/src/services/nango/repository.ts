@@ -185,7 +185,6 @@ export class NangoRepository {
   }
 
   public async linkCrmRecordClickhouse(link: CRMRecordLink) {
-    console.log('link', link)
     await batchInsertToClickhouse(
       this.tenantId,
       CLICKHOUSE_DEFINITIONS.CRM_USER_RECORD_LINK.tableName,

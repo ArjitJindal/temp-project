@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { compact, difference, groupBy, isEqual, startCase, uniq } from 'lodash';
+import { compact, difference, groupBy, isEmpty, isEqual, startCase, uniq } from 'lodash';
 import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
@@ -13,6 +13,7 @@ import {
   CountryCode,
   GenericSanctionsSearchType,
   SanctionsEntity,
+  SanctionsEntityDelta,
   SanctionsEntityType,
   SanctionsHit,
   SanctionsHitStatus,
@@ -231,7 +232,7 @@ function Content(props: {
         </Section>
       )}
       {comparisonItems.length > 0 && <SanctionsComparison items={comparisonItems} />}
-      {hit.entity && <CAEntityDetails entity={hit.entity} pdfMode={pdfMode} />}
+      {hit.entity && <CAEntityDetails entity={hit.entity} delta={hit.delta} pdfMode={pdfMode} />}
     </>
   );
 }
@@ -256,9 +257,13 @@ export function AISummarySection(props: { score: number; comment: string }) {
   );
 }
 
-export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: boolean }) {
-  const { entity, pdfMode = false } = props;
-  const tabItems = useTabs(entity, pdfMode);
+export function CAEntityDetails(props: {
+  entity: SanctionsEntity;
+  delta?: SanctionsEntityDelta;
+  pdfMode?: boolean;
+}) {
+  const { entity, delta, pdfMode = false } = props;
+  const tabItems = useTabs(entity, pdfMode, delta);
   const occupations = entity?.occupations ?? [];
   const occupationTitles = compact(occupations?.map((occ) => occ.title));
   const occupationCodes = uniq(
@@ -295,6 +300,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           </Form.Layout.Label>
           {isEqual(entity.yearOfBirth, entity.dateOfBirths) ? (
             <Form.Layout.Label
+              isChangedIcon={delta?.yearOfBirth != null}
               key={entity.yearOfBirth?.[0]}
               title={
                 isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
@@ -306,6 +312,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             <>
               {entity.yearOfBirth && (
                 <Form.Layout.Label
+                  isChangedIcon={delta?.yearOfBirth != null}
                   key={entity.yearOfBirth[0]}
                   title={
                     isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
@@ -323,6 +330,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                         ? 'Date of birth'
                         : 'Date of incorporation'
                     }
+                    isChangedIcon={delta?.yearOfBirth != null}
                   >
                     {difference(entity.dateOfBirths, entity.yearOfBirth).join(', ')}
                   </Form.Layout.Label>
@@ -330,7 +338,11 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </>
           )}
           {entity.countries && entity.countries.length > 0 && (
-            <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
+            <Form.Layout.Label
+              key={entity.countries?.join(',')}
+              title={'Country'}
+              isChangedIcon={delta?.nationality != null}
+            >
               <div className={s.countryList}>
                 {Object.entries(countryCodesMap).map(([code, countryName], i) => (
                   <div key={i}>
@@ -346,6 +358,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             <Form.Layout.Label
               key={entity.nationality?.join(',')}
               title={isHitEntityPerson(entity.entityType) ? 'Nationality' : 'Countries'}
+              isChangedIcon={delta?.nationality != null}
             >
               {compact(entity.nationality?.map((code) => COUNTRIES[code])).length > 0
                 ? compact(entity.nationality?.map((code) => COUNTRIES[code])).join(', ')
@@ -368,7 +381,11 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {isHitEntityPerson(entity.entityType) ? (
-            <Form.Layout.Label key={entity.gender} title={'Gender'}>
+            <Form.Layout.Label
+              key={entity.gender}
+              title={'Gender'}
+              isChangedIcon={delta?.gender != null}
+            >
               {entity.gender ?? '-'}
             </Form.Layout.Label>
           ) : (
@@ -564,20 +581,36 @@ function makeStubAiText(hit: SanctionsHit): string {
 // todo: delete when have information in sanction hit
 const TMP_TABS_HAS_UPDATES = false;
 
-function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
+function useTabs(
+  entity: SanctionsEntity,
+  pdfMode: boolean,
+  delta?: SanctionsEntityDelta,
+): TabItem[] {
   return useMemo(() => {
-    const tabs: { name: string; hasUpdates: boolean; sources: SanctionsSource[] }[] = [
+    const tabs: {
+      name: string;
+      hasUpdates: boolean;
+      sources: SanctionsSource[];
+      delta?: SanctionsSource[];
+    }[] = [
       { name: 'Sources', hasUpdates: TMP_TABS_HAS_UPDATES, sources: entity.screeningSources || [] },
       {
         name: 'Sanctions',
-        hasUpdates: TMP_TABS_HAS_UPDATES,
+        hasUpdates: TMP_TABS_HAS_UPDATES || !!delta?.sanctionsSources?.length,
         sources: entity.sanctionsSources || [],
+        delta: delta?.sanctionsSources,
       },
-      { name: 'PEP', hasUpdates: TMP_TABS_HAS_UPDATES, sources: entity.pepSources || [] },
+      {
+        name: 'PEP',
+        hasUpdates: TMP_TABS_HAS_UPDATES || !!delta?.pepSources?.length,
+        sources: entity.pepSources || [],
+        delta: delta?.pepSources,
+      },
       {
         name: 'Adverse media',
-        hasUpdates: TMP_TABS_HAS_UPDATES,
+        hasUpdates: TMP_TABS_HAS_UPDATES || !!delta?.mediaSources?.length,
         sources: entity.mediaSources || [],
+        delta: delta?.mediaSources,
       },
       {
         name: 'Images',
@@ -617,7 +650,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
           showBadge: tab.hasUpdates,
           children: (
             <div className={s.listingItems}>
-              {tab.sources.map((source) => {
+              {tab.sources.map((source, i) => {
                 const sourceTitle = source?.url ? (
                   <a href={source?.url} target="_blank">
                     {source?.name}
@@ -635,7 +668,8 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
                     description={source?.description}
                     listedTime={[source?.createdAt, source?.endedAt]}
                     isExpandedByDefault={pdfMode}
-                    hasUpdates={TMP_TABS_HAS_UPDATES}
+                    /* Just for demo mode we are showing updates for the first source of each tab */
+                    hasUpdates={TMP_TABS_HAS_UPDATES || (!isEmpty(tab.delta) && i === 0)}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
@@ -698,6 +732,9 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     entity.otherSources,
     entity.sanctionSearchTypes,
     entity.profileImagesUrls,
+    delta?.mediaSources,
+    delta?.pepSources,
+    delta?.sanctionsSources,
   ]);
 }
 

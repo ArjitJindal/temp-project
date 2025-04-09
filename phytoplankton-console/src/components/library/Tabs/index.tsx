@@ -14,6 +14,7 @@ export interface TabItem {
   Icon?: React.ReactNode;
   captureEvents?: boolean;
   TrailIcon?: React.ReactNode;
+  isChanged?: boolean;
 }
 
 export interface Props
@@ -65,7 +66,17 @@ export default function Tabs(props: Props) {
       tabBarExtraContent={tabBarExtraContent}
     >
       {items.map((item: TabItem) => {
-        const { title, key, children, isClosable, isDisabled, Icon, showBadge, TrailIcon } = item;
+        const {
+          title,
+          key,
+          children,
+          isClosable,
+          isDisabled,
+          Icon,
+          showBadge,
+          TrailIcon,
+          isChanged,
+        } = item;
         return (
           <AntTabs.TabPane
             className={s.tab}
@@ -74,6 +85,7 @@ export default function Tabs(props: Props) {
                 {Icon && <div className={cn(s.icon)}>{Icon}</div>}
                 {showBadge && <div className={cn(s.badge)} />}
                 <span>{title}</span>
+                {isChanged && <div className={cn(s.isChangedIcon)} />}
                 {TrailIcon && <div className={cn(s.icon)}>{TrailIcon}</div>}
               </span>
             }

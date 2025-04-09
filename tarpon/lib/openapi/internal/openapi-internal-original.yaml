@@ -13568,6 +13568,8 @@ components:
             $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
         entity:
           $ref: '#/components/schemas/SanctionsEntity'
+        delta:
+          $ref: '#/components/schemas/SanctionsEntityDelta'
         comment:
           type: string
         score:
@@ -13579,6 +13581,32 @@ components:
         - updatedAt
         - entity
         - provider
+    SanctionsEntityDelta:
+      title: SanctionsEntityDelta
+      type: object
+      properties:
+        sanctionsSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        mediaSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        pepSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        yearOfBirth:
+          type: array
+          items:
+            type: string
+        gender:
+          type: string
+        nationality:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
     SanctionsSource:
       title: SanctionsSource
       type: object
