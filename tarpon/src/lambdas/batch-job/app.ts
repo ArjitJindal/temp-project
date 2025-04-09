@@ -120,6 +120,7 @@ export const jobDecisionHandler = async (
     FIX_ARS_BREAKDOWN: 'FARGATE',
     DELTA_SANCTIONS_DATA_FETCH: 'FARGATE',
     BACKFILL_ACTION_PROCESSING: 'LAMBDA',
+    QA_CLEANUP: 'LAMBDA',
   }
 
   return {

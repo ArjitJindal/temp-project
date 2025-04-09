@@ -31,6 +31,7 @@ import { FixArsBreakdownBatchJobRunner } from './fix-ars-breakdown-batch-job-run
 import { ClickhouseDataBatchJobRunner } from './clickhouse-data-batch-job-runner'
 import { FixLocksForKrsBatchJobRunner } from './fix-locks-for-krs-batch-job-runner'
 import { DeltaSanctionsDataFetchBatchJobRunner } from './delta-sanctions-batch-job-runner'
+import { QACleanupBatchJobRunner } from './qa-cleanup-batchjob'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -50,6 +51,7 @@ type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
 export function getBatchJobRunner(type: BatchJobType, jobId: string) {
   const jobRunnerMap: JobRunnerMap = {
+    QA_CLEANUP: (jobId) => new QACleanupBatchJobRunner(jobId),
     DASHBOARD_REFRESH: (jobId) => new DashboardRefreshBatchJobRunner(jobId),
     API_USAGE_METRICS: (jobId) => new ApiUsageMetricsBatchJobRunner(jobId),
     DEMO_MODE_DATA_LOAD: (jobId) => new DemoModeDataLoadJobRunner(jobId),

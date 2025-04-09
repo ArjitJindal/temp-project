@@ -1,7 +1,6 @@
 import { chunk, compact, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
-import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
 import axios from 'axios'
@@ -33,6 +32,7 @@ import {
   ENGINEERING_ON_CALL_GROUP_ID,
   INCIDENTS_BUGS_CHANNEL_ID,
 } from '@/utils/slack'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const dynamoDb = getDynamoDbClient()
@@ -179,7 +179,10 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   )
 
   if (envIs('dev')) {
-    await cleanUpStaleQaEnvs()
+    await sendBatchJobCommand({
+      type: 'QA_CLEANUP',
+      tenantId: FLAGRIGHT_TENANT_ID,
+    })
   }
 })
 
