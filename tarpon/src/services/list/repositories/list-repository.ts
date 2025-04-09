@@ -100,24 +100,41 @@ export class ListRepository {
   }
 
   public async getListHeaders(
-    listType: ListType | null = null
+    listType: ListType | null = null,
+    userIds?: string[]
   ): Promise<ListHeader[]> {
     const primaryKey = DynamoDbKeys.LIST_HEADER(this.tenantId, '')
+    const filterConditions: string[] = []
+    const expressionAttributeValues: Record<string, any> = {
+      ':pk': primaryKey.PartitionKeyID,
+    }
+    const expressionAttributeNames: Record<string, string> = {}
+
+    if (listType != null) {
+      filterConditions.push('header.listType = :listType')
+      expressionAttributeValues[':listType'] = listType
+    }
+
+    if (userIds && userIds.length > 0) {
+      filterConditions.push('header.#st = :subtype')
+      expressionAttributeValues[':subtype'] = 'USER_ID'
+      expressionAttributeNames['#st'] = 'subtype'
+    }
+
     const query = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression:
-        listType != null ? 'header.listType = :listType' : undefined,
-      ExpressionAttributeValues:
-        listType == null
-          ? {
-              ':pk': primaryKey.PartitionKeyID,
-            }
-          : {
-              ':pk': primaryKey.PartitionKeyID,
-              ':listType': listType,
-            },
+        filterConditions.length > 0
+          ? filterConditions.join(' AND ')
+          : undefined,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ExpressionAttributeNames:
+        Object.keys(expressionAttributeNames).length > 0
+          ? expressionAttributeNames
+          : undefined,
     }
+
     const { Items = [] } = await paginateQuery(this.dynamoDb, query)
 
     const headers = await Promise.all(
@@ -131,7 +148,27 @@ export class ListRepository {
         return header
       })
     )
-    return headers
+
+    if (!userIds || userIds.length === 0) {
+      return headers
+    }
+
+    // Filter headers by checking if any of the userIds exist in the list items
+    const filteredHeaders = await Promise.all(
+      headers.map(async (header) => {
+        for (const userId of userIds) {
+          const item = await this.getListItem(header.listId, userId)
+          if (item !== null) {
+            return header
+          }
+        }
+        return null
+      })
+    )
+
+    return filteredHeaders.filter(
+      (header): header is ListHeader => header !== null
+    )
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {

@@ -12,6 +12,7 @@ import { CRM_ICON_MAP, useConsoleUser } from './UserDetails/utils';
 import { useLinkingState, useUserEntityFollow } from './UserDetails/Linking/UserGraph';
 import CRMRecords from './UserDetails/CRMMonitoring/CRMRecords';
 import CRMData from './UserDetails/CRMMonitoring/CRMResponse';
+import UserLists from './UserLists';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import {
@@ -209,6 +210,13 @@ export default function UserItem() {
             title: 'Alerts',
             key: 'alerts',
             children: <AlertsCard userId={userId} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+          {
+            title: 'Lists',
+            key: 'lists',
+            children: <UserLists userId={userId} />,
             isClosable: false,
             isDisabled: false,
           },

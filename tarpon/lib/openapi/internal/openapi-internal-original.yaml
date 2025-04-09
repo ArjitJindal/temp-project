@@ -593,6 +593,13 @@ paths:
       x-flagright:
         permissions:
           - lists:whitelist:read
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
       responses:
         '200':
           description: OK

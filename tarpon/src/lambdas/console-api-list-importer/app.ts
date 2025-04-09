@@ -33,7 +33,10 @@ export const listsHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetLists(async () => await listService.getListHeaders())
+    handlers.registerGetLists(
+      async (ctx, request) =>
+        await listService.getListHeaders(null, request.filterUserIds)
+    )
 
     handlers.registerGetWhitelist(
       async () => await listService.getListHeaders('WHITELIST')
