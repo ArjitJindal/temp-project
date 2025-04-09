@@ -34,9 +34,6 @@ async function migrateTenant(tenant: Tenant) {
       view.table === 'transactions_daily_stats' ||
       view.table === 'transactions_hourly_stats'
     ) {
-      await client.query({ query: `DROP VIEW IF EXISTS ${view.viewName}` })
-      await client.query({ query: `DROP TABLE IF EXISTS ${view.table}` })
-
       const createViewQuery = createMaterializedTableQuery(view)
       await client.query({ query: createViewQuery })
       const matQuery = await createMaterializedViewQuery(view, tableName)

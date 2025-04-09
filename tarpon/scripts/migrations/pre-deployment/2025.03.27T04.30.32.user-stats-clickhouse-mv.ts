@@ -30,12 +30,6 @@ async function migrateTenant(tenant: Tenant) {
       table.table === 'user_hourly_stats'
     ) {
       await client.query({
-        query: `DROP TABLE IF EXISTS ${table.table}`,
-      })
-      await client.query({
-        query: `DROP VIEW IF EXISTS ${table.viewName} `,
-      })
-      await client.query({
         query: createMaterializedTableQuery(table),
       })
       await client.query({

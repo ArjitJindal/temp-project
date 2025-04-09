@@ -31,8 +31,6 @@ async function migrateTenant(tenant: Tenant) {
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.RULE_STATS_HOURLY
         .viewName
     ) {
-      await client.query({ query: `DROP VIEW IF EXISTS ${view.viewName}` })
-      await client.query({ query: `DROP TABLE IF EXISTS ${view.table}` })
       const createViewQuery = createMaterializedTableQuery(view)
       await client.query({ query: createViewQuery })
       const matQuery = await createMaterializedViewQuery(view, transactionTable)
