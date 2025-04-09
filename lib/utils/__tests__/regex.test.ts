@@ -7,6 +7,9 @@ describe('isValidEmail', () => {
       'john.doe@example.co.uk',
       'john.doe@example.flagright.co.uk',
       'jane_doe123@example.com',
+      'chris.evans@marvel.entertainment',
+      'test@domain-with-hyphen.com',
+      'user+tag@example.com',
     ]
 
     validEmails.forEach((email) => {
@@ -23,6 +26,17 @@ describe('isValidEmail', () => {
       'test@',
       '@example.com',
       'test@com.',
+      'test@example.c',
+      'test@-start-hyphen.com',
+      'test@end-hyphen-.com',
+      'test@domain..com',
+      'user..name@example.com',
+      'user..@example.com',
+      'user.@example.com',
+      '.user@example.com',
+      'user++tag@example.com',
+      'a'.repeat(65) + '@example.com',
+      'test@' + 'a'.repeat(250) + '.com',
     ]
 
     invalidEmails.forEach((email) => {
