@@ -6,7 +6,7 @@ import {
   ResponseJSON,
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
-import { chain, get, maxBy } from 'lodash'
+import { chain, get, maxBy, memoize } from 'lodash'
 import { backOff, BackoffOptions } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
@@ -574,6 +574,16 @@ export const createMaterializedViewQuery = async (
   `
 }
 
+const listAllTables = memoize(async (client: ClickHouseClient) => {
+  const listAllTables = await client.query({
+    query: `SHOW TABLES`,
+  })
+  const allTables = await listAllTables.json<{
+    name: string
+  }>()
+  return allTables.data
+})
+
 async function createMaterializedViews(
   client: ClickHouseClient,
   table: ClickhouseTableDefinition,
@@ -582,8 +592,13 @@ async function createMaterializedViews(
   if (!table.materializedViews?.length) {
     return
   }
-
+  const allTables = await listAllTables(client)
   for (const view of table.materializedViews) {
+    const isViewExists = allTables.some((t) => t.name === view.table)
+    if (isViewExists) {
+      // To save some time, we skip the view if it already exists please create a new migration if there are any changes to the view
+      continue
+    }
     const createViewQuery = createMaterializedTableQuery(view)
     await client.query({ query: createViewQuery })
     const matQuery = await createMaterializedViewQuery(
@@ -592,6 +607,7 @@ async function createMaterializedViews(
       tenantId
     )
     await client.query({ query: matQuery })
+
     await addMissingColumns(client, view.table, view.columns)
   }
 }
