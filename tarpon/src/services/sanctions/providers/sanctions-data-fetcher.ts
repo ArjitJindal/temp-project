@@ -298,13 +298,21 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
+      const entityTypes =
+        request.entityType === 'BANK'
+          ? ['BANK', 'BUSINESS']
+          : [request.entityType]
       if (request.orFilters?.includes('entityType')) {
         orConditions.push({
-          entityType: request.entityType,
+          entityType: {
+            $in: entityTypes,
+          },
         })
       } else {
         andConditions.push({
-          entityType: request.entityType,
+          entityType: {
+            $in: entityTypes,
+          },
         })
       }
     }
@@ -633,14 +641,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
-      const matchEntityType = [
-        {
-          text: {
-            query: request.entityType,
-            path: 'entityType',
-          },
+      const entityTypes =
+        request.entityType === 'BANK'
+          ? ['BANK', 'BUSINESS']
+          : [request.entityType]
+      const matchEntityType = entityTypes.map((entityType) => ({
+        text: {
+          query: entityType,
+          path: 'entityType',
         },
-      ]
+      }))
       if (request.orFilters?.includes('entityType')) {
         orFilters.push(...matchEntityType)
       } else {
