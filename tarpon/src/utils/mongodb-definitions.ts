@@ -14,7 +14,7 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
   mappings: {
     dynamic: false,
     fields: {
-      aka: {
+      normalizedAka: {
         type: 'string',
       },
       associates: {
