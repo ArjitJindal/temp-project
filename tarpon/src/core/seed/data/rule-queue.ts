@@ -27,7 +27,19 @@ const ruleQueueInstance: () => RuleQueue[] = () => {
     description: 'A queue for handling proof of funds alerts',
     createdAt: Date.now(),
   }
-  return [highVelocityAlertQueue, sanctionQueue, deviationAlertQueue, pofQueue]
+  const chainalysisQueue: RuleQueue = {
+    id: uuid4(),
+    name: 'Chainalysis',
+    description: 'A queue for handling Chainalysis alerts',
+    createdAt: Date.now(),
+  }
+  return [
+    highVelocityAlertQueue,
+    sanctionQueue,
+    deviationAlertQueue,
+    pofQueue,
+    chainalysisQueue,
+  ]
 }
 
 export function getRandomRuleQueues() {
