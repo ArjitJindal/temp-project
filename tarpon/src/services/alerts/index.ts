@@ -1402,9 +1402,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
           // First check current alert's reason
           if (statusUpdateRequest.reason?.length) {
-            statusUpdateRequest.reason.forEach(
-              (r) => r !== 'Other' && allReasons.add(r)
-            )
+            statusUpdateRequest.reason.forEach((r) => allReasons.add(r))
             if (statusUpdateRequest.otherReason) {
               otherReason = statusUpdateRequest.otherReason
             }
@@ -1419,9 +1417,7 @@ export class AlertsService extends CaseAlertsCommonService {
                 (sc) => sc.caseStatus === 'CLOSED'
               )
               if (lastChange?.reason) {
-                lastChange.reason.forEach(
-                  (r) => r !== 'Other' && allReasons.add(r)
-                )
+                lastChange.reason.forEach((r) => allReasons.add(r))
               }
               if (lastChange?.otherReason && !otherReason) {
                 otherReason = lastChange.otherReason
