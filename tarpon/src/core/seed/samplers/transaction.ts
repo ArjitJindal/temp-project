@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { BaseSampler } from './base'
 import { names } from './dictionary'
+import { CRYPTO_CURRENCIES } from './currencies'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -51,6 +52,18 @@ const RANDOM_IPS = [
   '51.112.26.119',
   '106.219.120.147',
   '26.1.230.222',
+]
+
+const RISK_INDICATOR_CATEGORIES = [
+  'Sanctions',
+  'Mixer',
+  'Darknet Market',
+  'Scam',
+  'Ransomware',
+  'Stolen Funds',
+  'Terrorist Financing',
+  'High Risk Exchange',
+  'Gambling',
 ]
 
 const TRANSACTION_REFERENCES = [
@@ -177,6 +190,102 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
       hitRules: [],
       executedRules: [],
       status: this.rng.pickRandom(RULE_ACTIONS),
+    }
+  }
+}
+export class CryptoTransactionSampler extends BaseSampler<InternalTransaction> {
+  protected generateSample({
+    originUserId,
+    destinationUserId,
+  }: {
+    originUserId?: string
+    destinationUserId?: string
+    originCountry?: CountryCode
+    destinationCountry?: CountryCode
+    originUserPaymentDetails?: {
+      [key: string]: PaymentDetails
+    }
+    destinationUserPaymentDetails?: {
+      [key: string]: PaymentDetails
+    }
+  }): InternalTransaction {
+    const originPaymentDetails = new WalletDetailsSampler().getSample()
+    const destinationPaymentDetails = new WalletDetailsSampler().getSample()
+    const transactionCurrencyOrigin = this.rng.pickRandom(CRYPTO_CURRENCIES)
+    const transactionCurrencyDestination =
+      this.rng.pickRandom(CRYPTO_CURRENCIES)
+    return {
+      transactionId: `sample_transaction_${uuid()}`,
+      type: 'TRANSFER',
+      destinationAmountDetails: {
+        country: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
+        transactionCurrency: transactionCurrencyDestination,
+        transactionAmount: this.rng.randomInt(100),
+      },
+      originUserId,
+      destinationUserId,
+      reference: this.rng.pickRandom(TRANSACTION_REFERENCES),
+      productType: 'Crypto',
+      transactionState: 'CREATED' as const,
+      originAmountDetails: {
+        country: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
+        transactionCurrency: transactionCurrencyOrigin,
+        transactionAmount: this.rng.randomInt(100),
+      },
+      timestamp: new Date().getTime(),
+      destinationPaymentDetails: {
+        ...destinationPaymentDetails,
+        walletBalance: {
+          amountValue: this.rng.randomInt(100),
+          amountCurrency: transactionCurrencyDestination,
+        },
+        tags: [
+          {
+            key: 'address',
+            value: `0x${[...Array(40)]
+              .map(() => Math.floor(Math.random() * 16).toString(16))
+              .join('')}`,
+          },
+          {
+            key: 'Direction',
+            value: 'Incoming',
+          },
+        ],
+      },
+      originPaymentDetails: {
+        ...originPaymentDetails,
+        walletBalance: {
+          amountValue: this.rng.randomInt(100),
+          amountCurrency: transactionCurrencyOrigin,
+        },
+        tags: [
+          {
+            key: 'address',
+            value: `0x${[...Array(40)]
+              .map(() => Math.floor(Math.random() * 16).toString(16))
+              .join('')}`,
+          },
+          {
+            key: 'Direction',
+            value: 'Outgoing',
+          },
+        ],
+      },
+      hitRules: [],
+      executedRules: [],
+      status: this.rng.pickRandom(RULE_ACTIONS),
+      tags: [
+        {
+          value: this.rng.randomInt(100).toString(),
+          key: 'Chainanalysis Risk score',
+        },
+        ...Array(3)
+          .fill(null)
+          .map(() => ({
+            value: this.rng.pickRandom(RISK_INDICATOR_CATEGORIES),
+            key: 'Risk Indicator Category',
+          })),
+      ],
     }
   }
 }
