@@ -803,7 +803,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
 
   private getYearFromDates(date, dateType) {
-    return uniq(
+    const yearOfBirth = uniq(
       compact(
         date?.flatMap((d) =>
           d['@_DateType'] === dateType
@@ -814,6 +814,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         )
       )
     ) as string[]
+    return yearOfBirth.length ? yearOfBirth : undefined
   }
 
   private getFormattedDates(date, dateType: string) {

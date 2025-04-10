@@ -78,8 +78,9 @@ export class MongoSanctionsRepository implements SanctionsRepository {
           throw new Error(`Unsupported action: ${action}`)
       }
     })
-
-    await coll.bulkWrite(operations)
+    if (operations.length > 0) {
+      await coll.bulkWrite(operations)
+    }
   }
 
   async saveAssociations(
@@ -137,29 +138,29 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       }
       return acc
     }, {})
-
-    await coll.bulkWrite(
-      associations.map(([entityId, associateIds]) => {
-        return {
-          updateOne: {
-            filter: {
-              id: entityId,
-              provider,
-              version,
-            },
-            update: {
-              $set: {
-                associates: associateIds.map(({ id, association }) => ({
-                  ...associateNameMap[id],
-                  association: association
-                    ? RELATIONSHIP_CODE_TO_NAME[association]
-                    : undefined,
-                })),
-              },
+    const bulkWriteOperations = associations.map(([entityId, associateIds]) => {
+      return {
+        updateOne: {
+          filter: {
+            id: entityId,
+            provider,
+            version,
+          },
+          update: {
+            $set: {
+              associates: associateIds.map(({ id, association }) => ({
+                ...associateNameMap[id],
+                association: association
+                  ? RELATIONSHIP_CODE_TO_NAME[association]
+                  : undefined,
+              })),
             },
           },
-        }
-      })
-    )
+        },
+      }
+    })
+    if (bulkWriteOperations.length > 0) {
+      await coll.bulkWrite(bulkWriteOperations)
+    }
   }
 }

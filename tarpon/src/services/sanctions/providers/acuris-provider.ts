@@ -59,6 +59,11 @@ const PEP_TIERS = {
   'PEP Tier 3': 'LEVEL_3',
 }
 
+enum AcurisEntityType {
+  individuals = 'PERSON',
+  businesses = 'BUSINESS',
+}
+
 interface Address {
   addressType: string
   line1: string
@@ -420,12 +425,18 @@ export class AcurisProvider extends SanctionsDataFetcher {
   private getEntityTypesToLoad(entityType?: SanctionsEntityType) {
     return entityType
       ? [
-          ...(entityType === 'PERSON' ? ['individuals'] : []),
-          ...(entityType === 'BUSINESS' ? ['businesses'] : []),
+          ...(entityType === AcurisEntityType.individuals
+            ? ['individuals']
+            : []),
+          ...(entityType === AcurisEntityType.businesses ? ['businesses'] : []),
         ]
       : [
-          ...(this.entityTypes.includes('PERSON') ? ['individuals'] : []),
-          ...(this.entityTypes.includes('BUSINESS') ? ['businesses'] : []),
+          ...(this.entityTypes.includes(AcurisEntityType.individuals)
+            ? ['individuals']
+            : []),
+          ...(this.entityTypes.includes(AcurisEntityType.businesses)
+            ? ['businesses']
+            : []),
         ]
   }
 
@@ -505,8 +516,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                     ).save(
                       SanctionsDataProviders.ACURIS,
                       entities.filter(
-                        ([_, e]) =>
-                          e.entityType === (type as SanctionsEntityType)
+                        ([_, e]) => e.entityType === AcurisEntityType[type]
                       ),
                       version
                     ),
@@ -530,7 +540,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   ).save(
                     SanctionsDataProviders.ACURIS,
                     entities.filter(
-                      ([_, e]) => e.entityType === (type as SanctionsEntityType)
+                      ([_, e]) => e.entityType === AcurisEntityType[type]
                     ),
                     version
                   ),
@@ -574,6 +584,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
         this.getEntityName(alias, entityType).toLowerCase()
       )
     )
+    const yearOfBirth = uniq(
+      entity.datesOfBirthIso?.map((date) => dayjs(date).format('YYYY'))
+    )
     return {
       id: entity.qrCode,
       name: normalizedName,
@@ -598,9 +611,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ...this.getOccupations(entity.pepEntries.current ?? [], pepTier),
         ...this.getOccupations(entity.pepEntries.former ?? [], pepTier),
       ],
-      yearOfBirth: uniq(
-        entity.datesOfBirthIso?.map((date) => dayjs(date).format('YYYY'))
-      ),
+      yearOfBirth: yearOfBirth.length ? yearOfBirth : undefined,
       dateOfBirths: entity.datesOfBirthIso,
       isDeseased: entity.isDeseased,
       isActiveSanctioned: sanctionSearchTypes.includes('SANCTIONS')
