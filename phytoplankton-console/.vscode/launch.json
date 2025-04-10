@@ -5,7 +5,7 @@
       "type": "node-terminal",
       "name": "Run Console (Local API)",
       "request": "launch",
-      "command": "nvm use 18 && yarn start:local",
+      "command": "nvm use 20 && yarn start:local",
       "cwd": "${workspaceFolder}"
     },
     {

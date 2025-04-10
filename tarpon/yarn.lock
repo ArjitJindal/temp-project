@@ -7813,10 +7813,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/node18@npm:^18.2.1":
-  version: 18.2.2
-  resolution: "@tsconfig/node18@npm:18.2.2"
-  checksum: 1c4b04b570e33de14bf518492e077079db2dcfba738c8d40c6ff916d94c9410246f4cb56f0802d9771423862140bf714c35d4a5f6cec2446d851cf61d3f8f9df
+"@tsconfig/node20@npm:^20.1.5":
+  version: 20.1.5
+  resolution: "@tsconfig/node20@npm:20.1.5"
+  checksum: 6d689785f7b6ffd09d2cd0565290235ddc650932f6c110701dd38732b3c0b57ba039a3663268ae4a16b855d55ec2fbd48a53910e5a5fc7f196caaa4074dd0a53
   languageName: node
   linkType: hard
 
@@ -19200,7 +19200,7 @@ __metadata:
     "@slack/webhook": "npm:^7.0.1"
     "@smithy/node-http-handler": "npm:^3.2.3"
     "@smithy/util-retry": "npm:^2.0.5"
-    "@tsconfig/node18": "npm:^18.2.1"
+    "@tsconfig/node20": "npm:^20.1.5"
     "@types/ajv": "npm:^1.0.0"
     "@types/aws-lambda": "npm:^8.10.89"
     "@types/aws-synthetics-puppeteer": "npm:^3.1.9"

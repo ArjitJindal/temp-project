@@ -119,7 +119,7 @@ async function main() {
           chunkEntries.length === 1 && !chunkEntries[0].includes('fargate')
             ? `${outDir}/${chunkEntries[0].split('/')[2]}`
             : outDir,
-        target: 'node18.17.1',
+        target: 'node20.9.0',
         format: 'cjs',
         minify: true,
         metafile: true,

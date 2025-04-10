@@ -15,7 +15,7 @@ export const postSandboxDeployIntegrationsUpdateBuildProject = (
         phases: {
           install: {
             'runtime-versions': {
-              nodejs: 18,
+              nodejs: 20,
             },
             commands: [
               'corepack enable && yarn set version 4.0.2',
@@ -53,7 +53,7 @@ export const postProdDeployIntegrationsUpdateBuildProject = (
       phases: {
         install: {
           'runtime-versions': {
-            nodejs: 18,
+            nodejs: 20,
           },
           commands: [
             'corepack enable && yarn set version 4.0.2',

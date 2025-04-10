@@ -1725,10 +1725,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/node18@npm:^18.2.4":
-  version: 18.2.4
-  resolution: "@tsconfig/node18@npm:18.2.4"
-  checksum: cdfd17f212660374eb2765cd5907b2252e43cfa2623cd52307a49f004327ef49bbe7d53c78b0aca57f33e9a5cb0d7d2eb5ded9be1235e6212f65c9f0699322b6
+"@tsconfig/node20@npm:^20.1.5":
+  version: 20.1.5
+  resolution: "@tsconfig/node20@npm:20.1.5"
+  checksum: aec70cc8a573d49ee65878d0b6929e23a83d990fe451fc4d288bda7b37607afd8841ef59c1fa239c698bd4d087e2a7815d1719b796294b32a356c26dc52c3dd2
   languageName: node
   linkType: hard
 
@@ -3308,7 +3308,7 @@ __metadata:
   dependencies:
     "@aws-sdk/client-secrets-manager": "npm:^3.716.0"
     "@flagright/lib": "link:../lib"
-    "@tsconfig/node18": "npm:^18.2.4"
+    "@tsconfig/node20": "npm:^20.1.5"
     nango: "npm:^0.57.1"
   languageName: unknown
   linkType: soft

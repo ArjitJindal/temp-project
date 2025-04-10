@@ -115,7 +115,7 @@ export function createFunction(
       },
     },
     functionName: name,
-    runtime: Runtime.NODEJS_18_X,
+    runtime: Runtime.NODEJS_20_X,
     handler: `app.${handlerName}`,
     role: role,
     code: process.env.INFRA_CI

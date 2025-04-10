@@ -28,10 +28,10 @@ jobs:
           fetch-depth: 0
       - name: Corepack enable
         run: corepack enable && yarn set version 4.0.2
-      - name: Use Node.js 18x
+      - name: Use Node.js 20x
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           cache: "yarn"
           cache-dependency-path: "lib/yarn.lock"
       - name: Cache jest results

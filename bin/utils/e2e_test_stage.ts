@@ -22,14 +22,14 @@ export const getE2ETestProject = (
       phases: {
         install: {
           'runtime-versions': {
-            nodejs: 18,
+            nodejs: 20,
           },
           commands: [
             'corepack enable && yarn set version 4.0.2',
             'yarn install --immutable',
-            'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'yarn add @tsconfig/node20@20.1.5 ts-node@10.9.1 typescript@5.2.2',
             'cd tarpon',
-            'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'yarn add @tsconfig/node20@20.1.5 ts-node@10.9.1 typescript@5.2.2',
             'cd ..',
             'cd phytoplankton-console',
             'apt-get update',

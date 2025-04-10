@@ -27,7 +27,7 @@ export const tarponDeployStage = (
       phases: {
         install: {
           'runtime-versions': {
-            nodejs: 18,
+            nodejs: 20,
           },
           commands: [
             'npm install -g nango',
@@ -35,7 +35,7 @@ export const tarponDeployStage = (
             'yarn install --immutable',
             'cd tarpon',
             'corepack enable',
-            'yarn add @tsconfig/node18@18.2.1 ts-node@10.9.1 typescript@5.2.2',
+            'yarn add @tsconfig/node20@20.1.5 ts-node@10.9.1 typescript@5.2.2',
             `export ENV=${env}`,
             `export AWS_REGION=${config.env.region}`,
             `export AWS_ACCOUNT=${config.env.account}`,

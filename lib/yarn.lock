@@ -992,7 +992,7 @@ __metadata:
   resolution: "@flagright/lib@workspace:."
   dependencies:
     "@aws-sdk/client-api-gateway": "npm:^3.749.0"
-    "@tsconfig/node18": "npm:^18.2.2"
+    "@tsconfig/node20": "npm:^20.1.5"
     "@types/eslint": "npm:^8"
     "@types/fast-levenshtein": "npm:^0.0.4"
     "@types/jest": "npm:^29.5.12"
@@ -1962,10 +1962,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/node18@npm:^18.2.2":
-  version: 18.2.2
-  resolution: "@tsconfig/node18@npm:18.2.2"
-  checksum: 71f2c65616125f3ec8c85704ea55100d2131e0c01cbf7a247e5f6f7d617dfaafd5ff4a09b4193bceface4b4f44e9aa909da8e9af3910c01a0661f202386e40af
+"@tsconfig/node20@npm:^20.1.5":
+  version: 20.1.5
+  resolution: "@tsconfig/node20@npm:20.1.5"
+  checksum: aec70cc8a573d49ee65878d0b6929e23a83d990fe451fc4d288bda7b37607afd8841ef59c1fa239c698bd4d087e2a7815d1719b796294b32a356c26dc52c3dd2
   languageName: node
   linkType: hard
 

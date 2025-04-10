@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.441.0",
-    "@tsconfig/node18": "^18.2.1",
+    "@tsconfig/node20": "^20.1.5",
     "constructs": "^10.4.2",
     "husky": "^8.0.1",
     "prettier": "^3.1.1",
@@ -50,5 +50,9 @@
     "lodash": "^4.17.21",
     "octokit": "^3.2.1"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.0.2",
+  "engines": {
+    "node": "20.x",
+    "yarn": "4.x"
+  }
 }

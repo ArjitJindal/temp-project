@@ -5347,10 +5347,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/node18@npm:^18.2.1":
-  version: 18.2.1
-  resolution: "@tsconfig/node18@npm:18.2.1"
-  checksum: 54474c3625cf4c693fbc5b53bf7bff5d1093394d1bfe07044e900964afeb734a05f15c689dda757601bb2a53e54c3d6a1481ee05390661933d45444122a8a65a
+"@tsconfig/node20@npm:^20.1.5":
+  version: 20.1.5
+  resolution: "@tsconfig/node20@npm:20.1.5"
+  checksum: aec70cc8a573d49ee65878d0b6929e23a83d990fe451fc4d288bda7b37607afd8841ef59c1fa239c698bd4d087e2a7815d1719b796294b32a356c26dc52c3dd2
   languageName: node
   linkType: hard
 
@@ -15726,7 +15726,7 @@ __metadata:
     "@testing-library/react": "npm:^12.1.5"
     "@testing-library/user-event": "npm:^14.4.3"
     "@toast-ui/react-editor": "npm:^3.2.2"
-    "@tsconfig/node18": "npm:^18.2.1"
+    "@tsconfig/node20": "npm:^20.1.5"
     "@types/auth0-lock": "npm:^11.27.4"
     "@types/d3-scale": "npm:^4.0.8"
     "@types/express": "npm:^4.17.0"

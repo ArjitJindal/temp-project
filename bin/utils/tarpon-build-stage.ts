@@ -11,7 +11,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
       phases: {
         install: {
           'runtime-versions': {
-            nodejs: 18,
+            nodejs: 20,
           },
           commands: [
             'corepack enable',
