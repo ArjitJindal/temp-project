@@ -75,7 +75,7 @@ function DynamicRiskHistoryModal(props: Props) {
       render: (item) => {
         return (
           <div className={styles.craScore}>
-            {item.drsScore ?? '-'}
+            {item.drsScore.toFixed(2) ?? '-'}
             {(isFirstDrs(item) || isLatestDrs(item, value)) && (
               <Tag color="gray">{isFirstDrs(item) ? '1st CRA = KRS' : 'Latest CRA'}</Tag>
             )}
@@ -111,7 +111,7 @@ function DynamicRiskHistoryModal(props: Props) {
       title: 'TRS risk score',
       id: 'arsRiskScore',
       render: (item) => {
-        return item.arsRiskScore ? <>{item.arsRiskScore}</> : <>-</>;
+        return item.arsRiskScore ? <>{item.arsRiskScore.toFixed(2)}</> : <>-</>;
       },
       defaultWidth: 200,
     }),
