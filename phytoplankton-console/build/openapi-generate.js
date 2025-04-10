@@ -44,6 +44,24 @@ function replaceUserSavedPaymentDetails(paths) {
   }
 }
 
+function replacePermission(paths) {
+  for (const path of paths) {
+    if (!fs.existsSync(path)) {
+      continue;
+    }
+
+    const newText = fs
+      .readFileSync(path)
+      .toString()
+      .replace(
+        "import { StaticPermissionsNode | DynamicPermissionsNode } from './StaticPermissionsNode | DynamicPermissionsNode';",
+        '',
+      );
+
+    fs.writeFileSync(path, newText);
+  }
+}
+
 function replaceSimulationGetResponse(paths) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
@@ -117,12 +135,15 @@ fi`);
     'src/apis/models/BusinessOptional.ts',
     'src/apis/models/BusinessWithRulesResult.ts',
     'src/apis/models/BusinessResponse.ts',
+    'src/apis/models/PermissionsNodeBase.ts',
+    'src/apis/models/DynamicPermissionsNode.ts',
+    'src/apis/models/StaticPermissionsNode.ts',
   ];
 
   removeBadImports(['src/apis/models/QuestionVariable.ts']);
 
   replaceUserSavedPaymentDetails(pathsToReplace);
-
+  replacePermission(pathsToReplace);
   replaceSimulationGetResponse([
     'src/apis/apis/DefaultApi.ts',
     'src/apis/models/SimulationGetResponse.ts',

@@ -96,6 +96,9 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/UserWithRulesResult.ts`,
     `src/@types/openapi-${type}/UsersSearchResponse.ts`,
     `src/@types/openapi-${type}/SimulationRiskLevelsAndRiskFactorsResultResponse.ts`,
+    `src/@types/openapi-${type}/PermissionsNodeBase.ts`,
+    `src/@types/openapi-${type}/DynamicPermissionsNode.ts`,
+    `src/@types/openapi-${type}/StaticPermissionsNode.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

@@ -17219,6 +17219,87 @@ components:
               $ref: '#/components/schemas/RiskLevel'
             arsRiskScore:
               type: number
+    PermissionsNodeBase:
+      type: object
+      properties:
+        id:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsAction'
+        children:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/StaticPermissionsNode'
+              - $ref: '#/components/schemas/DynamicPermissionsNode'
+      required:
+        - id
+        - actions
+    PermissionsAction:
+      type: string
+      enum:
+        - read
+        - write
+    StaticPermissionsNode:
+      title: StaticPermissionsNode
+      allOf:
+        - $ref: '#/components/schemas/PermissionsNodeBase'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - STATIC
+          required:
+            - type
+    DynamicPermissionsNodeSubType:
+      type: string
+      enum:
+        - NARRATIVE_TEMPLATES
+    DynamicPermissionsNode:
+      title: DynamicPermissionsNode
+      allOf:
+        - $ref: '#/components/schemas/PermissionsNodeBase'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - DYNAMIC
+            subType:
+              $ref: '#/components/schemas/DynamicPermissionsNodeSubType'
+          required:
+            - type
+            - subType
+    DynamicResourcesData:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/DynamicPermissionsNodeSubType'
+      required:
+        - id
+        - name
+        - type
+    PermissionStatements:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsAction'
+      required:
+        - resources
+        - actions
   securitySchemes:
     Authorization:
       type: http
