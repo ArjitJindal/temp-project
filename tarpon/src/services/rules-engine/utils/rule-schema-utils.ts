@@ -95,6 +95,6 @@ export function compareNumber(
     case 'GREATER_THAN_OR_EQUAL_TO':
       return value >= comparator.value
     case 'LESS_THAN_OR_EQUAL_TO':
-      return value >= comparator.value
+      return value <= comparator.value
   }
 }

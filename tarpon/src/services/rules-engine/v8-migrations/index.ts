@@ -16,6 +16,7 @@ import { TransactionsAverageAmountExceededParameters } from '../transaction-rule
 import { TransactionsAverageNumberExceededParameters } from '../transaction-rules/transactions-average-number-exceeded'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../transaction-rules/total-transactions-volume-exceeds'
 import { LowValueTransactionsRuleParameters } from '../transaction-rules/low-value-transactions-base'
+import { TransactionsOutflowInflowVolumeRuleParameters } from '../transaction-rules/transactions-outflow-inflow-volume'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -1392,6 +1393,238 @@ const V8_CONVERSION: Readonly<
       logicAggregationVariables,
       alertCreationDirection: 'ORIGIN',
       baseCurrency,
+    }
+  },
+  'R-41': (params: TransactionsOutflowInflowVolumeRuleParameters) => {
+    const {
+      timeWindow,
+      outflowTransactionTypes,
+      inflowTransactionTypes,
+      outflowInflowComparator,
+      outflow3dsDonePercentageThreshold,
+      inflow3dsDonePercentageThreshold,
+    } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:transactionsOutFlowAggSum',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'SUM',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        in: [
+          {
+            var: 'TRANSACTION:type',
+          },
+          outflowTransactionTypes,
+        ],
+      },
+    })
+    logicAggregationVariables.push({
+      key: 'agg:transactionsInFlowAggSum',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'SUM',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey:
+        'TRANSACTION:destinationAmountDetails-transactionAmount',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        in: [{ var: 'TRANSACTION:type' }, inflowTransactionTypes],
+      },
+    })
+
+    // outflowTransactionCount
+    logicAggregationVariables.push({
+      key: 'agg:transactionsOutFlowAggCount',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'COUNT',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        in: [
+          {
+            var: 'TRANSACTION:type',
+          },
+          outflowTransactionTypes,
+        ],
+      },
+    })
+
+    //inflowTransactionCount
+    logicAggregationVariables.push({
+      key: 'agg:transactionsInFlowAggCount',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'COUNT',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        in: [{ var: 'TRANSACTION:type' }, inflowTransactionTypes],
+      },
+    })
+    // outflowTransactionCount3dsDone
+    logicAggregationVariables.push({
+      key: 'agg:transactionsOutFlowAggCount3dsDone',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'COUNT',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        and: [
+          {
+            in: [{ var: 'TRANSACTION:type' }, outflowTransactionTypes],
+          },
+          {
+            '==': [{ var: 'TRANSACTION:originPaymentDetails-3dsDone' }, true],
+          },
+        ],
+      },
+    })
+    // inflowTransactionCount3dsDone
+    logicAggregationVariables.push({
+      key: 'agg:transactionsInFlowAggCount3dsDone',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'COUNT',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        and: [
+          {
+            in: [{ var: 'TRANSACTION:type' }, inflowTransactionTypes],
+          },
+          {
+            '==': [
+              { var: 'TRANSACTION:destinationPaymentDetails-3dsDone' },
+              true,
+            ],
+          },
+        ],
+      },
+    })
+
+    const conditions: any[] = []
+
+    if (outflowInflowComparator == 'GREATER_THAN_OR_EQUAL_TO') {
+      conditions.push({
+        and: [
+          {
+            '>=': [
+              { var: 'agg:transactionsOutFlowAggSum' },
+              { var: 'agg:transactionsInFlowAggSum' },
+            ],
+          },
+          {
+            '!=': [{ var: 'agg:transactionsOutFlowAggSum' }, 0],
+          },
+          {
+            '!=': [{ var: 'agg:transactionsInFlowAggSum' }, 0],
+          },
+        ],
+      })
+    } else if (outflowInflowComparator == 'LESS_THAN_OR_EQUAL_TO') {
+      conditions.push({
+        and: [
+          {
+            '<=': [
+              { var: 'agg:transactionsOutFlowAggSum' },
+              { var: 'agg:transactionsInFlowAggSum' },
+            ],
+          },
+          {
+            '!=': [{ var: 'agg:transactionsOutFlowAggSum' }, 0],
+          },
+          {
+            '!=': [{ var: 'agg:transactionsInFlowAggSum' }, 0],
+          },
+        ],
+      })
+    }
+
+    if (outflow3dsDonePercentageThreshold) {
+      const {
+        value: valueOutflow3DsDone,
+        comparator: comparatorOutflow3DsDone,
+      } = outflow3dsDonePercentageThreshold
+
+      conditions.push({
+        [comparatorOutflow3DsDone === 'GREATER_THAN_OR_EQUAL_TO' ? '>=' : '<=']:
+          [
+            {
+              '*': [
+                {
+                  '/': [
+                    { var: 'agg:transactionsOutFlowAggCount3dsDone' },
+                    { var: 'agg:transactionsOutFlowAggCount' },
+                  ],
+                },
+                100,
+              ],
+            },
+            valueOutflow3DsDone,
+          ],
+      })
+    }
+    if (inflow3dsDonePercentageThreshold) {
+      const { value: valueInflow3DsDone, comparator: comparatorInflow3DsDone } =
+        inflow3dsDonePercentageThreshold
+      conditions.push({
+        [comparatorInflow3DsDone === 'GREATER_THAN_OR_EQUAL_TO' ? '>=' : '<=']:
+          [
+            {
+              '*': [
+                {
+                  '/': [
+                    { var: 'agg:transactionsInFlowAggCount3dsDone' },
+                    { var: 'agg:transactionsInFlowAggCount' },
+                  ],
+                },
+                100,
+              ],
+            },
+            valueInflow3DsDone,
+          ],
+      })
+    }
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
     }
   },
 }

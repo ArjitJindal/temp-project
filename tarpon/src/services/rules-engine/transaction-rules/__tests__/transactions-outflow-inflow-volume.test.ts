@@ -35,7 +35,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsOutflowInflowVolumeRuleParameters = {
   outflowTransactionTypes: ['WITHDRAWAL'],
 }
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {
     describe('R-41 description formatting - gte', () => {
       const TEST_TENANT_ID = getTestTenantId()
@@ -179,7 +179,7 @@ ruleVariantsTest({ aggregation: true }, () => {
           }),
           getTestTransaction({
             originUserId: '2-1',
-            type: 'WITHDRAWAL',
+            type: 'DEPOSIT',
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             timestamp: dayjs('2022-01-03T00:20:00.000Z').valueOf(),
           }),
