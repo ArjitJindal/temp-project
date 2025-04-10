@@ -29,7 +29,7 @@ const ruleQueueInstance = (): RuleQueue[] => {
     createdAt: Date.now(),
   }
   const chainalysisQueue: RuleQueue = {
-    id: 'rulechainalysisQueue', // done this because of missing feature flags during seeding
+    id: 'chainalysisQueue', // done this because of missing feature flags during seeding
     name: 'Chainalysis',
     description: 'A queue for handling Chainalysis alerts',
     createdAt: Date.now(),
