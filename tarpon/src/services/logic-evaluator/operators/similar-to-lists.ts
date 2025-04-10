@@ -66,5 +66,5 @@ export const SIMILAR_TO_LISTS_OPERATOR: TextLogicOperator = {
 
 export const NOT_SIMILAR_TO_LISTS_OPERATOR = getNegatedOperator(
   SIMILAR_TO_LISTS_OPERATOR,
-  'Not Similar to (Lists)'
+  'Not similar to (Lists)'
 )

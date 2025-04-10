@@ -39,5 +39,5 @@ export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
 
 export const NOT_CONTAINS_IN_LISTS_OPERATOR = getNegatedOperator(
   CONTAINS_IN_LISTS_OPERATOR,
-  'Not Contains (Lists)'
+  'Not contains (Lists)'
 )
