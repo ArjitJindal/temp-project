@@ -2,12 +2,21 @@ import { DynamicPermissionsNode } from '@/@types/openapi-internal/DynamicPermiss
 import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResourcesData'
 import { StaticPermissionsNode } from '@/@types/openapi-internal/StaticPermissionsNode'
 
-export interface DynamicPermissionsInternal extends DynamicPermissionsNode {
-  validator: () => boolean
-  queryGenerator: () => string
-  fetcher: () => Promise<DynamicResourcesData>
+export interface StaticPermissionsInternal
+  extends Omit<StaticPermissionsNode, 'children'> {
+  children?: (DynamicPermissionsInternal | StaticPermissionsInternal)[]
 }
 
-export type PermissionsNode = DynamicPermissionsInternal | StaticPermissionsNode
+export interface DynamicPermissionsInternal
+  extends Omit<DynamicPermissionsNode, 'children'> {
+  validator?: () => boolean
+  queryGenerator?: () => string
+  fetcher?: () => Promise<DynamicResourcesData>
+  children?: (DynamicPermissionsInternal | StaticPermissionsInternal)[]
+}
+
+export type PermissionsNode =
+  | DynamicPermissionsInternal
+  | StaticPermissionsInternal
 
 export type Permissions = PermissionsNode[]

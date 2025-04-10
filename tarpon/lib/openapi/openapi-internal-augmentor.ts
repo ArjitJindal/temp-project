@@ -65,6 +65,7 @@ export const ConsoleApiPathToLambda: any = {
   '/post-login': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/roles': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/roles/{roleId}': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
+  '/permissions': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/apikey': StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME,
   '/logic-config': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule-ml-models': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,

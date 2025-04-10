@@ -99,6 +99,7 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/PermissionsNodeBase.ts`,
     `src/@types/openapi-${type}/DynamicPermissionsNode.ts`,
     `src/@types/openapi-${type}/StaticPermissionsNode.ts`,
+    `src/@types/openapi-${type}/PermissionsResponse.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

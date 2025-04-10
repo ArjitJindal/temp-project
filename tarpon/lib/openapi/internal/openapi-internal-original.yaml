@@ -3546,6 +3546,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountRole'
+  /permissions:
+    get:
+      summary: Permissions - List
+      operationId: get-all-permissions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
   /accounts/{accountId}/change_tenant:
     parameters:
       - schema:
@@ -17266,8 +17277,11 @@ components:
               type: string
               enum:
                 - STATIC
+            name:
+              type: string
           required:
             - type
+            - name
     DynamicPermissionsNodeSubType:
       type: string
       enum:
@@ -17287,6 +17301,17 @@ components:
           required:
             - type
             - subType
+    PermissionsResponse:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/StaticPermissionsNode'
+              - $ref: '#/components/schemas/DynamicPermissionsNode'
+      required:
+        - permissions
     DynamicResourcesData:
       type: object
       properties:

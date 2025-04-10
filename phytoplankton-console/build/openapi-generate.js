@@ -135,15 +135,17 @@ fi`);
     'src/apis/models/BusinessOptional.ts',
     'src/apis/models/BusinessWithRulesResult.ts',
     'src/apis/models/BusinessResponse.ts',
-    'src/apis/models/PermissionsNodeBase.ts',
-    'src/apis/models/DynamicPermissionsNode.ts',
-    'src/apis/models/StaticPermissionsNode.ts',
   ];
 
   removeBadImports(['src/apis/models/QuestionVariable.ts']);
 
   replaceUserSavedPaymentDetails(pathsToReplace);
-  replacePermission(pathsToReplace);
+  replacePermission([
+    'src/apis/models/PermissionsNodeBase.ts',
+    'src/apis/models/DynamicPermissionsNode.ts',
+    'src/apis/models/StaticPermissionsNode.ts',
+    'src/apis/models/PermissionsResponse.ts',
+  ]);
   replaceSimulationGetResponse([
     'src/apis/apis/DefaultApi.ts',
     'src/apis/models/SimulationGetResponse.ts',
