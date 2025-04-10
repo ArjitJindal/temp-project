@@ -1,45 +1,58 @@
-import React, { useRef, useCallback, useMemo, Dispatch } from 'react';
+import { useRef, useCallback, useMemo, Dispatch } from 'react';
+import { omitBy } from 'lodash';
 import { QuestionResponse, QuestionResponseSkeleton } from '../types';
 import s from './index.module.less';
 import EmptyIcon from './empty.react.svg';
 import HistoryItem from './HistoryItem';
 import { GAP, DATA_KEY } from './helpers';
 import HistoryItemSkeleton from './HistoryItemSkeleton';
-import { Updater } from '@/utils/state';
+import { Updater, applyUpdater } from '@/utils/state';
 import { itemId } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/helpers';
+import { useDeepEqualMemo } from '@/utils/hooks';
+
+type Sizes = { [key: string]: number };
 
 interface Props {
   alertId: string;
   items: (QuestionResponse | QuestionResponseSkeleton)[];
   seenItems: string[];
-  setSizes: Dispatch<Updater<{ [key: string]: number }>>;
+  setSizes: Dispatch<Updater<Sizes>>;
 }
 
 export default function History(props: Props) {
   const { alertId, items, seenItems, setSizes } = props;
 
+  const allIds = useMemo(() => items.map((item) => itemId(item)), [items]);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const observer = useMemo(() => {
+  const handleSetSizes = useDeepEqualMemo(() => {
+    return (updater: Updater<Sizes>) => {
+      setSizes((prevState: Sizes): Sizes => {
+        return omitBy(applyUpdater(prevState, updater), (_, key) => !allIds.includes(key));
+      });
+    };
+  }, [setSizes, allIds]);
+
+  const observer = useDeepEqualMemo(() => {
     const resizeObserver = new ResizeObserver((entries) => {
-      const patch = {};
+      const patch: Sizes = {};
       for (const entry of entries) {
         const key = entry.target.getAttribute(DATA_KEY)?.toString() ?? 'null';
         patch[key] = entry.borderBoxSize[0].blockSize;
       }
-      setSizes((prevState) => ({ ...prevState, ...patch }));
+      handleSetSizes((prevState) => ({ ...prevState, ...patch }));
     });
     return resizeObserver;
-  }, [setSizes]);
+  }, [handleSetSizes]);
 
   const observe = useCallback(
     (el: Element) => {
       const key = el.getAttribute(DATA_KEY)?.toString() ?? 'null';
-      setSizes((prevState) => ({ ...prevState, [key]: el.getBoundingClientRect().height }));
+      handleSetSizes((prevState) => ({ ...prevState, [key]: el.getBoundingClientRect().height }));
       observer.observe(el);
       return () => observer.unobserve(el);
     },
-    [observer, setSizes],
+    [observer, handleSetSizes],
   );
 
   return (

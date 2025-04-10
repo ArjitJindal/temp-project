@@ -21,6 +21,7 @@ export interface Props extends InputProps<string> {
   iconRight?: React.ReactNode;
   isSuccess?: boolean;
   description?: string;
+  disableBorders?: boolean;
   className?: string;
 }
 
@@ -46,6 +47,7 @@ export default function TextInput(props: Props) {
     isSuccess,
     isLoading,
     description,
+    disableBorders = false,
     className,
   } = props;
   const defaultRef = useRef<HTMLInputElement>(null);
@@ -65,7 +67,7 @@ export default function TextInput(props: Props) {
   const isFilled = value != null && value !== '';
 
   return (
-    <div className={cn(s.root, className)}>
+    <div className={cn(s.root, className, disableBorders && s.disableBorders)}>
       <div
         className={cn(
           s.inputWrapper,

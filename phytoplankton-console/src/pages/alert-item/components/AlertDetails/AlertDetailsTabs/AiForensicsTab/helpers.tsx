@@ -98,7 +98,7 @@ export function usePreloadedHistory(
   return useMemo((): (QuestionResponse | QuestionResponseSkeleton)[] => {
     const result: QuestionResponseRuleHit = {
       questionType: 'RULE_HIT',
-      questionId: `rule_hit_predefined_${Date.now()}}`,
+      questionId: `rule_hit_predefined_${Date.now()}`,
       variableOptions: [],
       title: 'Rule hit',
       createdById: '',

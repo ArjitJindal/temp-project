@@ -131,6 +131,7 @@ export const SearchBar = (props: Props) => {
         <div className={s.textInput}>
           <TextInput
             testName={'investigation-input'}
+            disableBorders={true}
             placeholder="Ask ‘AI Forensics’ for investigative data using natural language"
             value={searchInputText}
             onChange={(newValue) => {
