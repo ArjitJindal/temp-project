@@ -14311,6 +14311,15 @@ components:
         - DEVICE_IDENTIFIER
         - 314A_INDIVIDUAL
         - 314A_BUSINESS
+    ProductType:
+      title: ProductType
+      type: string
+      enum:
+        - PHYSICAL_GOODS
+        - DIGITAL_GOODS
+        - SERVICES
+        - SUBSCRIPTION
+        - OTHER
     ComplyAdvantageMatchType:
       title: ComplyAdvantageMatchType
       type: string

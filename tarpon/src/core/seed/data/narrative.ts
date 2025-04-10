@@ -5,9 +5,17 @@ import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 export const getNarrativeTemplates = memoize(() => {
   return [
     {
-      name: 'Analysis of high risk transaction template',
+      name: 'Sanction Suspicion',
       description:
-        'Merchant is an [XXX], Card country and IP address status [], Typical transaction patterns []. Overall [XXX] fraud risk,  Assessment on RFI -> []',
+        '**Reason for Alert/Case**\n\n- Basis for Suspicion:\n\n- Associated Entities:\n\n**Investigation Findings**\n\n- Customer Profile:\n\n- Match Review:\n\n- Supporting Evidence:\n\n**Decision:**',
+      id: uuid4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      name: 'AML/Fraud Suspicion',
+      description:
+        '**Reason for Alert/Case**\n\n- Basis for Suspicion:\n\n- Associated Transactions:\n\n**Investigation Findings**\n\n- Customer Profile:\n\n- Pattern Analysis:\n\n- Counterparty Risk:\n\n- Historical Behaviour:\n\n- Supporting Evidence:\n\n**Decision:**',
       id: uuid4(),
       createdAt: Date.now(),
       updatedAt: Date.now(),

@@ -23,6 +23,7 @@ import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { RULE_STAGES } from '@/@types/openapi-internal-custom/RuleStage'
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/GenericSanctionsSearchType'
 import { FUZZINESS_SETTING_OPTIONSS } from '@/@types/openapi-internal-custom/FuzzinessSettingOptions'
+import { PRODUCT_TYPES } from '@/@types/openapi-internal-custom/ProductType'
 
 type SchemaOptions = {
   title?: string
@@ -449,13 +450,14 @@ export const CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA = (
 export const PRODUCT_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {
-      subtype: 'PRODUCT_TYPES',
+      subtype: 'FREE_TEXT_ENUM',
     }),
     title: options?.title || 'Product type',
     description: options?.description,
     type: 'array',
     items: {
       type: 'string',
+      enum: PRODUCT_TYPES,
     },
   } as const)
 

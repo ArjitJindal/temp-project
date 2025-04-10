@@ -26,6 +26,7 @@ import MarkdownInput from './custom/MarkdownInput';
 import { NumberRangeInput } from './custom/NumberRangeInput';
 import { GenericSanctionScreeningTypes } from './custom/GenericSanctionScreeningTypes';
 import { FuzzinessSettingsInput } from './custom/FuzzinessSettings';
+import FreeTextEnumInput from './custom/FreeTextEnum';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -122,6 +123,10 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'FUZZINESS_SETTINGS') {
     return <FuzzinessSettingsInput {...props} uiSchema={uiSchema} />;
   }
+  if (uiSchema['ui:subtype'] === 'FREE_TEXT_ENUM') {
+    return <FreeTextEnumInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+
   const schemaType = schema.oneOf ? 'object' : schema.type;
   switch (schemaType) {
     case 'number':

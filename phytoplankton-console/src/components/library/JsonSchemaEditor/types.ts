@@ -78,6 +78,10 @@ export interface UiSchemaUserType extends UiSchemaCommon {
   'ui:subtype': 'USER_TYPE';
 }
 
+export interface UiSchemaFreeTextEnum extends UiSchemaCommon {
+  'ui:subtype': 'FREE_TEXT_ENUM';
+}
+
 export interface UiSchemaCurrency extends UiSchemaCommon {
   'ui:subtype': 'CURRENCY';
 }
@@ -174,7 +178,8 @@ export type UiSchema =
   | UiSchemaList
   | UiSchemaNumberRange
   | UiSchemaGenericSanctionsScreeningTypes
-  | UiSchemaFuzzinessSettings;
+  | UiSchemaFuzzinessSettings
+  | UiSchemaFreeTextEnum;
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
   items?: ExtendedSchema;
