@@ -837,7 +837,7 @@ export class BusinessUserSampler extends UserSampler<
       .generateSample(this.counter - 1)
       .map((r) => ({ ...r, ruleHit: true }))
     const hitRulesInstanceId = hitRulesFromSampler.map((r) => r.ruleInstanceId)
-    const executedRules = businessRules.map((r) => ({
+    const executedRules = businessRules().map((r) => ({
       ...r,
       ruleHit: hitRulesInstanceId.includes(r.ruleInstanceId) ? true : false,
     }))
@@ -994,7 +994,7 @@ export class ConsumerUserSampler extends UserSampler<
       .map((r) => ({ ...r, ruleHit: true }))
     const hitRulesInstanceId = hitRulesFromSampler.map((r) => r.ruleInstanceId)
     const hitRules = this.sampleUserRules(user)
-    const executedRules = consumerRules.map((r) => ({
+    const executedRules = consumerRules().map((r) => ({
       ...r,
       ruleHit: hitRulesInstanceId.includes(r.ruleInstanceId) ? true : false,
     }))

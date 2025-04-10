@@ -20,6 +20,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 import { WALLET_NETWORKS } from '@/@types/openapi-public-custom/WalletNetwork'
+import { RISK_LEVELS } from '@/@types/openapi-public-management-custom/RiskLevel'
 
 const RANDOM_IPS = [
   '126.239.220.152',
@@ -276,8 +277,8 @@ export class CryptoTransactionSampler extends BaseSampler<InternalTransaction> {
       status: this.rng.pickRandom(RULE_ACTIONS),
       tags: [
         {
-          value: this.rng.randomInt(100).toString(),
-          key: 'Chainanalysis Risk score',
+          value: this.rng.pickRandom(RISK_LEVELS),
+          key: 'Chainanalysis Risk Level',
         },
         ...Array(3)
           .fill(null)

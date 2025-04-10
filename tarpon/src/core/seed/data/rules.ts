@@ -19,7 +19,9 @@ import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/tran
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
 import { isShadowRule } from '@/services/rules-engine/utils'
 import { PaymentDetailsScreeningRuleParameters } from '@/services/rules-engine/transaction-rules/payment-details-screening-base'
-// import { hasFeature } from '@/core/utils/context'
+import { hasFeature } from '@/core/utils/context'
+import { getRandomRuleQueues } from '@/core/seed/data/rule-queue'
+import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -772,208 +774,165 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       alertCreationOnHit: true,
     },
   ]
-  // if (hasFeature('CHAINALYSIS')) {
-  customRuleInstances.push(
-    {
-      id: 'RC-4',
-      type: 'TRANSACTION',
-      ruleId: 'RC-4',
-      ruleNameAlias: 'High Chainalysis Risk Score',
-      queueId: 'chainalysisQueue',
-      ruleDescriptionAlias:
-        'Flag transactions with a Chainalysis risk score of 75 or higher',
-      logic: {
-        and: [
-          {
-            '==': [
+
+  if (hasFeature('CHAINALYSIS')) {
+    customRuleInstances.push(
+      {
+        id: 'RC-4',
+        type: 'TRANSACTION',
+        ruleId: 'RC-4',
+        ruleNameAlias: 'High Chainalysis Risk Score',
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'Chainalysis'
+        )?.id,
+        ruleDescriptionAlias:
+          'Flag transactions with a Chainalysis risk score of 75 or higher',
+        logic: {
+          and: [
+            {
+              '==': [
+                {
+                  var: 'entity:a1745431',
+                },
+                75,
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
               {
-                var: 'entity:a1745431',
-              },
-              75,
-            ],
-          },
-        ],
-      },
-      riskLevelLogic: {
-        VERY_LOW: {
-          and: [
-            {
-              '>=': [
-                {
-                  var: 'entity:a1745431',
-                },
-                75,
-              ],
-            },
-          ],
-        },
-        VERY_HIGH: {
-          and: [
-            {
-              '==': [
-                {
-                  var: 'entity:a1745431',
-                },
-                75,
-              ],
-            },
-          ],
-        },
-        HIGH: {
-          and: [
-            {
-              '==': [
-                {
-                  var: 'entity:a1745431',
-                },
-                75,
-              ],
-            },
-          ],
-        },
-        MEDIUM: {
-          and: [
-            {
-              '==': [
-                {
-                  var: 'entity:a1745431',
-                },
-                75,
-              ],
-            },
-          ],
-        },
-        LOW: {
-          and: [
-            {
-              '==': [
-                {
-                  var: 'entity:a1745431',
-                },
-                75,
-              ],
-            },
-          ],
-        },
-      },
-      logicEntityVariables: [
-        {
-          key: 'entity:0e6cc6b7',
-          entityKey: 'TRANSACTION:type',
-        },
-        {
-          name: 'Chainalysis risk score',
-          key: 'entity:a1745431',
-          entityKey:
-            'TRANSACTION:paymentDetails-networkProviderRiskScore__BOTH',
-        },
-      ],
-      logicAggregationVariables: [],
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'ACTIVE',
-      createdAt: 1744106182057,
-      updatedAt: 1744106182057,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          usersToCheck: 'ALL',
-        },
-        VERY_HIGH: {
-          usersToCheck: 'ALL',
-        },
-        HIGH: {
-          usersToCheck: 'ALL',
-        },
-        MEDIUM: {
-          usersToCheck: 'ALL',
-        },
-        LOW: {
-          usersToCheck: 'ALL',
-        },
-      },
-      alertConfig: {
-        frozenStatuses: [],
-        alertCreationInterval: {
-          type: 'INSTANTLY',
-        },
-        alertCreatedFor: ['USER'],
-      },
-      checksFor: [],
-      createdBy: rng.pickRandom(getAccounts()).id,
-      logicMachineLearningVariables: [],
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-      alertCreationOnHit: true,
-    },
-    {
-      id: 'RC-5',
-      type: 'TRANSACTION',
-      ruleId: 'RC-5',
-      ruleNameAlias: 'Multiple Chainalysis Risk Indicators Detected',
-      ruleDescriptionAlias:
-        'Flag transactions with two or more Chainalysis risk indicators',
-      queueId: 'chainalysisQueue',
-      logic: {
-        and: [
-          {
-            '>=': [
-              {
-                reduce: [
+                '>=': [
                   {
-                    filter: [
-                      {
-                        var: 'entity:bd548281',
-                      },
-                      {
-                        'op:contains': [
-                          {
-                            var: 'key',
-                          },
-                          [
-                            'sanctions',
-                            'mixer',
-                            'darknet_market',
-                            'scam',
-                            'ransomware',
-                            'stolen_funds',
-                            'terrorist_financing',
-                            'high_risk_exchange',
-                            'gambling',
-                          ],
-                        ],
-                      },
-                    ],
+                    var: 'entity:a1745431',
                   },
-                  {
-                    '+': [
-                      1,
-                      {
-                        var: 'accumulator',
-                      },
-                    ],
-                  },
-                  0,
+                  75,
                 ],
               },
-              2,
             ],
           },
+          VERY_HIGH: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:0e6cc6b7',
+            entityKey: 'TRANSACTION:type',
+          },
+          {
+            name: 'Chainalysis risk score',
+            key: 'entity:a1745431',
+            entityKey:
+              'TRANSACTION:paymentDetails-networkProviderRiskScore__BOTH',
+          },
         ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1744106182057,
+        updatedAt: 1744106182057,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+        },
+        checksFor: [],
+        createdBy: rng.pickRandom(getAccounts()).id,
+        logicMachineLearningVariables: [],
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
       },
-      riskLevelLogic: {
-        VERY_LOW: {
+      {
+        id: 'RC-5',
+        type: 'TRANSACTION',
+        ruleId: 'RC-5',
+        ruleNameAlias: 'Multiple Chainalysis Risk Indicators Detected',
+        ruleDescriptionAlias:
+          'Flag transactions with two or more Chainalysis risk indicators',
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'Chainalysis'
+        )?.id,
+        logic: {
           and: [
             {
               '>=': [
@@ -1020,251 +979,299 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
             },
           ],
         },
-        VERY_HIGH: {
-          and: [
-            {
-              '>=': [
-                {
-                  reduce: [
-                    {
-                      filter: [
-                        {
-                          var: 'entity:bd548281',
-                        },
-                        {
-                          'op:contains': [
-                            {
-                              var: 'key',
-                            },
-                            [
-                              'sanctions',
-                              'mixer',
-                              'darknet_market',
-                              'scam',
-                              'ransomware',
-                              'stolen_funds',
-                              'terrorist_financing',
-                              'high_risk_exchange',
-                              'gambling',
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
                             ],
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      '+': [
-                        1,
-                        {
-                          var: 'accumulator',
-                        },
-                      ],
-                    },
-                    0,
-                  ],
-                },
-                2,
-              ],
-            },
-          ],
-        },
-        HIGH: {
-          and: [
-            {
-              '>=': [
-                {
-                  reduce: [
-                    {
-                      filter: [
-                        {
-                          var: 'entity:bd548281',
-                        },
-                        {
-                          'op:contains': [
-                            {
-                              var: 'key',
-                            },
-                            [
-                              'sanctions',
-                              'mixer',
-                              'darknet_market',
-                              'scam',
-                              'ransomware',
-                              'stolen_funds',
-                              'terrorist_financing',
-                              'high_risk_exchange',
-                              'gambling',
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
                             ],
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      '+': [
-                        1,
-                        {
-                          var: 'accumulator',
-                        },
-                      ],
-                    },
-                    0,
-                  ],
-                },
-                2,
-              ],
-            },
-          ],
-        },
-        MEDIUM: {
-          and: [
-            {
-              '>=': [
-                {
-                  reduce: [
-                    {
-                      filter: [
-                        {
-                          var: 'entity:bd548281',
-                        },
-                        {
-                          'op:contains': [
-                            {
-                              var: 'key',
-                            },
-                            [
-                              'sanctions',
-                              'mixer',
-                              'darknet_market',
-                              'scam',
-                              'ransomware',
-                              'stolen_funds',
-                              'terrorist_financing',
-                              'high_risk_exchange',
-                              'gambling',
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
                             ],
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      '+': [
-                        1,
-                        {
-                          var: 'accumulator',
-                        },
-                      ],
-                    },
-                    0,
-                  ],
-                },
-                2,
-              ],
-            },
-          ],
-        },
-        LOW: {
-          and: [
-            {
-              '>=': [
-                {
-                  reduce: [
-                    {
-                      filter: [
-                        {
-                          var: 'entity:bd548281',
-                        },
-                        {
-                          'op:contains': [
-                            {
-                              var: 'key',
-                            },
-                            [
-                              'sanctions',
-                              'mixer',
-                              'darknet_market',
-                              'scam',
-                              'ransomware',
-                              'stolen_funds',
-                              'terrorist_financing',
-                              'high_risk_exchange',
-                              'gambling',
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
                             ],
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      '+': [
-                        1,
-                        {
-                          var: 'accumulator',
-                        },
-                      ],
-                    },
-                    0,
-                  ],
-                },
-                2,
-              ],
-            },
-          ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
         },
-      },
-      logicEntityVariables: [
-        {
-          key: 'entity:bd548281',
-          entityKey: 'TRANSACTION:tags',
+        logicEntityVariables: [
+          {
+            key: 'entity:bd548281',
+            entityKey: 'TRANSACTION:tags',
+          },
+        ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
         },
-      ],
-      logicAggregationVariables: [],
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'ACTIVE',
-      createdAt: 1744106659805,
-      updatedAt: 1744106659805,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          usersToCheck: 'ALL',
+        status: 'ACTIVE',
+        createdAt: 1744106659805,
+        updatedAt: 1744106659805,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
         },
-        VERY_HIGH: {
-          usersToCheck: 'ALL',
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
         },
-        HIGH: {
-          usersToCheck: 'ALL',
-        },
-        MEDIUM: {
-          usersToCheck: 'ALL',
-        },
-        LOW: {
-          usersToCheck: 'ALL',
-        },
-      },
-      alertConfig: {
-        frozenStatuses: [],
-        alertCreationInterval: {
-          type: 'INSTANTLY',
-        },
-        alertCreatedFor: ['USER'],
-      },
-      checksFor: [],
-      createdBy: rng.pickRandom(getAccounts()).id,
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-      alertCreationOnHit: true,
-    }
-  )
-  // }
+        checksFor: [],
+        createdBy: rng.pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+      }
+    )
+  }
   const r1RuleInstance: RuleInstance[] = [
     {
       id: 'R-1.7',
@@ -2485,13 +2492,18 @@ export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
   })
 const businessUserInstanceId = ['pLRu4m', 'FlWDkd']
 const consumerUserInstanceId = ['pLRu4m', 'hODvd2']
-export const businessRules: ExecutedRulesResult[] = userRules().filter((rule) =>
-  businessUserInstanceId.some((id) => id == rule.ruleInstanceId)
-)
 
-export const consumerRules: ExecutedRulesResult[] = userRules().filter((rule) =>
-  consumerUserInstanceId.some((id) => id == rule.ruleInstanceId)
-)
+export const businessRules: () => ExecutedRulesResult[] = () => {
+  return userRules().filter((rule) =>
+    businessUserInstanceId.some((id) => id == rule.ruleInstanceId)
+  )
+}
+
+export const consumerRules: () => ExecutedRulesResult[] = () => {
+  return userRules().filter((rule) =>
+    consumerUserInstanceId.some((id) => id == rule.ruleInstanceId)
+  )
+}
 
 export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
   private entityToRuleHitsMap: Map<number, string[]> = new Map()
@@ -2516,9 +2528,8 @@ export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
     // Initialize tracking of entities and their rule hit counts
     // Key: number of rule hits, Value: array of entity IDs with that many hits
     const entityHitCountMap = new Map<number, number[]>()
-    const allEntityIds: number[] = Array.from(
-      { length: entityCount },
-      (_, i) => i
+    const allEntityIds: number[] = shuffle(
+      Array.from({ length: entityCount }, (_, i) => i)
     )
     // Initially all entities have 0 hits
     entityHitCountMap.set(0, allEntityIds)
@@ -2574,14 +2585,19 @@ export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
         1,
         Math.floor(0.009 * entityCount)
       )
-      const targetEntityCount =
+
+      let targetEntityCount =
         Math.floor((hitRate * entityCount) / 100) + randomVariation
 
-      // todo improve random subset of size function return multiple instance of same entity id, TECH DOC DEMO DATA
-      const selectedEntities: number[] = shuffle(allEntityIds).slice(
-        0,
-        targetEntityCount
-      )
+      const selectedEntities: number[] = []
+      while (targetEntityCount--) {
+        const entity = allEntityIds.shift()
+        if (entity) {
+          selectedEntities.push(entity)
+          allEntityIds.push(entity)
+        }
+      }
+
       // Record rule assignments in entity-rule mapping
       selectedEntities.forEach((entityId) => {
         const existingRules = this.entityToRuleHitsMap.get(entityId) ?? []
@@ -2626,14 +2642,14 @@ export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
 export class ConsumerUserRuleSampler extends RuleSampler {
   constructor() {
     super()
-    this.intalizeSampler(consumerRules, [5, 6], 200, false)
+    this.intalizeSampler(consumerRules(), [5, 6], 200, false)
   }
 }
 
 export class BussinessUserRuleSampler extends RuleSampler {
   constructor() {
     super()
-    this.intalizeSampler(businessRules, [4, 5], companies.length, false)
+    this.intalizeSampler(businessRules(), [4, 5], companies.length, false)
   }
 }
 
@@ -2654,7 +2670,7 @@ export class CryptoTransactionRuleSampler extends RuleSampler {
     super()
     this.intalizeSampler(
       transactionRules(true),
-      [30, 30],
+      [7, 11],
       CRYPTO_TXN_COUNT,
       false
     )

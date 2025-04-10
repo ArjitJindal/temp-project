@@ -425,6 +425,8 @@ export class AlertSampler extends BaseSampler<Alert> {
         ?.nature,
       slaPolicyDetails: slaPolicyDetails,
       ruleHitMeta: params.ruleHit.ruleHitMeta,
+      ruleQueueId:
+        getRuleInstance(params.ruleHit.ruleInstanceId)?.queueId ?? undefined,
     }
   }
 }
