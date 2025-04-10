@@ -114,6 +114,7 @@ export interface SanctionsHitsTableParams {
   searchIds?: string[];
   searchTerm?: string;
   fuzziness?: number;
+  paymentMethodIds?: string[];
 }
 
 export function useSanctionHitsQuery(
@@ -126,6 +127,7 @@ export function useSanctionHitsQuery(
     alertId: alertId,
     filterStatus: params.statuses ?? ['OPEN' as const],
     filterSearchId: params.searchIds,
+    filterPaymentMethodId: params.paymentMethodIds,
   };
   return useCursorQuery(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
@@ -254,6 +256,7 @@ interface Props {
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   selectedSanctionsHitsIds?: string[];
   sanctionsSearchIdFilter?: string;
+  paymentMethodIdFilter?: string;
   onSanctionsHitSelect?: (
     alertId: string,
     sanctionsHitsIds: string[],
@@ -270,6 +273,7 @@ interface Props {
 export function useAlertTabs(props: Props): TabItem[] {
   const {
     sanctionsSearchIdFilter,
+    paymentMethodIdFilter,
     alert,
     caseUserId,
     selectedSanctionsHitsIds,
@@ -305,6 +309,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     {
       ...openTableParams,
       searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
     },
     alertId,
     tabList.includes(AlertTabs.MATCH_LIST),
@@ -313,6 +318,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     {
       ...clearedTableParams,
       searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
     },
     alertId,
     tabList.includes(AlertTabs.CLEARED_MATCH_LIST),

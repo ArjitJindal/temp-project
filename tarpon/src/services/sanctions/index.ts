@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { BadRequest } from 'http-errors'
-import { intersection, isEmpty, omit, round, startCase, uniq } from 'lodash'
+import { intersection, omit, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { sanitizeString } from '@flagright/lib/utils'
 import { AlertsRepository } from '../alerts/repository'
@@ -545,8 +544,11 @@ export class SanctionsService {
     params: {
       filterHitIds?: string[]
       filterSearchId?: string[]
+      filterPaymentMethodId?: string[]
       filterStatus?: SanctionsHitStatus[]
       alertId?: string
+      ruleId?: string
+      filterUserId?: string
     } & CursorPaginationParams
   ): Promise<SanctionsHitListResponse> {
     if (params.alertId) {
@@ -559,13 +561,12 @@ export class SanctionsService {
         params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails?.flatMap(
           ({ sanctionHitIds }) => sanctionHitIds ?? []
         )
+        params.ruleId = alert.ruleId
+        params.filterUserId =
+          alert.ruleHitMeta?.sanctionsDetails?.[0]?.hitContext?.userId ??
+          undefined
       }
     }
-
-    if (isEmpty(params.filterHitIds) && isEmpty(params.filterSearchId)) {
-      throw new BadRequest('Search ID or Hit IDs must be provided')
-    }
-
     await this.initialize()
     return await this.sanctionsHitsRepository.searchHits(params)
   }

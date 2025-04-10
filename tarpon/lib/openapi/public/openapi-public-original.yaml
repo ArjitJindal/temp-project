@@ -6458,11 +6458,15 @@ components:
           type: string
         ruleInstanceId:
           type: string
+        ruleId:
+          type: string
         iban:
           type: string
         yearOfBirth:
           type: number
         searchTerm:
+          type: string
+        paymentMethodId:
           type: string
       required:
         - entity
