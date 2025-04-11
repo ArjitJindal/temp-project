@@ -29,6 +29,7 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Select from '@/components/library/Select';
 import Button from '@/components/library/Button';
+import { notEmpty } from '@/utils/array';
 
 interface Params extends TableCommonParams {
   scope: 'CASES' | 'ALERTS';
@@ -141,6 +142,20 @@ export default function TeamPerformanceCard(props: WidgetProps) {
           ]}
           style={{ width: 120 }}
         />,
+        type === 'daterange' && (
+          <DatePicker.RangePicker
+            value={getDateRangeToShow(params.dateRange)}
+            onChange={(value) => {
+              setParams((prevState) => ({
+                ...prevState,
+                dateRange: value,
+              }));
+            }}
+            onOpenChange={(state) => {
+              setIsDatePickerOpen(state);
+            }}
+          />
+        ),
         <Button
           key="toggleView"
           onClick={() => setShowAggregatedView(!showAggregatedView)}
@@ -148,7 +163,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
         >
           {showAggregatedView ? 'Show Individual' : 'Show Aggregated'}
         </Button>,
-      ]}
+      ].filter(notEmpty)}
       {...props}
     >
       <div className={s.header}>
@@ -162,20 +177,6 @@ export default function TeamPerformanceCard(props: WidgetProps) {
             setParams((prevState) => ({ ...prevState, scope: newActive }));
           }}
         />
-        {type === 'daterange' && (
-          <DatePicker.RangePicker
-            value={getDateRangeToShow(params.dateRange)}
-            onChange={(value) => {
-              setParams((prevState) => ({
-                ...prevState,
-                dateRange: value,
-              }));
-            }}
-            onOpenChange={(state) => {
-              setIsDatePickerOpen(state);
-            }}
-          />
-        )}
       </div>
       {type === 'daterange' ? (
         showAggregatedView ? (
