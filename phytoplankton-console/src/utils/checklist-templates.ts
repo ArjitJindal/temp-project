@@ -31,7 +31,9 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
           items: category.checklistItems.map((cli): ChecklistItem => {
             const item = alert.ruleChecklist?.find((item) => item.checklistItemId === cli.id);
             if (!item) {
-              throw new Error('Bad checklist item');
+              throw new Error(
+                'Alert is missing checklist status information, please contact support',
+              );
             }
             return {
               id: cli.id,
