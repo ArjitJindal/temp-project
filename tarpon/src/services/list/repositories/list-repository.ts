@@ -402,6 +402,14 @@ export class ListRepository {
     const { Items = [] } = await this.dynamoDb.send(
       new QueryCommand(queryCommandInput)
     )
+    const Data = await this.dynamoDb.send(
+      new QueryCommand({
+        ...queryCommandInput,
+        ScanIndexForward: false,
+        ExclusiveStartKey: undefined,
+      })
+    )
+    const LastPageItems = Data.Items ?? []
     let prev = ''
     let hasPrev = false
     if (params?.fromCursorKey) {
@@ -427,6 +435,7 @@ export class ListRepository {
       ? 0
       : await this.countListValues(listId, requestedVersion)
 
+    const mod = count % pageSize
     return {
       next:
         hasNextPage && items.length === pageSize
@@ -437,7 +446,7 @@ export class ListRepository {
       hasPrev,
       count: count,
       limit: 10000,
-      last: '',
+      last: hasNextPage ? LastPageItems[mod]?.key ?? '' : '',
       pageSize: pageSize,
       items,
     }

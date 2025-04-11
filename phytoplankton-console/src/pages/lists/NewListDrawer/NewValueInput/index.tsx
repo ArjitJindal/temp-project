@@ -22,6 +22,7 @@ import Select, { Option } from '@/components/library/Select';
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
   listSubtype: ListSubtype;
+  excludeCountries?: Set<string>;
 }
 
 export default function NewValueInput(props: Props) {
@@ -166,7 +167,7 @@ function SearchInput(
   );
 }
 
-const OPTIONS = Object.entries(COUNTRIES).map(
+const ALL_COUNTRY_OPTIONS = Object.entries(COUNTRIES).map(
   (entry): Option<string> => ({
     value: entry[0],
     label: entry[1],
@@ -174,14 +175,23 @@ const OPTIONS = Object.entries(COUNTRIES).map(
   }),
 );
 
-function CountriesInput(props: InputProps<string[]>) {
+function CountriesInput(props: InputProps<string[]> & { excludeCountries?: Set<string> }) {
+  const { excludeCountries, ...restProps } = props;
+
+  const filteredOptions = useMemo(() => {
+    if (!excludeCountries || excludeCountries.size === 0) {
+      return ALL_COUNTRY_OPTIONS;
+    }
+    return ALL_COUNTRY_OPTIONS.filter((option) => !excludeCountries.has(option.value));
+  }, [excludeCountries]);
+
   return (
     <Select
       mode={'MULTIPLE'}
-      options={OPTIONS}
+      options={filteredOptions}
       placeholder={`Select countries`}
       className={s.select}
-      {...props}
+      {...restProps}
     />
   );
 }

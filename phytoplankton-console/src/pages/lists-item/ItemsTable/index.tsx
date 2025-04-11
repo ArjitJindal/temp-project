@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { useCursorQuery } from '@/utils/queries/hooks';
+import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
@@ -25,6 +25,7 @@ import {
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+
 interface ExistedTableItemData {
   value: string;
   reason: string;
@@ -72,6 +73,17 @@ type ExternalState = {
 };
 
 const helper = new ColumnHelper<TableItem>();
+
+const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
+  items: [],
+  count: 0,
+  limit: 0,
+  hasNext: false,
+  hasPrev: false,
+  next: undefined,
+  prev: undefined,
+  last: undefined,
+};
 
 export default function ItemsTable(props: Props) {
   const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
@@ -222,6 +234,26 @@ export default function ItemsTable(props: Props) {
     };
   });
 
+  const currentItems = getOr(listResult.data, DEFAULT_LIST_DATA).items;
+  const listSubtype = getOr(
+    map(listHeaderRes, ({ subtype }) => subtype),
+    null,
+  );
+
+  const existingCountryCodes = useMemo(() => {
+    if (listSubtype !== 'COUNTRY') {
+      return new Set<string>();
+    }
+    const codes = new Set<string>();
+    currentItems.forEach((item) => {
+      if (item.type === 'EXISTED' && item.value) {
+        const values = Array.isArray(item.value) ? item.value : [item.value];
+        values.forEach((code) => codes.add(code));
+      }
+    });
+    return codes;
+  }, [currentItems, listSubtype]);
+
   const externalState: ExternalState = {
     editUserData: [editUserData, setEditUserData],
     newUserData: [newUserData, setNewUserData],
@@ -232,10 +264,6 @@ export default function ItemsTable(props: Props) {
     onDelete: handleDeleteUser,
   };
 
-  const listSubtype = getOr(
-    map(listHeaderRes, ({ subtype }) => subtype),
-    null,
-  );
   const columns = useMemo(() => {
     return helper.list(
       [
@@ -247,7 +275,6 @@ export default function ItemsTable(props: Props) {
               render: (value, context) => {
                 const { item: entity } = context;
                 const externalState: ExternalState = context.external as ExternalState;
-
                 const [newUserData, setNewUserData] = externalState.newUserData;
 
                 if (entity.type === 'NEW') {
@@ -268,6 +295,7 @@ export default function ItemsTable(props: Props) {
                         }));
                       }}
                       listSubtype={listSubtype}
+                      excludeCountries={existingCountryCodes}
                     />
                   );
                 } else if (listSubtype === 'COUNTRY' && value != null) {
@@ -309,6 +337,7 @@ export default function ItemsTable(props: Props) {
                   <Input
                     disabled={isAddUserLoading}
                     value={newUserData.reason}
+                    autoFocus
                     onChange={(e) => {
                       setNewUserData((prevState) => ({
                         ...prevState,
@@ -322,6 +351,7 @@ export default function ItemsTable(props: Props) {
                   <Input
                     disabled={isUserDeleteLoading}
                     value={editUserData.reason}
+                    autoFocus
                     onChange={(e) => {
                       setEditUserData({
                         ...editUserData,
@@ -392,7 +422,12 @@ export default function ItemsTable(props: Props) {
                     type="SECONDARY"
                     isDisabled={isUserDeleteLoading}
                     onClick={() => {
-                      setEditUserData(entity);
+                      const editTarget: ExistedTableItemData = {
+                        value: entity.value,
+                        reason: entity.reason,
+                        meta: entity.meta,
+                      };
+                      setEditUserData(editTarget);
                     }}
                     requiredPermissions={requiredWritePermissions}
                   >
@@ -412,6 +447,7 @@ export default function ItemsTable(props: Props) {
                 </div>
               );
             }
+            return null;
           },
         }),
       ].filter(notEmpty),
@@ -423,6 +459,7 @@ export default function ItemsTable(props: Props) {
     listSubtype,
     requiredWritePermissions,
     settings,
+    existingCountryCodes,
   ]);
 
   return (
