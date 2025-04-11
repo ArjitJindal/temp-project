@@ -212,7 +212,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: 'RC-2',
       type: 'TRANSACTION',
       ruleId: 'RC-2',
-      ruleNameAlias: 'Mutiple high value transactions ',
+      ruleNameAlias: 'Multiple high value transactions ',
       ruleDescriptionAlias: 'Multiple high value transactions in 1 week',
       baseCurrency: 'USD',
       checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
