@@ -42,8 +42,7 @@ export type CommonCaseParams = {
   qaAssignment: string[];
   updatedAt: string[];
   caseTypesFilter: CaseType[];
-  filterQaStatus?: (ChecklistStatus | "NOT_QA'd")[];
-  filterOutQaStatus?: ChecklistStatus[];
+  filterQaStatus?: ChecklistStatus | "NOT_QA'd";
   filterClosingReason?: CaseReasons[];
   alertPriority: Priority[];
   ruleQueueIds?: string[];

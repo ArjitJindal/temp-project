@@ -104,14 +104,14 @@ const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } })
     {
       ...(type === 'CREATE' && params),
       pageSize: 1,
-      filterQaStatus: ["NOT_QA'd"],
+      filterQaStatus: "NOT_QA'd",
       sort: [['createdAt', 'descend']],
       alertStatus: ['CLOSED'],
     },
     type === 'EDIT'
       ? ({
           ...params,
-          filterQaStatus: ["NOT_QA'd" as ChecklistStatus],
+          filterQaStatus: "NOT_QA'd" as ChecklistStatus | "NOT_QA'd",
           filterAlertStatus: ['CLOSED'],
           sortField: 'createdAt',
           sortOrder: 'descend',

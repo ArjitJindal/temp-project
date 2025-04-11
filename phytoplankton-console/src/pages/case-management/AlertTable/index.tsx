@@ -104,7 +104,7 @@ import {
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
-  filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
+  filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
 };
 
 const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {

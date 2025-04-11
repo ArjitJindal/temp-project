@@ -4830,17 +4830,9 @@ paths:
           in: query
           name: beforeTimestamp
         - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ChecklistStatus'
+            $ref: '#/components/schemas/ChecklistStatus'
           in: query
           name: filterQaStatus
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ChecklistStatus'
-          in: query
-          name: filterOutQaStatus
         - schema:
             type: number
           in: query

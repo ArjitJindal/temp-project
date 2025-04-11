@@ -76,7 +76,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       roleAssignedTo: params.roleAssignedTo?.join(','),
       qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
-      filterQaStatus: params['filterQaStatus']?.join(','),
+      filterQaStatus: params['filterQaStatus'],
       filterClosingReason: params['filterClosingReason']?.join(','),
       alertPriority: params.alertPriority?.join(','),
       ruleQueueIds: params.ruleQueueIds?.join(','),
@@ -143,7 +143,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ) as unknown as TableSearchParams['roleAssignedTo'],
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
-      filterQaStatus: raw?.['filterQaStatus']?.split(',') as ChecklistStatus[] | undefined,
+      filterQaStatus: raw?.['filterQaStatus'] as ChecklistStatus | undefined | "NOT_QA'd",
       filterClosingReason: raw?.['filterClosingReason']?.split(',') as CaseReasons[],
       alertPriority: raw?.alertPriority?.split(
         ',',

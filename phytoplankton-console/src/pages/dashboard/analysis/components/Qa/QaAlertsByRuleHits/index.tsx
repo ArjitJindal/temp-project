@@ -116,7 +116,7 @@ const QaAlertsByRuleHits = (props: Props) => {
         const { startTimestamp, endTimestamp } = getStartAndEndTimestamp(dateRange);
         return (
           <Id
-            to={`/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&rulesHitFilter=${ruleInstanceId}&alertStatus=CLOSED&filterQaStatus=PASSED%2CFAILED&updatedAt=${startTimestamp}%2C${endTimestamp}`}
+            to={`/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&rulesHitFilter=${ruleInstanceId}&updatedAt=${startTimestamp}%2C${endTimestamp}`}
           >
             View alerts
           </Id>

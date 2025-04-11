@@ -1872,7 +1872,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return {
       ...filters,
       filterAlertStatus: ['CLOSED'],
-      filterQaStatus: ["NOT_QA'd"],
+      filterQaStatus: "NOT_QA'd",
     }
   }
 

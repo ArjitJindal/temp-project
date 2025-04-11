@@ -70,7 +70,7 @@ export interface AlertParams
   extends OptionalPagination<
     Omit<DefaultApiGetAlertListRequest, 'filterQaStatus'>
   > {
-  filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd">
+  filterQaStatus?: ChecklistStatus | "NOT_QA'd"
   excludeAlertIds?: string[]
 }
 
@@ -566,16 +566,14 @@ export class AlertsRepository {
     }
 
     if (params.filterQaStatus) {
-      const filterQaStatus = params.filterQaStatus.map((status) =>
-        (status as string) === "NOT_QA'd" ? undefined : status
-      )
+      const filterQaStatus =
+        params.filterQaStatus === "NOT_QA'd"
+          ? {
+              $nin: ['PASSED', 'FAILED'],
+            }
+          : params.filterQaStatus
       alertConditions.push({
-        'alerts.ruleQaStatus': { $in: filterQaStatus },
-      })
-    }
-    if (params.filterOutQaStatus) {
-      alertConditions.push({
-        'alerts.ruleQaStatus': { $nin: params.filterOutQaStatus },
+        'alerts.ruleQaStatus': filterQaStatus,
       })
     }
 

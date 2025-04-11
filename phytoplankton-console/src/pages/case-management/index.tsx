@@ -233,7 +233,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, alertStatus: ['CLOSED'], filterQaStatus: ["NOT_QA'd"] }}
+            params={{ ...params, alertStatus: ['CLOSED'], filterQaStatus: "NOT_QA'd" }}
             onChangeParams={handleChangeParams}
             isSelectionEnabled={true}
           />
@@ -243,7 +243,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, filterQaStatus: ['PASSED'], alertStatus: ['CLOSED'] }}
+            params={{ ...params, filterQaStatus: 'PASSED', alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
             isSelectionEnabled={false}
           />
@@ -253,7 +253,7 @@ function getTable(
       return (
         <Authorized required={['case-management:qa:read']} showForbiddenPage>
           <QaTable
-            params={{ ...params, filterQaStatus: ['FAILED'], alertStatus: ['CLOSED'] }}
+            params={{ ...params, filterQaStatus: 'FAILED', alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
             isSelectionEnabled={false}
           />
