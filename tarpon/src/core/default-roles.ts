@@ -127,7 +127,6 @@ export const DEFAULT_ROLES: {
       'users:user-details:read',
       'risk-scoring:risk-score-details:read',
       'dashboard:download-data:read',
-      'settings:organisation:read',
       'settings:system-config:read',
       'settings:case-management:read',
       'settings:security:read',

@@ -11664,8 +11664,6 @@ components:
         - users:user-tags:write
         - users:user-manual-risk-levels:write
         - dashboard:download-data:read
-        - settings:organisation:read
-        - settings:organisation:write
         - settings:system-config:read
         - settings:system-config:write
         - settings:case-management:write
