@@ -1,5 +1,6 @@
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { PermissionsAction } from '@/@types/openapi-internal/PermissionsAction'
 import { PermissionsResponse } from '@/@types/openapi-internal/PermissionsResponse'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { Permissions, PermissionsNode } from '@/@types/rbac/permissions'
@@ -256,7 +257,7 @@ export const PERMISSIONS_LIBRARY: Permissions = [
             type: 'STATIC',
             children: [
               {
-                id: 'narrative-template-1',
+                id: 'template',
                 actions: ['read', 'write'],
                 type: 'DYNAMIC',
                 subType: 'NARRATIVE_TEMPLATES',
@@ -491,6 +492,20 @@ export const PERMISSIONS_LIBRARY: Permissions = [
       },
     ],
   },
+  {
+    id: 'sanctions',
+    name: 'Sanctions',
+    actions: ['read', 'write'],
+    type: 'STATIC',
+    children: [
+      {
+        id: 'search',
+        name: 'Search',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
+    ],
+  },
 ]
 
 export const hydratePermissions = (
@@ -511,6 +526,92 @@ const traverseNode = (node: PermissionsNode) => {
   }
 
   return node
+}
+
+export const isPermissionValidFromTree = (data: {
+  tenantId: string
+  permission: string
+  action: PermissionsAction[]
+}) => {
+  const { tenantId, permission, action } = data
+  const [prefix, permissionPath] = permission.split(':::')
+
+  const splitPrefix = prefix.split(':')
+
+  // first part of prefix should be frn
+  if (splitPrefix[0] !== 'frn') {
+    return false
+  }
+
+  // second part of prefix should be console right now we hard code it
+  if (splitPrefix[1] !== 'console' && splitPrefix[1] !== '*') {
+    return false
+  }
+
+  // third part of prefix should be tenantId
+  if (splitPrefix[2] !== tenantId && splitPrefix[2] !== '*') {
+    return false
+  }
+
+  const pathParts = permissionPath.split('/')
+  const currentActions = action
+
+  const validateNode = (
+    node: PermissionsNode | undefined,
+    templateId?: string
+  ) => {
+    if (!node) {
+      return false
+    }
+
+    if (node.type === 'DYNAMIC' && !templateId) {
+      return false
+    }
+
+    if (node.type !== (templateId ? 'DYNAMIC' : 'STATIC')) {
+      return false
+    }
+
+    const hasAllActions = node.actions.every((action) =>
+      currentActions.includes(action)
+    )
+
+    if (hasAllActions) {
+      return true
+    }
+
+    return node.actions.some((action) => currentActions.includes(action))
+  }
+
+  const validatePath = (pathParts: string[], libraryChildren: Permissions) => {
+    if (pathParts.length === 0) {
+      return true
+    }
+
+    const [first, ...rest] = pathParts
+    if (first === '*') {
+      return true
+    }
+
+    let currentNode: PermissionsNode | undefined
+    let templateId: string | undefined
+
+    if (first.includes(':')) {
+      const [resourceId, template] = first.split(':')
+      currentNode = libraryChildren.find((child) => child.id === resourceId)
+      templateId = template
+    } else {
+      currentNode = libraryChildren.find((child) => child.id === first)
+    }
+
+    if (!validateNode(currentNode, templateId)) {
+      return false
+    }
+
+    return validatePath(rest, currentNode?.children || [])
+  }
+
+  return validatePath(pathParts, PERMISSIONS_LIBRARY)
 }
 
 export const convertV1PermissionToV2 = (
@@ -574,8 +675,32 @@ export const convertV1PermissionToV2 = (
     const eligibleWrite = allWritePermissions.has(resource)
 
     if (hasRead && !hasWrite && eligibleRead && eligibleWrite) {
+      const isPermissionValid = isPermissionValidFromTree({
+        tenantId,
+        permission: frn,
+        action: ['read'],
+      })
+
+      if (!isPermissionValid) {
+        throw new Error(
+          `Resource ${frn} is valid for read but not valid from tree`
+        )
+      }
+
       readOnly.add(frn)
     } else {
+      const isPermissionValid = isPermissionValidFromTree({
+        tenantId,
+        permission: frn,
+        action: ['read', 'write'],
+      })
+
+      if (!isPermissionValid) {
+        throw new Error(
+          `Resource ${frn} is valid for read but not valid from tree`
+        )
+      }
+
       readWrite.add(frn)
     }
   }
