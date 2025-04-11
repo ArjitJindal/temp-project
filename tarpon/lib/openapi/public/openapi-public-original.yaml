@@ -1941,6 +1941,8 @@ components:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetails'
+        eoddDate:
+          type: number
         employmentStatus:
           $ref: '#/components/schemas/EmploymentStatus'
         occupation:

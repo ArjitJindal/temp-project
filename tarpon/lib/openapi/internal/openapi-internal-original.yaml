@@ -10073,6 +10073,8 @@ components:
               type: number
             updatedAt:
               type: number
+            eoddDate:
+              type: number
           required:
             - type
     InternalBusinessUser:
@@ -10102,6 +10104,8 @@ components:
               type: number
             isMonitoringEnabled:
               type: boolean
+            eoddDate:
+              type: number
           required:
             - type
     InternalUser:
@@ -10428,6 +10432,8 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
+        eoddDate:
+          type: number
     FileImport:
       title: FileImport
       type: object

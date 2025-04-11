@@ -5,6 +5,7 @@ import UserStateEditor from '../../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
 import { UserTrsRiskDisplay } from '../../UserDetails/UserTrsRiskDisplay';
+import UserEODDEditor from '../../UserDetails/UserEODDEditor';
 import s from './index.module.less';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
@@ -43,6 +44,7 @@ export default function SubHeader(props: Props) {
             title={`${firstLetterUpper(settings.userAlias)} status`}
             userRes={userRes}
           />
+          <UserEODDEditor title={`EODD`} userRes={userRes} />
         </div>
       </div>
       <Feature name={['RISK_SCORING', 'RISK_LEVELS']} fallback={''}>

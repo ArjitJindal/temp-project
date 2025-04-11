@@ -140,7 +140,7 @@ function internalUserToExternalUser(
 
 type UpdatableUserDetails = Pick<
   UserUpdateRequest,
-  'kycStatusDetails' | 'userStateDetails' | 'pepStatus' | 'tags'
+  'kycStatusDetails' | 'userStateDetails' | 'pepStatus' | 'tags' | 'eoddDate'
 >
 
 // User State Update Rule Instances are key in UpdatableUserDetails and value is RuleInstance
@@ -518,7 +518,8 @@ export class UserService {
     user: User | Business,
     updates: UpdatableUserDetails
   ): UserUpdateRequest {
-    const { kycStatusDetails, userStateDetails, pepStatus, tags } = updates
+    const { kycStatusDetails, userStateDetails, pepStatus, tags, eoddDate } =
+      updates
     const newKycStatus = kycStatusDetails?.status
     const oldKycStatus = user?.kycStatusDetails?.status
     const oldUserState = user?.userStateDetails?.state
@@ -550,6 +551,10 @@ export class UserService {
       updateableData.tags = tags
     }
 
+    if (eoddDate !== undefined && eoddDate !== user['eoddDate']) {
+      updateableData.eoddDate = eoddDate
+    }
+
     return updateableData
   }
 
@@ -571,6 +576,8 @@ export class UserService {
       kycStatusDetails: this.getKycStatusDetails,
       pepStatus: this.processPepStatusDetails,
       tags: this.processTagDetails,
+      eoddDate: (triggersOnHit: TriggersOnHit, eoddDate: number | undefined) =>
+        eoddDate,
     }
 
     for (const key in updateFunctions) {
@@ -1493,6 +1500,9 @@ export class UserService {
         ? { pepStatus: this.getUniquePepStatus(updateRequest.pepStatus) }
         : {}),
       ...(updateRequest.tags && { tags: updateRequest.tags }),
+      ...(updateRequest.eoddDate !== undefined && {
+        eoddDate: updateRequest.eoddDate,
+      }),
     }
   }
 
