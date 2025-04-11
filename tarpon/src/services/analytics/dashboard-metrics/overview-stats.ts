@@ -112,6 +112,7 @@ export class OverviewStatsDashboardMetric {
     ] = await Promise.all([
       casesCollection.countDocuments({
         caseStatus: { $in: ['OPEN', 'REOPENED'] },
+        createdTimestamp: { $lte: Date.now() },
       }),
       casesCollection
         .aggregate([
@@ -120,6 +121,7 @@ export class OverviewStatsDashboardMetric {
               'alerts.alertStatus': {
                 $in: ['OPEN', 'REOPENED'],
               },
+              createdTimestamp: { $lte: Date.now() },
             },
           },
           {
@@ -166,12 +168,14 @@ export class OverviewStatsDashboardMetric {
       SELECT count(*) as count
       FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
       WHERE caseStatus IN ('OPEN', 'REOPENED')
+        AND timestamp <= toUnixTimestamp64Milli(now64())
     `
     const alertsCountQuery = `
       SELECT count(*) as count
       FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
       ARRAY JOIN alerts as alert
       WHERE alert.2 IN ('OPEN', 'REOPENED')
+      AND alert.createdTimestamp <= toUnixTimestamp64Milli(now64())
     `
     // const sarReportsQuery = `
     //   SELECT count(*) as count
