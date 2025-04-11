@@ -37,6 +37,7 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
+import { useReasons } from '@/utils/reasons';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -54,6 +55,7 @@ export default function QaTable(props: Props) {
   const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
+  const closingResons = useReasons('CLOSURE');
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
@@ -277,13 +279,17 @@ export default function QaTable(props: Props) {
         key: 'filterClosingReason',
         showFilterByDefault: true,
         renderer: {
-          kind: 'dateTimeRange',
-          allowClear: true,
-          clearNotAllowedReason: 'You must select an interval to view alerts',
+          kind: 'select',
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+          options: closingResons.map((r) => ({
+            label: r,
+            value: r,
+          })),
         },
       },
     ]);
-  }, [filters]);
+  }, [filters, closingResons]);
 
   const handleChangeParams = useCallback(
     (params: AllParams<TableSearchParams>) => {
