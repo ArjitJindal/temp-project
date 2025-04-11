@@ -2,7 +2,6 @@ import { compact, first, flatMap, groupBy, map } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { FormValues } from './index';
 import { PEPStatus, PepRank } from '@/apis';
-import { message } from '@/components/library/Message';
 
 export function consolidatePEPStatus(array: PEPStatus[]): FormValues[] {
   const grouped = groupBy(array, (item) => `${item.isPepHit}-${item.pepRank}`);
@@ -30,23 +29,20 @@ export function expandPEPStatus(array: FormValues[]): PEPStatus[] {
   });
 }
 
-export function validatePEPStatus(array: PEPStatus[]) {
+export function validatePEPStatus(array: PEPStatus[]): string | null {
   const seenEntries = new Map<string, { isPepHit: boolean; pepRank?: PepRank }>();
 
   for (const entry of array) {
     const key = `${entry.isPepHit}-${entry.pepRank}-${entry.pepCountry}`;
     const currentEntry = { isPepHit: entry.isPepHit, pepRank: entry.pepRank };
     if (seenEntries.has(key)) {
-      message.error(
-        `Conflicting entries found ${
-          entry.pepCountry ? `for country: ${COUNTRIES[entry.pepCountry]}` : ''
-        }`,
-      );
-      return false;
+      return `Conflicting entries found ${
+        entry.pepCountry ? `for country: ${COUNTRIES[entry.pepCountry]}` : ''
+      }`;
     } else {
       seenEntries.set(key, currentEntry);
     }
   }
 
-  return true;
+  return null;
 }

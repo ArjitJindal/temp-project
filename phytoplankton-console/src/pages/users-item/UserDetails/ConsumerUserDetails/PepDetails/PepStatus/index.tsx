@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -17,6 +17,7 @@ import { message } from '@/components/library/Message';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { getErrorMessage } from '@/utils/lang';
 import { useHasPermissions } from '@/utils/user-utils';
+import Alert from '@/components/library/Alert';
 
 interface Props {
   userId: string;
@@ -63,13 +64,17 @@ export const PepStatusLabel = (props: Props) => {
 
   const api = useApi();
 
+  const pepStatusToUpdate = useMemo(() => expandPEPStatus(formValues), [formValues]);
+
+  const validationResult = useMemo(() => {
+    return validatePEPStatus(pepStatusToUpdate);
+  }, [pepStatusToUpdate]);
+
   const userUpdateMutation = useMutation(
     [],
     async () => {
-      const pepStatusToUpdate = expandPEPStatus(formValues);
-      const isValid = validatePEPStatus(pepStatusToUpdate);
-      if (!isValid) {
-        throw new Error('Conflicting entries found');
+      if (validationResult != null) {
+        throw new Error(validationResult);
       }
       await api.postConsumerUsersUserId({
         userId: userId,
@@ -107,7 +112,7 @@ export const PepStatusLabel = (props: Props) => {
         maskClosable={false}
         okText="Save"
         okProps={{
-          isDisabled: userUpdateMutation.isLoading,
+          isDisabled: userUpdateMutation.isLoading || validationResult != null,
           isLoading: userUpdateMutation.isLoading,
         }}
       >
@@ -120,7 +125,7 @@ export const PepStatusLabel = (props: Props) => {
               onDelete={() => handleDelete(index)}
             />
           ))}
-
+          {validationResult != null && <Alert type="ERROR">{validationResult}</Alert>}
           <Button
             className={s.addButton}
             onClick={() => {
