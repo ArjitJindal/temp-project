@@ -52,11 +52,12 @@ describe('Investigative Copilot', () => {
         expect(button).to.contain('Alert transactions');
       })
       .click();
-
+    cy.get('[data-cy="investigation-input"]').clear();
     // Go through each question type
     ['TRS score', 'Ontology', 'User details', 'Transactions by rule action'].forEach((text) => {
       cy.get('[data-cy="investigation-input"]').type(text);
       cy.get('[data-cy="investigation-suggestion-button"]').contains(text).click();
+      cy.get('[data-cy="investigation-input"]').clear();
     });
 
     cy.get('.ant-modal-title').parents('.ant-modal-header').find('button').click();
