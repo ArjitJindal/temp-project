@@ -116,7 +116,7 @@ export class AttributeSet extends Map<
     })
 
     const cleanAttributes = Object.fromEntries(
-      Object.entries(attributes.entries()).filter(([_, value]) => {
+      Array.from(attributes.entries()).filter(([_, value]) => {
         if (Array.isArray(value)) {
           return value.length > 0
         }
