@@ -82,6 +82,7 @@ export const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
 };
 
 interface Props {
+  caseId: string;
   caseItemRes: AsyncResource<Case>;
   expandedAlertId?: string;
   headerStickyElRef: HTMLDivElement | null;
@@ -97,7 +98,7 @@ interface CommentsHandlers {
 }
 
 function CaseDetails(props: Props) {
-  const { caseItemRes, headerStickyElRef, expandedAlertId, comments } = props;
+  const { caseId, caseItemRes, headerStickyElRef, expandedAlertId, comments } = props;
   useScrollToFocus();
   const navigate = useNavigate();
 
@@ -116,9 +117,7 @@ function CaseDetails(props: Props) {
         activeKey={tab}
         onChange={(newTab) => {
           navigate(
-            keepBackUrl(
-              makeUrl('/case-management/case/:id/:tab', { id: caseItem?.caseId, tab: newTab }),
-            ),
+            keepBackUrl(makeUrl('/case-management/case/:id/:tab', { id: caseId, tab: newTab })),
             { replace: true },
           );
         }}

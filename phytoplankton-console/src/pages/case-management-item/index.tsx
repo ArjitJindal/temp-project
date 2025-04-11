@@ -118,6 +118,7 @@ function CaseManagementItemPage() {
       disableHeaderPadding
     >
       <CaseDetails
+        caseId={caseId}
         caseItemRes={caseItemRes}
         headerStickyElRef={headerStickyElRef}
         expandedAlertId={expandedAlertId ? expandedAlertId : ''}
