@@ -56,17 +56,10 @@ export default function TransactionsTab(props: Props) {
   const filterSanctionsHitIds = sanctionsDetailsFilter
     ? sanctionsDetailsFilter.sanctionHitIds
     : undefined;
-  const filterSanctionsHitId = sanctionsDetailsFilter?.hitContext?.paymentMethodId
-    ? undefined
-    : filterSanctionsHitIds?.[0];
-  const filterPaymentMethodId = sanctionsDetailsFilter?.hitContext?.paymentMethodId;
+  const filterSanctionsHitId = filterSanctionsHitIds?.[0];
 
   const transactionsResponse = useCursorQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', {
-      ...params,
-      filterSanctionsHitId,
-      filterPaymentMethodId,
-    }),
+    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', { ...params, filterSanctionsHitId }),
     async ({ from, view }) => {
       if (alert.alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
@@ -101,7 +94,6 @@ export default function TransactionsTab(props: Props) {
         filterDestinationCountries: params['destinationAmountDetails.country'],
         filterOriginCountries: params['originAmountDetails.country'],
         filterSanctionsHitId: filterSanctionsHitId,
-        filterPaymentMethodId: filterPaymentMethodId,
       });
     },
   );

@@ -39,10 +39,10 @@ function ExpandedRowRenderer(props: Props) {
   } = props;
 
   const sanctionDetails = alert.ruleHitMeta?.sanctionsDetails ?? [];
-
-  const [selectedItem, setSelectedItem] = useState<SanctionsDetails | undefined>(
-    sanctionDetails[0],
+  const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
+    sanctionDetails[0]?.searchId,
   );
+  const sanctionsDetailsFilter = sanctionDetails.find((x) => x.searchId === sanctionsDetailsId);
 
   const tabItems = useAlertTabs({
     alert: alert,
@@ -51,16 +51,12 @@ function ExpandedRowRenderer(props: Props) {
     onTransactionSelect: onTransactionSelect,
     escalatedTransactionIds: escalatedTransactionIds,
     selectedSanctionsHitsIds: selectedSanctionsHitsIds,
-    sanctionsSearchIdFilter: selectedItem?.hitContext?.paymentMethodId
-      ? undefined
-      : alert.ruleId === 'R-169'
-      ? undefined
-      : selectedItem?.searchId,
-    paymentMethodIdFilter: selectedItem?.hitContext?.paymentMethodId,
+    sanctionsSearchIdFilter: sanctionsDetailsId,
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
-    sanctionsDetailsFilter: selectedItem,
+    sanctionsDetailsFilter: sanctionsDetailsFilter,
   });
+
   return (
     <Tabs
       items={tabItems.filter(({ key }) => !TABS_TO_HIDE_IN_TABLE.some((x) => x === key))}
@@ -68,24 +64,13 @@ function ExpandedRowRenderer(props: Props) {
       defaultActiveKey={AlertTabs.TRANSACTIONS}
       tabBarExtraContent={
         <Select
-          value={selectedItem?.hitContext?.paymentMethodId ?? selectedItem?.searchId}
+          value={sanctionsDetailsId}
           isDisabled={sanctionDetails.length < 2}
           options={sanctionDetails.map((detailsItem) => ({
             label: getOptionName(detailsItem),
-            value: detailsItem.hitContext?.paymentMethodId ?? detailsItem.searchId,
+            value: detailsItem.searchId,
           }))}
-          onChange={(value) => {
-            const selectedItem = sanctionDetails.find((item) => {
-              if (item.hitContext?.paymentMethodId === value) {
-                return true;
-              }
-              if (item.searchId === value && !item.hitContext?.paymentMethodId) {
-                return true;
-              }
-              return false;
-            });
-            setSelectedItem(selectedItem);
-          }}
+          onChange={setSanctionsDetailsId}
           allowClear={false}
         />
       }
@@ -118,8 +103,5 @@ function getOptionName(details: SanctionsDetails) {
   if (details.entityType) {
     result += ` (${humanizeConstant(details.entityType)})`;
   }
-  return (
-    result +
-    (details.hitContext?.paymentMethodId ? ` (${details.hitContext?.paymentMethodId})` : '')
-  );
+  return result;
 }

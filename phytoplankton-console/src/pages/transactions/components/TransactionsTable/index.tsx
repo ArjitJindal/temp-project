@@ -90,8 +90,6 @@ export interface TransactionsTableParams extends CommonParams {
   showDetailedView?: boolean;
   view?: TableListViewEnum;
   filterSanctionsHitIds?: string[];
-  filterPaymentDetailName?: string;
-  filterPaymentMethodId?: string;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {

@@ -16,29 +16,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
-const SUBJECT_FIELDS = [
-  'userId',
-  'entityType',
-  'searchTerm',
-  'entity',
-  'paymentMethodId',
-  'alertId',
-] as const
-
-const USER_ENTITY_FILTER_FIELDS = [
-  'userId',
-  'entityType',
-  'searchTerm',
-  'entity',
-] as const
-
-const OTHER_ENTITY_FILTER_FIELDS = [
-  'userId',
-  'entityType',
-  'searchTerm',
-  'entity',
-  'paymentMethodId',
-] as const
+const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
 
 export type WhitelistSubject = Pick<
   SanctionsWhitelistEntity,
@@ -143,13 +121,6 @@ export class SanctionsWhitelistEntityRepository {
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
-
-    // Choose filter fields based on entity type
-    const filterFields =
-      subject.entity === 'USER'
-        ? USER_ENTITY_FILTER_FIELDS
-        : OTHER_ENTITY_FILTER_FIELDS
-
     const filters = [
       // TODO change this after release.
       // https://github.com/flagright/orca/pull/4677
@@ -162,8 +133,8 @@ export class SanctionsWhitelistEntityRepository {
       {
         provider: provider,
       },
-      ...filterFields.map((key) => ({
-        $or: [{ [key]: subject[key] }],
+      ...SUBJECT_FIELDS.map((key) => ({
+        $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],
       })),
     ]
     return collection.find({ $and: filters }).limit(limit).toArray()
