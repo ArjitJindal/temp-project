@@ -180,7 +180,18 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   }
 
   await Promise.all(
-    tenantInfos.map((tenant) => sendCaseCreatedAlert(tenant.tenant.id))
+    tenantInfos.map((tenant) => {
+      try {
+        return sendCaseCreatedAlert(tenant.tenant.id)
+      } catch (e) {
+        logger.error(
+          `Failed to send case created alert: ${
+            (e as Error)?.message
+          } for tenant ${tenant.tenant.id}`,
+          e
+        )
+      }
+    })
   )
 
   if (envIs('dev')) {
