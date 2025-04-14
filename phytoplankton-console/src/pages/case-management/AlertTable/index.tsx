@@ -17,13 +17,14 @@ import { FalsePositiveTag } from './FalsePositiveTag';
 import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import {
-  Account,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   AlertStatus,
   ChecklistStatus,
   Comment,
   SanctionsHitStatus,
+  CaseStatusChange,
+  Account,
 } from '@/apis';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -145,6 +146,60 @@ interface Props<ModalProps> {
   expandedAlertId?: string;
   updateModalState: (newState: ModalProps) => void;
   setModalVisibility: (visibility: boolean) => void;
+}
+
+function getCheckerAction(
+  statusChanges: CaseStatusChange[],
+  accountMap: {
+    [accountId: string]: Account;
+  },
+) {
+  if (statusChanges && statusChanges.length >= 2) {
+    statusChanges.sort((a, b) => {
+      if (a.timestamp > b.timestamp) {
+        return -1;
+      }
+      return 1;
+    });
+
+    let checkerChange: CaseStatusChange | undefined = undefined,
+      makerChange: CaseStatusChange | undefined = undefined;
+    for (let i = 0; i < statusChanges.length; i++) {
+      const change = statusChanges[i];
+      const account = accountMap[change.userId];
+      if (account) {
+        if (account.isReviewer) {
+          checkerChange = change;
+          makerChange = undefined;
+        }
+        if (
+          account.reviewerId &&
+          (change.caseStatus === 'IN_REVIEW_CLOSED' || change.caseStatus === 'IN_REVIEW_ESCALATED')
+        ) {
+          makerChange = change;
+          if (checkerChange) {
+            break;
+          }
+        }
+      }
+    }
+    if (checkerChange && makerChange) {
+      if (makerChange.caseStatus === 'IN_REVIEW_ESCALATED') {
+        if (checkerChange.caseStatus === 'ESCALATED') {
+          return 'Escalation approved';
+        } else {
+          return 'Escalation rejected';
+        }
+      } else {
+        if (checkerChange.caseStatus === 'CLOSED') {
+          return 'Closure approved';
+        } else {
+          return 'Closure rejected';
+        }
+      }
+    }
+  }
+  return '-';
 }
 
 const getCommentForStatusChange = (body: string) => {
@@ -762,13 +817,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 }),
               ]
             : []) as TableColumn<TableAlertItem>[]),
-          helper.simple<'checkerAction'>({
-            title: 'Checker action',
-            key: 'checkerAction',
-            hideInTable: true,
-            exporting: true,
-            filtering: false,
-          }),
           helper.simple<'comments'>({
             title: 'Maker comment',
             key: 'comments',
@@ -791,6 +839,19 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             filtering: false,
             type: {
               stringify: (value) => commentsToString(value ?? [], users).trim(),
+            },
+          }),
+          helper.simple<'statusChanges'>({
+            title: 'Checker action',
+            key: 'statusChanges',
+            hideInTable: true,
+            filtering: false,
+            exporting: true,
+            type: {
+              stringify: (value) => {
+                const checkerAction = getCheckerAction(value ?? [], users);
+                return checkerAction ?? '-';
+              },
             },
           }),
           showReason &&

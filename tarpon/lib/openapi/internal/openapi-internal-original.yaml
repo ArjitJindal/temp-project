@@ -4778,10 +4778,6 @@ paths:
       description: ''
       parameters:
         - schema:
-            $ref: '#/components/schemas/TableListViewEnum'
-          in: query
-          name: view
-        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -12281,12 +12277,6 @@ components:
         - transactionCount
         - createdAt
         - userId
-    ReviewerActionEnum:
-      title: ReviewerActionEnum
-      type: string
-      enum:
-        - APPROVED
-        - DECLINED
     AlertQASamplingFilters:
       title: AlertQASamplingFilters
       type: object
@@ -12452,8 +12442,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SLAPolicyDetails'
-        checkerAction:
-          type: string
       required:
         - createdTimestamp
         - ruleInstanceId
@@ -12728,8 +12716,6 @@ components:
           type: array
           items:
             type: string
-        reviewerAction:
-          $ref: '#/components/schemas/ReviewerActionEnum'
         closeSourceCase:
           type: boolean
       required:

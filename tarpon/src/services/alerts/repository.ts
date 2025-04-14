@@ -1255,7 +1255,6 @@ export class AlertsRepository {
     alertIds: string[],
     caseIds: string[],
     statusChange: CaseStatusChange,
-    checkerAction?: { [alertId: string]: string },
     isLastInReview?: boolean
   ): Promise<{
     caseIdsWithAllAlertsSameStatus: string[]
@@ -1281,18 +1280,6 @@ export class AlertsRepository {
         isLastInReview
       )
     }
-
-    let alertCheckerAction = {}
-
-    if (checkerAction) {
-      alertCheckerAction = checkerAction
-    }
-
-    alertIds.forEach((alertId) => {
-      if (!(alertId in alertCheckerAction)) {
-        alertCheckerAction[alertId] = '-'
-      }
-    })
 
     await this.updateManyAlerts(
       {
@@ -1323,12 +1310,6 @@ export class AlertsRepository {
                               { $ifNull: ['$$alert.statusChanges', []] },
                               [statusChangePipline],
                             ],
-                          },
-                          checkerAction: {
-                            $getField: {
-                              field: { $toString: '$$alert.alertId' },
-                              input: { $literal: checkerAction },
-                            },
                           },
                         },
                       ],
