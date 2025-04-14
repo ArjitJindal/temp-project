@@ -1,6 +1,7 @@
 import { Forbidden } from 'http-errors'
 import { Credentials } from '@aws-sdk/client-sts'
 import { ManagedRoleName } from '../openapi-internal/ManagedRoleName'
+import { PermissionsAction } from '../openapi-internal/PermissionsAction'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { ContextUser, currentUser } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -168,6 +169,47 @@ export function assertPermissions(requiredPermissions: Permission[]) {
       )
     }
     return
+  }
+}
+
+export function assertResourceAccess(requiredResources: string[]) {
+  const context = getContext()
+  if (!context) {
+    throw new Forbidden('Unknown user')
+  }
+  const statements = context.statements
+
+  if (context.user?.role === 'root') {
+    assertAllowAccessTenant()
+    return
+  }
+
+  for (const requiredResource of requiredResources) {
+    const [action, resource] = requiredResource.split(':::')
+    let hasAccess = false // Deny by default
+
+    const statementsForAction =
+      statements?.filter((s) =>
+        s.actions.includes(action as PermissionsAction)
+      ) ?? []
+
+    for (const statement of statementsForAction) {
+      for (const statementResource of statement.resources) {
+        const [_, resourcePath] = statementResource.split(':::')
+
+        if (resourcePath === '*' || resource.startsWith(resourcePath)) {
+          hasAccess = true
+          break
+        }
+      }
+      if (hasAccess) {
+        break
+      }
+    }
+
+    if (!hasAccess) {
+      throw new Forbidden(`Missing required resource: ${requiredResource}`)
+    }
   }
 }
 

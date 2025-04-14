@@ -76,9 +76,9 @@ export class RoleService {
     tenantId: string,
     inputRole: CreateAccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
-    const permissionsV2 = getOptimizedPermissions(
+    const statements = getOptimizedPermissions(
       tenantId,
-      inputRole.permissions_v2 ?? []
+      inputRole.statements ?? []
     )
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
@@ -88,7 +88,7 @@ export class RoleService {
       type: 'DATABASE',
       params: {
         ...data,
-        permissions_v2: permissionsV2,
+        statements,
       },
     })
     const transformedRole = transformRole(data, data.permissions)
@@ -110,15 +110,15 @@ export class RoleService {
     id: string,
     inputRole: AccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
-    const permissionsV2 = getOptimizedPermissions(
+    const statements = getOptimizedPermissions(
       tenantId,
-      inputRole.permissions_v2 ?? []
+      inputRole.statements ?? []
     )
     const oldRole = await this.getRole(id)
     await this.auth0.updateRole(tenantId, id, inputRole)
     await this.cache.updateRole(tenantId, id, {
       ...inputRole,
-      permissions_v2: permissionsV2,
+      statements,
     })
     const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = (await accountsService.getTenantById(tenantId)) as Tenant

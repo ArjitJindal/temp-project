@@ -220,8 +220,8 @@ export function getAugmentedOpenapi(
           )
 
           const allPathParameters = new Set([
-            ...parentPathParameters,
-            ...pathParameterNames,
+            ...(parentPathParameters ?? []),
+            ...(pathParameterNames ?? []),
           ])
 
           flagrightExtension['resources'].forEach((r: string) => {

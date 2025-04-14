@@ -110,6 +110,10 @@ export function getApiRequiredPermissions(resource: string, method: string): Per
     return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_PERMISSIONS[`${resource}-${method}`]
 }
 
+export function getApiRequiredResources(resource: string, method: string): string[] {
+    return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_RESOURCES[`${resource}-${method}`]
+}
+
 export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_PERMISSIONS: {[key: string]: Permission[]} = {
 {{#operations}}
   {{#operation}}
@@ -118,6 +122,18 @@ export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecas
         "{{.}}"{{^-last}},{{/-last}}
         {{/vendorExtensions.x-flagright.permissions}}
       ]{{^-last}},{{/-last}}
+  {{/operation}}
+{{/operations}}
+}
+
+export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_RESOURCES: {[key: string]: string[]} = {
+{{#operations}}
+  {{#operation}}
+    "{{path}}-{{httpMethod}}": [
+        {{#vendorExtensions.x-flagright.resources}}
+        "{{.}}"{{^-last}},{{/-last}}
+        {{/vendorExtensions.x-flagright.resources}}
+    ],
   {{/operation}}
 {{/operations}}
 }

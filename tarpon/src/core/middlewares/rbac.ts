@@ -5,13 +5,16 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getContext } from '../utils/context-storage'
+import { hasFeature } from '../utils/context'
 import {
   assertPermissions,
   assertProductionAccess,
+  assertResourceAccess,
   JWTAuthorizerResult,
 } from '@/@types/jwt'
 import {
   getAlwaysAllowedAccess,
+  getApiRequiredResources,
   getApiRequiredPermissions as getInternalApiRequiredPermissions,
 } from '@/@types/openapi-internal-custom/DefaultApi'
 import { determineApi } from '@/core/utils/api'
@@ -44,6 +47,20 @@ export const rbacMiddleware =
     // if api path ends with any of the exemptedApiPaths, then skip production access check
     if (!getAlwaysAllowedAccess(apiPath, httpMethod)) {
       assertProductionAccess()
+    }
+
+    if (hasFeature('RBAC_V2')) {
+      const requiredResources = getApiRequiredResources(apiPath, httpMethod)
+      // replace path parameters with actual values
+      const pathParameters = event.pathParameters
+      const requiredResourcesWithValues = requiredResources.map((resource) => {
+        for (const [key, value] of Object.entries(pathParameters ?? {})) {
+          resource = resource.replace(new RegExp(`{${key}}`, 'g'), value ?? '')
+        }
+        return resource
+      })
+
+      assertResourceAccess(requiredResourcesWithValues)
     }
 
     const tenantId = event.requestContext.authorizer.tenantId

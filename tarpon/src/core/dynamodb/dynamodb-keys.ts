@@ -494,6 +494,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#roles-by-namespace:${namespace}#${auth0Domain}`,
     SortKeyID: roleId,
   }),
+  ROLES_BY_NAME: (auth0Domain: string, roleName: string) => ({
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#roles-by-name#${auth0Domain}`,
+    SortKeyID: roleName,
+  }),
   RULE_INSTANCE_THRESHOLD_OPTIMIZATION_DATA: (
     tenantId: string,
     ruleInstanceId: string,

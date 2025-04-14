@@ -190,6 +190,11 @@ export const featureDescriptions: Record<
     description: 'Enables Chainalysis',
     tag: FeatureTag.ENG,
   },
+  RBAC_V2: {
+    title: 'RBAC V2',
+    description: 'Enables RBAC V2',
+    tag: FeatureTag.WIP,
+  },
 };
 
 export default function SuperAdminPanel() {

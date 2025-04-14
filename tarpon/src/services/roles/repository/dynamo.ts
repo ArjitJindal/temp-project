@@ -22,6 +22,7 @@ import { traceable } from '@/core/xray'
 import { Tenant } from '@/services/accounts/repository'
 import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
+import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 
 @traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
@@ -68,6 +69,14 @@ export class DynamoRolesRepository extends BaseRolesRepository {
           ),
           ...role,
         },
+      })
+    )
+
+    await this.dynamoClient.send(
+      new PutCommand({
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+        Item: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role.name),
       })
     )
 
@@ -161,6 +170,25 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     return roles.Items as AccountRole[]
   }
 
+  public async getRoleStatements(
+    namespace: string,
+    name: string
+  ): Promise<PermissionStatements[]> {
+    const role = await this.dynamoClient.send(
+      new GetCommand({
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+        Key: DynamoDbKeys.ROLES_BY_NAME(
+          this.auth0Domain,
+          getNamespacedRoleName(namespace, name)
+        ),
+        ProjectionExpression: 'statements',
+      })
+    )
+
+    return role.Item?.statements as PermissionStatements[]
+  }
+
   public async deleteRole(id: string) {
     const role = await this.getRole(id)
 
@@ -181,6 +209,14 @@ export class DynamoRolesRepository extends BaseRolesRepository {
           this.getTenantId(getNamespace(role?.name || '')),
           id
         ),
+      })
+    )
+
+    await this.dynamoClient.send(
+      new DeleteCommand({
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+        Key: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role?.name || ''),
       })
     )
   }

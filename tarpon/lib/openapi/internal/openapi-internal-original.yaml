@@ -11535,6 +11535,7 @@ components:
         - 314A
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
+        - RBAC_V2
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -11567,7 +11568,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
-        permissions_v2:
+        statements:
           type: array
           items:
             $ref: '#/components/schemas/PermissionStatements'
@@ -11589,7 +11590,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
-        permissions_v2:
+        statements:
           type: array
           items:
             $ref: '#/components/schemas/PermissionStatements'
