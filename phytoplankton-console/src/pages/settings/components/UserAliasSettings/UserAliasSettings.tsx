@@ -18,18 +18,20 @@ const UserAliasSettings = () => {
   const mutateTenantSettings = useUpdateTenantSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [alias, setAlias] = useState(settings.userAlias || '');
+  const [isDisabled, setIsDisabled] = useState(false);
 
   return (
     <SettingsCard title="User alias" description="Configure users display name in console">
       <Form<FormValues>
         className={s.root}
         initialValues={{
-          alias: settings.userAlias || '',
+          alias: settings.userAlias || 'user',
         }}
         onSubmit={() => {
           setIsLoading(true);
-          mutateTenantSettings.mutateAsync({ userAlias: alias });
+          mutateTenantSettings.mutateAsync({ userAlias: alias || '' });
           setIsLoading(false);
+          setIsDisabled(true);
         }}
       >
         <p className={s.aliasLabel}>User alias</p>
@@ -37,12 +39,15 @@ const UserAliasSettings = () => {
           <TextInput
             name={'alias'}
             value={alias}
-            onChange={(value) => setAlias((value?.toLocaleLowerCase() ?? '').slice(0, 30))}
+            onChange={(value) => {
+              setAlias((value?.toLocaleLowerCase() ?? '').slice(0, 30));
+              setIsDisabled(false);
+            }}
           />
         </div>
         <Button
           isLoading={isLoading}
-          isDisabled={!alias || alias === settings.userAlias}
+          isDisabled={isDisabled || alias === settings.userAlias}
           htmlType="submit"
         >
           Update
