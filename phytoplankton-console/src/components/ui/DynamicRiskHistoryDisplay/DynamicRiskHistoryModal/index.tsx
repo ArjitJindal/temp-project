@@ -134,7 +134,13 @@ function DynamicRiskHistoryModal(props: Props) {
   ]);
 
   return (
-    <Modal onCancel={onCancel} isOpen={isOpen} width="XL" hideFooter title="CRA Score">
+    <Modal
+      onCancel={onCancel}
+      isOpen={isOpen}
+      width="XL"
+      hideFooter
+      title="Customer Risk Assessment (CRA) score"
+    >
       <div className={styles.root}>
         <div className={styles.header}>
           <MainPanel
