@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { cloneDeep, omit, uniq } from 'lodash'
 import { StackConstants } from '../constants'
+import { isValidResource } from '@/services/rbac/utils/permissions'
 
 type PathToLambda = { [key: string]: string }
 type AuthorizationType = 'JWT' | 'API_KEY'
@@ -203,6 +204,47 @@ export function getAugmentedOpenapi(
           flagrightExtension['permissions'].forEach((p: string) => {
             if (openapi.components.schemas['Permission'].enum.indexOf(p) < 0) {
               throw new Error(`Invalid x-flagright permission: ${p}`)
+            }
+          })
+        }
+
+        if (flagrightExtension['resources']) {
+          const schema = openapi.paths[path]
+          const parentPathParameters = schema?.parameters
+            ?.filter((p: any) => p.in === 'path')
+            .map((p: any) => p.name)
+          const pathParameterNames = Object.keys(schema).flatMap((key) =>
+            schema[key].parameters
+              .filter((p: any) => p.in === 'path')
+              .map((p: any) => p.name)
+          )
+
+          const allPathParameters = new Set([
+            ...parentPathParameters,
+            ...pathParameterNames,
+          ])
+
+          flagrightExtension['resources'].forEach((r: string) => {
+            const [action, resource] = r.split(':::')
+            if (action !== 'read' && action !== 'write') {
+              throw new Error(`Invalid x-flagright action: ${action}`)
+            }
+            if (!isValidResource(resource, [action])) {
+              throw new Error(`Invalid x-flagright resource: ${r}`)
+            }
+
+            // get everything which is in format {paramName} and remove paranthesis
+            const paramNames = resource
+              .match(/{(\w+)}/g)
+              ?.map((p) => p.replace('{', '').replace('}', ''))
+
+            // if narrative Template id in paramNames but not in pathParameterNamesSet, throw error
+            if (paramNames?.some((p) => !allPathParameters.has(p))) {
+              throw new Error(
+                `Path parameter ${paramNames?.find(
+                  (p) => !allPathParameters.has(p)
+                )} is required but not in path parameters`
+              )
             }
           })
         }

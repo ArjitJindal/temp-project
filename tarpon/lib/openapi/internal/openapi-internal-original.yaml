@@ -6856,6 +6856,8 @@ paths:
       x-flagright:
         permissions:
           - settings:case-management:write
+        resources:
+          - write:::settings/case-management/narrative-templates/template:{narrativeTemplateId}
       responses:
         '200':
           description: OK

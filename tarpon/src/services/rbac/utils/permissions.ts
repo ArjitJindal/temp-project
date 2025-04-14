@@ -530,32 +530,11 @@ const traverseNode = (node: PermissionsNode) => {
   return node
 }
 
-export const isPermissionValidFromTree = (data: {
-  tenantId: string
-  permission: string
+export const isValidResource = (
+  resource: string,
   action: PermissionsAction[]
-}) => {
-  const { tenantId, permission, action } = data
-  const [prefix, permissionPath] = permission.split(':::')
-
-  const splitPrefix = prefix.split(':')
-
-  // first part of prefix should be frn
-  if (splitPrefix[0] !== 'frn') {
-    return false
-  }
-
-  // second part of prefix should be console right now we hard code it
-  if (splitPrefix[1] !== 'console' && splitPrefix[1] !== '*') {
-    return false
-  }
-
-  // third part of prefix should be tenantId
-  if (splitPrefix[2] !== tenantId && splitPrefix[2] !== '*') {
-    return false
-  }
-
-  const pathParts = permissionPath.split('/')
+) => {
+  const pathParts = resource.split('/')
   const currentActions = action
 
   const validateNode = (
@@ -614,6 +593,34 @@ export const isPermissionValidFromTree = (data: {
   }
 
   return validatePath(pathParts, PERMISSIONS_LIBRARY)
+}
+
+export const isPermissionValidFromTree = (data: {
+  tenantId: string
+  permission: string
+  action: PermissionsAction[]
+}) => {
+  const { tenantId, permission, action } = data
+  const [prefix, permissionPath] = permission.split(':::')
+
+  const splitPrefix = prefix.split(':')
+
+  // first part of prefix should be frn
+  if (splitPrefix[0] !== 'frn') {
+    return false
+  }
+
+  // second part of prefix should be console right now we hard code it
+  if (splitPrefix[1] !== 'console' && splitPrefix[1] !== '*') {
+    return false
+  }
+
+  // third part of prefix should be tenantId
+  if (splitPrefix[2] !== tenantId && splitPrefix[2] !== '*') {
+    return false
+  }
+
+  return isValidResource(permissionPath, action)
 }
 
 export const convertV1PermissionToV2 = (

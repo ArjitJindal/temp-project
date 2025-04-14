@@ -65,11 +65,11 @@ jobs:
         working-directory: "tarpon"
       - name: Install nango
         run: npm install -g nango
-      - name: Format and prepare openapi
-        run: yarn run openapi:format && yarn run openapi:prepare
-        working-directory: "tarpon"
       - name: Build tarpon
         run: yarn run build:local
+        working-directory: "tarpon"
+      - name: Format and prepare openapi
+        run: yarn run openapi:format && yarn run openapi:prepare
         working-directory: "tarpon"
       - name: Typecheck tarpon
         run: yarn run tsc:ci
