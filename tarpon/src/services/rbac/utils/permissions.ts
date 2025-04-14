@@ -1,3 +1,4 @@
+import { compact } from 'lodash'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { PermissionsAction } from '@/@types/openapi-internal/PermissionsAction'
@@ -709,4 +710,181 @@ export const convertV1PermissionToV2 = (
     { actions: ['read', 'write'], resources: Array.from(readWrite) },
     { actions: ['read'], resources: Array.from(readOnly) },
   ]
+}
+
+type Resource = {
+  id: string
+  children?: Resource[]
+  items?: string[]
+}
+
+const parsePath = (resource: string): string[] => {
+  return compact(resource.replace(/^frn:console:[^:]*:::/, '').split('/'))
+}
+
+const buildGrantedTree = (resources: string[]): Resource[] => {
+  const root: Resource = { id: 'root', children: [] }
+
+  for (const path of resources) {
+    const parts = parsePath(path)
+    let current = root
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+
+      if (part === '*' && i === parts.length - 1) {
+        break
+      }
+
+      if (!current.children) {
+        current.children = []
+      }
+
+      if (part.includes(':')) {
+        const [id, resource] = part.split(':')
+        let next = current.children.find((child) => child.id === id)
+        if (!next) {
+          next = { id, items: [] }
+          current.children.push(next)
+        }
+        if (!next.items) {
+          next.items = []
+        }
+        if (!next.items.includes(resource)) {
+          next.items.push(resource)
+        }
+        current = next
+        continue
+      }
+
+      let next = current.children.find((child) => child.id === part)
+      if (!next) {
+        next = { id: part }
+        if (parts[i + 1] !== '*') {
+          next.children = []
+        }
+        current.children.push(next)
+      }
+      current = next
+    }
+  }
+
+  return root.children ?? []
+}
+
+export const convertToFrns = (
+  tenantId: string,
+  permissions: Resource[] | string,
+  base = `frn:console:${tenantId}:::`,
+  parentPath: string[] = []
+): string[] => {
+  if (typeof permissions === 'string') {
+    return [permissions]
+  }
+
+  const frns: string[] = []
+
+  for (const node of permissions) {
+    const path = [...parentPath, node.id]
+
+    if (!node.children || node.children.length === 0) {
+      if (node.items) {
+        node.items.forEach((item) => {
+          frns.push(`${base}${path.join('/')}:${item}/*`)
+        })
+      } else {
+        frns.push(`${base}${path.join('/')}` + '/*')
+      }
+    } else {
+      const childFrns = convertToFrns(tenantId, node.children, base, path)
+      frns.push(...childFrns)
+    }
+  }
+
+  return frns
+}
+export const getOptimizedPermissions = (
+  tenantId: string,
+  resources: string[]
+): string[] => {
+  const grantedTree = buildGrantedTree(resources)
+  if (grantedTree.length === 0) {
+    return []
+  }
+  const optimized = optimizePermissions(
+    grantedTree,
+    PERMISSIONS_LIBRARY
+  ).optimized
+
+  const noChildrenInAll = optimized.every(
+    (node) => !node.children || node.children.length === 0
+  )
+
+  if (noChildrenInAll) {
+    const allFirstLevelResources = PERMISSIONS_LIBRARY.map((node) => node.id)
+    const allFirstLevelResourcesInOptimized = optimized.map((node) => node.id)
+    const everyResourceOfLevel1Exists = allFirstLevelResources.every((node) =>
+      allFirstLevelResourcesInOptimized.includes(node)
+    )
+
+    if (everyResourceOfLevel1Exists) {
+      return [`frn:console:${tenantId}:::*`]
+    }
+
+    return convertToFrns(tenantId, optimized)
+  }
+
+  return convertToFrns(tenantId, optimized)
+}
+
+export const optimizePermissions = (
+  grantedTree: Resource[],
+  permissionLib: PermissionsNode[]
+): { optimized: Resource[]; skipped: boolean } => {
+  const optimized: Resource[] = []
+  let skipped = false
+
+  for (const node of grantedTree) {
+    const libNode = permissionLib.find((n) => n.id === node.id)
+    if (!libNode) {
+      continue
+    }
+    if (node.items) {
+      skipped = true
+      optimized.push({
+        id: node.id,
+        items: node.items,
+      })
+      continue
+    }
+
+    if (!libNode.children || !node.children) {
+      optimized.push({ id: node.id })
+      continue
+    }
+
+    const { optimized: optimizedChildren, skipped: skippedChildren } =
+      optimizePermissions(node.children, libNode.children)
+
+    skipped = skipped || skippedChildren
+    if (Array.isArray(optimizedChildren)) {
+      const checkAllIdsExists = libNode.children.every((child) =>
+        optimizedChildren.some(
+          (optimizedChild) =>
+            optimizedChild.id === child.id && !optimizedChild.items?.length
+        )
+      )
+      if (checkAllIdsExists && !skippedChildren) {
+        optimized.push({ id: node.id })
+      } else if (optimizedChildren.length > 0) {
+        optimized.push({
+          id: node.id,
+          children: optimizedChildren,
+        })
+      }
+    } else {
+      optimized.push({ id: node.id })
+    }
+  }
+
+  return { optimized, skipped }
 }

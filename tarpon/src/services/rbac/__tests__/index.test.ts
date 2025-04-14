@@ -1,6 +1,10 @@
 import fs from 'fs'
 import path from 'path'
-import { isPermissionValidFromTree } from '../utils/permissions'
+import {
+  convertToFrns,
+  getOptimizedPermissions,
+  isPermissionValidFromTree,
+} from '../utils/permissions'
 import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
 
 describe('default roles', () => {
@@ -156,5 +160,65 @@ describe('isPermissionValidFromTree', () => {
         })
       ).toBe(true)
     })
+  })
+})
+
+describe('convertToFrns', () => {
+  it('should convert a resource to an array of FRNs', () => {
+    const frns = convertToFrns('test-tenant', [
+      {
+        id: 'case-management',
+        children: [
+          {
+            id: 'case-overview',
+            children: [
+              { id: 'case-1', items: ['data-1', 'data-2'] },
+              { id: 'case-2', items: ['data-3', 'data-4'] },
+            ],
+          },
+          {
+            id: 'case-overview-2',
+          },
+        ],
+      },
+      {
+        id: 'case-management-2',
+      },
+    ])
+    expect(frns).toEqual([
+      'frn:console:test-tenant:::case-management/case-overview/case-1:data-1/*',
+      'frn:console:test-tenant:::case-management/case-overview/case-1:data-2/*',
+      'frn:console:test-tenant:::case-management/case-overview/case-2:data-3/*',
+      'frn:console:test-tenant:::case-management/case-overview/case-2:data-4/*',
+      'frn:console:test-tenant:::case-management/case-overview-2/*',
+      'frn:console:test-tenant:::case-management-2/*',
+    ])
+  })
+})
+
+describe('getOptimizedPermissions', () => {
+  it('should optimize permissions', () => {
+    const admin = DEFAULT_ROLES_V2.find((p) => p.role === 'admin')
+    const frns = getOptimizedPermissions(
+      'test-tenant',
+      admin?.permissions[0].resources ?? []
+    )
+    expect(frns).toEqual(['frn:console:test-tenant:::*'])
+  })
+
+  it('should not change dynamic permissions', () => {
+    const frns = getOptimizedPermissions('test-tenant', [
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
+      'frn:console:test-tenant:::settings/system-config/default-values/currency/*',
+      'frn:console:test-tenant:::settings/system-config/default-values/timezone/*',
+      'frn:console:test-tenant:::settings/system-config/production-access-control/*',
+    ])
+
+    expect(frns).toEqual([
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
+      'frn:console:test-tenant:::settings/system-config/*',
+    ])
   })
 })
