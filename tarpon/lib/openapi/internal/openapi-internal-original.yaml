@@ -11569,6 +11569,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
+        permissions_v2:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionStatements'
       required:
         - name
         - description
@@ -11587,6 +11591,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
+        permissions_v2:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionStatements'
       required:
         - id
         - name

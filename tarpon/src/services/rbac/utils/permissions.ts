@@ -5,6 +5,7 @@ import { PermissionsAction } from '@/@types/openapi-internal/PermissionsAction'
 import { PermissionsResponse } from '@/@types/openapi-internal/PermissionsResponse'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { Permissions, PermissionsNode } from '@/@types/rbac/permissions'
+import { generateChecksum } from '@/utils/object'
 
 export const PERMISSIONS_LIBRARY: Permissions = [
   {
@@ -802,38 +803,81 @@ export const convertToFrns = (
 
   return frns
 }
+
 export const getOptimizedPermissions = (
   tenantId: string,
-  resources: string[]
-): string[] => {
-  const grantedTree = buildGrantedTree(resources)
-  if (grantedTree.length === 0) {
-    return []
+  resources: PermissionStatements[]
+): PermissionStatements[] => {
+  const map = new Map<
+    string,
+    { actions: PermissionsAction[]; resources: Set<string> }
+  >()
+  const optimizedPermissions: PermissionStatements[] = []
+
+  for (const statement of resources) {
+    const hashOfActions = generateChecksum(statement.actions)
+    if (!map.has(hashOfActions)) {
+      map.set(hashOfActions, {
+        actions: statement.actions,
+        resources: new Set(statement.resources),
+      })
+    } else {
+      for (const resource of statement.resources) {
+        map.get(hashOfActions)?.resources.add(resource)
+      }
+    }
   }
-  const optimized = optimizePermissions(
-    grantedTree,
-    PERMISSIONS_LIBRARY
-  ).optimized
 
-  const noChildrenInAll = optimized.every(
-    (node) => !node.children || node.children.length === 0
-  )
+  for (const [_, { actions, resources }] of map.entries()) {
+    const grantedTree = buildGrantedTree(Array.from(resources))
+    if (grantedTree.length === 0) {
+      continue
+    }
+    const optimized = optimizePermissions(
+      grantedTree,
+      PERMISSIONS_LIBRARY
+    ).optimized
 
-  if (noChildrenInAll) {
-    const allFirstLevelResources = PERMISSIONS_LIBRARY.map((node) => node.id)
-    const allFirstLevelResourcesInOptimized = optimized.map((node) => node.id)
-    const everyResourceOfLevel1Exists = allFirstLevelResources.every((node) =>
-      allFirstLevelResourcesInOptimized.includes(node)
+    const noChildrenInAll = optimized.every(
+      (node) => !node.children || node.children.length === 0
     )
 
-    if (everyResourceOfLevel1Exists) {
-      return [`frn:console:${tenantId}:::*`]
+    if (noChildrenInAll) {
+      const allFirstLevelResources = new Set(
+        PERMISSIONS_LIBRARY.map((node) => node.id)
+      )
+      const allFirstLevelResourcesInOptimized = new Set(
+        optimized.map((node) => node.id)
+      )
+
+      const everyResourceOfLevel1Exists = Array.from(
+        allFirstLevelResources
+      ).every((node) => allFirstLevelResourcesInOptimized.has(node))
+
+      if (everyResourceOfLevel1Exists) {
+        optimizedPermissions.push({
+          actions,
+          resources: [`frn:console:${tenantId}:::*`],
+        })
+
+        continue
+      }
+
+      optimizedPermissions.push({
+        actions,
+        resources: convertToFrns(tenantId, optimized),
+      })
+
+      continue
     }
 
-    return convertToFrns(tenantId, optimized)
+    optimizedPermissions.push({
+      actions,
+      resources: convertToFrns(tenantId, optimized),
+    })
   }
 
-  return convertToFrns(tenantId, optimized)
+  return optimizedPermissions
 }
 
 export const optimizePermissions = (

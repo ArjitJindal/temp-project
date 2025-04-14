@@ -201,24 +201,39 @@ describe('getOptimizedPermissions', () => {
     const admin = DEFAULT_ROLES_V2.find((p) => p.role === 'admin')
     const frns = getOptimizedPermissions(
       'test-tenant',
-      admin?.permissions[0].resources ?? []
+      admin?.permissions ?? []
     )
-    expect(frns).toEqual(['frn:console:test-tenant:::*'])
+    expect(frns).toEqual([
+      {
+        actions: ['read', 'write'],
+        resources: ['frn:console:test-tenant:::*'],
+      },
+    ])
   })
 
   it('should not change dynamic permissions', () => {
     const frns = getOptimizedPermissions('test-tenant', [
-      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
-      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
-      'frn:console:test-tenant:::settings/system-config/default-values/currency/*',
-      'frn:console:test-tenant:::settings/system-config/default-values/timezone/*',
-      'frn:console:test-tenant:::settings/system-config/production-access-control/*',
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
+          'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
+          'frn:console:test-tenant:::settings/system-config/default-values/currency/*',
+          'frn:console:test-tenant:::settings/system-config/default-values/timezone/*',
+          'frn:console:test-tenant:::settings/system-config/production-access-control/*',
+        ],
+      },
     ])
 
     expect(frns).toEqual([
-      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
-      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
-      'frn:console:test-tenant:::settings/system-config/*',
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
+          'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
+          'frn:console:test-tenant:::settings/system-config/*',
+        ],
+      },
     ])
   })
 })

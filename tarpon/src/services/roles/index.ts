@@ -4,6 +4,7 @@ import { memoize } from 'lodash'
 import { AccountsService } from '../accounts'
 import { Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { getOptimizedPermissions } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
 import { isInNamespace, transformRole } from './utils'
@@ -75,13 +76,20 @@ export class RoleService {
     tenantId: string,
     inputRole: CreateAccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
+    const permissionsV2 = getOptimizedPermissions(
+      tenantId,
+      inputRole.permissions_v2 ?? []
+    )
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
       params: inputRole,
     })
     await this.cache.createRole(tenantId, {
       type: 'DATABASE',
-      params: data,
+      params: {
+        ...data,
+        permissions_v2: permissionsV2,
+      },
     })
     const transformedRole = transformRole(data, data.permissions)
     return {
@@ -102,9 +110,16 @@ export class RoleService {
     id: string,
     inputRole: AccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
+    const permissionsV2 = getOptimizedPermissions(
+      tenantId,
+      inputRole.permissions_v2 ?? []
+    )
     const oldRole = await this.getRole(id)
     await this.auth0.updateRole(tenantId, id, inputRole)
-    await this.cache.updateRole(tenantId, id, inputRole)
+    await this.cache.updateRole(tenantId, id, {
+      ...inputRole,
+      permissions_v2: permissionsV2,
+    })
     const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = (await accountsService.getTenantById(tenantId)) as Tenant
     const users = await this.getUsersByRole(id, tenant)
