@@ -188,6 +188,7 @@ export class ReportRepository {
       newReport = {
         ...reportPayload,
         id: reportPayload.id ?? (await this.getId()),
+        createdAt: Date.now(),
       }
     }
 

@@ -20,6 +20,7 @@ describe('sar-details', () => {
       reportId: '1',
       status: 'SUBMISSION_SUCCESSFUL',
       region: 'US',
+      createdAt: 1745971200000,
     })
     const user = getTestUser({
       userId: 'U-1',
@@ -33,6 +34,7 @@ describe('sar-details', () => {
         reportId: '1',
         status: 'SUBMISSION_SUCCESSFUL',
         region: 'US',
+        createdAt: 1745971200000,
       },
     ])
   })

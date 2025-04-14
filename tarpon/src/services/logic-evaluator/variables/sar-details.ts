@@ -56,6 +56,11 @@ export const SAR_DETAILS: CommonUserLogicVariable = {
         type: 'text',
         valueSources: ['value', 'field', 'func'],
       },
+      createdAt: {
+        label: 'SAR Created At',
+        type: 'datetime',
+        valueSources: ['value', 'field', 'func'],
+      },
     },
   },
   requiredFeatures: ['SAR'],

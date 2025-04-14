@@ -11760,6 +11760,9 @@ components:
           $ref: '#/components/schemas/ReportStatus'
         region:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        createdAt:
+          type: number
+          minimum: 1262300400000
       required:
         - reportId
         - status
