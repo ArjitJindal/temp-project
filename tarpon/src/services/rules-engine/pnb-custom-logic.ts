@@ -1635,7 +1635,7 @@ const CONFLICTING_RULES = {
     'pnb-internal-trigger-complete-risk-levels-destination-user',
 }
 
-export const getUsersForPNB = async (
+export const getMohaUsersForPNB = async (
   getUsersFromLists: (
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
@@ -1646,12 +1646,6 @@ export const getUsersForPNB = async (
   usersCollection: Collection<InternalUser>,
   ruleInstances?: RuleInstance[]
 ) => {
-  const userIdFromODDList = await getUserIdFromODDList(
-    getUsersFromLists,
-    tenantId,
-    dynamoDb,
-    ruleInstances
-  )
   const { userIdFromMOHAList, matchedMohaUsers } =
     await getUserIdFromMOHARuleList(
       getUsersFromLists,
@@ -1660,13 +1654,8 @@ export const getUsersForPNB = async (
       usersCollection,
       ruleInstances
     )
-
   const targetUserIds = new Set<string>()
   const allNames: Set<string> = new Set()
-
-  userIdFromODDList.forEach((u) => {
-    targetUserIds.add(u.key)
-  })
   matchedMohaUsers.forEach((u) => {
     targetUserIds.add(u.userId)
   })
@@ -1675,6 +1664,32 @@ export const getUsersForPNB = async (
     if (!isMatched) {
       allNames.add(m.key)
     }
+  })
+  return { targetUserIds, allNames }
+}
+
+export const getODDUsersForPNB = async (
+  getUsersFromLists: (
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    listIds: string[]
+  ) => Promise<{ key: string; value: string }[]>,
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  ruleInstances?: RuleInstance[]
+) => {
+  const userIdFromODDList = await getUserIdFromODDList(
+    getUsersFromLists,
+    tenantId,
+    dynamoDb,
+    ruleInstances
+  )
+
+  const targetUserIds = new Set<string>()
+  const allNames: Set<string> = new Set()
+
+  userIdFromODDList.forEach((u) => {
+    targetUserIds.add(u.key)
   })
 
   return { targetUserIds, allNames }

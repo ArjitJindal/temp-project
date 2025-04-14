@@ -32,6 +32,7 @@ import {
   ENGINEERING_ON_CALL_GROUP_ID,
   INCIDENTS_BUGS_CHANNEL_ID,
 } from '@/utils/slack'
+import { BatchJob } from '@/@types/batch-job'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
@@ -66,6 +67,12 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const commonDataTenantIds: string[] = []
   await Promise.all(
     tenantInfos.flatMap(async (tenant) => {
+      const batchJobs: BatchJob[] = [
+        {
+          type: 'PERIODIC_SCREENING_USER_RULE',
+          tenantId: tenant.tenant.id,
+        },
+      ]
       const tenantRepository = new TenantRepository(tenant.tenant.id, {
         dynamoDb,
       })
@@ -76,36 +83,34 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
         features?.map((feature) => FEATURE_FLAG_PROVIDER_MAP[feature])
       )
       if (providers.length && isSanctionsDataFetchTenantSpecific(providers)) {
-        return [
-          sendBatchJobCommand({
-            type: 'SANCTIONS_DATA_FETCH',
-            tenantId: tenant.tenant.id,
-            providers: getTenantSpecificProviders(providers),
-            parameters: {
-              from: dayjs().subtract(1, 'day').toISOString(),
-            },
-          }),
-          sendBatchJobCommand({
-            type: 'DELTA_SANCTIONS_DATA_FETCH',
-            tenantId: tenant.tenant.id,
-            providers: getTenantSpecificProviders(providers),
-            parameters: {
-              from: dayjs().subtract(1, 'day').toISOString(),
-              ongoingScreeningTenantIds: [tenant.tenant.id],
-            },
-          }),
-        ]
+        batchJobs.push({
+          type: 'SANCTIONS_DATA_FETCH',
+          tenantId: tenant.tenant.id,
+          providers: getTenantSpecificProviders(providers),
+          parameters: {
+            from: dayjs().subtract(1, 'day').toISOString(),
+          },
+        })
+        batchJobs.push({
+          type: 'DELTA_SANCTIONS_DATA_FETCH',
+          tenantId: tenant.tenant.id,
+          providers: getTenantSpecificProviders(providers),
+          parameters: {
+            from: dayjs().subtract(1, 'day').toISOString(),
+            ongoingScreeningTenantIds: [tenant.tenant.id],
+          },
+        })
       } else if (providers.length) {
         commonDataTenantIds.push(tenant.tenant.id)
         return []
       } else {
-        return [
-          sendBatchJobCommand({
-            type: 'ONGOING_SCREENING_USER_RULE',
-            tenantId: tenant.tenant.id,
-          }),
-        ]
+        batchJobs.push({
+          type: 'ONGOING_SCREENING_USER_RULE',
+          tenantId: tenant.tenant.id,
+        })
       }
+      await Promise.all(batchJobs.map((job) => sendBatchJobCommand(job)))
+      return batchJobs
     })
   )
   const mongoDb = await getMongoDbClient()

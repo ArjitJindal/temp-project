@@ -75,6 +75,11 @@ export type OngoingScreeningUserRuleBatchJob = {
   to?: string // Optionally process a batch of users to this ID
 }
 
+export type PeriodicScreeningUserRuleBatchJob = {
+  type: 'PERIODIC_SCREENING_USER_RULE'
+  tenantId: string
+}
+
 /* Pulse Backfill */
 export type PulseDataLoadBatchJob = {
   type: 'PULSE_USERS_BACKFILL_RISK_SCORE'
@@ -464,6 +469,7 @@ export type BatchJob =
   | ClickhouseDataBackfillBatchJob
   | DeltaSanctionsDataFetchBatchJob
   | BackFillActionProcessing
+  | PeriodicScreeningUserRuleBatchJob
   | QACleanupBatchJob
 
 export type BatchJobWithId = BatchJob & {

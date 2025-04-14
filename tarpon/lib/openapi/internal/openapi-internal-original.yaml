@@ -9662,6 +9662,7 @@ components:
         - SYNC_AUTH0_DATA
         - FAILING_BATCH_JOB
         - DELTA_SANCTIONS_DATA_FETCH
+        - PERIODIC_SCREENING_USER_RULE
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string

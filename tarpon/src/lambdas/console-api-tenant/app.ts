@@ -309,6 +309,13 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'PERIODIC_SCREENING_USER_RULE': {
+          await sendBatchJobCommand({
+            type: 'PERIODIC_SCREENING_USER_RULE',
+            tenantId,
+          })
+          break
+        }
         case 'PULSE_USERS_BACKFILL_RISK_SCORE': {
           await sendBatchJobCommand({
             type: 'PULSE_USERS_BACKFILL_RISK_SCORE',

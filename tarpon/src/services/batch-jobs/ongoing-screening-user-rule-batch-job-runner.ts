@@ -1,28 +1,21 @@
 import pMap from 'p-map'
 import { Collection, FindCursor, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { backOff } from 'exponential-backoff'
 import { compact } from 'lodash'
-import { getTimeDiff } from '../rules-engine/utils/time-utils'
-import { LogicEvaluator } from '../logic-evaluator/engine'
-import { UserService } from '../users'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
-import { ListRepository } from '../list/repositories/list-repository'
-import { getUsersForPNB } from '../rules-engine/pnb-custom-logic'
-import { mergeRules } from '../rules-engine/utils/rule-utils'
+import { getMohaUsersForPNB } from '../rules-engine/pnb-custom-logic'
 import {
   getDefaultProviders,
   getSanctionsCollectionName,
 } from '../sanctions/utils'
-import { BatchJobRunner } from './batch-job-runner-base'
-import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
+import {
+  getUsersFromLists,
+  ScreeningUserRuleBatchJobRunnerBase,
+} from './screening-user-rule-batch-job-runner-base'
+import { processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RulesEngineService } from '@/services/rules-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { logger } from '@/core/logger'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import {
@@ -31,24 +24,20 @@ import {
   tenantHasFeature,
 } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { Rule } from '@/@types/openapi-internal/Rule'
-import { CaseCreationService } from '@/services/cases/case-creation-service'
-import dayjs from '@/utils/dayjs'
-import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import {
   getSearchIndexName,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
-const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
-  ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
-  : 10
-
-export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
+export async function getOngoingScreeningUserRuleInstances(
+  tenantId: string,
+  dynamoDb?: DynamoDBDocumentClient
+) {
+  if (!tenantId || !dynamoDb) {
+    return []
+  }
   const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
-  const dynamoDb = getDynamoDbClient()
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
@@ -58,23 +47,7 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
   ).filter((ruleInstance) => {
     const schedule = ruleInstance.userRuleRunCondition?.schedule
     if (schedule) {
-      // For now the frequency depends on the createdAt date of the rule instance. When a rule instance is created,
-      // the rule will be run on the same day once and then every x time units.
-      // TODO: Allow setting the start date (e.g every Monday, every 1st of the month, etc.)
-      const diffTime = getTimeDiff(
-        dayjs(),
-        dayjs(ruleInstance.createdAt),
-        schedule.unit.toLowerCase() as any
-      )
-      const diffTimeInDays = getTimeDiff(
-        dayjs(),
-        dayjs(ruleInstance.createdAt),
-        'day'
-      )
-      return (
-        diffTime % schedule.value === 0 ||
-        (diffTimeInDays === 1 && !ruleInstance.runCount) // if the rule is created after starting the cron job but on the same day,
-      )
+      return false
     }
     return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
   })
@@ -83,70 +56,22 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
 }
 
 @traceable
-export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
-  mongoDb?: MongoClient
-  dynamoDb?: DynamoDBDocumentClient
-  ruleRepository?: RuleRepository
-  ruleInstanceRepository?: RuleInstanceRepository
-  rulesEngineService?: RulesEngineService
-  userRepository?: UserRepository
-  caseCreationService?: CaseCreationService
-  userService?: UserService
-  from?: string
-  to?: string
-  tenantId?: string
+export class OngoingScreeningUserRuleBatchJobRunner extends ScreeningUserRuleBatchJobRunnerBase {
   constructor(jobId: string, tenantId?: string) {
     super(jobId)
     if (tenantId) {
       this.tenantId = tenantId
     }
   }
-  public async init(job: OngoingScreeningUserRuleBatchJob) {
-    const tenantId = job.tenantId
-    const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
-
-    this.mongoDb = mongoDb
-    this.dynamoDb = dynamoDb
-    this.tenantId = tenantId
-    this.from = job.from
-    this.to = job.to
-    this.ruleRepository = new RuleRepository(tenantId, {
-      dynamoDb,
-    })
-    this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb,
-    })
-    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    this.rulesEngineService = new RulesEngineService(
-      tenantId,
-      dynamoDb,
-      logicEvaluator,
-      mongoDb
-    )
-    this.caseCreationService = new CaseCreationService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
-    this.userService = new UserService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
-    this.userRepository = this.userService.userRepository
-  }
 
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
     await this.init(job)
     const sequentialUserRuleInstances =
-      await getOngoingScreeningUserRuleInstances(this.tenantId ?? '')
-    const agglomerationUserRules =
-      (await this.ruleInstanceRepository?.getActiveRuleInstances(
-        'USER_ONGOING_SCREENING'
-      )) ?? []
-    await Promise.all([
-      this.verifyUsersSequentialMode(sequentialUserRuleInstances),
-      this.verifyUsersAgglomerationMode(agglomerationUserRules),
-    ])
+      await getOngoingScreeningUserRuleInstances(
+        this.tenantId ?? '',
+        this.dynamoDb
+      )
+    await this.verifyUsersSequentialMode(sequentialUserRuleInstances)
   }
 
   public async verifyUsersSequentialMode(
@@ -228,143 +153,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       )
     }
   }
-
-  private async verifyUsersAgglomerationMode(
-    ruleInstances: readonly RuleInstance[]
-  ) {
-    if (!ruleInstances?.length) {
-      logger.info('No active ongoing screening user rule (all) found. Skip.')
-      return
-    }
-    if (!this.rulesEngineService) {
-      throw new Error('Rules Engine Service is not initialized')
-    }
-    const data = await this.rulesEngineService.verifyAllUsersRules()
-    if (!this.userRepository) {
-      throw new Error('User Repository is not initialized')
-    }
-    await pMap(
-      Object.keys(data),
-      async (userId) => {
-        const user = await this.userRepository?.getUserById(userId)
-        if (!user) {
-          return
-        }
-        const { hitRules, executedRules } = data[userId]
-        if (hitRules && hitRules.length > 0) {
-          await this.createCase(user, executedRules ?? [], hitRules)
-        }
-      },
-      { concurrency: CONCURRENT_BATCH_SIZE }
-    )
-  }
-
-  private async runUsersBatch(
-    usersChunk: InternalUser[],
-    rules: readonly Rule[],
-    ruleInstances: readonly RuleInstance[]
-  ) {
-    const updates: {
-      [key: string]: {
-        hitCountDelta: number
-        runCountDelta: number
-      }
-    } = {}
-    await backOff(
-      async () => {
-        await pMap(
-          usersChunk,
-          async (user) => {
-            const result = await this.rulesEngineService?.verifyUserByRules(
-              user,
-              ruleInstances,
-              rules,
-              'ONGOING'
-            )
-
-            // We only update when there are no hit rules else we will update the user in consumer
-            if (!result?.hitRules?.length) {
-              result?.executedRules
-                ?.filter(
-                  (executedRule) =>
-                    ruleInstances.find(
-                      (ruleInstance) =>
-                        ruleInstance.id === executedRule.ruleInstanceId
-                    )?.userRuleRunCondition?.schedule
-                )
-                .forEach((executedRule) => {
-                  updates[executedRule.ruleInstanceId] = {
-                    hitCountDelta:
-                      (updates[executedRule.ruleInstanceId]?.hitCountDelta ??
-                        0) + (executedRule.ruleHit ? 1 : 0),
-                    runCountDelta:
-                      (updates[executedRule.ruleInstanceId]?.runCountDelta ??
-                        0) + 1,
-                  }
-                })
-            } else {
-              const mergedExecutedRules = mergeRules(
-                user.executedRules ?? [],
-                result?.executedRules ?? []
-              )
-              const mergedHitRules = mergeRules(
-                user.hitRules ?? [],
-                result?.hitRules ?? []
-              )
-
-              await Promise.all([
-                this.createCase(
-                  user,
-                  result.executedRules ?? [],
-                  result.hitRules
-                ),
-                this.userService?.handleUserStatusUpdateTrigger(
-                  result.hitRules,
-                  ruleInstances.filter((ruleInstance) =>
-                    result.hitRules?.some(
-                      (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
-                    )
-                  ),
-                  user,
-                  null
-                ),
-                this.userService?.userRepository?.updateUserWithExecutedRules(
-                  user.userId,
-                  mergedExecutedRules,
-                  mergedHitRules
-                ),
-              ])
-            }
-          },
-          { concurrency: CONCURRENT_BATCH_SIZE }
-        )
-      },
-      {
-        numOfAttempts: 5,
-      }
-    )
-    await this.ruleInstanceRepository?.updateRuleInstanceStatsCount(updates)
-  }
-
-  private async createCase(
-    user: InternalUser,
-    executedRules: ExecutedRulesResult[],
-    hitRules: HitRulesDetails[]
-  ) {
-    const timestampBeforeCasesCreation = Date.now()
-
-    const cases = await this.caseCreationService?.handleUser({
-      ...user,
-      hitRules,
-      executedRules,
-    })
-
-    await this.caseCreationService?.handleNewCases(
-      this.tenantId ?? '',
-      timestampBeforeCasesCreation,
-      cases ?? []
-    )
-  }
 }
 
 export async function preprocessUsers(
@@ -406,8 +194,9 @@ export async function preprocessUsers(
   const targetUserIds = new Set<string>()
 
   if (hasFeature('PNB')) {
+    // MOHA List users
     const { targetUserIds: pnbTargetUserIds, allNames: pnbAllNames } =
-      await getUsersForPNB(
+      await getMohaUsersForPNB(
         getUsersFromLists,
         tenantId,
         dynamoDb,
@@ -520,42 +309,4 @@ async function processNames(
     },
     { concurrency: 10 }
   )
-}
-
-const getUsersFromLists = async (
-  tenantId: string,
-  dynamoDb: DynamoDBDocumentClient,
-  listIds: string[]
-) => {
-  const listRepository = new ListRepository(tenantId, dynamoDb)
-  const entities: {
-    key: string
-    value: string
-  }[] = []
-  for await (const listId of listIds) {
-    const listHeader = await listRepository.getListHeader(listId)
-    if (listHeader) {
-      let fromCursorKey: string | undefined
-      let hasNext = true
-      while (hasNext) {
-        const listItems = await listRepository.getListItems(
-          listId,
-          {
-            pageSize: 100,
-            fromCursorKey,
-          },
-          listHeader.version
-        )
-        fromCursorKey = listItems.next
-        hasNext = listItems.hasNext
-        listItems.items.map((i) =>
-          entities.push({
-            key: i.key,
-            value: i.metadata?.reason,
-          })
-        )
-      }
-    }
-  }
-  return entities
 }

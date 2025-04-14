@@ -15,6 +15,8 @@ import { LinkerService } from '@/services/linker'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments } from '@/utils/helpers'
+import { getPeriodicScreeningUserRuleInstances } from '@/services/batch-jobs/periodic-screening-user-rule-batch-job-runner'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -185,8 +187,11 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
-      const ongoingScreeningUserRules =
-        await getOngoingScreeningUserRuleInstances(tenantId)
+      const dynamoDb = getDynamoDbClient()
+      const ongoingScreeningUserRules = [
+        (await getOngoingScreeningUserRuleInstances(tenantId, dynamoDb), this),
+        ...(await getPeriodicScreeningUserRuleInstances(tenantId, dynamoDb)),
+      ]
 
       return { isOngoingScreening: ongoingScreeningUserRules.length > 0 }
     })
