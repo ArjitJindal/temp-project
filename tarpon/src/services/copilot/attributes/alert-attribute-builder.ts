@@ -64,6 +64,8 @@ export class AlertAttributeBuilder implements AttributeBuilder {
 
     attributes.setAttribute('rules', uniqBy(rules, 'id'))
 
+    attributes.setAttribute('ruleHitNames', compact(rules.map((r) => r.name)))
+
     if (inputData.sanctionsHits?.length) {
       const name = getUserName(inputData.user)
       const data: Partial<
@@ -79,6 +81,10 @@ export class AlertAttributeBuilder implements AttributeBuilder {
         matchTypeDetails: sh.entity.matchTypeDetails,
         mediaSources: sh.entity.mediaSources?.map((ms) => ({
           name: ms.name,
+        })),
+        sanctionsSources: sh.entity.sanctionsSources?.map((ss) => ({
+          name: ss.name,
+          countryCodes: ss.countryCodes,
         })),
       }))
 

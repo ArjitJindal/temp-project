@@ -163,6 +163,10 @@ const AI_SOURCES_MAP: Record<AIAttribute, AIAttributeData> = {
     isPii: false,
     category: 'ALERT',
   },
+  ruleHitNames: {
+    isPii: false,
+    category: 'ALERT',
+  },
 }
 
 export const AI_SOURCES: AiSource[] = Object.entries(AI_SOURCES_MAP).map(

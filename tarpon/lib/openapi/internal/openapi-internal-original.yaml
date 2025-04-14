@@ -10672,6 +10672,7 @@ components:
         - timeOfTransaction
         - transactionReference
         - sanctionsHitDetails
+        - ruleHitNames
     AIAttributeCategory:
       title: CoPilotAttributeCategory
       type: string

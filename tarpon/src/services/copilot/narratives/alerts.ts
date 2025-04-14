@@ -60,7 +60,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
 
     const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the alert's transactions and behaviors.]`
 
-    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision. You should be more foucesed on screening details and information dense\n\n Sanctions Sources: [sanctionsSources]`
+    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision. You should be more foucesed on screening details and information dense\n\n Sanctions Sources: [Write summary about sanctions sources]`
 
     const conclusion = `CONCLUSION`
 
