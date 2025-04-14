@@ -13,9 +13,10 @@ import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colo
 import { SKELETON_TICK_COMPONENT } from '@/components/charts/BarChart/helpers';
 import { generateEvenTicks } from '@/components/charts/shared/helpers';
 import { DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
-
+import { BarGrouping } from '@/components/charts/BarChart';
 type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
   showSkeleton?: boolean;
+  centerBandTicks?: boolean;
   tickLabelProps?: (
     value: ScaleInput<Scale>,
     index: number,
@@ -24,6 +25,7 @@ type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
       index: number;
     }[],
   ) => Partial<TextProps>;
+  grouping?: BarGrouping;
 };
 
 const WrappedTickComponent = ({ x, y, formattedValue, ...props }: any) => {
@@ -31,8 +33,8 @@ const WrappedTickComponent = ({ x, y, formattedValue, ...props }: any) => {
     <Text
       x={x}
       y={y}
-      width={40}
-      maxWidth={40}
+      width={70}
+      maxWidth={70}
       verticalAnchor="start"
       textAnchor="middle"
       {...props}
@@ -49,7 +51,7 @@ const WrappedTickComponent = ({ x, y, formattedValue, ...props }: any) => {
 };
 
 export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) {
-  const { showSkeleton = false, tickLabelProps, ...rest } = props;
+  const { showSkeleton = false, tickLabelProps, scale, ...rest } = props;
   const axisColor = showSkeleton ? COLORS_V2_SKELETON_COLOR : COLORS_V2_GRAY_6;
 
   return (
@@ -58,13 +60,17 @@ export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) 
       tickStroke={axisColor}
       hideTicks={showSkeleton}
       tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : WrappedTickComponent}
+      scale={scale}
       {...rest}
-      tickLabelProps={(...args) => {
+      tickLabelProps={(...args): Partial<TextProps> => {
         const tickLabelPropsResult = tickLabelProps ? tickLabelProps(...args) : {};
+
         return {
-          fill: axisColor,
           ...tickLabelPropsResult,
-          className: cn(s.tick, tickLabelPropsResult.className),
+          fill: axisColor,
+          dy: '0.5em',
+          textAnchor: 'middle',
+          className: cn(s.tick, tickLabelPropsResult?.className),
         };
       }}
     />
@@ -112,6 +118,7 @@ export function DefaultAxisLeft<Scale extends AxisScale>(props: Props<Scale>) {
           fontWeight: DEFAULT_AXIS_FONT_STYLE.fontWeight,
           fontFamily: DEFAULT_AXIS_FONT_STYLE.fontFamily,
           textAnchor: 'end',
+          dx: '0.5em',
           fill: axisColor,
           ...tickLabelPropsResult,
           className: cn(s.tick, tickLabelPropsResult.className),

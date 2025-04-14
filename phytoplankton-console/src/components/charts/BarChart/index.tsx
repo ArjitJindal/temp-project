@@ -10,7 +10,7 @@ import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatt
 export * from './types';
 // type BarOrientation = 'VERTICAL' | 'HORIZONTAL';
 type BarOrientation = 'VERTICAL';
-type BarGrouping = 'GROUPED' | 'STACKED';
+export type BarGrouping = 'GROUPED' | 'STACKED';
 
 export const DEFAULT_GROUPING: BarGrouping = 'GROUPED';
 export const DEFAULT_ORIENTATION: BarOrientation = 'VERTICAL';
@@ -64,6 +64,7 @@ export default function BarChart<
         formatValue={formatValue}
         formatSeries={formatSeries}
         formatCategory={formatCategory}
+        grouping={grouping}
         {...rest}
       />
     );

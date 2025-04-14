@@ -6,7 +6,7 @@ import { localPoint } from '@visx/event';
 import { groupBy, mapKeys, uniq } from 'lodash';
 import cn from 'clsx';
 import { ColorsMap } from '../types';
-import { BarChartData, Props as BarChartProps } from '../index';
+import { BarChartData, Props as BarChartProps, BarGrouping } from '../index';
 import {
   ChartParts,
   DEFAULT_CHART_CONFIGURATION,
@@ -65,6 +65,7 @@ export default function GropedColumn<
     colors,
     height,
     hideLegend,
+    grouping,
     formatValue = DEFAULT_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
     formatCategory = DEFAULT_FORMATTER,
@@ -135,6 +136,7 @@ export default function GropedColumn<
           highlightedState={[highlighted, setHighlighted]}
           customBarColors={preparedCustomBarColors}
           configuration={configuration}
+          grouping={grouping}
         />
       )}
       renderLegend={(props) => (
@@ -195,6 +197,7 @@ export type ChartProps<Category extends StringLike, Series extends StringLike> =
   highlightedState: StatePair<Highlighted>;
   customBarColors?: (category: string, series: string, defaultColor: string) => string;
   configuration?: Configuration;
+  grouping?: BarGrouping;
 };
 
 function Chart<Category extends StringLike, Series extends StringLike>(
@@ -209,6 +212,7 @@ function Chart<Category extends StringLike, Series extends StringLike>(
     highlightedState,
     customBarColors,
     configuration = DEFAULT_CHART_CONFIGURATION,
+    grouping,
   } = props;
 
   const initialPaddings = showSkeleton ? SKELETON_PADDINGS : DEFAULT_PADDINGS;
@@ -421,8 +425,11 @@ function Chart<Category extends StringLike, Series extends StringLike>(
                 })
               }
             </BarGroup>
-            {!showSkeleton && <DefaultAxisLeft hideTicks hideAxisLine left={0} scale={yScale} />}
+            {!showSkeleton && (
+              <DefaultAxisLeft hideTicks hideAxisLine left={0} scale={yScale} grouping={grouping} />
+            )}
             <DefaultAxisBottom
+              centerBandTicks
               hideTicks={showSkeleton}
               left={0}
               top={size.height - paddings.top - paddings.bottom}

@@ -4,6 +4,7 @@ import { ScaleBand, ScaleLinear } from 'd3-scale';
 import { BarChartData } from '../types';
 import { adjustScalesAndPaddings, Paddings } from '@/components/charts/shared/helpers';
 import { useDeepEqualMemo } from '@/utils/hooks';
+import { measureTextSize, DEFAULT_AXIS_FONT_STYLE } from '@/components/charts/shared/text';
 
 export type DerivedScales<Category extends StringLike, Series extends StringLike> = {
   x0Scale: ScaleBand<Category>;
@@ -20,6 +21,9 @@ export function calcScales<Category extends StringLike, Series extends StringLik
 
   const width = fullWidth - paddings.left - paddings.right;
   const height = fullHeight - paddings.top - paddings.bottom;
+
+  const labelHeight = measureTextSize('0', DEFAULT_AXIS_FONT_STYLE).height;
+  const topTickBuffer = labelHeight / 2 + 2;
 
   const x0Scale = scaleBand<Category>({
     domain: data.map((item) => item.category),
@@ -40,7 +44,7 @@ export function calcScales<Category extends StringLike, Series extends StringLik
       Math.min(0, ...data.map(({ value }) => value)),
       Math.max(1, ...data.map(({ value }) => value)),
     ],
-    range: [height, 0],
+    range: [height, topTickBuffer],
     nice: true,
   });
 

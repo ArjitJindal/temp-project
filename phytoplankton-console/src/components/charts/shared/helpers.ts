@@ -33,6 +33,7 @@ export const calcAxisPaddings = (
   fontStyle: FontStyle = DEFAULT_AXIS_FONT_STYLE,
   xAngle = DEFAULT_X_AXIS_LABEL_ANGLE,
 ): {
+  top: number;
   left: number;
   bottom: number;
 } => {
@@ -41,12 +42,15 @@ export const calcAxisPaddings = (
     return Math.max(result, length);
   }, 0);
 
+  const labelHeight = measureTextSize('0', fontStyle).height;
+
   const maxXlength = xLabels.reduce((result, label) => {
     const length = measureTextSize(label, fontStyle).width;
     return Math.max(result, length);
   }, 0);
 
   return {
+    top: labelHeight / 2,
     left: maxYlength,
     bottom: Math.max(0, maxXlength * -1 * Math.sin(xAngle)),
   };
@@ -80,6 +84,7 @@ export function adjustScalesAndPaddings<
   // Adjust left and bottom paddings by scales ticks
   const newPaddings = {
     ...initialPaddings,
+    top: initialPaddings.top + axisPaddings.top,
     left: initialPaddings.left + axisPaddings.left,
     bottom: initialPaddings.bottom + axisPaddings.bottom,
   };
@@ -104,8 +109,16 @@ export const generateEvenTicks = (scale: ScaleLinear<number, number>, maxTicks =
   }
 
   const roughStep = range / (maxTicks - 1);
-  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-  const normalizedStep = Math.ceil(roughStep / magnitude) * magnitude;
+  let step: number;
+
+  if (roughStep <= 1e-9) {
+    step = 1;
+  } else {
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    step = Math.ceil(roughStep / magnitude) * magnitude;
+  }
+
+  const normalizedStep = Math.max(1, Math.ceil(step));
 
   const start = Math.ceil(min / normalizedStep) * normalizedStep;
   const end = Math.floor(max / normalizedStep) * normalizedStep;
