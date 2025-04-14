@@ -192,24 +192,20 @@ export default function ParametersTable(props: Props) {
               },
             )}
             onSave={onSaveValues}
-            currentWeight={
-              map(
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                  success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
-                (x) => {
-                  return x.weight;
-                },
-              ) ?? 1
-            }
-            currentDefaultValue={
-              map(
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                  success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
-                (x) => {
-                  return x.defaultValue;
-                },
-              ) ?? DEFAULT_RISK_LEVEL
-            }
+            currentWeight={map(
+              (parameterSettings && parameterSettings[item.parameter]) ??
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
+              (x) => {
+                return x.weight;
+              },
+            )}
+            currentDefaultValue={map(
+              (parameterSettings && parameterSettings[item.parameter]) ??
+                success<ParameterSettings>(DEFAULT_PARAMETER_SETTINGS),
+              (x) => {
+                return x.defaultValue;
+              },
+            )}
           />
         )}
         pagination={false}

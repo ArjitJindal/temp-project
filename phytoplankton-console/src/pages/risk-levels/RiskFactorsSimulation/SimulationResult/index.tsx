@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 import { capitalizeWords, firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -6,6 +6,7 @@ import cn from 'clsx';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 import s from './styles.module.less';
+import { drawSimulationGraphs } from './report-utils';
 import {
   ParameterAttributeRiskValues,
   RiskLevel,
@@ -45,6 +46,7 @@ import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Provider
 import { Progress } from '@/components/Simulation/Progress';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 
 interface Props {
   jobId: string;
@@ -58,6 +60,17 @@ export const SimulationResult = (props: Props) => {
   const location = useLocation();
   const isCustomRiskFactors = location.pathname.includes('custom-risk-factors');
   const navigate = useNavigate();
+  const [isGeneratingPdf] = useState(false);
+  const pendingDownloadRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const downloadPdf = pendingDownloadRef.current;
+    if (isGeneratingPdf && downloadPdf) {
+      pendingDownloadRef.current = null;
+      requestAnimationFrame(downloadPdf);
+    }
+  }, [isGeneratingPdf]);
+
   function isAllIterationsCompleted(
     iterations: SimulationRiskFactorsIteration[] | SimulationV8RiskFactorsIteration[],
   ): boolean {
@@ -119,6 +132,52 @@ export const SimulationResult = (props: Props) => {
       },
     },
   );
+
+  const handleReportDownload = useCallback(async () => {
+    const hideMessage = message.loading('Downloading report...');
+
+    try {
+      const itemResponses = await Promise.all(
+        iterations.map((iteration) =>
+          api.getSimulationTaskIdResult({
+            taskId: iteration.taskId,
+            page: 1,
+            pageSize: 1000,
+            sortField: 'userId',
+            sortOrder: 'ascend',
+          }),
+        ),
+      );
+
+      const iterationsData = iterations.map((iteration, index) => ({
+        name: iteration.name,
+        description: iteration.description,
+        items: itemResponses[index].items as SimulationRiskLevelsAndRiskFactorsResult[],
+        statistics: iteration.statistics as {
+          current: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
+          simulated: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
+        },
+      }));
+
+      await DownloadAsPDF({
+        fileName: `risk-simulation-result-${jobId}-report.pdf`,
+        reportTitle: 'Risk Simulation Result Report',
+        onCustomPdfGeneration: (doc) => {
+          return drawSimulationGraphs(doc, iterationsData, settings, isCustomRiskFactors);
+        },
+      });
+
+      message.success('Report successfully downloaded');
+    } catch (err) {
+      message.fatal(
+        'Unable to complete the download!',
+        err instanceof Error ? err.message : String(err),
+      );
+    } finally {
+      hideMessage();
+    }
+  }, [api, iterations, settings, isCustomRiskFactors, jobId]);
+
   return (
     <div>
       <Tabs
@@ -146,6 +205,9 @@ export const SimulationResult = (props: Props) => {
       {iterations[activeIterationIndex - 1]?.progress > 0.1 ? (
         <div className={s.footer}>
           <div className={s.footerButtons}>
+            <Button onClick={handleReportDownload} type={'TETRIARY'}>
+              PDF report
+            </Button>
             <Confirm
               onConfirm={() => {
                 updateParametersMutation.mutate();
@@ -523,28 +585,28 @@ const SimulationResultWidgets = (props: WidgetProps) => {
 
       <div className={s.graphs}>
         <Card.Root noBorder>
-          <Card.Section>
+          <Card.Section className={s.graphsContainer}>
             <span className={s.title}>{`${userAlias}s distribution based on KRS`}</span>
             <GroupedColumn data={krsGraphdata} max={Math.ceil(maxKRS + maxKRS * 0.2)} />
           </Card.Section>
         </Card.Root>
         {isCustomRiskFactors && (
           <Card.Root noBorder>
-            <Card.Section>
+            <Card.Section className={s.graphsContainer}>
               <span className={s.title}>{`${userAlias}s distribution based on CRA`}</span>
               <GroupedColumn data={drsGraphData} max={Math.ceil(maxDRS + maxDRS * 0.2)} />
             </Card.Section>
           </Card.Root>
         )}
         <Card.Root noBorder>
-          <Card.Section>
+          <Card.Section className={s.graphsContainer}>
             <span className={s.title}>Transactions distribution based on TRS</span>
             <GroupedColumn data={arsGraphData} max={Math.ceil(maxARS + maxARS * 0.2)} />
           </Card.Section>
         </Card.Root>
       </div>
       <Card.Root noBorder>
-        <Card.Section>
+        <Card.Section className={s.tableContainer}>
           <span className={s.title}>
             {`${userAlias}'s updated ${isCustomRiskFactors ? '' : 'KRS'} risk levels`}
           </span>

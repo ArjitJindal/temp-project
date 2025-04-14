@@ -22,6 +22,7 @@ interface Props {
   parameterSettings: RiskFactorsSettings;
   canEditParameters?: boolean;
 }
+
 export const ParametersTableTabs = (props: Props) => {
   const { parameterSettings, canEditParameters = true } = props;
   const onSaveValues = props.onSaveValues ?? (() => {});

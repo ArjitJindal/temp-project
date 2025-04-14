@@ -206,8 +206,8 @@ export default function SimulationCustomRiskFactorsTable(props: Props) {
                 <Button
                   onClick={onClick}
                   icon={<DeleteOutlined />}
-                  size="SMALL"
-                  type="TETRIARY"
+                  size="MEDIUM"
+                  type="SECONDARY"
                   isDisabled={!canWriteRiskFactors}
                   testName="risk-factor-delete-button"
                 >

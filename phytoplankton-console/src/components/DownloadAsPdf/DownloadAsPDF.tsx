@@ -8,6 +8,7 @@ interface Props {
   fileName: string;
   reportTitle?: string;
   tableOptions?: TableOptions[];
+  onCustomPdfGeneration?: (doc: jsPDF) => number;
 }
 
 export interface TableOptions {
@@ -23,7 +24,7 @@ export const FONT_FAMILY_SEMIBOLD = 'NotoSans-SemiBold';
 const DownloadAsPDF = async (props: Props) => {
   await import('./NotoSans-Regular');
   await import('./NotoSans-SemiBold');
-  const { pdfRef, fileName, tableOptions, reportTitle } = props;
+  const { pdfRef, fileName, tableOptions, reportTitle, onCustomPdfGeneration } = props;
   const inputArray = (Array.isArray(pdfRef) ? pdfRef : [pdfRef]).filter(notNullish);
   try {
     const Logo = getBranding().logoDark;
@@ -36,7 +37,7 @@ const DownloadAsPDF = async (props: Props) => {
     });
 
     const { default: jsPDF } = await import('jspdf');
-    const { default: autoTable } = await import('jspdf-autotable'); // need to be imported before creating a new Jspdf instance
+    const { default: autoTable } = await import('jspdf-autotable');
     let imgHeight = 0;
     const doc = new jsPDF('p', 'mm');
     let position = 30;
@@ -55,6 +56,7 @@ const DownloadAsPDF = async (props: Props) => {
         const input = inputArray[i];
         if (i > 0) {
           doc.addPage();
+          addTopFormatting(doc, logoImage);
           position = 0;
         }
         position += reportTitle ? 16 : 0;
@@ -72,18 +74,36 @@ const DownloadAsPDF = async (props: Props) => {
         while (heightLeft >= 0) {
           position = heightLeft - imgHeight;
           doc.addPage();
+          addTopFormatting(doc, logoImage);
           doc.addImage(imgData, 'PNG', 10, position, PAGE_WIDTH, imgHeight);
           heightLeft -= PAGE_HEIGHT;
         }
       }
     }
 
+    let tableStartY = position;
+    if (onCustomPdfGeneration) {
+      const customY = onCustomPdfGeneration(doc);
+      if (customY) {
+        tableStartY = customY;
+      }
+    }
+
     // Add table if data is available
-    addTable({ imgHeight, position, doc, tableOptions, logoImage, autoTable });
+    addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable });
+
+    const pageCount = doc.internal.pages.length - 1;
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      addTopFormatting(doc, logoImage);
+      doc.setFontSize(10);
+      doc.text(`${i}`, 190, 290);
+    }
 
     doc.save(fileName);
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
@@ -107,8 +127,6 @@ export const getTableHeadAndBody = (data?: string) => {
 
 const getLogoImageData = (logoImage: HTMLImageElement): string => {
   const logoCanvas = document.createElement('canvas');
-  // logoCanvas.width = 548;
-  // logoCanvas.height = 112;
   logoCanvas.width = 2192;
   logoCanvas.height = 448;
   const logoContext = logoCanvas.getContext('2d');
@@ -127,14 +145,12 @@ const addTopFormatting = (doc: jsPDF, logoImage: HTMLImageElement) => {
 };
 
 const addTable = ({
-  imgHeight,
   position,
   doc,
   tableOptions,
   logoImage,
   autoTable,
 }: {
-  imgHeight: number;
   position: number;
   doc: jsPDF;
   tableOptions?: TableOptions[];
@@ -149,17 +165,15 @@ const addTable = ({
         doc.text(
           table.tableTitle,
           15,
-          (index === 0 ? (imgHeight + position) % PAGE_HEIGHT : 0) +
-            ((doc as any).autoTable?.previous?.finalY ?? 0) +
-            12,
+          index === 0 ? position + 12 : ((doc as any).autoTable?.previous?.finalY ?? 0) + 12,
         );
       }
       autoTable.default(doc, {
         ...(index === 0
-          ? { startY: (imgHeight + position + 14) % PAGE_HEIGHT }
+          ? { startY: position + 14 }
           : { startY: ((doc as any).autoTable?.previous?.finalY ?? 0) + 16 }),
         tableWidth: tableWidth,
-        margin: { top: 32, bottom: 12 },
+        margin: { top: 40, left: 15, right: 15, bottom: 12 },
         styles: {
           font: FONT_FAMILY_REGULAR,
           fontSize: 10,
