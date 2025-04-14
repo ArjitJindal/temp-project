@@ -21,6 +21,7 @@ import {
   TRANSACTION_ID,
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   userId: string;
@@ -53,6 +54,7 @@ function DynamicRiskHistoryModal(props: Props) {
     ...DEFAULT_PARAMS_STATE,
     pageSize: 10,
   });
+  const settings = useSettings();
 
   const queryResult = usePaginatedQuery<ExtendedDrsScore>(
     USER_DRS_VALUES(userId, params),
@@ -146,12 +148,16 @@ function DynamicRiskHistoryModal(props: Props) {
             <div className={styles.DRSHeader}>
               Dynamic aggregate score of your customer based on their KRS and TRS.
             </div>
-            <pre>
-              <div className={styles.DRSFormula}>CRA[i] = avg (CRA[i-1] + TRS[i] )</div>
-              <div className={styles.DRSFormula}>CRA[0] = KRS</div>
-              <div className={styles.DRSFormula}>CRA[1] = avg ( KRS + TRS[1] )</div>
-              <div className={styles.DRSFormula}>CRA[2] = avg ( CRA[1] + TRS[2] )</div>
-            </pre>
+            {settings?.riskScoringAlgorithm?.type === 'FORMULA_CUSTOM' &&
+            settings?.riskScoringAlgorithm?.krsWeight &&
+            settings?.riskScoringAlgorithm?.avgArsWeight ? (
+              <CustomRiskScoreFormula
+                w1={settings.riskScoringAlgorithm.krsWeight}
+                w2={settings.riskScoringAlgorithm.avgArsWeight}
+              />
+            ) : (
+              <DefaultRiskScoreFormula />
+            )}
           </div>
         </div>
         <QueryResultsTable<ExtendedDrsScore>
@@ -177,5 +183,32 @@ function DynamicRiskHistoryModal(props: Props) {
     </Modal>
   );
 }
+
+const DefaultRiskScoreFormula = () => {
+  return (
+    <pre>
+      <div className={styles.DRSFormula}>CRA[i] = avg(CRA[i-1] + avg(TRS[i...1]))</div>
+      <div className={styles.DRSFormula}>CRA[0] = KRS</div>
+      <div className={styles.DRSFormula}>CRA[1] = avg(KRS + TRS[1])</div>
+      <div className={styles.DRSFormula}>CRA[2] = avg(CRA[1] + avg(TRS[1...2]))</div>
+    </pre>
+  );
+};
+
+const CustomRiskScoreFormula = (props: { w1: number; w2: number }) => {
+  const { w1, w2 } = props;
+  return (
+    <pre>
+      <div
+        className={styles.DRSFormula}
+      >{`CRA[i] = (${w1} X KRS) + (${w2} X avg(TRS[1...i]))`}</div>
+      <div className={styles.DRSFormula}>CRA[0] = KRS</div>
+      <div className={styles.DRSFormula}>{`CRA[1] = (${w1} X KRS) + (${w2} X TRS[1])`}</div>
+      <div
+        className={styles.DRSFormula}
+      >{`CRA[2] = (${w1} X KRS) + (${w2} X avg(TRS[1...2]))`}</div>
+    </pre>
+  );
+};
 
 export default DynamicRiskHistoryModal;
