@@ -393,6 +393,19 @@ const customMultiselectWidget: CoreWidgets['multiselect'] = {
         ? deserializeCountries(props.value as string[])
         : props.value ?? undefined;
 
+    if (MULTI_SELECT_LIST_OPERATORS.includes(props.operator as LogicOperatorType)) {
+      return (
+        <WidgetWrapper widgetFactoryProps={props}>
+          <ListSelect
+            value={(props.value as any) ?? undefined}
+            onChange={(newValue) => {
+              props.setValue(newValue as any);
+            }}
+          />
+        </WidgetWrapper>
+      );
+    }
+
     if (isViewMode(props.config)) {
       return (
         <ViewModeTags>

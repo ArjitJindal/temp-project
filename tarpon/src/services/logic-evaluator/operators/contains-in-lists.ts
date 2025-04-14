@@ -8,7 +8,7 @@ export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
   key: 'op:contains_in_lists',
   uiDefinition: {
     label: 'Contains (Lists)',
-    valueTypes: ['text'],
+    valueTypes: ['text', 'multiselect'],
     valueSources: ['value'],
   },
   run: async (value, rhs, _params, context) => {
