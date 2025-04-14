@@ -541,7 +541,7 @@ export class UsSarReportGenerator implements ReportGenerator {
               TINUnknownIndicator: 'Y',
             },
       ]
-      subject.PartyIdentification.forEach((partyIdentification) => {
+      subject.PartyIdentification?.forEach((partyIdentification) => {
         if (
           partyIdentification.PartyIdentificationTypeCode &&
           partyIdentification.PartyIdentificationNumberText
