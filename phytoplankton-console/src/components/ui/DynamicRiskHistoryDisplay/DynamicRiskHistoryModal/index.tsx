@@ -15,7 +15,6 @@ import { DefaultApiGetDrsValuesRequest } from '@/apis/types/ObjectParamAPI';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ExtendedDrsScore } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import Tag from '@/components/library/Tag';
 import {
   DATE_TIME,
   RISK_LEVEL,
@@ -73,14 +72,7 @@ function DynamicRiskHistoryModal(props: Props) {
       title: 'CRA risk score',
       defaultWidth: 200,
       render: (item) => {
-        return (
-          <div className={styles.craScore}>
-            {item.drsScore.toFixed(2) ?? '-'}
-            {(isFirstDrs(item) || isLatestDrs(item, value)) && (
-              <Tag color="gray">{isFirstDrs(item) ? '1st CRA = KRS' : 'Latest CRA'}</Tag>
-            )}
-          </div>
-        );
+        return <div className={styles.craScore}>{item.drsScore.toFixed(2) ?? '-'}</div>;
       },
     }),
     helper.simple<'derivedRiskLevel'>({
