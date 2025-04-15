@@ -86,7 +86,7 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterValue={iteration.statistics.simulated?.transactionsHit}
               />
               <DeltaChart
-                title="Transaction's hit"
+                title="Transactions hit"
                 beforeValues={[{ value: current?.transactionsHit, type: 'Before' }]}
                 afterValues={[{ value: simulated?.transactionsHit, type: 'After' }]}
                 beforeColor={COLORS.orange.base}
@@ -102,7 +102,7 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterValue={iteration.statistics.simulated?.usersHit}
               />
               <DeltaChart
-                title={`${firstLetterUpper(settings.userAlias)}'s hit`}
+                title={`${firstLetterUpper(settings.userAlias)}s hit`}
                 beforeValues={[{ value: current?.usersHit, type: 'Before' }]}
                 afterValues={[{ value: simulated?.usersHit, type: 'After' }]}
                 beforeColor={COLORS.green.base}
