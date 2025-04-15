@@ -495,16 +495,7 @@ export default function SuperAdminPanel() {
                 value={features || initialFeatures}
               />
             </Label>
-            <Label
-              label="Simulation limit"
-              description="The maximum number of simulations that can be run by a tenant"
-            >
-              <NumberInput
-                value={limits?.simulations ?? 0}
-                onChange={(value) => setLimits({ ...limits, simulations: value })}
-                isDisabled={false}
-              />
-            </Label>
+
             <Label
               label="Max Seats"
               description="The maximum number of seats allowed for this tenant"
@@ -515,26 +506,7 @@ export default function SuperAdminPanel() {
                 isDisabled={false}
               />
             </Label>
-            <Label
-              label="Maximum times api key can be viewed"
-              description="The maximum number of times the api key can be viewed by a tenant"
-            >
-              <NumberInput
-                value={limits?.apiKeyView ?? 0}
-                onChange={(value) => setLimits({ ...limits, apiKeyView: value })}
-                isDisabled={false}
-              />
-            </Label>
-            <Button
-              type="DANGER"
-              onClick={() =>
-                mutateTenantSettings.mutate({
-                  apiKeyViewData: [],
-                })
-              }
-            >
-              Reset current API key view count
-            </Button>
+
             {isCrmToBeEnabled && (
               <Label label="Select a CRM">
                 <Select
@@ -672,6 +644,39 @@ export default function SuperAdminPanel() {
                 </Button>
               )}
             </Confirm>
+
+            <Divider />
+            <Label
+              label="Simulation limit"
+              description="The maximum number of simulations that can be run by a tenant"
+            >
+              <NumberInput
+                value={limits?.simulations ?? 0}
+                onChange={(value) => setLimits({ ...limits, simulations: value })}
+                isDisabled={false}
+              />
+            </Label>
+
+            <Label
+              label="Maximum times api key can be viewed"
+              description="The maximum number of times the api key can be viewed by a tenant"
+            >
+              <NumberInput
+                value={limits?.apiKeyView ?? 0}
+                onChange={(value) => setLimits({ ...limits, apiKeyView: value })}
+                isDisabled={false}
+              />
+            </Label>
+            <Button
+              type="DANGER"
+              onClick={() =>
+                mutateTenantSettings.mutate({
+                  apiKeyViewData: [],
+                })
+              }
+            >
+              Reset current API key view count
+            </Button>
 
             <Divider />
             {user.allowTenantDeletion && (

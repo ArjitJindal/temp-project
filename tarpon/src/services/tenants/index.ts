@@ -349,7 +349,11 @@ export class TenantService {
 
     if (!tenantData.siloDataMode) {
       const newTenantSettings: TenantSettings = {
-        limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
+        limits: {
+          seats: tenantData.seats ?? 5,
+          apiKeyView: 2,
+          simulations: tenantData.features.includes('SIMULATOR') ? 10 : 0,
+        },
         features: tenantData.features ?? [],
         webhookSettings: {
           retryBackoffStrategy: 'LINEAR',
@@ -364,7 +368,9 @@ export class TenantService {
             ? { marketType: tenantData.sanctionsMarketType }
             : undefined,
         }),
-
+        crmIntegrationName: tenantData.features.includes('CRM')
+          ? 'ZENDESK'
+          : undefined,
         ...(tenantData.sanctionsMarketType ||
         tenantData.sanctionsScreeningTypes ||
         tenantData.sanctionsEntityTypes
