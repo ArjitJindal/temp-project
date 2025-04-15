@@ -7,6 +7,7 @@ import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
 import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
 import { MalaysianSTRReportGenerator } from '@/services/sar/generators/MY/STR'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { ReportSubjectType } from '@/@types/openapi-internal/ReportSubjectType'
 
 const reportGenerators = [
   CanadaStrReportGenerator,
@@ -26,4 +27,13 @@ export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   })
 )
 
-export const UNIMPLEMENTED_GENERATORS: [CountryCode, string][] = [['KE', 'STR']]
+export const UNIMPLEMENTED_GENERATORS: [
+  CountryCode,
+  string,
+  ReportSubjectType[]
+][] = [
+  ['KE', 'STR', []],
+  ['CA', 'LCTR', ['CASE']],
+  ['CA', 'AMF', ['CASE']],
+  ['CA', 'Terrorist Property Report', ['CASE']],
+]

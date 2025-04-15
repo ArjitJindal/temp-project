@@ -143,7 +143,7 @@ export class ReportService {
     // For demos, append some generators we want to implement.
     return types.concat(
       UNIMPLEMENTED_GENERATORS.map(
-        ([countryCode, type]): ReportType => ({
+        ([countryCode, type, subjectType]): ReportType => ({
           country: formatCountry(countryCode) || 'Unknown',
           countryCode,
           directSubmission: false,
@@ -151,6 +151,7 @@ export class ReportService {
           implemented: false,
           type,
           reportStatuses: NON_FINCEN_REPORT_VALID_STATUSS,
+          subjectType,
         })
       )
     )

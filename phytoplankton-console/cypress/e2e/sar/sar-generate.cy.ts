@@ -42,6 +42,10 @@ describe('SAR Generate', () => {
         countryName: 'Malaysia',
         reportType: 'STR',
       },
+      {
+        countryName: 'Canada',
+        reportType: 'STR',
+      },
     ];
     SarCountrywithReports.map((item) => {
       cy.get('div[id="rc-tabs-1-panel-transactions"] input[data-cy="row-table-checkbox"]', {
