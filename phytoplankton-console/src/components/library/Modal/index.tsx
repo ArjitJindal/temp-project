@@ -4,11 +4,12 @@ import cn from 'clsx';
 import { useLocalStorageState } from 'ahooks';
 import s from './style.module.less';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
+import ExpandAltOutlined from '@/components/ui/icons/expand-diagonal-s-line.react.svg';
+import CollapseAltOutlined from '@/components/ui/icons/collapse-diagonal-line.react.svg';
 import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
-import Select from '@/components/library/Select';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -102,16 +103,13 @@ export default function Modal(props: Props) {
               </div>
               <div className={s.headerSection}>
                 {derivedResizable && (
-                  <Select<ModalWidth>
-                    value={derivedSize}
-                    options={[
-                      { label: `Size: M`, value: 'M' },
-                      { label: `Size: L`, value: 'XL' },
-                    ]}
-                    isSearchable={false}
-                    allowClear={false}
-                    onChange={setSize}
-                  />
+                  <button
+                    className={s.close}
+                    onClick={() => setSize(derivedSize === 'XL' ? 'M' : 'XL')}
+                    data-cy="modal-close"
+                  >
+                    {derivedSize === 'XL' ? <CollapseAltOutlined /> : <ExpandAltOutlined />}
+                  </button>
                 )}
                 <button className={s.close} onClick={onCancel} data-cy="modal-close">
                   <CloseCircleLineIcon />
