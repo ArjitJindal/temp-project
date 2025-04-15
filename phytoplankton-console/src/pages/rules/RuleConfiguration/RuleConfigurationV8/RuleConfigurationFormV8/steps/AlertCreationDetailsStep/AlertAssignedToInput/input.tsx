@@ -35,16 +35,21 @@ export function AlertAssignedToInput() {
       >
         {(inputProps) => {
           return (
-            <SelectionGroup<'EMAIL' | 'ROLE' | undefined>
+            <SelectionGroup<'EMAIL' | 'ROLE' | 'NONE'>
               mode="SINGLE"
               options={[
-                { label: 'None', value: undefined },
+                { label: 'None', value: 'NONE' },
                 { label: 'Account', value: 'EMAIL' },
                 { label: 'Role', value: 'ROLE' },
               ]}
               {...inputProps}
+              value={inputProps.value ?? 'NONE'}
               onChange={(value) => {
-                inputProps.onChange?.(value);
+                if (value === 'NONE') {
+                  inputProps.onChange?.(undefined);
+                } else {
+                  inputProps.onChange?.(value);
+                }
               }}
             />
           );

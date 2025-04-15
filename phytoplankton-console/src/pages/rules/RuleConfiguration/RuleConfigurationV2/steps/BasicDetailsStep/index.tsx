@@ -363,6 +363,7 @@ function AlertCreationDetails(props: Props) {
                   options={SCREENING_ALERT_CREATION_LOGICS}
                   {...inputProps}
                   className={s.alertCreationLogic}
+                  value={inputProps.value ?? 'SINGLE_ALERT'}
                 />
               )}
             </InputField>
