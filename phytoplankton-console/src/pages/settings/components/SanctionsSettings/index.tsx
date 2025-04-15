@@ -107,7 +107,7 @@ export const SanctionsSettings = () => {
   };
   return (
     <>
-      <SearchProfileList />
+      <SearchProfileList hasFeature={isSanctionsEnabled} />
       <SanctionsProviderSettings
         title="Acuris"
         hasFeature={hasFeatureAcuris}

@@ -21,7 +21,7 @@ import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUse
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 
-export const SearchProfileList = () => {
+export const SearchProfileList = ({ hasFeature }) => {
   const api = useApi();
   const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [deleting, setDeleting] = useState(false);
@@ -233,6 +233,10 @@ export const SearchProfileList = () => {
     deleteSearchProfileMutation,
     duplicateSearchProfileMutation,
   ]);
+
+  if (!hasFeature) {
+    return null;
+  }
 
   return (
     <SettingsCard title="Search Profiles">
