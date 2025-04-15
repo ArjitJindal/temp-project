@@ -1541,20 +1541,29 @@ export class LogicEvaluator {
 
       if (!userAggData) {
         if (
-          (hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') ||
+          ((hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') ||
             this.backfillNamespace) &&
-          data.type === 'TRANSACTION'
+            data.type === 'TRANSACTION') ||
+          data.type === 'USER'
         ) {
-          const isRebuilt = await this.rebuildAggregationVariable(
-            aggregationVariable,
-            data.transaction.timestamp,
-            direction === 'origin'
-              ? data.transaction.originUserId
-              : data.transaction.destinationUserId,
-            direction === 'origin'
-              ? data.transaction.originPaymentDetails
-              : data.transaction.destinationPaymentDetails
-          )
+          const isRebuilt =
+            data.type === 'TRANSACTION'
+              ? await this.rebuildAggregationVariable(
+                  aggregationVariable,
+                  data.transaction.timestamp,
+                  direction === 'origin'
+                    ? data.transaction.originUserId
+                    : data.transaction.destinationUserId,
+                  direction === 'origin'
+                    ? data.transaction.originPaymentDetails
+                    : data.transaction.destinationPaymentDetails
+                )
+              : await this.rebuildAggregationVariable(
+                  aggregationVariable,
+                  Date.now(),
+                  data.user.userId,
+                  undefined
+                )
           if (isRebuilt) {
             throw new RebuildSyncRetryError()
           }

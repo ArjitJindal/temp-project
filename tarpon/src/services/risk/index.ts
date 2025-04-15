@@ -368,7 +368,7 @@ export class RiskService {
 
     const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
 
-    await this.riskRepository.createOrUpdateRiskFactor(data)
+    const updatedData = await this.riskRepository.createOrUpdateRiskFactor(data)
 
     let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> = {
       entities: [
@@ -397,7 +397,7 @@ export class RiskService {
       }
     }
     await riskFactorAggregationVariablesRebuild(
-      data,
+      updatedData,
       now,
       this.tenantId,
       this.riskRepository

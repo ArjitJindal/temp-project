@@ -820,7 +820,7 @@ export class RiskRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
     logger.debug(`Updated risk factor for V8`)
 
-    return riskFactor
+    return newRiskFactor
   }
 
   async updateRiskFactorStatus(
