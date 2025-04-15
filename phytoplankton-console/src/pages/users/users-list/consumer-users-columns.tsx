@@ -57,11 +57,13 @@ export function getConsumerUserColumns(userAlias?: string): TableColumn<Consumer
       title: 'Country of residence',
       key: 'countryOfResidence',
       type: COUNTRY,
+      filtering: true,
     }),
     helper.simple<'countryOfNationality'>({
       title: 'Country of nationality',
       key: 'countryOfNationality',
       type: COUNTRY,
+      filtering: true,
     }),
     helper.simple<'kycStatus'>({
       title: 'KYC status',

@@ -321,6 +321,18 @@ export class UserClickhouseRepository {
       }
     }
 
+    if (params.filterCountryOfResidence) {
+      filterConditions.push(
+        `residence IN ('${params.filterCountryOfResidence.join("','")}')`
+      )
+    }
+
+    if (params.filterCountryOfNationality) {
+      filterConditions.push(
+        `nationality IN ('${params.filterCountryOfNationality.join("','")}')`
+      )
+    }
+
     if (params.filterRiskLevelLocked != null) {
       const isUpdatable = params.filterRiskLevelLocked === 'true' ? 'Yes' : 'No'
       filterConditions.push(`riskLevelLocked = '${isUpdatable}'`)

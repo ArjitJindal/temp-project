@@ -73,7 +73,6 @@ import {
   PaginationParams,
 } from '@/utils/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
-import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
@@ -86,6 +85,8 @@ import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
   DefaultApiGetAllUsersListRequest,
+  DefaultApiGetBusinessUsersListRequest,
+  DefaultApiGetConsumerUsersListRequest,
   DefaultApiGetRuleInstancesTransactionUsersHitRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -99,6 +100,14 @@ import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
 import { batchGet } from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+
+type Params = OptionalPaginationParams &
+  DefaultApiGetAllUsersListRequest &
+  DefaultApiGetConsumerUsersListRequest &
+  DefaultApiGetBusinessUsersListRequest & {
+    filterEmail?: string
+    filterUserIds?: string[]
+  }
 
 @traceable
 export class UserRepository {
@@ -156,9 +165,7 @@ export class UserRepository {
       : []
   }
   public async getMongoUsersCursorsPaginate(
-    params: OptionalPagination<
-      DefaultApiGetAllUsersListRequest & { filterUserIds?: string[] }
-    >,
+    params: OptionalPagination<Params>,
     mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
@@ -288,29 +295,7 @@ export class UserRepository {
   }
 
   private async getMongoUsersQuery(
-    params: OptionalPaginationParams & {
-      afterTimestamp?: number
-      beforeTimestamp?: number
-      filterId?: string
-      filterName?: string
-      filterOperator?: FilterOperator
-      filterBusinessIndustries?: string
-      filterRiskLevel?: RiskLevel[]
-      filterTagKey?: string
-      filterTagValue?: string
-      filterUserRegistrationStatus?: UserRegistrationStatus[]
-      sortField?: string
-      sortOrder?: SortOrder
-      filterRiskLevelLocked?: string
-      filterShadowHit?: boolean
-      filterRuleInstancesHit?: string[]
-      filterUserIds?: string[]
-      filterEmail?: string
-      filterParentUserId?: string
-      filterIsPepHit?: string
-      filterPepCountry?: string[]
-      filterPepRank?: string
-    },
+    params: OptionalPagination<Params>,
     isPulseEnabled: boolean,
     riskClassificationValues?: RiskClassificationScore[],
     userType?: UserType | undefined
@@ -398,9 +383,20 @@ export class UserRepository {
         },
       })
     }
-    if (params.filterParentUserId != null) {
+
+    if (params.filterCountryOfNationality != null) {
       filterConditions.push({
-        'linkedEntities.parentUserId': params.filterParentUserId,
+        'userDetails.countryOfNationality': {
+          $in: params.filterCountryOfNationality,
+        },
+      })
+    }
+
+    if (params.filterCountryOfResidence != null) {
+      filterConditions.push({
+        'userDetails.countryOfResidence': {
+          $in: params.filterCountryOfResidence,
+        },
       })
     }
 
@@ -597,25 +593,7 @@ export class UserRepository {
   }
 
   private async getMongoUsers(
-    params: OptionalPaginationParams & {
-      afterTimestamp?: number
-      beforeTimestamp?: number
-      filterId?: string
-      filterName?: string
-      filterOperator?: FilterOperator
-      filterBusinessIndustries?: string
-      filterRiskLevel?: RiskLevel[]
-      filterTagKey?: string
-      filterTagValue?: string
-      includeCasesCount?: boolean
-      filterUserRegistrationStatus?: UserRegistrationStatus[]
-      sortField?: string
-      sortOrder?: SortOrder
-      filterRiskLevelLocked?: string
-      filterShadowHit?: boolean
-      filterRuleInstancesHit?: string[]
-      filterParentUserId?: string
-    },
+    params: Params,
     userType?: UserType
   ): Promise<{
     total: number

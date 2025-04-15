@@ -18,6 +18,8 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       isPepHit: params.isPepHit,
       pepCountry: params.pepCountry?.join(',') ?? '',
       pepRank: params.pepRank,
+      countryOfNationality: params.countryOfNationality?.join(',') ?? '',
+      countryOfResidence: params.countryOfResidence?.join(',') ?? '',
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -37,6 +39,12 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       isPepHit: raw.isPepHit as 'true' | 'false' | undefined,
       pepCountry: raw.pepCountry ? (raw.pepCountry.split(',') as CountryCode[]) : undefined,
       pepRank: raw.pepRank as PepRank | undefined,
+      countryOfNationality: raw.countryOfNationality
+        ? (raw.countryOfNationality.split(',') as CountryCode[])
+        : undefined,
+      countryOfResidence: raw.countryOfResidence
+        ? (raw.countryOfResidence.split(',') as CountryCode[])
+        : undefined,
     };
   },
 };

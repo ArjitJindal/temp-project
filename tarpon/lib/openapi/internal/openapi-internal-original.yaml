@@ -2006,6 +2006,18 @@ paths:
             type: string
           in: query
           name: filterPepRank
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCountryOfResidence
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCountryOfNationality
     parameters: []
   /consumer/users-v2:
     get:
@@ -2092,6 +2104,18 @@ paths:
             type: string
           in: query
           name: filterPepRank
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCountryOfResidence
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCountryOfNationality
   /users:
     get:
       summary: All Users - List

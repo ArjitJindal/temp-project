@@ -30,6 +30,8 @@ export interface UserSearchParams extends CommonParams {
   createdTimestamp?: string[];
   userRegistrationStatus?: UserRegistrationStatus[];
   riskLevelLocked?: 'true' | 'false';
+  countryOfResidence?: CountryCode[];
+  countryOfNationality?: CountryCode[];
 }
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
@@ -125,6 +127,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterPepRank: params.pepRank,
         filterRiskLevelLocked: params.riskLevelLocked,
         filterPepCountry: params.pepCountry,
+        filterCountryOfResidence: params.countryOfResidence,
+        filterCountryOfNationality: params.countryOfNationality,
       };
 
       const queryParam = {
@@ -179,6 +183,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterIsPepHit: params.isPepHit,
         filterPepCountry: params.pepCountry,
         filterPepRank: params.pepRank,
+        filterCountryOfResidence: params.countryOfResidence,
+        filterCountryOfNationality: params.countryOfNationality,
       };
 
       const response =
