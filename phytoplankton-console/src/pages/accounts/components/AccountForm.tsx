@@ -406,7 +406,7 @@ export default function AccountForm(props: Props) {
             >
               {(inputProps) => <TextInput {...inputProps} testName="accounts-email" />}
             </InputField>
-            <ExpandContentButton suffixText="advanced options">
+            <ExpandContentButton suffixText="options">
               <>
                 <InputField<FormValues, 'staffId'> name={'staffId'} label={'Staff ID'}>
                   {(inputProps) => <TextInput {...inputProps} />}
