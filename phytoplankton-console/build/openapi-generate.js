@@ -96,7 +96,7 @@ function exec(command, cwd) {
 }
 
 async function prepare() {
-  exec('yarn && yarn openapi:prepare', TARPON_PATH);
+  exec('yarn && yarn openapi:build && yarn openapi:prepare', TARPON_PATH);
   fs.copyFileSync(SOURCE_OPENAPI_INTERNAL_PATH, OUTPUT_OPENAPI_INTERNAL_PATH);
 }
 
