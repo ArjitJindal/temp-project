@@ -2,6 +2,7 @@ import { Forbidden } from 'http-errors'
 import { Credentials } from '@aws-sdk/client-sts'
 import { ManagedRoleName } from '../openapi-internal/ManagedRoleName'
 import { PermissionsAction } from '../openapi-internal/PermissionsAction'
+import { PermissionStatements } from '../openapi-internal/PermissionStatements'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { ContextUser, currentUser } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -172,12 +173,15 @@ export function assertPermissions(requiredPermissions: Permission[]) {
   }
 }
 
-export function assertResourceAccess(requiredResources: string[]) {
+export function assertResourceAccess(
+  requiredResources: string[],
+  statements: PermissionStatements[]
+) {
   const context = getContext()
+
   if (!context) {
     throw new Forbidden('Unknown user')
   }
-  const statements = context.statements
 
   if (context.user?.role === 'root') {
     assertAllowAccessTenant()
@@ -185,19 +189,24 @@ export function assertResourceAccess(requiredResources: string[]) {
   }
 
   for (const requiredResource of requiredResources) {
-    const [action, resource] = requiredResource.split(':::')
+    const [action, requiredResourcePath] = requiredResource.split(':::')
     let hasAccess = false // Deny by default
 
     const statementsForAction =
       statements?.filter((s) =>
         s.actions.includes(action as PermissionsAction)
       ) ?? []
-
     for (const statement of statementsForAction) {
       for (const statementResource of statement.resources) {
-        const [_, resourcePath] = statementResource.split(':::')
-
-        if (resourcePath === '*' || resource.startsWith(resourcePath)) {
+        let resourcePath = statementResource.split(':::')[1]
+        if (resourcePath.endsWith('/*')) {
+          // remove /* from end of resourcePath
+          resourcePath = resourcePath.replace(/\/\*$/, '')
+        }
+        if (
+          resourcePath === '*' ||
+          requiredResourcePath.startsWith(resourcePath)
+        ) {
           hasAccess = true
           break
         }

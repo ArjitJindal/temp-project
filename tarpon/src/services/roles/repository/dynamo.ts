@@ -177,14 +177,15 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     namespace: string,
     name: string
   ): Promise<PermissionStatements[]> {
+    const key = DynamoDbKeys.ROLES_BY_NAME(
+      this.auth0Domain,
+      getNamespacedRoleName(getNonDemoTenantId(namespace), name)
+    )
     const role = await this.dynamoClient.send(
       new GetCommand({
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Key: DynamoDbKeys.ROLES_BY_NAME(
-          this.auth0Domain,
-          getNamespacedRoleName(namespace, name)
-        ),
+        Key: key,
         ProjectionExpression: 'statements',
       })
     )

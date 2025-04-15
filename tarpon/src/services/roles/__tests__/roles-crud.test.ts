@@ -153,6 +153,7 @@ describe('Test Custom Roles Deletion and Updation', () => {
       name: 'test-name',
       description: 'test-description',
       permissions: [],
+      statements: [],
     })
     expect(TEST_ROLES.length).toEqual(3)
 

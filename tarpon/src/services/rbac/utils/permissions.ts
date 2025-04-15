@@ -720,6 +720,39 @@ export const convertV1PermissionToV2 = (
   ]
 }
 
+export const convertV2PermissionToV1 = (
+  tenantId: string,
+  permissionsToConvert: PermissionStatements[]
+): Permission[] => {
+  const permissions: string[] = []
+  for (const perm of permissionsToConvert) {
+    if (perm.resources.includes(`frn:console:${tenantId}:::*`)) {
+      continue
+    }
+
+    for (const action of perm.actions) {
+      for (const resource of perm.resources) {
+        const resourceParts = resource.split(':::')[1].split('/')
+        if (resourceParts.length >= 2) {
+          permissions.push(`${resourceParts[0]}:${resourceParts[1]}:${action}`)
+        }
+
+        if (resourceParts.length === 1) {
+          permissions.push(
+            ...PERMISSIONS.filter(
+              (p) => p.startsWith(resourceParts[0]) && p.endsWith(action)
+            )
+          )
+        }
+      }
+    }
+  }
+
+  return permissions.filter((p) =>
+    PERMISSIONS.includes(p as Permission)
+  ) as Permission[]
+}
+
 type Resource = {
   id: string
   children?: Resource[]

@@ -5,7 +5,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getContext } from '../utils/context-storage'
-import { hasFeature } from '../utils/context'
+import { hasFeature, tenantStatements } from '../utils/context'
 import {
   assertPermissions,
   assertProductionAccess,
@@ -50,6 +50,10 @@ export const rbacMiddleware =
     }
 
     if (hasFeature('RBAC_V2')) {
+      const statements = await tenantStatements(
+        event.requestContext.authorizer.tenantId
+      )
+
       const requiredResources = getApiRequiredResources(apiPath, httpMethod)
       // replace path parameters with actual values
       const pathParameters = event.pathParameters
@@ -60,7 +64,7 @@ export const rbacMiddleware =
         return resource
       })
 
-      assertResourceAccess(requiredResourcesWithValues)
+      assertResourceAccess(requiredResourcesWithValues, statements)
     }
 
     const tenantId = event.requestContext.authorizer.tenantId

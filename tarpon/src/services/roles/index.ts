@@ -68,7 +68,7 @@ export class RoleService {
 
       return roles
     }
-    return roles.map((r) => transformRole(r, r.permissions))
+    return roles.map((r) => transformRole(r, r.permissions, r.statements ?? []))
   }
 
   @auditLog('ROLE', 'ROLE', 'CREATE')
@@ -91,7 +91,11 @@ export class RoleService {
         statements,
       },
     })
-    const transformedRole = transformRole(data, data.permissions)
+    const transformedRole = transformRole(
+      data,
+      data.permissions,
+      data.statements ?? []
+    )
     return {
       result: transformedRole,
       entities: [
@@ -208,7 +212,11 @@ export class RoleService {
       })
       return role
     }
-    return transformRole(cachedRole, cachedRole.permissions)
+    return transformRole(
+      cachedRole,
+      cachedRole.permissions,
+      cachedRole?.statements ?? []
+    )
   }
 
   async setRole(

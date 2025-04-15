@@ -2,10 +2,12 @@ import fs from 'fs'
 import path from 'path'
 import {
   convertToFrns,
+  convertV1PermissionToV2,
+  convertV2PermissionToV1,
   getOptimizedPermissions,
   isPermissionValidFromTree,
 } from '../utils/permissions'
-import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
+import { DEFAULT_ROLES, DEFAULT_ROLES_V2 } from '@/core/default-roles'
 
 describe('default roles', () => {
   test('keys', async () => {
@@ -235,5 +237,14 @@ describe('getOptimizedPermissions', () => {
         ],
       },
     ])
+  })
+
+  it('should convert v2 permissions to v1 permissions', () => {
+    const adminPermissions = DEFAULT_ROLES.find(
+      (p) => p.role === 'admin'
+    )?.permissions.sort()
+    const frns = convertV1PermissionToV2('test-tenant', adminPermissions ?? [])
+    const v1Permissions = convertV2PermissionToV1('test-tenant', frns).sort()
+    expect(v1Permissions).toEqual(adminPermissions)
   })
 })

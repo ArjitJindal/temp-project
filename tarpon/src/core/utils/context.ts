@@ -15,7 +15,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
 import { isEmpty, isNil, mergeWith, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
-import { DEFAULT_ROLES, DEFAULT_ROLES_V2 } from '../default-roles'
+import { DEFAULT_ROLES_V2 } from '../default-roles'
 import { getContext, getContextStorage } from './context-storage'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
@@ -171,20 +171,7 @@ export async function initializeTenantContext(tenantId: string) {
   }
   const dynamoDb = getDynamoDbClient()
   const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-  const roleRepository = new DynamoRolesRepository(tenantId, dynamoDb)
-  const isDefaultRole = DEFAULT_ROLES.find(
-    (role) => role.role === context.user?.role
-  )
-  const [tenantSettings, roleStatements] = await Promise.all([
-    tenantRepository.getTenantSettings(),
-    isDefaultRole
-      ? Promise.resolve(
-          DEFAULT_ROLES_V2.find((role) => role.role === context.user?.role)
-            ?.permissions ?? []
-        )
-      : roleRepository.getRoleStatements(tenantId, context.user?.role ?? ''),
-  ])
-
+  const tenantSettings = await tenantRepository.getTenantSettings()
   context.tenantId = tenantId
   if (!context.logMetadata) {
     context.logMetadata = {}
@@ -197,7 +184,6 @@ export async function initializeTenantContext(tenantId: string) {
   context.features = tenantSettings?.features
   context.settings = tenantSettings ?? {}
   context.auth0Domain = tenantSettings?.auth0Domain ?? process.env.AUTH0_DOMAIN
-  context.statements = roleStatements
 }
 
 export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
@@ -428,6 +414,31 @@ export async function tenantHasEitherFeatures(
     getTestEnabledFeatures()?.some((feature) => features.includes(feature)) ||
     false
   )
+}
+
+export async function tenantStatements(
+  tenantId: string
+): Promise<PermissionStatements[]> {
+  const context = getContext()
+  const contextStatements = context?.statements
+  if (contextStatements && !isEmpty(contextStatements)) {
+    return contextStatements
+  }
+
+  const roleRepository = new DynamoRolesRepository(
+    getContext()?.auth0Domain ?? '',
+    getDynamoDbClient()
+  )
+  const isDefaultRole = DEFAULT_ROLES_V2.find(
+    (role) => role.role === context?.user?.role
+  )
+  const statements = isDefaultRole
+    ? Promise.resolve(
+        DEFAULT_ROLES_V2.find((role) => role.role === context?.user?.role)
+          ?.permissions ?? []
+      )
+    : roleRepository.getRoleStatements(tenantId, context?.user?.role ?? '')
+  return statements
 }
 
 export async function tenantSettings(

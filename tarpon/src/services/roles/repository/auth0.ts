@@ -45,7 +45,8 @@ export class Auth0RolesRepository extends BaseRolesRepository {
 
     return transformRole(
       role,
-      auth0Permissions.map((p) => p.permission_name) as Permission[]
+      auth0Permissions.map((p) => p.permission_name) as Permission[],
+      []
     )
   }
 
