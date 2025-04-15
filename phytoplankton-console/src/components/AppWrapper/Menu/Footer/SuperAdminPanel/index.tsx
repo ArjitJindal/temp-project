@@ -326,6 +326,35 @@ export default function SuperAdminPanel() {
     }
   };
 
+  const handlePullAllTenantsFeatures = async () => {
+    const features = await api.getTenantsFeatures();
+
+    const csvContent =
+      `Tenant ID, Tenant Name, Region, ${Object.entries(featureDescriptions)
+        .map(([_, value]) => value.title)
+        .join(',')}\n` +
+      // if feature is enabled, add Y, otherwise add N
+      features
+        .map(
+          (feature) =>
+            `${feature.tenantId},${feature.tenantName},${feature.region},${Object.entries(
+              featureDescriptions,
+            )
+              .map(([featureKey]) => (feature.features.includes(featureKey as Feature) ? 'Y' : 'N'))
+              .join(',')}`,
+        )
+        .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tenant_features-${new Date().toISOString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const tenantsDeletionQueryResult = useQuery(['tenantsFailedToDelete'], async () => {
     return await api.getTenantsDeletionData();
   });
@@ -750,8 +779,17 @@ export default function SuperAdminPanel() {
                     </Button>
                   )}
                 </Confirm>
+                <br />
               </>
             )}
+            <Button
+              type={'PRIMARY'}
+              onClick={async () => {
+                await handlePullAllTenantsFeatures();
+              }}
+            >
+              Pull all tenants features
+            </Button>
           </div>
         )}
       </Modal>

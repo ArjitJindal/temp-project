@@ -47,6 +47,7 @@ export const ConsoleApiPathToLambda: any = {
   '/tenants/settings/rule-queues/{ruleQueueId}':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/batch-job': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/features': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/change_tenant':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,

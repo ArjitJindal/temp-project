@@ -173,7 +173,8 @@ export class TenantService {
 
   public static getAllTenants = async (
     stage?: Stage,
-    region?: FlagrightRegion
+    region?: FlagrightRegion,
+    useCache: boolean = false
   ): Promise<TenantInfo[]> => {
     const stageOrDefault = stage ?? (process.env.ENV?.split(':')[0] as Stage)
     const regionOrDefault = region ?? (process.env.REGION as FlagrightRegion)
@@ -190,11 +191,13 @@ export class TenantService {
       )
       const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
       tenantInfos.push(
-        ...(await accountsService.getTenants()).map((tenant) => ({
-          tenant,
-          auth0Domain,
-          auth0TenantConfig,
-        }))
+        ...(await accountsService.getTenants(undefined, useCache)).map(
+          (tenant) => ({
+            tenant,
+            auth0Domain,
+            auth0TenantConfig,
+          })
+        )
       )
     }
 
@@ -205,6 +208,48 @@ export class TenantService {
             tenantInfo.tenant.region === regionOrDefault
         )
       : tenantInfos
+  }
+
+  static async pullAllTenantsFeatures(): Promise<
+    Record<
+      string,
+      {
+        tenantName: string
+        region: string
+        features: Feature[]
+      }
+    >
+  > {
+    const tenants = await TenantService.getAllTenants(
+      process.env.ENV?.split(':')[0] as Stage,
+      process.env.REGION as FlagrightRegion,
+      true
+    )
+    const features: Record<
+      string,
+      { tenantName: string; region: string; features: Feature[] }
+    > = {}
+    const dynamoDb = getDynamoDbClient()
+    for (const tenant of tenants) {
+      const tenantRepository = new TenantRepository(tenant.tenant.id, {
+        dynamoDb,
+      })
+      const tenantSettings = await tenantRepository.getTenantSettings([
+        'features',
+      ])
+
+      if (!tenantSettings.features || !tenant.tenant.id) {
+        continue
+      }
+
+      features[tenant.tenant.id] = {
+        tenantName: tenant.tenant.name,
+        region: tenant.tenant.region,
+        features: tenantSettings.features,
+      }
+    }
+
+    return features
   }
 
   async createTenant(

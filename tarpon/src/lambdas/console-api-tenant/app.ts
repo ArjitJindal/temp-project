@@ -44,6 +44,7 @@ import {
   getDefaultProviders,
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
+import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -597,6 +598,19 @@ export const tenantsHandler = lambdaApi()(
         request.reasonId,
         request.ConsoleActionReasonPutRequest.isActive
       )
+    })
+
+    handlers.registerGetTenantsFeatures(async () => {
+      const features = await TenantService.pullAllTenantsFeatures()
+      const tenantFeatures: TenantFeatures[] = Object.entries(features).map(
+        ([tenantId, { tenantName, region, features }]) => ({
+          tenantId,
+          tenantName,
+          region,
+          features,
+        })
+      )
+      return tenantFeatures
     })
 
     return await handlers.handle(event)

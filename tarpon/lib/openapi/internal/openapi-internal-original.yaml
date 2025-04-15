@@ -3354,6 +3354,22 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantSettings'
         required: true
+  /tenants/features:
+    get:
+      summary: Tenant - Get Features
+      operationId: get-tenants-features
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantFeatures'
+        '401':
+          description: Unauthorized
+      parameters: []
   /tenants/batch-job:
     post:
       summary: Tenant - Trigger Batch Job
@@ -15057,6 +15073,23 @@ components:
           type: number
       required:
         - average
+    TenantFeatures:
+      title: TenantFeatures
+      type: object
+      properties:
+        tenantId:
+          type: string
+        tenantName:
+          type: string
+        region:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+      required:
+        - tenantId
+        - features
     TenantCreationRequest:
       title: TenantCreationRequest
       type: object
