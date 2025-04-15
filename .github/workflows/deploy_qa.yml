@@ -78,7 +78,12 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.1.7"
-      - run: npm run openapi:prepare
+      - name: Build Openapi
+        run: npm run openapi:build
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - name: Prepare Openapi
+        run: npm run openapi:prepare
         if: steps.check.outputs.triggered == 'true'
         working-directory: "tarpon"
       - name: Deploy
