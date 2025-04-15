@@ -38,8 +38,8 @@ interface Params extends TableCommonParams {
 }
 
 export default function TeamPerformanceCard(props: WidgetProps) {
-  const startTime = dayjs().subtract(1, 'day').startOf('day');
-  const endTime = dayjs().endOf('day');
+  const startTime = dayjs().subtract(1, 'month');
+  const endTime = dayjs();
   const [type, setType] = useLocalStorageState<'current' | 'daterange'>(
     'team-performance-card-type',
     'current',

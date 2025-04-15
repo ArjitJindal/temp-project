@@ -28,8 +28,8 @@ interface Params extends TableCommonParams {
 
 function TeamSLAPerformanceCard(props: WidgetProps) {
   const [users] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
-  const startTime = dayjs().subtract(1, 'day').startOf('day');
-  const endTime = dayjs().endOf('day');
+  const startTime = dayjs().subtract(1, 'month');
+  const endTime = dayjs();
   const [params, setParams] = useState<AllParams<Params>>({
     ...DEFAULT_PARAMS_STATE,
     dateRange: [startTime, endTime],
