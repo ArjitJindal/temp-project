@@ -1534,7 +1534,7 @@ async function expectCaseStats(
     startTimestamp?: number
     endTimestamp?: number
     status?: CaseStatus[]
-    accountIds?: string[]
+    accounts?: { id: string; role: string }[]
     page?: number
     pageSize?: number
   }
@@ -1545,7 +1545,7 @@ async function expectCaseStats(
     filters?.startTimestamp,
     filters?.endTimestamp,
     filters?.status,
-    filters?.accountIds,
+    filters?.accounts,
     filters?.page,
     filters?.pageSize
   )
@@ -1571,7 +1571,7 @@ async function expectAlertStats(
     startTimestamp?: number
     endTimestamp?: number
     status?: AlertStatus[]
-    accountIds?: string[]
+    accounts?: { id: string; role: string }[]
     page?: number
     pageSize?: number
   }
@@ -1582,7 +1582,7 @@ async function expectAlertStats(
     dateFilter?.startTimestamp,
     dateFilter?.endTimestamp,
     dateFilter?.status,
-    dateFilter?.accountIds,
+    dateFilter?.accounts,
     dateFilter?.page,
     dateFilter?.pageSize
   )

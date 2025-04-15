@@ -174,7 +174,10 @@ export const dashboardStatsHandler = lambdaApi()(
       )
       const accountIds = accounts
         .filter((account) => account.role !== 'root')
-        .map((account) => account.id)
+        .map((account) => ({
+          id: account.id,
+          role: account.role,
+        }))
 
       const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
       return await dashboardStatsRepository.getTeamStatistics(
@@ -269,13 +272,16 @@ export const dashboardStatsHandler = lambdaApi()(
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshLatestTeamStats()
       }
-      const accountIds = accounts
+      const accountsWithRole = accounts
         .filter((account) => account.role !== 'root')
-        .map((account) => account.id)
+        .map((account) => ({
+          id: account.id,
+          role: account.role,
+        }))
 
       return await dashboardStatsRepository.getLatestTeamStatistics(
         scope,
-        accountIds,
+        accountsWithRole,
         pageSize,
         page
       )

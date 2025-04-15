@@ -909,10 +909,11 @@ export class TeamStatsDashboardMetric {
     startTimestamp: number,
     endTimestamp: number,
     status: (CaseStatus | AlertStatus)[],
-    accountIds: Array<string>,
+    accounts: { id: string; role: string }[],
     pageSize: number,
     page: number
   ): Promise<DashboardTeamStatsItemResponse> {
+    const accountIds = accounts.map((account) => account.id) ?? []
     if (isClickhouseEnabled()) {
       return this.getClickhouse(
         tenantId,
@@ -920,7 +921,7 @@ export class TeamStatsDashboardMetric {
         startTimestamp,
         endTimestamp,
         status,
-        accountIds,
+        accounts,
         pageSize,
         page
       )
@@ -1041,7 +1042,10 @@ export class TeamStatsDashboardMetric {
       .toArray()
 
     return {
-      items: data,
+      items: data.map((item) => ({
+        ...item,
+        role: accounts.find((account) => account.id === item.accountId)?.role,
+      })),
       total,
     }
   }
@@ -1052,10 +1056,11 @@ export class TeamStatsDashboardMetric {
     startTimestamp: number,
     endTimestamp: number,
     status: (CaseStatus | AlertStatus)[],
-    accountIds: Array<string>,
+    accounts: { id: string; role: string }[],
     pageSize: number,
     page: number
   ): Promise<DashboardTeamStatsItemResponse> {
+    const accountIds = accounts.map((account) => account.id)
     const clickhouseClient = await getClickhouseClient(tenantId)
     const viewQuery =
       scope === 'CASES'
@@ -1137,6 +1142,7 @@ export class TeamStatsDashboardMetric {
         closedBySystem: Number(item.closedBySystem),
         inProgress: Number(item.inProgress),
         escalatedBy: Number(item.escalatedBy),
+        role: accounts.find((account) => account.id === item.accountId)?.role,
       })),
       total: Number(count[0]?.count ?? 0),
     }

@@ -196,7 +196,7 @@ async function expectLatestTeamStats(
     onHold: number
   }[],
   filters?: {
-    accountIds?: string[]
+    accounts?: { id: string; role: string }[]
     page?: number
     pageSize?: number
   }
@@ -204,7 +204,7 @@ async function expectLatestTeamStats(
   await repo.refreshLatestTeamStats()
   const stats = await repo.getLatestTeamStatistics(
     scope,
-    filters?.accountIds,
+    filters?.accounts,
     filters?.pageSize,
     filters?.page
   )

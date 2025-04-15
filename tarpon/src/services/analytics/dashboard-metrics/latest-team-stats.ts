@@ -442,12 +442,13 @@ export class LatestTeamStatsDashboardMetric {
   public static async get(
     tenantId: string,
     scope: 'CASES' | 'ALERTS',
-    accountIds?: Array<string>,
+    accounts?: { id: string; role: string }[],
     pageSize?: number,
     page?: number
   ): Promise<DashboardLatestTeamStatsItemResponse> {
+    const accountIds = accounts?.map((account) => account.id) ?? []
     if (isClickhouseEnabled()) {
-      return this.getClickhouse(tenantId, scope, accountIds, pageSize, page)
+      return this.getClickhouse(tenantId, scope, accounts, pageSize, page)
     }
     const db = await getMongoDbClientDb()
     const collectionName =
@@ -529,10 +530,11 @@ export class LatestTeamStatsDashboardMetric {
   public static async getClickhouse(
     tenantId: string,
     scope: 'CASES' | 'ALERTS',
-    accountIds?: Array<string>,
+    accounts?: { id: string; role: string }[],
     pageSize?: number,
     page?: number
   ): Promise<DashboardLatestTeamStatsItemResponse> {
+    const accountIds = accounts?.map((account) => account.id)
     const client = await getClickhouseClient(tenantId)
     const assignmentStatuses = this.getStatusAccordingToAssignment(
       'assignments'
@@ -581,6 +583,7 @@ export class LatestTeamStatsDashboardMetric {
         inProgress: Number(row.inProgress),
         escalated: Number(row.escalated),
         onHold: Number(row.onHold),
+        role: accounts?.find((account) => account.id === row.accountId)?.role,
       })),
       total,
     }

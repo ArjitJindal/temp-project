@@ -127,7 +127,7 @@ export class DashboardStatsRepository {
     startTimestamp?: number,
     endTimestamp?: number,
     status?: (CaseStatus | AlertStatus)[],
-    accountIds?: Array<string>,
+    accountIds?: { id: string; role: string }[],
     pageSize?: number,
     page?: number
   ): Promise<DashboardTeamStatsItemResponse> {
@@ -326,14 +326,14 @@ export class DashboardStatsRepository {
 
   public async getLatestTeamStatistics(
     scope: 'CASES' | 'ALERTS',
-    accountIds?: Array<string>,
+    accounts?: { id: string; role: string }[],
     pageSize?: number,
     page?: number
   ): Promise<DashboardLatestTeamStatsItemResponse> {
     return LatestTeamStatsDashboardMetric.get(
       this.tenantId,
       scope,
-      accountIds,
+      accounts ?? [],
       pageSize,
       page
     )
