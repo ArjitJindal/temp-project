@@ -316,9 +316,14 @@ export class MongoDbConsumer {
           }
 
           const items = await this.fetchDocuments(collectionName, records)
-          const filterConditions = `mongo_id IN (${items
+          const idsToDelete = `${items
             .map((item) => `'${item._id}'`)
-            .join(',')})`
+            .join(',')}`
+          if (idsToDelete.length === 0) {
+            logger.info(`No documents to delete for ${collectionName}`)
+            return
+          }
+          const filterConditions = `mongo_id IN (${idsToDelete})`
 
           await this.executeDeleteQuery(
             tenantId,
