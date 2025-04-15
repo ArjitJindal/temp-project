@@ -76,7 +76,10 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       new PutCommand({
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Item: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role.name),
+        Item: {
+          ...DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role.name),
+          ...role,
+        },
       })
     )
 
