@@ -3,7 +3,7 @@ import { Option } from '.';
 import { Comparable } from '@/utils/comparable';
 import { notEmpty } from '@/utils/array';
 
-export const SEPARATOR = ',';
+export const SEPARATOR = ';';
 
 export function parseSearchString<Value extends Comparable>(
   options: Option<Value>[],

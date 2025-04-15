@@ -109,19 +109,19 @@ describe('MULTIPLE mode', () => {
     expectDropdownOpen(true);
 
     // By option values
-    await userEvent.keyboard('option1,option2, unknown option, option3,');
+    await userEvent.keyboard('option1;option2; unknown option; option3;');
     expectValues(['First option', 'Second option', 'Third option']);
     await clickClear();
     expectValues([]);
 
     // By option labels
-    await userEvent.keyboard('First option,Second option, unknown option, Third option,');
+    await userEvent.keyboard('First option;Second option; unknown option; Third option;');
     expectValues(['First option', 'Second option', 'Third option']);
     await clickClear();
     expectValues([]);
 
     // By alternative labels
-    await userEvent.keyboard('111,bbb, unknown option, ccc,');
+    await userEvent.keyboard('111;bbb; unknown option; ccc;');
     expectValues(['First option', 'Second option', 'Third option']);
     await clickClear();
     expectValues([]);
@@ -226,19 +226,19 @@ describe('TAGS mode', () => {
     expectDropdownOpen(true);
 
     // By option values
-    await userEvent.keyboard('option1,option2, unknown option, option3,');
+    await userEvent.keyboard('option1;option2; unknown option; option3;');
     expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
     await clickClear();
     expectValues([]);
 
     // By option labels
-    await userEvent.keyboard('First option,Second option, unknown option, Third option,');
+    await userEvent.keyboard('First option;Second option; unknown option; Third option;');
     expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
     await clickClear();
     expectValues([]);
 
     // By alternative labels
-    await userEvent.keyboard('111,bbb, unknown option, ccc,');
+    await userEvent.keyboard('111;bbb; unknown option; ccc;');
     expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
     await clickClear();
     expectValues([]);
