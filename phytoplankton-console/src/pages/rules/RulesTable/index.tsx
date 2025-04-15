@@ -57,8 +57,8 @@ function canSimulate(rule: Rule) {
 }
 
 const ruleUsageReasons: string[] = [
-  'Top used rule this month',
-  'Used by companies similar to us',
+  'The most frequently created rule of the month',
+  'Used by companies offering similar products',
   'Used by companies in the same region',
   'Best performing rule this month',
   'Used by companies with similar risk profiles',
@@ -68,7 +68,7 @@ const ruleUsageReasons: string[] = [
   'Used by companies of similar license',
   'Top performing rule by SAR conversion rate',
   'Rule with highest efficiency score',
-  'Fastest growing rule adoption across network',
+  'The most frequent active rule across all FIs',
   'Emerging typology coverage',
 ];
 
