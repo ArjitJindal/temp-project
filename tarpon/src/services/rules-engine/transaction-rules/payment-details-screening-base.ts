@@ -101,10 +101,12 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           const hitContext = {
             entity: 'EXTERNAL_USER' as const,
             ruleInstanceId: this.ruleInstance.id ?? '',
+            ruleId: this.ruleInstance.ruleId ?? '',
             transactionId: this.transaction.transactionId,
             userId: user?.userId ?? paymentMethodId,
             searchTerm: name,
             entityType,
+            paymentMethodId,
           }
           const result = await this.sanctionsService.search(
             {

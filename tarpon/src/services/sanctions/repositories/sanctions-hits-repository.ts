@@ -1,4 +1,10 @@
-import { MongoClient, UpdateResult, Filter, Document } from 'mongodb'
+import {
+  MongoClient,
+  UpdateResult,
+  Filter,
+  Document,
+  FindCursor,
+} from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -28,6 +34,9 @@ export interface HitsFilters {
   filterSearchId?: string[]
   filterStatus?: SanctionsHitStatus[]
   filterCountry?: CountryCode[]
+  filterPaymentMethodId?: string[]
+  ruleId?: string
+  filterUserId?: string
 }
 
 @traceable
@@ -65,7 +74,6 @@ export class SanctionsHitsRepository {
     if (params?.filterSearchId) {
       filter.searchId = { $in: params?.filterSearchId }
     }
-
     return filter
   }
 
@@ -153,7 +161,6 @@ export class SanctionsHitsRepository {
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
-
     const filteredHits = await this.filterWhitelistedHits(rawHits, hitContext)
 
     const ids = await this.counterRepository.getNextCountersAndUpdate(
@@ -202,6 +209,9 @@ export class SanctionsHitsRepository {
           {
             $match: {
               searchId,
+              'hitContext.paymentMethodId': hitContext?.paymentMethodId,
+              'hitContext.userId': hitContext?.userId,
+              'hitContext.entityType': hitContext?.entityType,
             },
           },
           {
@@ -239,9 +249,12 @@ export class SanctionsHitsRepository {
     )
 
     const entityIds = rawHits.map((x) => x.id)
-    const foundHitsCursor = collection.find({
+    const foundHitsCursor: FindCursor<SanctionsHit> = collection.find({
       searchId: searchId,
       'entity.id': { $in: entityIds },
+      'hitContext.paymentMethodId': hitContext?.paymentMethodId,
+      'hitContext.userId': hitContext?.userId,
+      'hitContext.entityType': hitContext?.entityType,
     })
     const updatedIds: string[] = []
     for await (const { sanctionsHitId, entity } of foundHitsCursor) {
@@ -281,6 +294,7 @@ export class SanctionsHitsRepository {
       entity: hitContext?.entity,
       entityType: hitContext?.entityType,
       searchTerm: hitContext?.searchTerm,
+      paymentMethodId: hitContext?.paymentMethodId,
     }
     const whitelistEntities =
       await this.sanctionsWhitelistEntityRepository.getWhitelistEntities(

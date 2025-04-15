@@ -25,6 +25,7 @@ import {
   Alert,
   SanctionHitStatusUpdateRequest,
   SanctionsDetails,
+  SanctionsDetailsEntityType,
   SanctionsHit,
   SanctionsHitListResponse,
   SanctionsHitStatus,
@@ -114,6 +115,8 @@ export interface SanctionsHitsTableParams {
   searchIds?: string[];
   searchTerm?: string;
   fuzziness?: number;
+  paymentMethodIds?: string[];
+  entityType?: SanctionsDetailsEntityType;
 }
 
 export function useSanctionHitsQuery(
@@ -126,6 +129,8 @@ export function useSanctionHitsQuery(
     alertId: alertId,
     filterStatus: params.statuses ?? ['OPEN' as const],
     filterSearchId: params.searchIds,
+    filterPaymentMethodId: params.paymentMethodIds,
+    filterScreeningHitEntityType: params.entityType,
   };
   return useCursorQuery(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
@@ -254,6 +259,7 @@ interface Props {
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   selectedSanctionsHitsIds?: string[];
   sanctionsSearchIdFilter?: string;
+  paymentMethodIdFilter?: string;
   onSanctionsHitSelect?: (
     alertId: string,
     sanctionsHitsIds: string[],
@@ -265,11 +271,13 @@ interface Props {
   selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
   fitTablesHeight?: boolean;
   sanctionsDetailsFilter?: SanctionsDetails;
+  entityTypeFilter?: SanctionsDetailsEntityType;
 }
 
 export function useAlertTabs(props: Props): TabItem[] {
   const {
     sanctionsSearchIdFilter,
+    paymentMethodIdFilter,
     alert,
     caseUserId,
     selectedSanctionsHitsIds,
@@ -283,6 +291,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionActions,
     fitTablesHeight,
     sanctionsDetailsFilter,
+    entityTypeFilter,
   } = props;
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
@@ -305,6 +314,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     {
       ...openTableParams,
       searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
+      entityType: entityTypeFilter,
     },
     alertId,
     tabList.includes(AlertTabs.MATCH_LIST),
@@ -313,6 +324,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     {
       ...clearedTableParams,
       searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
+      entityType: entityTypeFilter,
     },
     alertId,
     tabList.includes(AlertTabs.CLEARED_MATCH_LIST),

@@ -15,7 +15,9 @@ import { useApi } from '@/api';
 import {
   Alert,
   CurrencyCode,
+  PaymentMethod,
   SanctionsDetails,
+  SanctionsDetailsEntityType,
   TransactionTableItem,
   TransactionType,
 } from '@/apis';
@@ -50,16 +52,46 @@ export default function TransactionsTab(props: Props) {
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
+  const mapEntityTypeToTransactionMethod: Partial<
+    Record<
+      SanctionsDetailsEntityType,
+      PaymentMethod[] // Using an array as some methods map to the same entity type
+    >
+  > = {
+    NAME_ON_CARD: ['CARD'],
+    BANK_ACCOUNT_HOLDER_NAME: ['GENERIC_BANK_ACCOUNT', 'IBAN'],
+    PAYMENT_NAME: ['SWIFT', 'UPI', 'WALLET', 'CHECK', 'ACH'],
+    PAYMENT_BENEFICIARY_NAME: ['ACH'],
+  };
 
   const api = useApi();
 
   const filterSanctionsHitIds = sanctionsDetailsFilter
     ? sanctionsDetailsFilter.sanctionHitIds
     : undefined;
-  const filterSanctionsHitId = filterSanctionsHitIds?.[0];
+  const filterSanctionsHitId = sanctionsDetailsFilter?.hitContext?.paymentMethodId
+    ? undefined
+    : filterSanctionsHitIds?.[0];
+  const filterPaymentMethodId = sanctionsDetailsFilter?.hitContext?.paymentMethodId;
+  const originMethodFilter: PaymentMethod[] = [];
+  const destinationMethodFilter: PaymentMethod[] = [];
+  if (alert.ruleId === 'R-169' && sanctionsDetailsFilter?.entityType) {
+    const entityType = sanctionsDetailsFilter.entityType;
+    const methods = mapEntityTypeToTransactionMethod[entityType] ?? [];
 
+    if (alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')) {
+      destinationMethodFilter.push(...methods);
+    }
+    if (alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')) {
+      originMethodFilter.push(...methods);
+    }
+  }
   const transactionsResponse = useCursorQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', { ...params, filterSanctionsHitId }),
+    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', {
+      ...params,
+      filterSanctionsHitId,
+      filterPaymentMethodId,
+    }),
     async ({ from, view }) => {
       if (alert.alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
@@ -82,18 +114,25 @@ export default function TransactionsTab(props: Props) {
         filterTransactionId: params.transactionId,
         filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
         filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
-        filterOriginPaymentMethods: params.originMethodFilter
-          ? [params.originMethodFilter]
-          : undefined,
-        filterDestinationPaymentMethods: params.destinationMethodFilter
-          ? [params.destinationMethodFilter]
-          : undefined,
+        filterOriginPaymentMethods:
+          alert.ruleId === 'R-169' && originMethodFilter.length > 0
+            ? originMethodFilter
+            : params.originMethodFilter
+            ? [params.originMethodFilter]
+            : undefined,
+        filterDestinationPaymentMethods:
+          alert.ruleId === 'R-169' && destinationMethodFilter.length > 0
+            ? destinationMethodFilter
+            : params.destinationMethodFilter
+            ? [params.destinationMethodFilter]
+            : undefined,
         filterTransactionType: params.type as TransactionType,
         beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
         afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
         filterDestinationCountries: params['destinationAmountDetails.country'],
         filterOriginCountries: params['originAmountDetails.country'],
         filterSanctionsHitId: filterSanctionsHitId,
+        filterPaymentMethodId: filterPaymentMethodId,
       });
     },
   );

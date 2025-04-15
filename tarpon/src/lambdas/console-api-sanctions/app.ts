@@ -143,6 +143,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
                     entity: hit.hitContext.entity,
                     entityType: hit.hitContext.entityType,
                     searchTerm: hit.hitContext.searchTerm,
+                    paymentMethodId: hit.hitContext.paymentMethodId,
+                    alertId: alertId,
                   },
                   {
                     reason: updates.reasons,
