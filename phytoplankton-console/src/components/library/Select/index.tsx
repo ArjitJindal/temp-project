@@ -152,7 +152,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const handleCopyText = useCallback(() => {
     if (props.value) {
       const valueToCopy = Array.isArray(props.value)
-        ? props.value.join(',')
+        ? props.value.join(SEPARATOR)
         : props.value.toString();
       if (valueToCopy && valueToCopy.length > 0) {
         valueToCopy && copyTextToClipboard(valueToCopy);
