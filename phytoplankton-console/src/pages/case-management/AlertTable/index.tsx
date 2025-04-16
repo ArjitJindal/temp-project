@@ -1772,6 +1772,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             ? (alert) => (
                 <ExpandedRowRenderer
                   alert={alert ?? null}
+                  isEmbedded={isEmbedded}
                   escalatedTransactionIds={props.escalatedTransactionIds || []}
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
                   selectedSanctionsHitsIds={

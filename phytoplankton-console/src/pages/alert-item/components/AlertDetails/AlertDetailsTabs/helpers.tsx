@@ -267,6 +267,7 @@ interface Props {
   ) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   transactionSelectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
+  isEmbedded?: boolean;
   selectionInfo?: SelectionInfo;
   selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
   fitTablesHeight?: boolean;
@@ -279,6 +280,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     sanctionsSearchIdFilter,
     paymentMethodIdFilter,
     alert,
+    isEmbedded = false,
     caseUserId,
     selectedSanctionsHitsIds,
     onSanctionsHitSelect,
@@ -531,7 +533,7 @@ export function useAlertTabs(props: Props): TabItem[] {
           };
         }
         if (tab === AlertTabs.CRM) {
-          if (!isCrmEnabled || !settings.crmIntegrationName) {
+          if (!isCrmEnabled || !settings.crmIntegrationName || isEmbedded) {
             return null;
           }
           return {
@@ -593,6 +595,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     isCrmEnabled,
     settings.crmIntegrationName,
     isFreshDeskCrmEnabled,
+    isEmbedded,
   ]);
 
   return tabs;

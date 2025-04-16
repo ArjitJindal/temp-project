@@ -15,6 +15,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   alert: TableAlertItem;
+  isEmbedded: boolean;
   escalatedTransactionIds?: string[];
   selectedTransactionIds?: string[];
   selectedSanctionsHitsIds?: string[];
@@ -30,6 +31,7 @@ interface Props {
 function ExpandedRowRenderer(props: Props) {
   const {
     alert,
+    isEmbedded,
     selectedTransactionIds,
     selectedSanctionsHitsIds,
     onTransactionSelect,
@@ -46,6 +48,7 @@ function ExpandedRowRenderer(props: Props) {
 
   const tabItems = useAlertTabs({
     alert: alert,
+    isEmbedded: isEmbedded,
     caseUserId: alert.caseUserId,
     selectedTransactionIds: selectedTransactionIds,
     onTransactionSelect: onTransactionSelect,
