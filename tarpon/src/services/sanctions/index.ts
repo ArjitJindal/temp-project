@@ -562,7 +562,8 @@ export class SanctionsService {
           ?.filter((data) => {
             const check =
               params.filterSearchId?.includes(data.searchId) &&
-              data.entityType === params.filterScreeningHitEntityType
+              (!params.filterScreeningHitEntityType ||
+                data.entityType === params.filterScreeningHitEntityType)
             if (params.filterPaymentMethodId) {
               return (
                 params.filterPaymentMethodId.includes(
