@@ -223,6 +223,7 @@ export class AccountsService {
     params: InternalUserCreate
   ): Promise<AuditLogReturnData<Account, Account, Account>> {
     let account: Account | null = null
+    let deletedAccountIfError: boolean = true
     try {
       account = await this.getAccountByEmail(params.email)
 
@@ -230,6 +231,7 @@ export class AccountsService {
         account = await this.createAccountInternal(tenant, params)
         await this.roleService.setRole(tenant.id, account.id, params.role)
       } else {
+        deletedAccountIfError = false
         if (account.blocked) {
           await this.updateBlockedReason(tenant.id, account.id, false, null)
           await this.roleService.setRole(tenant.id, account.id, params.role)
@@ -237,10 +239,14 @@ export class AccountsService {
           throw new BadRequest('The user already exists.')
         }
       }
-      await this.addAccountToOrganizationInternal(tenant, account)
-      await this.sendPasswordResetEmail(params.email)
-    } catch (e) {
+
       if (account) {
+        deletedAccountIfError = false
+        await this.addAccountToOrganizationInternal(tenant, account)
+        await this.sendPasswordResetEmail(params.email)
+      }
+    } catch (e) {
+      if (account && deletedAccountIfError) {
         await this.deleteAuth0User(account)
       }
       throw e

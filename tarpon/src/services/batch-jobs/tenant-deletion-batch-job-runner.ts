@@ -845,7 +845,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       logger.warn(`Tenant not found.`)
       return
     }
-    const users = await accountsService.getTenantAccounts(tenant)
+    const users = await accountsService.auth0.getTenantAccounts(tenant)
     for (const user of users) {
       logger.info(`Deleting auth0 user ${user.id}`)
       await accountsService.deleteAuth0User(user)
