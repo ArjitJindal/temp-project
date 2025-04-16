@@ -23,6 +23,8 @@ import { Tenant } from '@/services/accounts/repository'
 import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
+import { logger } from '@/core/logger'
+import { addSentryExtras } from '@/core/utils/context'
 
 @traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
@@ -216,11 +218,19 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       })
     )
 
+    if (!role?.name) {
+      addSentryExtras({
+        role,
+      })
+      logger.error('Role name is undefined for role id: ' + id)
+      return
+    }
+
     await this.dynamoClient.send(
       new DeleteCommand({
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Key: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role?.name || ''),
+        Key: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role.name),
       })
     )
   }

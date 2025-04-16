@@ -6,7 +6,7 @@ import {
   SQSEvent,
 } from 'aws-lambda'
 import * as ejs from 'ejs'
-import { IncomingWebhook } from '@slack/webhook'
+import { IncomingWebhook, IncomingWebhookSendArguments } from '@slack/webhook'
 import { Credentials } from '@aws-sdk/client-sts'
 import { OauthV2AccessResponse } from '@slack/web-api'
 import {
@@ -16,6 +16,7 @@ import {
   PutCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { chunk } from 'lodash'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -28,6 +29,9 @@ import { apiFetch } from '@/utils/api-fetch'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import dayjs from '@/utils/dayjs'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { splitSlackMessage } from '@/utils/slack'
+
+const slackifyMarkdown = require('slackify-markdown') // eslint-disable-line
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -191,39 +195,19 @@ export async function sendCaseCreatedAlert(tenantId: string) {
         },
       },
       {
-        $project: {
-          caseId: 1,
-        },
+        $project: { caseId: 1 },
       },
     ])
     .toArray()
   if (caseIds.length === 0) {
     return
   }
-  const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
   logger.info(`Sending bulk cases Slack alert: tenant=${tenantId}`)
-  await webhook.send({
-    text: 'New cases created',
-    attachments: [
-      {
-        color: '#ffa500', // orange
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: caseIds
-                .map(
-                  ({ caseId }) =>
-                    `<${process.env.CONSOLE_URI}/case-management/case/${caseId}|${caseId}>\n`
-                )
-                .join(', '),
-            },
-          },
-        ],
-      },
-    ],
-  })
+  await sendSlackMessages(
+    slackWebhook.slackWebhookURL,
+    caseIds.map(({ caseId }) => caseId)
+  )
+
   const putItemInput: PutCommandInput = {
     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     Item: {
@@ -232,4 +216,39 @@ export async function sendCaseCreatedAlert(tenantId: string) {
     },
   }
   await dynamoDb.send(new PutCommand(putItemInput))
+}
+
+const sendSlackMessages = async (slackWebhook: string, caseIds: string[]) => {
+  const webhook = new IncomingWebhook(slackWebhook)
+
+  const chunks = chunk(caseIds, 1000)
+  for (let i = 0; i < chunks.length; i++) {
+    const blocks: IncomingWebhookSendArguments['blocks'] = []
+    if (i === 0) {
+      blocks.push({
+        type: 'section',
+        text: { type: 'mrkdwn', text: 'New cases created' },
+      })
+      blocks.push({
+        type: 'divider',
+      })
+    }
+
+    const text = chunks[i]
+      .map(
+        (caseId) =>
+          `[${caseId}](${process.env.CONSOLE_URI}/case-management/case/${caseId})`
+      )
+      .join('\n')
+    const messageBlocks = splitSlackMessage(text, 1500).map((message) => ({
+      type: 'section',
+      text: { type: 'mrkdwn', text: slackifyMarkdown(message).trim() },
+    }))
+
+    blocks.push(...messageBlocks)
+
+    await webhook.send({
+      blocks,
+    })
+  }
 }
