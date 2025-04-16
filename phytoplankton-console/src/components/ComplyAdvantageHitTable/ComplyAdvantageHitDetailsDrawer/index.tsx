@@ -31,7 +31,7 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
         </>
       }
     >
-      {hit && <CAEntityDetails pdfMode={false} entity={hit} delta={hit} />}
+      {hit && <CAEntityDetails pdfMode={false} entity={hit} />}
     </Drawer>
   );
 }
