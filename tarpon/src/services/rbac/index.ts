@@ -5,6 +5,7 @@ import { traceable } from '@/core/xray'
 import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/DynamicPermissionsNodeSubType'
 import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResourcesData'
 import { PermissionsNode } from '@/@types/rbac/permissions'
+import { PermissionsCountResponse } from '@/@types/openapi-internal/PermissionsCountResponse'
 
 @traceable
 export class PermissionsService {
@@ -118,6 +119,48 @@ export class PermissionsService {
     return filteredPermissions
   }
 
+  private async getCounts(
+    permissions: PermissionsNode[]
+  ): Promise<PermissionsCountResponse[]> {
+    const counts: PermissionsCountResponse[] = []
+
+    const countLeafNodes = async (
+      node: PermissionsNode
+    ): Promise<{ read: number; write: number }> => {
+      if (!node.children || node.children.length === 0) {
+        const defaultReadCount = node.actions.includes('read') ? 1 : 0
+        const defaultWriteCount = node.actions.includes('write') ? 1 : 0
+        return node.type === 'STATIC'
+          ? { read: defaultReadCount, write: defaultWriteCount }
+          : {
+              read: node.items?.length ?? defaultReadCount,
+              write: node.items?.length ?? defaultWriteCount,
+            }
+      }
+
+      let readCount = 0
+      let writeCount = 0
+      for (const child of node.children) {
+        const childCount = await countLeafNodes(child)
+        readCount += childCount.read * (node.actions.includes('read') ? 1 : 0)
+        writeCount +=
+          childCount.write * (node.actions.includes('write') ? 1 : 0)
+      }
+      return { read: readCount, write: writeCount }
+    }
+
+    for (const permission of permissions) {
+      const count = await countLeafNodes(permission)
+      counts.push({
+        id: permission.id,
+        read: permission.actions.includes('read') ? count.read : 0,
+        write: permission.actions.includes('write') ? count.write : 0,
+      })
+    }
+
+    return counts
+  }
+
   async getAllPermissions(search?: string): Promise<PermissionsResponse> {
     const hydratedPermissions = hydratePermissions(PERMISSIONS_LIBRARY)
     const filteredPermissions = await this.filterBySearch(
@@ -127,9 +170,10 @@ export class PermissionsService {
     const permissions = await this.putItemsInHydratedPermissions(
       filteredPermissions
     )
-
+    const counts = await this.getCounts(permissions)
     return {
       permissions,
+      counts,
     }
   }
 

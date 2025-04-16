@@ -17378,8 +17378,26 @@ components:
             oneOf:
               - $ref: '#/components/schemas/StaticPermissionsNode'
               - $ref: '#/components/schemas/DynamicPermissionsNode'
+        counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsCountResponse'
       required:
         - permissions
+        - counts
+    PermissionsCountResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        read:
+          type: number
+        write:
+          type: number
+      required:
+        - id
+        - read
+        - write
     DynamicResourcesData:
       type: object
       properties:
