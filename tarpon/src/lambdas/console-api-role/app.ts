@@ -7,7 +7,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { RBACService } from '@/services/rbac'
+import { PermissionsService } from '@/services/rbac'
 
 export const rolesHandler = lambdaApi()(
   async (
@@ -53,8 +53,9 @@ export const rolesHandler = lambdaApi()(
       async (ctx, request) => await rolesService.getRole(request.roleId)
     )
 
-    handlers.registerGetAllPermissions(async () => {
-      return RBACService.getAllPermissions()
+    handlers.registerGetAllPermissions(async (ctx, request) => {
+      const rbacService = new PermissionsService(ctx.tenantId)
+      return rbacService.getAllPermissions(request.search)
     })
 
     return await handlers.handle(event)

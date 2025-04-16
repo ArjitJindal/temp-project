@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
+import { PermissionsService } from '../rbac'
 import { NarrativeRepository } from './repositories/narrative-template-repository'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 import { NarrativeTemplateResponse } from '@/@types/openapi-internal/NarrativeTemplateResponse'
@@ -11,9 +12,11 @@ import { traceable } from '@/core/xray'
 @traceable
 export class NarrativeService {
   private narrativeRepository: NarrativeRepository
+  private permissionsService: PermissionsService
 
   constructor(tenantId: string, mongoClient: MongoClient) {
     this.narrativeRepository = new NarrativeRepository(tenantId, mongoClient)
+    this.permissionsService = new PermissionsService(tenantId)
   }
 
   public async getNarrativeTemplate(
@@ -55,7 +58,16 @@ export class NarrativeService {
       ...narrative,
     }
 
-    return this.narrativeRepository.createNarrativeTemplate(newNarrative)
+    const data = await this.narrativeRepository.createNarrativeTemplate(
+      newNarrative
+    )
+
+    await this.permissionsService.insertDynamicPermission(
+      'NARRATIVE_TEMPLATES',
+      { id, name: newNarrative.name }
+    )
+
+    return data
   }
 
   public async updateNarrativeTemplate(
@@ -71,12 +83,23 @@ export class NarrativeService {
     if (!data) {
       throw new NotFound('NarrativeTemplate not found')
     }
+
+    await this.permissionsService.insertDynamicPermission(
+      'NARRATIVE_TEMPLATES',
+      { id: data.id, name: data.name }
+    )
+
     return data
   }
 
   public async deleteNarrativeTemplate(
     narrativeTemplateId: string
   ): Promise<void> {
+    await this.permissionsService.deleteDynamicPermission(
+      'NARRATIVE_TEMPLATES',
+      narrativeTemplateId
+    )
+
     return this.narrativeRepository.deleteNarrativeTemplate(narrativeTemplateId)
   }
 }

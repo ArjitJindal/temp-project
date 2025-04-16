@@ -517,12 +517,6 @@ export const hydratePermissions = (
 }
 
 const traverseNode = (node: PermissionsNode) => {
-  if (node.type === 'DYNAMIC') {
-    delete node.validator
-    delete node.queryGenerator
-    delete node.fetcher
-  }
-
   if (node.children) {
     node.children.forEach(traverseNode)
   }

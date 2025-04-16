@@ -150,6 +150,7 @@ export enum ClickhouseTableNames {
   Alerts = 'alerts',
   CrmRecords = 'crm_records',
   CrmUserRecordLink = 'crm_user_record_link',
+  DynamicPermissionsItems = 'dynamic_permissions_items',
 }
 
 export const CLICKHOUSE_DEFINITIONS = {
@@ -251,6 +252,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   CRM_USER_RECORD_LINK: {
     tableName: ClickhouseTableNames.CrmUserRecordLink,
+  },
+  DYNAMIC_PERMISSIONS_ITEMS: {
+    tableName: ClickhouseTableNames.DynamicPermissionsItems,
   },
 } as const
 
@@ -804,6 +808,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "recordType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'recordType')",
       "crmName LowCardinality(String) MATERIALIZED JSONExtractString(data, 'crmName')",
       "userId String MATERIALIZED JSONExtractString(data, 'userId')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.DYNAMIC_PERMISSIONS_ITEMS.tableName,
+    idColumn: 'id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(subType, id)',
+    orderBy: '(subType, id)',
+    materializedColumns: [
+      "subType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'subType')",
+      "name String MATERIALIZED JSONExtractString(data, 'name')",
     ],
   },
 ] as const

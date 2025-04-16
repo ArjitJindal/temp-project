@@ -3590,6 +3590,11 @@ paths:
     get:
       summary: Permissions - List
       operationId: get-all-permissions
+      parameters:
+        - schema:
+            type: string
+          name: search
+          in: query
       responses:
         '200':
           description: OK
@@ -17357,6 +17362,10 @@ components:
                 - DYNAMIC
             subType:
               $ref: '#/components/schemas/DynamicPermissionsNodeSubType'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/DynamicResourcesData'
           required:
             - type
             - subType
@@ -17378,12 +17387,9 @@ components:
           type: string
         name:
           type: string
-        type:
-          $ref: '#/components/schemas/DynamicPermissionsNodeSubType'
       required:
         - id
         - name
-        - type
     PermissionStatements:
       type: object
       properties:
