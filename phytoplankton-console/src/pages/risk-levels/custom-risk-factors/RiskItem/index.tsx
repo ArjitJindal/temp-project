@@ -53,16 +53,17 @@ export default function () {
             },
           mode === 'create' && {
             title: 'Create',
-            to: isSimulationMode
-              ? makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode`, {
-                  key,
-                  type,
-                  mode,
-                })
-              : makeUrl(`/risk-levels/custom-risk-factors/:type/:mode`, {
-                  type,
-                  mode,
-                }),
+            to:
+              isSimulationMode && key
+                ? makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode`, {
+                    key,
+                    type,
+                    mode,
+                  })
+                : makeUrl(`/risk-levels/custom-risk-factors/:type/:mode`, {
+                    type,
+                    mode,
+                  }),
           },
           id && {
             title: id,
@@ -70,18 +71,22 @@ export default function () {
           (mode === 'read' || mode === 'edit' || mode === 'duplicate') &&
             id && {
               title: mode === 'read' ? 'View' : mode === 'edit' ? 'Edit' : 'duplicate',
-              to: isSimulationMode
-                ? makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode`, {
-                    key,
-                    type,
-                    id,
-                    mode,
-                  })
-                : makeUrl(`/risk-levels/custom-risk-factors/:type/:id/:mode`, {
-                    type,
-                    id,
-                    mode,
-                  }),
+              to:
+                isSimulationMode && key
+                  ? makeUrl(
+                      `/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode`,
+                      {
+                        key,
+                        type,
+                        id,
+                        mode,
+                      },
+                    )
+                  : makeUrl(`/risk-levels/custom-risk-factors/:type/:id/:mode`, {
+                      type,
+                      id,
+                      mode,
+                    }),
             },
         ].filter(notEmpty)}
       >
