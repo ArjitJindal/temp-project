@@ -27,7 +27,6 @@ import { traceable } from '@/core/xray'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
-import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
@@ -204,7 +203,7 @@ export class SanctionsService {
             DEFAULT_PROVIDER_TYEPS_MAP[p]) as GenericSanctionsSearchType[]
         })
       ),
-      types ?? SANCTIONS_SEARCH_TYPES
+      types ?? uniq(providers.flatMap((p) => DEFAULT_PROVIDER_TYEPS_MAP[p]))
     )
   }
 
