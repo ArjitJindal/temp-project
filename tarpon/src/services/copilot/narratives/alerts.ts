@@ -40,9 +40,11 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
     const screening = isScreening(this.attributes)
+    const comments = this.attributes.getAttribute('alertComments')
+    const commentsAvailable = comments ? comments.length > 0 : false
     const reasonNarratives = screening
-      ? reasonNarrativeScreening(this.type)
-      : reasonNarrativesCasesAlerts(this.type)
+      ? reasonNarrativeScreening(this.type, commentsAvailable)
+      : reasonNarrativesCasesAlerts(this.type, commentsAvailable)
     return Object.entries(reasonNarratives).map(([reason, narrative]) => ({
       reason: reason as CaseReasons,
       narrative,
