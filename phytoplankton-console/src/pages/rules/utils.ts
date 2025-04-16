@@ -22,7 +22,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { GET_RULE_INSTANCE, GET_RULE_INSTANCES } from '@/utils/queries/keys';
+import { GET_RULE_INSTANCE, GET_RULE_INSTANCES, RULES } from '@/utils/queries/keys';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -559,6 +559,7 @@ export function useUpdateRuleInstance(
         }
         await queryClient.invalidateQueries(GET_RULE_INSTANCE(updatedRuleInstance.id as string));
         await queryClient.invalidateQueries(GET_RULE_INSTANCES());
+        await queryClient.invalidateQueries(RULES());
 
         if (updatedRuleInstance.status === 'DEPLOYING') {
           message.success(
