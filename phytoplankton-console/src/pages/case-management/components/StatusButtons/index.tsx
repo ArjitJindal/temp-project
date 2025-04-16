@@ -15,12 +15,13 @@ export default function StatusButtons(props: Props) {
   const { onChangeParams, params } = props;
 
   const options = useOptions();
-  const value = params.status;
+  const value = params.status ?? options[0].value;
 
   return (
     <div className={s.root}>
       <Dropdown<RuleAction>
         options={options}
+        selectedKeys={[value]}
         onSelect={(option) => {
           onChangeParams({
             ...params,
