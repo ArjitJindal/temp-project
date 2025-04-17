@@ -484,8 +484,13 @@ export function createV8FactorFromV2(
   riskClassification: RiskClassificationScore[]
 ): Partial<RiskFactorsPostRequest> {
   const riskLevelLogic = createRiskLevelLogic(v2Factor, riskClassification)
-
+  const initialDefault = RISK_FACTORS.find(
+    (val) =>
+      val.parameter === v2Factor.parameter &&
+      v2Factor.riskEntityType === val.type
+  )
   return {
+    ...initialDefault,
     riskLevelLogic,
     defaultWeight: v2Factor.weight,
     type: v2Factor.riskEntityType,
