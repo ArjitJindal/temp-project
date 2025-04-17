@@ -512,7 +512,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                     this.getRepo(
                       fullExtractPersonRepo,
                       fullExtractBusinessRepo,
-                      type as SanctionsEntityType
+                      AcurisEntityType[type]
                     ).save(
                       SanctionsDataProviders.ACURIS,
                       entities.filter(
@@ -536,7 +536,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   this.getRepo(
                     fullExtractPersonRepo,
                     fullExtractBusinessRepo,
-                    type as SanctionsEntityType
+                    AcurisEntityType[type]
                   ).save(
                     SanctionsDataProviders.ACURIS,
                     entities.filter(
