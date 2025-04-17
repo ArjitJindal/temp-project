@@ -30,7 +30,7 @@ const TooltipContent = (props: Props) => {
 
 export const OverviewToolTip = (props: Props) => {
   return (
-    <Tooltip overlay={<TooltipContent {...props} />} color={COLORS.white} placement="bottomRight">
+    <Tooltip overlay={<TooltipContent {...props} />} color={COLORS.white} placement="rightTop">
       {props.children}
     </Tooltip>
   );
