@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'
+import { DERIVED_CURRENCY_EXCHANGE_RATES } from './derived-exchange-rates'
 import { apiFetch } from '@/utils/api-fetch'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -34,9 +35,7 @@ export function useDbCache(): void {
 }
 
 export type CoinbaseResponse = {
-  data: {
-    rates: Record<CurrencyCode, string>
-  }
+  data: { rates: Record<NonExchangeRateCurrency, string> }
 }
 
 export type CurrencyExchangeUSDType = {
@@ -65,6 +64,12 @@ export const CURRENCY_CODES_WITH_NO_EXCHANGE_RATE: CurrencyCode[] = [
   'XAI',
 ] as const
 
+// Currencies to take exchange rate from other currency for Example SLE should take exchange rate of SLL
+export type CurrencyToTakeExchangeRateFromOtherCurrency = 'SLE'
+export type NonExchangeRateCurrency = Exclude<
+  CurrencyCode,
+  CurrencyToTakeExchangeRateFromOtherCurrency
+>
 export class CurrencyService {
   repository: CurrencyRepository
 
@@ -78,6 +83,14 @@ export class CurrencyService {
     CURRENCY_CODES_WITH_NO_EXCHANGE_RATE.forEach((currency) => {
       coinbaseResponse.data.rates[currency] = coinbaseResponse.data.rates['USD']
     })
+
+    Object.entries(DERIVED_CURRENCY_EXCHANGE_RATES).forEach(
+      ([currency, getExchangeRate]) => {
+        coinbaseResponse.data.rates[currency] = getExchangeRate(
+          coinbaseResponse.data.rates as Record<NonExchangeRateCurrency, string>
+        )
+      }
+    )
 
     return {
       rates: mapValues(coinbaseResponse.data.rates, parseFloat) as Record<

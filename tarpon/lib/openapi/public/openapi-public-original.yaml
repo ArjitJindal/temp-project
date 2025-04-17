@@ -6368,6 +6368,7 @@ components:
         - TYUGA
         - VIC
         - XAI
+        - SLE
     MCCDetails:
       title: MCCDetails
       type: object

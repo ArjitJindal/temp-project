@@ -351,6 +351,7 @@ export const schema = {
             'SHP',
             'SLE',
             'SLL',
+            'SLE',
             'SOL',
             'SOS',
             'SRD',

@@ -365,6 +365,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   SKK: { label: 'Slovak koruna', symbol: null },
   SKL: { label: 'SKALE', symbol: null },
   SLL: { label: 'Sierra Leonean leone', symbol: 'Le' },
+  SLE: { label: 'Sierra Leonean leone', symbol: 'Le' },
   SNT: { label: 'Status', symbol: null },
   SNX: { label: 'Synthetix', symbol: null },
   SOL: { label: 'Solana', symbol: null },
