@@ -24,7 +24,12 @@ import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { logger } from '@/core/logger'
-import { addSentryExtras } from '@/core/utils/context'
+import { addSentryExtras, hasFeature } from '@/core/utils/context'
+import {
+  convertV1PermissionToV2,
+  convertV2PermissionToV1,
+  getOptimizedPermissions,
+} from '@/services/rbac/utils/permissions'
 
 @traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
@@ -46,7 +51,23 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Invalid role type')
     }
 
-    const role = data.params
+    const v1V2Permissions = convertV1PermissionToV2(
+      namespace,
+      data.params.permissions ?? []
+    )
+
+    const statements = getOptimizedPermissions(
+      namespace,
+      (data.params.statements ?? []).concat(v1V2Permissions)
+    )
+
+    const role: AccountRole = {
+      ...data.params,
+      statements,
+      permissions: hasFeature('RBAC_V2')
+        ? convertV2PermissionToV1(namespace, statements)
+        : data.params.permissions,
+    }
 
     await this.dynamoClient.send(
       new PutCommand({
@@ -138,11 +159,15 @@ export class DynamoRolesRepository extends BaseRolesRepository {
         ...role,
         ...data,
         name: getNamespacedRoleName(tenantId, data.name || roleName),
+        statements: data.statements, // Since its update we don't want to append existing statements
       },
     })
   }
 
-  async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
+  async getTenantRoles(
+    tenantId: string,
+    fetchRootRoles = this.shouldFetchRootRole()
+  ): Promise<AccountRole[]> {
     const allRoles: AccountRole[] = []
     const defaultRoles = await this.getRolesByNamespace(DEFAULT_NAMESPACE)
     const roles = await this.getRolesByNamespace(tenantId)
@@ -150,7 +175,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     allRoles.push(...defaultRoles)
     allRoles.push(...roles)
 
-    if (this.shouldFetchRootRole()) {
+    if (fetchRootRoles) {
       return allRoles
     }
 

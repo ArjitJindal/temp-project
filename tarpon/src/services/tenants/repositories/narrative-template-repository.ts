@@ -22,14 +22,18 @@ export class NarrativeRepository {
     return await this.collection.findOne({ id: narrativeTemplateId })
   }
 
-  public async getNarrativeTemplates(params: DefaultApiGetNarrativesRequest) {
+  private getFilter(params: DefaultApiGetNarrativesRequest) {
     const match: Filter<NarrativeTemplate> = {}
 
     if (params.filterNarrativeTemplateIds) {
       match.id = { $in: params.filterNarrativeTemplateIds }
     }
 
-    console.log('match', match)
+    return match
+  }
+
+  public async getNarrativeTemplates(params: DefaultApiGetNarrativesRequest) {
+    const match = this.getFilter(params)
 
     const cursor = this.collection.find(match).sort({ createdAt: -1 })
 
@@ -41,8 +45,11 @@ export class NarrativeRepository {
     return await paginatedCursor.toArray()
   }
 
-  public async getNarrativeTemplatesCount(): Promise<number> {
-    return await this.collection.countDocuments()
+  public async getNarrativeTemplatesCount(
+    params: DefaultApiGetNarrativesRequest
+  ): Promise<number> {
+    const match = this.getFilter(params)
+    return await this.collection.countDocuments(match)
   }
 
   public async createNarrativeTemplate(

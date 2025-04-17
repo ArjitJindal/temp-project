@@ -36,7 +36,9 @@ export class NarrativeService {
   public async getNarrativeTemplates(
     params: DefaultApiGetNarrativesRequest
   ): Promise<NarrativeTemplateResponse> {
-    const count = await this.narrativeRepository.getNarrativeTemplatesCount()
+    const count = await this.narrativeRepository.getNarrativeTemplatesCount(
+      params
+    )
     const narratives = await this.narrativeRepository.getNarrativeTemplates(
       params
     )

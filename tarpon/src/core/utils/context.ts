@@ -432,13 +432,21 @@ export async function tenantStatements(
   const isDefaultRole = DEFAULT_ROLES_V2.find(
     (role) => role.role === context?.user?.role
   )
-  const statements = isDefaultRole
+  const statements = await (isDefaultRole
     ? Promise.resolve(
         DEFAULT_ROLES_V2.find((role) => role.role === context?.user?.role)
           ?.permissions ?? []
       )
-    : roleRepository.getRoleStatements(tenantId, context?.user?.role ?? '')
-  return statements
+    : roleRepository.getRoleStatements(tenantId, context?.user?.role ?? ''))
+
+  return statements.map((statement) => {
+    return {
+      ...statement,
+      resources: statement.resources.map((resource) =>
+        resource.replace('<default>', tenantId)
+      ),
+    }
+  })
 }
 
 export async function tenantSettings(
