@@ -9,7 +9,10 @@ import {
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
 } from './utils'
-import { token_similarity_sort_ratio } from '@/utils/fuzzball'
+import {
+  calculateJaroWinklerDistance,
+  token_similarity_sort_ratio,
+} from '@/utils/fuzzball'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -868,10 +871,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   private getFuzzinessFunction(
     fuzzinessSettings: FuzzinessSetting | undefined
-  ): (a, b) => number {
+  ): (a: string, b: string) => number {
     if (fuzzinessSettings?.similarTermsConsideration) {
       return token_similarity_sort_ratio
     }
+
+    if (fuzzinessSettings?.jarowinklerDistance) {
+      return calculateJaroWinklerDistance
+    }
+
     return calculateLevenshteinDistancePercentage
   }
 

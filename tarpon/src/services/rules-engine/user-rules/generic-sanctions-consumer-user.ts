@@ -142,6 +142,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
             fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
           levenshteinDistanceDefault:
             fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          jarowinklerDistance: fuzzinessSetting === 'JAROWINKLER_DISTANCE',
         },
         ...getIsActiveParameters(providers, screeningTypes, isActive),
         ...getStopwordSettings(providers, stopwords),

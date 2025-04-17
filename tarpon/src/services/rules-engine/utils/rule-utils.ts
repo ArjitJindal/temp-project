@@ -79,6 +79,7 @@ export function getFuzzinessSettings(
             fuzzinessSetting === 'TOKENIZED_SIMILARITY_MATCHING',
           levenshteinDistanceDefault:
             fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          jarowinklerDistance: fuzzinessSetting === 'JAROWINKLER_DISTANCE',
         },
       }
     : {}

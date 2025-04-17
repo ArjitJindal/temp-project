@@ -45,6 +45,16 @@ const optionsMap: Record<FuzzinessSettingOptions, React.ReactNode> = {
       </Tooltip>
     </span>
   ),
+  JAROWINKLER_DISTANCE: (
+    <span className={s.option}>
+      Jaro-Winkler distance
+      <Tooltip
+        title={`Measures the similarity between two strings based on the Jaro-Winkler distance algorithm.`}
+      >
+        <InformationLineIcon className={s.icon} />
+      </Tooltip>
+    </span>
+  ),
 };
 
 export const FuzzinessSettingsInput = (props: Props) => {

@@ -14472,6 +14472,8 @@ components:
           type: boolean
         levenshteinDistanceDefault:
           type: boolean
+        jarowinklerDistance:
+          type: boolean
     FuzzinessSettingOptions:
       title: FuzzinessSettingOptions
       type: string
@@ -14479,6 +14481,7 @@ components:
         - LEVENSHTEIN_DISTANCE_DEFAULT
         - IGNORE_SPACES_AND_SPECIAL_CHARACTERS
         - TOKENIZED_SIMILARITY_MATCHING
+        - JAROWINKLER_DISTANCE
     UsersUniquesField:
       title: UsersUniquesField
       type: string
