@@ -273,10 +273,7 @@ export const tenantsHandler = lambdaApi()(
     const narrativeService = new NarrativeService(tenantId, mongoDb)
     handlers.registerGetNarratives(
       async (ctx, request) =>
-        await narrativeService.getNarrativeTemplates({
-          page: request.page,
-          pageSize: request.pageSize,
-        })
+        await narrativeService.getNarrativeTemplates(request)
     )
 
     handlers.registerPutNarrativeTemplate(

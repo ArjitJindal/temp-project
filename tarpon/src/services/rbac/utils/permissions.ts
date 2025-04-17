@@ -6,6 +6,7 @@ import { PermissionsResponse } from '@/@types/openapi-internal/PermissionsRespon
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { Permissions, PermissionsNode } from '@/@types/rbac/permissions'
 import { generateChecksum } from '@/utils/object'
+import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/DynamicPermissionsNodeSubType'
 
 export const PERMISSIONS_LIBRARY: Permissions = [
   {
@@ -965,4 +966,47 @@ export const optimizePermissions = (
   }
 
   return { optimized, skipped }
+}
+
+export const getDynamicPermissionsType = (
+  statements: string[]
+): { subType: DynamicPermissionsNodeSubType; ids: string[] }[] => {
+  const uniqueIdsDynamic = new Map<string, Set<string>>()
+
+  statements.forEach((statement) => {
+    const [_, requiredResourcePath] = statement.split(':::')
+    const pathParts = requiredResourcePath.split('/')
+
+    pathParts.forEach((part) => {
+      if (part.includes(':')) {
+        const [id, resource] = part.split(':')
+        if (!uniqueIdsDynamic.has(id)) {
+          uniqueIdsDynamic.set(id, new Set([resource])) // Fix: Pass array to Set constructor
+        } else {
+          uniqueIdsDynamic.get(id)?.add(resource)
+        }
+      }
+    })
+  })
+
+  const data: { subType: DynamicPermissionsNodeSubType; ids: string[] }[] = []
+
+  const traverseNode = (node: PermissionsNode) => {
+    if (node.type === 'DYNAMIC' && uniqueIdsDynamic.has(node.id)) {
+      data.push({
+        subType: node.subType,
+        ids: Array.from(uniqueIdsDynamic.get(node.id) || []),
+      })
+    }
+
+    if (node.children) {
+      node.children.forEach(traverseNode)
+    }
+  }
+
+  for (const libNode of PERMISSIONS_LIBRARY) {
+    traverseNode(libNode)
+  }
+
+  return data
 }

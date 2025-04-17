@@ -6884,6 +6884,12 @@ paths:
           in: query
           name: page
           required: true
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterNarrativeTemplateIds
   /tenants/settings/narrative-template:
     post:
       summary: Create narrative

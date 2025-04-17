@@ -1,4 +1,4 @@
-import { Collection, MongoClient } from 'mongodb'
+import { Collection, Filter, MongoClient } from 'mongodb'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 import { paginateCursor } from '@/utils/mongodb-utils'
 import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
@@ -23,7 +23,15 @@ export class NarrativeRepository {
   }
 
   public async getNarrativeTemplates(params: DefaultApiGetNarrativesRequest) {
-    const cursor = this.collection.find({}).sort({ createdAt: -1 })
+    const match: Filter<NarrativeTemplate> = {}
+
+    if (params.filterNarrativeTemplateIds) {
+      match.id = { $in: params.filterNarrativeTemplateIds }
+    }
+
+    console.log('match', match)
+
+    const cursor = this.collection.find(match).sort({ createdAt: -1 })
 
     const paginatedCursor = paginateCursor<
       DefaultApiGetNarrativesRequest,

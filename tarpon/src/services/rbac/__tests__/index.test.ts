@@ -4,6 +4,7 @@ import {
   convertToFrns,
   convertV1PermissionToV2,
   convertV2PermissionToV1,
+  getDynamicPermissionsType,
   getOptimizedPermissions,
   isPermissionValidFromTree,
 } from '../utils/permissions'
@@ -246,5 +247,18 @@ describe('getOptimizedPermissions', () => {
     const frns = convertV1PermissionToV2('test-tenant', adminPermissions ?? [])
     const v1Permissions = convertV2PermissionToV1('test-tenant', frns).sort()
     expect(v1Permissions).toEqual(adminPermissions)
+  })
+
+  it('should convert v2 permissions to v1 permissions', () => {
+    const frns = getDynamicPermissionsType([
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template/*',
+      'frn:console:test-tenant:::settings/case-management/narrative-templates/template:custom-template-2/*',
+    ])
+    expect(frns).toEqual([
+      {
+        subType: 'NARRATIVE_TEMPLATES',
+        ids: ['custom-template', 'custom-template-2'],
+      },
+    ])
   })
 })

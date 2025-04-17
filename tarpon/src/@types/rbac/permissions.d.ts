@@ -4,3 +4,7 @@ import { StaticPermissionsNode } from '@/@types/openapi-internal/StaticPermissio
 export type PermissionsNode = StaticPermissionsNode | DynamicPermissionsNode
 
 export type Permissions = PermissionsNode[]
+
+export type FilterKey = 'filterNarrativeTemplateIds'
+
+export type RBACFilter = Partial<Record<FilterKey, string[]>>

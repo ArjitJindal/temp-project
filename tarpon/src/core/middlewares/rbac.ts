@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { uniq } from 'lodash'
 import { getContext } from '../utils/context-storage'
 import { hasFeature, tenantStatements } from '../utils/context'
 import {
@@ -20,10 +21,17 @@ import {
 import { determineApi } from '@/core/utils/api'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { SessionsService } from '@/services/sessions'
+import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/DynamicPermissionsNodeSubType'
+import { getDynamicPermissionsType } from '@/services/rbac/utils/permissions'
+import { FilterKey } from '@/@types/rbac/permissions'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
 >
+
+const subTypeFilterMap: Record<DynamicPermissionsNodeSubType, FilterKey> = {
+  NARRATIVE_TEMPLATES: 'filterNarrativeTemplateIds',
+}
 
 export const rbacMiddleware =
   () =>
@@ -65,6 +73,26 @@ export const rbacMiddleware =
       })
 
       assertResourceAccess(requiredResourcesWithValues, statements)
+
+      const dynamicPermissions = getDynamicPermissionsType(
+        uniq(statements.flatMap((statement) => statement.resources))
+      ) // Even if its write we consider it as read and read is considered as read
+
+      for (const permission of dynamicPermissions) {
+        const filterKey = subTypeFilterMap[permission.subType]
+
+        if (filterKey) {
+          const currentFilterValue =
+            event.queryStringParameters?.[filterKey] ?? ''
+          event.queryStringParameters = {
+            ...event.queryStringParameters,
+            [filterKey]: currentFilterValue.concat(
+              permission.ids.length && currentFilterValue.length ? ',' : '',
+              ...permission.ids
+            ),
+          }
+        }
+      }
     }
 
     const tenantId = event.requestContext.authorizer.tenantId
