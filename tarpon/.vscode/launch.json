@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+
     {
       "type": "node-terminal",
       "name": "Run Console API",
@@ -30,6 +31,14 @@
       "name": "Run all APIs",
       "request": "launch",
       "command": "yarn dev:api",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Playground",
+      "request": "launch",
+      "command": "npm run playground",
       "cwd": "${workspaceFolder}",
       "outFiles": []
     },

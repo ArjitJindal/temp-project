@@ -247,9 +247,14 @@ export class ListService {
 
   public async getListHeaders(
     listType: ListType | null = null,
-    userIds?: string[]
+    userIds?: string[],
+    subtypes?: ListSubtype[]
   ): Promise<ListHeader[]> {
-    const result = await this.listRepository.getListHeaders(listType, userIds)
+    const result = await this.listRepository.getListHeaders(
+      listType,
+      userIds,
+      subtypes
+    )
     return result
   }
 

@@ -600,6 +600,12 @@ paths:
               type: string
           in: query
           name: filterUserIds
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListSubtype
+          in: query
+          name: filterListSubtype
       responses:
         '200':
           description: OK
@@ -8644,6 +8650,8 @@ components:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
         pepStatus:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+        listId:
+          type: string
         tags:
           type: array
           items:

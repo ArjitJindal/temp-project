@@ -4,6 +4,7 @@ import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
 import TagsInput from './components/TagsInput';
+import { useQuery } from '@/utils/queries/hooks';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
 import Select from '@/components/library/Select';
@@ -25,6 +26,9 @@ import {
 import InputField from '@/components/library/Form/InputField';
 import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApi } from '@/api';
+import { LISTS } from '@/utils/queries/keys';
+import { getOr, isLoading } from '@/utils/asyncResource';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
@@ -50,6 +54,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
   const settings = useSettings();
   const [isUserStateDetailsOpen, setIsUserStateDetailsOpen] = useState(false);
   const [isKYCStatusDetailsOpen, setIsKYCStatusDetailsOpen] = useState(false);
+  const api = useApi();
 
   const {
     values,
@@ -59,6 +64,13 @@ export const UserStatusTriggersAdvancedOptionsForm = (
       kycStatusDetails: KYCStatusDetails;
     };
   } = useFormContext();
+
+  const queryResults = useQuery(LISTS('USER_ID'), async () => {
+    return await api.getLists({
+      filterListSubtype: ['USER_ID'],
+    });
+  });
+
   return (
     <>
       {type === 'RULE' && ruleType === 'TRANSACTION' && (
@@ -215,6 +227,23 @@ export const UserStatusTriggersAdvancedOptionsForm = (
       {type === 'RULE' && (
         <InputField<TriggersOnHit, 'tags'> name="tags" label="Update tags to">
           {(inputProps) => <TagsInput {...inputProps} />}
+        </InputField>
+      )}
+      {type === 'RULE' && (
+        <InputField<TriggersOnHit, 'listId'> name="listId" label="Update List to">
+          {(inputProps) => {
+            return (
+              <Select<string>
+                options={getOr(queryResults.data, []).map((list) => ({
+                  label: list.metadata?.name || list.listId,
+                  value: list.listId,
+                }))}
+                {...inputProps}
+                placeholder={isLoading(queryResults.data) ? 'Loading...' : 'Search for List ID'}
+                isLoading={isLoading(queryResults.data)}
+              />
+            );
+          }}
         </InputField>
       )}
     </>

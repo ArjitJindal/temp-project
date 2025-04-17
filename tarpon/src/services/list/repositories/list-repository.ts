@@ -101,7 +101,8 @@ export class ListRepository {
 
   public async getListHeaders(
     listType: ListType | null = null,
-    userIds?: string[]
+    userIds?: string[],
+    subtypes?: ListSubtype[]
   ): Promise<ListHeader[]> {
     const primaryKey = DynamoDbKeys.LIST_HEADER(this.tenantId, '')
     const filterConditions: string[] = []
@@ -113,6 +114,17 @@ export class ListRepository {
     if (listType != null) {
       filterConditions.push('header.listType = :listType')
       expressionAttributeValues[':listType'] = listType
+    }
+
+    if (subtypes && subtypes.length > 0) {
+      const subtypeConditions = subtypes.map(
+        (_, index) => `header.#st = :subtype${index}`
+      )
+      filterConditions.push(`(${subtypeConditions.join(' OR ')})`)
+      subtypes.forEach((subtype, index) => {
+        expressionAttributeValues[`:subtype${index}`] = subtype
+      })
+      expressionAttributeNames['#st'] = 'subtype'
     }
 
     if (userIds && userIds.length > 0) {

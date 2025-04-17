@@ -2,7 +2,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
-import { CrmName, ListType, ReasonType } from '@/apis';
+import { CrmName, ListSubtype, ListType, ReasonType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
@@ -42,7 +42,7 @@ export const LISTS_ITEM_TYPE = (id: string, type: ListType, params?: AnyParamete
   type,
   params,
 ];
-export const LISTS = (): QueryKey => ['lists'];
+export const LISTS = (listSubtype?: ListSubtype): QueryKey => ['lists', { listSubtype }];
 export const USERS_ITEM_TRANSACTIONS_HISTORY = (
   userId: string,
   params: AnyParameters,

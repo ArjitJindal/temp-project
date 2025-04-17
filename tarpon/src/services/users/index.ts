@@ -104,6 +104,7 @@ import { Amount } from '@/@types/openapi-public/Amount'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { ListItem } from '@/@types/openapi-internal/ListItem'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -658,6 +659,27 @@ export class UserService {
     }
   }
 
+  private async addUserToList(
+    user: InternalUser | null,
+    listId: string,
+    ruleInstanceId?: string
+  ): Promise<void> {
+    if (!user?.userId) {
+      return
+    }
+
+    const userFullName = getUserName(user)
+    const listItem: ListItem = {
+      key: user.userId,
+      metadata: {
+        reason: `${ruleInstanceId} rule hit`,
+        userFullName,
+      },
+    }
+
+    await this.listService.updateOrCreateListItem(listId, listItem)
+  }
+
   public async handleUserStatusUpdateTrigger(
     hitRules: HitRulesDetails[],
     ruleInstancesHit: RuleInstance[],
@@ -680,7 +702,7 @@ export class UserService {
         userData: { pepStatus: user?.pepStatus, tags: undefined },
         ruleInstances: {},
       }
-      ruleInstancesHit.forEach((ruleInstance) => {
+      for (const ruleInstance of ruleInstancesHit) {
         const hitRulesDetails = hitRules.find(
           (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
         )
@@ -689,7 +711,7 @@ export class UserService {
           !hitRulesDetails ||
           !hitRulesDetails.ruleHitMeta?.hitDirections?.includes(direction)
         ) {
-          return
+          continue
         }
 
         const triggersOnHit = this.getTriggersOnHit(
@@ -706,10 +728,18 @@ export class UserService {
             userData.ruleInstances,
             ruleInstance
           )
+          // Add user to list if listId is set
+          if (triggersOnHit.listId) {
+            await this.addUserToList(
+              user,
+              triggersOnHit.listId,
+              ruleInstance.id
+            )
+          }
 
           Object.assign(userData, result)
         }
-      })
+      }
 
       // Save user events
       await this.saveUserEvents(
