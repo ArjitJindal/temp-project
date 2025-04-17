@@ -17,7 +17,9 @@ const UserAliasSettings = () => {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
   const [isLoading, setIsLoading] = useState(false);
-  const [alias, setAlias] = useState(settings.userAlias || '');
+  const [alias, setAlias] = useState(
+    (settings.userAlias === 'user' ? '' : settings.userAlias) || '',
+  );
   const [isDisabled, setIsDisabled] = useState(false);
 
   return (
