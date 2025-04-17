@@ -16,7 +16,6 @@ import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { getInvestigationTimes } from '@/utils/clickhouse/materialised-views-queries'
 
 @traceable
@@ -95,21 +94,8 @@ export class OverviewStatsDashboardMetric {
     const totalSarReported = hasFeature('SAR')
       ? await reportsCollection.countDocuments({ status: 'COMPLETE' })
       : 0
-    if (isClickhouseEnabled()) {
-      const clickhouseStats = await this.getClickhouse(tenantId, accountIds)
-      return {
-        ...clickhouseStats,
-        totalSarReported,
-      }
-    }
-
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
-    const [
-      casesCount,
-      alertsCount,
-      averageInvestigationTimeCases,
-      averageInvestigationTimeAlerts,
-    ] = await Promise.all([
+    const [casesCount, alertsCount] = await Promise.all([
       casesCollection.countDocuments({
         caseStatus: { $in: ['OPEN', 'REOPENED'] },
         createdTimestamp: { $lte: Date.now() },
@@ -142,10 +128,22 @@ export class OverviewStatsDashboardMetric {
         ])
         .toArray()
         .then((result) => result[0]?.count ?? 0),
-
-      this.getAverageInvestigationTime(tenantId, 'cases', accountIds),
-      this.getAverageInvestigationTime(tenantId, 'alerts', accountIds),
     ])
+    if (isClickhouseEnabled()) {
+      const clickhouseStats = await this.getClickhouse(tenantId, accountIds)
+      return {
+        ...clickhouseStats,
+        totalSarReported,
+        totalOpenCases: casesCount,
+        totalOpenAlerts: alertsCount,
+      }
+    }
+
+    const [averageInvestigationTimeCases, averageInvestigationTimeAlerts] =
+      await Promise.all([
+        this.getAverageInvestigationTime(tenantId, 'cases', accountIds),
+        this.getAverageInvestigationTime(tenantId, 'alerts', accountIds),
+      ])
 
     return {
       totalOpenCases: casesCount,
@@ -160,23 +158,23 @@ export class OverviewStatsDashboardMetric {
     tenantId: string,
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
-    type ClickhouseCountResult = Array<{ count: number }>
+    // type ClickhouseCountResult = Array<{ count: number }>
 
-    const clickhouseClient = await getClickhouseClient(tenantId)
+    // const clickhouseClient = await getClickhouseClient(tenantId)
 
-    const casesCountQuery = `
-      SELECT count(*) as count
-      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-      WHERE caseStatus IN ('OPEN', 'REOPENED')
-        AND timestamp <= toUnixTimestamp64Milli(now64())
-    `
-    const alertsCountQuery = `
-      SELECT count(*) as count
-      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-      ARRAY JOIN alerts as alert
-      WHERE alert.2 IN ('OPEN', 'REOPENED')
-      AND alert.createdTimestamp <= toUnixTimestamp64Milli(now64())
-    `
+    // const casesCountQuery = `
+    //   SELECT count(*) as count
+    //   FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
+    //   WHERE caseStatus IN ('OPEN', 'REOPENED')
+    //     AND timestamp <= toUnixTimestamp64Milli(now64())
+    // `
+    // const alertsCountQuery = `
+    //   SELECT count(*) as count
+    //   FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
+    //   ARRAY JOIN alerts as alert
+    //   WHERE alert.2 IN ('OPEN', 'REOPENED')
+    //   AND alert.createdTimestamp <= toUnixTimestamp64Milli(now64())
+    ;`
     // const sarReportsQuery = `
     //   SELECT count(*) as count
     //   FROM ${CLICKHOUSE_DEFINITIONS.REPORTS.tableName} FINAL
@@ -184,21 +182,21 @@ export class OverviewStatsDashboardMetric {
     // `
 
     const [
-      casesCountResult,
-      alertsCountResult,
+      // casesCountResult,
+      // alertsCountResult,
       // sarReportsResult,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
     ] = await Promise.all([
-      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
-        query: casesCountQuery,
-        format: 'JSONEachRow',
-      }),
+      // executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+      //   query: casesCountQuery,
+      //   format: 'JSONEachRow',
+      // }),
 
-      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
-        query: alertsCountQuery,
-        format: 'JSONEachRow',
-      }),
+      // executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+      //   query: alertsCountQuery,
+      //   format: 'JSONEachRow',
+      // }),
 
       // hasFeature('SAR')
       //   ? clickhouseClient
@@ -218,8 +216,8 @@ export class OverviewStatsDashboardMetric {
     ])
 
     return {
-      totalOpenCases: casesCountResult[0]?.count ?? 0,
-      totalOpenAlerts: alertsCountResult[0]?.count ?? 0,
+      totalOpenCases: 0,
+      totalOpenAlerts: 0,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
       totalSarReported: 0,
