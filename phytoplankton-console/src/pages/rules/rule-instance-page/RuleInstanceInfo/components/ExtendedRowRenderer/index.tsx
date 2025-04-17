@@ -43,7 +43,7 @@ export default function ExtendedRowRenderer(props: Props) {
             title: (
               <div className={s.title}>
                 <TimeLineIcon className={s.titleIcon} />
-                <>Total work hours saved</>
+                <>Total work hours saved since rule enabled</>
               </div>
             ),
             valueComponent: (
