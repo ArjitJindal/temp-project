@@ -23,7 +23,7 @@ const UserAliasSettings = () => {
   const [isDisabled, setIsDisabled] = useState(false);
 
   return (
-    <SettingsCard title="User alias" description="Configure users display name in console">
+    <SettingsCard title="User alias" description="Configure the user's display name in the console">
       <Form<FormValues>
         className={s.root}
         initialValues={{

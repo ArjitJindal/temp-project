@@ -137,7 +137,7 @@ const dataSource = (pageSize: number, page: number) => {
 };
 
 describe('Pagination', () => {
-  test('Pagination should not appear when there is only one page', async () => {
+  test('Pagination should appear when there is only one page', async () => {
     const items = dataSource(PAGE_SIZE, 1);
     render(
       <Table<Person>
@@ -153,7 +153,7 @@ describe('Pagination', () => {
     );
 
     // ASSERT
-    expect(await findPagination()).not.toBeInTheDocument();
+    expect(await findPagination()).toBeInTheDocument();
   });
 
   test('Pagination should appear when there are more than one page', async () => {

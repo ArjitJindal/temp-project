@@ -52,7 +52,7 @@ describe('CrudEntitiesTable Component', () => {
   it('renders the table with initial data', async () => {
     render(<CrudEntitiesTable {...mockProps} />);
     await waitFor(() => screen.getAllByRole('row'));
-    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '1' })).toBeInTheDocument();
     expect(screen.getByText('bar1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create entity/i })).toBeInTheDocument();
     expect(screen.getByText('ID')).toBeInTheDocument();

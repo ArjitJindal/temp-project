@@ -250,8 +250,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     }
   }, [Rows, expandedRowId, rowExpanded]);
 
-  const showPagination = pagination && getPageCount(params, data) > 1;
-
   const cyId = tableId != null ? `table-${tableId}` : `table`;
 
   return (
@@ -310,7 +308,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         />
       )}
       <div data-cy={`${cyId}-pagination-wrapper`}>
-        {!cursor && showPagination && (
+        {!cursor && pagination && (
           <Pagination
             isDisabled={isLoading(dataRes)}
             current={params?.page ?? 1}
