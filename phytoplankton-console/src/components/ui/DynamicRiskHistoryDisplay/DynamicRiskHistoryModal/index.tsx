@@ -161,6 +161,8 @@ function DynamicRiskHistoryModal(props: Props) {
                 w1={settings.riskScoringAlgorithm.krsWeight}
                 w2={settings.riskScoringAlgorithm.avgArsWeight}
               />
+            ) : settings?.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG' ? (
+              <MovingAverageRiskScoreFormula />
             ) : (
               <DefaultRiskScoreFormula />
             )}
@@ -193,6 +195,17 @@ function DynamicRiskHistoryModal(props: Props) {
 const DefaultRiskScoreFormula = () => {
   return (
     <pre>
+      <div className={styles.DRSFormula}>CRA[i] = avg(KRS + avg(TRS[1...i]))</div>
+      <div className={styles.DRSFormula}>CRA[0] = KRS</div>
+      <div className={styles.DRSFormula}>CRA[1] = avg(KRS + TRS[1])</div>
+      <div className={styles.DRSFormula}>CRA[2] = avg(KRS + avg(TRS[1...2]))</div>
+    </pre>
+  );
+};
+
+const MovingAverageRiskScoreFormula = () => {
+  return (
+    <pre>
       <div className={styles.DRSFormula}>CRA[i] = avg(CRA[i-1] + avg(TRS[i...1]))</div>
       <div className={styles.DRSFormula}>CRA[0] = KRS</div>
       <div className={styles.DRSFormula}>CRA[1] = avg(KRS + TRS[1])</div>
@@ -207,7 +220,7 @@ const CustomRiskScoreFormula = (props: { w1: number; w2: number }) => {
     <pre>
       <div
         className={styles.DRSFormula}
-      >{`CRA[i] = (${w1} X KRS) + (${w2} X avg(TRS[1...i]))`}</div>
+      >{`CRA[i] = (${w1} X KRS) + (${w2} X avg(TRS[i...1]))`}</div>
       <div className={styles.DRSFormula}>CRA[0] = KRS</div>
       <div className={styles.DRSFormula}>{`CRA[1] = (${w1} X KRS) + (${w2} X TRS[1])`}</div>
       <div
