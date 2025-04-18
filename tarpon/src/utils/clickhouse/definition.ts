@@ -826,7 +826,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
 
-export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
+export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
+  string,
+  ClickhouseTableNames
+> = {
   [MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS]:
     CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.USERS]: CLICKHOUSE_DEFINITIONS.USERS.tableName,

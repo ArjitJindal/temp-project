@@ -125,4 +125,9 @@ export const config: Config = {
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
   },
+  clickhouse: {
+    awsPrivateLinkEndpointName:
+      'com.amazonaws.vpce.me-central-1.vpce-svc-0a5c104af59ece6df',
+    maxTotalMemoryGb: 48,
+  },
 }
