@@ -24,7 +24,6 @@ import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { logger } from '@/core/logger'
-import { addSentryExtras } from '@/core/utils/context'
 import {
   convertV1PermissionToV2,
   convertV2PermissionToV1,
@@ -168,10 +167,13 @@ export class DynamoRolesRepository extends BaseRolesRepository {
 
   async getTenantRoles(
     tenantId: string,
-    fetchRootRoles = this.shouldFetchRootRole()
+    fetchRootRoles = this.shouldFetchRootRole(),
+    fetchDefaultRoles = true
   ): Promise<AccountRole[]> {
     const allRoles: AccountRole[] = []
-    const defaultRoles = await this.getRolesByNamespace(DEFAULT_NAMESPACE)
+    const defaultRoles = fetchDefaultRoles
+      ? await this.getRolesByNamespace(DEFAULT_NAMESPACE)
+      : []
     const roles = await this.getRolesByNamespace(tenantId)
 
     allRoles.push(...defaultRoles)
@@ -245,11 +247,8 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       })
     )
 
-    if (!role?.name) {
-      addSentryExtras({
-        role,
-      })
-      logger.error('Role name is undefined for role id: ' + id)
+    if (!role) {
+      logger.error('Role not found with id: ' + id)
       return
     }
 

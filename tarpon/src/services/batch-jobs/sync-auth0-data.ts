@@ -128,7 +128,12 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     const auth0Roles = await auth0.rolesByNamespace(
       getNonDemoTenantId(tenant.id)
     )
-    const cacheRoles = await cache.getTenantRoles(getNonDemoTenantId(tenant.id))
+
+    const cacheRoles = await cache.getTenantRoles(
+      getNonDemoTenantId(tenant.id),
+      false,
+      false
+    )
 
     // delete roles which are in cache but not in auth0
     const rolesToDelete = cacheRoles.filter(
