@@ -90,6 +90,7 @@ export interface TransactionsTableParams extends CommonParams {
   showDetailedView?: boolean;
   view?: TableListViewEnum;
   filterSanctionsHitIds?: string[];
+  filterPaymentDetailName?: string;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -173,6 +174,7 @@ export const transactionParamsToRequest = (
     filterOriginCountries: params['originPayment.country'],
     filterStatus: status ? [status] : undefined,
     includePaymentDetails: params.showDetailedView,
+    filterPaymentDetailName: params.filterPaymentDetailName,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;

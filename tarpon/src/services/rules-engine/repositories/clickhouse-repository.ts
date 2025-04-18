@@ -210,6 +210,17 @@ export class ClickhouseTransactionsRepository {
       )
     }
 
+    // Payment details name search (on both origin and destination)
+    if ((params as any).filterPaymentDetailName) {
+      whereConditions.push(
+        `(originPaymentDetails_name = '${
+          (params as any).filterPaymentDetailName
+        }' OR destinationPaymentDetails_name = '${
+          (params as any).filterPaymentDetailName
+        }')`
+      )
+    }
+
     return whereConditions.length ? `${whereConditions.join(' AND ')}` : ''
   }
 
@@ -243,10 +254,6 @@ export class ClickhouseTransactionsRepository {
       originUserId: "JSONExtractString(data, 'originUserId')",
       type: "JSONExtractString(data, 'type')",
       tags: "JSONExtractRaw(data, 'tags')",
-      originPaymentMethod:
-        "JSONExtractString(data, 'originPaymentDetails', 'method')",
-      destinationPaymentMethod:
-        "JSONExtractString(data, 'destinationPaymentDetails', 'method')",
       originCountry:
         "JSONExtractString(data, 'originAmountDetails', 'country')",
       destinationCountry:

@@ -1246,6 +1246,10 @@ paths:
           in: query
           name: filterDestinationPaymentMethodId
         - schema:
+            type: string
+          in: query
+          name: filterPaymentDetailName
+        - schema:
             type: array
             items:
               type: string
