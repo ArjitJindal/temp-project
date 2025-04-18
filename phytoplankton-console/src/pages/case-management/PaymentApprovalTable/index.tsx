@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import TransactionsTable, {
   transactionParamsToRequest,
   TransactionsTableParams,
@@ -9,6 +10,8 @@ import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import PaymentApprovalButton from '@/pages/case-management/components/PaymentApprovalButton';
 import { TransactionsResponse } from '@/apis';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   params: TransactionsTableParams;
@@ -18,6 +21,7 @@ interface Props {
 export default function PaymentApprovalsTable(props: Props) {
   const { params, onChangeParams: setParams } = props;
   const api = useApi({ debounce: 500 });
+  const settings = useSettings();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const filterStatus = [params.status ?? 'SUSPEND'];
@@ -58,6 +62,23 @@ export default function PaymentApprovalsTable(props: Props) {
       onSelect={setSelectedIds}
       isExpandable
       hideStatusFilter={true}
+      extraFilters={[
+        {
+          key: 'userId',
+          title: `${firstLetterUpper(settings.userAlias)} ID/name`,
+          renderer: ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.userId ?? null}
+              onConfirm={(userId) => {
+                setParams((state) => ({
+                  ...state,
+                  userId: userId ?? undefined,
+                }));
+              }}
+            />
+          ),
+        },
+      ]}
       selectionInfo={
         selectedIds.length
           ? { entityCount: selectedIds.length, entityName: 'transactions' }
