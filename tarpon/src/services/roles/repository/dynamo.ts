@@ -6,7 +6,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { memoize } from 'lodash'
+import { memoize, uniq } from 'lodash'
 import {
   getNamespace,
   getNamespacedRoleName,
@@ -24,7 +24,7 @@ import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { logger } from '@/core/logger'
-import { addSentryExtras, hasFeature } from '@/core/utils/context'
+import { addSentryExtras } from '@/core/utils/context'
 import {
   convertV1PermissionToV2,
   convertV2PermissionToV1,
@@ -64,9 +64,11 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role: AccountRole = {
       ...data.params,
       statements,
-      permissions: hasFeature('RBAC_V2')
-        ? convertV2PermissionToV1(namespace, statements)
-        : data.params.permissions,
+      permissions: uniq(
+        convertV2PermissionToV1(namespace, statements).concat(
+          data.params.permissions ?? []
+        )
+      ),
     }
 
     await this.dynamoClient.send(

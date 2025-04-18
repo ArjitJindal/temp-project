@@ -721,7 +721,18 @@ export const convertV2PermissionToV1 = (
 ): Permission[] => {
   const permissions: string[] = []
   for (const perm of permissionsToConvert) {
-    if (perm.resources.includes(`frn:console:${tenantId}:::*`)) {
+    if (
+      perm.resources.includes(`frn:console:${tenantId}:::*`) ||
+      perm.resources.includes(`frn:console:*:::*`)
+    ) {
+      const isReadAction = perm.actions.includes('read')
+      const isWriteAction = perm.actions.includes('write')
+      if (isReadAction) {
+        permissions.push(...PERMISSIONS.filter((p) => p.endsWith('read')))
+      }
+      if (isWriteAction) {
+        permissions.push(...PERMISSIONS.filter((p) => p.endsWith('write')))
+      }
       continue
     }
 
