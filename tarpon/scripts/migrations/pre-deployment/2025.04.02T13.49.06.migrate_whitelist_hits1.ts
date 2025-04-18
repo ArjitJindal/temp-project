@@ -1,4 +1,4 @@
-import { AnyBulkWriteOperation } from 'mongodb'
+import { AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -13,6 +13,67 @@ import { Case } from '@/@types/openapi-public-management/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { CounterRepository } from '@/services/counter/repository'
+
+async function backupCollection(db: Db, collectionName: string) {
+  const backupCollectionName = `${collectionName}_backup`
+  const batchSize = 1000 // Define a batch size
+
+  try {
+    const sourceCollection = db.collection(collectionName)
+    const cursor = sourceCollection.find({})
+
+    const count = await sourceCollection.countDocuments()
+    if (count === 0) {
+      console.log(`No documents to backup in ${collectionName}`)
+      return { success: true, backupName: backupCollectionName, count: 0 }
+    }
+
+    const collections = await db
+      .listCollections({ name: backupCollectionName })
+      .toArray()
+    if (collections.length > 0) {
+      await db.dropCollection(backupCollectionName)
+    }
+
+    const backupCollection = db.collection(backupCollectionName)
+    await db.createCollection(backupCollectionName)
+
+    let batch: any[] = []
+    let backedUpCount = 0
+
+    for await (const doc of cursor) {
+      batch.push(doc)
+      if (batch.length === batchSize) {
+        await backupCollection.insertMany(batch)
+        backedUpCount += batch.length
+        batch = [] // Clear the batch
+      }
+    }
+
+    // Insert any remaining documents in the last batch
+    if (batch.length > 0) {
+      await backupCollection.insertMany(batch)
+      backedUpCount += batch.length
+    }
+
+    console.log(
+      `Backed up ${backedUpCount} documents from ${collectionName} to ${backupCollectionName}`
+    )
+
+    return {
+      success: true,
+      backupName: backupCollectionName,
+      count: backedUpCount,
+    }
+  } catch (error) {
+    console.error(`Error backing up collection ${collectionName}:`, error)
+    return {
+      success: false,
+      backupName: backupCollectionName,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
@@ -31,6 +92,46 @@ async function migrateTenant(tenant: Tenant) {
   const sanctionsHitsCollection = db.collection(
     SANCTIONS_HITS_COLLECTION(tenantId)
   )
+
+  try {
+    // Backup each collection using the helper function
+    const collectionsToBackup = [
+      CASES_COLLECTION(tenantId),
+      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId),
+      SANCTIONS_HITS_COLLECTION(tenantId),
+    ]
+
+    const backupResults = await Promise.all(
+      collectionsToBackup.map((collectionName) =>
+        backupCollection(db, collectionName)
+      )
+    )
+
+    // Log summary of backup operations
+    const successCount = backupResults.filter((result) => result.success).length
+    const totalDocuments = backupResults.reduce(
+      (sum, result) => sum + (result.count || 0),
+      0
+    )
+
+    console.log(
+      `Backup summary for tenant ${tenantId}: ${successCount}/${backupResults.length} collections backed up successfully with ${totalDocuments} total documents`
+    )
+
+    // If any backups failed, log errors
+    const failedBackups = backupResults.filter((result) => !result.success)
+    if (failedBackups.length > 0) {
+      console.error(
+        `Failed backups for tenant ${tenantId}:`,
+        failedBackups
+          .map((result) => `${result.backupName}: ${result.error}`)
+          .join(', ')
+      )
+    }
+  } catch (error) {
+    console.error(`Error in backup process for tenant ${tenantId}:`, error)
+  }
+
   const alertsPipeline = [
     {
       $match: {
@@ -101,6 +202,7 @@ async function migrateTenant(tenant: Tenant) {
     const sanctionsHitsBulkOperations: AnyBulkWriteOperation<any>[] = []
     const counterRepository = new CounterRepository(tenantId, mongoDb)
     const paymentMethodIdSanctionHitIdsMap = new Map<string, string[]>()
+    const checkSanctionHitIdsSet = new Set<string>()
 
     for (const alert of alerts) {
       const context = alert.ruleHitMeta.sanctionsDetails.hitContext
@@ -120,6 +222,10 @@ async function migrateTenant(tenant: Tenant) {
 
       // For each existing hit
       for (const hit of existingHits) {
+        if (checkSanctionHitIdsSet.has(hit.sanctionsHitId)) {
+          continue
+        }
+        checkSanctionHitIdsSet.add(hit.sanctionsHitId)
         // For each transaction
         for (const transactionId of transactionIds) {
           const paymentMethodId =
@@ -204,18 +310,22 @@ async function migrateTenant(tenant: Tenant) {
         const firstPaymentMethodId =
           transactionIdToPaymentMethodId.get(firstTransactionId)
 
-        if (firstPaymentMethodId) {
-          for (const whitelist of existingWhitelists) {
+        for (const whitelist of existingWhitelists) {
+          const updateFields: any = {}
+          if (firstTransactionId) {
+            updateFields.transactionId = firstTransactionId
+          }
+          if (firstPaymentMethodId) {
+            updateFields.paymentMethodId = firstPaymentMethodId
+          }
+          if (Object.keys(updateFields).length > 0) {
             sanctionsWhitelistBulkOperations.push({
               updateOne: {
                 filter: {
                   sanctionsWhitelistId: whitelist.sanctionsWhitelistId,
                 },
                 update: {
-                  $set: {
-                    transactionId: firstTransactionId,
-                    paymentMethodId: firstPaymentMethodId,
-                  },
+                  $set: updateFields,
                 },
               },
             })
@@ -223,13 +333,13 @@ async function migrateTenant(tenant: Tenant) {
         }
 
         // For remaining transactions, create new copies of all whitelists
-        const paymentIdsSet = new Set<string>()
+        const paymentIdsSet = new Set<string | null>()
         for (let i = 1; i < transactionIds.length; i++) {
           const transactionId = transactionIds[i]
           const paymentMethodId =
-            transactionIdToPaymentMethodId.get(transactionId)
+            transactionIdToPaymentMethodId.get(transactionId) ?? null
 
-          if (paymentMethodId && !paymentIdsSet.has(paymentMethodId)) {
+          if (!paymentIdsSet.has(paymentMethodId)) {
             for (const whitelist of existingWhitelists) {
               const newWhitelist = {
                 ...whitelist,
@@ -270,7 +380,11 @@ async function migrateTenant(tenant: Tenant) {
     }
 
     const alertBulkOperations: AnyBulkWriteOperation<Case>[] = []
-    for (const alert of alerts) {
+    for (const alertId of alertIds) {
+      const alert = alerts.find((alert) => alert.alertId === alertId)
+      if (!alert) {
+        continue
+      }
       const transactionIds = alert.transactionIds || []
 
       alertBulkOperations.push({
@@ -288,14 +402,16 @@ async function migrateTenant(tenant: Tenant) {
           arrayFilters: [{ 'alertElem.alertId': alert.alertId }],
         },
       })
-      const paymentIdsSet = new Set<string>()
+      const paymentIdsSet = new Set<string | null>()
       for (const transactionId of transactionIds) {
         const paymentMethodId =
-          transactionIdToPaymentMethodId.get(transactionId)
+          transactionIdToPaymentMethodId.get(transactionId) ?? null
 
-        if (paymentMethodId && !paymentIdsSet.has(paymentMethodId)) {
-          const hits =
-            paymentMethodIdSanctionHitIdsMap.get(paymentMethodId) || []
+        if (!paymentIdsSet.has(paymentMethodId)) {
+          let hits: string[] = []
+          if (paymentMethodId !== null) {
+            hits = paymentMethodIdSanctionHitIdsMap.get(paymentMethodId) || []
+          }
           alertBulkOperations.push({
             updateOne: {
               filter: {
