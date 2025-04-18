@@ -59,6 +59,10 @@ export default function AlertDetailsTabs(props: Props) {
   const entityHeaderHeight = rect?.height ?? 0;
 
   const sanctionDetails = alert.ruleHitMeta?.sanctionsDetails ?? [];
+  const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
+    sanctionDetails[0]?.searchId,
+  );
+  const sanctionsDetailsFilter = sanctionDetails.find((x) => x.searchId === sanctionsDetailsId);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
@@ -109,9 +113,6 @@ export default function AlertDetailsTabs(props: Props) {
 
   const isTransactionSelectionEnabled = transactionSelectionActions.length > 0;
 
-  const [selectedItem, setSelectedItem] = useState<SanctionsDetails | undefined>(
-    sanctionDetails[0],
-  );
   const tabItems = useAlertTabs({
     alert: alert,
     caseUserId: caseUserId,
@@ -119,16 +120,14 @@ export default function AlertDetailsTabs(props: Props) {
     onTransactionSelect: isTransactionSelectionEnabled ? onTransactionSelect : undefined,
     escalatedTransactionIds: escalatedTransactionIds,
     selectedSanctionsHitsIds: selectedSanctionsHitsIds,
+    sanctionsSearchIdFilter: sanctionsDetailsId,
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
     transactionSelectionActions: transactionSelectionActions,
     selectionInfo: selectionInfo,
     selectionActions: selectionActions,
     fitTablesHeight: true,
-    sanctionsDetailsFilter: selectedItem,
-    sanctionsSearchIdFilter: selectedItem?.searchId,
-    entityTypeFilter: selectedItem?.entityType,
-    paymentMethodIdFilter: selectedItem?.hitContext?.paymentMethodId,
+    sanctionsDetailsFilter: sanctionsDetailsFilter,
   });
 
   const filteredTabItems = useMemo(() => {
@@ -152,38 +151,13 @@ export default function AlertDetailsTabs(props: Props) {
       tabBarExtraContent={
         isScreeningAlert(alert) && (
           <Select
-            value={
-              (selectedItem?.hitContext?.paymentMethodId ?? selectedItem?.searchId) +
-              ' ' +
-              selectedItem?.entityType
-            }
+            value={sanctionsDetailsId}
             isDisabled={sanctionDetails.length < 2}
             options={sanctionDetails.map((detailsItem) => ({
               label: getOptionName(detailsItem),
-              value:
-                (detailsItem.hitContext?.paymentMethodId ?? detailsItem.searchId) +
-                ' ' +
-                detailsItem.entityType,
+              value: detailsItem.searchId,
             }))}
-            onChange={(value) => {
-              const selectedItem = sanctionDetails.find((item) => {
-                if (
-                  item.hitContext?.paymentMethodId === value?.split(' ')[0] &&
-                  item.entityType === value?.split(' ')[1]
-                ) {
-                  return true;
-                }
-                if (
-                  item.searchId === value?.split(' ')[0] &&
-                  !item.hitContext?.paymentMethodId &&
-                  item.entityType === value?.split(' ')[1]
-                ) {
-                  return true;
-                }
-                return false;
-              });
-              setSelectedItem(selectedItem);
-            }}
+            onChange={setSanctionsDetailsId}
             allowClear={false}
           />
         )

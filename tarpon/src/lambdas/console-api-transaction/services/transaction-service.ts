@@ -48,7 +48,6 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { TransactionType } from '@/@types/openapi-internal/TransactionType'
-import { Alert } from '@/@types/openapi-internal/Alert'
 
 @traceable
 export class TransactionService {
@@ -222,56 +221,40 @@ export class TransactionService {
       },
       {
         includeUsers: true,
-      },
-      params.filterPaymentMethodId ? params.filterPaymentMethodId : undefined
+      }
     )
   }
 
   public async getTransactionsList(
     params: DefaultApiGetTransactionsListRequest,
-    options: { includeUsers?: boolean } = {},
-    filterPaymentMethodId?: string
+    options: { includeUsers?: boolean }
   ): Promise<TransactionsResponse> {
     const { includeUsers } = options
+    let response = await this.getTransactions(params)
 
-    let alert: Alert | null = null
-    if (params.alertId) {
+    if (params.alertId != null) {
       const alertRepository = new AlertsRepository(this.tenantId, {
         mongoDb: this.mongoDb,
         dynamoDb: this.dynamoDb,
       })
 
-      alert = await alertRepository.getAlertById(params.alertId)
+      const alert = await alertRepository.getAlertById(params.alertId)
 
-      if (
-        alert &&
-        filterPaymentMethodId &&
-        alert.ruleHitMeta?.hitDirections?.length
-      ) {
-        const hasOriginDirection =
-          alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
-
-        if (hasOriginDirection) {
-          params.filterDestinationPaymentMethodId = filterPaymentMethodId
-        } else {
-          params.filterOriginPaymentMethodId = filterPaymentMethodId
-        }
-      }
-    }
-    let response = await this.getTransactions(params, alert)
-    if (alert && params.alertId) {
       response = {
         ...response,
         items: response.items.map((transaction) => {
-          const ruleInstanceId = alert?.ruleInstanceId
-          const matchingRule = ruleInstanceId
+          const executedRule = alert?.ruleInstanceId
             ? transaction.executedRules?.find(
-                (rule) => rule.ruleInstanceId === ruleInstanceId
+                (rule) => rule.ruleInstanceId === alert?.ruleInstanceId
               )
             : undefined
-          return matchingRule?.ruleHit
-            ? { ...transaction, status: matchingRule.ruleAction }
-            : transaction
+
+          return {
+            ...transaction,
+            status: executedRule?.ruleHit
+              ? executedRule?.ruleAction
+              : transaction.status,
+          }
         }),
       }
     }
@@ -325,58 +308,51 @@ export class TransactionService {
     return transaction
   }
 
-  public async getTransactions(
-    params: DefaultApiGetTransactionsListRequest,
-    alert?: Alert | null
-  ) {
+  public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
     const result =
-      await this.transactionRepository.getTransactionsCursorPaginate(
-        params,
-        {
-          projection: {
-            _id: 1,
-            type: 1,
-            transactionId: 1,
-            timestamp: 1,
-            originUserId: 1,
-            destinationUserId: 1,
-            transactionState: 1,
-            originAmountDetails: 1,
-            destinationAmountDetails: 1,
-            originPaymentDetails: 1,
-            destinationPaymentDetails: 1,
-            productType: 1,
-            tags: 1,
-            status: 1,
-            originPaymentMethodId: 1,
-            destinationPaymentMethodId: 1,
-            arsScore: {
-              arsScore: 1,
-            },
-            originFundsInfo: 1,
-            executedRules:
-              params.view === ('TABLE' as TableListViewEnum)
-                ? {
-                    ruleInstanceId: 1,
-                    ruleHitMeta: {
-                      sanctionsDetails: {
-                        searchId: 1,
-                      },
-                    },
-                  }
-                : [],
-            hitRules:
-              params.view === ('TABLE' as TableListViewEnum)
-                ? {
-                    ruleName: 1,
-                    ruleDescription: 1,
-                  }
-                : [],
-            alertIds: 1,
+      await this.transactionRepository.getTransactionsCursorPaginate(params, {
+        projection: {
+          _id: 1,
+          type: 1,
+          transactionId: 1,
+          timestamp: 1,
+          originUserId: 1,
+          destinationUserId: 1,
+          transactionState: 1,
+          originAmountDetails: 1,
+          destinationAmountDetails: 1,
+          originPaymentDetails: 1,
+          destinationPaymentDetails: 1,
+          productType: 1,
+          tags: 1,
+          status: 1,
+          originPaymentMethodId: 1,
+          destinationPaymentMethodId: 1,
+          arsScore: {
+            arsScore: 1,
           },
+          originFundsInfo: 1,
+          executedRules:
+            params.view === ('TABLE' as TableListViewEnum)
+              ? {
+                  ruleInstanceId: 1,
+                  ruleHitMeta: {
+                    sanctionsDetails: {
+                      searchId: 1,
+                    },
+                  },
+                }
+              : [],
+          hitRules:
+            params.view === ('TABLE' as TableListViewEnum)
+              ? {
+                  ruleName: 1,
+                  ruleDescription: 1,
+                }
+              : [],
+          alertIds: 1,
         },
-        alert
-      )
+      })
     return result
   }
 

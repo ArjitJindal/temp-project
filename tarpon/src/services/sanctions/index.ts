@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import { intersection, omit, round, startCase, uniq } from 'lodash'
+import { BadRequest } from 'http-errors'
+import { intersection, isEmpty, omit, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { sanitizeString } from '@flagright/lib/utils'
 import { AlertsRepository } from '../alerts/repository'
@@ -543,12 +544,8 @@ export class SanctionsService {
     params: {
       filterHitIds?: string[]
       filterSearchId?: string[]
-      filterPaymentMethodId?: string[]
       filterStatus?: SanctionsHitStatus[]
       alertId?: string
-      ruleId?: string
-      filterUserId?: string
-      filterScreeningHitEntityType?: SanctionsDetailsEntityType
     } & CursorPaginationParams
   ): Promise<SanctionsHitListResponse> {
     if (params.alertId) {
@@ -558,28 +555,16 @@ export class SanctionsService {
       })
       const alert = await alertsRepository.getAlertById(params.alertId)
       if (alert) {
-        params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails
-          ?.filter((data) => {
-            const check =
-              params.filterSearchId?.includes(data.searchId) &&
-              (!params.filterScreeningHitEntityType ||
-                data.entityType === params.filterScreeningHitEntityType)
-            if (params.filterPaymentMethodId) {
-              return (
-                params.filterPaymentMethodId.includes(
-                  data.hitContext?.paymentMethodId ?? ''
-                ) && check
-              )
-            }
-            return check && data.hitContext?.paymentMethodId == null
-          })
-          .flatMap(({ sanctionHitIds }) => sanctionHitIds ?? [])
-        params.ruleId = alert.ruleId
-        params.filterUserId =
-          alert.ruleHitMeta?.sanctionsDetails?.[0]?.hitContext?.userId ??
-          undefined
+        params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails?.flatMap(
+          ({ sanctionHitIds }) => sanctionHitIds ?? []
+        )
       }
     }
+
+    if (isEmpty(params.filterHitIds) && isEmpty(params.filterSearchId)) {
+      throw new BadRequest('Search ID or Hit IDs must be provided')
+    }
+
     await this.initialize()
     return await this.sanctionsHitsRepository.searchHits(params)
   }
