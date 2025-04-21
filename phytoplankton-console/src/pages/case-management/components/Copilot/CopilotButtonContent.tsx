@@ -38,6 +38,9 @@ type CopilotButtonProps = {
 
 export const CopilotButtons = (props: CopilotButtonProps) => {
   const settings = useSettings();
+  const branding = getBranding();
+  const tooltipTextForDisabledCopilot = `Enable ${branding.companyName} AI Features to generate a narrative`;
+  const tooltipTextForEnabledCopilot = `Use AI to generate the narrative template`;
   const {
     narrative,
     askLoading,
@@ -63,8 +66,8 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
             copilotDisabled
               ? copilotDisabledReason
               : settings.isAiEnabled
-              ? `Use AI to generate the narrative template`
-              : `Enable AI Features to generate a narrative`
+              ? tooltipTextForEnabledCopilot
+              : tooltipTextForDisabledCopilot
           }
         >
           <span>
@@ -82,25 +85,24 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
           </span>
         </Tooltip>
         {settings.allowManualNarrativeModeUpdates && (
-          <Dropdown<NarrativeMode>
-            options={[
-              { value: 'COMPACT', label: 'Compact' },
-              { value: 'STANDARD', label: 'Standard' },
-            ]}
-            onSelect={(value) => setNarrativeMode(value.value)}
-          >
-            <Button type={'TEXT'} iconRight={<ArrowDownLine />}>
-              Narrative: {narrativeMode === 'COMPACT' ? 'Compact' : 'Standard'}
-            </Button>
-          </Dropdown>
+          <Tooltip title={settings.isAiEnabled ? '' : tooltipTextForDisabledCopilot}>
+            <Dropdown<NarrativeMode>
+              options={[
+                { value: 'COMPACT', label: 'Compact' },
+                { value: 'STANDARD', label: 'Standard' },
+              ]}
+              onSelect={(value) => setNarrativeMode(value.value)}
+              disabled={!settings?.isAiEnabled}
+            >
+              <Button type={'TEXT'} iconRight={<ArrowDownLine />}>
+                Narrative: {narrativeMode === 'COMPACT' ? 'Compact' : 'Standard'}
+              </Button>
+            </Dropdown>
+          </Tooltip>
         )}
       </div>
       <Tooltip
-        title={
-          settings.isAiEnabled
-            ? `Use AI to format your narrative`
-            : `Enable AI Features to generate a narrative`
-        }
+        title={settings.isAiEnabled ? tooltipTextForEnabledCopilot : tooltipTextForDisabledCopilot}
       >
         <span>
           <Button
@@ -123,7 +125,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         title={
           settings.isAiEnabled
             ? `Discover the data that was used to generate the narrative.`
-            : `Enable AI Features to generate a narrative`
+            : tooltipTextForDisabledCopilot
         }
       >
         <span>
@@ -177,8 +179,6 @@ export const CopilotButtonContent = (props: CopilotButtonContentProps) => {
     copilotDisabled,
     copilotDisabledReason,
   } = props;
-  const branding = getBranding();
-  const settings = useSettings();
 
   // TODO We will support alerts and transactions in a later version.
   if (entityType !== 'CASE' && entityType !== 'ALERT' && entityType !== 'TRANSACTION') {
@@ -187,33 +187,17 @@ export const CopilotButtonContent = (props: CopilotButtonContentProps) => {
 
   return (
     <>
-      {!settings.isAiEnabled ? (
-        <Tooltip title={`Enable ${branding.companyName} AI Features to generate a narrative`}>
-          <CopilotWrapperContent
-            reasons={reasons}
-            entityId={entityId}
-            entityType={entityType}
-            narrative={narrative}
-            setNarrativeValue={setNarrativeValue}
-            additionalCopilotInfo={additionalCopilotInfo}
-            otherReason={otherReason}
-            copilotDisabled={copilotDisabled}
-            copilotDisabledReason={copilotDisabledReason}
-          />
-        </Tooltip>
-      ) : (
-        <CopilotWrapperContent
-          reasons={reasons}
-          entityId={entityId}
-          entityType={entityType}
-          narrative={narrative}
-          setNarrativeValue={setNarrativeValue}
-          additionalCopilotInfo={additionalCopilotInfo}
-          otherReason={otherReason}
-          copilotDisabled={copilotDisabled}
-          copilotDisabledReason={copilotDisabledReason}
-        />
-      )}
+      <CopilotWrapperContent
+        reasons={reasons}
+        entityId={entityId}
+        entityType={entityType}
+        narrative={narrative}
+        setNarrativeValue={setNarrativeValue}
+        additionalCopilotInfo={additionalCopilotInfo}
+        otherReason={otherReason}
+        copilotDisabled={copilotDisabled}
+        copilotDisabledReason={copilotDisabledReason}
+      />
     </>
   );
 };
