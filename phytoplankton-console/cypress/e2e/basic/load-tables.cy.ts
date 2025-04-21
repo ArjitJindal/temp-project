@@ -62,7 +62,7 @@ describe.skip('Main pages loading', () => {
       isRulesPage: true,
       button: { text: 'Shadow rules', dataCy: 'segmented-control-shadow' },
     },
-    { testName: 'Library', url: '/rules/rules-library', title: 'Library', isRulesPage: true },
+    { testName: 'Templates', url: '/rules/rules-library', title: 'Templates', isRulesPage: true },
     { testName: 'SAR', url: '/reports', title: 'SAR' },
     {
       testName: 'Risk factors(consumer)',

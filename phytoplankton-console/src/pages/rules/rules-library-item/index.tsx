@@ -43,7 +43,7 @@ export default function RulesLibraryItemPage() {
               to: '/rules',
             },
             {
-              title: 'Library',
+              title: 'Templates',
               to: '/rules/rules-library',
             },
             {

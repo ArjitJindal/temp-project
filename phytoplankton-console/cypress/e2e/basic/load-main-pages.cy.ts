@@ -14,7 +14,7 @@ describe('navigate sidebar', () => {
     cy.navigateToPage('/transactions/list', 'Transactions');
     cy.navigateToPage('/users/list/business/all', 'Users');
     navigateToRulesPage('my-rules', 'My rules');
-    navigateToRulesPage('rules-library', 'Library');
+    navigateToRulesPage('rules-library', 'Templates');
   });
 
   it('should load entity details', () => {

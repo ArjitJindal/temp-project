@@ -32,7 +32,7 @@ const TableList = () => {
           to: '/rules/my-rules',
         },
         tab === 'rules-library' && {
-          title: 'Library',
+          title: 'Templates',
           to: '/rules/rules-library',
         },
       ].filter(notEmpty)}
@@ -69,7 +69,7 @@ function Content(props: { tab: string }) {
         ),
       },
       {
-        title: 'Library',
+        title: 'Templates',
         key: 'rules-library',
         children: (
           <PageWrapperContentContainer>

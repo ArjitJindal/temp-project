@@ -67,7 +67,7 @@ export const PERMISSIONS_LIBRARY: Permissions = [
       },
       {
         id: 'library',
-        name: 'Library',
+        name: 'Templates',
         actions: ['read'],
         type: 'STATIC',
       },

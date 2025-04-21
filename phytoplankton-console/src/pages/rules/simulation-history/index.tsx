@@ -17,7 +17,7 @@ export default function SimulationHistoryPage() {
           to: '/rules',
         },
         {
-          title: rulesTab === 'my-rules' ? 'My rules' : 'Library',
+          title: rulesTab === 'my-rules' ? 'My rules' : 'Templates',
           to: `/rules/${rulesTab}`,
         },
         {
