@@ -1,6 +1,5 @@
 import React from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
-import { startCase } from 'lodash';
+import { capitalizeWordsInternal, humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { SanctionsComparisonTableItem } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison/types';
 import Tag from '@/components/library/Tag';
@@ -29,11 +28,13 @@ export default function SanctionsComparison(props: Props) {
                 <InformationLineIcon className={s.tooltipIcon} />
               </Tooltip>
             </div>
-            <div className={s.propHitValue}>{startCase(String(item.screeningValue))}</div>
+            <div className={s.propHitValue}>
+              {capitalizeWordsInternal(String(item.screeningValue))}
+            </div>
             <div className={s.propHitMatch}>
               <MatchTag match={item.match} />
             </div>
-            <div className={s.propValue}>{startCase(String(item.kycValue))}</div>
+            <div className={s.propValue}>{capitalizeWordsInternal(String(item.kycValue))}</div>
           </React.Fragment>
         ))}
       </div>

@@ -1,11 +1,11 @@
-import { uniq } from 'lodash'
-import { sanitizeString } from '@flagright/lib/utils'
+import { uniq, uniqBy } from 'lodash'
+import { normalize, sanitizeString } from '@flagright/lib/utils'
+import { Db } from 'mongodb'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
 import {
   getNameMatches,
   getSecondaryMatches,
-  normalize,
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
 } from './utils'
@@ -19,7 +19,7 @@ import {
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getSearchIndexName } from '@/utils/mongodb-definitions'
-import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -172,20 +172,42 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     })
   }
 
-  async searchWithoutMatchingNames(
-    request: SanctionsSearchRequest
-  ): Promise<SanctionsProviderResponse> {
-    const db = await getMongoDbClientDb()
+  private getNonSearchIndexQuery(request: SanctionsSearchRequest): {
+    $and?: any[] | undefined
+    $or?: any[] | undefined
+  } {
     const andConditions: any[] = []
     const orConditions: any[] = []
+    if (
+      request.searchTerm &&
+      (request.fuzziness != null ||
+        (request.fuzzinessRange?.lowerBound != null &&
+          request.fuzzinessRange?.upperBound != null))
+    ) {
+      const matchTypeCondition = {
+        $or: [
+          {
+            name: sanitizeString(request.searchTerm),
+          },
+          {
+            normalizedAka: sanitizeString(request.searchTerm),
+          },
+        ],
+      }
+      if (request.orFilters?.includes('types')) {
+        orConditions.push(matchTypeCondition)
+      } else {
+        andConditions.push(matchTypeCondition)
+      }
+    }
     if (request.types) {
       const matchTypeCondition = {
         $or: [
           {
-            sanctionSearchTypes: request.types,
+            sanctionSearchTypes: { $in: request.types },
           },
           {
-            'associates.sanctionsSearchTypes': request.types,
+            'associates.sanctionsSearchTypes': { $in: request.types },
           },
         ],
       }
@@ -246,7 +268,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (request.nationality) {
       const matchNationalityCondition = {
         nationality: {
-          $in: [...request.nationality, 'XX', 'ZZ'],
+          $in: [...request.nationality, 'XX', 'ZZ', null],
         },
       }
       if (request.orFilters?.includes('nationality')) {
@@ -322,7 +344,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.yearOfBirth) {
       const matchYearOfBirthCondition = {
-        yearOfBirth: `${request.yearOfBirth}`,
+        yearOfBirth: {
+          $in: [`${request.yearOfBirth}`, null],
+        },
       }
       if (request.orFilters?.includes('yearOfBirth')) {
         orConditions.push(matchYearOfBirthCondition)
@@ -332,7 +356,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.gender) {
       const matchGenderCondition = {
-        gender: request.gender,
+        gender: {
+          $in: [request.gender, 'Unknown', null],
+        },
       }
       if (request.orFilters?.includes('gender')) {
         orConditions.push(matchGenderCondition)
@@ -364,6 +390,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ...(orConditions.length > 0 ? { $or: orConditions } : {}),
       ...(andConditions.length > 0 ? { $and: andConditions } : {}),
     }
+    return match
+  }
+
+  async searchWithoutMatchingNames(
+    request: SanctionsSearchRequest,
+    db: Db
+  ): Promise<SanctionsProviderResponse> {
+    const match = this.getNonSearchIndexQuery(request)
     const providers = getDefaultProviders()
     const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
     const entityTypes =
@@ -406,9 +440,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   async searchWithMatchingNames(
     request: SanctionsSearchRequest,
+    db: Db,
     limit: number = 200
   ): Promise<SanctionsProviderResponse> {
-    const client = await getMongoDbClient()
     const match = {}
     const providers = getDefaultProviders()
     const andFilters: any[] = []
@@ -732,6 +766,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             path: 'gender',
           },
         },
+        {
+          equals: {
+            value: null,
+            path: 'gender',
+          },
+        },
       ]
       if (request.orFilters?.includes('gender')) {
         orFilters.push(...genderMatch)
@@ -787,9 +827,26 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     )
     const results = await Promise.all(
-      collectionNames.map((c) =>
-        client
-          .db()
+      collectionNames.flatMap((c) => [
+        db
+          .collection(c)
+          .aggregate<SanctionsEntity>([
+            {
+              $match: this.getNonSearchIndexQuery(request),
+            },
+            {
+              $limit: providers.includes(SanctionsDataProviders.DOW_JONES)
+                ? limit
+                : limit + 50,
+            },
+            {
+              $project: {
+                rawResponse: 0,
+              },
+            },
+          ])
+          .toArray(),
+        db
           .collection(c)
           .aggregate<SanctionsEntity>([
             {
@@ -800,7 +857,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   must: [
                     {
                       text: {
-                        query: normalize(sanitizeString(request.searchTerm)),
+                        query: sanitizeString(request.searchTerm),
                         path: ['name', 'normalizedAka'],
                         fuzzy: {
                           maxEdits: 2,
@@ -852,13 +909,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               },
             },
           ])
-          .toArray()
-      )
+          .toArray(),
+      ])
     )
     const fuzzinessSettings = request?.fuzzinessSettings
     const filteredResults = this.hydrateHitsWithMatchTypes(
       this.filterResults(
-        results.flat(),
+        uniqBy(results.flat(), (s) => s.id),
         request,
         fuzzinessSettings,
         stopwordSet
@@ -916,11 +973,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       .trim()
     const searchTerm = shouldSanitizeString
       ? sanitizeString(modifiedTerm, keepSpaces)
-      : modifiedTerm
+      : normalize(modifiedTerm)
 
     return results.filter((entity) => {
-      const values = uniq([entity.name, ...(entity.aka || [])]).map((name) =>
-        this.processNameWithStopwords(name, stopwordSet)
+      const values = uniq([entity.name, ...(entity.normalizedAka || [])]).map(
+        (name) => this.processNameWithStopwords(name, stopwordSet)
       )
       if (
         request.fuzzinessRange?.upperBound === 100 ||
@@ -929,12 +986,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         return true
       } else {
         for (let value of values) {
-          if (value.toLowerCase() === searchTerm) {
-            return true
-          }
           value = shouldSanitizeString
             ? sanitizeString(value, keepSpaces)
             : value
+          if (value === searchTerm) {
+            return true
+          }
           const evaluatingFunction =
             this.getFuzzinessFunction(fuzzinessSettings)
           const percentageSimilarity = evaluatingFunction(searchTerm, value)
@@ -955,16 +1012,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsSearchRequest,
     isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
+    const db = await getMongoDbClientDb()
     let result: SanctionsProviderResponse
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||
         (request.fuzziness ?? 0) * 100 === 100)
     ) {
-      result = await this.searchWithoutMatchingNames(request)
+      result = await this.searchWithoutMatchingNames(request, db)
     } else {
       result = await this.searchWithMatchingNames(
         request,
+        db,
         isMigration || request.manualSearch ? 500 : 200
       )
     }

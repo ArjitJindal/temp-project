@@ -128,3 +128,8 @@ export function normalizeCase(str: string): string {
 export function capitalizeWords(text: string): string {
   return startCase(toLower(text))
 }
+
+// startCase from loadsh removes accents
+export function capitalizeWordsInternal(text: string): string {
+  return text.split(' ').map(firstLetterUpper).join(' ')
+}

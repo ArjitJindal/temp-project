@@ -132,6 +132,16 @@ export const SANCTIONS_INDEX_DEFINITION: Array<{
   },
   { index: { version: 1 } },
   { index: { updatedAt: -1 } },
+  {
+    index: {
+      normalizedAka: 1,
+    },
+  },
+  {
+    index: {
+      name: 1,
+    },
+  },
 ]
 
 export const MONGO_TABLE_SUFFIX_MAP = {

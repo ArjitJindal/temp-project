@@ -6,7 +6,7 @@ import data from './ongoing_search_results.json'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
 import {
   SANCTIONS_COLLECTION,
@@ -120,15 +120,18 @@ describe('SanctionsDataFetcher Integration Tests', () => {
       .slice(0, 10)
 
     await sanctionsCollection.insertMany(screeningEntities)
-
+    const db = await getMongoDbClientDb()
     const randomEntity1 = sample(screeningEntities)
     const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
-    const searchResult1 = await sanctionsFetcher.searchWithoutMatchingNames({
-      searchTerm: randomEntity1.name,
-      documentId: randomEntity1.documents?.map((doc) => doc.formattedId),
-      types: randomEntity1.sanctionSearchTypes,
-      allowDocumentMatches: true,
-    })
+    const searchResult1 = await sanctionsFetcher.searchWithoutMatchingNames(
+      {
+        searchTerm: randomEntity1.name,
+        documentId: randomEntity1.documents?.map((doc) => doc.formattedId),
+        types: randomEntity1.sanctionSearchTypes,
+        allowDocumentMatches: true,
+      },
+      db
+    )
     expect(searchResult1.data?.length).toBeGreaterThan(0)
     const resultDocumentIds = searchResult1.data?.map((result) =>
       result.documents?.map((doc) => doc.formattedId)
@@ -153,12 +156,15 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     ).toBe(true)
 
     const randomEntity2 = sample(screeningEntities)
-    const searchResult2 = await sanctionsFetcher.searchWithoutMatchingNames({
-      searchTerm: randomEntity2.name,
-      documentId: randomEntity2.documents?.map((doc) => doc.formattedId),
-      types: randomEntity2.sanctionSearchTypes,
-      allowDocumentMatches: true,
-    })
+    const searchResult2 = await sanctionsFetcher.searchWithoutMatchingNames(
+      {
+        searchTerm: randomEntity2.name,
+        documentId: randomEntity2.documents?.map((doc) => doc.formattedId),
+        types: randomEntity2.sanctionSearchTypes,
+        allowDocumentMatches: true,
+      },
+      db
+    )
     expect(searchResult2.data?.length).toBeGreaterThan(0)
     const resultDocumentIds2 = searchResult2.data?.map((result) =>
       result.documents?.map((doc) => doc.formattedId)
@@ -182,12 +188,15 @@ describe('SanctionsDataFetcher Integration Tests', () => {
       )
     ).toBe(true)
 
-    const searchResult3 = await sanctionsFetcher.searchWithoutMatchingNames({
-      searchTerm: 'Rajesh Kumar',
-      documentId: ['test-to-not-match'],
-      types: ['ADVERSE_MEDIA'],
-      allowDocumentMatches: true,
-    })
+    const searchResult3 = await sanctionsFetcher.searchWithoutMatchingNames(
+      {
+        searchTerm: 'Rajesh Kumar',
+        documentId: ['test-to-not-match'],
+        types: ['ADVERSE_MEDIA'],
+        allowDocumentMatches: true,
+      },
+      db
+    )
     expect(searchResult3.data?.length).toBe(0)
   })
 
