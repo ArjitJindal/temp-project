@@ -3,9 +3,10 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { Tenant } from '@/services/accounts/repository'
 import { hasFeature } from '@/core/utils/context'
+import { isDemoTenant } from '@/utils/tenant'
 
 async function migrateTenant(tenant: Tenant) {
-  if (hasFeature('DOW_JONES')) {
+  if (hasFeature('DOW_JONES') && !isDemoTenant(tenant.id)) {
     await sendBatchJobCommand({
       type: 'SANCTIONS_DATA_FETCH',
       tenantId: tenant.id,
