@@ -16,6 +16,8 @@ import { TransactionsAverageAmountExceededParameters } from '../transaction-rule
 import { TransactionsAverageNumberExceededParameters } from '../transaction-rules/transactions-average-number-exceeded'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../transaction-rules/total-transactions-volume-exceeds'
 import { LowValueTransactionsRuleParameters } from '../transaction-rules/low-value-transactions-base'
+import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
+import { UsingTooManyBanksToMakePaymentsRuleParameters } from '../transaction-rules/using-too-many-banks-to-make-payments'
 import { TransactionsOutflowInflowVolumeRuleParameters } from '../transaction-rules/transactions-outflow-inflow-volume'
 import {
   getFiltersConditions,
@@ -1618,6 +1620,118 @@ const V8_CONVERSION: Readonly<
             },
             valueInflow3DsDone,
           ],
+      })
+    }
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-14': (params: HighRiskIpAddressCountriesParameters) => {
+    const conditions: any[] = []
+
+    conditions.push({
+      or: ['origin', 'destination'].map((direction) => ({
+        in: [
+          {
+            var: `TRANSACTION:${direction}AmountDetails-country`,
+          },
+          params.highRiskCountries,
+        ],
+      })),
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-15': (params: UsingTooManyBanksToMakePaymentsRuleParameters) => {
+    const {
+      checkSender,
+      checkReceiver,
+      banksLimit,
+      timeWindow,
+      onlyCheckKnownUsers,
+    } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    if (checkSender !== 'none') {
+      logicAggregationVariables.push({
+        key: 'agg:transactionWithUniqueBanksNamesSender$1',
+        type: 'USER_TRANSACTIONS',
+        aggregationFunc: 'UNIQUE_VALUES',
+        userDirection:
+          checkSender !== 'sending' ? 'SENDER_OR_RECEIVER' : 'SENDER',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:originPaymentDetails-bankName',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+      })
+    }
+    if (checkReceiver !== 'none') {
+      logicAggregationVariables.push({
+        key: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+        type: 'USER_TRANSACTIONS',
+        aggregationFunc: 'UNIQUE_VALUES',
+        userDirection:
+          checkReceiver !== 'receiving' ? 'SENDER_OR_RECEIVER' : 'RECEIVER',
+        transactionDirection: 'RECEIVING',
+        aggregationFieldKey: 'TRANSACTION:destinationPaymentDetails-bankName',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+      })
+    }
+
+    const conditions: any[] = []
+
+    conditions.push({
+      '>=': [
+        {
+          '+': [
+            {
+              number_of_items: [
+                {
+                  var: 'agg:transactionWithUniqueBanksNamesSender$1',
+                },
+              ],
+            },
+            {
+              number_of_items: [
+                {
+                  var: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+                },
+              ],
+            },
+          ],
+        },
+        banksLimit + 1,
+      ],
+    })
+
+    if (onlyCheckKnownUsers) {
+      conditions.push({
+        and: [
+          {
+            '!!': {
+              var: 'TRANSACTION:originUserId',
+            },
+          },
+          {
+            '!!': {
+              var: 'TRANSACTION:destinationUserId',
+            },
+          },
+        ],
       })
     }
 
