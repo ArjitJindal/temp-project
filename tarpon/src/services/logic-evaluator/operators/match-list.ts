@@ -8,7 +8,7 @@ export const MATCH_LIST_OPERATOR: TextLogicOperator = {
   key: 'op:inlist',
   uiDefinition: {
     label: 'Any in (Lists)',
-    valueTypes: ['text'],
+    valueTypes: ['text', 'multiselect'],
     valueSources: ['value'],
   },
   run: async (value, rhs, _params, context) => {
@@ -27,7 +27,14 @@ export const MATCH_LIST_OPERATOR: TextLogicOperator = {
         if (!listHeader?.metadata?.status) {
           return false
         }
-        return listRepo.match(listHeader, value, 'EXACT')
+        if (isArray(value)) {
+          const matchResults = await Promise.all(
+            value.map((val) => listRepo.match(listHeader, val, 'EXACT'))
+          )
+          return matchResults.some(Boolean)
+        } else {
+          return listRepo.match(listHeader, value, 'EXACT')
+        }
       })
     )
     return result.some(Boolean)

@@ -28,9 +28,18 @@ export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
       if (!listHeader?.metadata?.status) {
         continue
       }
-      const result = await listRepo.match(listHeader, value, 'CONTAINS')
-      if (result) {
-        return true
+      if (isArray(value)) {
+        for (const val of value) {
+          const result = await listRepo.match(listHeader, val, 'CONTAINS')
+          if (result) {
+            return true
+          }
+        }
+      } else {
+        const result = await listRepo.match(listHeader, value, 'CONTAINS')
+        if (result) {
+          return true
+        }
       }
     }
     return false
