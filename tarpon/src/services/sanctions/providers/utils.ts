@@ -155,7 +155,7 @@ export function getNameAndAka(
     name: normalizedName,
     aka: uniq(compact([...aka, name]).filter((n) => n !== normalizedName)),
     normalizedAka: getUniqueStrings(uniq(compact([...aka]))).filter(
-      (n) => n !== normalizedName
+      (n) => n !== normalizedName && /[a-z]/.test(n) // Check if the string contains any alphabet
     ),
   }
 }
