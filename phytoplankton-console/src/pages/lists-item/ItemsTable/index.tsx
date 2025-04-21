@@ -3,7 +3,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Input } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
-import { ListHeader, ListType, Permission } from '@/apis';
+import { ListHeaderInternal, ListType, Permission } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
@@ -57,7 +57,7 @@ export type UserListTableRef = React.Ref<{
 interface Props {
   listId: string;
   listType: ListType;
-  listHeaderRes: AsyncResource<ListHeader>;
+  listHeaderRes: AsyncResource<ListHeaderInternal>;
   clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
   onImportCsv: () => void;
 }

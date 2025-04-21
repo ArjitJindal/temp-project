@@ -1,5 +1,5 @@
 import s from './index.module.less';
-import { ListHeader } from '@/apis';
+import { ListHeaderInternal } from '@/apis';
 import { useApi } from '@/api';
 import Id from '@/components/ui/Id';
 import { TableColumn } from '@/components/library/Table/types';
@@ -29,8 +29,8 @@ export default function UserLists(props: Props) {
     };
   });
 
-  const helper = new ColumnHelper<ListHeader>();
-  const columns: TableColumn<ListHeader>[] = helper.list([
+  const helper = new ColumnHelper<ListHeaderInternal>();
+  const columns: TableColumn<ListHeaderInternal>[] = helper.list([
     helper.simple<'listId'>({
       key: 'listId',
       title: 'ID',

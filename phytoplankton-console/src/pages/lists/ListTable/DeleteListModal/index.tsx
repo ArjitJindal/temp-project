@@ -5,14 +5,14 @@ import s from './index.module.less';
 import Spam2FillIcon from '@/components/ui/icons/Remix/system/spam-2-fill.react.svg';
 import Modal from '@/components/library/Modal';
 import COLORS from '@/components/ui/colors';
-import { ListHeader, ListType } from '@/apis';
+import { ListHeaderInternal, ListType } from '@/apis';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   listType: ListType;
-  list: ListHeader | null;
+  list: ListHeaderInternal | null;
   onCancel: () => void;
   onSuccess: () => void;
 }

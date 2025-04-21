@@ -614,7 +614,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+                  $ref: '#/components/schemas/ListHeaderInternal'
       operationId: get-lists
   /whitelist:
     get:
@@ -631,7 +631,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+                  $ref: '#/components/schemas/ListHeaderInternal'
       operationId: get-whitelist
     post:
       summary: White Lists - Post
@@ -651,7 +651,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+                $ref: '#/components/schemas/ListExistedInternal'
       operationId: post-white-list
   /blacklist:
     get:
@@ -668,7 +668,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+                  $ref: '#/components/schemas/ListHeaderInternal'
       operationId: get-blacklist
     post:
       summary: Black Lists - Post
@@ -688,7 +688,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+                $ref: '#/components/schemas/ListExistedInternal'
       operationId: post-blacklist
   /whitelist/{listId}:
     parameters:
@@ -726,7 +726,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+                $ref: '#/components/schemas/ListExistedInternal'
     get:
       summary: White Lists - Item header
       tags: []
@@ -740,7 +740,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+                $ref: '#/components/schemas/ListHeaderInternal'
         '404':
           description: Not found
   /blacklist/{listId}:
@@ -779,7 +779,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+                $ref: '#/components/schemas/ListExistedInternal'
     get:
       summary: Black Lists - Item header
       tags: []
@@ -793,7 +793,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+                $ref: '#/components/schemas/ListHeaderInternal'
         '404':
           description: Not found
   /whitelist/{listId}/import-csv:
@@ -14646,12 +14646,59 @@ components:
       type: object
       properties:
         subtype:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListSubtype
+          $ref: '#/components/schemas/ListSubtypeInternal'
         data:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
       required:
         - subtype
         - data
+    ListExistedInternal:
+      title: ListExistedInternal
+      description: List with ID and header
+      type: object
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+        - type: object
+          properties:
+            header:
+              $ref: '#/components/schemas/ListHeaderInternal'
+      required:
+        - listId
+        - header
+        - items
+    ListHeaderInternal:
+      title: ListHeaderInternal
+      type: object
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+        - type: object
+          properties:
+            subtype:
+              $ref: '#/components/schemas/ListSubtypeInternal'
+      required:
+        - listId
+        - listType
+        - subtype
+        - createdTimestamp
+    ListSubtypeInternal:
+      title: ListSubtypeInternal
+      type: string
+      enum:
+        - USER_ID
+        - CARD_FINGERPRINT_NUMBER
+        - IBAN_NUMBER
+        - BANK_ACCOUNT_NUMBER
+        - ACH_ACCOUNT_NUMBER
+        - SWIFT_ACCOUNT_NUMBER
+        - BIC
+        - BANK_SWIFT_CODE
+        - UPI_IDENTIFYING_NUMBER
+        - IP_ADDRESS
+        - DEVICE_IDENTIFIER
+        - STRING
+        - COUNTRY
+        - 314A_INDIVIDUAL
+        - 314A_BUSINESS
     SimulationRiskLevelsParameters:
       title: SimulationRiskLevelsParameters
       type: object

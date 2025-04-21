@@ -1,6 +1,7 @@
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
-import { ListSubtype, ListType, TenantSettings } from '@/apis';
+import { ListSubtypeInternal, ListType, TenantSettings } from '@/apis';
 import { neverReturn } from '@/utils/lang';
+import { LIST_SUBTYPE_INTERNALS } from '@/apis/models-custom/ListSubtypeInternal';
 
 export function parseListType(pathname): ListType {
   if (pathname.indexOf('blacklist') !== -1) {
@@ -14,28 +15,10 @@ export function stringifyListType(str: ListType): string {
   return str.toLowerCase();
 }
 
-const LIST_SUBTYPES: ListSubtype[] = [
-  'USER_ID',
-  'CARD_FINGERPRINT_NUMBER',
-  'IBAN_NUMBER',
-  'BANK_ACCOUNT_NUMBER',
-  'ACH_ACCOUNT_NUMBER',
-  'SWIFT_ACCOUNT_NUMBER',
-  'BIC',
-  'BANK_SWIFT_CODE',
-  'UPI_IDENTIFYING_NUMBER',
-  'IP_ADDRESS',
-  'DEVICE_IDENTIFIER',
-  'COUNTRY',
-  'STRING',
-  'INDIVIDUAL_314' as ListSubtype,
-  'BUSINESS_314' as ListSubtype,
-];
+export const BLACKLIST_SUBTYPES = LIST_SUBTYPE_INTERNALS;
+export const WHITELIST_SUBTYPES = LIST_SUBTYPE_INTERNALS;
 
-export const BLACKLIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
-export const WHITELIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
-
-export function getListSubtypeTitle(subtype: ListSubtype, tenantSettings: TenantSettings) {
+export function getListSubtypeTitle(subtype: ListSubtypeInternal, tenantSettings: TenantSettings) {
   switch (subtype) {
     case 'USER_ID':
       return `${firstLetterUpper(tenantSettings.userAlias)} ID`;
@@ -63,9 +46,9 @@ export function getListSubtypeTitle(subtype: ListSubtype, tenantSettings: Tenant
       return 'Custom';
     case 'COUNTRY':
       return 'Country';
-    case 'INDIVIDUAL_314' as ListSubtype:
+    case '314A_INDIVIDUAL':
       return 'Individual (314a)';
-    case 'BUSINESS_314' as ListSubtype:
+    case '314A_BUSINESS':
       return 'Business (314a)';
   }
   return neverReturn(subtype, humanizeAuto(subtype));

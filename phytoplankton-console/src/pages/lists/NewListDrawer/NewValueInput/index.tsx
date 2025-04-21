@@ -5,7 +5,7 @@ import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
-import { AllUsersTableItem, ListSubtype, TransactionsUniquesField } from '@/apis';
+import { AllUsersTableItem, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
@@ -21,7 +21,7 @@ import Select, { Option } from '@/components/library/Select';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
-  listSubtype: ListSubtype;
+  listSubtype: ListSubtypeInternal;
   excludeCountries?: Set<string>;
 }
 
@@ -41,11 +41,7 @@ export default function NewValueInput(props: Props) {
     return <Select<string> className={s.select} mode={'TAGS'} options={[]} {...rest} />;
   }
 
-  if (
-    is314aEnabled &&
-    (listSubtype === ('INDIVIDUAL_314' as ListSubtype) ||
-      listSubtype === ('BUSINESS_314' as ListSubtype))
-  ) {
+  if (is314aEnabled && (listSubtype === '314A_INDIVIDUAL' || listSubtype === '314A_BUSINESS')) {
     return <SearchInput listSubtype={listSubtype} {...rest} />;
   }
 
@@ -93,7 +89,7 @@ const SEPARATOR = ',';
 
 function SearchInput(
   props: Omit<Props, 'listSubtype'> & {
-    listSubtype: Exclude<ListSubtype, 'USER_ID'>;
+    listSubtype: Exclude<ListSubtypeInternal, 'USER_ID'>;
   },
 ) {
   const { listSubtype, value, onChange } = props;
@@ -123,9 +119,9 @@ function SearchInput(
         return 'IP_ADDRESS';
       case 'DEVICE_IDENTIFIER':
         return 'DEVICE_IDENTIFIER';
-      case 'INDIVIDUAL_314' as ListSubtype:
+      case '314A_INDIVIDUAL':
         return '314A_INDIVIDUAL';
-      case 'BUSINESS_314' as ListSubtype:
+      case '314A_BUSINESS':
         return '314A_BUSINESS';
       case 'STRING':
       case 'COUNTRY':

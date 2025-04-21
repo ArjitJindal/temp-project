@@ -8,8 +8,8 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import createHttpError from 'http-errors'
+import { compact } from 'lodash'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
 import { ListData } from '@/@types/openapi-public/ListData'
 import {
@@ -21,7 +21,6 @@ import {
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { neverReturn } from '@/utils/lang'
 import { ListType } from '@/@types/openapi-public/ListType'
-import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { traceable } from '@/core/xray'
 import {
   CursorPaginationParams,
@@ -29,7 +28,10 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '@/utils/pagination'
 import { ListMetadataTtl } from '@/@types/openapi-public/ListMetadataTtl'
-
+import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
+import { ListHeaderInternal } from '@/@types/openapi-internal/ListHeaderInternal'
+import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
+import { hasFeature } from '@/core/utils/context'
 @traceable
 export class ListRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -42,10 +44,10 @@ export class ListRepository {
 
   public async createList(
     listType: ListType,
-    subtype: ListSubtype,
+    subtype: ListSubtypeInternal,
     newList: ListData = {},
     mannualListId?: string
-  ): Promise<ListExisted> {
+  ): Promise<ListExistedInternal> {
     const listId = mannualListId ?? uuidv4()
     const { items = [], metadata } = newList
     const header = {
@@ -102,7 +104,7 @@ export class ListRepository {
   public async getListHeaders(
     listType: ListType | null = null,
     userIds?: string[],
-    subtypes?: ListSubtype[]
+    subtypes?: ListSubtypeInternal[]
   ): Promise<ListHeader[]> {
     const primaryKey = DynamoDbKeys.LIST_HEADER(this.tenantId, '')
     const filterConditions: string[] = []
@@ -178,8 +180,21 @@ export class ListRepository {
       })
     )
 
-    return filteredHeaders.filter(
-      (header): header is ListHeader => header !== null
+    return this.filterListHeaders(filteredHeaders)
+  }
+
+  private filterListHeaders(listHeaders: ListHeader[]): ListHeader[] {
+    const LISTS_314A: ListSubtypeInternal[] = [
+      '314A_INDIVIDUAL',
+      '314A_BUSINESS',
+    ]
+    if (hasFeature('314A')) {
+      return listHeaders
+    }
+    return compact(
+      listHeaders.filter((header) => {
+        return !LISTS_314A.includes(header.subtype)
+      })
     )
   }
 
@@ -204,11 +219,11 @@ export class ListRepository {
     if (header.metadata?.ttl) {
       header.size = await this.countListValues(header.listId, header.version)
     }
-
-    return header
+    const filteredHeader = this.filterListHeaders([header])
+    return filteredHeader?.length > 0 ? filteredHeader[0] : null
   }
 
-  public async updateListHeader(listHeader: ListHeader): Promise<void> {
+  public async updateListHeader(listHeader: ListHeaderInternal): Promise<void> {
     await this.dynamoDb.send(
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -489,7 +504,7 @@ export class ListRepository {
   }
 
   public async match(
-    listHeader: ListHeader,
+    listHeader: ListHeaderInternal,
     value: string,
     method: 'EXACT' | 'PREFIX' | 'CONTAINS'
   ): Promise<boolean> {

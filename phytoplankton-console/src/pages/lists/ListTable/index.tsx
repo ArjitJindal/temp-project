@@ -1,7 +1,7 @@
 import React, { useImperativeHandle, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
-import { ListHeader, ListMetadata, ListType } from '@/apis';
+import { ListHeaderInternal, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import DeleteListModal from '@/pages/lists/ListTable/DeleteListModal';
@@ -34,7 +34,7 @@ function ListTable(props: Props, ref: ListTableRef) {
   const { listType, extraTools } = props;
   const settings = useSettings();
   const api = useApi();
-  const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
+  const [listToDelete, setListToDelete] = useState<ListHeaderInternal | null>(null);
   const queryClient = useQueryClient();
   const queryResults = useQuery(LISTS_OF_TYPE(listType), () => {
     if (listType === 'WHITELIST') {
@@ -54,7 +54,7 @@ function ListTable(props: Props, ref: ListTableRef) {
     unknown,
     unknown,
     { listId: string; metadata: ListMetadata },
-    { previousList: ListHeader[] | undefined }
+    { previousList: ListHeaderInternal[] | undefined }
   >(
     async (event) => {
       const { listId, metadata } = event;
@@ -76,8 +76,8 @@ function ListTable(props: Props, ref: ListTableRef) {
       onMutate: async (event) => {
         const { listId, metadata } = event;
         const listsOfTypeKey = LISTS_OF_TYPE(listType);
-        const previousList = queryClient.getQueryData<ListHeader[]>(listsOfTypeKey);
-        queryClient.setQueryData<ListHeader[]>(listsOfTypeKey, (prevState) =>
+        const previousList = queryClient.getQueryData<ListHeaderInternal[]>(listsOfTypeKey);
+        queryClient.setQueryData<ListHeaderInternal[]>(listsOfTypeKey, (prevState) =>
           prevState?.map((listHeader) =>
             listHeader.listId === listId ? { ...listHeader, metadata } : listHeader,
           ),
@@ -91,8 +91,8 @@ function ListTable(props: Props, ref: ListTableRef) {
     },
   );
 
-  const helper = new ColumnHelper<ListHeader>();
-  const columns: TableColumn<ListHeader>[] = helper.list([
+  const helper = new ColumnHelper<ListHeaderInternal>();
+  const columns: TableColumn<ListHeaderInternal>[] = helper.list([
     helper.simple<'listId'>({
       key: 'listId',
       title: 'List ID',

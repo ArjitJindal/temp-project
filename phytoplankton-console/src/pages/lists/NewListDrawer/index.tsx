@@ -6,7 +6,7 @@ import s from './index.module.less';
 import NewValueInput from './NewValueInput';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
-import { ListSubtype, ListType } from '@/apis';
+import { ListSubtypeInternal, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
@@ -24,7 +24,7 @@ import NumberInput from '@/components/library/NumberInput';
 import Alert from '@/components/library/Alert';
 
 interface FormValues {
-  subtype: ListSubtype | null;
+  subtype: ListSubtypeInternal | null;
   name: string;
   description: string;
   status: boolean;
@@ -161,8 +161,7 @@ export default function NewListDrawer(props: Props) {
                   .filter((subtype) => {
                     if (
                       !is314aEnabled &&
-                      (subtype === ('INDIVIDUAL_314' as ListSubtype) ||
-                        subtype === ('BUSINESS_314' as ListSubtype))
+                      (subtype === '314A_INDIVIDUAL' || subtype === '314A_BUSINESS')
                     ) {
                       return false;
                     }

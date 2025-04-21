@@ -13,7 +13,6 @@ import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
-import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
@@ -42,6 +41,8 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { ListUpdatedDetails } from '@/@types/openapi-public/ListUpdatedDetails'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
+import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -93,10 +94,10 @@ export class ListService {
   @auditLog('LIST', 'LIST_HEADER', 'CREATE')
   public async createList(
     listType: ListType,
-    subtype: ListSubtype,
+    subtype: ListSubtypeInternal,
     newList: ListData = {},
     mannualListId?: string
-  ): Promise<AuditLogReturnData<ListExisted>> {
+  ): Promise<AuditLogReturnData<ListExistedInternal>> {
     const list = await this.listRepository.createList(
       listType,
       subtype,
@@ -248,7 +249,7 @@ export class ListService {
   public async getListHeaders(
     listType: ListType | null = null,
     userIds?: string[],
-    subtypes?: ListSubtype[]
+    subtypes?: ListSubtypeInternal[]
   ): Promise<ListHeader[]> {
     const result = await this.listRepository.getListHeaders(
       listType,

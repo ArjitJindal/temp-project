@@ -1,7 +1,7 @@
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
-import { ListExisted as List } from '@/@types/openapi-internal/ListExisted'
+import { ListExistedInternal as List } from '@/@types/openapi-internal/ListExistedInternal'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { CursorPaginationResponse } from '@/utils/pagination'
