@@ -28,7 +28,7 @@ import { makeUrl } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
 import { Option } from '@/components/library/Select';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DERIVED_ENTITY_TYPE_VALUES = [
   'CONSUMER_USER',
@@ -164,6 +164,7 @@ export function useColumns(
 ): TableColumn<SanctionsWhitelistEntity>[] {
   const hasWritePermissions = useHasPermissions(['sanctions:search:write']);
   const settings = useSettings();
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   return useMemo(() => {
     const [_, setSelected] = selectedState;
     const helper = new ColumnHelper<SanctionsWhitelistEntity>();
@@ -179,6 +180,21 @@ export function useColumns(
                 return <span>{value}</span>;
               }
               return <Id to={makeUrl('/users/list/all/:userId', { userId: value })}>{value}</Id>;
+            },
+          },
+        }),
+      hasFeatureDowJones &&
+        helper.simple<'sanctionsEntity.id'>({
+          title: 'ID',
+          key: 'sanctionsEntity.id',
+          type: {
+            ...STRING,
+            render: (value, context) => {
+              return (
+                <>
+                  <Id onClick={() => setSelected(context.item)}>{value}</Id>
+                </>
+              );
             },
           },
         }),
@@ -259,5 +275,12 @@ export function useColumns(
     ].filter(notEmpty);
 
     return columns;
-  }, [singleUserMode, deleteMutation, hasWritePermissions, selectedState, settings.userAlias]);
+  }, [
+    singleUserMode,
+    deleteMutation,
+    hasWritePermissions,
+    selectedState,
+    settings.userAlias,
+    hasFeatureDowJones,
+  ]);
 }
