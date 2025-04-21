@@ -17,12 +17,6 @@ export const tenantAuth0Domain = () => {
     case 'transaction.console.regtank.com':
       auth0Domain = 'regtank-flagright.eu.auth0.com';
       break;
-    case 'sitapp.traxionright.com':
-      auth0Domain = 'sandbox-traxionright-flagright.eu.auth0.com';
-      break;
-    case 'app.traxionright.com':
-      auth0Domain = 'traxionright-flagright.eu.auth0.com';
-      break;
     default:
       break;
   }

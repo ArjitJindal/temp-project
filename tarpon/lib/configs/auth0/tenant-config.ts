@@ -5,11 +5,9 @@ import { Auth0ProdTenantConfig } from './tenant-config-prod'
 import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
-import { Auth0SandboxTraxionRightTenantConfig } from './tenant-config-sandbox-traxionright'
-import { Auth0ProdTraxionRightTenantConfig } from './tenant-config-prod-traxionright'
 
 const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
-  'asia-1': [Auth0ProdRegtankTenantConfig, Auth0ProdTraxionRightTenantConfig],
+  'asia-1': [Auth0ProdRegtankTenantConfig],
 }
 
 export function getAuth0TenantConfigs(
@@ -24,11 +22,7 @@ export function getAuth0TenantConfigs(
       return [Auth0DevTenantConfig]
     }
     case 'sandbox': {
-      return [
-        Auth0SandboxTenantConfig,
-        Auth0SandboxRegtankTenantConfig,
-        Auth0SandboxTraxionRightTenantConfig,
-      ]
+      return [Auth0SandboxTenantConfig, Auth0SandboxRegtankTenantConfig]
     }
     case 'prod': {
       let tenantConfigs = [Auth0ProdTenantConfig]

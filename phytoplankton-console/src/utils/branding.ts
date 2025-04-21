@@ -7,12 +7,9 @@ import FlagrightLightLogo from '@/branding/flagright-logo-light.svg';
 import FlagrightDarkLogo from '@/branding/flagright-logo-dark.svg';
 import RegtankLightLogo from '@/branding/regtank-logo-light.svg';
 import RegtankDarkLogo from '@/branding/regtank-logo-dark.svg';
-import TraxionRightLightLogo from '@/branding/traxionright-logo-light.png';
-import TraxionRightDarkLogo from '@/branding/traxion-logo-dark.svg';
 import FlagrightFavicon from '@/branding/flagright-favicon.png';
 import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
-import TraxionRightFavicon from '@/branding/traxion-favicon.svg';
 import { neverThrow } from '@/utils/lang';
 
 interface BrandingSettings {
@@ -65,28 +62,13 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
   systemAvatarUrl: RegtankFaviconSvg,
 };
 
-const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
-  supportEmail: 'support@traxionright.com',
-  logoLight: TraxionRightLightLogo,
-  logoDark: TraxionRightDarkLogo,
-  companyName: 'Traxion right',
-  notProvisionedWarning: `User does not have a provisioned Traxion right Account.`,
-  apiDocsLinks: {
-    webhooks: undefined,
-  },
-  faviconUrl: TraxionRightFavicon,
-  systemAvatarUrl: TraxionRightFavicon,
-};
-
 function getBrandingSettings(
   brandId: BrandId,
 ): Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> {
   if (brandId === 'REGTANK') {
     return REGTANK_BRANDING;
   }
-  if (brandId === 'TRAXIONRIGHT') {
-    return TRAXIONRIGHT_BRANDING;
-  }
+
   throw neverThrow(brandId);
 }
 

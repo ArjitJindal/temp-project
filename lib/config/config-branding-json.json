@@ -14,21 +14,5 @@
         "auth0ClientId": "nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc"
       }
     }
-  },
-  "TRAXIONRIGHT": {
-    "consoleSettings": {
-      "sandbox": {
-        "allowedDomains": ["*.traxionright.com"],
-        "host": "sitapp.traxionright.com",
-        "auth0Domain": "login.sitapp.traxionright.com",
-        "auth0ClientId": "wJuiiS6bbcGhSMnqC442RL8HKHfMUI4n"
-      },
-      "prod": {
-        "allowedDomains": ["*.traxionright.com"],
-        "host": "app.traxionright.com",
-        "auth0Domain": "login.app.traxionright.com",
-        "auth0ClientId": "6k9yUXtYFG9WTjsuEhe4LahCD8Q9W8x6"
-      }
-    }
   }
 }

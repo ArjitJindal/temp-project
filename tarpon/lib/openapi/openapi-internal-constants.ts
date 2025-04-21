@@ -21,9 +21,6 @@ function getWhitelabelOrigins(consoleSettings: BrandingConsoleEnvSettings): {
 // BRANDING_CONFIG
 export const WHITE_LABEL_ORIGINS = {
   regtank: getWhitelabelOrigins(BRANDING_CONFIG.REGTANK.consoleSettings),
-  traxionRight: getWhitelabelOrigins(
-    BRANDING_CONFIG.TRAXIONRIGHT.consoleSettings
-  ),
 }
 
 export const ALLOWED_ORIGINS = {
