@@ -4,7 +4,7 @@ import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import {
   CLICKHOUSE_DEFINITIONS,
@@ -15,7 +15,7 @@ import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-public-management-custom/KYCStatus'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const client = await getClickhouseClient(tenant.id)

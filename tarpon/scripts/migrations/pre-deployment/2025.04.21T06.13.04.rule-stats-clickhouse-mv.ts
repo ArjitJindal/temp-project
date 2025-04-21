@@ -1,37 +1,41 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
 import {
-  CLICKHOUSE_DEFINITIONS,
   ClickHouseTables,
+  CLICKHOUSE_DEFINITIONS,
 } from '@/utils/clickhouse/definition'
 import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
-
+import { Tenant } from '@/services/accounts/repository'
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
-  const tableName = CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
   const client = await getClickhouseClient(tenant.id)
+  const transactionTable = CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
   const transactionsClickHouseTable = ClickHouseTables.find(
-    (t) => t.table === CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
+    (t) => t.table === transactionTable
   )
   if (!transactionsClickHouseTable) {
-    throw new Error('Transactions table not found')
+    console.log(
+      `ClickHouse table definition not found for table: ${transactionTable}`
+    )
+    return
   }
   for (const view of transactionsClickHouseTable.materializedViews || []) {
     if (
-      view.table === 'transactions_monthly_stats' ||
-      view.table === 'transactions_daily_stats' ||
-      view.table === 'transactions_hourly_stats'
+      view.viewName ===
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.RULE_STATS_HOURLY
+        .viewName
     ) {
+      await client.query({ query: `DROP VIEW IF EXISTS ${view.viewName}` })
+      await client.query({ query: `DROP TABLE IF EXISTS ${view.table}` })
       const createViewQuery = createMaterializedTableQuery(view)
       await client.query({ query: createViewQuery })
-      const matQuery = await createMaterializedViewQuery(view, tableName)
+      const matQuery = await createMaterializedViewQuery(view, transactionTable)
       await client.query({ query: matQuery })
     }
   }

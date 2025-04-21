@@ -7,11 +7,11 @@ import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const client = await getClickhouseClient(tenant.id)

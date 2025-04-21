@@ -7,12 +7,12 @@ import {
   createMaterializedViewQuery,
   createMaterializedTableQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const client = await getClickhouseClient(tenant.id)
@@ -28,6 +28,8 @@ async function migrateTenant(tenant: Tenant) {
       CLICKHOUSE_DEFINITIONS.CASES.materializedViews
         .INVESTIGATION_TIMES_HOURLY_STATS.viewName
     ) {
+      await client.query({ query: `DROP VIEW IF EXISTS ${view.viewName}` })
+      await client.query({ query: `DROP TABLE IF EXISTS ${view.table}` })
       const createViewQuery = createMaterializedTableQuery(view)
       await client.query({ query: createViewQuery })
       const matQuery = await createMaterializedViewQuery(view, view.table)

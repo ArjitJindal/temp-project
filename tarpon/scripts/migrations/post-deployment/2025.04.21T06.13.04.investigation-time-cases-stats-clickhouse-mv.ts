@@ -7,12 +7,12 @@ import {
   createMaterializedViewQuery,
   createMaterializedTableQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const tableName = CLICKHOUSE_DEFINITIONS.CASES.tableName

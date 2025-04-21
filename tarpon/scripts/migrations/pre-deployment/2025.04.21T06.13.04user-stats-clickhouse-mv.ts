@@ -4,14 +4,14 @@ import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import {
   CLICKHOUSE_DEFINITIONS,
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const client = await getClickhouseClient(tenant.id)
@@ -29,6 +29,8 @@ async function migrateTenant(tenant: Tenant) {
       table.table === 'user_daily_stats' ||
       table.table === 'user_hourly_stats'
     ) {
+      await client.query({ query: `DROP VIEW IF EXISTS ${table.viewName}` })
+      await client.query({ query: `DROP TABLE IF EXISTS ${table.table}` })
       await client.query({
         query: createMaterializedTableQuery(table),
       })

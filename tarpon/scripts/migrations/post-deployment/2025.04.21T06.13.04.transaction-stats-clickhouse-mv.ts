@@ -9,7 +9,7 @@ import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
   getClickhouseClient,
-  isClickhouseEnabled,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RULE_ACTIONS } from '@/@types/openapi-internal-custom/RuleAction'
@@ -17,7 +17,7 @@ import { TRANSACTION_TYPES } from '@/@types/openapi-internal-custom/TransactionT
 import { buildQueryPart } from '@/utils/clickhouse/queries/transaction-stats-clickhouse'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!isClickhouseEnabled()) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
   const tableName = CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
