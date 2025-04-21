@@ -78,7 +78,7 @@ export default function Header<Item extends object, Params extends object = Comm
         hasFilters && s.filtersVisible,
       )}
     >
-      {(hasFilters || hasTools) && (
+      {(hasFilters || hasTools || leftTools) && (
         <div className={s.root}>
           {hasFilters ? (
             <Filters<Params>
@@ -93,7 +93,7 @@ export default function Header<Item extends object, Params extends object = Comm
               }
             />
           ) : (
-            (leftTools || hasTools) && <div className={s.left}>{leftTools}</div>
+            leftTools && <div className={s.left}>{leftTools}</div>
           )}
 
           {hasTools && (
