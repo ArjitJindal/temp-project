@@ -1180,14 +1180,14 @@ export class CdkTarponStack extends cdk.Stack {
 
       if (envIs('prod') && config.region) {
         const triggerTime: Record<FlagrightRegion, Record<string, string>> = {
-          'eu-1': { hour: '20', minute: '0' },
-          'eu-2': { hour: '20', minute: '15' },
-          'asia-2': { hour: '20', minute: '45' },
-          'au-1': { hour: '21', minute: '0' },
-          'us-1': { hour: '21', minute: '15' },
-          'me-1': { hour: '21', minute: '30' },
-          'asia-1': { hour: '23', minute: '00' },
-          'asia-3': { hour: '23', minute: '15' },
+          'eu-1': { hour: '22', minute: '15' }, // 10:15 PM UTC
+          'eu-2': { hour: '00', minute: '15' }, // 12:00 AM UTC
+          'asia-2': { hour: '18', minute: '45' }, // 06:45 PM UTC
+          'au-1': { hour: '14', minute: '15' }, // 10:15 PM UTC
+          'us-1': { hour: '07', minute: '15' }, // 07:15 AM UTC
+          'me-1': { hour: '20', minute: '15' }, // 8:15 PM UTC
+          'asia-1': { hour: '16', minute: '15' }, // 11:15 PM UTC
+          'asia-3': { hour: '16', minute: '30' }, // 11:30 PM UTC // Its same for asia-1 and asia-3 hence 15 minutes difference
         }
 
         triggerHour = triggerTime[config.region].hour
