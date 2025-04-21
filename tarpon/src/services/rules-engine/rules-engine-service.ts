@@ -678,7 +678,17 @@ export class RulesEngineService {
     )
     // Update transaction with the latest payload.
     const mergedHitRules = mergeRules(updatedTransaction.hitRules, hitRules)
-    const transactionStatus = getAggregatedRuleStatus(mergedHitRules)
+    /**
+     * We should only derive the status from the hit rules, not the merged hit rules because we should take info from new rule
+     * Use case:
+     *  - Create a rule which is triggered when the transaction is CREATED and it changes status to SUSPEND
+     *  - Transaction goes to payment approvals and transaction is approved and status is changed to ALLOW
+     *  - The customer recives a webhook and updates the transaction state to PROCESSING
+     *  In current logic we merge the hit rules and we will still get the status as SUSPEND
+     *  But ideally we should not update the status since no rule was hit in a trasnaction event
+     *  Hence we will derive from hit rules instead of merged hit rules
+     */
+    const transactionStatus = getAggregatedRuleStatus(hitRules)
     await this.transactionRepository.saveTransaction(updatedTransaction, {
       executedRules: mergeRules(
         updatedTransaction.executedRules,
