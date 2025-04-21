@@ -10,8 +10,5 @@ frontend:
 viper:
   - viper/**
 
-raptor:
-  - raptor/**
-
 pipeline:
   - bin/**
