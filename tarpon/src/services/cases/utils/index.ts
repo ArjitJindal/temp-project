@@ -144,7 +144,7 @@ export function getDerivedStatus(
 }
 
 export type ActionProcessingRecord = {
-  entity: Alert
+  entityId: string
   reason: ActionReason
   action: CaseStatus
   tenantId: string
@@ -172,7 +172,7 @@ export async function sendActionProcessionTasks(
   const sqsClient = getSQSClient()
   const messages = tasks.map((task) => ({
     MessageBody: JSON.stringify(task),
-    MessageDeduplicationId: generateChecksum(task.entity.alertId),
+    MessageDeduplicationId: generateChecksum(task.entityId),
   }))
   await bulkSendMessages(
     sqsClient,

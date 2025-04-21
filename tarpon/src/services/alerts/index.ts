@@ -13,6 +13,7 @@ import {
   cloneDeep,
   difference,
   uniqBy,
+  compact,
 } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -1451,16 +1452,21 @@ export class AlertsService extends CaseAlertsCommonService {
     }
     if (statusUpdateRequest.alertStatus === 'CLOSED') {
       await sendActionProcessionTasks(
-        alerts.map(
-          (val): ActionProcessingRecord => ({
-            entity: val,
-            reason: {
-              reasons: statusUpdateRequest.reason,
-              comment: statusUpdateRequest.comment ?? '',
-              timestamp: Date.now(),
-            },
-            action: 'CLOSED',
-            tenantId: this.tenantId,
+        compact(
+          alerts.map((val): ActionProcessingRecord | undefined => {
+            if (!val.alertId) {
+              return undefined
+            }
+            return {
+              entityId: val.alertId,
+              reason: {
+                reasons: statusUpdateRequest.reason,
+                comment: statusUpdateRequest.comment ?? '',
+                timestamp: Date.now(),
+              },
+              action: 'CLOSED',
+              tenantId: this.tenantId,
+            }
           })
         )
       )

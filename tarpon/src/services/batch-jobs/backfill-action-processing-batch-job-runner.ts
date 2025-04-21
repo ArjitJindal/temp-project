@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { chunk } from 'lodash'
+import { chunk, compact } from 'lodash'
 import { AlertsRepository } from '../alerts/repository'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { isV2RuleInstance } from '../rules-engine/utils'
@@ -49,18 +49,23 @@ export class BackFillActionProcessingBatchJobRunner extends BatchJobRunner {
           chunk(alerts, CHUNK_SIZE),
           async (chunkedAlerts) => {
             const tasks = chunkedAlerts.map(
-              (alert): ActionProcessingRecord => ({
-                entity: alert,
-                reason: {
-                  reasons: alert.lastStatusChange?.reason ?? [],
-                  comment: alert.lastStatusChange?.comment ?? '',
-                  timestamp: alert.lastStatusChange?.timestamp,
-                },
-                action: 'CLOSED',
-                tenantId,
-              })
+              (alert): ActionProcessingRecord | undefined => {
+                if (!alert.alertId) {
+                  return undefined
+                }
+                return {
+                  entityId: alert.alertId,
+                  reason: {
+                    reasons: alert.lastStatusChange?.reason ?? [],
+                    comment: alert.lastStatusChange?.comment ?? '',
+                    timestamp: alert.lastStatusChange?.timestamp,
+                  },
+                  action: 'CLOSED',
+                  tenantId,
+                }
+              }
             )
-            await sendActionProcessionTasks(tasks)
+            await sendActionProcessionTasks(compact(tasks))
           },
           { concurrency: CONCURRENCY }
         )
