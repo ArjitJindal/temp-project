@@ -9,7 +9,7 @@
   },
   "author": "",
   "dependencies": {
-    "@react-email/components": "0.0.33",
+    "@react-email/components": "0.0.34",
     "react-email": "3.0.7"
   },
   "engines": {
