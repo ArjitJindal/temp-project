@@ -443,7 +443,7 @@ function parseColumnDefinition(col: string): {
   colType: string
   expr: string
 } {
-  const [colName, ...rest] = col.split(' ')
+  const [colName, ...rest] = col.trim().split(' ')
   const expr = rest.join(' ').split('MATERIALIZED ')[1]?.trim()
   const colType = rest.join(' ').split(' MATERIALIZED ')[0].trim()
 
