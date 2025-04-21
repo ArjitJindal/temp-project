@@ -538,16 +538,16 @@ export function RuleConfigurationSimulation(props: Props) {
               }}
             />
           )}
-          {isShowingResults && allSimulationsDone && (
-            <Button onClick={handleReportDownload} type={'TETRIARY'}>
-              PDF report
-            </Button>
-          )}
         </div>
         <div className={s.footerButtons}>
           <Button type="TETRIARY" onClick={onCancel}>
             Cancel
           </Button>
+          {isShowingResults && allSimulationsDone && (
+            <Button onClick={handleReportDownload} type={'TETRIARY'}>
+              PDF report
+            </Button>
+          )}
           {isShowingResults ? (
             <Button
               onClick={() => {
