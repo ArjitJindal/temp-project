@@ -93,7 +93,9 @@ export default function Header<Item extends object, Params extends object = Comm
               }
             />
           ) : (
-            leftTools && <div className={s.left}>{leftTools}</div>
+            (leftTools || hasTools) && (
+              <div className={cn(s.left, !leftTools && s.empty)}>{leftTools}</div>
+            )
           )}
 
           {hasTools && (
