@@ -114,10 +114,12 @@ export async function seedDynamo(
     ) as UserWithRulesResult | BusinessWithRulesResult
 
     await userRepo.saveUser(dynamoUser, type)
-    await ruleStatsHandler(tenantId, user?.executedRules ?? [], {
-      dynamoDb,
-      mongoDb: await getMongoDbClient(),
-    })
+
+    await ruleStatsHandler(
+      tenantId,
+      { newExecutedRules: user?.executedRules ?? [], oldExecutedRules: [] },
+      { dynamoDb, mongoDb: await getMongoDbClient() }
+    )
 
     let transactionCount = 0,
       arsScoreSummation = 0
@@ -179,10 +181,11 @@ export async function seedDynamo(
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
     })
-    await ruleStatsHandler(tenantId, txn?.executedRules ?? [], {
-      dynamoDb,
-      mongoDb: await getMongoDbClient(),
-    })
+    await ruleStatsHandler(
+      tenantId,
+      { newExecutedRules: txn?.executedRules ?? [], oldExecutedRules: [] },
+      { dynamoDb, mongoDb: await getMongoDbClient() }
+    )
   }
 
   logger.info('Updating average ARS score for users...')

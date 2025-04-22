@@ -111,7 +111,13 @@ export abstract class ScreeningUserRuleBatchJobRunnerBase extends BatchJobRunner
 
             // We only update when there are no hit rules else we will update the user in consumer
             if (!result?.hitRules?.length) {
-              result?.executedRules
+              const newExecutedRules = result?.executedRules?.filter(
+                (e) =>
+                  !user.executedRules?.find(
+                    (er) => er.ruleInstanceId === e.ruleInstanceId
+                  )
+              )
+              newExecutedRules
                 ?.filter(
                   (executedRule) =>
                     ruleInstances.find(
@@ -120,10 +126,15 @@ export abstract class ScreeningUserRuleBatchJobRunnerBase extends BatchJobRunner
                     )?.userRuleRunCondition?.schedule
                 )
                 .forEach((executedRule) => {
+                  const isNewHit =
+                    executedRule.ruleHit &&
+                    !user.executedRules?.find(
+                      (er) => er.ruleInstanceId === executedRule.ruleInstanceId
+                    )?.ruleHit
                   updates[executedRule.ruleInstanceId] = {
                     hitCountDelta:
                       (updates[executedRule.ruleInstanceId]?.hitCountDelta ??
-                        0) + (executedRule.ruleHit ? 1 : 0),
+                        0) + (isNewHit ? 1 : 0),
                     runCountDelta:
                       (updates[executedRule.ruleInstanceId]?.runCountDelta ??
                         0) + 1,

@@ -1,7 +1,7 @@
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { groupBy } from 'lodash'
+import { compact, groupBy } from 'lodash'
 import {
   hasFeature,
   initializeTenantContext,
@@ -57,6 +57,7 @@ type TransactionHandler = (
 ) => Promise<void>
 type TransactionsHandler = (
   tenantId: string,
+  oldTransactions: TransactionWithRulesResult[],
   newTransactions: TransactionWithRulesResult[],
   dbClients: DbClients
 ) => Promise<void>
@@ -84,6 +85,7 @@ type UserHandler = (
 ) => Promise<void>
 type UsersHandler = (
   tenantId: string,
+  oldUsers: Array<UserWithRulesResult | BusinessWithRulesResult>,
   newUsers: Array<UserWithRulesResult | BusinessWithRulesResult>,
   dbClients: DbClients
 ) => Promise<void>
@@ -334,6 +336,9 @@ export class StreamConsumerBuilder {
         )
         await this.transactionsHandler(
           transactionUpdates[0].tenantId,
+          compact(
+            transactionUpdates.map((update) => update.OldImage) ?? []
+          ) as TransactionWithRulesResult[],
           transactions,
           dbClients
         )
@@ -348,7 +353,14 @@ export class StreamConsumerBuilder {
           (update) =>
             update.NewImage as UserWithRulesResult | BusinessWithRulesResult
         )
-        await this.usersHandler(userUpdates[0].tenantId, users, dbClients)
+        await this.usersHandler(
+          userUpdates[0].tenantId,
+          compact(
+            userUpdates.map((update) => update.OldImage) ?? []
+          ) as UserWithRulesResult[],
+          users,
+          dbClients
+        )
       }
     }
   }

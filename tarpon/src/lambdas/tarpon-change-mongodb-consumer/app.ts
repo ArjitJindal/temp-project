@@ -59,6 +59,12 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
+import { getAddedItems } from '@/utils/array'
+
+type RuleStats = {
+  oldExecutedRules: ExecutedRulesResult[]
+  newExecutedRules: ExecutedRulesResult[]
+}
 
 @traceable
 export class TarponChangeMongoDbConsumer {
@@ -106,17 +112,28 @@ export class TarponChangeMongoDbConsumer {
               dbClients
             )
         )
-        .setTransactionsHandler((tenantId, newTransactions, dbClients) =>
-          this.handleRuleStats(
-            tenantId,
-            newTransactions.flatMap((t) => t.executedRules),
-            dbClients
-          )
+        .setTransactionsHandler(
+          (tenantId, oldTransactions, newTransactions, dbClients) =>
+            this.handleRuleStats(
+              tenantId,
+              {
+                oldExecutedRules: oldTransactions.flatMap(
+                  (t) => t.executedRules
+                ),
+                newExecutedRules: newTransactions.flatMap(
+                  (t) => t.executedRules
+                ),
+              },
+              dbClients
+            )
         )
-        .setUsersHandler((tenantId, newUsers, dbClients) =>
+        .setUsersHandler((tenantId, oldUsers, newUsers, dbClients) =>
           this.handleRuleStats(
             tenantId,
-            newUsers.flatMap((u) => u.executedRules ?? []),
+            {
+              oldExecutedRules: oldUsers.flatMap((u) => u.executedRules ?? []),
+              newExecutedRules: newUsers.flatMap((u) => u.executedRules ?? []),
+            },
             dbClients
           )
         )
@@ -728,24 +745,37 @@ export class TarponChangeMongoDbConsumer {
 
   async handleRuleStats(
     tenantId: string,
-    executedRules: Array<ExecutedRulesResult>,
+    data: RuleStats,
     dbClients: DbClients
   ): Promise<void> {
     const subSegment = await addNewSubsegment(
       'StreamConsumer',
       'handleRuleStats'
     )
-    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-      dynamoDb: dbClients.dynamoDb,
-    })
+
+    const ruleInstanceRepository = new RuleInstanceRepository(
+      tenantId,
+      dbClients
+    )
+
+    const executedRulesInstanceIds = getAddedItems(
+      data.oldExecutedRules.map((r) => r.ruleInstanceId),
+      data.newExecutedRules.map((r) => r.ruleInstanceId)
+    )
+
+    const hitRulesInstanceIds = getAddedItems(
+      data.oldExecutedRules
+        .filter((r) => r.ruleHit)
+        .map((r) => r.ruleInstanceId),
+      data.newExecutedRules
+        .filter((r) => r.ruleHit)
+        .map((r) => r.ruleInstanceId)
+    )
+
     await ruleInstanceRepository.updateRuleInstancesStats([
-      {
-        executedRulesInstanceIds: executedRules.map((r) => r.ruleInstanceId),
-        hitRulesInstanceIds: executedRules
-          .filter((r) => r.ruleHit)
-          .map((r) => r.ruleInstanceId),
-      },
+      { executedRulesInstanceIds, hitRulesInstanceIds },
     ])
+
     subSegment?.close()
   }
 }
@@ -755,18 +785,14 @@ const consumer = new TarponChangeMongoDbConsumer()
 
 export const ruleStatsHandler = async (
   tenantId: string,
-  executedRules: Array<ExecutedRulesResult>,
+  data: RuleStats,
   dbClients: DbClients
 ): Promise<void> => {
   const subSegment = await addNewSubsegment(
     'StreamConsumer',
     'ruleStatsHandler'
   )
-  const result = await consumer.handleRuleStats(
-    tenantId,
-    executedRules,
-    dbClients
-  )
+  const result = await consumer.handleRuleStats(tenantId, data, dbClients)
   subSegment?.close()
   return result
 }

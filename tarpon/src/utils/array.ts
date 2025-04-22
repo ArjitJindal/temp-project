@@ -38,3 +38,29 @@ export function isSimpleValue(value: unknown): value is SimpleValue {
     typeof value === 'boolean'
   )
 }
+
+export function getAddedItems(oldArr: string[], newArr: string[]) {
+  const count = (arr: string[]) => {
+    const map = new Map()
+    for (const item of arr) {
+      map.set(item, (map.get(item) || 0) + 1)
+    }
+    return map
+  }
+
+  const oldCount = count(oldArr)
+  const newCount = count(newArr)
+
+  const added: string[] = []
+
+  for (const [item, newQty] of newCount.entries()) {
+    const oldQty = oldCount.get(item) || 0
+    if (newQty > oldQty) {
+      for (let i = 0; i < newQty - oldQty; i++) {
+        added.push(item)
+      }
+    }
+  }
+
+  return added
+}

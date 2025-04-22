@@ -486,18 +486,6 @@ export class RuleInstanceRepository {
     return result.Items?.map(toRuleInstance) || []
   }
 
-  public async incrementRuleInstanceStatsCount(
-    runRuleInstanceIds: string[],
-    hitRuleInstanceIds: string[]
-  ) {
-    await this.updateRuleInstancesStats([
-      {
-        executedRulesInstanceIds: runRuleInstanceIds,
-        hitRulesInstanceIds: hitRuleInstanceIds,
-      },
-    ])
-  }
-
   public async updateRuleInstancesStats(ruleStats: RuleStats[]) {
     const updates: {
       [key: string]: {
