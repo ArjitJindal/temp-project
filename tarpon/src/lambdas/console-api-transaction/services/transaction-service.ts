@@ -202,8 +202,7 @@ export class TransactionService {
   public async getAlertsTransaction(
     params: DefaultApiGetAlertTransactionListRequest
   ) {
-    let filterPaymentDetailName: string | undefined
-    if (params.filterSanctionsHitId) {
+    if (!params.filterPaymentDetailName && params.filterSanctionsHitId) {
       const sanctionsHitsRepository = new SanctionsHitsRepository(
         this.tenantId,
         this.mongoDb
@@ -211,13 +210,12 @@ export class TransactionService {
       const hit = await sanctionsHitsRepository.searchHits({
         filterHitIds: [params.filterSanctionsHitId],
       })
-      filterPaymentDetailName = hit?.items?.[0]?.hitContext?.searchTerm
+      params.filterPaymentDetailName = hit?.items?.[0]?.hitContext?.searchTerm
     }
 
     return this.getTransactionsList(
       {
         ...params,
-        filterPaymentDetailName,
       },
       {
         includeUsers: true,

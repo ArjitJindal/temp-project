@@ -238,37 +238,29 @@ export class MongoDbTransactionRepository
                   { [`${prefix}.method`]: 'CARD' },
                   {
                     $expr: {
-                      $eq: [
-                        params.filterPaymentDetailName,
-                        {
-                          $trim: {
-                            input: {
-                              $concat: [
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.firstName`,
-                                    '',
-                                  ],
-                                },
-                                ' ',
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.middleName`,
-                                    '',
-                                  ],
-                                },
-                                ' ',
-                                {
-                                  $ifNull: [
-                                    `$${prefix}.nameOnCard.lastName`,
-                                    '',
-                                  ],
-                                },
-                              ],
-                            },
+                      $reduce: {
+                        input: {
+                          $filter: {
+                            input: [
+                              `$${prefix}.nameOnCard.firstName`,
+
+                              `$${prefix}.nameOnCard.middleName`,
+
+                              `$${prefix}.nameOnCard.lastName`,
+                            ],
+                            as: 'part',
+                            cond: { $ne: ['$$part', null] },
                           },
                         },
-                      ],
+                        initialValue: '',
+                        in: {
+                          $cond: [
+                            { $eq: ['$$value', ''] },
+                            '$$this',
+                            { $concat: ['$$value', ' ', '$$this'] },
+                          ],
+                        },
+                      },
                     },
                   },
                 ],

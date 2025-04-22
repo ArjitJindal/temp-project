@@ -94,6 +94,7 @@ export default function TransactionsTab(props: Props) {
         filterDestinationCountries: params['destinationAmountDetails.country'],
         filterOriginCountries: params['originAmountDetails.country'],
         filterSanctionsHitId: filterSanctionsHitId,
+        filterPaymentDetailName: params.filterPaymentDetailName,
       });
     },
   );
@@ -146,6 +147,12 @@ export default function TransactionsTab(props: Props) {
                 }}
               />
             ),
+          },
+          {
+            title: 'Account name',
+            key: 'filterPaymentDetailName',
+            renderer: { kind: 'string' },
+            showFilterByDefault: false,
           },
         ]}
         canSelectRow={(row) => {

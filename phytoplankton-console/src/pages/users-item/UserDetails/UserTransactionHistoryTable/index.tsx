@@ -365,6 +365,12 @@ export function Content(props: { userId: string }) {
       icon: <GavelIcon />,
       showFilterByDefault: true,
     },
+    {
+      title: 'Account name',
+      key: 'filterPaymentDetailName',
+      renderer: { kind: 'string' },
+      showFilterByDefault: false,
+    },
   ];
 
   return (

@@ -4774,6 +4774,10 @@ paths:
           type: string
         in: query
         name: filterSanctionsHitId
+      - schema:
+          type: string
+        in: query
+        name: filterPaymentDetailName
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

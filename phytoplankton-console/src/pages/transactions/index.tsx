@@ -179,7 +179,7 @@ const TableList = () => {
               ),
             },
             {
-              title: 'Account Name',
+              title: 'Account name',
               key: 'filterPaymentDetailName',
               renderer: { kind: 'string' },
               showFilterByDefault: false,
