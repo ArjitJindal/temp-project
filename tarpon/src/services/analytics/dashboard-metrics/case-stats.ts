@@ -26,6 +26,7 @@ import {
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { DashboardStatsAlertPriorityDistributionStatsAlertPriorityData } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStatsAlertPriorityData'
+import { tenantTimezone } from '@/core/utils/context'
 
 type ReturnType =
   Array<DashboardStatsAlertPriorityDistributionStatsAlertPriorityData>
@@ -598,6 +599,7 @@ export class CaseStatsDashboardMetric {
     entity: 'CASE' | 'ALERT' = 'CASE',
     ruleInstanceIds?: string[]
   ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
+    const timezone = await tenantTimezone(tenantId)
     const clickhouseClient = await getClickhouseClient(tenantId)
     let timeFormat: string
     let timeLabels: string[]
@@ -639,7 +641,7 @@ export class CaseStatsDashboardMetric {
 
     const query = `
       SELECT
-        formatDateTime(fromUnixTimestamp64Milli(${timestampField}), '${timeFormat}') as time_label,
+        formatDateTime(fromUnixTimestamp64Milli(${timestampField}), '${timeFormat}', '${timezone}') as time_label,
         ${statusField} as status,
         count(distinct(${idField})) as count
       FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
