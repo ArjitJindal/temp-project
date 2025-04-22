@@ -1,6 +1,6 @@
-import { ParameterValues } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import { RiskParameterLevelKeyValue } from '@/apis';
 
-export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
+export const DEFAULT_COUNTRY_RISK_VALUES: RiskParameterLevelKeyValue[] = [
   {
     parameterValue: {
       content: {
@@ -341,7 +341,7 @@ export const DEFAULT_COUNTRY_RISK_VALUES: ParameterValues = [
   },
 ];
 
-export const DEFAULT_CPI_COUNTRY_RISK_VALUES: ParameterValues = [
+export const DEFAULT_CPI_COUNTRY_RISK_VALUES: RiskParameterLevelKeyValue[] = [
   {
     parameterValue: {
       content: {

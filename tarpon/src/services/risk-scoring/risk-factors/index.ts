@@ -452,6 +452,16 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
     logicGenerator: foreignDestinationBusinessCountryV8Logic,
     type: 'TRANSACTION',
   },
+  {
+    key: 'consumerCreatedTimestamp',
+    logicGenerator: consumerUserAgePlatformV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'businessCreatedTimestamp',
+    logicGenerator: businessUserAgePlatformV8Logic,
+    type: 'TRANSACTION',
+  },
 ]
 
 // Update the map type to use the composite key

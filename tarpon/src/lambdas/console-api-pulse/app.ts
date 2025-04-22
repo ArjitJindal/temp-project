@@ -9,8 +9,6 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
-import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { hasPermission } from '@/utils/auth0-utils'
 
 export const riskClassificationHandler = lambdaApi({
@@ -56,34 +54,6 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     const mongoDb = await getMongoDbClient()
     const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
     const handlers = new Handlers()
-
-    handlers.registerGetPulseRiskParameter(
-      async (ctx, request) =>
-        await riskService.getRiskParameter(
-          request.parameter as RiskFactorParameter,
-          request.entityType as RiskEntityType
-        )
-    )
-
-    handlers.registerPostPulseRiskParameter(async (ctx, request) => {
-      const response = await riskService.createOrUpdateRiskParameter(
-        request.PostPulseRiskParameters.parameterAttributeRiskValues
-      )
-      return response.result
-    })
-
-    handlers.registerPostPulseRiskParameters(async (ctx, request) => {
-      await Promise.all(
-        request.PostPulseRiskParametersBulk.parameterAttributeRiskValues.map(
-          async (riskParameter) =>
-            await riskService.createOrUpdateRiskParameter(riskParameter)
-        )
-      )
-    })
-
-    handlers.registerGetPulseRiskParameters(async (_ctx, _request) => {
-      return await riskService.getAllRiskParameters()
-    })
 
     handlers.registerGetAllRiskFactors(async (_ctx, request) => {
       const includeV2 = request.includeV2

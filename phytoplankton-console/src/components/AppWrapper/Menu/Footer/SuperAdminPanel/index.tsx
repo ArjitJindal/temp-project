@@ -107,10 +107,6 @@ export const featureDescriptions: Record<
   },
   MACHINE_LEARNING: { title: 'Machine learning', description: 'Enables machine learning features' },
   ALERT_SLA: { title: 'Alerts SLA', description: 'Enables Alert SLA' },
-  RISK_SCORING_V8: {
-    title: 'Risk scoring V8',
-    description: 'Enables risk scoring V8',
-  },
   DOW_JONES: {
     title: 'Dow Jones',
     description: 'Enables using Dow Jones for sanctions',
@@ -137,11 +133,6 @@ export const featureDescriptions: Record<
     description: 'Enables Rules engine V8 sync rebuild',
     tag: FeatureTag.ENG,
   },
-  RISK_FACTORS_UI_MERGE: {
-    title: 'Risk factors merge',
-    description: 'Enables risk factors merge',
-    tag: FeatureTag.ENG,
-  },
   PNB: {
     title: 'PNB',
     description: 'Enables PNB specific features',
@@ -149,11 +140,6 @@ export const featureDescriptions: Record<
   MULTI_LEVEL_ESCALATION: {
     title: 'Multi Level Escalation',
     description: 'Enables multi level escalation',
-  },
-  RISK_SCORING_V8_FOR_V2: {
-    title: 'Risk Scoring V8 for V2',
-    description:
-      'Enables both V2 and V8 engines together (requires: Risk scoring & Risk scoring V8)',
   },
   STRICT_FILE_SECURITY: {
     title: 'Strict file security',
@@ -180,7 +166,6 @@ export const featureDescriptions: Record<
     description: 'Enables alerts Dynamo POC (Experimental)',
     tag: FeatureTag.ENG,
   },
-
   '314A': {
     title: '314A',
     description: 'Enables 314A',

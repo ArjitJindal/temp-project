@@ -1,4 +1,3 @@
-import { RiskScoringService } from '../../..'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { getRiskFactorLogicByKeyAndType } from '../..'
@@ -17,7 +16,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/all'
 dynamoDbSetupHook()
 describe('Country of Nationality Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result', async () => {
+  test('Basic case', async () => {
     const riskFactor = {
       ...TEST_BUSINESS_USER_RISK_PARAMETER,
       parameter: 'shareHolders' as RiskFactorParameter,
@@ -72,10 +71,6 @@ describe('Country of Nationality Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -85,11 +80,6 @@ describe('Country of Nationality Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -97,7 +87,7 @@ describe('Country of Nationality Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handel undefined shareholders country of nationality', async () => {
     const riskFactor = {
@@ -154,10 +144,6 @@ describe('Country of Nationality Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -167,11 +153,6 @@ describe('Country of Nationality Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -179,7 +160,7 @@ describe('Country of Nationality Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handel empty shareholders country of nationality', async () => {
     const riskFactor = {
@@ -228,10 +209,6 @@ describe('Country of Nationality Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -241,11 +218,6 @@ describe('Country of Nationality Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -253,6 +225,6 @@ describe('Country of Nationality Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

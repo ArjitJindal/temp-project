@@ -37,7 +37,6 @@ import {
 
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserService } from '@/services/users'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -57,7 +56,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RiskService } from '@/services/risk'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
-import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
@@ -726,6 +725,8 @@ describe('Public API - Create a Consumer User Event', () => {
     const mongoUser = await userRepository.getUserById('foo')
     expect(mongoUser).toEqual({
       ...internalConsumerUserWithComments,
+      drsScore: expect.any(Object),
+      krsScore: expect.any(Object),
       riskLevel: 'VERY_HIGH',
       updatedAt: expect.any(Number),
       tags: [
@@ -1298,25 +1299,22 @@ describe('Risk Scoring Tests', () => {
       dynamoDb,
       mongoDb,
     })
-    await riskRepository.createOrUpdateParameterRiskItem(
-      TEST_VARIABLE_RISK_ITEM
-    )
-    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+    const riskService = new RiskService(TEST_TENANT_ID, {
       dynamoDb,
-      mongoDb: await getMongoDbClient(),
+      mongoDb,
     })
-    await riskScoringService.updateInitialRiskScores(testUser1)
-    const riskScore = await riskRepository.getParameterRiskItem(
-      'originAmountDetails.country' as RiskFactorParameter,
-      'TRANSACTION'
+
+    await riskService.createOrUpdateRiskFactor(TEST_VARIABLE_RISK_ITEM)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const riskScoringService = new RiskScoringV8Service(
+      TEST_TENANT_ID,
+      logicEvaluator,
+      {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      }
     )
-
-    expect(riskScore).toEqual(TEST_VARIABLE_RISK_ITEM)
-    const allRiskScores = await riskRepository.getParameterRiskItems()
-
-    expect(allRiskScores).toEqual([
-      expect.objectContaining(TEST_VARIABLE_RISK_ITEM),
-    ])
+    await riskScoringService.handleUserUpdate({ user: testUser1 })
 
     const testTransaction1 = getTestTransaction({
       originUserId: testUser1.userId,
@@ -1347,13 +1345,15 @@ describe('Risk Scoring Tests', () => {
   })
   it("shouldn't update the risk score on isUpdatable is false", async () => {
     const mongoDb = await getMongoDbClient()
+    const riskService = new RiskService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
     const riskRepository = new RiskRepository(TEST_TENANT_ID, {
       dynamoDb,
       mongoDb,
     })
-    await riskRepository.createOrUpdateParameterRiskItem(
-      TEST_VARIABLE_RISK_ITEM
-    )
+    await riskService.createOrUpdateRiskFactor(TEST_VARIABLE_RISK_ITEM)
     const testTransaction1 = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,
@@ -1398,7 +1398,7 @@ describe('Public API - Verify Transction and Transaction Event with V2 Risk scor
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
     const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
-    await riskService.createOrUpdateRiskParameter(
+    await riskService.createOrUpdateRiskFactor(
       TEST_CONSUMER_USER_RISK_PARAMETER
     )
     await createConsumerUser(tenantId, getTestUser({ userId: userId1 }))

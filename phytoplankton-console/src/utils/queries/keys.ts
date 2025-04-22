@@ -431,11 +431,7 @@ export const USER_TRS_RISK_SCORES = (userId: string): QueryKey => [
   'trs-score',
 ];
 
-export const RISK_FACTORS_V8 = (type?: string, includeV2?: boolean): QueryKey => [
-  'custom-risk-factors',
-  type,
-  includeV2,
-];
+export const RISK_FACTORS_V8 = (type?: string): QueryKey => ['custom-risk-factors', type];
 export const CUSTOM_RISK_FACTORS_ITEM = (type: string, id?: string): QueryKey => [
   'custom-risk-factors',
   type,

@@ -23,7 +23,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 dynamoDbSetupHook()
-withFeatureHook(['RISK_SCORING_V8'])
+withFeatureHook(['RISK_SCORING'])
 describe('V8 Risk scoring ', () => {
   describe('handle Transaction only ARS', () => {
     let riskScoringService: RiskScoringV8Service
@@ -393,9 +393,8 @@ describe('V8 Risk scoring ', () => {
         })
         const dynamoDb = getDynamoDbClient()
         const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-        const user1AverageArsScore1 = await riskRepository.getAverageArsScore(
-          'USER1'
-        )
+        const user1AverageArsScore1 =
+          await riskRepository.getAverageArsScoreDynamo('USER1')
         expect(user1AverageArsScore1).toEqual({
           userId: 'USER1',
           value: 67.5,
@@ -417,9 +416,8 @@ describe('V8 Risk scoring ', () => {
           trsScore: 75,
           trsRiskLevel: 'HIGH',
         })
-        const user1AverageArsScore2 = await riskRepository.getAverageArsScore(
-          'USER1'
-        )
+        const user1AverageArsScore2 =
+          await riskRepository.getAverageArsScoreDynamo('USER1')
         expect(user1AverageArsScore2).toEqual({
           userId: 'USER1',
           value: 71.25,
@@ -448,9 +446,8 @@ describe('V8 Risk scoring ', () => {
         })
         const dynamoDb = getDynamoDbClient()
         const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-        const user4AverageArsScore1 = await riskRepository.getAverageArsScore(
-          'USER4'
-        )
+        const user4AverageArsScore1 =
+          await riskRepository.getAverageArsScoreDynamo('USER4')
         expect(user4AverageArsScore1).toEqual({
           userId: 'USER4',
           value: 67.5,
@@ -473,9 +470,8 @@ describe('V8 Risk scoring ', () => {
           trsScore: 75,
           trsRiskLevel: 'HIGH',
         })
-        const user4AverageArsScore2 = await riskRepository.getAverageArsScore(
-          'USER4'
-        )
+        const user4AverageArsScore2 =
+          await riskRepository.getAverageArsScoreDynamo('USER4')
         expect(user4AverageArsScore2).toEqual({
           userId: 'USER4',
           value: 71.25,
@@ -510,9 +506,8 @@ describe('V8 Risk scoring ', () => {
           trsScore: 75,
           trsRiskLevel: 'HIGH',
         })
-        const user4AverageArsScore3 = await riskRepository.getAverageArsScore(
-          'USER4'
-        )
+        const user4AverageArsScore3 =
+          await riskRepository.getAverageArsScoreDynamo('USER4')
         expect(user4AverageArsScore3).toEqual({
           userId: 'USER4',
           value: 75,
@@ -542,18 +537,16 @@ describe('V8 Risk scoring ', () => {
         })
         const dynamoDb = getDynamoDbClient()
         const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-        const user2AverageArsScore1 = await riskRepository.getAverageArsScore(
-          'USER2'
-        )
+        const user2AverageArsScore1 =
+          await riskRepository.getAverageArsScoreDynamo('USER2')
         expect(user2AverageArsScore1).toEqual({
           userId: 'USER2',
           value: 67.5,
           transactionCount: 1,
           createdAt: expect.any(Number),
         })
-        const user3AverageArsScore1 = await riskRepository.getAverageArsScore(
-          'USER3'
-        )
+        const user3AverageArsScore1 =
+          await riskRepository.getAverageArsScoreDynamo('USER3')
         expect(user3AverageArsScore1).toEqual({
           userId: 'USER3',
           value: 67.5,
@@ -579,18 +572,16 @@ describe('V8 Risk scoring ', () => {
           trsScore: 75,
           trsRiskLevel: 'HIGH',
         })
-        const user2AverageArsScore2 = await riskRepository.getAverageArsScore(
-          'USER2'
-        )
+        const user2AverageArsScore2 =
+          await riskRepository.getAverageArsScoreDynamo('USER2')
         expect(user2AverageArsScore2).toEqual({
           userId: 'USER2',
           value: 71.25,
           transactionCount: 2,
           createdAt: expect.any(Number),
         })
-        const user3AverageArsScore2 = await riskRepository.getAverageArsScore(
-          'USER3'
-        )
+        const user3AverageArsScore2 =
+          await riskRepository.getAverageArsScoreDynamo('USER3')
         expect(user3AverageArsScore2).toEqual({
           userId: 'USER3',
           value: 71.25,

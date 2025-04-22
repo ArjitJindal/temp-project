@@ -25,18 +25,6 @@ export type SimulationRiskLevelsBatchJob = {
   awsCredentials?: Credentials
 }
 
-/* Simulation (Risk Scoring) */
-export type SimulationRiskFactorsBatchJob = {
-  type: 'SIMULATION_RISK_FACTORS'
-  tenantId: string
-  parameters: {
-    taskId: string
-    jobId: string
-    sampling: SimulationRiskFactorsSampling
-  }
-  awsCredentials?: Credentials
-}
-
 /* Simulation (Risk Scoring V8) */
 export type SimulationRiskFactorsV8BatchJob = {
   type: 'SIMULATION_RISK_FACTORS_V8'
@@ -78,16 +66,6 @@ export type OngoingScreeningUserRuleBatchJob = {
 export type PeriodicScreeningUserRuleBatchJob = {
   type: 'PERIODIC_SCREENING_USER_RULE'
   tenantId: string
-}
-
-/* Pulse Backfill */
-export type PulseDataLoadBatchJob = {
-  type: 'PULSE_USERS_BACKFILL_RISK_SCORE'
-  tenantId: string
-  parameters: {
-    userIds: string[]
-  }
-  awsCredentials?: Credentials
 }
 
 /* Api Usage Metrics */
@@ -426,12 +404,10 @@ export type QACleanupBatchJob = {
 
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
-  | SimulationRiskFactorsBatchJob
   | SimulationBeaconBatchJob
   | SimulationRiskFactorsV8BatchJob
   | DemoModeDataLoadBatchJob
   | OngoingScreeningUserRuleBatchJob
-  | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob
   | DashboardRefreshBatchJob

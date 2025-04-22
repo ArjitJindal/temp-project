@@ -4202,105 +4202,6 @@ paths:
           in: query
           name: alertStatus
       description: ''
-  /pulse/risk-parameter:
-    parameters: []
-    post:
-      summary: Parameter Risk Level - POST
-      operationId: post-pulse-risk-parameter
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              title: PostPulseRiskParameters
-              properties:
-                parameterAttributeRiskValues:
-                  $ref: '#/components/schemas/ParameterAttributeRiskValues'
-              required:
-                - parameterAttributeRiskValues
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterAttributeRiskValues'
-        '403':
-          description: Not enough privileges
-      parameters: []
-      description: '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          '
-    get:
-      summary: Parameter Risk Level - GET
-      operationId: get-pulse-risk-parameter
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterAttributeRiskValues'
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: parameter
-          description: Parameter you want to filter on
-        - schema:
-            $ref: '#/components/schemas/RiskEntityType'
-          in: query
-          name: entityType
-          description: Entity type you want to filter on
-  /pulse/risk-parameters:
-    parameters: []
-    post:
-      summary: Parameters Risk Level - POST
-      operationId: post-pulse-risk-parameters
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              title: PostPulseRiskParametersBulk
-              properties:
-                parameterAttributeRiskValues:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/ParameterAttributeRiskValues'
-              required:
-                - parameterAttributeRiskValues
-        required: true
-      responses:
-        '200':
-          description: OK
-        '403':
-          description: Not enough privileges
-      parameters: []
-      description: ''
-    get:
-      summary: Parameters Risk Level - GET
-      operationId: get-pulse-risk-parameters
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ParameterAttributeRiskValues'
   /risk-factors:
     parameters: []
     post:
@@ -9724,7 +9625,6 @@ components:
       type: string
       enum:
         - ONGOING_SCREENING_USER_RULE
-        - PULSE_USERS_BACKFILL_RISK_SCORE
         - DEMO_MODE_DATA_LOAD
         - TEST_FARGATE
         - SANCTIONS_DATA_FETCH
@@ -11592,15 +11492,12 @@ components:
         - CLICKHOUSE_ENABLED
         - ALERT_SLA
         - MACHINE_LEARNING
-        - RISK_SCORING_V8
         - DOW_JONES
         - OPEN_SANCTIONS
         - ASYNC_RULES
         - CONCURRENT_ASYNC_RULES
         - PNB
         - MULTI_LEVEL_ESCALATION
-        - RISK_SCORING_V8_FOR_V2
-        - RISK_FACTORS_UI_MERGE
         - STRICT_FILE_SECURITY
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH
@@ -14724,10 +14621,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskClassificationScore'
-        parameterAttributeRiskValues:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParameterAttributeRiskValues'
         sampling:
           $ref: '#/components/schemas/SimulationRiskLevelsSampling'
         name:

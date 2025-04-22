@@ -61,7 +61,6 @@ export abstract class TransactionRule<
   aggregationRepository?: AggregationRepository
   sanctionsService: SanctionsService
   mode: 'DYNAMODB' | 'MONGODB'
-  transactionRiskScore?: number
   geoIpService: GeoIPService
 
   constructor(
@@ -101,7 +100,6 @@ export abstract class TransactionRule<
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.mode = mode
-    this.transactionRiskScore = data.transactionRiskScore
     this.geoIpService = services.geoIpService
 
     if (mode === 'DYNAMODB' && dynamoDb) {

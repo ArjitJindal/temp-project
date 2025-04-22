@@ -81,7 +81,6 @@ export enum RuleChecksForField {
   TransactionPaymentIdentifier = 'Transaction payment identifier',
   UserCardFingerprintID = 'User card fingerprint ID',
   UserPaymentIdentifier = 'User payment identifier',
-  TransactionRiskScore = 'Transaction risk score',
   Username = 'Username',
   BothPartiesUsername = 'Both parties username',
   TransactionState = 'Transaction state',

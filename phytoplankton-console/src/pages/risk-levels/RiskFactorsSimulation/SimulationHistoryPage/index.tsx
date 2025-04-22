@@ -1,5 +1,4 @@
 import { useLocalStorageState } from 'ahooks';
-import { useLocation } from 'react-router';
 import { SimulationHistory } from './SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
@@ -7,15 +6,9 @@ import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimula
 const ROOT_PATH = '/risk-levels';
 
 export const SimulationHistoryPage = () => {
-  const location = useLocation();
-  const type = location.pathname.includes('custom-risk-factors')
-    ? 'custom-risk-factors'
-    : 'risk-factors';
+  const type = 'risk-factors';
 
-  const [isSimulationMode] = useLocalStorageState(
-    type === 'custom-risk-factors' ? 'SIMULATION_CUSTOM_RISK_FACTORS' : 'SIMULATION_RISK_FACTORS',
-    false,
-  );
+  const [isSimulationMode] = useLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
 
   const buildUrl = (path: string) => `${ROOT_PATH}/${type}${path}`;
 
@@ -33,11 +26,7 @@ export const SimulationHistoryPage = () => {
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper
-        storageKey={
-          type === 'custom-risk-factors'
-            ? 'SIMULATION_CUSTOM_RISK_FACTORS'
-            : 'SIMULATION_RISK_FACTORS'
-        }
+        storageKey="SIMULATION_CUSTOM_RISK_FACTORS"
         breadcrumbs={breadcrumbs}
         simulationHistoryUrl={buildUrl('/simulation-history')}
         nonSimulationDefaultUrl={buildUrl('')}

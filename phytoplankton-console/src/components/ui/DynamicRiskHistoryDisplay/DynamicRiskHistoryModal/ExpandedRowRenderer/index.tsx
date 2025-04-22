@@ -63,7 +63,7 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
       defaultWidth: 200,
     }),
   ]);
-  const factorMapResult = useQuery(RISK_FACTORS_V8('ALL', true), async () => {
+  const factorMapResult = useQuery(RISK_FACTORS_V8('ALL'), async () => {
     const data = await api.getAllRiskFactors({ includeV2: true });
     return keyBy(data, 'id');
   });

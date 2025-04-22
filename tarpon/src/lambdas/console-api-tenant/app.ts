@@ -314,17 +314,6 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
-        case 'PULSE_USERS_BACKFILL_RISK_SCORE': {
-          await sendBatchJobCommand({
-            type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
-            tenantId: tenantId,
-            awsCredentials: getCredentialsFromEvent(event),
-            parameters: {
-              userIds: [],
-            },
-          })
-          break
-        }
         case 'DEMO_MODE_DATA_LOAD': {
           await sendBatchJobCommand({
             type: 'DEMO_MODE_DATA_LOAD',

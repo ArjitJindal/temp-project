@@ -78,7 +78,6 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
@@ -723,35 +722,38 @@ export class UserRepository {
   private async getRiskScoringResult(
     userId: string
   ): Promise<UserRiskScoreDetails> {
-    const riskScoringService = new RiskScoringService(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
-
     // TODO: After switch to V8 remove these calls as right now they return the same values as V8
-
+    const riskRepository = new RiskRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const [kycRiskScore, craRiskScore, riskClassificationValues] =
       await Promise.all([
-        riskScoringService.getKrsScore(userId),
-        riskScoringService.getDrsScore(userId),
-        riskScoringService.riskRepository.getRiskClassificationValues(),
+        riskRepository.getKrsScore(userId),
+        riskRepository.getDrsScore(userId),
+        riskRepository.getRiskClassificationValues(),
       ])
 
     const kycRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      kycRiskScore ?? null
+      kycRiskScore?.krsScore ?? null
     )
 
     const craRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      craRiskScore ?? null
+      craRiskScore?.drsScore ?? null
     )
 
     if (hasFeature('RISK_LEVELS') && !hasFeature('RISK_SCORING')) {
-      return { craRiskLevel, craRiskScore }
+      return { craRiskLevel, craRiskScore: craRiskScore?.drsScore }
     }
 
-    return { kycRiskScore, craRiskScore, kycRiskLevel, craRiskLevel }
+    return {
+      kycRiskScore: kycRiskScore?.krsScore,
+      craRiskScore: craRiskScore?.drsScore,
+      kycRiskLevel,
+      craRiskLevel,
+    }
   }
 
   public async getConsumerUserWithRiskScores(

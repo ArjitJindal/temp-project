@@ -28,7 +28,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import * as snsSqsClient from '@/utils/sns-sqs-client'
 
 dynamoDbSetupHook()
-withFeatureHook(['RULES_ENGINE_V8', 'RISK_SCORING_V8'])
+withFeatureHook(['RULES_ENGINE_V8', 'RISK_SCORING'])
 withLocalChangeHandler()
 
 const dynamoDb = getDynamoDbClient()

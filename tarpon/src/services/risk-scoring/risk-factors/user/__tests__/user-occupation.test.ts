@@ -1,4 +1,3 @@
-import { RiskScoringService } from '../../..'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { getRiskFactorLogicByKeyAndType } from '../..'
@@ -18,7 +17,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 dynamoDbSetupHook()
 describe('User Occupation Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result', async () => {
+  test('Basic case', async () => {
     const riskFactor = {
       ...TEST_CONSUMER_USER_RISK_PARAMETER,
       parameter: 'occupation' as RiskFactorParameter,
@@ -61,10 +60,6 @@ describe('User Occupation Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
 
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
@@ -75,11 +70,6 @@ describe('User Occupation Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -87,15 +77,9 @@ describe('User Occupation Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle empty riskLevelAssignmentValues', async () => {
-    const riskFactor = {
-      ...TEST_CONSUMER_USER_RISK_PARAMETER,
-      parameter: 'occupation' as RiskFactorParameter,
-      isDerived: false,
-      riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[], // Empty riskLevelAssignmentValues
-    }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_OCCUPATION_RISK_FACTOR,
@@ -119,10 +103,6 @@ describe('User Occupation Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -132,11 +112,6 @@ describe('User Occupation Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -144,7 +119,7 @@ describe('User Occupation Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handle null occupation', async () => {
     const riskFactor = {
@@ -189,10 +164,6 @@ describe('User Occupation Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
 
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
@@ -203,11 +174,6 @@ describe('User Occupation Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -215,7 +181,7 @@ describe('User Occupation Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handle empty occupation', async () => {
     const riskFactor = {
@@ -260,10 +226,6 @@ describe('User Occupation Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
 
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
@@ -274,11 +236,6 @@ describe('User Occupation Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -286,6 +243,6 @@ describe('User Occupation Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

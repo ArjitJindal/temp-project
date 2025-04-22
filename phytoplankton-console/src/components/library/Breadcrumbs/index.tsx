@@ -9,6 +9,7 @@ import Skeleton from '@/components/library/Skeleton';
 export interface BreadcrumbItem {
   title: string;
   to?: string;
+  onClick?: () => void;
 }
 
 interface Props {
@@ -31,6 +32,7 @@ export default function Breadcrumbs(props: Props) {
                   className: cn(s.link, i === items.length - 1 && s.isLast),
                   to: x.to ?? '',
                   id: 'breadcrumb-link',
+                  onClick: x.onClick,
                 },
                 x.title,
               )

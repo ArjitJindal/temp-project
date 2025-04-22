@@ -3342,7 +3342,7 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
 })
 
 describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
-  withFeatureHook(['RISK_SCORING_V8', 'RISK_SCORING', 'RISK_LEVELS'])
+  withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
   const tenantId = getTestTenantId()
   const userId1 = uuidv4()
   const userId2 = uuidv4()
@@ -3478,7 +3478,6 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           status: 'FAILED',
         },
       }),
-      true,
       true
     )
     await createConsumerUser(
@@ -3489,7 +3488,6 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           status: 'CANCELLED',
         },
       }),
-      true,
       true
     )
     const transaction = getTestTransaction({

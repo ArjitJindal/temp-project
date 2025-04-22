@@ -110,13 +110,6 @@ export class TenantService {
       >
     > = {
       ENABLED: {
-        RISK_SCORING: async () => {
-          await sendBatchJobCommand({
-            type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
-            tenantId: this.tenantId,
-            parameters: { userIds: [] },
-          })
-        },
         RULES_ENGINE_V8_FOR_V2_RULES: async () => {
           const service = new RuleInstanceService(this.tenantId, {
             dynamoDb: this.dynamoDb,

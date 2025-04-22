@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import { RiskScoringService } from '../../../'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { getRiskFactorLogicByKeyAndType } from '../../index'
@@ -23,7 +22,7 @@ import { TransactionWithRiskDetails } from '@/services/rules-engine/repositories
 dynamoDbSetupHook()
 describe('Origin Payment Method TRANSACTION Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result', async () => {
+  test('Basic case', async () => {
     const riskFactor = TEST_TRANSACTION_RISK_PARAMETERS[0]
 
     const v8RiskFactor: RiskFactor = {
@@ -60,10 +59,6 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -72,11 +67,6 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -88,7 +78,7 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle empty transaction country for origin country', async () => {
     const riskFactor = TEST_TRANSACTION_RISK_PARAMETERS[0]
@@ -127,10 +117,6 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -139,11 +125,6 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -155,6 +136,6 @@ describe('Origin Payment Method TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

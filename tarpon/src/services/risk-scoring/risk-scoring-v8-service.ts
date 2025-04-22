@@ -512,7 +512,9 @@ export class RiskScoringV8Service {
     if (!userId) {
       return null
     }
-    const averageArsScore = await this.riskRepository.getAverageArsScore(userId)
+    const averageArsScore = await this.riskRepository.getAverageArsScoreDynamo(
+      userId
+    )
     if (!averageArsScore) {
       await this.riskRepository.updateOrCreateAverageArsScore(userId, {
         userId,
@@ -710,7 +712,9 @@ export class RiskScoringV8Service {
     if (oldDrsScore?.isUpdatable === false && !isUpdatable) {
       return oldDrsScore.drsScore
     }
-    const avgArsScore = await this.riskRepository.getAverageArsScore(userId)
+    const avgArsScore = await this.riskRepository.getAverageArsScoreDynamo(
+      userId
+    )
     const { riskScoringAlgorithm = { type: 'FORMULA_LEGACY_MOVING_AVG' } } =
       await this.getTenantSettings() // Default to simple average if no algorithm is set
     const newDrsScore = this.calculateNewDrsScore({

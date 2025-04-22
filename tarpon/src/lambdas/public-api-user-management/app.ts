@@ -11,7 +11,6 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
@@ -28,7 +27,6 @@ import {
   DefaultApiPostBusinessUserRequest,
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
-import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { getUserRiskScoreDetailsForPNB } from '@/services/rules-engine/pnb-custom-logic'
 
 const MAX_BATCH_IMPORT_COUNT = 200
@@ -93,35 +91,24 @@ export const userHandler = lambdaApi()(
         }
       }
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-      const isV8RiskScoringEnabled = hasFeature('RISK_SCORING_V8')
-      const isDrsUpdatable = options?.lockCraRiskLevel !== true
-      const riskScoringService = isV8RiskScoringEnabled
-        ? new RiskScoringV8Service(tenantId, logicEvaluator, {
-            dynamoDb,
-            mongoDb,
-          })
-        : new RiskScoringService(tenantId, { dynamoDb, mongoDb })
 
-      let riskScoreResult: UserRiskScoreDetails
-      if (isV8RiskScoringEnabled) {
-        riskScoreResult = await (
-          riskScoringService as RiskScoringV8Service
-        ).handleUserUpdate({
-          user: userPayload,
-          manualRiskLevel: userPayload.riskLevel,
-          isDrsUpdatable,
-          manualKrsRiskLevel: userPayload.kycRiskLevel,
-          lockKrs: options?.lockKycRiskLevel,
-        })
-      } else {
-        riskScoreResult = await (
-          riskScoringService as RiskScoringService
-        ).runRiskScoresForUser(
-          userPayload,
-          isDrsUpdatable,
-          options?.lockKycRiskLevel
-        )
-      }
+      const isDrsUpdatable = options?.lockCraRiskLevel !== true
+      const riskScoringService = new RiskScoringV8Service(
+        tenantId,
+        logicEvaluator,
+        {
+          dynamoDb,
+          mongoDb,
+        }
+      )
+
+      const riskScoreResult = await riskScoringService.handleUserUpdate({
+        user: userPayload,
+        manualRiskLevel: userPayload.riskLevel,
+        isDrsUpdatable,
+        manualKrsRiskLevel: userPayload.kycRiskLevel,
+        lockKrs: options?.lockKycRiskLevel,
+      })
 
       const { craRiskScore, craRiskLevel, kycRiskScore, kycRiskLevel } =
         riskScoreResult

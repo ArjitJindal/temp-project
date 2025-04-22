@@ -1,5 +1,4 @@
 import { TenantDeletionBatchJobRunner } from './tenant-deletion-batch-job-runner'
-import { SimulationRiskFactorsBatchJobRunner } from './simulation-risk-scoring-batch-job-runner'
 import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-job-runner'
 import {
   AlertSLAStatusRefreshBatchJobRunner,
@@ -40,7 +39,6 @@ import { DashboardRefreshBatchJobRunner } from '@/services/batch-jobs/dashboard-
 import { DemoModeDataLoadJobRunner } from '@/services/batch-jobs/demo-mode-data-load-job-runner'
 import { GlobalRuleAggregationRebuildBatchJobRunner } from '@/services/batch-jobs/global-rule-aggregation-rebuild-batch-job-runner'
 import { OngoingScreeningUserRuleBatchJobRunner } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
-import { PulseDataLoadJobRunner } from '@/services/batch-jobs/pulse-data-load-job-runner'
 import { SimulationBeaconBatchJobRunner } from '@/services/batch-jobs/simulation-beacon-batch-job-runner'
 import { SimulationRiskLevelsBatchJobRunner } from '@/services/batch-jobs/simulation-pulse-batch-job-runner'
 import { SyncDatabases } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
@@ -60,15 +58,11 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new GlobalRuleAggregationRebuildBatchJobRunner(jobId),
     ONGOING_SCREENING_USER_RULE: (jobId) =>
       new OngoingScreeningUserRuleBatchJobRunner(jobId),
-    PULSE_USERS_BACKFILL_RISK_SCORE: (jobId) =>
-      new PulseDataLoadJobRunner(jobId),
     SIMULATION_BEACON: (jobId) => new SimulationBeaconBatchJobRunner(jobId),
     SIMULATION_PULSE: (jobId) => new SimulationRiskLevelsBatchJobRunner(jobId),
     SYNC_DATABASES: (jobId) => new SyncDatabases(jobId),
     TEST_FARGATE: (jobId) => new TestFargateBatchJobRunner(jobId),
     TENANT_DELETION: (jobId) => new TenantDeletionBatchJobRunner(jobId),
-    SIMULATION_RISK_FACTORS: (jobId) =>
-      new SimulationRiskFactorsBatchJobRunner(jobId),
     RULE_PRE_AGGREGATION: (jobId) =>
       new RulePreAggregationBatchJobRunner(jobId),
     MANUAL_RULE_PRE_AGGREGATION: (jobId) =>

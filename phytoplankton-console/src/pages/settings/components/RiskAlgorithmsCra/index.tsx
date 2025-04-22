@@ -9,7 +9,7 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Label from '@/components/library/Label';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasPermissions } from '@/utils/user-utils';
 
 type RiskAlgorithmsType = 'FORMULA_LEGACY_MOVING_AVG' | 'FORMULA_SIMPLE_AVG' | 'FORMULA_CUSTOM';
 
@@ -22,6 +22,7 @@ function RiskAlgorithmsCra() {
   const [algorithmType, setAlgorithmType] = useState<RiskAlgorithmsType>(
     settings.riskScoringAlgorithm?.type ?? 'FORMULA_LEGACY_MOVING_AVG',
   );
+  const user = useAuth0User();
   const [localKrsWeight, setLocalKrsWeight] = useState(
     currentAlgorithm?.type === 'FORMULA_CUSTOM' ? currentAlgorithm?.krsWeight ?? 0.5 : 0.5,
   );
@@ -71,7 +72,7 @@ function RiskAlgorithmsCra() {
           onChange={(newValue) => {
             setAlgorithmType(newValue as RiskAlgorithmsType);
           }}
-          isDisabled={!permissions}
+          isDisabled={!permissions || !isSuperAdmin(user)}
         />
       </div>
       {algorithmType === 'FORMULA_CUSTOM' && (
@@ -127,7 +128,7 @@ function RiskAlgorithmsCra() {
       <div className={s.buttonContainer}>
         <Button
           onClick={handleUpdateRiskAlgorithm}
-          isDisabled={mutateTenantSettings.isLoading || !permissions}
+          isDisabled={mutateTenantSettings.isLoading || !permissions || !isSuperAdmin(user)}
         >
           Update
         </Button>

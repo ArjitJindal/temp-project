@@ -1,24 +1,20 @@
 import { uniqueId } from 'lodash'
-import { getTestTenantId } from './tenant-test-utils'
-import { setUpUsersHooks } from './user-test-utils'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { RiskScoringService } from '@/services/risk-scoring'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
-import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
-export const TEST_CONSUMER_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
+export const TEST_CONSUMER_USER_RISK_PARAMETER: RiskFactor = {
   parameter: 'type',
-  isActive: true,
+  id: uniqueId(),
+  status: 'ACTIVE',
+  name: 'Test consumer user type',
+  description: 'Test description',
+  logicAggregationVariables: [],
+  logicEntityVariables: [],
   isDerived: true,
-  riskEntityType: 'CONSUMER_USER',
+  type: 'CONSUMER_USER',
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -38,19 +34,21 @@ export const TEST_CONSUMER_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
       },
     },
   ],
-  parameterType: 'VARIABLE',
-  weight: 0.5,
-  defaultValue: {
-    type: 'RISK_LEVEL',
-    value: 'VERY_HIGH',
-  },
+  defaultWeight: 0.5,
+  defaultRiskScore: 90,
+  defaultRiskLevel: 'VERY_HIGH',
 }
 
-export const TEST_BUSINESS_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
+export const TEST_BUSINESS_USER_RISK_PARAMETER: RiskFactor = {
+  id: uniqueId(),
+  name: 'Test Business user type',
+  description: 'Test description',
   parameter: 'type',
-  isActive: true,
+  status: 'ACTIVE',
   isDerived: true,
-  riskEntityType: 'BUSINESS',
+  type: 'BUSINESS',
+  logicAggregationVariables: [],
+  logicEntityVariables: [],
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -70,21 +68,24 @@ export const TEST_BUSINESS_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
       },
     },
   ],
-  parameterType: 'VARIABLE',
-  weight: 0.5,
-  defaultValue: {
-    type: 'RISK_LEVEL',
-    value: 'VERY_HIGH',
-  },
+  defaultWeight: 0.5,
+  defaultRiskScore: 90,
+  defaultRiskLevel: 'VERY_HIGH',
 }
 
-export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
+export const TEST_VARIABLE_RISK_ITEM: RiskFactor = {
+  name: 'Test origin amount details country',
+  description: 'Test description',
+  id: uniqueId('RF'),
   parameter: 'originAmountDetails.country',
-  weight: 1,
-  isActive: true,
+  defaultWeight: 1,
+  status: 'ACTIVE',
   isDerived: false,
-  riskEntityType: 'TRANSACTION',
-  defaultValue: DEFAULT_RISK_VALUE,
+  type: 'TRANSACTION',
+  defaultRiskLevel: 'VERY_HIGH',
+  defaultRiskScore: 90,
+  logicAggregationVariables: [],
+  logicEntityVariables: [],
   riskLevelAssignmentValues: [
     {
       parameterValue: {
@@ -104,7 +105,6 @@ export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
       },
     },
   ],
-  parameterType: 'VARIABLE',
 }
 export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
   [
@@ -407,112 +407,6 @@ export const TEST_ITERABLE_RISK_ITEM: ParameterAttributeRiskValues = {
     },
   ],
   parameterType: 'ITERABLE',
-}
-
-type KrsTestCase = {
-  testName: string
-  user: User | Business
-  expectedScore: number
-}
-export function createKrsRiskFactorTestCases(
-  parameter: RiskFactorParameter,
-  riskClassificationValues: RiskClassificationScore[],
-  parameterRiskLevels: ParameterAttributeRiskValues,
-  testCases: Array<KrsTestCase>
-) {
-  describe(parameter, () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getDynamoDbClient()
-    let riskScoringService: RiskScoringService
-
-    beforeAll(async () => {
-      const mongoDb = await getMongoDbClient()
-      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
-      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
-      await riskRepository.createOrUpdateRiskClassificationConfig(
-        riskClassificationValues
-      )
-      await riskRepository.createOrUpdateParameterRiskItem(parameterRiskLevels)
-    })
-
-    describe.each<KrsTestCase>(testCases)(
-      '',
-      ({ testName, user, expectedScore }) => {
-        test(testName, async () => {
-          const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-            dynamoDb,
-          })
-          await riskScoringService.updateInitialRiskScores(user)
-          expect(
-            (await riskRepository.getKrsScore(user.userId))?.krsScore
-          ).toBe(expectedScore)
-        })
-      }
-    )
-  })
-}
-
-type ArsTestCase = {
-  testName: string
-  transaction: Transaction
-  users: Array<User | Business>
-  expectedScore: number
-}
-
-export function createArsRiskFactorTestCases(
-  parameter: RiskFactorParameter,
-  riskClassificationValues: RiskClassificationScore[],
-  parameterRiskLevels: ParameterAttributeRiskValues,
-  testCases: Array<ArsTestCase>,
-  beforeAllHook?: (tenantId: string) => Promise<void>
-) {
-  describe(parameter, () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getDynamoDbClient()
-    let riskScoringService: RiskScoringService
-
-    beforeAll(async () => {
-      const mongoDb = await getMongoDbClient()
-      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
-      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
-      await riskRepository.createOrUpdateRiskClassificationConfig(
-        riskClassificationValues
-      )
-      await riskRepository.createOrUpdateParameterRiskItem(parameterRiskLevels)
-      if (beforeAllHook) {
-        await beforeAllHook(TEST_TENANT_ID)
-      }
-    })
-
-    describe.each<ArsTestCase>(testCases)(
-      '',
-      ({ testName, transaction, users, expectedScore }) => {
-        setUpUsersHooks(TEST_TENANT_ID, users)
-        test(testName, async () => {
-          const riskRepository = new RiskRepository(TEST_TENANT_ID, {
-            dynamoDb,
-          })
-          await riskScoringService.updateDynamicRiskScores(transaction)
-          expect(
-            (await riskRepository.getArsScore(transaction.transactionId))
-              ?.arsScore
-          ).toBe(expectedScore)
-        })
-      }
-    )
-  })
 }
 
 export function setUpRiskFactorsHook(

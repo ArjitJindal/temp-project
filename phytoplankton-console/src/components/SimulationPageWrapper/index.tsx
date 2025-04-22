@@ -17,8 +17,8 @@ export type SimulationPageWrapperRef = {
 
 export type SimulationPageWrapperProps = PageWrapperProps & {
   header?: (actionButtons: React.ReactNode) => JSX.Element;
-  isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
+  isSimulationModeEnabled: boolean;
 };
 
 export const SimulationPageWrapper = forwardRef<

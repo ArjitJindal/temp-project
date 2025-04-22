@@ -32,6 +32,8 @@ const BUSINESSUSER_SEGMENT_RISK_FACTOR = (
   valueType: 'MULTIPLE',
   type: entityType,
   status: 'INACTIVE',
+  dataType: 'BUSINESS_USER_SEGMENT',
+  isDerived: false,
 })
 
 export const CONSUMER_USER_SEGMENT_RISK_FACTOR =

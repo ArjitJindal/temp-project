@@ -2,6 +2,8 @@ import { countBy, isEmpty } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import pMap from 'p-map'
 import PQueue from 'p-queue'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -13,8 +15,6 @@ import { SimulationRiskLevelsSampling } from '@/@types/openapi-internal/Simulati
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { SimulationRiskLevelsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskLevelsStatisticsResult'
-import { RiskScoringService } from '@/services/risk-scoring'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getUserName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
@@ -36,7 +36,7 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
   usersRepository?: UserRepository
   riskRepository?: RiskRepository
   transactionRepository?: MongoDbTransactionRepository
-  riskScoringService?: RiskScoringService
+  riskScoringService?: RiskScoringV8Service
   usersSimulated: number = 0
   userResultsSaved: number = 0
   simulationResult: SimulationResult = {
@@ -59,9 +59,15 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       dynamoDb
     )
     this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    this.riskScoringService = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      {
+        dynamoDb,
+        mongoDb,
+      }
+    )
 
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
@@ -110,17 +116,6 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
         ])
       }
       if (
-        parameters.parameterAttributeRiskValues &&
-        !isEmpty(parameters.parameterAttributeRiskValues)
-      ) {
-        await this.recalculateRiskScores(
-          parameters.classificationValues,
-          parameters.parameterAttributeRiskValues,
-          users?.data ?? [],
-          updateProgress,
-          parameters.sampling
-        )
-      } else if (
         parameters.classificationValues &&
         !isEmpty(parameters.classificationValues)
       ) {
@@ -285,103 +280,6 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       {
         concurrency: 10,
       }
-    )
-  }
-
-  private async recalculateRiskScores(
-    classificationValues: RiskClassificationScore[] | undefined,
-    parameterAttributeRiskValues: ParameterAttributeRiskValues[],
-    users: (InternalBusinessUser | InternalConsumerUser)[],
-    updateProgress: (progress: number) => Promise<void>,
-    sampling?: SimulationRiskLevelsSampling
-  ) {
-    const currentClassificationValues =
-      (await this.riskRepository?.getRiskClassificationValues()) ?? []
-    const newClassificationValues = isEmpty(classificationValues)
-      ? currentClassificationValues
-      : (classificationValues as RiskClassificationScore[])
-
-    await pMap(
-      users,
-      async (user) => {
-        const { score: userKrsScore } =
-          (await this.riskScoringService?.calculateKrsScore(
-            user,
-            newClassificationValues,
-            parameterAttributeRiskValues
-          )) ?? { score: 0 }
-        const userTransactions = await this.getUserTransactions(
-          user.userId,
-          sampling
-        )
-        let userCurrentDrsScore = userKrsScore
-
-        for (const transaction of userTransactions ?? []) {
-          const { score: arsScore } =
-            (await this.riskScoringService?.simulateArsScore(
-              transaction,
-              newClassificationValues,
-              parameterAttributeRiskValues
-            )) ?? { score: 0 }
-          userCurrentDrsScore =
-            this.riskScoringService?.calculateDrsScore(
-              userCurrentDrsScore,
-              arsScore
-            ) ?? 0
-          if (transaction.arsScore?.arsScore) {
-            this.simulationResult.transactionResults.current.push(
-              getRiskLevelFromScore(
-                currentClassificationValues,
-                transaction.arsScore.arsScore
-              )
-            )
-            this.simulationResult.transactionResults.simulated.push(
-              getRiskLevelFromScore(newClassificationValues, arsScore)
-            )
-          }
-        }
-        this.simulationResult.userResults.push({
-          userId: user.userId,
-          userType: user.type,
-          userName: getUserName(user),
-          current: {
-            krs: user.krsScore && {
-              riskScore: user.krsScore?.krsScore,
-              riskLevel: getRiskLevelFromScore(
-                currentClassificationValues,
-                user.krsScore.krsScore
-              ),
-            },
-            drs: user.drsScore && {
-              riskScore: user.drsScore?.drsScore,
-              riskLevel: getRiskLevelFromScore(
-                currentClassificationValues,
-                user.drsScore.drsScore
-              ),
-            },
-          },
-          simulated: {
-            krs: user.krsScore && {
-              riskScore: userKrsScore,
-              riskLevel: getRiskLevelFromScore(
-                newClassificationValues,
-                userKrsScore
-              ),
-            },
-            drs: user.drsScore && {
-              riskScore: userCurrentDrsScore,
-              riskLevel: getRiskLevelFromScore(
-                newClassificationValues,
-                userCurrentDrsScore
-              ),
-            },
-          },
-        })
-        await this.progressQueue.add(() =>
-          this.updateStatusAndProgress(users.length, updateProgress)
-        )
-      },
-      { concurrency: 10 }
     )
   }
 

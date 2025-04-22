@@ -365,7 +365,7 @@ describe('Public API - Create a consumer user with risk scoring V8', () => {
       riskScoringCraEnabled: true,
     })
   })
-  withFeatureHook(['RISK_SCORING_V8'])
+  withFeatureHook(['RISK_SCORING'])
   setUpRiskFactorsHook(TEST_TENANT_ID, [
     getTestRiskFactor({
       id: 'RF-1',
@@ -467,7 +467,7 @@ describe('Public API - Create a business user with risk scoring V8', () => {
       riskScoringCraEnabled: true,
     })
   })
-  withFeatureHook(['RISK_SCORING_V8'])
+  withFeatureHook(['RISK_SCORING'])
   setUpRiskFactorsHook(TEST_TENANT_ID, [
     getTestRiskFactor({
       id: 'RF-1',

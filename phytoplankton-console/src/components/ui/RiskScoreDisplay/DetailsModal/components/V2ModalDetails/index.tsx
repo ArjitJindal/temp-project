@@ -5,8 +5,8 @@ import { findParameter } from '../../helpers';
 import MainPanel from '../../../MainPanel';
 import s from './styles.module.less';
 import Table from '@/components/library/Table';
-import { ParameterName } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
 import { RiskScoreComponent } from '@/apis/models/RiskScoreComponent';
+import { RiskFactorParameter } from '@/apis';
 
 interface Props {
   icon: React.ReactNode;
@@ -50,7 +50,7 @@ function V2ModalDetails(props: Props) {
               {components.map((component, i) => {
                 const parameterDescription = findParameter(
                   component.entityType,
-                  component.parameter as ParameterName,
+                  component.parameter as RiskFactorParameter,
                 );
                 return (
                   <React.Fragment key={VARIABLES[i]}>
@@ -91,7 +91,7 @@ export function V2RiskBreakDownTable(props: V2RiskBreakDownTableProps) {
           total: components.length,
           items: components.map((component) => ({
             entityType: component.entityType,
-            parameter: component.parameter as ParameterName,
+            parameter: component.parameter as RiskFactorParameter,
             value: component.value,
             riskScore: component.score,
             weight: component.weight,

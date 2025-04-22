@@ -26,7 +26,6 @@ import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
-import { RiskScoringService } from '../risk-scoring'
 import { SanctionsService } from '../sanctions'
 import { GeoIPService } from '../geo-ip'
 import {
@@ -118,7 +117,6 @@ import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
-import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { AccountsService } from '@/services/accounts'
 
@@ -222,7 +220,6 @@ export class RulesEngineService {
   riskRepository: RiskRepository
   userRepository: UserRepository
   tenantRepository: TenantRepository
-  riskScoringService: RiskScoringService
   riskScoringV8Service: RiskScoringV8Service
   ruleLogicEvaluator: LogicEvaluator
   sanctionsService: SanctionsService
@@ -266,10 +263,6 @@ export class RulesEngineService {
     })
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
-    })
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
     })
     this.riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -520,7 +513,6 @@ export class RulesEngineService {
       hitRules,
       aggregationMessages,
       riskScoreDetails,
-      riskScoreComponents,
       senderUser = null,
       receiverUser = null,
       isAnyAsyncRules,
@@ -537,20 +529,6 @@ export class RulesEngineService {
       'Rules Engine',
       'Save Transaction/Event'
     )
-
-    if (
-      !hasFeature('RISK_SCORING_V8') &&
-      hasFeature('RISK_SCORING') &&
-      riskScoreDetails
-    ) {
-      await this.riskRepository.createOrUpdateArsScore(
-        transaction.transactionId,
-        riskScoreDetails.trsScore,
-        transaction.originUserId,
-        transaction.destinationUserId,
-        riskScoreComponents
-      )
-    }
 
     const transactionToSave = {
       ...transaction,
@@ -654,7 +632,6 @@ export class RulesEngineService {
       receiverUser = null,
       isAnyAsyncRules,
       userRiskScoreDetails,
-      riskScoreComponents,
     } = await this.verifyTransactionInternal(
       updatedTransaction,
       previousTransactionEvents.concat(
@@ -734,16 +711,6 @@ export class RulesEngineService {
             transactionEventId: eventId,
           },
         ]),
-      hasFeature('RISK_SCORING') &&
-        !hasFeature('RISK_SCORING_V8') &&
-        riskScoreDetails &&
-        this.riskRepository.createOrUpdateArsScore(
-          transaction.transactionId,
-          riskScoreDetails.trsScore,
-          transaction.originUserId,
-          transaction.destinationUserId,
-          riskScoreComponents
-        ),
     ])
 
     const updatedTransactionWithoutRulesResult = {
@@ -885,22 +852,6 @@ export class RulesEngineService {
 
     const rules = await this.ruleRepository.getRulesByIds(ruleIds)
     return keyBy(rules, 'id')
-  }
-
-  private async getTransactionRiskScoreDetails(
-    transaction: Transaction
-  ): Promise<RiskScoreDetails | undefined> {
-    const data = hasFeature('RISK_SCORING')
-      ? await this.riskScoringService.calculateArsScore(transaction)
-      : undefined
-
-    return data
-      ? {
-          trsRiskLevel: data.riskLevel,
-          trsScore: data.score,
-          components: data.components,
-        }
-      : undefined
   }
 
   private async verifyAsyncRulesTransactionInternal(
@@ -1063,44 +1014,31 @@ export class RulesEngineService {
       'Rules Engine',
       'Get Initial Data'
     )
-    const isV8RiskScoring = hasFeature('RISK_SCORING_V8')
 
     const userPromise =
       relatedData &&
       ('senderUser' in relatedData || 'receiverUser' in relatedData)
         ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
         : this.getTransactionUsers(transaction, options)
-    const riskScoringPromise = isV8RiskScoring
-      ? Promise.resolve(undefined)
-      : relatedData && 'transactionRiskDetails' in relatedData
-      ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
-      : this.getTransactionRiskScoreDetails(transaction)
 
-    const [{ senderUser, receiverUser }, riskScoreDetails] = await Promise.all([
-      userPromise,
-      riskScoringPromise,
-    ])
+    const [{ senderUser, receiverUser }] = await Promise.all([userPromise])
 
-    const newRiskScoreDetails = isV8RiskScoring
-      ? await this.riskScoringV8Service.handleTransaction(
-          transaction,
-          transactionEvents,
-          senderUser,
-          receiverUser
-        )
-      : riskScoreDetails
+    const newRiskScoreDetails =
+      relatedData && 'transactionRiskDetails' in relatedData
+        ? (relatedData.transactionRiskDetails as RiskScoreDetails)
+        : hasFeature('RISK_SCORING')
+        ? await this.riskScoringV8Service.handleTransaction(
+            transaction,
+            transactionEvents,
+            senderUser,
+            receiverUser
+          )
+        : undefined
+
     const [
-      {
-        riskLevel: senderUserRiskLevel,
-        riskScore: senderUserRiskScore,
-        isUpdatable: isSenderUserUpdatable,
-      },
+      { riskLevel: senderUserRiskLevel },
       activeRuleInstances,
-      {
-        riskLevel: receiverUserRiskLevel,
-        riskScore: receiverUserRiskScore,
-        isUpdatable: isReceiverUserUpdatable,
-      },
+      { riskLevel: receiverUserRiskLevel },
     ] = await Promise.all([
       this.getUserRiskLevelAndScore(transaction.originUserId),
       this.ruleInstanceRepository.getActiveRuleInstances(),
@@ -1144,7 +1082,7 @@ export class RulesEngineService {
 
     const transactionWithRiskDetails: TransactionWithRiskDetails = {
       ...transaction,
-      riskScoreDetails,
+      riskScoreDetails: newRiskScoreDetails,
     }
 
     const lastTransactionEvent = last(transactionEvents)
@@ -1177,7 +1115,6 @@ export class RulesEngineService {
             transactionEvents,
             senderUser,
             receiverUser,
-            transactionRiskScore: riskScoreDetails?.trsScore,
             receiverUserRiskLevel,
             stage,
           })
@@ -1213,44 +1150,14 @@ export class RulesEngineService {
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
 
     this.ruleLogicEvaluator.updatedAggregationVariables.clear()
-    let userRiskScoreDetails:
-      | {
-          originUserCraRiskLevel?: RiskLevel
-          destinationUserCraRiskLevel?: RiskLevel
-          originUserCraRiskScore?: number
-          destinationUserCraRiskScore?: number
-        }
-      | undefined
 
-    if (isV8RiskScoring) {
-      userRiskScoreDetails = {
-        originUserCraRiskLevel: newRiskScoreDetails?.originUserCraRiskLevel,
-        destinationUserCraRiskLevel:
-          newRiskScoreDetails?.destinationUserCraRiskLevel,
-        originUserCraRiskScore: newRiskScoreDetails?.originUserCraRiskScore,
-        destinationUserCraRiskScore:
-          newRiskScoreDetails?.destinationUserCraRiskScore,
-      }
-    } else {
-      const [originUserRiskDetails, destinationUserRiskDetails] =
-        await Promise.all([
-          this.getUserRiskScoreDetails(
-            riskScoreDetails?.trsScore,
-            senderUserRiskScore,
-            isSenderUserUpdatable
-          ),
-          this.getUserRiskScoreDetails(
-            riskScoreDetails?.trsScore,
-            receiverUserRiskScore,
-            isReceiverUserUpdatable
-          ),
-        ])
-      userRiskScoreDetails = {
-        originUserCraRiskLevel: originUserRiskDetails?.craRiskLevel,
-        destinationUserCraRiskLevel: destinationUserRiskDetails?.craRiskLevel,
-        originUserCraRiskScore: originUserRiskDetails?.craRiskScore,
-        destinationUserCraRiskScore: destinationUserRiskDetails?.craRiskScore,
-      }
+    const userRiskScoreDetails = {
+      originUserCraRiskLevel: newRiskScoreDetails?.originUserCraRiskLevel,
+      destinationUserCraRiskLevel:
+        newRiskScoreDetails?.destinationUserCraRiskLevel,
+      originUserCraRiskScore: newRiskScoreDetails?.originUserCraRiskScore,
+      destinationUserCraRiskScore:
+        newRiskScoreDetails?.destinationUserCraRiskScore,
     }
 
     return {
@@ -1268,29 +1175,6 @@ export class RulesEngineService {
     }
   }
 
-  private async getUserRiskScoreDetails(
-    arsScore?: number,
-    drsScore?: number,
-    isUpdatable?: boolean
-  ): Promise<UserRiskScoreDetails | undefined> {
-    if (arsScore == null || drsScore == null) {
-      return undefined
-    }
-    const newDrsScore = isUpdatable
-      ? this.riskScoringService.calculateDrsScore(drsScore, arsScore)
-      : drsScore
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
-    const riskLevel = getRiskLevelFromScore(
-      riskClassificationValues,
-      newDrsScore
-    )
-    return {
-      craRiskLevel: riskLevel,
-      craRiskScore: newDrsScore,
-    }
-  }
-
   public async verifyRuleIdempotent(options: {
     rule?: Rule
     ruleInstance: RuleInstance
@@ -1302,7 +1186,6 @@ export class RulesEngineService {
     senderUser?: User | Business
     receiverUser?: User | Business
     tracing?: boolean
-    transactionRiskScore?: number
     stage: RuleStage
   }): Promise<{
     ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
@@ -1320,7 +1203,6 @@ export class RulesEngineService {
       receiverUser,
       database,
       tracing,
-      transactionRiskScore,
     } = options
     const { parameters, logic, action } = this.getUserSpecificParameters(
       ruleInstance.type === 'TRANSACTION' &&
@@ -1371,7 +1253,6 @@ export class RulesEngineService {
             transactionEvents,
             senderUser,
             receiverUser,
-            transactionRiskScore,
           } as TransactionLogicData)
         : senderUser
         ? ({ type: 'USER', user: senderUser } as UserLogicData)
@@ -1423,7 +1304,6 @@ export class RulesEngineService {
               transaction: transactionWithValidUserId,
               senderUser,
               receiverUser,
-              transactionRiskScore,
             },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule: rule },
@@ -1565,7 +1445,6 @@ export class RulesEngineService {
     transactionEvents: TransactionEventWithRulesResult[]
     senderUser?: User | Business
     receiverUser?: User | Business
-    transactionRiskScore?: number
     stage: RuleStage
   }): Promise<
     | {

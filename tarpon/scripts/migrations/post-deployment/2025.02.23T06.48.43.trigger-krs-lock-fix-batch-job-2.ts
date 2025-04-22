@@ -9,7 +9,7 @@ async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()
   const tenantRepository = new TenantRepository(tenant.id, { dynamoDb })
   const { features } = await tenantRepository.getTenantSettings(['features'])
-  if (features?.includes('RISK_SCORING_V8')) {
+  if (features?.includes('RISK_SCORING')) {
     await sendBatchJobCommand({
       tenantId: tenant.id,
       type: 'FIX_LOCKS_FOR_KRS',

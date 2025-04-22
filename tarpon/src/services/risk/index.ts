@@ -7,7 +7,6 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
-import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { intersection, pick } from 'lodash'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
@@ -40,12 +39,6 @@ const validateClassificationRequest = (
     throw new BadRequest('Invalid request - duplicate risk levels')
   }
 }
-
-type ParameterRiskItemAuditLogReturnData = AuditLogReturnData<
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValues
->
 
 type RiskClassificationAuditLogReturnData = AuditLogReturnData<
   RiskClassificationScore[],
@@ -106,76 +99,6 @@ export class RiskService {
         },
       ],
       result: newClassificationValues,
-    }
-  }
-
-  async getRiskParameter(
-    parameter: RiskFactorParameter,
-    entityType: RiskEntityType
-  ) {
-    if (parameter == null || entityType == null) {
-      throw new BadRequest(
-        'Invalid request - please provide parameter and entityType'
-      )
-    }
-    return await this.riskRepository.getParameterRiskItem(
-      parameter as RiskFactorParameter,
-      entityType
-    )
-  }
-
-  async getAllRiskParameters(): Promise<ParameterAttributeRiskValues[]> {
-    return (await this.riskRepository.getParameterRiskItems()) ?? []
-  }
-
-  @auditLog('RISK_SCORING', 'PARAMETER_RISK_ITEM', 'UPDATE')
-  async createOrUpdateRiskParameter(
-    parameterAttributeRiskValues: ParameterAttributeRiskValues
-  ): Promise<ParameterRiskItemAuditLogReturnData> {
-    const oldParameterRiskItemValue =
-      await this.riskRepository.getParameterRiskItem(
-        parameterAttributeRiskValues.parameter,
-        parameterAttributeRiskValues.riskEntityType
-      )
-    const newParameterRiskItemValue =
-      await this.riskRepository.createOrUpdateParameterRiskItem(
-        parameterAttributeRiskValues
-      )
-    const riskClassificationScore =
-      await this.riskRepository.getRiskClassificationValues()
-
-    const v8Factor = createV8FactorFromV2(
-      parameterAttributeRiskValues,
-      riskClassificationScore
-    )
-    // Update the v8 risk factor to keep the logic in sync
-    await this.createOrUpdateRiskFactor(
-      v8Factor,
-      await this.getV2RiskFactorID(
-        parameterAttributeRiskValues.riskEntityType,
-        parameterAttributeRiskValues.parameter
-      )
-    )
-    return {
-      entities: [
-        {
-          oldImage: oldParameterRiskItemValue ?? undefined,
-          newImage: newParameterRiskItemValue,
-          logMetadata: {
-            parameter: newParameterRiskItemValue.parameter,
-            riskEntityType: newParameterRiskItemValue.riskEntityType,
-            targetIterableParameter:
-              newParameterRiskItemValue.targetIterableParameter,
-          },
-          entityId: [
-            humanizeAuto('RISK_FACTOR'),
-            humanizeAuto(parameterAttributeRiskValues.riskEntityType),
-            parameterAttributeRiskValues.parameter,
-          ].join(' - '),
-        },
-      ],
-      result: newParameterRiskItemValue,
-      actionTypeOverride: oldParameterRiskItemValue ? 'UPDATE' : 'CREATE',
     }
   }
 
@@ -318,7 +241,7 @@ export class RiskService {
     }
     let currentRiskFactor: RiskFactor | null = null
     const isNewRiskFactor = riskFactorId ? false : true
-    const isDefaultFactor = isDefaultRiskFactor(riskFactor)
+
     const id =
       riskFactorId || riskFactor.riskFactorId
         ? riskFactorId && !riskFactor.riskFactorId
@@ -328,7 +251,9 @@ export class RiskService {
     if (!riskFactor.riskFactorId && riskFactorId) {
       currentRiskFactor = await this.riskRepository.getRiskFactor(id)
     }
-
+    const isDefaultFactor =
+      isDefaultRiskFactor(riskFactor) ||
+      (currentRiskFactor && isDefaultRiskFactor(currentRiskFactor))
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
 
@@ -336,7 +261,7 @@ export class RiskService {
 
     if (isDefaultFactor) {
       migratedFactor = createMigratedFactor(
-        riskFactor,
+        { ...currentRiskFactor, ...riskFactor },
         riskClassificationValues
       )
     }

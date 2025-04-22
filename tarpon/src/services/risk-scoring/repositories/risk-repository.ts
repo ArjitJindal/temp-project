@@ -35,7 +35,6 @@ import {
 } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { logger } from '@/core/logger'
 import {
@@ -67,7 +66,6 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
-import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { handleSmallNumber } from '@/utils/helpers'
 import { CounterRepository } from '@/services/counter/repository'
 import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
@@ -510,88 +508,6 @@ export class RiskRepository {
     return newDrsRiskValue
   }
 
-  async createOrUpdateParameterRiskItem(
-    parameterRiskLevels: ParameterAttributeRiskValues
-  ) {
-    logger.debug(`Updating parameter risk levels.`)
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...parameterRiskLevels,
-        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
-          this.tenantId,
-
-          parameterRiskLevels.parameter,
-          parameterRiskLevels.riskEntityType
-        ),
-      },
-    }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
-    logger.debug(`Updated parameter risk levels.`)
-    return parameterRiskLevels
-  }
-
-  async deleteParameterRiskItem(
-    parameter: RiskFactorParameter,
-    entityType: RiskEntityType
-  ) {
-    logger.debug(`Deleting parameter risk item.`)
-    const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
-      this.tenantId,
-      parameter,
-      entityType
-    )
-
-    const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: primaryKey,
-    }
-
-    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
-    logger.debug(`Deleted parameter risk item.`)
-  }
-
-  async getParameterRiskItem(
-    parameter: RiskFactorParameter,
-    entityType: RiskEntityType
-  ): Promise<ParameterAttributeRiskValues | null> {
-    const keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
-    const { PartitionKeyID, SortKeyID } =
-      DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
-        this.tenantId,
-        parameter,
-        entityType
-      )
-    const expressionAttributeVals = {
-      ':pk': PartitionKeyID,
-      ':sk': SortKeyID,
-    }
-
-    const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: keyConditionExpr,
-
-      ExpressionAttributeValues: expressionAttributeVals,
-    }
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-
-      if (!result.Items?.length) {
-        return null
-      }
-
-      return omit(result.Items[0], [
-        'PartitionKeyID',
-        'SortKeyID',
-      ]) as ParameterAttributeRiskValues
-    } catch (e) {
-      logger.error(e)
-      throw new InternalServerError(
-        `Parameter Risk Item not found for ${parameter} and ${entityType}`
-      )
-    }
-  }
-
   public async augmentRiskLevel<T extends { arsScore?: ArsScore }>(
     items: Array<T>
   ): Promise<T[]> {
@@ -609,48 +525,24 @@ export class RiskRepository {
     }))
   }
 
-  async getParameterRiskItems(): Promise<
-    ParameterAttributeRiskValues[] | null
-  > {
-    const keyConditionExpr = 'PartitionKeyID = :pk'
-    const expressionAttributeVals = {
-      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
-        .PartitionKeyID,
-    }
-
-    const queryInput: QueryCommandInput = {
+  async getAverageArsScoreDynamo(userId: string) {
+    const getInput: GetCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: keyConditionExpr,
-      ExpressionAttributeValues: expressionAttributeVals,
+      Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
     }
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0
-        ? (result.Items.map((item) =>
-            omit(item, ['PartitionKeyID', 'SortKeyID'])
-          ) as ParameterAttributeRiskValues[])
-        : null
-    } catch (e) {
-      logger.error(e)
+    const result = await this.dynamoDb.send(new GetCommand(getInput))
+    if (!result.Item) {
+      logger.warn(`Average ars score null for user: ${userId}`)
       return null
     }
+
+    return omit(result.Item, ['PartitionKeyID', 'SortKeyID']) as AverageArsScore
   }
 
   async getAverageArsScore(userId: string): Promise<AverageArsScore | null> {
-    if (hasFeature('RISK_SCORING_V8')) {
-      const getInput: GetCommandInput = {
-        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
-      }
-      const result = await this.dynamoDb.send(new GetCommand(getInput))
-      if (!result.Item) {
-        return null
-      }
-
-      return omit(result.Item, [
-        'PartitionKeyID',
-        'SortKeyID',
-      ]) as AverageArsScore
+    // Todo: Remove this after Algorithm switch is GA and we've backfilled Average Ars score to dynamo.
+    if (hasFeature('PNB')) {
+      return await this.getAverageArsScoreDynamo(userId)
     }
     const db = this.mongoDb.db()
     const arsScoresCollectionName = ARS_SCORES_COLLECTION(this.tenantId)

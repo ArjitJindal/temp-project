@@ -19,7 +19,6 @@ const TEST_PARAMETERS: SimulationPostRequest = {
       {
         type: 'PULSE',
         classificationValues: [],
-        parameterAttributeRiskValues: [],
         sampling: {
           usersCount: 100,
         },
@@ -99,7 +98,6 @@ describe('Consoel API - Simulation', () => {
           parameters: {
             type: 'PULSE',
             classificationValues: [],
-            parameterAttributeRiskValues: [],
             sampling: { usersCount: 100 },
             name: 'Test Simulation',
           },
@@ -169,7 +167,6 @@ describe('Consoel API - Simulation', () => {
           parameters: {
             type: 'PULSE',
             classificationValues: [],
-            parameterAttributeRiskValues: [],
             sampling: { usersCount: 100 },
             name: 'Test Simulation',
           },

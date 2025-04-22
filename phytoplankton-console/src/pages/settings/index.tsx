@@ -148,7 +148,7 @@ export default function SettingsPage() {
                 <Feature name="RISK_SCORING">
                   <RiskAlgorithmsSettings />
                 </Feature>
-                <Feature name="RISK_SCORING_V8">
+                <Feature name="RISK_SCORING">
                   <CraToggleSettings />
                   <Feature name="RISK_SCORING">
                     <RiskAlgorithmsCra />

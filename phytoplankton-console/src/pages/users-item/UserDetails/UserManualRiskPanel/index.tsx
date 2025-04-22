@@ -25,7 +25,7 @@ import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg
 import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_DRS, USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
-import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/const';
 import { useHasPermissions } from '@/utils/user-utils';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {

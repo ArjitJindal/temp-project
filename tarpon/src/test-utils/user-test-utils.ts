@@ -6,7 +6,6 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { Business } from '@/@types/openapi-public/Business'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -137,32 +136,25 @@ export async function createUsersForTransactions(
 export async function createConsumerUser(
   testTenantId: string,
   user: User | InternalUser,
-  calculateRiskScores: boolean = true,
-  useV8RiskScoring: boolean = false
+  calculateRiskScores: boolean = true
 ) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
-  const riskScoringService = useV8RiskScoring
-    ? new RiskScoringV8Service(testTenantId, logicEvaluator, {
-        dynamoDb,
-        mongoDb,
-      })
-    : new RiskScoringService(testTenantId, {
-        dynamoDb,
-        mongoDb,
-      })
-  if (calculateRiskScores) {
-    if (useV8RiskScoring) {
-      await (riskScoringService as RiskScoringV8Service).handleUserUpdate({
-        user,
-      })
-    } else {
-      await (riskScoringService as RiskScoringService).updateInitialRiskScores(
-        user
-      )
+  const riskScoringService = new RiskScoringV8Service(
+    testTenantId,
+    logicEvaluator,
+    {
+      dynamoDb,
+      mongoDb,
     }
+  )
+
+  if (calculateRiskScores) {
+    await (riskScoringService as RiskScoringV8Service).handleUserUpdate({
+      user,
+    })
   }
   const createdUser = await userRepository.saveConsumerUser(user)
   await userRepository.saveUserMongo(createdUser as InternalUser)
@@ -189,12 +181,17 @@ export async function createBusinessUser(
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
-  const riskScoringService = new RiskScoringService(testTenantId, {
-    dynamoDb,
-    mongoDb,
-  })
+  const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+  const riskScoringService = new RiskScoringV8Service(
+    testTenantId,
+    logicEvaluator,
+    {
+      dynamoDb,
+      mongoDb,
+    }
+  )
   if (calculateRiskScores) {
-    await riskScoringService.updateInitialRiskScores(user)
+    await riskScoringService.handleUserUpdate({ user })
   }
   const createdUser = await userRepository.saveBusinessUser(user)
 

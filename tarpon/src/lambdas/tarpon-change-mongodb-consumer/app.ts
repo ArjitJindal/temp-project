@@ -34,7 +34,6 @@ import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBus
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { RiskScoringService } from '@/services/risk-scoring'
 import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -43,7 +42,6 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
@@ -311,14 +309,6 @@ export class TarponChangeMongoDbConsumer {
     }
     await casesRepo.syncCaseUsers(internalUser)
 
-    if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
-      // Will backfill KRS score for all users without KRS score
-      await sendBatchJobCommand({
-        type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
-        tenantId,
-        parameters: { userIds: [internalUser.userId] },
-      })
-    }
     subSegment?.close()
   }
 
@@ -358,26 +348,21 @@ export class TarponChangeMongoDbConsumer {
     })
 
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    const riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
 
     const settings = await tenantSettings(tenantId)
     const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
-    const v8RiskScoringEnabled = settings.features?.includes('RISK_SCORING_V8')
     const arsScoreSubSegment = await addNewSubsegment(
       'StreamConsumer',
       'handleTransaction arsScore'
     )
-    const arsScore =
-      isRiskScoringEnabled || v8RiskScoringEnabled
-        ? await riskScoringService.getArsScore(transaction.transactionId)
-        : undefined
+    const arsScore = isRiskScoringEnabled
+      ? await riskRepository.getArsScore(transaction.transactionId)
+      : undefined
 
     arsScoreSubSegment?.close()
 
-    if ((v8RiskScoringEnabled || isRiskScoringEnabled) && !arsScore) {
+    if (isRiskScoringEnabled && !arsScore) {
       logger.error(`ARS score not found for transaction. Recalculating async`)
     }
 
@@ -401,7 +386,7 @@ export class TarponChangeMongoDbConsumer {
             ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
             ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
           },
-          arsScore
+          arsScore || undefined
         ),
         ruleInstancesRepo.getRuleInstancesByIds(
           filterLiveRules(
@@ -421,7 +406,7 @@ export class TarponChangeMongoDbConsumer {
       'StreamConsumer',
       'handleTransaction deployingFactors'
     )
-    const deployingFactors = v8RiskScoringEnabled
+    const deployingFactors = isRiskScoringEnabled
       ? (await riskService.getAllRiskFactors()).filter(
           (factor) => factor.status === 'DEPLOYING'
         )
@@ -529,67 +514,39 @@ export class TarponChangeMongoDbConsumer {
 
     // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
     if (isRiskScoringEnabled) {
-      if (v8RiskScoringEnabled) {
-        const riskScoringV8Service = new RiskScoringV8Service(
-          tenantId,
-          logicEvaluator,
-          {
-            dynamoDb,
-            mongoDb,
-          }
-        )
-        const drsScoreSubSegment = await addNewSubsegment(
-          'StreamConsumer',
-          'handleTransaction drsScore'
-        )
-        const [originDrsScore, destinationDrsScore] = await Promise.all([
-          ORIGIN?.type === 'USER'
-            ? riskScoringV8Service.getDrsScore(ORIGIN.user.userId)
-            : Promise.resolve(undefined),
-          DESTINATION?.type === 'USER'
-            ? riskScoringV8Service.getDrsScore(DESTINATION.user.userId)
-            : Promise.resolve(undefined),
-        ])
-        drsScoreSubSegment?.close()
+      const riskScoringV8Service = new RiskScoringV8Service(
+        tenantId,
+        logicEvaluator,
+        {
+          dynamoDb,
+          mongoDb,
+        }
+      )
+      const drsScoreSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction drsScore'
+      )
+      const [originDrsScore, destinationDrsScore] = await Promise.all([
+        ORIGIN?.type === 'USER'
+          ? riskScoringV8Service.getDrsScore(ORIGIN.user.userId)
+          : Promise.resolve(undefined),
+        DESTINATION?.type === 'USER'
+          ? riskScoringV8Service.getDrsScore(DESTINATION.user.userId)
+          : Promise.resolve(undefined),
+      ])
+      drsScoreSubSegment?.close()
 
-        const updateDrsScoreSubSegment = await addNewSubsegment(
-          'StreamConsumer',
-          'handleTransaction updateDrsScore'
-        )
-        await casesRepo.updateDynamicRiskScores(
-          pick(transaction, ['transactionId', 'hitRules']),
-          originDrsScore?.drsScore,
-          destinationDrsScore?.drsScore
-        )
-        updateDrsScoreSubSegment?.close()
-        logger.info(`DRS Updated in Cases`)
-      } else {
-        logger.info(`Calculating ARS & DRS`)
-        const updateDynamicRiskScoresSubSegment = await addNewSubsegment(
-          'StreamConsumer',
-          'handleTransaction updateDynamicRiskScores'
-        )
-        const { originDrsScore, destinationDrsScore } =
-          await riskScoringService.updateDynamicRiskScores(
-            transaction,
-            !arsScore
-          )
-        updateDynamicRiskScoresSubSegment?.close()
-        logger.info(`Calculation of ARS & DRS Completed`)
-
-        const casesUpdateSubSegment = await addNewSubsegment(
-          'StreamConsumer',
-          'handleTransaction casesUpdateDrsScore'
-        )
-        await casesRepo.updateDynamicRiskScores(
-          pick(transaction, ['transactionId', 'hitRules']),
-          originDrsScore,
-          destinationDrsScore
-        )
-        casesUpdateSubSegment?.close()
-
-        logger.info(`DRS Updated in Cases`)
-      }
+      const updateDrsScoreSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction updateDrsScore'
+      )
+      await casesRepo.updateDynamicRiskScores(
+        pick(transaction, ['transactionId', 'hitRules']),
+        originDrsScore?.drsScore,
+        destinationDrsScore?.drsScore
+      )
+      updateDrsScoreSubSegment?.close()
+      logger.info(`DRS Updated in Cases`)
     }
 
     const handleNewCasesSubSegment = await addNewSubsegment(

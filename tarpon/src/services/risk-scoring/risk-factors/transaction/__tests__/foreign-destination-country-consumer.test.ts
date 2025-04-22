@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import { RiskScoringService } from '../../..'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { getRiskFactorLogicByKeyAndType } from '../../index'
@@ -26,7 +25,7 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 dynamoDbSetupHook()
 describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result foreign', async () => {
+  test('Basic case', async () => {
     const riskFactor = {
       ...TEST_TRANSACTION_RISK_PARAMETERS[0],
       isDerived: true,
@@ -101,10 +100,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -113,11 +108,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -130,7 +120,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
       }
     )
 
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be equivalent to V2 result domestic', async () => {
     const riskFactor = {
@@ -207,10 +197,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -219,11 +205,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -236,7 +217,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
       }
     )
 
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle null transaction country for foreign destination country consumer', async () => {
     const riskFactor = {
@@ -313,10 +294,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -325,11 +302,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -341,7 +313,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle null user country for foreign destination country consumer', async () => {
     const riskFactor = {
@@ -418,10 +390,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -430,11 +398,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -446,7 +409,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle null user country and transaction country for foreign destination country consumer', async () => {
     const riskFactor = {
@@ -523,10 +486,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -535,11 +494,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         mongoDb,
         dynamoDb,
       }
-    )
-    const v2Result = await riskScoringV2Service.simulateArsScore(
-      transaction.transaction,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
@@ -551,6 +505,6 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

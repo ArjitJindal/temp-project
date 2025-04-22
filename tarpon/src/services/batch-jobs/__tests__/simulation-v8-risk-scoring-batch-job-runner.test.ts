@@ -20,7 +20,7 @@ import {
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
-withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING', 'RISK_SCORING_V8'])
+withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
 
 describe('Simulation (Risk Scoring) Batch Job Runner', () => {

@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react';
-import { useLocalStorageState } from 'ahooks';
+import { useParams } from 'react-router';
 import RiskClassificationSimulationResults from '../RiskClassificationSimulationResults';
 import { State } from '../RiskClassificationTable';
 import NewSimulation, { SimulationRef } from './NewSimulation';
 import SimulationHistory from './SimulationHistory';
 import { SimulationPostResponse } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Tabs, { TabItem } from '@/components/library/Tabs';
 
 type Props = {
   refetchSimulationCount: () => void;
@@ -17,15 +16,14 @@ type Props = {
 export const SimulateRiskClassification = (props: Props): JSX.Element => {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<SimulationPostResponse | null>(null);
-  const [activeKey, setActiveKey] = useLocalStorageState<'NEW' | 'HISTORY'>(
-    'SIMULATOR_RISK_LEVELS_ACTIVE_KEY',
-    'NEW',
-  );
   const ref = useRef<SimulationRef>(null);
-  const tabItems: TabItem[] = [
-    {
-      title: 'Simulate',
-      children: (
+  const { type } = useParams();
+
+  return (
+    <Feature name="SIMULATOR">
+      {type === 'simulation-history' ? (
+        <SimulationHistory setResult={setResult} setOpen={setOpen} />
+      ) : (
         <NewSimulation
           ref={ref}
           setResult={setResult}
@@ -36,30 +34,7 @@ export const SimulateRiskClassification = (props: Props): JSX.Element => {
             setOpen(true);
           }}
         />
-      ),
-      key: 'NEW',
-      isClosable: false,
-    },
-    {
-      title: 'Simulation history',
-      children: <SimulationHistory setResult={setResult} setOpen={setOpen} />,
-      key: 'HISTORY',
-      isClosable: false,
-    },
-  ];
-  const onChange = (key: string) => {
-    if (key === 'NEW' || key === 'HISTORY') {
-      setActiveKey(key);
-    }
-  };
-  return (
-    <Feature name="SIMULATOR">
-      <Tabs
-        activeKey={activeKey}
-        type="line"
-        items={tabItems}
-        onChange={(key: string) => onChange(key)}
-      />
+      )}
       {result && result.jobId && (
         <RiskClassificationSimulationResults
           onClose={(toClose) => {

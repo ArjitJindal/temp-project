@@ -22,7 +22,7 @@ export type PageWrapperProps = {
   simulationHistoryUrl: string;
   simulationDefaultUrl: string;
   nonSimulationDefaultUrl: string;
-  storageKey: 'SIMULATION_RULES' | 'SIMULATION_RISK_FACTORS' | 'SIMULATION_CUSTOM_RISK_FACTORS';
+  storageKey: 'SIMULATION_RULES' | 'SIMULATION_CUSTOM_RISK_FACTORS' | 'SIMULATION_RISK_LEVELS';
 };
 
 export const BreadcrumbsSimulationPageWrapper = forwardRef<
@@ -48,6 +48,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
     false,
   );
   const navigate = useNavigate();
+
   const handleSimulationModeChange = useCallback(
     (value: boolean | undefined) => {
       setIsSimulationEnabled(value);
@@ -92,22 +93,25 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
   return (
     <SimulationPageWrapper
       key={`${isSimulationEnabled}`}
-      isSimulationModeEnabled={isSimulationEnabled}
+      isSimulationModeEnabled={
+        localStorage.getItem(props.storageKey) === 'true' ||
+        location.pathname.includes('simulation')
+      }
       onSimulationModeChange={handleSimulationModeChange}
       header={(actionButton) => (
         <div className={s.header}>
           <Breadcrumbs items={props.breadcrumbs} />
           <div className={s.right}>
-            {!location.pathname.endsWith('/simulation-history') && isSimulationEnabled && (
-              <Link
-                to={props.simulationHistoryUrl}
-                className={s.history}
-                data-cy="simulation-history-link"
-              >
-                {' '}
-                <EyeLineIcon className={s.icon} /> View history
-              </Link>
-            )}
+            {!location.pathname.endsWith('/simulation-history') &&
+              localStorage.getItem(props.storageKey) === 'true' && (
+                <Link
+                  to={props.simulationHistoryUrl}
+                  className={s.history}
+                  data-cy="simulation-history-link"
+                >
+                  <EyeLineIcon className={s.icon} /> View history
+                </Link>
+              )}
             {actionButton}
           </div>
         </div>

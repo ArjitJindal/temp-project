@@ -8,9 +8,7 @@ import Page404 from '@/pages/404';
 import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
 import AlertItemPage from '@/pages/alert-item';
-import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
-import RiskLevelPage from '@/pages/risk-levels/risk-factors';
-import CustomRiskFactorsPage from '@/pages/risk-levels/custom-risk-factors';
+import RiskFactorPage from '@/pages/risk-levels/risk-factors';
 import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
@@ -41,17 +39,16 @@ import { QASamplePage } from '@/pages/qa-sample-item';
 import { SimulationHistoryResultPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
 import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage';
 import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
-import RiskFactorItemPage from '@/pages/risk-levels/custom-risk-factors/RiskItem';
+import RiskFactorItemPage from '@/pages/risk-levels/risk-factors/RiskItem';
 import { MlModelsPage } from '@/pages/ml-models';
+import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const isRiskScoringV8Enabled = useFeatureEnabled('RISK_SCORING_V8');
+  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isSarEnabled = useFeatureEnabled('SAR');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
-  const isRiskScoringV8EnabledForV2 = useFeatureEnabled('RISK_SCORING_V8_FOR_V2');
-  const isRiskFactorsMergeEnabled = useFeatureEnabled('RISK_FACTORS_UI_MERGE');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -302,362 +299,139 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isRiskScoringV8EnabledForV2 &&
-        !isRiskFactorsMergeEnabled && {
-          path: '/risk-levels',
-          icon: 'risk-scoring',
-          name: 'risk-levels',
-          position: 'top',
-          permissions: [
-            'risk-scoring:risk-factors:read',
-            'risk-scoring:risk-levels:read',
-            'risk-scoring:risk-algorithms:read',
-          ],
-          routes: [
-            {
-              path: '/risk-levels',
-              redirect: '/risk-levels/risk-factors',
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/risk-factors/',
-              component: RiskLevelPage,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/risk-factors/:type',
-              component: RiskLevelPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/risk-factors/simulation-history',
-              component: RiskFactorsSimulationHistoryPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/risk-factors/simulation-history/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/risk-factors/simulation-result/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'configure',
-              path: '/risk-levels/configure',
-              component: RiskLevelsConfigurePage,
-              permissions: ['risk-scoring:risk-levels:read'],
-            },
-            {
-              name: 'risk-algorithms',
-              path: '/risk-levels/risk-algorithms',
-              component: RiskAlgorithmTable,
-              permissions: ['risk-scoring:risk-algorithms:read'],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/',
-              component: CustomRiskFactorsPage,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type',
-              component: CustomRiskFactorsPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-history',
-              component: RiskFactorsSimulationHistoryPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-history/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'custom-risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-result/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-          ],
-        },
-      isRiskScoringV8EnabledForV2 &&
-        isRiskFactorsMergeEnabled && {
-          path: '/risk-levels',
-          icon: 'risk-scoring',
-          name: 'risk-levels',
-          position: 'top',
-          permissions: [
-            'risk-scoring:risk-factors:read',
-            'risk-scoring:risk-levels:read',
-            'risk-scoring:risk-algorithms:read',
-          ],
-          routes: [
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/',
-              component: CustomRiskFactorsPage,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type',
-              component: CustomRiskFactorsPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/:type/:mode',
-              component: RiskFactorItemPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-history',
-              component: RiskFactorsSimulationHistoryPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-history/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'risk-factors',
-              path: '/risk-levels/custom-risk-factors/simulation-result/:jobId',
-              component: SimulationHistoryResultPage,
-              hideInMenu: true,
-              permissions: ['risk-scoring:risk-factors:read'],
-            },
-            {
-              name: 'configure',
-              path: '/risk-levels/configure',
-              component: RiskLevelsConfigurePage,
-              permissions: ['risk-scoring:risk-levels:read'],
-            },
-            {
-              name: 'risk-algorithms',
-              path: '/risk-levels/risk-algorithms',
-              component: RiskAlgorithmTable,
-              permissions: ['risk-scoring:risk-algorithms:read'],
-            },
-          ],
-        },
-
-      !isRiskScoringV8EnabledForV2 &&
-        (isRiskScoringEnabled || isRiskScoringV8Enabled) && {
-          path: '/risk-levels',
-          icon: 'risk-scoring',
-          name: 'risk-levels',
-          position: 'top',
-          permissions: [
-            'risk-scoring:risk-factors:read',
-            'risk-scoring:risk-levels:read',
-            'risk-scoring:risk-algorithms:read',
-          ],
-          routes: [
-            ...(!isRiskScoringV8Enabled && isRiskScoringEnabled
-              ? [
-                  {
-                    path: '/risk-levels',
-                    redirect: '/risk-levels/risk-factors',
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'risk-factors',
-                    path: '/risk-levels/risk-factors/',
-                    component: RiskLevelPage,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'risk-factors',
-                    path: '/risk-levels/risk-factors/:type',
-                    component: RiskLevelPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'risk-factors',
-                    path: '/risk-levels/risk-factors/simulation-history',
-                    component: RiskFactorsSimulationHistoryPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'risk-factors',
-                    path: '/risk-levels/risk-factors/simulation-history/:jobId',
-                    component: SimulationHistoryResultPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'risk-factors',
-                    path: '/risk-levels/risk-factors/simulation-result/:jobId',
-                    component: SimulationHistoryResultPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                ]
-              : []),
-            ...(isRiskScoringV8Enabled
-              ? [
-                  {
-                    path: '/risk-levels',
-                    redirect: '/risk-levels/custom-risk-factors',
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/',
-                    component: CustomRiskFactorsPage,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/:type',
-                    component: CustomRiskFactorsPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode',
-                    component: RiskFactorItemPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode',
-                    component: RiskFactorItemPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
-                    component: RiskFactorItemPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/:type/:mode',
-                    component: RiskFactorItemPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/simulation-history',
-                    component: RiskFactorsSimulationHistoryPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/simulation-history/:jobId',
-                    component: SimulationHistoryResultPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                  {
-                    name: 'custom-risk-factors',
-                    path: '/risk-levels/custom-risk-factors/simulation-result/:jobId',
-                    component: SimulationHistoryResultPage,
-                    hideInMenu: true,
-                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                  },
-                ]
-              : []),
-            {
-              name: 'configure',
-              path: '/risk-levels/configure',
-              component: RiskLevelsConfigurePage,
-              permissions: ['risk-scoring:risk-levels:read'],
-            },
-            {
-              name: 'risk-algorithms',
-              path: '/risk-levels/risk-algorithms',
-              component: RiskAlgorithmTable,
-              permissions: ['risk-scoring:risk-algorithms:read'],
-            },
-          ],
-        },
+      (isRiskLevelsEnabled || isRiskScoringEnabled) && {
+        path: '/risk-levels',
+        icon: 'risk-scoring',
+        name: 'risk-levels',
+        position: 'top',
+        permissions: [
+          'risk-scoring:risk-factors:read',
+          'risk-scoring:risk-levels:read',
+          'risk-scoring:risk-algorithms:read',
+        ],
+        routes: [
+          ...(isRiskLevelsEnabled
+            ? [
+                {
+                  name: 'risk-levels-configure',
+                  path: '/risk-levels/configure',
+                  component: RiskLevelsConfigurePage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-levels:read'] as Permission[],
+                },
+                {
+                  name: 'risk-levels-configure',
+                  path: '/risk-levels/configure/:type',
+                  component: RiskLevelsConfigurePage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-levels:read'] as Permission[],
+                },
+              ]
+            : []),
+          ...(isRiskScoringEnabled
+            ? [
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors',
+                  component: RiskFactorPage,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/:type',
+                  component: RiskFactorPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/simulation-history',
+                  component: RiskFactorsSimulationHistoryPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/simulation-history/:jobId',
+                  component: SimulationHistoryResultPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/simulation-result/:jobId',
+                  component: SimulationHistoryResultPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+              ]
+            : []),
+          {
+            name: 'risk-algorithms',
+            path: '/risk-levels/risk-algorithms',
+            component: RiskAlgorithmTable,
+            permissions: ['risk-scoring:risk-algorithms:read'],
+          },
+          ...(isRiskScoringEnabled
+            ? [
+                {
+                  name: 'risk-factors-create',
+                  path: '/risk-levels/risk-factors/:type/create',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-edit',
+                  path: '/risk-levels/risk-factors/:type/:id/edit',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-read',
+                  path: '/risk-levels/risk-factors/:type/:id/read',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-duplicate',
+                  path: '/risk-levels/risk-factors/:type/:id/duplicate',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-simulation-mode-create',
+                  path: '/risk-levels/risk-factors/simulation-mode/:key/:type/create',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-simulation-mode-edit',
+                  path: '/risk-levels/risk-factors/simulation-mode/:key/:type/:id/edit',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                },
+                {
+                  name: 'risk-factors-simulation-mode-read',
+                  path: '/risk-levels/risk-factors/simulation-mode/:key/:type/:id/read',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  path: '/risk-levels',
+                  redirect: '/risk-levels/risk-factors',
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+              ]
+            : []),
+        ],
+      },
       {
         name: 'lists',
         path: '/lists',
@@ -831,7 +605,7 @@ export function useRoutes(): RouteItem[] {
   }, [
     lastActiveTab,
     lastActiveRuleTab,
-    isRiskScoringEnabled,
+    isRiskLevelsEnabled,
     isSarEnabled,
     lastActiveList,
     isSanctionsEnabled,
@@ -840,9 +614,7 @@ export function useRoutes(): RouteItem[] {
     hasAuditLogPermission,
     permissions,
     hasMachineLearningFeature,
-    isRiskScoringV8Enabled,
-    isRiskScoringV8EnabledForV2,
-    isRiskFactorsMergeEnabled,
+    isRiskScoringEnabled,
   ]);
 }
 

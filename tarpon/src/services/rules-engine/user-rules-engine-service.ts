@@ -3,7 +3,6 @@ import { NotFound, BadRequest } from 'http-errors'
 import { isEmpty, omit } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
-import { RiskScoringService } from '../risk-scoring'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { UserEventRepository } from './repositories/user-event-repository'
@@ -53,7 +52,6 @@ export class UserManagementService {
   rulesEngineService: RulesEngineService
   userRepository: UserRepository
   userEventRepository: UserEventRepository
-  riskScoringService: RiskScoringService
   riskScoringV8Service: RiskScoringV8Service
   caseRepository: CaseRepository
   listService: ListService
@@ -78,10 +76,6 @@ export class UserManagementService {
       logicEvaluator,
       mongoDb
     )
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
     this.riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
       logicEvaluator,
@@ -302,19 +296,6 @@ export class UserManagementService {
     const updatedAttributes: UpdatedAttributesType<T> =
       this.getUpdatedUserAttributes(userType, userEvent) ?? {}
 
-    if (hasFeature('RISK_LEVELS') && !hasFeature('RISK_SCORING_V8')) {
-      const preDefinedRiskLevel = updatedAttributes?.riskLevel
-
-      if (preDefinedRiskLevel) {
-        await this.riskScoringService.handleManualRiskLevel(
-          {
-            ...updatedAttributes,
-            userId: user.userId,
-          } as User | Business,
-          isDrsUpdatable
-        )
-      }
-    }
     let updatedTags: UserTag[] | undefined
     if (updatedAttributes.tags) {
       updatedTags = mergeUserTags(user.tags ?? [], updatedAttributes.tags)
@@ -330,21 +311,24 @@ export class UserManagementService {
     let riskScoreDetails: UserRiskScoreDetails | undefined
 
     if (hasFeature('RISK_SCORING')) {
-      if (hasFeature('RISK_SCORING_V8')) {
-        riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate({
-          user: updatedUser,
-          manualRiskLevel: updatedAttributes.riskLevel,
-          isDrsUpdatable,
-          manualKrsRiskLevel: updatedAttributes.kycRiskLevel,
-          lockKrs: isKrsLocked,
-        })
-      } else {
-        riskScoreDetails =
-          await this.riskScoringService.calculateAndUpdateKRSAndDRS(
-            updatedUser,
-            isDrsUpdatable,
-            isKrsLocked
-          )
+      riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate({
+        user: updatedUser,
+        manualRiskLevel: updatedAttributes.riskLevel,
+        isDrsUpdatable,
+        manualKrsRiskLevel: updatedAttributes.kycRiskLevel,
+        lockKrs: isKrsLocked,
+      })
+    } else if (hasFeature('RISK_LEVELS')) {
+      const preDefinedRiskLevel = updatedAttributes?.riskLevel
+
+      if (preDefinedRiskLevel) {
+        await this.riskScoringV8Service.handleManualRiskLevelUpdate(
+          {
+            ...updatedUser,
+            userId: user.userId,
+          } as User | Business,
+          isDrsUpdatable
+        )
       }
     }
 

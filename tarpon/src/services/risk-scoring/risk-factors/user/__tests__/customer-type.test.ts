@@ -1,4 +1,3 @@
-import { RiskScoringService } from '../../..'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import {
@@ -22,7 +21,7 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 dynamoDbSetupHook()
 describe('Customer Type Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result for consumer user', async () => {
+  test('Basic case', async () => {
     const consumerRiskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
     const consumerV8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
@@ -30,7 +29,8 @@ describe('Customer Type Risk Factor', () => {
       riskLevelLogic: (
         getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
       )({
-        riskLevelAssignmentValues: consumerRiskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues:
+          consumerRiskFactor.riskLevelAssignmentValues ?? [],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -41,10 +41,6 @@ describe('Customer Type Risk Factor', () => {
     const consumerUser = { ...getTestUser(), type: 'CONSUMER' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -54,11 +50,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const consumerV2Result = await riskScoringV2Service.calculateKrsScore(
-      consumerUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [consumerRiskFactor]
-    )
     const consumerV8Result =
       await riskScoringV8Service.calculateRiskFactorScore(
         consumerV8RiskFactor,
@@ -67,13 +58,9 @@ describe('Customer Type Risk Factor', () => {
           type: 'USER',
         }
       )
-    expect(consumerV2Result.score).toEqual(consumerV8Result.score)
+    expect(50).toEqual(consumerV8Result.score)
   })
   test('V8 result should handle empty riskLevelAssignmentValues consumer user', async () => {
-    const riskFactor = {
-      ...TEST_CONSUMER_USER_RISK_PARAMETER,
-      riskLevelAssignmentValues: [], // Empty riskLevelAssignmentValues
-    }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
@@ -92,10 +79,6 @@ describe('Customer Type Risk Factor', () => {
     const user = { ...getTestUser(), type: 'CONSUMER' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -105,11 +88,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -117,7 +95,7 @@ describe('Customer Type Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able handel empty type consumer user', async () => {
     const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
@@ -128,7 +106,7 @@ describe('Customer Type Risk Factor', () => {
       riskLevelLogic: (
         getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
       )({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues ?? [],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -140,10 +118,6 @@ describe('Customer Type Risk Factor', () => {
     const user = { ...getTestUser(), type: '' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -153,11 +127,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -165,7 +134,7 @@ describe('Customer Type Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(50).toEqual(v8Result.score)
   })
   test('V8 result should be able handel null consumer user', async () => {
     const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
@@ -175,7 +144,7 @@ describe('Customer Type Risk Factor', () => {
       riskLevelLogic: (
         getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
       )({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues ?? [],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -187,10 +156,6 @@ describe('Customer Type Risk Factor', () => {
     const user = { ...getTestUser(), type: null }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -200,11 +165,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -212,9 +172,9 @@ describe('Customer Type Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(50).toEqual(v8Result.score)
   })
-  test('V8 result should be equivalent to V2 result for business user', async () => {
+  test('Basic case # 2', async () => {
     const businessRiskFactor = {
       ...TEST_BUSINESS_USER_RISK_PARAMETER,
       riskLevelAssignmentValues: [
@@ -255,10 +215,6 @@ describe('Customer Type Risk Factor', () => {
     const businessUser = { ...getTestBusiness(), type: 'BUSINESS' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -268,11 +224,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const businessV2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [businessRiskFactor]
-    )
     const businessV8Result =
       await riskScoringV8Service.calculateRiskFactorScore(
         businessV8RiskFactor,
@@ -281,7 +232,7 @@ describe('Customer Type Risk Factor', () => {
           type: 'USER',
         }
       )
-    expect(businessV2Result.score).toEqual(businessV8Result.score)
+    expect(90).toEqual(businessV8Result.score)
   })
   test('V8 result should be able handel empty type business user', async () => {
     const riskFactor = TEST_BUSINESS_USER_RISK_PARAMETER
@@ -292,7 +243,7 @@ describe('Customer Type Risk Factor', () => {
       riskLevelLogic: (
         getRiskFactorLogicByKeyAndType('type', 'BUSINESS') ?? (() => [])
       )({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues ?? [],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -304,10 +255,6 @@ describe('Customer Type Risk Factor', () => {
     const businessUser = { ...getTestBusiness(), type: '' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -317,11 +264,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -329,7 +271,7 @@ describe('Customer Type Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able handel null business user', async () => {
     const riskFactor = TEST_BUSINESS_USER_RISK_PARAMETER
@@ -339,7 +281,7 @@ describe('Customer Type Risk Factor', () => {
       riskLevelLogic: (
         getRiskFactorLogicByKeyAndType('type', 'BUSINESS') ?? (() => [])
       )({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues ?? [],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -351,10 +293,6 @@ describe('Customer Type Risk Factor', () => {
     const businessUser = { ...getTestBusiness(), type: null }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -364,11 +302,6 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      businessUser,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -376,6 +309,6 @@ describe('Customer Type Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

@@ -20,7 +20,7 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { RiskScoringService } from '@/services/risk-scoring'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 withLocalChangeHandler()
 dynamoDbSetupHook()
@@ -151,8 +151,15 @@ describe('User inactivity with Risk Level', () => {
   } as UserInactivityRuleParameters
 
   jest
-    .spyOn(RiskScoringService.prototype, 'updateInitialRiskScores')
-    .mockReturnValue(Promise.resolve(30))
+    .spyOn(RiskScoringV8Service.prototype, 'handleUserUpdate')
+    .mockReturnValue(
+      Promise.resolve({
+        kycRiskScore: 30,
+        kycRiskLevel: 'LOW',
+        craRiskLevel: 'LOW',
+        craRiskScore: 30,
+      })
+    )
 
   setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({

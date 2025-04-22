@@ -1,13 +1,12 @@
 import React from 'react';
 import { DEFAULT_RENDERER, findParameter, PARAMETER_RENDERERS } from './helpers';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { Entity, ParameterName } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
-import { RiskLevel } from '@/apis';
+import { RiskEntityType, RiskFactorParameter, RiskLevel } from '@/apis';
 import { RISK_LEVEL, STRING } from '@/components/library/Table/standardDataTypes';
 
 export interface TableRow {
-  entityType: Entity;
-  parameter: ParameterName;
+  entityType: RiskEntityType;
+  parameter: RiskFactorParameter;
   value: unknown;
   riskScore: number;
   riskLevel: RiskLevel;

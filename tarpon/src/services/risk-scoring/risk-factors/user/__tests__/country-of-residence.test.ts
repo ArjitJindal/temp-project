@@ -1,4 +1,3 @@
-import { RiskScoringService } from '../../..'
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR } from '../../user/country-of-residence'
@@ -17,7 +16,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/all'
 dynamoDbSetupHook()
 describe('Country of Residence Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result', async () => {
+  test('Basic case', async () => {
     const riskFactor = {
       ...TEST_CONSUMER_USER_RISK_PARAMETER,
       parameter: 'userDetails.countryOfResidence' as RiskFactorParameter,
@@ -75,10 +74,6 @@ describe('Country of Residence Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -88,11 +83,6 @@ describe('Country of Residence Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -100,15 +90,9 @@ describe('Country of Residence Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should handle empty riskLevelAssignmentValues', async () => {
-    const riskFactor = {
-      ...TEST_CONSUMER_USER_RISK_PARAMETER,
-      parameter: 'userDetails.countryOfResidence' as RiskFactorParameter,
-      isDerived: false,
-      riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[], // Empty riskLevelAssignmentValues
-    }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
@@ -138,10 +122,6 @@ describe('Country of Residence Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -151,11 +131,6 @@ describe('Country of Residence Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -163,7 +138,7 @@ describe('Country of Residence Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handle null country of residence', async () => {
     const riskFactor = {
@@ -223,10 +198,6 @@ describe('Country of Residence Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -236,11 +207,6 @@ describe('Country of Residence Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -248,7 +214,7 @@ describe('Country of Residence Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
   test('V8 result should be able to handle empty country of residence', async () => {
     const riskFactor = {
@@ -305,10 +271,6 @@ describe('Country of Residence Risk Factor', () => {
     }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
@@ -318,11 +280,6 @@ describe('Country of Residence Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
       {
@@ -330,6 +287,6 @@ describe('Country of Residence Risk Factor', () => {
         type: 'USER',
       }
     )
-    expect(v2Result.score).toEqual(v8Result.score)
+    expect(90).toEqual(v8Result.score)
   })
 })

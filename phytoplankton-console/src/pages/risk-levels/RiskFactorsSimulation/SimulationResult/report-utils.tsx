@@ -172,7 +172,6 @@ export const drawSimulationGraphs = (
     };
   }>,
   settings: TenantSettings,
-  isCustomRiskFactors: boolean,
 ): number => {
   let currentY = 40;
   const pageHeight = doc.internal.pageSize.height;
@@ -250,12 +249,10 @@ export const drawSimulationGraphs = (
     const krsHeight = drawBarGraph(doc, krsData.data, currentY, krsData.title, settings);
     currentY += krsHeight + 20;
 
-    if (isCustomRiskFactors) {
-      const craData = getGraphData('drs', settings, iteration);
-      ensureSpaceForContent(80);
-      const craHeight = drawBarGraph(doc, craData.data, currentY, craData.title, settings);
-      currentY += craHeight + 20;
-    }
+    const craData = getGraphData('drs', settings, iteration);
+    ensureSpaceForContent(80);
+    const craHeight = drawBarGraph(doc, craData.data, currentY, craData.title, settings);
+    currentY += craHeight + 20;
 
     const trsData = getGraphData('ars', settings, iteration);
     ensureSpaceForContent(80);
@@ -276,7 +273,8 @@ export const drawSimulationGraphs = (
         `${userAlias} type`,
         'KRS risk level before',
         'KRS risk level after',
-        ...(isCustomRiskFactors ? ['CRA risk level before', 'CRA risk level after'] : []),
+        'CRA risk level before',
+        'CRA risk level after',
       ],
     ];
 
@@ -288,16 +286,10 @@ export const drawSimulationGraphs = (
       item.simulated?.krs?.riskLevel
         ? getRiskLevelLabel(item.simulated.krs.riskLevel, settings)
         : '-',
-      ...(isCustomRiskFactors
-        ? [
-            item.current?.drs?.riskLevel
-              ? getRiskLevelLabel(item.current.drs.riskLevel, settings)
-              : '-',
-            item.simulated?.drs?.riskLevel
-              ? getRiskLevelLabel(item.simulated.drs.riskLevel, settings)
-              : '-',
-          ]
-        : []),
+      item.current?.drs?.riskLevel ? getRiskLevelLabel(item.current.drs.riskLevel, settings) : '-',
+      item.simulated?.drs?.riskLevel
+        ? getRiskLevelLabel(item.simulated.drs.riskLevel, settings)
+        : '-',
     ]);
 
     currentY = drawTable(
