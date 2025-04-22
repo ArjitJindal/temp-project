@@ -1881,7 +1881,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SubjectIdentificationConsumerUserRuleParameters = {
       fuzzinessRange: {
         upperBound: 20,
-        lowerBound: 20,
+        lowerBound: 0,
       },
       ongoingScreening: false,
       listId: '',
@@ -1913,7 +1913,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SubjectIdentificationBusinessUserRuleParameters = {
       fuzzinessRange: {
         upperBound: 20,
-        lowerBound: 20,
+        lowerBound: 0,
       },
       ongoingScreening: false,
       listId: '',
