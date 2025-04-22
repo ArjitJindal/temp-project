@@ -12,6 +12,7 @@ export interface Props extends InputProps<string> {
   size?: 'X1' | 'X2';
   allowClear?: boolean;
   htmlAttrs?: InputHTMLAttributes<HTMLInputElement>;
+  onEnterKey?: () => void;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
   innerRef?: React.RefObject<HTMLInputElement>;
@@ -37,6 +38,7 @@ export default function TextInput(props: Props) {
     onChange,
     onFocus,
     onBlur,
+    onEnterKey,
     onArrowUp,
     onArrowDown,
     testName = 'input text-input',
@@ -100,12 +102,14 @@ export default function TextInput(props: Props) {
           onBlur={handleBlur}
           data-cy={testName}
           onKeyDown={
-            onArrowUp || onArrowDown
+            onArrowUp || onArrowDown || onEnterKey
               ? (e) => {
                   if (e.key === 'ArrowUp') {
                     onArrowUp?.();
                   } else if (e.key === 'ArrowDown') {
                     onArrowDown?.();
+                  } else if (e.key === 'Enter') {
+                    onEnterKey?.();
                   }
                 }
               : undefined

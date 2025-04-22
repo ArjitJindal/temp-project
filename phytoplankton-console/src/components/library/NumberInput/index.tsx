@@ -74,12 +74,17 @@ export default function NumberInput(props: Props) {
     [checkAndApply, commitMode],
   );
 
+  const handleEnterKey = useCallback(() => {
+    checkAndApply(inputText, true);
+  }, [checkAndApply, inputText]);
+
   return (
     <TextInput
       {...rest}
       value={inputText}
       onChange={handleChange}
       onBlur={handleBlur}
+      onEnterKey={handleEnterKey}
       htmlAttrs={{
         inputMode: 'numeric',
         style: {

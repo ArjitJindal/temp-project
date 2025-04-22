@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
+import NumberInput from '../NumberInput';
 import s from './index.module.less';
 import { formatNumber } from '@/utils/number';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
@@ -17,8 +18,8 @@ import { Cursor } from '@/utils/queries/types';
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const COUNT_QUERY_LIMIT = 100000;
 
-const MAX_BUTTONS_TO_SHOW = 7;
-const MAX_SIDE_BUTTONS = Math.floor(MAX_BUTTONS_TO_SHOW / 2);
+const MAX_SIDE_BUTTONS = 5;
+const MAX_BUTTONS_TO_SHOW = MAX_SIDE_BUTTONS * 2 + 1;
 
 interface CursorProps {
   isDisabled?: boolean;
@@ -55,7 +56,6 @@ function PageBasedPagination(props: PageBasedProps) {
     isDisabled,
     total,
     totalPages,
-    current = 1,
     currentItems,
     pageSize = DEFAULT_PAGE_SIZE,
     showResultsInfo = true,
@@ -69,14 +69,40 @@ function PageBasedPagination(props: PageBasedProps) {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [totalPages, total, pageSize]);
 
-  const buttonsToShow = Math.min(normalisedTotalPages, MAX_BUTTONS_TO_SHOW);
-  const buttonsOnLeft = Math.min(
-    current - 1,
-    buttonsToShow - 1 - Math.min(MAX_SIDE_BUTTONS, normalisedTotalPages - current),
-  );
-  const buttonsOnRight = buttonsToShow - 1 - buttonsOnLeft;
-  const allPagesVisibleOnLeft = buttonsOnLeft >= current - 1;
-  const allPagesVisibleOnRight = buttonsOnRight >= normalisedTotalPages - current;
+  const current = Math.min(Math.max(1, props.current ?? 1), normalisedTotalPages);
+
+  let buttonsToShow: number;
+  let buttonsOnLeft: number;
+  let buttonsOnRight: number;
+  let allPagesVisibleOnLeft: boolean;
+  let allPagesVisibleOnRight: boolean;
+
+  const allPagesVisible = normalisedTotalPages <= MAX_BUTTONS_TO_SHOW;
+  if (allPagesVisible) {
+    buttonsToShow = normalisedTotalPages;
+    buttonsOnLeft = current - 1;
+    buttonsOnRight = buttonsToShow - 1 - buttonsOnLeft;
+    allPagesVisibleOnLeft = true;
+    allPagesVisibleOnRight = true;
+  } else {
+    buttonsToShow = MAX_BUTTONS_TO_SHOW;
+    if (current <= MAX_SIDE_BUTTONS + 1) {
+      buttonsOnLeft = current - 1;
+      buttonsOnRight = buttonsToShow - 1 - buttonsOnLeft;
+      allPagesVisibleOnLeft = true;
+      allPagesVisibleOnRight = false;
+    } else if (current >= normalisedTotalPages - MAX_SIDE_BUTTONS) {
+      buttonsOnLeft = buttonsToShow - 1 - (normalisedTotalPages - current);
+      buttonsOnRight = normalisedTotalPages - current;
+      allPagesVisibleOnLeft = false;
+      allPagesVisibleOnRight = true;
+    } else {
+      buttonsOnLeft = MAX_SIDE_BUTTONS;
+      buttonsOnRight = MAX_SIDE_BUTTONS;
+      allPagesVisibleOnLeft = false;
+      allPagesVisibleOnRight = false;
+    }
+  }
 
   return (
     <nav className={s.root} data-cy="pagination" role="pagination">
@@ -100,48 +126,47 @@ function PageBasedPagination(props: PageBasedProps) {
             <ArrowLeftSLineIcon />
           </IconButton>
         </div>
-        <div className={s.buttonsGroup}>
-          {[...new Array(normalisedTotalPages)].map((_, i) => {
+        {[...new Array(buttonsOnLeft)].map((_, i) => {
+          if (allPagesVisibleOnLeft || i === 0) {
             const page = i + 1;
-            if (!allPagesVisibleOnLeft || !allPagesVisibleOnRight) {
-              if (page !== 1 && page !== normalisedTotalPages) {
-                if (!allPagesVisibleOnLeft) {
-                  if (page === 2) {
-                    return (
-                      <IconButton key={i} isDisabled={true}>
-                        <MoreLineIcon />
-                      </IconButton>
-                    );
-                  }
-                  if (page < current - (buttonsOnLeft - 2)) {
-                    return <React.Fragment key={i}></React.Fragment>;
-                  }
-                }
-                if (!allPagesVisibleOnRight) {
-                  if (page === current + buttonsOnRight) {
-                    return (
-                      <IconButton key={i} isDisabled={true}>
-                        <MoreLineIcon />
-                      </IconButton>
-                    );
-                  }
-                  if (page - current + 2 > buttonsOnRight) {
-                    return <React.Fragment key={i}></React.Fragment>;
-                  }
-                }
-              }
-            }
             return (
-              <PageNumberButton
-                key={i}
-                page={page}
-                isActive={page === current}
-                isDisabled={isDisabled}
-                onClick={() => onChange(page, pageSize)}
-              />
+              <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
             );
-          })}
-        </div>
+          }
+          if (i === 1) {
+            return (
+              <IconButton key={'separator-left'} isDisabled={true}>
+                <MoreLineIcon />
+              </IconButton>
+            );
+          }
+          const page = current - (buttonsOnLeft - i);
+          return (
+            <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+          );
+        })}
+        <PageNumberButton page={current} isActive={true} />
+        {[...new Array(buttonsOnRight)].map((_, i) => {
+          if (!allPagesVisibleOnRight) {
+            if (i === buttonsOnRight - 2) {
+              return (
+                <IconButton key={'separator-right'} isDisabled={true}>
+                  <MoreLineIcon />
+                </IconButton>
+              );
+            }
+            if (i === buttonsOnRight - 1) {
+              const page = normalisedTotalPages;
+              return (
+                <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+              );
+            }
+          }
+          const page = current + i + 1;
+          return (
+            <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+          );
+        })}
         <div className={s.buttonsGroup}>
           <IconButton
             isDisabled={isDisabled || current >= normalisedTotalPages}
@@ -153,73 +178,23 @@ function PageBasedPagination(props: PageBasedProps) {
           </IconButton>
         </div>
       </div>
-      {false && (
-        <div className={s.buttonsGroup}>
-          {[...new Array(current - 1)].map((_, i) => {
-            if (!allPagesVisibleOnLeft && i !== 0 && current - i > MAX_SIDE_BUTTONS - 1) {
-              return <></>;
-            }
-            const page = i + 1;
-            return (
-              <>
-                <PageNumberButton
-                  key={i}
-                  page={page}
-                  isDisabled={isDisabled}
-                  onClick={() => onChange(page, pageSize)}
-                />
-                {!allPagesVisibleOnLeft && i === 0 && (
-                  <IconButton isDisabled={isDisabled}>
-                    <MoreLineIcon />
-                  </IconButton>
-                )}
-              </>
-            );
-          })}
-          <PageNumberButton page={current} isActive={true} isDisabled={isDisabled} />
-          {[...new Array(normalisedTotalPages - current)].map((_, i) => {
-            const page = current + i + 1;
-            if (
-              !allPagesVisibleOnRight &&
-              i > MAX_SIDE_BUTTONS - 2 &&
-              page !== normalisedTotalPages
-            ) {
-              return <></>;
-            }
-            return (
-              <>
-                {!allPagesVisibleOnRight && page === normalisedTotalPages && (
-                  <IconButton isDisabled={isDisabled}>
-                    <MoreLineIcon />
-                  </IconButton>
-                )}
-                <PageNumberButton
-                  key={i}
-                  page={page}
-                  isDisabled={isDisabled}
-                  onClick={() => onChange(page, pageSize)}
-                />
-              </>
-            );
-          })}
-        </div>
-      )}
       <div className={cn(s.side, s.right)}>
         <div>
           <Label label={'Go to page'} level={2} position={'LEFT'}>
-            <Select<number>
-              isDisabled={isDisabled}
-              mode="SINGLE"
-              onChange={(value) => {
-                onChange(value ?? 1, pageSize);
-              }}
-              value={current}
-              options={[...new Array(normalisedTotalPages)].map((_, page) => ({
-                value: page + 1,
-                label: `${page + 1}`,
-              }))}
-              dropdownPlacement="topRight"
-            />
+            <div className={s.goToPageInput}>
+              <NumberInput
+                isDisabled={isDisabled}
+                min={1}
+                max={normalisedTotalPages}
+                onChange={(value) => {
+                  if (value != null) {
+                    onChange(Math.max(1, Math.min(normalisedTotalPages, value)), pageSize);
+                  }
+                }}
+                value={current}
+                commitMode="ON_BLUR"
+              />
+            </div>
           </Label>
         </div>
         {totalPages == null && (

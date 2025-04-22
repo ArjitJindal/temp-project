@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import NumberInput from '../NumberInput';
 import Component from './index';
-import { UseCase } from '@/pages/storybook/components';
-import Slider from '@/components/library/Slider';
 import Label from '@/components/library/Label';
+import Slider from '@/components/library/Slider';
+import { UseCase } from '@/pages/storybook/components';
 import { success } from '@/utils/asyncResource';
 
 export default function (): JSX.Element {
@@ -12,6 +13,12 @@ export default function (): JSX.Element {
   return (
     <>
       <Label label={'Total amount of items'}>
+        <NumberInput
+          value={total}
+          onChange={(value) => {
+            setTotal(value ?? 0);
+          }}
+        />
         <Slider
           min={0}
           max={10000}
