@@ -21,6 +21,9 @@ interface Props {
 
 const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
   get: (_target, prop) => {
+    if (typeof prop !== 'string') {
+      return _target[prop];
+    }
     if (prop === 'getAccounts') {
       return (): Promise<Account[]> => {
         return Promise.resolve(MOCKED_ACCOUNTS);

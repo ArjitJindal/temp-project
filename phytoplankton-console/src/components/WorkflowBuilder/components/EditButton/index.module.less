@@ -1,0 +1,20 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  outline: none;
+  cursor: pointer;
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  > svg {
+    width: 12px;
+    height: 12px;
+  }
+}
