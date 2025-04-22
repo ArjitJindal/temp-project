@@ -43,6 +43,7 @@ import { ListUpdatedDetails } from '@/@types/openapi-public/ListUpdatedDetails'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
 import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
+import { notEmpty } from '@/utils/array'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -348,8 +349,29 @@ export class ListService {
 
   public async getListItems(
     listId: string,
-    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>
+    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'> & {
+      filterKeys?: string[]
+    }
   ): Promise<CursorPaginationResponse<ListItem>> {
+    if (params?.filterKeys != null) {
+      const items = (
+        await Promise.all(
+          params.filterKeys.map((key) =>
+            this.listRepository.getListItem(listId, key)
+          )
+        )
+      ).filter(notEmpty)
+      return {
+        items: items,
+        count: items.length,
+        next: '',
+        prev: '',
+        hasNext: false,
+        hasPrev: false,
+        limit: items.length,
+        last: '',
+      }
+    }
     return await this.listRepository.getListItems(listId, params)
   }
 

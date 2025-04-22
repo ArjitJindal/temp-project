@@ -1,30 +1,42 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { Input } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
+import { Input } from 'antd';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { queryAdapter } from './helpers';
 import s from './index.module.less';
-import { ListHeaderInternal, ListType, Permission } from '@/apis';
+import { TableParams } from './types';
 import { useApi } from '@/api';
-import Button from '@/components/library/Button';
-import { getErrorMessage } from '@/utils/lang';
-import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
-import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
-import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
-import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
-import { CommonParams, TableRefType } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { message } from '@/components/library/Message';
-import CountryDisplay from '@/components/ui/CountryDisplay';
-import { StatePair } from '@/utils/state';
+import { ListHeaderInternal, ListSubtypeInternal, ListType, Permission } from '@/apis';
 import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
 } from '@/apis/types/ObjectParamAPI';
-import { AsyncResource, getOr, map } from '@/utils/asyncResource';
-import { notEmpty } from '@/utils/array';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Button from '@/components/library/Button';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { message } from '@/components/library/Message';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import {
+  AllParams,
+  CommonParams,
+  TableColumn,
+  TableRefType,
+} from '@/components/library/Table/types';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
+import CountryDisplay from '@/components/ui/CountryDisplay';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
+import { Metadata, getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import { notEmpty } from '@/utils/array';
+import { AsyncResource, getOr, map } from '@/utils/asyncResource';
+import { getErrorMessage } from '@/utils/lang';
+import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
+import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
+import { QueryResult } from '@/utils/queries/types';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
+import { StatePair } from '@/utils/state';
 
 interface ExistedTableItemData {
   value: string;
@@ -87,7 +99,6 @@ const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
 
 export default function ItemsTable(props: Props) {
   const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
-  const settings = useSettings();
 
   const api = useApi();
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
@@ -195,50 +206,165 @@ export default function ItemsTable(props: Props) {
     },
     [api, listId, listType],
   );
-  const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
-  const listResult = useCursorQuery(LISTS_ITEM_TYPE(listId, listType, params), async ({ from }) => {
-    const payload: DefaultApiGetWhiteListItemsRequest = {
-      listId,
-      start: params.from || from,
-      pageSize: params.pageSize,
-    };
-
-    const response =
-      listType === 'WHITELIST'
-        ? await api.getWhiteListItems(payload)
-        : await api.getBlacklistItems(payload);
-
-    const data: TableItem[] = [
-      ...response.items.map(
-        ({ key, metadata }): TableItem => ({
-          rowKey: key,
-          type: 'EXISTED',
-          value: key,
-          reason: metadata?.reason ?? '',
-          meta: metadata ?? {},
-        }),
+  const [params, setParams] = useNavigationParams<AllParams<TableParams>>({
+    queryAdapter: queryAdapter,
+    makeUrl: (rawQueryParams) =>
+      makeUrl(
+        '/lists/:type/:listId',
+        {
+          type: stringifyListType(listType),
+          listId: listId,
+        },
+        rawQueryParams,
       ),
-      {
-        rowKey: 'NEW',
-        type: 'NEW',
-        value: [],
-        reason: '',
-        meta: {},
-      },
-    ];
-    return {
-      ...response,
-      items: data,
-      total: response.count,
-    };
+    replace: true,
   });
 
-  const currentItems = getOr(listResult.data, DEFAULT_LIST_DATA).items;
   const listSubtype = getOr(
     map(listHeaderRes, ({ subtype }) => subtype),
     null,
   );
+
+  const filterKeys = useMemo(() => {
+    if (listSubtype === 'USER_ID' && params.userId != null) {
+      return [params.userId];
+    } else if (listSubtype === 'COUNTRY' && params.country != null) {
+      return params.country;
+    } else if (params.search != null) {
+      return [params.search];
+    }
+    return undefined;
+  }, [listSubtype, params.userId, params.country, params.search]);
+
+  const listResult: QueryResult<CursorPaginatedData<TableItem>> = useCursorQuery(
+    LISTS_ITEM_TYPE(listId, listType, listSubtype, { ...params, filterKeys }),
+    async ({ from }) => {
+      const payload: DefaultApiGetWhiteListItemsRequest = {
+        listId,
+        start: params.from || from,
+        pageSize: params.pageSize,
+        filterKeys,
+      };
+
+      const response =
+        listType === 'WHITELIST'
+          ? await api.getWhiteListItems(payload)
+          : await api.getBlacklistItems(payload);
+
+      const data: TableItem[] = [
+        ...response.items.map(
+          ({ key, metadata }): TableItem => ({
+            rowKey: key,
+            type: 'EXISTED',
+            value: key,
+            reason: metadata?.reason ?? '',
+            meta: metadata ?? {},
+          }),
+        ),
+        ...(filterKeys == null
+          ? [
+              {
+                rowKey: 'NEW',
+                type: 'NEW' as const,
+                value: [],
+                reason: '',
+                meta: {},
+              },
+            ]
+          : []),
+      ];
+      return {
+        ...response,
+        items: data,
+        total: response.count,
+      };
+    },
+  );
+
+  const externalState: ExternalState = {
+    editUserData: [editUserData, setEditUserData],
+    newUserData: [newUserData, setNewUserData],
+    isEditUserLoading: [isEditUserLoading, setEditUserLoading],
+    isUserDeleteLoading: [isUserDeleteLoading, setEditDeleteLoading],
+    onAdd: handleAddItem,
+    onSave: handleSaveItem,
+    onDelete: handleDeleteUser,
+  };
+
+  const extraFilters = useExtraFilters(listSubtype);
+
+  const columns = useColumns({
+    listSubtype,
+    listResult,
+    isAddUserLoading,
+    isNewUserValid,
+    isEditUserValid,
+    requiredWritePermissions,
+    isSearchMode: filterKeys != null,
+  });
+
+  return (
+    <AsyncResourceRenderer resource={listHeaderRes}>
+      {(listHeader) => {
+        const listSubtype = listHeader.subtype;
+        return (
+          <QueryResultsTable<TableItem, CommonParams>
+            tableId={`list-items-table-${listSubtype}`}
+            rowKey="rowKey"
+            innerRef={tableRef}
+            columns={columns}
+            params={params}
+            onChangeParams={setParams}
+            queryResults={listResult}
+            fitHeight
+            sizingMode="SCROLL"
+            externalState={externalState}
+            extraFilters={extraFilters}
+            extraTools={[
+              () => <Button onClick={onImportCsv}>Import CSV</Button>,
+              () => (
+                <Button
+                  type="TETRIARY"
+                  onClick={() => clearListMutation.mutate()}
+                  isDisabled={clearListMutation.isLoading}
+                  requiredPermissions={requiredWritePermissions}
+                >
+                  Clear list
+                </Button>
+              ),
+            ]}
+          />
+        );
+      }}
+    </AsyncResourceRenderer>
+  );
+}
+
+/*
+  Helpers
+*/
+function useColumns(options: {
+  listSubtype: ListSubtypeInternal | null;
+  listResult: QueryResult<CursorPaginatedData<TableItem>>;
+  isAddUserLoading: boolean;
+  isNewUserValid: boolean;
+  isEditUserValid: boolean;
+  requiredWritePermissions: Permission[];
+  isSearchMode: boolean;
+}): TableColumn<TableItem>[] {
+  const {
+    listSubtype,
+    listResult,
+    isAddUserLoading,
+    isNewUserValid,
+    isEditUserValid,
+    requiredWritePermissions,
+    isSearchMode,
+  } = options;
+  const settings = useSettings();
+
+  const currentItems = getOr(listResult.data, DEFAULT_LIST_DATA).items;
 
   const existingCountryCodes = useMemo(() => {
     if (listSubtype !== 'COUNTRY') {
@@ -254,17 +380,7 @@ export default function ItemsTable(props: Props) {
     return codes;
   }, [currentItems, listSubtype]);
 
-  const externalState: ExternalState = {
-    editUserData: [editUserData, setEditUserData],
-    newUserData: [newUserData, setNewUserData],
-    isEditUserLoading: [isEditUserLoading, setEditUserLoading],
-    isUserDeleteLoading: [isUserDeleteLoading, setEditDeleteLoading],
-    onAdd: handleAddItem,
-    onSave: handleSaveItem,
-    onDelete: handleDeleteUser,
-  };
-
-  const columns = useMemo(() => {
+  return useMemo(() => {
     return helper.list(
       [
         listSubtype != null &&
@@ -366,90 +482,91 @@ export default function ItemsTable(props: Props) {
             defaultWrapMode: 'WRAP',
           },
         }),
-        helper.display({
-          title: 'Actions',
-          defaultWidth: 170,
-          render: (entity, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [editUserData, setEditUserData] = externalState.editUserData;
-            const [isEditUserLoading] = externalState.isEditUserLoading;
-            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-            const { onAdd, onSave, onDelete } = externalState;
-            if (entity.type === 'NEW') {
-              return (
-                <div className={s.actions}>
-                  <Button
-                    type="PRIMARY"
-                    isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid}
-                    onClick={onAdd}
-                    requiredPermissions={requiredWritePermissions}
-                  >
-                    Add
-                  </Button>
-                </div>
-              );
-            } else if (entity.type === 'EXISTED') {
-              if (editUserData?.value === entity.value) {
+        !isSearchMode &&
+          helper.display({
+            title: 'Actions',
+            defaultWidth: 170,
+            render: (entity, context) => {
+              const externalState: ExternalState = context.external as ExternalState;
+              const [editUserData, setEditUserData] = externalState.editUserData;
+              const [isEditUserLoading] = externalState.isEditUserLoading;
+              const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
+              const { onAdd, onSave, onDelete } = externalState;
+              if (entity.type === 'NEW') {
+                return (
+                  <div className={s.actions}>
+                    <Button
+                      type="PRIMARY"
+                      isLoading={isAddUserLoading}
+                      isDisabled={!isNewUserValid}
+                      onClick={onAdd}
+                      requiredPermissions={requiredWritePermissions}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                );
+              } else if (entity.type === 'EXISTED') {
+                if (editUserData?.value === entity.value) {
+                  return (
+                    <div className={s.actions}>
+                      <Button
+                        size="SMALL"
+                        type="PRIMARY"
+                        onClick={onSave}
+                        isDisabled={isEditUserLoading || !isEditUserValid}
+                        requiredPermissions={requiredWritePermissions}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="SMALL"
+                        type="SECONDARY"
+                        isDisabled={isEditUserLoading}
+                        onClick={() => {
+                          setEditUserData(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  );
+                }
                 return (
                   <div className={s.actions}>
                     <Button
                       size="SMALL"
-                      type="PRIMARY"
-                      onClick={onSave}
-                      isDisabled={isEditUserLoading || !isEditUserValid}
+                      type="SECONDARY"
+                      isDisabled={isUserDeleteLoading}
+                      onClick={() => {
+                        const editTarget: ExistedTableItemData = {
+                          value: entity.value,
+                          reason: entity.reason,
+                          meta: entity.meta,
+                        };
+                        setEditUserData(editTarget);
+                      }}
                       requiredPermissions={requiredWritePermissions}
                     >
-                      Save
+                      Edit
                     </Button>
                     <Button
                       size="SMALL"
                       type="SECONDARY"
-                      isDisabled={isEditUserLoading}
+                      isLoading={isUserDeleteLoading}
                       onClick={() => {
-                        setEditUserData(null);
+                        onDelete(entity.value ?? '');
                       }}
+                      requiredPermissions={requiredWritePermissions}
                     >
-                      Cancel
+                      Remove
                     </Button>
                   </div>
                 );
               }
-              return (
-                <div className={s.actions}>
-                  <Button
-                    size="SMALL"
-                    type="SECONDARY"
-                    isDisabled={isUserDeleteLoading}
-                    onClick={() => {
-                      const editTarget: ExistedTableItemData = {
-                        value: entity.value,
-                        reason: entity.reason,
-                        meta: entity.meta,
-                      };
-                      setEditUserData(editTarget);
-                    }}
-                    requiredPermissions={requiredWritePermissions}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="SMALL"
-                    type="SECONDARY"
-                    isLoading={isUserDeleteLoading}
-                    onClick={() => {
-                      onDelete(entity.value ?? '');
-                    }}
-                    requiredPermissions={requiredWritePermissions}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              );
-            }
-            return null;
-          },
-        }),
+              return null;
+            },
+          }),
       ].filter(notEmpty),
     );
   }, [
@@ -460,35 +577,62 @@ export default function ItemsTable(props: Props) {
     requiredWritePermissions,
     settings,
     existingCountryCodes,
+    isSearchMode,
   ]);
+}
 
-  return (
-    <>
-      <QueryResultsTable<TableItem, CommonParams>
-        leftTools={<Button onClick={onImportCsv}>Import CSV</Button>}
-        tableId="list-items-table"
-        rowKey="rowKey"
-        innerRef={tableRef}
-        columns={columns}
-        params={params}
-        onChangeParams={setParams}
-        queryResults={listResult}
-        fitHeight
-        sizingMode="SCROLL"
-        externalState={externalState}
-        extraTools={[
-          () => (
-            <Button
-              type="TETRIARY"
-              onClick={() => clearListMutation.mutate()}
-              isDisabled={clearListMutation.isLoading}
-              requiredPermissions={requiredWritePermissions}
-            >
-              Clear list
-            </Button>
+function useExtraFilters(listSubtype: ListSubtypeInternal | null): ExtraFilterProps<TableParams>[] {
+  const settings = useSettings();
+  return useMemo((): ExtraFilterProps<TableParams>[] => {
+    if (listSubtype === 'USER_ID') {
+      return [
+        {
+          kind: 'EXTRA',
+          title: `${firstLetterUpper(settings.userAlias)} ID/name`,
+          key: 'userId',
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.userId ?? null}
+              onConfirm={(userId) => {
+                setParams((state) => ({
+                  ...state,
+                  userId: userId ?? undefined,
+                }));
+              }}
+            />
           ),
-        ]}
-      />
-    </>
-  );
+        },
+      ];
+    } else if (listSubtype === 'COUNTRY') {
+      return [
+        {
+          kind: 'EXTRA',
+          title: 'Country',
+          key: 'country',
+          showFilterByDefault: true,
+          renderer: {
+            kind: 'select',
+            options: Object.entries(COUNTRIES).map(([isoCode, country]) => ({
+              value: isoCode,
+              label: country,
+            })),
+            mode: 'MULTIPLE',
+            displayMode: 'select',
+          },
+        },
+      ];
+    }
+    return [
+      {
+        kind: 'EXTRA',
+        title: listSubtype ? getListSubtypeTitle(listSubtype, settings) : 'Search',
+        key: 'search',
+        showFilterByDefault: true,
+        renderer: {
+          kind: 'string',
+        },
+      },
+    ];
+  }, [listSubtype, settings]);
 }

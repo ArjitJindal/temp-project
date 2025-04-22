@@ -132,18 +132,20 @@ export const listsHandler = lambdaApi()(
     handlers.registerPatchBlacklist(async (ctx, request) => patchList(request))
 
     handlers.registerGetWhiteListItems(async (ctx, request) => {
-      const { listId, start, pageSize } = request
+      const { listId, start, pageSize, filterKeys } = request
       return await listService.getListItems(listId, {
         fromCursorKey: start,
         pageSize,
+        filterKeys,
       })
     })
 
     handlers.registerGetBlacklistItems(async (ctx, request) => {
-      const { listId, start, pageSize } = request
+      const { listId, start, pageSize, filterKeys } = request
       return await listService.getListItems(listId, {
         fromCursorKey: start,
         pageSize,
+        filterKeys,
       })
     })
 

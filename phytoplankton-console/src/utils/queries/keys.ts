@@ -2,7 +2,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
-import { CrmName, ListSubtype, ListType, ReasonType } from '@/apis';
+import { CrmName, ListSubtype, ListSubtypeInternal, ListType, ReasonType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
@@ -35,13 +35,12 @@ export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParamet
 ];
 export const LISTS_OF_TYPE = (type: ListType | undefined): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id?: string, type?: ListType): QueryKey => ['lists', 'item', id, type];
-export const LISTS_ITEM_TYPE = (id: string, type: ListType, params?: AnyParameters): QueryKey => [
-  'lists',
-  'item',
-  id,
-  type,
-  params,
-];
+export const LISTS_ITEM_TYPE = (
+  id: string,
+  type: ListType,
+  subtype: ListSubtypeInternal | null,
+  params?: AnyParameters,
+): QueryKey => ['lists', 'item', id, type, subtype, params];
 export const LISTS = (listSubtype?: ListSubtype): QueryKey => ['lists', { listSubtype }];
 export const USERS_ITEM_TRANSACTIONS_HISTORY = (
   userId: string,

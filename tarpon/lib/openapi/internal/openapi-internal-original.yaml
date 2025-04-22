@@ -734,6 +734,11 @@ paths:
       x-flagright:
         permissions:
           - lists:whitelist:read
+      parameters:
+        - schema:
+            type: string
+          name: filterKeys
+          in: query
       responses:
         '200':
           description: OK
@@ -902,6 +907,12 @@ paths:
             type: number
           name: pageSize
           in: query
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterKeys
+          in: query
       responses:
         '200':
           description: OK
@@ -996,6 +1007,12 @@ paths:
         - schema:
             type: number
           name: pageSize
+          in: query
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterKeys
           in: query
       responses:
         '200':

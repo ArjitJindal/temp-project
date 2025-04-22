@@ -138,10 +138,12 @@ export function useNavigationParams<Params>(options: {
   // When params changing, save them to local storage and update url
   const isParamsChanged = useIsChanged(params);
   useEffect(() => {
-    if (isParamsChanged && persistId != null) {
+    if (isParamsChanged) {
       const url = makeUrl(queryAdapter.serializer(params));
-      window.localStorage.setItem(persistId, JSON.stringify(params));
       navigate(url, { replace });
+      if (persistId != null) {
+        window.localStorage.setItem(persistId, JSON.stringify(params));
+      }
     }
   }, [queryAdapter, params, replace, navigate, makeUrl, persistId, isParamsChanged]);
 
