@@ -8,12 +8,12 @@ import Button from '@/components/library/Button';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 
 interface Props {
-  emails: Array<CrmAccountResponseEngagements>;
+  engagements: Array<CrmAccountResponseEngagements>;
 }
 
 const { Panel } = Collapse;
 const Emails = (props: Props) => {
-  const { emails } = props;
+  const { engagements: emails } = props;
   return (
     <Collapse defaultActiveKey={['1']} ghost>
       {sortBy(emails, 'createdAt')
