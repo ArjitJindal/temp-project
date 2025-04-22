@@ -40,6 +40,7 @@ import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
+import { useSARReportCountries } from '@/components/Sar/utils';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -223,12 +224,29 @@ export default function SuperAdminPanel() {
     features?.includes('DOW_JONES');
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
   const isCrmToBeEnabled = features?.includes('CRM');
+  const isSARToBeEnabled = features?.includes('SAR');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
 
+  const SARCountries = useSARReportCountries(true);
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const [crmIntegrationName, setCrmIntegrationName] = useState<CrmIntegrationNames | undefined>(
     settings.crmIntegrationName ?? undefined,
   );
+
+  const initialSarJurisdictions = useMemo(() => {
+    if (!SARCountries?.length) {
+      return settings.sarJurisdictions ?? [];
+    }
+
+    if (!settings?.sarJurisdictions?.length && SARCountries?.length) {
+      return [SARCountries[0].countryCode];
+    }
+
+    return settings.sarJurisdictions ?? [];
+  }, [SARCountries, settings?.sarJurisdictions]);
+
+  const [sarJurisdictions, setSarJurisdictions] = useState<Array<string>>(initialSarJurisdictions);
+
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList(), {
@@ -387,6 +405,7 @@ export default function SuperAdminPanel() {
       ...(limits && { limits }),
       sanctions: sanctionsSettings,
       crmIntegrationName,
+      sarJurisdictions,
     });
   };
   const showModal = () => {
@@ -519,6 +538,21 @@ export default function SuperAdminPanel() {
                 />
               </Label>
             )}
+
+            {isSARToBeEnabled && (
+              <Label label="Select SAR jurisdictions">
+                <Select<string>
+                  mode="MULTIPLE"
+                  options={SARCountries.map((sarCountry) => ({
+                    label: humanizeConstant(sarCountry.country),
+                    value: sarCountry.countryCode,
+                  }))}
+                  value={sarJurisdictions}
+                  onChange={(v) => v && setSarJurisdictions(v)}
+                />
+              </Label>
+            )}
+
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <Label label="ComplyAdvantage settings">
                 <Label level={2} label="Market type" required={{ value: true, showHint: true }}>

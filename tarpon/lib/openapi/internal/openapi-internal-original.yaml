@@ -6958,6 +6958,10 @@ paths:
           - reports:schema:read
       parameters:
         - schema:
+            $ref: '#/components/schemas/AllReportType'
+          in: query
+          name: allReportType
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -10851,6 +10855,10 @@ components:
           $ref: '#/components/schemas/WebhookSettings'
         crmIntegrationName:
           $ref: '#/components/schemas/CrmIntegrationNames'
+        sarJurisdictions:
+          type: array
+          items:
+            type: string
     NangoPostConnect:
       title: NangoPostConnect
       type: object
@@ -14575,6 +14583,9 @@ components:
       type: number
       minimum: 1
       maximum: 1000
+    AllReportType:
+      title: AllReportType
+      type: boolean
     TableListViewEnum:
       title: TableListViewEnum
       type: string
@@ -15223,6 +15234,10 @@ components:
             type: string
         siloDataMode:
           type: boolean
+        sarJurisdiction:
+          type: array
+          items:
+            type: string
       required:
         - tenantName
         - tenantWebsite

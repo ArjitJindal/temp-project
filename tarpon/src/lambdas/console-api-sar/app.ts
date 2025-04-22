@@ -17,8 +17,9 @@ export const sarHandler = lambdaApi()(
     const reportService = await ReportService.fromEvent(event)
     const handlers = new Handlers()
 
-    handlers.registerGetReportTypes(async () => {
-      const types = reportService.getTypes()
+    handlers.registerGetReportTypes(async (ctx, request) => {
+      const getAllReport = request.allReportType ?? false
+      const types = reportService.getTypes(getAllReport)
       return {
         data: types,
         total: types.length,

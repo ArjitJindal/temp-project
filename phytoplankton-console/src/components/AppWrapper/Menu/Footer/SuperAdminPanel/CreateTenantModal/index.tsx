@@ -17,6 +17,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
+import { useSARReportCountries } from '@/components/Sar/utils';
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -154,6 +155,8 @@ export const CreateTenantModal = (props: Props) => {
     }
   }, [formDetails, api]);
   const isSanctionsEnabled = formDetails.featureFlags.includes('SANCTIONS');
+  const isSAREnabled = formDetails.featureFlags.includes('SAR');
+  const SARCountries = useSARReportCountries(true);
 
   const schema = useMemo(
     () => ({
@@ -203,6 +206,18 @@ export const CreateTenantModal = (props: Props) => {
             ),
           },
         },
+        ...(isSAREnabled && {
+          sarJurisdiction: {
+            type: 'array',
+            title: 'SAR Jurisdiction',
+            uniqueItems: true,
+            items: {
+              type: 'string',
+              enum: SARCountries.map((country) => country.countryCode),
+              enumNames: SARCountries.map((country) => country.country),
+            },
+          },
+        }),
         ...(isSanctionsEnabled && {
           sanctionsMarketType: {
             type: 'string',
@@ -248,9 +263,10 @@ export const CreateTenantModal = (props: Props) => {
         'featureFlags',
         'emailsOfAdmins',
         'auth0Domain',
+        'sarJurisdiction',
       ].concat(isSanctionsEnabled ? ['sanctionsMarketType'] : []),
     }),
-    [UPDATED_FEATURES, isSanctionsEnabled],
+    [UPDATED_FEATURES, isSanctionsEnabled, isSAREnabled, SARCountries],
   );
 
   const uiSchema = useMemo(

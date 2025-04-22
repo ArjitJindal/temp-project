@@ -123,10 +123,35 @@ export class ReportService {
     })
   }
 
-  public getTypes(): ReportType[] {
+  private isNotValidSarReport(
+    getAllReport: boolean,
+    sarJurisdictions: Array<string> | undefined,
+    countryCode: string
+  ) {
+    return (
+      !getAllReport &&
+      sarJurisdictions &&
+      !sarJurisdictions.includes(countryCode)
+    )
+  }
+
+  public getTypes(getAllReport?: boolean): ReportType[] {
+    if (!getAllReport) {
+      getAllReport = false
+    }
+    const sarJurisdictions = getContext()?.settings?.sarJurisdictions
     const types: ReportType[] = []
     for (const [id, generator] of REPORT_GENERATORS.entries()) {
       const type = generator.getType()
+      if (
+        this.isNotValidSarReport(
+          getAllReport ?? false,
+          sarJurisdictions,
+          type.countryCode
+        )
+      ) {
+        continue
+      }
       types.push({
         country: formatCountry(type.countryCode) || 'Unknown',
         countryCode: type.countryCode,
@@ -142,7 +167,18 @@ export class ReportService {
     }
     // For demos, append some generators we want to implement.
     return types.concat(
-      UNIMPLEMENTED_GENERATORS.map(
+      UNIMPLEMENTED_GENERATORS.filter(([countryCode]) => {
+        if (
+          this.isNotValidSarReport(
+            getAllReport ?? false,
+            sarJurisdictions,
+            countryCode
+          )
+        ) {
+          return false
+        }
+        return true
+      }).map(
         ([countryCode, type, subjectType]): ReportType => ({
           country: formatCountry(countryCode) || 'Unknown',
           countryCode,

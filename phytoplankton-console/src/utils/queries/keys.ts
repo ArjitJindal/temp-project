@@ -91,6 +91,7 @@ export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
 export const ROLE = (roleId: string): QueryKey => ['role', roleId];
 
 export const REPORT_SCHEMAS = (): QueryKey => ['report', 'schemas'];
+export const REPORT_SCHEMAS_ALL = (): QueryKey => ['report', 'all', 'schemas'];
 export const REPORT_TEMPLATE = (caseId: string, schemaId: string): QueryKey => [
   'report',
   'template',
