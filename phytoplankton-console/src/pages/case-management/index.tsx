@@ -59,8 +59,10 @@ export default function CaseManagementPage() {
         if (isAlertScope(newParams.showCases) && !isAlertScope(prevState.showCases)) {
           newParams.alertStatus = ['OPEN'];
           newParams.caseStatus = null;
+          newParams.sort = [];
         } else if (isCasesScope(newParams.showCases) && !isCasesScope(prevState.showCases)) {
           newParams.alertStatus = null;
+          newParams.sort = [];
           // if users has escalation level then show relevant escalated cases
           if (userEscalationLevel === 'L1') {
             newParams.caseStatus = ['ESCALATED'];
@@ -72,9 +74,11 @@ export default function CaseManagementPage() {
         } else if (isQaScope(newParams.showCases)) {
           newParams.alertStatus = ['CLOSED'];
           newParams.caseStatus = null;
+          newParams.sort = [];
         }
         if (newParams.showCases === 'MY_ALERTS' || newParams.showCases === 'MY') {
           newParams.assignedTo = undefined;
+          newParams.sort = [];
         }
         return newParams;
       });
