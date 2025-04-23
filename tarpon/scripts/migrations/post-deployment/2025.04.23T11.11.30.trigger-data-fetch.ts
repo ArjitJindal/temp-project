@@ -2,11 +2,12 @@ import { migrateAllTenants } from '../utils/tenant'
 import { hasFeature } from '@/core/utils/context'
 import { Tenant } from '@/services/accounts/repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { isDemoTenant } from '@/utils/tenant'
 
 let hasFeatureAcuris = false
 let hasFeatureOpenSanctions = false
 async function migrateTenant(tenant: Tenant) {
-  if (hasFeature('DOW_JONES')) {
+  if (hasFeature('DOW_JONES') && !isDemoTenant(tenant.id)) {
     await sendBatchJobCommand({
       type: 'SANCTIONS_DATA_FETCH',
       tenantId: tenant.id,
