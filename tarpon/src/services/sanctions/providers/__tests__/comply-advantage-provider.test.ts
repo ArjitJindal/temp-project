@@ -114,7 +114,7 @@ describe('complyAdvantageDocToEntity', () => {
       doc: {
         id: '123',
         name: 'John Doe',
-        types: ['type1'],
+        types: ['sanction'],
         aka: [{ name: 'Alias1' }],
         entity_type: 'PERSON',
         last_updated_utc: new Date('2023-09-01T00:00:00Z'),
@@ -157,7 +157,7 @@ describe('complyAdvantageDocToEntity', () => {
       id: '123',
       name: 'John Doe',
       countries: ['US'],
-      types: ['type1'],
+      types: ['sanction'],
       matchTypes: ['aka_exact'],
       aka: ['Alias1'],
       entityType: 'PERSON',

@@ -66,9 +66,7 @@ export function getSources(doc: ComplyAdvantageSearchHitDoc): {
 
       if (amlTypes.some((type) => type.includes('sanction'))) {
         groups.sanctionsSources.push(source)
-      }
-
-      if (amlTypes.some((type) => type.includes('warning'))) {
+      } else {
         groups.warningsSources.push(source)
       }
 
@@ -139,9 +137,9 @@ export function complyAdvantageDocToEntity(
           ? 'ADVERSE_MEDIA'
           : t.includes('pep')
           ? 'PEP'
-          : t.includes('warning')
-          ? 'WARNINGS'
-          : 'SANCTIONS'
+          : t.includes('sanction')
+          ? 'SANCTIONS'
+          : 'WARNINGS'
       )
     )
   )
