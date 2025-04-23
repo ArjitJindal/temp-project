@@ -110,6 +110,11 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ROLES_BY_NAMESPACE'
   | 'RULE_INSTANCE_THRESHOLD_OPTIMIZATION_DATA'
   | 'CRM_USER_RECORD_LINK'
+  | 'CASE'
+  | 'CASE_ALERT'
+  | 'CASE_COMMENT'
+  | 'CASE_COMMENT_FILE'
+  | 'CASE_SUBJECT'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

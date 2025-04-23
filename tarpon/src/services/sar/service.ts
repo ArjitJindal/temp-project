@@ -282,6 +282,7 @@ export class ReportService {
 
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
     })
     const c = await caseRepository.getCaseById(caseId)
     if (!c) {

@@ -5,6 +5,7 @@ import {
   batchWrite,
   getDynamoDbClient,
   paginateQuery,
+  transactWrite,
 } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 const MOCK_RECORDS_COUNT = 250
@@ -258,5 +259,96 @@ describe('batchWrite', () => {
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       )
     ).rejects.toThrow()
+  })
+})
+
+describe('transactWrite', () => {
+  test('Successfully performs transactWrite operations', async () => {
+    const operations = [
+      {
+        Put: {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+          Item: {
+            PartitionKeyID: 'transact-partition',
+            SortKeyID: '1',
+            data: 'test data 1',
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+          Item: {
+            PartitionKeyID: 'transact-partition',
+            SortKeyID: '2',
+            data: 'test data 2',
+          },
+        },
+      },
+    ]
+
+    await expect(transactWrite(dynamoDb, operations)).resolves.not.toThrow()
+
+    // Verify items were written
+    const result = await paginateQuery(dynamoDb, {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'transact-partition',
+      },
+    })
+
+    expect(result.Items).toHaveLength(2)
+    expect(result.Items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          PartitionKeyID: 'transact-partition',
+          SortKeyID: '1',
+          data: 'test data 1',
+        }),
+        expect.objectContaining({
+          PartitionKeyID: 'transact-partition',
+          SortKeyID: '2',
+          data: 'test data 2',
+        }),
+      ])
+    )
+  })
+
+  test('Handles large item size without throwing an error', async () => {
+    const largeItem = {
+      PartitionKeyID: 'transact-partition',
+      SortKeyID: 'large',
+      attribute1: new Array(100000).fill(0),
+      attribute2: new Array(100000).fill(0),
+      attribute3: new Array(100000).fill(0),
+    }
+
+    const operations = [
+      {
+        Put: {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+          Item: largeItem,
+        },
+      },
+    ]
+
+    await expect(transactWrite(dynamoDb, operations)).resolves.not.toThrow()
+  })
+
+  test('Throws an error for invalid operations', async () => {
+    const invalidOperations = [
+      {
+        Put: {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+          Item: {
+            // Missing required key attributes
+            data: 'invalid data',
+          },
+        },
+      },
+    ]
+
+    await expect(transactWrite(dynamoDb, invalidOperations)).rejects.toThrow()
   })
 })

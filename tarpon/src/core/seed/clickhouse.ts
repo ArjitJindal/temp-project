@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import { compact, omit } from 'lodash'
 import { Document, WithId } from 'mongodb'
 import { logger } from '../logger'
 import { getCases } from './data/cases'
@@ -109,6 +109,14 @@ export const seedClickhouse = async (tenantId: string) => {
           .flatMap((a) => a)
 
         await batchInsertToClickhouse(tenantId, table.table, compact(alerts))
+      },
+    },
+    {
+      table: 'CASES_V2',
+      sync: async (_: TableName, table: ClickhouseTableDefinition) => {
+        const data = getCases()
+        const cases = data.map((c) => omit(c, 'alerts', 'comments'))
+        await batchInsertToClickhouse(tenantId, table.table, compact(cases))
       },
     },
     {

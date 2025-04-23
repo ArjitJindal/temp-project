@@ -58,7 +58,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
       logicEvaluator
     )
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
-    const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
     const transactionRepository = new MongoDbTransactionRepository(
       tenantId,
       mongoDb,

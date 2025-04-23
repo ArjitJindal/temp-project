@@ -138,6 +138,12 @@ export type DashboardRefreshBatchJob = {
   parameters: DashboardRefreshBatchJobParameters
 }
 
+/* Cases backfill */
+export type CasesBackfillDynamoBatchJob = {
+  type: 'CASES_DYNAMO_BACKFILL'
+  tenantId: string
+}
+
 /* Sync Indexes */
 export type SyncDatabasesBatchJob = {
   type: 'SYNC_DATABASES'
@@ -445,9 +451,9 @@ export type BatchJob =
   | ClickhouseDataBackfillBatchJob
   | DeltaSanctionsDataFetchBatchJob
   | BackFillActionProcessing
+  | CasesBackfillDynamoBatchJob
   | PeriodicScreeningUserRuleBatchJob
   | QACleanupBatchJob
-
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

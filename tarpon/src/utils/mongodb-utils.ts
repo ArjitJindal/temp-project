@@ -539,7 +539,6 @@ export async function internalMongoReplace<T extends Document>(
   })
 
   const result = data.value as { _id: ObjectId }
-
   await sendMessageToMongoConsumer({
     collectionName,
     documentKey: { type: 'id', value: String(result._id) },

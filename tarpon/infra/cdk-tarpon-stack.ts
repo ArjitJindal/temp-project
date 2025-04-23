@@ -138,6 +138,7 @@ const FEATURE = 'feature'
 
 const FEATURES = {
   MONGO_DB_CONSUMER: 'mongo-db-consumer',
+  DYNAMO_DB_CONSUMER: 'dynamo-db-consumer',
 }
 
 // TODO make this equal to !isQaEnv before merge
@@ -300,6 +301,18 @@ export class CdkTarponStack extends cdk.Stack {
 
     this.addTagsToResource(mongoDbConsumerQueue, {
       [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+    })
+
+    const dynamoDbConsumerQueue = this.createQueue(
+      SQSQueues.DYNAMO_DB_CONSUMER_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+      }
+    )
+
+    this.addTagsToResource(dynamoDbConsumerQueue, {
+      [FEATURE]: FEATURES.DYNAMO_DB_CONSUMER,
     })
 
     const batchJobQueue = this.createQueue(
@@ -557,6 +570,7 @@ export class CdkTarponStack extends cdk.Stack {
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
+        DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
         ACTION_PROCESSING_QUEUE_URL: actionProcessingQueue.queueUrl,
       },
@@ -640,6 +654,7 @@ export class CdkTarponStack extends cdk.Stack {
             mongoDbConsumerQueue.queueArn,
             mongoUpdateConsumerQueue.queueArn,
             actionProcessingQueue.queueArn,
+            dynamoDbConsumerQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -1537,6 +1552,31 @@ export class CdkTarponStack extends cdk.Stack {
     mongoDbTriggerQueueConsumerAlias.addEventSource(
       new SqsEventSource(mongoDbConsumerQueue, {
         batchSize: 10,
+        maxBatchingWindow: Duration.seconds(10),
+        maxConcurrency: 100,
+      })
+    )
+
+    const {
+      alias: dynamoDbTriggerQueueConsumerAlias,
+      func: dynamoDbTriggerQueueConsumerFunc,
+    } = createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.DYNAMO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+      memorySize: config.resource.DYNAMO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
+    })
+
+    this.addTagsToResource(dynamoDbTriggerQueueConsumerAlias, {
+      [FEATURE]: FEATURES.DYNAMO_DB_CONSUMER,
+    })
+
+    this.addTagsToResource(dynamoDbTriggerQueueConsumerFunc, {
+      [FEATURE]: FEATURES.DYNAMO_DB_CONSUMER,
+    })
+
+    // Connect the Lambda to the queue
+    dynamoDbTriggerQueueConsumerAlias.addEventSource(
+      new SqsEventSource(dynamoDbConsumerQueue, {
+        batchSize: 1,
         maxBatchingWindow: Duration.seconds(10),
         maxConcurrency: 100,
       })

@@ -12170,6 +12170,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SLAPolicyDetails'
+        caseSubjectIdentifiers:
+          type: array
+          items:
+            type: string
       required:
         - caseType
         - caseAggregates
@@ -12432,6 +12436,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SLAPolicyDetails'
+        caseCreatedTimestamp:
+          type: number
+        caseSubjectIdentifiers:
+          type: array
+          items:
+            type: string
       required:
         - createdTimestamp
         - ruleInstanceId

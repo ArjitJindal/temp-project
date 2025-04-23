@@ -315,6 +315,9 @@ export const StackConstants = {
   MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'MongoDbChangeCaptureQueueConsumerFunction'
   ),
+  DYNAMO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'DynamoDbChangeCaptureQueueConsumerFunction'
+  ),
   ACTION_PROCESSING_FUNCTION_NAME: getResourceNameForTarpon(
     'ActionProcessingFunction'
   ),
@@ -370,6 +373,9 @@ export const SQSQueues: {
   },
   ACTION_PROCESSING_QUEUE: {
     name: getResourceName('ActionPostProcessingQueue'),
+  },
+  DYNAMO_DB_CONSUMER_QUEUE_NAME: {
+    name: getResourceName('DynamoDbConsumerQueue'),
   },
 }
 

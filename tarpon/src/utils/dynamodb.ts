@@ -17,6 +17,7 @@ import {
   QueryCommandInput,
   QueryCommandOutput,
   UpdateCommand,
+  TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
 import {
   ConsumedCapacity,
@@ -26,6 +27,11 @@ import {
   PutRequest,
   DeleteRequest,
   KeysAndAttributes,
+  TransactWriteItem,
+  Update,
+  Delete,
+  Put,
+  ConditionCheck,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
@@ -58,6 +64,28 @@ export type BatchWriteRequestInternal = Omit<
 > & {
   PutRequest?: PutRequestInternal
   DeleteRequest?: DeleteRequestInternal
+}
+
+export type TransactWriteOperation = Omit<
+  TransactWriteItem,
+  'ConditionCheck' | 'Put' | 'Delete' | 'Update'
+> & {
+  ConditionCheck?: Omit<ConditionCheck, 'Key' | 'ExpressionAttributeValues'> & {
+    Key: Record<string, NativeAttributeValue> | undefined
+    ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+  }
+  Put?: Omit<Put, 'Item' | 'ExpressionAttributeValues'> & {
+    Item: Record<string, NativeAttributeValue> | undefined
+    ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+  }
+  Delete?: Omit<Delete, 'Key' | 'ExpressionAttributeValues'> & {
+    Key: Record<string, NativeAttributeValue> | undefined
+    ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+  }
+  Update?: Omit<Update, 'Key' | 'ExpressionAttributeValues'> & {
+    Key: Record<string, NativeAttributeValue> | undefined
+    ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+  }
 }
 
 function getAugmentedDynamoDBCommand(command: any): {
@@ -653,4 +681,102 @@ export async function dangerouslyDeletePartitionKey(
 ) {
   const deleteCommand = new DeleteCommand({ TableName: tableName, Key: key })
   await dynamoDb.send(deleteCommand)
+}
+
+/**
+ * Recursively converts MongoDB ObjectIds to strings in an object structure
+ *
+ * Did not want to use marshalling/unmarshalling because it might break the object structure
+ */
+export function sanitizeMongoObject<T>(obj: T): T {
+  if (!obj) {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeMongoObject) as unknown as T
+  }
+
+  if (typeof obj === 'object') {
+    if (
+      obj.constructor.name === 'ObjectID' ||
+      (obj as any)?._bsontype === 'ObjectID'
+    ) {
+      return obj?.toString() as unknown as T
+    }
+
+    const result: Record<string, any> = {}
+
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+        continue
+      }
+
+      if (key === '_id') {
+        result[key] = obj[key]?.toString()
+      } else {
+        result[key] = sanitizeMongoObject(obj[key])
+      }
+    }
+
+    return result as unknown as T
+  }
+
+  return obj
+}
+
+const MAX_TRANSACT_WRITE_RETRY_COUNT = 10
+const MAX_TRANSACT_WRITE_RETRY_DELAY = 5 * 1000
+
+export async function transactWrite(
+  dynamoDb: DynamoDBDocumentClient,
+  operations: TransactWriteOperation[]
+): Promise<void> {
+  for (const nextChunk of chunk(operations, 100)) {
+    let retryCount = 0
+    let retryDelay = 100
+    let success = false
+
+    while (!success) {
+      try {
+        await dynamoDb.send(
+          new TransactWriteCommand({
+            TransactItems: nextChunk as TransactWriteItem[],
+          })
+        )
+        success = true
+      } catch (e) {
+        retryCount += 1
+
+        if (
+          (e as any)?.name === 'TransactionCanceledException' &&
+          retryCount <= MAX_TRANSACT_WRITE_RETRY_COUNT
+        ) {
+          logger.warn(
+            `TransactWrite retry ${retryCount}/${MAX_TRANSACT_WRITE_RETRY_COUNT}`
+          )
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
+          retryDelay = Math.min(retryDelay * 2, MAX_TRANSACT_WRITE_RETRY_DELAY)
+        } else if (
+          (e as any)?.name === 'ValidationException' &&
+          (e as any)?.message.includes(
+            'Item size has exceeded the maximum allowed size'
+          )
+        ) {
+          if (getContext()?.logMetadata?.ruleInstanceId) {
+            logger.warn(
+              `Item size has exceeded the maximum allowed size (400 KB)`
+            )
+          } else {
+            logger.error(
+              `Item size has exceeded the maximum allowed size (400 KB)`
+            )
+          }
+          success = true
+        } else {
+          throw e
+        }
+      }
+    }
+  }
 }

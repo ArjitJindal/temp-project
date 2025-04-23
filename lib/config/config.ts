@@ -109,6 +109,9 @@ export type Config = {
     MONGO_DB_TRIGGER_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    DYNAMO_DB_TRIGGER_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
   }
   viper?: {
     ADMIN_EMAILS: string[]

@@ -74,7 +74,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
     const dynamoDb = getDynamoDbClient()
 
     if (type === 'CASE') {
-      return new CaseRepository(tenantId, { mongoDb })
+      return new CaseRepository(tenantId, { mongoDb, dynamoDb })
     } else if (type === 'ALERT') {
       return new AlertsRepository(tenantId, {
         mongoDb,

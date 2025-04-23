@@ -535,7 +535,6 @@ export class TarponChangeMongoDbConsumer {
           : Promise.resolve(undefined),
       ])
       drsScoreSubSegment?.close()
-
       const updateDrsScoreSubSegment = await addNewSubsegment(
         'StreamConsumer',
         'handleTransaction updateDrsScore'

@@ -35,6 +35,8 @@ export function initializeEnvVars() {
     SQSQueues.MONGO_UPDATE_CONSUMER_QUEUE_NAME.name
   const mongoDbConsumerQueueName: string =
     SQSQueues.MONGO_DB_CONSUMER_QUEUE_NAME.name
+  const dynamoDbConsumerQueueName: string =
+    SQSQueues.DYNAMO_DB_CONSUMER_QUEUE_NAME.name
   process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
   process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
   process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
@@ -43,6 +45,7 @@ export function initializeEnvVars() {
     getConfig()
   )
   process.env.MONGO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoDbConsumerQueueName}`
+  process.env.DYNAMO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${dynamoDbConsumerQueueName}`
   process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoUpdateConsumerQueueName}`
   process.env.DOCUMENT_BUCKET = getNameForGlobalResource(
     StackConstants.S3_DOCUMENT_BUCKET_PREFIX,

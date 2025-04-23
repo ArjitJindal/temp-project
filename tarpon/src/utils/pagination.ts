@@ -293,6 +293,44 @@ export async function offsetPaginateClickhouse<T>(
   }
 }
 
+export async function offsetPaginateClickhouseWithoutDataTable(
+  client: ClickHouseClient,
+  queryTableName: string,
+  query: ClickhousePaginationParams,
+  where = '1'
+): Promise<{ items: string[]; count: number }> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  const sortField = (query.sortField || 'id').replace(/\./g, '_')
+  const sortOrder = query.sortOrder || 'ascend'
+  const page = query.page || 1
+  const offset = (page - 1) * pageSize
+
+  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+  const findSql = `SELECT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
+
+  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
+    where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
+  }`
+  const [items, count] = await Promise.all([
+    executeClickhouseQuery<{ id: string }[]>(client, {
+      query: findSql,
+      format: 'JSONEachRow',
+    }),
+
+    executeClickhouseQuery<Array<{ count: number }>>(client, {
+      query: countQuery,
+      format: 'JSONEachRow',
+    }),
+  ])
+
+  return {
+    items: items.map((item) => item.id),
+    count: count[0].count,
+  }
+}
+
 function cursor<T>(item?: WithId<T>, sortField?: string): string {
   if (!item || !sortField) {
     return ''

@@ -20,15 +20,16 @@ const sampleAlert: Alert = {
   numberOfTransactionsHit: 1,
   priority: 'P1',
   ruleAction: 'ALLOW',
+  caseSubjectIdentifiers: ['S-1'],
+  caseCreatedTimestamp: Date.now(),
 }
 
 describe('Dynamo Repository', () => {
   test('Update status of alerts', async () => {
     const tenantId = getTestTenantId()
+    const alertId = sampleAlert.alertId as string
     const repo = new DynamoAlertRepository(tenantId, getDynamoDbClient())
-
-    const alertId = 'A-1'
-    await repo.saveAlert(sampleAlert)
+    await repo.saveAlertsForCase([sampleAlert], 'C-1')
     await repo.updateStatus([alertId], {
       timestamp: Date.now(),
       userId: 'U-1',

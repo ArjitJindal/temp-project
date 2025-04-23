@@ -32,6 +32,7 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
+import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
 import {
   CaseRepository,
@@ -108,14 +109,12 @@ import {
   AuditLogReturnData,
   getCaseAuditLogMetadata,
 } from '@/utils/audit-log'
+import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
-
-type CaseSubject =
-  | { type: 'USER'; user: InternalUser }
-  | { type: 'PAYMENT'; paymentDetails: PaymentDetails }
 
 type CaseAuditLogReturnData = AuditLogReturnData<
   Case,
@@ -143,6 +142,7 @@ type ExtendedHitRulesDetails = HitRulesDetails & {
 export class CaseCreationService {
   caseRepository: CaseRepository
   userRepository: UserRepository
+  dynamoCaseRepository: DynamoCaseRepository
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
   tenantId: string
@@ -185,6 +185,10 @@ export class CaseCreationService {
   ) {
     this.caseRepository = new CaseRepository(tenantID, connections)
     this.userRepository = new UserRepository(tenantID, connections)
+    this.dynamoCaseRepository = new DynamoCaseRepository(
+      tenantID,
+      connections.dynamoDb
+    )
     this.ruleInstanceRepository = new RuleInstanceRepository(
       tenantID,
       connections
@@ -1101,6 +1105,9 @@ export class CaseCreationService {
     subject: CaseSubject,
     params: SubjectCasesQueryParams
   ) {
+    if (isClickhouseMigrationEnabled()) {
+      return this.dynamoCaseRepository.getCasesBySubject(subject, params)
+    }
     return subject.type === 'USER'
       ? await this.caseRepository.getCasesByUserId(subject.user.userId, params)
       : await this.caseRepository.getCasesByPaymentDetails(

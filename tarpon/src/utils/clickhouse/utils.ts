@@ -34,6 +34,7 @@ import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 import { addNewSubsegment } from '@/core/xray'
+import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
@@ -285,6 +286,10 @@ export async function batchInsertToClickhouse(
 
 export function isClickhouseEnabled() {
   return hasFeature('CLICKHOUSE_ENABLED') && isClickhouseEnabledInRegion()
+}
+
+export function isClickhouseMigrationEnabled() {
+  return isClickhouseEnabledInRegion() && hasFeature('CLICKHOUSE_MIGRATION')
 }
 
 const getAllColumns = (table: ClickhouseTableDefinition) => [
@@ -657,6 +662,37 @@ export const sendMessageToMongoConsumer = async (
     new SendMessageCommand({
       MessageBody: JSON.stringify(message),
       QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
+    })
+  )
+}
+
+export async function sendMessageToDynamoDbConsumer(
+  message: DynamoConsumerMessage
+) {
+  if (envIs('test') && !hasFeature('CLICKHOUSE_MIGRATION')) {
+    return
+  }
+  if (envIs('local') || envIs('test')) {
+    // Direct processing for local/test environments
+    const { dynamoDbTriggerQueueConsumerHandler } = await import(
+      '@/lambdas/dynamo-db-trigger-consumer/app'
+    )
+    await dynamoDbTriggerQueueConsumerHandler({
+      Records: [
+        {
+          body: JSON.stringify(message),
+        },
+      ],
+    })
+    return
+  }
+  logger.debug('Sending message to DynamoDb consumer', {
+    message,
+  })
+  await sqs.send(
+    new SendMessageCommand({
+      QueueUrl: process.env.DYNAMO_DB_CONSUMER_QUEUE_URL,
+      MessageBody: JSON.stringify(message),
     })
   )
 }

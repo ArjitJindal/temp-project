@@ -36,10 +36,11 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 import { NangoRepository } from '@/services/nango/repository'
 import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
+import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -256,11 +257,15 @@ export async function seedDynamo(
     )
   }
 
+  // adding cases to dynamo
+  const dynamoCaseRepository = new DynamoCaseRepository(tenantId, dynamoDb)
   const dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
-
-  for (const caseItem of getCases()) {
-    await dynamoAlertRepository.saveAlerts(caseItem.alerts ?? [])
-  }
+  logger.info('Create cases')
+  await dynamoCaseRepository.deleteCasesData(tenantId)
+  await dynamoAlertRepository.deleteAlertsData(tenantId)
+  const cases = getCases()
+  // no need to add alerts here as it gets added in the add case method
+  await dynamoCaseRepository.saveCases(cases, false)
 
   logger.info('Create risk factors')
   for (const riskFactor of riskFactors()) {

@@ -30,6 +30,11 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { RuleThresholdRecommendations } from '@/@types/openapi-internal/RuleThresholdRecommendations'
 import { VarThresholdData } from '@/@types/openapi-internal/VarThresholdData'
 import { isDemoMode } from '@/utils/demo'
+import {
+  getClickhouseClient,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
+import { ClickhouseAlertRepository } from '@/services/alerts/clickhouse-repository'
 
 const MIN_DISPOSED_LIMIT = 15
 
@@ -43,6 +48,8 @@ export class RuleThresholdOptimizer {
   private mongoTransactionsRepository: MongoDbTransactionRepository
   private ruleThresholdOptimizerRepository: RuleThresholdOptimizerRepository
   private alertsRepository: AlertsRepository
+  private clickhouseAlertRepository?: ClickhouseAlertRepository
+
   constructor(
     tenantId: string,
     connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
@@ -71,6 +78,28 @@ export class RuleThresholdOptimizer {
       dynamoDb: this.dynamoDb,
     })
   }
+  /**
+   * Get the clickhouse alert repository.
+   * Since we cannot initialize the repository in the constructor, we need to initialize it here.
+   * If the repository is already initialized, it will return the existing repository.\
+   * Otherwise, it will initialize a new repository and return it.
+   *
+   * @returns The clickhouse alert repository
+   */
+  private async getClickhouseAlertRepository(): Promise<ClickhouseAlertRepository> {
+    if (this.clickhouseAlertRepository) {
+      return this.clickhouseAlertRepository
+    }
+    const clickhouse = await getClickhouseClient(this.tenantId)
+    this.clickhouseAlertRepository = new ClickhouseAlertRepository(
+      this.tenantId,
+      {
+        clickhouseClient: clickhouse,
+        dynamoDb: this.dynamoDb,
+      }
+    )
+    return this.clickhouseAlertRepository
+  }
 
   public async getRecommendedThresholdData(
     ruleInstanceId: string
@@ -98,16 +127,24 @@ export class RuleThresholdOptimizer {
         isReady: true,
       }
     }
-    const pipeline = await this.alertsRepository.getAlertsPipeline(
-      {
+    let disposedAlertsCount: number
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseAlertRepository =
+        await this.getClickhouseAlertRepository()
+      disposedAlertsCount = await clickhouseAlertRepository.getAlertsCount({
         filterRuleInstanceId: [ruleInstanceId],
         filterAlertStatus: ['CLOSED'],
-      },
-      { countOnly: true }
-    )
-    const disposedAlertsCount = await this.alertsRepository.getAlertsCount(
-      pipeline
-    )
+      })
+    } else {
+      const pipeline = await this.alertsRepository.getAlertsPipeline(
+        {
+          filterRuleInstanceId: [ruleInstanceId],
+          filterAlertStatus: ['CLOSED'],
+        },
+        { countOnly: true }
+      )
+      disposedAlertsCount = await this.alertsRepository.getAlertsCount(pipeline)
+    }
     const isReady = disposedAlertsCount >= MIN_DISPOSED_LIMIT
     if (!isReady) {
       return {

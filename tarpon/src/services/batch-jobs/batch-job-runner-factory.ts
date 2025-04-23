@@ -30,6 +30,7 @@ import { FixArsBreakdownBatchJobRunner } from './fix-ars-breakdown-batch-job-run
 import { ClickhouseDataBatchJobRunner } from './clickhouse-data-batch-job-runner'
 import { FixLocksForKrsBatchJobRunner } from './fix-locks-for-krs-batch-job-runner'
 import { DeltaSanctionsDataFetchBatchJobRunner } from './delta-sanctions-batch-job-runner'
+import { CasesDynamoBackfillBatchJobRunner } from './cases-backfill-dynamodb-job-runner'
 import { PeriodicScreeningUserRuleBatchJobRunner } from './periodic-screening-user-rule-batch-job-runner'
 import { QACleanupBatchJobRunner } from './qa-cleanup-batchjob'
 import { BatchJobType } from '@/@types/batch-job'
@@ -115,6 +116,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new DeltaSanctionsDataFetchBatchJobRunner(jobId),
     BACKFILL_ACTION_PROCESSING: (jobId) =>
       new BackfillAsyncRuleRunsBatchJobRunner(jobId),
+    CASES_DYNAMO_BACKFILL: (jobId) =>
+      new CasesDynamoBackfillBatchJobRunner(jobId),
     PERIODIC_SCREENING_USER_RULE: (jobId) =>
       new PeriodicScreeningUserRuleBatchJobRunner(jobId),
   }

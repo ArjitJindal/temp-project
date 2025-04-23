@@ -233,13 +233,13 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
           })
         })
         .filter((alert): alert is Alert => alert !== null)
-
+      const caseCreatedTimestamp = this.sampleTimestamp()
       return {
         caseId,
         caseType: 'SYSTEM',
         caseStatus,
         priority: this.rng.r(3).pickRandom(PRIORITYS),
-        createdTimestamp: this.sampleTimestamp(),
+        createdTimestamp: caseCreatedTimestamp,
         latestTransactionArrivalTimestamp: this.sampleTimestamp(),
         comments: [],
         caseTransactionsCount: caseTransactions.length,
@@ -299,7 +299,10 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
         },
 
         caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
-        alerts: alerts,
+        alerts: alerts.map((a) => ({
+          ...a,
+          createdTimestamp: caseCreatedTimestamp,
+        })),
       }
     }).filter((c) => c.alerts && c.alerts.length)
   }

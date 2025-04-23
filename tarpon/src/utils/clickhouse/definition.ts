@@ -142,6 +142,7 @@ export enum ClickhouseTableNames {
   TransactionEvents = 'transaction_events',
   UserEvents = 'user_events',
   Cases = 'cases',
+  CasesV2 = 'cases_v2',
   Reports = 'reports',
   KrsScore = 'krs_score',
   DrsScore = 'drs_score',
@@ -152,6 +153,29 @@ export enum ClickhouseTableNames {
   CrmUserRecordLink = 'crm_user_record_link',
   DynamicPermissionsItems = 'dynamic_permissions_items',
 }
+const userNameCasesV2MaterializedColumn = `
+  userName String MATERIALIZED coalesce(
+    nullIf(trim(BOTH ' ' FROM concat(
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'firstName'),
+      ' ',
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'middleName'),
+      ' ',
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'lastName')
+    )), ''),
+    
+    nullIf(trim(BOTH ' ' FROM concat(
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'firstName'),
+      ' ',
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'middleName'),
+      ' ',
+      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'lastName')
+    )), ''),
+    
+    nullIf(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'legalEntity', 'companyGeneralDetails'), 'legalName'), ''),
+    nullIf(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'legalEntity', 'companyGeneralDetails'), 'legalName'), ''),
+    ''
+  )
+`
 
 export const gerneratePaymentDetailsName = (prefix: string) => {
   return [
@@ -272,10 +296,56 @@ export const CLICKHOUSE_DEFINITIONS = {
   CRM_USER_RECORD_LINK: {
     tableName: ClickhouseTableNames.CrmUserRecordLink,
   },
+  CASES_V2: {
+    tableName: ClickhouseTableNames.CasesV2,
+  },
   DYNAMIC_PERMISSIONS_ITEMS: {
     tableName: ClickhouseTableNames.DynamicPermissionsItems,
   },
 } as const
+
+const businessIndustryMaterializedColumn = (
+  type: 'origin' | 'destination'
+) => `${type}BusinessIndustry Array(String) MATERIALIZED arrayMap(x -> replace(x, '"', ''), 
+          JSONExtractArrayRaw(
+            JSONExtractRaw(
+              JSONExtractRaw(
+                JSONExtractRaw(data, 'caseUsers'),
+                '${type}'
+              ),
+              'employmentDetails'
+            ),
+            'businessIndustry'
+          )
+        )`
+
+const commonMaterializedColumns = [
+  "originUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userId')",
+  "destinationUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userId')",
+  "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
+  "caseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseStatus')",
+  "statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))')",
+  "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+  "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+  "lastStatusChangeReasons Array(String) MATERIALIZED arrayMap(x -> replaceAll(x, '\"', ''), JSONExtractArrayRaw(data, 'lastStatusChange', 'reason'))",
+  "lastStatusChangeUserId String MATERIALIZED JSONExtractString(data, 'lastStatusChange', 'userId')",
+  "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
+  "caseType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseType')",
+  "priority LowCardinality(String) MATERIALIZED JSONExtractString(data, 'priority')",
+  "caseTransactionsIds Array(String) MATERIALIZED arrayMap(x -> replaceAll(x, '\"', ''), JSONExtractArrayRaw(data, 'caseTransactionsIds'))",
+  "availableAfterTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'availableAfterTimestamp')",
+  `destinationPaymentMethods Array(String) MATERIALIZED arrayMap(x -> replace(x, '"', ''), JSONExtractArrayRaw(data, 'caseAggregates', 'destinationPaymentMethods'))`,
+  `originPaymentMethods Array(String) MATERIALIZED arrayMap(x -> replace(x, '"', ''), JSONExtractArrayRaw(data, 'caseAggregates', 'originPaymentMethods'))`,
+  `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'caseAggregates', 'tags'), 'Array(Tuple(key String, value String))')`,
+  "caseIdNumber UInt64 MATERIALIZED toUInt64OrZero(extract(id, '^C-(\\d+)$'))",
+  "caseTransactionsCount UInt64 MATERIALIZED JSONExtractUInt(data, 'caseTransactionsCount')",
+  businessIndustryMaterializedColumn('origin'),
+  businessIndustryMaterializedColumn('destination'),
+  "originUserDrsScore Float32 MATERIALIZED JSONExtractFloat(data, 'caseUsers', 'originUserDrsScore')",
+  "destinationUserDrsScore Float32 MATERIALIZED JSONExtractFloat(data, 'caseUsers', 'destinationUserDrsScore')",
+  "originUserState String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userStateDetails', 'state')",
+  "destinationUserState String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userStateDetails', 'state')",
+]
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
   {
@@ -645,14 +715,9 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     orderBy: '(timestamp, id)',
     mongoIdColumn: true,
     materializedColumns: [
-      "originUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userId')",
-      "destinationUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userId')",
-      "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
-      "caseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseStatus')",
-      "statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))')",
-      "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
-      "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
-      "lastStatusChangeReasons Array(String) MATERIALIZED JSONExtractArrayRaw(data, 'lastStatusChange', 'reason')",
+      ...commonMaterializedColumns,
+      userNameCasesV2MaterializedColumn,
+      "alertsRuleInstanceIds Array(String) MATERIALIZED JSONExtractArrayRaw(data, 'alerts', 'Array(Tuple(ruleInstanceId String))')",
       `alerts Array(Tuple(
         alertId String, 
         alertStatus String, 
@@ -671,7 +736,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         ruleQaStatus String,
         ruleChecklistTemplateId String,
         ruleChecklistItemId Array(String),
-        qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64))
+        qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)),
+        ruleNature String
       )) MATERIALIZED
         arrayMap(x -> CAST((
           JSONExtractString(x, 'alertId'),
@@ -691,8 +757,9 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractString(x, 'ruleQaStatus'),
           JSONExtractString(x, 'ruleChecklistTemplateId'),
           JSONExtractArrayRaw(x, 'ruleChecklist', 'checklistItemId'),
-          JSONExtract(x, 'qaAssignment', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)))'),
+          JSONExtract(x, 'qaAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
+          JSONExtractString(x, 'ruleNature')
+        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String)'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
     materializedViews: [
@@ -711,6 +778,19 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
             .INVESTIGATION_TIMES_HOURLY_STATS.table,
         query: getCreateInvestigationTimesStatsClickhouseMVQuery,
       },
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.CASES_V2.tableName,
+    idColumn: 'caseId',
+    timestampColumn: 'createdTimestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      ...commonMaterializedColumns,
+      userNameCasesV2MaterializedColumn,
     ],
   },
   {
@@ -797,12 +877,37 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     primaryKey: '(caseId, id)',
     orderBy: '(caseId, id)',
     materializedColumns: [
-      "caseId String MATERIALIZED JSON_VALUE(data, '$.caseId')",
-      "caseStatus String MATERIALIZED JSON_VALUE(data, '$.caseStatus')",
-      "alertStatus String MATERIALIZED JSON_VALUE(data, '$.alertStatus')",
-      "updatedAt UInt64 MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))",
+      "numberOfTransactionsHit Int32 MATERIALIZED JSONExtractInt(data, 'numberOfTransactionsHit')",
+      "alertIdNumber UInt64 MATERIALIZED toUInt64OrZero(extract(id, '^A-(\\d+)$'))",
+      "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
+      "caseStatus String MATERIALIZED JSONExtractString(data, 'caseStatus')",
+      "alertStatus String MATERIALIZED JSONExtractString(data, 'alertStatus')",
+      "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
+      "ruleQaStatus String MATERIALIZED JSONExtractString(data, 'ruleQaStatus')",
+      "caseCreatedTimestamp UInt64 MATERIALIZED COALESCE(toUInt64OrNull(JSON_VALUE(data, '$.caseCreatedTimestamp')), 0)",
+
+      // Rule Metadata
+      "ruleInstanceId String MATERIALIZED JSONExtractString(data, 'ruleInstanceId')",
+      "ruleAction String MATERIALIZED JSONExtractString(data, 'ruleAction')",
+      "ruleNature String MATERIALIZED JSONExtractString(data, 'ruleNature')",
+      "ruleQueueId String MATERIALIZED JSONExtractString(data, 'ruleQueueId')",
+      `ruleChecklistTemplateId String MATERIALIZED JSONExtractString(data, 'ruleChecklistTemplateId')`,
+      // IDs and Statuses
+      "priority String MATERIALIZED JSONExtractString(data, 'priority')",
+
+      // Timestamps and Transaction Info
+      "transactionIds Array(String) MATERIALIZED JSONExtract(data, 'transactionIds', 'Array(String)')",
+
+      // Assignments -- done
       "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+      "qaAssignment Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'qaAssignment', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
       "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+
+      // SLA Policies
+      `slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)) MATERIALIZED JSONExtract(data, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64))')`,
+
+      "lastStatusChangeReasons Array(String) MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'reason')",
+      "lastStatusChangeUserId String MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'userId')",
     ],
   },
   {

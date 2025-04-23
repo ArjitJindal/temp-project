@@ -122,6 +122,7 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
 
       const caseRepository = new CaseRepository(tenantId, {
         mongoDb,
+        dynamoDb,
       })
       const caseItem = await caseRepository.getCaseById(caseId)
       const availableAfterTimestamp = caseItem?.availableAfterTimestamp

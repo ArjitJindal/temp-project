@@ -53,6 +53,22 @@ const createPaymentDetailsIdentifier = (
   }
 }
 
+export function getPaymentDetailsIdentifiersSubject(
+  paymentDetails: PaymentDetails
+): string | undefined {
+  const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
+  if (!identifiers) {
+    return
+  }
+  if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+    const { accountNumber, bankCode, bankId } = identifiers
+    return [accountNumber, bankCode ?? bankId].filter(Boolean).join('.')
+  }
+  return Object.entries(identifiers)
+    .map((entry) => `${entry[0]}:${entry[1]}`)
+    .join('#')
+}
+
 export const TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER =
   createPaymentDetailsIdentifier('ORIGIN')
 export const TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER =

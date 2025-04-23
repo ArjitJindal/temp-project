@@ -32,6 +32,7 @@ const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
 const QUESTION_ID_PREFIX = 'question:'
 export const ALERT_ID_PREFIX = 'alert:'
+export const CASE_ID_PREFIX = 'case:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = keyof TenantSettings
@@ -50,6 +51,10 @@ export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
+export const CASE_KEY_IDENTIFIER = '#cases'
+export const CASE_COMMENT_KEY_IDENTIFIER = '#case-comment'
+export const CASE_COMMENT_FILE_KEY_IDENTIFIER = '#case-comment-file'
+export const CASE_SUBJECT_KEY_IDENTIFIER = '#case-subject'
 
 export const CRM_RECORD_KEY_IDENTIFIER = '#crm-record'
 export const CRM_RECORD_MODEL_KEY_IDENTIFIER = '#crm-record-model'
@@ -75,6 +80,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${ALERT_KEY_IDENTIFIER}`,
     SortKeyID: alertId,
   }),
+  CASE: (tenantId: string, caseId: string) => ({
+    PartitionKeyID: `${tenantId}${CASE_KEY_IDENTIFIER}`,
+    SortKeyID: caseId,
+  }),
   // Attributes: refer to Search Profile
   SEARCH_PROFILE: (tenantId: string, searchProfileId?: string) => ({
     PartitionKeyID: `${tenantId}#search-profile`,
@@ -94,8 +103,8 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${CRM_USER_RECORD_LINK_KEY_IDENTIFIER}#userId:${userId}#recordType:${recordType}#crmName:${crmName}`,
     SortKeyID: crmRecordId,
   }),
-  ALERT_COMMENT: (tenantId: string, alertId: string, commentId: string) => ({
-    PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_COMMENT_KEY_IDENTIFIER}`,
+  ALERT_COMMENT: (tenantId: string, alertId: string, commentId?: string) => ({
+    PartitionKeyID: `${tenantId}${ALERT_COMMENT_KEY_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
     SortKeyID: commentId,
   }),
   ALERT_COMMENT_FILE: (
@@ -104,8 +113,29 @@ export const DynamoDbKeys = {
     commentId?: string,
     fileS3Key?: string
   ) => ({
-    PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_FILE_ID_IDENTIFIER}`,
+    PartitionKeyID: `${tenantId}${ALERT_FILE_ID_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
     SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
+  CASE_ALERT: (tenantId: string, caseId: string, alertId?: string) => ({
+    PartitionKeyID: `${tenantId}#alert#${CASE_ID_PREFIX}${caseId}`,
+    SortKeyID: alertId,
+  }),
+  CASE_COMMENT: (tenantId: string, caseId: string, commentId?: string) => ({
+    PartitionKeyID: `${tenantId}${CASE_COMMENT_KEY_IDENTIFIER}#${CASE_ID_PREFIX}${caseId}`,
+    SortKeyID: commentId,
+  }),
+  CASE_COMMENT_FILE: (
+    tenantId: string,
+    caseId: string,
+    commentId?: string,
+    fileS3Key?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}${CASE_COMMENT_FILE_KEY_IDENTIFIER}#${CASE_ID_PREFIX}${caseId}`,
+    SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
+  CASE_SUBJECT: (tenantId: string, subjectId: string, caseId?: string) => ({
+    PartitionKeyID: `${tenantId}${CASE_SUBJECT_KEY_IDENTIFIER}#${subjectId}`,
+    SortKeyID: `${caseId}`,
   }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId?: string) => ({

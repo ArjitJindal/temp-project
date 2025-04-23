@@ -136,6 +136,7 @@ export class TransactionService {
     const { caseId, ...rest } = params
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
     })
 
     const case_ = await caseRepository.getCaseById(caseId)

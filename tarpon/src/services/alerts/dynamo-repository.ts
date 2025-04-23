@@ -1,160 +1,721 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'
 import {
-  DeleteCommand,
   GetCommand,
   PutCommand,
-  QueryCommand,
-  UpdateCommand,
+  QueryCommandInput,
+  GetCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { v4 as uuidv4 } from 'uuid'
+import { concat, now, omit } from 'lodash'
+import {
+  createUpdateCaseQueries,
+  dynamoKey,
+  dynamoKeyList,
+  generateDynamoConsumerMessage,
+  transactWriteWithClickhouse,
+} from '../case-alerts-common/utils'
+import { CaseWithoutCaseTransactions } from '../cases/repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { batchGet, batchWrite } from '@/utils/dynamodb'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import {
+  batchGet,
+  batchWrite,
+  sanitizeMongoObject,
+  TransactWriteOperation,
+  paginateQuery,
+  getUpdateAttributesUpdateItemInput,
+  dangerouslyDeletePartitionKey,
+  dangerouslyDeletePartition,
+  dangerouslyQueryPaginateDelete,
+} from '@/utils/dynamodb'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { logger } from '@/core/logger'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
+import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
+import { getContext } from '@/core/utils/context-storage'
+import { Account } from '@/@types/openapi-internal/Account'
+import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
+import { traceable } from '@/core/xray'
+import {
+  AlertCommentFileInternal,
+  AlertCommentsInternal,
+} from '@/@types/alert/AlertsInternal'
+type caseUpdateOptions = {
+  updateCase: boolean
+  caseUpdateFields: Record<string, any>
+}
 
+@traceable
 export class DynamoAlertRepository {
   private readonly tenantId: string
   private readonly dynamoDb: DynamoDBClient
+  private readonly tableName: string
+  private readonly CasesClickhouseTableName: string
+  private readonly AlertsClickhouseTableName: string
 
   constructor(tenantId: string, dynamoDb: DynamoDBClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
+    this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    this.CasesClickhouseTableName = CLICKHOUSE_DEFINITIONS.CASES_V2.tableName
+    this.AlertsClickhouseTableName = CLICKHOUSE_DEFINITIONS.ALERTS.tableName
   }
 
-  public async saveComment(alertId: string, comment: Comment): Promise<string> {
-    const now = Date.now()
-    const commentId = comment.id || uuidv4()
-    const item: Comment = {
-      ...comment,
-      id: commentId,
-      createdAt: comment.createdAt ?? now,
-      updatedAt: now,
+  public async saveAlertsForCase(
+    alerts: Alert[],
+    caseId: string,
+    updateHere: boolean = true
+  ): Promise<{
+    batchWriteRequests: TransactWriteOperation[]
+    message?: DynamoConsumerMessage
+  }> {
+    if (!alerts || alerts.length === 0) {
+      return { batchWriteRequests: [] }
     }
-
-    const key = DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
-
-    await Promise.all([
-      this.dynamoDb.send(
-        new PutCommand({
-          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-          Item: { ...key, ...item },
-        })
-      ),
-      ...(comment.files ?? []).map(async (file) => {
-        const fileKey = DynamoDbKeys.ALERT_COMMENT_FILE(
-          this.tenantId,
-          alertId,
-          commentId,
-          file.s3Key
-        )
-
-        await this.dynamoDb.send(
-          new PutCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Item: { ...fileKey, ...file },
-          })
-        )
-
-        await this.localChangeHandler(fileKey)
-      }),
-    ])
-
-    await this.localChangeHandler(key)
-
-    return commentId
-  }
-
-  public async saveAlertsComment(
-    alertIds: string[],
-    comment: Comment
-  ): Promise<void> {
-    const now = Date.now()
-    const commentId = comment.id || uuidv4()
-    const item: Comment = {
-      ...comment,
-      id: commentId,
-      createdAt: comment.createdAt ?? now,
-      updatedAt: now,
-    }
-
-    await batchWrite(
-      this.dynamoDb,
-      alertIds.map((alertId) => ({
-        PutRequest: {
+    const alertKeys: dynamoKeyList = []
+    let writeRequests: TransactWriteOperation[] = []
+    if (updateHere) {
+      const caseKey = DynamoDbKeys.CASE(this.tenantId, caseId)
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
           Item: {
-            ...DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId),
-            ...item,
+            ...caseKey,
+            updatedAt: Date.now(),
           },
         },
-      })),
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+      })
+    }
+    for (const alert of alerts) {
+      const alertId = alert.alertId as string
+      logger.debug(`Saving alert ${alertId} to DynamoDB`)
+      const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
+      const caseAlertKey = DynamoDbKeys.CASE_ALERT(
+        this.tenantId,
+        caseId,
+        alertId
+      )
+
+      let alertToSave = { ...alert }
+
+      const comments = alertToSave.comments || []
+
+      alertToSave = omit(alertToSave, ['comments'])
+
+      // Add alert to both the keys
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
+          Item: {
+            ...key,
+            ...sanitizeMongoObject(alertToSave),
+          },
+        },
+      })
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
+          Item: {
+            ...caseAlertKey,
+            ...sanitizeMongoObject(alertToSave),
+          },
+        },
+      })
+      alertKeys.push({ key })
+      // Add alert comments if they exist
+      writeRequests = concat(
+        writeRequests,
+        await this.saveCommentsForAlert(alertId, comments, false)
+      )
+    }
+    const message: DynamoConsumerMessage[] = generateDynamoConsumerMessage(
+      this.tenantId,
+      [{ keyLists: alertKeys, tableName: this.AlertsClickhouseTableName }]
+    )
+    if (updateHere) {
+      await transactWriteWithClickhouse(this.dynamoDb, writeRequests, message)
+      return { batchWriteRequests: [] }
+    }
+    return { batchWriteRequests: writeRequests, message: message[0] }
+  }
+
+  public async saveCommentsForAlert(
+    alertId: string,
+    comments: Comment[],
+    updateHere: boolean = true
+  ): Promise<TransactWriteOperation[]> {
+    if (!comments || comments.length === 0) {
+      return []
+    }
+
+    let writeRequests: TransactWriteOperation[] = []
+    let keyLists: dynamoKeyList = []
+    let caseKeyLists: dynamoKeyList = []
+
+    if (updateHere) {
+      const {
+        writeRequests: alertWriteRequests,
+        keyLists: alertKeyLists,
+        caseKeyLists: caseAlertKeyLists,
+      } = await this.prepareAlertUpdates(alertId)
+      writeRequests = concat(writeRequests, alertWriteRequests)
+      keyLists = concat(keyLists, alertKeyLists)
+      caseKeyLists = concat(caseKeyLists, caseAlertKeyLists)
+    }
+
+    for (const comment of comments) {
+      const commentKey = DynamoDbKeys.ALERT_COMMENT(
+        this.tenantId,
+        alertId,
+        comment.id as string
+      )
+
+      let commentToSave = { ...comment, alertId }
+
+      const files = commentToSave.files || []
+
+      // Remove files from comment to avoid duplication
+      commentToSave = omit(commentToSave, ['files'])
+
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
+          Item: {
+            ...commentKey,
+            ...commentToSave,
+          },
+        },
+      })
+
+      // Add comment files if they exist
+      writeRequests = concat(
+        writeRequests,
+        await this.saveCommentsFilesForAlert(
+          alertId,
+          comment.id as string,
+          files,
+          false
+        )
+      )
+    }
+    if (updateHere) {
+      const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+        generateDynamoConsumerMessage(this.tenantId, [
+          { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+          { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+        ])
+      await transactWriteWithClickhouse(
+        this.dynamoDb,
+        writeRequests,
+        dynamoDbConsumerMessage
+      )
+      return []
+    }
+    return writeRequests
+  }
+
+  /**
+   * Updates the SLA policy details for a alert
+   *
+   * @param alertId - The ID of the alert to update
+   * @param slaPolicyDetails - The updated SLA policy details array
+   *
+   * We are not updating the updatedAt field here because we make the SLAPolicyDetails update
+   * from our end and we do not want to make the user confused if they have not updated the object.
+   *  - Jayant Patil "Saheb"
+   * @returns Promise that resolves when the update is complete
+   */
+  public async updateAlertSlaPolicyDetails(
+    alertIds: string[],
+    slaPolicyDetails: SLAPolicyDetails[]
+  ): Promise<void> {
+    const now = Date.now()
+
+    const updateExpression = `SET slaPolicyDetails = :slaPolicyDetails, updatedAt = :updatedAt`
+
+    const expressionAttributeValues = {
+      ':slaPolicyDetails': slaPolicyDetails,
+      ':updatedAt': now,
+    }
+
+    const alertItems = await this.getAlertsFromAlertIds(alertIds)
+    if (!alertItems) {
+      throw new Error(`Alert with ID ${alertIds} not found`)
+    }
+    let operations: TransactWriteOperation[] = []
+    let keyLists: dynamoKeyList = []
+    for (const alertItem of alertItems) {
+      const { operations: alertOperations, keyLists: alertKeyLists } =
+        await this.createAlertUpdatesQueries(
+          alertItem.alertId as string,
+          updateExpression,
+          expressionAttributeValues,
+          alertItem
+        )
+      operations = concat(operations, alertOperations)
+      keyLists = concat(keyLists, alertKeyLists)
+    }
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
+    )
+
+    logger.debug(`Updated SLA policy details for given alerts`)
+  }
+
+  public async saveCommentsFilesForAlert(
+    alertId: string,
+    commentId: string,
+    files: FileInfo[],
+    updateHere: boolean = true
+  ): Promise<TransactWriteOperation[]> {
+    if (!files || files.length === 0) {
+      return []
+    }
+    let writeRequests: TransactWriteOperation[] = []
+    let keyLists: dynamoKeyList = []
+    let caseKeyLists: dynamoKeyList = []
+    if (updateHere) {
+      // Get timestamp update requests
+      const {
+        writeRequests: alertWriteRequests,
+        keyLists: alertKeyLists,
+        caseKeyLists: caseAlertKeyLists,
+      } = await this.prepareAlertUpdates(alertId)
+      writeRequests = concat(writeRequests, alertWriteRequests)
+      keyLists = concat(keyLists, alertKeyLists)
+      caseKeyLists = concat(caseKeyLists, caseAlertKeyLists)
+
+      const commentKey = DynamoDbKeys.ALERT_COMMENT(
+        this.tenantId,
+        alertId,
+        commentId
+      )
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
+          Item: {
+            ...commentKey,
+            updatedAt: now,
+          },
+        },
+      })
+    }
+    // Add all files
+    files.forEach((file) => {
+      const fileKey = DynamoDbKeys.ALERT_COMMENT_FILE(
+        this.tenantId,
+        alertId,
+        commentId,
+        file.s3Key
+      )
+      writeRequests.push({
+        Put: {
+          TableName: this.tableName,
+          Item: {
+            ...fileKey,
+            ...file,
+            alertId,
+            commentId,
+          },
+        },
+      })
+    })
+
+    if (updateHere) {
+      const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+        generateDynamoConsumerMessage(this.tenantId, [
+          { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+          { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+        ])
+
+      await transactWriteWithClickhouse(
+        this.dynamoDb,
+        writeRequests,
+        dynamoDbConsumerMessage
+      )
+      return []
+    }
+
+    return writeRequests
+  }
+
+  /**
+   * Updates the checklist status for a alert
+   * @param alertId - The ID of the alert to update
+   * @param updatedChecklist - The updated checklist status array
+   * @returns Promise that resolves when the update is complete
+   */
+  public async updateAlertChecklistStatus(
+    alertId: string,
+    updatedChecklist: ChecklistItemValue[]
+  ): Promise<void> {
+    const updateExpressionRecord = {
+      ruleChecklist: updatedChecklist,
+      updatedAt: Date.now(),
+    }
+    const { writeRequests, keyLists, caseKeyLists } =
+      await this.prepareAlertUpdates(alertId, updateExpressionRecord)
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      writeRequests,
+      dynamoDbConsumerMessage
     )
   }
 
+  /**
+   * Get a case by its ID from DynamoDB
+   *
+   * @param caseId - The ID of the case to retrieve
+   * @returns Promise resolving to the case or undefined if not found
+   */
+  public async getCaseById(
+    caseId: string,
+    projectionExpression?: string
+  ): Promise<CaseWithoutCaseTransactions | undefined> {
+    const key = DynamoDbKeys.CASE(this.tenantId, caseId)
+    const commandInput: GetCommandInput = {
+      TableName: this.tableName,
+      Key: key,
+    }
+    if (projectionExpression) {
+      commandInput.ProjectionExpression = projectionExpression
+    }
+    const command = new GetCommand(commandInput)
+
+    const commandResult = await this.dynamoDb.send(command)
+    if (!commandResult.Item) {
+      return undefined
+    }
+    const caseItem = commandResult.Item as CaseWithoutCaseTransactions
+    return omit(caseItem, [
+      'PartitionKeyID',
+      'SortKeyID',
+    ]) as CaseWithoutCaseTransactions
+  }
+
+  /**
+   * Add alerts to a case
+   * @param caseId - The ID of the case to save alerts for
+   * @param alerts - The alerts to save
+   * @returns Promise that resolves when the alerts are saved
+   */
+  public async addAlertToDynamo(
+    caseId: string,
+    alert: Alert,
+    caseData: { caseAggregates: CaseAggregates; caseTransactionsIds: string[] }
+  ): Promise<void> {
+    const { caseAggregates, caseTransactionsIds } = caseData
+    const caseItem = await this.getCaseById(
+      caseId,
+      'caseSubjectIdentifiers,createdTimestamp'
+    )
+    if (!caseItem) {
+      throw new Error(`Case with ID ${caseId} not found`)
+    }
+    alert.caseSubjectIdentifiers = caseItem.caseSubjectIdentifiers
+    alert.caseCreatedTimestamp = caseItem.createdTimestamp
+    let writeRequests: TransactWriteOperation[] = []
+    const { batchWriteRequests, message } = await this.saveAlertsForCase(
+      [alert],
+      caseId
+    )
+    writeRequests = concat(writeRequests, batchWriteRequests)
+    const updateCaseExpression = `SET caseAggregates = :caseAggregates, caseTransactionsIds = :caseTransactionsIds, caseTransactionsCount = :caseTransactionsCount`
+    const updateCaseExpressionAttributeValues = {
+      ':caseAggregates': caseAggregates,
+      ':caseTransactionsIds': caseTransactionsIds,
+      ':caseTransactionsCount': caseTransactionsIds.length,
+    }
+    const { operations: caseWriteRequests, keyLists: caseKeyLists } =
+      await createUpdateCaseQueries(this.tenantId, this.tableName, {
+        caseId,
+        UpdateExpression: updateCaseExpression,
+        ExpressionAttributeValues: updateCaseExpressionAttributeValues,
+        caseItem: caseItem,
+        identifiers: alert.caseSubjectIdentifiers,
+      })
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+    if (message) {
+      dynamoDbConsumerMessage.push(message)
+    }
+    writeRequests = concat(writeRequests, caseWriteRequests)
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      writeRequests,
+      dynamoDbConsumerMessage
+    )
+  }
+
+  /**
+   * Updates the QA status for a alert
+   * @param alertId - The ID of the alert to update
+   * @param qaStatus - The updated QA status
+   * @returns Promise that resolves when the update is complete
+   */
+  public async updateAlertQaStatus(
+    alertId: string,
+    qaStatus: ChecklistStatus,
+    comment: Comment,
+    assignments?: Assignment[]
+  ): Promise<void> {
+    const updateExpressionRecord = {
+      ruleQaStatus: qaStatus,
+      assignments: assignments,
+      updatedAt: Date.now(),
+    }
+    let writeRequests: TransactWriteOperation[] = []
+    const {
+      writeRequests: alertWriteRequests,
+      keyLists,
+      caseKeyLists,
+    } = await this.prepareAlertUpdates(alertId, updateExpressionRecord)
+    writeRequests = concat(writeRequests, alertWriteRequests)
+    writeRequests = concat(
+      writeRequests,
+      await this.saveCommentsForAlert(alertId, [comment], false)
+    )
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      writeRequests,
+      dynamoDbConsumerMessage
+    )
+  }
+
+  /**
+   * Updates the QA assignments for a alert
+   * @param alertId - The ID of the alert to update
+   * @param assignments - The updated QA assignments
+   * @returns Promise that resolves when the update is complete
+   */
+  public async updateAlertQaAssignments(
+    alertId: string,
+    assignments: Assignment[]
+  ): Promise<void> {
+    const updateExpressionRecord = {
+      qaAssignment: assignments,
+      updatedAt: Date.now(),
+    }
+    const { writeRequests, keyLists, caseKeyLists } =
+      await this.prepareAlertUpdates(alertId, updateExpressionRecord)
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      writeRequests,
+      dynamoDbConsumerMessage
+    )
+  }
+
+  /**
+   * Updates the AI summary of a file in a comment
+   *
+   * @param alertId - The ID of the alert containing the comment
+   * @param commentId - The ID of the comment containing the file
+   * @param fileS3Key - The S3 key of the file to update
+   * @param summary - The AI summary to set for the file
+   * @returns Promise that resolves when the update is complete
+   */
   public async updateAISummary(
     alertId: string,
     commentId: string,
     fileS3Key: string,
     summary: string
-  ): Promise<void> {
-    const key = DynamoDbKeys.ALERT_COMMENT_FILE(
+  ) {
+    const fileKey = DynamoDbKeys.ALERT_COMMENT_FILE(
       this.tenantId,
       alertId,
       commentId,
       fileS3Key
     )
 
-    await this.dynamoDb.send(
-      new UpdateCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: key,
-        UpdateExpression: 'set aiSummary = :summary',
+    const fileUpdateOperation: TransactWriteOperation = {
+      Update: {
+        TableName: this.tableName,
+        Key: fileKey,
+        UpdateExpression: 'SET aiSummary = :aiSummary, updatedAt = :updatedAt',
         ExpressionAttributeValues: {
-          ':summary': summary,
+          ':aiSummary': summary,
+          ':updatedAt': Date.now(),
         },
-      })
-    )
+      },
+    }
 
-    await this.localChangeHandler(key)
+    return this.prepareAlertUpdates(alertId).then(
+      ({ writeRequests, keyLists, caseKeyLists }) => {
+        const operations = [...writeRequests, fileUpdateOperation]
+
+        const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+          generateDynamoConsumerMessage(this.tenantId, [
+            { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+            {
+              keyLists: caseKeyLists,
+              tableName: this.CasesClickhouseTableName,
+            },
+          ])
+
+        if (operations.length > 0) {
+          return transactWriteWithClickhouse(
+            this.dynamoDb,
+            operations,
+            dynamoDbConsumerMessage
+          )
+        }
+      }
+    )
   }
 
-  public async saveAlerts(alerts: Alert[]): Promise<void> {
-    const modifiedAlerts = alerts.map((alert) => {
-      delete alert.comments
-      return alert
+  /**
+   * Prepares update operations for an alert and its case and its auxiliary indexes
+   * @param alertId The ID of the alert to update
+   * @param updateFields fields to update (beyond updatedAt)
+   * @returns Array of operations to use with transactWrite
+   */
+  async prepareAlertUpdates(
+    alertId: string,
+    updateFields: Record<string, any> = {},
+    alertItem?: Alert,
+    options: caseUpdateOptions = {
+      updateCase: true,
+      caseUpdateFields: { updatedAt: Date.now() },
+    }
+  ): Promise<{
+    writeRequests: TransactWriteOperation[]
+    keyLists: dynamoKeyList
+    caseKeyLists: dynamoKeyList
+  }> {
+    const now = Date.now()
+
+    const fieldsToUpdate = {
+      ...updateFields,
+      updatedAt: now,
+    }
+    if (!alertItem) {
+      alertItem = await this.getAlert(alertId)
+    }
+    if (!alertItem) {
+      throw new Error(`Alert with ID ${alertId} not found`)
+    }
+    const caseId = alertItem.caseId as string
+    const identifiers = alertItem.caseSubjectIdentifiers
+
+    const { UpdateExpression, ExpressionAttributeValues } =
+      getUpdateAttributesUpdateItemInput(fieldsToUpdate)
+    let operations: TransactWriteOperation[] = []
+    const { operations: writeRequests, keyLists } =
+      await this.createAlertUpdatesQueries(
+        alertId,
+        UpdateExpression,
+        ExpressionAttributeValues,
+        alertItem
+      )
+    operations = concat(operations, writeRequests)
+    let caseKeyLists: dynamoKeyList = []
+    if (options.updateCase) {
+      const {
+        UpdateExpression: caseUpdateExpression,
+        ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
+      } = getUpdateAttributesUpdateItemInput(options.caseUpdateFields)
+      const { operations: caseOperations, keyLists: caseKeyListsTemp } =
+        await createUpdateCaseQueries(this.tenantId, this.tableName, {
+          caseId,
+          UpdateExpression: caseUpdateExpression,
+          ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
+          identifiers: identifiers,
+        })
+      operations = concat(operations, caseOperations)
+      caseKeyLists = concat(caseKeyLists, caseKeyListsTemp)
+    }
+    return { writeRequests: operations, keyLists, caseKeyLists }
+  }
+
+  private async createAlertUpdatesQueries(
+    alertId: string,
+    UpdateExpression: string,
+    ExpressionAttributeValues: Record<string, any>,
+    alertItem: Alert
+  ) {
+    const operations: TransactWriteOperation[] = []
+    const keyLists: dynamoKeyList = []
+
+    const mainKey = DynamoDbKeys.ALERT(this.tenantId, alertId)
+    operations.push({
+      Update: {
+        TableName: this.tableName,
+        Key: mainKey,
+        UpdateExpression,
+        ExpressionAttributeValues,
+      },
     })
 
-    await batchWrite(
-      this.dynamoDb,
-      modifiedAlerts.map((alert) => ({
-        PutRequest: {
-          Item: {
-            ...DynamoDbKeys.ALERT(this.tenantId, alert.alertId as string),
-            ...alert,
+    keyLists.push({
+      key: mainKey,
+    })
+    const auxiliaryIndexes = this.getAlertAuxiliaryIndexes(alertId, alertItem)
+    for (const index of auxiliaryIndexes) {
+      operations.push({
+        Update: {
+          TableName: this.tableName,
+          Key: {
+            PartitionKeyID: index.PartitionKeyID,
+            SortKeyID: index.SortKeyID,
           },
+          UpdateExpression,
+          ExpressionAttributeValues,
         },
-      })),
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
-    )
+      })
+    }
 
-    await Promise.all(
-      alerts.map((alert) =>
-        this.localChangeHandler(
-          DynamoDbKeys.ALERT(this.tenantId, alert.alertId as string)
-        )
-      )
-    )
+    return { operations, keyLists }
+  }
+
+  private getAlertAuxiliaryIndexes(alertId: string, alertItem: Alert) {
+    const caseId = alertItem.caseId as string
+    const indexes: dynamoKey[] = []
+    const caseAlertKey = DynamoDbKeys.CASE_ALERT(
+      this.tenantId,
+      caseId,
+      alertId
+    ) as dynamoKey
+    indexes.push(caseAlertKey)
+    return indexes
   }
 
   public async saveAlert(alert: Alert): Promise<void> {
     const alertId = alert.alertId as string
     const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
 
-    delete alert.comments
+    alert = omit(alert, ['comments'])
 
     await this.dynamoDb.send(
       new PutCommand({
@@ -165,59 +726,122 @@ export class DynamoAlertRepository {
         },
       })
     )
-
-    await this.localChangeHandler(key)
   }
 
-  public async deleteComment(
+  /**
+   * Save the same comment for multiple alerts
+   * Not saving the updatedAt here as it will be anyways saved in the updateStatus method
+   * @param alertIds - Array of alert IDs to save the comment for
+   * @param comment - The comment to save
+   */
+  public async saveAlertsComment(
+    alertIds: string[],
+    comment: Comment
+  ): Promise<void> {
+    let operations: TransactWriteOperation[] = []
+    alertIds.forEach(async (alertId) => {
+      operations = concat(
+        operations,
+        await this.saveCommentsForAlert(alertId, [comment])
+      )
+    })
+    await batchWrite(
+      this.dynamoDb,
+      operations,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
+  }
+
+  /**
+   * Soft deletes a comment and its child comments by setting the 'deletedAt' timestamp.
+   * Also updates the 'updatedAt' timestamp on the parent case and its auxiliary items.
+   *
+   * @param alertId - The ID of the alert containing the comment.
+   * @param commentId - The ID of the comment to delete.
+   */
+  public async deleteAlertComment(
     alertId: string,
     commentId: string
   ): Promise<void> {
-    const key = DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
+    const now = Date.now()
 
-    await this.dynamoDb.send(
-      new DeleteCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: key,
-      })
+    const commentPartitionKey = DynamoDbKeys.ALERT_COMMENT(
+      this.tenantId,
+      alertId,
+      ''
+    ).PartitionKeyID
+
+    const queryInput: QueryCommandInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': commentPartitionKey,
+      },
+    }
+
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+    const allComments = result.Items || []
+
+    const commentsToDelete = allComments.filter(
+      (comment) => comment.id === commentId || comment.parentId === commentId
     )
 
-    const queryCommandResult = await this.dynamoDb.send(
-      new QueryCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        KeyConditionExpression: 'PartitionKeyID = :pk',
-        ExpressionAttributeValues: {
-          ':pk': DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
-            .PartitionKeyID,
-        },
-      })
-    )
-
-    if (!queryCommandResult?.Items?.length) {
+    if (commentsToDelete.length === 0) {
+      logger.warn(
+        `No comments found with id or parentId ${commentId} in alert ${alertId}`
+      )
       return
     }
 
-    await Promise.all(
-      queryCommandResult?.Items?.map(async (item) => {
-        const key = DynamoDbKeys.ALERT_COMMENT_FILE(
-          this.tenantId,
-          item.alertId,
-          item.commentId,
-          item.s3Key
-        )
+    let operations: TransactWriteOperation[] = []
 
-        await this.dynamoDb.send(
-          new DeleteCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-          })
-        )
+    commentsToDelete.forEach((comment) => {
+      const commentKey = DynamoDbKeys.ALERT_COMMENT(
+        this.tenantId,
+        alertId,
+        comment.id
+      )
 
-        await this.localChangeHandler(key)
+      operations.push({
+        Update: {
+          TableName: this.tableName,
+          Key: commentKey,
+          UpdateExpression:
+            'SET deletedAt = :deletedAt, updatedAt = :updatedAt',
+          ExpressionAttributeValues: {
+            ':deletedAt': now,
+            ':updatedAt': now,
+          },
+        },
       })
+    })
+
+    const { writeRequests, keyLists, caseKeyLists } =
+      await this.prepareAlertUpdates(alertId, {
+        updatedAt: now,
+      })
+
+    operations = [...operations, ...writeRequests]
+
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
     )
   }
 
+  /**
+   * Updates the status of multiple alerts
+   *
+   * @param alertIds - Array of alert IDs to update
+   * @param statusChange - The new status change to set
+   * @param isLastInReview - Optional flag indicating if the status change is the last in review
+   */
   public async updateStatus(
     alertIds: string[],
     statusChange: CaseStatusChange,
@@ -239,24 +863,66 @@ export class DynamoAlertRepository {
       ':alertStatus': statusChange.caseStatus,
       ':empty_list': [],
     }
-
-    await Promise.all(
+    const caseIdsSet = new Map<string, string[]>()
+    const operationsAndKeyLists = await Promise.all(
       alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-
-        await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
-          })
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem) {
+          return { operations: [], keyLists: [] }
+        }
+        caseIdsSet.set(
+          alertItem.caseId as string,
+          alertItem.caseSubjectIdentifiers as string[]
         )
-
-        await this.localChangeHandler(key)
+        return await this.createAlertUpdatesQueries(
+          alertId,
+          updateExpression,
+          expressionAttributeValues,
+          alertItem
+        )
       })
     )
+    const operations = operationsAndKeyLists.flatMap(
+      (result) => result.operations
+    )
+    const keyLists = operationsAndKeyLists.flatMap((result) => result.keyLists)
+    let caseKeyLists: dynamoKeyList = []
+    const caseUpdateExpression = 'SET updatedAt = :updatedAt'
+    const caseUpdateExpressionAttributeValues = {
+      ':updatedAt': now,
+    }
+    caseIdsSet.forEach(async (caseSubjectIdentifiers, caseId) => {
+      const { operations: caseOperations, keyLists: caseKeyListTemp } =
+        await createUpdateCaseQueries(this.tenantId, this.tableName, {
+          caseId,
+          UpdateExpression: caseUpdateExpression,
+          ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
+          identifiers: caseSubjectIdentifiers,
+        })
+      operations.push(...caseOperations)
+      if (caseKeyListTemp.length > 0) {
+        caseKeyLists = concat(caseKeyLists, caseKeyListTemp)
+      }
+    })
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
+    )
   }
+
+  /**
+   * Get an alert by its ID
+   *
+   * @param alertId - The ID of the alert to get
+   * @returns Promise resolving to the alert or undefined if not found
+   */
   public async getAlert(alertId: string): Promise<Alert | undefined> {
     const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
     const command = new GetCommand({
@@ -269,94 +935,69 @@ export class DynamoAlertRepository {
     return commandResult.Item as Alert | undefined
   }
 
-  public async updateAssignments(
+  /**
+   * Updates assignments, qaAssignment and/or review assignments for multiple alerts
+   *
+   * @param alertIds - Array of alert IDs to update
+   * @param assignments - Optional new assignments to set
+   * @param reviewAssignments - Optional new review assignments to set
+   * @param qaAssignment - Optional new qaAssignment to set
+   * @returns Promise that resolves when updates are complete
+   */
+  public async updateAssignmentsReviewAssignments(
     alertIds: string[],
-    assignments: Assignment[]
+    assignments?: Assignment[],
+    reviewAssignments?: Assignment[],
+    qaAssignment?: Assignment[]
   ): Promise<void> {
     const now = Date.now()
 
-    const updateExpression = `SET assignments = :assignments, updatedAt = :updatedAt`
-
-    const expressionAttributeValues = {
-      ':assignments': assignments,
-      ':updatedAt': now,
+    const updateExpressionRecord = {
+      updatedAt: now,
+    }
+    if (assignments) {
+      updateExpressionRecord['assignments'] = assignments
+    }
+    if (reviewAssignments) {
+      updateExpressionRecord['reviewAssignments'] = reviewAssignments
+    }
+    if (qaAssignment) {
+      updateExpressionRecord['qaAssignment'] = qaAssignment
     }
 
-    await Promise.all(
+    const operationsAndKeyLists = await Promise.all(
       alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-        await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
-          })
-        )
-
-        await this.localChangeHandler(key)
+        return await this.prepareAlertUpdates(alertId, updateExpressionRecord)
       })
+    )
+
+    const operations = operationsAndKeyLists.flatMap(
+      (result) => result.writeRequests
+    )
+    const keyLists = operationsAndKeyLists.flatMap((result) => result.keyLists)
+    const caseKeyLists = operationsAndKeyLists.flatMap(
+      (result) => result.caseKeyLists
+    )
+    // Create dynamic consumer message for Clickhouse
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
     )
   }
 
-  public async updateInReviewAssignments(
-    alertIds: string[],
-    assignments: Assignment[],
-    reviewAssignments: Assignment[]
-  ): Promise<void> {
-    const now = Date.now()
-
-    const updateExpression = `SET assignments = :assignments, reviewAssignments = :reviewAssignments, updatedAt = :updatedAt`
-
-    const expressionAttributeValues = {
-      ':assignments': assignments,
-      ':reviewAssignments': reviewAssignments,
-      ':updatedAt': now,
-    }
-
-    await Promise.all(
-      alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-        await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
-          })
-        )
-      })
-    )
-  }
-
-  public async updateReviewAssignments(
-    alertIds: string[],
-    reviewAssignments: Assignment[]
-  ): Promise<void> {
-    const now = Date.now()
-
-    const updateExpression = `SET reviewAssignments = :reviewAssignments, updatedAt = :updatedAt`
-
-    const expressionAttributeValues = {
-      ':reviewAssignments': reviewAssignments,
-      ':updatedAt': now,
-    }
-
-    await Promise.all(
-      alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-        await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
-          })
-        )
-      })
-    )
-  }
-
+  /**
+   * Copies review assignments to regular assignments for multiple alerts
+   * Used when promoting review assignments after approval
+   *
+   * @param alertIds - Array of alert IDs to update
+   * @returns Promise that resolves when updates are complete
+   */
   public async updateReviewAssignmentsToAssignments(
     alertIds: string[]
   ): Promise<void> {
@@ -367,44 +1008,662 @@ export class DynamoAlertRepository {
     const expressionAttributeValues = {
       ':updatedAt': now,
     }
-
-    await Promise.all(
+    const caseUpdateExpression = 'SET updatedAt = :updatedAt'
+    const caseUpdateExpressionAttributeValues = {
+      ':updatedAt': now,
+    }
+    const operationsAndKeyLists = await Promise.all(
       alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-
-        await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem) {
+          return { operations: [], keyLists: [] }
+        }
+        const { operations: caseOperations, keyLists: caseKeyLists } =
+          await createUpdateCaseQueries(this.tenantId, this.tableName, {
+            caseId: alertItem.caseId as string,
+            UpdateExpression: caseUpdateExpression,
+            ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
+            identifiers: alertItem.caseSubjectIdentifiers,
           })
-        )
-
-        await this.localChangeHandler(key)
+        const { operations: alertOperations, keyLists } =
+          await this.createAlertUpdatesQueries(
+            alertId,
+            updateExpression,
+            expressionAttributeValues,
+            alertItem
+          )
+        return {
+          operations: [...caseOperations, ...alertOperations],
+          keyLists,
+          caseKeyLists,
+        }
       })
+    )
+    const operations = operationsAndKeyLists.flatMap(
+      (result) => result.operations
+    )
+    const keyLists = operationsAndKeyLists.flatMap((result) => result.keyLists)
+    const caseKeyLists = operationsAndKeyLists
+      .flatMap((result) => result.caseKeyLists)
+      .filter((item) => item !== undefined)
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        {
+          keyLists: caseKeyLists as dynamoKeyList,
+          tableName: this.CasesClickhouseTableName,
+        },
+      ])
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
     )
   }
 
-  private async localChangeHandler(primaryKey: {
-    PartitionKeyID: string
-    SortKeyID: string
-  }) {
-    if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
-      )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+  /**
+   * Reassign alerts from one user to another, incase of its deletion
+   *
+   * This method follows the MongoDB implementation's logic:
+   * - For alerts with a single assignment matching the assignee, replace that assignment
+   * - For alerts with multiple assignments, remove the assignee (don't add new one)
+   *
+   * @param assignmentId - The ID of the user currently assigned
+   * @param reassignmentId - The ID of the user to reassign to
+   */
+  public async reassignAlerts(
+    assignmentId: string,
+    reassignmentId: string,
+    alertIds: {
+      assignments: { single: string[]; multiple: string[] }
+      reviewAssignments: { single: string[]; multiple: string[] }
+      qaAssignment: { single: string[]; multiple: string[] }
     }
+  ): Promise<void> {
+    const user = getContext()?.user as Account
+
+    const newAssignment: Assignment[] = [
+      {
+        assignedByUserId: user.id,
+        assigneeUserId: reassignmentId,
+        timestamp: Date.now(),
+      },
+    ]
+
+    const singleAssignmentPromises: Promise<void>[] = []
+    const multipleAssignmentPromises: Promise<void>[] = []
+
+    // For alerts with single assignment, replace with new assignment
+    if (alertIds.assignments.single.length > 0) {
+      for (const alertId of alertIds.assignments.single) {
+        singleAssignmentPromises.push(
+          this.updateAssignmentsReviewAssignments([alertId], newAssignment)
+        )
+      }
+    }
+
+    // For cases with multiple assignments, remove the assignee
+    if (alertIds.assignments.multiple.length > 0) {
+      for (const alertId of alertIds.assignments.multiple) {
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem || !alertItem.assignments) {
+          continue
+        }
+
+        const filteredAssignments = alertItem.assignments.filter(
+          (a) => a.assigneeUserId !== assignmentId
+        )
+
+        multipleAssignmentPromises.push(
+          this.updateAssignmentsReviewAssignments(
+            [alertId],
+            filteredAssignments
+          )
+        )
+      }
+    }
+
+    // Process review assignments
+    const singleReviewPromises: Promise<void>[] = []
+    const multipleReviewPromises: Promise<void>[] = []
+
+    // For cases with single review assignment, replace with new assignment
+    if (alertIds.reviewAssignments.single.length > 0) {
+      for (const alertId of alertIds.reviewAssignments.single) {
+        singleReviewPromises.push(
+          this.updateAssignmentsReviewAssignments(
+            [alertId],
+            undefined,
+            newAssignment
+          )
+        )
+      }
+    }
+
+    // For cases with multiple review assignments, remove the assignee
+    if (alertIds.reviewAssignments.multiple.length > 0) {
+      for (const alertId of alertIds.reviewAssignments.multiple) {
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem || !alertItem.reviewAssignments) {
+          continue
+        }
+
+        const filteredAssignments = alertItem.reviewAssignments.filter(
+          (a) => a.assigneeUserId !== assignmentId
+        )
+
+        multipleReviewPromises.push(
+          this.updateAssignmentsReviewAssignments(
+            [alertId],
+            undefined,
+            filteredAssignments
+          )
+        )
+      }
+    }
+
+    // Process qaAssignment
+    const singleQaAssignmentPromises: Promise<void>[] = []
+    const multipleQaAssignmentPromises: Promise<void>[] = []
+
+    // For alerts with single qaAssignment, replace with new assignment
+    if (alertIds.qaAssignment.single.length > 0) {
+      for (const alertId of alertIds.qaAssignment.single) {
+        singleQaAssignmentPromises.push(
+          this.updateAssignmentsReviewAssignments(
+            [alertId],
+            undefined,
+            undefined,
+            newAssignment
+          )
+        )
+      }
+    }
+
+    // For alerts with multiple qaAssignment, remove the assignee
+    if (alertIds.qaAssignment.multiple.length > 0) {
+      for (const alertId of alertIds.qaAssignment.multiple) {
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem || !alertItem.qaAssignment) {
+          continue
+        }
+
+        const filteredAssignments = alertItem.qaAssignment.filter(
+          (a) => a.assigneeUserId !== assignmentId
+        )
+
+        multipleQaAssignmentPromises.push(
+          this.updateAssignmentsReviewAssignments(
+            [alertId],
+            undefined,
+            undefined,
+            filteredAssignments
+          )
+        )
+      }
+    }
+    // Execute all operations
+    await Promise.all([
+      ...singleAssignmentPromises,
+      ...multipleAssignmentPromises,
+      ...singleReviewPromises,
+      ...multipleReviewPromises,
+      ...singleQaAssignmentPromises,
+      ...multipleQaAssignmentPromises,
+    ])
   }
 
-  public async getAlerts(alertIds: string[]): Promise<Alert[]> {
-    const alerts = await batchGet<Alert>(
+  /**
+   * Updates the rule queue ID for multiple alerts
+   * MIght also set it to null for deletes
+   *
+   * @param ruleQueueId - The ID of the rule queue
+   * @param alertIds - Array of alert IDs to update
+   */
+  public async updateRuleQueue(ruleQueueId: string | null, alertIds: string[]) {
+    const updateExpression = `SET ruleQueueId = :ruleQueueId, updatedAt = :updatedAt`
+    const expressionAttributeValues = {
+      ':ruleQueueId': ruleQueueId,
+      ':updatedAt': Date.now(),
+    }
+    const caseIdsSet = new Map<string, string[]>()
+    const operationsAndKeyLists = await Promise.all(
+      alertIds.map(async (alertId) => {
+        const alertItem = await this.getAlert(alertId)
+        if (!alertItem) {
+          return { operations: [], keyLists: [] }
+        }
+        caseIdsSet.set(
+          alertItem.caseId as string,
+          alertItem.caseSubjectIdentifiers as string[]
+        )
+        return await this.createAlertUpdatesQueries(
+          alertId,
+          updateExpression,
+          expressionAttributeValues,
+          alertItem
+        )
+      })
+    )
+    const operations = operationsAndKeyLists.flatMap(
+      (result) => result.operations
+    )
+    const keyLists = operationsAndKeyLists.flatMap((result) => result.keyLists)
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+      ])
+    // I am getting all the distinct caseIds and caseSubjectIdentifiers in a set to avoid duplicate update on dynamo and clickhouse
+    const caseUpdateExpression = 'SET updatedAt = :updatedAt'
+    const caseUpdateExpressionAttributeValues = {
+      ':updatedAt': Date.now(),
+    }
+    caseIdsSet.forEach(async (caseSubjectIdentifiers, caseId) => {
+      const { operations: caseOperations, keyLists: caseKeyLists } =
+        await createUpdateCaseQueries(this.tenantId, this.tableName, {
+          caseId,
+          UpdateExpression: caseUpdateExpression,
+          ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
+          identifiers: caseSubjectIdentifiers,
+        })
+      operations.push(...caseOperations)
+      if (caseKeyLists.length > 0) {
+        dynamoDbConsumerMessage.push({
+          tenantId: this.tenantId,
+          tableName: this.CasesClickhouseTableName,
+          items: caseKeyLists,
+        })
+      }
+    })
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
+    )
+  }
+
+  public async getAlertsFromAlertIds(
+    alertIds: string[],
+    { getComments = false }: { getComments?: boolean } = {}
+  ): Promise<Alert[]> {
+    let alerts = await batchGet<Alert>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       alertIds.map((alertId) => DynamoDbKeys.ALERT(this.tenantId, alertId))
     )
 
-    return alerts
+    if (getComments) {
+      const comments = await this.getComments(alertIds)
+      const files = await this.getFiles(alertIds)
+
+      alerts = alerts.map((alertItem) => {
+        const enrichedComments = comments
+          .filter((comment) => comment.alertId === alertItem.alertId)
+          .map((comment) => ({
+            ...comment,
+            files: files.filter(
+              (file) =>
+                file.alertId === alertItem.alertId &&
+                file.commentId === comment.id
+            ),
+          }))
+
+        return {
+          ...alertItem,
+          comments: enrichedComments,
+        }
+      })
+    }
+
+    const alertMap = alerts.reduce((acc, item) => {
+      const alertId = item.alertId as string
+      acc[alertId] = omit(item, ['PartitionKeyID', 'SortKeyID']) as Alert
+      return acc
+    }, {} as Record<string, Alert>)
+
+    return alertIds.map((id) => alertMap[id]).filter(Boolean)
+  }
+  public async getAlertsByCaseIds(caseIds: string[]): Promise<Alert[]> {
+    const queryPromises = caseIds.map((caseId) => {
+      const partitionKey = DynamoDbKeys.CASE_ALERT(
+        this.tenantId,
+        caseId
+      ).PartitionKeyID
+
+      const queryInput: QueryCommandInput = {
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': partitionKey,
+        },
+      }
+
+      return paginateQuery(this.dynamoDb, queryInput)
+    })
+
+    // Execute all queries in parallel
+    const results = await Promise.all(queryPromises)
+
+    // Combine all results
+    const alerts: Alert[] = []
+    results.forEach((result) => {
+      if (result.Items) {
+        alerts.push(...(result.Items as Alert[]))
+      }
+    })
+
+    return alerts.map((item) => {
+      item = omit(item, ['PartitionKeyID', 'SortKeyID']) as Alert
+      return item
+    })
+  }
+
+  public async updateAlertInDynamo(
+    caseId: string,
+    alertId: string,
+    data: Partial<Alert>,
+    caseData: { caseAggregates?: CaseAggregates; caseTransactionIds?: string[] }
+  ): Promise<CaseWithoutCaseTransactions | undefined | void> {
+    const now = Date.now()
+
+    const updateExpressionRecord = {
+      ...data,
+      updatedAt: now,
+    }
+
+    const alertItem = await this.getAlert(alertId)
+    if (!alertItem) {
+      throw new Error(`Alert with ID ${alertId} not found`)
+    }
+
+    const { writeRequests, keyLists } = await this.prepareAlertUpdates(
+      alertId,
+      updateExpressionRecord,
+      alertItem,
+      { updateCase: false, caseUpdateFields: {} }
+    )
+    const caseUpdateFields = {
+      updatedAt: now,
+    }
+
+    if (caseData.caseAggregates) {
+      caseUpdateFields['caseAggregates'] = caseData.caseAggregates
+    }
+
+    if (caseData.caseTransactionIds) {
+      caseUpdateFields['caseTransactionsIds'] = caseData.caseTransactionIds
+      caseUpdateFields['caseTransactionsCount'] =
+        caseData.caseTransactionIds.length
+    }
+    const caseUpdateExpression =
+      getUpdateAttributesUpdateItemInput(caseUpdateFields)
+
+    const { operations: caseOperations, keyLists: caseKeyLists } =
+      await createUpdateCaseQueries(this.tenantId, this.tableName, {
+        caseId,
+        UpdateExpression: caseUpdateExpression.UpdateExpression,
+        ExpressionAttributeValues:
+          caseUpdateExpression.ExpressionAttributeValues,
+        identifiers: alertItem.caseSubjectIdentifiers,
+      })
+
+    const operations = [...writeRequests, ...caseOperations]
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: keyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessage
+    )
+
+    // Pausing the return as it will be returned from mongo for now
+    // return this.getCaseById(caseId)
+  }
+
+  /**
+   * Marks all checklist items as DONE for multiple alerts
+   *
+   * @param alertIds - Array of alert IDs to update
+   * @returns Promise that resolves when the update is complete
+   */
+  public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+    const now = Date.now()
+    const operations: TransactWriteOperation[] = []
+    const alertKeyLists: dynamoKeyList = []
+    const caseKeyLists: dynamoKeyList = []
+    const caseIdsSet = new Map<string, string[]>()
+
+    const alerts = await this.getAlertsFromAlertIds(alertIds)
+
+    for (const alert of alerts) {
+      const alertId = alert.alertId as string
+
+      if (
+        !alert.ruleChecklist ||
+        alert.ruleChecklist === null ||
+        alert.ruleChecklist.length === 0
+      ) {
+        continue
+      }
+
+      if (alert.caseId && alert.caseSubjectIdentifiers) {
+        caseIdsSet.set(alert.caseId, alert.caseSubjectIdentifiers as string[])
+      }
+
+      const hasItemsToUpdate = alert.ruleChecklist.some(
+        (item) => item.done !== 'DONE'
+      )
+
+      if (!hasItemsToUpdate) {
+        continue
+      }
+
+      const updatedChecklist = alert.ruleChecklist.map((item) => ({
+        ...item,
+        done: 'DONE',
+      }))
+
+      const { operations: alertOperations, keyLists } =
+        await this.createAlertUpdatesQueries(
+          alertId,
+          'SET ruleChecklist = :checklist, updatedAt = :updatedAt',
+          {
+            ':checklist': updatedChecklist,
+            ':updatedAt': now,
+          },
+          alert
+        )
+
+      operations.push(...alertOperations)
+      alertKeyLists.push(...keyLists)
+    }
+
+    for (const [caseId, subjectIdentifiers] of caseIdsSet.entries()) {
+      const { operations: caseOperations, keyLists: caseLists } =
+        await createUpdateCaseQueries(this.tenantId, this.tableName, {
+          caseId,
+          UpdateExpression: 'SET updatedAt = :updatedAt',
+          ExpressionAttributeValues: { ':updatedAt': now },
+          identifiers: subjectIdentifiers,
+        })
+
+      operations.push(...caseOperations)
+      caseKeyLists.push(...caseLists)
+    }
+
+    if (operations.length === 0) {
+      return
+    }
+
+    const dynamoDbConsumerMessages: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        { keyLists: alertKeyLists, tableName: this.AlertsClickhouseTableName },
+        { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      operations,
+      dynamoDbConsumerMessages
+    )
+  }
+  public async getComments(
+    alertIds: string[]
+  ): Promise<AlertCommentsInternal[]> {
+    const queryPromises = alertIds.map((alertId) => {
+      const partitionKey = DynamoDbKeys.ALERT_COMMENT(
+        this.tenantId,
+        alertId,
+        ''
+      ).PartitionKeyID
+      const queryInput: QueryCommandInput = {
+        TableName: this.tableName,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': partitionKey,
+        },
+      }
+
+      return paginateQuery(this.dynamoDb, queryInput)
+    })
+
+    const results = await Promise.all(queryPromises)
+
+    const comments: AlertCommentsInternal[] = []
+    results.forEach((result) => {
+      if (result.Items) {
+        comments.push(...(result.Items as AlertCommentsInternal[]))
+      }
+    })
+
+    return comments.map((item) => {
+      item = omit(item, [
+        'PartitionKeyID',
+        'SortKeyID',
+      ]) as AlertCommentsInternal
+      return item
+    })
+  }
+  public async getFiles(
+    alertIds: string[],
+    commentId?: string
+  ): Promise<AlertCommentFileInternal[]> {
+    const queryPromises = alertIds.map((alertId) => {
+      const partitionKey = DynamoDbKeys.ALERT_COMMENT_FILE(
+        this.tenantId,
+        alertId,
+        commentId
+      ).PartitionKeyID
+
+      const queryInput: QueryCommandInput & {
+        ExpressionAttributeValues: Record<string, any>
+      } = {
+        TableName: this.tableName,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': partitionKey,
+        },
+      }
+
+      if (commentId) {
+        queryInput.KeyConditionExpression +=
+          ' AND begins_with(SortKeyID, :skPrefix)'
+        queryInput.ExpressionAttributeValues[':skPrefix'] = `${commentId}#`
+      }
+
+      return paginateQuery(this.dynamoDb, queryInput)
+    })
+
+    const results = await Promise.all(queryPromises)
+
+    const files: AlertCommentFileInternal[] = []
+    results.forEach((result) => {
+      if (result.Items) {
+        files.push(...(result.Items as AlertCommentFileInternal[]))
+      }
+    })
+
+    return files.map((item) => {
+      item = omit(item, [
+        'PartitionKeyID',
+        'SortKeyID',
+      ]) as AlertCommentFileInternal
+      return item
+    })
+  }
+
+  public async getAlertIdsByCaseIds(caseIds: string[]): Promise<string[]> {
+    const alertIds: string[] = []
+
+    await Promise.all(
+      caseIds.map(async (caseId) => {
+        const queryInput: QueryCommandInput = {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+          KeyConditionExpression: 'PartitionKeyID = :pk',
+          ExpressionAttributeValues: {
+            ':pk': DynamoDbKeys.CASE_ALERT(this.tenantId, caseId)
+              .PartitionKeyID,
+          },
+        }
+        const result = await this.dynamoDb.send(new QueryCommand(queryInput))
+        alertIds.push(
+          ...(result.Items?.map((item) => item.alertId as unknown as string) ||
+            [])
+        )
+      })
+    )
+
+    return alertIds
+  }
+
+  public async deleteAlertsData(tenantId: string) {
+    const partitionKeyId = DynamoDbKeys.ALERT(tenantId, '').PartitionKeyID
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': partitionKeyId,
+      },
+    }
+
+    await dangerouslyQueryPaginateDelete<Alert>(
+      this.dynamoDb,
+      tenantId,
+      queryInput,
+      (tenantId, alert) => {
+        return this.deleteAlert(tenantId, alert)
+      }
+    )
+  }
+
+  private async deleteAlert(tenantId: string, alert: Alert) {
+    const alertId = alert.alertId as string
+
+    await Promise.all([
+      dangerouslyDeletePartition(
+        this.dynamoDb,
+        tenantId,
+        DynamoDbKeys.ALERT_COMMENT(tenantId, alertId, '').PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        'Alert Comment'
+      ),
+      dangerouslyDeletePartition(
+        this.dynamoDb,
+        tenantId,
+        DynamoDbKeys.ALERT_COMMENT_FILE(tenantId, alertId, '', '')
+          .PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        'Alert Comment File'
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb,
+        DynamoDbKeys.ALERT(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+    ])
   }
 }
