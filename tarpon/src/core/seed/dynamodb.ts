@@ -34,11 +34,11 @@ import {
 } from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { dangerouslyDeletePartition } from '@/utils/dynamodb'
-import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { NangoRepository } from '@/services/nango/repository'
 import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { TarponChangeMongoDbConsumer } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 
@@ -115,8 +115,8 @@ export async function seedDynamo(
     ) as UserWithRulesResult | BusinessWithRulesResult
 
     await userRepo.saveUser(dynamoUser, type)
-
-    await ruleStatsHandler(
+    const consumer = new TarponChangeMongoDbConsumer()
+    await consumer.handleRuleStats(
       tenantId,
       { newExecutedRules: user?.executedRules ?? [], oldExecutedRules: [] },
       { dynamoDb, mongoDb: await getMongoDbClient() }
@@ -182,7 +182,8 @@ export async function seedDynamo(
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
     })
-    await ruleStatsHandler(
+    const consumer = new TarponChangeMongoDbConsumer()
+    await consumer.handleRuleStats(
       tenantId,
       { newExecutedRules: txn?.executedRules ?? [], oldExecutedRules: [] },
       { dynamoDb, mongoDb: await getMongoDbClient() }

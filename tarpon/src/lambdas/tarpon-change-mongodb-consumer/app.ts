@@ -771,20 +771,6 @@ export class TarponChangeMongoDbConsumer {
 // Create a singleton instance
 const consumer = new TarponChangeMongoDbConsumer()
 
-export const ruleStatsHandler = async (
-  tenantId: string,
-  data: RuleStats,
-  dbClients: DbClients
-): Promise<void> => {
-  const subSegment = await addNewSubsegment(
-    'StreamConsumer',
-    'ruleStatsHandler'
-  )
-  const result = await consumer.handleRuleStats(tenantId, data, dbClients)
-  subSegment?.close()
-  return result
-}
-
 // Update the exported lambda handlers to use the class methods
 export const tarponChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {

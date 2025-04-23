@@ -41,7 +41,7 @@ export function isSimpleValue(value: unknown): value is SimpleValue {
 
 export function getAddedItems(oldArr: string[], newArr: string[]) {
   const count = (arr: string[]) => {
-    const map = new Map()
+    const map = new Map<string, number>()
     for (const item of arr) {
       map.set(item, (map.get(item) || 0) + 1)
     }

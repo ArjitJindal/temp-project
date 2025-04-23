@@ -487,24 +487,29 @@ export class RuleInstanceRepository {
   }
 
   public async updateRuleInstancesStats(ruleStats: RuleStats[]) {
-    const updates: {
-      [key: string]: {
+    const updates = new Map<
+      string,
+      {
         hitCountDelta: number
         runCountDelta: number
       }
-    } = {}
+    >()
     for (const stat of ruleStats) {
       stat.executedRulesInstanceIds?.map((id) => {
-        updates[id] = {
-          runCountDelta: (updates[id]?.runCountDelta ?? 0) + 1,
+        updates.set(id, {
+          runCountDelta: (updates.get(id)?.runCountDelta ?? 0) + 1,
           hitCountDelta: 0,
-        }
+        })
       })
       stat.hitRulesInstanceIds?.map((id) => {
-        updates[id].hitCountDelta = updates[id].hitCountDelta + 1
+        const update = updates.get(id)
+        updates.set(id, {
+          hitCountDelta: (update?.hitCountDelta ?? 0) + 1,
+          runCountDelta: update?.runCountDelta ?? 0,
+        })
       })
     }
-    await this.updateRuleInstanceStatsCount(updates)
+    await this.updateRuleInstanceStatsCount(Object.fromEntries(updates))
   }
 
   public async updateRuleInstanceStatsCount(updates: {
