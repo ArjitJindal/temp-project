@@ -129,7 +129,13 @@ export function capitalizeWords(text: string): string {
   return startCase(toLower(text))
 }
 
-// startCase from loadsh removes accents
+// startCase from loadsh removes accents and symbols
 export function capitalizeWordsInternal(text: string): string {
-  return text.split(' ').map(firstLetterUpper).join(' ')
+  return text
+    .split(' ')
+    .map((term) => {
+      const splits = term.split('-')
+      return splits.map(firstLetterUpper).join('-')
+    })
+    .join(' ')
 }

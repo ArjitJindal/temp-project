@@ -74,7 +74,7 @@ describe('DowJonesProvider', () => {
             matchTypes: ['Organised Crime'],
             dateMatched: true,
             nationality: ['IN'],
-            normalizedAka: [],
+            normalizedAka: ['priyavrat bhartia'],
             profileImagesUrls: [
               'http://www.jubl.com/Uploads/image/471imguf_Priyavrat_Bhartia.jpg',
               'http://www.digicontent.co.in/wp-content/uploads/2021/08/priyavrat-bhartia.jpg',
@@ -155,7 +155,7 @@ Jubilant Pharmova Ltd.`,
           'add',
           {
             id: '10183',
-            name: 'ange-felix patasse',
+            name: 'ange-félix patassé',
             entityType: 'PERSON',
             nationality: ['CF'],
             sanctionSearchTypes: ['PEP', 'ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
@@ -182,9 +182,9 @@ Jubilant Pharmova Ltd.`,
             aka: [
               'ange félix patassé',
               'ange felix patasse',
-              'ange-félix patassé',
+              'ange-felix patasse',
             ],
-            normalizedAka: ['ange felix patasse'],
+            normalizedAka: ['ange felix patasse', 'ange-felix patasse'],
             freetext: `PROFILE CREATED: 28-Aug-2006
 UPDATE ADDED: 05-Sep-2006
 UPDATE ADDED: 07-Jun-2022
@@ -373,12 +373,12 @@ Patasse passed away on April 5, 2011.`,
             id: '10184',
             isActivePep: true,
             isActiveSanctioned: false,
-            name: 'martin ziguele',
+            name: 'martin ziguélé',
             entityType: 'PERSON',
             gender: 'Male',
             documents: [],
             nationality: ['CF'],
-            normalizedAka: ['martin zinguele'],
+            normalizedAka: ['martin zinguele', 'martin ziguele'],
             occupations: [
               {
                 occupationCode: 'members_of_the_national_legislature',
@@ -400,7 +400,7 @@ Patasse passed away on April 5, 2011.`,
             dateMatched: true,
             matchTypes: ['PEP'],
             sanctionSearchTypes: ['PEP'],
-            aka: ['martin zinguélé', 'martin zinguele', 'martin ziguélé'],
+            aka: ['martin zinguélé', 'martin ziguele', 'martin zinguele'],
             countries: ['Central African Republic'],
             countryCodes: ['CF'],
             yearOfBirth: ['1957'],

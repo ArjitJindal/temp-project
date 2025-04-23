@@ -1,10 +1,9 @@
 import React from 'react';
-import { startCase } from 'lodash';
+import { capitalizeWordsInternal } from '@flagright/lib/utils/humanize';
 import { SanctionsEntity } from '@/apis';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
 import { CAEntityDetails } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer';
-
 interface Props {
   hit: SanctionsEntity | null;
   searchedAt?: number;
@@ -16,7 +15,7 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
 
   return (
     <Drawer
-      title={startCase(hit?.name ?? '')}
+      title={capitalizeWordsInternal(hit?.name ?? '')}
       isVisible={Boolean(hit)}
       onChangeVisibility={(isShown) => {
         if (!isShown) {

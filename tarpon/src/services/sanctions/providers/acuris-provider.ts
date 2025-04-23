@@ -474,12 +474,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const types = this.getEntityTypesToLoad(entityType)
     const fullExtractPersonRepo = this.getFullExtractRepo('PERSON')
     const fullExtractBusinessRepo = this.getFullExtractRepo('BUSINESS')
-    let hasMore = true
-
-    let timestamp = runFullLoad
-      ? dayjs().startOf('month').valueOf()
-      : from.getTime()
     for (const type of types) {
+      let timestamp = runFullLoad
+        ? dayjs().startOf('month').valueOf()
+        : from.getTime()
+      let entities: [Action, SanctionsEntity][] = []
+      let hasMore = true
       while (hasMore) {
         const response = await fetch(
           `${this.uri}/${type}/delta?timestamp=${timestamp}`,
@@ -491,7 +491,6 @@ export class AcurisProvider extends SanctionsDataFetcher {
           }
         )
         const data = await response.json()
-        let entities: [Action, SanctionsEntity][] = []
         for (const entity of data.profiles) {
           if (type === 'individuals') {
             const e = this.processIndividualEntity(entity, 'PERSON')

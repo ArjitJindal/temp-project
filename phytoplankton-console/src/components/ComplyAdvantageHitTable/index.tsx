@@ -1,7 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { startCase, uniq } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { humanizeSnakeCase, humanizeAuto } from '@flagright/lib/utils/humanize';
+import {
+  humanizeSnakeCase,
+  humanizeAuto,
+  capitalizeWordsInternal,
+} from '@flagright/lib/utils/humanize';
 import {
   useFeatureEnabled,
   useHasNoSanctionsProviders,
@@ -114,7 +118,7 @@ export default function SanctionsSearchTable(props: Props) {
       title: 'Name',
       key: 'name',
       type: {
-        render: (value) => <span>{startCase(value)}</span>,
+        render: (value) => <span>{capitalizeWordsInternal(value ?? '')}</span>,
       },
     }),
     helper.derived<string[]>({

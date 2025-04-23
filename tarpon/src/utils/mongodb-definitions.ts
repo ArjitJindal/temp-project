@@ -39,9 +39,6 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
           },
         },
       },
-      name: {
-        type: 'string',
-      },
       gender: {
         type: 'string',
       },
@@ -135,11 +132,6 @@ export const SANCTIONS_INDEX_DEFINITION: Array<{
   {
     index: {
       normalizedAka: 1,
-    },
-  },
-  {
-    index: {
-      name: 1,
     },
   },
 ]

@@ -187,9 +187,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       const matchTypeCondition = {
         $or: [
           {
-            name: sanitizeString(request.searchTerm),
-          },
-          {
             normalizedAka: sanitizeString(request.searchTerm),
           },
         ],
@@ -858,7 +855,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                     {
                       text: {
                         query: sanitizeString(request.searchTerm),
-                        path: ['name', 'normalizedAka'],
+                        path: 'normalizedAka',
                         fuzzy: {
                           maxEdits: 2,
                           maxExpansions: 100,
@@ -927,9 +924,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   private getFuzzinessFunction(
-    fuzzinessSettings: FuzzinessSetting | undefined
+    fuzzinessSettings: FuzzinessSetting | undefined,
+    manualSearch: boolean | undefined
   ): (a: string, b: string) => number {
-    if (fuzzinessSettings?.similarTermsConsideration) {
+    if (fuzzinessSettings?.similarTermsConsideration || manualSearch) {
       return token_similarity_sort_ratio
     }
 
@@ -963,7 +961,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
     const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
-      fuzzinessSettings?.similarTermsConsideration
+      fuzzinessSettings?.similarTermsConsideration ||
+      request.manualSearch
 
     const modifiedTerm = this.processNameWithStopwords(
       request.searchTerm,
@@ -976,8 +975,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       : normalize(modifiedTerm)
 
     return results.filter((entity) => {
-      const values = uniq([entity.name, ...(entity.normalizedAka || [])]).map(
-        (name) => this.processNameWithStopwords(name, stopwordSet)
+      const values = uniq(entity.normalizedAka || []).map((name) =>
+        this.processNameWithStopwords(name, stopwordSet)
       )
       if (
         request.fuzzinessRange?.upperBound === 100 ||
@@ -992,8 +991,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           if (value === searchTerm) {
             return true
           }
-          const evaluatingFunction =
-            this.getFuzzinessFunction(fuzzinessSettings)
+          const evaluatingFunction = this.getFuzzinessFunction(
+            fuzzinessSettings,
+            request.manualSearch
+          )
           const percentageSimilarity = evaluatingFunction(searchTerm, value)
           const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
             request,

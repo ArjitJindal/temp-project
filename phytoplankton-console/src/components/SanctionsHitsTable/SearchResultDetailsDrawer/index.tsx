@@ -1,7 +1,11 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { compact, difference, groupBy, isEmpty, isEqual, startCase, uniq } from 'lodash';
-import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import {
+  capitalizeWordsInternal,
+  humanizeAuto,
+  humanizeSnakeCase,
+} from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
@@ -74,7 +78,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
   const hit = getOr(hitRes, undefined);
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
-  const pdfName = startCase(hit?.entity?.name);
+  const pdfName = capitalizeWordsInternal(hit?.entity?.name ?? '');
   const [isDownloading, setDownloading] = useState<boolean>(false);
   const handleDownloadClick = async () => {
     setDownloading(true);
@@ -293,7 +297,9 @@ export function CAEntityDetails(props: {
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
           {!entity.nameMatched && (
-            <Form.Layout.Label title={'Full name'}>{startCase(entity?.name)}</Form.Layout.Label>
+            <Form.Layout.Label title={'Full name'}>
+              {capitalizeWordsInternal(entity?.name)}
+            </Form.Layout.Label>
           )}
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType?.toLowerCase())}
@@ -397,9 +403,9 @@ export function CAEntityDetails(props: {
                 {entity.aka.map((aka, i) => (
                   <Popover
                     key={i}
-                    content={startCase(aka)}
+                    content={capitalizeWordsInternal(aka)}
                     trigger="hover"
-                    children={<Tag color="gray">{startCase(aka)}</Tag>}
+                    children={<Tag color="gray">{capitalizeWordsInternal(aka)}</Tag>}
                     wrapText={true}
                   />
                 ))}

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, isEmpty, startCase } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, capitalizeWordsInternal } from '@flagright/lib/utils/humanize';
 import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
@@ -128,7 +128,7 @@ export default function SanctionsHitsTable(props: Props) {
       title: 'Name',
       key: 'entity.name',
       type: {
-        render: (value) => <span>{startCase(value)}</span>,
+        render: (value) => <span>{capitalizeWordsInternal(value ?? '')}</span>,
       },
     }),
     helper.derived<string[]>({

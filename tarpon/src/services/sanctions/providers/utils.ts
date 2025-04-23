@@ -150,12 +150,11 @@ export function getNameAndAka(
   aka: string[]
   normalizedAka: string[]
 } {
-  const normalizedName = sanitizeString(name)
   return {
-    name: normalizedName,
-    aka: uniq(compact([...aka, name]).filter((n) => n !== normalizedName)),
-    normalizedAka: getUniqueStrings(uniq(compact([...aka]))).filter(
-      (n) => n !== normalizedName && /[a-z]/.test(n) // Check if the string contains any alphabet
+    name,
+    aka: uniq(compact([...aka])),
+    normalizedAka: getUniqueStrings(uniq(compact([...aka, name]))).filter(
+      (n) => /[a-z]/.test(n) // Check if the string contains any alphabet
     ),
   }
 }
