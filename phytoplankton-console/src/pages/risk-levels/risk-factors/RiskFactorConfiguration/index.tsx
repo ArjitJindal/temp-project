@@ -324,7 +324,6 @@ export function serializeRiskItem(
     parameter: RiskFactorParameter;
     item: RiskFactor;
   },
-  mode?: 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE',
 ): RiskFactorsPostRequest {
   const baseRequest = {
     name: riskFactorFormValues.basicDetailsStep.name ?? '',
@@ -345,7 +344,7 @@ export function serializeRiskItem(
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
     type: type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
-    riskFactorId: mode === 'DUPLICATE' ? undefined : riskFactorId,
+    riskFactorId,
   } as RiskFactorsPostRequest;
   if (v2Props) {
     return {

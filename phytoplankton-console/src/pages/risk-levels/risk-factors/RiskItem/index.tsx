@@ -344,7 +344,6 @@ function RiskItemForm(props: RiskItemFormProps) {
           riskClassificationValues,
           id,
           riskFactorFormValues?.v2Props,
-          mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE',
         ),
       });
     },
@@ -380,12 +379,11 @@ function RiskItemForm(props: RiskItemFormProps) {
         }
       }
 
-      if (formValues.riskFactorConfigurationStep) {
+      if (mode !== 'duplicate' && formValues.riskFactorConfigurationStep) {
         delete (formValues.riskFactorConfigurationStep as any).riskFactorId;
       }
+      createRiskFactorMutation.mutate(formValues);
     }
-
-    createRiskFactorMutation.mutate(formValues);
   };
 
   if (mode === 'create') {

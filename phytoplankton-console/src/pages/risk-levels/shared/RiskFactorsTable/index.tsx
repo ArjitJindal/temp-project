@@ -225,6 +225,7 @@ export default function RiskFactorsTable(props: Props) {
                   logicEntityVariables: [],
                   riskLevelLogic: [],
                   isDerived: entity.isDerived || false,
+                  riskFactorId: entity.id,
                 },
               });
 
