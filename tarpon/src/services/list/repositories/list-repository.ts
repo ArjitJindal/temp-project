@@ -164,7 +164,7 @@ export class ListRepository {
     )
 
     if (!userIds || userIds.length === 0) {
-      return headers
+      return this.filterListHeaders(headers)
     }
 
     // Filter headers by checking if any of the userIds exist in the list items
@@ -189,13 +189,11 @@ export class ListRepository {
       '314A_BUSINESS',
     ]
     if (hasFeature('314A')) {
-      return listHeaders
+      return compact(listHeaders)
     }
-    return compact(
-      listHeaders.filter((header) => {
-        return !LISTS_314A.includes(header.subtype)
-      })
-    )
+    return compact(listHeaders).filter((header) => {
+      return !LISTS_314A.includes(header.subtype)
+    })
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {
