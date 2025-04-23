@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, isEmpty, isEqual, omit, pick } from 'lodash'
+import { difference, isEmpty, isEqual, omit, pick, uniq, compact } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   arsScoreEventHandler,
@@ -58,6 +58,7 @@ import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getAddedItems } from '@/utils/array'
+import dayjs from '@/utils/dayjs'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -603,10 +604,41 @@ export class TarponChangeMongoDbConsumer {
     if (isDemoTenant(tenantId) && envIsNot('local')) {
       return
     }
+
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb: dbClients.mongoDb,
+    })
+
+    const userIds = await userRepository.getUserIdsByEmails(
+      compact(
+        uniq([
+          ...(newCrmRecord.data.record.email
+            ? [newCrmRecord.data.record.email]
+            : []),
+          ...(newCrmRecord.data.record.ccEmails ?? []),
+          ...(newCrmRecord.data.record.replyCcEmails ?? []),
+          ...(newCrmRecord.data.record.fwdEmails ?? []),
+        ])
+      )
+    )
+
     await new NangoRepository(
       tenantId,
       dbClients.dynamoDb
     ).storeRecordsClickhouse([newCrmRecord])
+
+    for (const userId of userIds) {
+      await new NangoRepository(
+        tenantId,
+        dbClients.dynamoDb
+      ).linkCrmRecordClickhouse({
+        crmName: newCrmRecord.crmName,
+        recordType: newCrmRecord.data.recordType,
+        id: newCrmRecord.data.record.id,
+        userId,
+        timestamp: dayjs().valueOf(),
+      })
+    }
   }
 
   async handleCrmUserRecordLink(

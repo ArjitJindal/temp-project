@@ -1493,6 +1493,26 @@ export class UserRepository {
     return users
   }
 
+  public async getUserIdsByEmails(emails: string[]) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const userIds = await collection
+      .find({
+        $or: [
+          { 'contactDetails.emailIds': { $in: emails } },
+          { 'legalEntity.contactDetails.emailIds': { $in: emails } },
+        ],
+      })
+      .project({ userId: 1 })
+      .map((user) => user.userId)
+      .toArray()
+
+    return userIds
+  }
+
   public async getChildUserIds(parentUserId: string) {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
