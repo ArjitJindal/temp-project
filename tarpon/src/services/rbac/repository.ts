@@ -3,6 +3,7 @@ import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResources
 import {
   batchInsertToClickhouse,
   executeClickhouseQuery,
+  runExecClickhouseQuery,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
@@ -42,7 +43,7 @@ export class PermissionsRepository {
   }
 
   async deletePermission(subType: DynamicPermissionsNodeSubType, id: string) {
-    await executeClickhouseQuery(this.tenantId, {
+    await runExecClickhouseQuery(this.tenantId, {
       query: `DELETE FROM ${CLICKHOUSE_DEFINITIONS.DYNAMIC_PERMISSIONS_ITEMS.tableName} WHERE id = '${id}' AND subType = '${subType}'`,
     })
   }

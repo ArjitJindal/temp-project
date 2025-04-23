@@ -978,3 +978,13 @@ export async function executeClickhouseQuery<T extends object>(
     segment2?.close()
   }
 }
+
+export const runExecClickhouseQuery = async (
+  tenantId: string,
+  data: { query: string }
+) => {
+  const client = await getClickhouseClient(tenantId)
+  await client.exec({
+    query: data.query,
+  })
+}
