@@ -51,6 +51,18 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title="Forced pages count">
+        <Component
+          total={0}
+          totalPages={0}
+          current={page}
+          pageSize={pageSize}
+          onChange={(page, pageSize) => {
+            setPage(page);
+            setPageSize(pageSize);
+          }}
+        />
+      </UseCase>
       <UseCase title="Hide results info">
         <Component
           showResultsInfo={false}

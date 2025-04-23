@@ -64,7 +64,7 @@ function PageBasedPagination(props: PageBasedProps) {
 
   const normalisedTotalPages = useMemo(() => {
     if (totalPages != null) {
-      return totalPages;
+      return Math.max(1, totalPages);
     }
     return Math.max(1, Math.ceil(total / pageSize));
   }, [totalPages, total, pageSize]);
