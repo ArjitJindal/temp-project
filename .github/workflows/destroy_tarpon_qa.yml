@@ -23,6 +23,9 @@ jobs:
           clean: false
       - name: Corepack enable
         run: corepack enable && yarn set version 4.0.2
+      - name: Install Nango
+        run: |
+          npm install -g nango
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:

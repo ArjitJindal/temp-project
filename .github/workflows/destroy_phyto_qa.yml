@@ -29,6 +29,9 @@ jobs:
           cache-dependency-path: "phytoplankton-console/yarn.lock"
       - run: yarn add
         working-directory: "phytoplankton-console"
+      - name: Install Nango
+        run: |
+          npm install -g nango
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
