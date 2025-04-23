@@ -212,6 +212,7 @@ export class ReportRepository {
       reportId: newReport.id ?? '',
       status: newReport.status,
       region: newReport.reportTypeId?.split('-')[0] as CountryCode,
+      createdAt: newReport.createdAt,
     })
     return newReport
   }
