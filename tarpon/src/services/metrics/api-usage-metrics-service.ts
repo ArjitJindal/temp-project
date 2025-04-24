@@ -21,6 +21,7 @@ import {
   sumBy,
 } from 'lodash'
 import { PostHog } from 'posthog-node'
+import { SanctionsDataProviders } from '../sanctions/types'
 import {
   DailyMetricStats,
   DailyStats,
@@ -46,10 +47,14 @@ import {
   USERS_COUNT_METRIC,
   ACTIVE_RULE_INSTANCES_COUNT_METRIC,
   MetricsData,
-  SANCTIONS_SEARCHES_COUNT_METRIC,
   TENANT_SEATS_COUNT_METRIC,
   Metric,
   USER_EVENTS_COUNT_METRIC,
+  COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC,
+  ACURIS_SANCTIONS_SEARCHES_COUNT_METRIC,
+  OPEN_SANCTIONS_SANCTIONS_SEARCHES_COUNT_METRIC,
+  DOW_JONES_SANCTIONS_SEARCHES_COUNT_METRIC,
+  SANCTIONS_SEARCHES_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
@@ -60,6 +65,7 @@ import {
   MONTH_DATE_FORMAT_JS,
   DAY_DATE_FORMAT_JS,
 } from '@/core/constants'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 
@@ -108,10 +114,40 @@ export class ApiUsageMetricsService {
       timeRange,
       usersCounts
     )
-    const sanctionsChecksCounts = await this.getDailySanctionSearchsCount(
-      tenantInfo,
-      timeRange
-    )
+    // put in promise.all
+    const [
+      caSanctionsChecksCounts,
+      acurisSanctionsChecksCounts,
+      openSanctionsSanctionsChecksCounts,
+      dowJonesSanctionsChecksCounts,
+    ] = await Promise.all([
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        SanctionsDataProviders.COMPLY_ADVANTAGE
+      ),
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        SanctionsDataProviders.ACURIS
+      ),
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        SanctionsDataProviders.OPEN_SANCTIONS
+      ),
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        SanctionsDataProviders.DOW_JONES
+      ),
+    ])
+    const sanctionsChecksCounts = this.getTotalSanctionsSearchCounts([
+      caSanctionsChecksCounts,
+      acurisSanctionsChecksCounts,
+      openSanctionsSanctionsChecksCounts,
+      dowJonesSanctionsChecksCounts,
+    ])
     const activeRuleInstanceCounts =
       await this.getDailyActiveRuleInstancesCount(tenantInfo, timeRange)
     const tenantSeatCounts = await this.getDailyNumberOfSeats(
@@ -146,6 +182,30 @@ export class ApiUsageMetricsService {
       mapValues(sanctionsChecksCounts, (v) => [
         {
           metric: SANCTIONS_SEARCHES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(caSanctionsChecksCounts, (v) => [
+        {
+          metric: COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(acurisSanctionsChecksCounts, (v) => [
+        {
+          metric: ACURIS_SANCTIONS_SEARCHES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(openSanctionsSanctionsChecksCounts, (v) => [
+        {
+          metric: OPEN_SANCTIONS_SANCTIONS_SEARCHES_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(dowJonesSanctionsChecksCounts, (v) => [
+        {
+          metric: DOW_JONES_SANCTIONS_SEARCHES_COUNT_METRIC,
           value: v,
         },
       ]),
@@ -267,7 +327,7 @@ export class ApiUsageMetricsService {
       }
       data.values.forEach((value) => {
         if (
-          value.metric === SANCTIONS_SEARCHES_COUNT_METRIC &&
+          value.metric === COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC &&
           value.value > 200
         ) {
           logger.error(
@@ -366,9 +426,20 @@ export class ApiUsageMetricsService {
     }
   }
 
+  private getTotalSanctionsSearchCounts(dailyStats: DailyStats[]): DailyStats {
+    const stats: DailyStats = {}
+    for (const dailyStat of dailyStats) {
+      for (const key in dailyStat) {
+        stats[key] = (stats[key] ?? 0) + dailyStat[key]
+      }
+    }
+    return stats
+  }
+
   private async getDailySanctionSearchsCount(
     tenantInfo: TenantBasic,
-    timeRange: TimeRange
+    timeRange: TimeRange,
+    provider: SanctionsDataProviderName
   ): Promise<DailyStats> {
     const db = await getMongoDbClientDb()
     const collection = db.collection(
@@ -383,6 +454,7 @@ export class ApiUsageMetricsService {
               $gte: dayjs(timeRange.startTimestamp).valueOf(),
               $lte: dayjs(timeRange.endTimestamp).valueOf(),
             },
+            provider,
           },
         },
         {
