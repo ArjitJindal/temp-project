@@ -239,7 +239,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
                   value: list.listId,
                 }))}
                 {...inputProps}
-                placeholder={isLoading(queryResults.data) ? 'Loading...' : 'Search for List ID'}
+                placeholder={isLoading(queryResults.data) ? 'Loading...' : 'Search for List Name'}
                 isLoading={isLoading(queryResults.data)}
               />
             );
