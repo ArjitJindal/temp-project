@@ -3,13 +3,18 @@ import cn from 'clsx';
 import s from './style.module.less';
 
 interface Props extends React.HTMLAttributes<unknown> {
-  children: string;
+  title?: string;
+  children: React.ReactNode;
 }
 
 export default function SameWidthDiv(props: Props) {
-  const { children, className, ...rest } = props;
+  const { children, className, title, ...rest } = props;
   return (
-    <div {...rest} className={cn(s.root, className)} title={children}>
+    <div
+      {...rest}
+      className={cn(s.root, className)}
+      title={title ?? (typeof children === 'string' ? children : '')}
+    >
       {children}
     </div>
   );

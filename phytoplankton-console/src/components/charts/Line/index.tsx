@@ -85,7 +85,9 @@ export default function LineChart<X extends StringLike, Series extends StringLik
           formatY={formatY}
         />
       )}
-      renderLegend={() => <CustomLegendOrdinal {...props} scale={colorScale} />}
+      renderLegend={() => (
+        <CustomLegendOrdinal {...props} scale={colorScale} showSkeleton={showSkeleton} />
+      )}
     />
   );
 }

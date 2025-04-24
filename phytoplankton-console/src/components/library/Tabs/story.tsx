@@ -3,12 +3,13 @@ import { PlusOutlined } from '@ant-design/icons';
 import Component, { TabItem } from './index';
 import Flask from '@/components/ui/icons/Remix/health/flask-line.react.svg';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
   const [items, setItems] = useState<TabItem[]>([
-    { title: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
-    { title: 'Iteration 2', children: 'Content of Tab 2', key: '2' },
-    { title: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
+    { title: 'First tab', children: 'Content of Tab 1', key: '1' },
+    { title: 'Another tab with a long title', children: 'Content of Tab 2', key: '2' },
+    { title: 'Small', children: 'Content of Tab 3', key: '3' },
     {
       title: 'Iteration 4',
       children: 'Content of Tab 4',
@@ -83,23 +84,17 @@ export default function (): JSX.Element {
 
   return (
     <>
-      <UseCase title={'Basic Card'}>
-        <div>
-          <div style={{ display: 'block' }}>
-            <Component type="line" items={items} onChange={(key) => onChange(key)} />
-          </div>
-        </div>
-      </UseCase>
-      <UseCase title={'Card'}>
-        <div>
-          <div style={{ display: 'block' }}>
+      <UseCase title={'Horizontal line'}>
+        <PropertyMatrix y={['X1', 'X2'] as const} yLabel="Size">
+          {(_, size) => (
             <Component
-              type="card"
+              size={size}
               items={items}
-              tabBarGutter={5} //The gap between tabs
+              onChange={(key) => onChange(key)}
+              activeKey={activeKey}
             />
-          </div>
-        </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Line'}>
         <div>
@@ -113,69 +108,101 @@ export default function (): JSX.Element {
         </div>
       </UseCase>
       <UseCase title={'Editable Card'}>
-        <div>
-          <div style={{ display: 'block' }}>
-            <Component
-              type="editable-card"
-              items={items}
-              onEdit={(action, key) => onEdit(action, key)}
-            />
-          </div>
-        </div>
+        <PropertyMatrix y={['X1', 'X2'] as const} yLabel="Size">
+          {(_, size) => (
+            <div>
+              <div style={{ display: 'block' }}>
+                <Component
+                  size={size}
+                  type="editable-card"
+                  items={items}
+                  onEdit={(action, key) => onEdit(action, key)}
+                />
+              </div>
+            </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Editable Card with custom add button'}>
-        <div>
-          <div style={{ display: 'block' }}>
-            <Component
-              addIcon={
-                <div>
-                  <PlusOutlined /> Add
-                </div>
-              }
-              type="editable-card"
-              items={items}
-              onEdit={(action, key) => onEdit(action, key)}
-            />
-          </div>
-        </div>
+        <PropertyMatrix y={['X1', 'X2'] as const} yLabel="Size">
+          {(_, size) => (
+            <div>
+              <div style={{ display: 'block' }}>
+                <Component
+                  size={size}
+                  addIcon={
+                    <div>
+                      <PlusOutlined /> Add
+                    </div>
+                  }
+                  type="editable-card"
+                  items={items}
+                  onEdit={(action, key) => onEdit(action, key)}
+                />
+              </div>
+            </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Basic Card with large size'}>
-        <div>
-          <div style={{ display: 'block' }}>
-            <Component
-              size="large"
-              addIcon={
-                <div>
-                  <PlusOutlined /> Add
-                </div>
-              }
-              type="line"
-              items={items}
-              onEdit={(action, key) => onEdit(action, key)}
-            />
-          </div>
-        </div>
+        <PropertyMatrix y={['X1', 'X2'] as const} yLabel="Size">
+          {(_, size) => (
+            <div>
+              <div style={{ display: 'block' }}>
+                <Component
+                  size={size}
+                  addIcon={
+                    <div>
+                      <PlusOutlined /> Add
+                    </div>
+                  }
+                  type="line"
+                  items={items}
+                  onEdit={(action, key) => onEdit(action, key)}
+                />
+              </div>
+            </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
       <UseCase title={'Tabs with indicator'}>
-        <div>
-          <div style={{ display: 'block' }}>
+        <PropertyMatrix y={['X1', 'X2'] as const} yLabel="Size">
+          {(_, size) => (
+            <div>
+              <div style={{ display: 'block' }}>
+                <Component
+                  size={size}
+                  type="line"
+                  items={[
+                    { title: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
+                    {
+                      title: 'Iteration 2 (with badge)',
+                      showBadge: true,
+                      children: 'Content of Tab 2',
+                      key: '2',
+                    },
+                    { title: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
+                  ]}
+                  onEdit={(action, key) => onEdit(action, key)}
+                />
+              </div>
+            </div>
+          )}
+        </PropertyMatrix>
+      </UseCase>
+      <UseCase title={'Vertical line'}>
+        <PropertyMatrix x={['X1', 'X2'] as const} xLabel="Size">
+          {(size) => (
             <Component
-              size="large"
+              orientation="VERTICAL"
               type="line"
-              items={[
-                { title: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
-                {
-                  title: 'Iteration 2 (with badge)',
-                  showBadge: true,
-                  children: 'Content of Tab 2',
-                  key: '2',
-                },
-                { title: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
-              ]}
-              onEdit={(action, key) => onEdit(action, key)}
+              items={items}
+              onChange={(key) => onChange(key)}
+              activeKey={activeKey}
+              size={size}
             />
-          </div>
-        </div>
+          )}
+        </PropertyMatrix>
       </UseCase>
     </>
   );

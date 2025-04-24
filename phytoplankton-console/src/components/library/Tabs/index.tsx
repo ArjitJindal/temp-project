@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs as AntTabs, TabsProps } from 'antd';
 import cn from 'clsx';
+import SameWidthDiv from '../SameWidthDiv';
 import s from './index.module.less';
 import { captureTabEvent } from '@/utils/postHog';
 
@@ -14,7 +15,6 @@ export interface TabItem {
   Icon?: React.ReactNode;
   captureEvents?: boolean;
   TrailIcon?: React.ReactNode;
-  isChanged?: boolean;
 }
 
 export interface Props
@@ -22,16 +22,19 @@ export interface Props
   items: TabItem[];
   addIcon?: React.ReactNode;
   tabHeight?: string | number;
-  size?: 'large' | 'middle' | 'small';
+  size?: 'X1' | 'X2';
+  orientation?: 'HORIZONTAL' | 'VERTICAL';
   tabBarGutter?: number;
   tabBarExtraContent?: React.ReactNode;
   onEdit?: (action: 'add' | 'remove', key?: string) => void;
   onChange?: (key?: any) => void;
   eventData?: Record<string, any>;
+  sticky?: number;
 }
 
 export default function Tabs(props: Props) {
   const {
+    type = 'line',
     items,
     addIcon,
     tabBarGutter,
@@ -42,17 +45,27 @@ export default function Tabs(props: Props) {
     defaultActiveKey,
     hideAdd,
     eventData,
+    size = 'X1',
+    orientation = 'HORIZONTAL',
+    sticky,
   } = props;
 
   return (
     <AntTabs
       hideAdd={hideAdd}
       activeKey={activeKey}
-      type={props?.type}
-      size={props?.size}
-      className={cn(s.root, props.type === 'line' && s.line)}
+      type={type}
+      tabPosition={orientation === 'HORIZONTAL' ? 'top' : 'left'}
+      className={cn(
+        s.root,
+        sticky != null && s.isSticky,
+        s[`type-${type === 'line' ? 'line' : 'card'}`],
+        s[`size-${size}`],
+        s[`orientation-${orientation}`],
+      )}
       addIcon={addIcon}
       defaultActiveKey={defaultActiveKey ?? '1'}
+      tabBarStyle={sticky != null ? { top: sticky } : undefined}
       tabBarGutter={tabBarGutter}
       onChange={(key) => {
         captureTabEvent(activeKey, key, items ?? [], { ...eventData, component: 'Tabs' });
@@ -66,26 +79,19 @@ export default function Tabs(props: Props) {
       tabBarExtraContent={tabBarExtraContent}
     >
       {items.map((item: TabItem) => {
-        const {
-          title,
-          key,
-          children,
-          isClosable,
-          isDisabled,
-          Icon,
-          showBadge,
-          TrailIcon,
-          isChanged,
-        } = item;
+        const { title, key, children, isClosable, isDisabled, Icon, showBadge, TrailIcon } = item;
         return (
           <AntTabs.TabPane
             className={s.tab}
             tab={
               <span className={cn(s.tab_span)} data-sentry-allow={true}>
                 {Icon && <div className={cn(s.icon)}>{Icon}</div>}
-                {showBadge && <div className={cn(s.badge)} />}
-                <span>{title}</span>
-                {isChanged && <div className={cn(s.isChangedIcon)} />}
+                <SameWidthDiv title={typeof title === 'string' ? title : undefined}>
+                  <span className={cn(s.tabTitle)}>
+                    {title}
+                    {showBadge && <div className={cn(s.badge)} />}
+                  </span>
+                </SameWidthDiv>
                 {TrailIcon && <div className={cn(s.icon)}>{TrailIcon}</div>}
               </span>
             }

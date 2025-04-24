@@ -13,6 +13,7 @@ import {
   RuleInstance,
   RuleQueuesResponse,
   SLAPoliciesResponse,
+  AlertListResponse,
 } from '@/apis';
 
 interface Props {
@@ -79,6 +80,14 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
     if (prop === 'getRoles') {
       return (): Promise<Array<AccountRole>> => {
         return Promise.resolve([]);
+      };
+    }
+    if (prop === 'getAlertList') {
+      return (): Promise<AlertListResponse> => {
+        return Promise.resolve({
+          total: 0,
+          data: [],
+        });
       };
     }
     throw new Error(
