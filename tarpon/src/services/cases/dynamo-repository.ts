@@ -1399,7 +1399,11 @@ export class DynamoCaseRepository {
         const updateExpression = `SET ${setClauses.join(', ')}`
 
         const expressionAttributeValues = {
-          ':newUser': newUser,
+          ...(updateInfo.isOrigin || updateInfo.isDestination
+            ? {
+                ':newUser': newUser,
+              }
+            : {}),
           ':updatedAt': now,
         }
 
