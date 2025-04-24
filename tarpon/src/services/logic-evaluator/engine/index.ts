@@ -839,13 +839,20 @@ export class LogicEvaluator {
     // For now, as a workaround, we stop fetching transactions if the timeout is reached to avoid repeatedly
     // retrying to rebuild and fail.
     // TODO: Proper fix by FR-5225
+    const isFargate = process.env.AWS_FUNCTION_NAME == null
     let timeoutReached = false
-    const timeout = setTimeout(() => {
-      timeoutReached = true
-    }, 10 * 60 * 1000)
+    let timeout: NodeJS.Timeout | undefined
+
+    if (!isFargate) {
+      timeout = setTimeout(() => {
+        timeoutReached = true
+      }, 10 * 60 * 1000)
+    }
+
     let timeAggregatedResult: {
       [time: string]: AggregationData
     } = {}
+
     let targetTransactionsCount = 0
     const entitiesByGroupValue: { [key: string]: number } = {}
     let lastTransactionTimestamp = 0
@@ -1071,7 +1078,11 @@ export class LogicEvaluator {
         break
       }
     }
-    clearTimeout(timeout)
+
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+
     return {
       result: timeAggregatedResult,
       lastTransactionTimestamp,
