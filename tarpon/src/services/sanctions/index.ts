@@ -94,10 +94,6 @@ export class SanctionsService {
     )
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
-    this.sanctionsSearchRepository = new SanctionsSearchRepository(
-      this.tenantId,
-      mongoDb
-    )
     this.sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(this.tenantId, mongoDb)
     this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
@@ -157,7 +153,7 @@ export class SanctionsService {
     const provider = await this.getProvider(providerName)
     const response = await provider.getSearch(providerSearchId)
 
-    const newHits = await this.sanctionsHitsRepository.addNewHits(
+    await this.sanctionsHitsRepository.addNewHits(
       providerName,
       result._id,
       response.data || [],
@@ -165,10 +161,11 @@ export class SanctionsService {
     )
 
     const parsedResponse = {
-      hitsCount: (result.response?.hitsCount ?? 0) + newHits.length,
+      hitsCount: response.data?.length ?? 0,
       searchId: result._id,
       providerSearchId: response.providerSearchId,
       createdAt: Date.now(),
+      data: response.data ?? [],
     }
     await this.sanctionsSearchRepository.saveSearchResult({
       provider: providerName,
