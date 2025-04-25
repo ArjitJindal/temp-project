@@ -10,7 +10,7 @@ const BASE_URL = '/risk-levels';
 export const SimulationHistoryResultPage = () => {
   const { jobId } = useParams();
   const { pathname } = useLocation();
-  const type = 'custom-risk-factors';
+  const type = 'risk-factors';
   const [isSimulationMode] = useLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
 
   const getUrl = (path: string) => `${BASE_URL}/${type}${path}`;

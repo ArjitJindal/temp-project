@@ -27,7 +27,7 @@ export default function QueryResultsTable<T extends object, Params extends objec
       onReload={handleReload}
       data={queryResults.data}
       cursor={queryResults?.cursor}
-      onPaginateData={queryResults.paginate}
+      onPaginateData={queryResults.paginate ?? rest.onPaginateData}
       showResultsInfo={showResultsInfo}
       expandedRowId={expandedRowId}
     />

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 import { capitalizeWords, firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -25,17 +25,15 @@ import { RISK_LEVELS } from '@/utils/risk-levels';
 import GroupedColumn from '@/pages/risk-levels/configure/components/Charts';
 import { ParameterSettings } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
 import { SIMULATION_JOB_ITERATION_RESULT, SIMULATION_RISK_FACTOR } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useQuery, usePaginatedQuery } from '@/utils/queries/hooks';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useApi } from '@/api';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { makeUrl } from '@/utils/routing';
-import COLORS from '@/components/ui/colors';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
-import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { denseArray, getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
@@ -43,6 +41,8 @@ import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Provider
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
+import { makeUrl } from '@/utils/routing';
+import COLORS from '@/components/ui/colors';
 import RiskFactorsTable from '@/pages/risk-levels/shared/RiskFactorsTable';
 
 interface Props {
@@ -124,22 +124,9 @@ export const SimulationResult = (props: Props) => {
     const hideMessage = message.loading('Downloading report...');
 
     try {
-      const itemResponses = await Promise.all(
-        iterations.map((iteration) =>
-          api.getSimulationTaskIdResult({
-            taskId: iteration.taskId,
-            page: 1,
-            pageSize: 1000,
-            sortField: 'userId',
-            sortOrder: 'ascend',
-          }),
-        ),
-      );
-
-      const iterationsData = iterations.map((iteration, index) => ({
+      const iterationsData = iterations.map((iteration) => ({
         name: iteration.name,
         description: iteration.description,
-        items: itemResponses[index].items as SimulationRiskLevelsAndRiskFactorsResult[],
         statistics: iteration.statistics as {
           current: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
           simulated: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
@@ -163,7 +150,7 @@ export const SimulationResult = (props: Props) => {
     } finally {
       hideMessage();
     }
-  }, [api, iterations, settings, jobId]);
+  }, [iterations, settings, jobId]);
 
   return (
     <div>
@@ -238,8 +225,10 @@ export type RiskFactorsSettings = {
 };
 
 type TableSearchParams = CommonParams & {
-  currentKrsLevel?: RiskLevel[];
-  simulatedKrsLevel?: RiskLevel[];
+  'current.krs.riskLevel'?: RiskLevel[];
+  'simulated.krs.riskLevel'?: RiskLevel[];
+  'current.drs.riskLevel'?: RiskLevel[];
+  'simulated.drs.riskLevel'?: RiskLevel[];
   userId?: string;
 };
 
@@ -253,17 +242,18 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   });
   const showResults = iteration.progress > 0.1;
   const api = useApi();
-  const iterationQueryResults = useQuery(
+
+  const iterationQueryResults = usePaginatedQuery(
     SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
       ...params,
       progress: iteration.progress,
     }),
-    async () => {
+    async (paginationParams) => {
       if (iteration?.taskId) {
         const response = await api.getSimulationTaskIdResult({
           taskId: iteration.taskId,
-          page: params.page,
-          pageSize: params.pageSize,
+          page: paginationParams.page ?? params.page,
+          pageSize: paginationParams.pageSize ?? params.pageSize,
           sortField: params.sort?.[0]?.[0] ?? 'userId',
           sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
           filterCurrentKrsLevel: params['current.krs.riskLevel'],
@@ -272,13 +262,14 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
           filterId: params.userId,
         });
+
         return {
           items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
           total: response.total,
         };
       } else {
         return {
-          items: [],
+          items: [] as SimulationRiskLevelsAndRiskFactorsResult[],
           total: 0,
         };
       }
@@ -305,6 +296,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           );
         },
       },
+      exporting: true,
     }),
     helper.simple<'userName'>({
       title: `${userAlias} name`,
@@ -323,6 +315,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           );
         },
       },
+      exporting: true,
     }),
     helper.simple<'userType'>({
       title: `${userAlias} type`,
@@ -336,6 +329,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           }
         },
       },
+      exporting: true,
     }),
     helper.simple<'current.krs.riskLevel'>({
       title: 'KRS risk level before',
@@ -349,6 +343,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           }
         },
       },
+      exporting: true,
     }),
     helper.simple<'simulated.krs.riskLevel'>({
       title: 'KRS risk level after',
@@ -362,6 +357,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           }
         },
       },
+      exporting: true,
     }),
     helper.simple<'current.drs.riskLevel'>({
       title: 'CRA risk level before',
@@ -581,15 +577,20 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         </Card.Root>
       </div>
       <Card.Root noBorder>
-        <Card.Section>
+        <Card.Section className={styles.tableContainer}>
           <span className={styles.title}>{`${userAlias}'s updated KRS risk levels`}</span>
-          <QueryResultsTable<SimulationRiskLevelsAndRiskFactorsResult>
+          <QueryResultsTable<SimulationRiskLevelsAndRiskFactorsResult, TableSearchParams>
             columns={columns}
             queryResults={iterationQueryResults}
             rowKey="userId"
             params={params}
             onChangeParams={setParams}
-            toolsOptions={false}
+            pagination
+            toolsOptions={{
+              download: true,
+              reload: false,
+              setting: false,
+            }}
             extraFilters={filter}
           />
         </Card.Section>

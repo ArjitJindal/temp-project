@@ -1,27 +1,11 @@
+import { scaleLinear } from 'd3-scale';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { RiskLevel, SimulationRiskLevelsAndRiskFactorsResult, TenantSettings } from '@/apis';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { RiskLevel, TenantSettings } from '@/apis';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-
-interface JsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: {
-    head: string[][];
-    body: string[][];
-    startY: number;
-    headStyles: any;
-    alternateRowStyles: any;
-    bodyStyles: any;
-    didParseCell: (data: any) => void;
-    margin: { left: number; top: number };
-    willDrawPage: () => void;
-    didDrawPage: (data: any) => void;
-  }) => void;
-  lastAutoTable: {
-    finalY: number;
-  };
-}
+import { generateEvenTicks } from '@/components/charts/shared/helpers';
 
 const COLORS = {
   TABLE: {
@@ -58,7 +42,7 @@ const drawBarGraph = (
   settings: TenantSettings,
 ) => {
   const graphWidth = 170;
-  const graphHeight = 80;
+  const graphHeight = 60;
   const startX = 20;
   const barGap = 2;
   const groupGap = 8;
@@ -68,7 +52,7 @@ const drawBarGraph = (
   data.forEach(({ before, after }) => {
     maxValue = Math.max(maxValue, before || 0, after || 0);
   });
-  maxValue = Math.max(1, Math.ceil(maxValue + maxValue * 0.2));
+  maxValue = Math.ceil(maxValue + maxValue * 0.2);
 
   doc.setFontSize(12);
   doc.setFont('NotoSans-SemiBold');
@@ -77,15 +61,18 @@ const drawBarGraph = (
 
   doc.setFontSize(8);
   doc.setFont('NotoSans-Regular');
-  for (let i = 0; i <= 4; i++) {
-    const value = Math.round((maxValue * i) / 4);
-    const y = startY + graphHeight - (graphHeight * i) / 4;
+
+  const scale = scaleLinear().domain([0, maxValue]).range([0, maxValue]);
+
+  const ticks = generateEvenTicks(scale, 10);
+  ticks.forEach((value) => {
+    const y = startY + graphHeight - (graphHeight * value) / maxValue;
     doc.text(value.toString(), startX - 5, y, { align: 'right' });
 
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.1);
     doc.line(startX, y, startX + graphWidth, y);
-  }
+  });
 
   let x = startX + 10;
   RISK_LEVELS.forEach((level) => {
@@ -99,6 +86,10 @@ const drawBarGraph = (
     doc.setFillColor(br, bg, bb);
     if (beforeHeight > 0) {
       doc.rect(x, startY + graphHeight - beforeHeight, barWidth, beforeHeight, 'F');
+      doc.setFontSize(7);
+      doc.text(before.toString(), x + barWidth / 2, startY + graphHeight - beforeHeight - 2, {
+        align: 'center',
+      });
     }
 
     const [ar, ag, ab] = COLORS.GRAPH.AFTER[level];
@@ -111,6 +102,13 @@ const drawBarGraph = (
         afterHeight,
         'F',
       );
+      doc.setFontSize(7);
+      doc.text(
+        after.toString(),
+        x + barWidth + barGap + barWidth / 2,
+        startY + graphHeight - afterHeight - 2,
+        { align: 'center' },
+      );
     }
 
     doc.setFontSize(8);
@@ -119,7 +117,37 @@ const drawBarGraph = (
     x += 2 * barWidth + groupGap;
   });
 
-  return graphHeight + 15;
+  // Add legend below the graph
+  const legendStartY = startY + graphHeight + 20;
+  doc.setFontSize(8);
+  doc.setFont('NotoSans-Regular');
+
+  // First column: True positive (before) / Before values
+  let legendX = startX;
+  let currentY = legendStartY;
+  RISK_LEVELS.forEach((level) => {
+    const { before = 0 } = data.get(level) || { before: 0, after: 0 };
+    const [br, bg, bb] = COLORS.GRAPH.BEFORE[level];
+    doc.setFillColor(br, bg, bb);
+    doc.circle(legendX + 4, currentY + 4, 1, 'F');
+    doc.text(`${getRiskLevelLabel(level, settings)} (before):`, legendX + 12, currentY + 4);
+    doc.text(before.toString(), legendX + 80, currentY + 4);
+    currentY += 12;
+  });
+
+  currentY = legendStartY;
+  legendX = startX + 100;
+  RISK_LEVELS.forEach((level) => {
+    const { after = 0 } = data.get(level) || { before: 0, after: 0 };
+    const [ar, ag, ab] = COLORS.GRAPH.AFTER[level];
+    doc.setFillColor(ar, ag, ab);
+    doc.circle(legendX + 4, currentY + 4, 1, 'F');
+    doc.text(`${getRiskLevelLabel(level, settings)} (after):`, legendX + 12, currentY + 4);
+    doc.text(after.toString(), legendX + 80, currentY + 4);
+    currentY += 12;
+  });
+
+  return graphHeight + 35 + RISK_LEVELS.length * 12; // Account for legend height
 };
 
 const getGraphData = (
@@ -165,7 +193,6 @@ export const drawSimulationGraphs = (
   iterations: Array<{
     name: string;
     description?: string;
-    items: SimulationRiskLevelsAndRiskFactorsResult[];
     statistics?: {
       current: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
       simulated: Array<{ count: number; riskLevel: RiskLevel; riskType: string }>;
@@ -176,50 +203,12 @@ export const drawSimulationGraphs = (
   let currentY = 40;
   const pageHeight = doc.internal.pageSize.height;
   const marginBottom = 20;
-  const userAlias = firstLetterUpper(settings.userAlias);
 
   const ensureSpaceForContent = (requiredHeight: number) => {
     if (currentY + requiredHeight + marginBottom > pageHeight) {
       doc.addPage();
       currentY = 40;
     }
-  };
-
-  const drawTable = (title: string, head: string[][], body: string[][], startY: number): number => {
-    (doc as JsPDFWithAutoTable).autoTable({
-      head,
-      body,
-      startY,
-      headStyles: {
-        fillColor: COLORS.TABLE.HEAD,
-        textColor: COLORS.TEXT.HEADER,
-        valign: 'middle',
-        font: 'NotoSans-SemiBold',
-        fontSize: 10,
-      },
-      alternateRowStyles: { fillColor: COLORS.TABLE.ALTERNATE },
-      bodyStyles: {
-        fillColor: COLORS.TABLE.BODY,
-        textColor: COLORS.TEXT.HEADER,
-        fontSize: 9,
-        font: 'NotoSans-Regular',
-      },
-      didParseCell: (data) => {
-        data.cell.styles.cellPadding = {
-          horizontal: 5,
-          vertical: 2.5,
-        };
-      },
-      margin: { left: 20, top: 40 },
-      willDrawPage: function () {
-        currentY = 40;
-      },
-      didDrawPage: function (data) {
-        data.cursor.y += 10;
-      },
-    });
-
-    return (doc as JsPDFWithAutoTable).lastAutoTable.finalY;
   };
 
   iterations.forEach((iteration, index) => {
@@ -234,15 +223,6 @@ export const drawSimulationGraphs = (
       doc.text(iteration.description, 20, currentY);
       currentY += 10;
     }
-
-    ensureSpaceForContent(30);
-    currentY = drawTable(
-      'Summary',
-      [['Value']],
-      [['Total Users', iteration.items.length.toString()]],
-      currentY,
-    );
-    currentY += 20;
 
     const krsData = getGraphData('krs', settings, iteration);
     ensureSpaceForContent(80);
@@ -264,41 +244,6 @@ export const drawSimulationGraphs = (
       settings,
     );
     currentY += trsHeight + 20;
-
-    ensureSpaceForContent(100);
-    const tableHead = [
-      [
-        `${userAlias} ID`,
-        `${userAlias} name`,
-        `${userAlias} type`,
-        'KRS risk level before',
-        'KRS risk level after',
-        'CRA risk level before',
-        'CRA risk level after',
-      ],
-    ];
-
-    const tableBody = iteration.items.map((item) => [
-      item.userId,
-      item.userName || '-',
-      item.userType ? capitalizeWords(item.userType) : '-',
-      item.current?.krs?.riskLevel ? getRiskLevelLabel(item.current.krs.riskLevel, settings) : '-',
-      item.simulated?.krs?.riskLevel
-        ? getRiskLevelLabel(item.simulated.krs.riskLevel, settings)
-        : '-',
-      item.current?.drs?.riskLevel ? getRiskLevelLabel(item.current.drs.riskLevel, settings) : '-',
-      item.simulated?.drs?.riskLevel
-        ? getRiskLevelLabel(item.simulated.drs.riskLevel, settings)
-        : '-',
-    ]);
-
-    currentY = drawTable(
-      `${userAlias}'s Risk Level Changes - Iteration ${index + 1}`,
-      tableHead,
-      tableBody,
-      currentY,
-    );
-    currentY += 20;
 
     if (index < iterations.length - 1) {
       doc.addPage();
