@@ -503,6 +503,7 @@ export default function RiskFactorsTable(props: Props) {
           }
         }}
         isDisabled={!canWriteRiskFactors}
+        testName="create-risk-factor-button"
       >
         Custom risk factor
       </Button>

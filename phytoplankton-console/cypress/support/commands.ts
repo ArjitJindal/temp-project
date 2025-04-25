@@ -424,3 +424,16 @@ Cypress.Commands.add('deleteRuleInstance', (ruleInstanceId: string) => {
     });
   });
 });
+
+Cypress.Commands.add('selectAntDropdownByLabel', (label: string) => {
+  cy.get('li[role="menuitem"]').should('be.visible');
+  cy.get('li[role="menuitem"]').contains(label).click();
+});
+
+Cypress.Commands.add('verifyModalOpen', (title?: string) => {
+  cy.get('.ant-modal').should('be.visible');
+  cy.get('.ant-modal-content').should('exist');
+  if (title) {
+    cy.get('.ant-modal-title').should('contain.text', title);
+  }
+});

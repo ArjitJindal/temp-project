@@ -30,9 +30,9 @@ function simulationModeCheck() {
 
 function nonSimulationModeCheck() {
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Consumer');
-  cy.selectTab('Business');
+  cy.selectSegmentedControl('Business');
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Business');
-  cy.selectTab('Transaction');
+  cy.selectSegmentedControl('Transaction');
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Transaction');
 }
 

@@ -63,6 +63,8 @@ declare global {
       assertSkeletonLoader(): Chai.Assertion;
       checkNotification(statement: string[]): Chainable<Element>;
       deleteRuleInstance(ruleInstanceId: string): Chainable<Element>;
+      selectAntDropdownByLabel(label: string): Chainable<Element>;
+      verifyModalOpen(title?: string): Chainable<Element>;
     }
   }
 }
