@@ -84,9 +84,8 @@ export default function () {
             id && {
               title: mode === 'read' ? 'View' : mode === 'edit' ? 'Edit' : 'duplicate',
               to: isSimulationMode
-                ? makeUrl(`/risk-levels/risk-factors/:key/:type/:id/:mode`, {
-                    key: 'simulation-mode',
-                    type,
+                ? makeUrl(`/risk-levels/risk-factors/:type/:id/:mode`, {
+                    type: 'simulation-mode',
                     id,
                     mode,
                   })
