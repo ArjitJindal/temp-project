@@ -38,7 +38,7 @@ export default function NotificationsDrawerItem(props: Props) {
     <div
       className={cn(s.root, !isRead && s.isUnread)}
       onClick={() => {
-        window.open(getNotificationUrl(notification));
+        window.location.href = getNotificationUrl(notification);
         if (notification.consoleNotificationStatuses?.some((x) => x.status === 'SENT')) {
           handleReadNotification(notification.id);
         }

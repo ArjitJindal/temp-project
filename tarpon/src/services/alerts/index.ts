@@ -1494,6 +1494,9 @@ export class AlertsService extends CaseAlertsCommonService {
           entityId: alertId,
           oldImage,
           newImage,
+          logMetadata: {
+            caseId: alertEntity?.caseId,
+          },
         }
       })
     )
