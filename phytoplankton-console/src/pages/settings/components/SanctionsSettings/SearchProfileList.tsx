@@ -239,7 +239,7 @@ export const SearchProfileList = ({ hasFeature }) => {
   }
 
   return (
-    <SettingsCard title="Search Profiles">
+    <SettingsCard title="Search profiles">
       <div className={s.sanctionsSettingsRoot}>
         <QueryResultsTable<SearchProfileResponse>
           queryResults={queryResult}

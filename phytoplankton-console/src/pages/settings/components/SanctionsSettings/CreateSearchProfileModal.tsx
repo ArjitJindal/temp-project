@@ -29,7 +29,7 @@ interface FilterRow {
 
 const AVAILABLE_FILTERS = [
   {
-    label: 'Matched types',
+    label: 'Matched type',
     value: 'types',
     type: 'multi',
     options: SANCTIONS_SEARCH_TYPES.map((type) => ({ label: humanizeAuto(type), value: type })),

@@ -230,7 +230,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
         </InputField>
       )}
       {type === 'RULE' && (
-        <InputField<TriggersOnHit, 'listId'> name="listId" label="Update List to">
+        <InputField<TriggersOnHit, 'listId'> name="listId" label="Add user to list">
           {(inputProps) => {
             return (
               <Select<string>
