@@ -5,6 +5,12 @@ import { isEmpty } from 'lodash';
 import s from './index.module.less';
 import { JSON_LOGIC_OPERATORS, MULTI_SELECT_LIST_OPERATORS, SELECT_OPERATORS } from './operators';
 import ViewModeTags from './ViewModeTags';
+import {
+  addVirtualFieldsForNestedSubfields,
+  getVirtualFieldDescription,
+  getVirtualFieldVarName,
+  isVirtualFieldVarName,
+} from './virtual-fields';
 import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
@@ -56,7 +62,7 @@ export function makeConfig(
       ...params.funcs,
     },
     operators: operators,
-    fields: fields,
+    fields: addVirtualFieldsForNestedSubfields(fields),
     settings: {
       ...InitialConfig.settings,
       mode,
@@ -300,18 +306,46 @@ interface FieldInputProps {
 
 export const FieldInput = (props: FieldInputProps) => {
   const { options, value, onChange, showlabel = true } = props;
+  const selectedOption =
+    value != null
+      ? options.find((x) => x.value === value || x.value === getVirtualFieldVarName(value))
+      : null;
+  const selectedOptionVirtualFieldsOptions = options
+    .filter(
+      (x) =>
+        isVirtualFieldVarName(x.value) && getVirtualFieldVarName(x.value) === selectedOption?.value,
+    )
+    .map((x) => {
+      return {
+        label: getVirtualFieldDescription(x.value),
+        value: x.value,
+        virtualField: x.value,
+      };
+    });
   return (
     <OptionalLabel label={'Variable'} showLabel={showlabel} testId="logic-variable">
-      <Select
-        autoTrim={true}
-        dropdownMatchWidth={false}
-        portaled={true}
-        allowClear={false}
-        options={options}
-        value={value}
-        onChange={onChange}
-        tooltip
-      />
+      <div className={s.variableSelects}>
+        <Select
+          autoTrim={true}
+          dropdownMatchWidth={false}
+          portaled={true}
+          allowClear={false}
+          options={options.filter((x) => !isVirtualFieldVarName(x.value))}
+          value={selectedOption?.value}
+          onChange={onChange}
+          tooltip
+        />
+        {selectedOption && selectedOptionVirtualFieldsOptions.length > 0 && (
+          <Select
+            options={[
+              { label: 'string', value: selectedOption.value },
+              ...selectedOptionVirtualFieldsOptions,
+            ]}
+            value={value}
+            onChange={onChange}
+          />
+        )}
+      </div>
     </OptionalLabel>
   );
 };

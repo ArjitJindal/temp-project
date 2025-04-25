@@ -1,2 +1,10 @@
 {
+    "search.exclude": {
+        ".drafts": true,
+        ".gen": true,
+        "**/*.map": true,
+        "**/cdk.out": true,
+        "**/dist": true,
+        "coverage": true
+    },
 }

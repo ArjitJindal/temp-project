@@ -32,7 +32,6 @@ module.exports = (options = {}, loaderOptions = {}) => ({
       // Return an export path to be used in the application
       // The path should be relative to the outputBase and should be a URL path, not a filesystem path
       const publicPath = `/${outputPath.replace(/\\/g, '/')}`; // Ensure the path is in URL format
-      console.log(publicPath);
 
       return {
         contents: `export default "${publicPath}"`,

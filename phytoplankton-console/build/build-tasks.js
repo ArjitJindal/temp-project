@@ -120,6 +120,18 @@ async function buildCode(env, options) {
       ),
     },
     plugins: [
+      ...(watch
+        ? [
+            {
+              name: 'watch',
+              setup: (build) => {
+                build.onStart(() => {
+                  log('Re-building started...');
+                });
+              },
+            },
+          ]
+        : []),
       fontsPlugin(
         {},
         {

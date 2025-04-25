@@ -20,6 +20,7 @@ import {
 } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 import Spinner from '@/components/library/Spinner';
+import { jsonLogicFormat, jsonLogicParse } from '@/components/ui/LogicBuilder/virtual-fields';
 
 interface Props {
   ruleType: RuleType;
@@ -58,7 +59,7 @@ export function RuleLogicBuilder(props: Props) {
       }
       let currentJsonLogic;
       try {
-        currentJsonLogic = QbUtils.jsonLogicFormat(newState.tree, newState.config);
+        currentJsonLogic = jsonLogicFormat(newState.tree, newState.config);
       } catch (e) {
         console.warn(e);
       }
@@ -73,17 +74,16 @@ export function RuleLogicBuilder(props: Props) {
       let isJsonLogicChanged = false;
       const config = configRes.value;
 
-      let propsTree = QbUtils.loadFromJsonLogic(jsonLogic, config);
+      let propsTree = jsonLogicParse(jsonLogic, config);
+
       propsTree = propsTree ? QbUtils.checkTree(propsTree, config) : undefined;
 
       if (state && !state.tree && jsonLogic) {
         isJsonLogicChanged = true;
       }
       if (state && state.tree && jsonLogic) {
-        const jsonLogic = QbUtils.jsonLogicFormat(state.tree, config).logic;
-        const propsJsonLogic = propsTree
-          ? QbUtils.jsonLogicFormat(propsTree, config).logic
-          : undefined;
+        const jsonLogic = jsonLogicFormat(state.tree, config);
+        const propsJsonLogic = propsTree ? jsonLogicFormat(propsTree, config) : undefined;
         isJsonLogicChanged = !isEqual(jsonLogic, propsJsonLogic);
       }
 

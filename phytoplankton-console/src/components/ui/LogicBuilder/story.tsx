@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Fields } from '@react-awesome-query-builder/core';
 import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import fixture from './story-fixture.json';
+import { jsonLogicFormat, jsonLogicParse } from './virtual-fields';
 import LogicBuilder from './index';
 import { UseCase } from '@/pages/storybook/components';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
@@ -55,6 +56,79 @@ export default function (): JSX.Element {
           setShowVariablePopover(null);
         }}
       />
+
+      <UseCase
+        title={'Virtual fields'}
+        initialState={{
+          value: jsonLogicParse(
+            {
+              and: [
+                {
+                  some: [
+                    {
+                      var: 'entity:158de687',
+                    },
+                    {
+                      '==': [
+                        {
+                          string_to_number: [
+                            {
+                              var: 'userId',
+                            },
+                          ],
+                        },
+                        9999,
+                      ],
+                    },
+                  ],
+                },
+                {
+                  '==': [
+                    {
+                      var: 'agg:b4b8bc21',
+                    },
+                    665,
+                  ],
+                },
+              ],
+            },
+            config,
+          ),
+          config: makeConfig({
+            fields: fixture.fields as Fields,
+            funcs,
+            enableNesting: true,
+            onClickVariable,
+          }),
+        }}
+      >
+        {([state, setState]) => {
+          return (
+            <>
+              <textarea
+                value={JSON.stringify(jsonLogicFormat(state.value, state.config), null, 2)}
+                readOnly
+                style={{
+                  background: 'rgb(241, 238, 238)',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #c7c7c7',
+                  height: '200px',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                }}
+              />
+              <LogicBuilder
+                value={state.value}
+                onChange={(newValue) => {
+                  setState((prevState) => ({ ...prevState, value: newValue }));
+                }}
+                config={state.config}
+              />
+            </>
+          );
+        }}
+      </UseCase>
       <UseCase
         title={'View mode'}
         initialState={{
