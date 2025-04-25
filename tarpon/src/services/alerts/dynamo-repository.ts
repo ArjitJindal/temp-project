@@ -1323,7 +1323,10 @@ export class DynamoAlertRepository {
 
     return alertIds.map((id) => alertMap[id]).filter(Boolean)
   }
-  public async getAlertsByCaseIds(caseIds: string[]): Promise<Alert[]> {
+  public async getAlertsByCaseIds(
+    caseIds: string[],
+    { getComments = false }: { getComments?: boolean } = {}
+  ): Promise<Alert[]> {
     const queryPromises = caseIds.map((caseId) => {
       const partitionKey = DynamoDbKeys.CASE_ALERT(
         this.tenantId,
@@ -1351,10 +1354,27 @@ export class DynamoAlertRepository {
         alerts.push(...(result.Items as Alert[]))
       }
     })
-
+    const alertIds = alerts
+      .map((item) => item.alertId && (item.alertId as string))
+      .filter(Boolean) as string[]
+    let comments: AlertCommentsInternal[] = []
+    let files: AlertCommentFileInternal[] = []
+    if (getComments) {
+      comments = await this.getComments(alertIds)
+      files = await this.getFiles(alertIds)
+    }
     return alerts.map((item) => {
+      const enrichedComments = comments
+        .filter((comment) => comment.alertId === item.alertId)
+        .map((comment) => ({
+          ...comment,
+          files: files.filter(
+            (file) =>
+              file.alertId === item.alertId && file.commentId === comment.id
+          ),
+        }))
       item = omit(item, ['PartitionKeyID', 'SortKeyID']) as Alert
-      return item
+      return { ...item, comments: enrichedComments }
     })
   }
 

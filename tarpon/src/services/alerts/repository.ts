@@ -147,7 +147,8 @@ export class AlertsRepository {
       const { items, total } = await clickhouseRepository.getAlerts(params)
 
       const alerts = await this.dynamoAlertRepository.getAlertsFromAlertIds(
-        items
+        items,
+        { getComments: true }
       )
 
       const alertMap = new Map<string, Alert>()
