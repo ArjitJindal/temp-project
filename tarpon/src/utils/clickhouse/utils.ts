@@ -390,22 +390,59 @@ async function checkTableExists(
   return response.data[0].result === 1
 }
 
-async function addMissingColumns(
-  client: ClickHouseClient,
-  tableName: string,
-  columns: string[]
-): Promise<void> {
-  const existingColumns = await getExistingColumns(client, tableName)
-  for (const col of columns) {
-    const { colName, colType, expr = '' } = parseColumnDefinition(col)
-    const existingColumn = existingColumns.find((c) => c.name === colName)
-    // remove unnecessare '\n' from colType and only keep a single whitespace
+async function createRemoveColumnsQuery(columns: string[]): Promise<string[]> {
+  const queries: string[] = []
+  for (const colName of columns) {
+    logger.info(`Removing column ${colName}`)
+    queries.push(`DROP COLUMN ${colName}`)
+  }
+  return queries
+}
 
-    if (!existingColumn) {
-      await addColumn(client, tableName, colName, colType, expr)
+async function createAddColumnsQuery(
+  columns: string[],
+  definedColumnMap: Map<string, { colType: string; expr: string }>
+): Promise<string[]> {
+  const queries: string[] = []
+  for (const colName of columns) {
+    if (!definedColumnMap.has(colName)) {
       continue
     }
+    const colType = definedColumnMap.get(colName)?.colType
+    if (!colType) {
+      continue
+    }
+    logger.info(`Adding column ${colName}`)
+    queries.push(
+      `ADD COLUMN ${colName} ${colType} ${
+        definedColumnMap.get(colName)?.expr
+          ? 'MATERIALIZED ' + definedColumnMap.get(colName)?.expr
+          : ''
+      }`
+    )
+  }
+  return queries
+}
 
+async function createModifyColumnsQuery(
+  definedColumnMap: Map<string, { colType: string; expr: string }>,
+  existingColumnsMap: Map<
+    string,
+    { name: string; default_expression: string; type: string }
+  >
+): Promise<string[]> {
+  const queries: string[] = []
+  for (const colName of definedColumnMap.keys()) {
+    if (!definedColumnMap.has(colName) || !existingColumnsMap.has(colName)) {
+      continue
+    }
+    const colType = definedColumnMap.get(colName)?.colType
+    const expr = definedColumnMap.get(colName)?.expr || ''
+    const existingColumn = existingColumnsMap.get(colName)
+
+    if (!colType) {
+      continue
+    }
     const updatedColType = colType
       .split('DEFAULT')[0]
       .replace(/\s+/g, ' ')
@@ -413,24 +450,77 @@ async function addMissingColumns(
       .replace(/\s+\)/g, ')')
       .trim()
       .split(' MATERIALIZED ')[0]
-    const existingColType = existingColumn.type
+
+    const existingColType = existingColumn?.type
       .replace(/\s+/g, ' ')
       .replace(/\(\s+/g, '(')
       .replace(/\s+\)/g, ')')
       .trim()
 
     if (existingColType !== updatedColType) {
-      await updateColumn(client, tableName, colName, colType, expr)
+      logger.info(`Updating column ${colName}`)
+      queries.push(
+        `MODIFY COLUMN ${colName} ${colType} ${
+          expr ? 'MATERIALIZED ' + expr : ''
+        }`
+      )
     }
   }
+  return queries
 }
+
+async function alterTableColumns(
+  client: ClickHouseClient,
+  tableName: string,
+  columns: string[]
+): Promise<void> {
+  const existingColumns = await getExistingColumns(client, tableName)
+  const existingColumnsMap = new Map(existingColumns.map((c) => [c.name, c]))
+  const definedColumnMap = new Map(
+    columns.map((c) => {
+      const parsed = parseColumnDefinition(c)
+      return [parsed.colName, { colType: parsed.colType, expr: parsed.expr }]
+    })
+  )
+  // Find columns to add (in defined but not in existing)
+  const columnsToAdd = Array.from(definedColumnMap.keys()).filter(
+    (colName) => !existingColumnsMap.has(colName)
+  )
+
+  // Find extra columns (in existing but not in defined)
+  const columnsToRemove = Array.from(existingColumnsMap.keys()).filter(
+    (colName) => !definedColumnMap.has(colName)
+  )
+  logger.info(`Altering Table: ${tableName}`)
+  const addColumnsQuery = await createAddColumnsQuery(
+    columnsToAdd,
+    definedColumnMap
+  )
+  const removeColumnsQuery = await createRemoveColumnsQuery(columnsToRemove)
+  const modifyColumnsQuery = await createModifyColumnsQuery(
+    definedColumnMap,
+    existingColumnsMap
+  )
+  const alterQueryList = [
+    ...addColumnsQuery,
+    ...removeColumnsQuery,
+    ...modifyColumnsQuery,
+  ]
+  if (alterQueryList.length) {
+    const alterTableQuery = `ALTER TABLE ${tableName} ${alterQueryList.join(
+      ', '
+    )}`
+    await client.query({ query: alterTableQuery })
+  }
+}
+
 async function addMissingColumnsTable(
   client: ClickHouseClient,
   tableName: string,
   table: ClickhouseTableDefinition
 ): Promise<void> {
   const columns = getAllColumns(table)
-  await addMissingColumns(client, tableName, columns)
+  await alterTableColumns(client, tableName, columns)
 }
 
 async function getExistingColumns(client: ClickHouseClient, tableName: string) {
@@ -457,38 +547,6 @@ function parseColumnDefinition(col: string): {
     colType,
     expr,
   }
-}
-
-async function addColumn(
-  client: ClickHouseClient,
-  tableName: string,
-  colName: string,
-  colType: string,
-  expr?: string
-): Promise<void> {
-  const addColumnQuery = `
-    ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType} ${
-    expr ? 'MATERIALIZED ' + expr : ''
-  }
-  `
-  await client.query({ query: addColumnQuery })
-  logger.info(
-    `Added missing materialized column ${colName} to table ${tableName}.`
-  )
-}
-
-async function updateColumn(
-  client: ClickHouseClient,
-  tableName: string,
-  colName: string,
-  colType: string,
-  expr?: string
-): Promise<void> {
-  const updateColumnQuery = `ALTER TABLE ${tableName} MODIFY COLUMN ${colName} ${colType} ${
-    expr ? 'MATERIALIZED ' + expr : ''
-  }`
-  logger.info(`Updated materialized column ${colName} in table ${tableName}.`)
-  await client.query({ query: updateColumnQuery })
 }
 
 async function addMissingProjections(
@@ -613,7 +671,7 @@ async function createMaterializedViews(
     )
     await client.query({ query: matQuery })
 
-    await addMissingColumns(client, view.table, view.columns)
+    await alterTableColumns(client, view.table, view.columns)
   }
 }
 
