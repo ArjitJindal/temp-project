@@ -5,6 +5,7 @@ import {
 import { shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
 import { isEmpty, isEqual } from 'lodash'
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   JWTAuthorizerResult,
@@ -45,6 +46,7 @@ import {
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
+import { createApiUsageJobs } from '@/utils/api-usage'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -377,6 +379,15 @@ export const tenantsHandler = lambdaApi()(
             type: 'FAILING_BATCH_JOB',
             tenantId: tenantId,
           })
+          break
+        }
+        case 'API_USAGE_METRICS': {
+          const tenantInfos = await TenantService.getAllTenants(
+            process.env.ENV as Stage,
+            process.env.REGION as FlagrightRegion,
+            true
+          )
+          await createApiUsageJobs(tenantInfos)
           break
         }
         default: {

@@ -9649,6 +9649,7 @@ components:
         - FAILING_BATCH_JOB
         - DELTA_SANCTIONS_DATA_FETCH
         - PERIODIC_SCREENING_USER_RULE
+        - API_USAGE_METRICS
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string

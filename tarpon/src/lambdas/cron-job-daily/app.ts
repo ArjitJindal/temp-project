@@ -1,6 +1,5 @@
-import { chunk, compact, groupBy, mapValues } from 'lodash'
+import { compact } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
-import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
 import axios from 'axios'
@@ -44,6 +43,7 @@ import {
 } from '@/utils/clickhouse/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { createApiUsageJobs } from '@/utils/api-usage'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const dynamoDb = getDynamoDbClient()
@@ -233,46 +233,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     })
   }
 })
-
-async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
-  const basicTenants = await getTenantInfoFromUsagePlans(
-    envIs('local') ? 'eu-central-1' : process.env.AWS_REGION || 'eu-central-1'
-  )
-  const tenantsBySheets = mapValues(
-    groupBy(basicTenants, (basicTenant) => {
-      const auth0Tenant = tenantInfos.find(
-        (t) => t.tenant.id === basicTenant.id
-      )
-      return auth0Tenant?.auth0TenantConfig.apiUsageGoogleSheetId ?? ''
-    }),
-    (tenants) =>
-      tenants.map((tenant) => {
-        const auth0Tenant = tenantInfos.find((t) => t.tenant.id === tenant.id)
-        return {
-          ...tenant,
-          auth0Domain: auth0Tenant?.auth0Domain,
-        }
-      })
-  )
-  for (const sheetId in tenantsBySheets) {
-    for (const tenants of chunk(tenantsBySheets[sheetId], 5)) {
-      const googleSheetIds = [
-        process.env.API_USAGE_GOOGLE_SHEET_ID as string,
-        sheetId,
-      ].filter(Boolean)
-
-      await sendBatchJobCommand({
-        type: 'API_USAGE_METRICS',
-        tenantId: '',
-        parameters: {
-          tenantInfos: tenants,
-          targetMonth: dayjs().subtract(2, 'day').format('YYYY-MM'),
-          googleSheetIds: googleSheetIds,
-        },
-      })
-    }
-  }
-}
 
 async function clearTriageQueueTickets() {
   if (isQaEnv()) {

@@ -1,6 +1,5 @@
 import {
   APIGatewayClient,
-  GetUsagePlanKeysCommand,
   GetUsagePlansCommand,
   UsagePlan,
 } from '@aws-sdk/client-api-gateway'
@@ -35,69 +34,6 @@ export const getAllUsagePlans = async (
   return usagePlans
 }
 
-type UsagePlanWithTenantId = UsagePlan & { tenantId: string }
-export const getTenantInfoFromUsagePlans = async (
-  region: string
-): Promise<TenantBasic[]> => {
-  const apigateway = new APIGatewayClient({
-    region,
-    maxAttempts: 10,
-  })
-
-  const allUsagePlans = await getAllUsagePlans(region)
-
-  const usagePlanKeys = (
-    await Promise.all(
-      allUsagePlans.map(async (usagePlan) => {
-        const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
-          usagePlanId: usagePlan.id,
-        })
-
-        const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
-
-        if (usagePlanKeys.items?.length) {
-          return {
-            ...usagePlan,
-            tenantId: usagePlanKeys.items[0].name,
-          }
-        } else {
-          console.warn(
-            `Usage plan ${usagePlan.id} does not have any keys associated with it`
-          )
-          return null
-        }
-      })
-    )
-  ).filter((u): u is UsagePlanWithTenantId => Boolean(u))
-
-  return usagePlanKeys
-    .filter((usagePlan): usagePlan is UsagePlanWithTenantId =>
-      Boolean(usagePlan)
-    )
-    .map((usagePlan): TenantBasic | null => {
-      if (
-        usagePlan.name &&
-        USAGE_PLAN_REGEX.test(usagePlan.name) &&
-        usagePlan.tenantId &&
-        usagePlan.name?.includes(usagePlan.tenantId)
-      ) {
-        return {
-          id: usagePlan.tenantId,
-          usagePlanId: usagePlan.id,
-          name: usagePlan.name
-            .replace('tarpon:', '')
-            .replace(':', '')
-            .replace(usagePlan.tenantId, ''),
-        }
-      }
-      console.warn(
-        `Invalid usage plan name ${usagePlan.name} for usage plan ${usagePlan.id}`
-      )
-      return null
-    })
-    .filter((t): t is TenantBasic => Boolean(t)) // Another replacement for compact
-}
-
 export const doesUsagePlanExist = async (
   planName: string,
   region: string
@@ -115,11 +51,4 @@ export const doesUsagePlanExist = async (
     return true
   }
   return false
-}
-
-type TenantBasic = {
-  id: string
-  name: string
-  auth0Domain?: string
-  usagePlanId?: string
 }
