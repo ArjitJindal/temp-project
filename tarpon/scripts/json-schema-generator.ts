@@ -1,11 +1,13 @@
+/**
+ * Generate a JSON Schema from an OpenAPI specification file
+ * For example:
+ * If you want to generate a JSON Schema for the User model in the openapi-public-original.yaml file, you can run the following command:
+ * npm run json-schema-generator -- --file=lib/openapi/public/openapi-public-original.yaml --model=User --output=user.csv --format=csv
+ */
 import fs from 'fs'
 import { exit } from 'process'
 import yaml from 'js-yaml'
-
-/**
- * To generate a JSON schema from an OpenAPI spec, run the following command:
- * Usage = npm run json-schema-generator -- --file=lib/openapi/public/openapi-public-original.yaml --model=Business --output=business.json
- */
+import { Command } from 'commander'
 
 interface OpenAPISpec {
   components?: {
@@ -19,106 +21,142 @@ interface JSONSchema {
   [key: string]: any
 }
 
-const args = process.argv.slice(2)
-const filePath = args.find((arg) => arg.startsWith('--file='))?.split('=')[1]
-const modelName = args.find((arg) => arg.startsWith('--model='))?.split('=')[1]
-const outputPath = args
-  .find((arg) => arg.startsWith('--output='))
-  ?.split('=')[1]
+const program = new Command()
+program
+  .requiredOption('--file <path>', 'Path to OpenAPI specification file')
+  .requiredOption('--model <name>', 'Name of the model to extract')
+  .requiredOption('--output <path>', 'Output file path')
+  .option('--format <type>', 'Output format (json or csv)', 'json')
+  .parse(process.argv)
 
-console.log(filePath, modelName, outputPath)
+const {
+  file: filePath,
+  model: modelName,
+  output: outputPath,
+  format,
+} = program.opts()
 
-if (!filePath || !modelName || !outputPath) {
-  console.error('Missing required arguments')
-  process.exit(1)
+const resolveRef = (openAPISpec: OpenAPISpec, ref: string): any => {
+  const parts = ref.replace('#/', '').split('/')
+  let current: any = openAPISpec
+  for (const part of parts) {
+    if (current && part in current) {
+      current = current[part]
+    } else {
+      throw new Error(`Invalid reference: ${ref}`)
+    }
+  }
+  return current
 }
 
-const flattenOpenAPISchema = (
+const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj))
+
+const processSchema = (openAPISpec: OpenAPISpec, schema: any): any => {
+  if (!schema) {
+    return schema
+  }
+  if (schema.$ref) {
+    return processSchema(openAPISpec, resolveRef(openAPISpec, schema.$ref))
+  }
+
+  const newSchema = deepClone(schema)
+
+  if (newSchema.properties) {
+    Object.keys(newSchema.properties).forEach((propName) => {
+      newSchema.properties[propName] = processSchema(
+        openAPISpec,
+        newSchema.properties[propName]
+      )
+    })
+  }
+
+  if (newSchema.items) {
+    newSchema.items = processSchema(openAPISpec, newSchema.items)
+  }
+
+  ;['allOf', 'anyOf', 'oneOf'].forEach((key) => {
+    if (newSchema[key]) {
+      newSchema[key] = newSchema[key].map((s: any) =>
+        processSchema(openAPISpec, s)
+      )
+    }
+  })
+
+  if (
+    newSchema.additionalProperties &&
+    typeof newSchema.additionalProperties === 'object'
+  ) {
+    newSchema.additionalProperties = processSchema(
+      openAPISpec,
+      newSchema.additionalProperties
+    )
+  }
+
+  return newSchema
+}
+
+export const flattenOpenAPISchema = (
   openAPISpec: OpenAPISpec,
   entityName: string
 ): JSONSchema => {
-  const resolveRef = (ref: string): any => {
-    const parts = ref.replace('#/', '').split('/')
-    let current: any = openAPISpec
-    for (const part of parts) {
-      if (current && part in current) {
-        current = current[part]
-      } else {
-        throw new Error(`Invalid reference: ${ref}`)
-      }
-    }
-    return current
+  const entitySchema =
+    openAPISpec.components?.schemas?.[entityName] ||
+    openAPISpec.definitions?.[entityName]
+
+  if (!entitySchema) {
+    throw new Error(
+      `Entity '${entityName}' not found in the OpenAPI specification`
+    )
   }
 
-  const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj))
+  const flattenedSchema = processSchema(openAPISpec, entitySchema)
+  return {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    ...flattenedSchema,
+  }
+}
 
-  const processSchema = (schema: any): any => {
-    if (!schema) {
-      return schema
+const flattenSchemaForCSV = (
+  schema: any,
+  prefix = '',
+  maxArrayItems = 1,
+  result: string[] = []
+): string[] => {
+  if (schema.allOf) {
+    schema.allOf.forEach((subSchema: any) =>
+      flattenSchemaForCSV(subSchema, prefix, maxArrayItems, result)
+    )
+    return result
+  }
+
+  if (schema.oneOf || schema.anyOf) {
+    const variants = schema.oneOf || schema.anyOf
+    if (variants.length > 0) {
+      flattenSchemaForCSV(variants[0], prefix, maxArrayItems, result)
     }
+    return result
+  }
 
-    if (schema.$ref) {
-      const resolved = resolveRef(schema.$ref)
-      return processSchema(resolved)
-    }
-
-    const newSchema = deepClone(schema)
-
-    if (newSchema.properties) {
-      Object.keys(newSchema.properties).forEach((propName) => {
-        newSchema.properties[propName] = processSchema(
-          newSchema.properties[propName]
-        )
-      })
-    }
-
-    if (newSchema.items) {
-      newSchema.items = processSchema(newSchema.items)
-    }
-
-    ;['allOf', 'anyOf', 'oneOf'].forEach((key) => {
-      if (newSchema[key]) {
-        newSchema[key] = newSchema[key].map(processSchema)
-      }
+  if (schema.type === 'object' && schema.properties) {
+    Object.entries(schema.properties).forEach(([key, prop]) => {
+      const newPrefix = prefix ? `${prefix}.${key}` : key
+      flattenSchemaForCSV(prop, newPrefix, maxArrayItems, result)
     })
-
-    if (
-      newSchema.additionalProperties &&
-      typeof newSchema.additionalProperties === 'object'
-    ) {
-      newSchema.additionalProperties = processSchema(
-        newSchema.additionalProperties
-      )
-    }
-
-    return newSchema
+  } else if (schema.type === 'array' && schema.items) {
+    Array.from({ length: maxArrayItems }, (_, i) => {
+      const arrayPrefix = `${prefix}.${i}`
+      flattenSchemaForCSV(schema.items, arrayPrefix, maxArrayItems, result)
+    })
+  } else {
+    result.push(prefix)
   }
-
-  try {
-    const entitySchema: any =
-      openAPISpec.components?.schemas?.[entityName] ||
-      openAPISpec.definitions?.[entityName]
-    if (!entitySchema) {
-      throw new Error(
-        `Entity '${entityName}' not found in the OpenAPI specification`
-      )
-    }
-
-    const flattenedSchema = processSchema(entitySchema)
-
-    return {
-      $schema: 'http://json-schema.org/draft-07/schema#',
-      ...flattenedSchema,
-    }
-  } catch (error: any) {
-    throw new Error(`Error flattening schema: ${error.message}`)
-  }
+  return result
 }
 
 const processOpenAPIFile = async (
   filePath: string,
   entityName: string,
-  outputPath?: string
+  outputPath: string
 ): Promise<JSONSchema> => {
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8')
@@ -129,8 +167,12 @@ const processOpenAPIFile = async (
 
     const flattenedSchema = flattenOpenAPISchema(spec, entityName)
 
-    if (outputPath) {
-      fs.writeFileSync(
+    if (format === 'csv') {
+      const headers = flattenSchemaForCSV(flattenedSchema)
+      await fs.promises.writeFile(outputPath, headers.join(',') + '\n', 'utf8')
+      console.log(`CSV template written to ${outputPath}`)
+    } else {
+      await fs.promises.writeFile(
         outputPath,
         JSON.stringify(flattenedSchema, null, 2),
         'utf8'
