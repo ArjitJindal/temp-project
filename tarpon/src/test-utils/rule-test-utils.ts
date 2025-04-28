@@ -216,7 +216,7 @@ export function getRuleHitMetadata(
     if (result.executedRules && result.executedRules?.length > 1) {
       throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules?.[0].ruleHitMeta as RuleHitMeta
+    return result.executedRules?.[0]?.ruleHitMeta as RuleHitMeta
   })
 }
 

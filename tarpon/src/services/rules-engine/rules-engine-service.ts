@@ -61,6 +61,7 @@ import {
 import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
 import { mergeRules } from './utils/rule-utils'
 import { getTransactionRiskScoreDetailsForPNB } from './pnb-custom-logic'
+import { isRuleInstanceUpdateOrOnboarding } from './utils/user-rule-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -788,8 +789,7 @@ export class RulesEngineService {
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
     const targetRuleInstances = ruleInstances.filter(
       (r) =>
-        (stage === 'ONGOING' ||
-          r.userRuleRunCondition?.entityUpdated !== false) &&
+        isRuleInstanceUpdateOrOnboarding(r, stage, hasFeature('RISK_LEVELS')) &&
         (async ? isAsyncRule(r) : isSyncRule(r))
     )
 

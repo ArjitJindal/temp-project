@@ -1,3 +1,4 @@
+import { isV8RuleInstance } from '../utils'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -35,4 +36,30 @@ export function isOngoingUserRuleInstance(
     )
   }
   return checkForOngoing(ruleInstance.parameters)
+}
+
+export function isRuleInstanceUpdateOrOnboarding(
+  ruleInstance: RuleInstance,
+  stage: RuleStage,
+  isRiskLevelsEnabled: boolean
+) {
+  const checkForUpdatedEntity = (parameters: {
+    ongoingScreening?: boolean
+    ruleStages?: RuleStage[]
+  }) =>
+    Boolean(
+      (isV8RuleInstance(ruleInstance) &&
+        ruleInstance.userRuleRunCondition?.entityUpdated !== false) ||
+        parameters?.ruleStages == null ||
+        parameters.ruleStages.includes(stage)
+    )
+
+  if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
+    return Boolean(
+      Object.values(ruleInstance.riskLevelParameters).find(
+        checkForUpdatedEntity
+      )
+    )
+  }
+  return checkForUpdatedEntity(ruleInstance.parameters)
 }
