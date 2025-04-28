@@ -1,0 +1,36 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  z-index: 2;
+}
+
+.headerLeft {
+  background-color: @fr-colors-v2-gray-1;
+}
+
+.headerRight {
+  display: flex;
+  gap: 16px;
+}
+
+.content {
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}

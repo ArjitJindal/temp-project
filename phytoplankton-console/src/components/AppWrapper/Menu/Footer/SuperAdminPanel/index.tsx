@@ -181,6 +181,11 @@ export const featureDescriptions: Record<
     description: 'Enables RBAC V2',
     tag: FeatureTag.WIP,
   },
+  CUSTOM_WORKFLOWS: {
+    title: 'Custom workflows',
+    description: 'Enables custom workflows',
+    tag: FeatureTag.WIP,
+  },
 };
 
 export default function SuperAdminPanel() {

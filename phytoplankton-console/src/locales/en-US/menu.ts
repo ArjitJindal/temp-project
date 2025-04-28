@@ -67,4 +67,5 @@ export default {
   'menu.ml-models': 'AI detection',
   'menu.ml-models.description':
     "Enable Flagright's machine learning detection models and access the model library. Models can be deployed from the Scenario Builder on Rules module. Contact support@flagright.com to learn more.",
+  'menu.workflows': 'Workflows',
 };

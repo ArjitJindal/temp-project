@@ -1,53 +1,56 @@
-import { useMemo } from 'react';
 import { useLocalStorageState } from 'ahooks';
+import { useMemo } from 'react';
 import RulesItemPage from 'src/pages/rules/rules-item';
 import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
-import AccountsPage from '@/pages/accounts';
-import DashboardAnalysisPage from '@/pages/dashboard/analysis';
+import { Permission } from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import ForbiddenPage from '@/pages/403';
 import Page404 from '@/pages/404';
+import AccountsPage from '@/pages/accounts';
+import AlertItemPage from '@/pages/alert-item';
+import AuditLogPage from '@/pages/auditlog';
+import Clueso from '@/pages/auth/clueso';
 import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
-import AlertItemPage from '@/pages/alert-item';
-import RiskFactorPage from '@/pages/risk-levels/risk-factors';
-import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
-import TransactionsListPage from '@/pages/transactions';
-import TransactionsItemPage from '@/pages/transactions-item';
-import UsersUsersListPage from '@/pages/users/users-list';
-import UsersItemPage from '@/pages/users-item';
+import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
+import { MlModelsPage } from '@/pages/ml-models';
+import { QASamplePage } from '@/pages/qa-sample-item';
+import { QASamplesTable } from '@/pages/qa-samples';
+import ReportsList from '@/pages/reports';
+import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
+import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
+import RiskFactorPage from '@/pages/risk-levels/risk-factors';
+import RiskFactorItemPage from '@/pages/risk-levels/risk-factors/RiskItem';
+import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage';
+import { SimulationHistoryResultPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
 import RulesPage from '@/pages/rules';
+import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
 import SimulationHistoryPage from '@/pages/rules/simulation-history';
 import SimulationHistoryItemPage from '@/pages/rules/simulation-history-item';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
-import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
-import AuditLogPage from '@/pages/auditlog';
+import SettingsPage from '@/pages/settings';
+import TransactionsListPage from '@/pages/transactions';
+import TransactionsItemPage from '@/pages/transactions-item';
+import UsersItemPage from '@/pages/users-item';
+import UsersUsersListPage from '@/pages/users/users-list';
+import WorkflowsPage from '@/pages/workflows';
+import WorkflowsItemPage from '@/pages/workflows-item';
+import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import {
   isAtLeastAdmin,
   useAuth0User,
   useHasPermissions,
   usePermissions,
 } from '@/utils/user-utils';
-import { Permission } from '@/apis';
-import ForbiddenPage from '@/pages/403';
-import ReportsList from '@/pages/reports';
-import Clueso from '@/pages/auth/clueso';
-import { QASamplesTable } from '@/pages/qa-samples';
-import { QASamplePage } from '@/pages/qa-sample-item';
-import { SimulationHistoryResultPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
-import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage';
-import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
-import RiskFactorItemPage from '@/pages/risk-levels/risk-factors/RiskItem';
-import { MlModelsPage } from '@/pages/ml-models';
-import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isSarEnabled = useFeatureEnabled('SAR');
+  const isWorkflowsEnabled = useFeatureEnabled('CUSTOM_WORKFLOWS');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
@@ -526,6 +529,32 @@ export function useRoutes(): RouteItem[] {
             ]
           : [],
       },
+      isWorkflowsEnabled && {
+        path: '/workflows',
+        name: 'workflows',
+        icon: 'workflows',
+        hideChildrenInMenu: true,
+        position: 'top',
+        disabled: !isWorkflowsEnabled,
+        associatedFeatures: ['CUSTOM_WORKFLOWS'],
+        // permissions: ['workflows:all:read'],
+        routes: [
+          {
+            path: '/workflows',
+            redirect: '/workflows/list',
+          },
+          {
+            path: '/workflows/item/:id',
+            name: 'workflows-item',
+            component: WorkflowsItemPage,
+          },
+          {
+            path: '/workflows/:section',
+            name: 'workflows-page',
+            component: WorkflowsPage,
+          },
+        ],
+      },
       (isAtLeastAdminUser || hasAuditLogPermission) && {
         path: '/auditlog',
         icon: 'auditlog',
@@ -615,6 +644,7 @@ export function useRoutes(): RouteItem[] {
     permissions,
     hasMachineLearningFeature,
     isRiskScoringEnabled,
+    isWorkflowsEnabled,
   ]);
 }
 
@@ -622,23 +652,28 @@ function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, bool
   if (!(isLeaf(r) || isTree(r))) {
     return r;
   }
+  const result: RouteItem = { ...r };
   const routePermissions = r.permissions ?? [];
   const hasAnyOnePermission = routePermissions.some((p) => permissions?.get(p));
   if (routePermissions.length > 0 && !hasAnyOnePermission) {
-    r.disabled = true;
-    if (isLeaf(r)) {
-      r.component = ForbiddenPage;
+    if (isLeaf(result)) {
+      result.component = ForbiddenPage;
     }
+    result.disabled = true;
   }
-  if (isTree(r)) {
+  if (isTree(result)) {
     // If parent disabled, disable children.
-    if (r.disabled) {
-      r.routes = r.routes.map((r) => ({ ...r, disabled: true, component: ForbiddenPage }));
+    if (result.disabled) {
+      result.routes = result.routes.map((r) => ({
+        ...r,
+        disabled: true,
+        component: ForbiddenPage,
+      }));
     } else {
-      r.routes = r.routes.map((r) => {
+      result.routes = result.routes.map((r) => {
         return disableForbiddenRoutes(r, permissions);
       });
     }
   }
-  return r;
+  return result;
 }

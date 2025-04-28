@@ -1,5 +1,66 @@
 import NodeCanvas from './NodeCanvas';
+import { NodeDescription, EdgeDescription } from './types';
+import s from './styles.module.less';
+const TMP_NODES: NodeDescription[] = [
+  {
+    id: 'node-1',
+    type: 'StatusNode',
+    data: { status: 'OPEN' },
+  },
+  {
+    id: 'node-2',
+    type: 'IfNode',
+    data: { logic: false },
+  },
+  {
+    id: 'node-3',
+    type: 'ThenNode',
+    data: { logic: false },
+  },
+  {
+    id: 'node-4',
+    type: 'IfNode',
+    data: { logic: false },
+  },
+  {
+    id: 'node-5',
+    type: 'ThenNode',
+    data: { logic: false },
+  },
+  {
+    id: 'node-6',
+    type: 'StatusNode',
+    data: { status: 'CLOSED' },
+  },
+  {
+    id: 'node-7',
+    type: 'NewBranchButtonNode',
+    data: {},
+  },
+  {
+    id: 'node-8',
+    type: 'NewBranchButtonNode',
+    data: {
+      text: 'Add If/Then condition',
+    },
+  },
+];
+
+const TMP_EDGES: EdgeDescription[] = [
+  { id: 'e1', source: 'node-1', target: 'node-2' },
+  { id: 'e2', source: 'node-2', target: 'node-3' },
+  { id: 'e3', source: 'node-1', target: 'node-4' },
+  { id: 'e4', source: 'node-4', target: 'node-5' },
+  { id: 'e5', source: 'node-3', target: 'node-6' },
+  { id: 'e6', source: 'node-5', target: 'node-6' },
+  { id: 'e7', source: 'node-1', target: 'node-7' },
+  { id: 'e8', source: 'node-4', target: 'node-8' },
+];
 
 export default function WorkflowBuilder() {
-  return <NodeCanvas nodes={[]} edges={[]} />;
+  return (
+    <div className={s.root}>
+      <NodeCanvas nodes={TMP_NODES} edges={TMP_EDGES} />
+    </div>
+  );
 }

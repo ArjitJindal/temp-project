@@ -11526,6 +11526,7 @@ components:
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
         - RBAC_V2
+        - CUSTOM_WORKFLOWS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

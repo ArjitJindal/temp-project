@@ -31,6 +31,7 @@ import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
 import { getBranding } from '@/utils/branding';
 import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import MlModelsIcon from '@/components/ui/icons/ml-models.react.svg';
+import GitMergeIcon from '@/components/ui/icons/Remix/development/git-merge-line.react.svg';
 
 const icons = {
   accounts: <AddUsersIcon />,
@@ -48,6 +49,7 @@ const icons = {
   sanctions: <GlobeIcon />,
   auditlog: <AuditLogIcon />,
   'ml-models': <MlModelsIcon />,
+  workflows: <GitMergeIcon />,
 };
 
 const branding = getBranding();
