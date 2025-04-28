@@ -54,7 +54,7 @@ export default function ScopeSelector<
       size="LARGE"
       active={params.showCases as ScopeSelectorValue}
       onChange={(newValue) => {
-        onChangeParams((oldState) => ({ ...oldState, showCases: newValue }));
+        onChangeParams((oldState) => ({ ...oldState, showCases: newValue, sort: [] }));
       }}
       items={items}
     />
