@@ -631,26 +631,36 @@ describe('Cases (Transaction hit)', () => {
         )
         const finalCase = finalCases[0]
         expect(finalCase.alerts).toHaveLength(2)
-        expect(finalCase.alerts?.at(0)?.transactionIds?.at(0)).toEqual('333')
         expect(
-          finalCase.alerts?.at(1)?.transactionIds?.indexOf('333') === -1
+          finalCase.alerts
+            ?.find((a) => a?.alertStatus !== 'CLOSED')
+            ?.transactionIds?.at(0)
+        ).toEqual('333')
+        expect(
+          finalCase.alerts
+            ?.find((a) => a?.alertStatus === 'CLOSED')
+            ?.transactionIds?.indexOf('333') === -1
         ).toBeTruthy()
 
         // Check if alertId added to transaction
-        const finalAlertIds = finalCases[0].alerts?.map(
-          (a) => a.alertId
-        ) as string[]
+        const openAlertIds = finalCases[0].alerts
+          ?.filter((a) => a?.alertStatus !== 'CLOSED')
+          ?.map((a) => a.alertId) as string[]
+        const closedAlertIds = finalCases[0].alerts
+          ?.filter((a) => a?.alertStatus === 'CLOSED')
+          ?.map((a) => a.alertId) as string[]
         const finalTransactionWithAlertIds =
           await transactionRepository.getTransactionById(
             nextTransaction.transactionId
           )
-        expectTransactionsToHaveAlertIds(finalTransactionWithAlertIds, [
-          finalAlertIds[0],
-        ])
+        expectTransactionsToHaveAlertIds(
+          finalTransactionWithAlertIds,
+          openAlertIds
+        )
         expect(finalTransactionWithAlertIds).toBeDefined()
         expect(finalTransactionWithAlertIds?.alertIds).toHaveLength(1)
         expect(finalTransactionWithAlertIds?.alertIds).not.toContain(
-          finalAlertIds[1]
+          closedAlertIds[1]
         )
       }
     })
@@ -795,10 +805,18 @@ describe('Cases (Transaction hit)', () => {
       }
 
       const case1 = (await addTransaction(0, true)) as Case
-      case1.caseTransactionsIds = [...new Array(49_999)].map(
+      const transactionIds = [...new Array(49_999)].map(
         (_, counter) => `fake_transaction_${counter}`
       )
-      await caseCreationService.caseRepository.addCaseMongo(case1)
+      case1.caseTransactionsIds = transactionIds
+
+      await caseCreationService.caseRepository.addCaseMongo({
+        ...case1,
+        alerts: case1.alerts?.map((a) => ({
+          ...a,
+          transactionIds: [...(a.transactionIds ?? []), ...transactionIds],
+        })) as Alert[],
+      })
 
       // Goes to the same case, making transaction number 1000
       const case2 = (await addTransaction(1, true)) as Case

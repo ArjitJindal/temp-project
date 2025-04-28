@@ -1293,27 +1293,33 @@ export class CaseCreationService {
 
         for (const group of delayTimestampsGroups) {
           const { availableAfterTimestamp, hitRules, ruleInstances } = group
-          const existedCase = cases.find(
+          const existedCases = cases.filter(
             (x) =>
               x.availableAfterTimestamp === availableAfterTimestamp ||
               (x.availableAfterTimestamp == null &&
                 availableAfterTimestamp == null)
           )
 
-          if (existedCase) {
-            logger.debug(`Existed case for user`, {
-              existedCaseId: existedCase?.caseId ?? null,
+          if (existedCases?.length) {
+            logger.debug(`Existed cases for user`, {
+              existedCaseIds: existedCases.map((c) => c.caseId) ?? null,
               existedCaseTransactionsIdsLength: (
-                existedCase?.caseTransactionsIds || []
+                existedCases.flatMap((c) => c.caseTransactionsIds) || []
               ).length,
             })
 
             const unclosedAlerts =
-              existedCase.alerts?.filter((a) => a.alertStatus !== 'CLOSED') ??
-              []
+              compact(
+                existedCases.flatMap(({ alerts }) =>
+                  alerts?.filter((a) => a.alertStatus !== 'CLOSED')
+                )
+              ) ?? []
             const closedAlerts =
-              existedCase.alerts?.filter((a) => a.alertStatus === 'CLOSED') ??
-              []
+              compact(
+                existedCases.flatMap(({ alerts }) =>
+                  alerts?.filter((a) => a.alertStatus === 'CLOSED')
+                )
+              ) ?? []
             const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
               hitRules,
               unclosedAlerts,
@@ -1323,27 +1329,37 @@ export class CaseCreationService {
               params.latestTransactionArrivalTimestamp,
               params.checkListTemplates
             )
+            const newAlerts = updatedAlerts.filter((a) => !a.caseId)
+            const existedCase = existedCases[0]
             const alerts = [...updatedAlerts, ...closedAlerts]
+            const caseAlerts = [
+              ...alerts.filter((a) => a.caseId === existedCase.caseId),
+              ...newAlerts,
+            ]
             const caseTransactionsIds = uniq(
-              [
-                ...(existedCase.caseTransactionsIds ?? []),
-                filteredTransaction?.transactionId as string,
-              ].filter(Boolean)
+              compact(caseAlerts?.flatMap((a) => a.transactionIds))
             )
-
             logger.debug('Update existed case with transaction')
             result.push({
               ...existedCase,
-              latestTransactionArrivalTimestamp:
-                params.latestTransactionArrivalTimestamp,
-              caseTransactionsIds,
-              caseAggregates: generateCaseAggreates(
-                [filteredTransaction as InternalTransaction],
-                existedCase.caseAggregates
+              latestTransactionArrivalTimestamp: Math.max(
+                ...compact(
+                  caseAlerts.map((a) => a.latestTransactionArrivalTimestamp)
+                )
               ),
+              caseTransactionsIds,
+              caseAggregates:
+                filteredTransaction?.transactionId &&
+                caseTransactionsIds.includes(filteredTransaction.transactionId)
+                  ? generateCaseAggreates(
+                      [filteredTransaction as InternalTransaction],
+                      existedCase.caseAggregates
+                    )
+                  : existedCase.caseAggregates,
               caseTransactionsCount: caseTransactionsIds.length,
-              priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
-              alerts,
+              priority:
+                minBy(caseAlerts, 'priority')?.priority ?? last(PRIORITYS),
+              alerts: caseAlerts,
               updatedAt: now,
             })
           } else {
