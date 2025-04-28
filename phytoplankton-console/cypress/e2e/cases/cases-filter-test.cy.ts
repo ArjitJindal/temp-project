@@ -54,58 +54,57 @@ describe('Filter according to case id (optimized)', () => {
       });
   });
 
-  // it('should filter according to rule name', () => {
-  //   cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
-  //   cy.intercept('GET', '**/rule_instances**').as('rules');
-  //   cy.visit('/case-management/cases');
+  it('should filter according to rule name', () => {
+    cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
+    cy.intercept('GET', '**/rule_instances**').as('rules');
+    cy.visit('/case-management/cases?showCases=ALL_ALERTS');
 
-  //   cy.wait('@getRuleWithAlerts').then((interception) => {
-  //     expect(interception.response?.statusCode).to.be.oneOf([200, 304]);
-  //   });
-  //   let ruleName = '';
-  //   cy.wait('@rules').then((interception) => {
-  //     cy.log('interception.response', interception.response);
-  //     expect(interception.response?.statusCode).to.oneOf([200, 304]);
-  //     const rules = interception.response?.body ?? [];
-  //     rules.forEach((rule) => {
-  //       if (rule.ruleNameAlias) {
-  //         ruleName = rule.ruleNameAlias;
-  //       }
-  //     });
-  //     expect(ruleName).to.not.equal('');
-  //     cy.get('[data-cy="segmented-control-all-alerts"]').click();
-  //     cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
-  //     cy.get('li[data-cy="OPEN"]').first().click();
-  //     cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
-  //     cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
-  //     cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
-  //     cy.get('.ant-popover .ant-select-selector').first().click().type(`${ruleName}{enter}`);
-  //     cy.get('td[data-cy="ruleName"]')
-  //       .contains(ruleName)
-  //       .should('exist')
-  //       .each((ele) => {
-  //         cy.wrap(ele).should('exist').invoke('text').should('include', ruleName);
-  //       });
-  //   });
-  // });
+    cy.wait('@getRuleWithAlerts').then((interception) => {
+      expect(interception.response?.statusCode).to.be.oneOf([200, 304]);
+    });
+    let ruleName = '';
+    cy.wait('@rules').then((interception) => {
+      cy.log('interception.response', interception.response);
+      expect(interception.response?.statusCode).to.oneOf([200, 304]);
+      const rules = interception.response?.body ?? [];
+      rules.forEach((rule) => {
+        if (rule.ruleNameAlias) {
+          ruleName = rule.ruleNameAlias;
+        }
+      });
+      expect(ruleName).to.not.equal('');
+      cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
+      cy.get('li[data-cy="OPEN"]').first().click();
+      cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
+      cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
+      cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
+      cy.get('.ant-popover .ant-select-selector').first().click().type(`${ruleName}{enter}`);
+      cy.get('td[data-cy="ruleName"]')
+        .contains(ruleName)
+        .should('exist')
+        .each((ele) => {
+          cy.wrap(ele).should('exist').invoke('text').should('include', ruleName);
+        });
+    });
+  });
 
-  // it('should assign single and multiple cases', () => {
-  //   cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
+  it('should assign single and multiple cases', () => {
+    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN');
 
-  //   cy.get('[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
+    cy.get('[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 
-  //   cy.intercept('PATCH', '**/cases/assignments').as('case');
-  //   cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
-  //   cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
-  //   cy.wait('@case').then((interception) => {
-  //     expect(interception.response?.statusCode).to.eq(200);
-  //   });
-  //   cy.waitNothingLoading();
-  //   cy.get('[data-cy="header-table-checkbox"]').click();
-  //   cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
-  //   cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
-  //   cy.wait('@case').then((interception) => {
-  //     expect(interception.response?.statusCode).to.eq(200);
-  //   });
-  // });
+    cy.intercept('PATCH', '**/cases/assignments').as('case');
+    cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
+    cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
+    cy.wait('@case').then((interception) => {
+      expect(interception.response?.statusCode).to.eq(200);
+    });
+    cy.waitNothingLoading();
+    cy.get('[data-cy="header-table-checkbox"]').click();
+    cy.get('button[data-cy="update-assignment-button"]').eq(0).click();
+    cy.get('.ant-dropdown-menu-item-only-child').eq(0).click();
+    cy.wait('@case').then((interception) => {
+      expect(interception.response?.statusCode).to.eq(200);
+    });
+  });
 });
