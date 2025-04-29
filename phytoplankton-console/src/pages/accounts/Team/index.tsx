@@ -51,6 +51,7 @@ export default function Team() {
   let messageVar: CloseMessage | null = null;
   const allAccountsResult = useAccountsQueryResult();
   const queryClient = useQueryClient();
+  const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
   const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
     if (isSuccess(allAccountsResult.data)) {
       const filteredAccounts = allAccountsResult.data.value
@@ -138,65 +139,69 @@ export default function Team() {
   const columnHelper = new ColumnHelper<Account>();
 
   const columns: TableColumn<Account>[] = columnHelper.list([
-    columnHelper.simple<'name'>({
-      key: 'name',
-      title: 'Name',
-      defaultWidth: 220,
-      type: {
-        render(name, context) {
-          return (
-            <div className={s.name}>
-              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                {!name || context.item.email === context.item.name ? '-' : name}
-              </P>
-            </div>
-          );
-        },
-        stringify(value, item) {
-          return !value || item.email === item.name ? '-' : value;
-        },
-      },
-    }),
-    columnHelper.simple<'staffId'>({
-      key: 'staffId',
-      title: 'Staff ID',
-      defaultWidth: 220,
-      defaultVisibility: false,
-      type: {
-        render(staffId) {
-          return (
-            <div className={s.staffId}>
-              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                {staffId}
-              </P>
-            </div>
-          );
-        },
-        stringify(value) {
-          return value || '-';
-        },
-      },
-    }),
-    columnHelper.simple<'department'>({
-      key: 'department',
-      title: 'Department',
-      defaultWidth: 220,
-      defaultVisibility: false,
-      type: {
-        render(department) {
-          return (
-            <div className={s.department}>
-              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                {department}
-              </P>
-            </div>
-          );
-        },
-        stringify(value) {
-          return value || '-';
-        },
-      },
-    }),
+    ...(isNewFeaturesEnabled
+      ? [
+          columnHelper.simple<'name'>({
+            key: 'name',
+            title: 'Name',
+            defaultWidth: 220,
+            type: {
+              render(name, context) {
+                return (
+                  <div className={s.name}>
+                    <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                      {!name || context.item.email === context.item.name ? '-' : name}
+                    </P>
+                  </div>
+                );
+              },
+              stringify(value, item) {
+                return !value || item.email === item.name ? '-' : value;
+              },
+            },
+          }),
+          columnHelper.simple<'staffId'>({
+            key: 'staffId',
+            title: 'Staff ID',
+            defaultWidth: 220,
+            defaultVisibility: false,
+            type: {
+              render(staffId) {
+                return (
+                  <div className={s.staffId}>
+                    <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                      {staffId}
+                    </P>
+                  </div>
+                );
+              },
+              stringify(value) {
+                return value || '-';
+              },
+            },
+          }),
+          columnHelper.simple<'department'>({
+            key: 'department',
+            title: 'Department',
+            defaultWidth: 220,
+            defaultVisibility: false,
+            type: {
+              render(department) {
+                return (
+                  <div className={s.department}>
+                    <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                      {department}
+                    </P>
+                  </div>
+                );
+              },
+              stringify(value) {
+                return value || '-';
+              },
+            },
+          }),
+        ]
+      : []),
     columnHelper.simple<'email'>({
       key: 'email',
       title: 'Email',

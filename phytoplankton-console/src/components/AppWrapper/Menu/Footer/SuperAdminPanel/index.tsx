@@ -137,6 +137,15 @@ export const featureDescriptions: Record<
     title: 'PNB',
     description: 'Enables PNB specific features',
   },
+  PNB_DAY_2: {
+    title: 'PNB Day 2',
+    description: 'Enables PNB Day 2 specific features',
+  },
+  NEW_FEATURES: {
+    title: 'New features',
+    description:
+      'Enables new features (Specifically for ALL Customers but hidden because of the PNB)',
+  },
   MULTI_LEVEL_ESCALATION: {
     title: 'Multi Level Escalation',
     description: 'Enables multi level escalation',

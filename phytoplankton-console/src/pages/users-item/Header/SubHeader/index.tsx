@@ -44,7 +44,9 @@ export default function SubHeader(props: Props) {
             title={`${firstLetterUpper(settings.userAlias)} status`}
             userRes={userRes}
           />
-          <UserEODDEditor title={`EODD`} userRes={userRes} />
+          <Feature name="PNB_DAY_2">
+            <UserEODDEditor title={`EODD`} userRes={userRes} />
+          </Feature>
         </div>
       </div>
       <Feature name={['RISK_SCORING', 'RISK_LEVELS']} fallback={''}>

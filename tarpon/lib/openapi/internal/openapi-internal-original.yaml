@@ -11519,6 +11519,8 @@ components:
         - ASYNC_RULES
         - CONCURRENT_ASYNC_RULES
         - PNB
+        - PNB_DAY_2
+        - NEW_FEATURES
         - MULTI_LEVEL_ESCALATION
         - STRICT_FILE_SECURITY
         - MANUAL_PRE_AGGREGATION
@@ -11589,6 +11591,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PermissionStatements'
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
       required:
         - id
         - name

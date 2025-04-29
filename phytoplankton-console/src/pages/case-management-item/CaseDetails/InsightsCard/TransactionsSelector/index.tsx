@@ -28,6 +28,7 @@ import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
 import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -123,12 +124,14 @@ export default function TransactionsSelector(props: Props) {
               })}
         </div>
         <div className={s.settings}>
-          <DatePicker.RangePicker
-            value={params.timeRange}
-            onChange={(value) => {
-              onChangeParams({ ...params, timeRange: value });
-            }}
-          />
+          <Feature name="NEW_FEATURES">
+            <DatePicker.RangePicker
+              value={params.timeRange}
+              onChange={(value) => {
+                onChangeParams({ ...params, timeRange: value });
+              }}
+            />
+          </Feature>
           <Select<string>
             value={`${params.aggregateBy}`}
             onChange={(value) => {

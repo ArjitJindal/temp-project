@@ -51,6 +51,7 @@ export default function UserItem() {
 
   const queryClient = useQueryClient();
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+  const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const settings = useSettings();
   const isCrmEnabled = useFeatureEnabled('CRM');
@@ -213,13 +214,17 @@ export default function UserItem() {
             isClosable: false,
             isDisabled: false,
           },
-          {
-            title: 'Lists',
-            key: 'lists',
-            children: <UserLists userId={userId} />,
-            isClosable: false,
-            isDisabled: false,
-          },
+          ...(isNewFeaturesEnabled
+            ? [
+                {
+                  title: 'Lists',
+                  key: 'lists',
+                  children: <UserLists userId={userId} />,
+                  isClosable: false,
+                  isDisabled: false,
+                },
+              ]
+            : []),
           ...(isCrmEnabled && settings.crmIntegrationName
             ? [
                 {

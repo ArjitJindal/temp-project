@@ -10,6 +10,7 @@ import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -102,15 +103,17 @@ export default function Modal(props: Props) {
                 </Typography.Title>
               </div>
               <div className={s.headerSection}>
-                {derivedResizable && (
-                  <button
-                    className={s.close}
-                    onClick={() => setSize(derivedSize === 'XL' ? 'M' : 'XL')}
-                    data-cy="modal-close"
-                  >
-                    {derivedSize === 'XL' ? <CollapseAltOutlined /> : <ExpandAltOutlined />}
-                  </button>
-                )}
+                <Feature name="NEW_FEATURES">
+                  {derivedResizable && (
+                    <button
+                      className={s.close}
+                      onClick={() => setSize(derivedSize === 'XL' ? 'M' : 'XL')}
+                      data-cy="modal-close"
+                    >
+                      {derivedSize === 'XL' ? <CollapseAltOutlined /> : <ExpandAltOutlined />}
+                    </button>
+                  )}
+                </Feature>
                 <button className={s.close} onClick={onCancel} data-cy="modal-close">
                   <CloseCircleLineIcon />
                 </button>

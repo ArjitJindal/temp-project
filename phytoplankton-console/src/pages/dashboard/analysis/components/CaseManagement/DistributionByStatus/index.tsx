@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/colors';
 import { useRuleOptions } from '@/utils/rules';
 import Select from '@/components/library/Select';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type StatusType =
   | 'OPEN'
@@ -134,15 +135,17 @@ export default function DistributionByStatus(props: WidgetProps) {
       }}
       extraControls={[
         <div key="rule-filter" style={{ display: 'flex', alignItems: 'center', marginRight: 16 }}>
-          <Select
-            mode="MULTIPLE"
-            allowClear
-            style={{ minWidth: 200 }}
-            placeholder="Filter by Rules"
-            options={ruleOptions.filter(Boolean) as { value: string; label: string }[]}
-            value={selectedRules}
-            onChange={handleRulesChange}
-          />
+          <Feature name="NEW_FEATURES">
+            <Select
+              mode="MULTIPLE"
+              allowClear
+              style={{ minWidth: 200 }}
+              placeholder="Filter by Rules"
+              options={ruleOptions.filter(Boolean) as { value: string; label: string }[]}
+              value={selectedRules}
+              onChange={handleRulesChange}
+            />
+          </Feature>
         </div>,
         <GranularDatePicker
           timeWindowType={timeWindowType}

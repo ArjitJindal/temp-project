@@ -11,7 +11,11 @@ import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { Account, AccountPatchPayload, EscalationLevel } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  Feature,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
 import { useAuth0User, useInvalidateUsers } from '@/utils/user-utils';
 import TextInput from '@/components/library/TextInput';
@@ -396,9 +400,11 @@ export default function AccountForm(props: Props) {
       >
         {({ valuesState: [values] }) => (
           <>
-            <InputField<FormValues, 'name'> name={'name'} label={'Name'}>
-              {(inputProps) => <TextInput {...inputProps} />}
-            </InputField>
+            <Feature name="NEW_FEATURES">
+              <InputField<FormValues, 'name'> name={'name'} label={'Name'}>
+                {(inputProps) => <TextInput {...inputProps} />}
+              </InputField>
+            </Feature>
             <InputField<FormValues, 'email'>
               name={'email'}
               label={'Email'}
@@ -406,16 +412,18 @@ export default function AccountForm(props: Props) {
             >
               {(inputProps) => <TextInput {...inputProps} testName="accounts-email" />}
             </InputField>
-            <ExpandContentButton suffixText="options">
-              <>
-                <InputField<FormValues, 'staffId'> name={'staffId'} label={'Staff ID'}>
-                  {(inputProps) => <TextInput {...inputProps} />}
-                </InputField>
-                <InputField<FormValues, 'department'> name={'department'} label={'Department'}>
-                  {(inputProps) => <TextInput {...inputProps} />}
-                </InputField>
-              </>
-            </ExpandContentButton>
+            <Feature name="NEW_FEATURES">
+              <ExpandContentButton suffixText="options">
+                <>
+                  <InputField<FormValues, 'staffId'> name={'staffId'} label={'Staff ID'}>
+                    {(inputProps) => <TextInput {...inputProps} />}
+                  </InputField>
+                  <InputField<FormValues, 'department'> name={'department'} label={'Department'}>
+                    {(inputProps) => <TextInput {...inputProps} />}
+                  </InputField>
+                </>
+              </ExpandContentButton>
+            </Feature>
             <InputField<FormValues, 'role'>
               name={'role'}
               label={'Role'}

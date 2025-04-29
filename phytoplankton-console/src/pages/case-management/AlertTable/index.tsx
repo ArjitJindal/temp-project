@@ -275,6 +275,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const settings = useSettings();
   const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const isPNBDay2Enabled = useFeatureEnabled('PNB_DAY_2');
   const sarEnabled = useFeatureEnabled('SAR');
   const slaEnabled = useFeatureEnabled('ALERT_SLA');
   const clickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
@@ -841,19 +842,23 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               stringify: (value) => commentsToString(value ?? [], users).trim(),
             },
           }),
-          helper.simple<'statusChanges'>({
-            title: 'Checker action',
-            key: 'statusChanges',
-            hideInTable: true,
-            filtering: false,
-            exporting: true,
-            type: {
-              stringify: (value) => {
-                const checkerAction = getCheckerAction(value ?? [], users);
-                return checkerAction ?? '-';
-              },
-            },
-          }),
+          ...(isPNBDay2Enabled
+            ? [
+                helper.simple<'statusChanges'>({
+                  title: 'Checker action',
+                  key: 'statusChanges',
+                  hideInTable: true,
+                  filtering: false,
+                  exporting: true,
+                  type: {
+                    stringify: (value) => {
+                      const checkerAction = getCheckerAction(value ?? [], users);
+                      return checkerAction ?? '-';
+                    },
+                  },
+                }),
+              ]
+            : []),
           showReason &&
             helper.derived<TableAlertItem['lastStatusChangeReasons'] | null>({
               title: 'Reason',
@@ -1124,6 +1129,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     navigate,
     expandedAlertId,
     capitalizeUserAlias,
+    isPNBDay2Enabled,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
