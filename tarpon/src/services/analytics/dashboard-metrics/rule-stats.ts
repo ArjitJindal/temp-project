@@ -359,12 +359,12 @@ export class RuleHitsStatsDashboardMetric {
     // data in a new table
 
     const transactionsQuery = `
-    SELECT 
-      ruleInstanceId,
-      ruleId,
+    SELECT
+      arrayJoin(nonShadowHitRuleIdPairs).1 AS ruleInstanceId,
+      arrayJoin(nonShadowHitRuleIdPairs).2 AS ruleId,
       count() as hitCount
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.RULE_STATS_HOURLY.viewName} FINAL
-    WHERE time BETWEEN toDateTime(${startTimestamp} / 1000) AND toDateTime(${endTimestamp} / 1000)
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
     GROUP BY ruleInstanceId, ruleId
   `
 
