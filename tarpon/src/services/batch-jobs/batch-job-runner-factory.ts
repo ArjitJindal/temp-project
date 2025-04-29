@@ -33,6 +33,7 @@ import { DeltaSanctionsDataFetchBatchJobRunner } from './delta-sanctions-batch-j
 import { CasesDynamoBackfillBatchJobRunner } from './cases-backfill-dynamodb-job-runner'
 import { PeriodicScreeningUserRuleBatchJobRunner } from './periodic-screening-user-rule-batch-job-runner'
 import { QACleanupBatchJobRunner } from './qa-cleanup-batchjob'
+import { PnbPullUsersDataBatchJobRunner } from './pnb-pull-users-data-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -120,6 +121,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new CasesDynamoBackfillBatchJobRunner(jobId),
     PERIODIC_SCREENING_USER_RULE: (jobId) =>
       new PeriodicScreeningUserRuleBatchJobRunner(jobId),
+    PNB_PULL_USERS_DATA: (jobId) => new PnbPullUsersDataBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

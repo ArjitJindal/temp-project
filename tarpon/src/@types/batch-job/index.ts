@@ -408,6 +408,11 @@ export type QACleanupBatchJob = {
   tenantId: string
 }
 
+export type PnbPullUsersData = {
+  type: 'PNB_PULL_USERS_DATA'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -454,6 +459,8 @@ export type BatchJob =
   | CasesBackfillDynamoBatchJob
   | PeriodicScreeningUserRuleBatchJob
   | QACleanupBatchJob
+  | PnbPullUsersData
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

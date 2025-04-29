@@ -77,6 +77,7 @@ export const jobDecisionHandler = async (
     DASHBOARD_REFRESH: settings.features?.includes('MANUAL_DASHBOARD_REFRESH')
       ? 'FARGATE'
       : 'LAMBDA',
+    PNB_PULL_USERS_DATA: 'FARGATE',
     API_USAGE_METRICS: 'LAMBDA',
     DEMO_MODE_DATA_LOAD: 'LAMBDA',
     GLOBAL_RULE_AGGREGATION_REBUILD: 'LAMBDA',

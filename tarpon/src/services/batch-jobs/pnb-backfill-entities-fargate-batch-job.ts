@@ -93,7 +93,10 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         Key: importFileS3Key,
       })
     )
-    const stream = (Body as any)?.transformToWebStream()
+    const stream = Body?.transformToWebStream()
+    if (!stream) {
+      throw new Error('Stream is undefined')
+    }
     const reader = stream.getReader()
     const decoder = new TextDecoder()
     const rl = {

@@ -390,6 +390,13 @@ export const tenantsHandler = lambdaApi()(
           await createApiUsageJobs(tenantInfos)
           break
         }
+        case 'PNB_PULL_USERS_DATA': {
+          await sendBatchJobCommand({
+            type: 'PNB_PULL_USERS_DATA',
+            tenantId: tenantId,
+          })
+          break
+        }
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
         }

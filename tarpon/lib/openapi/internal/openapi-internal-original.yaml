@@ -9654,6 +9654,7 @@ components:
         - DELTA_SANCTIONS_DATA_FETCH
         - PERIODIC_SCREENING_USER_RULE
         - API_USAGE_METRICS
+        - PNB_PULL_USERS_DATA
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string
