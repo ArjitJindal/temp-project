@@ -9210,6 +9210,8 @@ components:
           properties:
             createdAt:
               type: number
+            isKrsLocked:
+              type: boolean
     InternalBusinessUserEvent:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/BusinessUserEventWithRulesResult
@@ -9218,6 +9220,8 @@ components:
           properties:
             createdAt:
               type: number
+            isKrsLocked:
+              type: boolean
     InternalUserEvent:
       title: InternalUserEvent
       oneOf:

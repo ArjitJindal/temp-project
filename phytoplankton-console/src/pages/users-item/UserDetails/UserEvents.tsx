@@ -107,21 +107,27 @@ export const UserEvents = (props: Props) => {
       exporting: false,
       type: {
         render: (item) => {
-          if (!item?.updatedConsumerUserAttributes && !item?.updatedBusinessUserAttributes) {
+          if (
+            !item?.updatedConsumerUserAttributes &&
+            !item?.updatedBusinessUserAttributes &&
+            item?.isKrsLocked === null
+          ) {
             return (
               <Tooltip title={`No changes were made to the ${settings.userAlias} details.`}>
                 <Typography.Text type={'secondary'}>View Changes</Typography.Text>
               </Tooltip>
             );
           }
+          const newImage = {
+            ...(item?.updatedConsumerUserAttributes || item?.updatedBusinessUserAttributes || {}),
+            isKrsLocked: item?.isKrsLocked,
+          };
           return (
             <AuditLogModal
               data={{
                 type: firstLetterUpper(settings.userAlias),
                 oldImage: {},
-                newImage: item.updatedConsumerUserAttributes
-                  ? item.updatedConsumerUserAttributes
-                  : item.updatedBusinessUserAttributes ?? {},
+                newImage: newImage,
                 showNotChanged: false,
                 showOldImage: false,
               }}

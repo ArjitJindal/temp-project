@@ -134,7 +134,8 @@ export const userHandler = lambdaApi()(
       const user = await userManagementService.verifyUser(
         userPayload,
         isConsumerUser ? 'CONSUMER' : 'BUSINESS',
-        riskScoreResult
+        riskScoreResult,
+        options?.lockKycRiskLevel
       )
       if (hasFeature('PNB') && riskScoreResult) {
         craRiskLevelToReturn = getUserRiskScoreDetailsForPNB(

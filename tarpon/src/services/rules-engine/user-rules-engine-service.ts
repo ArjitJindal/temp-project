@@ -97,7 +97,8 @@ export class UserManagementService {
   public async verifyUser(
     userPayload: User | Business,
     type: UserType,
-    riskScoreDetails?: UserRiskScoreDetails
+    riskScoreDetails?: UserRiskScoreDetails,
+    isKrsLocked?: boolean
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const isConsumerUser = type === 'CONSUMER'
 
@@ -131,6 +132,7 @@ export class UserManagementService {
             timestamp: userResult.createdTimestamp,
             userId: userResult.userId,
             updatedConsumerUserAttributes: userResult,
+            isKrsLocked,
           },
           'CONSUMER',
           {
@@ -149,6 +151,7 @@ export class UserManagementService {
             timestamp: userResult.createdTimestamp,
             userId: userResult.userId,
             updatedBusinessUserAttributes: userResult as Business,
+            isKrsLocked,
           },
           'BUSINESS',
           {
@@ -344,10 +347,14 @@ export class UserManagementService {
 
     await Promise.all([
       saveUser(updatedUserResult as UserResultType<T>),
-      this.userEventRepository.saveUserEvent(userEvent, userType, {
-        ...monitoringResult,
-        riskScoreDetails,
-      }),
+      this.userEventRepository.saveUserEvent(
+        { ...userEvent, isKrsLocked },
+        userType,
+        {
+          ...monitoringResult,
+          riskScoreDetails,
+        }
+      ),
       isAnyAsyncRules &&
         sendAsyncRuleTasks([
           {
@@ -364,7 +371,7 @@ export class UserManagementService {
     ])
 
     return {
-      ...(omit(updatedUserResult, 'type') as UserResultType<T>),
+      ...(omit(updatedUserResult, ['type', 'kycStatus']) as UserResultType<T>),
       hitRules: monitoringResult.hitRules,
       executedRules: monitoringResult.executedRules,
       riskScoreDetails: hasFeature('PNB')
