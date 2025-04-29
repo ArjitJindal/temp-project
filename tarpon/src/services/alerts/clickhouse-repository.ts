@@ -153,7 +153,7 @@ export class ClickhouseAlertRepository {
     )}')`
 
     let assignmentCondition: string
-    const assignmentArrayExtraction = `arrayMap(x -> x.1, ${key})`
+    const assignmentArrayExtraction = `arrayMap(x -> x.assigneeUserId, ${key})`
     if (isUnassignedIncluded) {
       assignmentCondition = `
     (hasAny(${assignmentArrayExtraction}, ['${filterAssignmentsIds.join(
@@ -360,7 +360,7 @@ export class ClickhouseAlertRepository {
 
     if (params.filterQaAssignmentsIds != null) {
       whereConditions.push(
-        `arrayExists(x -> x.1 IN ('${params.filterQaAssignmentsIds.join(
+        `arrayExists(assignment -> assignment.assigneeUserId IN ('${params.filterQaAssignmentsIds.join(
           "','"
         )}'), qaAssignment)`
       )
@@ -432,7 +432,7 @@ export class ClickhouseAlertRepository {
 
     if (params.filterAlertSlaPolicyId != null) {
       whereConditions.push(
-        `arrayExists(x -> x.1 IN ('${params.filterAlertSlaPolicyId.join(
+        `arrayExists(x -> x.slaPolicyId IN ('${params.filterAlertSlaPolicyId.join(
           "','"
         )}'), slaPolicyDetails)`
       )
@@ -440,7 +440,7 @@ export class ClickhouseAlertRepository {
 
     if (params.filterAlertSlaPolicyStatus != null) {
       whereConditions.push(
-        `arrayExists(x -> x.2 IN ('${params.filterAlertSlaPolicyStatus.join(
+        `arrayExists(x -> x.policyStatus IN ('${params.filterAlertSlaPolicyStatus.join(
           "','"
         )}'), slaPolicyDetails)`
       )
@@ -488,7 +488,7 @@ export class ClickhouseAlertRepository {
       WHERE id IN (
         SELECT caseId
         FROM ${ALERTS_TABLE_NAME_CH}
-          WHERE arrayExists(x -> x.1 = '${assigneeId}', assignments) AND alertStatus = 'CLOSED'
+          WHERE arrayExists(x -> x.assigneeUserId = '${assigneeId}', assignments) AND alertStatus = 'CLOSED'
       )
     `
     const cases = await executeClickhouseQuery<Case[]>(
@@ -510,7 +510,7 @@ export class ClickhouseAlertRepository {
       WHERE id IN (
         SELECT caseId
         FROM ${ALERTS_TABLE_NAME_CH}
-          WHERE arrayExists(x -> x.1 = '${assigneeId}', assignments) AND alertStatus NOT IN ('CLOSED', 'REJECTED', 'ARCHIVED')
+          WHERE arrayExists(x -> x.assigneeUserId = '${assigneeId}', assignments) AND alertStatus NOT IN ('CLOSED', 'REJECTED', 'ARCHIVED')
       )
     `
     const cases = await executeClickhouseQuery<string[]>(

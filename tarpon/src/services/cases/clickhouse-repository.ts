@@ -325,11 +325,11 @@ export class CaseClickhouseRepository {
       const tagConditions: string[] = []
 
       if (params.filterTransactionTagKey) {
-        tagConditions.push(`x.1 = '${params.filterTransactionTagKey}'`)
+        tagConditions.push(`x.key = '${params.filterTransactionTagKey}'`)
       }
 
       if (params.filterTransactionTagValue) {
-        tagConditions.push(`x.2 = '${params.filterTransactionTagValue}'`)
+        tagConditions.push(`x.value = '${params.filterTransactionTagValue}'`)
       }
 
       conditions.push(`
@@ -371,7 +371,7 @@ export class CaseClickhouseRepository {
     const statusCondition = `caseStatus IN ('${assignmentsStatus.join("','")}')`
 
     let assignmentCondition: string
-    const assignmentArrayExtraction = `arrayMap(x -> x.1, ${key})`
+    const assignmentArrayExtraction = `arrayMap(x -> x.assigneeUserId, ${key})`
 
     if (isUnassignedIncluded) {
       assignmentCondition = `
@@ -420,7 +420,7 @@ export class CaseClickhouseRepository {
     }
     if (params.filterCaseSlaPolicyId?.length) {
       conditions.push(
-        `arrayExists(x -> x.1 IN ('${params.filterCaseSlaPolicyId.join(
+        `arrayExists(x -> x.slaPolicyId IN ('${params.filterCaseSlaPolicyId.join(
           "','"
         )}'), slaPolicyDetails)`
       )
@@ -428,7 +428,7 @@ export class CaseClickhouseRepository {
 
     if (params.filterCaseSlaPolicyStatus?.length) {
       conditions.push(
-        `arrayExists(x -> x.2 IN ('${params.filterCaseSlaPolicyStatus.join(
+        `arrayExists(x -> x.policyStatus IN ('${params.filterCaseSlaPolicyStatus.join(
           "','"
         )}'), slaPolicyDetails)`
       )
