@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import { Alert, Col, Row } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { uniqBy } from 'lodash';
@@ -173,48 +173,26 @@ const SARProperties = (props: SARPropertiesProps) => {
 
   const countryList = useMemo(() => Object.keys(groupedReportTypes), [groupedReportTypes]);
 
-  useMemo(() => {
-    const countryReports = country ? groupedReportTypes[country] ?? [] : [];
-
-    if (reportTypes.length === 0 || (country && countryReports.length === 0)) {
-      if (country !== '') {
-        handleCountryChange('');
-      }
-      if (reportTypeId !== '') {
+  const handleSarCountrySelection = useCallback(
+    (country: string) => {
+      handleCountryChange(country);
+      const countryReports = groupedReportTypes[country] ?? [];
+      if (countryReports.length === 0) {
         handleReportTypeIdChange('');
+        return;
       }
-      return;
-    }
+      handleReportTypeIdChange(countryReports[0].id);
+    },
+    [groupedReportTypes, handleCountryChange, handleReportTypeIdChange],
+  );
 
-    if (countryReports.length > 0) {
-      const validIds = countryReports.map((r) => r.id);
-      const autoSelectedReport = countryReports[0];
-      if (!validIds.includes(reportTypeId ?? '')) {
-        handleReportTypeIdChange(autoSelectedReport.id);
-      }
-    } else if (!country && countryList.length === 1) {
-      const [onlyCountry] = countryList;
-      const reports = groupedReportTypes[onlyCountry];
-
-      handleCountryChange(onlyCountry);
-      handleReportTypeIdChange(reports?.[0]?.id ?? '');
+  useEffect(() => {
+    if (countryList.length === 1) {
+      handleSarCountrySelection(countryList[0]);
     } else {
-      if (country !== '') {
-        handleCountryChange('');
-      }
-      if (reportTypeId !== '') {
-        handleReportTypeIdChange('');
-      }
+      handleSarCountrySelection('');
     }
-  }, [
-    reportTypes,
-    country,
-    reportTypeId,
-    groupedReportTypes,
-    countryList,
-    handleCountryChange,
-    handleReportTypeIdChange,
-  ]);
+  }, [countryList, handleSarCountrySelection]);
 
   return (
     <PropertyListLayout>
@@ -229,7 +207,9 @@ const SARProperties = (props: SARPropertiesProps) => {
             'value',
           )}
           onChange={(country) => {
-            handleCountryChange(country);
+            if (country) {
+              handleSarCountrySelection(country);
+            }
           }}
         />
       </Label>
