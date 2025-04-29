@@ -8,8 +8,13 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
+import { isDemoTenant } from '@/utils/tenant'
 
 async function migrateTenant(tenant: Tenant) {
+  if (isDemoTenant(tenant.id)) {
+    return
+  }
+
   const tenantId = tenant.id
   const providers = getDefaultProviders()
   if (!providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
