@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { mean, uniq } from 'lodash'
+import { mean, omit, uniq } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -130,10 +130,9 @@ export class RiskScoringV8Service {
         result = {
           riskFactorId: factor.id,
           vars: vars,
-          riskLevel: logicDetails.riskLevel,
-          score: logicDetails.riskScore,
           hit: true,
-          weight: logicDetails.weight,
+          score: logicDetails.riskScore,
+          ...omit(logicDetails, ['logic', 'riskScore']),
         }
         break
       }
@@ -200,9 +199,16 @@ export class RiskScoringV8Service {
         })
       )
     }
-    const score = this.calculateWeightedSumScore(result)
+    const filteredResult = result.filter(
+      (scoreDetails) => !scoreDetails.excludeFactor
+    )
+    const score = this.calculateWeightedSumScore(filteredResult)
     const { v2ScoreComponents, v8FactorScoreDetails } =
-      await this.augmentFactorScoreDetails(result, riskData, riskFactors)
+      await this.augmentFactorScoreDetails(
+        filteredResult,
+        riskData,
+        riskFactors
+      )
     return {
       riskFactorsResult: {
         scoreDetails: v8FactorScoreDetails,
@@ -232,8 +238,10 @@ export class RiskScoringV8Service {
         })
         .filter((val) => !!val)
     )) as RiskScoreComponent[]
-
-    return { v8FactorScoreDetails: factorScoreDetails, v2ScoreComponents }
+    return {
+      v8FactorScoreDetails: factorScoreDetails,
+      v2ScoreComponents,
+    }
   }
 
   private async convertToComponent(
@@ -265,10 +273,12 @@ export class RiskScoringV8Service {
 
   private calculateWeightedSumScore(scores: RiskFactorScoreDetails[]): number {
     const { weightedSum, totalWeight } = scores.reduce(
-      (acc, { score, weight }) => ({
-        weightedSum: acc.weightedSum + score * weight,
-        totalWeight: acc.totalWeight + weight,
-      }),
+      (acc, { score, weight }) => {
+        return {
+          weightedSum: acc.weightedSum + score * weight,
+          totalWeight: acc.totalWeight + weight,
+        }
+      },
       { weightedSum: 0, totalWeight: 0 }
     )
 

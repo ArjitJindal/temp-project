@@ -11185,6 +11185,8 @@ components:
           type: number
           minimum: 0.01
           maximum: 1
+        excludeFactor:
+          type: boolean
       required:
         - logic
         - weight
@@ -11391,6 +11393,8 @@ components:
           minimum: 0.01
           maximum: 1
         hit:
+          type: boolean
+        excludeFactor:
           type: boolean
       required:
         - riskFactorId

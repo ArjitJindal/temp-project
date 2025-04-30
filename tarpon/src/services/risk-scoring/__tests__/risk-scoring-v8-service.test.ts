@@ -1041,6 +1041,140 @@ describe('V8 Risk scoring ', () => {
       })
     })
   })
+
+  describe('Exclusion of risk factors', () => {
+    let riskScoringService: RiskScoringV8Service
+    const tenantId = getTestTenantId()
+    beforeEach(async () => {
+      const mongoDb = await getMongoDbClient()
+      const dynamoDb = getDynamoDbClient()
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      riskScoringService = new RiskScoringV8Service(tenantId, logicEvaluator, {
+        mongoDb,
+        dynamoDb,
+      })
+    })
+    setUpRiskFactorsHook(tenantId, [
+      getTestRiskFactor({
+        id: 'RF1',
+        type: 'CONSUMER_USER',
+        riskLevelLogic: [
+          {
+            logic: {
+              and: [
+                {
+                  '==': [
+                    { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                    'PAID',
+                  ],
+                },
+              ],
+            },
+            riskLevel: 'VERY_LOW',
+            riskScore: 0,
+            weight: 1,
+            excludeFactor: false,
+          },
+          {
+            logic: {
+              and: [
+                {
+                  '==': [
+                    { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                    'REFERRAL',
+                  ],
+                },
+              ],
+            },
+            riskLevel: 'VERY_LOW',
+            riskScore: 0,
+            weight: 1,
+            excludeFactor: true,
+          },
+        ],
+      }),
+      getTestRiskFactor({
+        id: 'RF2',
+        type: 'CONSUMER_USER',
+        riskLevelLogic: [
+          {
+            logic: {
+              and: [
+                {
+                  '==': [
+                    { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                    'FAILED',
+                  ],
+                },
+              ],
+            },
+            riskLevel: 'MEDIUM',
+            riskScore: 44,
+            weight: 1,
+          },
+        ],
+      }),
+    ])
+    test('Include risk factor with 0 score (from weighted score)', async () => {
+      const user = getTestUser({
+        acquisitionChannel: 'PAID',
+        kycStatusDetails: {
+          status: 'FAILED',
+        },
+      })
+      const result = await riskScoringService.handleUserUpdate({ user })
+
+      // Verify that both factors are included in the calculation
+      // Factor 1: score 0, weight 1 (not excluded)
+      // Factor 2: score 44, weight 1
+      // Expected weighted average: (0*1 + 44*1)/(1+1) = 22
+      expect(result).toEqual({
+        kycRiskScore: 22,
+        kycRiskLevel: 'LOW',
+        craRiskLevel: 'LOW',
+        craRiskScore: 22,
+      })
+
+      // Verify both factors are in the details
+      const krs = await riskScoringService.getKrsScore(user.userId)
+      expect(krs?.factorScoreDetails?.length).toBe(2)
+
+      // Verify the scores are as expected
+      const scores = krs?.factorScoreDetails
+        ?.map((detail) => detail.score)
+        .sort()
+      expect(scores).toEqual([0, 44])
+    })
+
+    test('Exclude risk factor with 0 score (From weighted score)', async () => {
+      const user = getTestUser({
+        acquisitionChannel: 'REFERRAL',
+        kycStatusDetails: {
+          status: 'FAILED',
+        },
+      })
+      const result = await riskScoringService.handleUserUpdate({ user })
+
+      // Verify that the factor with excludeFactor=true is not included in calculation
+      // Factor 1 (excluded): score 0, weight 1, but excluded
+      // Factor 2: score 44, weight 1
+      // Expected: only Factor 2 is used, so score is 44
+      expect(result).toEqual({
+        kycRiskScore: 44,
+        kycRiskLevel: 'MEDIUM',
+        craRiskLevel: 'MEDIUM',
+        craRiskScore: 44,
+      })
+
+      // Verify only one factor is in the details (the excluded one is filtered out)
+      const krs = await riskScoringService.getKrsScore(user.userId)
+      expect(krs?.factorScoreDetails?.length).toBe(1)
+
+      // Verify the included factor has the correct score
+      expect(krs?.factorScoreDetails?.[0].score).toBe(44)
+      expect(krs?.factorScoreDetails?.[0].riskFactorId).toBe('RF2')
+    })
+  })
 })
 describe('complete risk scoring flow (DRS)', () => {
   let riskScoringService: RiskScoringV8Service

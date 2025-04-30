@@ -27,6 +27,7 @@ import Tag from '@/components/library/Tag';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '@/pages/risk-levels/risk-factors/utils';
+import Checkbox from '@/components/library/Checkbox';
 
 interface Props {
   ruleType: RuleType;
@@ -41,6 +42,7 @@ export interface LevelLogic {
   riskLevel?: RiskLevel;
   riskScore?: number;
   weight: number;
+  excludeFactor?: boolean;
 }
 
 function convertToLevelLogic(logic: RiskFactorLogic | undefined): LevelLogic | undefined {
@@ -52,11 +54,12 @@ function convertToLevelLogic(logic: RiskFactorLogic | undefined): LevelLogic | u
     riskLevel: logic.riskLevel,
     riskScore: logic.riskScore,
     weight: logic.weight,
+    excludeFactor: logic.excludeFactor,
   };
 }
 
 function convertToRiskFactorLogic(logic: LevelLogic): RiskFactorLogic | undefined {
-  if (!logic.riskLevel || !logic.riskScore) {
+  if (!logic.riskLevel || logic.riskScore == null) {
     return undefined;
   }
   return {
@@ -64,6 +67,7 @@ function convertToRiskFactorLogic(logic: LevelLogic): RiskFactorLogic | undefine
     riskScore: logic.riskScore,
     riskLevel: logic.riskLevel,
     weight: logic.weight,
+    excludeFactor: logic.excludeFactor,
   };
 }
 
@@ -230,8 +234,10 @@ export const LogicDefinitionCard = (props: Props) => {
         onOk={handleSave}
         okText={'Save'}
         okProps={{
-          isDisabled: ['logic', 'riskLevel', 'riskScore', 'weight'].some(
-            (x) => !currentRiskLevelAssignmentValues?.[x],
+          isDisabled: ['logic', 'riskLevel', 'riskScore', 'weight'].some((x) =>
+            x === 'riskScore'
+              ? currentRiskLevelAssignmentValues?.[x] == null
+              : !currentRiskLevelAssignmentValues?.[x],
           ),
         }}
         subTitle="Using the above defined variables configure a risk factor logic mapped to one or more risk levels"
@@ -337,6 +343,22 @@ export const LogicDefinitionCard = (props: Props) => {
                     textInput={{ min: 0.01, max: 1, step: 0.01 }}
                   />
                 </Label>
+                {currentRiskLevelAssignmentValues?.riskScore === 0 && (
+                  <Label
+                    label={'Exclude this risk factor from risk score calculation'}
+                    position="RIGHT"
+                  >
+                    <Checkbox
+                      onChange={(val) => {
+                        setCurrentRiskLevelAssignmentValues({
+                          ...(currentRiskLevelAssignmentValues ?? {}),
+                          excludeFactor: val,
+                        } as LevelLogic);
+                      }}
+                      value={currentRiskLevelAssignmentValues?.excludeFactor ?? false}
+                    />
+                  </Label>
+                )}
               </div>
             }
           />
