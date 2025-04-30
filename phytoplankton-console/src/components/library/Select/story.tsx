@@ -59,6 +59,27 @@ export default function (): JSX.Element {
                 setState((prevState) => ({ ...prevState, value3: newValue }));
               }}
             />
+            <Component
+              mode="DYNAMIC"
+              placeholder={'Single tags select (only one value allowed)'}
+              options={[
+                { value: 'option1', label: 'Option #1' },
+                { value: 'option2', label: 'Option #2 with a very, very, very long title' },
+                { value: 'option3', label: 'Option #3' },
+                { value: 'option4', label: 'Option #4' },
+                { value: 'option5', label: 'Option #5' },
+                { value: 'option6', label: 'Option #6' },
+                { value: 'option7', label: 'Option #7' },
+                { value: 'option8', label: 'Option #8' },
+                { value: 'option9', label: 'Option #9' },
+              ]}
+              value={state.value4}
+              onChange={(newValue) => {
+                setState((prevState) => ({ ...prevState, value4: newValue }));
+              }}
+              tooltip
+              style={{ width: '100%' }}
+            />
           </>
         )}
       </UseCase>

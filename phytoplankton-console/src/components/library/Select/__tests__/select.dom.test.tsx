@@ -245,11 +245,113 @@ describe('TAGS mode', () => {
   });
 });
 
+describe('DYNAMIC mode', () => {
+  test('Simple use case', async () => {
+    render(
+      <RenderSelect
+        mode="DYNAMIC"
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+
+    await clickSelector();
+    expectDropdownOpen(true);
+    await clickOptionByText('First option');
+    expectDropdownOpen(false);
+    expectValues(['First option']);
+
+    await clickSelector();
+    expectDropdownOpen(true);
+    await clickOptionByText('Second option');
+    expectDropdownOpen(false);
+    expectValues(['Second option']);
+  });
+
+  test('Add new option', async () => {
+    render(
+      <RenderSelect
+        mode="DYNAMIC"
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+
+    await clickSelector();
+    expectDropdownOpen(true);
+    await userEvent.keyboard('New dynamic option');
+    await clickOptionByText('New dynamic option');
+    expectDropdownOpen(false);
+    expectValues(['New dynamic option']);
+
+    // Verify the new option is added to the dropdown
+    await clickSelector();
+    expectDropdownOpen(true);
+    await clickOptionByText('New dynamic option');
+    expectDropdownOpen(false);
+    expectValues(['New dynamic option']);
+  });
+
+  test('Add new option with whitespace', async () => {
+    render(
+      <RenderSelect
+        mode="DYNAMIC"
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+
+    await clickSelector();
+    expectDropdownOpen(true);
+    await userEvent.keyboard('  New dynamic option with spaces  ');
+    await clickOptionByText('New dynamic option with spaces');
+    expectDropdownOpen(false);
+    expectValues(['New dynamic option with spaces']);
+  });
+
+  test('Add duplicate option', async () => {
+    render(
+      <RenderSelect
+        mode="DYNAMIC"
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+
+    await clickSelector();
+    expectDropdownOpen(true);
+    await userEvent.keyboard('First option');
+    await clickOptionByText('First option');
+    expectDropdownOpen(false);
+    expectValues(['First option']);
+
+    // Verify we can still select the original option
+    await clickSelector();
+    expectDropdownOpen(true);
+    await clickOptionByText('First option');
+    expectDropdownOpen(false);
+    expectValues(['First option']);
+  });
+});
+
 async function clickOptionByText(text: string) {
-  // const dropdownEl = screen.getByClassName('ant-select-dropdown');
   const dropdownEl = screen.getByClassName('ant-select-dropdown');
   const virtualList = within(dropdownEl).getByClassName('rc-virtual-list');
-  const optionEl = within(virtualList).getByText(text);
+  const options = within(virtualList).getAllByText(text);
+  // If there are multiple options with the same text, select the first one
+  const optionEl = options[0];
   await userEvent.click(optionEl);
 }
 async function clickClear() {

@@ -1,6 +1,6 @@
 import { Select as AntSelect } from 'antd';
 import cn from 'clsx';
-import { uniq } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import Tooltip from '../Tooltip';
 import s from './style.module.less';
@@ -20,6 +20,7 @@ export interface Option<Value extends Comparable> {
   alternativeLabels?: string[]; // Used for search
   isDisabled?: boolean;
   isDefault?: boolean;
+  isVirtual?: boolean;
 }
 
 interface CommonProps<Value extends Comparable> {
@@ -60,10 +61,26 @@ export interface TagsProps<Value extends Comparable>
   mode: 'TAGS';
 }
 
+/**
+ * DYNAMIC mode is used to add new options to the dropdown when the user is typing.
+ * In this mode:
+ * - Users can type and select values that don't exist in the initial options
+ * - New options are automatically added to the dropdown list
+ * - The component maintains its own internal state of options
+ * - New options persist in the dropdown until the component is unmounted
+ */
+
+export interface DynamicProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value> {
+  mode: 'DYNAMIC';
+}
+
 export type Props<Value extends Comparable> =
   | SingleProps<Value>
   | MultipleProps<Value>
-  | TagsProps<Value>;
+  | TagsProps<Value>
+  | DynamicProps<Value>;
 
 export default function Select<Value extends Comparable = string>(props: Props<Value>) {
   const {
@@ -91,6 +108,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
 
   const selectInput = useRef<HTMLDivElement | null>(null);
   const [searchValue, setSearchValue] = useState('');
+  const [internalOptions, setInternalOptions] = useState<Option<Value>[]>(options);
+
+  useEffect(() => {
+    setInternalOptions(options);
+  }, [options]);
 
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -101,7 +123,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         if (Array.isArray(newValue)) {
           props.onChange?.(newValue.length === 0 ? undefined : newValue);
         }
-      } else if (props.mode === 'SINGLE' || props.mode == null) {
+      } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
         if (!Array.isArray(newValue)) {
           props.onChange?.(newValue);
         }
@@ -110,20 +132,52 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       }
       setSearchValue('');
     },
-    // suppressing because we only use `props.mode` and `props.onChange` in
-    // the function, but eslint failed to see this and requires `props` to be
-    // in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [props.mode, props.onChange],
+    [props],
+  );
+
+  const addNewOption = useCallback(
+    (newValue: string) => {
+      if (!newValue?.trim()) {
+        return false;
+      }
+
+      const trimmedValue = newValue.trim();
+      const valueStr = trimmedValue.toLowerCase();
+
+      const optionExists = internalOptions.some((option) => {
+        const optionValue = option.value?.toString().trim()?.toLowerCase();
+        return optionValue === valueStr && (!option.isVirtual || option.label === trimmedValue);
+      });
+
+      if (optionExists) {
+        return false;
+      }
+
+      const newOption: Option<Value> = {
+        value: trimmedValue.toString() as Value,
+        label: trimmedValue,
+        labelText: trimmedValue,
+        isVirtual: true,
+      };
+
+      setInternalOptions((prev) => uniqBy([...prev, newOption], 'value'));
+
+      if (props.mode === 'DYNAMIC') {
+        handleChange(trimmedValue as Value);
+      }
+
+      return true;
+    },
+    [internalOptions, handleChange, props],
   );
 
   const applySearchStringValue = useCallback(
     (searchString: string, skipUnknown: boolean) => {
-      const parsedValues = parseSearchString(options, searchString, skipUnknown);
+      const parsedValues = parseSearchString(internalOptions, searchString, skipUnknown);
       let newValue;
       if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
         newValue = uniq([...(props.value ?? []), ...parsedValues] as Value[]);
-      } else if (props.mode === 'SINGLE' || props.mode == null) {
+      } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
         newValue = parsedValues[0] ?? props.value;
       } else {
         newValue = neverReturn(props.mode, props.value);
@@ -131,23 +185,45 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       handleChange?.(newValue as (Value & Value[]) | undefined);
       setSearchValue('');
     },
-    [props.value, props.mode, options, handleChange],
+    [props.value, props.mode, internalOptions, handleChange],
   );
 
-  const filteredOptions = useMemo(
-    () =>
-      searchValue
-        ? options
-            .filter((option) => filterOption(searchValue, option))
-            .sort((option1, option2) => {
-              // Shorter options are more relevant
-              return (
-                (option1.value?.toString() ?? '').length - (option2.value?.toString() ?? '').length
-              );
-            })
-        : options,
-    [searchValue, options],
-  );
+  const filteredOptions = useMemo(() => {
+    let options = searchValue
+      ? internalOptions
+          .filter((option) => filterOption(searchValue, option))
+          .sort((option1, option2) => {
+            // Shorter options are more relevant
+            return (
+              (option1.value?.toString() ?? '').length - (option2.value?.toString() ?? '').length
+            );
+          })
+      : internalOptions;
+
+    // For DYNAMIC mode, add the search term as an option if it doesn't exist already
+    if (props.mode === 'DYNAMIC' && searchValue && searchValue.trim() !== '') {
+      const searchValueLower = searchValue.toLowerCase();
+      const exactMatchExists = options.some(
+        (option) => option.value?.toString().toLowerCase() === searchValueLower,
+      );
+
+      if (!exactMatchExists) {
+        // Add search term as a "virtual" option in the dropdown
+        options = [
+          ...options,
+          {
+            value: searchValue as unknown as Value,
+            label: searchValue,
+            labelText: searchValue,
+            // We'll use this flag to identify dynamically added options that aren't saved yet
+            isVirtual: true,
+          },
+        ];
+      }
+    }
+
+    return options;
+  }, [searchValue, internalOptions, props.mode]);
 
   const handleCopyText = useCallback(() => {
     if (props.value) {
@@ -199,7 +275,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
 
     if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
-      const filteredOptions = options.filter((option) => props.value?.includes(option.value));
+      const filteredOptions = internalOptions.filter((option) =>
+        props.value?.includes(option.value),
+      );
       text = filteredOptions
         .map(
           (option) =>
@@ -210,8 +288,8 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             '',
         )
         .join(', ');
-    } else if (props.mode === 'SINGLE' || props.mode == null) {
-      const option = options.find((option) => option.value === props.value);
+    } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+      const option = internalOptions.find((option) => option.value === props.value);
       text =
         option?.labelText ??
         (['string', 'number', 'boolean'].includes(typeof option?.label)
@@ -221,7 +299,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
 
     return text;
-  }, [options, props.mode, props.value, tooltip]);
+  }, [internalOptions, props.mode, props.value, tooltip]);
+
+  // For DYNAMIC mode, we don't need custom not found content
+  // because we'll show the search term as an option directly in the dropdown
 
   const antSelect: JSX.Element = (
     <div
@@ -256,7 +337,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         onBlur={() => {
           setIsFocused(false);
           if (searchValue != '') {
-            applySearchStringValue(searchValue, mode !== 'TAGS');
+            if (props.mode === 'DYNAMIC') {
+              // Add new option on blur for DYNAMIC mode if it doesn't exist yet
+              addNewOption(searchValue.trim());
+            } else {
+              applySearchStringValue(searchValue.trim(), mode !== 'TAGS');
+            }
             setSearchValue('');
           }
         }}
@@ -266,7 +352,18 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         placement={props.dropdownPlacement ?? 'bottomLeft'}
         mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}
         value={value}
-        onChange={handleChange}
+        onChange={(newValue) => {
+          // For DYNAMIC mode, check if the selected option is a virtual one
+          if (props.mode === 'DYNAMIC' && newValue) {
+            const selectedOption = filteredOptions.find((option) => option.value === newValue);
+            if (selectedOption?.isVirtual) {
+              // Add the option permanently to our internal options
+              addNewOption(newValue.toString());
+              return; // addNewOption already calls handleChange
+            }
+          }
+          handleChange(newValue);
+        }}
         onSearch={(searchString) => {
           onSearch?.(searchString);
           setSearchValue(searchString);
