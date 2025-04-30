@@ -11181,6 +11181,8 @@ components:
           maximum: 100
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
+        overrideScore:
+          type: boolean
         weight:
           type: number
           minimum: 0.01
@@ -11394,6 +11396,8 @@ components:
           maximum: 1
         hit:
           type: boolean
+        overrideScore:
+          type: boolean
         excludeFactor:
           type: boolean
       required:
@@ -11417,10 +11421,13 @@ components:
             $ref: '#/components/schemas/RiskScoreComponent'
         score:
           type: number
+        isOverriddenScore:
+          type: boolean
       required:
         - scoreDetails
         - score
         - components
+        - isOverriddenScore
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object

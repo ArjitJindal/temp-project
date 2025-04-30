@@ -27,7 +27,9 @@ import Tag from '@/components/library/Tag';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '@/pages/risk-levels/risk-factors/utils';
+import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Checkbox from '@/components/library/Checkbox';
+import { P } from '@/components/ui/Typography';
 
 interface Props {
   ruleType: RuleType;
@@ -42,6 +44,7 @@ export interface LevelLogic {
   riskLevel?: RiskLevel;
   riskScore?: number;
   weight: number;
+  overrideScore?: boolean;
   excludeFactor?: boolean;
 }
 
@@ -54,6 +57,7 @@ function convertToLevelLogic(logic: RiskFactorLogic | undefined): LevelLogic | u
     riskLevel: logic.riskLevel,
     riskScore: logic.riskScore,
     weight: logic.weight,
+    overrideScore: logic.overrideScore,
     excludeFactor: logic.excludeFactor,
   };
 }
@@ -67,6 +71,7 @@ function convertToRiskFactorLogic(logic: LevelLogic): RiskFactorLogic | undefine
     riskScore: logic.riskScore,
     riskLevel: logic.riskLevel,
     weight: logic.weight,
+    overrideScore: logic.overrideScore,
     excludeFactor: logic.excludeFactor,
   };
 }
@@ -343,6 +348,33 @@ export const LogicDefinitionCard = (props: Props) => {
                     textInput={{ min: 0.01, max: 1, step: 0.01 }}
                   />
                 </Label>
+                {ruleType !== 'TRANSACTION' && (
+                  <Label
+                    label={
+                      <div className={s.override}>
+                        <P fontWeight="semibold" variant="m">
+                          Override risk score{' '}
+                        </P>
+                        <Tooltip
+                          title={`Overrides KRS and CRA when triggered. Multiple override risk factors use weighted averages to determine the final risk score`}
+                        >
+                          <InformationLineIcon className={s.icon} />
+                        </Tooltip>
+                      </div>
+                    }
+                    position="RIGHT"
+                  >
+                    <Checkbox
+                      onChange={(val) => {
+                        setCurrentRiskLevelAssignmentValues({
+                          ...(currentRiskLevelAssignmentValues ?? {}),
+                          overrideScore: val,
+                        } as LevelLogic);
+                      }}
+                      value={currentRiskLevelAssignmentValues?.overrideScore ?? false}
+                    />
+                  </Label>
+                )}
                 {currentRiskLevelAssignmentValues?.riskScore === 0 && (
                   <Label
                     label={'Exclude this risk factor from risk score calculation'}

@@ -12,7 +12,10 @@ import { SimulationTaskRepository } from '../simulation/repositories/simulation-
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import {
+  RiskScoringV8Service,
+  UserKrsData,
+} from '../risk-scoring/risk-scoring-v8-service'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsV8BatchJob } from '@/@types/batch-job'
@@ -266,13 +269,19 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         if (
           riskScoringAlgorithm?.type !== 'FORMULA_LEGACY_MOVING_AVG' // As we do not allow CRA simulation for legacy moving average
         ) {
-          simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
-            algorithm: riskScoringAlgorithm ?? { type: 'FORMULA_SIMPLE_AVG' },
-            oldDrsScore: undefined,
-            krsScore: simulatedKrs,
-            avgArsScore: averageArs,
-            arsScore: undefined,
-          })
+          if (simulatedKrs.isOverriddenScore) {
+            simulatedDrs = simulatedKrs.score
+          } else {
+            simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
+              algorithm: riskScoringAlgorithm ?? {
+                type: 'FORMULA_SIMPLE_AVG',
+              },
+              oldDrsScore: undefined,
+              krsScore: simulatedKrs.score,
+              avgArsScore: averageArs,
+              arsScore: undefined,
+            })
+          }
         }
         const currentKrs = user.krsScore?.krsScore ?? 0
         const currentKrsRiskLevel = getRiskLevelFromScore(
@@ -286,7 +295,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         )
         const simulatedKrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          simulatedKrs
+          simulatedKrs.score
         )
         const simulatedDrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
@@ -310,7 +319,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
           },
           simulated: {
             krs: {
-              riskScore: simulatedKrs,
+              riskScore: simulatedKrs.score,
               riskLevel: simulatedKrsRiskLevel,
             },
             drs: {
@@ -460,13 +469,13 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     return totalArs / (transactionsCount == 0 ? 1 : transactionsCount)
   }
 
-  private async calculateUserKrs(user: User | Business): Promise<number> {
+  private async calculateUserKrs(user: User | Business): Promise<UserKrsData> {
     const isConsumer = isConsumerUser(user)
     const riskFactors = isConsumer
       ? this.riskFactors?.consumer
       : this.riskFactors?.business
     if (!riskFactors) {
-      return 0
+      return { score: 0, isOverriddenScore: false }
     }
     const result = await this.riskScoringV8Service.calculateRiskFactorsScore(
       {
@@ -475,7 +484,10 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       },
       riskFactors
     )
-    return result?.riskFactorsResult.score ?? 0
+    return {
+      score: result?.riskFactorsResult.score ?? 0,
+      isOverriddenScore: result.riskFactorsResult.isOverriddenScore,
+    }
   }
 
   private extrapolateStats(

@@ -121,12 +121,12 @@ export class PnbBackfillCraBatchJobRunner extends BatchJobRunner {
           `[${user.userId}] KRS: ${user.krsScore?.krsScore}, ARS: ${avgArsScore} (${arsScores.length} txs), CRA: ${newDrsScore}`
         )
 
-        await this.riskScoringService.updateDrsScore(
-          user.userId,
-          newDrsScore,
-          last(transactionIds) ?? 'FIRST_DRS',
-          last(arsScores)?.factorScoreDetails
-        )
+        await this.riskScoringService.updateDrsScore({
+          userId: user.userId,
+          drsScore: newDrsScore,
+          transactionId: last(transactionIds) ?? 'FIRST_DRS',
+          factorScoreDetails: last(arsScores)?.factorScoreDetails,
+        })
 
         if (index % 100 === 0) {
           await updateMigrationLastCompletedTimestamp(

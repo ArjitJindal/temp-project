@@ -45,6 +45,7 @@ import { logger } from '@/core/logger'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
+export type UserKrsData = { score: number; isOverriddenScore: boolean }
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -177,6 +178,7 @@ export class RiskScoringV8Service {
     if (result.length === 0) {
       return {
         riskFactorsResult: {
+          isOverriddenScore: false,
           scoreDetails: [],
           components: [],
           score: getDefaultRiskValue(riskClassificationScore),
@@ -185,8 +187,10 @@ export class RiskScoringV8Service {
     }
     // Handle Aggregation for User factors
     if (riskData.type === 'TRANSACTION') {
-      const userFactors = await this.getActiveRiskFactors('CONSUMER_USER')
-      const businessFactors = await this.getActiveRiskFactors('BUSINESS')
+      const [userFactors, businessFactors] = await Promise.all([
+        this.getActiveRiskFactors('CONSUMER_USER'),
+        this.getActiveRiskFactors('BUSINESS'),
+      ])
       const allUserFactors = userFactors.concat(businessFactors)
       await Promise.all(
         allUserFactors.map(async (factor) => {
@@ -202,7 +206,7 @@ export class RiskScoringV8Service {
     const filteredResult = result.filter(
       (scoreDetails) => !scoreDetails.excludeFactor
     )
-    const score = this.calculateWeightedSumScore(filteredResult)
+    const scoreData = this.calculateWeightedSumScore(filteredResult)
     const { v2ScoreComponents, v8FactorScoreDetails } =
       await this.augmentFactorScoreDetails(
         filteredResult,
@@ -213,7 +217,7 @@ export class RiskScoringV8Service {
       riskFactorsResult: {
         scoreDetails: v8FactorScoreDetails,
         components: v2ScoreComponents,
-        score: score,
+        ...scoreData,
       },
     }
   }
@@ -271,18 +275,43 @@ export class RiskScoringV8Service {
     }
   }
 
-  private calculateWeightedSumScore(scores: RiskFactorScoreDetails[]): number {
-    const { weightedSum, totalWeight } = scores.reduce(
-      (acc, { score, weight }) => {
-        return {
-          weightedSum: acc.weightedSum + score * weight,
-          totalWeight: acc.totalWeight + weight,
-        }
-      },
-      { weightedSum: 0, totalWeight: 0 }
+  private calculateWeightedSumScore(
+    scores: RiskFactorScoreDetails[]
+  ): UserKrsData {
+    const {
+      weightedSum,
+      totalWeight,
+      overrideWeightedSum,
+      overrideTotalWeight,
+      hasAnyOverride,
+    } = scores.reduce(
+      (acc, { score, weight, overrideScore }) => ({
+        weightedSum: acc.weightedSum + score * weight,
+        totalWeight: acc.totalWeight + weight,
+        overrideWeightedSum:
+          acc.overrideWeightedSum + (overrideScore ? score * weight : 0),
+        overrideTotalWeight:
+          acc.overrideTotalWeight + (overrideScore ? weight : 0),
+        hasAnyOverride: acc.hasAnyOverride || (overrideScore ?? false),
+      }),
+      {
+        weightedSum: 0,
+        totalWeight: 0,
+        overrideWeightedSum: 0,
+        overrideTotalWeight: 0,
+        hasAnyOverride: false,
+      }
     )
 
-    return totalWeight === 0 ? 0 : weightedSum / totalWeight
+    const normalScore = totalWeight === 0 ? 0 : weightedSum / totalWeight
+
+    const overriddenScore =
+      overrideTotalWeight === 0 ? 0 : overrideWeightedSum / overrideTotalWeight
+
+    return {
+      score: hasAnyOverride ? overriddenScore : normalScore,
+      isOverriddenScore: hasAnyOverride,
+    }
   }
 
   public async getActiveRiskFactors(type: RiskEntityType) {
@@ -413,12 +442,12 @@ export class RiskScoringV8Service {
       arsScore: arsScore,
     })
 
-    await this.updateDrsScore(
+    await this.updateDrsScore({
       userId,
-      newDrsScore,
+      drsScore: newDrsScore,
       transactionId,
-      factorScoreDetails
-    )
+      factorScoreDetails,
+    })
     return newDrsScore
   }
 
@@ -458,14 +487,22 @@ export class RiskScoringV8Service {
     )
   }
 
-  public async updateDrsScore(
-    userId: string,
-    drsScore: number,
-    transactionId: string,
-    factorScoreDetails?: RiskFactorScoreDetails[],
-    components?: RiskScoreComponent[],
+  public async updateDrsScore(params: {
+    userId: string
+    drsScore: number
+    transactionId: string
+    factorScoreDetails?: RiskFactorScoreDetails[]
+    components?: RiskScoreComponent[]
     isUpdatable?: boolean
-  ) {
+  }) {
+    const {
+      userId,
+      drsScore,
+      transactionId,
+      factorScoreDetails,
+      components,
+      isUpdatable,
+    } = params
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
       drsScore,
@@ -586,6 +623,7 @@ export class RiskScoringV8Service {
           getDefaultRiskValue(riskClassificationValues),
         scoreDetails: existingKrs?.factorScoreDetails ?? [],
         components: existingKrs?.components ?? [],
+        isOverriddenScore: false,
       }
     }
 
@@ -602,6 +640,7 @@ export class RiskScoringV8Service {
         ),
         scoreDetails: [],
         components: [],
+        isOverriddenScore: false,
       }
     }
     const newKrsScore = await this.calculateKrsScore(user, riskFactors)
@@ -644,22 +683,23 @@ export class RiskScoringV8Service {
     let craRiskScore: number | undefined = newKrsScore.score
     if (riskScoringCraEnabled && !manualRiskLevel) {
       if (!krsScore) {
-        await this.updateDrsScore(
+        await this.updateDrsScore({
           userId,
-          newKrsScore.score,
-          'FIRST_DRS',
-          newKrsScore.scoreDetails,
-          newKrsScore.components,
-          isDrsUpdatable
-        )
+          drsScore: newKrsScore.score,
+          transactionId: 'FIRST_DRS',
+          factorScoreDetails: newKrsScore.scoreDetails,
+          components: newKrsScore.components,
+          isUpdatable: isDrsUpdatable,
+        })
       } else {
-        craRiskScore = await this.updateDrsForUserChange(
+        craRiskScore = await this.updateDrsForUserChange({
           userId,
-          newKrsScore.score,
-          newKrsScore.scoreDetails,
-          newKrsScore.components,
-          isDrsUpdatable
-        )
+          krsScore: newKrsScore.score,
+          isOverridenScore: newKrsScore.isOverriddenScore,
+          factorScoreDetails: newKrsScore.scoreDetails,
+          components: newKrsScore.components,
+          isUpdatable: isDrsUpdatable,
+        })
       }
     }
     if (manualRiskLevel) {
@@ -711,16 +751,37 @@ export class RiskScoringV8Service {
     }
   }
 
-  public async updateDrsForUserChange(
-    userId: string,
-    krsScore: number,
-    factorScoreDetails?: RiskFactorScoreDetails[],
-    components?: RiskScoreComponent[],
+  public async updateDrsForUserChange(params: {
+    userId: string
+    krsScore: number
+    isOverridenScore: boolean
+    factorScoreDetails?: RiskFactorScoreDetails[]
+    components?: RiskScoreComponent[]
     isUpdatable?: boolean
-  ) {
+  }) {
+    const {
+      userId,
+      krsScore,
+      isOverridenScore,
+      factorScoreDetails,
+      components,
+      isUpdatable,
+    } = params
     const oldDrsScore = await this.getDrsScore(userId)
     if (oldDrsScore?.isUpdatable === false && !isUpdatable) {
       return oldDrsScore.drsScore
+    }
+    if (isOverridenScore) {
+      // Early return and handling as no computation is
+      await this.updateDrsScore({
+        userId,
+        drsScore: krsScore,
+        transactionId: 'USER_UPDATE',
+        factorScoreDetails,
+        components,
+        isUpdatable,
+      })
+      return krsScore
     }
     const avgArsScore = await this.riskRepository.getAverageArsScoreDynamo(
       userId
@@ -735,14 +796,14 @@ export class RiskScoringV8Service {
       arsScore: undefined,
       userEvent: true,
     })
-    await this.updateDrsScore(
+    await this.updateDrsScore({
       userId,
-      newDrsScore,
-      'USER_UPDATE',
+      drsScore: newDrsScore,
+      transactionId: 'USER_UPDATE',
       factorScoreDetails,
       components,
-      isUpdatable
-    )
+      isUpdatable,
+    })
     return newDrsScore
   }
 

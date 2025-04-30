@@ -21,6 +21,7 @@ import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyM
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { User } from '@/@types/openapi-internal/User'
 
 dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING'])
@@ -833,6 +834,488 @@ describe('V8 Risk scoring ', () => {
       })
     })
   })
+  describe('Knock off risk factors', () => {
+    describe('Only KRS score with one knock off factor', () => {
+      let riskScoringService: RiskScoringV8Service
+      const tenantId = getTestTenantId()
+      beforeAll(async () => {
+        const mongoDb = await getMongoDbClient()
+        const dynamoDb = getDynamoDbClient()
+        const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+        riskScoringService = new RiskScoringV8Service(
+          tenantId,
+          logicEvaluator,
+          {
+            mongoDb,
+            dynamoDb,
+          }
+        )
+        const tenantRepository = new TenantRepository(tenantId, {
+          dynamoDb,
+        })
+        await tenantRepository.createOrUpdateTenantSettings({
+          riskScoringCraEnabled: false,
+        })
+      })
+      setUpRiskFactorsHook(tenantId, [
+        getTestRiskFactor({
+          id: 'RF1',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                      'PAID',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'LOW',
+              riskScore: 25,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+        getTestRiskFactor({
+          id: 'RF2',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                      'FAILED',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'MEDIUM',
+              riskScore: 44,
+              weight: 1,
+            },
+          ],
+        }),
+      ])
+      test('Overrides KRS', async () => {
+        const user = getTestUser({
+          acquisitionChannel: 'PAID',
+          kycStatusDetails: {
+            status: 'FAILED',
+          },
+        })
+        const result = await riskScoringService.handleUserUpdate({ user })
+        expect(result).toEqual({
+          kycRiskLevel: 'LOW',
+          kycRiskScore: 25,
+        })
+        const krs = await riskScoringService.getKrsScore(user.userId)
+        expect(krs?.factorScoreDetails).toEqual([
+          {
+            score: 25,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:acquisitionChannel__SENDER': 'PAID',
+                },
+              },
+            ],
+            riskLevel: 'LOW',
+            riskFactorId: 'RF1',
+            overrideScore: true,
+          },
+          {
+            score: 44,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:kycStatusDetails-status__SENDER': 'FAILED',
+                },
+              },
+            ],
+            riskLevel: 'MEDIUM',
+            riskFactorId: 'RF2',
+          },
+        ])
+      })
+    })
+    describe('Only KRS score with multiple knock off factor', () => {
+      let riskScoringService: RiskScoringV8Service
+      const tenantId = getTestTenantId()
+      beforeAll(async () => {
+        const mongoDb = await getMongoDbClient()
+        const dynamoDb = getDynamoDbClient()
+        const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+        riskScoringService = new RiskScoringV8Service(
+          tenantId,
+          logicEvaluator,
+          {
+            mongoDb,
+            dynamoDb,
+          }
+        )
+        const tenantRepository = new TenantRepository(tenantId, {
+          dynamoDb,
+        })
+        await tenantRepository.createOrUpdateTenantSettings({
+          riskScoringCraEnabled: false,
+        })
+      })
+      setUpRiskFactorsHook(tenantId, [
+        getTestRiskFactor({
+          id: 'RF1',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                      'PAID',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'LOW',
+              riskScore: 25,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+        getTestRiskFactor({
+          id: 'RF2',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                      'FAILED',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'MEDIUM',
+              riskScore: 44,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+      ])
+      test('Overrides KRS', async () => {
+        const user = getTestUser({
+          acquisitionChannel: 'PAID',
+          kycStatusDetails: {
+            status: 'FAILED',
+          },
+        })
+        const result = await riskScoringService.handleUserUpdate({ user })
+        expect(result).toEqual({
+          kycRiskScore: 34.5,
+          kycRiskLevel: 'LOW',
+        })
+        const krs = await riskScoringService.getKrsScore(user.userId)
+        expect(krs?.factorScoreDetails).toEqual([
+          {
+            score: 25,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:acquisitionChannel__SENDER': 'PAID',
+                },
+              },
+            ],
+            riskLevel: 'LOW',
+            riskFactorId: 'RF1',
+            overrideScore: true,
+          },
+          {
+            score: 44,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:kycStatusDetails-status__SENDER': 'FAILED',
+                },
+              },
+            ],
+            riskLevel: 'MEDIUM',
+            riskFactorId: 'RF2',
+            overrideScore: true,
+          },
+        ])
+      })
+    })
+    describe('KRS and CRA score with one knock off factor', () => {
+      let riskScoringService: RiskScoringV8Service
+      const tenantId = getTestTenantId()
+      beforeAll(async () => {
+        const mongoDb = await getMongoDbClient()
+        const dynamoDb = getDynamoDbClient()
+        const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+        riskScoringService = new RiskScoringV8Service(
+          tenantId,
+          logicEvaluator,
+          {
+            mongoDb,
+            dynamoDb,
+          }
+        )
+        const tenantRepository = new TenantRepository(tenantId, {
+          dynamoDb,
+        })
+        await tenantRepository.createOrUpdateTenantSettings({
+          riskScoringCraEnabled: true,
+        })
+      })
+      setUpRiskFactorsHook(tenantId, [
+        getTestRiskFactor({
+          id: 'RF1',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                      'PAID',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'LOW',
+              riskScore: 25,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+        getTestRiskFactor({
+          id: 'RF2',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                      'FAILED',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'MEDIUM',
+              riskScore: 44,
+              weight: 1,
+            },
+          ],
+        }),
+      ])
+      test('Overrides KRS and CRA', async () => {
+        const user = getTestUser({
+          acquisitionChannel: 'GATHERING',
+          kycStatusDetails: {
+            status: 'FAILED',
+          },
+        })
+        const result = await riskScoringService.handleUserUpdate({ user })
+        expect(result).toEqual({
+          kycRiskScore: 59.5,
+          kycRiskLevel: 'MEDIUM',
+          craRiskScore: 59.5,
+          craRiskLevel: 'MEDIUM',
+        })
+        const krs = await riskScoringService.getKrsScore(user.userId)
+        expect(krs?.factorScoreDetails).toEqual([
+          {
+            score: 75,
+            weight: 1,
+            hit: false,
+            vars: [],
+            riskLevel: 'HIGH',
+            riskFactorId: 'RF1',
+          },
+          {
+            score: 44,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:kycStatusDetails-status__SENDER': 'FAILED',
+                },
+              },
+            ],
+            riskLevel: 'MEDIUM',
+            riskFactorId: 'RF2',
+          },
+        ])
+
+        const updatedUser: User = {
+          ...user,
+          acquisitionChannel: 'PAID',
+        }
+        const result2 = await riskScoringService.handleUserUpdate({
+          user: updatedUser,
+        })
+        expect(result2).toEqual({
+          kycRiskScore: 25,
+          kycRiskLevel: 'LOW',
+          craRiskScore: 25,
+          craRiskLevel: 'LOW',
+        })
+      })
+    })
+    describe('KRS and CRA score with multiple knock off factor', () => {
+      let riskScoringService: RiskScoringV8Service
+      const tenantId = getTestTenantId()
+      beforeAll(async () => {
+        const mongoDb = await getMongoDbClient()
+        const dynamoDb = getDynamoDbClient()
+        const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+        riskScoringService = new RiskScoringV8Service(
+          tenantId,
+          logicEvaluator,
+          {
+            mongoDb,
+            dynamoDb,
+          }
+        )
+        const tenantRepository = new TenantRepository(tenantId, {
+          dynamoDb,
+        })
+        await tenantRepository.createOrUpdateTenantSettings({
+          riskScoringCraEnabled: true,
+        })
+      })
+      setUpRiskFactorsHook(tenantId, [
+        getTestRiskFactor({
+          id: 'RF1',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:acquisitionChannel__SENDER' },
+                      'PAID',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'LOW',
+              riskScore: 25,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+        getTestRiskFactor({
+          id: 'RF2',
+          type: 'CONSUMER_USER',
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                      'FAILED',
+                    ],
+                  },
+                ],
+              },
+              riskLevel: 'MEDIUM',
+              riskScore: 44,
+              weight: 1,
+              overrideScore: true,
+            },
+          ],
+        }),
+      ])
+      test('Overrides KRS and CRA', async () => {
+        const user = getTestUser({
+          acquisitionChannel: 'GATHERING',
+          kycStatusDetails: {
+            status: 'FAILED',
+          },
+        })
+        const result = await riskScoringService.handleUserUpdate({ user })
+        expect(result).toEqual({
+          kycRiskScore: 44,
+          kycRiskLevel: 'MEDIUM',
+          craRiskScore: 44,
+          craRiskLevel: 'MEDIUM',
+        })
+        const krs = await riskScoringService.getKrsScore(user.userId)
+        expect(krs?.factorScoreDetails).toEqual([
+          {
+            score: 75,
+            weight: 1,
+            hit: false,
+            vars: [],
+            riskLevel: 'HIGH',
+            riskFactorId: 'RF1',
+          },
+          {
+            score: 44,
+            weight: 1,
+            hit: true,
+            vars: [
+              {
+                direction: 'ORIGIN',
+                value: {
+                  'CONSUMER_USER:kycStatusDetails-status__SENDER': 'FAILED',
+                },
+              },
+            ],
+            riskLevel: 'MEDIUM',
+            riskFactorId: 'RF2',
+            overrideScore: true,
+          },
+        ])
+
+        const updatedUser: User = {
+          ...user,
+          acquisitionChannel: 'PAID',
+        }
+        const result2 = await riskScoringService.handleUserUpdate({
+          user: updatedUser,
+        })
+        expect(result2).toEqual({
+          kycRiskScore: 34.5,
+          kycRiskLevel: 'LOW',
+          craRiskScore: 34.5,
+          craRiskLevel: 'LOW',
+        })
+      })
+    })
+  })
   describe('V8 Risk Scoring Algorithms', () => {
     const tenantId = getTestTenantId()
     describe('Calculation for Transaction', () => {
@@ -944,7 +1427,7 @@ describe('V8 Risk scoring ', () => {
     describe('User Events', () => {
       let riskScoringService: RiskScoringV8Service
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
         const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
@@ -1323,7 +1806,7 @@ describe('complete risk scoring flow (DRS)', () => {
         })
       })
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
         const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
