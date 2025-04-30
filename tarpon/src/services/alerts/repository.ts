@@ -547,15 +547,6 @@ export class AlertsRepository {
       })
     }
 
-    if (params.filterUserId != null) {
-      caseConditions.push({
-        $or: [
-          { originUserId: params.filterUserId },
-          { destinationUserId: params.filterUserId },
-        ],
-      })
-    }
-
     const pipeline: Document[] = [
       ...(caseConditions.length > 0
         ? [{ $match: { $and: caseConditions } }]
