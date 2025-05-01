@@ -23,6 +23,17 @@
       }
     }
   }
+
+  &.isDisabled {
+    pointer-events: none;
+    border-color: @figma-vars--tokens-colorBackgroundDisabled;
+    background: @figma-vars--tokens-colorBackgroundDisabled;
+    color: @figma-vars--tokens-colorTextSecondary;
+
+    .arrow {
+      color: @figma-vars--tokens-colorIconDisabled;
+    }
+  }
 }
 
 .icon {
@@ -66,10 +77,6 @@
   cursor: pointer;
   justify-content: space-between;
   width: 100%;
-
-  &.isDisabled {
-    pointer-events: none;
-  }
 }
 
 .bordered {

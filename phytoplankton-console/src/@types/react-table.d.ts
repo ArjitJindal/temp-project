@@ -1,7 +1,9 @@
 import '@tanstack/react-table';
-
+import { TableColumn, FieldAccessor } from '@/components/library/Table/types';
 declare module '@tanstack/table-core' {
-  interface ColumnMeta {
+  interface ColumnMeta<Item> {
+    rowKey?: FieldAccessor<Item>;
+    column: TableColumn<Item>;
     wrapMode: string;
     tooltip?: string;
     subtitle?: string;

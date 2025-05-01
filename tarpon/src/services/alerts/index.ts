@@ -1555,7 +1555,8 @@ export class AlertsService extends CaseAlertsCommonService {
   async updateAlertChecklistStatus(
     alertId: string,
     checklistItemIds: string[],
-    done: ChecklistDoneStatus
+    done: ChecklistDoneStatus,
+    comment?: string
   ): Promise<AlertChecklistUpdateAuditLogReturnData> {
     const alert = await this.alertsRepository.getAlertById(alertId)
     if (!alert) {
@@ -1572,6 +1573,7 @@ export class AlertsService extends CaseAlertsCommonService {
         checklistItemIds.includes(checkListItem.checklistItemId)
       ) {
         checkListItem.done = done
+        checkListItem.comment = comment
       }
       return checkListItem
     })
@@ -1591,7 +1593,6 @@ export class AlertsService extends CaseAlertsCommonService {
       entities: [
         {
           entityId: alertId,
-
           oldImage: { ruleChecklist: originalChecklist },
           newImage: { ruleChecklist: updatedChecklist },
         },

@@ -69,7 +69,8 @@ export const casesHandler = lambdaApi()(
       const result = await alertsService.updateAlertChecklistStatus(
         request.alertId,
         request.AlertChecklistUpdateRequest.checklistItemIds,
-        request.AlertChecklistUpdateRequest.done
+        request.AlertChecklistUpdateRequest.done,
+        request.AlertChecklistUpdateRequest.comment
       )
       return result.result
     })

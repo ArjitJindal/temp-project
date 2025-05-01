@@ -11,6 +11,7 @@ import { AutoFilterDataType } from '@/components/library/Filter/types';
 
 export interface EditContext<T> {
   isEditing: boolean;
+  isBusy: boolean;
   toggleEditing: (isEditing?: boolean) => void;
   state: StatePair<T>;
   onConfirm: (value?: T) => void;

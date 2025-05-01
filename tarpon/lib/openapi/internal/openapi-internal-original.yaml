@@ -12981,6 +12981,8 @@ components:
             type: string
         done:
           $ref: '#/components/schemas/ChecklistDoneStatus'
+        comment:
+          type: string
       required:
         - done
         - checklistItemIds
@@ -16413,6 +16415,7 @@ components:
       enum:
         - PASSED
         - FAILED
+        - NOT_APPLICABLE
     SanctionsHitStatus:
       type: string
       enum:
@@ -16425,6 +16428,7 @@ components:
         - DONE
         - NOT_DONE
         - NOT_STARTED
+        - NOT_APPLICABLE
     ChecklistItemValue:
       type: object
       title: ChecklistItemValue
@@ -16437,6 +16441,8 @@ components:
           $ref: '#/components/schemas/ChecklistStatus'
         info:
           $ref: '#/components/schemas/ChecklistInfo'
+        comment:
+          type: string
     ChecklistItem:
       title: ChecklistItem
       type: object

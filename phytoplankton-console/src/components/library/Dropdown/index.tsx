@@ -54,6 +54,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
 
   const hasUserPermissions = useHasPermissions(writePermissions);
 
+  const isDisabled = !hasUserPermissions || disabled;
   const menu = (
     <AntMenu
       onClick={({ key }) => {
@@ -63,7 +64,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
         }
       }}
       selectedKeys={selectedKeys}
-      disabled={!hasUserPermissions}
+      disabled={isDisabled}
       items={options.map((option) => ({
         key: option.value.toString(),
         disabled: option.isDisabled,
@@ -75,7 +76,12 @@ export default function Dropdown<T extends string | number = string>(props: Prop
 
   return (
     <div
-      className={cn(s.root, extraBottomMargin && s.extraBottomMargin, bordered && s.bordered)}
+      className={cn(
+        s.root,
+        extraBottomMargin && s.extraBottomMargin,
+        bordered && s.bordered,
+        isDisabled && s.isDisabled,
+      )}
       style={{ minWidth }}
     >
       <AntDropdown overlay={menu} trigger={['click']} placement={placement} disabled={disabled}>

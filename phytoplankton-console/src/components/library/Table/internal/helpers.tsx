@@ -1,3 +1,11 @@
+import * as TanTable from '@tanstack/react-table';
+import {
+  RowSelectionState,
+  getFilteredRowModel,
+  getPaginationRowModel,
+} from '@tanstack/react-table';
+import { ExpandedState } from '@tanstack/table-core';
+import { sortBy } from 'lodash';
 import React, {
   SetStateAction,
   useCallback,
@@ -6,39 +14,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import * as TanTable from '@tanstack/react-table';
-import {
-  getFilteredRowModel,
-  getPaginationRowModel,
-  RowSelectionState,
-} from '@tanstack/react-table';
-import { sortBy } from 'lodash';
-import { ExpandedState } from '@tanstack/table-core';
-import {
-  AllParams,
-  applyFieldAccessor,
-  ColumnDataType,
-  CommonParams,
-  DerivedColumn,
-  DisplayColumn,
-  EditContext,
-  FieldAccessor,
-  flatColumns,
-  getColumnId,
-  isDerivedColumn,
-  isDisplayColumn,
-  isMultiRows,
-  isSimpleColumn,
-  setByFieldAccessor,
-  SimpleColumn,
-  SortingParamsItem,
-  TableColumn,
-  TableData,
-  TableDataItem,
-  TableDataSimpleItem,
-  TableRow,
-  ValueOf,
-} from '../types';
 import {
   DEFAULT_COLUMN_WRAP_MODE,
   EXPAND_COLUMN,
@@ -46,16 +21,38 @@ import {
   SELECT_COLUMN,
   SELECT_COLUMN_ID,
 } from '../consts';
-import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
+import {
+  AllParams,
+  ColumnDataType,
+  CommonParams,
+  EditContext,
+  FieldAccessor,
+  SortingParamsItem,
+  TableColumn,
+  TableData,
+  TableDataItem,
+  TableDataSimpleItem,
+  TableRow,
+  ValueOf,
+  applyFieldAccessor,
+  flatColumns,
+  getColumnId,
+  isDerivedColumn,
+  isDisplayColumn,
+  isMultiRows,
+  isSimpleColumn,
+  setByFieldAccessor,
+} from '../types';
 import { ExternalStateContext } from './externalState';
 import s from './index.module.less';
-import Skeleton, { shouldShowSkeleton } from '@/components/library/Skeleton';
-import { getErrorMessage, isEqual } from '@/utils/lang';
-import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import { AsyncResource, getOr, loading } from '@/utils/asyncResource';
-import { applyUpdater, StatePair, Updater } from '@/utils/state';
+import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
+import { StatePair, Updater, applyUpdater } from '@/utils/state';
 import { getPageCount } from '@/utils/queries/hooks';
 import { makeRandomNumberGenerator } from '@/utils/prng';
+import { getErrorMessage, isEqual } from '@/utils/lang';
+import { AsyncResource, getOr, loading } from '@/utils/asyncResource';
+import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
+import Skeleton, { shouldShowSkeleton } from '@/components/library/Skeleton';
 
 export function useLocalStorageOptionally<Value extends PersistedState = PersistedState>(
   key: string | null,
@@ -122,7 +119,7 @@ export function useTanstackTable<
   columns: TableColumn<Item>[];
   params: AllParams<Params>;
   onChangeParams: (newParams: AllParams<Params>) => void;
-  onEdit: ((rowKey: string, newValue: Item) => void) | undefined;
+  onEdit: ((rowKey: string, newValue: Item) => void | Promise<void>) | undefined;
   selectedIds?: string[];
   partiallySelectedIds?: string[];
   onSelect?: (ids: string[]) => void;
@@ -256,8 +253,10 @@ export function useTanstackTable<
           enableResizing: column.enableResizing ?? true,
           enableSorting: column.sorting === true || column.sorting === 'desc',
           sortDescFirst: column.sorting === 'desc',
-          cell: showSkeleton ? SkeletonCell : makeSimpleColumnCellComponent({ column, rowKey }),
+          cell: showSkeleton ? SkeletonCell : SimpleColumnCellComponent,
           meta: {
+            rowKey: rowKey,
+            column: column,
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
             subtitle: column.subtitle,
@@ -267,9 +266,11 @@ export function useTanstackTable<
         return columnHelper.display({
           id: columnId,
           header: column.title,
-          cell: showSkeleton ? SkeletonCell : makeDisplayColumnCellComponent({ column, rowKey }),
+          cell: showSkeleton ? SkeletonCell : DisplayColumnCellComponent,
           enableResizing: column.enableResizing ?? true,
           meta: {
+            rowKey: rowKey,
+            column: column,
             wrapMode: DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
             subtitle: column.subtitle,
@@ -284,8 +285,9 @@ export function useTanstackTable<
           id: columnId,
           header: column.title,
           enableResizing: column.enableResizing ?? true,
-          cell: showSkeleton ? SkeletonCell : makeDerivedColumnCellComponent({ column }),
+          cell: showSkeleton ? SkeletonCell : DerivedColumnCellComponent,
           meta: {
+            column: column,
             wrapMode: columnDataType.defaultWrapMode ?? DEFAULT_COLUMN_WRAP_MODE,
             tooltip: column.tooltip,
             subtitle: column.subtitle,
@@ -483,7 +485,6 @@ export function useTanstackTable<
 }
 
 type CellComponentProps<Item, Value = unknown> = TanTable.CellContext<TableRow<Item>, Value>;
-type CellComponent<Item> = React.FunctionComponent<CellComponentProps<Item>>;
 
 const SkeletonCell = (props: CellComponentProps<any>) => {
   const hashCode = props.cell.id
@@ -494,115 +495,108 @@ const SkeletonCell = (props: CellComponentProps<any>) => {
   return <Skeleton length={4 + Math.round(10 * random())} res={loading()} />;
 };
 
-function makeSimpleColumnCellComponent<
-  Item extends object,
-  Accessor extends FieldAccessor<Item>,
->(options: { column: SimpleColumn<Item, Accessor>; rowKey: FieldAccessor<Item> }) {
-  const { column, rowKey } = options;
-  const columnDataType = {
-    ...UNKNOWN,
-    ...column.type,
-  } as ColumnDataType<ValueOf<Accessor>, Item>;
-
+function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAccessor<Item>>(
+  props: CellComponentProps<Item, ValueOf<Accessor>>,
+) {
   type Value = ValueOf<Accessor>;
-  return (props: CellComponentProps<Item, Value>) => {
-    const onEdit = props.table.options.meta.onEdit;
-    const value: Value = props.getValue();
-    const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
 
-    const editContext = useEditContext<Value | undefined>(
-      (onEdit != null && column.defaultEditState) ?? false,
-      value,
-      (newValue) => {
-        const newItem = setByFieldAccessor(props.row.original.content, column.key, newValue);
-        onEdit?.(id, newItem);
-      },
-    );
+  const { column, rowKey } = props.column.columnDef.meta;
+  const onEdit = props.table.options.meta.onEdit;
+  const value: Value = props.getValue();
+  const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
 
-    const itemContext = {
-      value: value,
-      item: props.row.original.content,
-      edit: editContext,
-    };
+  const columnDataType = {
+    ...UNKNOWN,
+    ...column.type,
+  } as ColumnDataType<Value, Item>;
 
-    return (
-      <div className={s.columnCellComponentContainer}>
-        {editContext.isEditing && columnDataType.renderEdit
-          ? columnDataType.renderEdit(itemContext)
-          : columnDataType.render?.(value, itemContext)}
-      </div>
-    );
+  const editContext = useEditContext<Value | undefined>(
+    (onEdit != null && column.defaultEditState) ?? false,
+    value,
+    async (newValue) => {
+      const newItem = setByFieldAccessor(props.row.original.content, column.key, newValue);
+      const promise = onEdit?.(id, newItem);
+      if (promise != null && promise instanceof Promise) {
+        await promise;
+      }
+    },
+  );
+
+  const itemContext = {
+    value: value,
+    item: props.row.original.content,
+    edit: editContext,
   };
+
+  return (
+    <div className={s.columnCellComponentContainer}>
+      {editContext.isEditing && columnDataType.renderEdit
+        ? columnDataType.renderEdit(itemContext)
+        : columnDataType.render?.(value, itemContext)}
+    </div>
+  );
 }
 
-function makeDerivedColumnCellComponent<Item extends object>(options: {
-  column: DerivedColumn<Item>;
-}): CellComponent<Item> {
-  const { column } = options;
+function DerivedColumnCellComponent<Item extends object>(props: CellComponentProps<Item>) {
+  const { column } = props.column.columnDef.meta;
   const columnDataType = {
     ...UNKNOWN,
     ...column.type,
   };
 
-  return (props: CellComponentProps<Item>) => {
-    const columnValue = column.value(props.row.original.content);
-    const externalState = useContext(ExternalStateContext);
-    const editContext = useEditContext<unknown>(
-      false, // derived columns doesn't support editing
-      props.row.original.content,
-      () => {},
-    );
-    const cellContext = {
-      value: columnValue,
-      item: props.row.original.content,
-      edit: editContext,
-      external: externalState?.value ?? null,
-    };
-    return (
-      <div className={s.columnCellComponentContainer} key={`${props.row.id}-${columnValue}`}>
-        {editContext.isEditing && columnDataType.renderEdit
-          ? columnDataType.renderEdit(cellContext)
-          : columnDataType.render?.(columnValue, cellContext)}
-      </div>
-    );
+  const columnValue = column.value(props.row.original.content);
+  const externalState = useContext(ExternalStateContext);
+  const editContext = useEditContext<unknown>(
+    false, // derived columns doesn't support editing
+    props.row.original.content,
+    async () => {},
+  );
+  const cellContext = {
+    value: columnValue,
+    item: props.row.original.content,
+    edit: editContext,
+    external: externalState?.value ?? null,
   };
+  return (
+    <div className={s.columnCellComponentContainer} key={`${props.row.id}-${columnValue}`}>
+      {editContext.isEditing && columnDataType.renderEdit
+        ? columnDataType.renderEdit(cellContext)
+        : columnDataType.render?.(columnValue, cellContext)}
+    </div>
+  );
 }
 
-function makeDisplayColumnCellComponent<Item extends object>(options: {
-  column: DisplayColumn<Item>;
-  rowKey: FieldAccessor<Item>;
-}): CellComponent<Item> {
-  const { column, rowKey } = options;
-  return (props: CellComponentProps<Item>) => {
-    const id = applyFieldAccessor(props.row.original.content, rowKey);
-    const onEdit = props.table.options.meta.onEdit;
-    const externalState = useContext(ExternalStateContext);
-    const editContext = useEditContext<Item>(
-      (onEdit != null && column.defaultEditState) ?? false,
-      props.row.original.content,
-      (state) => {
-        onEdit?.(id, state);
-      },
-    );
+function DisplayColumnCellComponent<Item extends object>(props: CellComponentProps<Item>) {
+  const { column, rowKey } = props.column.columnDef.meta;
+  const id = applyFieldAccessor(props.row.original.content, rowKey);
+  const onEdit = props.table.options.meta.onEdit;
+  const externalState = useContext(ExternalStateContext);
+  const editContext = useEditContext<Item>(
+    (onEdit != null && column.defaultEditState) ?? false,
+    props.row.original.content,
+    async (state) => {
+      await onEdit?.(id, state);
+    },
+  );
 
-    return (
-      <div className={s.columnCellComponentContainer}>
-        {column.render(props.row.original.content, {
-          item: props.row.original.content,
-          edit: editContext,
-          external: externalState?.value ?? null,
-        })}
-      </div>
-    );
-  };
+  return (
+    <div className={s.columnCellComponentContainer}>
+      {column.render(props.row.original.content, {
+        item: props.row.original.content,
+        edit: editContext,
+        external: externalState?.value ?? null,
+      })}
+    </div>
+  );
 }
 
 function useEditContext<T>(
   isEditByDefault: boolean,
   defaultState: T,
-  onConfirm: (state: T) => void,
+  onConfirm: (state: T) => Promise<void>,
 ): EditContext<T> {
   const [isEditing, setEditing] = useState(isEditByDefault ?? false);
+  const [isBusy, setIsBusy] = useState(false);
   const [editState, setEditState] = useState(defaultState);
   return {
     isEditing: isEditing,
@@ -618,10 +612,16 @@ function useEditContext<T>(
         setEditState((state) => applyUpdater(state, updater));
       },
     ],
-    onConfirm: (value) => {
-      onConfirm(value != null ? value : editState);
-      if (value != null) {
-        setEditState(value);
+    isBusy,
+    onConfirm: async (value) => {
+      setIsBusy(true);
+      try {
+        await onConfirm(value != null ? value : editState);
+        if (value != null) {
+          setEditState(value);
+        }
+      } finally {
+        setIsBusy(false);
       }
     },
   };

@@ -41,6 +41,7 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
               level: cli.level,
               qaStatus: item.status,
               done: item.done ?? 'NOT_STARTED',
+              comment: item.comment,
             };
           }),
         };
@@ -52,6 +53,7 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
 export type ChecklistItem = EmptyChecklistItem & {
   qaStatus?: ChecklistStatus;
   done: ChecklistDoneStatus;
+  comment?: string;
 };
 
 type ChecklistCategory = {

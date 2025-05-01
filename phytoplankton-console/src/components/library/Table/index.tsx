@@ -14,6 +14,7 @@ import {
   TableRefType,
   TableRow,
   ToolRenderer,
+  applyFieldAccessor,
 } from './types';
 import Header from './Header';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from './consts';
@@ -52,7 +53,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   onSelect?: (ids: string[]) => void;
   sizingMode?: 'FULL_WIDTH' | 'SCROLL';
   params?: AllParams<Params>;
-  onEdit?: (rowKey: string, newValue: Item) => void;
+  onEdit?: (rowKey: string, newValue: Item) => void | Promise<void>;
   onChangeParams?: (newParams: AllParams<Params>) => void;
   onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
   columns: TableColumn<Item>[];
@@ -284,6 +285,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         {(containerWidth) => {
           return (
             <ScrollContainerChild
+              rowKey={rowKey}
               containerWidth={containerWidth}
               columns={columns}
               table={table}
@@ -385,6 +387,7 @@ function Td<Item>(props: {
 }
 
 interface ScrollContainerChildProps<Item extends object> {
+  rowKey: FieldAccessor<Item>;
   table: TanTable.Table<TableRow<Item>>;
   dataRes: AsyncResource<TableData<Item>>;
   containerWidth: number;
@@ -407,6 +410,7 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
     fitHeight,
     rowHeightMode,
     fixedExpandedContainer,
+    rowKey,
     renderExpanded,
   } = props;
   const showSkeleton = shouldShowSkeleton(dataRes);
@@ -418,6 +422,7 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
 
   return (
     <table
+      key={`table-${showSkeleton ? 'skeleton' : ''}`}
       data-cy={cyId}
       className={cn(
         s.table,
@@ -513,8 +518,12 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
                 (header) => !header.column.getIsPinned(),
               );
 
+              const rowId = `row-${applyFieldAccessor(
+                row.original.content,
+                rowKey as FieldAccessor<Item>,
+              )}`;
               return (
-                <React.Fragment key={index}>
+                <React.Fragment key={rowId}>
                   <tr id={`row_${index}`} data-cy={`${cyId}-data-row`}>
                     {visibleCells.map((cell, i) => {
                       const isPinned = cell.column.getIsPinned();

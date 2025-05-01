@@ -1,9 +1,12 @@
 import { Input } from 'antd';
-import { TextAreaRef } from 'antd/lib/input/TextArea';
 import cn from 'clsx';
-import React from 'react';
+import React, { useImperativeHandle, useRef } from 'react';
 import s from './styles.module.less';
 import { InputProps } from '@/components/library/Form';
+
+export type TextAreaRef = {
+  focus: () => void;
+};
 
 export interface Props extends InputProps<string> {
   className?: string;
@@ -17,7 +20,7 @@ export interface Props extends InputProps<string> {
   description?: string;
 }
 
-export default function TextArea(props: Props) {
+function TextArea(props: Props, ref: React.Ref<TextAreaRef>) {
   const {
     className,
     showCount,
@@ -34,6 +37,15 @@ export default function TextArea(props: Props) {
     isSuccess,
     description,
   } = props;
+
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus();
+    },
+  }));
+
   return (
     <div className={s.root}>
       <Input.TextArea
@@ -51,7 +63,7 @@ export default function TextArea(props: Props) {
           !showCount && s.bareInput,
         )}
         disabled={isDisabled}
-        ref={props.ref}
+        ref={inputRef}
         onFocus={onFocus || undefined}
         onBlur={onBlur || undefined}
         style={{ minHeight }}
@@ -60,3 +72,5 @@ export default function TextArea(props: Props) {
     </div>
   );
 }
+
+export default React.forwardRef(TextArea);
