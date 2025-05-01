@@ -16,9 +16,10 @@ import { TransactionsAverageAmountExceededParameters } from '../transaction-rule
 import { TransactionsAverageNumberExceededParameters } from '../transaction-rules/transactions-average-number-exceeded'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../transaction-rules/total-transactions-volume-exceeds'
 import { LowValueTransactionsRuleParameters } from '../transaction-rules/low-value-transactions-base'
-import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from '../transaction-rules/using-too-many-banks-to-make-payments'
 import { TransactionsOutflowInflowVolumeRuleParameters } from '../transaction-rules/transactions-outflow-inflow-volume'
+import { SenderLocationChangesFrequencyRuleParameters } from '../transaction-rules/sender-location-changes-frequency'
+import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -1395,6 +1396,91 @@ const V8_CONVERSION: Readonly<
       logicAggregationVariables,
       alertCreationDirection: 'ORIGIN',
       baseCurrency,
+    }
+  },
+  'R-113': (params: SenderLocationChangesFrequencyRuleParameters) => {
+    const { uniqueCitiesCountThreshold, timeWindow } = params
+
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:userTransactionsCountriesSender$1',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originDeviceData-ipAddress',
+      aggregationFunc: 'UNIQUE_VALUES',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+    logicAggregationVariables.push({
+      key: 'agg:userTransactionsCountriesReciever$2',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:destinationDeviceData-ipAddress',
+      aggregationFunc: 'UNIQUE_VALUES',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    const conditions: any[] = []
+
+    conditions.push({
+      '>=': [
+        {
+          number_of_items: [
+            {
+              var: 'agg:userTransactionsCountriesSender$1',
+            },
+          ],
+        },
+        uniqueCitiesCountThreshold + 1,
+      ],
+    })
+    conditions.push({
+      '>=': [
+        {
+          number_of_items: [
+            {
+              var: 'agg:userTransactionsCountriesReciever$2',
+            },
+          ],
+        },
+        uniqueCitiesCountThreshold + 1,
+      ],
+    })
+
+    return {
+      logic: { or: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-87': (params: HighRiskIpAddressCountriesParameters) => {
+    const { highRiskCountries } = params
+
+    const conditions: any[] = []
+
+    conditions.push({
+      in: [
+        {
+          var: 'TRANSACTION:ipCountry__BOTH',
+        },
+        highRiskCountries,
+      ],
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables: [],
+      alertCreationDirection: 'AUTO',
     }
   },
   'R-41': (params: TransactionsOutflowInflowVolumeRuleParameters) => {

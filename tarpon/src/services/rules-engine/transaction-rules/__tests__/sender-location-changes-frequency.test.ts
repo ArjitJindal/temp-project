@@ -40,7 +40,7 @@ jest.mock('@/services/geo-ip', () => ({
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {
     const TEST_TENANT_ID = getTestTenantId()
 
