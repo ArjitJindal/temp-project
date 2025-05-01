@@ -97,6 +97,16 @@ export async function bulkSendMessages(
     batchRequestEntries,
     (acc, entry) => {
       const entrySize = getEntrySize(entry)
+      const messageBody = JSON.parse(entry.MessageBody ?? '{}')
+
+      // Skip ALERT type messages that exceed size limit
+      if (messageBody?.type === 'ALERT' && entrySize > MAX_BATCH_SIZE_BYTES) {
+        logger.error(
+          `Skipping ALERT message with size ${entrySize} bytes as it exceeds the maximum batch size of ${MAX_BATCH_SIZE_BYTES} bytes`
+        )
+        return acc
+      }
+
       if (entrySize > MAX_BATCH_SIZE_BYTES) {
         addSentryExtras({ entry })
         logger.error(
