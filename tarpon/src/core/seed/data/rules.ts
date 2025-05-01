@@ -2410,6 +2410,37 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
 })
 
 export const CHAINALYSIS_RULE_IDS = ['RC-4', 'RC-5']
+export const COUNTERPARTY_RULE_IDS = ['R-169', 'R-169.1']
+
+export const mapRuleInstanceToExecuteRules = (
+  ruleInstance: RuleInstance,
+  index: number,
+  rng: RandomNumberGenerator,
+  hitRuleIds?: string[]
+): ExecutedRulesResult => {
+  rng.setSeed(TRANSACTION_RULES_SEED + index)
+
+  return {
+    ruleInstanceId: ruleInstance.id as string,
+    ruleName: ruleInstance.ruleNameAlias as string,
+    ruleAction: ruleInstance.action as RuleAction,
+    ruleId: ruleInstance.ruleId as string,
+    nature: ruleInstance.nature,
+    ruleDescription: ruleInstance.ruleDescriptionAlias as string,
+    ruleHit: hitRuleIds?.includes(ruleInstance.id ?? '') ?? true,
+    ruleHitMeta: {
+      falsePositiveDetails:
+        rng.randomInt(10) < 4
+          ? {
+              isFalsePositive: true,
+              confidenceScore: rng.r(1).randomIntInclusive(59, 82),
+            }
+          : { isFalsePositive: false, confidenceScore: 100 },
+      hitDirections: index % 2 ? ['ORIGIN'] : ['DESTINATION'],
+    },
+    isShadow: isShadowRule(ruleInstance),
+  }
+}
 
 export const transactionRules: (
   isCryptoTransaction?: boolean,
@@ -2423,6 +2454,10 @@ export const transactionRules: (
   return ruleInstances()
     .filter((ri) => {
       if (ri.ruleId) {
+        const counterPartyExists = COUNTERPARTY_RULE_IDS.includes(ri.ruleId)
+        if (counterPartyExists) {
+          return false
+        }
         const exists = CHAINALYSIS_RULE_IDS.includes(ri.ruleId)
         return isCryptoTransaction ? exists : !exists
       }
@@ -2431,30 +2466,27 @@ export const transactionRules: (
     .filter((ri) => {
       return ri.type === 'TRANSACTION'
     })
-    .map((ri, i): ExecutedRulesResult => {
-      rng.setSeed(TRANSACTION_RULES_SEED + i)
+    .map(
+      (ri, i): ExecutedRulesResult =>
+        mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+    )
+})
 
-      return {
-        ruleInstanceId: ri.id as string,
-        ruleName: ri.ruleNameAlias as string,
-        ruleAction: ri.action as RuleAction,
-        ruleId: ri.ruleId as string,
-        nature: ri.nature,
-        ruleDescription: ri.ruleDescriptionAlias as string,
-        ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
-        ruleHitMeta: {
-          falsePositiveDetails:
-            rng.randomInt(10) < 4
-              ? {
-                  isFalsePositive: true,
-                  confidenceScore: rng.r(1).randomIntInclusive(59, 82),
-                }
-              : { isFalsePositive: false, confidenceScore: 100 },
-          hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
-        },
-        isShadow: isShadowRule(ri),
+export const counterPartyTransactionRules: (
+  hitRuleIds?: string[]
+) => ExecutedRulesResult[] = memoize((hitRuleIds) => {
+  const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 1000)
+  return ruleInstances()
+    .filter((ri) => {
+      if (ri.ruleId) {
+        return COUNTERPARTY_RULE_IDS.includes(ri.ruleId)
       }
+      return false
     })
+    .map(
+      (ri, i): ExecutedRulesResult =>
+        mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+    )
 })
 
 export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
@@ -2656,12 +2688,7 @@ export class BussinessUserRuleSampler extends RuleSampler {
 export class TransactionRuleSampler extends RuleSampler {
   constructor() {
     super()
-    this.intalizeSampler(
-      transactionRules(false),
-      [7, 8, 9, 10],
-      TXN_COUNT,
-      true
-    )
+    this.intalizeSampler(transactionRules(false), [4, 5, 6, 7], TXN_COUNT, true)
   }
 }
 
@@ -2671,6 +2698,18 @@ export class CryptoTransactionRuleSampler extends RuleSampler {
     this.intalizeSampler(
       transactionRules(true),
       [7, 11],
+      CRYPTO_TXN_COUNT,
+      false
+    )
+  }
+}
+
+export class CounterPartyTransactionRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(
+      counterPartyTransactionRules(),
+      [7, 8],
       CRYPTO_TXN_COUNT,
       false
     )

@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
+import { Merchant } from '../raw-data/merchant'
 import { BaseSampler } from './base'
 import { names } from './dictionary'
 import { CRYPTO_CURRENCIES } from './currencies'
@@ -320,6 +321,7 @@ export class PaymentDetailsSampler extends BaseSampler<PaymentDetails> {
 
 export class CardDetailsSampler extends BaseSampler<CardDetails> {
   generateSample(): CardDetails {
+    const merchantDetail = this.rng.pickRandom(Merchant)
     return {
       method: 'CARD' as const,
       cardFingerprint: 'FNGR' + this.rng.randomInt(),
@@ -343,30 +345,7 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
       cardType: this.rng.pickRandom(['VIRTUAL', 'PHYSICAL']),
       merchantDetails: {
         id: uuid(),
-        category: this.rng.pickRandom([
-          'RETAIL',
-          'GROCERY',
-          'GAS',
-          'ECOMMERCE',
-          'HOTEL',
-          'TRAVEL',
-          'TRANSPORTATION',
-          'ENTERTAINMENT',
-          'OTHER',
-        ]),
-        MCC: this.rng.randomIntInclusive(1000, 9999).toString(),
-        city: this.rng.pickRandom([
-          'NEW YORK',
-          'LOS ANGELES',
-          'CHICAGO',
-          'TORONTO',
-          'VANCOUVER',
-          'MONTREAL',
-          'OTTAWA',
-        ]),
-        country: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
-        state: this.rng.pickRandom(['NY', 'CA', 'IL', 'ON']),
-        postCode: this.rng.randomIntInclusive(10000, 99999).toString(),
+        ...merchantDetail,
       },
     }
   }

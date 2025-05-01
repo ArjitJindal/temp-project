@@ -10,6 +10,7 @@ import {
 } from './sanctions'
 import { PAYMENT_METHODS_SEED, TRANSACTIONS_SEED } from './seeds'
 import {
+  CardDetailsSampler,
   CryptoTransactionSampler,
   PaymentDetailsSampler,
   TransactionSampler,
@@ -25,8 +26,10 @@ import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/Transaction
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import {
+  CounterPartyTransactionRuleSampler,
   CryptoTransactionRuleSampler,
   transactionRules,
+  counterPartyTransactionRules,
   TransactionRuleSampler,
 } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
@@ -43,6 +46,8 @@ export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   : envIs('local')
   ? 500
   : 50
+
+export const COUNTER_PARTY_TXN_COUNT = TXN_COUNT / 10
 
 export const CRYPTO_TXN_COUNT = process.env.SEED_CRYPTO_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_CRYPTO_TRANSACTIONS_COUNT)
@@ -72,6 +77,8 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
   private ruleSampler: TransactionRuleSampler = new TransactionRuleSampler()
   private cryptoTxnRuleSampler: CryptoTransactionRuleSampler =
     new CryptoTransactionRuleSampler()
+  private counterPartyTxnRuleSampler: CounterPartyTransactionRuleSampler =
+    new CounterPartyTransactionRuleSampler()
 
   constructor(seed: number) {
     super(seed)
@@ -134,12 +141,23 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
 
   protected generateSample(
     transactionIdForRule: number,
-    isCryptoTransaction: boolean
+    isCryptoTransaction: boolean,
+    isCounterPartyTransaction?: boolean
   ): InternalTransaction {
     const type = this.rng.pickRandom(TRANSACTION_TYPES)
+    let counterPartyDirection: 'origin' | 'destination' | null = null
+
+    if (isCounterPartyTransaction) {
+      counterPartyDirection =
+        this.rng.randomFloat(1) < 0.5 ? 'origin' : 'destination'
+    }
 
     // Hack in some suspended transactions for payment approvals
-    const hitRules: ExecutedRulesResult[] = !isCryptoTransaction
+    const hitRules: ExecutedRulesResult[] = isCounterPartyTransaction
+      ? this.counterPartyTxnRuleSampler.generateSample(
+          transactionIdForRule - TXN_COUNT - CRYPTO_TXN_COUNT + 1
+        )
+      : !isCryptoTransaction
       ? this.ruleSampler.generateSample(transactionIdForRule)
       : this.cryptoTxnRuleSampler.generateSample(
           transactionIdForRule - TXN_COUNT + 1
@@ -278,13 +296,20 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     const timestamp = this.sampleTimestamp()
 
     const transactionAmount = this.rng.randomInt(1_00_000)
+
+    const executedRules = isCounterPartyTransaction
+      ? counterPartyTransactionRules()
+      : transactionRules(isCryptoTransaction)
+
     const fullTransaction: InternalTransaction = {
       ...transaction,
       type: type,
       timestamp,
       transactionId,
-      originUserId,
-      destinationUserId,
+      originUserId:
+        counterPartyDirection === 'origin' ? undefined : originUserId,
+      destinationUserId:
+        counterPartyDirection === 'destination' ? undefined : destinationUserId,
       createdAt: timestamp,
       updatedAt: timestamp,
       status: getAggregatedRuleStatus(hitRules),
@@ -308,7 +333,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
           transaction
         ),
       },
-      executedRules: transactionRules(isCryptoTransaction).map((r) => ({
+      executedRules: executedRules.map((r) => ({
         ...r,
         ruleHit: ruleHitIds.includes(r.ruleInstanceId) ? true : false,
       })),
@@ -326,6 +351,13 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
           transactionAmount,
         },
         tags: [this.tagSampler.getSample()],
+      }),
+      // for counter party making sure it has card payment type
+      ...(counterPartyDirection === 'origin' && {
+        originPaymentDetails: new CardDetailsSampler().getSample(),
+      }),
+      ...(counterPartyDirection === 'destination' && {
+        destinationPaymentDetails: new CardDetailsSampler().getSample(),
       }),
     }
     return fullTransaction
@@ -363,7 +395,7 @@ export function internalToPublic(
 
 export const getTransactions: () => InternalTransaction[] = memoize(() => {
   const fullTransactionSampler = new FullTransactionSampler(TRANSACTIONS_SEED)
-  const transactions = [...Array(TXN_COUNT)].map((_, index) => {
+  let transactions = [...Array(TXN_COUNT)].map((_, index) => {
     return fullTransactionSampler.getSample(undefined, index, false)
   })
   if (hasFeature('CHAINALYSIS')) {
@@ -374,8 +406,18 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
         true
       )
     })
-    return [...transactions, ...cryptoTransactions]
+    transactions = [...transactions, ...cryptoTransactions]
   }
+  const counterParty = [...Array(COUNTER_PARTY_TXN_COUNT)].map((_, index) => {
+    return fullTransactionSampler.getSample(
+      undefined,
+      index + TXN_COUNT + CRYPTO_TXN_COUNT,
+      false,
+      true
+    )
+  })
+  transactions = [...transactions, ...counterParty]
+
   return transactions
 })
 

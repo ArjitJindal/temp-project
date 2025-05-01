@@ -7908,6 +7908,7 @@ components:
             - MONEY_AMOUNT
             - MONEY_CURRENCY
             - COUNTRY
+            - MERCHANT_NAME
         columnWidth:
           type: number
       required:

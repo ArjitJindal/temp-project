@@ -33,6 +33,7 @@ export const COPILOT_QUESTIONS = {
   USER_TRANSACTIONS: 'Transactions',
   WEBSITE: 'Website',
   RULE_LOGIC: 'Rule logic',
+  CARD_MERCHANT_IDENTIFIERS: 'Merchants transacted with',
 } as const
 
 export type QuestionId =
