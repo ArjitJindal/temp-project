@@ -1694,29 +1694,57 @@ const V8_CONVERSION: Readonly<
 
     const conditions: any[] = []
 
-    conditions.push({
-      '>=': [
-        {
-          '+': [
-            {
-              number_of_items: [
-                {
-                  var: 'agg:transactionWithUniqueBanksNamesSender$1',
-                },
-              ],
-            },
-            {
-              number_of_items: [
-                {
-                  var: 'agg:transactionWithUniqueBanksNamesReceiver$1',
-                },
-              ],
-            },
-          ],
-        },
-        banksLimit + 1,
-      ],
-    })
+    if (checkSender == 'none' && checkReceiver !== 'none') {
+      conditions.push({
+        '>=': [
+          {
+            number_of_items: [
+              {
+                var: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+              },
+            ],
+          },
+          banksLimit + 1,
+        ],
+      })
+    } else if (checkSender !== 'none' && checkReceiver == 'none') {
+      conditions.push({
+        '>=': [
+          {
+            number_of_items: [
+              {
+                var: 'agg:transactionWithUniqueBanksNamesSender$1',
+              },
+            ],
+          },
+          banksLimit + 1,
+        ],
+      })
+    } else if (checkSender !== 'none' && checkReceiver !== 'none') {
+      conditions.push({
+        '>=': [
+          {
+            '+': [
+              {
+                number_of_items: [
+                  {
+                    var: 'agg:transactionWithUniqueBanksNamesSender$1',
+                  },
+                ],
+              },
+              {
+                number_of_items: [
+                  {
+                    var: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+                  },
+                ],
+              },
+            ],
+          },
+          banksLimit + 1,
+        ],
+      })
+    }
 
     if (onlyCheckKnownUsers) {
       conditions.push({
