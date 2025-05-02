@@ -16,7 +16,7 @@ export default function CreateCaseConfirmModal(props: ConfirmModalProps) {
   return (
     <Confirm
       title="Are you sure you want to create a new Case?"
-      text="Please note that creating a new case would create a new case for this user with a new Case ID with the selected Alerts."
+      text="This action will create a new case with a new Case ID for the selected alert(s)."
       res={createNewCaseMutation.dataResource}
       onConfirm={() => {
         createNewCaseMutation.mutate({
