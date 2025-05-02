@@ -42,6 +42,7 @@ import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { logger } from '@/core/logger'
+import { updateLogMetadata, withContext } from '@/core/utils/context'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
@@ -168,10 +169,28 @@ export class RiskScoringV8Service {
   ): Promise<{
     riskFactorsResult: RiskFactorsResult
   }> {
+    const context = getContext()
     const result = await Promise.all(
-      riskFactors.map((factor) =>
-        this.calculateRiskFactorScore(factor, riskData)
-      )
+      riskFactors.map(async (factor) => {
+        const id = factor.id
+        return await withContext(
+          async () => {
+            updateLogMetadata({
+              riskFactorId: id,
+            })
+            logger.debug(`Running risk factor`)
+            const data = await this.calculateRiskFactorScore(factor, riskData)
+            logger.debug(`Completed running risk factor`)
+            return data
+          },
+          {
+            ...context,
+            metricDimensions: {
+              riskFactorId: id,
+            },
+          }
+        )
+      })
     )
 
     const riskClassificationScore = await this.getRiskClassificationValues()

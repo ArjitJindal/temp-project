@@ -248,7 +248,11 @@ export class LogicEvaluator {
     hitDirections: RuleHitDirection[]
     vars: ExecutedLogicVars[]
   }> {
-    const traceNamespace = `${getContext()?.metricDimensions?.ruleInstanceId}`
+    const lambdaContext = getContext()
+    const traceNamespace = `${
+      lambdaContext?.metricDimensions?.ruleInstanceId ??
+      lambdaContext?.metricDimensions?.riskFactorId
+    }`
     const v8SubSegment = await addNewSubsegment(
       traceNamespace,
       'Logic Evaluation'
