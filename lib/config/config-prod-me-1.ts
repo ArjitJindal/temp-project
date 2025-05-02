@@ -128,6 +128,6 @@ export const config: Config = {
   clickhouse: {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.me-central-1.vpce-svc-0a5c104af59ece6df',
-    maxTotalMemoryGb: 48,
+    maxTotalMemoryGb: 24,
   },
 }
