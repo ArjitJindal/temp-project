@@ -232,21 +232,21 @@ export class RuleService {
     return false // Rule should be kept
   }
 
+  private featureRuleMappings: FeatureRuleMapping[] = [
+    { feature: 'ACURIS', rulesToRemove: ['R-16'] },
+    { feature: 'DOW_JONES', rulesToRemove: ['R-16'] },
+    { feature: 'OPEN_SANCTIONS', rulesToRemove: ['R-16'] },
+  ]
+
   async getAllRules(): Promise<Array<Rule>> {
     let rules = await this.ruleRepository.getAllRules()
     rules = await Promise.all(
       rules.map((rule) => this.getTenantSpecificRule(rule))
     )
-    // add features DOW_JONES and OPEN_SANCTIONS also
-    const featureRuleMappings = [
-      { feature: 'ACURIS', rulesToRemove: ['R-16'] },
-      { feature: 'DOW_JONES', rulesToRemove: ['R-16'] },
-      { feature: 'OPEN_SANCTIONS', rulesToRemove: ['R-16'] },
-    ]
 
     return rules.filter(
       (rule) =>
-        !this.shouldRemoveRuleBasedOnFeatures(rule, featureRuleMappings) &&
+        !this.shouldRemoveRuleBasedOnFeatures(rule, this.featureRuleMappings) &&
         (isEmpty(rule.requiredFeatures) ||
           this.hasRequiredFeaturesForRule(rule))
     )
@@ -341,10 +341,21 @@ export class RuleService {
      * 1. If bestSearchesCount >= 3, return all bestSearches and otherSearches is 2 only
      * 2. If bestSearchesCount < 3, return all bestSearches and otherSearches is 8 - bestSearchesCount
      */
+    const filteredBestSearches = bestSearchesResult.filter(
+      (rule) =>
+        !this.shouldRemoveRuleBasedOnFeatures(rule, this.featureRuleMappings)
+    )
+
+    const filteredOtherSearches = otherSearchesResult
+      .filter(
+        (rule) =>
+          !this.shouldRemoveRuleBasedOnFeatures(rule, this.featureRuleMappings)
+      )
+      .slice(0, 10 - bestSearchesCount)
 
     return {
-      bestSearches: bestSearchesResult,
-      otherSearches: otherSearchesResult.slice(0, 10 - bestSearchesCount),
+      bestSearches: filteredBestSearches,
+      otherSearches: filteredOtherSearches,
       filtersApplied,
     }
   }

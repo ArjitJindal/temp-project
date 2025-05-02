@@ -3,7 +3,7 @@ import { compact, isEmpty, isEqual, sortBy, uniq } from 'lodash';
 import { useDebounce, useLocalStorageState } from 'ahooks';
 import { replaceMagicKeyword } from '@flagright/lib/utils/object';
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency';
-import { Rule, RuleNature } from '@/apis';
+import { Rule, RuleNature, Feature as FeatureName } from '@/apis';
 import { FilterProps } from '@/components/library/Filter/types';
 import SearchBar from '@/components/library/SearchBar';
 import { ItemGroup, Item } from '@/components/library/SearchBar/SearchBarDropdown';
@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { RULES_UNIVERSAL_SEARCH } from '@/utils/queries/keys';
 import { AsyncResource, getOr, isLoading, isSuccess, success } from '@/utils/asyncResource';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Option } from '@/components/library/Select';
 import { useDeepEqualEffect } from '@/utils/hooks';
 
@@ -44,6 +44,7 @@ const countFilters = (filters: RuleUniversalSearchFilters) => {
 export const RulesSearchBar = (props: Props) => {
   const { rules, onSelectedRule, onScenarioClick } = props;
   const settings = useSettings();
+  const features = useFeatures();
 
   const [universalSearchFilterParams, setUniversalSearchFilterParams] =
     useState<RuleUniversalSearchFilters>(DEFAULT_FILTER_PARAMS);
@@ -144,7 +145,18 @@ export const RulesSearchBar = (props: Props) => {
       isAISearch: isAIEnabled,
       disableGptSearch: isAIEnabled && isAiFiltersIncreased,
     });
+    const filterRulesByFeatures = (rules: Rule[]) =>
+      rules.filter(({ requiredFeatures }) =>
+        (requiredFeatures ?? []).every((f) => features.includes(f as FeatureName)),
+      );
 
+    if (rulesSearchResult.bestSearches) {
+      rulesSearchResult.bestSearches = filterRulesByFeatures(rulesSearchResult.bestSearches);
+    }
+
+    if (rulesSearchResult.otherSearches) {
+      rulesSearchResult.otherSearches = filterRulesByFeatures(rulesSearchResult.otherSearches);
+    }
     const result = replaceMagicKeyword<typeof rulesSearchResult>(
       rulesSearchResult,
       DEFAULT_CURRENCY_KEYWORD,
