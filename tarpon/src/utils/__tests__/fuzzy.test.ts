@@ -1,31 +1,48 @@
 import {
   token_similarity_sort_ratio,
   calculateJaroWinklerDistance,
-} from '../fuzzball'
+} from '../fuzzy'
 import { calculateLevenshteinDistancePercentage } from '../search'
 
 describe('token_similarity_sort_ratio', () => {
   it('should return the correct result', () => {
     expect(
-      token_similarity_sort_ratio('abdul ali aziz', 'abdul mutalib aziz')
+      token_similarity_sort_ratio('abdul ali aziz', 'abdul mutalib aziz', {
+        partialMatch: false,
+        partialMatchLength: 3,
+        omitSpaces: true,
+      })
     ).toBe(
       calculateLevenshteinDistancePercentage('abdulaliaziz', 'abdulmutalibaziz')
     )
-    expect(token_similarity_sort_ratio('John Doe', 'John Smith')).toBe(
-      calculateLevenshteinDistancePercentage('JohnDoe', 'JohnSmith')
-    )
-    expect(token_similarity_sort_ratio('Smit Jon', 'John Smith')).toBe(
-      calculateLevenshteinDistancePercentage('JonSmit', 'JohnSmith')
-    )
     expect(
-      token_similarity_sort_ratio('John Smith Deo', 'John Deo Smith')
+      token_similarity_sort_ratio('John Doe', 'John Smith', {
+        partialMatch: false,
+        partialMatchLength: 2,
+        omitSpaces: true,
+      })
+    ).toBe(calculateLevenshteinDistancePercentage('JohnDoe', 'JohnSmith'))
+    expect(
+      token_similarity_sort_ratio('Smit Jon', 'John Smith', {
+        partialMatch: false,
+        partialMatchLength: 2,
+        omitSpaces: true,
+      })
+    ).toBe(calculateLevenshteinDistancePercentage('JonSmit', 'JohnSmith'))
+    expect(
+      token_similarity_sort_ratio('John Smith Deo', 'John Deo Smith', {
+        partialMatch: false,
+        partialMatchLength: 3,
+        omitSpaces: true,
+      })
     ).toBe(
       calculateLevenshteinDistancePercentage('JohnSmithDeo', 'JohnSmithDeo')
     )
     expect(
       token_similarity_sort_ratio(
         'Abdul Ali Abdul Aziz',
-        'Kadir Abdul Ali Azizul Khan'
+        'Kadir Abdul Ali Azizul Khan',
+        { partialMatch: false, partialMatchLength: 4, omitSpaces: true }
       )
     ).toBe(
       calculateLevenshteinDistancePercentage(
@@ -33,6 +50,13 @@ describe('token_similarity_sort_ratio', () => {
         'AbdulAliAzizulKadirKhan'
       )
     )
+    expect(
+      token_similarity_sort_ratio('mohammad ohab', 'muhammad', {
+        partialMatch: true,
+        partialMatchLength: 2,
+        omitSpaces: false,
+      })
+    ).toBe(calculateLevenshteinDistancePercentage('mohammadohab', 'muhammad'))
   })
 })
 

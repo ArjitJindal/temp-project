@@ -10,9 +10,11 @@ import {
   sanitizeOpenSanctionsEntities,
 } from './utils'
 import {
-  calculateJaroWinklerDistance,
+  FuzzinessOptions,
+  fuzzy_levenshtein_distance,
+  jaro_winkler_distance,
   token_similarity_sort_ratio,
-} from '@/utils/fuzzball'
+} from '@/utils/fuzzy'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -21,7 +23,6 @@ import {
 import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
@@ -926,16 +927,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private getFuzzinessFunction(
     fuzzinessSettings: FuzzinessSetting | undefined,
     manualSearch: boolean | undefined
-  ): (a: string, b: string) => number {
+  ): (a: string, b: string, options: FuzzinessOptions) => number {
     if (fuzzinessSettings?.similarTermsConsideration || manualSearch) {
       return token_similarity_sort_ratio
     }
 
     if (fuzzinessSettings?.jarowinklerDistance) {
-      return calculateJaroWinklerDistance
+      return jaro_winkler_distance
     }
 
-    return calculateLevenshteinDistancePercentage
+    return fuzzy_levenshtein_distance
   }
 
   public processNameWithStopwords = (name: string, stopwords?: Set<string>) => {
@@ -958,7 +959,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     fuzzinessSettings: FuzzinessSetting | undefined,
     stopwordSet: Set<string> | undefined
   ): SanctionsEntity[] {
-    const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
+    const keepSpaces =
+      Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness) && false
     const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
       fuzzinessSettings?.similarTermsConsideration ||
@@ -971,9 +973,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       .toLowerCase()
       .trim()
     const searchTerm = shouldSanitizeString
-      ? sanitizeString(modifiedTerm, keepSpaces)
+      ? sanitizeString(modifiedTerm)
       : normalize(modifiedTerm)
-
+    const searchTermTokensLength = searchTerm.split(' ').length
     return results.filter((entity) => {
       const values = uniq(entity.normalizedAka || []).map((name) =>
         this.processNameWithStopwords(name, stopwordSet)
@@ -985,9 +987,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         return true
       } else {
         for (let value of values) {
-          value = shouldSanitizeString
-            ? sanitizeString(value, keepSpaces)
-            : value
+          value = shouldSanitizeString ? sanitizeString(value) : value
           if (value === searchTerm) {
             return true
           }
@@ -995,7 +995,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             fuzzinessSettings,
             request.manualSearch
           )
-          const percentageSimilarity = evaluatingFunction(searchTerm, value)
+          const percentageSimilarity = evaluatingFunction(searchTerm, value, {
+            omitSpaces: !keepSpaces,
+            partialMatch: !!request.partialMatch || !!request.manualSearch,
+            partialMatchLength: searchTermTokensLength,
+          })
           const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
             request,
             percentageSimilarity

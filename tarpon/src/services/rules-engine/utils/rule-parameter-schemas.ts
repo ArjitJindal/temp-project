@@ -866,6 +866,19 @@ export const IS_ACTIVE_SCHEMA = {
   ),
 } as const
 
+export const PARTIAL_MATCH_SCHEMA = {
+  type: 'boolean',
+  nullable: true,
+  title: 'Partial match',
+  description: `If true, partial fuzzy matching will be applied`,
+  ...uiSchema(
+    {},
+    {
+      requiredFeatures: ['DOW_JONES', 'ACURIS', 'OPEN_SANCTIONS'],
+    }
+  ),
+} as const
+
 export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({
     type: 'object',

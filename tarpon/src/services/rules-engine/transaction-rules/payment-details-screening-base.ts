@@ -5,6 +5,7 @@ import {
   FUZZINESS_SETTINGS_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
+  PARTIAL_MATCH_SCHEMA,
   PAYMENT_DETAILS_SCREENING_FIELDS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
@@ -14,6 +15,7 @@ import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
   getIsActiveParameters,
+  getPartialMatchParameters,
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { TransactionRule } from './rule'
@@ -46,6 +48,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
   isActive?: boolean
+  partialMatch?: boolean
 }
 
 @traceable
@@ -66,6 +69,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
+        partialMatch: PARTIAL_MATCH_SCHEMA,
       },
       required: ['fuzziness', 'fuzzinessSetting', 'screeningFields'],
       additionalProperties: false,
@@ -85,6 +89,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       isActive,
       screeningTypes,
       screeningFields,
+      partialMatch,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
@@ -120,6 +125,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getEntityTypeForSearch(providers, 'EXTERNAL_USER'),
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
+              ...getPartialMatchParameters(providers, partialMatch),
             },
             hitContext
           )
@@ -157,6 +163,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getEntityTypeForSearch(providers, 'BANK'),
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
+              ...getPartialMatchParameters(providers, partialMatch),
             },
             hitContext
           )

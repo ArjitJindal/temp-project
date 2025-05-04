@@ -126,3 +126,17 @@ export function getIsActiveParameters(
       : {}),
   }
 }
+
+export function getPartialMatchParameters(
+  providers: SanctionsDataProviderName[],
+  partialMatch?: boolean
+): {
+  partialMatch?: boolean
+} {
+  if (providers.includes('comply-advantage') || !partialMatch) {
+    return {}
+  }
+  return {
+    partialMatch,
+  }
+}

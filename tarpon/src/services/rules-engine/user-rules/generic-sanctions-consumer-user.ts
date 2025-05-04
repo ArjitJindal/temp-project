@@ -7,10 +7,15 @@ import {
   GENERIC_SCREENING_VALUES_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
+  PARTIAL_MATCH_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
-import { getIsActiveParameters, getStopwordSettings } from '../utils/rule-utils'
+import {
+  getIsActiveParameters,
+  getPartialMatchParameters,
+  getStopwordSettings,
+} from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
@@ -32,6 +37,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
   isActive?: boolean
+  partialMatch?: boolean
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -59,6 +65,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         }),
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        partialMatch: PARTIAL_MATCH_SCHEMA,
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
       },
@@ -76,6 +83,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       fuzzinessSetting,
       stopwords,
       isActive,
+      partialMatch,
     } = this.parameters
     const user = this.user as User
     if (
@@ -146,6 +154,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         },
         ...getIsActiveParameters(providers, screeningTypes, isActive),
         ...getStopwordSettings(providers, stopwords),
+        ...getPartialMatchParameters(providers, partialMatch),
       },
       hitContext,
       undefined

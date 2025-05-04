@@ -13174,6 +13174,8 @@ components:
           type: boolean
         isActiveSanctioned:
           type: boolean
+        partialMatch:
+          type: boolean
       required:
         - searchTerm
     ListSearchProfileResponse:

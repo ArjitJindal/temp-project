@@ -8,6 +8,7 @@ import {
   STOPWORDS_OPTIONAL_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
+  PARTIAL_MATCH_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -15,6 +16,7 @@ import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
   getIsActiveParameters,
+  getPartialMatchParameters,
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
@@ -44,6 +46,7 @@ export type SanctionsBusinessUserRuleParameters = {
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
   isActive?: boolean
+  partialMatch?: boolean
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -73,6 +76,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
+        partialMatch: PARTIAL_MATCH_SCHEMA,
       },
       required: ['fuzziness', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -88,6 +92,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       fuzzinessSetting,
       stopwords,
       isActive,
+      partialMatch,
     } = this.parameters
 
     if (
@@ -155,6 +160,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               ...getFuzzinessSettings(providers, fuzzinessSetting),
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
+              ...getPartialMatchParameters(providers, partialMatch),
             },
             hitContext
           )

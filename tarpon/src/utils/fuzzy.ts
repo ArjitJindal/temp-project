@@ -1,5 +1,11 @@
-import { intersection as intersectionFn, uniq } from 'lodash'
+import { compact, intersection as intersectionFn, uniq } from 'lodash'
 import { calculateLevenshteinDistancePercentage } from './search'
+
+export interface FuzzinessOptions {
+  partialMatch: boolean
+  omitSpaces: boolean
+  partialMatchLength: number
+}
 
 /**
  * Calculates similarity between two strings using token-based sorting and Levenshtein distance
@@ -8,7 +14,54 @@ import { calculateLevenshteinDistancePercentage } from './search'
  * 3. Applies similarity-based token sorting
  * 4. Returns final similarity percentage
  */
-export function token_similarity_sort_ratio(str1: string, str2: string) {
+export function token_similarity_sort_ratio(
+  str1: string,
+  str2: string,
+  options: FuzzinessOptions
+) {
+  const { tokens1, tokens2 } = arrange_token_lists(str1, str2)
+  const separator = ''
+  if (options?.partialMatch) {
+    return getSimilarityPercentage(
+      tokens1,
+      tokens2,
+      separator,
+      options.partialMatchLength,
+      calculateLevenshteinDistancePercentage
+    )
+  }
+  return calculateLevenshteinDistancePercentage(
+    tokens1.join(separator),
+    tokens2.join(separator)
+  )
+}
+
+export function fuzzy_levenshtein_distance(
+  str1: string,
+  str2: string,
+  options: FuzzinessOptions
+) {
+  const { tokens1, tokens2 } = arrange_token_lists(str1, str2)
+  const separator = options?.omitSpaces ? '' : ' '
+  if (options?.partialMatch) {
+    return getSimilarityPercentage(
+      tokens1,
+      tokens2,
+      separator,
+      options.partialMatchLength,
+      calculateLevenshteinDistancePercentage
+    )
+  }
+  return calculateLevenshteinDistancePercentage(str1, str2)
+}
+
+export function arrange_token_lists(
+  str1: string,
+  str2: string
+): {
+  tokens1: string[]
+  tokens2: string[]
+} {
   const tokens1 = unique_tokens(str1)
   const tokens2 = unique_tokens(str2)
 
@@ -19,10 +72,11 @@ export function token_similarity_sort_ratio(str1: string, str2: string) {
   const first = orderedTokenLists[0]
   const second = orderedTokenLists[1]
   const newSecond = token_similarity_sort(first, second)
-  return calculateLevenshteinDistancePercentage(
-    first.join(''),
-    newSecond.join('')
-  )
+
+  return {
+    tokens1: compact(first),
+    tokens2: compact(newSecond),
+  }
 }
 
 /**
@@ -117,7 +171,6 @@ function token_similarity_sort(sorted1: string[], sorted2: string[]) {
   const newSorted2: string[] = new Array(oldSorted2.length)
   const usedColumn = new Set<number>()
   const usedRow = new Set<number>()
-
   while (j < sorted1.length && i < similarityVector.length) {
     if (
       !usedRow.has(similarityVector[i].coorinates[0]) &&
@@ -208,6 +261,26 @@ function unique_tokens(str: string) {
  * 6. Applies prefix boost if applicable
  * Returns Jaro-Winkler distance between 0 and 1
  */
+
+export function jaro_winkler_distance(
+  s1: string,
+  s2: string,
+  options?: FuzzinessOptions
+): number {
+  const { tokens1, tokens2 } = arrange_token_lists(s1, s2)
+  if (options?.partialMatch) {
+    const separator = options?.omitSpaces ? '' : ' '
+    return getSimilarityPercentage(
+      tokens1,
+      tokens2,
+      separator,
+      options.partialMatchLength,
+      calculateJaroWinklerDistance
+    )
+  }
+  return calculateJaroWinklerDistance(s1, s2)
+}
+
 export function calculateJaroWinklerDistance(s1: string, s2: string): number {
   if (s1 === s2) {
     return 100
@@ -273,4 +346,17 @@ export function calculateJaroWinklerDistance(s1: string, s2: string): number {
   }
 
   return (jaro + prefix * 0.1 * (1 - jaro)) * 100
+}
+
+function getSimilarityPercentage(
+  tokens1: string[],
+  tokens2: string[],
+  separator: string,
+  partialMatchLength: number,
+  operatingFunction: (s1: string, s2: string) => number
+) {
+  return operatingFunction(
+    tokens1.slice(0, partialMatchLength).join(separator),
+    tokens2.slice(0, partialMatchLength).join(separator)
+  )
 }
