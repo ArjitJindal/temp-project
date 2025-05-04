@@ -289,6 +289,7 @@ describe('Sanctions Service', () => {
           ),
           {
             userId: hitContext1.userId,
+            entity: 'USER',
           }
         )
       }

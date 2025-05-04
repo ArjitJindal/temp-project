@@ -85,6 +85,7 @@ import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -215,7 +216,8 @@ export class MongoDbTransactionRepository
 
   public getTransactionsMongoQuery(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
-    additionalFilters: Filter<InternalTransaction>[] = []
+    additionalFilters: Filter<InternalTransaction>[] = [],
+    alert?: Alert | null
   ): Filter<InternalTransaction> {
     const conditions: Filter<InternalTransaction>[] = additionalFilters
 
@@ -283,6 +285,16 @@ export class MongoDbTransactionRepository
           createPaymentDetailsFilter('destinationPaymentDetails'),
         ],
       } as Filter<InternalTransaction>)
+      // This is added to handle the scenario of counter party tnxs with no accout number
+      if (alert?.ruleId === 'R-169') {
+        alert?.ruleHitMeta?.hitDirections?.includes('ORIGIN')
+          ? conditions.push({
+              destinationPaymentMethodId: undefined,
+            })
+          : conditions.push({
+              originPaymentMethodId: undefined,
+            })
+      }
     }
 
     if (params.filterOriginCountries) {
@@ -766,13 +778,14 @@ export class MongoDbTransactionRepository
 
   public async getTransactionsCursorPaginate(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
-    options?: { projection?: Document }
+    options?: { projection?: Document },
+    alert?: Alert | null
   ): Promise<CursorPaginationResponse<InternalTransaction>> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
 
-    const filter = this.getTransactionsMongoQuery(params)
+    const filter = this.getTransactionsMongoQuery(params, [], alert)
 
     return await cursorPaginate<InternalTransaction>(
       collection,

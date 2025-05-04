@@ -4696,6 +4696,10 @@ paths:
           type: string
         in: query
         name: filterPaymentDetailName
+      - schema:
+          type: string
+        in: query
+        name: filterPaymentMethodId
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
@@ -6417,6 +6421,12 @@ paths:
             type: array
             items:
               type: string
+          name: filterPaymentMethodId
+          in: query
+        - schema:
+            type: array
+            items:
+              type: string
           name: filterHitIds
           in: query
         - schema:
@@ -6445,6 +6455,10 @@ paths:
             type: string
           in: query
           name: alertId
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsDetailsEntityType
+          in: query
+          name: filterScreeningHitEntityType
       operationId: search-sanctions-hits
   /sanctions/whitelist:
     get:
@@ -12825,6 +12839,10 @@ components:
         sanctionsEntity:
           $ref: '#/components/schemas/SanctionsEntity'
         userId:
+          type: string
+        paymentMethodId:
+          type: string
+        alertId:
           type: string
         entity:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity

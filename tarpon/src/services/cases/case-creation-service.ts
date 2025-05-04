@@ -675,7 +675,6 @@ export class CaseCreationService {
           hitRule.ruleHitMeta != null
             ? await this.addOrUpdateSanctionsHits(hitRule.ruleHitMeta, false)
             : undefined
-
         const auth0Domain =
           getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
         const slaService = new SLAService(this.tenantId, auth0Domain, {
@@ -806,13 +805,18 @@ export class CaseCreationService {
           sanctionsDetails.length > 0
             ? {
                 ...alert.ruleHitMeta,
-                sanctionsDetails: uniqBy(
-                  [
-                    ...(alert?.ruleHitMeta?.sanctionsDetails ?? []),
-                    ...(sanctionsDetails ?? []),
-                  ],
-                  'searchId'
-                ),
+                sanctionsDetails: (() => {
+                  return uniqBy(
+                    [
+                      ...(alert?.ruleHitMeta?.sanctionsDetails ?? []),
+                      ...(sanctionsDetails ?? []),
+                    ],
+                    (item) =>
+                      `${item.searchId}_${
+                        item.hitContext?.paymentMethodId || 'unknown'
+                      }_${item.entityType}`
+                  )
+                })(),
               }
             : alert.ruleHitMeta
 

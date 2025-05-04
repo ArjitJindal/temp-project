@@ -244,6 +244,16 @@ export function useColumns(
         key: 'createdAt',
         type: DATE_TIME,
       }),
+      helper.simple<'alertId'>({
+        title: 'Alert ID',
+        key: 'alertId',
+        type: STRING,
+      }),
+      helper.simple<'paymentMethodId'>({
+        title: 'Payment Identifier',
+        key: 'paymentMethodId',
+        type: STRING,
+      }),
       helper.display({
         title: 'Actions',
         defaultWidth: 120,
