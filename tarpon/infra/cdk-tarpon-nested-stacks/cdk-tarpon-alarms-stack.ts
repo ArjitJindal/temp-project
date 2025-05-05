@@ -77,31 +77,24 @@ const KINESIS_STREAM_NAMES = [
 
 interface AlarmProps extends cdk.NestedStackProps {
   config: Config
-  betterUptimeCloudWatchTopic: Topic
   zendutyCloudWatchTopic: Topic
   batchJobStateMachineArn: string
 }
 
 export class CdkTarponAlarmsStack extends cdk.NestedStack {
-  betterUptimeCloudWatchTopic: Topic
   zendutyCloudWatchTopic: Topic
   config: Config
 
   constructor(scope: Construct, id: string, props: AlarmProps) {
     super(scope, id, props)
     this.config = props.config
-    this.betterUptimeCloudWatchTopic = props.betterUptimeCloudWatchTopic
     this.zendutyCloudWatchTopic = props.zendutyCloudWatchTopic
-    createTarponOverallLambdaAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      this.zendutyCloudWatchTopic
-    )
+
+    createTarponOverallLambdaAlarm(this, this.zendutyCloudWatchTopic)
 
     for (const lambdaName of allLambdas) {
       createLambdaDurationAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         lambdaName,
         Duration.seconds(LAMBDAS[lambdaName].expectedMaxSeconds)
@@ -112,20 +105,13 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       if (lambdaName !== StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME) {
         createLambdaErrorPercentageAlarm(
           this,
-          this.betterUptimeCloudWatchTopic,
           this.zendutyCloudWatchTopic,
           lambdaName
         )
       }
-      createLambdaThrottlingAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        this.zendutyCloudWatchTopic,
-        lambdaName
-      )
+      createLambdaThrottlingAlarm(this, this.zendutyCloudWatchTopic, lambdaName)
       createLambdaMemoryUtilizationAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         lambdaName
       )
@@ -134,7 +120,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     for (const lambdaName of KINESIS_CONSUMER_LAMBDAS) {
       createLambdaConsumerIteratorAgeAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         lambdaName
       )
@@ -143,7 +128,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     for (let i = 0; i < API_GATEWAY_ALARM_NAMES.length; i++) {
       createAPIGatewayAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         API_GATEWAY_ALARM_NAMES[i],
         API_GATEWAY_NAMES[i]
@@ -153,7 +137,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     for (const streamDetails of KINESIS_STREAM_NAMES) {
       createKinesisAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         `${streamDetails.streamId}PutRecordErrorRate`,
         streamDetails.streamName
@@ -164,7 +147,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         dynamoTableOperations.map((operation) => {
           createDynamoDBAlarm(
             this,
-            this.betterUptimeCloudWatchTopic,
             this.zendutyCloudWatchTopic,
             `Dynamo${tableName}${operation}${metric}`,
             tableName,
@@ -184,7 +166,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
 
         createDynamoDBAlarm(
           this,
-          this.betterUptimeCloudWatchTopic,
           this.zendutyCloudWatchTopic,
           `Dynamo${tableName}ConsumedReadCapacityUnits`,
           tableName,
@@ -203,7 +184,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         )
         createDynamoDBAlarm(
           this,
-          this.betterUptimeCloudWatchTopic,
           this.zendutyCloudWatchTopic,
           `Dynamo${tableName}ConsumedWriteCapacityUnits`,
           tableName,
@@ -228,21 +208,18 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     for (const sqsQueue of Object.values(SQSQueues)) {
       createSQSOldestMessageAgeAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         sqsQueue.name,
         Duration.minutes(sqsQueue.oldestMsgAgeAlarmThresholdMinutes ?? 30)
       )
       createSQSOldestMessageAgeAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         getDeadLetterQueueName(sqsQueue.name),
         Duration.minutes(5)
       )
       createSQSOldestMessageAgeAlarm(
         this,
-        this.betterUptimeCloudWatchTopic,
         this.zendutyCloudWatchTopic,
         `NintyMin${getDeadLetterQueueName(sqsQueue.name)}`,
         Duration.minutes(90)
@@ -278,12 +255,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       })
     }
 
-    createRuleHitRateAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      this.zendutyCloudWatchTopic,
-      25
-    )
+    createRuleHitRateAlarm(this, this.zendutyCloudWatchTopic, 25)
 
     /* Canaries */
 
@@ -291,7 +263,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
       for (const canaryName of Object.keys(CANARIES)) {
         createCanarySuccessPercentageAlarm(
           this,
-          this.betterUptimeCloudWatchTopic,
           this.zendutyCloudWatchTopic,
           canaryName,
           90
@@ -301,7 +272,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
 
     createStateMachineAlarm(
       this,
-      this.betterUptimeCloudWatchTopic,
       this.zendutyCloudWatchTopic,
       props.batchJobStateMachineArn
     )

@@ -28,7 +28,6 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
   lambdaExecutionRole: IRole
   functionProps: Partial<FunctionProps>
-  betterUptimeCloudWatchTopic: Topic
   zendutyCloudWatchTopic: Topic
   domainName?: DomainName
 }
@@ -36,15 +35,11 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
 export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
   config: Config
   functionProps: Partial<FunctionProps>
+
   constructor(scope: Construct, id: string, props: ConsoleLambdasProps) {
     super(scope, id, props)
     this.config = props.config
-    const {
-      lambdaExecutionRole,
-      betterUptimeCloudWatchTopic,
-      zendutyCloudWatchTopic,
-      domainName,
-    } = props
+    const { lambdaExecutionRole, zendutyCloudWatchTopic, domainName } = props
 
     const importBucketName = getNameForGlobalResource(
       StackConstants.S3_IMPORT_BUCKET_PREFIX,
@@ -68,7 +63,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
 
     createAPIGatewayThrottlingAlarm(
       this,
-      betterUptimeCloudWatchTopic,
       zendutyCloudWatchTopic,
       consoleApiLogGroup,
       StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,

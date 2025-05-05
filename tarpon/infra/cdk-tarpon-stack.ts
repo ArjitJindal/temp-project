@@ -146,7 +146,6 @@ const deployKinesisConsumer = !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
-  betterUptimeCloudWatchTopic: Topic
   zendutyCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
 
@@ -168,15 +167,6 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * SQS & SNS
      */
-    const BetterUptimeCloudWatchTopic = new Topic(
-      this,
-      StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
-      {
-        displayName: StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
-        topicName: StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
-      }
-    )
-    this.betterUptimeCloudWatchTopic = BetterUptimeCloudWatchTopic
 
     const ZendutyCloudWatchTopic = new Topic(
       this,
@@ -187,14 +177,6 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
-
-    new Subscription(this, StackConstants.BETTER_UPTIME_SUBSCRIPTION_NAME, {
-      topic: this.betterUptimeCloudWatchTopic,
-      endpoint: config.application.BETTERUPTIME_HOOK_URL
-        ? config.application.BETTERUPTIME_HOOK_URL
-        : '',
-      protocol: SubscriptionProtocol.HTTPS,
-    })
 
     new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
       topic: this.zendutyCloudWatchTopic,
@@ -980,7 +962,6 @@ export class CdkTarponStack extends cdk.Stack {
     const batchJobRunnerLogGroupName = batchJobRunnerHandler.logGroup
     createFinCENSTFPConnectionAlarm(
       this,
-      this.betterUptimeCloudWatchTopic,
       this.zendutyCloudWatchTopic,
       batchJobRunnerLogGroupName,
       StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
@@ -1377,7 +1358,6 @@ export class CdkTarponStack extends cdk.Stack {
 
     createAPIGatewayThrottlingAlarm(
       this,
-      this.betterUptimeCloudWatchTopic,
       this.zendutyCloudWatchTopic,
       publicApiLogGroup,
       StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
@@ -1396,7 +1376,6 @@ export class CdkTarponStack extends cdk.Stack {
 
     createAPIGatewayThrottlingAlarm(
       this,
-      this.betterUptimeCloudWatchTopic,
       this.zendutyCloudWatchTopic,
       publicConsoleApiLogGroup,
       StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
@@ -1477,7 +1456,6 @@ export class CdkTarponStack extends cdk.Stack {
     if (!isDevUserStack) {
       new CdkTarponAlarmsStack(this, `${config.stage}-tarpon-alarms`, {
         config,
-        betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
         batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       })
@@ -1497,7 +1475,6 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         functionProps: this.functionProps,
         domainName,
-        betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       }
     )

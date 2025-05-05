@@ -151,7 +151,6 @@ export type Config = {
     CONSOLE_URI: string
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
     NODE_ENV?: string
-    BETTERUPTIME_HOOK_URL?: string
     ZENDUTY_WEBHOOK_URL?: string
     POSTMAN_SECRET_ARN?: string
     SLACK_CLIENT_ID: string

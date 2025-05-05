@@ -214,10 +214,6 @@ export const StackConstants = {
     'MongoUpdateConsumerFunction'
   ),
   AUDIT_LOG_TOPIC_NAME: getResourceName('AuditLogTopic'),
-  BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME: getResourceName(
-    'BetterUptimeCloudWatchTopic'
-  ),
-  BETTER_UPTIME_SUBSCRIPTION_NAME: getResourceName('Subscription'),
   ZENDUTY_CLOUD_WATCH_TOPIC_NAME: getResourceName('ZendutyCloudWatchTopic'),
   ZENDUTY_SUBSCRIPTION_NAME: getResourceName('ZendutySubscription'),
   TARPON_API_NAME: getResourceName('TarponAPI'),

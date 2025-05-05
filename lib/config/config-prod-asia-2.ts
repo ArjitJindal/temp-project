@@ -110,8 +110,6 @@ export const config: Config = {
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
       '01c3b373-c01a-48b2-96f7-3fcf17dd0c91',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
-    BETTERUPTIME_HOOK_URL:
-      'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/F1qqouNUNcuyfmwMwSEpjRC2',
     ZENDUTY_WEBHOOK_URL:
       'https://events.zenduty.com/integration/ro7ie/cloudwatch_v2/94d6c1fe-c451-47eb-982f-89b27001a1b1/',
     CONSOLE_URI: 'https://console.flagright.com',
