@@ -3,19 +3,18 @@ import { StringLike } from '@visx/scale';
 import { groupBy } from 'lodash';
 import React from 'react';
 import { Group } from '@visx/group';
-import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
+import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import cn from 'clsx';
+import SeriesTooltip from '../shared/SeriesTooltip';
 import { LineData } from './types';
 import s from './index.module.less';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
 import { TooltipData, useColorScale, useScales } from '@/components/charts/Line/helpers';
-
 import { DEFAULT_PADDINGS, Paddings } from '@/components/charts/shared/helpers';
 import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { AsyncResource, getOr, isLoading, map } from '@/utils/asyncResource';
 import { makeRandomNumberGenerator } from '@/utils/prng';
-import SeriesTooltip from '@/components/charts/shared/SeriesTooltip';
 import CustomLegendOrdinal from '@/components/charts/shared/CustomLegendOrdinal';
 import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
 import { DefaultAxisBottom, DefaultAxisLeft } from '@/components/charts/shared/DefaultAxis';
@@ -37,8 +36,6 @@ interface Props<X extends StringLike, Series extends StringLike> {
   formatX?: Formatter<X>;
   formatY?: Formatter<number>;
   formatSeries?: Formatter<Series>;
-  // dashedLinesSeries?: Series[];
-  // customTooltip?: Tooltip;
 }
 
 export default function LineChart<X extends StringLike, Series extends StringLike>(
@@ -49,13 +46,10 @@ export default function LineChart<X extends StringLike, Series extends StringLik
     height,
     colors,
     hideLegend,
-    // dashedLinesSeries,
-    // customTooltip,
     formatX = DEFAULT_FORMATTER,
     formatY = DEFAULT_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
   } = props;
-  // const tooltip = customTooltip ? { tooltip: customTooltip } : {};
 
   const showSkeleton = isLoading(data) && getOr(data, null) == null;
   const dataValue: LineData<string, string> = getOr(
@@ -107,11 +101,12 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
   const lines = groupBy(data, ({ series }) => series?.toString() ?? '');
   const innerHeight = size.height - paddings.bottom - paddings.top;
 
-  const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } =
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } =
     useTooltip<TooltipData<X>>();
 
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     scroll: true,
+    detectBounds: true,
   });
 
   const highlightedItems =
@@ -147,6 +142,11 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
     }
 
     return data[nearestIndex].xValue;
+  };
+
+  const tooltipStyles = {
+    ...defaultStyles,
+    zIndex: 9999,
   };
 
   return (
@@ -227,8 +227,14 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
           <DefaultAxisBottom left={0} top={innerHeight} scale={xScale} />
         </Group>
       </svg>
+
       {tooltipOpen && tooltipData && (
-        <TooltipInPortal top={tooltipTop} left={tooltipLeft}>
+        <TooltipInPortal
+          top={tooltipTop}
+          left={tooltipLeft}
+          style={tooltipStyles}
+          className={s.tooltip}
+        >
           <SeriesTooltip
             title={tooltipData.xValue.toString()}
             items={data
