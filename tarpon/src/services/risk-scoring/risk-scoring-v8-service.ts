@@ -798,7 +798,7 @@ export class RiskScoringV8Service {
         transactionId: 'USER_UPDATE',
         factorScoreDetails,
         components,
-        isUpdatable,
+        isUpdatable: false,
       })
       return krsScore
     }
