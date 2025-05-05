@@ -134,11 +134,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
 
       if (request.searchTerm && hit.name) {
-        if (request.searchTerm.toLowerCase() == hit.name.toLowerCase()) {
+        if (sanitizeString(request.searchTerm) == sanitizeString(hit.name)) {
           matchTypes.push('name_exact')
         } else if (
           hit.aka?.some(
-            (aka) => request.searchTerm.toLowerCase() == aka.toLowerCase()
+            (aka) => sanitizeString(request.searchTerm) == sanitizeString(aka)
           )
         ) {
           matchTypes.push('aka_exact')
