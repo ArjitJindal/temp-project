@@ -32,10 +32,9 @@ import {
   useFreshdeskCrmEnabled,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
+import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
-import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import Linking from '@/pages/users-item/UserDetails/Linking';
@@ -126,17 +125,7 @@ function CaseDetails(props: Props) {
         }}
         items={tabs.map((tab) => ({
           ...tab,
-          children: (
-            <div
-              style={{
-                minHeight: `calc(100vh - ${
-                  entityHeaderHeight + TABS_LINE_HEIGHT + PAGE_WRAPPER_PADDING
-                }px)`,
-              }}
-            >
-              {tab.children}
-            </div>
-          ),
+          children: <>{tab.children}</>,
         }))}
       />
     </>
