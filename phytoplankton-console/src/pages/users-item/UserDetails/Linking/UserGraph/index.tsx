@@ -144,7 +144,7 @@ export function useUserEntity(
   const queryResult = useQuery(
     ['user-entity', userId, filters],
     () => api.getUserEntity({ userId, ...(filters || {}) }),
-    { enabled: hasFeatureEnabled },
+    { enabled: hasFeatureEnabled && !!userId },
   );
 
   return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
@@ -155,8 +155,10 @@ export function useTxnEntity(
   filters?: { afterTimestamp: number | undefined; beforeTimestamp: number | undefined },
 ) {
   const api = useApi();
-  const queryResult = useQuery(['txn-entity', userId, filters], () =>
-    api.getTxnLinking({ userId, ...filters }),
+  const queryResult = useQuery(
+    ['txn-entity', userId, filters],
+    () => api.getTxnLinking({ userId, ...filters }),
+    { enabled: !!userId },
   );
   return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
 }
