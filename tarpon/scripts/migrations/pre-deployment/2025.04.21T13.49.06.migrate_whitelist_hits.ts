@@ -2,7 +2,7 @@ import { AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -149,163 +149,172 @@ async function migrateTenant(tenant: Tenant) {
     },
   ]
   try {
-    const result = await casesCollection
-      .aggregate<{
-        alert: Alert
-      }>(alertsPipeline)
-      .toArray()
-    const alerts = result.map((item) => item.alert)
-    const transactionsCollection = db.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(tenantId)
-    )
-    const transactionIds = new Set<string>()
-    for (const alert of alerts) {
-      if (alert.transactionIds && Array.isArray(alert.transactionIds)) {
-        for (const transactionId of alert.transactionIds) {
-          transactionIds.add(transactionId)
-        }
-      }
-    }
-    const transactions = await transactionsCollection
-      .find({
-        transactionId: { $in: Array.from(transactionIds) },
-      })
-      .toArray()
-    const transactionIdToPaymentMethodId = new Map<string | undefined, string>()
-
-    for (const transaction of transactions) {
-      // Find rule 169 in hitRules
-      const rule169 = transaction.hitRules?.find(
-        (rule) => rule.ruleId === 'R-169'
-      )
-      const hitDirection = rule169?.ruleHitMeta?.hitDirections?.[0]
-
-      if (hitDirection) {
-        const paymentMethodId =
-          hitDirection !== 'ORIGIN'
-            ? transaction.originPaymentMethodId
-            : transaction.destinationPaymentMethodId
-
-        if (paymentMethodId) {
-          transactionIdToPaymentMethodId.set(
-            transaction.transactionId,
-            paymentMethodId
-          )
-        }
-      }
-    }
-
-    const counterRepository = new CounterRepository(tenantId, mongoDb)
-    const now = Date.now()
-    const sanctionsWhitelistBulkOperations: AnyBulkWriteOperation<any>[] = []
-    for (const alert of alerts) {
-      if (!alert.ruleHitMeta?.sanctionsDetails) {
-        continue
-      }
-
-      for (const sanctionsDetail of alert.ruleHitMeta.sanctionsDetails) {
-        const context = sanctionsDetail.hitContext
-
-        const alertTransactionIds = alert.transactionIds
-        const reqTransactions = transactions.filter((transaction) =>
-          alertTransactionIds?.includes(transaction.transactionId)
+    const alertsCursor = casesCollection.aggregate<{
+      alert: Alert
+    }>(alertsPipeline)
+    await processCursorInBatch(
+      alertsCursor,
+      async (result) => {
+        const alerts = result.map((item) => item.alert)
+        const transactionsCollection = db.collection<InternalTransaction>(
+          TRANSACTIONS_COLLECTION(tenantId)
         )
-        const transactionIds = reqTransactions
-          .filter((transaction) =>
-            transaction.hitRules?.some((rule) =>
-              rule.ruleHitMeta?.sanctionsDetails?.find(
-                (d) => d.searchId === sanctionsDetail.searchId
-              )
-            )
-          )
-          .map((t) => t.transactionId)
-
-        const existingWhitelists = await sanctionsWhitelistCollection
-          .find(
-            {
-              searchTerm: context?.searchTerm,
-              userId: context?.userId,
-              entity: 'EXTERNAL_USER',
-              entityType: context?.entityType,
-            },
-            { projection: { _id: 0 } }
-          )
-          .toArray()
-
-        if (existingWhitelists.length > 0 && transactionIds.length > 0) {
-          const firstTransactionId = transactionIds[0]
-          const firstPaymentMethodId =
-            transactionIdToPaymentMethodId.get(firstTransactionId)
-
-          for (const whitelist of existingWhitelists) {
-            const updateFields: any = {}
-            if (firstTransactionId) {
-              updateFields.transactionId = firstTransactionId
-            }
-            if (firstPaymentMethodId) {
-              updateFields.paymentMethodId = firstPaymentMethodId
-            }
-            if (Object.keys(updateFields).length > 0) {
-              sanctionsWhitelistBulkOperations.push({
-                updateOne: {
-                  filter: {
-                    sanctionsWhitelistId: whitelist.sanctionsWhitelistId,
-                  },
-                  update: {
-                    $set: updateFields,
-                    updatedAt: now,
-                  },
-                },
-              })
-            }
-          }
-
-          // For remaining transactions, create new copies of all whitelists
-          const paymentIdsSet = new Set<string | null>()
-          for (let i = 1; i < transactionIds.length; i++) {
-            const transactionId = transactionIds[i]
-            const paymentMethodId =
-              transactionIdToPaymentMethodId.get(transactionId) ?? null
-
-            if (!paymentIdsSet.has(paymentMethodId)) {
-              for (const whitelist of existingWhitelists) {
-                const newWhitelist = {
-                  ...whitelist,
-                  sanctionsWhitelistId:
-                    'SW-' +
-                    (await counterRepository.getNextCounterAndUpdate(
-                      'SanctionsWhitelist'
-                    )),
-                  sanctionsEntity: {
-                    ...whitelist.sanctionsEntity,
-                  },
-                  transactionId,
-                  paymentMethodId,
-                  createdAt: now,
-                  updatedAt: now,
-                }
-
-                sanctionsWhitelistBulkOperations.push({
-                  insertOne: {
-                    document: newWhitelist,
-                  },
-                })
-              }
-              paymentIdsSet.add(paymentMethodId)
+        const transactionIds = new Set<string>()
+        for (const alert of alerts) {
+          if (alert.transactionIds && Array.isArray(alert.transactionIds)) {
+            for (const transactionId of alert.transactionIds) {
+              transactionIds.add(transactionId)
             }
           }
         }
-      }
-    }
-    if (sanctionsWhitelistBulkOperations.length > 0) {
-      await sanctionsWhitelistCollection.bulkWrite(
-        sanctionsWhitelistBulkOperations
-      )
-    }
+        const transactions = await transactionsCollection
+          .find({
+            transactionId: { $in: Array.from(transactionIds) },
+          })
+          .toArray()
+        const transactionIdToPaymentMethodId = new Map<
+          string | undefined,
+          string
+        >()
+
+        for (const transaction of transactions) {
+          // Find rule 169 in hitRules
+          const rule169 = transaction.hitRules?.find(
+            (rule) => rule.ruleId === 'R-169'
+          )
+          const hitDirection = rule169?.ruleHitMeta?.hitDirections?.[0]
+
+          if (hitDirection) {
+            const paymentMethodId =
+              hitDirection !== 'ORIGIN'
+                ? transaction.originPaymentMethodId
+                : transaction.destinationPaymentMethodId
+
+            if (paymentMethodId) {
+              transactionIdToPaymentMethodId.set(
+                transaction.transactionId,
+                paymentMethodId
+              )
+            }
+          }
+        }
+
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const now = Date.now()
+        const sanctionsWhitelistBulkOperations: AnyBulkWriteOperation<any>[] =
+          []
+        for (const alert of alerts) {
+          if (!alert.ruleHitMeta?.sanctionsDetails) {
+            continue
+          }
+
+          for (const sanctionsDetail of alert.ruleHitMeta.sanctionsDetails) {
+            const context = sanctionsDetail.hitContext
+
+            const alertTransactionIds = alert.transactionIds
+            const reqTransactions = transactions.filter((transaction) =>
+              alertTransactionIds?.includes(transaction.transactionId)
+            )
+            const transactionIds = reqTransactions
+              .filter((transaction) =>
+                transaction.hitRules?.some((rule) =>
+                  rule.ruleHitMeta?.sanctionsDetails?.find(
+                    (d) => d.searchId === sanctionsDetail.searchId
+                  )
+                )
+              )
+              .map((t) => t.transactionId)
+
+            const existingWhitelists = await sanctionsWhitelistCollection
+              .find(
+                {
+                  searchTerm: context?.searchTerm,
+                  userId: context?.userId,
+                  entity: 'EXTERNAL_USER',
+                  entityType: context?.entityType,
+                },
+                { projection: { _id: 0 } }
+              )
+              .toArray()
+
+            if (existingWhitelists.length > 0 && transactionIds.length > 0) {
+              const firstTransactionId = transactionIds[0]
+              const firstPaymentMethodId =
+                transactionIdToPaymentMethodId.get(firstTransactionId)
+
+              for (const whitelist of existingWhitelists) {
+                const updateFields: any = {}
+                if (firstTransactionId) {
+                  updateFields.transactionId = firstTransactionId
+                }
+                if (firstPaymentMethodId) {
+                  updateFields.paymentMethodId = firstPaymentMethodId
+                }
+                if (Object.keys(updateFields).length > 0) {
+                  sanctionsWhitelistBulkOperations.push({
+                    updateOne: {
+                      filter: {
+                        sanctionsWhitelistId: whitelist.sanctionsWhitelistId,
+                      },
+                      update: {
+                        $set: updateFields,
+                        updatedAt: now,
+                      },
+                    },
+                  })
+                }
+              }
+
+              // For remaining transactions, create new copies of all whitelists
+              const paymentIdsSet = new Set<string | null>()
+              for (let i = 1; i < transactionIds.length; i++) {
+                const transactionId = transactionIds[i]
+                const paymentMethodId =
+                  transactionIdToPaymentMethodId.get(transactionId) ?? null
+
+                if (!paymentIdsSet.has(paymentMethodId)) {
+                  for (const whitelist of existingWhitelists) {
+                    const newWhitelist = {
+                      ...whitelist,
+                      sanctionsWhitelistId:
+                        'SW-' +
+                        (await counterRepository.getNextCounterAndUpdate(
+                          'SanctionsWhitelist'
+                        )),
+                      sanctionsEntity: {
+                        ...whitelist.sanctionsEntity,
+                      },
+                      transactionId,
+                      paymentMethodId,
+                      createdAt: now,
+                      updatedAt: now,
+                    }
+
+                    sanctionsWhitelistBulkOperations.push({
+                      insertOne: {
+                        document: newWhitelist,
+                      },
+                    })
+                  }
+                  paymentIdsSet.add(paymentMethodId)
+                }
+              }
+            }
+          }
+        }
+        if (sanctionsWhitelistBulkOperations.length > 0) {
+          await sanctionsWhitelistCollection.bulkWrite(
+            sanctionsWhitelistBulkOperations
+          )
+        }
+      },
+      { processBatchSize: 100, mongoBatchSize: 500 }
+    )
   } catch (error) {
     console.error('Error during migration:', error)
   }
 }
+
 export const up = async () => {
   await migrateAllTenants(migrateTenant)
 }

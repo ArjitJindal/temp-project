@@ -3,7 +3,7 @@ import { AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -165,209 +165,229 @@ async function migrateTenant(tenant: Tenant) {
     },
   ]
   try {
-    const result = await casesCollection
-      .aggregate<{
-        alert: Alert
-      }>(alertsPipeline)
-      .toArray()
-    const alerts = result.map((item) => item.alert)
-    const transactionsCollection = db.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(tenantId)
-    )
-    const transactionIds = new Set<string>()
-    for (const alert of alerts) {
-      if (alert.transactionIds && Array.isArray(alert.transactionIds)) {
-        for (const transactionId of alert.transactionIds) {
-          transactionIds.add(transactionId)
-        }
-      }
-    }
-    const transactions = await transactionsCollection
-      .find({
-        transactionId: { $in: Array.from(transactionIds) },
-      })
-      .toArray()
-    const transactionIdToPaymentMethodId = new Map<string | undefined, string>()
-
-    for (const transaction of transactions) {
-      // Find rule 169 in hitRules
-      const rule169 = transaction.hitRules?.find(
-        (rule) => rule.ruleId === 'R-169'
-      )
-      const hitDirection = rule169?.ruleHitMeta?.hitDirections?.[0]
-
-      if (hitDirection) {
-        const paymentMethodId =
-          hitDirection !== 'ORIGIN'
-            ? transaction.originPaymentMethodId
-            : transaction.destinationPaymentMethodId
-
-        if (paymentMethodId) {
-          transactionIdToPaymentMethodId.set(
-            transaction.transactionId,
-            paymentMethodId
-          )
-        }
-      }
-    }
-
-    const sanctionsHitsBulkOperations: AnyBulkWriteOperation<any>[] = []
-    const counterRepository = new CounterRepository(tenantId, mongoDb)
-    const hashSanctionHitIdsMap = new Map<string, string[]>()
-    const now = Date.now()
-    const paymentMethodIdSearchIdSet = new Set<string | null>()
-
-    for (const alert of alerts) {
-      if (
-        alert.ruleHitMeta?.sanctionsDetails &&
-        Array.isArray(alert.ruleHitMeta.sanctionsDetails)
-      ) {
-        const sanctionsDetails = alert.ruleHitMeta.sanctionsDetails
-        for (const sanctionsDetail of sanctionsDetails) {
-          const context = sanctionsDetail.hitContext
-          const alertTransactionIds = alert.transactionIds
-
-          const existingHits = await sanctionsHitsCollection
-            .find({
-              sanctionsHitId: { $in: sanctionsDetail.sanctionHitIds },
-            })
-            .toArray()
-          const reqTransactions = transactions.filter((transaction) =>
-            alertTransactionIds?.includes(transaction.transactionId)
-          )
-          const filteredTransactions = reqTransactions.filter((transaction) =>
-            transaction.hitRules?.some((rule) =>
-              rule.ruleHitMeta?.sanctionsDetails?.find(
-                (d) => d.searchId === sanctionsDetail.searchId
-              )
-            )
-          )
-          for (const transaction of filteredTransactions) {
-            const paymentMethodId =
-              transactionIdToPaymentMethodId.get(transaction.transactionId) ??
-              null
-            if (
-              paymentMethodIdSearchIdSet.has(
-                paymentMethodId + ':' + sanctionsDetail.searchId
-              )
-            ) {
-              continue
+    const alertsCursor = casesCollection.aggregate<{
+      alert: Alert
+    }>(alertsPipeline)
+    await processCursorInBatch(
+      alertsCursor,
+      async (result) => {
+        const alerts = result.map((item) => item.alert)
+        const transactionsCollection = db.collection<InternalTransaction>(
+          TRANSACTIONS_COLLECTION(tenantId)
+        )
+        const transactionIds = new Set<string>()
+        for (const alert of alerts) {
+          if (alert.transactionIds && Array.isArray(alert.transactionIds)) {
+            for (const transactionId of alert.transactionIds) {
+              transactionIds.add(transactionId)
             }
-            paymentMethodIdSearchIdSet.add(
-              paymentMethodId + ':' + sanctionsDetail.searchId
-            )
-            for (const hit of existingHits) {
-              // If this hit belongs to any transaction with the same payment method ID
-              const hitTransactionId = hit.hitContext?.transactionId
-              const hitPaymentMethodId =
-                transactionIdToPaymentMethodId.get(hitTransactionId)
-              if (hitPaymentMethodId === paymentMethodId) {
-                sanctionsHitsBulkOperations.push({
-                  updateOne: {
-                    filter: {
-                      sanctionsHitId: hit.sanctionsHitId,
-                    },
-                    update: {
-                      $set: {
-                        'hitContext.paymentMethodId': paymentMethodId,
+          }
+        }
+        const transactions = await transactionsCollection
+          .find({
+            transactionId: { $in: Array.from(transactionIds) },
+          })
+          .toArray()
+        const transactionIdToPaymentMethodId = new Map<
+          string | undefined,
+          string
+        >()
+
+        for (const transaction of transactions) {
+          // Find rule 169 in hitRules
+          const rule169 = transaction.hitRules?.find(
+            (rule) => rule.ruleId === 'R-169'
+          )
+          const hitDirection = rule169?.ruleHitMeta?.hitDirections?.[0]
+
+          if (hitDirection) {
+            const paymentMethodId =
+              hitDirection !== 'ORIGIN'
+                ? transaction.originPaymentMethodId
+                : transaction.destinationPaymentMethodId
+
+            if (paymentMethodId) {
+              transactionIdToPaymentMethodId.set(
+                transaction.transactionId,
+                paymentMethodId
+              )
+            }
+          }
+        }
+
+        const sanctionsHitsBulkOperations: AnyBulkWriteOperation<any>[] = []
+        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const hashSanctionHitIdsMap = new Map<string, string[]>()
+        const now = Date.now()
+        const paymentMethodIdSearchIdSet = new Set<string | null>()
+
+        for (const alert of alerts) {
+          if (
+            alert.ruleHitMeta?.sanctionsDetails &&
+            Array.isArray(alert.ruleHitMeta.sanctionsDetails)
+          ) {
+            const sanctionsDetails = alert.ruleHitMeta.sanctionsDetails
+            for (const sanctionsDetail of sanctionsDetails) {
+              const context = sanctionsDetail.hitContext
+              const alertTransactionIds = alert.transactionIds
+
+              const existingHits = await sanctionsHitsCollection
+                .find({
+                  sanctionsHitId: { $in: sanctionsDetail.sanctionHitIds },
+                })
+                .toArray()
+              const reqTransactions = transactions.filter((transaction) =>
+                alertTransactionIds?.includes(transaction.transactionId)
+              )
+              const filteredTransactions = reqTransactions.filter(
+                (transaction) =>
+                  transaction.hitRules?.some((rule) =>
+                    rule.ruleHitMeta?.sanctionsDetails?.find(
+                      (d) => d.searchId === sanctionsDetail.searchId
+                    )
+                  )
+              )
+              for (const transaction of filteredTransactions) {
+                const paymentMethodId =
+                  transactionIdToPaymentMethodId.get(
+                    transaction.transactionId
+                  ) ?? null
+                if (
+                  paymentMethodIdSearchIdSet.has(
+                    paymentMethodId + ':' + sanctionsDetail.searchId
+                  )
+                ) {
+                  continue
+                }
+                paymentMethodIdSearchIdSet.add(
+                  paymentMethodId + ':' + sanctionsDetail.searchId
+                )
+                const setSanctionHitIds = new Set()
+                for (const hit of existingHits) {
+                  // If this hit belongs to any transaction with the same payment method ID
+                  if (setSanctionHitIds.has(hit.sanctionsHitId)) {
+                    continue
+                  }
+                  setSanctionHitIds.add(hit.sanctionsHitId)
+                  const hitTransactionId = hit.hitContext?.transactionId
+                  const hitPaymentMethodId =
+                    transactionIdToPaymentMethodId.get(hitTransactionId)
+                  if (hitPaymentMethodId === paymentMethodId) {
+                    sanctionsHitsBulkOperations.push({
+                      updateOne: {
+                        filter: {
+                          sanctionsHitId: hit.sanctionsHitId,
+                        },
+                        update: {
+                          $set: {
+                            'hitContext.paymentMethodId': paymentMethodId,
+                          },
+                        },
                       },
-                    },
-                  },
-                })
-              } else {
-                const hash = await getHash({
-                  userId: context?.userId,
-                  entityType: context?.entityType,
-                  searchTerm: context?.searchTerm,
-                  entity: context?.entity,
-                  paymentMethodId: paymentMethodId,
-                })
-                const sanctionHitId =
-                  'SH-' +
-                  (await counterRepository.getNextCounterAndUpdate(
-                    'SanctionsHit'
-                  ))
-                hashSanctionHitIdsMap.set(hash, [
-                  ...(hashSanctionHitIdsMap.get(hash) ?? []),
-                  sanctionHitId,
-                ])
-                const { _id, ...hitWithoutId } = hit
-                sanctionsHitsBulkOperations.push({
-                  insertOne: {
-                    document: {
-                      ...hitWithoutId,
-                      searchId: sanctionsDetail.searchId,
-                      sanctionsHitId: sanctionHitId,
-                      hitContext: {
-                        ...hitWithoutId.hitContext,
-                        transactionId: transaction.transactionId,
-                        paymentMethodId: paymentMethodId,
+                    })
+                  } else {
+                    const hash = await getHash({
+                      userId: context?.userId,
+                      entityType: context?.entityType,
+                      searchTerm: context?.searchTerm,
+                      entity: context?.entity,
+                      paymentMethodId: paymentMethodId,
+                    })
+                    const sanctionHitId =
+                      'SH-' +
+                      (await counterRepository.getNextCounterAndUpdate(
+                        'SanctionsHit'
+                      ))
+                    hashSanctionHitIdsMap.set(hash, [
+                      ...(hashSanctionHitIdsMap.get(hash) ?? []),
+                      sanctionHitId,
+                    ])
+                    const { _id, ...hitWithoutId } = hit
+                    sanctionsHitsBulkOperations.push({
+                      insertOne: {
+                        document: {
+                          ...hitWithoutId,
+                          searchId: sanctionsDetail.searchId,
+                          sanctionsHitId: sanctionHitId,
+                          hitContext: {
+                            ...hitWithoutId.hitContext,
+                            transactionId: transaction.transactionId,
+                            paymentMethodId: paymentMethodId,
+                          },
+                          updatedAt: now,
+                          createdAt: now,
+                        },
                       },
-                      updatedAt: now,
-                      createdAt: now,
-                    },
-                  },
-                })
+                    })
+                  }
+                }
               }
             }
           }
         }
-      }
-    }
-    if (sanctionsHitsBulkOperations.length > 0) {
-      await sanctionsHitsCollection.bulkWrite(sanctionsHitsBulkOperations)
-      console.log(
-        `Updated ${sanctionsHitsBulkOperations.length} sanctions hits with paymentMethodId`
-      )
-    } else {
-      console.log('No matching sanctions hits found to update')
-    }
+        if (sanctionsHitsBulkOperations.length > 0) {
+          await sanctionsHitsCollection.bulkWrite(sanctionsHitsBulkOperations)
+          console.log(
+            `Updated ${sanctionsHitsBulkOperations.length} sanctions hits with paymentMethodId`
+          )
+        } else {
+          console.log('No matching sanctions hits found to update')
+        }
 
-    const alertBulkOperations: AnyBulkWriteOperation<Case>[] = []
-    for (const alert of alerts) {
-      const sanctionDetails = alert.ruleHitMeta?.sanctionsDetails
-      if (!sanctionDetails) {
-        continue
-      }
-      for (const sanctionsDetail of sanctionDetails) {
-        const context = sanctionsDetail.hitContext
-        const paymentMethodId = transactionIdToPaymentMethodId.get(
-          context?.transactionId
-        )
-        const hash = await getHash({
-          userId: context?.userId,
-          entityType: context?.entityType,
-          searchTerm: context?.searchTerm,
-          entity: context?.entity,
-          paymentMethodId: paymentMethodId ?? null,
-        })
-        const sanctionHitIds = hashSanctionHitIdsMap.get(hash) || []
-        const existingHitIds = sanctionsDetail.sanctionHitIds || []
-        alertBulkOperations.push({
-          updateOne: {
-            filter: {
-              'alerts.alertId': alert.alertId,
-            },
-            update: {
-              $set: {
-                'alerts.$[alertElem].ruleHitMeta.sanctionsDetails.$[detailElem].sanctionHitIds':
-                  [...existingHitIds, ...sanctionHitIds],
-                'alerts.$[alertElem].ruleHitMeta.sanctionsDetails.$[detailElem].hitContext.paymentMethodId':
-                  paymentMethodId ?? null,
+        const alertBulkOperations: AnyBulkWriteOperation<Case>[] = []
+        for (const alert of alerts) {
+          const sanctionDetails = alert.ruleHitMeta?.sanctionsDetails
+          if (!sanctionDetails) {
+            continue
+          }
+          for (const sanctionsDetail of sanctionDetails) {
+            const context = sanctionsDetail.hitContext
+            const paymentMethodId = transactionIdToPaymentMethodId.get(
+              context?.transactionId
+            )
+            const hash = await getHash({
+              userId: context?.userId,
+              entityType: context?.entityType,
+              searchTerm: context?.searchTerm,
+              entity: context?.entity,
+              paymentMethodId: paymentMethodId ?? null,
+            })
+            const sanctionHitIds = hashSanctionHitIdsMap.get(hash) || []
+            const existingHitIds = sanctionsDetail.sanctionHitIds || []
+            alertBulkOperations.push({
+              updateOne: {
+                filter: {
+                  'alerts.alertId': alert.alertId,
+                },
+                update: {
+                  $set: {
+                    'alerts.$[alertElem].ruleHitMeta.sanctionsDetails.$[detailElem].sanctionHitIds':
+                      [...existingHitIds, ...sanctionHitIds],
+                    'alerts.$[alertElem].ruleHitMeta.sanctionsDetails.$[detailElem].hitContext.paymentMethodId':
+                      paymentMethodId ?? null,
+                  },
+                },
+                arrayFilters: [
+                  { 'alertElem.alertId': alert.alertId },
+                  {
+                    'detailElem.hitContext.transactionId':
+                      context?.transactionId,
+                  },
+                ],
               },
-            },
-            arrayFilters: [
-              { 'alertElem.alertId': alert.alertId },
-              { 'detailElem.hitContext.transactionId': context?.transactionId },
-            ],
-          },
-        })
-      }
-    }
+            })
+          }
+        }
 
-    if (alertBulkOperations.length > 0) {
-      await casesCollection.bulkWrite(alertBulkOperations)
-    }
+        if (alertBulkOperations.length > 0) {
+          await casesCollection.bulkWrite(alertBulkOperations)
+        }
+      },
+      {
+        mongoBatchSize: 500,
+        processBatchSize: 100,
+      }
+    )
   } catch (error) {
     console.error('Error during migration:', error)
   }
