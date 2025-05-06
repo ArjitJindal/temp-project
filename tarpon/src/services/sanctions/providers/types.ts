@@ -3,6 +3,7 @@ import {
   SanctionsEntity,
   SanctionsSearchRequest,
   SanctionsSearchResponse,
+  SourceDocument,
 } from '@/@types/openapi-internal/all'
 
 export type Action = 'add' | 'del' | 'chg'
@@ -22,6 +23,14 @@ export interface SanctionsRepository {
   saveAssociations(
     provider: SanctionsDataProviderName,
     associations: [string, { id: string; association: string }[]][],
+    version: string
+  ): Promise<void>
+}
+
+export interface SanctionsSourceRepository {
+  save(
+    provider: SanctionsDataProviderName,
+    entities: [Action, SourceDocument][],
     version: string
   ): Promise<void>
 }

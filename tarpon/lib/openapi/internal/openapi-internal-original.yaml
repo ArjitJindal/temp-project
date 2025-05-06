@@ -6121,6 +6121,39 @@ paths:
             schema:
               $ref: '#/components/schemas/SanctionHitsStatusUpdateRequest'
         required: true
+  /default-manual-screening-filters:
+    post:
+      summary: Create a Default Manual Screening Filters
+      operationId: post-default-manual-screening-filters
+      x-flagright:
+        permissions:
+          - screening:search-profiles:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefaultManualScreeningFiltersRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultManualScreeningFiltersResponse'
+    get:
+      summary: Get a Default Manual Screening Filters
+      operationId: get-default-manual-screening-filters
+      x-flagright:
+        permissions:
+          - screening:search-profiles:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultManualScreeningFiltersResponse'
   /search-profiles:
     post:
       summary: Create a Search Profile
@@ -6168,10 +6201,7 @@ paths:
           in: query
           name: filterSearchProfileName
         - schema:
-            type: string
-            enum:
-              - ENABLED
-              - DISABLED
+            $ref: '#/components/schemas/StatusEnum'
           in: query
           name: filterSearchProfileStatus
   /search-profiles/{searchProfileId}:
@@ -6215,6 +6245,120 @@ paths:
       responses:
         '204':
           description: No Content
+  /screening-profiles:
+    get:
+      summary: Get screening profiles
+      operationId: get-screening-profiles
+      x-flagright:
+        permissions:
+          - screening:screening-profiles:read
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterScreeningProfileId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterScreeningProfileName
+        - schema:
+            $ref: '#/components/schemas/StatusEnum'
+          in: query
+          name: filterScreeningProfileStatus
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListScreeningProfileResponse'
+    post:
+      summary: Create a Screening Profile
+      operationId: post-screening-profiles
+      x-flagright:
+        permissions:
+          - screening:screening-profiles:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreeningProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreeningProfileResponse'
+  /screening-profiles/{screeningProfileId}:
+    put:
+      summary: Update a Screening Profile
+      operationId: update-screening-profile
+      x-flagright:
+        permissions:
+          - screening:screening-profiles:write
+      parameters:
+        - schema:
+            type: string
+          name: screeningProfileId
+          in: path
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreeningProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreeningProfileResponse'
+    delete:
+      summary: Delete a Screening Profile
+      operationId: delete-screening-profile
+      x-flagright:
+        permissions:
+          - screening:screening-profiles:write
+      parameters:
+        - schema:
+            type: string
+          name: screeningProfileId
+          in: path
+          required: true
+      responses:
+        '204':
+          description: No Content
+  /sanctions/sources:
+    get:
+      summary: Get sanctions sources
+      operationId: get-sanctions-sources
+      x-flagright:
+        permissions:
+          - sanctions:search:read
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/SanctionsSourceType'
+          in: query
+          name: filterSourceType
+        - schema:
+            type: string
+          in: query
+          name: filterSourceName
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSourceListResponse'
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -11747,6 +11891,8 @@ components:
         - roles:overview:write
         - screening:search-profiles:read
         - screening:search-profiles:write
+        - screening:screening-profiles:read
+        - screening:screening-profiles:write
     CaseStatus:
       type: string
       title: CaseStatus
@@ -13105,6 +13251,8 @@ components:
           type: string
         searchProfileId:
           type: string
+        screeningProfileId:
+          type: string
         fuzziness:
           type: number
           minimum: 0
@@ -13253,6 +13401,207 @@ components:
       required:
         - searchProfileName
         - searchProfileStatus
+    DefaultManualScreeningFiltersRequest:
+      title: DefaultManualScreeningFiltersRequest
+      type: object
+      properties:
+        fuzziness:
+          type: number
+          minimum: 0
+          maximum: 1
+        nationality:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
+        yearOfBirth:
+          type: number
+        documentId:
+          type: array
+          items:
+            type: string
+    DefaultManualScreeningFiltersResponse:
+      title: DefaultManualScreeningFiltersResponse
+      type: object
+      properties:
+        fuzziness:
+          type: number
+          minimum: 0
+          maximum: 1
+        nationality:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
+        yearOfBirth:
+          type: number
+        documentId:
+          type: array
+          items:
+            type: string
+    ScreeningProfileRequest:
+      title: ScreeningProfileRequest
+      type: object
+      properties:
+        screeningProfileName:
+          type: string
+        screeningProfileDescription:
+          type: string
+        isDefault:
+          type: boolean
+        sanctions:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/SanctionsSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        pep:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/PEPSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        rel:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/RELSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        adverseMedia:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdverseMediaSourceRelevance'
+        screeningProfileStatus:
+          type: string
+          enum:
+            - ENABLED
+            - DISABLED
+      required:
+        - screeningProfileName
+    ScreeningProfileResponse:
+      title: ScreeningProfileResponse
+      type: object
+      properties:
+        screeningProfileId:
+          type: string
+        screeningProfileName:
+          type: string
+        screeningProfileDescription:
+          type: string
+        isDefault:
+          type: boolean
+        sanctions:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/SanctionsSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        pep:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/PEPSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        rel:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/RELSourceRelevance'
+            sourceIds:
+              type: array
+              items:
+                type: string
+        adverseMedia:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdverseMediaSourceRelevance'
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+        screeningProfileStatus:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+        - screeningProfileId
+        - screeningProfileName
+        - screeningProfileStatus
+        - createdBy
+        - updatedBy
+        - createdAt
+        - updatedAt
+    ListScreeningProfileResponse:
+      title: ListScreeningProfileResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScreeningProfileResponse'
+      required:
+        - items
+    SanctionsSourceResponse:
+      title: SanctionsSourceResponse
+      type: object
+      properties:
+        id:
+          type: string
+        sourceName:
+          type: string
+        sourceType:
+          $ref: '#/components/schemas/SanctionsSourceType'
+    SanctionsSourceListResponse:
+      title: SanctionsSourceListResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSourceResponse'
+      required:
+        - items
     PepRank:
       title: PepRank
       type: string
@@ -13260,6 +13609,14 @@ components:
         - LEVEL_1
         - LEVEL_2
         - LEVEL_3
+    SanctionsSourceType:
+      title: SanctionsSourceType
+      type: string
+      enum:
+        - SANCTIONS
+        - REGULATORY_ENFORCEMENT_LIST
+        - PEP
+        - ADVERSE_MEDIA
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
@@ -13268,6 +13625,12 @@ components:
         - PEP
         - ADVERSE_MEDIA
         - WARNINGS
+    StatusEnum:
+      title: StatusEnum
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
     GenericSanctionsSearchType:
       title: GenericSanctionsSearchType
       type: string
@@ -13300,6 +13663,37 @@ components:
         - SANCTIONS
         - PEP
         - CRIME
+    SanctionsSourceRelevance:
+      title: SanctionsSourceRelevance
+      type: string
+      enum:
+        - CURRENT
+        - FORMER
+    PEPSourceRelevance:
+      title: PEPSourceRelevance
+      type: string
+      enum:
+        - POI
+        - PEP
+        - RCA
+    RELSourceRelevance:
+      title: RELSourceRelevance
+      type: string
+      enum:
+        - FINANCIAL_REGULATOR
+        - LAW_ENFORCEMENT
+    AdverseMediaSourceRelevance:
+      title: AdverseMediaSourceRelevance
+      type: string
+      enum:
+        - TERRORISM
+        - ORGANISED_CRIME
+        - MODERN_SLAVERY
+        - FINANCIAL_CRIME_AND_FRAUD
+        - BRIBERY_AND_CORRUPTION
+        - CYBERCRIMES
+        - OTHER_ALLEGED_OFFENCES
+        - REPUTATIONAL_RISK_EXPOSURE
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
       type: object
@@ -13676,6 +14070,8 @@ components:
           type: number
         name:
           type: string
+        sourceName:
+          type: string
         url:
           type: string
         description:
@@ -13704,6 +14100,8 @@ components:
                 type: string
               url:
                 type: string
+        category:
+          type: string
     SanctionsMedia:
       title: SanctionsMedia
       type: object
@@ -13798,6 +14196,22 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
         postalCode:
           type: string
+    SourceDocument:
+      title: SourceDocument
+      type: object
+      properties:
+        id:
+          type: string
+        sourceName:
+          type: string
+        entityIds:
+          type: array
+          items:
+            type: string
+        sourceType:
+          $ref: '#/components/schemas/SanctionsSourceType'
+        entityType:
+          type: string
     SanctionsEntity:
       title: SanctionsEntity
       type: object
@@ -13813,6 +14227,10 @@ components:
           items:
             $ref: '#/components/schemas/SanctionsMatchType'
         types:
+          type: array
+          items:
+            type: string
+        aggregatedSourceIds:
           type: array
           items:
             type: string

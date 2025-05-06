@@ -436,6 +436,10 @@ export const DELTA_SANCTIONS_GLOBAL_COLLECTION = () => {
   return 'delta-sanctions'
 }
 
+export const SANCTIONS_SOURCE_DOCUMENTS_COLLECTION = () => {
+  return `sanctions_source_documents`
+}
+
 /** Collection to log Requests and Responses to GPT */
 export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-gpt-request-logs`

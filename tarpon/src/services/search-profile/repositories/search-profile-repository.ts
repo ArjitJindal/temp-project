@@ -80,7 +80,7 @@ export class SearchProfileRepository {
     const timestamp = Date.now()
     const key = DynamoDbKeys.SEARCH_PROFILE(this.tenantId, searchProfileId)
     const createdBy = getContext()?.user?.id
-    const updatedBy = getContext()?.user?.id
+    const updatedBy = createdBy
     const item = {
       ...key,
       searchProfileId,

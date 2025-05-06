@@ -2,7 +2,14 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
-import { CrmName, ListSubtype, ListSubtypeInternal, ListType, ReasonType } from '@/apis';
+import {
+  CrmName,
+  ListSubtype,
+  ListSubtypeInternal,
+  ListType,
+  ReasonType,
+  SanctionsSourceType,
+} from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
@@ -457,5 +464,14 @@ export const USER_DRS_VALUES = (userId: string, params: AnyParameters): QueryKey
 ];
 
 export const SEARCH_PROFILES = (params?: AnyParameters): QueryKey => ['search-profiles', params];
+export const SCREENING_PROFILES = (params?: AnyParameters): QueryKey => [
+  'screening-profiles',
+  params,
+];
+
+export const SANCTIONS_SOURCES = (type: SanctionsSourceType): QueryKey => [
+  'sanctions-sources',
+  type,
+];
 
 export const WORKFLOWS_LIST = (params?: AnyParameters): QueryKey => ['workflows', 'list', params];

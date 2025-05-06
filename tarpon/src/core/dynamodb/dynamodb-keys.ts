@@ -89,6 +89,14 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#search-profile`,
     SortKeyID: searchProfileId,
   }),
+  DEFAULT_FILTERS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#default-filters`,
+    SortKeyID: 'default',
+  }),
+  SCREENING_PROFILE: (tenantId: string, screeningProfileId?: string) => ({
+    PartitionKeyID: `${tenantId}#screening-profile`,
+    SortKeyID: screeningProfileId,
+  }),
   CRM_RECORD: (tenantId: string, modelName: CRMModelType, id: string) => ({
     PartitionKeyID: `${tenantId}${CRM_RECORD_KEY_IDENTIFIER}#${CRM_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
     SortKeyID: id,

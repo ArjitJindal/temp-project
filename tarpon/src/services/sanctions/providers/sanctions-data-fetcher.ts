@@ -1,8 +1,10 @@
 import { uniq, uniqBy } from 'lodash'
 import { normalize, sanitizeString } from '@flagright/lib/utils'
 import { Db } from 'mongodb'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
+import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
 import {
   getNameMatches,
   getSecondaryMatches,
@@ -20,8 +22,11 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { getSearchIndexName } from '@/utils/mongodb-definitions'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import {
+  getSearchIndexName,
+  SANCTIONS_SOURCE_DOCUMENTS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
@@ -32,6 +37,13 @@ import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMa
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { ScreeningProfileService } from '@/services/screening-profile'
+import { CounterRepository } from '@/services/counter/repository'
+import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
+import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
+import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
+import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -173,7 +185,103 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     })
   }
 
-  private getNonSearchIndexQuery(request: SanctionsSearchRequest): {
+  private applySourceCategoryFilters(
+    sanctionProviderNames?: string[],
+    pepProviderNames?: string[],
+    sanctionsCategory?: SanctionsSourceRelevance[],
+    pepCategory?: PEPSourceRelevance[],
+    relCategory?: RELSourceRelevance[],
+    adverseMediaCategory?: AdverseMediaSourceRelevance[]
+  ): any {
+    const conditions: any[] = []
+
+    if (sanctionsCategory && sanctionProviderNames) {
+      conditions.push({
+        $and: [
+          {
+            'sanctionsSources.sourceName': {
+              $in: sanctionProviderNames.map((name) =>
+                humanizeAuto(name).toLowerCase()
+              ),
+            },
+            'sanctionsSources.category': {
+              $in: sanctionsCategory,
+            },
+          },
+        ],
+      })
+    }
+
+    if (pepCategory && pepProviderNames) {
+      const orConditions: Array<{
+        'pepSources.sourceName'?: { $in: string[] }
+        types?: string
+      }> = [
+        {
+          'pepSources.sourceName': {
+            $in: pepProviderNames.map((name) =>
+              humanizeAuto(name).toLowerCase()
+            ),
+          },
+        },
+      ]
+
+      // Add PEP by association condition if needed
+      if (
+        pepProviderNames.some((name) =>
+          name.toLowerCase().includes('pep by association')
+        )
+      ) {
+        orConditions.push({
+          types: 'Linked to PEP (PEP by Association)',
+        })
+      }
+
+      conditions.push({
+        $and: [
+          {
+            $or: orConditions,
+          },
+          {
+            'pepSources.category': {
+              $in: pepCategory,
+            },
+          },
+        ],
+      })
+    }
+
+    if (relCategory) {
+      conditions.push({
+        'otherSources.type': 'REGULATORY_ENFORCEMENT_LIST',
+        'otherSources.value.category': {
+          $in: relCategory,
+        },
+      })
+    }
+
+    if (adverseMediaCategory) {
+      conditions.push({
+        'mediaSources.category': {
+          $in: adverseMediaCategory.map((cat) =>
+            humanizeAuto(cat).toLowerCase()
+          ),
+        },
+      })
+    }
+
+    return conditions.length > 0 ? { $or: conditions } : {}
+  }
+
+  private getNonSearchIndexQuery(
+    request: SanctionsSearchRequest,
+    sanctionProviderNames?: string[],
+    pepProviderNames?: string[],
+    sanctionsCategory?: SanctionsSourceRelevance[],
+    pepCategory?: PEPSourceRelevance[],
+    relCategory?: RELSourceRelevance[],
+    adverseMediaCategory?: AdverseMediaSourceRelevance[]
+  ): {
     $and?: any[] | undefined
     $or?: any[] | undefined
   } {
@@ -198,6 +306,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchTypeCondition)
       }
     }
+
+    const sourceCategoryFilters = this.applySourceCategoryFilters(
+      sanctionProviderNames,
+      pepProviderNames,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory
+    )
+    if (Object.keys(sourceCategoryFilters).length > 0) {
+      orConditions.push(sourceCategoryFilters)
+    }
+
     if (request.types) {
       const matchTypeCondition = {
         $or: [
@@ -439,13 +560,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async searchWithMatchingNames(
     request: SanctionsSearchRequest,
     db: Db,
-    limit: number = 200
+    limit: number = 200,
+    sanctionProviderNames?: string[],
+    pepProviderNames?: string[],
+    sanctionsCategory?: SanctionsSourceRelevance[],
+    pepCategory?: PEPSourceRelevance[],
+    relCategory?: RELSourceRelevance[],
+    adverseMediaCategory?: AdverseMediaSourceRelevance[]
   ): Promise<SanctionsProviderResponse> {
     const match = {}
     const providers = getDefaultProviders()
     const andFilters: any[] = []
     const orFilters: any[] = []
-
     if (request.yearOfBirth) {
       const yearOfBirthMatch = [
         {
@@ -830,7 +956,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           .collection(c)
           .aggregate<SanctionsEntity>([
             {
-              $match: this.getNonSearchIndexQuery(request),
+              $match: this.getNonSearchIndexQuery(
+                request,
+                sanctionProviderNames,
+                pepProviderNames,
+                sanctionsCategory,
+                pepCategory,
+                relCategory,
+                adverseMediaCategory
+              ),
             },
             {
               $limit: providers.includes(SanctionsDataProviders.DOW_JONES)
@@ -865,19 +999,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                       },
                     },
                   ],
-                  filter: [
-                    ...(orFilters.length > 0
-                      ? [
-                          {
-                            compound: {
-                              should: orFilters,
-                              minimumShouldMatch: 1,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...andFilters,
-                  ],
+                  ...(orFilters.length > 0
+                    ? { should: orFilters, minimumShouldMatch: 1 }
+                    : {}),
+                  filter: andFilters,
                 },
               },
             },
@@ -896,6 +1021,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               // whilst using atlas search console
               $match: {
                 ...match,
+                ...this.applySourceCategoryFilters(
+                  sanctionProviderNames,
+                  pepProviderNames,
+                  sanctionsCategory,
+                  pepCategory,
+                  relCategory,
+                  adverseMediaCategory
+                ),
                 searchScore: {
                   $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
                 },
@@ -1013,12 +1146,71 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     })
   }
 
+  async getSanctionSourceDetails(screeningProfileId: string) {
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const screeningProfileService = new ScreeningProfileService(
+      this.tenantId,
+      counterRepository
+    )
+    const screeningProfile =
+      await screeningProfileService.getExistingScreeningProfile(
+        dynamoDb,
+        screeningProfileId
+      )
+    const sanctionSourceIds = screeningProfile.sanctions?.sourceIds
+    const pepSourceIds = screeningProfile.pep?.sourceIds
+    const sanctionsCategory = screeningProfile.sanctions?.relevance
+    const pepCategory = screeningProfile.pep?.relevance
+    const relCategory = screeningProfile.rel?.relevance
+    const adverseMediaCategory = screeningProfile.adverseMedia?.relevance
+    const sourceIds = [...(sanctionSourceIds ?? []), ...(pepSourceIds ?? [])]
+    return {
+      sourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    }
+  }
+
   async search(
     request: SanctionsSearchRequest,
     isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
     const db = await getMongoDbClientDb()
+    const mongoDb = await getMongoDbClient()
     let result: SanctionsProviderResponse
+    const sanctionSourceNames: string[] = []
+    const pepSourceNames: string[] = []
+    let sourceIds: string[] = []
+    let sanctionsCategory: SanctionsSourceRelevance[] | undefined
+    let pepCategory: PEPSourceRelevance[] | undefined
+    let relCategory: RELSourceRelevance[] | undefined
+    let adverseMediaCategory: AdverseMediaSourceRelevance[] | undefined
+    if (request.screeningProfileId) {
+      const details = await this.getSanctionSourceDetails(
+        request.screeningProfileId
+      )
+      sourceIds = details.sourceIds
+      sanctionsCategory = details.sanctionsCategory
+      pepCategory = details.pepCategory
+      relCategory = details.relCategory
+      adverseMediaCategory = details.adverseMediaCategory
+      const repo = new MongoSanctionSourcesRepository(
+        SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
+        mongoDb
+      )
+      const sources = await repo.getSanctionsSources(undefined, sourceIds)
+      for (const source of sources) {
+        if (source.sourceType === 'SANCTIONS') {
+          sanctionSourceNames.push(source.sourceName ?? '')
+        } else if (source.sourceType === 'PEP') {
+          pepSourceNames.push(source.sourceName ?? '')
+        }
+      }
+    }
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||
@@ -1029,7 +1221,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       result = await this.searchWithMatchingNames(
         request,
         db,
-        isMigration || request.manualSearch ? 500 : 200
+        isMigration || request.manualSearch ? 500 : 200,
+        sanctionSourceNames,
+        pepSourceNames,
+        sanctionsCategory,
+        pepCategory,
+        relCategory,
+        adverseMediaCategory
       )
     }
     const data = result.data?.map(
@@ -1042,11 +1240,27 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
     return {
       ...result,
-      data: await this.sanitizeEntities(data),
+      data: await this.sanitizeEntities(
+        data,
+        sanctionSourceNames,
+        pepSourceNames,
+        sanctionsCategory,
+        pepCategory,
+        relCategory,
+        adverseMediaCategory
+      ),
     }
   }
 
-  private async sanitizeEntities(data: SanctionsEntity[] | undefined) {
+  private async sanitizeEntities(
+    data: SanctionsEntity[] | undefined,
+    sanctionSourceNames?: string[],
+    pepSourceNames?: string[],
+    sanctionsCategory?: SanctionsSourceRelevance[],
+    pepCategory?: PEPSourceRelevance[],
+    relCategory?: RELSourceRelevance[],
+    adverseMediaCategory?: AdverseMediaSourceRelevance[]
+  ) {
     const providers = getDefaultProviders().filter(
       (p) =>
         p === SanctionsDataProviders.OPEN_SANCTIONS ||
@@ -1062,7 +1276,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (e) => e.provider === SanctionsDataProviders.OPEN_SANCTIONS
     )
     return [
-      ...sanitizeAcurisEntities(acurisEntities),
+      ...sanitizeAcurisEntities(
+        acurisEntities,
+        sanctionSourceNames,
+        pepSourceNames,
+        sanctionsCategory,
+        pepCategory,
+        relCategory,
+        adverseMediaCategory
+      ),
       ...sanitizeOpenSanctionsEntities(openSanctionsEntities),
     ]
   }

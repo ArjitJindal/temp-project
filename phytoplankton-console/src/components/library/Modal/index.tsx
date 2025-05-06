@@ -40,6 +40,7 @@ interface Props {
   maskClosable?: boolean;
   footerExtra?: React.ReactNode;
   isResizable?: boolean;
+  destroyOnClose?: boolean;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -74,6 +75,7 @@ export default function Modal(props: Props) {
     maskClosable = true,
     footerExtra,
     isResizable = false,
+    destroyOnClose = false,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -86,6 +88,7 @@ export default function Modal(props: Props) {
   const withTabs = tabs.length > 1;
   return (
     <AntModal
+      destroyOnClose={destroyOnClose}
       className={cn(
         s.root,
         withTabs && s.withTabs,

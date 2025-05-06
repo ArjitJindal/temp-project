@@ -2,6 +2,7 @@ import { useState } from 'react';
 import KYC6Logo from 'src/branding/KYC6.svg';
 import s from './styles.module.less';
 import SearchProfileList from './SearchProfileList';
+import { ScreeningProfileList } from './ScreeningProfileList';
 import SanctionsProviderSettings from './SanctionProviderSettings';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
@@ -29,6 +30,7 @@ export const SanctionsSettings = () => {
     'settings:screening:write',
   ]);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+  const isAcurisEnabled = useFeatureEnabled('ACURIS');
   const branding = getBranding();
   const hasNoSanctionsProviders = useHasNoSanctionsProviders();
 
@@ -107,7 +109,11 @@ export const SanctionsSettings = () => {
   };
   return (
     <>
-      <SearchProfileList hasFeature={isSanctionsEnabled} />
+      {isAcurisEnabled ? (
+        <ScreeningProfileList hasFeature={isSanctionsEnabled} />
+      ) : (
+        <SearchProfileList hasFeature={isSanctionsEnabled} />
+      )}
       <SanctionsProviderSettings
         title="Acuris"
         hasFeature={hasFeatureAcuris}

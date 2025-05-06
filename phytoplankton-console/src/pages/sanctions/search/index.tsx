@@ -16,13 +16,19 @@ import {
 } from '@/utils/asyncResource';
 import { AllParams, TableData } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { SANCTIONS_SEARCH, SANCTIONS_SEARCH_HISTORY, SEARCH_PROFILES } from '@/utils/queries/keys';
+import {
+  SANCTIONS_SEARCH,
+  SANCTIONS_SEARCH_HISTORY,
+  SEARCH_PROFILES,
+  SCREENING_PROFILES,
+} from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import { QueryResult } from '@/utils/queries/types';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -34,6 +40,7 @@ interface TableSearchParams {
   occupationCode?: Array<OccupationCode>;
   documentId?: string;
   searchProfileId?: string;
+  screeningProfileId?: string;
 }
 
 interface Props {
@@ -46,6 +53,7 @@ export function SearchResultTable(props: Props) {
   const api = useApi();
   const currentUser = useAuth0User();
   const hasSetDefaultProfile = useRef(false);
+  const hasFeatureAcuris = useFeatureEnabled('ACURIS');
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
@@ -69,7 +77,34 @@ export function SearchResultTable(props: Props) {
     },
   );
 
+  const screeningProfilesResult = useQuery(
+    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
+    async () => {
+      try {
+        const response = await api.getScreeningProfiles({
+          filterScreeningProfileStatus: 'ENABLED',
+        });
+        return {
+          items: response.items || [],
+          total: response.items?.length || 0,
+        };
+      } catch (error) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+    },
+    {
+      enabled: hasFeatureAcuris,
+    },
+  );
+
   useEffect(() => {
+    if (hasFeatureAcuris) {
+      return;
+    }
+
     const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
     const profiles = response.items || [];
     const defaultProfile = Array.isArray(profiles)
@@ -86,18 +121,36 @@ export function SearchResultTable(props: Props) {
           : {}),
         ...(defaultProfile.nationality?.length ? { nationality: defaultProfile.nationality } : {}),
       }));
-      setSearchParams((current) => ({
-        ...current,
-        searchProfileId: defaultProfile.searchProfileId,
-        ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
-        ...(defaultProfile.types?.length
-          ? { types: defaultProfile.types as SanctionsSearchType[] }
-          : {}),
-        ...(defaultProfile.nationality?.length ? { nationality: defaultProfile.nationality } : {}),
-      }));
       hasSetDefaultProfile.current = true;
     }
-  }, [searchProfilesResult.data]);
+  }, [searchProfilesResult.data, hasFeatureAcuris]);
+
+  useEffect(() => {
+    if (
+      hasFeatureAcuris &&
+      !hasSetDefaultProfile.current &&
+      isSuccess(screeningProfilesResult.data)
+    ) {
+      const response = getOr(screeningProfilesResult.data, { items: [], total: 0 });
+      const profiles = response.items || [];
+      const defaultProfile = profiles.find((profile) => profile.isDefault);
+
+      hasSetDefaultProfile.current = true;
+
+      if (defaultProfile?.screeningProfileId) {
+        setParams((current) => ({
+          ...current,
+          screeningProfileId: defaultProfile.screeningProfileId,
+          searchProfileId: undefined,
+        }));
+      } else if (hasFeatureAcuris) {
+        setParams((current) => ({
+          ...current,
+          searchProfileId: undefined,
+        }));
+      }
+    }
+  }, [hasFeatureAcuris, screeningProfilesResult.data]);
 
   const historyItemQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId, { page: params.page, pageSize: params.pageSize }),
@@ -177,6 +230,7 @@ export function SearchResultTable(props: Props) {
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
           manualSearch: true,
+          screeningProfileId: hasFeatureAcuris ? searchParams.screeningProfileId : undefined,
         },
       });
     },
@@ -202,7 +256,6 @@ export function SearchResultTable(props: Props) {
 
   const searchDisabled =
     !params.searchTerm ||
-    // NOTE: In prod, only customer users can manually search for sanctions
     (process.env.ENV_NAME === 'prod' &&
       isSuperAdmin(currentUser) &&
       !currentUser.tenantName.toLowerCase().includes('flagright'));

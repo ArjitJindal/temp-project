@@ -15,6 +15,7 @@ export type CounterEntity =
   | 'ClosureReason'
   | 'EscalationReason'
   | 'SearchProfile'
+  | 'ScreeningProfile'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
@@ -27,6 +28,7 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'ClosureReason',
   'EscalationReason',
   'SearchProfile',
+  'ScreeningProfile',
 ]
 
 export type EntityCounter = {

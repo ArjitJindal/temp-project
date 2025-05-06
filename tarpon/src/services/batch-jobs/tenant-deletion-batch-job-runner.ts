@@ -388,6 +388,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteSearchProfiles.bind(this),
         order: 17,
       },
+      SCREENING_PROFILE: {
+        method: this.deleteScreeningProfiles.bind(this),
+        order: 18,
+      },
+      DEFAULT_FILTERS: {
+        method: this.deleteDefaultFilters.bind(this),
+        order: 19,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -880,6 +888,31 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Search Profile'
+    )
+  }
+
+  private async deleteScreeningProfiles(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId =
+      DynamoDbKeys.SCREENING_PROFILE(tenantId).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Screening Profile'
+    )
+  }
+
+  private async deleteDefaultFilters(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.DEFAULT_FILTERS(tenantId).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Default Filters'
     )
   }
 

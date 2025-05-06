@@ -3,8 +3,10 @@ import { createInterface } from 'readline'
 import { promisify } from 'util'
 import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
+import { MongoClient } from 'mongodb'
 import { COLLECTIONS_MAP, getSanctionsCollectionName } from '../utils'
 import { MongoSanctionsRepository } from '../repositories/sanctions-repository'
+import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -26,6 +28,11 @@ import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
+import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
+import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
+import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
+import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const pipelineAsync = promisify(pipeline)
 
@@ -271,12 +278,26 @@ interface AcurisBusinessEntity extends AcurisEntity {
   datesOfBirthIso: string[]
 }
 
+function normalizeSource(source?: string) {
+  if (!source) {
+    return ''
+  }
+  return source.toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
 @traceable
 export class AcurisProvider extends SanctionsDataFetcher {
   private apiKey: string
   private uri: string = 'https://api.acuris.com/compliance-datafeed'
   private screeningTypes: AcurisSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
+
+  private SanctionsSourceToEntityIdMapPerson = new Map<string, string[]>()
+  private SanctionsSourceToEntityIdMapBusiness = new Map<string, string[]>()
+  private PEPTierToEntityIdMapPerson = new Map<string, string[]>()
+  private RELSourceToEntityIdMapPerson = new Map<string, string[]>()
+  private RELSourceToEntityIdMapBusiness = new Map<string, string[]>()
+
   static async build(
     tenantId: string,
     settings?: SanctionsSettingsProviderScreeningTypes
@@ -324,6 +345,99 @@ export class AcurisProvider extends SanctionsDataFetcher {
     this.apiKey = apiKey
     this.screeningTypes = screeningTypes
     this.entityTypes = entityTypes
+  }
+
+  private async saveSourceMapsToCollection(version: string) {
+    const sourceDocuments: [Action, SourceDocument][] = []
+    // Process Sanctions Sources for Persons
+    for (const [
+      sourceName,
+      entityIds,
+    ] of this.SanctionsSourceToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds,
+          entityType: 'PERSON',
+          sourceType: 'SANCTIONS',
+        },
+      ])
+    }
+
+    // Process Sanctions Sources for Businesses
+    for (const [
+      sourceName,
+      entityIds,
+    ] of this.SanctionsSourceToEntityIdMapBusiness.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds,
+          entityType: 'BUSINESS',
+          sourceType: 'SANCTIONS',
+        },
+      ])
+    }
+
+    // Process PEP Tiers for Persons
+    for (const [
+      sourceName,
+      entityIds,
+    ] of this.PEPTierToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds,
+          entityType: 'PERSON',
+          sourceType: 'PEP',
+        },
+      ])
+    }
+
+    // Process REL Sources for Persons
+    for (const [
+      sourceName,
+      entityIds,
+    ] of this.RELSourceToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds,
+          entityType: 'PERSON',
+          sourceType: 'REGULATORY_ENFORCEMENT_LIST',
+        },
+      ])
+    }
+
+    // Process REL Sources for Businesses
+    for (const [
+      sourceName,
+      entityIds,
+    ] of this.RELSourceToEntityIdMapBusiness.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds,
+          entityType: 'BUSINESS',
+          sourceType: 'REGULATORY_ENFORCEMENT_LIST',
+        },
+      ])
+    }
+
+    // save to collection acuris_source_documents
+    const mongoDb = await getMongoDbClient()
+    const repo = this.getSourceDocumentsRepo(mongoDb)
+    await repo.save(SanctionsDataProviders.ACURIS, sourceDocuments, version)
+    this.SanctionsSourceToEntityIdMapPerson.clear()
+    this.SanctionsSourceToEntityIdMapBusiness.clear()
+    this.PEPTierToEntityIdMapPerson.clear()
+    this.RELSourceToEntityIdMapPerson.clear()
+    this.RELSourceToEntityIdMapBusiness.clear()
   }
 
   async fullLoad(
@@ -388,8 +502,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 if (entities.length > 1000) {
                   repo
                     .save(SanctionsDataProviders.ACURIS, entities, version)
-                    .then(() => {
+                    .then(async () => {
                       logger.info(`Processed ${lc} entities`)
+                      await this.saveSourceMapsToCollection(version)
                       entities = []
                       callback()
                     })
@@ -420,6 +535,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         logger.info('Stream processing error:', error)
       }
     }
+    await this.saveSourceMapsToCollection(version)
   }
 
   private getEntityTypesToLoad(entityType?: SanctionsEntityType) {
@@ -438,6 +554,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
             ? ['businesses']
             : []),
         ]
+  }
+
+  private getSourceDocumentsRepo(mongoDb: MongoClient) {
+    return new MongoSanctionSourcesRepository(
+      SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
+      mongoDb
+    )
   }
 
   private getFullExtractRepo(entityType: SanctionsEntityType) {
@@ -522,6 +645,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   ]
                 : []),
             ])
+            await this.saveSourceMapsToCollection(version)
             logger.info(`Processed ${entities.length} entities`)
             entities = []
           }
@@ -546,6 +670,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 ]
               : []),
           ])
+          await this.saveSourceMapsToCollection(version)
           entities = []
         }
         hasMore = Boolean(data.profiles?.length)
@@ -642,7 +767,33 @@ export class AcurisProvider extends SanctionsDataFetcher {
             )
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
-          return this.getOtherSources(evidence, evidenceName, description)
+          const normalisedSourceName = normalizeSource(evidenceName ?? '')
+          if (normalisedSourceName) {
+            const existingIds =
+              this.SanctionsSourceToEntityIdMapPerson.get(
+                normalisedSourceName
+              ) || []
+            this.SanctionsSourceToEntityIdMapPerson.set(normalisedSourceName, [
+              ...existingIds,
+              entity.qrCode,
+            ])
+          }
+          const category = matchingSanEntry
+            ? entity.sanEntries.current.some((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )
+              ? SANCTIONS_SOURCE_RELEVANCES[0]
+              : SANCTIONS_SOURCE_RELEVANCES[1]
+            : undefined
+          return this.getOtherSources(
+            evidence,
+            evidenceName,
+            description,
+            category,
+            normalisedSourceName
+          )
         }),
       pepSources: entity.evidences
         .filter(
@@ -652,6 +803,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             ) && sanctionSearchTypes.includes('PEP')
         )
         .map((evidence) => {
+          const pepTier = entity.pepEntries.pepTier
           const evidenceName =
             entity.pepEntries.current.find((pepEntry) =>
               pepEntry.evidenceIds.includes(evidence.evidenceId)
@@ -659,7 +811,27 @@ export class AcurisProvider extends SanctionsDataFetcher {
             entity.pepEntries.former.find((pepEntry) =>
               pepEntry.evidenceIds.includes(evidence.evidenceId)
             )?.segment
-          return this.getOtherSources(evidence, evidenceName)
+          const normalisedPepTier = normalizeSource(pepTier)
+          if (normalisedPepTier) {
+            const existingIds =
+              this.PEPTierToEntityIdMapPerson.get(normalisedPepTier) || []
+            this.PEPTierToEntityIdMapPerson.set(normalisedPepTier, [
+              ...existingIds,
+              entity.qrCode,
+            ])
+          }
+          const category = entity.datasets.some((dataset) => dataset === 'POI')
+            ? 'POI'
+            : entity.datasets.some((dataset) => dataset === 'RCA')
+            ? 'RCA'
+            : 'PEP'
+          return this.getOtherSources(
+            evidence,
+            evidenceName,
+            undefined,
+            category,
+            normalisedPepTier
+          )
         }),
       associates: entity.individualLinks.map((link) => ({
         name: this.getEntityName(link, entityType),
@@ -676,7 +848,16 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
             ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
         )
-        .map((evidence) => this.getMedia(evidence)),
+        .map((evidence) => {
+          const category = entity.rreEntries
+            .find((rreEntry) =>
+              rreEntry.events.some((event) =>
+                event.evidenceIds.includes(evidence.evidenceId)
+              )
+            )
+            ?.category.toLowerCase()
+          return this.getMedia(evidence, category)
+        }),
       rawResponse: entity,
       otherSources: [
         {
@@ -696,7 +877,32 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   event.evidenceIds.includes(evidence.evidenceId)
                 )
               )?.subcategory
-              return this.getOtherSources(evidence, evidenceName)
+              const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
+              if (normalisedEvidenceName) {
+                const existingIds =
+                  this.RELSourceToEntityIdMapPerson.get(
+                    normalisedEvidenceName
+                  ) || []
+                this.RELSourceToEntityIdMapPerson.set(normalisedEvidenceName, [
+                  ...existingIds,
+                  entity.qrCode,
+                ])
+              }
+              const category = entity.relEntries.find((relEntry) =>
+                relEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )?.category
+              return this.getOtherSources(
+                evidence,
+                evidenceName,
+                undefined,
+                category === 'Financial Regulator'
+                  ? REL_SOURCE_RELEVANCES[0]
+                  : category === 'Law Enforcement'
+                  ? REL_SOURCE_RELEVANCES[1]
+                  : undefined
+              )
             }),
         },
       ].filter((e) => e.value.length),
@@ -760,7 +966,33 @@ export class AcurisProvider extends SanctionsDataFetcher {
             )
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
-          return this.getOtherSources(evidence, evidenceName, description)
+          const category = matchingSanEntry
+            ? entity.sanEntries.current.some((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )
+              ? SANCTIONS_SOURCE_RELEVANCES[0]
+              : SANCTIONS_SOURCE_RELEVANCES[1]
+            : undefined
+          const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
+          if (normalisedEvidenceName) {
+            const existingIds =
+              this.SanctionsSourceToEntityIdMapBusiness.get(
+                normalisedEvidenceName
+              ) || []
+            this.SanctionsSourceToEntityIdMapBusiness.set(
+              normalisedEvidenceName,
+              [...existingIds, entity.qrCode]
+            )
+          }
+          return this.getOtherSources(
+            evidence,
+            evidenceName,
+            description,
+            category,
+            normalisedEvidenceName
+          )
         }),
       associates: entity.businessLinks.map((link) => ({
         name: this.getEntityName(link, entityType),
@@ -777,7 +1009,14 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
             ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
         )
-        .map((evidence) => this.getMedia(evidence)),
+        .map((evidence) => {
+          const category = entity.rreEntries.find((rreEntry) =>
+            rreEntry.events.some((event) =>
+              event.evidenceIds.includes(evidence.evidenceId)
+            )
+          )?.category
+          return this.getMedia(evidence, category)
+        }),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
@@ -796,7 +1035,33 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   event.evidenceIds.includes(evidence.evidenceId)
                 )
               )?.subcategory
-              return this.getOtherSources(evidence, evidenceName)
+              const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
+              if (normalisedEvidenceName) {
+                const existingIds =
+                  this.RELSourceToEntityIdMapBusiness.get(
+                    normalisedEvidenceName
+                  ) || []
+                this.RELSourceToEntityIdMapBusiness.set(
+                  normalisedEvidenceName,
+                  [...existingIds, entity.qrCode]
+                )
+              }
+              const category = entity.relEntries.find((relEntry) =>
+                relEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )?.category
+              return this.getOtherSources(
+                evidence,
+                evidenceName,
+                undefined,
+                category === 'Financial Regulator'
+                  ? REL_SOURCE_RELEVANCES[0]
+                  : category === 'Law Enforcement'
+                  ? REL_SOURCE_RELEVANCES[1]
+                  : undefined,
+                normalisedEvidenceName
+              )
             }),
         },
       ].filter((e) => e.value.length),
@@ -838,7 +1103,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
     return ''
   }
 
-  private getMedia(evidence: AcurisEvidence): SanctionsSource {
+  private getMedia(
+    evidence: AcurisEvidence,
+    category?: string
+  ): SanctionsSource {
     const url = evidence.originalUrl || evidence.assetUrl
     const name = evidence.title || url
     return {
@@ -847,6 +1115,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ? new Date(evidence.captureDateIso).valueOf()
         : undefined,
       name,
+      category,
       fields: [
         {
           name: 'Keywords',
@@ -887,7 +1156,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
   private getOtherSources(
     evidence: AcurisEvidence,
     evidenceName?: string,
-    description?: string
+    description?: string,
+    category?: string,
+    sourceName?: string
   ): SanctionsSource {
     const url = evidence.originalUrl || evidence.assetUrl
     const name = evidenceName || evidence.title || url
@@ -898,6 +1169,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : undefined,
       name,
       description,
+      category,
+      sourceName,
       fields: [
         {
           name: 'Title',

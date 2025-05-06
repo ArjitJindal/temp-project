@@ -78,7 +78,8 @@
           "frn:console:<default>:::notifications/all/*",
           "frn:console:<default>:::accounts/overview/*",
           "frn:console:<default>:::roles/overview/*",
-          "frn:console:<default>:::screening/search-profiles/*"
+          "frn:console:<default>:::screening/search-profiles/*",
+          "frn:console:<default>:::screening/screening-profiles/*"
         ]
       },
       {
@@ -119,7 +120,8 @@
           "frn:console:<default>:::lists/whitelist/*",
           "frn:console:<default>:::lists/blacklist/*",
           "frn:console:<default>:::simulator/simulations/*",
-          "frn:console:<default>:::screening/search-profiles/*"
+          "frn:console:<default>:::screening/search-profiles/*",
+          "frn:console:<default>:::screening/screening-profiles/*"
         ]
       }
     ],
@@ -156,7 +158,8 @@
           "frn:console:<default>:::risk-scoring/risk-factors/*",
           "frn:console:<default>:::transactions/overview/*",
           "frn:console:<default>:::users/user-overview/*",
-          "frn:console:<default>:::screening/search-profiles/*"
+          "frn:console:<default>:::screening/search-profiles/*",
+          "frn:console:<default>:::screening/screening-profiles/*"
         ]
       }
     ],
@@ -198,7 +201,8 @@
           "frn:console:<default>:::lists/blacklist/*",
           "frn:console:<default>:::simulator/simulations/*",
           "frn:console:<default>:::users/user-overview/*",
-          "frn:console:<default>:::screening/search-profiles/*"
+          "frn:console:<default>:::screening/search-profiles/*",
+          "frn:console:<default>:::screening/screening-profiles/*"
         ]
       }
     ],
@@ -248,7 +252,8 @@
           "frn:console:<default>:::lists/whitelist/*",
           "frn:console:<default>:::lists/blacklist/*",
           "frn:console:<default>:::simulator/simulations/*",
-          "frn:console:<default>:::screening/search-profiles/*"
+          "frn:console:<default>:::screening/search-profiles/*",
+          "frn:console:<default>:::screening/screening-profiles/*"
         ]
       }
     ],

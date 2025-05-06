@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { intersection, omit, round, startCase, uniq } from 'lodash'
+import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { sanitizeString } from '@flagright/lib/utils'
 import { AlertsRepository } from '../alerts/repository'
@@ -10,6 +10,7 @@ import {
 } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { AcurisProvider } from './providers/acuris-provider'
+import { MongoSanctionSourcesRepository } from './repositories/sanction-source-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
@@ -46,6 +47,8 @@ import {
   SanctionsEntity,
   SanctionsHit,
   SanctionsSearchResponse,
+  SanctionsSourceListResponse,
+  SanctionsSourceType,
 } from '@/@types/openapi-internal/all'
 import {
   SanctionsDataProvider,
@@ -62,6 +65,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
+import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 const DEFAULT_FUZZINESS = 0.5
 
 export type ProviderConfig = {
@@ -75,6 +79,7 @@ export class SanctionsService {
   complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
   sanctionsHitsRepository!: SanctionsHitsRepository
+  sanctionsSourcesRepository!: MongoSanctionSourcesRepository
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
   counterRepository!: CounterRepository
@@ -98,6 +103,10 @@ export class SanctionsService {
     this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
     this.sanctionsHitsRepository = new SanctionsHitsRepository(
       this.tenantId,
+      mongoDb
+    )
+    this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
+      SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
       mongoDb
     )
   }
@@ -597,5 +606,22 @@ export class SanctionsService {
       })
     // todo: add audit log record
     return { modifiedCount }
+  }
+
+  public async getSanctionsSources(
+    filterSourceType?: SanctionsSourceType
+  ): Promise<SanctionsSourceListResponse> {
+    await this.initialize()
+    const sources = await this.sanctionsSourcesRepository.getSanctionsSources(
+      filterSourceType,
+      [],
+      true
+    )
+    return {
+      items:
+        sources?.map((source) =>
+          pick(source, ['id', 'sourceName', 'sourceType'])
+        ) ?? [],
+    }
   }
 }

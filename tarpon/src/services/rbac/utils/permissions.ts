@@ -493,6 +493,12 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read', 'write'],
         type: 'STATIC',
       },
+      {
+        id: 'screening-profiles',
+        name: 'Screening profiles',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
     ],
   },
   {

@@ -1,5 +1,6 @@
 import { compact, intersection, uniq } from 'lodash'
 import { sanitizeString } from '@flagright/lib/utils'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { SanctionsDataProviders } from '../types'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
@@ -13,6 +14,10 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/
 import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { getContext } from '@/core/utils/context-storage'
+import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
+import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
+import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
+import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -160,7 +165,13 @@ export function getNameAndAka(
 }
 
 export function sanitizeAcurisEntities(
-  entities: SanctionsEntity[]
+  entities: SanctionsEntity[],
+  sanctionSourceNames?: string[],
+  pepSourceNames?: string[],
+  sanctionsCategory?: SanctionsSourceRelevance[],
+  pepCategory?: PEPSourceRelevance[],
+  relCategory?: RELSourceRelevance[],
+  adverseMediaCategory?: AdverseMediaSourceRelevance[]
 ): SanctionsEntity[] {
   const SCREENING_TYPES_TO_TYPES = {
     PEP: [
@@ -195,14 +206,69 @@ export function sanitizeAcurisEntities(
       ...entity,
       sanctionSearchTypes,
       sanctionsSources: sanctionSearchTypes.includes('SANCTIONS')
-        ? entity.sanctionsSources
+        ? entity.sanctionsSources?.filter(
+            (source) =>
+              (!sanctionSourceNames?.length ||
+                sanctionSourceNames
+                  .map((s) => s.toLowerCase())
+                  .includes(
+                    humanizeAuto(source.sourceName ?? '').toLowerCase()
+                  )) &&
+              (!sanctionsCategory ||
+                (source.category &&
+                  sanctionsCategory
+                    .map((cat) => humanizeAuto(cat).toLowerCase())
+                    .includes(humanizeAuto(source.category).toLowerCase())))
+          ) ??
+          entity.sanctionsSources ??
+          []
         : [],
-      pepSources: sanctionSearchTypes.includes('PEP') ? entity.pepSources : [],
+      pepSources: sanctionSearchTypes.includes('PEP')
+        ? entity.pepSources?.filter(
+            (source) =>
+              (!pepSourceNames?.length ||
+                pepSourceNames
+                  .map((s) => s.toLowerCase())
+                  .includes(
+                    humanizeAuto(source.sourceName ?? '').toLowerCase()
+                  )) &&
+              (!pepCategory ||
+                (source.category &&
+                  pepCategory
+                    .map((cat) => humanizeAuto(cat).toLowerCase())
+                    .includes(humanizeAuto(source.category).toLowerCase())))
+          ) ??
+          entity.pepSources ??
+          []
+        : [],
       mediaSources: sanctionSearchTypes.includes('ADVERSE_MEDIA')
-        ? entity.mediaSources
+        ? entity.mediaSources?.filter(
+            (source) =>
+              !adverseMediaCategory ||
+              (source.category &&
+                adverseMediaCategory
+                  .map((cat) => humanizeAuto(cat).toLowerCase())
+                  .includes(humanizeAuto(source.category).toLowerCase()))
+          ) ??
+          entity.mediaSources ??
+          []
         : [],
       otherSources: sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
-        ? entity.otherSources
+        ? entity.otherSources?.filter(
+            (source) =>
+              source.type === 'REGULATORY_ENFORCEMENT_LIST' &&
+              (!relCategory ||
+                (source.value?.some(
+                  (value) =>
+                    value.category &&
+                    relCategory
+                      .map((cat) => humanizeAuto(cat).toLowerCase())
+                      .includes(humanizeAuto(value.category).toLowerCase())
+                ) ??
+                  false))
+          ) ??
+          entity.otherSources ??
+          []
         : [],
       isActiveSanctioned: sanctionSearchTypes.includes('SANCTIONS')
         ? entity.isActiveSanctioned

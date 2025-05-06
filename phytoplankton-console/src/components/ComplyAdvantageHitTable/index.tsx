@@ -35,7 +35,7 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSancti
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
-import { SEARCH_PROFILES } from '@/utils/queries/keys';
+import { SEARCH_PROFILES, SCREENING_PROFILES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
 export interface TableSearchParams {
@@ -82,6 +82,13 @@ export default function SanctionsSearchTable(props: Props) {
   const settings = useSettings();
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
+
+  // Move feature flag declarations here, before using them in useQuery dependencies
+  const hasFeatureAcuris = useFeatureEnabled('ACURIS');
+  const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
+  const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+
   const searchProfileResult = useQuery(
     SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
     async () => {
@@ -99,6 +106,33 @@ export default function SanctionsSearchTable(props: Props) {
           total: 0,
         };
       }
+    },
+    {
+      enabled: !hasFeatureAcuris, // Only fetch search profiles if ACURIS is not enabled
+      staleTime: 300000, // 5 minutes
+    },
+  );
+
+  const screeningProfilesResult = useQuery(
+    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
+    async () => {
+      try {
+        const response = await api.getScreeningProfiles({
+          filterScreeningProfileStatus: 'ENABLED',
+        });
+        return {
+          items: response.items || [],
+          total: response.items?.length || 0,
+        };
+      } catch (error) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+    },
+    {
+      enabled: true,
     },
   );
   const helper = new ColumnHelper<SanctionsEntity>();
@@ -173,11 +207,6 @@ export default function SanctionsSearchTable(props: Props) {
       },
     }),
   ]);
-
-  const hasFeatureAcuris = useFeatureEnabled('ACURIS');
-  const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
-  const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
-  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
 
   const acurisOptions = useMemo(() => {
     if (!hasFeatureAcuris) {
@@ -317,10 +346,34 @@ export default function SanctionsSearchTable(props: Props) {
     },
   ];
 
-  if (searchProfiles.length > 0) {
+  if (hasFeatureAcuris) {
+    const screeningProfiles =
+      getOr(screeningProfilesResult.data, { items: [], total: 0 }).items || [];
+
+    extraFilters.unshift({
+      title: 'Screening profile',
+      key: 'screeningProfileId',
+      pinFilterToLeft: true,
+      showFilterByDefault: true,
+      renderer: {
+        kind: 'select',
+        options:
+          screeningProfiles.length > 0
+            ? screeningProfiles.map((profile) => ({
+                label: profile.screeningProfileName ?? '',
+                value: profile.screeningProfileId ?? '',
+              }))
+            : [{ label: 'Loading profiles...', value: '' }], // Show a loading state if no profiles yet
+        mode: 'SINGLE',
+        displayMode: 'select',
+      },
+    });
+  } else if (searchProfiles.length > 0) {
     extraFilters.unshift({
       title: 'Search profile',
       key: 'searchProfileId',
+      pinFilterToLeft: true,
+      showFilterByDefault: true,
       renderer: {
         kind: 'select',
         options: searchProfiles.map((profile) => ({
