@@ -44,8 +44,11 @@ export const RuleModeModal = (props: Props) => {
       onCancel={onCancel}
       title={`Configure rule ${ruleId}`}
       onOk={onOk}
-      okText="Confirm"
+      okText={isLoading(submitRes) ? 'Creating...' : 'Confirm'}
       okProps={{
+        isLoading: isLoading(submitRes),
+      }}
+      cancelProps={{
         isLoading: isLoading(submitRes),
       }}
     >
