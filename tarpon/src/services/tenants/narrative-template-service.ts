@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
+import { ConnectionCredentials } from 'thunder-schema'
 import { PermissionsService } from '../rbac'
 import { NarrativeRepository } from './repositories/narrative-template-repository'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
@@ -14,8 +15,16 @@ export class NarrativeService {
   private narrativeRepository: NarrativeRepository
   private permissionsService: PermissionsService
 
-  constructor(tenantId: string, mongoClient: MongoClient) {
-    this.narrativeRepository = new NarrativeRepository(tenantId, mongoClient)
+  constructor(
+    tenantId: string,
+    mongoClient: MongoClient,
+    clickhouseConfig: ConnectionCredentials
+  ) {
+    this.narrativeRepository = new NarrativeRepository(
+      tenantId,
+      mongoClient,
+      clickhouseConfig
+    )
     this.permissionsService = new PermissionsService(tenantId)
   }
 

@@ -11,6 +11,7 @@ import { backOff, BackoffOptions } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
+import { ConnectionCredentials } from 'thunder-schema'
 import { envIs, envIsNot } from '../env'
 import {
   ClickHouseTables,
@@ -62,9 +63,29 @@ export const closeClickhouseClient = async (tenantId: string) => {
   }
 }
 
+const getUrl = (config: NodeClickHouseClientConfigOptions) => {
+  if (useNormalLink()) {
+    return config.url?.toString().replace('vpce.', '')
+  }
+  return config.url
+}
+
+const getLocalConfig = (
+  database: string
+): NodeClickHouseClientConfigOptions => ({
+  url: 'http://localhost:8123',
+  username: 'default',
+  password: '',
+  database,
+})
+
 export const getClickhouseClientConfig = async (
   database: string
 ): Promise<NodeClickHouseClientConfigOptions> => {
+  if (envIs('local')) {
+    return getLocalConfig(database)
+  }
+
   const config = await getSecret<NodeClickHouseClientConfigOptions>(
     'clickhouse'
   )
@@ -72,9 +93,7 @@ export const getClickhouseClientConfig = async (
   return {
     ...config,
     database,
-    url: useNormalLink()
-      ? config.url?.toString().replace('vpce.', '')
-      : config.url,
+    url: getUrl(config),
     clickhouse_settings: {
       ...config.clickhouse_settings,
       alter_sync: '2',
@@ -82,37 +101,60 @@ export const getClickhouseClientConfig = async (
   }
 }
 
-export const executeClickhouseDefaultClientQuery = async (
-  callback: (client: ClickHouseClient) => Promise<any>
+const createAndExecuteWithClient = async <T>(
+  config: NodeClickHouseClientConfigOptions,
+  callback: (client: ClickHouseClient) => Promise<T>
+): Promise<T> => {
+  const clickHouseClient = createClient(config)
+  const result = await callback(clickHouseClient)
+  await clickHouseClient.close()
+  return result
+}
+
+export const executeClickhouseDefaultClientQuery = async <T>(
+  callback: (client: ClickHouseClient) => Promise<T>
 ) => {
   if (envIs('local') || envIs('test')) {
-    const clickHouseClient = createClient({
-      url: 'http://localhost:8123',
-      username: 'default',
-      database: 'default',
-    })
-    const result = await callback(clickHouseClient)
-    await clickHouseClient.close()
-    return result
-  } else {
-    const config = await getClickhouseClientConfig('default')
-    const clickHouseClient = createClient(config)
-    const result = await callback(clickHouseClient)
-    await clickHouseClient.close()
-    return result
+    return createAndExecuteWithClient(getLocalConfig('default'), callback)
   }
+
+  const config = await getClickhouseClientConfig('default')
+  return createAndExecuteWithClient(config, callback)
 }
 
 const useNormalLink = () => {
-  if (envIs('local') || envIs('test') || envIs('dev')) {
+  if (envIs('local', 'test', 'dev') || process.env.MIGRATION_TYPE) {
     return true
   }
-
-  if (process.env.MIGRATION_TYPE) {
-    return true
-  }
-
   return false
+}
+
+const getConnectionCredentials = (
+  config: NodeClickHouseClientConfigOptions,
+  database: string
+): ConnectionCredentials => ({
+  url: config.url?.toString() ?? '',
+  username: config.username,
+  password: config.password,
+  database,
+})
+
+export async function getClickhouseCredentials(
+  tenantId: string
+): Promise<ConnectionCredentials> {
+  const dbName = getClickhouseDbName(tenantId)
+  const config = await getClickhouseClientConfig(dbName)
+
+  if (!config.url) {
+    throw new Error('Clickhouse URL is not set')
+  }
+
+  return getConnectionCredentials(config, dbName)
+}
+
+export async function getDefualtConfig(): Promise<ConnectionCredentials> {
+  const config = await getClickhouseClientConfig('default')
+  return getConnectionCredentials(config, 'default')
 }
 
 export async function getClickhouseClient(tenantId: string) {
@@ -128,24 +170,8 @@ export async function getClickhouseClient(tenantId: string) {
     })
   }
 
-  if (envIs('local') || envIs('test')) {
-    const clickHouseClient = createClient({
-      url: 'http://localhost:8123',
-      username: 'default',
-      database: getClickhouseDbName(tenantId),
-    })
-
-    client = { [tenantId]: clickHouseClient }
-
-    return clickHouseClient
-  }
-
   const config = await getClickhouseClientConfig(getClickhouseDbName(tenantId))
-
-  client = {
-    [tenantId]: createClient(config),
-  }
-
+  client = { [tenantId]: createClient(config) }
   return client[tenantId]
 }
 

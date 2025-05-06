@@ -4,6 +4,7 @@ import { exit } from 'process'
 import { Umzug, MongoDBStorage } from 'umzug'
 import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
 import { RuleInstanceService } from '../../src/services/rules-engine/rule-instance-service'
+import { migrateClickhouse } from '../clickhouse-migrations'
 import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
 import { initializeEnvVars, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
@@ -111,6 +112,7 @@ async function main() {
   if (!isMigrationFileCreation && migrationType === 'PRE_DEPLOYMENT') {
     console.info('Syncing clickhouse tables before handling migrations')
     // Sync clickhouse tables before handling migrations
+    await migrateClickhouse()
     await syncClickhouseTables()
   }
 

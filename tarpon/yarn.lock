@@ -3564,10 +3564,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@clickhouse/client-common@npm:1.11.1":
+  version: 1.11.1
+  resolution: "@clickhouse/client-common@npm:1.11.1"
+  checksum: e1b294cad84db8c1facc77c3a72fc05436519f6420b4cbee08994d5cd8c247ac71fa43f4c53c9f1ec453dcabd7828e5acc5348268286efa9c06d459da9965ccf
+  languageName: node
+  linkType: hard
+
 "@clickhouse/client-common@npm:1.5.0":
   version: 1.5.0
   resolution: "@clickhouse/client-common@npm:1.5.0"
   checksum: ae618878d89cc1d08de2b4715a3e320f43f5b2911dddcb78d1b70a10875e2423e5dcc094bc761cdbce399879229995a3e99a7c3e0303b10e337e297484ee9c3e
+  languageName: node
+  linkType: hard
+
+"@clickhouse/client@npm:^1.11.1":
+  version: 1.11.1
+  resolution: "@clickhouse/client@npm:1.11.1"
+  dependencies:
+    "@clickhouse/client-common": "npm:1.11.1"
+  checksum: d51a85984e06e2593060e19e06b3086a4bf26c15dd3c339b816f4ed7677dc4a80fd213f4a1e8d34ed3ba5af88218fad74937893533080185787c9273b3c39940
   languageName: node
   linkType: hard
 
@@ -13531,6 +13547,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"inherits@npm:2.0.3":
+  version: 2.0.3
+  resolution: "inherits@npm:2.0.3"
+  checksum: 8771303d66c51be433b564427c16011a8e3fbc3449f1f11ea50efb30a4369495f1d0e89f0fc12bdec0bd7e49102ced5d137e031d39ea09821cb3c717fcf21e69
+  languageName: node
+  linkType: hard
+
 "ini@npm:~1.3.0":
   version: 1.3.8
   resolution: "ini@npm:1.3.8"
@@ -17233,6 +17256,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path@npm:^0.12.7":
+  version: 0.12.7
+  resolution: "path@npm:0.12.7"
+  dependencies:
+    process: "npm:^0.11.1"
+    util: "npm:^0.10.3"
+  checksum: d49d101f9596613cf4cd1d4ebc4e64ba9a9df5d9cd75a410cfe87a88ce4bf0e2617ff44b92025376f7ecb02e88a6308b27f7f39d810f2335a5126f762487adfb
+  languageName: node
+  linkType: hard
+
 "pdf2json@npm:^3.1.3":
   version: 3.1.3
   resolution: "pdf2json@npm:3.1.3"
@@ -17541,7 +17574,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"process@npm:^0.11.10":
+"process@npm:^0.11.1, process@npm:^0.11.10":
   version: 0.11.10
   resolution: "process@npm:0.11.10"
   checksum: dbaa7e8d1d5cf375c36963ff43116772a989ef2bb47c9bdee20f38fd8fc061119cf38140631cf90c781aca4d3f0f0d2c834711952b728953f04fd7d238f59f5b
@@ -19327,6 +19360,7 @@ __metadata:
     ssh2-sftp-client: "npm:^10.0.3"
     stopword: "npm:^3.0.1"
     swagger-routes-express: "npm:^3.3.2"
+    thunder-schema: "npm:1.0.12"
     timeout-signal: "npm:^1.1.0"
     ts-jest: "npm:^28.0.8"
     ts-loader: "npm:^9.2.6"
@@ -19406,6 +19440,18 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 5da78346f70139a7d213b65a0106f3c398d6bc5301f9248b5275f420abc2c4b1e77c2abc72d218dedc28c41efb2e7c312cb76a7730d04f9c2d37d247da3f4198
+  languageName: node
+  linkType: hard
+
+"thunder-schema@npm:1.0.12":
+  version: 1.0.12
+  resolution: "thunder-schema@npm:1.0.12"
+  dependencies:
+    "@clickhouse/client": "npm:^1.11.1"
+    path: "npm:^0.12.7"
+  bin:
+    thunder-schema: dist/cli/index.js
+  checksum: 3cccd420a448545443c10039361db1344ab5e31979410de5998742b92f940f326c86133888400eb9a76330274282555449d04a8ebe4690e0186dbd1de96f8738
   languageName: node
   linkType: hard
 
@@ -20272,6 +20318,15 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
+  languageName: node
+  linkType: hard
+
+"util@npm:^0.10.3":
+  version: 0.10.4
+  resolution: "util@npm:0.10.4"
+  dependencies:
+    inherits: "npm:2.0.3"
+  checksum: 1200a1ca2b474758342b3a0c5261c56f14ef09ad7eeaec3e6f449f5776ecdfce09a153cad62652b823e74647cdcfd2918552eadd2434783dfb58dabc5061803a
   languageName: node
   linkType: hard
 

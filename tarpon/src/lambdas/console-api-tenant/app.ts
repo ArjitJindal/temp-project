@@ -46,6 +46,7 @@ import {
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
+import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 import { createApiUsageJobs } from '@/utils/api-usage'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -272,7 +273,12 @@ export const tenantsHandler = lambdaApi()(
     })
 
     /** Narratives */
-    const narrativeService = new NarrativeService(tenantId, mongoDb)
+    const clickhouseConfig = await getClickhouseCredentials(tenantId)
+    const narrativeService = new NarrativeService(
+      tenantId,
+      mongoDb,
+      clickhouseConfig
+    )
     handlers.registerGetNarratives(
       async (ctx, request) =>
         await narrativeService.getNarrativeTemplates(request)

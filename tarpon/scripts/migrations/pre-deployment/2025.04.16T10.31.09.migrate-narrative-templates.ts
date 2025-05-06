@@ -3,10 +3,16 @@ import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { NarrativeService } from '@/services/tenants/narrative-template-service'
 import { PermissionsService } from '@/services/rbac'
+import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoClient = await getMongoDbClient()
-  const narrativeService = new NarrativeService(tenant.id, mongoClient)
+  const clickhouseConfig = await getClickhouseCredentials(tenant.id)
+  const narrativeService = new NarrativeService(
+    tenant.id,
+    mongoClient,
+    clickhouseConfig
+  )
 
   const narrativeTemplates = await narrativeService.getNarrativeTemplates({
     page: 1,
