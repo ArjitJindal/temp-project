@@ -522,7 +522,7 @@ const customFieldWidget: FieldWidget<Config> = {
       return rhsOnly && isAnyInOpreator(props.operator);
     });
     const finalOptions = options.map((x) => ({ label: x.label, value: x.path }));
-    const finalValue = options.find((x) => x.path === props.value)?.label ?? undefined;
+    const finalValue = options.find((x) => x.path === props.value)?.path ?? undefined;
 
     const queryBuilderConfig = props.config as QueryBuilderConfig;
     if (isViewMode(queryBuilderConfig)) {
