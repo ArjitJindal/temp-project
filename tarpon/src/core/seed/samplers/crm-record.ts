@@ -30,54 +30,54 @@ const ATTACHMENT_NAMES = [
 ]
 const TICKET_DESCRIPTIONS: { descriptionText?: string; subject?: string }[] = [
   {
-    subject: 'Login Issue',
+    subject: 'Request for Suspicious Transaction Review',
     descriptionText:
-      'User reports being unable to log in despite entering the correct credentials. Password reset attempts also fail.',
+      'Compliance team requests analysis of a $25,000 wire transfer to an offshore account flagged by the monitoring system.',
   },
   {
-    subject: 'Payment Failure',
+    subject: 'Unusual Activity Alert on Customer Account',
     descriptionText:
-      "Customer attempted to process payment via credit card but received an 'Invalid Transaction' error.",
+      'Customer account shows multiple high-value international transactions within a short timeframe. Requesting internal review.',
   },
   {
-    subject: 'Feature Request: Dark Mode',
+    subject: 'RFI: Clarification on Beneficial Ownership',
     descriptionText:
-      'User suggests adding a dark mode option for better usability during nighttime browsing.',
+      'Need confirmation of the ultimate beneficial owner for corporate account 84293 used in multiple flagged transactions.',
   },
   {
-    subject: 'Bug: App Crashes on Startup',
+    subject: 'Escalation: Potential Structuring Behavior',
     descriptionText:
-      'Multiple users report that the mobile app crashes immediately upon launching after the latest update.',
+      'Customer appears to be making cash deposits just under the reporting threshold across different branches. Please investigate.',
   },
   {
-    subject: 'Slow Website Performance',
+    subject: 'Investigation Request: Link to Sanctioned Entity',
     descriptionText:
-      'Website takes longer than usual to load pages, especially on the checkout page.',
+      'System flagged a transaction possibly linked to an entity under OFAC sanctions. RFI raised for further assessment.',
   },
   {
-    subject: 'Email Notifications Not Received',
+    subject: 'SAR Justification Required',
     descriptionText:
-      'User has not been receiving order confirmation or support emails despite correct email settings.',
+      'Need justification for filing a SAR on account 56289. Please attach relevant transaction patterns or customer behavior analysis.',
   },
   {
-    subject: 'Request for Refund',
+    subject: 'High-Risk Jurisdiction Wire Transfer',
     descriptionText:
-      'Customer mistakenly purchased the wrong plan and requests a refund per the 30-day money-back policy.',
+      'Compliance seeks additional context on a large outbound transfer to a high-risk jurisdiction. RFI initiated for business rationale.',
   },
   {
-    subject: 'Two-Factor Authentication Issue',
+    subject: 'Multiple RFIs for Same Customer ID',
     descriptionText:
-      'User enabled 2FA but is not receiving the authentication code on their registered device.',
+      'Customer 119202 has triggered 3 RFIs in the past month. Need a consolidated summary of findings and recommended actions.',
   },
   {
-    subject: 'Order Not Delivered',
+    subject: 'Unexplained Cash Activity',
     descriptionText:
-      'Customer placed an order 10 days ago, but tracking information has not been updated, and the package has not arrived.',
+      'RFI raised for unexplained frequent cash withdrawals exceeding $10,000 from ATM over two weeks. Review requested.',
   },
   {
-    subject: 'Unable to Reset Password',
+    subject: 'Potential Identity Mismatch Detected',
     descriptionText:
-      'User reports that the password reset link sent via email does not work and redirects to a blank page.',
+      'A transaction was flagged due to mismatched KYC information. Need verification of customer identity documents and onboarding logs.',
   },
 ]
 
