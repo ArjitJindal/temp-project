@@ -231,20 +231,9 @@ export default function SuperAdminPanel() {
   const [crmIntegrationName, setCrmIntegrationName] = useState<CrmIntegrationNames | undefined>(
     settings.crmIntegrationName ?? undefined,
   );
-
-  const initialSarJurisdictions = useMemo(() => {
-    if (!SARCountries?.length) {
-      return settings.sarJurisdictions ?? [];
-    }
-
-    if (!settings?.sarJurisdictions?.length && SARCountries?.length) {
-      return [SARCountries[0].countryCode];
-    }
-
-    return settings.sarJurisdictions ?? [];
-  }, [SARCountries, settings?.sarJurisdictions]);
-
-  const [sarJurisdictions, setSarJurisdictions] = useState<Array<string>>(initialSarJurisdictions);
+  const [sarJurisdictions, setSarJurisdictions] = useState<Array<string>>(
+    settings.sarJurisdictions ?? [],
+  );
 
   const user = useAuth0User();
   const api = useApi();
@@ -546,7 +535,11 @@ export default function SuperAdminPanel() {
                     label: humanizeConstant(sarCountry.country),
                     value: sarCountry.countryCode,
                   }))}
-                  value={sarJurisdictions}
+                  value={
+                    sarJurisdictions.length === 0
+                      ? SARCountries?.map((country) => country.countryCode)
+                      : sarJurisdictions
+                  }
                   onChange={(v) => v && setSarJurisdictions(v)}
                 />
               </Label>
