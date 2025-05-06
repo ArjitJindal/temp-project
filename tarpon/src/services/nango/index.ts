@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { memoize } from 'lodash'
 import { Nango, RecordMetadata } from '@nangohq/node'
 import createHttpError from 'http-errors'
+import { backOff } from 'exponential-backoff'
 import { NangoRepository } from './repository'
 import { getSecret } from '@/utils/secrets-manager'
 import { NangoWebhookEvent } from '@/@types/openapi-internal/NangoWebhookEvent'
@@ -99,6 +100,26 @@ export class NangoService {
     return { tenantId, region }
   }
 
+  private async handleRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn()
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        const retryAfter =
+          parseInt(error.response.headers['retry-after'] || '5', 10) * 1000
+        await new Promise((resolve) => setTimeout(resolve, retryAfter))
+        return backOff(fn, {
+          timeMultiple: 2,
+          maxDelay: 30000,
+          jitter: 'full',
+          numOfAttempts: 5,
+          delayFirstAttempt: true,
+        })
+      }
+      throw error
+    }
+  }
+
   public async recieveWebhook(webhook: NangoWebhookEvent, _region: string) {
     const { connectionId, providerConfigKey, model, modifiedAfter } = webhook
     const nango = await this.nango()
@@ -122,21 +143,34 @@ export class NangoService {
     }
 
     let nextCursor: string | null = null
+    const { recordType, crmName } = NANGO_MODEL_TYPE_MAP[model as NangoModels]
+
+    const maxTimestampInDb = await repository.getMaxTimestamp(
+      recordType,
+      crmName
+    )
+
+    const updatedModifiedAfter = Math.min(
+      dayjs(maxTimestampInDb).valueOf(),
+      dayjs(modifiedAfter).valueOf()
+    )
 
     do {
       const records: NangoListRecordsResponse<IncomingRecord> =
-        await nango.listRecords<IncomingRecord>({
-          connectionId,
-          providerConfigKey,
-          model,
-          modifiedAfter,
-          ...(nextCursor ? { fromCursorKey: nextCursor } : {}),
-        })
+        await this.handleRateLimit(() =>
+          nango.listRecords<IncomingRecord>({
+            connectionId,
+            providerConfigKey,
+            model,
+            modifiedAfter: dayjs(updatedModifiedAfter).toISOString(),
+            ...(nextCursor ? { fromCursorKey: nextCursor } : {}),
+            limit: 10000,
+          })
+        )
 
       const data = records.records
 
       logger.info(`Received ${data.length} records`, { records })
-      const { recordType, crmName } = NANGO_MODEL_TYPE_MAP[model as NangoModels]
 
       const nangoRecords: CRMRecord[] = data.map((record: IncomingRecord) => {
         const { idKey, timestampKey } = NANGO_MODELS_DATA[model]

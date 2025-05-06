@@ -70,6 +70,14 @@ export class NangoRepository {
     )
   }
 
+  public async getMaxTimestamp(modelType: CRMModelType, crmName: string) {
+    const result = await executeClickhouseQuery<{ max: number }[]>(
+      this.tenantId,
+      `SELECT MAX(timestamp) as max FROM ${CLICKHOUSE_DEFINITIONS.CRM_RECORDS.tableName} FINAL WHERE recordType = '${modelType}' AND crmName = '${crmName}'`
+    )
+    return result[0].max
+  }
+
   public async getCrmRecords(
     crmRecordParams: DefaultApiGetCrmRecordsRequest
   ): Promise<CrmGetResponse> {
