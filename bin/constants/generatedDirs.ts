@@ -10,6 +10,7 @@ const GENERATED_DIRS = [
   'src/@types/openapi-public-management',
   'src/@types/openapi-public-management-custom',
   '.gen',
+  'torpedo/dist',
 ]
 
 const commandMoveGeneratedDirs = () =>

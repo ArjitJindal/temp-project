@@ -67,6 +67,7 @@ const main = async () => {
   process.env.ENV = config.env
 
   if (clean) {
+    execSync(`./torpedo/build.sh`, { stdio: 'inherit' })
     execSync('yarn build', { stdio: 'inherit' })
     execSync('yarn openapi:augment', { stdio: 'inherit' })
     execSync(`npx cdk synth --quiet ${config.stackName}`, { stdio: 'inherit' })

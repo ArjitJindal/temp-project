@@ -62,6 +62,44 @@ export function createFunction(
   internalFunctionProps: InternalFunctionProps,
   props: Partial<FunctionProps> = {}
 ): { alias: Alias; func: LambdaFunction } {
+  return createLambdaFunction(
+    'nodejs',
+    context,
+    role,
+    internalFunctionProps,
+    props,
+    (name) => `dist/lambdas/${LAMBDAS[name].codePath}`
+  )
+}
+
+export function createPythonLambdaFunction(
+  context: Construct & { config: Config } & {
+    functionProps: Partial<FunctionProps>
+  },
+  role: IRole,
+  internalFunctionProps: InternalFunctionProps,
+  props: Partial<FunctionProps> = {}
+): { alias: Alias; func: LambdaFunction } {
+  return createLambdaFunction(
+    'python',
+    context,
+    role,
+    internalFunctionProps,
+    props,
+    (name) => `torpedo/dist/${LAMBDAS[name].codePath}.zip`
+  )
+}
+
+function createLambdaFunction(
+  type: 'python' | 'nodejs',
+  context: Construct & { config: Config } & {
+    functionProps: Partial<FunctionProps>
+  },
+  role: IRole,
+  internalFunctionProps: InternalFunctionProps,
+  props: Partial<FunctionProps>,
+  getCodePath: (name: string) => string
+): { alias: Alias; func: LambdaFunction } {
   const { layers, name, memorySize, provisionedConcurrency } =
     internalFunctionProps
   const layersArray = layers ? [...layers] : []
@@ -80,6 +118,7 @@ export function createFunction(
     layersArray.push(cwInsightsLayer)
   }
   const { handlerName } = LAMBDAS[name]
+
   if (!handlerName) {
     throw new Error(`Unknown lambda ${name}!`)
   }
@@ -115,12 +154,12 @@ export function createFunction(
       },
     },
     functionName: name,
-    runtime: Runtime.NODEJS_20_X,
+    runtime: type === 'python' ? Runtime.PYTHON_3_10 : Runtime.NODEJS_20_X,
     handler: `app.${handlerName}`,
     role: role,
     code: process.env.INFRA_CI
       ? Code.fromInline("console.log('hello')")
-      : Code.fromAsset(`dist/lambdas/${LAMBDAS[name].codePath}`),
+      : Code.fromAsset(getCodePath(name)),
     tracing: Tracing.ACTIVE,
     timeout: Duration.seconds(LAMBDAS[name].timeoutSeconds),
     memorySize: memorySize

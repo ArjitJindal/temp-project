@@ -317,6 +317,11 @@ export const StackConstants = {
   ACTION_PROCESSING_FUNCTION_NAME: getResourceNameForTarpon(
     'ActionProcessingFunction'
   ),
+  LAMBDA_PROCESS_LAMBDA_FUNCTION_NAME: getResourceNameForTarpon(
+    'LambdaProcessLambda'
+  ),
+  PROCESSING_LAMBDA_FUNCTION_NAME: getResourceNameForTarpon('ProcessingLambda'),
+  PYTHON_LAYER_NAME: getResourceNameForTarpon('PythonLayer'),
 }
 
 export const SQSQueues: {

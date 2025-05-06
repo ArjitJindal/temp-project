@@ -15,3 +15,7 @@ lib/openapi/internal/nango-models.yaml
 Dockerfile
 *.lock
 *.csv
+*.pyc
+Makefile
+*.toml
+torpedo/*

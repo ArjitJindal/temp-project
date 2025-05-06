@@ -12,6 +12,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
         install: {
           'runtime-versions': {
             nodejs: 20,
+            python: '3.10',
           },
           commands: [
             'corepack enable',
@@ -22,6 +23,9 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
             'yarn install --immutable',
             'cd ../tarpon',
             'yarn install --immutable',
+            'cd torpedo',
+            './build.sh',
+            'cd ..', // Move back to tarpon
           ],
         },
         build: {

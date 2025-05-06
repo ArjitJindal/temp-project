@@ -383,4 +383,16 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.LAMBDA_PROCESS_LAMBDA_FUNCTION_NAME]: {
+    codePath: 'lambda_process',
+    handlerName: 'handler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
+  [StackConstants.PROCESSING_LAMBDA_FUNCTION_NAME]: {
+    codePath: 'processing',
+    handlerName: 'handler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
 }

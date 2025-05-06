@@ -121,6 +121,7 @@ import {
   createFargateTaskDefinition,
 } from './cdk-utils/cdk-fargate-utils'
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
+import { CdkTarponPythonStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-python-stack'
 import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -1478,6 +1479,13 @@ export class CdkTarponStack extends cdk.Stack {
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       }
     )
+
+    new CdkTarponPythonStack(this, `${config.stage}-tarpon-python`, {
+      config,
+      lambdaExecutionRole,
+      functionProps: this.functionProps,
+      zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+    })
 
     /**
      * Canaries

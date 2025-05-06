@@ -59,6 +59,23 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "yarn"
           cache-dependency-path: "tarpon/yarn.lock"
+      - name: Use Python
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install Python dependencies
+        if: steps.check.outputs.triggered == 'true'
+        run: | 
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+        working-directory: "tarpon/torpedo"
+      - name: Build Torpedo
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          ./build.sh
+        working-directory: "tarpon/torpedo"
       - name: Install infra dependencies
         if: steps.check.outputs.triggered == 'true'
         run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
