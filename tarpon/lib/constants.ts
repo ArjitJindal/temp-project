@@ -355,11 +355,11 @@ export const SQSQueues: {
   },
   ASYNC_RULE_QUEUE_NAME: {
     name: getResourceName('AsyncRuleQueue') + '.fifo',
-    oldestMsgAgeAlarmThresholdMinutes: 180, // Lets do 3 Hours it should not be more then that ideally
+    oldestMsgAgeAlarmThresholdMinutes: 360, // Lets do 6 Hours it should not be more then that ideally
   },
   BATCH_ASYNC_RULE_QUEUE_NAME: {
     name: getResourceName('BatchAsyncRuleQueue') + '.fifo',
-    oldestMsgAgeAlarmThresholdMinutes: 180, // Lets do 3 Hours it should not be more then that ideally
+    oldestMsgAgeAlarmThresholdMinutes: 360, // Lets do 6 Hours it should not be more then that ideally
   },
   MONGO_DB_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoDbConsumerQueue'),
