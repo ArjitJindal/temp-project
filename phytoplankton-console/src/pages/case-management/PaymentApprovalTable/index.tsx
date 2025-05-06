@@ -35,11 +35,8 @@ export default function PaymentApprovalsTable(props: Props) {
   });
 
   const updateCacheData = useCallback(() => {
-    const queryState = queryClient.getQueryState(queryKey);
-    const pageParam = (queryState as any)?.state?.data?.pageParam ?? '';
-    const fullQueryKey = [...queryKey, { pageParam }];
     queryClient.setQueryData<TransactionsResponse>(
-      fullQueryKey,
+      queryKey,
       (data: TransactionsResponse | undefined): TransactionsResponse | undefined => {
         if (data == null) {
           return undefined;
@@ -92,7 +89,6 @@ export default function PaymentApprovalsTable(props: Props) {
             onSuccess={() => {
               onResetSelection();
               updateCacheData();
-              queryResult.refetch();
             }}
           />
         ),
@@ -103,7 +99,6 @@ export default function PaymentApprovalsTable(props: Props) {
             onSuccess={() => {
               onResetSelection();
               updateCacheData();
-              queryResult.refetch();
             }}
           />
         ),
