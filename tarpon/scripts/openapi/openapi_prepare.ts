@@ -56,7 +56,7 @@ async function prepareSchemas(OUTPUT_DIR: string) {
     const publicSchemaYaml = parse(publicSchemaText)
     const internalSchemaFile = path.resolve(
       internalDir,
-      'openapi-internal-original.yaml'
+      'temp-merged-spec.yaml'
     )
     const nangoSchemaFile = path.resolve(internalDir, 'nango-models.yaml')
     const internalSchemaText = (

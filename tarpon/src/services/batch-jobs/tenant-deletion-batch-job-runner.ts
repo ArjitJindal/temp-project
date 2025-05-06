@@ -115,6 +115,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'CASE_COMMENT'
   | 'CASE_COMMENT_FILE'
   | 'CASE_SUBJECT'
+  | 'WORKFLOWS'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

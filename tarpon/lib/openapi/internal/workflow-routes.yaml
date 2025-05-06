@@ -1,0 +1,165 @@
+# TODO: unify workflow-routes and workflow-models
+lib/openapi/internal/openapi-internal-original.yaml openapi: 3.0.0
+info:
+  title: Workflow Routes
+  version: 1.0.0
+paths:
+  /workflows/{workflowType}/{workflowId}:
+    post:
+      summary: Save a new workflow or a new version
+      operationId: post-workflow
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              # TODO: this is a very poor hack, we need to use oneOf or something cleaner
+              # oneOf:
+              #   - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+              #   - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+              type: object
+              properties:
+                caseWorkflow:
+                  $ref: '#/components/schemas/CaseWorkflow'
+                alertWorkflow:
+                  $ref: '#/components/schemas/AlertWorkflow'
+      responses:
+        '200':
+          description: Workflow saved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+
+    get:
+      summary: Get the latest version of a workflow
+      operationId: get-workflow-by-id
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Latest workflow version retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+  /workflows/{workflowType}/{workflowId}/{version}:
+    get:
+      summary: Get a specific version of a workflow
+      operationId: get-workflow-version
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Specific workflow version retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+
+  /workflows/{workflowType}:
+    get:
+      summary: Get all workflows of a specific type
+      operationId: get-all-workflows
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of workflows retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                    - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+  /workflows/history/{workflowType}/{workflowId}:
+    get:
+      summary: Get the history of a workflow
+      operationId: get-workflow-history
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                    - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+  /workflows:
+    get:
+      summary: Get all workflows of all types
+      operationId: get-all-workflow-types
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [CASE, ALERT]
+          description: Optional parameter to filter workflows by type
+      responses:
+        '200':
+          description: List of all workflows retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: 'workflow-models.yaml#/components/schemas/WorkflowResponse'

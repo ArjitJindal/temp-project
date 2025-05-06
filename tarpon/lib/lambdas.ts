@@ -197,6 +197,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME]: {
+    codePath: 'console-api-workflow',
+    handlerName: 'workflowHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME]: {
     codePath: 'slack-app',
     handlerName: 'slackAppHandler',

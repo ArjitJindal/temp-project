@@ -138,3 +138,5 @@ lib/openapi/internal/nango-models.yaml
 torpedo/.venv/
 torpedo/dist/
 
+#merged openapi spec
+lib/openapi/internal/temp-merged-spec.yaml

@@ -314,6 +314,16 @@ export const ConsoleApiPathToLambda: any = {
   '/crm-records-search': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/webhooks/internal-proxy':
     StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+  '/workflows/{workflowType}/{workflowId}':
+    StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  '/workflows': StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  '/workflows/{workflowType}':
+    StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  '/workflows/history/{workflowType}/{workflowId}':
+    StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  '/workflows/{workflowType}/{workflowId}/{version}':
+    StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  // TODO: rename CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME to make it generic
 }
 
 const openapi = getAugmentedOpenapi(

@@ -2,6 +2,9 @@
 
 import { execSync } from 'child_process'
 import * as fs from 'fs'
+import { join } from 'path'
+import { load as yamlLoad } from 'js-yaml'
+import type { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types'
 
 function exec(command: string) {
   execSync(command, { env: process.env })
@@ -40,17 +43,84 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `mkdir -p src/@types/openapi-${type}/ src/@types/openapi-${type}-custom/ 1>/dev/null 2>&1`
   )
 
-  exec(
-    `
-    ./node_modules/.bin/openapi-generator-cli generate -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original --reserved-words-mappings 3dsDone=3dsDone
-    `
-  )
+  if (type === 'internal') {
+    // Load and merge specs for internal API
+    const internalSpec = yamlLoad(
+      fs.readFileSync(
+        join(
+          __dirname,
+          '../../lib/openapi/internal/openapi-internal-original.yaml'
+        ),
+        'utf8'
+      )
+    ) as OpenAPIV3.Document
 
-  // Custom code generation
-  exec(
-    `
-    ./node_modules/.bin/openapi-generator-cli generate -t lib/openapi/templates -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_custom --additional-properties=modelPropertyNaming=original,api=${type}    `
-  )
+    const workflowRoutes = yamlLoad(
+      fs.readFileSync(
+        join(__dirname, '../../lib/openapi/internal/workflow-routes.yaml'),
+        'utf8'
+      )
+    ) as OpenAPIV3.Document
+
+    const workflowModels = yamlLoad(
+      fs.readFileSync(
+        join(__dirname, '../../lib/openapi/internal/workflow-models.yaml'),
+        'utf8'
+      )
+    ) as OpenAPIV3.Document
+
+    const mergedSpec = {
+      ...internalSpec,
+      paths: {
+        ...internalSpec.paths,
+        ...workflowRoutes.paths,
+      },
+      components: {
+        ...internalSpec.components,
+        schemas: {
+          ...internalSpec.components?.schemas,
+          ...workflowModels.components?.schemas,
+        },
+      },
+    }
+
+    // Write to a temporary merged spec file
+    const tempMergedSpecPath = join(
+      __dirname,
+      '../../lib/openapi/internal/temp-merged-spec.yaml'
+    )
+    fs.writeFileSync(tempMergedSpecPath, JSON.stringify(mergedSpec))
+
+    // Use the temporary file for generation
+    exec(
+      `
+      ./node_modules/.bin/openapi-generator-cli generate -i ${tempMergedSpecPath} -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original --reserved-words-mappings 3dsDone=3dsDone
+      `
+    )
+
+    // Custom code generation
+    exec(
+      `
+      ./node_modules/.bin/openapi-generator-cli generate -t lib/openapi/templates -i ${tempMergedSpecPath} -g typescript -o /tmp/flagright/${type}_openapi_custom --additional-properties=modelPropertyNaming=original,api=${type}
+      `
+    )
+
+    // Clean up temporary file
+    // fs.unlinkSync(tempMergedSpecPath)
+  } else {
+    exec(
+      `
+      ./node_modules/.bin/openapi-generator-cli generate -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original --reserved-words-mappings 3dsDone=3dsDone
+      `
+    )
+
+    // Custom code generation
+    exec(
+      `
+      ./node_modules/.bin/openapi-generator-cli generate -t lib/openapi/templates -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_custom --additional-properties=modelPropertyNaming=original,api=${type}
+      `
+    )
+  }
 
   exec(
     `rm -rf src/@types/openapi-${type}/* src/@types/openapi-${type}-custom/*`
@@ -100,6 +170,7 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/DynamicPermissionsNode.ts`,
     `src/@types/openapi-${type}/StaticPermissionsNode.ts`,
     `src/@types/openapi-${type}/PermissionsResponse.ts`,
+    `src/@types/openapi-${type}/WorkflowResponse.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

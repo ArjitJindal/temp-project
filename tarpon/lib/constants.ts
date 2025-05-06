@@ -255,6 +255,9 @@ export const StackConstants = {
   CONSOLE_API_AUDIT_LOG_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiAuditLogFunction'
   ),
+  CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiWorkflowsCaseFunction'
+  ),
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',

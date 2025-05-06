@@ -3,7 +3,8 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3002
+  - url: http://flagright.local:3002
 paths:
   /apikey:
     parameters: []
@@ -11703,6 +11704,7 @@ components:
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
         - RBAC_V2
+        - WORKFLOWS_BUILDER
         - CUSTOM_WORKFLOWS
       description: ''
     NewRiskFactorIdResponse:

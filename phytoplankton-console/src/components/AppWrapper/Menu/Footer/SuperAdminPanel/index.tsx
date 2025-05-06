@@ -195,6 +195,11 @@ export const featureDescriptions: Record<
     description: 'Enables custom workflows',
     tag: FeatureTag.WIP,
   },
+  WORKFLOWS_BUILDER: {
+    title: 'Workflows builder',
+    description: 'Enables workflows builder',
+    tag: FeatureTag.WIP,
+  },
 };
 
 export default function SuperAdminPanel() {

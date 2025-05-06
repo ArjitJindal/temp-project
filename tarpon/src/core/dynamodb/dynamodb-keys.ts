@@ -33,6 +33,7 @@ const RULE_INSTANCE_PREFIX = 'rule:'
 const QUESTION_ID_PREFIX = 'question:'
 export const ALERT_ID_PREFIX = 'alert:'
 export const CASE_ID_PREFIX = 'case:'
+const WORKFLOWS_PREFIX = 'workflow'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = keyof TenantSettings
@@ -543,6 +544,16 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}#instance-threshold-data:${ruleInstanceId}`,
     SortKeyID: version, // To use version in future
+  }),
+  // Workflow keys
+  WORKFLOWS: (
+    tenantId: string,
+    workflowType: string,
+    workflowId?: string,
+    version?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#${WORKFLOWS_PREFIX}#${workflowType}`,
+    SortKeyID: `${workflowId}#${version}`,
   }),
 }
 

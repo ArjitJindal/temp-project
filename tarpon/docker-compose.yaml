@@ -32,6 +32,24 @@ services:
       - clickhouse_data:/var/lib/clickhouse-server
     privileged: true
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: local-swagger-ui
+    ports:
+      - '8080:8080'
+    environment:
+      - SWAGGER_JSON=/openapi.yaml
+      - SWAGGER_UI_PERSIST_AUTHORIZATION=true
+      - SWAGGER_UI_WATCH=true # Enable auto-reload
+      - QUERY_CONFIG_ENABLED=true
+      - WITH_CREDENTIALS=true
+      - PERSIST_AUTHORIZATION=true
+      - CORS=true
+      - CORS_ALLOWED_ORIGINS=*
+      - CORS_ALLOW_CREDENTIALS=true
+    volumes:
+      - ./lib/openapi/internal/temp-merged-spec.yaml:/openapi.yaml:ro
+
 volumes:
   dynamo_data:
   mongo_data:

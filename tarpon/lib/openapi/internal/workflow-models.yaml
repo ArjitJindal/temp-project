@@ -1,0 +1,95 @@
+openapi: 3.0.0
+info:
+  title: Workflow Models
+  version: 1.0.0
+components:
+  schemas:
+    BaseWorkflow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the workflow
+        workflowType:
+          $ref: '#/components/schemas/WorkflowType'
+        version:
+          type: string
+          description: Timestamp of when the document was saved
+        name:
+          type: string
+          description: Human readable name for the workflow
+      required:
+        - id
+        - workflowType
+        - version
+        - name
+
+    BaseCaseAlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [CASE, ALERT]
+              description: Must be CASE for case workflows
+            statuses:
+              type: array
+              items:
+                type: string
+              description: List of user-defined case statuses
+            statusAssignments:
+              type: object
+              additionalProperties:
+                type: string
+              description: Maps status to role that should be assigned
+              example:
+                OPEN: analyst
+                IN_REVIEW: reviewer
+                ESCALATION_L1: manager
+            transitions:
+              type: object
+              description: Defines allowed status transitions
+            roleTransitions:
+              type: object
+              description: Defines allowed role transitions
+          required:
+            - statuses
+            - statusAssignments
+            - transitions
+            - roleTransitions
+
+    CaseWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseCaseAlertWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [CASE]
+            autoClose:
+              type: boolean
+              description: Whether cases can be automatically closed
+          required:
+            - autoClose
+
+    AlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseCaseAlertWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [ALERT]
+    WorkflowResponse:
+      type: object
+      properties:
+        workflows:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/CaseWorkflow'
+              - $ref: '#/components/schemas/AlertWorkflow'
+    WorkflowType:
+      type: string
+      enum: [CASE, ALERT]

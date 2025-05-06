@@ -44,6 +44,42 @@ function replaceUserSavedPaymentDetails(paths) {
   }
 }
 
+function replaceWorkflow(paths) {
+  for (const path of paths) {
+    if (!fs.existsSync(path)) {
+      continue;
+    }
+
+    const newText = fs
+      .readFileSync(path)
+      .toString()
+      .replace(
+        "import { CaseWorkflow | AlertWorkflow } from './CaseWorkflow | AlertWorkflow';",
+        '',
+      );
+
+    fs.writeFileSync(path, newText);
+  }
+}
+
+function replaceWorkflowDefaultApi(paths) {
+  for (const path of paths) {
+    if (!fs.existsSync(path)) {
+      continue;
+    }
+
+    const newText = fs
+      .readFileSync(path)
+      .toString()
+      .replace(
+        "import { CaseWorkflow | AlertWorkflow } from '../models/CaseWorkflow | AlertWorkflow';",
+        '',
+      );
+
+    fs.writeFileSync(path, newText);
+  }
+}
+
 function replacePermission(paths) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
@@ -151,6 +187,8 @@ fi`);
     'src/apis/models/SimulationGetResponse.ts',
     'src/apis/models/SimulationRiskLevelsAndRiskFactorsResultResponse.ts',
   ]);
+  replaceWorkflow(['src/apis/models/WorkflowResponse.ts']);
+  replaceWorkflowDefaultApi(['src/apis/apis/DefaultApi.ts']);
 
   exec('npx prettier --write src/apis');
 }
