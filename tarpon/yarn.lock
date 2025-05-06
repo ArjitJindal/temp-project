@@ -10921,13 +10921,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dataloader@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "dataloader@npm:2.2.2"
-  checksum: 9c7a1f02cfa6391ab8bc21ebd0ef60b03832bd3beafdfecf48b111fba14090f98d33965f8e268045ba3c289f801b6a9000a9e61a41188363bdee2344811f64f1
-  languageName: node
-  linkType: hard
-
 "date-fns@npm:^2.16.1":
   version: 2.30.0
   resolution: "date-fns@npm:2.30.0"
@@ -19290,7 +19283,6 @@ __metadata:
     coverage-diff: "npm:^3.2.0"
     csvtojson: "npm:^2.0.10"
     currency-symbol-map: "npm:^5.1.0"
-    dataloader: "npm:^2.2.2"
     deep-object-diff: "npm:^1.1.7"
     deepmerge: "npm:^4.3.1"
     dotenv: "npm:^16.0.1"

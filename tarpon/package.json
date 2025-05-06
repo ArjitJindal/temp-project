@@ -231,7 +231,6 @@
     "coverage-diff": "^3.2.0",
     "csvtojson": "^2.0.10",
     "currency-symbol-map": "^5.1.0",
-    "dataloader": "^2.2.2",
     "deep-object-diff": "^1.1.7",
     "deepmerge": "^4.3.1",
     "ejs": "^3.1.10",

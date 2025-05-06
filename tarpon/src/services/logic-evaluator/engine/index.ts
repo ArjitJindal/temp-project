@@ -1,6 +1,5 @@
 import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
-import DataLoader from 'dataloader'
 import {
   compact,
   drop,
@@ -12,6 +11,7 @@ import {
   last,
   mapValues,
   memoize,
+  MemoizedFunction,
   mergeWith,
   minBy,
   omit,
@@ -125,6 +125,8 @@ type UserIdentifier = {
   paymentDetails?: PaymentDetails
 }
 
+type EntityVariableWithoutName = Omit<LogicEntityVariableInUse, 'name'>
+
 export type AuxiliaryIndexTransactionWithDirection =
   AuxiliaryIndexTransaction & {
     direction?: 'origin' | 'destination'
@@ -174,7 +176,7 @@ export const getJsonLogicEngine = memoizeOne(
 
 function getEntityVariableLoaderKey(
   entityVariable: LogicEntityVariableInUse
-): Omit<LogicEntityVariableInUse, 'name'> {
+): EntityVariableWithoutName {
   const { filtersLogic } = entityVariable
   return {
     key: entityVariable.key,
@@ -276,7 +278,7 @@ export class LogicEvaluator {
         }
         return [
           key,
-          await entityVarDataloader.load(getEntityVariableLoaderKey(variable)),
+          await entityVarDataloader(getEntityVariableLoaderKey(variable)),
         ]
       })
     )
@@ -305,14 +307,14 @@ export class LogicEvaluator {
           variable: aggVariable,
           ORIGIN:
             aggVariable.userDirection !== 'RECEIVER'
-              ? await aggregationVarLoader.load({
+              ? await aggregationVarLoader({
                   direction: 'origin',
                   aggVariable,
                 })
               : null,
           DESTINATION:
             aggVariable.userDirection !== 'SENDER'
-              ? await aggregationVarLoader.load({
+              ? await aggregationVarLoader({
                   direction: 'destination',
                   aggVariable,
                 })
@@ -418,105 +420,93 @@ export class LogicEvaluator {
 
   private entityVarLoader = memoizeOne(
     (data: LogicData, context: LogicVariableContext) => {
-      return new DataLoader<
-        Omit<LogicEntityVariableInUse, 'name'>,
-        any,
-        string
-      >(
-        async (entityVariables) => {
-          return Promise.all(
-            entityVariables.map(async (entityVariable) => {
-              const variable = getLogicVariableByKey(
-                entityVariable.entityKey ?? entityVariable.key
-              )
-              if (!variable) {
-                logger.error(
-                  `Rule variable not found: ${entityVariable.entityKey}`
-                )
-                return null
-              }
-              if (
-                variable.entity === 'TRANSACTION' &&
-                data.type === 'TRANSACTION'
-              ) {
-                let transaction: Transaction | undefined = data.transaction
-                if (!isEmpty(entityVariable.filtersLogic)) {
-                  const targetTransactionEvent =
-                    await this.findTransactionEvent(
-                      data.transactionEvents ?? [],
-                      entityVariable.filtersLogic,
-                      context
-                    )
-                  transaction = targetTransactionEvent
-                    ? targetTransactionEvent.transaction
-                    : undefined
-                }
-                if (!transaction) {
-                  return null
-                }
-                return (variable as TransactionLogicVariable<any>).load(
-                  transaction,
-                  context
-                )
-              }
-              if (
-                variable.entity === 'TRANSACTION_EVENT' &&
-                data.type === 'TRANSACTION'
-              ) {
-                let transactionEvent: TransactionEvent | undefined = last(
-                  data.transactionEvents
-                )
-                if (!isEmpty(entityVariable.filtersLogic)) {
-                  const targetTransactionEvent =
-                    await this.findTransactionEvent(
-                      data.transactionEvents ?? [],
-                      entityVariable.filtersLogic,
-                      context
-                    )
-                  transactionEvent = targetTransactionEvent?.transactionEvent
-                }
-                if (!transactionEvent) {
-                  return null
-                }
-                return (variable as TransactionEventLogicVariable<any>).load(
-                  transactionEvent,
-                  context
-                )
-              }
-
-              const user =
-                data.type === 'TRANSACTION'
-                  ? isSenderUserVariable(variable.key)
-                    ? data.senderUser
-                    : data.receiverUser
-                  : data.user
-
-              if (!user) {
-                return null
-              }
-              if (variable.entity === 'CONSUMER_USER') {
-                return (variable as ConsumerUserLogicVariable<any>).load(
-                  user as User,
-                  context
-                )
-              }
-              if (variable.entity === 'BUSINESS_USER') {
-                return (variable as BusinessUserLogicVariable<any>).load(
-                  user as Business,
-                  context
-                )
-              }
-              if (variable.entity === 'USER') {
-                return (variable as CommonUserLogicVariable<any>).load(
-                  user,
-                  context
-                )
-              }
-              return null
-            })
+      return memoize(
+        async (entityVariable: EntityVariableWithoutName) => {
+          const variable = getLogicVariableByKey(
+            entityVariable.entityKey ?? entityVariable.key
           )
+          if (!variable) {
+            logger.error(`Rule variable not found: ${entityVariable.entityKey}`)
+            return null
+          }
+          if (
+            variable.entity === 'TRANSACTION' &&
+            data.type === 'TRANSACTION'
+          ) {
+            let transaction: Transaction | undefined = data.transaction
+            if (!isEmpty(entityVariable.filtersLogic)) {
+              const targetTransactionEvent = await this.findTransactionEvent(
+                data.transactionEvents ?? [],
+                entityVariable.filtersLogic,
+                context
+              )
+              transaction = targetTransactionEvent
+                ? targetTransactionEvent.transaction
+                : undefined
+            }
+            if (!transaction) {
+              return null
+            }
+            return (variable as TransactionLogicVariable<any>).load(
+              transaction,
+              context
+            )
+          }
+          if (
+            variable.entity === 'TRANSACTION_EVENT' &&
+            data.type === 'TRANSACTION'
+          ) {
+            let transactionEvent: TransactionEvent | undefined = last(
+              data.transactionEvents
+            )
+            if (!isEmpty(entityVariable.filtersLogic)) {
+              const targetTransactionEvent = await this.findTransactionEvent(
+                data.transactionEvents ?? [],
+                entityVariable.filtersLogic,
+                context
+              )
+              transactionEvent = targetTransactionEvent?.transactionEvent
+            }
+            if (!transactionEvent) {
+              return null
+            }
+            return (variable as TransactionEventLogicVariable<any>).load(
+              transactionEvent,
+              context
+            )
+          }
+
+          const user =
+            data.type === 'TRANSACTION'
+              ? isSenderUserVariable(variable.key)
+                ? data.senderUser
+                : data.receiverUser
+              : data.user
+
+          if (!user) {
+            return null
+          }
+          if (variable.entity === 'CONSUMER_USER') {
+            return (variable as ConsumerUserLogicVariable<any>).load(
+              user as User,
+              context
+            )
+          }
+          if (variable.entity === 'BUSINESS_USER') {
+            return (variable as BusinessUserLogicVariable<any>).load(
+              user as Business,
+              context
+            )
+          }
+          if (variable.entity === 'USER') {
+            return (variable as CommonUserLogicVariable<any>).load(
+              user,
+              context
+            )
+          }
+          return null
         },
-        { cacheKeyFn: generateChecksum, batch: false }
+        (entityVariable) => generateChecksum(entityVariable)
       )
     },
     // Don't take dynamoDb into account
@@ -530,44 +520,30 @@ export class LogicEvaluator {
 
   private aggregationVarLoader = memoizeOne(
     (data: LogicData) => {
-      return new DataLoader(
-        async (
-          variableKeys: readonly {
-            direction: 'origin' | 'destination'
-            aggVariable: LogicAggregationVariable
-          }[]
-        ) => {
-          return Promise.all(
-            variableKeys.map(async ({ direction, aggVariable }) => {
-              for (let i = 0; i < 2; i++) {
-                try {
-                  return await this.loadAggregationData(
-                    direction,
-                    aggVariable,
-                    data
-                  )
-                } catch (e) {
-                  if (e instanceof RebuildSyncRetryError) {
-                    // try one more time after the rebuild is done
-                    if (i === 0) {
-                      continue
-                    }
-                    logger.error(
-                      'Still get RebuildSyncRetryError after rebuild'
-                    )
-                    return null
-                  }
-                  throw e
+      return memoize(
+        async ({ direction, aggVariable }) => {
+          for (let i = 0; i < 2; i++) {
+            try {
+              return await this.loadAggregationData(
+                direction,
+                aggVariable,
+                data
+              )
+            } catch (e) {
+              if (e instanceof RebuildSyncRetryError) {
+                // try one more time after the rebuild is done
+                if (i === 0) {
+                  continue
                 }
+                logger.error('Still get RebuildSyncRetryError after rebuild')
+                return null
               }
-            })
-          )
+              throw e
+            }
+          }
         },
-        {
-          cacheKeyFn: ({ direction, aggVariable }) => {
-            return `${direction}-${getAggVarHash(aggVariable)}`
-          },
-          batch: false,
+        ({ direction, aggVariable }) => {
+          return `${direction}-${getAggVarHash(aggVariable)}`
         }
       )
     },
@@ -1177,7 +1153,7 @@ export class LogicEvaluator {
     )
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
-      ? await entityVarDataloader.load({
+      ? await entityVarDataloader({
           key: aggregationVariable.aggregationGroupByFieldKey,
           entityKey: aggregationVariable.aggregationGroupByFieldKey,
         })
@@ -1365,11 +1341,10 @@ export class LogicEvaluator {
 
   private async getNewDataValueForAggregation(
     aggregationVariable: LogicAggregationVariable,
-    entityVarDataloader: DataLoader<
-      Omit<LogicEntityVariableInUse, 'name'>,
-      any,
-      string
-    >,
+    entityVarDataloader: ((
+      entityVariable: EntityVariableWithoutName
+    ) => Promise<any>) &
+      MemoizedFunction,
     direction: 'origin' | 'destination'
   ) {
     const { aggregationFilterFieldValue, aggregationFilterFieldKey } =
@@ -1378,7 +1353,7 @@ export class LogicEvaluator {
       aggregationVariable,
       direction
     )
-    const newDataValue = await entityVarDataloader.load(
+    const newDataValue = await entityVarDataloader(
       getEntityVariableLoaderKey({
         key: aggFieldKey,
         entityKey: aggFieldKey,
@@ -1520,7 +1495,7 @@ export class LogicEvaluator {
       dynamoDb: this.dynamoDb,
     })
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
-      ? ((await entityVarDataloader.load(
+      ? ((await entityVarDataloader(
           getEntityVariableLoaderKey({
             key: aggregationVariable.aggregationGroupByFieldKey,
             entityKey: aggregationVariable.aggregationGroupByFieldKey,
