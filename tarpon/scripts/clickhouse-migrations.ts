@@ -25,6 +25,7 @@ export async function migrateClickhouse() {
     process.env.CLICKHOUSE_USERNAME = credentials.username
     process.env.CLICKHOUSE_PASSWORD = credentials.password
     process.env.CLICKHOUSE_DATABASE = credentials.database
+    const timestamp = Date.now()
     execSync(`npx thunder-schema migrate --migrations-path src/models`, {
       env: {
         ...process.env,
@@ -35,6 +36,11 @@ export async function migrateClickhouse() {
       },
       stdio: 'inherit',
     })
+    console.log(
+      `Migration completed for tenant ${tenant.id} in ${
+        Date.now() - timestamp
+      }ms`
+    )
   })
 }
 
