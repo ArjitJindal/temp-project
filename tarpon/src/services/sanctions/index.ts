@@ -218,7 +218,8 @@ export class SanctionsService {
     context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
     },
-    providerOverrides?: ProviderConfig
+    providerOverrides?: ProviderConfig,
+    screeningEntity: 'USER' | 'TRANSACTION' = 'USER'
   ): Promise<SanctionsSearchResponse> {
     const page = request.page ?? 1
     const pageSize = request.pageSize ?? 20
@@ -344,6 +345,11 @@ export class SanctionsService {
                   providerOverrides.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
               })
             : undefined,
+        ...(context?.ruleInstanceId
+          ? {
+              screeningEntity,
+            }
+          : {}),
       })
     }
 

@@ -127,7 +127,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
             },
-            hitContext
+            hitContext,
+            undefined,
+            'TRANSACTION'
           )
 
           if (result.hitsCount > 0) {
@@ -165,7 +167,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
             },
-            hitContext
+            hitContext,
+            undefined,
+            'TRANSACTION'
           )
 
           if (result.hitsCount > 0) {

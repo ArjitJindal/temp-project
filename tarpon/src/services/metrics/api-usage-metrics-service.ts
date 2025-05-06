@@ -55,6 +55,8 @@ import {
   OPEN_SANCTIONS_SANCTIONS_SEARCHES_COUNT_METRIC,
   DOW_JONES_SANCTIONS_SEARCHES_COUNT_METRIC,
   SANCTIONS_SEARCHES_COUNT_METRIC,
+  USERS_SCREENING_COUNT_METRIC,
+  TRANSACTIONS_SCREENING_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
@@ -114,12 +116,13 @@ export class ApiUsageMetricsService {
       timeRange,
       usersCounts
     )
-    // put in promise.all
     const [
       caSanctionsChecksCounts,
       acurisSanctionsChecksCounts,
       openSanctionsSanctionsChecksCounts,
       dowJonesSanctionsChecksCounts,
+      userSanctionsChecksCounts,
+      transactionSanctionsChecksCounts,
     ] = await Promise.all([
       this.getDailySanctionSearchsCount(
         tenantInfo,
@@ -140,6 +143,18 @@ export class ApiUsageMetricsService {
         tenantInfo,
         timeRange,
         SanctionsDataProviders.DOW_JONES
+      ),
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        undefined,
+        'USER'
+      ),
+      this.getDailySanctionSearchsCount(
+        tenantInfo,
+        timeRange,
+        undefined,
+        'TRANSACTION'
       ),
     ])
     const sanctionsChecksCounts = this.getTotalSanctionsSearchCounts([
@@ -217,6 +232,18 @@ export class ApiUsageMetricsService {
           value: v,
         },
       ]),
+      mapValues(userSanctionsChecksCounts, (v) => [
+        {
+          metric: USERS_SCREENING_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(transactionSanctionsChecksCounts, (v) => [
+        {
+          metric: TRANSACTIONS_SCREENING_COUNT_METRIC,
+          value: v,
+        },
+      ]),
       mapValues(tenantSeatCounts, (v) => [
         {
           metric: TENANT_SEATS_COUNT_METRIC,
@@ -262,7 +289,11 @@ export class ApiUsageMetricsService {
               } else if (metrics[0].metric.kind === 'CULMULATIVE') {
                 return {
                   metric: metrics[0].metric,
-                  value: sumBy(metrics, (metric) => metric.value),
+                  value: sumBy(metrics, (metric) =>
+                    typeof metric.value === 'number' && !isNaN(metric.value)
+                      ? metric.value
+                      : 0
+                  ),
                 }
               } else {
                 throw new Error(
@@ -328,6 +359,8 @@ export class ApiUsageMetricsService {
       data.values.forEach((value) => {
         if (
           value.metric === COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC &&
+          typeof value.value === 'number' &&
+          !isNaN(value.value) &&
           value.value > 200
         ) {
           logger.error(
@@ -353,7 +386,10 @@ export class ApiUsageMetricsService {
       timeRange
     )
     return mapValues(transactionEventsCounts, (value, key) =>
-      Math.max(value - (dailyTransactionsCountsStats[key] ?? 0), 0)
+      Math.max(
+        Number(value) - (Number(dailyTransactionsCountsStats[key]) ?? 0),
+        0
+      )
     )
   }
 
@@ -368,7 +404,7 @@ export class ApiUsageMetricsService {
       timeRange
     )
     return mapValues(userEventsCounts, (value, key) =>
-      Math.max(value - (dailyUsersCountsStats[key] ?? 0), 0)
+      Math.max(Number(value) - (Number(dailyUsersCountsStats[key]) ?? 0), 0)
     )
   }
 
@@ -430,7 +466,7 @@ export class ApiUsageMetricsService {
     const stats: DailyStats = {}
     for (const dailyStat of dailyStats) {
       for (const key in dailyStat) {
-        stats[key] = (stats[key] ?? 0) + dailyStat[key]
+        stats[key] = (Number(stats[key]) ?? 0) + Number(dailyStat[key])
       }
     }
     return stats
@@ -439,7 +475,8 @@ export class ApiUsageMetricsService {
   private async getDailySanctionSearchsCount(
     tenantInfo: TenantBasic,
     timeRange: TimeRange,
-    provider: SanctionsDataProviderName
+    provider: SanctionsDataProviderName | undefined,
+    screeningEntity?: 'USER' | 'TRANSACTION'
   ): Promise<DailyStats> {
     const db = await getMongoDbClientDb()
     const collection = db.collection(
@@ -454,7 +491,10 @@ export class ApiUsageMetricsService {
               $gte: dayjs(timeRange.startTimestamp).valueOf(),
               $lte: dayjs(timeRange.endTimestamp).valueOf(),
             },
-            provider,
+            ...(provider && { provider }),
+            ...(screeningEntity && {
+              'metadata.screeningEntity': screeningEntity,
+            }),
           },
         },
         {

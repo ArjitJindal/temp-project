@@ -13780,6 +13780,16 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
         requestHash:
           type: string
+        metadata:
+          type: object
+          properties:
+            screeningEntity:
+              type: array
+              items:
+                type: string
+                enum:
+                  - USER
+                  - TRANSACTION
       required:
         - _id
         - provider

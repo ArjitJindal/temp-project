@@ -61,6 +61,7 @@ export class SanctionsSearchRepository {
     hitContext: SanctionsHitContext | undefined
     providerConfigHash?: string
     requestHash?: string
+    screeningEntity?: 'USER' | 'TRANSACTION'
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
     const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
@@ -79,6 +80,11 @@ export class SanctionsSearchRepository {
           providerConfigHash: props.providerConfigHash,
         }),
         ...(props.requestHash && { requestHash: props.requestHash }),
+        ...(props.screeningEntity && {
+          $addToSet: {
+            'metadata.screeningEntity': props.screeningEntity,
+          },
+        }),
       },
     }
 
