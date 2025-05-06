@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { memoize } from 'lodash'
-import { Nango, RecordMetadata } from '@nangohq/node'
+import { Nango } from '@nangohq/node'
 import createHttpError from 'http-errors'
 import { backOff } from 'exponential-backoff'
 import { NangoRepository } from './repository'
@@ -42,11 +42,6 @@ const NANGO_MODEL_TYPE_MAP: Record<
 
 export const NANGO_MODELS_DATA: Record<NangoModels, NangoModelData> = {
   FreshdeskTicket: { idKey: 'id', timestampKey: 'createdAt' },
-}
-
-type NangoListRecordsResponse<T> = {
-  records: (T & { _nango_metadata: RecordMetadata })[]
-  next_cursor: string | null
 }
 
 type IncomingRecord = NangoTicket
@@ -142,7 +137,6 @@ export class NangoService {
       throw new Error(`Invalid model: ${model}`)
     }
 
-    let nextCursor: string | null = null
     const { recordType, crmName } = NANGO_MODEL_TYPE_MAP[model as NangoModels]
 
     const maxTimestampInDb = await repository.getMaxTimestamp(
@@ -155,24 +149,25 @@ export class NangoService {
       dayjs(modifiedAfter).valueOf()
     )
 
-    do {
-      const records: NangoListRecordsResponse<IncomingRecord> =
-        await this.handleRateLimit(() =>
-          nango.listRecords<IncomingRecord>({
-            connectionId,
-            providerConfigKey,
-            model,
-            modifiedAfter: dayjs(updatedModifiedAfter).toISOString(),
-            ...(nextCursor ? { fromCursorKey: nextCursor } : {}),
-            limit: 10000,
-          })
-        )
+    const processRecords = async (
+      cursor: string | null = null
+    ): Promise<void> => {
+      const records = await this.handleRateLimit(() =>
+        nango.listRecords<IncomingRecord>({
+          connectionId,
+          providerConfigKey,
+          model,
+          modifiedAfter: dayjs(updatedModifiedAfter).toISOString(),
+          ...(cursor ? { fromCursorKey: cursor } : {}),
+          limit: 10000,
+        })
+      )
 
       const data = records.records
 
       logger.info(`Received ${data.length} records`, { records })
 
-      const nangoRecords: CRMRecord[] = data.map((record: IncomingRecord) => {
+      const nangoRecords: CRMRecord[] = data.map((record) => {
         const { idKey, timestampKey } = NANGO_MODELS_DATA[model]
 
         const crmRecord: CRMRecord = {
@@ -188,8 +183,12 @@ export class NangoService {
 
       await repository.storeRecord(nangoRecords)
 
-      nextCursor = records.next_cursor
-    } while (nextCursor)
+      if (records.next_cursor) {
+        await processRecords(records.next_cursor)
+      }
+    }
+
+    await processRecords()
   }
 
   public async getCrmNangoRecords(
