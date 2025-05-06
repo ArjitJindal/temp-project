@@ -644,7 +644,7 @@ export function getSortedData<T>({
 }
 
 export const sanitizeSqlName = (tableName: string) =>
-  tableName.replace(/-/g, '_')
+  tableName.replace(/[^0-9a-zA-Z]/g, '_')
 
 const sqs = new SQS({ region: process.env.AWS_REGION })
 
