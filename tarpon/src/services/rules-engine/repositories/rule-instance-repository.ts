@@ -16,7 +16,7 @@ import dayjsLib from '@flagright/lib/utils/dayjs'
 import pMap from 'p-map'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { isV2RuleInstance } from '../utils'
-import { getMigratedV8Config } from '../v8-migrations'
+import { getMigratedV8Config, V8_MIGRATED_RULES } from '../v8-migrations'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -151,6 +151,9 @@ export class RuleInstanceRepository {
   }
 
   public getV8PropsForV2RuleInstance(ruleInstance: RuleInstance) {
+    if (!V8_MIGRATED_RULES.includes(ruleInstance.ruleId ?? '')) {
+      return
+    }
     if (!isV2RuleInstance(ruleInstance)) {
       throw new Error('Rule instance is not a v2 rule instance')
     }
@@ -261,7 +264,7 @@ export class RuleInstanceRepository {
 
     return {
       logic,
-      riskLevelLogic: v2RiskLevelLogic,
+      riskLevelLogic: isEmpty(v2RiskLevelLogic) ? undefined : v2RiskLevelLogic,
       logicAggregationVariables,
       baseCurrency,
       alertConfig,
