@@ -38,51 +38,54 @@ function removeBadImports(paths: string[]) {
   }
 }
 
+export function mergeInternalSpecs(): OpenAPIV3.Document {
+  const internalSpec = yamlLoad(
+    fs.readFileSync(
+      join(
+        __dirname,
+        '../../lib/openapi/internal/openapi-internal-original.yaml'
+      ),
+      'utf8'
+    )
+  ) as OpenAPIV3.Document
+
+  const workflowRoutes = yamlLoad(
+    fs.readFileSync(
+      join(__dirname, '../../lib/openapi/internal/workflow-routes.yaml'),
+      'utf8'
+    )
+  ) as OpenAPIV3.Document
+
+  const workflowModels = yamlLoad(
+    fs.readFileSync(
+      join(__dirname, '../../lib/openapi/internal/workflow-models.yaml'),
+      'utf8'
+    )
+  ) as OpenAPIV3.Document
+
+  return {
+    ...internalSpec,
+    paths: {
+      ...internalSpec.paths,
+      ...workflowRoutes.paths,
+    },
+    components: {
+      ...internalSpec.components,
+      schemas: {
+        ...internalSpec.components?.schemas,
+        ...workflowModels.components?.schemas,
+      },
+    },
+  }
+}
+
 function buildApi(type: 'public' | 'public-management' | 'internal') {
   exec(
     `mkdir -p src/@types/openapi-${type}/ src/@types/openapi-${type}-custom/ 1>/dev/null 2>&1`
   )
 
   if (type === 'internal') {
-    // Load and merge specs for internal API
-    const internalSpec = yamlLoad(
-      fs.readFileSync(
-        join(
-          __dirname,
-          '../../lib/openapi/internal/openapi-internal-original.yaml'
-        ),
-        'utf8'
-      )
-    ) as OpenAPIV3.Document
-
-    const workflowRoutes = yamlLoad(
-      fs.readFileSync(
-        join(__dirname, '../../lib/openapi/internal/workflow-routes.yaml'),
-        'utf8'
-      )
-    ) as OpenAPIV3.Document
-
-    const workflowModels = yamlLoad(
-      fs.readFileSync(
-        join(__dirname, '../../lib/openapi/internal/workflow-models.yaml'),
-        'utf8'
-      )
-    ) as OpenAPIV3.Document
-
-    const mergedSpec = {
-      ...internalSpec,
-      paths: {
-        ...internalSpec.paths,
-        ...workflowRoutes.paths,
-      },
-      components: {
-        ...internalSpec.components,
-        schemas: {
-          ...internalSpec.components?.schemas,
-          ...workflowModels.components?.schemas,
-        },
-      },
-    }
+    const mergedSpec = mergeInternalSpecs()
 
     // Write to a temporary merged spec file
     const tempMergedSpecPath = join(

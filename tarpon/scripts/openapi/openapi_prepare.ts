@@ -6,6 +6,7 @@ import { pick } from 'lodash'
 import mkdirp from 'mkdirp'
 import { flattenSchemas } from '../../lib/openapi/openapi-augmentor-util'
 import { stringify, parse, localizeRefs, PROJECT_DIR } from './openapi_helpers'
+import { mergeInternalSpecs } from './openapi_generate_sdk'
 
 function listSubDirectories(directoryPath: string) {
   const items = fs.readdirSync(directoryPath)
@@ -19,7 +20,15 @@ function listSubDirectories(directoryPath: string) {
 async function prepareSchemas(OUTPUT_DIR: string) {
   console.log('Preparing schemas...')
   try {
+    // Generate and save merged spec first
+    const mergedSpec = mergeInternalSpecs()
     const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
+    await fs.writeFile(
+      path.resolve(internalDir, 'temp-merged-spec.yaml'),
+      stringify(mergedSpec)
+    )
+
+    // Continue with existing directory setup
     const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
     const publicManagementDir = path.resolve(
       PROJECT_DIR,
@@ -54,24 +63,16 @@ async function prepareSchemas(OUTPUT_DIR: string) {
     ).toString()
     const publicManagementSchemaYaml = parse(publicManagementSchemaText)
     const publicSchemaYaml = parse(publicSchemaText)
-    const internalSchemaFile = path.resolve(
-      internalDir,
-      'temp-merged-spec.yaml'
-    )
-    const nangoSchemaFile = path.resolve(internalDir, 'nango-models.yaml')
-    const internalSchemaText = (
-      await fs.readFile(internalSchemaFile)
-    ).toString()
-    {
-      /*
-        todo: this is just a temporal solution, we need a proper way to
-        dereference refs to public schema and only copy referenced models
-       */
 
-      // Replace all refs to public schema to internal
+    // Generate merged spec
+    const internalSchemaText = JSON.stringify(mergedSpec)
+
+    {
+      // Internal schema processing
       let internalSchemaYaml = parse(internalSchemaText)
       internalSchemaYaml = await localizeRefs(internalSchemaYaml)
 
+      const nangoSchemaFile = path.resolve(internalDir, 'nango-models.yaml')
       const nangoSchemaText = (await fs.readFile(nangoSchemaFile)).toString()
       const nangoSchemaYaml = parse(nangoSchemaText)
 
@@ -124,6 +125,9 @@ async function prepareSchemas(OUTPUT_DIR: string) {
         stringify(publicManagementSchemaYaml)
       )
     }
+
+    // delete temp-merged-spec.yaml in lib/openapi/internal dir
+    fs.removeSync(path.resolve(internalDir, 'temp-merged-spec.yaml'))
   } catch (err) {
     console.error(err)
   }
