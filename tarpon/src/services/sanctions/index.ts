@@ -640,6 +640,7 @@ export class SanctionsService {
       await this.sanctionsHitsRepository.updateHitsByIds(sanctionsHitIds, {
         status: updates.status,
         clearingReason: updates.reasons,
+        comment: updates.comment,
       })
     // todo: add audit log record
     return { modifiedCount }
