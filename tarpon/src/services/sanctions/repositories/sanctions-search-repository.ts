@@ -225,7 +225,9 @@ export class SanctionsSearchRepository {
 
     if (params.filterManualSearch) {
       conditions.push({
-        searchedBy: { $exists: true },
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        searchedBy: { $ne: null },
       })
     }
     if (params.filterSearchedBy?.length) {

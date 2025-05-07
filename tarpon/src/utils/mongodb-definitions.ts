@@ -870,6 +870,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'response.data.types': 1 },
           { 'response.providerSearchId': 1 },
           { requestHash: 1 },
+          { searchedBy: 1 },
         ].map((index) => ({ index })),
     },
     [SANCTIONS_HITS_COLLECTION(tenantId)]: {
