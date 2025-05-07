@@ -80,12 +80,13 @@ export class SanctionsSearchRepository {
           providerConfigHash: props.providerConfigHash,
         }),
         ...(props.requestHash && { requestHash: props.requestHash }),
-        ...(props.screeningEntity && {
-          $addToSet: {
-            'metadata.screeningEntity': props.screeningEntity,
-          },
-        }),
       },
+    }
+
+    if (props.screeningEntity) {
+      updateMessage.$addToSet = {
+        'metadata.screeningEntity': props.screeningEntity,
+      }
     }
 
     if (
