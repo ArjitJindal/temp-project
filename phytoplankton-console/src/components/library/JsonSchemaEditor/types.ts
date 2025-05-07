@@ -1,4 +1,5 @@
 import { JSONSchema4 } from 'json-schema';
+import { TransactionsUniquesField } from '@/apis';
 
 export interface UiSchemaCommon {
   'ui:group'?: string;
@@ -7,6 +8,7 @@ export interface UiSchemaCommon {
   'ui:hidden'?: boolean;
   'ui:readOnly'?: boolean;
   'ui:width'?: 'FULL' | 'HALF';
+  'ui:uniqueType'?: TransactionsUniquesField;
 }
 
 export interface UiSchemaUnknown extends UiSchemaCommon {
@@ -147,6 +149,14 @@ export interface UiSchemaWebhook extends UiSchemaCommon {
   'ui:subtype': 'WEBHOOK';
 }
 
+export interface UiSchemaTransactionTypes extends UiSchemaCommon {
+  'ui:subtype': 'TRANSACTION_TYPES';
+}
+
+export interface UiSchemaTransactionType extends UiSchemaCommon {
+  'ui:subtype': 'TRANSACTION_TYPE';
+}
+
 export type UiSchema =
   | UiSchemaUnknown
   | UiSchemaTextarea
@@ -179,7 +189,9 @@ export type UiSchema =
   | UiSchemaNumberRange
   | UiSchemaGenericSanctionsScreeningTypes
   | UiSchemaFuzzinessSettings
-  | UiSchemaFreeTextEnum;
+  | UiSchemaFreeTextEnum
+  | UiSchemaTransactionType
+  | UiSchemaTransactionTypes;
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
   items?: ExtendedSchema;

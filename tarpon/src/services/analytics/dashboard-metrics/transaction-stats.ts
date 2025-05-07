@@ -35,7 +35,6 @@ import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
@@ -61,7 +60,10 @@ async function createInexes(tenantId) {
 
 @traceable
 export class TransactionStatsDashboardMetric {
-  public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
+  public static async refresh(
+    tenantId: string,
+    timeRange?: TimeRange
+  ): Promise<void> {
     await createInexes(tenantId)
     const mongoDb = await getMongoDbClient()
     const db = mongoDb.db()
@@ -107,24 +109,6 @@ export class TransactionStatsDashboardMetric {
             'timestamp',
             'paymentMethods',
             ['originPaymentDetails.method', 'destinationPaymentDetails.method'],
-            timeRange
-          ),
-          lastUpdatedAt
-        ),
-        {
-          allowDiskUse: true,
-        }
-      )
-      .next()
-    await transactionsCollection
-      .aggregate(
-        withUpdatedAt(
-          getAttributeCountStatsPipeline(
-            aggregatedHourlyCollectionName,
-            'HOUR',
-            'timestamp',
-            'transactionType',
-            ['type'],
             timeRange
           ),
           lastUpdatedAt
@@ -274,11 +258,7 @@ export class TransactionStatsDashboardMetric {
       'originPaymentMethod',
       'destinationPaymentMethod'
     )
-    const transactionTypes = buildQueryPart(
-      TRANSACTION_TYPES,
-      'transactionType',
-      'type'
-    )
+
     const ruleActions = buildQueryPart(RULE_ACTIONS, 'status', 'status')
     const arsRiskLevels = buildQueryPart(
       RISK_LEVELS,
@@ -296,8 +276,7 @@ export class TransactionStatsDashboardMetric {
       tableName,
       granularity,
       `
-      ${paymentMethods},
-      ${transactionTypes}
+      ${paymentMethods}
       ${dateRangeQuery}
       `,
       { startTimestamp, endTimestamp },

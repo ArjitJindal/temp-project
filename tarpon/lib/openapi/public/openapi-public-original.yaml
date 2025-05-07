@@ -2522,7 +2522,9 @@ components:
           destinationUserId: 9350a2611e0771cba03310f74bf6
       properties:
         type:
-          $ref: '#/components/schemas/TransactionType'
+          type: string
+          description: 'Type of transaction (ex: DEPOSIT, WITHDRAWAL, TRANSFER,
+            EXTERNAL_PAYMENT, REFUND, OTHER)'
         transactionId:
           minLength: 1
           type: string
@@ -5309,16 +5311,6 @@ components:
         - '91'
         - '95'
         - '97'
-    TransactionType:
-      type: string
-      title: TransactionType
-      enum:
-        - DEPOSIT
-        - TRANSFER
-        - EXTERNAL_PAYMENT
-        - WITHDRAWAL
-        - REFUND
-        - OTHER
     WebhookEventBase:
       title: WebhookEventBase
       type: object

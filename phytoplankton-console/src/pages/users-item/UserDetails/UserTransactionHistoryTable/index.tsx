@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { getRiskLevelFromScore } from '@flagright/lib/utils';
+import { getRiskLevelFromScore, TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { ManualCaseCreationButton } from '../../ManualCaseCreationButton';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
@@ -47,9 +47,9 @@ import {
 } from '@/pages/transactions/components/TransactionsTable';
 import { useRuleOptions } from '@/utils/rules';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
-import ProductTypeSearchButton from '@/pages/transactions/components/ProductTypeSearchButton';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
+import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 
 export type DataItem = {
   index: number;
@@ -316,13 +316,34 @@ export function Content(props: { userId: string }) {
     {
       key: 'productType',
       title: 'Product Type',
+      showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
-        <ProductTypeSearchButton
+        <UniquesSearchButton
+          uniqueType={'PRODUCT_TYPES'}
+          title="Product Type"
           initialState={{
-            productTypes: params.productType ?? undefined,
+            uniques: params.productType ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({ ...state, productType: value.productTypes }));
+            setParams((state) => ({ ...state, productType: value.uniques }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'transactionType',
+      title: 'Transaction Type',
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <UniquesSearchButton
+          uniqueType={'TRANSACTION_TYPES'}
+          title="Transaction Type"
+          defaults={TRANSACTION_TYPES as string[]}
+          initialState={{
+            uniques: params.transactionTypes ?? undefined,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({ ...state, transactionTypes: value.uniques }));
           }}
         />
       ),

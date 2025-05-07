@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { startCase } from 'lodash';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { SimulationBeaconHit, SimulationBeaconTransactionResult } from '@/apis';
@@ -27,6 +28,7 @@ import { CommonParams } from '@/components/library/Table/types';
 import { dayjs } from '@/utils/dayjs';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 interface SimulationTransactionsHitProps {
   taskId: string;
 }
@@ -36,7 +38,7 @@ interface TableParams extends CommonParams {
   userId?: string;
   originPaymentMethod?: string;
   destinationPaymentMethod?: string;
-  transactionType?: string;
+  transactionTypes?: string[];
   hit?: string;
   timestamp?: string[];
 }
@@ -65,7 +67,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
         filterEndTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
         filterOriginPaymentMethod: params.originPaymentMethod,
         filterDestinationPaymentMethod: params.destinationPaymentMethod,
-        filterTransactionType: params.transactionType,
+        filterTransactionTypes: params.transactionTypes,
         filterUserId: params.userId,
       });
       return {
@@ -119,7 +121,6 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
       key: 'transactionType',
       title: 'Transaction type',
       type: TRANSACTION_TYPE,
-      filtering: true,
     }),
     helper.simple<'action'>({
       key: 'action',
@@ -267,6 +268,23 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
                       ...state,
                       userId: userId ?? undefined,
                     }));
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'transactionType',
+              title: 'Transaction Type',
+              renderer: ({ params, setParams }) => (
+                <UniquesSearchButton
+                  uniqueType={'TRANSACTION_TYPES'}
+                  title="Transaction Type"
+                  defaults={TRANSACTION_TYPES as string[]}
+                  initialState={{
+                    uniques: params.transactionTypes ?? undefined,
+                  }}
+                  onConfirm={(value) => {
+                    setParams((state) => ({ ...state, transactionTypes: value.uniques }));
                   }}
                 />
               ),

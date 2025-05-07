@@ -47,7 +47,6 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
-import { TransactionType } from '@/@types/openapi-internal/TransactionType'
 import { Alert } from '@/@types/openapi-internal/Alert'
 
 @traceable
@@ -408,9 +407,7 @@ export class TransactionService {
         average: (item?.average ?? 0) * exchangeRateWithUsd,
         count: item?.count ?? 0,
         transactionType:
-          item.transactionType === ''
-            ? undefined
-            : (item.transactionType as TransactionType),
+          item.transactionType === '' ? undefined : item.transactionType,
       }))
     }
 

@@ -14,7 +14,6 @@ import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/T
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { executeClickhouseQuery, getSortedData } from '@/utils/clickhouse/utils'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import {
@@ -125,6 +124,12 @@ export class ClickhouseTransactionsRepository {
       )
     }
 
+    if (params.filterTransactionTypes?.length) {
+      whereConditions.push(
+        `type IN ('${params.filterTransactionTypes.join("','")}')`
+      )
+    }
+
     if (params.filterTransactionState?.length) {
       whereConditions.push(
         `transactionState IN ('${params.filterTransactionState.join("','")}')`
@@ -139,10 +144,6 @@ export class ClickhouseTransactionsRepository {
       whereConditions.push(
         `destinationUserId = '${params.filterDestinationUserId}'`
       )
-    }
-
-    if (params.transactionType) {
-      whereConditions.push(`type = '${params.transactionType}'`)
     }
 
     if (params.filterStatus?.length) {
@@ -343,7 +344,7 @@ export class ClickhouseTransactionsRepository {
           },
           destinationUser: { id: item.destinationUserId as string },
           originUser: { id: item.originUserId as string },
-          type: item.type as TransactionType,
+          type: item.type as string,
           tags: (item.tags as string)?.length
             ? (JSON.parse(item.tags as string) as Tag[])
             : undefined,

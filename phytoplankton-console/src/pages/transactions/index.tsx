@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useLocation, useNavigate } from 'react-router';
+import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
-import ProductTypeSearchButton from './components/ProductTypeSearchButton';
+import UniquesSearchButton from './components/UniquesSearchButton';
 import { useApi } from '@/api';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -188,15 +189,35 @@ const TableList = () => {
               key: 'productType',
               title: 'Product Type',
               renderer: ({ params, setParams }) => (
-                <ProductTypeSearchButton
+                <UniquesSearchButton
                   initialState={{
-                    productTypes: params.productType ?? undefined,
+                    uniques: params.productType ?? undefined,
                   }}
+                  uniqueType={'PRODUCT_TYPES'}
                   onConfirm={(value) => {
                     setParams((state) => ({
                       ...state,
-                      productType: value.productTypes,
+                      productType: value.uniques,
                     }));
+                  }}
+                  title="Product Type"
+                />
+              ),
+            },
+            {
+              key: 'transactionType',
+              title: 'Transaction Type',
+              showFilterByDefault: true,
+              renderer: ({ params, setParams }) => (
+                <UniquesSearchButton
+                  uniqueType={'TRANSACTION_TYPES'}
+                  title="Transaction Type"
+                  defaults={TRANSACTION_TYPES as string[]}
+                  initialState={{
+                    uniques: params.transactionTypes ?? undefined,
+                  }}
+                  onConfirm={(value) => {
+                    setParams((state) => ({ ...state, transactionTypes: value.uniques }));
                   }}
                 />
               ),

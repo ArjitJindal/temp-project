@@ -16,7 +16,6 @@ import {
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
@@ -368,7 +367,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "destinationUserId String MATERIALIZED JSON_VALUE(data, '$.destinationUserId')",
       enumFields(RULE_ACTIONS, 'status', 'status'),
       "productType String MATERIALIZED JSON_VALUE(data, '$.productType')",
-      enumFields(TRANSACTION_TYPES, 'type', 'type'),
+      "type String MATERIALIZED JSON_VALUE(data, '$.type')",
       "originAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
       "destinationAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'destinationAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
       "tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')",

@@ -294,10 +294,8 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
           } else if (transaction.type === 'REFUND') {
             // todo: check that logic is valid
             reportTransactionType = 'OTHERS'
-          } else if (transaction.type === 'OTHER') {
-            reportTransactionType = 'OTHERS'
           } else {
-            reportTransactionType = neverReturn(transaction.type, undefined)
+            reportTransactionType = 'OTHERS'
           }
 
           // Derive transaction method

@@ -2,7 +2,7 @@ import React from 'react';
 import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { RiskLevelTableItem } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
-import { RiskEntityType, RiskFactorDataType, RiskFactorParameter, TransactionType } from '@/apis';
+import { RiskEntityType, RiskFactorDataType, RiskFactorParameter } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { PaymentMethod, getPaymentMethodTitle } from '@/utils/payments';
@@ -70,7 +70,7 @@ export const PARAMETER_RENDERERS: Record<RiskFactorDataType, ParameterRenderer<a
       renderer: <TransactionTypeDisplay transactionType={value} />,
       stringify: humanizeConstant(value),
     };
-  }) as ParameterRenderer<TransactionType>,
+  }) as ParameterRenderer<string>,
   RESIDENCE_TYPES: CONSTANT_RENDERER,
   CONSUMER_USER_TYPE: CONSTANT_RENDERER,
   BUSINESS_USER_TYPE: CONSTANT_RENDERER,

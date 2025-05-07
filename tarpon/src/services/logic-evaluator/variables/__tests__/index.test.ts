@@ -24,6 +24,8 @@ describe('List of entity variables', () => {
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
+              allowNewValues: true,
+              uniqueType: 'TRANSACTION_TYPES',
               allowCustomValues: true,
               listValues: expect.arrayContaining([
                 {

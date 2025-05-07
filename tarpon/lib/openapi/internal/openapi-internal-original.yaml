@@ -1184,10 +1184,6 @@ paths:
           in: query
           name: filterRuleInstancesHit
         - schema:
-            type: string
-          in: query
-          name: transactionType
-        - schema:
             type: array
             items:
               type: string
@@ -1252,7 +1248,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+              type: string
           in: query
           name: filterTransactionTypes
         - schema:
@@ -1480,7 +1476,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+              type: string
           in: query
           name: filterTransactionTypes
         - schema:
@@ -3339,6 +3335,31 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/transactions/transaction-type-distribution:
+    get:
+      summary: DashboardStats - Transaction Type Distribution
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsTransactionTypeDistribution'
+      operationId: get-dashboard-transactions-type-distribution
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
   /tenants:
     get:
       summary: Tenant - List
@@ -4650,9 +4671,11 @@ paths:
         in: query
         name: filterTransactionId
       - schema:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          type: array
+          items:
+            type: string
         in: query
-        name: filterTransactionType
+        name: filterTransactionTypes
       - schema:
           type: array
           items:
@@ -5894,7 +5917,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+              type: string
           in: query
           name: filterTransactionTypes
         - schema:
@@ -6915,9 +6938,11 @@ paths:
         in: query
         name: filterDestinationPaymentMethod
       - schema:
-          type: string
+          type: array
+          items:
+            type: string
         in: query
-        name: filterTransactionType
+        name: filterTransactionTypes
       - schema:
           type: string
         in: query
@@ -9294,7 +9319,7 @@ components:
             type: object
             properties:
               transactionType:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+                type: string
               count:
                 type: number
               sum:
@@ -9590,7 +9615,7 @@ components:
         transactionId:
           type: string
         type:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          type: string
         status:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleAction
         originUser:
@@ -9869,18 +9894,6 @@ components:
                 type: number
               arsRiskLevel_VERY_LOW:
                 type: number
-              transactionType_DEPOSIT:
-                type: number
-              transactionType_TRANSFER:
-                type: number
-              transactionType_EXTERNAL_PAYMENT:
-                type: number
-              transactionType_WITHDRAWAL:
-                type: number
-              transactionType_REFUND:
-                type: number
-              transactionType_OTHER:
-                type: number
             required:
               - time
       required:
@@ -9919,20 +9932,26 @@ components:
           type: number
         arsRiskLevel_VERY_LOW:
           type: number
-        transactionType_DEPOSIT:
-          type: number
-        transactionType_TRANSFER:
-          type: number
-        transactionType_EXTERNAL_PAYMENT:
-          type: number
-        transactionType_WITHDRAWAL:
-          type: number
-        transactionType_REFUND:
-          type: number
-        transactionType_OTHER:
-          type: number
       required:
         - time
+    DashboardStatsTransactionTypeDistribution:
+      type: object
+      title: DashboardStatsTransactionTypeDistribution
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              count:
+                type: number
+            required:
+              - type
+              - count
+      required:
+        - data
     DashboardStatsRulesCount:
       type: object
       title: DashboardStatsRulesCount
@@ -14796,6 +14815,7 @@ components:
         - DEVICE_IDENTIFIER
         - 314A_INDIVIDUAL
         - 314A_BUSINESS
+        - TRANSACTION_TYPES
     ProductType:
       title: ProductType
       type: string
@@ -15797,7 +15817,7 @@ components:
           enum:
             - BEACON_TRANSACTION
         transactionType:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          type: string
         timestamp:
           type: number
         action:

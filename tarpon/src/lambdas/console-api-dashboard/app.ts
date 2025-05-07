@@ -373,6 +373,17 @@ export const dashboardStatsHandler = lambdaApi()(
         page
       )
     })
+
+    handlers.registerGetDashboardTransactionsTypeDistribution(
+      async (ctx, request) => {
+        const { startTimestamp, endTimestamp } = request
+        const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
+        return await dashboardStatsRepository.getTransactionsTypeDistribution(
+          start,
+          end
+        )
+      }
+    )
     return await handlers.handle(event)
   }
 )

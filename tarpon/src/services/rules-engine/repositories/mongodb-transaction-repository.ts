@@ -57,7 +57,6 @@ import {
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import { duration } from '@/utils/dayjs'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
@@ -328,11 +327,6 @@ export class MongoDbTransactionRepository
         transactionId: prefixRegexMatchFilter(params.filterId),
       })
     }
-    if (params.transactionType != null) {
-      conditions.push({
-        type: prefixRegexMatchFilter(params.transactionType),
-      })
-    }
 
     if (params.filterOriginPaymentMethodId != null) {
       conditions.push({
@@ -359,6 +353,7 @@ export class MongoDbTransactionRepository
         transactionState: { $in: params.filterTransactionState },
       })
     }
+
     if (params.filterTransactionTypes != null) {
       conditions.push({
         type: { $in: params.filterTransactionTypes },
@@ -1001,6 +996,9 @@ export class MongoDbTransactionRepository
       case '314A_BUSINESS':
         fieldPath = '314A_BUSINESS'
         break
+      case 'TRANSACTION_TYPES':
+        fieldPath = 'type'
+        break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }
@@ -1073,7 +1071,7 @@ export class MongoDbTransactionRepository
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
     const result: {
-      [key in TransactionType | 'null']?: {
+      [key in string | 'null']?: {
         amounts: number[]
         min: number | null
         max: number | null
@@ -1099,20 +1097,18 @@ export class MongoDbTransactionRepository
     }
 
     return Object.entries(result).map(([transactionType, acc]) => {
-      const amounts = acc.amounts
+      const amounts = acc?.amounts ?? []
       amounts.sort((x, y) => x - y)
       const count = amounts.length
       const sum = amounts.reduce((acc: number, x) => acc + (x ?? 0), 0)
       return {
         transactionType:
-          transactionType === 'null'
-            ? undefined
-            : (transactionType as TransactionType),
+          transactionType === 'null' ? undefined : (transactionType as string),
         count,
         sum,
         average: sum / count || 0,
-        min: acc.min ?? 0,
-        max: acc.max ?? 0,
+        min: acc?.min ?? 0,
+        max: acc?.max ?? 0,
         median:
           (count % 2 === 1
             ? amounts[(count - 1) / 2]

@@ -38,7 +38,6 @@ import {
   SanctionsHitStatus as ApiSanctionsHitStatus,
   Tag as ApiTag,
   TransactionState as ApiTransactionState,
-  TransactionType,
   UserState,
   TenantSettings,
 } from '@/apis';
@@ -70,7 +69,6 @@ import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { SANCTIONS_HIT_STATUSS } from '@/apis/models-custom/SanctionsHitStatus';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
-import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { Option } from '@/components/library/Select';
 import { formatNumber } from '@/utils/number';
 import { ALERT_ITEM } from '@/utils/queries/keys';
@@ -318,18 +316,9 @@ export const USER_TYPE: ColumnDataType<
   defaultWrapMode: 'WRAP',
 };
 
-export const TRANSACTION_TYPE: ColumnDataType<TransactionType> = {
-  render: (type) => <TransactionTypeDisplay transactionType={type as TransactionType} />,
+export const TRANSACTION_TYPE: ColumnDataType<string> = {
+  render: (type) => <TransactionTypeDisplay transactionType={type} />,
   stringify: (value) => `${value}`,
-  autoFilterDataType: {
-    kind: 'select',
-    options: TRANSACTION_TYPES.map((type) => ({
-      value: type,
-      label: humanizeConstant(type),
-    })),
-    displayMode: 'list',
-    mode: 'SINGLE',
-  },
 };
 
 export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {

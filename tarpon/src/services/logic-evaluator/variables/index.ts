@@ -1,9 +1,16 @@
 import { get, groupBy, lowerCase, mapValues, memoize, startCase } from 'lodash'
-import { FieldOrGroup, ValueSource } from '@react-awesome-query-builder/core'
+import {
+  FieldOrGroup,
+  SelectFieldSettings,
+  ValueSource,
+} from '@react-awesome-query-builder/core'
+import { TRANSACTION_TYPES } from '@flagright/lib/utils'
+import { capitalizeWords } from '@flagright/lib/utils/humanize'
 import {
   BusinessUserLogicVariable,
   CommonUserLogicVariable,
   ConsumerUserLogicVariable,
+  ExtendedFieldSettings,
   LogicEntityType,
   LogicVariableBase as LogicVariable,
   LogicVariableContext,
@@ -142,6 +149,7 @@ function txEntityVariableWithoutDirection(variables: LogicVariable[]) {
     if (!variable.key.startsWith('origin')) {
       return [variable]
     }
+
     // Add one more direction-less variable for variables with direction
     let updatedKey = variable.key.replace(/^origin/, '')
     updatedKey = updatedKey.charAt(0).toLowerCase() + updatedKey.slice(1)
@@ -292,27 +300,47 @@ const loadAmount = async (
 function updatedTransactionEntityVariables(
   variables: TransactionLogicVariable[]
 ) {
-  const originAmountVariable = variables.find(
-    (v) => v.key === ORIGIN_TRANSACTION_AMOUNT_KEY
-  )
-  const destinationAmountVariable = variables.find(
-    (v) => v.key === DESTINATION_TRANSACTION_AMOUNT_KEY
-  )
+  let originExists = false
+  let destinationExists = false
+  for (const variable of variables) {
+    if (variable.key === ORIGIN_TRANSACTION_AMOUNT_KEY) {
+      originExists = true
+      variable.load = async (transaction, context) => {
+        return await loadAmount(transaction?.originAmountDetails, context)
+      }
+    } else if (variable.key === DESTINATION_TRANSACTION_AMOUNT_KEY) {
+      destinationExists = true
+      variable.load = async (transaction, context) => {
+        return await loadAmount(transaction?.destinationAmountDetails, context)
+      }
+    } else if (variable.key === 'type') {
+      const uiDefinition = variable.uiDefinition as FieldOrGroup
 
-  if (originAmountVariable) {
-    originAmountVariable.load = async (transaction, context) => {
-      return await loadAmount(transaction?.originAmountDetails, context)
+      if (uiDefinition.type === 'text') {
+        if (uiDefinition) {
+          const fieldSettings = (uiDefinition.fieldSettings ??
+            {}) as ExtendedFieldSettings & SelectFieldSettings<string>
+
+          if (fieldSettings) {
+            ;(uiDefinition.fieldSettings as ExtendedFieldSettings &
+              SelectFieldSettings<string>) = {
+              ...fieldSettings,
+              allowNewValues: true,
+              uniqueType: 'TRANSACTION_TYPES',
+              allowCustomValues: true,
+              listValues: TRANSACTION_TYPES.map((type) => ({
+                value: type,
+                title: capitalizeWords(type),
+              })),
+            }
+          }
+        }
+      }
     }
-  } else {
-    logger.error('Cannot find origin amount variable')
   }
 
-  if (destinationAmountVariable) {
-    destinationAmountVariable.load = async (transaction, context) => {
-      return await loadAmount(transaction?.destinationAmountDetails, context)
-    }
-  } else {
-    logger.error('Cannot find destination amount variable')
+  if (!originExists || !destinationExists) {
+    logger.error('Cannot find both origin and destination amount variables')
   }
 
   updateAmountValueVariables(variables)

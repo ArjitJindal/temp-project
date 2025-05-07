@@ -65,7 +65,7 @@ export interface TransactionsTableParams extends CommonParams {
   current?: string;
   timestamp?: string[];
   transactionId?: string;
-  type?: string;
+  transactionTypes?: string[];
   transactionState?: TransactionState[];
   originCurrenciesFilter?: string[];
   destinationCurrenciesFilter?: string[];
@@ -122,7 +122,7 @@ export const transactionParamsToRequest = (
     page,
     timestamp,
     transactionId,
-    type,
+    transactionTypes,
     transactionState,
     originCurrenciesFilter,
     destinationCurrenciesFilter,
@@ -155,7 +155,7 @@ export const transactionParamsToRequest = (
     filterId: transactionId,
     filterOriginCurrencies: originCurrenciesFilter,
     filterDestinationCurrencies: destinationCurrenciesFilter,
-    transactionType: type,
+    filterTransactionTypes: transactionTypes,
     filterTransactionState: transactionState,
     sortField: sortField ?? undefined,
     sortOrder: sortOrder ?? undefined,
@@ -376,7 +376,6 @@ export default function TransactionsTable(props: Props) {
         title: 'Transaction type',
         key: 'type',
         type: TRANSACTION_TYPE,
-        filtering: true,
       }),
       helper.simple<'timestamp'>({
         title: 'Timestamp',

@@ -11,7 +11,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       current: params.current,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
       transactionId: params.transactionId,
-      type: params.type,
+      transactionTypes: params.transactionTypes?.join(',') ?? '',
       transactionState: params.transactionState?.join(',') ?? '',
       originCurrenciesFilter: params.originCurrenciesFilter?.join(',') ?? '',
       destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(',') ?? '',
@@ -42,7 +42,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       transactionId: raw.transactionId,
-      type: raw.type,
+      transactionTypes: raw.transactionTypes?.split(','),
       transactionState: raw.transactionState
         ? (raw.transactionState.split(',') as TransactionState[])
         : undefined,

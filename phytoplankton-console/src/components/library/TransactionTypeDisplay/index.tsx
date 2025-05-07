@@ -6,11 +6,8 @@ import ArrowDownLineIcon from '@/components/ui/icons/Remix/system/arrow-down-lin
 import ArrowGoBackLineIcon from '@/components/ui/icons/Remix/system/arrow-go-back-line.react.svg';
 import ArrowLeftRightLineIcon from '@/components/ui/icons/Remix/system/arrow-left-right-line.react.svg';
 
-import { TransactionType } from '@/apis/models/TransactionType';
-import { neverReturn } from '@/utils/lang';
-
 interface Props {
-  transactionType: TransactionType | undefined;
+  transactionType: string | undefined;
 }
 
 export default function TransactionTypeDisplay({ transactionType }: Props) {
@@ -29,10 +26,8 @@ export default function TransactionTypeDisplay({ transactionType }: Props) {
     transactionTypeIcon = <ArrowGoBackLineIcon className={style.icon} />;
   } else if (transactionType === 'TRANSFER') {
     transactionTypeIcon = <ArrowLeftRightLineIcon className={style.icon} />;
-  } else if (transactionType === 'OTHER') {
-    transactionTypeIcon = null;
   } else {
-    transactionTypeIcon = neverReturn(transactionType, null);
+    transactionTypeIcon = null;
   }
 
   return (

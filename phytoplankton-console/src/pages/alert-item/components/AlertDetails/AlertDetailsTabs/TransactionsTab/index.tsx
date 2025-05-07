@@ -19,7 +19,6 @@ import {
   SanctionsDetails,
   SanctionsDetailsEntityType,
   TransactionTableItem,
-  TransactionType,
 } from '@/apis';
 import { SelectionAction } from '@/components/library/Table/types';
 
@@ -126,7 +125,7 @@ export default function TransactionsTab(props: Props) {
             : params.destinationMethodFilter
             ? [params.destinationMethodFilter]
             : undefined,
-        filterTransactionType: params.type as TransactionType,
+        filterTransactionTypes: params.transactionTypes,
         beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
         afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
         filterDestinationCountries: params['destinationAmountDetails.country'],

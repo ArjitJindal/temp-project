@@ -100,12 +100,6 @@ export class SimulationResultRepository {
       })
     }
 
-    if (params.filterTransactionType) {
-      conditions.push({
-        transactionType: params.filterTransactionType,
-      })
-    }
-
     if (params.filterHitStatus) {
       conditions.push({
         hit: params.filterHitStatus,

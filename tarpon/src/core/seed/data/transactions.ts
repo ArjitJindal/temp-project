@@ -1,4 +1,5 @@
 import { compact, random, memoize, uniq, shuffle } from 'lodash'
+import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'
 import { BaseSampler } from '../samplers/base'
@@ -33,7 +34,6 @@ import {
   TransactionRuleSampler,
 } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { envIs } from '@/utils/env'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
@@ -144,7 +144,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     isCryptoTransaction: boolean,
     isCounterPartyTransaction?: boolean
   ): InternalTransaction {
-    const type = this.rng.pickRandom(TRANSACTION_TYPES)
+    const type = this.rng.pickRandom<string>([...TRANSACTION_TYPES])
     let counterPartyDirection: 'origin' | 'destination' | null = null
 
     if (isCounterPartyTransaction) {

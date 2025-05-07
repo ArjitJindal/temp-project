@@ -34,6 +34,7 @@ import ElectronicAddress from '@/components/library/JsonSchemaEditor/Property/Pr
 import Gender from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/Gender';
 import { Props as LabelProps } from '@/components/library/Label';
 import ListSelect from '@/components/ui/LogicBuilder/ListSelect';
+import { SingleListSelectDynamic } from '@/components/ui/LogicBuilder/ListSelectDynamic';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -125,6 +126,30 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'FREE_TEXT_ENUM') {
     return <FreeTextEnumInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+
+  if (uiSchema['ui:subtype'] === 'TRANSACTION_TYPES') {
+    return (
+      <SingleListSelectDynamic
+        onChange={(value) => {
+          props.onChange?.(value);
+        }}
+        value={props.value}
+        uniqueType={uiSchema['ui:uniqueType']}
+      />
+    );
+  }
+
+  if (uiSchema['ui:subtype'] === 'TRANSACTION_TYPE') {
+    return (
+      <SingleListSelectDynamic
+        onChange={(value) => {
+          props.onChange?.(value);
+        }}
+        value={props.value}
+        uniqueType={uiSchema['ui:uniqueType']}
+      />
+    );
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

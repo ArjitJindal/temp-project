@@ -1,20 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { TRANSACTION_TYPES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export function transactionTypeRuleFilterPredicate(
   transaction: Transaction,
-  transactionTypes?: TransactionType[]
+  transactionTypes?: string[]
 ) {
-  return (
-    transactionTypes?.includes(transaction.type as TransactionType) ?? false
-  )
+  return transactionTypes?.includes(transaction.type as string) ?? false
 }
 
 export type TransactionTypeRuleFilterParameter = {
-  transactionTypes?: TransactionType[]
+  transactionTypes?: string[]
 }
 
 export class TransactionTypeRuleFilter extends TransactionRuleFilter<TransactionTypeRuleFilterParameter> {
@@ -23,7 +20,7 @@ export class TransactionTypeRuleFilter extends TransactionRuleFilter<Transaction
       type: 'object',
       properties: {
         transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA({
-          uiSchema: { group: 'transaction' },
+          uiSchema: { group: 'transaction', subtype: 'TRANSACTION_TYPE' },
         }),
       },
     }

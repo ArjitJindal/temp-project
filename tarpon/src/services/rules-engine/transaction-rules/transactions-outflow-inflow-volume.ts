@@ -20,7 +20,6 @@ import {
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { compareNumber } from '../utils/rule-schema-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
-import { TransactionType } from '@/@types/openapi-internal/TransactionType'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -30,8 +29,8 @@ import { traceable } from '@/core/xray'
 
 export type TransactionsOutflowInflowVolumeRuleParameters = {
   timeWindow: TimeWindow
-  outflowTransactionTypes: TransactionType[]
-  inflowTransactionTypes: TransactionType[]
+  outflowTransactionTypes: string[]
+  inflowTransactionTypes: string[]
   outflowInflowComparator: Comparator
   outflow3dsDonePercentageThreshold?: ValueComparator
   inflow3dsDonePercentageThreshold?: ValueComparator

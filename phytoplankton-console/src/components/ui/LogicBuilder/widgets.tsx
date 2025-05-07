@@ -1,4 +1,9 @@
-import { ListItem, SelectFieldSettings, WidgetProps } from '@react-awesome-query-builder/core';
+import {
+  FieldSettings,
+  ListItem,
+  SelectFieldSettings,
+  WidgetProps,
+} from '@react-awesome-query-builder/core';
 import {
   AsyncListValues,
   BasicConfig,
@@ -31,6 +36,7 @@ import {
 } from './operators';
 import { FieldInput, isViewMode, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
 import { isValidRegex } from './functions';
+import { MultiListSelectDynamic, SingleListSelectDynamic } from './ListSelectDynamic';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -38,7 +44,7 @@ import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { LogicOperatorType } from '@/apis';
+import { LogicOperatorType, TransactionsUniquesField } from '@/apis';
 import PropertyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput';
 import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import Tooltip from '@/components/library/Tooltip';
@@ -47,6 +53,11 @@ import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import ViewModeTags from '@/components/ui/LogicBuilder/ViewModeTags';
 import VariableInfoPopover from '@/components/ui/LogicBuilder/VariableInfoPopover';
 import { message } from '@/components/library/Message';
+
+type FieldSettingsWithUniqueType = FieldSettings & {
+  uniqueType?: TransactionsUniquesField;
+  allowNewValues?: boolean;
+};
 
 function getOperator(props: any) {
   const operator = props.config.operators[props.operator];
@@ -193,6 +204,20 @@ const customTextWidget: CoreWidgets['text'] = {
             onChange={(newValue) => {
               props.setValue(newValue as any);
             }}
+          />
+        </WidgetWrapper>
+      );
+    }
+
+    const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
+
+    if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      return (
+        <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+          <SingleListSelectDynamic
+            uniqueType={fieldSettings.uniqueType}
+            value={props.value}
+            onChange={(val) => props.setValue(val)}
           />
         </WidgetWrapper>
       );
@@ -359,6 +384,20 @@ const customSelectWidget: CoreWidgets['select'] = {
       return <ViewModeTags>{[option?.label ?? props.value]}</ViewModeTags>;
     }
 
+    const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
+
+    if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      return (
+        <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+          <SingleListSelectDynamic
+            uniqueType={fieldSettings.uniqueType}
+            value={props.value as string}
+            onChange={(val) => props.setValue(val)}
+          />
+        </WidgetWrapper>
+      );
+    }
+
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
@@ -401,6 +440,20 @@ const customMultiselectWidget: CoreWidgets['multiselect'] = {
             onChange={(newValue) => {
               props.setValue(newValue as any);
             }}
+          />
+        </WidgetWrapper>
+      );
+    }
+
+    const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
+
+    if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      return (
+        <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+          <MultiListSelectDynamic
+            uniqueType={fieldSettings.uniqueType}
+            value={props.value as string[]}
+            onChange={(val) => props.setValue(val)}
           />
         </WidgetWrapper>
       );

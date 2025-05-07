@@ -2,10 +2,9 @@ import { JSONSchemaType } from 'ajv'
 import { TRANSACTION_TYPES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { transactionTypeRuleFilterPredicate } from './transaction-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 export type TransactionTypeHistoricalRuleFilterParameter = {
-  transactionTypesHistorical?: TransactionType[]
+  transactionTypesHistorical?: string[]
 }
 
 export class TransactionTypeHistoricalRuleFilter extends TransactionRuleFilter<TransactionTypeHistoricalRuleFilterParameter> {

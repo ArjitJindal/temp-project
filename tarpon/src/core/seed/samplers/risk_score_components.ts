@@ -1,4 +1,4 @@
-import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { getRiskLevelFromScore, TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { SAMPLE_CURRENCIES } from './currencies'
 import { COUNTRIES } from './countries'
 import { BaseSampler } from './base'
@@ -7,7 +7,6 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 export class ConsumerUserRiskScoreSampler extends BaseSampler<
@@ -147,7 +146,8 @@ export class TransactionRiskScoreSampler extends BaseSampler<
         ),
         entityType: 'TRANSACTION',
         parameter: 'type',
-        value: transaction?.type ?? this.rng.r(5).pickRandom(TRANSACTION_TYPES),
+        value:
+          transaction?.type ?? this.rng.r(5).pickRandom([TRANSACTION_TYPES]),
         weight: 1,
       },
       {

@@ -1,4 +1,10 @@
-import { FieldOrGroup } from '@react-awesome-query-builder/core'
+import {
+  FieldGroup,
+  FieldGroupExt,
+  FieldSettings,
+  FieldStruct,
+  SimpleField,
+} from '@react-awesome-query-builder/core'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -9,6 +15,7 @@ import {
   AuxiliaryIndexTransaction,
   TransactionWithRiskDetails,
 } from '@/services/rules-engine/repositories/transaction-repository-interface'
+import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 
 export type LogicValueTypesEnum =
   | 'string'
@@ -23,6 +30,17 @@ export type LogicEntityType =
   | 'CONSUMER_USER'
   | 'BUSINESS_USER'
   | 'PAYMENT_DETAILS'
+
+export type ExtendedFieldSettings = FieldSettings & {
+  uniqueType?: TransactionsUniquesField
+  allowNewValues?: boolean
+}
+
+export type Field = SimpleField & {
+  fieldSettings?: ExtendedFieldSettings
+}
+
+export type FieldOrGroup = FieldStruct | FieldGroup | FieldGroupExt | Field
 
 export interface LogicVariableBase {
   key: string

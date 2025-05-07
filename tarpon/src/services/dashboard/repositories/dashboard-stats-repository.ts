@@ -34,6 +34,8 @@ import { TeamSLAStatsDashboardMetric } from '@/services/analytics/dashboard-metr
 import { DashboardStatsTeamSLAItemResponse } from '@/@types/openapi-internal/DashboardStatsTeamSLAItemResponse'
 import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardLatestTeamStatsItemResponse'
 import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
+import { DashboardStatsTransactionTypeDistribution } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistribution'
+import { TransactionsTypeDistributionDashboardMetric } from '@/services/analytics/dashboard-metrics/transaction-type-stats'
 
 @traceable
 export class DashboardStatsRepository {
@@ -43,10 +45,7 @@ export class DashboardStatsRepository {
 
   constructor(
     tenantId: string,
-    connections: {
-      dynamoDb: DynamoDBDocumentClient
-      mongoDb: MongoClient
-    }
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb
@@ -62,6 +61,7 @@ export class DashboardStatsRepository {
       this.refreshQaStats(timeRange),
       this.refreshLatestTeamStats(),
       this.refreshSLATeamStats(timeRange),
+      this.refreshTransactionsTypeDistribution(timeRange),
     ])
   }
 
@@ -151,10 +151,7 @@ export class DashboardStatsRepository {
   ): Promise<DashboardStatsTeamSLAItemResponse> {
     return TeamSLAStatsDashboardMetric.get(
       this.tenantId,
-      {
-        startTimestamp,
-        endTimestamp,
-      },
+      { startTimestamp, endTimestamp },
       pageSize,
       page
     )
@@ -192,6 +189,7 @@ export class DashboardStatsRepository {
         timestampTimeRange
       ),
       this.recalculateRuleHitStats(timestampTimeRange),
+      this.refreshTransactionsTypeDistribution(timestampTimeRange),
     ])
   }
 
@@ -384,6 +382,24 @@ export class DashboardStatsRepository {
       this.tenantId,
       startTimestamp,
       endTimestamp
+    )
+  }
+
+  public async getTransactionsTypeDistribution(
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsTransactionTypeDistribution> {
+    return TransactionsTypeDistributionDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp
+    )
+  }
+
+  public async refreshTransactionsTypeDistribution(timeRange?: TimeRange) {
+    await TransactionsTypeDistributionDashboardMetric.refresh(
+      this.tenantId,
+      timeRange
     )
   }
 }

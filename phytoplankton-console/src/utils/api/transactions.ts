@@ -1,9 +1,5 @@
-import { TransactionType } from '@/apis';
-import { neverReturn } from '@/utils/lang';
-
-export function isTransactionType(value: unknown): value is TransactionType {
-  const transactionType = value as TransactionType;
-  switch (transactionType) {
+export function isTransactionType(value: string): value is string {
+  switch (value) {
     case 'DEPOSIT':
     case 'EXTERNAL_PAYMENT':
     case 'WITHDRAWAL':
@@ -13,5 +9,5 @@ export function isTransactionType(value: unknown): value is TransactionType {
       return true;
   }
 
-  return neverReturn(transactionType, false);
+  return false;
 }

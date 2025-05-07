@@ -3,7 +3,6 @@ import {
   TransactionTimeRange,
 } from '../utils/rule-parameter-schemas'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import {
   PaymentDetails,
   PaymentMethod,
@@ -26,7 +25,7 @@ export type TimeRange = {
 }
 
 export type TransactionsFilterOptions = {
-  transactionTypes?: TransactionType[]
+  transactionTypes?: string[]
   transactionStates?: TransactionState[]
   originPaymentMethods?: PaymentMethod[]
   destinationPaymentMethods?: PaymentMethod[]

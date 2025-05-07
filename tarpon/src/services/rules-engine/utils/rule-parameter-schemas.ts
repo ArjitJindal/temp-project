@@ -1,6 +1,7 @@
 import { lowerCase, startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
+import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { SCREENING_FIELDS } from '../transaction-rules/payment-details-screening-base'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
@@ -12,7 +13,6 @@ import {
 } from '@/services/rules-engine/utils/rule-schema-utils'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
@@ -353,7 +353,10 @@ export const TRANSACTION_TYPE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
     enum: TRANSACTION_TYPES,
-    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPE' }),
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'TRANSACTION_TYPE',
+      uniqueType: 'TRANSACTION_TYPES',
+    }),
     title: options?.title || 'Target transaction type',
     description: options?.description,
   } as const)
@@ -361,7 +364,10 @@ export const TRANSACTION_TYPE_SCHEMA = (options?: SchemaOptions) =>
 export const TRANSACTION_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
-    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPES' }),
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'TRANSACTION_TYPES',
+      uniqueType: 'TRANSACTION_TYPES',
+    }),
     title: options?.title || 'Target transaction types',
     description: options?.description,
     items: {

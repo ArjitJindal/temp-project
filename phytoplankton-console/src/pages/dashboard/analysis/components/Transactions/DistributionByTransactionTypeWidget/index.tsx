@@ -20,9 +20,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
 import DonutChart, { DonutData } from '@/components/charts/DonutChart';
-import { TransactionType } from '@/apis';
 import DatePicker from '@/components/ui/DatePicker';
-import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 
 const DEFAULT_DATE_RANGE: RangeValue<Dayjs> = [dayjs().subtract(1, 'year'), dayjs()];
 
@@ -42,15 +40,15 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
   };
 
   const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
-    return await api.getDashboardStatsTransactionsTotal(params);
+    return await api.getDashboardTransactionsTypeDistribution(params);
   });
 
-  const preparedDataRes = map(queryResult.data, (value): DonutData<TransactionType> => {
-    const result: DonutData<TransactionType> = [];
-    for (const transactionType of TRANSACTION_TYPES) {
+  const preparedDataRes = map(queryResult.data, (value): DonutData<string> => {
+    const result: DonutData<string> = [];
+    for (const { type, count } of value.data ?? []) {
       result.push({
-        value: value?.data[`transactionType_${transactionType}`] ?? 0,
-        name: transactionType,
+        value: count,
+        name: type,
       });
     }
     return result.filter((widgetData) => widgetData.value !== 0);
@@ -88,7 +86,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
         {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
-          <DonutChart<TransactionType>
+          <DonutChart<string>
             data={preparedDataRes}
             colors={{
               DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,

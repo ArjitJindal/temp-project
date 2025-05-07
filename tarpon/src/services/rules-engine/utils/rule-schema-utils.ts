@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { ValueComparator } from './rule-parameter-schemas'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 
 interface UiSchema<Type> {
   'ui:schema'?: {
@@ -39,6 +40,7 @@ export interface UiSchemaGeneric<Type> extends UiSchemaParamsShared {
   subtype?: string
   order?: (keyof Type)[]
   requiredFeatures?: Feature[]
+  uniqueType?: TransactionsUniquesField
 }
 
 export interface UiSchemaRequiredFeatures extends UiSchemaParamsShared {

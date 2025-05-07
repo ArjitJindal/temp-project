@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { keyBy, uniq } from 'lodash';
 import { COUNTRIES, COUNTRY_ALIASES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import style from './style.module.less';
 import { RiskLevelTableItem, RiskValueContentByType, RiskValueType } from './types';
 import SliderWithInputs from './SliderWithInputs';
@@ -36,7 +37,6 @@ import { CONSUMER_USER_SEGMENTS } from '@/apis/models-custom/ConsumerUserSegment
 import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
 import { EMPLOYMENT_STATUSS } from '@/apis/models-custom/EmploymentStatus';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
-import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { timezones } from '@/utils/timezones';
@@ -469,6 +469,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
   TRANSACTION_TYPES: ((props) => {
     return (
       <MultipleSelect
+        mode="TAGS"
         options={TRANSACTION_TYPES.map((type) => ({ value: type, label: capitalizeWords(type) }))}
         {...props}
       />

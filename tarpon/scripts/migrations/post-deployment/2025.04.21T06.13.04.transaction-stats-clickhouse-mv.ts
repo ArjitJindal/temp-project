@@ -13,7 +13,6 @@ import {
 } from '@/utils/clickhouse/utils'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RULE_ACTIONS } from '@/@types/openapi-internal-custom/RuleAction'
-import { TRANSACTION_TYPES } from '@/@types/openapi-internal-custom/TransactionType'
 import { buildQueryPart } from '@/utils/clickhouse/queries/transaction-stats-clickhouse'
 
 async function migrateTenant(tenant: Tenant) {
@@ -55,7 +54,6 @@ async function migrateTenant(tenant: Tenant) {
               'originPaymentMethod',
               'destinationPaymentMethod'
             )},
-            ${buildQueryPart(TRANSACTION_TYPES, 'transactionType', 'type')},
             ${buildQueryPart(RULE_ACTIONS, 'status', 'status')},
             ${buildQueryPart(RISK_LEVELS, 'arsRiskLevel', 'arsScore_riskLevel')}
         FROM ${tableName}

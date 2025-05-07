@@ -111,7 +111,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const [internalOptions, setInternalOptions] = useState<Option<Value>[]>(options);
 
   useEffect(() => {
-    setInternalOptions(options);
+    setInternalOptions((prevOptions) => {
+      const existingVirtualOptions = prevOptions.filter((opt) => opt.isVirtual);
+      const newOptions = [...options, ...existingVirtualOptions];
+      return uniqBy(newOptions, 'value');
+    });
   }, [options]);
 
   const [isFocused, setIsFocused] = useState<boolean>(false);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { Params } from '../TransactionsSelector';
 import { FIXED_API_PARAMS } from '..';
 import TransactionsTable, {
@@ -15,8 +16,8 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { dayjs } from '@/utils/dayjs';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
-import ProductTypeSearchButton from '@/pages/transactions/components/ProductTypeSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 interface Props {
   userId: string;
   selectorParams: Params;
@@ -114,14 +115,36 @@ export default function TransactionsList(props: Props) {
           key: 'productType',
           title: 'Product Type',
           renderer: ({ params, setParams }) => (
-            <ProductTypeSearchButton
+            <UniquesSearchButton
               initialState={{
-                productTypes: params.productType ?? undefined,
+                uniques: params.productType ?? undefined,
               }}
+              uniqueType={'PRODUCT_TYPES'}
+              title="Product Type"
               onConfirm={(value) => {
                 setParams((state) => ({
                   ...state,
-                  productType: value.productTypes,
+                  productType: value.uniques,
+                }));
+              }}
+            />
+          ),
+        },
+        {
+          key: 'transactionType',
+          title: 'Transaction Type',
+          renderer: ({ params, setParams }) => (
+            <UniquesSearchButton
+              initialState={{
+                uniques: params.transactionTypes ?? undefined,
+              }}
+              uniqueType={'TRANSACTION_TYPES'}
+              title="Transaction Type"
+              defaults={TRANSACTION_TYPES as string[]}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  transactionTypes: value.uniques,
                 }));
               }}
             />

@@ -1,4 +1,14 @@
-import { chunk, get, isEmpty, omit, pickBy, set, sum, uniq } from 'lodash'
+import {
+  chunk,
+  compact,
+  get,
+  isEmpty,
+  omit,
+  pickBy,
+  set,
+  sum,
+  uniq,
+} from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -35,7 +45,6 @@ import {
   paginateQuery,
   paginateQueryGenerator,
 } from '@/utils/dynamodb'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
@@ -454,7 +463,7 @@ export class DynamoDbTransactionRepository
 
   private async hasAnySendingTransactionPrivate(
     userId: string,
-    transactionType: TransactionType | undefined,
+    transactionType: string | undefined,
     filterOptions: TransactionsFilterOptions
   ): Promise<boolean> {
     const transactionFilterQuery = this.getTransactionFilterQueryInput(
@@ -1183,9 +1192,9 @@ function sortTransactionsDescendingTimestamp(
 }
 
 function getTransactionTypes(
-  transactionTypes: TransactionType[] | undefined
-): (TransactionType | undefined)[] {
+  transactionTypes: string[] | undefined
+): (string | undefined)[] {
   return transactionTypes && !isEmpty(transactionTypes)
-    ? transactionTypes
+    ? compact(transactionTypes)
     : [undefined]
 }

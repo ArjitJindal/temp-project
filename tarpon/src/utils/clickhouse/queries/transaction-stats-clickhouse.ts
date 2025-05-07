@@ -1,7 +1,6 @@
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 
 export const getTransactionStatsClickhouseMVQuery = (timeFormat: string) => {
   const query = `
@@ -13,7 +12,6 @@ export const getTransactionStatsClickhouseMVQuery = (timeFormat: string) => {
         'originPaymentMethod',
         'destinationPaymentMethod'
       )},
-      ${buildQueryPart(TRANSACTION_TYPES, 'transactionType', 'type')},
       ${buildQueryPart(RULE_ACTIONS, 'status', 'status')},
       ${buildQueryPart(RISK_LEVELS, 'arsRiskLevel', 'arsScore_riskLevel')}
     FROM transactions
@@ -26,10 +24,6 @@ export const transactionStatsColumns = [
   { name: 'time', type: 'DateTime' },
   ...PAYMENT_METHODS.map((pm) => ({
     name: `paymentMethods_${pm}`,
-    type: 'UInt64',
-  })),
-  ...TRANSACTION_TYPES.map((tt) => ({
-    name: `transactionType_${tt}`,
     type: 'UInt64',
   })),
   ...RULE_ACTIONS.map((ra) => ({

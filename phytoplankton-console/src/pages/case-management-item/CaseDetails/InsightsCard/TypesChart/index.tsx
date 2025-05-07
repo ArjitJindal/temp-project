@@ -5,11 +5,10 @@ import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Pie, { Data as PieData } from './Pie';
-import COLORS from '@/components/ui/colors';
+import COLORS, { ALL_CHART_COLORS } from '@/components/ui/colors';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { QueryResult } from '@/utils/queries/types';
-import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
-import { neverReturn } from '@/utils/lang';
+import { TransactionsStatsByTypesResponseData } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 
@@ -30,12 +29,9 @@ export default function AmountsChart(props: Props) {
           return <NoData />;
         }
         const data: PieData = result.map((x) => ({
-          category:
-            x.transactionType == null
-              ? '(unknown)'
-              : capitalizeWords(x.transactionType as TransactionType),
+          category: x.transactionType == null ? '(unknown)' : capitalizeWords(x.transactionType),
           value: currency === null ? x.count : x.sum ?? 0,
-          color: getTransactionTypeColor(x.transactionType as TransactionType),
+          color: getTransactionTypeColor(x.transactionType),
         }));
         return (
           <div className={cn(s.root)}>
@@ -64,7 +60,7 @@ export default function AmountsChart(props: Props) {
 }
 
 // todo: generalize
-export function getTransactionTypeColor(transactionType: TransactionType | undefined): string {
+export function getTransactionTypeColor(transactionType: string | undefined): string {
   if (transactionType === 'DEPOSIT') {
     return COLORS.brandBlue.base;
   } else if (transactionType === 'EXTERNAL_PAYMENT') {
@@ -79,6 +75,21 @@ export function getTransactionTypeColor(transactionType: TransactionType | undef
     return COLORS.purpleGray.shade;
   } else if (transactionType == null) {
     return COLORS.turquoise.tint;
+  } else {
+    // has the transaction type and pick one of the colors except already used
+    const usedColors = [
+      COLORS.brandBlue.base,
+      COLORS.navyBlue.base,
+      COLORS.purpleGray.tint,
+      COLORS.purpleGray.base,
+      COLORS.purpleGray.shade,
+      COLORS.turquoise.tint,
+    ];
+    const usedColorsSet = new Set(usedColors);
+    const availableColors = ALL_CHART_COLORS.filter((color) => !usedColorsSet.has(color));
+    // pick a color according to the hash
+    const hash = transactionType.split('').reduce((acc, val) => acc + val.charCodeAt(0), 0);
+    const hashIndex = hash % availableColors.length;
+    return availableColors[hashIndex];
   }
-  return neverReturn(transactionType, 'gray');
 }
