@@ -152,12 +152,16 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useRoles(): [AccountRole[], boolean] {
+export function useRoles(): [AccountRole[], boolean, () => void] {
   const api = useApi();
   const rolesQueryResult = useQuery(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
-  return [getOr(rolesQueryResult.data, []), isLoading(rolesQueryResult.data)];
+  return [
+    getOr(rolesQueryResult.data, []),
+    isLoading(rolesQueryResult.data),
+    rolesQueryResult.refetch,
+  ];
 }
 
 export function useAccountsQueryResult(): QueryResult<Account[]> {

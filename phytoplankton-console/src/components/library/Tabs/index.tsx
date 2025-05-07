@@ -15,6 +15,7 @@ export interface TabItem {
   Icon?: React.ReactNode;
   captureEvents?: boolean;
   TrailIcon?: React.ReactNode;
+  onClick?: () => void;
 }
 
 export interface Props
@@ -84,7 +85,7 @@ export default function Tabs(props: Props) {
           <AntTabs.TabPane
             className={s.tab}
             tab={
-              <span className={cn(s.tab_span)} data-sentry-allow={true}>
+              <span className={cn(s.tab_span)} data-sentry-allow={true} onClick={item.onClick}>
                 {Icon && <div className={cn(s.icon)}>{Icon}</div>}
                 <SameWidthDiv title={typeof title === 'string' ? title : undefined}>
                   <span className={cn(s.tabTitle)}>

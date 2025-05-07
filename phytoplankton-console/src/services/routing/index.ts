@@ -44,6 +44,7 @@ import {
   useHasPermissions,
   usePermissions,
 } from '@/utils/user-utils';
+import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -606,6 +607,16 @@ export function useRoutes(): RouteItem[] {
             path: '/accounts/:section',
             name: 'accounts-section',
             component: AccountsPage,
+          },
+          {
+            path: '/accounts/roles/:roleId',
+            name: 'accounts-roles-item',
+            component: AccountsRolesItemPage,
+          },
+          {
+            path: '/accounts/roles/:roleId/:mode',
+            name: 'accounts-roles-item-mode',
+            component: AccountsRolesItemPage,
           },
         ],
       },

@@ -13,7 +13,7 @@ describe('Custom Role - CRUD Test', () => {
 
   it('perform crud operation on custom role', () => {
     cy.visit('/accounts/roles');
-    cy.contains('Create role').click();
+    cy.contains('Create').click();
     const roleName = `Role ${random(0, 1000)}`;
     cy.log(roleName);
 

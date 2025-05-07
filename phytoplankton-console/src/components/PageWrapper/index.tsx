@@ -28,7 +28,7 @@ export default function PageWrapper(props: PageWrapperProps) {
       <Header {...props} />
       <div
         className={cn(s.body, 'print-container')}
-        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 8 }}
+        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 0 }}
       >
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>

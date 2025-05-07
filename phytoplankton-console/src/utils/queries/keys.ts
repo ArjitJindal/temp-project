@@ -95,6 +95,8 @@ export const CRM_RECORDS = (
 export const USER_ENTITY = (userId: string): QueryKey => ['userentity', userId];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];
 export const ROLE = (roleId: string): QueryKey => ['role', roleId];
+export const ROLE_PERMISSIONS = (roleId: string): QueryKey => ['role', roleId, 'permissions'];
+export const PERMISSIONS = (query?: string): QueryKey => ['permissions', query];
 
 export const REPORT_SCHEMAS = (): QueryKey => ['report', 'schemas'];
 export const REPORT_SCHEMAS_ALL = (): QueryKey => ['report', 'all', 'schemas'];
