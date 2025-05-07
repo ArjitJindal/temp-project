@@ -166,6 +166,7 @@ export class UserService {
   riskScoringV8Service: RiskScoringV8Service
   listService: ListService
   private s3Service: S3Service
+
   constructor(
     tenantId: string,
     connections: {

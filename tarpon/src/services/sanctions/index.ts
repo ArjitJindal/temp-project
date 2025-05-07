@@ -2,7 +2,16 @@ import { v4 as uuidv4 } from 'uuid'
 import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { sanitizeString } from '@flagright/lib/utils'
+import pluralize from 'pluralize'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
 import { AlertsRepository } from '../alerts/repository'
+import { AlertsService } from '../alerts'
+import { CaseService } from '../cases'
+import { UserService } from '../users'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import {
   SanctionsWhitelistEntityRepository,
@@ -66,6 +75,7 @@ import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanct
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
 import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+
 const DEFAULT_FUZZINESS = 0.5
 
 export type ProviderConfig = {
@@ -85,9 +95,30 @@ export class SanctionsService {
   counterRepository!: CounterRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
+  caseService!: CaseService
+  userService!: UserService
+  alertsService!: AlertsService
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
+  }
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ) {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const [caseService, userService, alertsService] = await Promise.all([
+      CaseService.fromEvent(event),
+      UserService.fromEvent(event),
+      AlertsService.fromEvent(event),
+    ])
+    const sanctionsService = new SanctionsService(tenantId)
+    sanctionsService.caseService = caseService
+    sanctionsService.userService = userService
+    sanctionsService.alertsService = alertsService
+    return sanctionsService
   }
 
   private async initializeInternal() {
@@ -629,5 +660,128 @@ export class SanctionsService {
           pick(source, ['id', 'sourceName', 'sourceType'])
         ) ?? [],
     }
+  }
+
+  public async changeSanctionsHitsStatus(
+    alertId: string,
+    sanctionHitIds: string[],
+    updates: SanctionHitStatusUpdateRequest
+  ): Promise<{ modifiedCount: number }> {
+    await this.initialize()
+    const result = await this.updateHits(sanctionHitIds, updates)
+    const whitelistUpdateComment = await this.handleWhitelistUpdates(
+      alertId,
+      sanctionHitIds,
+      updates
+    )
+    await this.addComments(
+      alertId,
+      sanctionHitIds,
+      updates,
+      whitelistUpdateComment
+    )
+    return result
+  }
+
+  private async handleWhitelistUpdates(
+    alertId: string,
+    sanctionHitIds: string[],
+    updates: SanctionHitStatusUpdateRequest
+  ): Promise<string | null> {
+    const { whitelistHits, removeHitsFromWhitelist } = updates
+    let whitelistUpdateComment: string | null = null
+
+    if (updates.status === 'OPEN' && removeHitsFromWhitelist) {
+      await this.deleteWhitelistRecordsByHits(sanctionHitIds)
+    }
+
+    if (updates.status === 'CLEARED' && whitelistHits) {
+      for await (const hit of this.sanctionsHitsRepository.iterateHits({
+        filterHitIds: sanctionHitIds,
+      })) {
+        if (hit.hitContext && hit.hitContext.userId != null && hit.entity) {
+          const { newRecords } = await this.addWhitelistEntities(
+            hit.provider,
+            [hit.entity],
+            {
+              userId: hit.hitContext.userId,
+              entity: hit.hitContext.entity,
+              entityType: hit.hitContext.entityType,
+              searchTerm: hit.hitContext.searchTerm,
+              paymentMethodId: hit.hitContext.paymentMethodId,
+              alertId: alertId,
+            },
+            {
+              reason: updates.reasons,
+              comment: updates.comment,
+            }
+          )
+
+          if (newRecords.length > 0) {
+            whitelistUpdateComment = `${pluralize(
+              'record',
+              newRecords.length,
+              true
+            )} added to whitelist for '${hit.hitContext.userId}' user`
+          }
+        }
+      }
+    }
+
+    return whitelistUpdateComment
+  }
+
+  private async addComments(
+    alertId: string,
+    sanctionHitIds: string[],
+    updates: SanctionHitStatusUpdateRequest,
+    whitelistUpdateComment: string | null
+  ): Promise<void> {
+    const isSingleHit = sanctionHitIds.length === 1
+    const reasonsComment = AlertsService.formatReasonsComment(updates)
+
+    // Add user comment
+    const caseItem = await this.caseService.getCaseByAlertId(alertId)
+    const userId =
+      caseItem?.caseUsers?.origin?.userId ??
+      caseItem?.caseUsers?.destination?.userId ??
+      null
+
+    if (userId != null) {
+      let userCommentBody = `${sanctionHitIds.join(', ')} ${
+        isSingleHit ? 'hit is' : 'hits are'
+      } are moved to "${updates.status}" status from alert '${alertId}'`
+      if (reasonsComment !== '') {
+        userCommentBody += `. Reasons: ` + reasonsComment
+      }
+      if (whitelistUpdateComment !== '') {
+        userCommentBody += `. ${whitelistUpdateComment}`
+      }
+      if (updates?.comment) {
+        userCommentBody += `\n\nComment: ${updates.comment}`
+      }
+      await this.userService.saveUserComment(userId, {
+        body: userCommentBody,
+        files: updates.files,
+      })
+    }
+
+    // Add alert comment
+    let alertCommentBody = `${sanctionHitIds.join(', ')} ${
+      isSingleHit ? 'hit is' : 'hits are'
+    } moved to "${updates.status}" status`
+    if (reasonsComment !== '') {
+      alertCommentBody += `. Reasons: ` + reasonsComment
+    }
+    if (whitelistUpdateComment) {
+      alertCommentBody += `. ${whitelistUpdateComment}`
+    }
+    if (updates?.comment) {
+      alertCommentBody += `\n\nComment: ${updates.comment}`
+    }
+    await this.alertsService.saveComment(alertId, {
+      body: alertCommentBody,
+      files: updates.files,
+    })
   }
 }

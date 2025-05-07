@@ -2,7 +2,6 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import pluralize from 'pluralize'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
@@ -20,9 +19,6 @@ import {
   DefaultApiDeleteScreeningProfileRequest,
   DefaultApiPostDefaultManualScreeningFiltersRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { AlertsService } from '@/services/alerts'
-import { UserService } from '@/services/users'
-import { CaseService } from '@/services/cases'
 import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { CounterRepository } from '@/services/counter/repository'
@@ -37,10 +33,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const sanctionsService = new SanctionsService(tenantId)
-    const alertsServicePromise = AlertsService.fromEvent(event)
-    const userServicePromise = UserService.fromEvent(event)
-    const caseServicePromise = CaseService.fromEvent(event)
+    const sanctionsService = await SanctionsService.fromEvent(event)
     const handlers = new Handlers()
 
     handlers.registerPostSanctions(
@@ -126,103 +119,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       async (_ctx, { SanctionHitsStatusUpdateRequest }) => {
         const { alertId, sanctionHitIds, updates } =
           SanctionHitsStatusUpdateRequest
-        const { whitelistHits, removeHitsFromWhitelist } = updates
-        const result = await sanctionsService.updateHits(
+
+        return await sanctionsService.changeSanctionsHitsStatus(
+          alertId,
           sanctionHitIds,
           updates
         )
-        const alertsService = await alertsServicePromise
-
-        const isSingleHit = sanctionHitIds.length
-
-        const reasonsComment = AlertsService.formatReasonsComment(updates)
-
-        let whitelistUpdateComment: string | null = null
-        if (updates.status === 'OPEN' && removeHitsFromWhitelist) {
-          await sanctionsService.deleteWhitelistRecordsByHits(sanctionHitIds)
-        }
-        if (updates.status === 'CLEARED' && whitelistHits) {
-          for await (const hit of sanctionsService.sanctionsHitsRepository.iterateHits(
-            {
-              filterHitIds: sanctionHitIds,
-            }
-          )) {
-            if (hit.hitContext && hit.hitContext.userId != null && hit.entity) {
-              const { newRecords } =
-                await sanctionsService.addWhitelistEntities(
-                  hit.provider,
-                  [hit.entity],
-                  {
-                    userId: hit.hitContext.userId,
-                    entity: hit.hitContext.entity,
-                    entityType: hit.hitContext.entityType,
-                    searchTerm: hit.hitContext.searchTerm,
-                    paymentMethodId: hit.hitContext.paymentMethodId,
-                    alertId: alertId,
-                  },
-                  {
-                    reason: updates.reasons,
-                    comment: updates.comment,
-                  }
-                )
-
-              if (newRecords.length > 0) {
-                whitelistUpdateComment = `${pluralize(
-                  'record',
-                  newRecords.length,
-                  true
-                )} added to whitelist for '${hit.hitContext.userId}' user`
-              }
-            }
-          }
-        }
-
-        // Add user comment
-        const caseService = await caseServicePromise
-        const caseItem = await caseService.getCaseByAlertId(alertId)
-        const userId =
-          caseItem?.caseUsers?.origin?.userId ??
-          caseItem?.caseUsers?.destination?.userId ??
-          null
-        if (userId != null) {
-          let userCommentBody = `${sanctionHitIds.join(', ')} ${
-            isSingleHit ? 'hit is' : 'hits are'
-          } are moved to "${updates.status}" status from alert '${alertId}'`
-          if (reasonsComment !== '') {
-            userCommentBody += `. Reasons: ` + reasonsComment
-          }
-          if (whitelistUpdateComment !== '') {
-            userCommentBody += `. ${whitelistUpdateComment}`
-          }
-          if (updates?.comment) {
-            userCommentBody += `\n\nComment: ${updates.comment}`
-          }
-          const userService = await userServicePromise
-          await userService.saveUserComment(userId, {
-            body: userCommentBody,
-            files: updates.files,
-          })
-        }
-
-        // Add alert comment
-        let alertCommentBody = `${sanctionHitIds.join(', ')} ${
-          isSingleHit ? 'hit is' : 'hits are'
-        } moved to "${updates.status}" status`
-        if (reasonsComment !== '') {
-          alertCommentBody += `. Reasons: ` + reasonsComment
-        }
-        if (whitelistUpdateComment) {
-          alertCommentBody += `. ${whitelistUpdateComment}`
-        }
-        if (updates?.comment) {
-          alertCommentBody += `\n\nComment: ${updates.comment}`
-        }
-        await alertsService.saveComment(alertId, {
-          body: alertCommentBody,
-          files: updates.files,
-        })
-
-        return result
       }
     )
 
