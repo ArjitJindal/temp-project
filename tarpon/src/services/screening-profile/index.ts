@@ -44,6 +44,11 @@ export class ScreeningProfileService {
     screeningProfile: ScreeningProfileRequest
   ): Promise<ScreeningProfileResponse> {
     const screeningProfileId = await this.getScreeningProfileId()
+    if (screeningProfile.isDefault) {
+      await this.screeningProfileRepository.markAllProfilesAsNonDefault(
+        dynamoDb
+      )
+    }
     return this.screeningProfileRepository.createScreeningProfile(
       dynamoDb,
       screeningProfile,
@@ -78,6 +83,12 @@ export class ScreeningProfileService {
       screeningProfileId
     )
 
+    if (screeningProfile.isDefault) {
+      await this.screeningProfileRepository.markAllProfilesAsNonDefault(
+        dynamoDb,
+        screeningProfileId
+      )
+    }
     return this.screeningProfileRepository.updateScreeningProfile(
       dynamoDb,
       existingScreeningProfile,

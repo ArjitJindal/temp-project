@@ -3,6 +3,7 @@ import {
   QueryCommand,
   QueryCommandInput,
   DeleteCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { BadRequest } from 'http-errors'
@@ -21,6 +22,54 @@ export class ScreeningProfileRepository {
   constructor(tenantId: string) {
     this.tenantId = tenantId
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+  }
+
+  public async markAllProfilesAsNonDefault(
+    dynamoDb: DynamoDBClient,
+    excludeProfileId?: string
+  ): Promise<void> {
+    const timestamp = Date.now()
+    const queryInput: QueryCommandInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: 'PartitionKeyID = :partitionKey',
+      FilterExpression: excludeProfileId
+        ? 'isDefault = :isDefault AND screeningProfileId <> :currentId'
+        : 'isDefault = :isDefault',
+      ExpressionAttributeValues: {
+        ':partitionKey': DynamoDbKeys.SCREENING_PROFILE(this.tenantId)
+          .PartitionKeyID,
+        ':isDefault': true,
+        ...(excludeProfileId && { ':currentId': excludeProfileId }),
+      },
+    }
+
+    const { Items: defaultProfiles } = await dynamoDb.send(
+      new QueryCommand(queryInput)
+    )
+
+    if (defaultProfiles && defaultProfiles.length > 0) {
+      for (const profile of defaultProfiles) {
+        const key = DynamoDbKeys.SCREENING_PROFILE(
+          this.tenantId,
+          profile.screeningProfileId
+        )
+        await dynamoDb.send(
+          new UpdateCommand({
+            TableName: this.tableName,
+            Key: {
+              PartitionKeyID: key.PartitionKeyID,
+              SortKeyID: key.SortKeyID,
+            },
+            UpdateExpression:
+              'SET isDefault = :isDefault, updatedAt = :updatedAt',
+            ExpressionAttributeValues: {
+              ':isDefault': false,
+              ':updatedAt': timestamp,
+            },
+          })
+        )
+      }
+    }
   }
 
   public async createScreeningProfile(
