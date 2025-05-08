@@ -16,13 +16,13 @@ export interface CommonProps {
   className?: string;
 }
 
-interface SingleModeProps extends CommonProps, InputProps<number> {
+export interface SingleModeProps extends CommonProps, InputProps<number> {
   mode: 'SINGLE';
   defaultValue?: number;
   textInput?: NumberProps;
 }
 
-interface RangeModeProps extends CommonProps, InputProps<[number, number]> {
+export interface RangeModeProps extends CommonProps, InputProps<[number, number]> {
   mode: 'RANGE';
   defaultValue?: [number, number];
   startExclusive?: boolean;

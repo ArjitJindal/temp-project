@@ -8,6 +8,7 @@ import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import {
   uiSchema,
+  UiSchemaNumberSlider,
   UiSchemaParams,
   UiSchemaParamsAgeRange,
 } from '@/services/rules-engine/utils/rule-schema-utils'
@@ -238,6 +239,10 @@ export const AGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 
 type AgeRangeSchemaOptions = SchemaOptions & {
   uiSchema?: Partial<UiSchemaParamsAgeRange>
+}
+
+type NumberSliderSchemaOptions = SchemaOptions & {
+  uiSchema?: Partial<UiSchemaNumberSlider>
 }
 
 export const AGE_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
@@ -885,18 +890,21 @@ export const PARTIAL_MATCH_SCHEMA = {
   ),
 } as const
 
-export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
+export const FUZZINESS_RANGE_SCHEMA = (options?: NumberSliderSchemaOptions) =>
   ({
     type: 'object',
     title: options?.title || 'Fuzziness range',
-    ...uiSchema(options?.uiSchema, {
-      subtype: 'NUMBER_RANGE',
-      minimum: 0,
-      maximum: 100,
-      multipleOf: 1,
-      startExclusive: false,
-      endExclusive: false,
-    }),
+    ...uiSchema(
+      {
+        subtype: 'NUMBER_SLIDER_RANGE',
+        minimum: 0,
+        maximum: 100,
+        multipleOf: 1,
+        startExclusive: false,
+        endExclusive: false,
+      },
+      options?.uiSchema
+    ),
     description: options?.description,
     properties: {
       lowerBound: {

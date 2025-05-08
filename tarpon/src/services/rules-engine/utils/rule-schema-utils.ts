@@ -27,8 +27,8 @@ export interface UiSchemaParamsAgeRange extends UiSchemaParamsShared {
   defaultGranularity?: 'day' | 'month' | 'year'
 }
 
-export interface UiSchemaNumberRange extends UiSchemaParamsShared {
-  subtype: 'NUMBER_RANGE'
+export interface UiSchemaNumberSlider extends UiSchemaParamsShared {
+  subtype: 'NUMBER_SLIDER_RANGE' | 'NUMBER_SLIDER_SINGLE'
   minimum: number
   maximum: number
   multipleOf?: number
@@ -51,7 +51,7 @@ export type UiSchemaParams<Type> =
   | UiSchemaParamsAgeRange
   | UiSchemaGeneric<Type>
   | UiSchemaRequiredFeatures
-  | UiSchemaNumberRange
+  | UiSchemaNumberSlider
 
 export function uiSchema<T extends object>(
   ...args: (UiSchemaParams<T> | undefined)[]

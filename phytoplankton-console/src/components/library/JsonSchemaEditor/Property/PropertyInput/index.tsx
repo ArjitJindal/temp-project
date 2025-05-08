@@ -115,8 +115,11 @@ export default function PropertyInput(props: Props) {
     const listType = uiSchema['ui:subtype'];
     return <ListSelect {...props} listType={listType} />;
   }
-  if (uiSchema['ui:subtype'] === 'NUMBER_RANGE') {
-    return <NumberRangeInput {...props} uiSchema={uiSchema} />;
+  if (uiSchema['ui:subtype'] === 'NUMBER_SLIDER_RANGE') {
+    return <NumberRangeInput {...props} uiSchema={uiSchema} mode="RANGE" />;
+  }
+  if (uiSchema['ui:subtype'] === 'NUMBER_SLIDER_SINGLE') {
+    return <NumberRangeInput {...props} uiSchema={uiSchema} mode="SINGLE" />;
   }
   if (uiSchema['ui:subtype'] === 'GENERIC_SANCTIONS_SCREENING_TYPES') {
     return <GenericSanctionScreeningTypes {...props} />;

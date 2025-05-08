@@ -45,8 +45,8 @@ export interface UiSchemaAgeRange extends UiSchemaCommon {
   'ui:defaultGranularity': 'day' | 'month' | 'year';
 }
 
-export interface UiSchemaNumberRange extends UiSchemaCommon {
-  'ui:subtype': 'NUMBER_RANGE';
+export interface UiSchemaNumberSlider extends UiSchemaCommon {
+  'ui:subtype': 'NUMBER_SLIDER_RANGE' | 'NUMBER_SLIDER_SINGLE';
   'ui:minimum': number;
   'ui:maximum': number;
   'ui:multipleOf'?: number;
@@ -186,7 +186,7 @@ export type UiSchema =
   | UiSchemaFincenNumber
   | UiSchemaWebhook
   | UiSchemaList
-  | UiSchemaNumberRange
+  | UiSchemaNumberSlider
   | UiSchemaGenericSanctionsScreeningTypes
   | UiSchemaFuzzinessSettings
   | UiSchemaFreeTextEnum
