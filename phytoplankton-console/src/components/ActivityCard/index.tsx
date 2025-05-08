@@ -79,7 +79,7 @@ export default function ActivityCard<FilterParams>(props: Props<FilterParams>) {
 
 const getAllAttachments = (commentsGroup: CommentGroup[]) => {
   const allComments = commentsGroup.flatMap((commentGroup) => commentGroup.comments);
-  return allComments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
+  return allComments.filter((comment) => comment?.files).flatMap((comment) => comment.files);
 };
 
 export { getLogData } from '@/components/ActivityCard/helpers';
