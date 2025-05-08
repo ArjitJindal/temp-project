@@ -926,8 +926,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       }
     }
-    const searchScoreThreshold =
-      request.fuzzinessRange?.upperBound === 100 ? 3 : 5
     const stopwordSet = request.stopwords?.length
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
@@ -1017,8 +1015,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               },
             },
             {
-              // A minumum searchScore of 3 was encountered by trial and error
-              // whilst using atlas search console
               $match: {
                 ...match,
                 ...this.applySourceCategoryFilters(
@@ -1029,9 +1025,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   relCategory,
                   adverseMediaCategory
                 ),
-                searchScore: {
-                  $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
-                },
               },
             },
             {
@@ -1120,7 +1113,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         return true
       } else {
         for (let value of values) {
-          value = shouldSanitizeString ? sanitizeString(value) : value
+          value = shouldSanitizeString
+            ? sanitizeString(value, true, false)
+            : value
           if (value === searchTerm) {
             return true
           }

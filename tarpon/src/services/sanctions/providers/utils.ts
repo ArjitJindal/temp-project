@@ -1,5 +1,5 @@
 import { compact, intersection, uniq } from 'lodash'
-import { sanitizeString } from '@flagright/lib/utils'
+import { normalize, sanitizeString } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { SanctionsDataProviders } from '../types'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
@@ -138,10 +138,13 @@ export function getSecondaryMatches(
   return []
 }
 
-export function getUniqueStrings(arr: string[]): string[] {
+export function getUniqueStrings(
+  arr: string[],
+  normalizeOnly?: boolean
+): string[] {
   const strings: Set<string> = new Set<string>()
   for (const str of arr) {
-    strings.add(sanitizeString(str))
+    strings.add(normalizeOnly ? normalize(str) : sanitizeString(str))
   }
 
   return Array.from(strings)
@@ -158,7 +161,7 @@ export function getNameAndAka(
   return {
     name,
     aka: uniq(compact([...aka])),
-    normalizedAka: getUniqueStrings(uniq(compact([...aka, name]))).filter(
+    normalizedAka: getUniqueStrings(uniq(compact([...aka, name])), true).filter(
       (n) => /[a-z]/.test(n) // Check if the string contains any alphabet
     ),
   }

@@ -41,18 +41,18 @@ export function fuzzy_levenshtein_distance(
   str2: string,
   options: FuzzinessOptions
 ) {
+  if (!options.partialMatch) {
+    return calculateLevenshteinDistancePercentage(str1, str2)
+  }
   const { tokens1, tokens2 } = arrange_token_lists(str1, str2)
   const separator = options?.omitSpaces ? '' : ' '
-  if (options?.partialMatch) {
-    return getSimilarityPercentage(
-      tokens1,
-      tokens2,
-      separator,
-      options.partialMatchLength,
-      calculateLevenshteinDistancePercentage
-    )
-  }
-  return calculateLevenshteinDistancePercentage(str1, str2)
+  return getSimilarityPercentage(
+    tokens1,
+    tokens2,
+    separator,
+    options.partialMatchLength,
+    calculateLevenshteinDistancePercentage
+  )
 }
 
 export function arrange_token_lists(
@@ -265,20 +265,20 @@ function unique_tokens(str: string) {
 export function jaro_winkler_distance(
   s1: string,
   s2: string,
-  options?: FuzzinessOptions
+  options: FuzzinessOptions
 ): number {
-  const { tokens1, tokens2 } = arrange_token_lists(s1, s2)
-  if (options?.partialMatch) {
-    const separator = options?.omitSpaces ? '' : ' '
-    return getSimilarityPercentage(
-      tokens1,
-      tokens2,
-      separator,
-      options.partialMatchLength,
-      calculateJaroWinklerDistance
-    )
+  if (!options.partialMatch) {
+    return calculateJaroWinklerDistance(s1, s2)
   }
-  return calculateJaroWinklerDistance(s1, s2)
+  const { tokens1, tokens2 } = arrange_token_lists(s1, s2)
+  const separator = options?.omitSpaces ? '' : ' '
+  return getSimilarityPercentage(
+    tokens1,
+    tokens2,
+    separator,
+    options.partialMatchLength,
+    calculateJaroWinklerDistance
+  )
 }
 
 export function calculateJaroWinklerDistance(s1: string, s2: string): number {
