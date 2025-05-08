@@ -97,6 +97,7 @@ export const getClickhouseClientConfig = async (
     clickhouse_settings: {
       ...config.clickhouse_settings,
       alter_sync: '2',
+      mutations_sync: '2',
     },
   }
 }
