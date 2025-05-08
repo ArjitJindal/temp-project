@@ -543,7 +543,7 @@ export function RuleConfigurationSimulation(props: Props) {
           <Button type="TETRIARY" onClick={onCancel}>
             Cancel
           </Button>
-          {isShowingResults && allSimulationsDone && (
+          {isShowingResults && allSimulationsDone && !isLoading && (
             <Button onClick={handleReportDownload} type={'TETRIARY'}>
               PDF report
             </Button>
