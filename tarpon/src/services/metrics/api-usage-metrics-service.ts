@@ -386,10 +386,7 @@ export class ApiUsageMetricsService {
       timeRange
     )
     return mapValues(transactionEventsCounts, (value, key) =>
-      Math.max(
-        Number(value) - (Number(dailyTransactionsCountsStats[key]) ?? 0),
-        0
-      )
+      Math.max(value - (dailyTransactionsCountsStats[key] ?? 0), 0)
     )
   }
 
@@ -404,7 +401,7 @@ export class ApiUsageMetricsService {
       timeRange
     )
     return mapValues(userEventsCounts, (value, key) =>
-      Math.max(Number(value) - (Number(dailyUsersCountsStats[key]) ?? 0), 0)
+      Math.max(value - (dailyUsersCountsStats[key] ?? 0), 0)
     )
   }
 
@@ -466,7 +463,7 @@ export class ApiUsageMetricsService {
     const stats: DailyStats = {}
     for (const dailyStat of dailyStats) {
       for (const key in dailyStat) {
-        stats[key] = (Number(stats[key]) ?? 0) + Number(dailyStat[key])
+        stats[key] = (stats[key] ?? 0) + dailyStat[key]
       }
     }
     return stats

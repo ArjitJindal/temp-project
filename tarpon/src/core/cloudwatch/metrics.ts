@@ -62,8 +62,6 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
     'DowJonesSanctionsSearchesCount',
   USERS_SCREENING_COUNT_METRIC_NAME: 'UsersScreeningCount',
   TRANSACTIONS_SCREENING_COUNT_METRIC_NAME: 'TransactionsScreeningCount',
-  SCREENING_TYPES_USED_METRIC_NAME: 'ScreeningTypesUsed',
-  ONGOING_SCREENING_COUNT_METRIC_NAME: 'OngoingScreeningsEnabled',
   TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
 }
 
