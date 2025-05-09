@@ -442,8 +442,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
-      const entityTypes =
-        request.entityType === 'BANK'
+      const entityTypes: SanctionsEntityType[] =
+        request.entityType !== 'PERSON'
           ? ['BANK', 'BUSINESS']
           : [request.entityType]
       if (request.orFilters?.includes('entityType')) {
@@ -519,10 +519,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const match = this.getNonSearchIndexQuery(request)
     const providers = getDefaultProviders()
     const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
-    const entityTypes =
+    const entityTypes: SanctionsEntityType[] =
       request.entityType === 'EXTERNAL_USER'
         ? ['PERSON', 'BUSINESS', 'BANK']
-        : [request.entityType]
+        : request.entityType !== 'PERSON'
+        ? ['BUSINESS', 'BANK']
+        : ['PERSON']
     const collectionNames = uniq(
       providers.flatMap((p) => {
         return entityTypes.map((entityType) =>
@@ -803,7 +805,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.entityType && request.entityType !== 'EXTERNAL_USER') {
       const entityTypes =
-        request.entityType === 'BANK'
+        request.entityType !== 'PERSON'
           ? ['BANK', 'BUSINESS']
           : [request.entityType]
       const matchEntityType = entityTypes.map((entityType) => ({
@@ -930,10 +932,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
     const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
-    const entityTypes =
+    const entityTypes: SanctionsEntityType[] =
       request.entityType === 'EXTERNAL_USER' || request.manualSearch
         ? ['PERSON', 'BUSINESS', 'BANK']
-        : [request.entityType]
+        : request.entityType !== 'PERSON'
+        ? ['BUSINESS', 'BANK']
+        : ['PERSON']
     const collectionNames = uniq(
       providers.flatMap((p) => {
         return entityTypes.map((entityType) =>
