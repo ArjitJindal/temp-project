@@ -57,9 +57,9 @@ export const CardMerchantIdentifier: TableQuestion<
         transactions FINAL
       WHERE
         ${directionSmall}UserId = '{{ userId }}'
-        and ${oppositeDirectionSmall}UserId = 'null'
-        and ${oppositeDirectionSmall}PaymentDetails_cardFingerprint != ''
-        and timestamp between {{ from }} and {{ to }}
+        AND (${oppositeDirectionSmall}UserId = 'null' OR ${oppositeDirectionSmall}UserId IS NULL OR ${oppositeDirectionSmall}UserId = '')
+        AND ${oppositeDirectionSmall}PaymentMethod = 'CARD'
+        AND timestamp between {{ from }} and {{ to }}
       GROUP BY
         merchantName
       `
