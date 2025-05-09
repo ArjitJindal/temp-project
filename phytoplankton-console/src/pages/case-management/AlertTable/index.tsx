@@ -838,6 +838,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             key: 'comments',
             hideInTable: true,
             filtering: false,
+            exporting: true,
             type: {
               stringify: (value) => commentsToString(value ?? [], users).trim(),
             },

@@ -299,7 +299,7 @@ function exportAlertDetails(caseItem: Case): Sheet {
     'creationReason',
     'alertStatus',
     // 'lastStatusChange',
-    // 'comments',
+    'comments',
   ]
 
   const user =
@@ -331,6 +331,9 @@ function exportAlertDetails(caseItem: Case): Sheet {
                 reasons: alert.lastStatusChange?.reason ?? [],
                 otherReason: alert.lastStatusChange?.otherReason ?? null,
               },
+              comments: alert.comments
+                ? alert.comments.map((comment) => comment.body).join('\n')
+                : '',
             }
           })
           .map((alert) => props.map((prop) => alert[prop])),
