@@ -243,7 +243,9 @@ async function migrateTenant(tenant: Tenant) {
                 transactionIdToPaymentMethodId.get(firstTransactionId)
 
               for (const whitelist of existingWhitelists) {
-                const updateFields: any = {}
+                const updateFields: any = {
+                  updatedAt: now,
+                }
                 if (firstTransactionId) {
                   updateFields.transactionId = firstTransactionId
                 }
@@ -258,7 +260,6 @@ async function migrateTenant(tenant: Tenant) {
                       },
                       update: {
                         $set: updateFields,
-                        updatedAt: now,
                       },
                     },
                   })
