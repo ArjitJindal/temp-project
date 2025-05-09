@@ -112,8 +112,8 @@ async function main() {
   if (!isMigrationFileCreation && migrationType === 'PRE_DEPLOYMENT') {
     console.info('Syncing clickhouse tables before handling migrations')
     // Sync clickhouse tables before handling migrations
-    await migrateClickhouse()
     await syncClickhouseTables()
+    await migrateClickhouse()
   }
 
   const mongodb = await getMongoDbClient()
