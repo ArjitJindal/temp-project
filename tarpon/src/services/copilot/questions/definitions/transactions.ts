@@ -72,7 +72,9 @@ const clickhouseTransactionQuery = async (
   `
 
   const countQuery = `
-    SELECT count(*) from ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+    SELECT count(*) as total from ${
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
+    }
     WHERE timestamp between {{ from }} and {{ to }} and ${clickhouseWhere(ctx)}
   `
 
