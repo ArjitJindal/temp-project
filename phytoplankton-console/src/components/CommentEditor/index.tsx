@@ -91,6 +91,40 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
     }
   }, [templateValue]);
 
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      setUploadingCount((prevCount) => prevCount + 1);
+      const hideMessage = message.loading('Uploading...');
+      let fileS3Key = '';
+      try {
+        const { s3Key } = await uploadFile(api, file);
+        fileS3Key = s3Key;
+        uploadedFiles.push({ s3Key, filename: file.name, size: file.size });
+        onChangeValues({
+          ...values,
+          files: uniqBy([...values.files, ...uploadedFiles], 's3Key'),
+        });
+        hideMessage();
+      } catch (error) {
+        message.fatal(`Unable to upload the file. ${getErrorMessage(error)}`, error);
+        removeFile(fileS3Key);
+      } finally {
+        hideMessage && hideMessage();
+        setUploadingCount((prevCount) => prevCount - 1);
+      }
+    },
+    [api, values, onChangeValues, removeFile],
+  );
+
+  const handleFilesUpload = useCallback(
+    (files: File[]) => {
+      files.forEach((file) => {
+        handleFileUpload(file);
+      });
+    },
+    [handleFileUpload],
+  );
+
   const isCommentTooLong = values.comment.length > MAX_COMMENT_LENGTH;
   return (
     <div className={s.commentEditor} data-cy="comment-editor">
@@ -113,6 +147,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
             id: users[userId].id,
           }))}
           editorHeight={editorHeight}
+          onDropFiles={handleFilesUpload}
         />
       </div>
       {isCommentTooLong && (

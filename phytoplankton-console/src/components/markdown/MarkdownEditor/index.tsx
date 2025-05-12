@@ -19,10 +19,12 @@ interface Props {
   mentionsEnabled?: boolean;
   mentionsList?: Array<MentionItem>;
   editorHeight?: number | 'FULL';
+  onDropFiles?: (files: File[]) => void;
 }
 
 export default class MarkdownEditor extends React.Component<Props> {
   editorRef = React.createRef<Editor>();
+  rootRef = React.createRef<HTMLDivElement>();
 
   private toolbarItems: (string | ToolbarItemOptions)[][] = [];
 
@@ -51,19 +53,6 @@ export default class MarkdownEditor extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     this.toolbarItems = [
-      // [
-      //   ...[1, 2, 3, 0].map((level) => ({
-      //     name: `h${level}`,
-      //     el: createToolButton(
-      //       `<span class=${s.header}>${level !== 0 ? `H${level}` : `P`}</span>`,
-      //       () => {
-      //         this.editorRef.current?.getInstance()?.exec('heading', { level });
-      //       },
-      //     ),
-      //     command: `h${level}`,
-      //     tooltip: level === 0 ? `Paragraph` : `Header ${level}`,
-      //   })),
-      // ],
       ['bold', 'italic', 'strike'],
       ['link'],
       ['ul', 'ol'],
@@ -85,7 +74,6 @@ export default class MarkdownEditor extends React.Component<Props> {
             },
           ]
         : [],
-      // 'heading', 'hr', 'quote', 'task', 'indent', 'outdent', 'table', 'image', 'link'
     ];
   }
 
@@ -149,9 +137,20 @@ export default class MarkdownEditor extends React.Component<Props> {
     }
   }
 
+  handleImageBlobHook = (blob: File | Blob) => {
+    if (this.props.onDropFiles && blob instanceof File) {
+      const isImage = blob.type.startsWith('image/');
+      if (isImage) {
+        this.props.onDropFiles([blob]);
+      }
+    }
+    return false;
+  };
+
   render() {
     return (
       <div
+        ref={this.rootRef}
         className={s.root}
         style={{
           minHeight: 200,
@@ -203,6 +202,9 @@ export default class MarkdownEditor extends React.Component<Props> {
           onKeyup={this.handleMention.bind(this)}
           usageStatistics={false}
           placeholder={this.props.placeholder}
+          hooks={{
+            addImageBlobHook: this.handleImageBlobHook,
+          }}
         />
       </div>
     );
