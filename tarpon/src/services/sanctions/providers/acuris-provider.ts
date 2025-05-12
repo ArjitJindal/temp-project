@@ -822,7 +822,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           }
           const category = entity.datasets.some((dataset) => dataset === 'POI')
             ? 'POI'
-            : entity.datasets.some((dataset) => dataset === 'RCA')
+            : entity.datasets.some((dataset) => dataset === 'PEP-LINKED')
             ? 'RCA'
             : 'PEP'
           return this.getOtherSources(

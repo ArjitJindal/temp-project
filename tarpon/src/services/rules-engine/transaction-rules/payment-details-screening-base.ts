@@ -7,6 +7,7 @@ import {
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
   PAYMENT_DETAILS_SCREENING_FIELDS_SCHEMA,
+  SCREENING_PROFILE_ID_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -34,6 +35,7 @@ import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 export type ScreeningField = 'NAME' | 'BANK_NAME'
 export const SCREENING_FIELDS: ScreeningField[] = ['NAME', 'BANK_NAME']
@@ -46,6 +48,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
+  screeningProfileId?: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -67,6 +70,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           multipleOf: 1,
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
@@ -90,6 +94,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       screeningTypes,
       screeningFields,
       partialMatch,
+      screeningProfileId,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
@@ -121,6 +126,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               monitoring: {
                 enabled: false,
               },
+              ...(providers.includes(SanctionsDataProviders.ACURIS)
+                ? { screeningProfileId: screeningProfileId ?? undefined }
+                : {}),
               ...getFuzzinessSettings(providers, fuzzinessSetting),
               ...getEntityTypeForSearch(providers, 'EXTERNAL_USER'),
               ...getStopwordSettings(providers, stopwords),

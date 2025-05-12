@@ -1197,16 +1197,42 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory = details.pepCategory
       relCategory = details.relCategory
       adverseMediaCategory = details.adverseMediaCategory
-      const repo = new MongoSanctionSourcesRepository(
-        SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
-        mongoDb
-      )
-      const sources = await repo.getSanctionsSources(undefined, sourceIds)
-      for (const source of sources) {
-        if (source.sourceType === 'SANCTIONS') {
-          sanctionSourceNames.push(source.sourceName ?? '')
-        } else if (source.sourceType === 'PEP') {
-          pepSourceNames.push(source.sourceName ?? '')
+
+      // Only fetch sources if we have sourceIds
+      if (sourceIds?.length) {
+        const repo = new MongoSanctionSourcesRepository(
+          SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
+          mongoDb
+        )
+        const sources = await repo.getSanctionsSources(undefined, sourceIds)
+        for (const source of sources) {
+          if (!source.sourceName) {
+            continue
+          }
+
+          if (source.sourceType === 'SANCTIONS') {
+            sanctionSourceNames.push(source.sourceName)
+          } else if (source.sourceType === 'PEP') {
+            pepSourceNames.push(source.sourceName)
+          }
+        }
+      }
+      if (!request.manualSearch && request.types) {
+        const types = new Set(request.types)
+
+        if (!types.has('PEP')) {
+          pepSourceNames.length = 0
+          pepCategory = []
+        }
+        if (!types.has('SANCTIONS')) {
+          sanctionSourceNames.length = 0
+          sanctionsCategory = []
+        }
+        if (!types.has('REGULATORY_ENFORCEMENT_LIST')) {
+          relCategory = []
+        }
+        if (!types.has('ADVERSE_MEDIA')) {
+          adverseMediaCategory = []
         }
       }
     }

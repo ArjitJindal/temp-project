@@ -1,10 +1,22 @@
 import { mapValues, uniqBy } from 'lodash'
+import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import { PaymentDetailsScreeningRuleBase } from './payment-details-screening-base'
+import {
+  PaymentDetailsScreeningRuleBase,
+  PaymentDetailsScreeningRuleParameters,
+} from './payment-details-screening-base'
 import { traceable } from '@/core/xray'
 @traceable
 export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase {
+  public static getSchema(): JSONSchemaType<PaymentDetailsScreeningRuleParameters> {
+    const baseSchema = PaymentDetailsScreeningRuleBase.getSchema()
+    delete baseSchema.properties.screeningProfileId
+    return {
+      ...baseSchema,
+    }
+  }
+
   public async computeRule() {
     const hitRules: RuleHitResult = []
 

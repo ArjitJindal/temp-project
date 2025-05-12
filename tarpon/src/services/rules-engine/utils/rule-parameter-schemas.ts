@@ -863,7 +863,22 @@ export const FUZZINESS_SCHEMA = (options: PercentSchemaOptions = {}) =>
     multipleOf: 10,
     ...options,
   })
-
+export const SCREENING_PROFILE_ID_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    nullable: true,
+    ...uiSchema(
+      options?.uiSchema,
+      {
+        subtype: 'SCREENING_PROFILE_ID',
+      },
+      {
+        requiredFeatures: ['ACURIS'],
+      }
+    ),
+    title: 'Screening profile',
+    description: 'Select the screening profile to be used for the screening',
+  } as const)
 export const IS_ACTIVE_SCHEMA = {
   type: 'boolean',
   nullable: true,

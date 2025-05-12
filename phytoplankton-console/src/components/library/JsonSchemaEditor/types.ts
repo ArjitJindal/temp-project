@@ -156,6 +156,9 @@ export interface UiSchemaTransactionTypes extends UiSchemaCommon {
 export interface UiSchemaTransactionType extends UiSchemaCommon {
   'ui:subtype': 'TRANSACTION_TYPE';
 }
+export interface UiSchemaScreeningProfileId extends UiSchemaCommon {
+  'ui:subtype': 'SCREENING_PROFILE_ID';
+}
 
 export type UiSchema =
   | UiSchemaUnknown
@@ -191,7 +194,9 @@ export type UiSchema =
   | UiSchemaFuzzinessSettings
   | UiSchemaFreeTextEnum
   | UiSchemaTransactionType
-  | UiSchemaTransactionTypes;
+  | UiSchemaTransactionTypes
+  | UiSchemaScreeningProfileId;
+
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
   items?: ExtendedSchema;
