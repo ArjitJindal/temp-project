@@ -601,6 +601,7 @@ describe('Sanctions data fetcher', () => {
       )
       expect(result.secondaryMatches).toEqual([
         {
+          key: 'yearOfBirth',
           match_types: ['exact_birth_year_match'],
           query_term: '1952',
         },
@@ -620,6 +621,7 @@ describe('Sanctions data fetcher', () => {
       )
       expect(result.secondaryMatches).toEqual([
         {
+          key: 'yearOfBirth',
           match_types: ['fuzzy_birth_year_match'],
           query_term: '1950',
         },

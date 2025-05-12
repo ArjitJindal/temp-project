@@ -23,10 +23,12 @@ export default function SanctionsComparison(props: Props) {
         {items.map((item, i) => (
           <React.Fragment key={i}>
             <div className={s.propName}>
-              {item.title}{' '}
-              <Tooltip title={`Sources: ${item.sources.join(', ')}`} trigger="click">
-                <InformationLineIcon className={s.tooltipIcon} />
-              </Tooltip>
+              <div className={s.rowTitle}>
+                {item.title}{' '}
+                <Tooltip title={`Sources: ${item.sources.join(', ')}`} trigger="click">
+                  <InformationLineIcon className={s.tooltipIcon} />
+                </Tooltip>
+              </div>
             </div>
             <div className={s.propHitValue}>
               {capitalizeWordsInternal(String(item.screeningValue))}

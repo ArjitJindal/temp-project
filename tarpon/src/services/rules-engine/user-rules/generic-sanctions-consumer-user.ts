@@ -133,7 +133,6 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         isOngoingScreening: this.ongoingScreeningMode,
         monitoring: { enabled: ongoingScreening },
         // PEPRank, //Open-sanctions does not provide PEP rank data
-        documentId: user.legalDocuments?.map((doc) => doc.documentNumber) ?? [],
         ...(screeningValues?.includes('NATIONALITY')
           ? {
               nationality: user.userDetails.countryOfNationality

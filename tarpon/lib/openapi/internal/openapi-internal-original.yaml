@@ -14485,58 +14485,53 @@ components:
             type: string
       required:
         - sources
+    SanctionsMatchTypeDetailsEnum:
+      title: SanctionsMatchTypeDetailsEnum
+      type: string
+      enum:
+        - exact_match
+        - edit_distance
+        - phonetic
+        - equivalent_name
+        - word_to_initial
+        - initial_to_word
+        - removed_spaces
+        - word_to_digit
+        - digit_to_word
+        - name_variations_removal
+        - removed_personal_title
+        - removed_personal_suffix
+        - removed_organisation_prefix
+        - removed_organisation_suffix
+        - removed_clerical_mark
+        - fuzzy_birth_year_match
+        - exact_birth_year_match
+        - exact_nationality_match
+        - exact_gender_match
+        - exact_document_id_match
     SanctionsNameMatched:
       type: object
       properties:
         match_types:
           type: array
           items:
-            type: string
-            enum:
-              - exact_match
-              - edit_distance
-              - phonetic
-              - equivalent_name
-              - word_to_initial
-              - initial_to_word
-              - removed_spaces
-              - word_to_digit
-              - digit_to_word
-              - name_variations_removal
-              - removed_personal_title
-              - removed_personal_suffix
-              - removed_organisation_prefix
-              - removed_organisation_suffix
-              - removed_clerical_mark
-              - fuzzy_birth_year_match
-              - exact_birth_year_match
+            $ref: '#/components/schemas/SanctionsMatchTypeDetailsEnum'
         query_term:
           type: string
+        key:
+          type: string
+          enum:
+            - nationality
+            - gender
+            - documentId
+            - yearOfBirth
     ComplyAdvantageNameMatched:
       type: object
       properties:
         match_types:
           type: array
           items:
-            type: string
-            enum:
-              - exact_match
-              - edit_distance
-              - phonetic
-              - equivalent_name
-              - word_to_initial
-              - initial_to_word
-              - removed_spaces
-              - word_to_digit
-              - digit_to_word
-              - name_variations_removal
-              - removed_personal_title
-              - removed_personal_suffix
-              - removed_organisation_prefix
-              - removed_organisation_suffix
-              - removed_clerical_mark
-              - fuzzy_birth_year_match
-              - exact_birth_year_match
+            $ref: '#/components/schemas/SanctionsMatchTypeDetailsEnum'
         query_term:
           type: string
     ComplyAdvantageSearchHitDoc:

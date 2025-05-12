@@ -8,7 +8,7 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { notEmpty } from '@/utils/array'
-import { SanctionsNameMatchedMatchTypesEnum } from '@/@types/openapi-internal/SanctionsNameMatched'
+import { SanctionsNameMatched } from '@/@types/openapi-internal/SanctionsNameMatched'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
 import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
@@ -18,6 +18,7 @@ import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMe
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
 import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
+import { SanctionsMatchTypeDetailsEnum } from '@/@types/openapi-internal/SanctionsMatchTypeDetailsEnum'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -111,11 +112,12 @@ export function getNameMatches(
 export function getSecondaryMatches(
   entity: SanctionsEntity,
   searchRequest: SanctionsSearchRequest
-) {
+): SanctionsNameMatched[] {
+  const secondaryMatches: SanctionsNameMatched[] = []
   const yearOfBirth =
     entity.yearOfBirth?.length && parseInt(entity.yearOfBirth[0])
   if (searchRequest.yearOfBirth != null) {
-    let matchTypes: SanctionsNameMatchedMatchTypesEnum[] = []
+    let matchTypes: SanctionsMatchTypeDetailsEnum[] = []
     if (yearOfBirth != null) {
       const match = checkYearMatch(
         yearOfBirth,
@@ -128,14 +130,40 @@ export function getSecondaryMatches(
         matchTypes = ['fuzzy_birth_year_match']
       }
     }
-    return [
-      {
-        match_types: matchTypes,
-        query_term: searchRequest.yearOfBirth.toString(),
-      },
-    ]
+    secondaryMatches.push({
+      match_types: matchTypes,
+      query_term: searchRequest.yearOfBirth.toString(),
+      key: 'yearOfBirth',
+    })
   }
-  return []
+  if (searchRequest.nationality != null) {
+    secondaryMatches.push({
+      match_types: entity.matchTypes?.includes('nationality')
+        ? ['exact_nationality_match']
+        : [],
+      query_term: searchRequest.nationality.toString(),
+      key: 'nationality',
+    })
+  }
+  if (searchRequest.gender != null) {
+    secondaryMatches.push({
+      match_types: entity.matchTypes?.includes('gender')
+        ? ['exact_gender_match']
+        : [],
+      query_term: searchRequest.gender.toString(),
+      key: 'gender',
+    })
+  }
+  if (searchRequest.documentId?.length) {
+    secondaryMatches.push({
+      match_types: entity.matchTypes?.includes('document_id')
+        ? ['exact_document_id_match']
+        : [],
+      query_term: searchRequest.documentId.toString(),
+      key: 'documentId',
+    })
+  }
+  return secondaryMatches
 }
 
 export function getUniqueStrings(

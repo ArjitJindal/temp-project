@@ -1,8 +1,10 @@
-import { uniq } from 'lodash';
+import { compact, uniq } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { COUNTRIES } from '@flagright/lib/constants';
 import { SanctionsComparisonTableItem, SanctionsComparisonTableItemMatch } from './types';
 import {
   ComplyAdvantageNameMatched,
+  CountryCode,
   SanctionsEntity,
   SanctionsHitContext,
   SanctionsMatchTypeDetails,
@@ -34,13 +36,49 @@ export function getComparisonItems(
         match: reduceMatched(nameMatches),
         sources: sources ?? [],
       },
-      secondaryMatches.length > 0 && {
-        title: 'Date of birth',
-        screeningValue: sanctionsEntity?.yearOfBirth ? sanctionsEntity.yearOfBirth.join(', ') : '',
-        kycValue: yearOfBirth ?? secondaryMatches.map(({ query_term }) => query_term).join(', '),
-        match: reduceMatched(secondaryMatches),
-        sources: sources ?? [],
-      },
+      ...(secondaryMatches.length > 0
+        ? secondaryMatches.map((x) => {
+            if (x.key === 'yearOfBirth' || x.key == null) {
+              return {
+                title: 'Date of birth',
+                screeningValue: sanctionsEntity?.yearOfBirth?.toString() ?? '-',
+                kycValue: yearOfBirth ?? x?.query_term,
+                match: reduceMatched([x]),
+                sources: sources ?? [],
+              };
+            }
+            if (x.key === 'nationality') {
+              const kycValueNationality = x.query_term?.split(',') ?? [];
+              const entityNationality: CountryCode[] = compact(sanctionsEntity?.nationality ?? []);
+              return {
+                title: 'Nationality',
+                screeningValue: entityNationality.map((n) => COUNTRIES[n]).join(', '),
+                kycValue: kycValueNationality.map((n) => COUNTRIES[n]).toString(),
+                match: reduceMatched([x]),
+                sources: sources ?? [],
+              };
+            }
+            if (x.key === 'gender') {
+              return {
+                title: 'Gender',
+                screeningValue: sanctionsEntity?.gender?.toString() ?? '-',
+                kycValue: x.query_term,
+                match: reduceMatched([x]),
+                sources: sources ?? [],
+              };
+            }
+            if (x.key === 'documentId') {
+              return {
+                title: 'Document ID',
+                screeningValue:
+                  compact(sanctionsEntity?.documents?.map((x) => x.id))?.join(', ') ?? '-',
+                kycValue: x.query_term,
+                match: reduceMatched([x]),
+                sources: sources ?? [],
+              };
+            }
+          })
+        : []),
     ].filter(notEmpty);
   });
 
@@ -94,6 +132,9 @@ export function reduceMatched(
         case 'exact_match':
         case 'exact_birth_year_match':
         case 'equivalent_name':
+        case 'exact_document_id_match':
+        case 'exact_gender_match':
+        case 'exact_nationality_match':
           return 'TRUE_HIT';
         default:
           return 'POTENTIAL_HIT';
