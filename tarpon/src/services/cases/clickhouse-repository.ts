@@ -437,7 +437,7 @@ export class CaseClickhouseRepository {
       const query = `
         id IN (SELECT caseId
         FROM ${ALERTS_TABLE_NAME_CH} FINAL
-        WHERE (${conditions.join(' AND ')})
+        WHERE (${conditions.join(' AND ')}))
       `
       return query
     }
