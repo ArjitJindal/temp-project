@@ -47,6 +47,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { Alert } from '@/@types/openapi-internal/Alert'
 
 @traceable
@@ -114,9 +115,10 @@ export class TransactionService {
     return await this.transactionRepository.getTransactionsCount(params)
   }
 
+  @auditLog('TRANSACTION', 'TRANSACTION_LIST', 'DOWNLOAD')
   public async getTransactionsListV2(
     params: DefaultApiGetTransactionsV2ListRequest
-  ): Promise<TransactionsResponseOffsetPaginated> {
+  ): Promise<AuditLogReturnData<TransactionsResponseOffsetPaginated>> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
       new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
@@ -126,8 +128,14 @@ export class TransactionService {
     if (params.includeUsers) {
       data.items = await this.getTransactionUsers(data.items)
     }
-
-    return data
+    return {
+      result: data,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'TRANSACTION_DOWNLOAD', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
   }
 
   public async getCasesTransactions(

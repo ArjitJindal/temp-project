@@ -327,10 +327,11 @@ export class CaseService extends CaseAlertsCommonService {
     return await this.caseRepository.getCaseByAlertId(alertId)
   }
 
+  @auditLog('CASE', 'CASE_LIST', 'DOWNLOAD')
   public async getCases(
     params: DefaultApiGetCaseListRequest,
     options?: { hideOptionalData?: boolean }
-  ): Promise<CasesListResponse> {
+  ): Promise<AuditLogReturnData<CasesListResponse>> {
     const result = await this.caseRepository.getCases(params, options)
 
     result.data = await Promise.all(
@@ -338,7 +339,14 @@ export class CaseService extends CaseAlertsCommonService {
         async (caseEntity) => await this.getAugmentedCase(caseEntity)
       )
     )
-    return result
+    return {
+      result: result,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'CASE_DOWNLOAD', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
   }
 
   public async getCaseTransactions(caseId: string) {
@@ -349,6 +357,7 @@ export class CaseService extends CaseAlertsCommonService {
     return await this.caseRepository.getUserTransaction(userId)
   }
 
+  @auditLog('CASE', 'CASE_REPORT', 'DOWNLOAD')
   public async createReport(params: {
     caseId: string
     afterTimestamp: number
@@ -357,7 +366,7 @@ export class CaseService extends CaseAlertsCommonService {
     addTransactions: boolean
     addAlertDetails: boolean
     addOntology: boolean
-  }): Promise<{ downloadUrl: string }> {
+  }): Promise<AuditLogReturnData<{ downloadUrl: string }>> {
     const caseItem = (await this.getCase(params.caseId)).result
 
     const now = Date.now()
@@ -406,7 +415,11 @@ export class CaseService extends CaseAlertsCommonService {
     const downloadUrl = await getSignedUrl(this.s3, getObjectCommand, {
       expiresIn: 3600,
     })
-    return { downloadUrl }
+    return {
+      result: { downloadUrl },
+      entities: [{ entityId: 'CASE_REPORT', entityAction: 'DOWNLOAD' }],
+      publishAuditLog: () => true,
+    }
   }
 
   private getStatusChange(
@@ -836,7 +849,7 @@ export class CaseService extends CaseAlertsCommonService {
     //       if futher performance improvements are needed, we should consider moving
     //       this logic into the consumer and executing it asynchronously
     await Promise.all(
-      cases.data.flatMap((c) => {
+      cases.result.data.flatMap((c) => {
         if (!c.alerts) {
           return []
         }

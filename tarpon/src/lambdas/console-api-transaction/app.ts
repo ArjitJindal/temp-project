@@ -113,7 +113,7 @@ export const transactionsViewHandler = lambdaApi()(
     })
 
     handlers.registerGetTransactionsV2List(async (context, request) => {
-      return await transactionService.getTransactionsListV2(request)
+      return (await transactionService.getTransactionsListV2(request)).result
     })
 
     handlers.registerGetTransactionsStatsByType(async (context, request) => ({

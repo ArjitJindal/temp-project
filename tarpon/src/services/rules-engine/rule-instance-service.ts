@@ -43,6 +43,8 @@ import {
   getClickhouseClient,
   isClickhouseEnabled,
 } from '@/utils/clickhouse/utils'
+import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -211,19 +213,31 @@ export class RuleInstanceService {
     return this.ruleInstanceRepository.getActiveRuleInstances(type)
   }
 
-  async getAllRuleInstances(mode?: RuleRunMode): Promise<RuleInstance[]> {
+  @auditLog('RULE', 'RULE_INSTANCES', 'DOWNLOAD')
+  async getAllRuleInstances(
+    mode?: RuleRunMode,
+    view: TableListViewEnum = 'TABLE'
+  ): Promise<AuditLogReturnData<RuleInstance[]>> {
     const allRuleInstances =
       await this.ruleInstanceRepository.getAllRuleInstances(mode)
 
-    if (hasFeature('PNB')) {
-      return allRuleInstances.filter(
-        (ruleInstance) =>
-          !PNB_INTERNAL_RULES.find(
-            (internalRule) => internalRule.id === ruleInstance.id
-          )
-      )
+    const result = hasFeature('PNB')
+      ? allRuleInstances.filter(
+          (ruleInstance) =>
+            !PNB_INTERNAL_RULES.find(
+              (internalRule) => internalRule.id === ruleInstance.id
+            )
+        )
+      : allRuleInstances
+
+    return {
+      result,
+      entities:
+        view === 'DOWNLOAD'
+          ? [{ entityId: 'RULE_INSTANCES', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => view === 'DOWNLOAD',
     }
-    return allRuleInstances
   }
 
   async createOrUpdateRuleInstance(

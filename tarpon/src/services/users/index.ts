@@ -1081,13 +1081,21 @@ export class UserService {
     return result
   }
 
+  @auditLog('USER', 'USER_LIST', 'DOWNLOAD')
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
-  ): Promise<AllUsersListResponse> {
+  ): Promise<AuditLogReturnData<AllUsersListResponse>> {
     if (isClickhouseEnabled()) {
-      return await this.getClickhouseUsers(params)
+      return {
+        result: await this.getClickhouseUsers(params),
+        entities:
+          params.view === 'DOWNLOAD'
+            ? [{ entityId: 'USER_DOWNLOAD', entityAction: 'DOWNLOAD' }]
+            : [],
+        publishAuditLog: () => params.view === 'DOWNLOAD',
+      }
     }
-    return await this.userRepository.getMongoUsersCursorsPaginate(
+    const data = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapAllUserToTableItem,
       undefined,
@@ -1121,6 +1129,14 @@ export class UserService {
         },
       }
     )
+    return {
+      result: data,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'USER_LIST', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
   }
 
   public async getClickhouseUsers(
@@ -1174,7 +1190,6 @@ export class UserService {
         params,
         this.mapAllUserToTableItem
       )
-
     return result
   }
 

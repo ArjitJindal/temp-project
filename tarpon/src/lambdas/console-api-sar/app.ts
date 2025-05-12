@@ -48,7 +48,7 @@ export const sarHandler = lambdaApi()(
     })
 
     handlers.registerGetReports(
-      async (ctx, request) => await reportService.getReports(request)
+      async (ctx, request) => (await reportService.getReports(request)).result
     )
 
     handlers.registerGetReportsReportId(

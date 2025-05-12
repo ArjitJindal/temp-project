@@ -198,10 +198,11 @@ export class AlertsService extends CaseAlertsCommonService {
     this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
   }
 
+  @auditLog('ALERT', 'ALERT_LIST', 'DOWNLOAD')
   public async getAlerts(
     params: DefaultApiGetAlertListRequest,
     options?: { hideTransactionIds?: boolean }
-  ): Promise<AlertListResponse> {
+  ): Promise<AuditLogReturnData<AlertListResponse>> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
       'Mongo Get Alerts Query'
@@ -212,7 +213,7 @@ export class AlertsService extends CaseAlertsCommonService {
         params,
         options
       )
-      return {
+      const data: AlertListResponse = {
         ...alerts,
         data: alerts.data.map((alertResponse) => ({
           ...alertResponse,
@@ -225,6 +226,14 @@ export class AlertsService extends CaseAlertsCommonService {
             ),
           },
         })),
+      }
+      return {
+        result: data,
+        entities:
+          params.view === 'DOWNLOAD'
+            ? [{ entityId: 'ALERT_DOWNLOAD', entityAction: 'DOWNLOAD' }]
+            : [],
+        publishAuditLog: () => params.view === 'DOWNLOAD',
       }
     } finally {
       caseGetSegment?.close()

@@ -113,6 +113,10 @@ paths:
             type: string
           in: query
           name: ruleId
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
     parameters: []
     post:
       summary: Rules - Create
@@ -327,6 +331,10 @@ paths:
       summary: Rule Instance - List
       operationId: get-rule_instances
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             type: string
             enum:
@@ -4791,6 +4799,10 @@ paths:
           in: query
           name: page
         - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
+        - schema:
             type: array
             items:
               type: string
@@ -7378,6 +7390,10 @@ paths:
             type: number
           in: query
           name: lastAckFetchTime
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
     post:
       summary: Create a new report
       operationId: post-reports
@@ -14987,6 +15003,7 @@ components:
         - SAR
         - SLA
         - LIST
+        - TRANSACTION
     AuditLogActionEnum:
       title: AuditLogActionEnum
       type: string
@@ -15033,6 +15050,9 @@ components:
             - COMMENT_CASE
             - VIEW_CASE
             - VIEW_ALERT
+            - CASE_LIST
+            - CASE_REPORT
+            - ALERT_LIST
             - DOCUMENT
             - RISK_CLASSIFICATION
             - DRS_RISK_LEVEL
@@ -15055,11 +15075,16 @@ components:
             - WEBHOOK
             - SAR_UPDATE
             - SAR_DELETE
+            - SAR_LIST
             - RISK_FACTOR_V8
             - ACCOUNT
             - ROLE
             - LIST_HEADER
             - LIST_ITEM
+            - TRANSACTION_LIST
+            - USER_LIST
+            - RULE_INSTANCES
+            - RULE_LIBRARY
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

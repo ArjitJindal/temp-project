@@ -32,9 +32,10 @@ export const ruleHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetRules(async (ctx) => {
+    handlers.registerGetRules(async (ctx, request) => {
       const ruleService = new RuleService(ctx.tenantId, { dynamoDb, mongoDb })
-      return (await ruleService.getAllRules()) as Array<PublicRule>
+      return (await ruleService.getAllRules(request))
+        .result as Array<PublicRule>
     })
 
     handlers.registerGetRuleFiltersSchema(async () => {
@@ -139,7 +140,8 @@ export const ruleInstanceHandler = lambdaApi()(
     })
 
     handlers.registerGetRuleInstances(async () => {
-      return (await ruleInstanceService.getAllRuleInstances()) as Array<PublicRuleInstance>
+      return (await ruleInstanceService.getAllRuleInstances())
+        .result as Array<PublicRuleInstance>
     })
 
     return handlers.handle(event)

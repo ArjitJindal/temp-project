@@ -357,8 +357,19 @@ export class ReportService {
     return withSchema(savedReport)
   }
 
-  async getReports(params: DefaultApiGetReportsRequest) {
-    return await this.reportRepository.getReports(params)
+  @auditLog('SAR', 'SAR_LIST', 'VIEW')
+  async getReports(
+    params: DefaultApiGetReportsRequest
+  ): Promise<AuditLogReturnData<{ total: number; items: Report[] }>> {
+    const reports = await this.reportRepository.getReports(params)
+    return {
+      result: reports,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'SAR_LIST', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
   }
 
   @auditLog('SAR', 'SAR_DELETE', 'DELETE')

@@ -134,7 +134,9 @@ export default function AuditLogTable() {
         return {
           entityType: item.type,
           entityId:
-            item.type === 'RULE' ? `${item.logMetadata.ruleId} (${item.entityId})` : item.entityId,
+            item.type === 'RULE' && item.action !== 'DOWNLOAD'
+              ? `${item.logMetadata.ruleId} (${item.entityId})`
+              : item.entityId,
         };
       },
       type: {
@@ -167,6 +169,9 @@ export default function AuditLogTable() {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
           }
           if (item.type === 'RULE') {
+            if (item.action === 'DOWNLOAD') {
+              return <Typography.Text type={'secondary'}>-</Typography.Text>;
+            }
             return <RuleAuditLogModal data={item} />;
           }
           if (item.type === 'RISK_FACTOR') {

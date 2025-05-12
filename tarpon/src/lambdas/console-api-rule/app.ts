@@ -50,7 +50,9 @@ export const ruleHandler = lambdaApi()(
       }
     })
 
-    handlers.registerGetRules(async () => await ruleService.getAllRules())
+    handlers.registerGetRules(async (_ctx, request) => {
+      return (await ruleService.getAllRules(request)).result
+    })
 
     handlers.registerGetRule(async (_ctx, request) => {
       return (await ruleService.getRuleById(request.ruleId)) ?? null
@@ -110,10 +112,13 @@ export const ruleInstanceHandler = lambdaApi()(
     })
     const handlers = new Handlers()
 
-    handlers.registerGetRuleInstances(
-      async (ctx, request) =>
-        await ruleInstanceService.getAllRuleInstances(request.mode)
-    )
+    handlers.registerGetRuleInstances(async (ctx, request) => {
+      const data = await ruleInstanceService.getAllRuleInstances(
+        request.mode,
+        request.view
+      )
+      return data.result
+    })
 
     handlers.registerGetRuleInstancesItem(
       async (ctx, request) =>

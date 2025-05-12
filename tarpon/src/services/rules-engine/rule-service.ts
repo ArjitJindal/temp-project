@@ -62,10 +62,12 @@ import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import {
   DefaultApiGetRuleMlModelsRequest,
+  DefaultApiGetRulesRequest,
   DefaultApiUpdateRuleMlModelModelIdRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -238,18 +240,29 @@ export class RuleService {
     { feature: 'OPEN_SANCTIONS', rulesToRemove: ['R-16'] },
   ]
 
-  async getAllRules(): Promise<Array<Rule>> {
+  @auditLog('RULE', 'RULE_LIBRARY', 'DOWNLOAD')
+  async getAllRules(
+    params: DefaultApiGetRulesRequest
+  ): Promise<AuditLogReturnData<Array<Rule>>> {
     let rules = await this.ruleRepository.getAllRules()
     rules = await Promise.all(
       rules.map((rule) => this.getTenantSpecificRule(rule))
     )
 
-    return rules.filter(
+    const data = rules.filter(
       (rule) =>
         !this.shouldRemoveRuleBasedOnFeatures(rule, this.featureRuleMappings) &&
         (isEmpty(rule.requiredFeatures) ||
           this.hasRequiredFeaturesForRule(rule))
     )
+    return {
+      result: data,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'RULE_LIBRARY', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
   }
 
   public async searchRules(

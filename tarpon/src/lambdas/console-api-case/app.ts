@@ -37,24 +37,26 @@ export const casesHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerCreateCaseReport(async (_ctx, request) => {
-      return await caseService.createReport({
-        caseId: request.caseId,
-        afterTimestamp: request.CreateCaseParams.afterTimestamp,
-        addUserOrPaymentDetails:
-          request.CreateCaseParams.addUserOrPaymentDetails,
-        addActivity: request.CreateCaseParams.addActivity,
-        addTransactions: request.CreateCaseParams.addTransactions,
-        addAlertDetails: request.CreateCaseParams.addAlertDetails,
-        addOntology: request.CreateCaseParams.addOntology,
-      })
+      return (
+        await caseService.createReport({
+          caseId: request.caseId,
+          afterTimestamp: request.CreateCaseParams.afterTimestamp,
+          addUserOrPaymentDetails:
+            request.CreateCaseParams.addUserOrPaymentDetails,
+          addActivity: request.CreateCaseParams.addActivity,
+          addTransactions: request.CreateCaseParams.addTransactions,
+          addAlertDetails: request.CreateCaseParams.addAlertDetails,
+          addOntology: request.CreateCaseParams.addOntology,
+        })
+      ).result
     })
 
-    handlers.registerGetCaseList(
-      async (ctx, request) =>
-        await caseService.getCases(request, {
-          hideOptionalData: true,
-        })
-    )
+    handlers.registerGetCaseList(async (ctx, request) => {
+      const data = await caseService.getCases(request, {
+        hideOptionalData: true,
+      })
+      return data.result
+    })
 
     handlers.registerPatchAlertsQaStatus(async (_ctx, request) => {
       const result = await alertsService.updateAlertChecklistQaStatus(
@@ -146,12 +148,12 @@ export const casesHandler = lambdaApi()(
       }
     )
 
-    handlers.registerGetAlertList(
-      async (ctx, request) =>
-        await alertsService.getAlerts(request, {
-          hideTransactionIds: true,
-        })
-    )
+    handlers.registerGetAlertList(async (ctx, request) => {
+      const data = await alertsService.getAlerts(request, {
+        hideTransactionIds: true,
+      })
+      return data.result
+    })
 
     handlers.registerPostCasesManual(async (ctx, request) => {
       const response = await caseCreationService.createManualCaseFromUser(

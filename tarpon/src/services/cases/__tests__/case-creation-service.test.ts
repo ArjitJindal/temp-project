@@ -1930,13 +1930,13 @@ describe('Test delayed publishing', () => {
 
           MockDate.set(DAY_BEFORE_PUBLISH_DATE)
           {
-            const cases = await caseService.getCases({})
+            const cases = (await caseService.getCases({})).result
             expect(cases.total).toEqual(0)
           }
 
           MockDate.set(DAY_AFTER_PUBLISH_DATE)
           {
-            const cases = await caseService.getCases({})
+            const cases = (await caseService.getCases({})).result
             expect(cases.total).toEqual(1)
           }
         }
@@ -1967,19 +1967,19 @@ describe('Test delayed publishing', () => {
 
       MockDate.set(DAY_BEFORE_PUBLISH_DATE)
       {
-        const cases = await caseService.getCases({})
+        const cases = (await caseService.getCases({})).result
         expect(cases.total).toEqual(0)
       }
 
       MockDate.set(DAY_AFTER_PUBLISH_DATE)
       {
-        const cases = await caseService.getCases({})
+        const cases = (await caseService.getCases({})).result
         expect(cases.total).toEqual(1)
       }
 
       MockDate.set(WEEK_AFTER_PUBLISH_DATE)
       {
-        const cases = await caseService.getCases({})
+        const cases = (await caseService.getCases({})).result
         expect(cases.total).toEqual(2)
       }
     })
@@ -2178,13 +2178,13 @@ describe('Test delayed publishing', () => {
 
           MockDate.set(DAY_BEFORE_PUBLISH_DATE)
           {
-            const alerts = await alertsService.getAlerts({})
+            const alerts = (await alertsService.getAlerts({})).result
             expect(alerts.total).toEqual(0)
           }
 
           MockDate.set(DAY_AFTER_PUBLISH_DATE)
           {
-            const alerts = await alertsService.getAlerts({})
+            const alerts = (await alertsService.getAlerts({})).result
             expect(alerts.total).toEqual(1)
             expect(alerts.data[0]?.alert.alertId).toEqual(alertId)
           }
