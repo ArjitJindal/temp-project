@@ -1,5 +1,5 @@
 import { getEditDistancePercentage } from '@flagright/lib/utils'
-import { compact, isArray, uniq } from 'lodash'
+import { isArray } from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import { TextLogicOperator } from './types'
 import { getNegatedOperator } from './utils'
@@ -33,10 +33,8 @@ export const SIMILAR_TO_WORDS_OPERATOR: TextLogicOperator = {
       logger.error('Fuzziness parameter is required for similar to operator')
       return false
     }
-    const lhsSingleWord = lhs.toLowerCase().trim().split(/\s+/).join(' ')
-    const lhsWords = uniq(
-      compact([...lhs.toLowerCase().trim().split(/\s+/), lhsSingleWord])
-    )
+
+    const lhsWords = lhs.toLowerCase().trim().split(/\s+/)
     const rhsWords = values.map((word) => word.toLowerCase().trim())
 
     for (const lhsWord of lhsWords) {
