@@ -357,13 +357,11 @@ export class TenantService {
         riskScoringAlgorithm: { type: 'FORMULA_SIMPLE_AVG' },
         auth0Domain: tenantData.auth0Domain,
         ...(tenantData.sanctionsMarketType && {
-          sanctions: tenantData.sanctionsMarketType
-            ? { marketType: tenantData.sanctionsMarketType }
-            : undefined,
+          sanctions: { marketType: tenantData.sanctionsMarketType },
         }),
-        crmIntegrationName: tenantData.features.includes('CRM')
-          ? 'ZENDESK'
-          : undefined,
+        ...(tenantData.features.includes('CRM') && {
+          crmIntegrationName: 'ZENDESK',
+        }),
         ...(tenantData.sanctionsMarketType ||
         tenantData.sanctionsScreeningTypes ||
         tenantData.sanctionsEntityTypes
