@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import s from './style.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -9,7 +9,6 @@ import { Value } from '@/pages/transactions/components/TagSearchButton/types';
 import Button from '@/components/library/Button';
 import InputField from '@/components/library/Form/InputField';
 import Form from '@/components/library/Form';
-import TextInput from '@/components/library/TextInput';
 
 interface Props {
   initialState: Value;
@@ -19,6 +18,7 @@ interface Props {
 
 export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm } = props;
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(initialState.key);
 
   const api = useApi();
 
@@ -27,7 +27,24 @@ export default function PopupContent(props: Props) {
       field: 'TAGS_KEY',
     });
   });
-
+  const tagsValueResult = useQuery(
+    USERS_UNIQUES('TAGS_VALUE', { filter: selectedKey }),
+    async () => {
+      if (!selectedKey) {
+        return [];
+      }
+      return await api.getUsersUniques({
+        field: 'TAGS_VALUE',
+        filter: selectedKey,
+      });
+    },
+    {
+      enabled: !!selectedKey,
+    },
+  );
+  const handleKeyChange = useCallback((key: string | undefined) => {
+    setSelectedKey(key);
+  }, []);
   return (
     <Form
       onSubmit={(values) => {
@@ -35,32 +52,56 @@ export default function PopupContent(props: Props) {
       }}
       initialValues={initialState}
     >
-      <div className={s.root}>
-        <InputField<Value, 'key'> label="Tag key" name={'key'} labelProps={{ level: 2 }}>
-          {(inputProps) => (
-            <Select<string>
-              style={{ width: '100%' }}
-              showSearch={true}
-              allowClear={true}
-              className={s.select}
-              loading={isLoading(result.data)}
-              options={(getOr(result.data, []) as unknown as Array<string>)
-                .filter((key) => key?.length > 0)
-                .map((key) => ({ label: key, value: key }))}
-              {...inputProps}
-            />
-          )}
-        </InputField>
-        <InputField<Value, 'value'> label="Tag value" name={'value'} labelProps={{ level: 2 }}>
-          {(inputProps) => <TextInput allowClear={true} {...inputProps} />}
-        </InputField>
-        <div className={s.buttons}>
-          <Button htmlType="submit" type="PRIMARY">
-            Confirm
-          </Button>
-          <Button onClick={onCancel}>Cancel</Button>
-        </div>
-      </div>
+      {({ valuesState }) => {
+        const [, setValues] = valuesState;
+
+        return (
+          <div className={s.root}>
+            <InputField<Value, 'key'> label="Tag key" name={'key'} labelProps={{ level: 2 }}>
+              {(inputProps) => (
+                <Select<string>
+                  style={{ width: '100%' }}
+                  showSearch={true}
+                  allowClear={true}
+                  className={s.select}
+                  loading={isLoading(result.data)}
+                  options={(getOr(result.data, []) as unknown as Array<string>)
+                    .filter((key) => key?.length > 0)
+                    .map((key) => ({ label: key, value: key }))}
+                  onChange={(value) => {
+                    handleKeyChange(value);
+                    if (inputProps.onChange) {
+                      inputProps.onChange(value);
+                    }
+                    setValues((prev) => ({ ...prev, value: undefined }));
+                  }}
+                />
+              )}
+            </InputField>
+            <InputField<Value, 'value'> label="Tag value" name={'value'} labelProps={{ level: 2 }}>
+              {(inputProps) => (
+                <Select<string>
+                  style={{ width: '100%' }}
+                  showSearch={true}
+                  allowClear={true}
+                  className={s.select}
+                  loading={isLoading(tagsValueResult.data)}
+                  options={(getOr(tagsValueResult.data, []) as unknown as Array<string>)
+                    .filter((value) => value?.length > 0)
+                    .map((value) => ({ label: value, value: value }))}
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+            <div className={s.buttons}>
+              <Button htmlType="submit" type="PRIMARY">
+                Confirm
+              </Button>
+              <Button onClick={onCancel}>Cancel</Button>
+            </div>
+          </div>
+        );
+      }}
     </Form>
   );
 }

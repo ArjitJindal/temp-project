@@ -4,7 +4,7 @@ import {
   _Object,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3'
-import { memoize, compact, uniq } from 'lodash'
+import { memoize } from 'lodash'
 import { getDemoDataS3Prefix } from '@lib/constants'
 import {
   BusinessUserSampler,
@@ -134,6 +134,22 @@ export const getUsers: (
   return users
 }
 
-export const getUserUniqueTags = memoize(() => {
-  return compact(uniq(users.flatMap((u) => u.tags?.map((t) => t.key))))
+export const getUserUniqueTags: () => {
+  key: string
+  value: string
+}[] = memoize(() => {
+  const uniqueSet = new Set<string>()
+  const result: { key: string; value: string }[] = []
+
+  users.forEach((user) => {
+    user.tags?.forEach((tag) => {
+      const uniqueKey = `${tag.key}:${tag.value}`
+      if (!uniqueSet.has(uniqueKey)) {
+        uniqueSet.add(uniqueKey)
+        result.push({ key: tag.key, value: tag.value })
+      }
+    })
+  })
+
+  return result
 })

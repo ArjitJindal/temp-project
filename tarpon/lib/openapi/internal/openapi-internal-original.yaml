@@ -14809,6 +14809,7 @@ components:
       enum:
         - TRANSACTION_STATE
         - TAGS_KEY
+        - TAGS_VALUE
         - IBAN_NUMBER
         - CARD_FINGERPRINT_NUMBER
         - BANK_ACCOUNT_NUMBER
@@ -14918,6 +14919,7 @@ components:
       enum:
         - BUSINESS_INDUSTRY
         - TAGS_KEY
+        - TAGS_VALUE
     RiskEntityType:
       type: string
       title: Risk entity type

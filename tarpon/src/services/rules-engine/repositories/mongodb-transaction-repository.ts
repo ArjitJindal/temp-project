@@ -883,6 +883,22 @@ export class MongoDbTransactionRepository
 
       return uniqueTags.map((doc) => doc.tag)
     }
+    if (params.field === 'TAGS_VALUE') {
+      const uniqueTagsCollection = db.collection(
+        UNIQUE_TAGS_COLLECTION(this.tenantId)
+      )
+      const uniqueTags = await uniqueTagsCollection
+        .find({
+          type: 'TRANSACTION',
+          ...(params.filter
+            ? { tag: prefixRegexMatchFilter(params.filter) }
+            : {}),
+        })
+        .project({ value: 1 })
+        .toArray()
+
+      return uniqueTags.map((doc) => doc.value)
+    }
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
 
@@ -2009,13 +2025,15 @@ export class MongoDbTransactionRepository
       UNIQUE_TAGS_COLLECTION(this.tenantId)
     )
 
-    const uniqueTags = uniq(transaction.tags.map((tag) => tag.key))
+    const uniqueTags = uniq(
+      transaction.tags.map((tag) => ({ key: tag.key, value: tag.value }))
+    )
 
     await Promise.all(
       uniqueTags.map((tag) =>
         uniqueTagsCollection.updateOne(
-          { tag, type: 'TRANSACTION' },
-          { $set: { tag, type: 'TRANSACTION' } },
+          { tag: tag.key, value: tag.value, type: 'TRANSACTION' },
+          { $set: { tag: tag.key, value: tag.value, type: 'TRANSACTION' } },
           { upsert: true }
         )
       )

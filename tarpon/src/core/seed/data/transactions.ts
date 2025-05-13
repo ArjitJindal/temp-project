@@ -1,4 +1,4 @@
-import { compact, random, memoize, uniq, shuffle } from 'lodash'
+import { random, memoize, shuffle } from 'lodash'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'
@@ -421,9 +421,24 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
   return transactions
 })
 
-export const getTransactionUniqueTags = memoize(() => {
+export const getTransactionUniqueTags: () => {
+  key: string
+  value: string
+}[] = memoize(() => {
   const transactions = getTransactions()
-  return compact(uniq(transactions.flatMap((t) => t.tags?.map((t) => t.key))))
+  const uniqueSet = new Set<string>()
+  const result: { key: string; value: string }[] = []
+
+  transactions.forEach((t) => {
+    t.tags?.forEach((tag) => {
+      const uniqueKey = `${tag.key}:${tag.value}`
+      if (!uniqueSet.has(uniqueKey)) {
+        uniqueSet.add(uniqueKey)
+        result.push({ key: tag.key, value: tag.value })
+      }
+    })
+  })
+  return result
 })
 
 export const allUniqueTags: () => {
@@ -434,7 +449,15 @@ export const allUniqueTags: () => {
   const userTags = getUserUniqueTags()
 
   return [
-    ...transactionTags.map((t) => ({ tag: t, type: 'TRANSACTION' as const })),
-    ...userTags.map((u) => ({ tag: u, type: 'USER' as const })),
+    ...transactionTags.map((t) => ({
+      tag: t.key,
+      value: t.value,
+      type: 'TRANSACTION' as const,
+    })),
+    ...userTags.map((u) => ({
+      tag: u.key,
+      value: u.value,
+      type: 'USER' as const,
+    })),
   ]
 })

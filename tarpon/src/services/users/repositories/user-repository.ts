@@ -1102,13 +1102,15 @@ export class UserRepository {
       UNIQUE_TAGS_COLLECTION(this.tenantId)
     )
 
-    const uniqueTags = uniq(tags?.map((tag) => tag.key))
+    const uniqueTags = uniq(
+      tags?.map((tag) => ({ key: tag.key, value: tag.value }))
+    )
 
     await Promise.all(
       uniqueTags.map((tag) =>
         uniqueTagsCollection.updateOne(
-          { tag, type: 'USER' },
-          { $set: { tag, type: 'USER' } },
+          { tag: tag.key, value: tag.value, type: 'USER' },
+          { $set: { tag: tag.key, value: tag.value, type: 'USER' } },
           { upsert: true }
         )
       )
@@ -1153,6 +1155,22 @@ export class UserRepository {
         .toArray()
 
       return uniqueTags.map((doc) => doc.tag)
+    }
+    if (params.field === 'TAGS_VALUE') {
+      const uniqueTagsCollection = db.collection(
+        UNIQUE_TAGS_COLLECTION(this.tenantId)
+      )
+      const uniqueTags = await uniqueTagsCollection
+        .find({
+          type: 'USER',
+          ...(params.filter
+            ? { tag: prefixRegexMatchFilter(params.filter) }
+            : {}),
+        })
+        .project({ value: 1 })
+        .toArray()
+
+      return uniqueTags.map((doc) => doc.value)
     }
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
