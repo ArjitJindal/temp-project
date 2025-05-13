@@ -1,5 +1,6 @@
 import { isEmpty, uniqBy } from 'lodash'
 import { mergeRulesForPNB } from '../pnb-custom-logic'
+import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { hasFeature } from '@/core/utils/context'
@@ -8,6 +9,8 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsSearchRequestEntityType } from '@/@types/openapi-internal/SanctionsSearchRequestEntityType'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
+import { PaymentDetailsName } from '@/utils/helpers'
+import dayjs from '@/utils/dayjs'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -138,5 +141,31 @@ export function getPartialMatchParameters(
   }
   return {
     partialMatch,
+  }
+}
+
+export function getScreeningValues(
+  providers: SanctionsDataProviderName[],
+  screeningValues?: GenericScreeningValues[],
+  paymentDetails?: PaymentDetailsName
+): {
+  nationality?: Array<string>
+  yearOfBirth?: number
+} {
+  if (
+    providers.includes('comply-advantage') ||
+    !paymentDetails ||
+    !screeningValues
+  ) {
+    return {}
+  }
+  return {
+    ...(paymentDetails.countryOfNationality &&
+    screeningValues?.includes('NATIONALITY')
+      ? { nationality: [paymentDetails.countryOfNationality] }
+      : {}),
+    ...(paymentDetails.dateOfBirth && screeningValues?.includes('YOB')
+      ? { yearOfBirth: dayjs(paymentDetails.dateOfBirth).year() }
+      : {}),
   }
 }

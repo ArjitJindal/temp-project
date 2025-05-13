@@ -4,6 +4,7 @@ import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
+  GENERIC_SCREENING_VALUES_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
   PAYMENT_DETAILS_SCREENING_FIELDS_SCHEMA,
@@ -17,8 +18,10 @@ import {
   getFuzzinessSettings,
   getIsActiveParameters,
   getPartialMatchParameters,
+  getScreeningValues,
   getStopwordSettings,
 } from '../utils/rule-utils'
+import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -52,6 +55,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
+  screeningValues?: GenericScreeningValues[]
 }
 
 @traceable
@@ -74,6 +78,13 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
+        screeningValues: GENERIC_SCREENING_VALUES_SCHEMA(
+          {
+            description:
+              'Select the screening attributes to be used for the screening',
+          },
+          ['YOB', 'NATIONALITY']
+        ),
       },
       required: ['fuzziness', 'fuzzinessSetting', 'screeningFields'],
       additionalProperties: false,
@@ -95,10 +106,12 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       screeningFields,
       partialMatch,
       screeningProfileId,
+      screeningValues,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
       : []
+
     const bankNames = screeningFields.includes('BANK_NAME')
       ? compact([getBankNameFromPaymentDetails(paymentDetails)])
       : []
@@ -106,7 +119,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     const providers = getDefaultProviders()
     const data = await Promise.all([
       ...namesToSearchFiltered.map(
-        async ({ name, entityType }): Promise<SanctionsDetails | undefined> => {
+        async (paymentDetail): Promise<SanctionsDetails | undefined> => {
           const paymentMethodId = getPaymentMethodId(paymentDetails)
           const hitContext = {
             entity: 'EXTERNAL_USER' as const,
@@ -114,13 +127,13 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
             ruleId: this.ruleInstance.ruleId ?? '',
             transactionId: this.transaction.transactionId,
             userId: user?.userId ?? paymentMethodId,
-            searchTerm: name,
-            entityType,
+            searchTerm: paymentDetail.name,
+            entityType: paymentDetail.entityType,
             paymentMethodId,
           }
           const result = await this.sanctionsService.search(
             {
-              searchTerm: name,
+              searchTerm: paymentDetail.name,
               types: this.parameters.screeningTypes || [],
               fuzziness: fuzziness / 100,
               monitoring: {
@@ -134,6 +147,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
+              ...getScreeningValues(providers, screeningValues, paymentDetail),
             },
             hitContext,
             undefined,
@@ -142,9 +156,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
 
           if (result.hitsCount > 0) {
             return {
-              name,
+              name: paymentDetail.name,
               searchId: result.searchId,
-              entityType,
+              entityType: paymentDetail.entityType,
               hitContext,
             }
           }

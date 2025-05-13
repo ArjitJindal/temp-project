@@ -1023,20 +1023,27 @@ const GENERIC_SCREENING_VALUES: GenericScreeningValues[] = [
   'YOB',
   'GENDER',
 ]
-export const GENERIC_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...uiSchema(options?.uiSchema),
+export const GENERIC_SCREENING_VALUES_SCHEMA = (
+  options?: SchemaOptions,
+  fieldsToPick?: GenericScreeningValues[]
+) => {
+  const values = fieldsToPick ?? GENERIC_SCREENING_VALUES
+  return {
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['OPEN_SANCTIONS', 'ACURIS', 'DOW_JONES'],
+    }),
     type: 'array',
     title: options?.title || 'Screening values',
     description: options?.description,
     items: {
       type: 'string',
-      enum: GENERIC_SCREENING_VALUES,
-      enumNames: GENERIC_SCREENING_VALUES.map((type) => humanizeAuto(type)),
+      enum: values,
+      enumNames: values.map((type) => humanizeAuto(type)),
     },
     uniqueItems: true,
     nullable: true,
-  } as const)
+  } as const
+}
 
 export const STOPWORDS_SCHEMA = (options?: SchemaOptions) =>
   ({

@@ -12,6 +12,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -139,9 +140,11 @@ export const isStatusOnHold = (status: CaseStatus | undefined): boolean => {
   return status?.includes('ON_HOLD') ?? false
 }
 
-type PaymentDetailsName = {
+export type PaymentDetailsName = {
   name: string
   entityType: SanctionsDetailsEntityType
+  countryOfNationality?: CountryCode
+  dateOfBirth?: string
 }
 
 export const getBankNameFromPaymentDetails = (
@@ -176,6 +179,17 @@ export const getPaymentDetailsName = (
       }
       break
     case 'GENERIC_BANK_ACCOUNT':
+      {
+        if (paymentDetails.name) {
+          namesToSearch.push({
+            name: paymentDetails.name,
+            entityType: 'BANK_ACCOUNT_HOLDER_NAME',
+            countryOfNationality: paymentDetails.countryOfNationality,
+            dateOfBirth: paymentDetails.dateOfBirth,
+          })
+        }
+      }
+      break
     case 'IBAN':
       {
         if (paymentDetails.name) {
