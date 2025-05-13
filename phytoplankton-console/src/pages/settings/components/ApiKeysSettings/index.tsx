@@ -16,6 +16,8 @@ import Alert from '@/components/library/Alert';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { useAuth0User } from '@/utils/user-utils';
 import { isWhiteLabeled } from '@/utils/branding';
+import { copyTextToClipboard } from '@/utils/browser';
+import { getErrorMessage } from '@/utils/lang';
 
 export const ApiKeysSettings = () => {
   const api = useApi();
@@ -123,9 +125,13 @@ export const ApiKeysSettings = () => {
                                 <FileCopyOutlined
                                   height={16}
                                   width={16}
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(key ?? '');
-                                    message.success('Copied to clipboard');
+                                  onClick={async () => {
+                                    try {
+                                      await copyTextToClipboard(key ?? '');
+                                      message.success('Copied');
+                                    } catch (error) {
+                                      message.error(`Failed to copy: ${getErrorMessage(error)}`);
+                                    }
                                   }}
                                 />
                               )}

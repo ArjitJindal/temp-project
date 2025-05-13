@@ -10,7 +10,7 @@ import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
 import { Comparable, key } from '@/utils/comparable';
-import { neverReturn } from '@/utils/lang';
+import { getErrorMessage, neverReturn } from '@/utils/lang';
 
 export interface Option<Value extends Comparable> {
   value: Value;
@@ -229,14 +229,18 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     return options;
   }, [searchValue, internalOptions, props.mode]);
 
-  const handleCopyText = useCallback(() => {
+  const handleCopyText = useCallback(async () => {
     if (props.value) {
       const valueToCopy = Array.isArray(props.value)
         ? props.value.join(SEPARATOR)
         : props.value.toString();
       if (valueToCopy && valueToCopy.length > 0) {
-        valueToCopy && copyTextToClipboard(valueToCopy);
-        message.success('Copied');
+        try {
+          await copyTextToClipboard(valueToCopy);
+          message.success('Copied');
+        } catch (error) {
+          message.error(`Failed to copy: ${getErrorMessage(error)}`);
+        }
       }
     }
   }, [props.value]);

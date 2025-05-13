@@ -4,6 +4,7 @@ import style from './style.module.less';
 import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
+import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
   alwaysShowCopy?: boolean;
@@ -17,17 +18,15 @@ interface Props {
 export default function Id(props: Props) {
   const { alwaysShowCopy, to, children, testName, onClick, toNewTab = false } = props;
 
-  const handleClickCopy = (e: React.MouseEvent<unknown>) => {
+  const handleClickCopy = async (e: React.MouseEvent<unknown>) => {
     e.preventDefault();
-    // todo: i18n
     if (children) {
-      copyTextToClipboard(children)
-        .then(() => {
-          message.success('Copied to clipboard');
-        })
-        .catch((e) => {
-          message.warn(`Unable copy to clipboard; ${e.message ?? 'Unknown error'}`);
-        });
+      try {
+        await copyTextToClipboard(children);
+        message.success('Copied');
+      } catch (error) {
+        message.error(`Failed to copy: ${getErrorMessage(error)}`);
+      }
     }
   };
 

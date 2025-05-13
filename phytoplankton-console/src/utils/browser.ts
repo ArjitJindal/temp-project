@@ -1,11 +1,43 @@
 import { useEffect, useState } from 'react';
-
-export async function copyTextToClipboard(text: string) {
-  if (!navigator.clipboard) {
-    // todo: i18n
-    throw new Error(`Sorry, you browser doesn't support this operation`);
+import { getErrorMessage } from '@/utils/lang';
+export async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (!text) {
+    throw new Error('No text provided to copy');
   }
-  await navigator.clipboard.writeText(text);
+
+  if (navigator.clipboard && window.isSecureContext) {
+    const permissionStatus = await navigator.permissions.query({
+      name: 'clipboard-write' as PermissionName,
+    });
+    if (permissionStatus.state === 'denied') {
+      throw new Error('Copy permission denied');
+    }
+
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+
+    if (!successful) {
+      throw new Error('Failed to copy');
+    }
+    return true;
+  } catch (err) {
+    throw new Error(`Failed to copy: ${getErrorMessage(err)}`);
+  }
 }
 
 export function downloadUrl(filename: string | undefined, url: string) {
