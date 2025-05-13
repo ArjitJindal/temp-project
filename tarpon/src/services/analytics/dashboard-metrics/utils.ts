@@ -13,6 +13,7 @@ import {
   getTimeformatsByGranularity,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
+import { tenantTimezone } from '@/core/utils/context'
 
 export function withUpdatedAt(
   pipeline: Document[],
@@ -328,12 +329,13 @@ export const executeTimeBasedClickhouseQuery = async <
   const { startTimestamp, endTimestamp } = timeRange
   const gte = dayjs(startTimestamp).format(timestampFormat)
   const lte = dayjs(endTimestamp).format(timestampFormat)
+  const timezone = await tenantTimezone(tenantId)
 
   const query = `
     SELECT 
       ${
         !countOnly
-          ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000))`
+          ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000, '${timezone}'))`
           : `''`
       } as time,
       ${selectStatement}
@@ -347,8 +349,8 @@ export const executeTimeBasedClickhouseQuery = async <
     GROUP BY time
     ORDER BY time ASC
     WITH FILL
-    FROM ${clickhouseTimeMethod}(toDateTime(${startTimestamp} / 1000))
-    TO ${clickhouseTimeMethod}(toDateTime(${endTimestamp} / 1000)) + INTERVAL 1 ${granularity.toUpperCase()}
+    FROM ${clickhouseTimeMethod}(toDateTime(${startTimestamp} / 1000, '${timezone}'))
+    TO ${clickhouseTimeMethod}(toDateTime(${endTimestamp} / 1000, '${timezone}')) + INTERVAL 1 ${granularity.toUpperCase()}
     STEP INTERVAL 1 ${granularity.toUpperCase()}
     `
         : ''
