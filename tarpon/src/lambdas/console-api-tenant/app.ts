@@ -606,6 +606,7 @@ export const tenantsHandler = lambdaApi()(
 
       return await reasonsService.enableOrDisableReason(
         request.reasonId,
+        request.ConsoleActionReasonPutRequest.reasonType,
         request.ConsoleActionReasonPutRequest.isActive
       )
     })

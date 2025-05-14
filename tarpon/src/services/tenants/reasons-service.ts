@@ -78,8 +78,12 @@ export class ReasonsService {
     return await this.reasonsRepository.getReasons(type)
   }
 
-  public async enableOrDisableReason(id: string, isActive: boolean) {
-    return await this.reasonsRepository.updateReason(id, {
+  public async enableOrDisableReason(
+    id: string,
+    reasonType: ReasonType,
+    isActive: boolean
+  ) {
+    return await this.reasonsRepository.updateReason(id, reasonType, {
       isActive: isActive,
     })
   }
@@ -102,6 +106,16 @@ export class ReasonsService {
 
   public async initialiseDefaultReasons() {
     const defaultReasons = getDefaultReasonsData()
-    return await this.reasonsRepository.bulkAddReasons(defaultReasons)
+    await Promise.all([
+      this.reasonsRepository.bulkAddReasons(defaultReasons),
+      this.counterRepository.setCounterValue(
+        'EscalationReason',
+        DEFAULT_ESCALATION_REASONS.length
+      ),
+      this.counterRepository.setCounterValue(
+        'ClosureReason',
+        DEFAULT_CLOSURE_REASONS.length
+      ),
+    ])
   }
 }

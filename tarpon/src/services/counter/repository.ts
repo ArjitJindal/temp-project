@@ -100,4 +100,18 @@ export class CounterRepository {
     const data = await collection.findOne({ entity })
     return (data?.count ?? 0) + 1
   }
+
+  public async setCounterValue(
+    entity: CounterEntity,
+    count: number
+  ): Promise<void> {
+    const collectionName = COUNTER_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const collection = db.collection<EntityCounter>(collectionName)
+    await collection.findOneAndUpdate(
+      { entity },
+      { $set: { count: count } },
+      { upsert: true, returnDocument: 'after' }
+    )
+  }
 }

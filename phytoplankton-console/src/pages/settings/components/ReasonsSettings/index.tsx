@@ -26,11 +26,11 @@ export const ReasonsSettings = () => {
     return await api.getActionReasons({});
   });
   const toggleReasonMutation = useMutation(
-    async (values: { reasonId: string; isActive: boolean }) => {
-      const { reasonId, isActive } = values;
+    async (values: { reasonId: string; isActive: boolean; reasonType: ReasonType }) => {
+      const { reasonId, isActive, reasonType } = values;
       return await api.toggleActionReason({
         reasonId,
-        ConsoleActionReasonPutRequest: { isActive },
+        ConsoleActionReasonPutRequest: { isActive, reasonType },
       });
     },
     {
@@ -68,8 +68,8 @@ export const ReasonsSettings = () => {
     );
     addReasonsMutation.mutate(actionReasons);
   };
-  const toggleReason = (reasonId: string, isActive: boolean) => {
-    toggleReasonMutation.mutate({ reasonId, isActive });
+  const toggleReason = (reasonId: string, isActive: boolean, reasonType: ReasonType) => {
+    toggleReasonMutation.mutate({ reasonId, isActive, reasonType });
   };
 
   const reasons = getOr(asyncResourceReasons.data, []);
@@ -104,7 +104,7 @@ export const ReasonsSettings = () => {
                         value={reasonData.isActive}
                         onChange={(newVal) => {
                           if (newVal !== undefined) {
-                            toggleReason(reasonData.id, newVal);
+                            toggleReason(reasonData.id, newVal, reasonData.reasonType);
                           }
                         }}
                       />

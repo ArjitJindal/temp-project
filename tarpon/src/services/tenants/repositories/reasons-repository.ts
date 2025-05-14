@@ -14,11 +14,20 @@ export class ReasonsRepository {
       REASONS_COLLECTION(tenantId)
     )
   }
-  private async getReason(id: string): Promise<ConsoleActionReason | null> {
-    const existingRecord = await this.collection.findOne({
+  private async getReason(
+    id: string,
+    reasonType: ReasonType
+  ): Promise<ConsoleActionReason | null> {
+    const query: {
+      id: string
+      isDeleted: { $ne: true }
+      reasonType?: ReasonType
+    } = {
       id: id,
       isDeleted: { $ne: true },
-    })
+      reasonType: reasonType,
+    }
+    const existingRecord = await this.collection.findOne(query)
     return existingRecord
   }
 
@@ -35,14 +44,15 @@ export class ReasonsRepository {
 
   public async updateReason(
     id: string,
+    reasonType: ReasonType,
     actionReason: Partial<ConsoleActionReason>
   ) {
-    const existingRecord = await this.getReason(id)
+    const existingRecord = await this.getReason(id, reasonType)
     if (!existingRecord) {
       throw new NotFound('Reason not found')
     }
     await this.collection.updateOne(
-      { id: id },
+      { id, reasonType },
       { $set: { ...actionReason, updatedAt: Date.now() } }
     )
     return { ...existingRecord, ...actionReason }
@@ -52,8 +62,8 @@ export class ReasonsRepository {
     return await this.collection.insertMany(actionReasons)
   }
 
-  public async deleteReason(id: string) {
-    const existingRecord = await this.getReason(id)
+  public async deleteReason(id: string, reasonType: ReasonType) {
+    const existingRecord = await this.getReason(id, reasonType)
     if (!existingRecord) {
       throw new NotFound('Reason not found')
     }

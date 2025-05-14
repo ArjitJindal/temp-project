@@ -12110,8 +12110,11 @@ components:
       properties:
         isActive:
           type: boolean
+        reasonType:
+          $ref: '#/components/schemas/ReasonType'
       required:
         - isActive
+        - reasonType
     ConsoleBulkActionReasonPostRequest:
       title: ConsoleBulkActionReasonPostRequest
       type: array
