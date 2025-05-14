@@ -35,19 +35,30 @@ export const STDEV: LogicVariableAggregator<number, StdDevSample, number> = {
   init: () => ({ sumOfSquares: 0, count: 0, sum: 0 }),
   aggregate: (values) => ({
     count: values.length,
-    sum: sum(values),
-    sumOfSquares: sum(values.map((value) => value * value)),
+    sum: Math.min(sum(values), Number.MAX_SAFE_INTEGER - 1),
+    sumOfSquares: Math.min(
+      sum(values.map((value) => value * value)),
+      Number.MAX_SAFE_INTEGER - 1
+    ),
   }),
   reduce: (aggregation, value) => ({
     count: aggregation.count + 1,
-    sum: aggregation.sum + sum(value),
-    sumOfSquares:
+    sum: Math.min(aggregation.sum + sum(value), Number.MAX_SAFE_INTEGER - 1),
+    sumOfSquares: Math.min(
       aggregation.sumOfSquares + sum(value.map((value) => value * value)),
+      Number.MAX_SAFE_INTEGER - 1
+    ),
   }),
   merge: (aggregation1, aggregation2) => ({
     count: aggregation1.count + aggregation2.count,
-    sum: aggregation1.sum + aggregation2.sum,
-    sumOfSquares: aggregation1.sumOfSquares + aggregation2.sumOfSquares,
+    sum: Math.min(
+      aggregation1.sum + aggregation2.sum,
+      Number.MAX_SAFE_INTEGER - 1
+    ),
+    sumOfSquares: Math.min(
+      aggregation1.sumOfSquares + aggregation2.sumOfSquares,
+      Number.MAX_SAFE_INTEGER - 1
+    ),
   }),
   compute: (aggregation) => calculateFinalStdev([aggregation]),
 }
