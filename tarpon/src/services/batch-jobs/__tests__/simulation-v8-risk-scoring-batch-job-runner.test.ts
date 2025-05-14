@@ -87,96 +87,96 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       },
     }),
   ])
-  test('should run the simulation v8 risk scoring job', async () => {
+  const testRiskFactors = [
+    getTestRiskFactor({
+      id: 'RF-1',
+      riskLevelLogic: [
+        {
+          logic: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                  },
+                  100,
+                ],
+              },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'LOW',
+          riskScore: 30,
+        },
+        {
+          logic: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                  },
+                  100,
+                ],
+              },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+        },
+      ],
+      type: 'TRANSACTION',
+    }),
+    getTestRiskFactor({
+      id: 'RF-2',
+      type: 'CONSUMER_USER',
+      riskLevelLogic: [
+        {
+          logic: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'CONSUMER_USER:kycStatusDetails-status__SENDER',
+                  },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'VERY_HIGH',
+          riskScore: 100,
+        },
+      ],
+    }),
+    getTestRiskFactor({
+      id: 'RF-3',
+      type: 'BUSINESS',
+      riskLevelLogic: [
+        {
+          logic: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'BUSINESS_USER:kycStatusDetails-status__SENDER',
+                  },
+                  'EXPIRED',
+                ],
+              },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'HIGH',
+          riskScore: 70,
+        },
+      ],
+    }),
+  ]
+  test('should run the simulation v8 risk scoring job (Simple avg algorithm)', async () => {
     const mongoDb = await getMongoDbClient()
-    const testRiskFactors = [
-      getTestRiskFactor({
-        id: 'RF-1',
-        riskLevelLogic: [
-          {
-            logic: {
-              and: [
-                {
-                  '==': [
-                    {
-                      var: 'TRANSACTION:originAmountDetails-transactionAmount',
-                    },
-                    100,
-                  ],
-                },
-              ],
-            },
-            weight: 1,
-            riskLevel: 'LOW',
-            riskScore: 30,
-          },
-          {
-            logic: {
-              and: [
-                {
-                  '>': [
-                    {
-                      var: 'TRANSACTION:originAmountDetails-transactionAmount',
-                    },
-                    100,
-                  ],
-                },
-              ],
-            },
-            weight: 1,
-            riskLevel: 'MEDIUM',
-            riskScore: 50,
-          },
-        ],
-        type: 'TRANSACTION',
-      }),
-      getTestRiskFactor({
-        id: 'RF-2',
-        type: 'CONSUMER_USER',
-        riskLevelLogic: [
-          {
-            logic: {
-              and: [
-                {
-                  '==': [
-                    {
-                      var: 'CONSUMER_USER:kycStatusDetails-status__SENDER',
-                    },
-                    'CANCELLED',
-                  ],
-                },
-              ],
-            },
-            weight: 1,
-            riskLevel: 'VERY_HIGH',
-            riskScore: 100,
-          },
-        ],
-      }),
-      getTestRiskFactor({
-        id: 'RF-3',
-        type: 'BUSINESS',
-        riskLevelLogic: [
-          {
-            logic: {
-              and: [
-                {
-                  '==': [
-                    {
-                      var: 'BUSINESS_USER:kycStatusDetails-status__SENDER',
-                    },
-                    'EXPIRED',
-                  ],
-                },
-              ],
-            },
-            weight: 1,
-            riskLevel: 'HIGH',
-            riskScore: 70,
-          },
-        ],
-      }),
-    ]
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
@@ -479,6 +479,321 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
           drs: {
             riskScore: 70,
             riskLevel: 'HIGH',
+          },
+        },
+      },
+    ])
+  })
+  test('should run the simulation v8 risk scoring job (Legacy moving avg algorithm)', async () => {
+    const mongoDb = await getMongoDbClient()
+    const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      mongoDb
+    )
+    const simulationResultRepository = new SimulationResultRepository(
+      tenantId,
+      mongoDb
+    )
+    const parameters: SimulationV8RiskFactorsParametersRequest = {
+      parameters: [
+        {
+          name: 'test-simulation-1',
+          parameters: testRiskFactors,
+          description: 'Test Simulation 1',
+          type: 'RISK_FACTORS_V8',
+          riskScoringAlgorithm: {
+            type: 'FORMULA_LEGACY_MOVING_AVG',
+          },
+        },
+      ],
+      type: 'RISK_FACTORS_V8',
+      sampling: { usersCount: 'RANDOM' },
+    }
+    const { taskIds, jobId } =
+      await simulationTaskRepository.createSimulationJob(parameters)
+    const testJob: SimulationRiskFactorsV8BatchJob = {
+      type: 'SIMULATION_RISK_FACTORS_V8',
+      tenantId,
+      parameters: {
+        taskId: taskIds[0],
+        jobId,
+        sampling: parameters.sampling ?? { usersCount: 'RANDOM' },
+      },
+    }
+    await jobRunnerHandler(testJob)
+
+    const data: SimulationV8RiskFactorsJob | null =
+      await simulationTaskRepository.getSimulationJob<SimulationV8RiskFactorsJob>(
+        jobId
+      )
+    const results = await simulationResultRepository.getSimulationResults({
+      taskId: taskIds[0],
+      page: 1,
+      pageSize: 10,
+    })
+    expect(data).toEqual({
+      createdAt: expect.any(Number),
+      jobId: expect.any(String),
+      createdBy: 'test',
+      internal: false,
+      type: 'RISK_FACTORS_V8',
+      iterations: [
+        {
+          taskId: expect.any(String),
+          parameters: {
+            name: 'test-simulation-1',
+            type: 'RISK_FACTORS_V8',
+            parameters: testRiskFactors,
+            description: 'Test Simulation 1',
+            riskScoringAlgorithm: {
+              type: 'FORMULA_LEGACY_MOVING_AVG',
+            },
+          },
+          progress: 1,
+          statistics: {
+            current: [
+              {
+                count: 0,
+                riskLevel: 'LOW',
+                riskType: 'KRS',
+              },
+              {
+                count: 1,
+                riskLevel: 'MEDIUM',
+                riskType: 'KRS',
+              },
+              {
+                count: 1,
+                riskLevel: 'HIGH',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'LOW',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'MEDIUM',
+                riskType: 'DRS',
+              },
+              {
+                count: 2,
+                riskLevel: 'HIGH',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'LOW',
+                riskType: 'ARS',
+              },
+              {
+                count: 1,
+                riskLevel: 'MEDIUM',
+                riskType: 'ARS',
+              },
+              {
+                count: 1,
+                riskLevel: 'HIGH',
+                riskType: 'ARS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'ARS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'ARS',
+              },
+            ],
+            simulated: [
+              {
+                count: 0,
+                riskLevel: 'LOW',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'MEDIUM',
+                riskType: 'KRS',
+              },
+              {
+                count: 1,
+                riskLevel: 'HIGH',
+                riskType: 'KRS',
+              },
+              {
+                count: 1,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'KRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'LOW',
+                riskType: 'DRS',
+              },
+              {
+                count: 2,
+                riskLevel: 'MEDIUM',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'HIGH',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'DRS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'DRS',
+              },
+              {
+                count: 1,
+                riskLevel: 'LOW',
+                riskType: 'ARS',
+              },
+              {
+                count: 1,
+                riskLevel: 'MEDIUM',
+                riskType: 'ARS',
+              },
+              {
+                count: 0,
+                riskLevel: 'HIGH',
+                riskType: 'ARS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_HIGH',
+                riskType: 'ARS',
+              },
+              {
+                count: 0,
+                riskLevel: 'VERY_LOW',
+                riskType: 'ARS',
+              },
+            ],
+          },
+          latestStatus: {
+            status: 'SUCCESS',
+            timestamp: expect.any(Number),
+          },
+          statuses: [
+            {
+              status: 'PENDING',
+              timestamp: expect.any(Number),
+            },
+            {
+              status: 'IN_PROGRESS',
+              timestamp: expect.any(Number),
+            },
+            {
+              status: 'IN_PROGRESS',
+              timestamp: expect.any(Number),
+            },
+            {
+              status: 'IN_PROGRESS',
+              timestamp: expect.any(Number),
+            },
+            {
+              status: 'SUCCESS',
+              timestamp: expect.any(Number),
+            },
+          ],
+          name: 'test-simulation-1',
+          description: 'Test Simulation 1',
+          type: 'RISK_FACTORS_V8',
+          createdAt: expect.any(Number),
+          createdBy: 'test',
+          totalEntities: 2,
+        },
+      ],
+    })
+    expect(results.items).toHaveLength(2)
+    expect(results.items).toEqual([
+      {
+        userId: 'test-user-2',
+        type: 'RISK_FACTORS_V8',
+        userName: 'Test Business',
+        userType: 'BUSINESS',
+        taskId: expect.any(String),
+        current: {
+          krs: {
+            riskScore: 60,
+            riskLevel: 'HIGH',
+          },
+          drs: {
+            riskScore: 60,
+            riskLevel: 'HIGH',
+          },
+        },
+        simulated: {
+          krs: {
+            riskScore: 70,
+            riskLevel: 'HIGH',
+          },
+          drs: {
+            riskScore: 45,
+            riskLevel: 'MEDIUM',
+          },
+        },
+      },
+      {
+        userId: 'test-user-1',
+        type: 'RISK_FACTORS_V8',
+        userName: 'Baran Realblood Ozkan',
+        userType: 'CONSUMER',
+        taskId: expect.any(String),
+        current: {
+          krs: {
+            riskScore: 40,
+            riskLevel: 'MEDIUM',
+          },
+          drs: {
+            riskScore: 60,
+            riskLevel: 'HIGH',
+          },
+        },
+        simulated: {
+          krs: {
+            riskScore: 100,
+            riskLevel: 'VERY_HIGH',
+          },
+          drs: {
+            riskScore: 52.5,
+            riskLevel: 'MEDIUM',
           },
         },
       },

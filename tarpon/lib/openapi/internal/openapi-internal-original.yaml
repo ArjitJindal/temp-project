@@ -15404,6 +15404,11 @@ components:
           type: string
         description:
           type: string
+        riskScoringAlgorithm:
+          oneOf:
+            - $ref: '#/components/schemas/FormulaLegacyMovingAvg'
+            - $ref: '#/components/schemas/FormulaSimpleAvg'
+            - $ref: '#/components/schemas/FormulaCustom'
       required:
         - parameters
         - name

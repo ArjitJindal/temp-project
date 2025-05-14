@@ -7,7 +7,6 @@ import PQueue from 'p-queue'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SimulationTaskRepository } from '../simulation/repositories/simulation-task-repository'
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -77,6 +76,12 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     string,
     { current: number; simulated: number }
   >()
+  private riskScoringAlgorithm:
+    | FormulaLegacyMovingAvg
+    | FormulaCustom
+    | FormulaSimpleAvg = {
+    type: 'FORMULA_SIMPLE_AVG',
+  }
 
   protected async run(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
     this.job = job
@@ -99,6 +104,8 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       mongoDb: this.mongoDb,
       dynamoDb,
     })
+    this.riskScoringAlgorithm =
+      task?.parameters.riskScoringAlgorithm ?? this.riskScoringAlgorithm
     const logicEvaluator = new LogicEvaluator(this.tenantId, dynamoDb)
     logicEvaluator.setMode('MONGODB') // As we use mongoDb for simulation
     this.riskScoringV8Service = new RiskScoringV8Service(
@@ -201,17 +208,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       if (!this.tenantId) {
         throw new Error('Tenant ID is not set')
       }
-      const tenantRepository = new TenantRepository(this.tenantId, {
-        mongoDb: this.mongoDb,
-        dynamoDb: this.dynamoDb,
-      })
-      const tenantSettings = await tenantRepository.getTenantSettings()
-      const { riskScoringAlgorithm } = tenantSettings
-      await this.processAllUsers(
-        riskClassificationValues,
-        updateProgress,
-        riskScoringAlgorithm
-      )
+      await this.processAllUsers(riskClassificationValues, updateProgress)
       await simulationTaskRepository.updateTaskStatus(taskId, 'SUCCESS')
     } catch (e) {
       await simulationTaskRepository.updateTaskStatus(taskId, 'FAILED', 0, 0)
@@ -221,11 +218,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
 
   private async processAllUsers(
     riskClassificationValues: RiskClassificationScore[],
-    updateProgress: (progress: number) => Promise<void>,
-    riskScoringAlgorithm?:
-      | FormulaCustom
-      | FormulaSimpleAvg
-      | FormulaLegacyMovingAvg
+    updateProgress: (progress: number) => Promise<void>
   ) {
     const usersCursor = this.userRepository
       .sampleUsersCursor(this.totalUsers)
@@ -236,8 +229,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         await this.processUsersBatch(
           users,
           riskClassificationValues,
-          updateProgress,
-          riskScoringAlgorithm
+          updateProgress
         )
       },
       {
@@ -250,38 +242,39 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
   private async processUsersBatch(
     users: InternalUser[],
     riskClassificationValues: RiskClassificationScore[],
-    updateProgress: (progress: number) => Promise<void>,
-    riskScoringAlgorithm?:
-      | FormulaCustom
-      | FormulaSimpleAvg
-      | FormulaLegacyMovingAvg
+    updateProgress: (progress: number) => Promise<void>
   ) {
     await pMap(
       users ?? [],
       async (user) => {
         // processing user KRS
-        const [simulatedKrs, averageArs] = await Promise.all([
+        const [simulatedKrs, arsData] = await Promise.all([
           this.calculateUserKrs(user),
           this.processUserTransactions(user),
         ])
 
         let simulatedDrs: number | undefined
-        if (
-          riskScoringAlgorithm?.type !== 'FORMULA_LEGACY_MOVING_AVG' // As we do not allow CRA simulation for legacy moving average
+        if (simulatedKrs.isOverriddenScore) {
+          simulatedDrs = simulatedKrs.score
+        } else if (
+          this.riskScoringAlgorithm.type !== 'FORMULA_LEGACY_MOVING_AVG' // As we do not allow CRA simulation for legacy moving average
         ) {
-          if (simulatedKrs.isOverriddenScore) {
-            simulatedDrs = simulatedKrs.score
-          } else {
-            simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
-              algorithm: riskScoringAlgorithm ?? {
-                type: 'FORMULA_SIMPLE_AVG',
-              },
-              oldDrsScore: undefined,
-              krsScore: simulatedKrs.score,
-              avgArsScore: averageArs,
-              arsScore: undefined,
+          simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
+            algorithm: this.riskScoringAlgorithm,
+            oldDrsScore: undefined,
+            krsScore: simulatedKrs.score,
+            avgArsScore: arsData.avgArsScore,
+            arsScore: undefined,
+          })
+        } else {
+          // Assumption that user has static KRS after creation
+          simulatedDrs = arsData.arsScores.reduce((prev, curr) => {
+            return this.riskScoringV8Service.calculateNewDrsScore({
+              algorithm: this.riskScoringAlgorithm,
+              oldDrsScore: prev,
+              arsScore: curr,
             })
-          }
+          }, simulatedKrs.score)
         }
         const currentKrs = user.krsScore?.krsScore ?? 0
         const currentKrsRiskLevel = getRiskLevelFromScore(
@@ -446,17 +439,21 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
 
   private async processUserTransactions(
     user: User | Business
-  ): Promise<number> {
+  ): Promise<{ avgArsScore: number; arsScores: number[] }> {
     const transactionsCursor = this.transactionRepo
       .getTransactionsCursor({
         filterUserId: user.userId,
+        sortField: 'timestamp',
+        sortOrder: 'ascend',
       })
       .addCursorFlag('noCursorTimeout', true)
-    let totalArs = 0,
-      transactionsCount = 0
+    let totalArs = 0
+    let transactionsCount = 0
+    const arsValues: number[] = []
     const updateArsStats = (ars: number) => {
       totalArs += ars
       transactionsCount++
+      arsValues.push(ars)
     }
 
     await processCursorInBatch(
@@ -466,7 +463,10 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       },
       { processBatchSize: BATCH_SIZE, mongoBatchSize: BATCH_SIZE }
     )
-    return totalArs / (transactionsCount == 0 ? 1 : transactionsCount)
+    return {
+      avgArsScore: totalArs / (transactionsCount || 1),
+      arsScores: arsValues,
+    }
   }
 
   private async calculateUserKrs(user: User | Business): Promise<UserKrsData> {

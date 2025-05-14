@@ -31,6 +31,9 @@ import {
 } from '@/apis';
 import Tabs from '@/components/library/Tabs';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import RiskAlgorithmsSelector, {
+  RiskScoringCraAlgorithm,
+} from '@/pages/settings/components/RiskAlgorithmsCra/RiskAlgorithmsSelector';
 
 export type ParameterValue = {
   [key in RiskEntityType]?: {
@@ -46,6 +49,7 @@ interface FormValues {
   name: string;
   description: string;
   samplingSize: 'ALL' | 'RANDOM';
+  riskAlgorithm?: RiskScoringCraAlgorithm;
 }
 
 const DEFAULT_ITERATION: FormValues = {
@@ -129,6 +133,7 @@ export function RiskFactorsSimulation(props: Props) {
           description: iteration.description,
           parameters: getRiskFactors(index),
           type: 'RISK_FACTORS_V8',
+          riskScoringAlgorithm: iteration.riskAlgorithm,
         };
       }),
     };
@@ -329,6 +334,25 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
                     : []),
                 ]}
                 {...inputProps}
+              />
+            )}
+          </InputField>
+          <InputField<FormValues, 'riskAlgorithm'>
+            name={'riskAlgorithm'}
+            label={'Risk algorithms for CRA'}
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => (
+              <RiskAlgorithmsSelector
+                currentAlgorithm={inputProps.value}
+                defaultAlgorithmType="FORMULA_SIMPLE_AVG"
+                handleUpdateAlgorithm={(riskAlgorithm) => {
+                  if (inputProps) {
+                    inputProps.onChange?.(riskAlgorithm);
+                  }
+                }}
+                isUpdateDisabled={false}
+                hasPermissions={true}
               />
             )}
           </InputField>
