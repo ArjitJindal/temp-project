@@ -178,9 +178,6 @@ export const SimulationResult = (props: Props) => {
       {iterations[activeIterationIndex - 1]?.progress > 0.1 ? (
         <div className={styles.footer}>
           <div className={styles.footerButtons}>
-            <Button onClick={handleReportDownload} type={'TETRIARY'}>
-              PDF report
-            </Button>
             <Confirm
               onConfirm={() => {
                 updateParametersMutation.mutate();
@@ -195,6 +192,9 @@ export const SimulationResult = (props: Props) => {
                 </Button>
               )}
             </Confirm>
+            <Button onClick={handleReportDownload} type={'TETRIARY'}>
+              PDF report
+            </Button>
             <Button
               type="TETRIARY"
               onClick={() => {
