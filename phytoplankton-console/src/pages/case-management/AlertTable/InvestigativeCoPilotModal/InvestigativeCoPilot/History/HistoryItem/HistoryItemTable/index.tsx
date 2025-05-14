@@ -139,6 +139,7 @@ export default function HistoryItemTable(props: Props) {
       })}
       data={tableData}
       pagination={paginate || 'HIDE_FOR_ONE_PAGE'}
+      sizingMode="FULL_WIDTH"
     />
   );
 }
