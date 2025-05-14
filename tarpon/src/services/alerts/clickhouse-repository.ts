@@ -100,10 +100,13 @@ export class ClickhouseAlertRepository {
     let sortField: string
     switch (params.sortField) {
       case 'alertId':
-        sortField = 'id'
+        sortField = 'alertIdNumber'
         break
       case 'createdTimestamp':
         sortField = 'timestamp'
+        break
+      case 'caseId':
+        sortField = 'caseIdNumber'
         break
       default:
         sortField = params.sortField ?? 'timestamp'

@@ -879,6 +879,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "numberOfTransactionsHit Int32 MATERIALIZED JSONExtractInt(data, 'numberOfTransactionsHit')",
       "alertIdNumber UInt64 MATERIALIZED toUInt64OrZero(extract(id, '^A-(\\d+)$'))",
       "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
+      "caseIdNumber UInt64 MATERIALIZED toUInt64OrZero(extract(JSONExtractString(data, 'caseId'), '^C-(\\d+)$'))",
       "caseStatus String MATERIALIZED JSONExtractString(data, 'caseStatus')",
       "alertStatus String MATERIALIZED JSONExtractString(data, 'alertStatus')",
       "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",

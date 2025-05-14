@@ -512,11 +512,13 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   : undefined;
               },
             },
+            sorting: true,
           }),
           helper.simple<'caseId'>({
             title: 'Case ID',
             key: 'caseId',
             type: CASEID,
+            sorting: true,
           }),
           helper.simple<'createdTimestamp'>({
             title: 'Created at',
