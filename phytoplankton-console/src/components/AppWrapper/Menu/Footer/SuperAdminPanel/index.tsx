@@ -220,6 +220,7 @@ export default function SuperAdminPanel() {
     markedForDeletionContainer: true,
     failedToDeleteContainer: true,
   });
+  const [downloadFeatureLoading, setDownloadFeatureState] = useState(false);
 
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
   const hasExternalSanctionsProvider =
@@ -821,10 +822,19 @@ export default function SuperAdminPanel() {
             <Button
               type={'PRIMARY'}
               onClick={async () => {
-                await handlePullAllTenantsFeatures();
+                try {
+                  setDownloadFeatureState(true);
+                  message.info('Pulling features config');
+                  await handlePullAllTenantsFeatures();
+                } catch (e) {
+                  message.error(`Failed to download features config ${e}`);
+                } finally {
+                  setDownloadFeatureState(false);
+                }
               }}
+              isLoading={downloadFeatureLoading}
             >
-              Pull all tenants features
+              Download features config
             </Button>
           </div>
         )}
