@@ -116,7 +116,10 @@ export class ReportService {
     )
     this.s3 = s3
     this.s3Config = s3Config
-    const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     this.caseService = new CaseService(caseRepository, s3, {
       tmpBucketName: this.s3Config.documentBucket,
       documentBucketName: this.s3Config.documentBucket,
