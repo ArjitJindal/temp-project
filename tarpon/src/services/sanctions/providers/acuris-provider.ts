@@ -767,7 +767,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             )
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
-          const normalisedSourceName = normalizeSource(evidenceName ?? '')
+          const normalisedSourceName = normalizeSource(evidenceName ?? 'Other')
           if (normalisedSourceName) {
             const existingIds =
               this.SanctionsSourceToEntityIdMapPerson.get(
@@ -975,7 +975,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
               ? SANCTIONS_SOURCE_RELEVANCES[0]
               : SANCTIONS_SOURCE_RELEVANCES[1]
             : undefined
-          const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
+          const normalisedEvidenceName = normalizeSource(
+            evidenceName ?? 'Other'
+          )
           if (normalisedEvidenceName) {
             const existingIds =
               this.SanctionsSourceToEntityIdMapBusiness.get(
