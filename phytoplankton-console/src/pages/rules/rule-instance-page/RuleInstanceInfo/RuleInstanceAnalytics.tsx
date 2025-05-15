@@ -35,8 +35,8 @@ import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-const HIT_RATE_SERIES = 'Hit rate (%)';
-const FALSE_POSITIVE_RATE_SERIES = 'False positive rate (%)';
+const HIT_RATE_SERIES = 'Hit rate';
+const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
 const RULE_UPDATED = 'Rule is edited';
 
 type TimeRange = { afterTimestamp?: number; beforeTimestamp?: number };
@@ -212,56 +212,13 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                 [FALSE_POSITIVE_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_10,
                 ...ruleUpdatedColors,
               };
-              // const customContent = (title: string, data) => {
-              //   return (
-              //     <div className={s.tooltip}>
-              //       <div className={s.tooltipTitle}>{title}</div>
-              //       {data.map(({ data }) => {
-              //         const date = title.replace(`${RULE_UPDATED} (`, '').replace(`)`, '');
-              //         return (
-              //           <div key={data.series} className={s.tooltipRow}>
-              //             <div className={s.tooltipLeft}>
-              //               <div
-              //                 className={s.tooltipMarker}
-              //                 style={{ backgroundColor: colors[data.series] }}
-              //               ></div>
-              //               <div>{data.series}</div>
-              //             </div>
-              //             {!data.series.startsWith(RULE_UPDATED) ? (
-              //               <div>{data.yValue}%</div>
-              //             ) : (
-              //               <a
-              //                 href={makeUrl(
-              //                   '/auditlog',
-              //                   {},
-              //                   {
-              //                     filterTypes: 'RULE',
-              //                     searchEntityId: ruleInstance.id,
-              //                     filterActions: 'UPDATE',
-              //                     createdTimestamp: `${dayjs(date)
-              //                       .startOf('day')
-              //                       .valueOf()},${dayjs(date).endOf('day').valueOf()}`,
-              //                   },
-              //                 )}
-              //                 target="_blank"
-              //               >
-              //                 ➡️
-              //               </a>
-              //             )}
-              //           </div>
-              //         );
-              //       })}
-              //     </div>
-              //   );
-              // };
               return (
                 <LineChart
                   data={success([...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats])}
                   colors={colors}
                   height={275}
-                  hideLegend={true}
-                  // dashedLinesSeries={Object.keys(ruleUpdatedColors)}
-                  // customTooltip={customContent}
+                  hideLegend
+                  formatY={(value) => `${value}%`}
                 />
               );
             }}
