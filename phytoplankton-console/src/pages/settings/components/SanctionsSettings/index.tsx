@@ -45,7 +45,7 @@ export const SanctionsSettings = () => {
     message.success('KYC6 download started');
 
     const downloadUrl1 =
-      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Acuris_Risk_Intelligence.zip';
+      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Acuris_Risk_Intelligence_May.zip';
     downloadLink(downloadUrl1, 'Acuris_Risk_Intelligence.zip');
   };
 
@@ -164,7 +164,7 @@ export const SanctionsSettings = () => {
       <SettingsCard
         title={
           isSanctionsEnabled
-            ? 'Screening Sources (as of January 2025)'
+            ? 'Screening Sources (as of May 2025)'
             : 'Sanctions/PEP/Adverse media screening'
         }
         description={isSanctionsEnabled ? '' : 'Screen individuals and entities in a single API.'}
