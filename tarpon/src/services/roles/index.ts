@@ -1,11 +1,12 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import { memoize, uniq } from 'lodash'
 import { AccountsService } from '../accounts'
 import { Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import {
   convertV1PermissionToV2,
+  convertV2PermissionToV1,
   getOptimizedPermissions,
 } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
@@ -87,9 +88,15 @@ export class RoleService {
       tenantId,
       (inputRole.statements ?? []).concat(v1V2Permissions)
     )
+    const convertedPermissions = uniq(
+      convertV2PermissionToV1(tenantId, statements).concat(
+        inputRole.permissions ?? []
+      )
+    )
+
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
-      params: inputRole,
+      params: { ...inputRole, permissions: convertedPermissions },
     })
     await this.cache.createRole(tenantId, {
       type: 'DATABASE',
@@ -122,14 +129,30 @@ export class RoleService {
     inputRole: AccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
     const oldRole = await this.getRole(id)
-    await this.auth0.updateRole(tenantId, id, inputRole)
-    await this.cache.updateRole(tenantId, id, {
+    const v1V2Permissions = convertV1PermissionToV2(
+      tenantId,
+      inputRole.permissions ?? []
+    )
+    const statements = getOptimizedPermissions(
+      tenantId,
+      (inputRole.statements ?? []).concat(v1V2Permissions)
+    )
+    const convertedPermissions = uniq(
+      convertV2PermissionToV1(tenantId, statements).concat(
+        inputRole.permissions ?? []
+      )
+    )
+    await this.auth0.updateRole(tenantId, oldRole.id, {
       ...inputRole,
-      statements: inputRole.statements ?? [],
+      permissions: convertedPermissions,
+    })
+    await this.cache.updateRole(tenantId, oldRole.id, {
+      ...inputRole,
+      statements,
     })
     const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = (await accountsService.getTenantById(tenantId)) as Tenant
-    const users = await this.getUsersByRole(id, tenant)
+    const users = await this.getUsersByRole(oldRole.id, tenant)
     await Promise.all(
       users.map((u) =>
         accountsService.patchUser(tenant, u.id, { role: inputRole.name })
@@ -138,11 +161,7 @@ export class RoleService {
     return {
       result: inputRole,
       entities: [
-        {
-          entityId: id,
-          oldImage: oldRole,
-          newImage: inputRole,
-        },
+        { entityId: oldRole.id, oldImage: oldRole, newImage: inputRole },
       ],
     }
   }
