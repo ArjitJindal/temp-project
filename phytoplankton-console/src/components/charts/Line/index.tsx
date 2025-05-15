@@ -223,7 +223,11 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
               }
             }}
           />
-          <DefaultAxisLeft left={0} scale={yScale} />
+          <DefaultAxisLeft
+            left={0}
+            scale={yScale}
+            tickLabelProps={() => ({ dx: '-0.25em', dy: '0.25em' })}
+          />
           <DefaultAxisBottom left={0} top={innerHeight} scale={xScale} />
         </Group>
       </svg>
