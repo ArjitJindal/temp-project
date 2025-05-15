@@ -48,7 +48,7 @@ export default function SimulationHistoryItemPage() {
         },
         {
           title: 'Simulations history',
-          to: '/rules/simulation-history',
+          to: `/rules/${rulesTab}/simulation-history`,
         },
         {
           title: `Simulation #${jobId?.split('-')[0]}...`,
