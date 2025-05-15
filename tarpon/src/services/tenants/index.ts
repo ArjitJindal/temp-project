@@ -29,6 +29,7 @@ import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RISK_FACTORS } from '../risk-scoring/risk-factors'
+import { CounterRepository } from '../counter/repository'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -403,15 +404,20 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,
     })
+    const counterRepository = new CounterRepository(tenantId, this.mongoDb)
     // initalising v2 risk factors in v8 for new tenant
-    await Promise.all(
-      RISK_FACTORS.map(async (riskFactor, index) => {
+    await Promise.all([
+      ...RISK_FACTORS.map(async (riskFactor, index) => {
         await riskRepository.createOrUpdateRiskFactor({
           id: `RF-${(index + 1).toString().padStart(3, '0')}`,
           ...riskFactor,
         })
-      })
-    )
+      }),
+      await counterRepository.setCounterValue(
+        'RiskFactor',
+        RISK_FACTORS.length
+      ),
+    ])
 
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',
