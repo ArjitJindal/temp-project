@@ -25,6 +25,7 @@ import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/vari
 import { generateChecksum } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
+import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -571,6 +572,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   | Array<keyof MpesaDetails>
   | Array<keyof CheckDetails>
   | Array<keyof CashDetails>
+  | Array<keyof NPPDetails>
 > = {
   IBAN: ['BIC', 'IBAN'],
   CARD: ['cardFingerprint'],
@@ -582,6 +584,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   MPESA: ['businessShortCode', 'phoneNumber'],
   CHECK: ['checkIdentifier', 'checkNumber'],
   CASH: ['identifier'],
+  NPP: ['accountNumber'],
 }
 
 export function getPaymentMethodId(
@@ -611,6 +614,8 @@ export function getPaymentMethodId(
       return pm.upiID
     case 'CASH':
       return pm.identifier
+    case 'NPP':
+      return pm.payId
   }
 }
 
@@ -621,7 +626,8 @@ export function getBankname(
     paymentMethodDetails?.method === 'IBAN' ||
     paymentMethodDetails?.method === 'SWIFT' ||
     paymentMethodDetails?.method === 'GENERIC_BANK_ACCOUNT' ||
-    paymentMethodDetails?.method === 'ACH'
+    paymentMethodDetails?.method === 'ACH' ||
+    paymentMethodDetails?.method === 'NPP'
   ) {
     return paymentMethodDetails.bankName
   }
@@ -650,9 +656,6 @@ export function getPaymentDetailsIdentifiers(
     return {
       accountNumber,
       bankCode,
-      // NOTE: bankId is currently being sent by Kevin. We'll ask them to send bankCode
-      // instead later
-      bankId: (paymentDetails as any).bankId,
     }
   } else {
     // All fields need to be non-empty

@@ -9513,6 +9513,7 @@ components:
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/NPPDetails
         amount:
           type: number
         currency:
@@ -12340,6 +12341,7 @@ components:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/NPPDetails
             destination:
               oneOf:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
@@ -12352,6 +12354,7 @@ components:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/NPPDetails
         paymentMethodId:
           type: string
         caseUsers:

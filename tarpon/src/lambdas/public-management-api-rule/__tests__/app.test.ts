@@ -166,6 +166,7 @@ describe('Public Management API - Rule', () => {
                 'WALLET',
                 'CHECK',
                 'CASH',
+                'NPP',
               ],
             },
             nullable: true,

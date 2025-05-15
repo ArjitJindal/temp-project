@@ -228,6 +228,18 @@ export const getPaymentDetailsName = (
     case 'MPESA':
     case 'CASH':
       break
+    case 'NPP': {
+      if (paymentDetails.name != null) {
+        const formattedName = formatConsumerName(paymentDetails.name)
+        if (formattedName != null) {
+          namesToSearch.push({
+            name: formattedName,
+            entityType: 'PAYMENT_NAME',
+          })
+        }
+      }
+      break
+    }
   }
 
   return namesToSearch

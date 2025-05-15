@@ -240,6 +240,10 @@ export class ClickhouseTransactionsRepository {
       timestamp: "JSONExtractFloat(data, 'timestamp')",
       updatedAt: "JSONExtractFloat(data, 'updatedAt')",
       arsScore: "JSONExtractFloat(data, 'arsScore', 'arsScore')",
+      originPaymentMethod:
+        "JSONExtractString(data, 'originPaymentDetails', 'method')",
+      destinationPaymentMethod:
+        "JSONExtractString(data, 'destinationPaymentDetails', 'method')",
       destinationPaymentMethodId:
         "JSONExtractString(data, 'destinationPaymentMethodId')",
       originPaymentMethodId: "JSONExtractString(data, 'originPaymentMethodId')",

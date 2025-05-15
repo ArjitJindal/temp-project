@@ -22,6 +22,8 @@ import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
 import { WALLET_NETWORKS } from '@/@types/openapi-public-custom/WalletNetwork'
 import { RISK_LEVELS } from '@/@types/openapi-public-management-custom/RiskLevel'
+import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
+import { CashDetails } from '@/@types/openapi-public/CashDetails'
 
 const RANDOM_IPS = [
   '126.239.220.152',
@@ -160,9 +162,11 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
       destinationUserPaymentDetails ||
       new UserPaymentDetailsSampler(this.rng.randomInt()).getSample()
     // there are 0...8 payment method thus getting a random int to get user patyment details
-    const originPaymentDetails = originUserPaymentDetails[this.rng.randomInt(9)]
+    const originPaymentDetails =
+      originUserPaymentDetails[this.rng.randomInt(11)]
+
     const destinationPaymentDetails =
-      destinationUserPaymentDetails[this.rng.randomInt(9)]
+      destinationUserPaymentDetails[this.rng.randomInt(11)]
 
     return {
       transactionId: `sample_transaction_${uuid()}`,
@@ -294,7 +298,7 @@ export class CryptoTransactionSampler extends BaseSampler<InternalTransaction> {
 
 export class PaymentDetailsSampler extends BaseSampler<PaymentDetails> {
   protected generateSample(): PaymentDetails {
-    switch (this.rng.randomInt(9)) {
+    switch (this.rng.randomInt(11)) {
       case 0:
         return new CardDetailsSampler().getSample()
       case 1:
@@ -313,6 +317,10 @@ export class PaymentDetailsSampler extends BaseSampler<PaymentDetails> {
         return new SWIFTDetailsSampler().getSample()
       case 8:
         return new CheckDetailsSampler().getSample()
+      case 9:
+        return new NPPDetailsSampler().getSample()
+      case 10:
+        return new CashDetailsSampler().getSample()
       default:
         return new CardDetailsSampler().getSample()
     }
@@ -534,6 +542,40 @@ export class CheckDetailsSampler extends BaseSampler<CheckDetails> {
   }
 }
 
+export class CashDetailsSampler extends BaseSampler<CashDetails> {
+  generateSample(): CashDetails {
+    return {
+      method: 'CASH',
+      identifier: `${this.rng.randomInt()}`,
+    }
+  }
+}
+
+export class NPPDetailsSampler extends BaseSampler<NPPDetails> {
+  generateSample(): NPPDetails {
+    return {
+      method: 'NPP',
+      payId: 'NPP' + this.rng.randomInt(),
+      accountNumber: `${this.rng.randomInt()}`,
+      isInstant: this.rng.randomBool(),
+      bankName: this.rng.pickRandom([
+        'Westpac',
+        'Australian National Bank',
+        'Commonwealth Bank of Australia',
+        'National Australia Bank',
+        'Bank of Queensland',
+        'Bank of Melbourne',
+        'Bank of New South Wales',
+        'Bank of South Australia',
+        'Bank of Tasmania',
+        'Bank of Western Australia',
+      ]),
+      oskoReference: `${this.rng.randomInt()}`,
+      endToEndId: `${this.rng.randomInt()}`,
+    }
+  }
+}
+
 export class UserPaymentDetailsSampler extends BaseSampler<{
   [key: string]: PaymentDetails
 }> {
@@ -548,6 +590,8 @@ export class UserPaymentDetailsSampler extends BaseSampler<{
       6: new UPIDetailsSampler().getSample(),
       7: new SWIFTDetailsSampler().getSample(),
       8: new CheckDetailsSampler().getSample(),
+      9: new NPPDetailsSampler().getSample(),
+      10: new CashDetailsSampler().getSample(),
     }
   }
 }

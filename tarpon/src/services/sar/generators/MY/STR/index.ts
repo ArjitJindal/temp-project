@@ -329,6 +329,8 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
               transactionMethod = 'CHEQUE'
             } else if (paymentDetails.method === 'CASH') {
               transactionMethod = 'CASH'
+            } else if (paymentDetails.method === 'NPP') {
+              transactionMethod = 'NPP'
             } else {
               transactionMethod = neverReturn(paymentDetails, undefined)
             }

@@ -20,6 +20,8 @@ import {
   MpesaDetails,
   CheckDetails,
   CashDetails,
+  NPPPaymentMethod,
+  NPPDetails,
 } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import { notEmpty } from '@/utils/array';
@@ -34,7 +36,8 @@ export type PaymentDetails =
   | WalletDetails
   | MpesaDetails
   | CheckDetails
-  | CashDetails;
+  | CashDetails
+  | NPPDetails;
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -46,12 +49,14 @@ export type PaymentMethod =
   | SWIFTPaymentMethod
   | MpesaPaymentMethod
   | CheckPaymentMethod
-  | CashPaymentMethod;
+  | CashPaymentMethod
+  | NPPPaymentMethod;
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
   'ACH',
   'CARD',
   'GENERIC_BANK_ACCOUNT',
+  'NPP',
   'IBAN',
   'SWIFT',
   'UPI',
@@ -74,6 +79,7 @@ export function isPaymentMethod(value: unknown): value is PaymentMethod {
     case 'WALLET':
     case 'CHECK':
     case 'CASH':
+    case 'NPP':
       return true;
   }
   return neverReturn(paymentMethod, false);
@@ -100,6 +106,8 @@ export function getPaymentDetailsIdString(paymentDetails: PaymentDetails): strin
     return paymentDetails.checkIdentifier ?? '-';
   } else if (paymentDetails.method === 'CASH') {
     return paymentDetails.identifier ?? '-';
+  } else if (paymentDetails.method === 'NPP') {
+    return paymentDetails.endToEndId ?? '-';
   } else {
     return neverReturn(paymentDetails, '-');
   }
@@ -126,6 +134,8 @@ export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
     return 'Check';
   } else if (paymentMethod === 'CASH') {
     return 'Cash';
+  } else if (paymentMethod === 'NPP') {
+    return 'New Payment Platform';
   } else {
     return neverReturn(paymentMethod, humanizeConstant(paymentMethod));
   }

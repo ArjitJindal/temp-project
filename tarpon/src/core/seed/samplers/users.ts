@@ -729,7 +729,7 @@ export class BusinessUserSampler extends UserSampler<
 
     const paymentMethod: PaymentDetails[] = []
 
-    for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
+    for (let i = 0; i < this.rng.randomIntInclusive(0, 10); i++) {
       paymentMethod.push(paymentMethodSampler.getSample())
     }
 

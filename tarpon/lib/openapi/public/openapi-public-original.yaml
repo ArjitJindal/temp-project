@@ -2003,6 +2003,7 @@ components:
               - $ref: '#/components/schemas/WalletDetails'
               - $ref: '#/components/schemas/CheckDetails'
               - $ref: '#/components/schemas/CashDetails'
+              - $ref: '#/components/schemas/NPPDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -2463,6 +2464,7 @@ components:
             - $ref: '#/components/schemas/WalletDetails'
             - $ref: '#/components/schemas/CheckDetails'
             - $ref: '#/components/schemas/CashDetails'
+            - $ref: '#/components/schemas/NPPDetails'
           description:
             Payment details of the origin. It can be a bank account number,
             wallet ID, card fingerprint etc.
@@ -2478,6 +2480,7 @@ components:
             - $ref: '#/components/schemas/MpesaDetails'
             - $ref: '#/components/schemas/CheckDetails'
             - $ref: '#/components/schemas/CashDetails'
+            - $ref: '#/components/schemas/NPPDetails'
         originFundsInfo:
           $ref: '#/components/schemas/OriginFundsInfo'
         relatedTransactionIds:
@@ -3992,6 +3995,7 @@ components:
               - $ref: '#/components/schemas/WalletDetails'
               - $ref: '#/components/schemas/CheckDetails'
               - $ref: '#/components/schemas/CashDetails'
+              - $ref: '#/components/schemas/NPPDetails'
         mccDetails:
           $ref: '#/components/schemas/MCCDetails'
         tags:
@@ -4150,6 +4154,79 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
+    NPPDetails:
+      title: NPPDetails
+      type: object
+      description: New Payment Platform Details for Australia
+      properties:
+        method:
+          $ref: '#/components/schemas/NPPPaymentMethod'
+        accountNumber:
+          type: string
+          description: Account number
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        emailId:
+          $ref: '#/components/schemas/EmailId'
+        contactNumber:
+          type: string
+          description: Contact number
+        bsb:
+          type: string
+          description: BSB number
+        payId:
+          type: string
+          description: PayID
+        endToEndId:
+          type: string
+          description: End to End ID
+        oskoReference:
+          type: string
+          description: OSKO reference
+        payIdReference:
+          type: string
+          description: PayID reference
+        isInstant:
+          type: boolean
+          description: Whether the payment is instant
+        remittanceInformation:
+          type: string
+          description: Remittance information
+        remittanceAdvice:
+          type: string
+          description: Remittance advice
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+        processingDate:
+          type: number
+          description: Timestamp of the event
+          minimum: 315529200000
+          maximum: 4133890801000
+        settlementDate:
+          type: number
+          description: Timestamp of the event
+          minimum: 315529200000
+          maximum: 4133890801000
+        referenceNumber:
+          type: string
+          description: Unique reference number for transaction reconciliation
+        traceNumber:
+          type: string
+          description: Trace number for tracking the payment through the NPP system
+        messageFormat:
+          type: string
+          description: Format of the NPP message (e.g., JSON, XML)
+        bankName:
+          type: string
+          description: Name of the bank associated with the account
+        address:
+          $ref: '#/components/schemas/Address'
+      required:
+        - method
+        - endToEndId
     IBANDetails:
       title: IBANDetails
       type: object
@@ -5034,6 +5111,14 @@ components:
         - CARD
       description: |
         Classify the method of payment as "Card" for CardDetails
+    NPPPaymentMethod:
+      type: string
+      title: NPPPaymentMethod
+      enum:
+        - NPP
+      description:
+        Classify the method of payment as "NPP" for NPPDetails (New Payment
+        Platform Details for Australia)
     WalletPaymentMethod:
       type: string
       title: WalletPaymentMethod
@@ -5562,6 +5647,7 @@ components:
         - WALLET
         - CHECK
         - CASH
+        - NPP
     CardMerchantDetails:
       title: CardMerchantDetails
       type: object

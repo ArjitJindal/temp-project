@@ -38,6 +38,7 @@ import { UPIDetails } from '@/@types/openapi-internal/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-internal/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-internal/CheckDetails'
 import { CashDetails } from '@/@types/openapi-internal/CashDetails'
+import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 
 interface ReportParams {
   afterTimestamp: number
@@ -729,6 +730,7 @@ function exportPaymentDetails(
     | WalletDetails
     | CheckDetails
     | CashDetails
+    | NPPDetails
 ): Item[] {
   return exportAnything(paymentDetails)
 }
@@ -797,6 +799,8 @@ export function getPaymentDetailsIdString(
     return paymentDetails.checkIdentifier ?? '-'
   } else if (paymentDetails.method === 'CASH') {
     return paymentDetails.identifier ?? '-'
+  } else if (paymentDetails.method === 'NPP') {
+    return paymentDetails.endToEndId ?? '-'
   } else {
     return neverReturn(paymentDetails, '-')
   }
@@ -823,6 +827,8 @@ export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
     return 'Check'
   } else if (paymentMethod === 'CASH') {
     return 'Cash'
+  } else if (paymentMethod === 'NPP') {
+    return 'NPP'
   } else {
     return neverReturn(paymentMethod, humanizeConstant(paymentMethod))
   }

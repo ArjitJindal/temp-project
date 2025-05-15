@@ -21,6 +21,7 @@ import { Address } from '@/@types/openapi-internal/Address'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import { traceable } from '@/core/xray'
+import { NPPDetails } from '@/@types/openapi-internal/NPPDetails'
 
 @traceable
 export class KenyaSARReportGenerator implements ReportGenerator {
@@ -170,6 +171,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       | WalletDetails
       | CheckDetails
       | CashDetails
+      | NPPDetails
       | undefined
   ) {
     if (!u || u?.type === 'CONSUMER') {

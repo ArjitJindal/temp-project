@@ -41,6 +41,7 @@ const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
   MPESA: COLORS_V2_ANALYTICS_CHARTS_09,
   CHECK: COLORS_V2_ANALYTICS_CHARTS_11,
   CASH: COLORS_V2_ANALYTICS_CHARTS_07,
+  NPP: COLORS_V2_ANALYTICS_CHARTS_11,
 };
 
 interface Props extends WidgetProps {}

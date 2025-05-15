@@ -143,6 +143,11 @@ function paymentSubjectLabels(caseItem: Case) {
       label: 'Cash identifier/number',
       value: paymentDetails.identifier,
     });
+  } else if (paymentDetails.method === 'NPP') {
+    specialFields.push({
+      label: 'NPP ID',
+      value: paymentDetails.endToEndId,
+    });
   } else {
     neverReturn(paymentDetails, '-');
   }

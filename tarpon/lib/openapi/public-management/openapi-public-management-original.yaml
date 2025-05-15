@@ -297,6 +297,7 @@ paths:
                           - GENERIC_BANK_ACCOUNT
                           - CHECK
                           - CASH
+                          - NPP
                         nullable: true
       operationId: get-rule-filters-schema
       description: >-

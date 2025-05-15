@@ -94,6 +94,8 @@ export function partyNameByPaymentDetails(
     name = paymentDetails.bankName
   } else if (paymentDetails.method === 'UPI') {
     name = paymentDetails.bankProvider
+  } else if (paymentDetails.method === 'NPP') {
+    name = paymentDetails.bankName
   } else if (
     paymentDetails.method === 'CARD' ||
     paymentDetails.method === 'MPESA' ||
@@ -122,7 +124,8 @@ export function organizationClassificationByPaymentDetails(
     paymentDetails.method === 'SWIFT' ||
     paymentDetails.method === 'CHECK' ||
     paymentDetails.method === 'CARD' ||
-    paymentDetails.method === 'UPI'
+    paymentDetails.method === 'UPI' ||
+    paymentDetails.method === 'NPP'
   ) {
     type = '2' // 'Depository institution' for banks
   } else if (
@@ -212,7 +215,8 @@ export function addressByPaymentDetails(
     paymentDetails.method === 'UPI' ||
     paymentDetails.method === 'MPESA' ||
     paymentDetails.method === 'WALLET' ||
-    paymentDetails.method === 'CASH'
+    paymentDetails.method === 'CASH' ||
+    paymentDetails.method === 'NPP'
   ) {
     return undefined
   } else {

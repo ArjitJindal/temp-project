@@ -18,6 +18,8 @@ import { WalletPaymentMethod } from '../openapi-public/WalletPaymentMethod'
 import { MpesaPaymentMethod } from '../openapi-public/MpesaPaymentMethod'
 import { CheckPaymentMethod } from '../openapi-public/CheckPaymentMethod'
 import { CashPaymentMethod } from '../openapi-public/CashPaymentMethod'
+import { NPPDetails } from '../openapi-public/NPPDetails'
+import { NPPPaymentMethod } from '../openapi-public/NPPPaymentMethod'
 
 export type PaymentDetails =
   | CardDetails
@@ -30,6 +32,7 @@ export type PaymentDetails =
   | MpesaDetails
   | CheckDetails
   | CashDetails
+  | NPPDetails
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -42,3 +45,4 @@ export type PaymentMethod =
   | MpesaPaymentMethod
   | CheckPaymentMethod
   | CashPaymentMethod
+  | NPPPaymentMethod

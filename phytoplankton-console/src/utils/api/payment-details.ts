@@ -9,6 +9,7 @@ import {
   UPIDetails,
   WalletDetails,
   CashDetails,
+  NPPDetails,
 } from '@/apis';
 
 export type PaymentDetails =
@@ -21,7 +22,8 @@ export type PaymentDetails =
   | SWIFTDetails
   | MpesaDetails
   | CheckDetails
-  | CashDetails;
+  | CashDetails
+  | NPPDetails;
 
 export type PaymentDetailsKey =
   | keyof CardDetails
@@ -33,4 +35,5 @@ export type PaymentDetailsKey =
   | keyof SWIFTDetails
   | keyof MpesaDetails
   | keyof CheckDetails
-  | keyof CashDetails;
+  | keyof CashDetails
+  | keyof NPPDetails;
