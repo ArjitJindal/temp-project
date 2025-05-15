@@ -615,7 +615,7 @@ export function getPaymentMethodId(
     case 'CASH':
       return pm.identifier
     case 'NPP':
-      return pm.payId
+      return pm.endToEndId
   }
 }
 
