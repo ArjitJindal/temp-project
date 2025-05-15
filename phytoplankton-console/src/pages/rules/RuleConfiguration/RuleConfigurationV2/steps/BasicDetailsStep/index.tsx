@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FrozenStatusesInput } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
 import { RangeValue } from 'rc-picker/es/interface';
-import { useLocalStorageState } from 'ahooks';
 import { COUNTERPARTY_RULES } from '@flagright/lib/constants';
 import StepHeader from '../../StepHeader';
 import SlaPolicyInput from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/SlaPolicyInput';
@@ -46,6 +45,7 @@ import { AlertInvestigationChecklist } from '@/pages/rules/RuleConfiguration/Rul
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import Toggle from '@/components/library/Toggle';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -133,7 +133,7 @@ function RuleDetails(props: Props) {
   useEffect(() => {
     setRuleLabels([]);
   }, [ruleNature]);
-  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
+  const [isSimulationModeEnabled] = useSafeLocalStorageState('SIMULATION_RULES', false);
   const isPnb = useFeatureEnabled('PNB');
   return (
     <>

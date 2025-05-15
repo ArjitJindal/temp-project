@@ -437,6 +437,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
           const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
           const isEscalated = statusEscalated(entity.caseStatus);
           const isEscalatedL2 = statusEscalatedL2(entity.caseStatus);
+          const caseUser = entity.user ?? undefined;
           const canMutateCases = canMutateEscalatedCases(
             { [entity.caseId]: entity },
             user.userId,
@@ -458,6 +459,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                   }}
                   setModalVisibility={setFirstModalVisibility}
                   haveModal={false}
+                  user={caseUser}
                 />
               )}
               {entity?.caseId &&
@@ -478,6 +480,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                     }}
                     setModalVisibility={setFirstModalVisibility}
                     haveModal={false}
+                    user={caseUser}
                   />
                 )}
               {entity?.caseId &&
@@ -497,6 +500,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                     }}
                     setModalVisibility={setFirstModalVisibility}
                     haveModal={false}
+                    user={caseUser}
                   />
                 )}
               {entity?.caseId && isInReview && canReview && entity.caseStatus && (
@@ -784,6 +788,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
 
           const isInReview = isInReviewCases(selectedItems);
           const caseStatus = selectedItems[selectedIds[0]].caseStatus;
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
           const isEscalated = isEscalatedCases(selectedItems);
           return (
             !isInReview &&
@@ -800,6 +805,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                 updateModalState={(modalState) => {
                   updateFirstModalState(modalState as FirstModalProps);
                 }}
+                user={caseUser}
                 setModalVisibility={setFirstModalVisibility}
                 haveModal={false}
               />
@@ -813,6 +819,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
 
           const isInReview = isInReviewCases(selectedItems);
           const caseStatus = selectedItems[selectedIds[0]].caseStatus;
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
           const isEscalated = isEscalatedCases(selectedItems);
           const canMutateCases = canMutateEscalatedCases(
             selectedItems,
@@ -835,6 +842,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                 updateModalState={(modalState) => {
                   updateFirstModalState(modalState as FirstModalProps);
                 }}
+                user={caseUser}
                 setModalVisibility={setFirstModalVisibility}
                 haveModal={false}
               />
@@ -894,6 +902,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
           ) {
             return;
           }
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
 
           return (
             <CasesStatusChangeButton
@@ -909,6 +918,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
               updateModalState={(modalState) => {
                 updateFirstModalState(modalState as FirstModalProps);
               }}
+              user={caseUser}
               setModalVisibility={setFirstModalVisibility}
               haveModal={false}
             />
@@ -927,6 +937,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
           const isInReview = isInReviewCases(selectedItems);
           const isCaseHavingEscalated = isEscalatedCases(selectedItems);
           const isCaseStatusEscalatedL2 = statusEscalatedL2(caseItem.caseStatus);
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
           return (
             selectedIdsCount === 1 &&
             escalationEnabled &&
@@ -950,6 +961,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                 }}
                 setModalVisibility={setFirstModalVisibility}
                 haveModal={false}
+                user={caseUser}
               />
             )
           );
@@ -966,6 +978,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
           );
           const isInReview = isInReviewCases(selectedItems);
           const isCaseHavingEscalated = isEscalatedCases(selectedItems);
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
           return (
             selectedIdsCount === 1 &&
             escalationEnabled &&
@@ -992,6 +1005,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                 }}
                 setModalVisibility={setFirstModalVisibility}
                 haveModal={false}
+                user={caseUser}
               />
             )
           );
@@ -1014,6 +1028,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
           );
           const isInReview = isInReviewCases(selectedItems);
           const isCaseHavingEscalated = isEscalatedCases(selectedItems);
+          const caseUser = selectedItems[selectedIds[0]].user ?? undefined;
           return (
             selectedIdsCount === 1 &&
             escalationEnabled &&
@@ -1056,6 +1071,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                 }}
                 setModalVisibility={setFirstModalVisibility}
                 haveModal={false}
+                user={caseUser}
               />
             )
           );

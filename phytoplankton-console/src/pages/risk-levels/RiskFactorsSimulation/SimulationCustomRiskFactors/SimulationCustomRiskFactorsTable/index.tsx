@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { useLocalStorageState } from 'ahooks';
 import RiskFactorsTable, {
   RiskFactorsTypeMap,
   scopeToRiskEntityType,
 } from '@/pages/risk-levels/shared/RiskFactorsTable';
 import { RiskFactor } from '@/apis';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 interface Props {
   riskFactors?: RiskFactor[];
@@ -21,7 +21,7 @@ export type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
 export default function SimulationCustomRiskFactorsTable(props: Props) {
   const { canEditRiskFactors = true, activeIterationIndex, riskFactors, jobId } = props;
   const [simulationRiskFactorsMap, setSimulationRiskFactorsMap] =
-    useLocalStorageState<RiskFactorsTypeMap>(
+    useSafeLocalStorageState<RiskFactorsTypeMap>(
       `${LocalStorageKey}-${jobId ? `${jobId}` : 'new'}-${activeIterationIndex}`,
       {
         CONSUMER_USER: [],

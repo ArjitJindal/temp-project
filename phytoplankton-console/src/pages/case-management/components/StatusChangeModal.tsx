@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
+import { TableUser } from '../CaseTable/types';
 import { statusToOperationName } from './StatusChangeButton';
 import s from './index.module.less';
-import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInternal } from '@/apis';
+import { CaseStatus, FileInfo, KYCStatus, ScreeningDetails, UserState, UserTag } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Narrative, { NarrativeRef } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
@@ -11,11 +12,11 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
+import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 
 export interface FormValues {
   reasons: string[];
@@ -23,8 +24,13 @@ export interface FormValues {
   comment: string | undefined;
   files: FileInfo[];
   closeRelatedCase?: boolean;
-  kycStatusDetails?: KYCStatusDetailsInternal;
-  userStateDetails?: UserStateDetailsInternal;
+  kycStatusDetails?: KYCStatus;
+  userStateDetails?: UserState;
+  eoddDate?: number;
+  tags?: UserTag[];
+  screeningDetails?: ScreeningDetails;
+  listId?: string;
+  actionReason?: string;
 }
 
 export type ActionLabel =
@@ -48,6 +54,7 @@ export interface Props {
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
   skipReasonsModal?: boolean;
   advancedOptions?: React.ReactNode;
+  user?: TableUser;
 }
 
 const DEFAULT_INITIAL_VALUES: FormValues = {
@@ -56,6 +63,7 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
   comment: '',
   files: [],
   closeRelatedCase: false,
+  tags: [],
 };
 
 export default function StatusChangeModal(props: Props) {
@@ -127,11 +135,11 @@ export default function StatusChangeModal(props: Props) {
     values: initialValues,
     isValid: false,
   });
-  const kycStatusDetailsValidator = {
-    reason: formState.values.kycStatusDetails?.status ? notEmpty : undefined,
-  };
-  const userStateDetailsValidator = {
-    reason: formState.values.userStateDetails?.state ? notEmpty : undefined,
+
+  const actionReasonValidator = () => {
+    return !formState.values.kycStatusDetails && !formState.values.userStateDetails
+      ? undefined
+      : notEmpty;
   };
   return (
     <>
@@ -173,8 +181,7 @@ export default function StatusChangeModal(props: Props) {
           }}
           advancedOptions={advancedOptions}
           advancedOptionsValidators={{
-            userStateDetails: userStateDetailsValidator,
-            kycStatusDetails: kycStatusDetailsValidator,
+            actionReason: actionReasonValidator(),
           }}
           additionalCopilotInfo={{
             ...(entityName === 'CASE' && { newCaseStatus: newStatus }),

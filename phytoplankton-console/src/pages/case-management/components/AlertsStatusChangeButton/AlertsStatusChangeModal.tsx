@@ -7,13 +7,19 @@ import StatusChangeModal, {
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
 import { useApi } from '@/api';
-import { AlertStatusUpdateRequest, CaseStatusUpdate } from '@/apis';
+import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
+import { CaseEscalateTriggerAdvancedOptionsForm } from '@/components/CaseEscalateTriggerAdvancedOptionsForm';
+import {
+  consolidatePEPStatus,
+  expandPEPStatus,
+} from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
+import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 
 export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
@@ -30,6 +36,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   const queryClient = useQueryClient();
   const [users] = useUsers();
   const currentUser = useCurrentUser();
+
   const escalatedCaseCallback = useCallback(
     async (formValues: FormValues, updates: AlertStatusUpdateRequest) => {
       const caseUpdateRequest: CaseStatusUpdate = updates;
@@ -136,6 +143,29 @@ export default function AlertsStatusChangeModal(props: Props) {
             : undefined;
         updates.files = formValues.files;
         updates.comment = formValues.comment ?? undefined;
+        updates.kycStatusDetails =
+          formValues?.kycStatusDetails && formValues?.actionReason
+            ? {
+                status: formValues?.kycStatusDetails,
+                reason: formValues?.actionReason,
+              }
+            : undefined;
+        updates.userStateDetails =
+          formValues?.userStateDetails && formValues?.actionReason
+            ? {
+                state: formValues?.userStateDetails,
+                reason: formValues?.actionReason,
+              }
+            : undefined;
+        updates.eoddDate = formValues?.eoddDate;
+        updates.tags = formValues?.tags;
+        updates.screeningDetails = {
+          ...formValues?.screeningDetails,
+          pepStatus: expandPEPStatus(
+            (formValues?.screeningDetails?.pepStatus?.slice(1) as PepFormValues[]) ?? [],
+          ),
+        };
+        updates.listId = formValues?.listId;
       }
 
       try {
@@ -184,6 +214,27 @@ export default function AlertsStatusChangeModal(props: Props) {
       entityIds={entityIds}
       entityName={isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
       updateMutation={updateMutation}
+      advancedOptions={
+        (statusEscalated(props.newStatus) || props.newStatus === 'CLOSED') &&
+        props.entityIds.length === 1 && <CaseEscalateTriggerAdvancedOptionsForm user={props.user} />
+      }
+      initialValues={{
+        tags: props.user?.tags ?? [],
+        ...(props?.user?.type === 'CONSUMER' && {
+          screeningDetails: {
+            pepStatus: [
+              {} as PEPStatus,
+              ...(consolidatePEPStatus(props?.user?.pepStatus ?? []) as PEPStatus[]),
+            ],
+            sanctionsStatus:
+              props?.user?.sanctionsStatus === undefined ? undefined : props?.user?.sanctionsStatus,
+            adverseMediaStatus:
+              props?.user?.adverseMediaStatus === undefined
+                ? undefined
+                : props?.user?.adverseMediaStatus,
+          },
+        }),
+      }}
     />
   );
 }

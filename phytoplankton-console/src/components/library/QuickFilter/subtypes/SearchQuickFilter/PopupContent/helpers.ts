@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
-import { useLocalStorageState } from 'ahooks';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export function useLastSearches(key: string): {
   items: string[];
   onAdd: (item: string) => void;
 } {
-  const [items, setItems] = useLocalStorageState<string[]>(key, []);
+  const [items, setItems] = useSafeLocalStorageState<string[]>(key, []);
   const onAdd = useCallback(
     (item) => {
       setItems((previousState) =>

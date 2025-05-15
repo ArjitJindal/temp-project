@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { useLocalStorageState } from 'ahooks';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_FIND } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { AllUsersTableItem } from '@/apis';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type UsersResponse = {
   total: number;
@@ -17,7 +17,7 @@ export function useLastSearches(): {
   items: string[];
   onAdd: (item: string) => void;
 } {
-  const [items, setItems] = useLocalStorageState<string[]>(LOCAL_STORAGE_KEY, []);
+  const [items, setItems] = useSafeLocalStorageState<string[]>(LOCAL_STORAGE_KEY, []);
   const onAdd = useCallback(
     (item) => {
       setItems((previousState) =>

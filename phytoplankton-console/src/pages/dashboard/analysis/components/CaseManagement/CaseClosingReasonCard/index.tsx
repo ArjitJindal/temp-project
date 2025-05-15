@@ -1,4 +1,3 @@
-import { useLocalStorageState } from 'ahooks';
 import React, { MutableRefObject, useRef, useState } from 'react';
 import s from './index.module.less';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
@@ -37,6 +36,7 @@ import WidgetRangePicker, {
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { dayjs } from '@/utils/dayjs';
 import { map, getOr } from '@/utils/asyncResource';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type ClosingReasons =
   | 'Other'
@@ -87,7 +87,7 @@ interface Props extends WidgetProps {}
 
 const CaseClosingReasonCard = (props: Props) => {
   const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
-  const [selectedSection, setSelectedSection] = useLocalStorageState(
+  const [selectedSection, setSelectedSection] = useSafeLocalStorageState(
     'dashboard-closing-reason-active-tab',
     'CASE',
   );

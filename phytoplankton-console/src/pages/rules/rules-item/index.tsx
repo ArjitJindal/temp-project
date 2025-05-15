@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router';
 import RuleConfiguration from 'src/pages/rules/RuleConfiguration';
 import { useNavigate } from 'react-router-dom';
-import { useLocalStorageState } from 'ahooks';
 import { useQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCE, GET_RULE } from '@/utils/queries/keys';
 import { useApi } from '@/api';
@@ -14,12 +13,13 @@ import { getRuleInstanceTitle } from '@/utils/api/rules';
 import { map, getOr } from '@/utils/asyncResource';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import PageWrapper from '@/components/PageWrapper';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export default function RulesItemPage() {
   const { id: ruleInstanceId = 'rules-library', mode = 'read' } = useParams<
     'tab' | 'id' | 'mode'
   >();
-  const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  const [isSimulationEnabled] = useSafeLocalStorageState<boolean>('SIMULATION_RULES', false);
   const api = useApi();
   const ruleInstanceResult = useQuery<RuleInstance>(
     GET_RULE_INSTANCE(ruleInstanceId),

@@ -12,11 +12,19 @@ import {
 export type TableUser =
   | Pick<
       InternalConsumerUser,
-      'type' | 'userDetails' | 'userId' | 'userStateDetails' | 'kycStatusDetails'
+      | 'type'
+      | 'userDetails'
+      | 'userId'
+      | 'userStateDetails'
+      | 'kycStatusDetails'
+      | 'tags'
+      | 'pepStatus'
+      | 'sanctionsStatus'
+      | 'adverseMediaStatus'
     >
   | Pick<
       InternalBusinessUser,
-      'type' | 'legalEntity' | 'userId' | 'userStateDetails' | 'kycStatusDetails'
+      'type' | 'legalEntity' | 'userId' | 'userStateDetails' | 'kycStatusDetails' | 'tags'
     >;
 
 export type TableItem = Omit<Case, 'alerts' | 'caseUsers'> & {

@@ -28,6 +28,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { SarButton } from '@/components/Sar';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { AsyncResource, getOr, isLoading, map } from '@/utils/asyncResource';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
   caseId: string;
@@ -99,6 +100,7 @@ interface StatusChangeButtonProps {
   handleStatusChangeSuccess: () => void;
   isEscalated: boolean;
   isEscalatedL2: boolean;
+  user?: TableUser;
 }
 
 const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
@@ -111,6 +113,7 @@ const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
   handleStatusChangeSuccess,
   isEscalated,
   isEscalatedL2,
+  user,
 }) => {
   const config = getStatusChangeButtonConfig(
     caseItem,
@@ -124,7 +127,7 @@ const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
     isEscalatedL2,
   );
 
-  return config ? <CasesStatusChangeButton {...config} haveModal={true} /> : null;
+  return config ? <CasesStatusChangeButton {...config} user={user} haveModal={true} /> : null;
 };
 
 export default function Header(props: Props) {
@@ -267,37 +270,44 @@ export default function Header(props: Props) {
           requiredPermissions={['case-management:case-overview:write']}
         />,
         ...getOr(
-          map(caseItemRes, (caseItem) => [
-            <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
-            <SarButton
-              caseId={caseId}
-              alertIds={[]}
-              transactionIds={[]}
-              key={`sar-button-${caseId}`}
-            />,
-            ...(!isReview && caseId
-              ? [
-                  <StatusChangeButton
-                    caseItem={caseItem}
-                    caseId={caseId}
-                    userAccount={userAccount}
-                    canMutateCases={canMutateCases}
-                    isReopenEnabled={isReopenEnabled}
-                    isLoading={isLoading(caseItemRes)}
-                    handleStatusChangeSuccess={handleStatusChangeSuccess}
-                    isEscalated={isEscalated}
-                    isEscalatedL2={isEscalatedL2}
-                    key={`status-change-button-${caseItem.caseId}`}
-                  />,
-                ]
-              : []),
-            <StatusChangeMenu
-              isDisabled={isLoading(caseItemRes)}
-              caseItem={caseItem}
-              onReload={handleStatusChangeSuccess}
-              key={`status-change-menu-${caseItem.caseId}`}
-            />,
-          ]),
+          map(caseItemRes, (caseItem) => {
+            const user: TableUser = {
+              ...caseItem.caseUsers?.destination,
+              ...caseItem.caseUsers?.origin,
+            } as TableUser;
+            return [
+              <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
+              <SarButton
+                caseId={caseId}
+                alertIds={[]}
+                transactionIds={[]}
+                key={`sar-button-${caseId}`}
+              />,
+              ...(!isReview && caseId
+                ? [
+                    <StatusChangeButton
+                      caseItem={caseItem}
+                      caseId={caseId}
+                      userAccount={userAccount}
+                      canMutateCases={canMutateCases}
+                      isReopenEnabled={isReopenEnabled}
+                      isLoading={isLoading(caseItemRes)}
+                      handleStatusChangeSuccess={handleStatusChangeSuccess}
+                      isEscalated={isEscalated}
+                      isEscalatedL2={isEscalatedL2}
+                      key={`status-change-button-${caseItem.caseId}`}
+                      user={user}
+                    />,
+                  ]
+                : []),
+              <StatusChangeMenu
+                isDisabled={isLoading(caseItemRes)}
+                caseItem={caseItem}
+                onReload={handleStatusChangeSuccess}
+                key={`status-change-menu-${caseItem.caseId}`}
+              />,
+            ];
+          }),
           [],
         ),
       ]}

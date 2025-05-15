@@ -2,7 +2,6 @@
 import { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
-import { useLocalStorageState } from 'ahooks';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import ScopeSelector from '../CaseClosingReasonCard/ScopeSelector';
 import { formatDate } from '../../../utils/date-utils';
@@ -34,6 +33,7 @@ import {
 } from '@/components/ui/colors';
 import { useRuleOptions } from '@/utils/rules';
 import Select from '@/components/library/Select';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type StatusType =
@@ -58,7 +58,7 @@ const statuses: StatusType[] = [
 ];
 
 export default function DistributionByStatus(props: WidgetProps) {
-  const [selectedSection, setSelectedSection] = useLocalStorageState(
+  const [selectedSection, setSelectedSection] = useSafeLocalStorageState(
     'dashboard-case-and-alert-status-active-tab',
     'CASE',
   );

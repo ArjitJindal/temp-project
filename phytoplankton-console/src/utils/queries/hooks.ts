@@ -10,11 +10,13 @@ import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
+import { LISTS } from './keys';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
 import { Cursor, QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 import { TableListViewEnum } from '@/apis';
+import { useApi } from '@/api';
 
 export function useQuery<
   TQueryFnData = unknown,
@@ -257,4 +259,13 @@ export function useNewUpdatesMessage(
       setLastCheckedUpdatedAt(newUpdatedAt);
     }
   }, (options?.refetchIntervalSeconds ?? 60) * 1000);
+}
+
+export function useUserLists() {
+  const api = useApi();
+  return useQuery(LISTS('USER_ID'), async () => {
+    return await api.getLists({
+      filterListSubtype: ['USER_ID'],
+    });
+  });
 }

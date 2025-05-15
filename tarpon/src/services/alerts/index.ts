@@ -32,6 +32,8 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
+import { ListService } from '../list'
+import { UserService } from '../users'
 import { AlertParams, AlertsRepository } from './repository'
 import { API_USER, FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -105,6 +107,10 @@ import {
 } from '@/@types/audit-log'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
+import { ListItem } from '@/@types/openapi-internal/ListItem'
 
 type AlertViewAuditLogReturnData = AuditLogReturnData<Alert>
 
@@ -419,6 +425,9 @@ export class AlertsService extends CaseAlertsCommonService {
           otherReason: caseUpdateRequest?.otherReason ?? '',
           priority: caseUpdateRequest?.priority,
           closeSourceCase: caseEscalationRequest.closeSourceCase,
+          tags: caseUpdateRequest?.tags,
+          screeningDetails: caseUpdateRequest?.screeningDetails,
+          listId: caseUpdateRequest?.listId,
         },
         { cascadeCaseUpdates: false }
       )
@@ -433,6 +442,9 @@ export class AlertsService extends CaseAlertsCommonService {
             caseStatus: caseUpdateRequest?.caseStatus,
             otherReason: caseUpdateRequest?.otherReason ?? '',
             priority: caseUpdateRequest?.priority,
+            tags: caseUpdateRequest?.tags,
+            screeningDetails: caseUpdateRequest?.screeningDetails,
+            listId: caseUpdateRequest?.listId,
           },
           { filterInReview: true }
         )
@@ -1161,6 +1173,113 @@ export class AlertsService extends CaseAlertsCommonService {
     return this.alertsRepository.getAlertsByIds(alertIds)
   }
 
+  private async updateUserDetails(
+    cases: Case[],
+    updates: AlertStatusUpdateRequest
+  ) {
+    const usersData: { caseId: string; user: User | Business }[] = []
+    const listId = updates.listId
+    const tags = updates.tags
+    const screeningDetails = updates.screeningDetails
+    const eoddDate = updates.eoddDate
+    cases.forEach((c) => {
+      const user = c?.caseUsers?.origin ?? c?.caseUsers?.destination
+      if (user && user.userId) {
+        usersData.push({
+          caseId: c.caseId ?? '',
+          user: user as User | Business,
+        })
+      }
+    })
+
+    const userService = new UserService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
+
+    const listService = new ListService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
+
+    const updateObject: UserUpdateRequest = {
+      ...(updates.kycStatusDetails?.status && {
+        kycStatusDetails: {
+          status: updates.kycStatusDetails.status,
+          reason: updates.kycStatusDetails.reason,
+          description: updates.kycStatusDetails.description,
+        },
+      }),
+      ...(updates.userStateDetails?.state && {
+        userStateDetails: {
+          state: updates.userStateDetails.state,
+          reason: updates.userStateDetails.reason,
+          description: updates.userStateDetails.description,
+        },
+      }),
+      ...(eoddDate && {
+        eoddDate,
+      }),
+      ...(tags && {
+        tags: tags,
+      }),
+      ...(screeningDetails?.pepStatus && {
+        pepStatus: screeningDetails.pepStatus,
+      }),
+      ...(screeningDetails?.sanctionsStatus && {
+        sanctionsStatus: screeningDetails.sanctionsStatus,
+      }),
+      ...(screeningDetails?.adverseMediaStatus && {
+        adverseMediaStatus: screeningDetails.adverseMediaStatus,
+      }),
+    }
+
+    if (isEmpty(updateObject)) {
+      return
+    }
+
+    if (!isEmpty(usersData)) {
+      await Promise.all(
+        usersData.map(({ user, caseId }) =>
+          userService.updateUser(user, updateObject, {}, { caseId })
+        )
+      )
+
+      if (listId) {
+        await Promise.all(
+          usersData.map(({ user }) => {
+            let userFullName = ''
+            if ('userDetails' in user && user.userDetails?.name) {
+              const {
+                firstName = '',
+                middleName = '',
+                lastName = '',
+              } = user.userDetails.name
+              userFullName =
+                [lastName, firstName, middleName].filter(Boolean).join(' ') ||
+                ''
+            } else if (
+              'legalEntity' in user &&
+              Array.isArray(user.legalEntity)
+            ) {
+              userFullName =
+                user.legalEntity?.companyGeneralDetails?.legalName || ''
+            }
+
+            const listItem: ListItem = {
+              key: user.userId,
+              metadata: {
+                reason: '',
+                userFullName,
+              },
+            }
+            return listService.updateOrCreateListItem(listId, listItem)
+          })
+        )
+      }
+    }
+  }
+
   @auditLog('ALERT', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     alertIds: string[],
@@ -1341,7 +1460,7 @@ export class AlertsService extends CaseAlertsCommonService {
             })
           : []),
       ])
-
+      await this.updateUserDetails(cases, statusUpdateRequest)
       const caseIdsWithAllAlertsSameStatus =
         response.caseIdsWithAllAlertsSameStatus // Only for escalated and closed alerts
 

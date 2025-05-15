@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useLocalStorageState } from 'ahooks';
 import { kebabCase } from 'lodash';
 import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
@@ -39,6 +38,7 @@ import Label from '@/components/library/Label';
 import { notEmpty } from '@/utils/array';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { Feature } from '@/apis';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -358,7 +358,7 @@ function Analysis() {
 
   const [drawerVisible, setDrawerVisible] = useState(false);
 
-  const [dashboardSettings, setDashboardSettings] = useLocalStorageState<DashboardSettings>(
+  const [dashboardSettings, setDashboardSettings] = useSafeLocalStorageState<DashboardSettings>(
     'DASHBOARD_SETTINGS',
     DEFAULT_VALUES,
   );

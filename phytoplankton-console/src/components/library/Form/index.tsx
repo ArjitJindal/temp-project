@@ -1,4 +1,11 @@
-import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import cn from 'clsx';
 import { FieldValidators, Validator } from './utils/validation/types';
 import s from './index.module.less';
@@ -54,6 +61,10 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   const [formValues, setFormValues] = useState<FormValues>(initialValues ?? ({} as FormValues));
   const [isFormValid, setFormValid] = useState<boolean>(false);
   const [fieldMeta, setFieldsMeta] = useState<InternalFieldsMeta>({});
+
+  useEffect(() => {
+    setFormValues(initialValues ?? ({} as FormValues));
+  }, [initialValues]);
 
   const formRef = useRef<HTMLFormElement>(null);
 

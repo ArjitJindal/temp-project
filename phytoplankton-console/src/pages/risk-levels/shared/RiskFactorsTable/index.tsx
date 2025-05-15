@@ -2,7 +2,6 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { EditOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalStorageState } from 'ahooks';
 import s from './styles.module.less';
 import ValuesTable from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/ValuesTable';
 import * as Card from '@/components/ui/Card';
@@ -29,6 +28,7 @@ import Tag from '@/components/library/Tag';
 import ActionMenu from '@/pages/risk-levels/risk-factors/components/ActionMenu';
 import { useApi } from '@/api';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
 
@@ -126,7 +126,7 @@ export default function RiskFactorsTable(props: Props) {
       };
 
   const [localStorageRiskFactors, setLocalStorageRiskFactors] =
-    useLocalStorageState<RiskFactorsTypeMap>(
+    useSafeLocalStorageState<RiskFactorsTypeMap>(
       simulationStorageKey || 'temp-risk-factors',
       defaultRiskFactorsMap,
     );

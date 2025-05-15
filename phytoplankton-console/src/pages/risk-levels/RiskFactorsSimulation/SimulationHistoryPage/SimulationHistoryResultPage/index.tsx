@@ -1,9 +1,9 @@
-import { useLocalStorageState } from 'ahooks';
 import { useLocation, useParams } from 'react-router';
 import { SimulationResult } from '../../SimulationResult';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import { notEmpty } from '@/utils/array';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 const BASE_URL = '/risk-levels';
 
@@ -11,7 +11,7 @@ export const SimulationHistoryResultPage = () => {
   const { jobId } = useParams();
   const { pathname } = useLocation();
   const type = 'risk-factors';
-  const [isSimulationMode] = useLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
+  const [isSimulationMode] = useSafeLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
 
   const getUrl = (path: string) => `${BASE_URL}/${type}${path}`;
 

@@ -3,7 +3,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import RuleActionsMenu from '../components/RuleActionsMenu';
@@ -28,7 +27,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useScrollToFocus } from '@/utils/hooks';
+import { useSafeLocalStorageState, useScrollToFocus } from '@/utils/hooks';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
@@ -53,7 +52,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
-  const [ruleMode, setRuleMode] = useLocalStorageState<RuleRunMode>('ruleMode', 'LIVE');
+  const [ruleMode, setRuleMode] = useSafeLocalStorageState<RuleRunMode>('ruleMode', 'LIVE');
   const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();

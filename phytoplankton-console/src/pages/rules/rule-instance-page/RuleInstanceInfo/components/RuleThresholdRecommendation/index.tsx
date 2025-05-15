@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import useLocalStorageState from 'ahooks/lib/useLocalStorageState';
 import ExtendedRowRenderer from '../ExtendedRowRenderer';
 import s from './index.module.less';
 import { useApi } from '@/api';
@@ -31,6 +30,7 @@ import {
   updateCurrentInstance,
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 interface Props {
   ruleInstance: RuleInstance;
   entityVariables?: LogicEntityVariableInUse[];
@@ -42,12 +42,12 @@ export default function RuleThresholdRecommendation(props: Props) {
   const { ruleInstance, entityVariables, aggregationVariables, type } = props;
   const ruleLogicConfig = useRuleLogicConfig(type);
   const [showRecommendations, setShowRecommendations] = useState<boolean>(false);
-  const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useLocalStorageState(
+  const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useSafeLocalStorageState(
     'SIMULATION_RULES',
     false,
   );
   const [_simulationVarUpdatedData, setSimulationVarUpdatedData] =
-    useLocalStorageState<VarThresholdData>(UPDATED_VAR_DATA_KEY, EMPTY_THRESHOLD_DATA);
+    useSafeLocalStorageState<VarThresholdData>(UPDATED_VAR_DATA_KEY, EMPTY_THRESHOLD_DATA);
   const helper = new ColumnHelper<VarThresholdData>();
   const api = useApi();
   const navigate = useNavigate();

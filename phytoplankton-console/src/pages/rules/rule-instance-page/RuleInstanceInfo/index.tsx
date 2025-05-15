@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
 import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import {
@@ -35,6 +34,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -60,7 +60,7 @@ export const RuleInstanceInfo = (props: Props) => {
   const navigate = useNavigate();
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
 
-  const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useLocalStorageState(
+  const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useSafeLocalStorageState(
     'SIMULATION_RULES',
     false,
   );

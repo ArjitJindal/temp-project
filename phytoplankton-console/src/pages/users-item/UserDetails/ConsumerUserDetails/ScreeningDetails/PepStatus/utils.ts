@@ -1,28 +1,38 @@
 import { compact, first, flatMap, groupBy, map } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { FormValues } from './index';
+import { PepFormValues } from './index';
 import { PEPStatus, PepRank } from '@/apis';
 
-export function consolidatePEPStatus(array: PEPStatus[]): FormValues[] {
+export function consolidatePEPStatus(array: PEPStatus[]): PepFormValues[] {
   const grouped = groupBy(array, (item) => `${item.isPepHit}-${item.pepRank}`);
 
   return map(grouped, (items) => {
     const firstItem = first(items) as PEPStatus;
     return {
-      isPepHit: firstItem?.isPepHit,
+      isPepHit: firstItem?.isPepHit ?? false,
       pepCountry: compact(map(items, 'pepCountry')),
       pepRank: firstItem?.pepRank,
     };
   });
 }
 
-export function expandPEPStatus(array: FormValues[]): PEPStatus[] {
+export function expandPEPStatus(array: PepFormValues[]): PEPStatus[] {
   return flatMap(array, (formValue) => {
-    const pepCountries = formValue.pepCountry?.length ? formValue.pepCountry : [undefined];
+    const pepCountries = formValue.pepCountry?.length ? formValue.pepCountry : [];
     const pepRank = formValue.pepRank;
 
+    if (pepCountries.length === 0) {
+      return [
+        {
+          isPepHit: formValue.isPepHit ?? false,
+          pepRank,
+          pepCountry: undefined,
+        } as PEPStatus,
+      ];
+    }
+
     return map(pepCountries, (country) => ({
-      isPepHit: formValue.isPepHit,
+      isPepHit: formValue.isPepHit ?? false,
       pepRank,
       pepCountry: country,
     }));

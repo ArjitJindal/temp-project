@@ -1,0 +1,37 @@
+@import 'src/components/ui/colors.less';
+
+.rowLayout {
+  display: flex;
+  gap: 1rem;
+  max-height: 22.5rem;
+}
+
+.columnLayout {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}
+
+.columnLayout > div {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.rowLayout > div {
+  width: 50%;
+  flex-grow: 1;
+}
+
+.screeningDetailWrapper {
+  display: flex;
+  gap: 1rem;
+  background-color: @fr-colors-v2-highlight-flagrightBlue;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+}
+
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+}

@@ -1,14 +1,14 @@
-import { useLocalStorageState } from 'ahooks';
 import { SimulationHistory } from './SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 const ROOT_PATH = '/risk-levels';
 
 export const SimulationHistoryPage = () => {
   const type = 'risk-factors';
 
-  const [isSimulationMode] = useLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
+  const [isSimulationMode] = useSafeLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
 
   const buildUrl = (path: string) => `${ROOT_PATH}/${type}${path}`;
 

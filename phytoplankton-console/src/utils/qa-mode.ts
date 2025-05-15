@@ -1,9 +1,9 @@
-import { useLocalStorageState } from 'ahooks';
+import { useSafeLocalStorageState } from './hooks';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useHasPermissions } from '@/utils/user-utils';
 
 export function useQaMode(): [boolean, (value: boolean) => void] {
-  const [qaMode, setQaMode] = useLocalStorageState<boolean>('QA_MODE', false);
+  const [qaMode, setQaMode] = useSafeLocalStorageState<boolean>('QA_MODE', false);
   const qaEnabled = useQaEnabled();
   return [qaMode && qaEnabled, setQaMode];
 }

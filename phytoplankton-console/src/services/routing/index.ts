@@ -1,4 +1,3 @@
-import { useLocalStorageState } from 'ahooks';
 import { useMemo } from 'react';
 import RulesItemPage from 'src/pages/rules/rules-item';
 import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
@@ -44,6 +43,7 @@ import {
   useHasPermissions,
   usePermissions,
 } from '@/utils/user-utils';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
 
 export function useRoutes(): RouteItem[] {
@@ -53,10 +53,10 @@ export function useRoutes(): RouteItem[] {
   const isSarEnabled = useFeatureEnabled('SAR');
   const isWorkflowsEnabled = useFeatureEnabled('CUSTOM_WORKFLOWS');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
-  const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
-  const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
-  const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
-  const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
+  const [lastActiveTab] = useSafeLocalStorageState('user-active-tab', 'consumer');
+  const [lastActiveRuleTab] = useSafeLocalStorageState('rule-active-tab', 'rules-library');
+  const [lastActiveList] = useSafeLocalStorageState('user-active-list', 'whitelist');
+  const [lastActiveSanctionsTab] = useSafeLocalStorageState('sanctions-active-tab', 'search');
   const permissions = usePermissions();
 
   const hasAuditLogPermission = useHasPermissions(['audit-log:export:read']);

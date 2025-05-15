@@ -1511,6 +1511,8 @@ export class UserService {
         options
       ),
       this.handlePepStatusUpdate(user, updateRequest, ruleInstances, options),
+      this.handleSanctionsStatusUpdate(user, updateRequest, options),
+      this.handleAdverseMediaStatusUpdate(user, updateRequest, options),
       this.handleAuditLog(updateRequest, oldImage, user.userId),
     ])
 
@@ -1545,6 +1547,14 @@ export class UserService {
       ...(!isBusiness && updateRequest.pepStatus?.length
         ? { pepStatus: this.getUniquePepStatus(updateRequest.pepStatus) }
         : {}),
+      ...(!isBusiness &&
+        updateRequest && {
+          sanctionsStatus: updateRequest.sanctionsStatus ?? false,
+        }),
+      ...(!isBusiness &&
+        updateRequest && {
+          adverseMediaStatus: updateRequest.adverseMediaStatus ?? false,
+        }),
       ...(updateRequest.tags && { tags: updateRequest.tags }),
       ...(updateRequest.eoddDate !== undefined && {
         eoddDate: updateRequest.eoddDate,
@@ -1598,6 +1608,30 @@ export class UserService {
       ? this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
           bySystem: options?.bySystem,
           pepStatusRuleInstance: ruleInstances?.pepStatus,
+        })
+      : null
+  }
+
+  private handleSanctionsStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: { bySystem?: boolean }
+  ) {
+    return updateRequest.sanctionsStatus != null && !isBusinessUser(user)
+      ? this.handlePostActionsForSanctionsStatusUpdate(user, updateRequest, {
+          bySystem: options?.bySystem,
+        })
+      : null
+  }
+
+  private handleAdverseMediaStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: { bySystem?: boolean }
+  ) {
+    return updateRequest.adverseMediaStatus != null && !isBusinessUser(user)
+      ? this.handlePostActionsForAdverseMediaStatusUpdate(user, updateRequest, {
+          bySystem: options?.bySystem,
         })
       : null
   }
@@ -1778,6 +1812,80 @@ export class UserService {
           payload: {
             userId: user.userId,
             pepStatus: updateRequest.pepStatus,
+          },
+          triggeredBy: options?.bySystem ? 'SYSTEM' : 'MANUAL',
+        },
+      ]),
+    ])
+    return savedComment
+  }
+
+  private async handlePostActionsForSanctionsStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: {
+      bySystem?: boolean
+      sanctionsStatusRuleInstance?: RuleInstance
+    }
+  ) {
+    const commentBody =
+      'Sanctions status updated ' +
+      (options?.sanctionsStatusRuleInstance
+        ? `due to hit of rule ${options?.sanctionsStatusRuleInstance?.id}`
+        : 'manually by ' + (getContext()?.user?.email as string))
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody,
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
+        updatedAt: Date.now(),
+      }),
+      sendWebhookTasks(this.userRepository.tenantId, [
+        {
+          event: 'SANCTIONS_STATUS_UPDATED',
+          entityId: user.userId,
+          payload: {
+            userId: user.userId,
+            sanctionsStatus: updateRequest.sanctionsStatus,
+          },
+          triggeredBy: options?.bySystem ? 'SYSTEM' : 'MANUAL',
+        },
+      ]),
+    ])
+    return savedComment
+  }
+
+  private async handlePostActionsForAdverseMediaStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: {
+      bySystem?: boolean
+      adverseMediaStatusRuleInstance?: RuleInstance
+    }
+  ) {
+    const commentBody =
+      'Adverse media status updated ' +
+      (options?.adverseMediaStatusRuleInstance
+        ? `due to hit of rule ${options?.adverseMediaStatusRuleInstance?.id}`
+        : 'manually by ' + (getContext()?.user?.email as string))
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody,
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
+        updatedAt: Date.now(),
+      }),
+      sendWebhookTasks(this.userRepository.tenantId, [
+        {
+          event: 'ADVERSE_MEDIA_STATUS_UPDATED',
+          entityId: user.userId,
+          payload: {
+            userId: user.userId,
+            adverseMediaStatus: updateRequest.adverseMediaStatus,
           },
           triggeredBy: options?.bySystem ? 'SYSTEM' : 'MANUAL',
         },

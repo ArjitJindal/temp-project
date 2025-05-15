@@ -24,6 +24,7 @@ export interface Props extends InputProps<string> {
   description?: string;
   disableBorders?: boolean;
   className?: string;
+  inputClassName?: string;
 }
 
 export default function TextInput(props: Props) {
@@ -51,6 +52,7 @@ export default function TextInput(props: Props) {
     description,
     disableBorders = false,
     className,
+    inputClassName,
   } = props;
   const defaultRef = useRef<HTMLInputElement>(null);
   const ref = innerRef === undefined ? defaultRef : innerRef;
@@ -88,7 +90,7 @@ export default function TextInput(props: Props) {
           {...htmlAttrs}
           ref={ref}
           placeholder={placeholder}
-          className={cn(s.input, s[`size-${size}`], isError && s.isError)}
+          className={cn(s.input, inputClassName, s[`size-${size}`], isError && s.isError)}
           disabled={isDisabled}
           value={value ?? ''}
           onChange={(e) => {

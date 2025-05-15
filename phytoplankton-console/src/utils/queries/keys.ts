@@ -17,7 +17,7 @@ import { CRMModelType } from '@/apis/models/CRMModelType';
 type AnyParameters = unknown;
 
 export const CASES_LIST = (params: AnyParameters): QueryKey => ['cases', 'list', { params }];
-export const CASES_ITEM = (caseId: string): QueryKey => ['cases', caseId];
+export const CASES_ITEM = (caseId: string | undefined): QueryKey => ['cases', caseId];
 export const CASES_ITEM_ALERT_LIST = (caseId: string, params?: AnyParameters): QueryKey =>
   ['cases', caseId, 'alerts', 'list', params].filter(Boolean);
 export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
@@ -27,7 +27,6 @@ export const CASES_USERS_CASEIDS = (params: AnyParameters): QueryKey => [
   'caseIds',
   params,
 ];
-
 export const CASES_RULE_TRANSACTIONS = (
   caseId: string,
   params: AnyParameters,

@@ -1,6 +1,8 @@
 import { EffectCallback, useEffect, useRef, useState } from 'react';
 import { customAlphabet } from 'nanoid/non-secure';
 import { useSearchParams } from 'react-router-dom';
+import { useLocalStorageState } from 'ahooks';
+import { SetState } from 'ahooks/lib/createUseStorageState';
 import { isEqual } from '@/utils/lang';
 
 const nanoid = customAlphabet('1234567890abcdef', 16);
@@ -66,4 +68,15 @@ export function useScrollToFocus() {
 export function useIsChanged<T>(value: T): boolean {
   const prev = usePrevious(value);
   return !isEqual(prev, value);
+}
+
+export function useSafeLocalStorageState<T>(
+  key: string,
+  defaultValue: T,
+): [T, (value?: SetState<T> | undefined) => void] {
+  const [value, setRawValue] = useLocalStorageState<T>(key, {
+    defaultValue,
+  });
+
+  return [value ?? defaultValue, setRawValue];
 }

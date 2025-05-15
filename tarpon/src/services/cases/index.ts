@@ -24,6 +24,7 @@ import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
+import { ListService } from '../list'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import {
@@ -100,6 +101,7 @@ import {
   CaseUpdateAuditLogImage,
   CommentAuditLogImage,
 } from '@/@types/audit-log'
+import { ListItem } from '@/@types/openapi-public/ListItem'
 
 // Custom AuditLogReturnData types
 type CaseUpdateAuditLogReturnData = AuditLogReturnData<
@@ -143,6 +145,7 @@ export class CaseService extends CaseAlertsCommonService {
   hasFeatureSla: boolean
   slaPolicyService: SLAPolicyService
   auth0Domain: string
+  listService: ListService
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -212,6 +215,10 @@ export class CaseService extends CaseAlertsCommonService {
     this.hasFeatureSla = hasFeature('ALERT_SLA') && hasFeature('PNB')
     this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
     this.auth0Domain = getContext()?.auth0Domain ?? ''
+    this.listService = new ListService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
   }
 
   private getUpdateManualCaseComment(
@@ -512,11 +519,11 @@ export class CaseService extends CaseAlertsCommonService {
     await sendWebhookTasks<CaseClosedDetails>(this.tenantId, webhookTasks)
   }
 
-  private async updateKycAndUserState(
-    cases: Case[],
-    updates: CaseStatusUpdate
-  ) {
+  private async updateUserDetails(cases: Case[], updates: CaseStatusUpdate) {
     const usersData: { caseId: string; user: User | Business }[] = []
+    const listId = updates.listId
+    const tags = updates.tags
+    const screeningDetails = updates.screeningDetails
     cases.forEach((c) => {
       const user = c?.caseUsers?.origin ?? c?.caseUsers?.destination
       if (user && user.userId) {
@@ -528,6 +535,11 @@ export class CaseService extends CaseAlertsCommonService {
     })
 
     const userService = new UserService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
+
+    const listService = new ListService(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
@@ -547,6 +559,18 @@ export class CaseService extends CaseAlertsCommonService {
           description: updates.userStateDetails.description,
         },
       }),
+      ...(tags && {
+        tags: tags,
+      }),
+      ...(screeningDetails?.pepStatus && {
+        pepStatus: screeningDetails.pepStatus,
+      }),
+      ...(screeningDetails && {
+        sanctionsStatus: screeningDetails?.sanctionsStatus ?? false,
+      }),
+      ...(screeningDetails && {
+        adverseMediaStatus: screeningDetails?.adverseMediaStatus ?? false,
+      }),
     }
 
     if (isEmpty(updateObject)) {
@@ -555,10 +579,43 @@ export class CaseService extends CaseAlertsCommonService {
 
     if (!isEmpty(usersData)) {
       await Promise.all(
-        usersData.map(({ user, caseId }) => {
-          return userService.updateUser(user, updateObject, {}, { caseId })
-        })
+        usersData.map(({ user, caseId }) =>
+          userService.updateUser(user, updateObject, {}, { caseId })
+        )
       )
+
+      if (listId) {
+        await Promise.all(
+          usersData.map(({ user }) => {
+            let userFullName = ''
+            if ('userDetails' in user && user.userDetails?.name) {
+              const {
+                firstName = '',
+                middleName = '',
+                lastName = '',
+              } = user.userDetails.name
+              userFullName =
+                [lastName, firstName, middleName].filter(Boolean).join(' ') ||
+                ''
+            } else if (
+              'legalEntity' in user &&
+              Array.isArray(user.legalEntity)
+            ) {
+              userFullName =
+                user.legalEntity?.companyGeneralDetails?.legalName || ''
+            }
+
+            const listItem: ListItem = {
+              key: user.userId,
+              metadata: {
+                reason: '',
+                userFullName,
+              },
+            }
+            return listService.updateOrCreateListItem(listId, listItem)
+          })
+        )
+      }
     }
   }
 
@@ -654,9 +711,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       await Promise.all([
-        ...(!externalRequest
-          ? [this.updateKycAndUserState(cases, updates)]
-          : []),
+        ...(!externalRequest ? [this.updateUserDetails(cases, updates)] : []),
         this.caseRepository.updateStatusOfCases(
           caseIds,
           statusChange,
@@ -1184,6 +1239,9 @@ export class CaseService extends CaseAlertsCommonService {
       files: caseUpdateRequest.files,
       kycStatusDetails: caseUpdateRequest.kycStatusDetails,
       userStateDetails: caseUpdateRequest.userStateDetails,
+      tags: caseUpdateRequest.tags,
+      screeningDetails: caseUpdateRequest.screeningDetails,
+      listId: caseUpdateRequest.listId,
     }
 
     if (

@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
-import { useLocalStorageState } from 'ahooks';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { SearchResultTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
@@ -17,6 +16,7 @@ import { dayjs } from '@/utils/dayjs';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
 import { BooleanString, SanctionsScreeningEntity } from '@/apis';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export type SanctionsType = 'manual' | 'rule';
 type TableSearchParams = AllParams<{
@@ -36,7 +36,7 @@ const SanctionsPage: React.FC = () => {
   const { type = 'manual-screening' } = useParams<'type'>();
   const { searchId } = useParams<'searchId'>();
   const navigate = useNavigate();
-  const [storedActiveType, setStoredActiveType] = useLocalStorageState<SanctionsType>(
+  const [storedActiveType, setStoredActiveType] = useSafeLocalStorageState<SanctionsType>(
     'sanctions-active-type',
     'rule',
   );

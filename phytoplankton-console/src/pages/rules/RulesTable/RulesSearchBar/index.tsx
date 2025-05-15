@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { compact, isEmpty, isEqual, sortBy, uniq } from 'lodash';
-import { useDebounce, useLocalStorageState } from 'ahooks';
+import { useDebounce } from 'ahooks';
 import { replaceMagicKeyword } from '@flagright/lib/utils/object';
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency';
 import { Rule, RuleNature, Feature as FeatureName } from '@/apis';
@@ -13,7 +13,7 @@ import { RULES_UNIVERSAL_SEARCH } from '@/utils/queries/keys';
 import { AsyncResource, getOr, isLoading, isSuccess, success } from '@/utils/asyncResource';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Option } from '@/components/library/Select';
-import { useDeepEqualEffect } from '@/utils/hooks';
+import { useDeepEqualEffect, useSafeLocalStorageState } from '@/utils/hooks';
 
 type Props = {
   rules: Rule[];
@@ -58,7 +58,7 @@ export const RulesSearchBar = (props: Props) => {
     return Object.values(universalSearchFilterParams).every((value) => isEmpty(value));
   }, [universalSearchFilterParams]);
 
-  const [recentSearches, setRecentSearches] = useLocalStorageState<
+  const [recentSearches, setRecentSearches] = useSafeLocalStorageState<
     (Item & { timestamp: number })[]
   >(RECENT_RULE_SEARCHES_KEY, []);
 

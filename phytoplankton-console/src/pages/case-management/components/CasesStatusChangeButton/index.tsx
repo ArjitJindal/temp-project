@@ -1,4 +1,4 @@
-import React from 'react';
+import { TableUser } from '../../CaseTable/types';
 import CasesStatusChangeModal, {
   Props as CasesStatusChangeModalProps,
 } from './CasesStatusChangeModal';
@@ -17,6 +17,7 @@ export interface CasesStatusChangeButtonProps {
   isDisabled?: boolean;
   skipReasonsModal?: boolean;
   className?: string;
+  user?: TableUser;
 }
 interface CasesStatusChangeButtonWithoutModalProps extends CasesStatusChangeButtonProps {
   haveModal: false;
@@ -46,6 +47,7 @@ export default function CasesStatusChangeButton(
     isDisabled = false,
     className,
     haveModal = true,
+    user,
   } = props;
 
   return (
@@ -69,6 +71,7 @@ export default function CasesStatusChangeButton(
               newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus]?.actionLabel}
               onSaved={() => onSaved(newStatus)}
               initialValues={initialValues}
+              user={user}
               onClose={() => {
                 setVisible(false);
               }}
@@ -94,6 +97,7 @@ export default function CasesStatusChangeButton(
               newStatusActionLabel: caseStatus && statusTransitions?.[caseStatus]?.actionLabel,
               onSaved: () => onSaved(newStatus),
               initialValues,
+              user: user,
               onClose: () =>
                 (props as CasesStatusChangeButtonWithoutModalProps).setModalVisibility(false),
               skipReasonsModal: props.skipReasonsModal,

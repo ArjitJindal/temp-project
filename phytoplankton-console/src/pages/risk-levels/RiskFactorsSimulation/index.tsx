@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useLocalStorageState } from 'ahooks';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import SimulationCustomRiskFactorsTable, {
@@ -11,7 +10,7 @@ import Form from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { useId } from '@/utils/hooks';
+import { useId, useSafeLocalStorageState } from '@/utils/hooks';
 import Button from '@/components/library/Button';
 import { ParameterSettings } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
 import { AsyncResource } from '@/utils/asyncResource';
@@ -63,9 +62,10 @@ const MAX_SIMULATION_ITERATIONS = 3;
 
 export function RiskFactorsSimulation(props: Props) {
   const { riskFactors } = props;
-  const [storedIterations, setStoredIterations] = useLocalStorageState('SIMULATION_ITERATIONS', [
-    DEFAULT_ITERATION,
-  ]);
+  const [storedIterations, setStoredIterations] = useSafeLocalStorageState(
+    'SIMULATION_ITERATIONS',
+    [DEFAULT_ITERATION],
+  );
   const [iterations, setIterations] = useState(storedIterations);
   const api = useApi();
   const navigate = useNavigate();

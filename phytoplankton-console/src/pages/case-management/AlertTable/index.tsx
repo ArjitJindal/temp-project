@@ -498,6 +498,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                           newCaseStatus={'CLOSED'}
                           onSaved={reload}
                           rounded
+                          user={entity.user}
                         />
                       )}
                   </div>
@@ -953,6 +954,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
               const isEscalated = statusEscalated(entity.alertStatus);
               const isEscalatedL2 = statusEscalatedL2(entity.alertStatus);
+              const caseUser = entity.user;
               const canMutateCases = canMutateEscalatedCases(
                 { [entity.caseId]: entity },
                 userId,
@@ -976,6 +978,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       }}
                       setModalVisibility={setModalVisibility}
                       haveModal={false}
+                      user={caseUser}
                     />
                   )}
                   {entity?.caseId &&
@@ -998,6 +1001,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         }}
                         setModalVisibility={setModalVisibility}
                         haveModal={false}
+                        user={caseUser}
                       />
                     )}
                   {entity?.caseId &&
@@ -1019,6 +1023,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         }}
                         setModalVisibility={setModalVisibility}
                         haveModal={false}
+                        user={caseUser}
                       />
                     )}
                   {entity?.caseId && isInReview && canReview && entity.alertStatus && (
@@ -1415,6 +1420,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       const alertStatus = selectedAlertStatus;
       const isCaseHavingEscalated = isEscalatedCases(selectedItems, true);
       const status = selectedItems[selectedIds[0]]?.alertStatus;
+      const caseUser = selectedItems[selectedIds[0]]?.user;
 
       const isReviewAlerts = isInReviewCases(selectedItems, true);
 
@@ -1453,6 +1459,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       );
     },
@@ -1470,6 +1477,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       const canMutateEscalatedL2Cases =
         canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) &&
         userAccount?.escalationLevel === 'L2';
+      const caseUser = selectedItems[selectedIds[0]]?.user;
 
       if (
         !escalationEnabled ||
@@ -1501,6 +1509,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       );
     },
@@ -1512,6 +1521,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
       const caseId = params.caseId ?? selectedCaseId;
       const status = selectedItems[selectedIds[0]]?.alertStatus;
+      const caseUser = selectedItems[selectedIds[0]]?.user;
       if (!caseId) {
         return;
       }
@@ -1546,6 +1556,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       );
     },
@@ -1570,6 +1581,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
       const caseId = params.caseId ?? selectedCaseId;
       const status = selectedItems[selectedIds[0]]?.alertStatus;
+      const caseUser = selectedItems[selectedIds[0]]?.user;
       if (!caseId) {
         return;
       }
@@ -1598,6 +1610,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       );
     },
@@ -1635,6 +1648,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       ];
       const isReviewAlerts = isInReviewCases(selectedItems, true);
       const isEscalated = isEscalatedCases(selectedItems, true);
+      const caseUser = selectedItems[selectedIds[0]]?.user;
       if (isReviewAlerts || isEscalated) {
         return;
       }
@@ -1660,6 +1674,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       ) : null;
     },
@@ -1684,6 +1699,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       );
       const statusChangeButtonValue =
         selectedStatuses.length === 1 ? selectedStatuses[0] : undefined;
+      const caseUser = selectedItems[selectedIds[0]]?.user;
       if (selectedTransactionIds.length) {
         return;
       }
@@ -1704,6 +1720,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           }}
           setModalVisibility={setModalVisibility}
           haveModal={false}
+          user={caseUser}
         />
       ) : null;
     },

@@ -9,7 +9,7 @@ import { Comment, InternalConsumerUser } from '@/apis';
 import Tags from '@/pages/users-item/UserDetails/shared/Tags';
 import { CommentType, useAuth0User } from '@/utils/user-utils';
 import PlaceOfBirth from '@/pages/users-item/UserDetails/ConsumerUserDetails/PlaceOfBirth';
-import PepDetails from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails';
+import ScreeningDetails from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails';
 import EmploymentDetails from '@/pages/users-item/UserDetails/ConsumerUserDetails/EmploymentDetails';
 
 interface Props {
@@ -31,7 +31,7 @@ export default function ConsumerUserDetails(props: Props) {
           childrens={[
             <PlaceOfBirth key="place-of-birth" user={user} />,
             <ExpectedIncome expectedIncome={user.expectedIncome} key="expected-income" />,
-            <PepDetails key="pep-details" user={user} />,
+            <ScreeningDetails key="screening-details" user={user} />,
           ]}
         />
       </EntityInfoGrid.Cell>

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { snakeCase } from 'lodash';
-import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
@@ -20,6 +19,7 @@ import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
 import { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import BarChart, { BarChartData, GroupBy } from '@/components/charts/BarChart';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 interface Props<DataType, ValueType extends string, GroupType extends string> extends WidgetProps {
   groups: Array<{
@@ -58,7 +58,7 @@ export default function DistributionChartWidget<
     showGranularity,
     ...restProps
   } = props;
-  const [selectedGroup, setSelectedGroup] = useLocalStorageState<GroupType>(
+  const [selectedGroup, setSelectedGroup] = useSafeLocalStorageState<GroupType>(
     `dashboard-${restProps.id}`,
     groups[0].name,
   );

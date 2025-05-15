@@ -22,6 +22,7 @@ export interface Props extends InputProps<string> {
       }
     | boolean;
   testId?: string;
+  labelClassName?: string;
 }
 
 export default function Label(props: Props) {
@@ -39,6 +40,7 @@ export default function Label(props: Props) {
     },
     testId,
     iconRight,
+    labelClassName,
   } = props;
   const isRequired = (typeof required === 'boolean' ? required : required?.value) === true;
   const showHint = (typeof required === 'boolean' ? required : required?.showHint) === true;
@@ -73,7 +75,7 @@ export default function Label(props: Props) {
   return React.createElement(
     element,
     {
-      className: cn(s.root, s[`position-${position}`], s[`level-${level}`]),
+      className: cn(s.root, s[`position-${position}`], s[`level-${level}`], labelClassName),
       ['data-cy']: testId,
       id: uuidv4(),
     },

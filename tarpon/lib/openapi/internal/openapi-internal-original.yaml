@@ -8755,6 +8755,18 @@ components:
         - $ref: '#/components/schemas/StatusDetails'
       required:
         - reason
+    ScreeningDetails:
+      title: ScreeningDetails
+      type: object
+      properties:
+        pepStatus:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+        sanctionsStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsStatus
+        adverseMediaStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/AdverseMediaStatus
     TriggersOnHit:
       title: TriggersOnHit
       type: object
@@ -10606,6 +10618,10 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+        sanctionsStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsStatus
+        adverseMediaStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/AdverseMediaStatus
         tags:
           type: array
           items:
@@ -12824,6 +12840,16 @@ components:
           $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        eoddDate:
+          type: number
+        listId:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
+        screeningDetails:
+          $ref: '#/components/schemas/ScreeningDetails'
       required:
         - reason
       description: ''
@@ -12943,6 +12969,20 @@ components:
             type: string
         closeSourceCase:
           type: boolean
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetailsInternal'
+        kycStatusDetails:
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        eoddDate:
+          type: number
+        listId:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
+        screeningDetails:
+          $ref: '#/components/schemas/ScreeningDetails'
       required:
         - alertStatus
         - reason

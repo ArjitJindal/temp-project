@@ -13,10 +13,11 @@ interface Props {
   columns?: number;
   children?: React.ReactNode;
   columnTemplate?: string;
+  modal?: React.ReactNode;
 }
 
 export default function EntityPropertiesCard(props: Props) {
-  const { title, extraControls, items, columns = 1, children, columnTemplate } = props;
+  const { title, extraControls, items, columns = 1, children, columnTemplate, modal } = props;
   return (
     <div className={s.root}>
       <div className={s.header}>
@@ -41,6 +42,7 @@ export default function EntityPropertiesCard(props: Props) {
         </>
       }
       {children}
+      {modal}
     </div>
   );
 }

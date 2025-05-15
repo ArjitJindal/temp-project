@@ -2430,6 +2430,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.21.0":
+  version: 7.27.0
+  resolution: "@babel/runtime@npm:7.27.0"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 35091ea9de48bd7fd26fb177693d64f4d195eb58ab2b142b893b7f3fa0f1d7c677604d36499ae0621a3703f35ba0c6a8f6c572cc8f7dc0317213841e493cf663
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.9.2":
   version: 7.22.5
   resolution: "@babel/runtime@npm:7.22.5"
@@ -6724,7 +6733,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ahooks@npm:^2.0.0, ahooks@npm:^2.6.1":
+"ahooks@npm:^2.6.1":
   version: 2.10.14
   resolution: "ahooks@npm:2.10.14"
   dependencies:
@@ -6741,6 +6750,25 @@ __metadata:
   peerDependencies:
     react: ^16.8.6 || ^17.0
   checksum: 856290956cb8fcfd041461cbcdcf16d8a08efc847616ceae5472fea409b4986886569cef98bf17f1d6c01ba087d8d7eb121ac3ac188944ff4f390e03e22de7e0
+  languageName: node
+  linkType: hard
+
+"ahooks@npm:^3.8.0":
+  version: 3.8.4
+  resolution: "ahooks@npm:3.8.4"
+  dependencies:
+    "@babel/runtime": "npm:^7.21.0"
+    dayjs: "npm:^1.9.1"
+    intersection-observer: "npm:^0.12.0"
+    js-cookie: "npm:^3.0.5"
+    lodash: "npm:^4.17.21"
+    react-fast-compare: "npm:^3.2.2"
+    resize-observer-polyfill: "npm:^1.5.1"
+    screenfull: "npm:^5.0.0"
+    tslib: "npm:^2.4.1"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: a26747f11ac9dceb9dd9e8946ae647bd4e0a4eb5d4fc1c4a3f5698507c031d631ec1a89b1bf59475f9cbe23bd53071ffb9d203fb9cb84c31b907f8a4fac1a327
   languageName: node
   linkType: hard
 
@@ -12368,6 +12396,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"intersection-observer@npm:^0.12.0":
+  version: 0.12.2
+  resolution: "intersection-observer@npm:0.12.2"
+  checksum: 9591f46b2b742f5801ed69dbc8860f487771b4af8361e7a5dcb28a377beff2ba56336a2b090af261825430d225dae9417121496d2e6925e000e4a469958843ff
+  languageName: node
+  linkType: hard
+
 "intersection-observer@npm:^0.7.0":
   version: 0.7.0
   resolution: "intersection-observer@npm:0.7.0"
@@ -13803,6 +13838,13 @@ __metadata:
   version: 2.2.1
   resolution: "js-cookie@npm:2.2.1"
   checksum: ee67fc0f8495d0800b851910b5eb5bf49d3033adff6493d55b5c097ca6da46f7fe666b10e2ecb13cfcaf5b88d71c205ce00a7e646de791689bfd053bbb36a376
+  languageName: node
+  linkType: hard
+
+"js-cookie@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "js-cookie@npm:3.0.5"
+  checksum: 04a0e560407b4489daac3a63e231d35f4e86f78bff9d792011391b49c59f721b513411cd75714c418049c8dc9750b20fcddad1ca5a2ca616c3aca4874cce5b3a
   languageName: node
   linkType: hard
 
@@ -15902,7 +15944,7 @@ __metadata:
     "@visx/shape": "npm:^3.12.0"
     "@visx/tooltip": "npm:^3.12.0"
     "@xyflow/react": "npm:^12.5.5"
-    ahooks: "npm:^2.0.0"
+    ahooks: "npm:^3.8.0"
     ajv: "npm:^8.12.0"
     antd: "npm:4.21.4"
     aws-cdk: "npm:~2.177.0"
@@ -17272,6 +17314,13 @@ __metadata:
   version: 3.2.1
   resolution: "react-fast-compare@npm:3.2.1"
   checksum: 81e805b9cde58a49e37ecb7361a4c97a24e869182761ceda9428c9f4de4b26e461a33c155bfe8fad67c8ae26c6355750671ff6335df80c5d3fe9c537ff2d6ffb
+  languageName: node
+  linkType: hard
+
+"react-fast-compare@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "react-fast-compare@npm:3.2.2"
+  checksum: 0bbd2f3eb41ab2ff7380daaa55105db698d965c396df73e6874831dbafec8c4b5b08ba36ff09df01526caa3c61595247e3269558c284e37646241cba2b90a367
   languageName: node
   linkType: hard
 

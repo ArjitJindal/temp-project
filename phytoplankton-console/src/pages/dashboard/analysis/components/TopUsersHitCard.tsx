@@ -1,6 +1,5 @@
-import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import HitsPerUserCard from './HitsPerUserCard';
 import { generateAlertsListUrl } from './HitsPerUserCard/utils';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
@@ -16,6 +15,7 @@ import { isSuccess } from '@/utils/asyncResource';
 import { getUserLink } from '@/utils/api/users';
 import { getCurrentDomain } from '@/utils/routing';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
 }
@@ -30,7 +30,7 @@ const TopUsersHitCard = (props: Props) => {
     dayjs().subtract(1, 'week'),
     dayjs(),
   ]);
-  const [selectedSection, setSelectedSection] = useLocalStorageState<ScopeSelectorValue>(
+  const [selectedSection, setSelectedSection] = useSafeLocalStorageState<ScopeSelectorValue>(
     `dashboard-${userType}-user-active-tab`,
     'ALL',
   );

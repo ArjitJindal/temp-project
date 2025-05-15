@@ -24,7 +24,8 @@ export default function Sticky(props: Props) {
   return (
     <ContainerRectMeasure>
       {(rect) => {
-        const isSticky = scrollPosition.top > rect.top - top;
+        const isSticky =
+          scrollPosition && scrollPosition.top ? scrollPosition.top > rect.top - top : false;
         return (
           <React.Fragment key="sticky-portal">
             {ReactDOM.createPortal(

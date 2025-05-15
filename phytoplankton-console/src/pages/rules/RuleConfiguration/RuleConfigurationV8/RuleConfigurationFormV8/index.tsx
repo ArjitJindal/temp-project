@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
-import { useLocalStorageState } from 'ahooks';
 import { Mode } from '..';
 import s from './style.module.less';
 import BasicDetailsStep, {
@@ -16,7 +15,7 @@ import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
   INITIAL_VALUES as ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES,
 } from './steps/AlertCreationDetailsStep';
-import { useId } from '@/utils/hooks';
+import { useId, useSafeLocalStorageState } from '@/utils/hooks';
 import * as Card from '@/components/ui/Card';
 
 import { Rule, RuleType } from '@/apis';
@@ -86,7 +85,7 @@ function RuleConfigurationFormV8(
     : defaultInitialValues;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const isAsyncRulesEnabled = useFeatureEnabled('ASYNC_RULES');
-  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
+  const [isSimulationModeEnabled] = useSafeLocalStorageState('SIMULATION_RULES', false);
 
   const formId = useId(`form-`);
 

@@ -1,4 +1,3 @@
-import { useLocalStorageState } from 'ahooks';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import MyRule from './my-rules';
@@ -11,10 +10,11 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 const TableList = () => {
   const { tab = 'tab' } = useParams<'tab'>();
-  const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', tab);
+  const [, setLocalStorageActiveTab] = useSafeLocalStorageState('rule-active-tab', tab);
   useEffect(() => {
     setLocalStorageActiveTab(tab);
   }, [setLocalStorageActiveTab, tab]);
@@ -48,7 +48,7 @@ const TableList = () => {
 function Content(props: { tab: string }) {
   const navigate = useNavigate();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  const [isSimulationEnabled] = useLocalStorageState<boolean>('SIMULATION_RULES', false);
+  const [isSimulationEnabled] = useSafeLocalStorageState<boolean>('SIMULATION_RULES', false);
   const handleChange = useCallback(
     (key) => {
       navigate(`/rules/${key}`, { replace: true });

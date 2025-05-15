@@ -1,5 +1,4 @@
 import React, { forwardRef, useCallback, useImperativeHandle } from 'react';
-import { useLocalStorageState } from 'ahooks';
 import Breadcrumbs, { BreadcrumbItem } from 'src/components/library/Breadcrumbs';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import s from './styles.module.less';
@@ -10,6 +9,7 @@ import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import { LocalStorageKey } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
@@ -43,7 +43,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
     },
   }));
 
-  const [isSimulationEnabled, setIsSimulationEnabled] = useLocalStorageState<boolean>(
+  const [isSimulationEnabled, setIsSimulationEnabled] = useSafeLocalStorageState<boolean>(
     props.storageKey,
     false,
   );

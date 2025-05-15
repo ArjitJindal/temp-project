@@ -4,7 +4,7 @@ import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
 import TagsInput from './components/TagsInput';
-import { useQuery } from '@/utils/queries/hooks';
+import { useUserLists } from '@/utils/queries/hooks';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
 import Select from '@/components/library/Select';
@@ -24,10 +24,8 @@ import {
   RuleType,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
-import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
+import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
-import { LISTS } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
@@ -54,7 +52,6 @@ export const UserStatusTriggersAdvancedOptionsForm = (
   const settings = useSettings();
   const [isUserStateDetailsOpen, setIsUserStateDetailsOpen] = useState(false);
   const [isKYCStatusDetailsOpen, setIsKYCStatusDetailsOpen] = useState(false);
-  const api = useApi();
 
   const {
     values,
@@ -65,11 +62,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
     };
   } = useFormContext();
 
-  const queryResults = useQuery(LISTS('USER_ID'), async () => {
-    return await api.getLists({
-      filterListSubtype: ['USER_ID'],
-    });
-  });
+  const queryResults = useUserLists();
 
   return (
     <>

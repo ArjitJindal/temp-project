@@ -1,7 +1,7 @@
-import React, { Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { useLocalStorageState, usePrevious } from 'ahooks';
+import { usePrevious } from 'ahooks';
 import RuleConfigurationFormV8, {
   RuleConfigurationFormV8Values,
   STEPS,
@@ -55,6 +55,7 @@ import {
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
@@ -91,7 +92,7 @@ export function RuleConfigurationSimulation(props: Props) {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const steps = v8Mode ? STEPS : RULE_CONFIGURATION_STEPS;
   const [activeStepKey, setActiveStepKey] = useState(steps[0]);
-  const [simulationVarUpdatedData] = useLocalStorageState<VarThresholdData>(
+  const [simulationVarUpdatedData] = useSafeLocalStorageState<VarThresholdData>(
     UPDATED_VAR_DATA_KEY,
     EMPTY_THRESHOLD_DATA,
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActionLabel, FormValues } from '../StatusChangeModal';
+import { TableUser } from '../../CaseTable/types';
 import AlertsStatusChangeModal, {
   Props as AlertsStatusChangeModalProps,
 } from './AlertsStatusChangeModal';
@@ -21,6 +22,7 @@ export interface AlertsStatusChangeButtonProps {
   onSaved: () => void;
   isDisabled?: boolean;
   skipReasonsModal?: boolean;
+  user?: TableUser;
 }
 
 interface AlertsStatusChangeButtonWithoutModalProps extends AlertsStatusChangeButtonProps {
@@ -53,6 +55,7 @@ export default function AlertsStatusChangeButton(
     buttonProps = {},
     isDisabled = false,
     haveModal = true,
+    user,
   } = props;
 
   return (
@@ -77,6 +80,7 @@ export default function AlertsStatusChangeButton(
               onSaved={onSaved}
               newStatusActionLabel={status && statusTransitions?.[status]?.actionLabel}
               initialValues={initialValues}
+              user={user}
               onClose={() => {
                 setVisible(false);
               }}
@@ -104,6 +108,7 @@ export default function AlertsStatusChangeButton(
               newStatusActionLabel: status && statusTransitions?.[status]?.actionLabel,
               initialValues: initialValues,
               skipReasonsModal: props.skipReasonsModal,
+              user: user,
               onClose: () =>
                 (props as AlertsStatusChangeButtonWithoutModalProps).setModalVisibility(false),
             });

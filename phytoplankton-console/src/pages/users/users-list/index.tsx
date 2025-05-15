@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { useLocalStorageState } from 'ahooks';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
@@ -17,7 +16,7 @@ import { USERS } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { NavigationState } from '@/utils/queries/types';
-import { useDeepEqualEffect } from '@/utils/hooks';
+import { useDeepEqualEffect, useSafeLocalStorageState } from '@/utils/hooks';
 
 export interface UserSearchParams extends CommonParams {
   isPepHit?: 'true' | 'false';
@@ -227,7 +226,7 @@ export default function UsersList() {
   const settings = useSettings();
   const navigate = useNavigate();
   const i18n = useI18n();
-  const [_, setLocalStorageActiveTab] = useLocalStorageState('user-active-tab', list);
+  const [_, setLocalStorageActiveTab] = useSafeLocalStorageState('user-active-tab', list);
   useEffect(() => {
     setLocalStorageActiveTab(list);
   }, [setLocalStorageActiveTab, list]);

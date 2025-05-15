@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { TableUser } from '../../CaseTable/types';
 import AlertStatusChangeModal from '../../components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import s from './index.module.less';
 import Tooltip from '@/components/library/Tooltip';
@@ -16,6 +17,7 @@ interface Props {
   onSaved: () => void;
   isBlue?: boolean;
   rounded?: boolean;
+  user?: TableUser;
 }
 
 const reasons: string[] = [
@@ -47,7 +49,7 @@ const FalsePostiveLabel = (props: { confidence: number; onClick?: () => void }) 
 };
 
 export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
-  const { alertId, caseIds, onSaved, newCaseStatus, confidence } = props;
+  const { alertId, caseIds, onSaved, newCaseStatus, confidence, user } = props;
   const [isModalVisible, setModalVisible] = useState(false);
 
   const [isDemoMode] = useDemoMode();
@@ -82,6 +84,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         newStatus={newCaseStatus}
         defaultReasons={newCaseStatus === 'CLOSED' ? ['False positive'] : []}
         onSaved={onSaved}
+        user={user}
         onClose={() => {
           setModalVisible(false);
         }}

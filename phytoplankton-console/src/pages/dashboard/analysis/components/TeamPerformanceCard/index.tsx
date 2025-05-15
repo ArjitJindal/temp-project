@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { useLocalStorageState } from 'ahooks';
 import s from './index.module.less';
 import AccountsStatisticsTable from './AccountsStatisticsTable';
 import LatestOverviewTable from './LatestTeamOverview';
@@ -30,6 +29,7 @@ import { WidgetProps } from '@/components/library/Widget/types';
 import Select from '@/components/library/Select';
 import Button from '@/components/library/Button';
 import { notEmpty } from '@/utils/array';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 interface Params extends TableCommonParams {
   scope: 'CASES' | 'ALERTS';
@@ -40,7 +40,7 @@ interface Params extends TableCommonParams {
 export default function TeamPerformanceCard(props: WidgetProps) {
   const startTime = dayjs().subtract(1, 'month');
   const endTime = dayjs();
-  const [type, setType] = useLocalStorageState<'current' | 'daterange'>(
+  const [type, setType] = useSafeLocalStorageState<'current' | 'daterange'>(
     'team-performance-card-type',
     'current',
   );

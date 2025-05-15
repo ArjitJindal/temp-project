@@ -27,6 +27,8 @@ import {
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
 import { useQaMode } from '@/utils/qa-mode';
 import { useBackUrl } from '@/utils/backUrl';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   alertItemRes: AsyncResource<Alert>;
@@ -56,7 +58,7 @@ export default function Header(props: Props) {
     },
   );
   const api = useApi();
-  const actionsRes = useActions(alertItemRes, props.onReload);
+  const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
@@ -121,6 +123,7 @@ export default function Header(props: Props) {
 }
 
 function useActions(
+  caseItemRes: AsyncResource<Case>,
   alertItemRes: AsyncResource<Alert>,
   onReload: () => void,
 ): AsyncResource<React.ReactNode[]> {
@@ -169,16 +172,25 @@ function useActions(
     // Comment button
     {
       result.push(
-        <AlertsStatusChangeButton
-          key={'status-change-button'}
-          status={alertItem.alertStatus}
-          ids={alertId ? [alertId] : []}
-          transactionIds={{}}
-          onSaved={() => {
-            client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
-          }}
-          haveModal={true}
-        />,
+        <AsyncResourceRenderer resource={caseItemRes}>
+          {(caseItem) => (
+            <AlertsStatusChangeButton
+              key={'status-change-button'}
+              status={alertItem.alertStatus}
+              ids={alertId ? [alertId] : []}
+              transactionIds={{}}
+              onSaved={() => {
+                client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
+              }}
+              haveModal={true}
+              user={
+                (caseItem?.caseUsers?.origin as TableUser) ||
+                (caseItem?.caseUsers?.destination as TableUser) ||
+                undefined
+              }
+            />
+          )}
+        </AsyncResourceRenderer>,
       );
     }
 

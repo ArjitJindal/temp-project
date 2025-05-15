@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { compact } from 'lodash';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
-import { useLocalStorageState } from 'ahooks';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import {
@@ -35,6 +34,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export interface BasicDetailsFormValues {
   ruleId: string | undefined;
@@ -87,7 +87,7 @@ export default function BasicDetailsStep(props: Props) {
   const userRuleRunConditionField = useFieldState<BasicDetailsFormValues, 'userRuleRunCondition'>(
     'userRuleRunCondition',
   );
-  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
+  const [isSimulationModeEnabled] = useSafeLocalStorageState('SIMULATION_RULES', false);
   const isPnb = useFeatureEnabled('PNB');
   return (
     <div className={s.root}>

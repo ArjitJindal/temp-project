@@ -26,7 +26,7 @@ paths:
         `/transactions` endpoint allows you to operate on the [Transaction entity.](/guides/overview/entities#transaction)
 
 
-        In order to pass the payload of a transaction to Flagright and verify the transaction, you will need to call this endpoint with the transaction payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup. 
+        In order to pass the payload of a transaction to Flagright and verify the transaction, you will need to call this endpoint with the transaction payload. Not all fields are mandatory, you will only need to pass in the fields that you have and are relevant for your compliance setup.
 
 
 
@@ -36,9 +36,9 @@ paths:
         Here are some of the most used payload fields explained (you can find the full payload [schema below](/api-reference/api-reference/transactions/verify#request) with 1 line descriptions):
 
 
-        * `type`: Type of transaction (Ex: `WITHDRAWAL`, `DEPOSIT`, `TRANSFER` etc). 
+        * `type`: Type of transaction (Ex: `WITHDRAWAL`, `DEPOSIT`, `TRANSFER` etc).
 
-        * `transactionId` - Unique Identifier for the transaction. 
+        * `transactionId` - Unique Identifier for the transaction.
 
         * `timestamp` - UNIX timestamp in *milliseconds* of when the transaction took place
 
@@ -411,7 +411,7 @@ paths:
         * Update the transaction details, using the `updatedTransactionAttributes` field.
 
 
-        > If you have neither of the above two use cases, you do not need to use transaction events. 
+        > If you have neither of the above two use cases, you do not need to use transaction events.
 
 
         ### Payload
@@ -424,7 +424,7 @@ paths:
 
         * `timestamp`- the timestamp of when the event was created or occured in your system
 
-        * `transactionId` - The ID of the transaction for which this event is generated. 
+        * `transactionId` - The ID of the transaction for which this event is generated.
 
 
         In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
@@ -623,7 +623,7 @@ paths:
         ### GET Transaction Events
 
 
-        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](/guides/overview/entities#transaction-event). 
+        `/events/transaction` endpoint allows you to operate on the [Transaction Events entity.](/guides/overview/entities#transaction-event).
 
 
         You can retrieve any transaction event you created using the [POST Transaction Events](/api-reference/api-reference/transaction-events/create) call.
@@ -1307,7 +1307,7 @@ paths:
         * Update the user details, using the `updatedConsumerUserAttributes` field.
 
 
-        > If you have neither of the above two use cases, you do not need to use user events. 
+        > If you have neither of the above two use cases, you do not need to use user events.
 
 
         ### Payload
@@ -1318,7 +1318,7 @@ paths:
 
         * `timestamp`- the timestamp of when the event was created or occured in your system
 
-        * `userId` - The ID of the transaction for which this event is generated. 
+        * `userId` - The ID of the transaction for which this event is generated.
 
 
         In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
@@ -1513,7 +1513,7 @@ paths:
         * Update the user details, using the `updatedBusinessUserAttributes` field.
 
 
-        > If you have neither of the above two use cases, you do not need to use user events. 
+        > If you have neither of the above two use cases, you do not need to use user events.
 
 
         ### Payload
@@ -1524,7 +1524,7 @@ paths:
 
         * `timestamp`- the timestamp of when the event was created or occured in your system
 
-        * `userId` - The ID of the transaction for which this event is generated. 
+        * `userId` - The ID of the transaction for which this event is generated.
 
 
         In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
@@ -1980,6 +1980,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PEPStatus'
+        sanctionsStatus:
+          $ref: '#/components/schemas/SanctionsStatus'
+        adverseMediaStatus:
+          $ref: '#/components/schemas/AdverseMediaStatus'
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
@@ -5135,6 +5139,10 @@ components:
         - LEVEL_1
         - LEVEL_2
         - LEVEL_3
+    SanctionsStatus:
+      type: boolean
+    AdverseMediaStatus:
+      type: boolean
     KYCStatusDetails:
       title: KYCStatusDetails
       type: object
@@ -5408,6 +5416,8 @@ components:
         - USER_TAGS_DELETED
         - CRA_RISK_LEVEL_UPDATED
         - LIST_UPDATED
+        - SANCTIONS_STATUS_UPDATED
+        - ADVERSE_MEDIA_STATUS_UPDATED
     ListType:
       type: string
       enum:

@@ -50,6 +50,13 @@ const WIDTH: { [K in ModalWidth]: number | string } = {
   XL: '100vw',
 };
 
+export const isModalWidthGreatherThan = (modalWidth: ModalWidth, comparedWith: ModalWidth) => {
+  const modalWidthIndex = MODAL_WIDTHS.indexOf(modalWidth);
+  const comapredWithIndex = MODAL_WIDTHS.indexOf(comparedWith);
+
+  return modalWidthIndex > comapredWithIndex;
+};
+
 export default function Modal(props: Props) {
   const {
     id,
@@ -79,7 +86,9 @@ export default function Modal(props: Props) {
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
-  const [size, setSize] = useLocalStorageState<ModalWidth | undefined>(id ?? 'UNKNOWN_MODAL');
+  const [size, setSize] = useLocalStorageState<ModalWidth | undefined>(id ?? 'UNKNOWN_MODAL', {
+    listenStorageChange: true,
+  });
 
   const derivedResizable: boolean = isResizable && id != null;
   const derivedSize: ModalWidth = derivedResizable && size != null ? size : width;

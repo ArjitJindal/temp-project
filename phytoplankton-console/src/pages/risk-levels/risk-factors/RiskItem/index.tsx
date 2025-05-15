@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalStorageState } from 'ahooks';
 import { useEffect } from 'react';
 import { RiskFactorConfiguration, serializeRiskItem } from '../RiskFactorConfiguration';
 import { RiskFactorConfigurationFormValues } from '../RiskFactorConfiguration/RiskFactorConfigurationForm';
@@ -21,6 +20,7 @@ import { getOr } from '@/utils/asyncResource';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
 import { message } from '@/components/library/Message';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export default function () {
   const isSimulationMode = window.localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
@@ -179,7 +179,7 @@ interface SimulationRiskItemFormProps {
 
 function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
   const { type, mode, id, riskClassificationValues, navigateToRiskFactors, dataKey } = props;
-  const [riskFactorsMap, setRiskFactorsMap] = useLocalStorageState<RiskFactorsTypeMap>(
+  const [riskFactorsMap, setRiskFactorsMap] = useSafeLocalStorageState<RiskFactorsTypeMap>(
     `${LocalStorageKey}-${dataKey}`,
     {
       CONSUMER_USER: [],
