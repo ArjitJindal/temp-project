@@ -1103,8 +1103,8 @@ export class UserRepository {
     )
 
     const uniqueTags = uniq(
-      tags?.map((tag) => ({ key: tag.key, value: tag.value }))
-    )
+      tags?.map((tag) => JSON.stringify({ key: tag.key, value: tag.value }))
+    ).map((uniqueStr) => JSON.parse(uniqueStr))
 
     await Promise.all(
       uniqueTags.map((tag) =>

@@ -2026,8 +2026,10 @@ export class MongoDbTransactionRepository
     )
 
     const uniqueTags = uniq(
-      transaction.tags.map((tag) => ({ key: tag.key, value: tag.value }))
-    )
+      transaction.tags.map((tag) =>
+        JSON.stringify({ key: tag.key, value: tag.value })
+      )
+    ).map((uniqueStr) => JSON.parse(uniqueStr))
 
     await Promise.all(
       uniqueTags.map((tag) =>
