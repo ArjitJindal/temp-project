@@ -181,14 +181,17 @@ export default function InvestigativeCoPilot(props: Props) {
             const parsedResponses = parseQuestionResponse(response);
             setHistory((items) => {
               const result: (QuestionResponse | QuestionResponseSkeleton)[] = [];
+              const embeddedItems: (QuestionResponse | QuestionResponseSkeleton)[] = [];
               for (const x of items) {
                 if (x.questionType === 'SKELETON' && x.requestId === requestId) {
                   result.push(...parsedResponses);
+                } else if (x.questionType === 'EMBEDDED') {
+                  embeddedItems.push(x);
                 } else {
                   result.push(x);
                 }
               }
-              return result;
+              return [...result, ...embeddedItems];
             });
           })
           .catch((error) => {
