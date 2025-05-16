@@ -400,10 +400,11 @@ export const COPILOT_ALERT_QUESTIONS = (alertId: string): QueryKey => [
   'list',
 ];
 
-export const COPILOT_SUGGESTIONS = (requestString: string): QueryKey => [
+export const COPILOT_SUGGESTIONS = (requestString: string, alertId: string): QueryKey => [
   'copilot',
   'suggestions',
   requestString,
+  alertId,
 ];
 export const RULE_QUEUES = (params?: AnyParameters): QueryKey =>
   ['rule-queues', params].filter(Boolean);

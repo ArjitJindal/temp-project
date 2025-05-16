@@ -54,6 +54,7 @@ export const SearchBar = (props: Props) => {
   const mutationRes = getMutationAsyncResource(searchMutation);
   const [searchText, setSearchText] = useState<string>('');
   const debouncedSearch = useDebounce(searchText, { wait: 500 });
+  const [clickedSuggestions, setClickedSuggestions] = useState<Set<string>>(new Set());
 
   const api = useApi();
   const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
@@ -62,7 +63,7 @@ export const SearchBar = (props: Props) => {
   });
   const alert = getOr(alertQueryResult.data, undefined);
   const suggestionsQueryResult = useQuery<string[]>(
-    COPILOT_SUGGESTIONS(debouncedSearch),
+    COPILOT_SUGGESTIONS(debouncedSearch, alertId),
     async () => {
       const response = await api.getQuestionAutocomplete({
         question: debouncedSearch,
@@ -71,11 +72,22 @@ export const SearchBar = (props: Props) => {
       return response.suggestions ?? [];
     },
   );
-  const suggestions = getOr(suggestionsQueryResult.data, []);
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setClickedSuggestions((prev) => new Set(prev).add(suggestion));
+    setHighlightedSuggestionIndex(undefined);
+    searchMutation.mutate([{ searchString: suggestion }]);
+  };
+
+  const rawSuggestions = getOr(suggestionsQueryResult.data, []);
+  const displayedSuggestions = rawSuggestions.filter((s) => !clickedSuggestions.has(s));
+
   const isOntologyEnabled = useFeatureEnabled('ENTITY_LINKING');
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState<number>();
   const highlightedSuggestion =
-    highlightedSuggestionIndex != null ? suggestions[highlightedSuggestionIndex] : undefined;
+    highlightedSuggestionIndex != null
+      ? displayedSuggestions[highlightedSuggestionIndex]
+      : undefined;
 
   const isResponseReceived = useFinishedSuccessfully(mutationRes);
 
@@ -87,6 +99,10 @@ export const SearchBar = (props: Props) => {
       setSearchText('');
     }
   }, [isResponseReceived]);
+  useEffect(() => {
+    setClickedSuggestions(new Set());
+    setHighlightedSuggestionIndex(undefined);
+  }, [debouncedSearch]);
   const searchInputText = highlightedSuggestion ?? searchText;
 
   if (!isClickhouseEnabled) {
@@ -95,17 +111,15 @@ export const SearchBar = (props: Props) => {
 
   return (
     <div className={s.root}>
-      {suggestions.length > 0 && (
+      {displayedSuggestions.length > 0 && (
         <div className={cn(s.grid, showMore && s.showMore)}>
           <div className={s.suggestions}>
-            {suggestions.map((suggestion, i) => (
+            {displayedSuggestions.map((suggestion, i) => (
               <button
                 data-cy="investigation-suggestion-button"
                 key={suggestion}
                 className={cn(s.suggestion, highlightedSuggestionIndex === i && s.isHighlighted)}
-                onClick={() => {
-                  searchMutation.mutate([{ searchString: suggestion }]);
-                }}
+                onClick={() => handleSuggestionClick(suggestion)}
               >
                 {suggestion}
               </button>
@@ -132,7 +146,7 @@ export const SearchBar = (props: Props) => {
           <TextInput
             testName={'investigation-input'}
             disableBorders={true}
-            placeholder="Ask ‘AI Forensics’ for investigative data using natural language"
+            placeholder="Ask 'AI Forensics' for investigative data using natural language"
             value={searchInputText}
             onChange={(newValue) => {
               setHighlightedSuggestionIndex(undefined);
@@ -141,8 +155,11 @@ export const SearchBar = (props: Props) => {
             onArrowUp={() => {
               setShowMore(true);
               setHighlightedSuggestionIndex((prevState) => {
+                if (displayedSuggestions.length === 0) {
+                  return undefined;
+                }
                 if (prevState == null || prevState === 0) {
-                  return suggestions.length - 1;
+                  return displayedSuggestions.length - 1;
                 }
                 return prevState - 1;
               });
@@ -150,10 +167,13 @@ export const SearchBar = (props: Props) => {
             onArrowDown={() => {
               setShowMore(true);
               setHighlightedSuggestionIndex((prevState) => {
+                if (displayedSuggestions.length === 0) {
+                  return undefined;
+                }
                 if (prevState == null) {
                   return 0;
                 }
-                return (prevState + 1) % suggestions.length;
+                return (prevState + 1) % displayedSuggestions.length;
               });
             }}
           />

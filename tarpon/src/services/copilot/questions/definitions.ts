@@ -25,7 +25,6 @@ import { hasFeature } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
 import { isDemoMode } from '@/utils/demo'
 import { ReferenceWordCount } from '@/services/copilot/questions/definitions/reference-word-count'
-import { RuleHit } from '@/services/copilot/questions/definitions/rules'
 export const isValidQuestion = (questionId: string) =>
   !!getQuestions().find((q) => q.questionId === questionId)
 
@@ -50,7 +49,6 @@ export const getQuestions = (): Question<any>[] =>
     UsersTransactedWith,
     TransactionSummary,
     ReferenceWordCount,
-    RuleHit,
     CardMerchantIdentifier,
     ...TransactionAggregations,
     ...TransactionQuestions,
