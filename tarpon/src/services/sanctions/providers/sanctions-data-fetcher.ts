@@ -296,7 +296,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       const matchTypeCondition = {
         $or: [
           {
-            normalizedAka: sanitizeString(request.searchTerm),
+            normalizedAka: normalize(request.searchTerm),
           },
         ],
       }
@@ -991,7 +991,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   must: [
                     {
                       text: {
-                        query: sanitizeString(request.searchTerm),
+                        query: normalize(request.searchTerm),
                         path: 'normalizedAka',
                         fuzzy: {
                           maxEdits: 2,
