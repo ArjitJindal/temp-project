@@ -491,7 +491,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         return [
           { index: { tag: 1 } },
           { index: { type: 1 } },
-          { index: { tag: 1, type: 1 }, unique: true },
+          { index: { tag: 1, type: 1, value: 1 }, unique: true },
         ]
       },
     },
