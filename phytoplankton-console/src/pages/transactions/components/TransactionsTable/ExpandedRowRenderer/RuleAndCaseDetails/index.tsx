@@ -15,7 +15,7 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useRuleOptions } from '@/utils/rules';
 import { PRIORITY } from '@/components/library/Table/standardDataTypes';
-
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
@@ -50,11 +50,11 @@ export default function RuleAndCaseDetails(props: Props) {
     },
   );
   const ruleOptions = useRuleOptions();
-
+  const columns = useColumns();
   return (
     <div>
       <P bold={true} className={s.title}>
-        {'Rule & Case details'}
+        Rule & Case details
       </P>
       <QueryResultsTable<Alert, TableParams>
         rowKey={'alertId'}
@@ -82,66 +82,66 @@ export default function RuleAndCaseDetails(props: Props) {
 
 const columnHelper = new ColumnHelper<Alert>();
 
-const columns = columnHelper.list([
-  columnHelper.simple({ title: '', key: 'priority', defaultWidth: 40, type: PRIORITY }),
-  columnHelper.simple({ key: 'ruleName', title: 'Rule name', defaultWidth: 300 }),
-  columnHelper.simple({ key: 'ruleDescription', title: 'Rule description', defaultWidth: 400 }),
-  columnHelper.derived({
-    id: 'ruleInstanceId',
-    value: (item) => getRuleInstanceDisplayId(item.ruleId, item.ruleInstanceId),
-    title: 'Rule ID',
-    defaultWidth: 150,
-    type: {
-      render: (id, context) => {
-        return (
-          <Id
-            to={makeUrl('/rules/my-rules/:ruleInstanceId', {
-              ruleInstanceId: context.item.ruleInstanceId,
-            })}
-          >
-            {id}
-          </Id>
-        );
+const useColumns = () => {
+  const isAlerDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
+  return columnHelper.list([
+    columnHelper.simple({ title: '', key: 'priority', defaultWidth: 40, type: PRIORITY }),
+    columnHelper.simple({ key: 'ruleName', title: 'Rule name', defaultWidth: 300 }),
+    columnHelper.simple({ key: 'ruleDescription', title: 'Rule description', defaultWidth: 400 }),
+    columnHelper.derived({
+      id: 'ruleInstanceId',
+      value: (item) => getRuleInstanceDisplayId(item.ruleId, item.ruleInstanceId),
+      title: 'Rule ID',
+      defaultWidth: 150,
+      type: {
+        render: (id, context) => {
+          return (
+            <Id
+              to={makeUrl('/rules/my-rules/:ruleInstanceId', {
+                ruleInstanceId: context.item.ruleInstanceId,
+              })}
+            >
+              {id}
+            </Id>
+          );
+        },
       },
-    },
-  }),
-  columnHelper.simple({
-    id: 'filterCaseId',
-    key: 'caseId' as const,
-    title: 'Case ID',
-    defaultWidth: 150,
-    filtering: true,
-    showFilterByDefault: true,
-    type: {
-      render: (caseId) => (
-        <Id to={caseId ? makeUrl('/case-management/case/:id', { id: caseId }) : undefined}>
-          {caseId}
-        </Id>
-      ),
-    },
-  }),
-  columnHelper.simple({
-    id: 'filterAlertId',
-    key: 'alertId' as const,
-    title: 'Alert ID',
-    filtering: true,
-    showFilterByDefault: true,
-    defaultWidth: 150,
-    type: {
-      render: (alertId: string | undefined, { item: alert }) => (
-        <Id
-          to={
-            alert.caseId
-              ? makeUrl('/case-management/case/:id/:tab', {
-                  id: alert.caseId,
-                  tab: 'alerts',
-                })
-              : undefined
-          }
-        >
-          {alertId}
-        </Id>
-      ),
-    },
-  }),
-]);
+    }),
+    columnHelper.simple({
+      id: 'filterCaseId',
+      key: 'caseId' as const,
+      title: 'Case ID',
+      defaultWidth: 150,
+      filtering: true,
+      showFilterByDefault: true,
+      type: {
+        render: (caseId) => (
+          <Id to={caseId ? makeUrl('/case-management/case/:id', { id: caseId }) : undefined}>
+            {caseId}
+          </Id>
+        ),
+      },
+    }),
+    columnHelper.simple({
+      id: 'filterAlertId',
+      key: 'alertId' as const,
+      title: 'Alert ID',
+      filtering: true,
+      showFilterByDefault: true,
+      defaultWidth: 150,
+      type: {
+        render: (alertId: string | undefined, { item: alert }) => {
+          const url = isAlerDetailsPageEnabled
+            ? makeUrl('case-management/alerts/:id', { id: alertId })
+            : alert.caseId
+            ? makeUrl('/case-management/case/:id/:tab', {
+                id: alert.caseId,
+                tab: 'alerts',
+              })
+            : undefined;
+          return <Id to={url}>{alertId}</Id>;
+        },
+      },
+    }),
+  ]);
+};
