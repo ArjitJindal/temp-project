@@ -1,7 +1,6 @@
 import { Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { usePrevious } from 'ahooks';
 import RuleConfigurationFormV8, {
   RuleConfigurationFormV8Values,
   STEPS,
@@ -55,7 +54,7 @@ import {
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
-import { useSafeLocalStorageState } from '@/utils/hooks';
+import { usePrevious, useSafeLocalStorageState } from '@/utils/hooks';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
@@ -99,7 +98,14 @@ export function RuleConfigurationSimulation(props: Props) {
   const updatedDefaultInstance = simulationVarUpdatedData.varKey
     ? updateCurrentInstance(ruleInstance, simulationVarUpdatedData)
     : ruleInstance;
-  localStorage.removeItem('UPDATED_VAR_DATA');
+
+  useEffect(() => {
+    const key = 'UPDATED_VAR_DATA';
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+    }
+  }, []);
+
   const [newIterations, setNewIterations] = useState<SimulationBeaconParameters[]>([
     {
       ...DEFAULT_ITERATION,
@@ -262,7 +268,6 @@ export function RuleConfigurationSimulation(props: Props) {
     v8Mode,
   ]);
 
-  // const prevIsVisible = usePrevious(isVisible);
   const prevRuleInstance = usePrevious(ruleInstance);
   useEffect(() => {
     if (!prevRuleInstance && ruleInstance) {
@@ -273,7 +278,7 @@ export function RuleConfigurationSimulation(props: Props) {
         },
       ]);
     }
-  }, [activeStepKey, prevRuleInstance, ruleInstance, startSimulationMutation]);
+  }, [prevRuleInstance, ruleInstance]);
   const isShowingResults = useMemo(
     () => Boolean(startSimulationMutation.isLoading || jobId),
     [jobId, startSimulationMutation.isLoading],
@@ -294,6 +299,10 @@ export function RuleConfigurationSimulation(props: Props) {
         });
   }, [jobId, jobResult.data, newIterations]);
   const iterationResults = useMemo(() => {
+    if (!jobId) {
+      return [];
+    }
+
     if (jobId && isSuccess(jobResult.data)) {
       return jobResult.data.value.iterations ?? [];
     } else if (isResourceLoading(jobResult.data)) {
@@ -305,7 +314,11 @@ export function RuleConfigurationSimulation(props: Props) {
     return Boolean(
       startSimulationMutation.isLoading ||
         (jobId &&
-          !(isSuccess(jobResult.data) && allIterationsCompleted(jobResult.data.value.iterations))),
+          !(
+            isSuccess(jobResult.data) &&
+            jobResult.data.value?.iterations &&
+            allIterationsCompleted(jobResult.data.value.iterations)
+          )),
     );
   }, [jobId, jobResult.data, startSimulationMutation.isLoading]);
   const handleDeleteIteration = (index: number) => {
