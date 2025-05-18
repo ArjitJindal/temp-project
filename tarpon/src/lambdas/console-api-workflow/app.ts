@@ -17,6 +17,36 @@ import {
 } from '@/utils/workflow-machine'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 
+function parseWorkflow(request): CaseWorkflow | AlertWorkflow {
+  let workflow: CaseWorkflow | AlertWorkflow
+  // TODO: fix this!
+  const inlineObject = request.InlineObject3 || request.InlineObject4
+
+  if (request.workflowType === 'case') {
+    workflow = inlineObject.caseWorkflow as CaseWorkflow
+    try {
+      CaseWorkflowMachine.validate(workflow)
+    } catch (error) {
+      throw new BadRequest(
+        'Invalid workflow definition: ' + (error as Error).message
+      )
+    }
+  } else if (request.workflowType === 'alert') {
+    workflow = inlineObject.alertWorkflow as AlertWorkflow
+    try {
+      AlertWorkflowMachine.validate(workflow)
+    } catch (error) {
+      throw new BadRequest(
+        'Invalid workflow definition: ' + (error as Error).message
+      )
+    }
+  } else {
+    throw new BadRequest('Invalid workflow type')
+  }
+
+  return workflow
+}
+
 export const workflowHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -44,34 +74,17 @@ export const workflowHandler = lambdaApi()(
       )
     })
 
-    // Create/Update case workflow
-    handlers.registerPostWorkflow(async (_ctx, request) => {
-      // log request attributes json
+    handlers.registerCreateWorkflow(async (_ctx, request) => {
+      const workflow = parseWorkflow(request)
+      return await workflowService.saveWorkflow(
+        request.workflowType as WorkflowType,
+        undefined,
+        workflow
+      )
+    })
 
-      let workflow: CaseWorkflow | AlertWorkflow
-      // if request.workflowType is case
-      if (request.workflowType === 'case') {
-        workflow = request.InlineObject3.caseWorkflow as CaseWorkflow
-        try {
-          CaseWorkflowMachine.validate(workflow)
-        } catch (error) {
-          throw new BadRequest(
-            'Invalid workflow definition: ' + (error as Error).message
-          )
-        }
-      } else if (request.workflowType === 'alert') {
-        workflow = request.InlineObject3.alertWorkflow as AlertWorkflow
-        try {
-          AlertWorkflowMachine.validate(workflow)
-        } catch (error) {
-          throw new BadRequest(
-            'Invalid workflow definition: ' + (error as Error).message
-          )
-        }
-      } else {
-        throw new BadRequest('Invalid workflow type')
-      }
-
+    handlers.registerPostWorkflowVersion(async (_ctx, request) => {
+      const workflow = parseWorkflow(request)
       return await workflowService.saveWorkflow(
         request.workflowType as WorkflowType,
         request.workflowId,

@@ -7,11 +7,16 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
+import { nanoid } from 'nanoid'
 import { StackConstants } from '@lib/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
+
+function generateUniqueId(): string {
+  return nanoid()
+}
 
 interface WorkflowServiceDeps {
   dynamoDb: DynamoDBClient
@@ -19,10 +24,23 @@ interface WorkflowServiceDeps {
 }
 
 type Workflow = CaseWorkflow | AlertWorkflow
+type InternalWorkflow = Workflow & {
+  PartitionKeyID: string
+  SortKeyID: string
+}
 
 export class WorkflowService {
   private readonly docClient: DynamoDBDocumentClient
   private readonly tableName: string
+
+  private cleanWorkflow(workflow: InternalWorkflow): Workflow {
+    const {
+      PartitionKeyID: _partitionKeyID,
+      SortKeyID: _sortKeyID,
+      ...cleanWorkflow
+    } = workflow
+    return cleanWorkflow
+  }
 
   constructor(
     private readonly tenantId: string,
@@ -35,7 +53,7 @@ export class WorkflowService {
   async getWorkflows(workflowType?: WorkflowType): Promise<Workflow[]> {
     const workflowTypes: WorkflowType[] = workflowType
       ? [workflowType]
-      : ['CASE', 'ALERT']
+      : ['case', 'alert']
 
     const results = await Promise.all(
       workflowTypes.map(async (type) => {
@@ -60,15 +78,17 @@ export class WorkflowService {
     }
 
     // Get unique workflows (latest version only)
-    const workflowMap = new Map<string, Workflow>()
+    const workflowMap = new Map<string, InternalWorkflow>()
     for (const item of allItems) {
       const workflowId = item.SortKeyID.split('#')[0]
       if (!workflowMap.has(workflowId)) {
-        workflowMap.set(workflowId, item as Workflow)
+        workflowMap.set(workflowId, item as InternalWorkflow)
       }
     }
 
-    return Array.from(workflowMap.values())
+    return Array.from(workflowMap.values()).map((workflow) =>
+      this.cleanWorkflow(workflow)
+    )
   }
 
   async getWorkflow(
@@ -93,7 +113,8 @@ export class WorkflowService {
       throw new NotFound(`Workflow ${workflowId} not found`)
     }
 
-    return result.Items[0] as Workflow
+    const workflow = result.Items[0] as InternalWorkflow
+    return this.cleanWorkflow(workflow)
   }
 
   async getWorkflowVersion(
@@ -117,7 +138,8 @@ export class WorkflowService {
       throw new NotFound(`Workflow ${workflowId} version ${version} not found`)
     }
 
-    return result.Item as Workflow
+    const workflow = result.Item as InternalWorkflow
+    return this.cleanWorkflow(workflow)
   }
 
   async getWorkflowHistory(
@@ -137,21 +159,28 @@ export class WorkflowService {
     }
 
     const result = await this.docClient.send(new QueryCommand(queryInput))
-    return (result.Items || []) as Workflow[]
+    return (result.Items || []).map((workflow) =>
+      this.cleanWorkflow(workflow as InternalWorkflow)
+    ) as Workflow[]
   }
 
   async saveWorkflow(
     workflowType: WorkflowType,
-    workflowId: string,
+    workflowId: string | undefined,
     workflow: Workflow
   ): Promise<Workflow> {
     const version = Date.now().toString()
+    const finalWorkflowId = workflowId || generateUniqueId()
+
     const item = {
       ...workflow,
+      id: finalWorkflowId,
+      version,
+      workflowType,
       ...DynamoDbKeys.WORKFLOWS(
         this.tenantId,
         workflowType,
-        workflowId,
+        finalWorkflowId,
         version
       ),
     }
@@ -163,6 +192,6 @@ export class WorkflowService {
       })
     )
 
-    return item
+    return this.cleanWorkflow(item as InternalWorkflow)
   }
 }

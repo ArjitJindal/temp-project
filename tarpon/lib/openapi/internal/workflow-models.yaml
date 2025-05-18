@@ -14,7 +14,9 @@ components:
           $ref: '#/components/schemas/WorkflowType'
         version:
           type: string
-          description: Timestamp of when the document was saved
+          format: int64
+          description: Timestamp in milliseconds when the document was saved
+          example: '1710834000000'
         name:
           type: string
           description: Human readable name for the workflow
@@ -31,8 +33,8 @@ components:
           properties:
             workflowType:
               type: string
-              enum: [CASE, ALERT]
-              description: Must be CASE for case workflows
+              enum: [case, alert]
+              description: Must be case or alert for case and alert workflows
             statuses:
               type: array
               items:
@@ -66,7 +68,7 @@ components:
           properties:
             workflowType:
               type: string
-              enum: [CASE]
+              enum: [case]
             autoClose:
               type: boolean
               description: Whether cases can be automatically closed
@@ -80,7 +82,7 @@ components:
           properties:
             workflowType:
               type: string
-              enum: [ALERT]
+              enum: [alert]
     WorkflowResponse:
       type: object
       properties:
@@ -92,4 +94,4 @@ components:
               - $ref: '#/components/schemas/AlertWorkflow'
     WorkflowType:
       type: string
-      enum: [CASE, ALERT]
+      enum: [case, alert]

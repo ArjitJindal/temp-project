@@ -6,8 +6,8 @@ info:
 paths:
   /workflows/{workflowType}/{workflowId}:
     post:
-      summary: Save a new workflow or a new version
-      operationId: post-workflow
+      summary: Save a new version of an existing workflow
+      operationId: post-workflow-version
       parameters:
         - name: workflowType
           in: path
@@ -24,16 +24,12 @@ paths:
         content:
           application/json:
             schema:
-              # TODO: this is a very poor hack, we need to use oneOf or something cleaner
-              # oneOf:
-              #   - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-              #   - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
               type: object
               properties:
                 caseWorkflow:
-                  $ref: '#/components/schemas/CaseWorkflow'
+                  $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
                 alertWorkflow:
-                  $ref: '#/components/schemas/AlertWorkflow'
+                  $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
       responses:
         '200':
           description: Workflow saved successfully
@@ -98,6 +94,36 @@ paths:
                   - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
 
   /workflows/{workflowType}:
+    post:
+      summary: Create a new workflow
+      operationId: create-workflow
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                caseWorkflow:
+                  $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                alertWorkflow:
+                  $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+      responses:
+        '200':
+          description: New workflow created successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
+                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+
     get:
       summary: Get all workflows of a specific type
       operationId: get-all-workflows
@@ -154,7 +180,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [CASE, ALERT]
+            enum: [case, alert]
           description: Optional parameter to filter workflows by type
       responses:
         '200':
