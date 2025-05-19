@@ -10,6 +10,7 @@ import {
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
+  SCREENING_PROFILE_ID_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
@@ -26,6 +27,7 @@ import { User } from '@/@types/openapi-public/User'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 const caConcurrencyLimit = pLimit(10)
 
@@ -36,6 +38,7 @@ export type SanctionsBankUserRuleParameters = {
   ruleStages: RuleStage[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
+  screeningProfileId?: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -56,6 +59,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
+        screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
       },
       required: ['fuzziness', 'fuzzinessSetting', 'ruleStages'],
       additionalProperties: false,
@@ -71,6 +75,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       stopwords,
       isActive,
       partialMatch,
+      screeningProfileId,
     } = this.parameters
 
     if (
@@ -137,6 +142,9 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 ...getStopwordSettings(providers, stopwords),
                 ...getIsActiveParameters(providers, screeningTypes, isActive),
                 ...getPartialMatchParameters(providers, partialMatch),
+                ...(providers.includes(SanctionsDataProviders.ACURIS)
+                  ? { screeningProfileId: screeningProfileId ?? undefined }
+                  : {}),
               },
               hitContext
             )

@@ -8,6 +8,7 @@ import {
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
+  SCREENING_PROFILE_ID_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -24,6 +25,7 @@ import { User } from '@/@types/openapi-public/User'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
 export type GenericSanctionsConsumerUserRuleParameters = {
@@ -35,6 +37,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   screeningValues?: GenericScreeningValues[]
   // PEPRank?: PepRank //Open-sanctions does not provide PEP rank data
   fuzzinessSetting: FuzzinessSettingOptions
+  screeningProfileId?: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -69,6 +72,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         partialMatch: PARTIAL_MATCH_SCHEMA,
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
+        screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
       },
       required: ['fuzzinessRange', 'fuzzinessSetting', 'ruleStages'],
     }
@@ -85,6 +89,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       stopwords,
       isActive,
       partialMatch,
+      screeningProfileId,
     } = this.parameters
     const user = this.user as User
     if (
@@ -155,6 +160,9 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         ...getIsActiveParameters(providers, screeningTypes, isActive),
         ...getStopwordSettings(providers, stopwords),
         ...getPartialMatchParameters(providers, partialMatch),
+        ...(providers.includes(SanctionsDataProviders.ACURIS)
+          ? { screeningProfileId: screeningProfileId ?? undefined }
+          : {}),
       },
       hitContext,
       undefined

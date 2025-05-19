@@ -11,7 +11,6 @@ import { traceable } from '@/core/xray'
 export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase {
   public static getSchema(): JSONSchemaType<PaymentDetailsScreeningRuleParameters> {
     const baseSchema = PaymentDetailsScreeningRuleBase.getSchema()
-    delete baseSchema.properties.screeningProfileId
     return {
       ...baseSchema,
     }

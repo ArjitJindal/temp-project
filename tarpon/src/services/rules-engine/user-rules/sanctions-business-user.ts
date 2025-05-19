@@ -9,6 +9,7 @@ import {
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
+  SCREENING_PROFILE_ID_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -29,6 +30,7 @@ import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -48,6 +50,7 @@ export type SanctionsBusinessUserRuleParameters = {
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
+  screeningProfileId?: string
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -78,6 +81,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
+        screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
       },
       required: ['fuzziness', 'ruleStages', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -94,6 +98,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       stopwords,
       isActive,
       partialMatch,
+      screeningProfileId,
     } = this.parameters
 
     if (
@@ -162,6 +167,10 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
+              ...(providers.includes(SanctionsDataProviders.ACURIS) &&
+              screeningProfileId
+                ? { screeningProfileId }
+                : {}),
             },
             hitContext
           )
