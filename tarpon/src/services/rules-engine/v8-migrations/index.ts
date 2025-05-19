@@ -20,6 +20,7 @@ import { UsingTooManyBanksToMakePaymentsRuleParameters } from '../transaction-ru
 import { TransactionsOutflowInflowVolumeRuleParameters } from '../transaction-rules/transactions-outflow-inflow-volume'
 import { SenderLocationChangesFrequencyRuleParameters } from '../transaction-rules/sender-location-changes-frequency'
 import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
+import { PaymentDetailChangeRuleParameters } from '../transaction-rules/payment-detail-change-base'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -1709,6 +1710,140 @@ const V8_CONVERSION: Readonly<
       })
     }
 
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-45': (params: PaymentDetailChangeRuleParameters) => {
+    const {
+      timeWindow,
+      oldNamesThreshold,
+      initialTransactions,
+      ignoreEmptyName,
+    } = params
+
+    // agg bank unique names
+    // check with count
+
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+    logicAggregationVariables.push({
+      key: 'agg:transactionWithUniqueBanksNamesSender$1',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'SENDER_OR_RECEIVER',
+      lastNEntities: oldNamesThreshold + 1,
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originPaymentDetails-name',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: ignoreEmptyName
+        ? {
+            '!=': [
+              {
+                var: 'TRANSACTION:originPaymentDetails-name',
+              },
+              '',
+            ],
+          }
+        : undefined,
+    })
+    logicAggregationVariables.push({
+      key: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+      type: 'PAYMENT_DETAILS_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'RECEIVING',
+      lastNEntities: oldNamesThreshold + 1,
+      aggregationFieldKey: 'TRANSACTION:destinationPaymentDetails-name',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: ignoreEmptyName
+        ? {
+            '!=': [
+              {
+                var: 'TRANSACTION:destinationPaymentDetails-name',
+              },
+              '',
+            ],
+          }
+        : undefined,
+    })
+
+    logicAggregationVariables.push({
+      key: 'agg:transactionsCount',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    const conditions1: any[] = []
+
+    conditions1.push({
+      '==': [
+        {
+          var: 'TRANSACTION:destinationPaymentDetails-method',
+        },
+        'GENERIC_BANK_ACCOUNT',
+      ],
+    })
+    conditions1.push({
+      '>=': [
+        {
+          number_of_items: [
+            {
+              var: 'agg:transactionWithUniqueBanksNamesReceiver$1',
+            },
+          ],
+        },
+        oldNamesThreshold + 1,
+      ],
+    })
+
+    const conditions2: any[] = []
+
+    conditions2.push({
+      '==': [
+        { var: 'TRANSACTION:originPaymentDetails-method' },
+        'GENERIC_BANK_ACCOUNT',
+      ],
+    })
+    conditions2.push({
+      '>=': [
+        {
+          number_of_items: [
+            {
+              var: 'agg:transactionWithUniqueBanksNamesSender$1',
+            },
+          ],
+        },
+        oldNamesThreshold + 1,
+      ],
+    })
+
+    const conditions: any[] = []
+    conditions.push({
+      and: [
+        { or: [{ and: conditions1 }, { and: conditions2 }] },
+        {
+          '>=': [{ var: 'agg:transactionsCount' }, initialTransactions],
+        },
+      ],
+    })
     return {
       logic: { and: conditions },
       logicAggregationVariables,
