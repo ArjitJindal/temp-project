@@ -15,8 +15,10 @@ import {
   getClickhouseClient,
   isClickhouseEnabled,
   executeClickhouseQuery,
+  isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { getInvestigationTimes } from '@/utils/clickhouse/materialised-views-queries'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class OverviewStatsDashboardMetric {
@@ -129,8 +131,14 @@ export class OverviewStatsDashboardMetric {
         .toArray()
         .then((result) => result[0]?.count ?? 0),
     ])
-    if (isClickhouseEnabled()) {
+    if (isClickhouseEnabled() || isClickhouseMigrationEnabled()) {
       const clickhouseStats = await this.getClickhouse(tenantId, accountIds)
+      if (isClickhouseMigrationEnabled()) {
+        return {
+          ...clickhouseStats,
+          totalSarReported,
+        }
+      }
       return {
         ...clickhouseStats,
         totalSarReported,
@@ -158,22 +166,21 @@ export class OverviewStatsDashboardMetric {
     tenantId: string,
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
-    // type ClickhouseCountResult = Array<{ count: number }>
+    type ClickhouseCountResult = Array<{ count: number }>
 
-    // const clickhouseClient = await getClickhouseClient(tenantId)
+    const clickhouseClient = await getClickhouseClient(tenantId)
 
-    // const casesCountQuery = `
-    //   SELECT count(*) as count
-    //   FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-    //   WHERE caseStatus IN ('OPEN', 'REOPENED')
-    //     AND timestamp <= toUnixTimestamp64Milli(now64())
-    // `
-    // const alertsCountQuery = `
-    //   SELECT count(*) as count
-    //   FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-    //   ARRAY JOIN alerts as alert
-    //   WHERE alert.2 IN ('OPEN', 'REOPENED')
-    //   AND alert.createdTimestamp <= toUnixTimestamp64Milli(now64())
+    const casesCountQuery = `
+      SELECT count(*) as count
+      FROM ${CLICKHOUSE_DEFINITIONS.CASES_V2.tableName} FINAL
+      WHERE caseStatus IN ('OPEN', 'REOPENED')
+        AND timestamp <= toUnixTimestamp64Milli(now64())
+    `
+    const alertsCountQuery = `
+      SELECT count(*) as count
+      FROM ${CLICKHOUSE_DEFINITIONS.ALERTS.tableName} FINAL
+      WHERE alertStatus IN ('OPEN', 'REOPENED')
+      AND timestamp <= toUnixTimestamp64Milli(now64())
     ;`
     // const sarReportsQuery = `
     //   SELECT count(*) as count
@@ -182,21 +189,21 @@ export class OverviewStatsDashboardMetric {
     // `
 
     const [
-      // casesCountResult,
-      // alertsCountResult,
+      casesCountResult,
+      alertsCountResult,
       // sarReportsResult,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
     ] = await Promise.all([
-      // executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
-      //   query: casesCountQuery,
-      //   format: 'JSONEachRow',
-      // }),
+      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+        query: casesCountQuery,
+        format: 'JSONEachRow',
+      }),
 
-      // executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
-      //   query: alertsCountQuery,
-      //   format: 'JSONEachRow',
-      // }),
+      executeClickhouseQuery<ClickhouseCountResult>(clickhouseClient, {
+        query: alertsCountQuery,
+        format: 'JSONEachRow',
+      }),
 
       // hasFeature('SAR')
       //   ? clickhouseClient
@@ -216,8 +223,8 @@ export class OverviewStatsDashboardMetric {
     ])
 
     return {
-      totalOpenCases: 0,
-      totalOpenAlerts: 0,
+      totalOpenCases: casesCountResult[0]?.count ?? 0,
+      totalOpenAlerts: alertsCountResult[0]?.count ?? 0,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
       totalSarReported: 0,
