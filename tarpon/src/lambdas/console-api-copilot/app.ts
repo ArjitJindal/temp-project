@@ -115,8 +115,11 @@ export const copilotHandler = lambdaApi({})(
       const c = await caseService.getCaseByAlertId(request.alertId)
       const alert = c?.alerts?.find((a) => a.alertId === request.alertId)
       const suggestions = autocomplete.autocomplete(request.question || '', c)
+      const isSearchIdPresent = alert?.ruleHitMeta?.sanctionsDetails?.some(
+        (detail) => !!detail.searchId
+      )
 
-      if (alert?.ruleNature === 'SCREENING') {
+      if (alert?.ruleNature === 'SCREENING' && isSearchIdPresent) {
         return { suggestions }
       }
 
