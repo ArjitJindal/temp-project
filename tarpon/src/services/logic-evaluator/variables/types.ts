@@ -16,6 +16,7 @@ import {
   TransactionWithRiskDetails,
 } from '@/services/rules-engine/repositories/transaction-repository-interface'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
+import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 
 export type LogicValueTypesEnum =
   | 'string'
@@ -32,7 +33,7 @@ export type LogicEntityType =
   | 'PAYMENT_DETAILS'
 
 export type ExtendedFieldSettings = FieldSettings & {
-  uniqueType?: TransactionsUniquesField
+  uniqueType?: TransactionsUniquesField | UsersUniquesField
   allowNewValues?: boolean
 }
 

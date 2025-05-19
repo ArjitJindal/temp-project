@@ -2,6 +2,7 @@ import {
   FieldSettings,
   ListItem,
   SelectFieldSettings,
+  TextWidgetProps,
   WidgetProps,
 } from '@react-awesome-query-builder/core';
 import {
@@ -44,7 +45,7 @@ import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { LogicOperatorType, TransactionsUniquesField } from '@/apis';
+import { LogicOperatorType, TransactionsUniquesField, UsersUniquesField } from '@/apis';
 import PropertyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput';
 import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import Tooltip from '@/components/library/Tooltip';
@@ -78,6 +79,17 @@ export function isOperatorParameterField(props: any): boolean {
     operator.parameters.length > 0
   );
 }
+
+const isTransactionKeyField = (
+  entityKey: TextWidgetProps['field'],
+  props: TextWidgetProps['config'],
+): boolean => {
+  if (typeof entityKey === 'string') {
+    const field = entityKey.split('.')[0];
+    return !!props.fields[field]?.label?.toLowerCase().includes('transaction /');
+  }
+  return false;
+};
 
 function WidgetWrapper(props: {
   widgetFactoryProps: WidgetProps<Config>;
@@ -212,11 +224,17 @@ const customTextWidget: CoreWidgets['text'] = {
     const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
 
     if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      const uniqueTypeProps = getUniqueTypeProps(
+        props.field,
+        props.config,
+        fieldSettings.uniqueType,
+      );
+
       return (
         <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
           <SingleListSelectDynamic
-            uniqueType={fieldSettings.uniqueType}
-            value={props.value}
+            uniqueTypeProps={uniqueTypeProps}
+            value={props.value as string}
             onChange={(val) => props.setValue(val)}
           />
         </WidgetWrapper>
@@ -387,10 +405,16 @@ const customSelectWidget: CoreWidgets['select'] = {
     const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
 
     if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      const uniqueTypeProps = getUniqueTypeProps(
+        props.field,
+        props.config,
+        fieldSettings.uniqueType,
+      );
+
       return (
         <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
           <SingleListSelectDynamic
-            uniqueType={fieldSettings.uniqueType}
+            uniqueTypeProps={uniqueTypeProps}
             value={props.value as string}
             onChange={(val) => props.setValue(val)}
           />
@@ -448,10 +472,16 @@ const customMultiselectWidget: CoreWidgets['multiselect'] = {
     const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
 
     if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+      const uniqueTypeProps = getUniqueTypeProps(
+        props.field,
+        props.config,
+        fieldSettings.uniqueType,
+      );
+
       return (
         <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
           <MultiListSelectDynamic
-            uniqueType={fieldSettings.uniqueType}
+            uniqueTypeProps={uniqueTypeProps}
             value={props.value as string[]}
             onChange={(val) => props.setValue(val)}
           />
@@ -611,6 +641,23 @@ function wrapDefaultWidget(widget) {
       );
     },
   };
+}
+
+function getUniqueTypeProps(
+  field: TextWidgetProps['field'],
+  config: TextWidgetProps['config'],
+  uniqueType: TransactionsUniquesField | UsersUniquesField,
+) {
+  const type = isTransactionKeyField(field, config) ? 'transactions' : 'users';
+  return type === 'transactions'
+    ? {
+        type: 'transactions' as const,
+        uniqueType: uniqueType as TransactionsUniquesField,
+      }
+    : {
+        type: 'users' as const,
+        uniqueType: uniqueType as UsersUniquesField,
+      };
 }
 
 export const customWidgets: CoreWidgets = {

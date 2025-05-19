@@ -159,6 +159,13 @@ export const USERS_UNIQUES = (
     filter?: string;
   } = {},
 ): QueryKey => ['users', 'uniques', field, params];
+export const UNIQUES = (
+  type: 'transactions' | 'users',
+  field: TransactionsUniquesField | UsersUniquesField,
+  params: {
+    filter?: string;
+  } = {},
+): QueryKey => [type, 'uniques', field, params];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'search',

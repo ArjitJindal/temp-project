@@ -11,6 +11,7 @@ import {
   CommonUserLogicVariable,
   ConsumerUserLogicVariable,
   ExtendedFieldSettings,
+  Field,
   LogicEntityType,
   LogicVariableBase as LogicVariable,
   LogicVariableContext,
@@ -79,6 +80,9 @@ export const VARIABLE_NAMESPACE_SEPARATOR = ':'
 const ORIGIN_TRANSACTION_AMOUNT_KEY = 'originAmountDetails.transactionAmount'
 const DESTINATION_TRANSACTION_AMOUNT_KEY =
   'destinationAmountDetails.transactionAmount'
+const TRANSACTION_TYPE_KEY = 'type'
+const TRANSACTION_TAGS_KEY = 'tags'
+const USER_TAGS_KEY = 'tags'
 
 function withNamespace(variable: LogicVariable) {
   return {
@@ -313,7 +317,7 @@ function updatedTransactionEntityVariables(
       variable.load = async (transaction, context) => {
         return await loadAmount(transaction?.destinationAmountDetails, context)
       }
-    } else if (variable.key === 'type') {
+    } else if (variable.key === TRANSACTION_TYPE_KEY) {
       const uiDefinition = variable.uiDefinition as FieldOrGroup
 
       if (uiDefinition.type === 'text') {
@@ -336,6 +340,8 @@ function updatedTransactionEntityVariables(
           }
         }
       }
+    } else if (variable.key === TRANSACTION_TAGS_KEY) {
+      updateTagsVariable(variable)
     }
   }
 
@@ -344,6 +350,48 @@ function updatedTransactionEntityVariables(
   }
 
   updateAmountValueVariables(variables)
+}
+
+function updateTagsVariable(variable: LogicVariable): void {
+  const uiDefinition = variable.uiDefinition as FieldOrGroup
+
+  if (uiDefinition.type === '!group' && 'subfields' in uiDefinition) {
+    const subfields = uiDefinition.subfields
+    const tagSubfield = subfields['key'] as Field
+    if (tagSubfield) {
+      tagSubfield.fieldSettings = {
+        ...tagSubfield.fieldSettings,
+        allowCustomValues: true,
+        uniqueType: 'TAGS_KEY',
+        allowNewValues: true,
+      }
+    }
+    const valueSubfield = subfields['value'] as Field
+    if (valueSubfield) {
+      valueSubfield.fieldSettings = {
+        ...valueSubfield.fieldSettings,
+        allowCustomValues: true,
+        uniqueType: 'TAGS_VALUE',
+        allowNewValues: true,
+      }
+    }
+  }
+}
+
+function updateConsumerUserVariables(variables: LogicVariable[]): void {
+  for (const variable of variables) {
+    if (variable.key === USER_TAGS_KEY) {
+      updateTagsVariable(variable)
+    }
+  }
+}
+
+function updateBusinessUserVariables(variables: LogicVariable[]): void {
+  for (const variable of variables) {
+    if (variable.key === USER_TAGS_KEY) {
+      updateTagsVariable(variable)
+    }
+  }
 }
 
 function updateAmountValueVariables(variables: LogicVariable[]): void {
@@ -418,11 +466,13 @@ export const getTransactionLogicEntityVariables = memoize(
       User
     )
     updateAmountValueVariables(consumerUserEntityVariables)
+    updateConsumerUserVariables(consumerUserEntityVariables)
     const businessUserEntityVariables = getAutoLogicEntityVariables(
       'BUSINESS_USER',
       Business
     )
     updateAmountValueVariables(businessUserEntityVariables)
+    updateBusinessUserVariables(businessUserEntityVariables)
     return Object.fromEntries(
       [
         ...txEntityVariableWithoutDirection(transactionEntityVariables),

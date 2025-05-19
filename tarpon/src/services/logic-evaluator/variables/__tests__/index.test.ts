@@ -12,6 +12,7 @@ describe('List of entity variables', () => {
     const entityVariables = Object.values(
       getTransactionLogicEntityVariables()
     ).map((v) => omit(v, 'load'))
+
     expect(entityVariables).toEqual(
       expect.arrayContaining([
         {
@@ -139,11 +140,21 @@ describe('List of entity variables', () => {
                 label: 'key',
                 type: 'text',
                 valueSources: ['value', 'field', 'func'],
+                fieldSettings: {
+                  allowCustomValues: true,
+                  allowNewValues: true,
+                  uniqueType: 'TAGS_KEY',
+                },
               },
               value: {
                 label: 'value',
                 type: 'text',
                 valueSources: ['value', 'field', 'func'],
+                fieldSettings: {
+                  allowCustomValues: true,
+                  allowNewValues: true,
+                  uniqueType: 'TAGS_VALUE',
+                },
               },
             },
           },

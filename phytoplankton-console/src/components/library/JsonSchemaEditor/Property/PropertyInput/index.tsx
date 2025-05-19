@@ -36,6 +36,7 @@ import { Props as LabelProps } from '@/components/library/Label';
 import ListSelect from '@/components/ui/LogicBuilder/ListSelect';
 import { SingleListSelectDynamic } from '@/components/ui/LogicBuilder/ListSelectDynamic';
 import ScreeningProfileSelect from '@/components/ui/LogicBuilder/ScreeningProfileSelect';
+import { TransactionsUniquesField } from '@/apis';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -139,7 +140,10 @@ export default function PropertyInput(props: Props) {
           props.onChange?.(value);
         }}
         value={props.value}
-        uniqueType={uiSchema['ui:uniqueType']}
+        uniqueTypeProps={{
+          type: 'transactions',
+          uniqueType: uiSchema['ui:uniqueType'] as TransactionsUniquesField,
+        }}
       />
     );
   }
@@ -151,7 +155,10 @@ export default function PropertyInput(props: Props) {
           props.onChange?.(value);
         }}
         value={props.value}
-        uniqueType={uiSchema['ui:uniqueType']}
+        uniqueTypeProps={{
+          type: 'transactions',
+          uniqueType: uiSchema['ui:uniqueType'] as TransactionsUniquesField,
+        }}
       />
     );
   }
@@ -159,6 +166,7 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'SCREENING_PROFILE_ID') {
     return <ScreeningProfileSelect {...props} />;
   }
+
   const schemaType = schema.oneOf ? 'object' : schema.type;
   switch (schemaType) {
     case 'number':
