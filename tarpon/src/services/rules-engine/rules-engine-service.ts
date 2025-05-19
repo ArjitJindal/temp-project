@@ -120,6 +120,7 @@ import { TransactionEventWithRulesResult } from '@/@types/openapi-public/Transac
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { AccountsService } from '@/services/accounts'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -950,6 +951,52 @@ export class RulesEngineService {
       transactionEventInDb.riskScoreDetails,
       oldStatus
     )
+  }
+
+  public async reverifyTransaction(transaction: InternalTransaction) {
+    const latestTransactionEvent =
+      await this.getOrCreateInitialTransactionEvent(transaction)
+    await this.reverifyTransactionInternal(transaction, [
+      latestTransactionEvent,
+    ])
+  }
+
+  private async reverifyTransactionInternal(
+    transaction: InternalTransaction,
+    transactionEvents: TransactionEvent[]
+  ) {
+    const data = await this.verifyTransactionInternal(
+      transaction,
+      transactionEvents,
+      'INITIAL'
+    )
+
+    const { executedRules, hitRules, aggregationMessages } = data
+    const mergedExecutedRules = mergeRules(
+      transaction.executedRules,
+      executedRules
+    )
+
+    const mergedHitRules = mergeRules(transaction.hitRules, hitRules)
+
+    const status = getAggregatedRuleStatus(mergedHitRules)
+
+    const transactionEventsSorted = transactionEvents.sort(
+      (a, b) => a.timestamp - b.timestamp
+    )
+
+    await Promise.all([
+      this.transactionRepository.updateTransactionRulesResult(
+        transaction.transactionId,
+        { status, executedRules: mergedExecutedRules, hitRules: mergedHitRules }
+      ),
+      this.transactionEventRepository.updateTransactionEventRulesResult(
+        transaction.transactionId,
+        last(transactionEventsSorted) as TransactionEvent,
+        { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
+      ),
+      sendTransactionAggregationTasks(aggregationMessages),
+    ])
   }
 
   public async verifyAsyncRulesTransaction(

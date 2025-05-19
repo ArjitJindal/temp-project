@@ -414,6 +414,23 @@ export type PnbPullUsersData = {
   tenantId: string
 }
 
+/* Currently built to be used for preAggregated data 
+  and with Sync rebuild aggregation
+*/
+export type ManualTransactionReverification = {
+  type: 'MANUAL_TRANSACTION_REVERIFICATION'
+  tenantId: string
+  parameters: {
+    uniqId: string
+    timeRange?: {
+      startTime: number
+      endTime: number
+    }
+    concurrency: number
+    mongoBatchSize: number
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -461,6 +478,7 @@ export type BatchJob =
   | PeriodicScreeningUserRuleBatchJob
   | QACleanupBatchJob
   | PnbPullUsersData
+  | ManualTransactionReverification
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

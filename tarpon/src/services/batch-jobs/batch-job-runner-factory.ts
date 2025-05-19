@@ -122,6 +122,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     PERIODIC_SCREENING_USER_RULE: (jobId) =>
       new PeriodicScreeningUserRuleBatchJobRunner(jobId),
     PNB_PULL_USERS_DATA: (jobId) => new PnbPullUsersDataBatchJobRunner(jobId),
+    MANUAL_TRANSACTION_REVERIFICATION: (jobId) =>
+      new ManualRulePreAggregationBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

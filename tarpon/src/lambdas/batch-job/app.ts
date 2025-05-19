@@ -122,6 +122,7 @@ export const jobDecisionHandler = async (
     CASES_DYNAMO_BACKFILL: 'FARGATE',
     PERIODIC_SCREENING_USER_RULE: 'FARGATE',
     QA_CLEANUP: 'LAMBDA',
+    MANUAL_TRANSACTION_REVERIFICATION: 'FARGATE',
   }
 
   return {
