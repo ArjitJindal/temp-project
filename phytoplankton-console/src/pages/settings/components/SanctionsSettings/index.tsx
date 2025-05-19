@@ -4,6 +4,7 @@ import s from './styles.module.less';
 import SearchProfileList from './SearchProfileList';
 import { ScreeningProfileList } from './ScreeningProfileList';
 import SanctionsProviderSettings from './SanctionProviderSettings';
+import ScreeningProfileDefaultFilters from './ScreeningProfileDefaultFilters';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useFeatureEnabled,
@@ -24,6 +25,7 @@ import { SanctionsDataProviderName } from '@/apis';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
+
 export const SanctionsSettings = () => {
   const screeningPermissions = useHasPermissions([
     'settings:screening:read',
@@ -114,6 +116,7 @@ export const SanctionsSettings = () => {
       ) : (
         <SearchProfileList hasFeature={isSanctionsEnabled} />
       )}
+      {isAcurisEnabled && <ScreeningProfileDefaultFilters />}
       <SanctionsProviderSettings
         title="Acuris"
         hasFeature={hasFeatureAcuris}

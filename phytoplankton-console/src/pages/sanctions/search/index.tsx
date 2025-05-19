@@ -21,6 +21,7 @@ import {
   SANCTIONS_SEARCH_HISTORY,
   SEARCH_PROFILES,
   SCREENING_PROFILES,
+  DEFAULT_MANUAL_SCREENING_FILTERS,
 } from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
@@ -75,6 +76,9 @@ export function SearchResultTable(props: Props) {
         };
       }
     },
+    {
+      enabled: !hasFeatureAcuris,
+    },
   );
 
   const screeningProfilesResult = useQuery(
@@ -100,30 +104,56 @@ export function SearchResultTable(props: Props) {
     },
   );
 
+  const defaultManualScreeningFilters = useQuery(
+    DEFAULT_MANUAL_SCREENING_FILTERS(),
+    async () => {
+      return api.getDefaultManualScreeningFilters();
+    },
+    {
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    },
+  );
+
   useEffect(() => {
-    if (hasFeatureAcuris) {
+    if (hasSetDefaultProfile.current) {
       return;
     }
-
-    const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
-    const profiles = response.items || [];
-    const defaultProfile = Array.isArray(profiles)
-      ? profiles.find((profile) => profile.isDefault) || profiles[0]
-      : null;
-
-    if (defaultProfile?.searchProfileId && !hasSetDefaultProfile.current) {
-      setParams((current) => ({
-        ...current,
-        searchProfileId: defaultProfile.searchProfileId,
-        ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
-        ...(defaultProfile.types?.length
-          ? { types: defaultProfile.types as SanctionsSearchType[] }
-          : {}),
-        ...(defaultProfile.nationality?.length ? { nationality: defaultProfile.nationality } : {}),
+    if (hasFeatureAcuris) {
+      const response = getOr(defaultManualScreeningFilters.data, {});
+      setParams((prevState) => ({
+        ...prevState,
+        fuzziness: response.fuzziness ?? prevState.fuzziness,
+        types: (response.types ?? prevState.types) as SanctionsSearchType[],
+        nationality: response.nationality ?? prevState.nationality,
+        yearOfBirth: response.yearOfBirth ?? prevState.yearOfBirth,
+        documentId: response.documentId?.[0] ?? prevState.documentId,
+        searchTerm: undefined,
       }));
+    } else {
+      const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
+      const profiles = response.items || [];
+      const defaultProfile = Array.isArray(profiles)
+        ? profiles.find((profile) => profile.isDefault) || profiles[0]
+        : null;
+
+      if (defaultProfile?.searchProfileId) {
+        setParams((current) => ({
+          ...current,
+          searchProfileId: defaultProfile.searchProfileId,
+          ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
+          ...(defaultProfile.types?.length
+            ? { types: defaultProfile.types as SanctionsSearchType[] }
+            : {}),
+          ...(defaultProfile.nationality?.length
+            ? { nationality: defaultProfile.nationality }
+            : {}),
+          searchTerm: undefined,
+        }));
+      }
       hasSetDefaultProfile.current = true;
     }
-  }, [searchProfilesResult.data, hasFeatureAcuris]);
+  }, [searchProfilesResult.data, defaultManualScreeningFilters.data, hasFeatureAcuris]);
 
   useEffect(() => {
     if (
@@ -325,10 +355,9 @@ export function SearchResultTable(props: Props) {
           (() => (
             <Button
               onClick={() => {
-                navigate(makeUrl(`/screening/manual-screening`, {}, {}));
-                setParams(DEFAULT_PARAMS_STATE);
-                setSearchParams(DEFAULT_PARAMS_STATE);
                 setSearchTerm('');
+                hasSetDefaultProfile.current = false;
+                navigate(makeUrl(`/screening/manual-screening`, {}, {}));
               }}
               requiredPermissions={['sanctions:search:read']}
             >

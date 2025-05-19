@@ -237,6 +237,9 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
       const action = initialValues ? 'updated' : 'created';
       message.success(`Screening profile ${action} successfully`);
       await queryClient.invalidateQueries(SCREENING_PROFILES());
+      await queryClient.invalidateQueries(
+        SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
+      );
       setIsModalOpen(false);
       onClose?.();
     },
@@ -258,10 +261,6 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
       formRef.current.submit();
     }
   };
-
-  // if (isReadOnly) {
-  //   return null;
-  // }
 
   return (
     <>

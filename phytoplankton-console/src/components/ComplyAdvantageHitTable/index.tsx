@@ -132,7 +132,8 @@ export default function SanctionsSearchTable(props: Props) {
       }
     },
     {
-      enabled: true,
+      enabled: hasFeatureAcuris,
+      staleTime: 300000, // 5 minutes
     },
   );
   const helper = new ColumnHelper<SanctionsEntity>();

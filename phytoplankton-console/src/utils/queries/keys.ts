@@ -478,6 +478,10 @@ export const SCREENING_PROFILES = (params?: AnyParameters): QueryKey => [
   params,
 ];
 
+export const DEFAULT_MANUAL_SCREENING_FILTERS = (): QueryKey => [
+  'default-manual-screening-filters',
+];
+
 export const SANCTIONS_SOURCES = (type: SanctionsSourceType): QueryKey => [
   'sanctions-sources',
   type,
