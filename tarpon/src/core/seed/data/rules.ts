@@ -1687,6 +1687,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       parameters: {
         fuzziness: 20,
         screeningTypes: ['PEP'],
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       } as SanctionsConsumerUserRuleParameters,
       action: 'BLOCK',
       type: 'USER',
@@ -1698,23 +1699,27 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
         } as SanctionsConsumerUserRuleParameters,
         HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsConsumerUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
         } as SanctionsConsumerUserRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
         } as SanctionsConsumerUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
         } as SanctionsConsumerUserRuleParameters,
       },
       riskLevelActions: {
@@ -1926,8 +1931,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       },
       parameters: {
         fuzziness: 20,
-        ongoingScreening: false,
         screeningTypes: ['PEP'],
+        ruleStages: ['INITIAL', 'UPDATE'],
       } as SanctionsBankUserRuleParameters,
       action: 'SUSPEND',
       type: 'USER',
@@ -1939,28 +1944,28 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       riskLevelParameters: {
         VERY_HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsBankUserRuleParameters,
         HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsBankUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsBankUserRuleParameters,
         LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsBankUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as SanctionsBankUserRuleParameters,
       },
       riskLevelActions: {
@@ -2089,9 +2094,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       casePriority: 'P1',
       parameters: {
         fuzziness: 20,
-        ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         entityTypes: ['LEGAL_NAME'],
+        ruleStages: ['INITIAL', 'UPDATE'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBusinessUserRuleParameters,
       action: 'SUSPEND',
       checksFor: ['Entity name'],
@@ -2105,32 +2111,37 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           entityTypes: ['LEGAL_NAME'],
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBusinessUserRuleParameters,
         HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
           entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBusinessUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
           entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBusinessUserRuleParameters,
         LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
           entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBusinessUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
           entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBusinessUserRuleParameters,
       },
       riskLevelActions: {

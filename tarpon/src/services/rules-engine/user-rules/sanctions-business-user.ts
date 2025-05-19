@@ -3,12 +3,12 @@ import { JSONSchemaType } from 'ajv'
 import { isEmpty } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  ENABLE_ONGOING_SCREENING_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
+  RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -28,6 +28,7 @@ import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -42,8 +43,8 @@ export type SanctionsBusinessUserRuleParameters = {
   entityTypes?: SanctionsDetailsEntityType[]
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
-  ongoingScreening: boolean
   fuzzinessSetting: FuzzinessSettingOptions
+  ruleStages: RuleStage[]
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -69,16 +70,16 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         },
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA(),
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+        ruleStages: RULE_STAGE_SCHEMA({
           description:
-            'It will do a screening every 24hrs of all the existing business users including shareholders and directors after it is enabled.',
+            'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
       },
-      required: ['fuzziness', 'fuzzinessSetting'],
+      required: ['fuzziness', 'ruleStages', 'fuzzinessSetting'],
       additionalProperties: false,
     }
   }
@@ -88,7 +89,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       fuzziness,
       entityTypes,
       screeningTypes,
-      ongoingScreening,
+      ruleStages,
       fuzzinessSetting,
       stopwords,
       isActive,
@@ -98,7 +99,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     if (
       isEmpty(entityTypes) ||
       !isBusinessUser(this.user) ||
-      (this.ongoingScreeningMode && !ongoingScreening)
+      (ruleStages && ruleStages.length > 0 && !ruleStages.includes(this.stage))
     ) {
       return
     }
@@ -142,7 +143,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
             entityType: entity.entityType,
             userId: this.user.userId,
             ruleInstanceId: this.ruleInstance.id ?? '',
-            isOngoingScreening: this.ongoingScreeningMode,
+            isOngoingScreening: this.stage === 'ONGOING',
             searchTerm: entity.name,
             yearOfBirth,
           }
@@ -152,7 +153,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               yearOfBirth,
               types: screeningTypes,
               fuzziness: fuzziness / 100,
-              monitoring: { enabled: ongoingScreening },
+              monitoring: { enabled: this.stage === 'ONGOING' },
               ...getEntityTypeForSearch(
                 providers,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'

@@ -1623,9 +1623,9 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SanctionsBusinessUserRuleParameters = {
       fuzziness: 20,
-      ongoingScreening: false,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
     }
 
     return {
@@ -1656,7 +1656,7 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SanctionsBankUserRuleParameters = {
       fuzziness: 20,
-      ongoingScreening: false,
+      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }
@@ -1746,6 +1746,7 @@ const _RULES_LIBRARY: Array<
     const defaultParameters: SanctionsConsumerUserRuleParameters = {
       fuzziness: 20,
       screeningTypes: [],
+      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
     }
 
     return {
@@ -1780,7 +1781,7 @@ const _RULES_LIBRARY: Array<
         upperBound: 20,
         lowerBound: 0,
       },
-      ongoingScreening: false,
+      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       screeningValues: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
     }

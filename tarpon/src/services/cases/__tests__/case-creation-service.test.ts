@@ -1554,7 +1554,7 @@ describe('Screening business user R-128', () => {
         entityTypes: ['DIRECTOR'],
         fuzziness: 0.5,
         fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
-        ongoingScreening: false,
+        ruleStages: ['INITIAL', 'UPDATE'],
       } as SanctionsBusinessUserRuleParameters,
     },
   ])

@@ -4,12 +4,12 @@ import pLimit from 'p-limit'
 import { uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  ENABLE_ONGOING_SCREENING_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
+  RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
@@ -25,6 +25,7 @@ import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 const caConcurrencyLimit = pLimit(10)
 
@@ -32,7 +33,7 @@ type BankInfo = { bankName?: string; iban?: string }
 
 export type SanctionsBankUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
-  ongoingScreening: boolean
+  ruleStages: RuleStage[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
@@ -46,17 +47,17 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       type: 'object',
       properties: {
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: FUZZINESS_SCHEMA(),
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+        ruleStages: RULE_STAGE_SCHEMA({
           description:
-            'It will do a screening every 24hrs of all the existing bank names after it is enabled.',
+            'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
+        fuzziness: FUZZINESS_SCHEMA(),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
       },
-      required: ['fuzziness', 'fuzzinessSetting'],
+      required: ['fuzziness', 'fuzzinessSetting', 'ruleStages'],
       additionalProperties: false,
     }
   }
@@ -65,14 +66,18 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     const {
       fuzziness,
       screeningTypes,
-      ongoingScreening,
+      ruleStages,
       fuzzinessSetting,
       stopwords,
       isActive,
       partialMatch,
     } = this.parameters
 
-    if (this.ongoingScreeningMode && !ongoingScreening) {
+    if (
+      ruleStages &&
+      ruleStages.length > 0 &&
+      !ruleStages.includes(this.stage)
+    ) {
       return
     }
     const user = this.user as User
@@ -126,7 +131,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 searchTerm: bankName,
                 types: screeningTypes,
                 fuzziness: fuzziness / 100,
-                monitoring: { enabled: ongoingScreening },
+                monitoring: { enabled: this.stage === 'ONGOING' },
                 ...getEntityTypeForSearch(providers, 'BANK'),
                 ...getFuzzinessSettings(providers, fuzzinessSetting),
                 ...getStopwordSettings(providers, stopwords),

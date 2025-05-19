@@ -16,7 +16,7 @@ import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 export type SanctionsConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
-  ruleStages?: RuleStage[]
+  ruleStages: RuleStage[]
 }
 
 export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsumerUserRuleParameters> {
@@ -35,7 +35,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
       },
-      required: ['fuzziness'],
+      required: ['fuzziness', 'ruleStages'],
     }
   }
 

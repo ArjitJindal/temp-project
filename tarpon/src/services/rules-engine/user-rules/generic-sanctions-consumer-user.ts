@@ -1,6 +1,5 @@
 import { JSONSchemaType } from 'ajv'
 import {
-  ENABLE_ONGOING_SCREENING_SCHEMA,
   FUZZINESS_RANGE_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
@@ -8,6 +7,7 @@ import {
   STOPWORDS_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
+  RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -23,6 +23,7 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { getDefaultProviders } from '@/services/sanctions/utils'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
 export type GenericSanctionsConsumerUserRuleParameters = {
@@ -31,13 +32,13 @@ export type GenericSanctionsConsumerUserRuleParameters = {
     lowerBound: number
     upperBound: number
   }
-  ongoingScreening: boolean
   screeningValues?: GenericScreeningValues[]
   // PEPRank?: PepRank //Open-sanctions does not provide PEP rank data
   fuzzinessSetting: FuzzinessSettingOptions
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
+  ruleStages: RuleStage[]
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -55,9 +56,9 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           description:
             'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
         }),
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+        ruleStages: RULE_STAGE_SCHEMA({
           description:
-            'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
+            'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
         screeningValues: GENERIC_SCREENING_VALUES_SCHEMA({
           description:
@@ -69,7 +70,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
       },
-      required: ['fuzzinessRange', 'fuzzinessSetting'],
+      required: ['fuzzinessRange', 'fuzzinessSetting', 'ruleStages'],
     }
   }
 
@@ -77,7 +78,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
     const {
       fuzzinessRange,
       screeningTypes,
-      ongoingScreening,
+      ruleStages,
       screeningValues,
       // PEPRank,
       fuzzinessSetting,
@@ -90,7 +91,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       !isConsumerUser(this.user) ||
       !user.userDetails ||
       !user.userDetails.name ||
-      (this.ongoingScreeningMode && !ongoingScreening)
+      (ruleStages && ruleStages.length > 0 && !ruleStages.includes(this.stage))
     ) {
       return
     }
@@ -131,7 +132,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         fuzzinessRange,
         fuzziness: undefined,
         isOngoingScreening: this.ongoingScreeningMode,
-        monitoring: { enabled: ongoingScreening },
+        monitoring: { enabled: this.stage === 'ONGOING' },
         // PEPRank, //Open-sanctions does not provide PEP rank data
         ...(screeningValues?.includes('NATIONALITY')
           ? {

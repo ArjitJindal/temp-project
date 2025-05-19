@@ -59,6 +59,8 @@ describe('Sanctions hit', () => {
         entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL' as const],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBusinessUserRuleParameters,
     },
   ])
@@ -205,6 +207,8 @@ describe('Sanctions no hit', () => {
         entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL' as const],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBusinessUserRuleParameters,
     },
   ])
@@ -260,6 +264,8 @@ describe('Skip if ongoing screening mode if on but ongoingScreening is false', (
         entityTypes: ['LEGAL_NAME', 'DIRECTOR', 'SHAREHOLDER'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL' as const],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBusinessUserRuleParameters,
     },
   ])

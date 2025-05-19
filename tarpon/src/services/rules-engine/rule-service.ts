@@ -95,6 +95,7 @@ const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
 const ajv = new Ajv()
 ajv.addKeyword('ui:schema')
 ajv.addKeyword('enumNames')
+ajv.addKeyword('labelProps')
 
 @traceable
 export class RuleService {

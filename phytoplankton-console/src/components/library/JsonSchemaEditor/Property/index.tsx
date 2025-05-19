@@ -114,6 +114,7 @@ export default function Property(props: Props) {
             value: item.isRequired,
             showHint: settings.showOptionalMark,
           },
+          ...(schema.labelProps || {}),
           ...labelProps,
           level: labelLevel,
           testId: `Property/${item.name}`,

@@ -59,6 +59,8 @@ describe('Sanctions bank name', () => {
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBankUserRuleParameters,
     },
   ])
@@ -154,6 +156,8 @@ describe('Check for consumer user', () => {
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBankUserRuleParameters,
     },
   ])
@@ -207,6 +211,8 @@ describe('Skip if ongoing screening mode if on but ongoingScreening is false', (
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 0.5,
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         ongoingScreening: false,
       } as SanctionsBankUserRuleParameters,
     },

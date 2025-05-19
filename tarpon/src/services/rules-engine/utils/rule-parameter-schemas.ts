@@ -287,9 +287,16 @@ export const RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
     type: 'array',
     title: options?.title || 'User rule stage',
     description: options?.description,
-    items: { type: 'string', enum: RULE_STAGES },
+    items: {
+      type: 'string',
+      enum: RULE_STAGES,
+      enumNames: RULE_STAGES.map((stage) => startCase(stage.toLowerCase())),
+    },
+    labelProps: {
+      hint: 'Initial - Screening is triggered once, when the user is first created on the platform.\nUpdate - Screening runs every time a User Event is received, and user details are updated.\nOngoing - Screening runs every 24 hours for all existing consumer users, starting from the moment it is enabled.',
+    },
     uniqueItems: true,
-    nullable: true,
+    nullable: false,
   } as const)
 
 export const COUNTRIES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>

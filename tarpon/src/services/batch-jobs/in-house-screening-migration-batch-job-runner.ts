@@ -253,9 +253,9 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
         lowerBound: 0,
         upperBound: parameters.fuzziness,
       },
-      ongoingScreening: parameters.ongoingScreening,
       screeningValues: ['YOB'],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
     }
     await this.ruleInstanceService?.createOrUpdateRuleInstance({
       ruleId: 'R-17',

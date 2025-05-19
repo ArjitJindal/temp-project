@@ -86,7 +86,7 @@ describe('Batch Job Sanctions Screening Rule', () => {
       defaultParameters: {
         fuzziness: 50,
         screeningTypes: ['SANCTIONS'],
-        ongoingScreening: true,
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       } as SanctionsConsumerUserRuleParameters,
     },
   ])
@@ -260,7 +260,7 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
         fuzziness: 50,
-        ongoingScreening: false,
+        ruleStages: ['INITIAL', 'UPDATE'],
       } as SanctionsConsumerUserRuleParameters,
     },
   ])
