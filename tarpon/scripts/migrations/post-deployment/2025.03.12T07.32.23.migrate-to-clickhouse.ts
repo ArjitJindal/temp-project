@@ -10,6 +10,7 @@ export const up = async () => {
     type: 'CLICKHOUSE_DATA_BACKFILL',
     tenantId: '3227d9c851',
     parameters: {
+      type: { type: 'ALL' },
       referenceId: '0',
       tableNames: [
         ClickhouseTableNames.Transactions,

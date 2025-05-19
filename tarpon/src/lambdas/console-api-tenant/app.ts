@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
-import { isEmpty, isEqual } from 'lodash'
+import { isEmpty, isEqual, random } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -48,6 +48,7 @@ import {
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
 import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 import { createApiUsageJobs } from '@/utils/api-usage'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -400,6 +401,20 @@ export const tenantsHandler = lambdaApi()(
           await sendBatchJobCommand({
             type: 'PNB_PULL_USERS_DATA',
             tenantId: tenantId,
+          })
+          break
+        }
+        case 'CLICKHOUSE_DATA_BACKFILL': {
+          await sendBatchJobCommand({
+            type: 'CLICKHOUSE_DATA_BACKFILL',
+            tenantId: tenantId,
+            parameters: {
+              type: { type: 'ALL' },
+              referenceId: random(Number.MAX_SAFE_INTEGER).toString(),
+              tableNames: Object.values(
+                MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE
+              ),
+            },
           })
           break
         }

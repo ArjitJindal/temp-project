@@ -11,6 +11,7 @@ export const up = async () => {
     type: 'CLICKHOUSE_DATA_BACKFILL',
     tenantId: '0cf1ffbc6d',
     parameters: {
+      type: { type: 'ALL' },
       referenceId: '0',
       tableNames: Object.values(MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE),
     },

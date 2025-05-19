@@ -221,8 +221,9 @@ export type ClickhouseDataBackfillBatchJob = {
   parameters: {
     referenceId: string // if referenceId is provided job will start from the last item of the referenceId
     tableNames: ClickhouseTableNames[]
-    fromTimestamp?: number
-    toTimestamp?: number
+    type:
+      | { type: 'ALL' }
+      | { type: 'PARTIAL'; fromTimestamp: number; toTimestamp: number }
   }
 }
 

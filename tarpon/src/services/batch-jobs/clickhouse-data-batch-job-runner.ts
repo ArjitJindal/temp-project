@@ -1,3 +1,4 @@
+import { FindCursor, WithId } from 'mongodb'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { ClickhouseDataBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -27,11 +28,10 @@ type ClickhouseBackfillItem = {
 export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
   protected async run(job: ClickhouseDataBackfillBatchJob): Promise<void> {
     const { tenantId, parameters } = job
-    const {
-      tableNames,
-      fromTimestamp = 0,
-      toTimestamp = Number.MAX_SAFE_INTEGER,
-    } = parameters
+    const { tableNames, type } = parameters
+    const fromTimestamp = type.type === 'PARTIAL' ? type.fromTimestamp : 0
+    const toTimestamp =
+      type.type === 'PARTIAL' ? type.toTimestamp : Number.MAX_SAFE_INTEGER
     const mongoDb = await getMongoDbClient()
     const db = mongoDb.db()
     const collection = db.collection<ClickhouseBackfillItem>(mongoTableName)
@@ -75,14 +75,24 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
         db.collection<ClickhouseBackfillTable>(mongoCollectionName)
       const timestampColumn = tableDefinition.timestampColumn
 
-      const allItems = mongoCollection
-        .find({
-          [timestampColumn]: {
-            $gte: Math.max(fromTimestamp, tableItem?.lastTimestamp ?? 0),
-            $lte: toTimestamp,
-          },
-        })
-        .sort({ [timestampColumn]: 1 })
+      let allItems: FindCursor<WithId<ClickhouseBackfillTable>>
+
+      if (parameters.type.type === 'ALL') {
+        allItems = mongoCollection
+          .find({})
+          .sort({ [timestampColumn]: 1 })
+          .batchSize(1000)
+      } else {
+        allItems = mongoCollection
+          .find({
+            [timestampColumn]: {
+              $gte: Math.max(fromTimestamp, tableItem?.lastTimestamp ?? 0),
+              $lte: toTimestamp,
+            },
+          })
+          .sort({ [timestampColumn]: 1 })
+          .batchSize(1000)
+      }
 
       const batchSize = 1000
       let batch: object[] = []
@@ -92,8 +102,7 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
 
       for await (const item of allItems) {
         batch.push(item)
-
-        if (batch.length >= batchSize) {
+        if (batch.length === batchSize) {
           await insertToClickhouse(tableDefinition.table, batch, job.tenantId)
           // lastTimestamp is the timestamp of the last item in the batch
           const lastTimestamp: number = batch[batch.length - 1][
@@ -106,10 +115,7 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
           if (isTableInReferenceItem) {
             isTableInReferenceItem.lastTimestamp = lastTimestamp
           } else {
-            tablesToBackfill.push({
-              tableName: table,
-              lastTimestamp,
-            })
+            tablesToBackfill.push({ tableName: table, lastTimestamp })
 
             await collection.updateOne(
               { tenantId, referenceId },

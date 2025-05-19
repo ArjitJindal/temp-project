@@ -26,6 +26,7 @@ async function migrateTenant(tenant: Tenant) {
     type: 'CLICKHOUSE_DATA_BACKFILL',
     tenantId: tenant.id,
     parameters: {
+      type: { type: 'ALL' },
       referenceId: '0',
       tableNames: [ClickhouseTableNames.Cases],
     },

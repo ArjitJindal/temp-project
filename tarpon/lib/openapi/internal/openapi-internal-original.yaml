@@ -9869,6 +9869,7 @@ components:
         - PERIODIC_SCREENING_USER_RULE
         - API_USAGE_METRICS
         - PNB_PULL_USERS_DATA
+        - CLICKHOUSE_DATA_BACKFILL
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string

@@ -13,6 +13,7 @@ async function migrateTenant(tenant: Tenant) {
     tenantId: tenant.id,
     type: 'CLICKHOUSE_DATA_BACKFILL',
     parameters: {
+      type: { type: 'ALL' },
       tableNames: Object.values(MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE),
       referenceId: tenant.id,
     },
