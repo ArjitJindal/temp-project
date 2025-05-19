@@ -301,7 +301,6 @@ export default function ItemsTable(props: Props) {
     isNewUserValid,
     isEditUserValid,
     requiredWritePermissions,
-    isSearchMode: filterKeys != null,
   });
 
   return (
@@ -351,7 +350,6 @@ function useColumns(options: {
   isNewUserValid: boolean;
   isEditUserValid: boolean;
   requiredWritePermissions: Permission[];
-  isSearchMode: boolean;
 }): TableColumn<TableItem>[] {
   const {
     listSubtype,
@@ -360,7 +358,6 @@ function useColumns(options: {
     isNewUserValid,
     isEditUserValid,
     requiredWritePermissions,
-    isSearchMode,
   } = options;
   const settings = useSettings();
 
@@ -482,91 +479,90 @@ function useColumns(options: {
             defaultWrapMode: 'WRAP',
           },
         }),
-        !isSearchMode &&
-          helper.display({
-            title: 'Actions',
-            defaultWidth: 170,
-            render: (entity, context) => {
-              const externalState: ExternalState = context.external as ExternalState;
-              const [editUserData, setEditUserData] = externalState.editUserData;
-              const [isEditUserLoading] = externalState.isEditUserLoading;
-              const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-              const { onAdd, onSave, onDelete } = externalState;
-              if (entity.type === 'NEW') {
+        helper.display({
+          title: 'Actions',
+          defaultWidth: 170,
+          render: (entity, context) => {
+            const externalState: ExternalState = context.external as ExternalState;
+            const [editUserData, setEditUserData] = externalState.editUserData;
+            const [isEditUserLoading] = externalState.isEditUserLoading;
+            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
+            const { onAdd, onSave, onDelete } = externalState;
+            if (entity.type === 'NEW') {
+              return (
+                <div className={s.actions}>
+                  <Button
+                    type="PRIMARY"
+                    isLoading={isAddUserLoading}
+                    isDisabled={!isNewUserValid}
+                    onClick={onAdd}
+                    requiredPermissions={requiredWritePermissions}
+                  >
+                    Add
+                  </Button>
+                </div>
+              );
+            } else if (entity.type === 'EXISTED') {
+              if (editUserData?.value === entity.value) {
                 return (
                   <div className={s.actions}>
                     <Button
+                      size="SMALL"
                       type="PRIMARY"
-                      isLoading={isAddUserLoading}
-                      isDisabled={!isNewUserValid}
-                      onClick={onAdd}
+                      onClick={onSave}
+                      isDisabled={isEditUserLoading || !isEditUserValid}
                       requiredPermissions={requiredWritePermissions}
                     >
-                      Add
-                    </Button>
-                  </div>
-                );
-              } else if (entity.type === 'EXISTED') {
-                if (editUserData?.value === entity.value) {
-                  return (
-                    <div className={s.actions}>
-                      <Button
-                        size="SMALL"
-                        type="PRIMARY"
-                        onClick={onSave}
-                        isDisabled={isEditUserLoading || !isEditUserValid}
-                        requiredPermissions={requiredWritePermissions}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="SMALL"
-                        type="SECONDARY"
-                        isDisabled={isEditUserLoading}
-                        onClick={() => {
-                          setEditUserData(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  );
-                }
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      isDisabled={isUserDeleteLoading}
-                      onClick={() => {
-                        const editTarget: ExistedTableItemData = {
-                          value: entity.value,
-                          reason: entity.reason,
-                          meta: entity.meta,
-                        };
-                        setEditUserData(editTarget);
-                      }}
-                      requiredPermissions={requiredWritePermissions}
-                    >
-                      Edit
+                      Save
                     </Button>
                     <Button
                       size="SMALL"
                       type="SECONDARY"
-                      isLoading={isUserDeleteLoading}
+                      isDisabled={isEditUserLoading}
                       onClick={() => {
-                        onDelete(entity.value ?? '');
+                        setEditUserData(null);
                       }}
-                      requiredPermissions={requiredWritePermissions}
                     >
-                      Remove
+                      Cancel
                     </Button>
                   </div>
                 );
               }
-              return null;
-            },
-          }),
+              return (
+                <div className={s.actions}>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isDisabled={isUserDeleteLoading}
+                    onClick={() => {
+                      const editTarget: ExistedTableItemData = {
+                        value: entity.value,
+                        reason: entity.reason,
+                        meta: entity.meta,
+                      };
+                      setEditUserData(editTarget);
+                    }}
+                    requiredPermissions={requiredWritePermissions}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isLoading={isUserDeleteLoading}
+                    onClick={() => {
+                      onDelete(entity.value ?? '');
+                    }}
+                    requiredPermissions={requiredWritePermissions}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              );
+            }
+            return null;
+          },
+        }),
       ].filter(notEmpty),
     );
   }, [
@@ -577,7 +573,6 @@ function useColumns(options: {
     requiredWritePermissions,
     settings,
     existingCountryCodes,
-    isSearchMode,
   ]);
 }
 
