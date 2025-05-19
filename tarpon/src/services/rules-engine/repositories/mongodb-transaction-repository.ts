@@ -710,11 +710,6 @@ export class MongoDbTransactionRepository
   public async getUsersCount(
     filters?: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-
     const filter = filters
       ? {
           timestamp: {
@@ -725,11 +720,54 @@ export class MongoDbTransactionRepository
       : {}
 
     const [originUsers, destinationUsers] = await Promise.all([
-      collection.distinct('originUserId', filter),
-      collection.distinct('destinationUserId', filter),
+      this.getDistinctUsers('ORIGIN', filter),
+      this.getDistinctUsers('DESTINATION', filter),
     ])
 
     return compact(uniq([...originUsers, ...destinationUsers])).length
+  }
+
+  private async getDistinctUsers(
+    direction: 'ORIGIN' | 'DESTINATION',
+    filter: Filter<InternalTransaction>
+  ): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const field = direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const userIds: string[] = []
+    let hasMore = true
+    const pageSize = 500
+    let page = 0
+    while (hasMore) {
+      const currentData = await collection
+        .aggregate<{ _id: string }>([
+          {
+            $match: filter,
+          },
+          {
+            $group: {
+              _id: `$${field}`,
+            },
+          },
+          { $sort: { _id: 1 } },
+          {
+            $skip: page * pageSize,
+          },
+          {
+            $limit: pageSize,
+          },
+        ])
+        .toArray()
+      if (currentData.length === 0) {
+        hasMore = false
+        break
+      }
+      userIds.push(...currentData.map((doc) => doc._id))
+      page++
+    }
+    return userIds
   }
 
   public async getTransactions(
