@@ -39,6 +39,7 @@ export const UserEvents = (props: Props) => {
   const queryResults = useQuery(
     USER_EVENTS_LIST({
       userId,
+      params,
     }),
     async () => {
       return await api.getEventsList({
