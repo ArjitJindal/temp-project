@@ -584,7 +584,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   MPESA: ['businessShortCode', 'phoneNumber'],
   CHECK: ['checkIdentifier', 'checkNumber'],
   CASH: ['identifier'],
-  NPP: ['accountNumber'],
+  NPP: ['payId'],
 }
 
 export function getPaymentMethodId(
@@ -615,7 +615,7 @@ export function getPaymentMethodId(
     case 'CASH':
       return pm.identifier
     case 'NPP':
-      return pm.endToEndId
+      return pm.payId
   }
 }
 

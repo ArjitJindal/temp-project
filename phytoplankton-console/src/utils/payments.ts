@@ -107,7 +107,7 @@ export function getPaymentDetailsIdString(paymentDetails: PaymentDetails): strin
   } else if (paymentDetails.method === 'CASH') {
     return paymentDetails.identifier ?? '-';
   } else if (paymentDetails.method === 'NPP') {
-    return paymentDetails.endToEndId ?? '-';
+    return paymentDetails.payId ?? '-';
   } else {
     return neverReturn(paymentDetails, '-');
   }

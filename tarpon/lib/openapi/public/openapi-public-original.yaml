@@ -4227,6 +4227,7 @@ components:
       required:
         - method
         - endToEndId
+        - payId
     IBANDetails:
       title: IBANDetails
       type: object

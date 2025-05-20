@@ -145,8 +145,8 @@ function paymentSubjectLabels(caseItem: Case) {
     });
   } else if (paymentDetails.method === 'NPP') {
     specialFields.push({
-      label: 'NPP ID',
-      value: paymentDetails.endToEndId,
+      label: 'Pay ID',
+      value: paymentDetails.payId,
     });
   } else {
     neverReturn(paymentDetails, '-');
