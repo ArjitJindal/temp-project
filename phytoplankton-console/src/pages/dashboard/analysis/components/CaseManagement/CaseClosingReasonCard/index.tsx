@@ -1,4 +1,4 @@
-import React, { MutableRefObject, useRef, useState } from 'react';
+import React, { MutableRefObject, useMemo, useRef, useState } from 'react';
 import s from './index.module.less';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -36,6 +36,7 @@ import WidgetRangePicker, {
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { dayjs } from '@/utils/dayjs';
 import { map, getOr } from '@/utils/asyncResource';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type ClosingReasons =
@@ -87,13 +88,25 @@ interface Props extends WidgetProps {}
 
 const CaseClosingReasonCard = (props: Props) => {
   const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
-  const [selectedSection, setSelectedSection] = useSafeLocalStorageState(
+  const [selectedSectionFromLocalStorage, setSelectedSection] = useSafeLocalStorageState(
     'dashboard-closing-reason-active-tab',
     'CASE',
   );
   const api = useApi();
+  const settings = useSettings();
+
+  const selectedSection = useMemo(() => {
+    const isPaymentApprovalEnabled = settings.isPaymentApprovalEnabled;
+    if (!isPaymentApprovalEnabled && selectedSectionFromLocalStorage === 'PAYMENT') {
+      // fallbacking to cases
+      setSelectedSection('CASE');
+      return 'CASE';
+    }
+    return selectedSectionFromLocalStorage;
+  }, [settings, selectedSectionFromLocalStorage, setSelectedSection]);
+
   const params = {
-    entity: selectedSection as 'CASE' | 'ALERT',
+    entity: selectedSection as 'CASE' | 'ALERT' | 'PAYMENT',
     startTimestamp: dateRange?.startTimestamp,
     endTimestamp: dateRange?.endTimestamp,
   };
@@ -156,6 +169,7 @@ const CaseClosingReasonCard = (props: Props) => {
           <ScopeSelector
             selectedSection={selectedSection}
             setSelectedSection={setSelectedSection}
+            showPaymentApproval={settings.isPaymentApprovalEnabled}
           />
           <TreemapChart<ClosingReasons> height={350} data={dataResource} colors={TREEMAP_COLORS} />
         </div>

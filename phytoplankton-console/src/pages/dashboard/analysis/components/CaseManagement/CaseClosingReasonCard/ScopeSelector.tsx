@@ -1,14 +1,22 @@
-import SegmentedControl from '@/components/library/SegmentedControl';
+import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 
-type ScopeSelectorValue = 'CASE' | 'ALERT';
+type ScopeSelectorValue = 'CASE' | 'ALERT' | 'PAYMENT';
 
 interface Props {
   selectedSection: string;
   setSelectedSection: (value: string) => void;
+  showPaymentApproval?: boolean;
 }
 
 const ScopeSelector = (props: Props) => {
   const { selectedSection, setSelectedSection } = props;
+  const items: Item<ScopeSelectorValue>[] = [
+    { value: 'CASE', label: `Cases` },
+    { value: 'ALERT', label: `Alerts` },
+  ];
+  if (props.showPaymentApproval) {
+    items.push({ value: 'PAYMENT', label: `Payment approval` });
+  }
   return (
     <SegmentedControl<ScopeSelectorValue>
       size="MEDIUM"
@@ -16,10 +24,7 @@ const ScopeSelector = (props: Props) => {
       onChange={(newValue) => {
         setSelectedSection(newValue);
       }}
-      items={[
-        { value: 'CASE', label: `Cases` },
-        { value: 'ALERT', label: `Alerts` },
-      ]}
+      items={items}
     />
   );
 };

@@ -23,6 +23,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   TRANSACTIONS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
@@ -31,11 +32,19 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import {
+  executeClickhouseQuery,
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
+import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
+import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+import { notEmpty, notNullish } from '@/utils/array'
+import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStatsClosingReasonsData'
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
   for (const collection of [
@@ -57,6 +66,9 @@ async function createInexes(tenantId) {
     })
   }
 }
+
+type ReturnType =
+  Array<DashboardStatsClosingReasonDistributionStatsClosingReasonsData>
 
 @traceable
 export class TransactionStatsDashboardMetric {
@@ -363,5 +375,147 @@ export class TransactionStatsDashboardMetric {
         ...stat,
       }
     })
+  }
+
+  public static async getPaymentClosingReasonDistributionStatistics(
+    tenantId: string,
+    params?: {
+      startTimestamp: number | undefined
+      endTimestamp: number | undefined
+    }
+  ): Promise<DashboardStatsClosingReasonDistributionStats> {
+    let closingReasonsData: DashboardStatsClosingReasonDistributionStatsClosingReasonsData[] =
+      []
+    if (isClickhouseEnabled()) {
+      const clickhouse = await getClickhouseClient(tenantId)
+      // rank window function as CTE to filter latest txn event for each txn id
+      const query = `
+        WITH latestEvents AS (
+          SELECT *
+          FROM (
+            SELECT transactionId, timestamp, status, reasons,
+                   row_number() OVER (PARTITION BY transactionId ORDER BY timestamp DESC) AS row_rank
+            FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName}
+            WHERE status IN ('ALLOW', 'BLOCK')
+              ${
+                params?.startTimestamp
+                  ? `AND timestamp >= ${params.startTimestamp}`
+                  : ''
+              }
+              ${
+                params?.endTimestamp
+                  ? `AND timestamp <= ${params.endTimestamp}`
+                  : ''
+              }
+          )
+          WHERE row_rank = 1
+        )
+        SELECT
+          concat(r, ' (', status, ')') AS reason,
+          count(*) AS value
+        FROM latestEvents
+        ARRAY JOIN reasons AS r
+        GROUP BY r
+        ORDER BY reason ASC;
+      `
+      closingReasonsData = await executeClickhouseQuery<ReturnType>(
+        clickhouse,
+        { query, format: 'JSONEachRow' }
+      )
+    } else {
+      const db = await getMongoDbClientDb()
+      const transactionEventCollection = db.collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(tenantId)
+      )
+      const reasons = await transactionEventCollection
+        .aggregate(
+          [
+            { $match: { status: { $in: ['ALLOW', 'BLOCK'] } } },
+            params?.startTimestamp != null || params?.endTimestamp != null
+              ? {
+                  $match: {
+                    $and: [
+                      params?.startTimestamp != null && {
+                        timestamp: {
+                          $gte: params?.startTimestamp,
+                        },
+                      },
+                      params?.endTimestamp != null && {
+                        timestamp: {
+                          $lte: params?.endTimestamp,
+                        },
+                      },
+                    ].filter(notEmpty),
+                  },
+                }
+              : null,
+            // pipeline to pick only latest transaction event
+            {
+              $sort: {
+                transactionId: 1,
+                timestamp: -1,
+              },
+            },
+            {
+              $group: {
+                _id: '$transactionId',
+                doc: {
+                  $first: '$$ROOT',
+                },
+              },
+            },
+            {
+              $replaceRoot: {
+                newRoot: '$doc',
+              },
+            },
+            // unwinding the reasons
+            {
+              $project: {
+                reasons: {
+                  $split: ['$reason', ','],
+                },
+                status: 1,
+              },
+            },
+            {
+              $unwind: '$reasons',
+            },
+            {
+              $project: {
+                reasonWithStatus: {
+                  $concat: [
+                    { $trim: { input: '$reasons' } },
+                    ' (',
+                    '$status',
+                    ')',
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: '$reasonWithStatus',
+                count: { $sum: 1 },
+              },
+            },
+          ].filter(notNullish)
+        )
+        .toArray()
+      console.info(reasons)
+      closingReasonsData = reasons.map((reason) => {
+        return {
+          reason: reason._id,
+          value: reason.count,
+        }
+      })
+    }
+
+    return {
+      closingReasonsData: closingReasonsData.map((reason) => ({
+        reason: reason.reason?.replace(/"/g, ''),
+        value: Number(reason.value),
+      })),
+    }
   }
 }

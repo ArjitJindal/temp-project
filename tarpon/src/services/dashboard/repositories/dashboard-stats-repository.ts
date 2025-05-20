@@ -283,15 +283,21 @@ export class DashboardStatsRepository {
   }
 
   async getClosingReasonDistributionStatistics(
-    entity?: 'CASE' | 'ALERT',
+    entity?: 'CASE' | 'ALERT' | 'PAYMENT',
     params?: {
       startTimestamp: number | undefined
       endTimestamp: number | undefined
     }
   ): Promise<DashboardStatsClosingReasonDistributionStats> {
-    return CaseStatsDashboardMetric.getClosingReasonDistributionStatistics(
+    if (entity === 'CASE' || entity === 'ALERT') {
+      return CaseStatsDashboardMetric.getClosingReasonDistributionStatistics(
+        this.tenantId,
+        entity,
+        params
+      )
+    }
+    return TransactionStatsDashboardMetric.getPaymentClosingReasonDistributionStatistics(
       this.tenantId,
-      entity,
       params
     )
   }

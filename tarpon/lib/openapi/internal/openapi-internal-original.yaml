@@ -3149,6 +3149,7 @@ paths:
             enum:
               - CASE
               - ALERT
+              - PAYMENT
           in: query
           name: entity
         - schema:
