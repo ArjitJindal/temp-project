@@ -15,7 +15,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
 import { isEmpty, isNil, mergeWith, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
-import { DEFAULT_ROLES_V2 } from '../default-roles'
 import { getContext, getContextStorage } from './context-storage'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
@@ -429,15 +428,10 @@ export async function tenantStatements(
     getContext()?.auth0Domain ?? '',
     getDynamoDbClient()
   )
-  const isDefaultRole = DEFAULT_ROLES_V2.find(
-    (role) => role.role === context?.user?.role
+  const statements = await roleRepository.getRoleStatements(
+    tenantId,
+    context?.user?.role ?? ''
   )
-  const statements = await (isDefaultRole
-    ? Promise.resolve(
-        DEFAULT_ROLES_V2.find((role) => role.role === context?.user?.role)
-          ?.permissions ?? []
-      )
-    : roleRepository.getRoleStatements(tenantId, context?.user?.role ?? ''))
 
   return statements.map((statement) => {
     return {

@@ -34,7 +34,7 @@ export class PermissionsService {
   ): Promise<PermissionsNode[]> {
     for (const permission of permissions) {
       if (permission.type === 'DYNAMIC') {
-        if (!permission.items) {
+        if (!permission.items?.length) {
           permission.items = await this.getDynamicResources(permission.subType)
         }
       }

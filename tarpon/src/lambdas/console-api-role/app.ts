@@ -8,6 +8,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { PermissionsService } from '@/services/rbac'
+import { DynamoRolesRepository } from '@/services/roles/repository/dynamo'
 
 export const rolesHandler = lambdaApi()(
   async (
@@ -16,9 +17,11 @@ export const rolesHandler = lambdaApi()(
     >
   ) => {
     const { auth0Domain } = event.requestContext.authorizer
-    const rolesService = RoleService.getInstance(
-      getDynamoDbClientByEvent(event),
-      auth0Domain
+    const dynamoDbClient = getDynamoDbClientByEvent(event)
+    const rolesService = RoleService.getInstance(dynamoDbClient, auth0Domain)
+    const dynamoRolesRepository = new DynamoRolesRepository(
+      auth0Domain,
+      dynamoDbClient
     )
     const { tenantId } = event.requestContext.authorizer
 
@@ -56,6 +59,13 @@ export const rolesHandler = lambdaApi()(
     handlers.registerGetAllPermissions(async (ctx, request) => {
       const rbacService = new PermissionsService(ctx.tenantId)
       return rbacService.getAllPermissions(request.search)
+    })
+
+    handlers.registerGetRolesByNameStatements(async (ctx) => {
+      return await dynamoRolesRepository.getRoleStatements(
+        ctx.tenantId,
+        ctx.role
+      )
     })
 
     return await handlers.handle(event)

@@ -3545,6 +3545,22 @@ paths:
                     type: string
       operationId: get-clueso-auth-token
     parameters: []
+  /roles/by-name/statements:
+    get:
+      summary: Role - Get Statements by Name
+      operationId: get-roles-by-name-statements
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermissionStatements'
+        '403':
+          description: Not enough privileges
   /roles:
     get:
       summary: Role - List

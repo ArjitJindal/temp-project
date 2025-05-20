@@ -29,6 +29,7 @@ import {
   convertV2PermissionToV1,
   getOptimizedPermissions,
 } from '@/services/rbac/utils/permissions'
+import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
 
 @traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
@@ -208,6 +209,12 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     namespace: string,
     name: string
   ): Promise<PermissionStatements[]> {
+    const isDefaultRole = DEFAULT_ROLES_V2.find((role) => role.role === name)
+
+    if (isDefaultRole) {
+      return isDefaultRole.permissions
+    }
+
     const key = DynamoDbKeys.ROLES_BY_NAME(
       this.auth0Domain,
       getNamespacedRoleName(getNonDemoTenantId(namespace), name)
