@@ -123,11 +123,11 @@ export function SearchResultTable(props: Props) {
       const response = getOr(defaultManualScreeningFilters.data, {});
       setParams((prevState) => ({
         ...prevState,
-        fuzziness: response.fuzziness ?? prevState.fuzziness,
-        types: (response.types ?? prevState.types) as SanctionsSearchType[],
-        nationality: response.nationality ?? prevState.nationality,
-        yearOfBirth: response.yearOfBirth ?? prevState.yearOfBirth,
-        documentId: response.documentId?.[0] ?? prevState.documentId,
+        fuzziness: response?.fuzziness ?? prevState?.fuzziness,
+        types: (response?.types ?? prevState?.types) as SanctionsSearchType[],
+        nationality: response?.nationality ?? prevState?.nationality,
+        yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
+        documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
       }));
     } else {
