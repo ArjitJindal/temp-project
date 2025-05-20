@@ -95,8 +95,9 @@ export class OngoingScreeningUserRuleBatchJobRunner extends ScreeningUserRuleBat
 
     let preprocessedMatches: Set<string>
 
-    let usersCursor =
+    let usersCursor = (
       inputUserCursor ?? this.userRepository?.getAllUsersCursor()
+    )?.addCursorFlag('noCursorTimeout', true)
     //TODO: remove feature flag PNB we have search index for user collection
     if (
       await tenantHasEitherFeatures(this.tenantId as string, [
@@ -135,9 +136,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends ScreeningUserRuleBat
         this.to,
         ruleInstances
       )
-      usersCursor = this.userRepository?.getUsersCursor({
-        userId: { $in: Array.from(preprocessedMatches) },
-      })
+      usersCursor = this.userRepository
+        ?.getUsersCursor({
+          userId: { $in: Array.from(preprocessedMatches) },
+        })
+        ?.addCursorFlag('noCursorTimeout', true)
       logger.warn(
         `preprocessedMatches: ${Array.from(preprocessedMatches).length}`
       )
