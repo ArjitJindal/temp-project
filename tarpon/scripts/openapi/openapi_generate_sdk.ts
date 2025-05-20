@@ -179,17 +179,19 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)
 }
 
-console.info('Syncing Nango models...')
-exec(`rm -rf src/@types/nango/models.d.ts`)
-exec(`yarn sync:nango:models`)
+if (require.main === module) {
+  console.info('Syncing Nango models...')
+  exec(`rm -rf src/@types/nango/models.d.ts`)
+  exec(`yarn sync:nango:models`)
 
-console.info('Generating public SDK...')
-buildApi('public')
+  console.info('Generating public SDK...')
+  buildApi('public')
 
-console.info('Generating public-management SDK...')
-buildApi('public-management')
+  console.info('Generating public-management SDK...')
+  buildApi('public-management')
 
-console.info('Generating internal SDK...')
-buildApi('internal')
+  console.info('Generating internal SDK...')
+  buildApi('internal')
 
-console.info('Done!')
+  console.info('Done!')
+}

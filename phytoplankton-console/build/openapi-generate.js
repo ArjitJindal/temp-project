@@ -132,7 +132,12 @@ function exec(command, cwd) {
 }
 
 async function prepare() {
-  exec('yarn && yarn openapi:build && yarn openapi:prepare', TARPON_PATH);
+  if (!fs.existsSync(SOURCE_OPENAPI_INTERNAL_PATH)) {
+    console.log('Building Tarpot SDK...');
+    exec('yarn && yarn openapi:build && yarn openapi:prepare', TARPON_PATH);
+  } else {
+    exec('yarn && yarn openapi:prepare', TARPON_PATH);
+  }
   fs.copyFileSync(SOURCE_OPENAPI_INTERNAL_PATH, OUTPUT_OPENAPI_INTERNAL_PATH);
 }
 
