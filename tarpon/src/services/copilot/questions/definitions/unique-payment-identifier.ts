@@ -37,8 +37,6 @@ export const UniquePaymentIdentifier: TableQuestion<
     { convert, userId, username },
     { page, pageSize, direction, currency, ...period }
   ) => {
-    const items: [string, string, number, number][] = []
-    const topPaymentIdentifier = ''
     if (!isClickhouseEnabled()) {
       throw new Error('Clickhouse is not enabled')
     }
@@ -62,6 +60,8 @@ export const UniquePaymentIdentifier: TableQuestion<
         sum desc
       `
 
+    let topPaymentIdentifier: PaymentIdentifier | undefined = undefined
+
     const { rows, total: resultTotal } =
       await paginatedClickhouseQuery<PaymentIdentifier>(
         query,
@@ -69,6 +69,21 @@ export const UniquePaymentIdentifier: TableQuestion<
         page,
         pageSize
       )
+
+    rows.forEach((row) => {
+      // update the payment method when
+      // 1. payment method is undefined
+      // 2. current payment method is less txn count
+      // 3. current payment method have same txn count but less txn amount
+      if (
+        !topPaymentIdentifier ||
+        topPaymentIdentifier.count < row.count ||
+        (topPaymentIdentifier.count === row.count &&
+          topPaymentIdentifier.sum < row.sum)
+      ) {
+        topPaymentIdentifier = row
+      }
+    })
 
     return {
       data: {
@@ -82,14 +97,15 @@ export const UniquePaymentIdentifier: TableQuestion<
         }),
         total: resultTotal,
       },
-      summary:
-        items.length === 0
-          ? `${username} has not transacted with anyone ${humanReadablePeriod(
-              period
-            )}.`
-          : `The top payment identifier used with ${username} as ${direction.toLowerCase()} was ${topPaymentIdentifier} which was a ${
-              items.at(0)?.[1]
-            } method ${humanReadablePeriod(period)}.`,
+      summary: !topPaymentIdentifier
+        ? `${username} has not transacted with anyone ${humanReadablePeriod(
+            period
+          )}.`
+        : `The top payment identifier used with ${username} as ${direction.toLowerCase()} was ${
+            (topPaymentIdentifier as PaymentIdentifier).paymentIdentifier
+          } which was a ${
+            (topPaymentIdentifier as PaymentIdentifier).paymentMethod
+          } method ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [
