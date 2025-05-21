@@ -73,7 +73,7 @@ export function validateField<T>(
     if (value != null && !Array.isArray(value)) {
       console.warn(`Wrong value type, expected array: ${JSON.stringify(value)}`);
     }
-    nestedResult = ((value as any) ?? []).map((x: any) =>
+    nestedResult = (Array.isArray(value) ? value : []).map((x: any) =>
       validateField(fieldValidator.itemValidator, x),
     );
   } else {
