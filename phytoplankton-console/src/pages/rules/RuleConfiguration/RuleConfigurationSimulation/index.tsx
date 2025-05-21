@@ -29,7 +29,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB } from '@/utils/queries/keys';
-import { isLoading as isResourceLoading, isSuccess } from '@/utils/asyncResource';
+import { getOr, isLoading as isResourceLoading, isSuccess } from '@/utils/asyncResource';
 import Label from '@/components/library/Label';
 import { H4 } from '@/components/ui/Typography';
 import Tooltip from '@/components/library/Tooltip';
@@ -85,6 +85,9 @@ export interface Props {
 }
 
 export function RuleConfigurationSimulation(props: Props) {
+  const [demoMode] = useDemoMode();
+  const isDemoMode = getOr(demoMode, false);
+  const [showDemoProgress, setShowDemoProgress] = useState(false);
   const { v8Mode, ruleInstance, onCancel, onRuleInstanceUpdated, rule } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const [showValidationError, setShowValidationError] = useState(false);
@@ -222,8 +225,6 @@ export function RuleConfigurationSimulation(props: Props) {
     },
   );
 
-  const [isDemoModeRes] = useDemoMode();
-
   const jobResult = useQuery(
     SIMULATION_JOB(jobId ?? ''),
     () =>
@@ -234,7 +235,7 @@ export function RuleConfigurationSimulation(props: Props) {
       refetchInterval: (data) =>
         allIterationsCompleted(data?.iterations || [])
           ? false
-          : isDemoModeRes
+          : isDemoMode
           ? 9000
           : POLL_STATUS_INTERVAL_SECONDS * 1000,
       enabled: Boolean(jobId),
@@ -257,6 +258,10 @@ export function RuleConfigurationSimulation(props: Props) {
         `Please make sure that all the required fields are filled. (${invalidIteration.name})`,
       );
     } else {
+      if (isDemoMode) {
+        setShowDemoProgress(true);
+        setTimeout(() => setShowDemoProgress(false), 5000);
+      }
       startSimulationMutation.mutate(newIterations);
     }
   }, [
@@ -266,6 +271,7 @@ export function RuleConfigurationSimulation(props: Props) {
     startSimulationMutation,
     syncFormValues,
     v8Mode,
+    isDemoMode,
   ]);
 
   const prevRuleInstance = usePrevious(ruleInstance);
@@ -439,14 +445,19 @@ export function RuleConfigurationSimulation(props: Props) {
             key: `${i}`,
             isClosable: iterations.length > 1 && !isShowingResults,
             children:
-              iterationResults.length > 0 && iterationResults[i].progress < 0.1 ? (
+              (iterationResults.length > 0 && iterationResults[i].progress < 0.1) ||
+              (isDemoMode && showDemoProgress) ? (
                 <div className={s.loadingCard}>
                   <Progress
                     simulationStartedAt={iterationResults[i]?.createdAt}
                     width="HALF"
                     progress={(iterationResults[i]?.progress ?? 0) * 100}
                     message="Running the simulation on subset of transactions & generating results for you."
-                    status={iterationResults[i]?.latestStatus?.status ?? 'SUCCESS'}
+                    status={
+                      showDemoProgress
+                        ? 'IN_PROGRESS'
+                        : iterationResults[i]?.latestStatus?.status ?? 'SUCCESS'
+                    }
                     totalEntities={iterationResults[i]?.totalEntities ?? 0}
                   />
                 </div>

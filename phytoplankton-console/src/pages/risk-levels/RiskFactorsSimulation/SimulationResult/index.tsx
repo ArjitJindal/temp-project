@@ -7,7 +7,6 @@ import { drawSimulationGraphs } from './report-utils';
 import styles from './styles.module.less';
 import { Progress } from '@/components/Simulation/Progress';
 import {
-  ParameterAttributeRiskValues,
   RiskEntityType,
   RiskFactorParameter,
   RiskLevel,
@@ -19,7 +18,15 @@ import {
   SimulationV8RiskFactorsParameters,
   SimulationV8RiskFactorsStatisticsRiskTypeEnum,
 } from '@/apis';
-import { AsyncResource, init, isLoading, isSuccess, loading, success } from '@/utils/asyncResource';
+import {
+  AsyncResource,
+  init,
+  isLoading,
+  isSuccess,
+  loading,
+  success,
+  getOr,
+} from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import GroupedColumn from '@/pages/risk-levels/configure/components/Charts';
@@ -44,6 +51,7 @@ import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
 import RiskFactorsTable from '@/pages/risk-levels/shared/RiskFactorsTable';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 
 interface Props {
   jobId: string;
@@ -57,6 +65,17 @@ export const SimulationResult = (props: Props) => {
   const navigate = useNavigate();
   const [isGeneratingPdf] = useState(false);
   const pendingDownloadRef = useRef<(() => void) | null>(null);
+  const [demoMode] = useDemoMode();
+  const isDemoMode = getOr(demoMode, false);
+  const [showDemoProgress, setShowDemoProgress] = useState(false);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setShowDemoProgress(true);
+      const timer = setTimeout(() => setShowDemoProgress(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isDemoMode]);
 
   useEffect(() => {
     const downloadPdf = pendingDownloadRef.current;
@@ -169,13 +188,15 @@ export const SimulationResult = (props: Props) => {
                 jobId={jobId}
                 iteration={iteration}
                 activeIterationIndex={index + 1}
+                showDemoProgress={showDemoProgress}
               />
             ),
           })),
         ]}
       />
 
-      {iterations[activeIterationIndex - 1]?.progress > 0.1 ? (
+      {iterations[activeIterationIndex - 1]?.progress > 0.1 &&
+      (!isDemoMode || !showDemoProgress) ? (
         <div className={styles.footer}>
           <div className={styles.footerButtons}>
             <Confirm
@@ -216,6 +237,7 @@ interface WidgetProps {
   iteration: SimulationRiskFactorsIteration | SimulationV8RiskFactorsIteration;
   activeIterationIndex: number;
   jobId: string;
+  showDemoProgress: boolean;
 }
 
 export type RiskFactorsSettings = {
@@ -234,13 +256,16 @@ type TableSearchParams = CommonParams & {
 
 const SimulationResultWidgets = (props: WidgetProps) => {
   const settings = useSettings();
-  const { iteration, activeIterationIndex, jobId } = props;
+  const { iteration, activeIterationIndex, jobId, showDemoProgress } = props;
   const { pathname } = useLocation();
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
   });
-  const showResults = iteration.progress > 0.1;
+  const [demoMode] = useDemoMode();
+  const isDemoMode = getOr(demoMode, false);
+
+  const showResults = iteration.progress > 0.1 && (!isDemoMode || !showDemoProgress);
   const api = useApi();
 
   const iterationQueryResults = usePaginatedQuery(
@@ -432,43 +457,6 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   const { graphData: krsGraphdata, max: maxKRS } = getGraphData('KRS');
   const { graphData: arsGraphData, max: maxARS } = getGraphData('ARS');
   const { graphData: drsGraphData, max: maxDRS } = getGraphData('DRS');
-  const deserializeRiskFactors = (
-    parameterAttributeRiskValues: ParameterAttributeRiskValues[],
-  ): RiskFactorsSettings => {
-    let deserialisedRiskFactors: RiskFactorsSettings = {};
-    for (const parameterAttributeRiskValue of parameterAttributeRiskValues) {
-      const entity = parameterAttributeRiskValue.riskEntityType;
-      const parameter = parameterAttributeRiskValue.parameter;
-      const isActive = parameterAttributeRiskValue.isActive;
-      const defaultValue = parameterAttributeRiskValue.defaultValue;
-      const weight = parameterAttributeRiskValue.weight;
-      const values = parameterAttributeRiskValue.riskLevelAssignmentValues;
-      const settings: ParameterSettings = {
-        isActive,
-        defaultValue,
-        weight,
-        values,
-      };
-      if (!deserialisedRiskFactors[entity]) {
-        deserialisedRiskFactors[entity] = {};
-      }
-      deserialisedRiskFactors = {
-        ...deserialisedRiskFactors,
-        [entity]: {
-          ...deserialisedRiskFactors[entity],
-          [parameter]: success(settings),
-        },
-      };
-    }
-    return deserialisedRiskFactors;
-  };
-
-  const _riskFactorsSettings: RiskFactorsSettings = useMemo(() => {
-    if (iteration.type === 'RISK_FACTORS') {
-      return deserializeRiskFactors(iteration.parameters.parameterAttributeRiskValues);
-    }
-    return {};
-  }, [iteration.parameters, iteration.type]);
 
   const filter: ExtraFilterProps<TableSearchParams>[] = denseArray([
     {
@@ -631,7 +619,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
             ? `Running the simulation for a random sample of ${settings.userAlias}s & generating results for you.`
             : 'Loading simulation results for you.'
         }
-        status={iteration.latestStatus.status}
+        status={showDemoProgress ? 'IN_PROGRESS' : iteration.latestStatus.status}
         totalEntities={iteration.totalEntities}
       />
     </div>
