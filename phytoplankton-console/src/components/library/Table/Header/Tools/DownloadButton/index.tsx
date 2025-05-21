@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { get } from 'lodash';
 import { Popover, Radio } from 'antd';
-import type { CellStyle, CellObject } from 'xlsx-js-style';
+import type { CellObject, CellStyle } from 'xlsx-js-style';
 import {
   applyFieldAccessor,
   DerivedColumn,
@@ -9,10 +9,10 @@ import {
   isDerivedColumn,
   isGroupColumn,
   isSimpleColumn,
+  PaginatedParams,
   SimpleColumn,
   TableColumn,
   TableData,
-  PaginatedParams,
 } from '../../../types';
 import {
   DEFAULT_DOWNLOAD_VIEW,
@@ -193,15 +193,10 @@ export default function DownloadButton<T extends object, Params extends object>(
     totalPages = 1,
   } = props;
 
-  const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT' | 'UP_TO_10000'>('CURRENT');
+  const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('CURRENT');
   const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
   const [format, setFormat] = useState<'csv' | 'xlsx'>('csv');
   const [isDownloadError, setIsDownloadError] = useState<boolean>(false);
-  useEffect(() => {
-    if (isDownloadError) {
-      setPagesMode('UP_TO_10000');
-    }
-  }, [isDownloadError]);
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -241,11 +236,8 @@ export default function DownloadButton<T extends object, Params extends object>(
           pagesMode === 'ALL' &&
           (totalItemsCount >= MAXIMUM_EXPORT_ITEMS || runningTotal >= MAXIMUM_EXPORT_ITEMS)
         ) {
-          message.error(
-            `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
-          );
           setIsDownloadError(true);
-          return;
+          break;
         }
 
         const flatData = flatDataItems<T>(items);
@@ -334,20 +326,19 @@ export default function DownloadButton<T extends object, Params extends object>(
                     Current page
                   </Radio>
                   <Radio value="ALL">All pages</Radio>
-                  {isDownloadError && <Radio value="UP_TO_10000">Upto 10,000 rows</Radio>}
                 </Radio.Group>
               </Form.Layout.Label>
             )}
             {pagesMode === 'ALL' && (
               <Alert type="INFO">
-                This option downloads up to 100,000 rows. Browser capacity may also impact the
-                download.
+                This option downloads up to {new Intl.NumberFormat().format(MAXIMUM_EXPORT_ITEMS)}{' '}
+                rows. Browser capacity may also impact the download.
               </Alert>
             )}
-            {pagesMode === 'UP_TO_10000' && (
+            {isDownloadError && (
               <Alert type="ERROR">
                 Download failed for all pages due to browser capacity. Please try downloading for up
-                to 10,000 rows.
+                to {new Intl.NumberFormat().format(MAXIMUM_EXPORT_ITEMS)} rows.
               </Alert>
             )}
             <Form.Layout.Label title="Format">
