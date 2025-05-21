@@ -7,7 +7,9 @@ import {
   ClickhouseTableNames,
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
-import { insertToClickhouse } from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const mongoTableName = 'clickhouse-backfill'
 
@@ -33,6 +35,7 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
     const toTimestamp =
       type.type === 'PARTIAL' ? type.toTimestamp : Number.MAX_SAFE_INTEGER
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const db = mongoDb.db()
     const collection = db.collection<ClickhouseBackfillItem>(mongoTableName)
 
@@ -75,13 +78,13 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
         db.collection<ClickhouseBackfillTable>(mongoCollectionName)
       const timestampColumn = tableDefinition.timestampColumn
 
-      let allItems: FindCursor<WithId<ClickhouseBackfillTable>>
+      let allItems: FindCursor<WithId<object>>
 
       if (parameters.type.type === 'ALL') {
         allItems = mongoCollection
           .find({})
           .sort({ [timestampColumn]: 1 })
-          .batchSize(1000)
+          .addCursorFlag('noCursorTimeout', true)
       } else {
         allItems = mongoCollection
           .find({
@@ -91,48 +94,40 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
             },
           })
           .sort({ [timestampColumn]: 1 })
-          .batchSize(1000)
+          .addCursorFlag('noCursorTimeout', true)
       }
 
       const batchSize = 1000
-      let batch: object[] = []
+      let batch: WithId<object>[] = []
 
       const tablesToBackfill: ClickhouseBackfillTable[] =
         referenceItem?.tablesToBackfill ?? []
 
-      for await (const item of allItems) {
-        batch.push(item)
-        if (batch.length === batchSize) {
-          await insertToClickhouse(tableDefinition.table, batch, job.tenantId)
-          // lastTimestamp is the timestamp of the last item in the batch
-          const lastTimestamp: number = batch[batch.length - 1][
-            timestampColumn
-          ] as number
-          const isTableInReferenceItem = tablesToBackfill.find(
-            (t) => t.tableName === table
-          )
-
-          if (isTableInReferenceItem) {
-            isTableInReferenceItem.lastTimestamp = lastTimestamp
-          } else {
-            tablesToBackfill.push({ tableName: table, lastTimestamp })
-
-            await collection.updateOne(
-              { tenantId, referenceId },
-              { $set: { tablesToBackfill } }
-            )
-          }
-
-          batch = []
+      const processBatch = async (
+        batch: WithId<object>[],
+        isLastBatch: boolean = false
+      ) => {
+        if (batch.length === 0) {
+          return
         }
-      }
 
-      if (batch.length > 0) {
-        await insertToClickhouse(tableDefinition.table, batch, job.tenantId)
+        const mongoDbConsumer = new MongoDbConsumer(mongoDb, dynamoDb)
+
+        const updatedDocuments = await mongoDbConsumer.updateInsertMessages(
+          mongoCollectionReference,
+          batch as WithId<Document>[]
+        )
+
+        await batchInsertToClickhouse(
+          job.tenantId,
+          tableDefinition.table,
+          updatedDocuments
+        )
 
         const lastTimestamp: number = batch[batch.length - 1][
           timestampColumn
         ] as number
+
         const isTableInReferenceItem = tablesToBackfill.find(
           (t) => t.tableName === table
         )
@@ -143,7 +138,7 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
           tablesToBackfill.push({
             tableName: table,
             lastTimestamp,
-            isCompleted: true,
+            ...(isLastBatch && { isCompleted: true }),
           })
 
           await collection.updateOne(
@@ -151,6 +146,18 @@ export class ClickhouseDataBatchJobRunner extends BatchJobRunner {
             { $set: { tablesToBackfill } }
           )
         }
+      }
+
+      for await (const item of allItems) {
+        batch.push(item)
+        if (batch.length === batchSize) {
+          await processBatch(batch)
+          batch = []
+        }
+      }
+
+      if (batch.length > 0) {
+        await processBatch(batch, true)
       }
     }
   }

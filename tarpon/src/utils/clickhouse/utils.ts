@@ -269,30 +269,6 @@ async function prepareClickhouseInsert(tableName: TableName, tenantId: string) {
   return tableDefinition
 }
 
-export async function insertToClickhouse<T extends object>(
-  tableName: TableName,
-  object: T,
-  tenantId: string = getContext()?.tenantId as string
-) {
-  const tableDefinition = await prepareClickhouseInsert(tableName, tenantId)
-  if (!tableDefinition) {
-    return
-  }
-
-  await clickhouseInsert(
-    tenantId,
-    tableName,
-    [
-      {
-        id: object[tableDefinition.idColumn],
-        data: JSON.stringify(object),
-        is_deleted: 0,
-      },
-    ],
-    ['id', 'data', 'is_deleted']
-  )
-}
-
 export async function batchInsertToClickhouse(
   tenantId: string,
   table: TableName,
