@@ -44,7 +44,11 @@ export async function migrateClickhouse() {
   })
 }
 
-migrateClickhouse().catch((err) => {
-  logger.error(err)
-  process.exit(1)
-})
+if (require.main === module) {
+  void migrateClickhouse()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      logger.error(e)
+      process.exit(1)
+    })
+}
