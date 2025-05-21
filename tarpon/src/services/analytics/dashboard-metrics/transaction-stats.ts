@@ -411,7 +411,7 @@ export class TransactionStatsDashboardMetric {
           WHERE row_rank = 1
         )
         SELECT
-          concat(r, ' (', status, ')') AS reason,
+          concat(r, ' (', any(status), ')') AS reason,
           count(*) AS value
         FROM latestEvents
         ARRAY JOIN reasons AS r
