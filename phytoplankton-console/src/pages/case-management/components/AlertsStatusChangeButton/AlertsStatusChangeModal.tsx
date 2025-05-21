@@ -20,6 +20,7 @@ import {
   expandPEPStatus,
 } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
 import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
@@ -36,6 +37,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   const queryClient = useQueryClient();
   const [users] = useUsers();
   const currentUser = useCurrentUser();
+  const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
 
   const escalatedCaseCallback = useCallback(
     async (formValues: FormValues, updates: AlertStatusUpdateRequest) => {
@@ -215,6 +217,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       entityName={isEmpty(transactionIds) ? 'ALERT' : 'TRANSACTION'}
       updateMutation={updateMutation}
       advancedOptions={
+        isNewFeaturesEnabled &&
         (statusEscalated(props.newStatus) || props.newStatus === 'CLOSED') &&
         props.entityIds.length === 1 && <CaseEscalateTriggerAdvancedOptionsForm user={props.user} />
       }
