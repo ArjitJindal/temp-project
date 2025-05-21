@@ -10,6 +10,8 @@ import { getAccounts } from '@/core/seed/samplers/accounts'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 
 const AUDIT_LOG_COUNT = 100
+// 30 days in milliseconds
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000
 
 const generator = function* (): Generator<AuditLog> {
   const rng = new RandomNumberGenerator(AUDIT_LOG_SEED)
@@ -19,7 +21,7 @@ const generator = function* (): Generator<AuditLog> {
       auditlogId: uuid4(),
       type: 'USER',
       action: 'VIEW',
-      timestamp: Date.now(),
+      timestamp: rng.randomTimestamp(THIRTY_DAYS),
       entityId: uuid4(),
       user: rng.pickRandom(getAccounts()),
     }
@@ -33,7 +35,7 @@ const generator = function* (): Generator<AuditLog> {
         type: 'USER',
         auditlogId: uuid4(),
         action: 'VIEW',
-        timestamp: Date.now(),
+        timestamp: rng.randomTimestamp(THIRTY_DAYS),
         entityId: userId,
         user: rng.r(2).pickRandom(getAccounts()),
       }
@@ -46,7 +48,7 @@ const generator = function* (): Generator<AuditLog> {
         type: 'CASE',
         action: 'CREATE',
         subtype: 'COMMENT',
-        timestamp: Date.now(),
+        timestamp: rng.randomTimestamp(THIRTY_DAYS),
         entityId: `C-${rng.r(1).randomInt(25)}`,
         oldImage: undefined,
         newImage: {
@@ -67,7 +69,7 @@ const generator = function* (): Generator<AuditLog> {
         auditlogId: uuid4(),
         type: 'ALERT',
         action: 'UPDATE',
-        timestamp: Date.now(),
+        timestamp: rng.randomTimestamp(THIRTY_DAYS),
         entityId: `A-${rng.r(1).randomInt(25)}`,
         oldImage: {},
         newImage: {
