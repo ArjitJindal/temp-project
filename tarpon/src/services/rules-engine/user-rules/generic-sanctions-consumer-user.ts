@@ -59,16 +59,16 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           description:
             'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
         }),
-        ruleStages: RULE_STAGE_SCHEMA({
-          description:
-            'Select specific stage(s) of the user lifecycle that this rule will run for',
-        }),
         screeningValues: GENERIC_SCREENING_VALUES_SCHEMA({
           description:
             'Select the screening attributes to be used for the screening',
         }),
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        ruleStages: RULE_STAGE_SCHEMA({
+          description:
+            'Select specific stage(s) of the user lifecycle that this rule will run for',
+        }),
         partialMatch: PARTIAL_MATCH_SCHEMA,
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,

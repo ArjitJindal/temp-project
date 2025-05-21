@@ -73,11 +73,11 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         },
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA(),
+        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         ruleStages: RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
-        fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
