@@ -4,7 +4,7 @@ import Tag, { TagColor } from '@/components/library/Tag';
 
 function ValueTag(props: { color?: TagColor; children: React.ReactNode | undefined | null }) {
   return (
-    <Tag color={props.color} trimText={false}>
+    <Tag color={props.color} trimText={false} wrapText={false}>
       {props.children ?? 'N/A'}
     </Tag>
   );
