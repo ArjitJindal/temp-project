@@ -53,8 +53,6 @@ export const CRYPTO_TXN_COUNT = process.env.SEED_CRYPTO_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_CRYPTO_TRANSACTIONS_COUNT)
   : 50
 
-const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
-
 interface TransactionPair {
   originUserId: string
   destinationUserId: string
@@ -165,9 +163,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
 
     const numberoShadowRulesHit = (this.counter % 3) + 1
     const shadowRulesHit = hitRules
-      .filter(
-        (r) => r.isShadow && !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId)
-      )
+      .filter((r) => r.isShadow)
       .slice(0, numberoShadowRulesHit)
 
     if (this.transactionIndex >= this.transactionPairs.length) {
@@ -245,52 +241,48 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     const randomHitRules = [
       ...hitRules.filter((r) => !r.isShadow),
       ...shadowRulesHit,
-    ]
-      .filter((r) => !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId))
-      .map((hitRule) => {
-        if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
-          const sanctionsDetails: SanctionsDetails[] = [
-            ...getSanctionsSearch(
-              transaction.originPaymentDetails as PaymentDetails,
-              originUserId,
-              hitRule.ruleInstanceId,
-              transactionId
-            ),
-            ...getSanctionsSearch(
-              transaction.destinationPaymentDetails as PaymentDetails,
-              destinationUserId,
-              hitRule.ruleInstanceId,
-              transactionId
-            ),
-          ]
+    ].map((hitRule) => {
+      if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
+        const sanctionsDetails: SanctionsDetails[] = [
+          ...getSanctionsSearch(
+            transaction.originPaymentDetails as PaymentDetails,
+            originUserId,
+            hitRule.ruleInstanceId,
+            transactionId
+          ),
+          ...getSanctionsSearch(
+            transaction.destinationPaymentDetails as PaymentDetails,
+            destinationUserId,
+            hitRule.ruleInstanceId,
+            transactionId
+          ),
+        ]
 
-          return {
-            ...hitRule,
-            ruleHitMeta: {
-              ...hitRule.ruleHitMeta,
-              sanctionsDetails,
-            },
-          }
+        return {
+          ...hitRule,
+          ruleHitMeta: {
+            ...hitRule.ruleHitMeta,
+            sanctionsDetails,
+          },
         }
+      }
 
-        if (
-          hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true
-        ) {
-          const modifiedHitRule: HitRulesDetails = {
-            ...hitRule,
-            ruleHitMeta: {
-              ...hitRule.ruleHitMeta,
-              falsePositiveDetails: {
-                ...hitRule.ruleHitMeta.falsePositiveDetails,
-                confidenceScore: random(59, 82),
-              },
+      if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
+        const modifiedHitRule: HitRulesDetails = {
+          ...hitRule,
+          ruleHitMeta: {
+            ...hitRule.ruleHitMeta,
+            falsePositiveDetails: {
+              ...hitRule.ruleHitMeta.falsePositiveDetails,
+              confidenceScore: random(59, 82),
             },
-          }
-          return modifiedHitRule
+          },
         }
+        return modifiedHitRule
+      }
 
-        return hitRule
-      })
+      return hitRule
+    })
     const ruleHitIds = randomHitRules.map((ri) => ri.ruleInstanceId)
 
     const timestamp = this.sampleTimestamp()

@@ -2699,7 +2699,12 @@ export class BussinessUserRuleSampler extends RuleSampler {
 export class TransactionRuleSampler extends RuleSampler {
   constructor() {
     super()
-    this.intalizeSampler(transactionRules(false), [4, 5, 6, 7], TXN_COUNT, true)
+    this.intalizeSampler(
+      transactionRules(false),
+      [4, 5, 6, 7],
+      TXN_COUNT,
+      false
+    )
   }
 }
 
