@@ -115,7 +115,7 @@ export class SanctionsScreeningDetailsRepository {
 
     const _id = updatedData.value?._id
 
-    if (!_id) {
+    if (_id) {
       await sendMessageToMongoConsumer({
         collectionName: sanctionsScreeningCollectionName,
         documentKey: { type: 'id', value: String(_id) },
