@@ -292,7 +292,7 @@ export class TransactionStatsDashboardMetric {
       ${dateRangeQuery}
       `,
       { startTimestamp, endTimestamp },
-      '',
+      'timestamp != 0',
       { countOnly: returnDataType === 'TOTAL' }
     )
   }

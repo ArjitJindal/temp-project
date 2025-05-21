@@ -222,6 +222,8 @@ export class ClickhouseTransactionsRepository {
       )
     }
 
+    whereConditions.push('timestamp != 0')
+
     return whereConditions.length ? `${whereConditions.join(' AND ')}` : ''
   }
 
