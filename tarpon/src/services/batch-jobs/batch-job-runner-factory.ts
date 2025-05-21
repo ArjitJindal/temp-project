@@ -34,6 +34,7 @@ import { CasesDynamoBackfillBatchJobRunner } from './cases-backfill-dynamodb-job
 import { PeriodicScreeningUserRuleBatchJobRunner } from './periodic-screening-user-rule-batch-job-runner'
 import { QACleanupBatchJobRunner } from './qa-cleanup-batchjob'
 import { PnbPullUsersDataBatchJobRunner } from './pnb-pull-users-data-batch-job-runner'
+import { ManualTransactionReverificationBatchJobRunner } from './manual-transaction-reverification-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -123,7 +124,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new PeriodicScreeningUserRuleBatchJobRunner(jobId),
     PNB_PULL_USERS_DATA: (jobId) => new PnbPullUsersDataBatchJobRunner(jobId),
     MANUAL_TRANSACTION_REVERIFICATION: (jobId) =>
-      new ManualRulePreAggregationBatchJobRunner(jobId),
+      new ManualTransactionReverificationBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

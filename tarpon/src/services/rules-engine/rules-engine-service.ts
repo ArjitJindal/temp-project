@@ -971,7 +971,14 @@ export class RulesEngineService {
       'INITIAL'
     )
 
-    const { executedRules, hitRules, aggregationMessages } = data
+    const {
+      executedRules,
+      hitRules,
+      aggregationMessages,
+      senderUser = null,
+      receiverUser = null,
+      isAnyAsyncRules,
+    } = data
     const mergedExecutedRules = mergeRules(
       transaction.executedRules,
       executedRules
@@ -996,6 +1003,25 @@ export class RulesEngineService {
         { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
       ),
       sendTransactionAggregationTasks(aggregationMessages),
+      isAnyAsyncRules &&
+        sendAsyncRuleTasks([
+          {
+            tenantId: this.tenantId,
+            type: 'TRANSACTION',
+            transaction: omit<Transaction>(
+              { ...transaction, status: status } as Transaction,
+              ['executedRules', 'hitRules']
+            ) as Transaction,
+            senderUser: omit<User>(senderUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business,
+            receiverUser: omit<User>(receiverUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business,
+          },
+        ]),
     ])
   }
 

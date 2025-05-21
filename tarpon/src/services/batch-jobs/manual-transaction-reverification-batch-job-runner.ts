@@ -1,5 +1,5 @@
 import { last } from 'lodash'
-import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { MongoClient } from 'mongodb'
 import { RulesEngineService } from '../rules-engine'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -8,6 +8,8 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 import { TransientRepository } from '@/core/repositories/transient-repository'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 const PARTITION_KEY = 'manual-re-verify-transactions'
 type Progress = {
@@ -16,30 +18,27 @@ type Progress = {
 }
 
 export class ManualTransactionReverificationBatchJobRunner extends BatchJobRunner {
-  private transactionsRepository!: MongoDbTransactionRepository
+  private mongoDb!: MongoClient
   private rulesEngineService!: RulesEngineService
   private concurrency!: number
   private mongoBatchSize!: number
   private transientRepository!: TransientRepository<Progress>
   private progressKey!: string
+  private tenantId!: string
   protected async run(job: ManualTransactionReverification) {
     const { tenantId, parameters } = job
+    this.tenantId = tenantId
     const { timeRange, concurrency, mongoBatchSize, uniqId } = parameters
     this.concurrency = concurrency
     this.mongoBatchSize = mongoBatchSize
     const dynamoDb = getDynamoDbClient()
-    const mongoDb = await getMongoDbClient()
+    this.mongoDb = await getMongoDbClient()
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
       logicEvaluator,
-      mongoDb
-    )
-    this.transactionsRepository = new MongoDbTransactionRepository(
-      tenantId,
-      mongoDb,
-      dynamoDb
+      this.mongoDb
     )
     this.transientRepository = new TransientRepository<Progress>(dynamoDb)
     this.progressKey = `${tenantId}-${uniqId}`
@@ -47,7 +46,7 @@ export class ManualTransactionReverificationBatchJobRunner extends BatchJobRunne
       PARTITION_KEY,
       this.progressKey
     )
-    await this.main(
+    await this.reverifyTransactions(
       {
         startTime: progress?.timestamp ?? timeRange?.startTime ?? 0,
         endTime: timeRange?.endTime ?? Number.MAX_SAFE_INTEGER,
@@ -56,17 +55,19 @@ export class ManualTransactionReverificationBatchJobRunner extends BatchJobRunne
     )
   }
 
-  private async main(
+  private async reverifyTransactions(
     timeRange: { startTime: number; endTime: number },
     currentProgress?: Progress
   ) {
+    logger.info('Reverifying transactions')
     let processedCount = currentProgress?.transactionCount ?? 0
-    const transactionsCursor = this.transactionsRepository
-      .getTransactionsCursor({
-        afterTimestamp: timeRange?.startTime,
-        beforeTimestamp: timeRange?.endTime,
-        sortField: 'timestamp',
+    const transactionsCursor = this.mongoDb
+      .db()
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(this.tenantId))
+      .find({
+        timestamp: { $gte: timeRange.startTime, $lte: timeRange.endTime },
       })
+      .sort({ timestamp: 1 })
       .addCursorFlag('noCursorTimeout', true)
 
     await processCursorInBatch(
@@ -89,6 +90,7 @@ export class ManualTransactionReverificationBatchJobRunner extends BatchJobRunne
         mongoBatchSize: this.mongoBatchSize,
       }
     )
+    await transactionsCursor.close()
     logger.info('Completed verifying all required transactions')
   }
 }
