@@ -1,7 +1,7 @@
 import { TableUser } from '../CaseTable/types';
 import { Alert, AlertStatus, CaseType } from '@/apis';
 
-export interface TableAlertItem extends Omit<Alert, 'transactionIds' | 'ruleChecklist'> {
+export interface TableAlertItem extends Omit<Alert, 'ruleChecklist'> {
   alertId?: string;
   caseId?: string;
   caseCreatedTimestamp?: number;

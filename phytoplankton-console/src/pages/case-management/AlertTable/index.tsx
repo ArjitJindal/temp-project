@@ -836,6 +836,21 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               },
             },
           }),
+          helper.simple<'transactionIds'>({
+            title: 'Transaction IDs',
+            key: 'transactionIds',
+            hideInTable: true,
+            filtering: false,
+            exporting: true,
+            type: {
+              stringify: (value) => {
+                if (!value || !Array.isArray(value) || value.length === 0) {
+                  return '';
+                }
+                return value.join(', ');
+              },
+            },
+          }),
           helper.simple<'comments'>({
             title: 'Comments',
             key: 'comments',
