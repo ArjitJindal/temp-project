@@ -1549,11 +1549,18 @@ export class UserService {
         : {}),
       ...(!isBusiness &&
         updateRequest && {
-          sanctionsStatus: updateRequest.sanctionsStatus ?? false,
+          sanctionsStatus:
+            !!updateRequest.sanctionsStatus === updateRequest.sanctionsStatus
+              ? updateRequest.sanctionsStatus
+              : (user as User).sanctionsStatus,
         }),
       ...(!isBusiness &&
         updateRequest && {
-          adverseMediaStatus: updateRequest.adverseMediaStatus ?? false,
+          adverseMediaStatus:
+            !!updateRequest.adverseMediaStatus ===
+            updateRequest.adverseMediaStatus
+              ? updateRequest.adverseMediaStatus
+              : (user as User).adverseMediaStatus,
         }),
       ...(updateRequest.tags && { tags: updateRequest.tags }),
       ...(updateRequest.eoddDate !== undefined && {
