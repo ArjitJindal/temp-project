@@ -34,6 +34,10 @@ jobs:
           cache-dependency-path: "tarpon/yarn.lock"
       - run: yarn install --immutable
         working-directory: "tarpon"
+      - name: Build Torpedo
+        run: |
+          ./build.sh
+        working-directory: "tarpon/torpedo"
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
