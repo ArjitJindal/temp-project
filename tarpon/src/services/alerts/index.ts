@@ -1226,12 +1226,16 @@ export class AlertsService extends CaseAlertsCommonService {
       ...(screeningDetails?.pepStatus && {
         pepStatus: screeningDetails.pepStatus,
       }),
-      ...(screeningDetails?.sanctionsStatus && {
-        sanctionsStatus: screeningDetails.sanctionsStatus,
-      }),
-      ...(screeningDetails?.adverseMediaStatus && {
-        adverseMediaStatus: screeningDetails.adverseMediaStatus,
-      }),
+      ...(screeningDetails &&
+        !!screeningDetails.sanctionsStatus ===
+          screeningDetails.sanctionsStatus && {
+          sanctionsStatus: screeningDetails.sanctionsStatus,
+        }),
+      ...(screeningDetails &&
+        !!screeningDetails.adverseMediaStatus ===
+          screeningDetails.adverseMediaStatus && {
+          adverseMediaStatus: screeningDetails.adverseMediaStatus,
+        }),
     }
 
     if (isEmpty(updateObject)) {

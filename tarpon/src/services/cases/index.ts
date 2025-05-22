@@ -565,12 +565,16 @@ export class CaseService extends CaseAlertsCommonService {
       ...(screeningDetails?.pepStatus && {
         pepStatus: screeningDetails.pepStatus,
       }),
-      ...(screeningDetails && {
-        sanctionsStatus: screeningDetails?.sanctionsStatus ?? false,
-      }),
-      ...(screeningDetails && {
-        adverseMediaStatus: screeningDetails?.adverseMediaStatus ?? false,
-      }),
+      ...(screeningDetails &&
+        !!screeningDetails.sanctionsStatus ===
+          screeningDetails.sanctionsStatus && {
+          sanctionsStatus: screeningDetails.sanctionsStatus,
+        }),
+      ...(screeningDetails &&
+        !!screeningDetails.adverseMediaStatus ===
+          screeningDetails.adverseMediaStatus && {
+          adverseMediaStatus: screeningDetails.adverseMediaStatus,
+        }),
     }
 
     if (isEmpty(updateObject)) {
