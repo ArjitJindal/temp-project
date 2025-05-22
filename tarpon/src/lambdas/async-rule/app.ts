@@ -13,9 +13,13 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { logger } from '@/core/logger'
-import { AsyncRuleRecord } from '@/services/rules-engine/utils'
+import {
+  AsyncBatchRecord,
+  AsyncRuleRecord,
+} from '@/services/rules-engine/utils'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
+import { BatchImportService } from '@/services/batch-import'
 
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
@@ -156,13 +160,22 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
     }))
     const tenantGroupRecords = groupBy(records, (v) => v.body.tenantId)
     const dynamoDb = getDynamoDbClient()
-
+    const mongoDb = await getMongoDbClient()
     await Promise.all(
       Object.entries(tenantGroupRecords).map(async ([tenantId, records]) => {
         await withContext(async () => {
           await initializeTenantContext(tenantId)
           const isConcurrentAsyncRulesEnabled = hasFeature(
             'CONCURRENT_ASYNC_RULES'
+          )
+          const batchImportService = new BatchImportService(tenantId, {
+            dynamoDb,
+            mongoDb,
+          })
+          const batchSavingPromise = batchImportService.saveBatchEntities(
+            records
+              .map((record) => record.body as AsyncBatchRecord)
+              .filter((data) => !!data.batchId)
           )
           for await (const record of records) {
             const lockKeys =
@@ -192,6 +205,7 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
               )
             }
           }
+          await batchSavingPromise
         })
       })
     )

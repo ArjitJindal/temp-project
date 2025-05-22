@@ -116,6 +116,12 @@ type ExcludedDynamoDbKey = Exclude<
   | 'CASE_COMMENT_FILE'
   | 'CASE_SUBJECT'
   | 'WORKFLOWS'
+  | 'BATCH_TRANSACTION'
+  | 'BATCH_TRANSACTION_EVENT'
+  | 'BATCH_CONSUMER_USER'
+  | 'BATCH_CONSUMER_USER_EVENT'
+  | 'BATCH_BUSINESS_USER'
+  | 'BATCH_BUSINESS_USER_EVENT'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

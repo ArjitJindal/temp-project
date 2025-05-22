@@ -288,6 +288,20 @@ export class TransactionEventRepository {
     return pickKnownEntityFields(result, TransactionEvent)
   }
 
+  public async getMongoTransactionEventsByIds(
+    eventIds: string[]
+  ): Promise<TransactionEvent[]> {
+    const db = this.mongoDb.db()
+    const events = db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .find({ eventId: { $in: eventIds } })
+      .toArray()
+
+    return events
+  }
+
   public async getTransactionEventsPaginatedMongo(
     transactionId: string,
     params: { page: number; pageSize: number }

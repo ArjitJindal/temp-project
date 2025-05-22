@@ -414,7 +414,7 @@ type AsyncRuleRecordUser = {
   userType: UserType
   user: User | Business
 }
-type AsyncRuleRecordUserBatch = {
+export type AsyncRuleRecordUserBatch = {
   type: 'USER_BATCH'
   userType: UserType
   user: User | Business
@@ -426,23 +426,32 @@ type AsyncRuleRecordUserEvent = {
   userEventTimestamp: number
   userType: UserType
 }
-type AsyncRuleRecordUserEventBatch = {
+
+export type AsyncRuleRecordUserEventBatch = {
   type: 'USER_EVENT_BATCH'
   userType: UserType
   userEvent: ConsumerUserEvent | BusinessUserEvent
 }
-export type AsyncRuleRecord = (
-  | AsyncRuleRecordTransaction
-  | AsyncRuleRecordTransactionEvent
-  | AsyncRuleRecordUser
-  | AsyncRuleRecordUserEvent
+
+export type AsyncBatchRecord = (
   | AsyncRuleRecordTransactionBatch
   | AsyncRuleRecordTransactionEventBatch
   | AsyncRuleRecordUserBatch
   | AsyncRuleRecordUserEventBatch
 ) & {
+  batchId: string
+}
+
+export type AsyncRuleRecord = (
+  | AsyncRuleRecordTransaction
+  | AsyncRuleRecordTransactionEvent
+  | AsyncRuleRecordUser
+  | AsyncRuleRecordUserEvent
+  | AsyncBatchRecord
+) & {
   tenantId: string
 }
+
 function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
   switch (record.type) {
     case 'TRANSACTION':

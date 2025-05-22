@@ -914,10 +914,10 @@ export class UserRepository {
     return user as T
   }
 
-  public async getUsersByIds(
-    userIds: string[]
-  ): Promise<UserWithRulesResult[]> {
-    return await batchGet<UserWithRulesResult | BusinessWithRulesResult>(
+  public async getUsersByIds<
+    T extends UserWithRulesResult | BusinessWithRulesResult
+  >(userIds: string[]): Promise<T[]> {
+    return await batchGet<T>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       userIds.map((userId) => DynamoDbKeys.USER(this.tenantId, userId)),

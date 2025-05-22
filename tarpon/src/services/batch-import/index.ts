@@ -1,9 +1,13 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, uniqBy } from 'lodash'
+import { compact, slice, uniqBy } from 'lodash'
+import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
+import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { AsyncBatchRecord } from '../rules-engine/utils'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
-import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { BatchRepository } from './batch-repository'
+import { BatchEntity } from './utils'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { BatchResponse } from '@/@types/openapi-public/BatchResponse'
 import { Business } from '@/@types/openapi-public/Business'
@@ -16,6 +20,20 @@ import { BatchResponseStatus } from '@/@types/openapi-public/BatchResponseStatus
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { BatchTransactionMonitoringResults } from '@/@types/openapi-public/BatchTransactionMonitoringResults'
+import { UserType } from '@/@types/openapi-internal/UserType'
+import { PaginationParams } from '@/utils/pagination'
+import { BatchTransactionEventMonitoringResults } from '@/@types/openapi-public/BatchTransactionEventMonitoringResults'
+import { pickKnownEntityFields } from '@/utils/object'
+import { BatchTransactionMonitoringResult } from '@/@types/openapi-public/BatchTransactionMonitoringResult'
+import { BatchTransactionEventMonitoringResult } from '@/@types/openapi-public/BatchTransactionEventMonitoringResult'
+import { BatchConsumerUsersWithRulesResults } from '@/@types/openapi-public/BatchConsumerUsersWithRulesResults'
+import { BatchBusinessUsersWithRulesResults } from '@/@types/openapi-public/BatchBusinessUsersWithRulesResults'
+import { BatchConsumerUserWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserWithRulesResult'
+import { BatchConsumerUserEventsWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventsWithRulesResult'
+import { BatchConsumerUserEventWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventWithRulesResult'
+import { BatchBusinessUserEventsWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventsWithRulesResult'
+import { BatchBusinessUserEventWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventWithRulesResult'
 
 const ID_ALREADY_EXISTS = 'ID_ALREADY_EXISTS'
 const ID_NOT_FOUND = 'ID_NOT_FOUND'
@@ -40,6 +58,7 @@ type TransactionValidationOptions = {
 export class BatchImportService {
   private readonly transactionRepository: DynamoDbTransactionRepository
   private readonly userRepository: UserRepository
+  private readonly batchRepository: BatchRepository
   private readonly userEventRepository: UserEventRepository
   private readonly transactionEventRepository: TransactionEventRepository
 
@@ -47,6 +66,7 @@ export class BatchImportService {
     private readonly tenantId: string,
     readonly connections: {
       dynamoDb: DynamoDBDocumentClient
+      mongoDb: MongoClient
     }
   ) {
     this.transactionRepository = new DynamoDbTransactionRepository(
@@ -56,13 +76,19 @@ export class BatchImportService {
     this.userRepository = new UserRepository(this.tenantId, {
       dynamoDb: connections.dynamoDb,
     })
+    this.batchRepository = new BatchRepository(
+      this.tenantId,
+      connections.dynamoDb
+    )
     this.userEventRepository = new UserEventRepository(this.tenantId, {
       dynamoDb: connections.dynamoDb,
+      mongoDb: connections.mongoDb,
     })
     this.transactionEventRepository = new TransactionEventRepository(
       this.tenantId,
       {
         dynamoDb: connections.dynamoDb,
+        mongoDb: connections.mongoDb,
       }
     )
   }
@@ -491,5 +517,157 @@ export class BatchImportService {
       return
     }
     return `${failedRecordsCount} of ${totalRecordsCount} records failed validation`
+  }
+
+  public async getBatchConsumerUserEvents(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchConsumerUserEventsWithRulesResult> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_EVENT_BATCH',
+      paginationParams,
+      'CONSUMER'
+    )
+    const userEvents =
+      await this.userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
+        entityIds
+      )
+    const formattedEvents = userEvents.map((event) =>
+      pickKnownEntityFields(event, BatchConsumerUserEventWithRulesResult)
+    )
+    return {
+      consumerUserEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchBusinessUserEvents(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchBusinessUserEventsWithRulesResult> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_EVENT_BATCH',
+      paginationParams,
+      'BUSINESS'
+    )
+    const userEvents =
+      await this.userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
+        entityIds
+      )
+    const formattedEvents = userEvents.map((event) =>
+      pickKnownEntityFields(event, BatchBusinessUserEventWithRulesResult)
+    )
+    return {
+      businessUserEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchBusinessUsers(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchBusinessUsersWithRulesResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_BATCH',
+      paginationParams,
+      'BUSINESS'
+    )
+    const users =
+      await this.userRepository.getUsersByIds<BusinessWithRulesResult>(
+        entityIds
+      )
+    return {
+      businessUsers: users,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchConsumerUsers(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchConsumerUsersWithRulesResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_BATCH',
+      paginationParams
+    )
+    const users = await this.userRepository.getUsersByIds<UserWithRulesResult>(
+      entityIds
+    )
+    const formattedUsers = users.map((user) =>
+      pickKnownEntityFields(user, BatchConsumerUserWithRulesResult)
+    )
+    return {
+      consumerUsers: formattedUsers,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchTransactions(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchTransactionMonitoringResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'TRANSACTION_BATCH',
+      paginationParams
+    )
+    const transactions = await this.transactionRepository.getTransactionsByIds(
+      entityIds
+    )
+    const formattedTransactions = transactions.map((transaction) =>
+      pickKnownEntityFields(transaction, BatchTransactionMonitoringResult)
+    )
+    return {
+      transactions: formattedTransactions,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchTransactionEvents(
+    batchId: string,
+    paginationParams
+  ): Promise<BatchTransactionEventMonitoringResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'TRANSACTION_EVENT_BATCH',
+      paginationParams
+    )
+    const transactionEvents =
+      await this.transactionEventRepository.getMongoTransactionEventsByIds(
+        entityIds
+      )
+    const formattedEvents = transactionEvents?.map((event) =>
+      pickKnownEntityFields(event, BatchTransactionEventMonitoringResult)
+    )
+    return {
+      transactionEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  private async getPaginatedEntityIds(
+    batchId: string,
+    entityType: BatchEntity,
+    paginationParams: PaginationParams,
+    userType?: UserType
+  ): Promise<{ entityIds: string[]; totalCount: number }> {
+    const page = paginationParams.page ?? 1
+    const pageSize = paginationParams.pageSize ?? 20
+    const entityIds = await this.batchRepository.getBatchEntityIds(
+      batchId,
+      entityType,
+      userType
+    )
+    const startIndex = (page - 1) * pageSize
+    const requiredIds = slice(entityIds, startIndex, startIndex + pageSize)
+    return { entityIds: requiredIds, totalCount: entityIds?.length ?? 0 }
+  }
+
+  public async saveBatchEntities(entitiesData: AsyncBatchRecord[]) {
+    await this.batchRepository.saveBatchEntities(entitiesData)
   }
 }

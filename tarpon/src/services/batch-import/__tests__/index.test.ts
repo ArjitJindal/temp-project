@@ -17,6 +17,7 @@ import {
   getTestBusinessEvent,
   getTestUserEvent,
 } from '@/test-utils/user-event-test-utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 enableLocalChangeHandler()
 dynamoDbSetupHook()
@@ -28,6 +29,7 @@ describe('BatchImportService', () => {
   beforeAll(async () => {
     batchImportService = new BatchImportService(TEST_TENANT_ID, {
       dynamoDb: getDynamoDbClient(),
+      mongoDb: await getMongoDbClient(),
     })
   })
 

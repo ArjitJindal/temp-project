@@ -174,6 +174,8 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/StaticPermissionsNode.ts`,
     `src/@types/openapi-${type}/PermissionsResponse.ts`,
     `src/@types/openapi-${type}/WorkflowResponse.ts`,
+    `src/@types/openapi-${type}/BatchBusinessUserWithRulesResult.ts`,
+    `src/@types/openapi-${type}/BatchConsumerUserWithRulesResult.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

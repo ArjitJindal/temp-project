@@ -5,7 +5,7 @@ import {
 import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { v4 as uuid4 } from 'uuid'
+import { v4 as uuid4, v4 as uuidv4 } from 'uuid'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
@@ -191,6 +191,7 @@ export const transactionHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedTransactions } =
         await batchImportService.importTransactions(
@@ -210,9 +211,21 @@ export const transactionHandler = lambdaApi()(
           type: 'TRANSACTION_BATCH',
           transaction: v,
           tenantId,
+          batchId,
         }))
       )
       return response
+    })
+    handlers.registerGetBatchTransactions(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      return await batchImportService.getBatchTransactions(batchId, {
+        page,
+        pageSize,
+      })
     })
     return await handlers.handle(event)
   }
@@ -276,6 +289,7 @@ export const transactionEventHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedTransactionEvents, validatedTransactions } =
         await batchImportService.importTransactionEvents(
@@ -295,11 +309,12 @@ export const transactionEventHandler = lambdaApi()(
       await sendAsyncRuleTasks(
         validatedTransactionEvents.map((v) => ({
           type: 'TRANSACTION_EVENT_BATCH',
-          transactionEvent: v,
+          transactionEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           originUserId: transactionUserIdMap[v.transactionId]?.originUserId,
           destinationUserId:
             transactionUserIdMap[v.transactionId]?.destinationUserId,
+          batchId,
         }))
       )
       return response
@@ -317,6 +332,20 @@ export const transactionEventHandler = lambdaApi()(
       }
       return result
     })
+
+    handlers.registerGetBatchTransactionEvents(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb: dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      const result = await batchImportService.getBatchTransactionEvents(
+        batchId,
+        { page, pageSize }
+      )
+      return result
+    })
+
     return await handlers.handle(event)
   }
 )
@@ -410,6 +439,7 @@ export const userEventsHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedUserEvents } =
         await batchImportService.importConsumerUserEvents(
@@ -420,8 +450,9 @@ export const userEventsHandler = lambdaApi()(
         validatedUserEvents.map((v) => ({
           type: 'USER_EVENT_BATCH',
           userType: 'CONSUMER',
-          userEvent: v,
+          userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
+          batchId,
         }))
       )
       return response
@@ -437,6 +468,7 @@ export const userEventsHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedUserEvents } =
         await batchImportService.importBusinessUserEvents(
@@ -447,8 +479,9 @@ export const userEventsHandler = lambdaApi()(
         validatedUserEvents.map((v) => ({
           type: 'USER_EVENT_BATCH',
           userType: 'BUSINESS',
-          userEvent: v,
+          userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
+          batchId,
         }))
       )
       return response
@@ -519,8 +552,32 @@ export const userEventsHandler = lambdaApi()(
       return result
     }
 
+    handlers.registerGetBatchBusinessUserEvents(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      return await batchImportService.getBatchBusinessUserEvents(batchId, {
+        page,
+        pageSize,
+      })
+    })
+    handlers.registerGetBatchConsumerUserEvents(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      return await batchImportService.getBatchConsumerUserEvents(batchId, {
+        page,
+        pageSize,
+      })
+    })
+
     handlers.registerGetConsumerUserEvent(getUserEventHandler)
     handlers.registerGetBusinessUserEvent(getUserEventHandler)
+
     return await handlers.handle(event)
   }
 )

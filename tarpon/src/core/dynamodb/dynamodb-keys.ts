@@ -35,6 +35,14 @@ const QUESTION_ID_PREFIX = 'question:'
 export const ALERT_ID_PREFIX = 'alert:'
 export const CASE_ID_PREFIX = 'case:'
 const WORKFLOWS_PREFIX = 'workflow'
+export const BATCH_TRANSACTIONS_IDENTIFIER = 'transactions-batch'
+export const BATCH_TRANSACTION_EVENTS_IDENTIFIER = 'transaction-events-batch'
+export const BATCH_CONSUMER_USERS_IDENTIFIER = 'consumer-users-batch'
+export const BATCH_CONSUMER_USER_EVENTS_IDENTIFIER =
+  'consumer-user-events-batch'
+export const BATCH_BUSINESS_USERS_IDENTIFIER = 'business-users-batch'
+export const BATCH_BUSINESS_USER_EVENTS_IDENTIFIER =
+  'business-user-events-batch'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = keyof TenantSettings
@@ -555,6 +563,30 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}#${WORKFLOWS_PREFIX}#${workflowType}`,
     SortKeyID: `${workflowId}#${version}`,
+  }),
+  BATCH_TRANSACTION: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_TRANSACTIONS_IDENTIFIER}`,
+    SortKeyID: `${batchId}`,
+  }),
+  BATCH_TRANSACTION_EVENT: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_TRANSACTION_EVENTS_IDENTIFIER}`,
+    SortKeyID: `${batchId}`,
+  }),
+  BATCH_CONSUMER_USER: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_CONSUMER_USERS_IDENTIFIER}`,
+    SortKeyID: `${batchId}`,
+  }),
+  BATCH_CONSUMER_USER_EVENT: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_CONSUMER_USER_EVENTS_IDENTIFIER}`,
+    SortKeyID: `${batchId}`,
+  }),
+  BATCH_BUSINESS_USER: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_BUSINESS_USERS_IDENTIFIER}`,
+    SortKeyID: `${batchId}`,
+  }),
+  BATCH_BUSINESS_USER_EVENT: (tenantId: string, batchId: string) => ({
+    PartitionKeyID: `${tenantId}#${BATCH_BUSINESS_USER_EVENTS_IDENTIFIER}`,
+    SortKeyID: `${batchId}}`,
   }),
 }
 

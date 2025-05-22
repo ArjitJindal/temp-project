@@ -389,6 +389,67 @@ paths:
                 $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
+  /batch/transactions/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrieve a transaction batch
+      operationId: get-batch-transactions
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTransactionMonitoringResults'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
   /events/transaction:
     post:
       x-fern-sdk-group-name: transaction_events
@@ -612,6 +673,67 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
+  /batch/events/transaction/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrive transaction events batch
+      operationId: get-batch-transaction-events
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTransactionEventMonitoringResults'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
   /events/transaction/{eventId}:
     get:
       x-fern-sdk-group-name: transaction_events
@@ -952,6 +1074,128 @@ paths:
                 $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+  /batch/consumer/users/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrieve a consumer user batch
+      operationId: get-batch-consumer-users
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchConsumerUsersWithRulesResults'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+  /batch/business/users/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrieve a business user batch
+      operationId: get-batch-business-users
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchBusinessUsersWithRulesResults'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
           headers: {}
           content:
             application/json:
@@ -1392,6 +1636,128 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
+  /batch/events/consumer/user/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrive consumer user events batch
+      operationId: get-batch-consumer-user-events
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchConsumerUserEventsWithRulesResult'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+  /batch/events/business/user/{batchId}:
+    get:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: get
+      security:
+        - x-api-key: []
+      summary: Retrive business user events batch
+      operationId: get-batch-business-user-events
+      parameters:
+        - name: batchId
+          in: path
+          description: Unique Batch Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: pageSize
+          description: Page size (default 20)
+          in: query
+          schema:
+            $ref: '#/components/schemas/PageSize'
+          required: false
+          style: simple
+        - name: page
+          description: Page
+          in: query
+          schema:
+            $ref: '#/components/schemas/Page'
+          required: false
+          style: simple
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchBusinessUserEventsWithRulesResult'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '404':
+          description: NotFound
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
   /batch/events/consumer/user:
     post:
       x-fern-sdk-group-name: batch
@@ -2782,6 +3148,44 @@ components:
             The version of the app your user is using on their device at a
             given timestamp for an event or transaction
       description: Model for device data
+    BatchTransactionMonitoringResults:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchTransactionMonitoringResult'
+        totalCount:
+          type: number
+      required:
+        - transactions
+        - totalCount
+    BatchTransactionMonitoringResult:
+      allOf:
+        - type: object
+          description: Model to convey the results of transaction monitoring
+          properties:
+            transactionId:
+              type: string
+              description: Transaction ID that the results pertain to
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
+          required:
+            - transactionId
+            - status
+        - $ref: '#/components/schemas/HitRulesResults'
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          hitRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: BLOCK
     TransactionMonitoringResult:
       allOf:
         - type: object
@@ -2816,6 +3220,33 @@ components:
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
+    BatchTransactionEventMonitoringResults:
+      type: object
+      title: BatchTransactionEventMonitoringResults
+      properties:
+        transactionEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchTransactionEventMonitoringResult'
+        totalCount:
+          type: number
+      required:
+        - transactionEvents
+        - totalCount
+    BatchTransactionEventMonitoringResult:
+      title: BatchTransactionEventMonitoringResult
+      allOf:
+        - $ref: '#/components/schemas/TransactionEvent'
+        - type: object
+          properties:
+            hitRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/HitRulesDetails'
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
     TransactionEventMonitoringResult:
       allOf:
         - type: object
@@ -2956,6 +3387,27 @@ components:
             $ref: '#/components/schemas/HitRulesDetails'
       required:
         - executedRules
+        - hitRules
+    HitRulesResults:
+      title: HitRulesResults
+      type: object
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          hitRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: BLOCK
+      properties:
+        hitRules:
+          type: array
+          description: Uniquue transaction identifier
+          items:
+            $ref: '#/components/schemas/HitRulesDetails'
+      required:
         - hitRules
     TransactionRiskScoringResult:
       title: TransactionRiskScoringResult
@@ -4813,6 +5265,87 @@ components:
         - transactionState
         - timestamp
         - transactionId
+    BatchConsumerUsersWithRulesResults:
+      title: BatchConsumerUsersWithRulesResult
+      type: object
+      properties:
+        consumerUsers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchConsumerUserWithRulesResult'
+        totalCount:
+          type: number
+      required:
+        - consumerUsers
+        - totalCount
+    BatchBusinessUsersWithRulesResults:
+      type: object
+      properties:
+        businessUsers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchBusinessUserWithRulesResult'
+        totalCount:
+          type: number
+      required:
+        - businessUsers
+        - totalCount
+    BatchConsumerUserWithRulesResult:
+      title: BatchConsumerUserWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - $ref: '#/components/schemas/BatchUserRulesResult'
+    BatchBusinessUserWithRulesResult:
+      title: BatchBusinessUserWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/Business'
+        - $ref: '#/components/schemas/BatchUserRulesResult'
+    BatchConsumerUserEventsWithRulesResult:
+      title: BatchConsumerUserEventsRulesResult
+      type: object
+      properties:
+        consumerUserEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchConsumerUserEventWithRulesResult'
+        totalCount:
+          type: number
+      required:
+        - consumerUserEvents
+        - totalCount
+    BatchBusinessUserEventsWithRulesResult:
+      title: BatchBusinessUserEventsWithRulesResult
+      type: object
+      properties:
+        businessUserEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchBusinessUserEventWithRulesResult'
+        totalCount:
+          type: number
+      required:
+        - businessUserEvents
+        - totalCount
+    BatchUserRulesResult:
+      title: BatchUserRulesResult
+      type: object
+      properties:
+        executedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
+        riskScoreDetails:
+          $ref: '#/components/schemas/UserRiskScoreDetails'
+    BatchConsumerUserEventWithRulesResult:
+      title: ConsumerUserEventWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/ConsumerUserEvent'
+        - $ref: '#/components/schemas/BatchUserRulesResult'
+    BatchBusinessUserEventWithRulesResult:
+      title: BatchBusinessUserEventWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/BusinessUserEvent'
+        - $ref: '#/components/schemas/BatchUserRulesResult'
     UserRulesResult:
       title: UserRulesResult
       type: object
@@ -6832,6 +7365,15 @@ components:
           type: string
       required:
         - message
+    Page:
+      title: Page
+      type: number
+      minimum: 1
+    PageSize:
+      title: PageSize
+      type: number
+      minimum: 1
+      maximum: 100
   securitySchemes:
     x-api-key:
       name: x-api-key

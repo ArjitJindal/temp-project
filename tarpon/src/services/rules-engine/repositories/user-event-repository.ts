@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
@@ -159,6 +159,17 @@ export class UserEventRepository {
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray()
+  }
+
+  public async getMongoUserEventsByIds<
+    T extends { eventId?: string } & (ConsumerUserEvent | BusinessUserEvent)
+  >(eventIds: string[]): Promise<T[]> {
+    const db = this.mongoDb.db()
+    const result = await db
+      .collection<T>(USER_EVENTS_COLLECTION(this.tenantId))
+      .find({ eventId: { $in: eventIds } } as Filter<T>)
+      .toArray()
+    return result as T[]
   }
 
   public async getMongoUserEvent(

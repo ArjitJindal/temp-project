@@ -222,6 +222,7 @@ export const userHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedUsers } =
         await batchImportService.importConsumerUsers(
@@ -234,6 +235,7 @@ export const userHandler = lambdaApi()(
           userType: 'CONSUMER',
           user: v,
           tenantId,
+          batchId,
         }))
       )
       return response
@@ -247,6 +249,7 @@ export const userHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
+        mongoDb: await getMongoDbClient(),
       })
       const { response, validatedUsers } =
         await batchImportService.importBusinessUsers(
@@ -259,9 +262,32 @@ export const userHandler = lambdaApi()(
           userType: 'BUSINESS',
           user: v,
           tenantId,
+          batchId,
         }))
       )
       return response
+    })
+    handlers.registerGetBatchBusinessUsers(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      return await batchImportService.getBatchBusinessUsers(batchId, {
+        page,
+        pageSize,
+      })
+    })
+    handlers.registerGetBatchConsumerUsers(async (ctx, request) => {
+      const { batchId, page, pageSize } = request
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+      return await batchImportService.getBatchConsumerUsers(batchId, {
+        page,
+        pageSize,
+      })
     })
     return await handlers.handle(event)
   }
