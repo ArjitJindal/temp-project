@@ -29,21 +29,21 @@ export default function TicketConversation(props: Props) {
           <div className={s.header}>
             <div className={s.left}>
               <div className={s.avatar}>
-                {item.fromEmail?.includes('support@flagright')
+                {item.toEmail?.includes('support@flagright')
                   ? 'F'
-                  : getAvatarText(item.fromEmail || item.toEmail || '')}
+                  : getAvatarText(item.toEmail || item.fromEmail || '')}
               </div>
               <div className={s.commentHeader}>
                 <span className={s.bold}>
-                  {item.fromEmail?.includes('support@flagright')
+                  {item.toEmail?.includes('support@flagright')
                     ? 'Flagright'
-                    : item.fromEmail || item.toEmail || ''}
+                    : item.toEmail || item.fromEmail || ''}
                 </span>
                 <div className={s.emailContainer}>
-                  {item.toEmail && (
+                  {item.fromEmail && (
                     <div>
                       <span className={s.greyText}>to:</span>
-                      <span className={s.emailText}>{item.toEmail},</span>
+                      <span className={s.emailText}>{item.fromEmail},</span>
                     </div>
                   )}
                   {item.ccEmails && item.ccEmails.length > 0 && (
