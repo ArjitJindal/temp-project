@@ -175,7 +175,7 @@ export default function InvestigativeCoPilot(props: Props) {
                 .filter(([_, value]) => value != null)
                 .map(([name, value]) => ({ name, value })),
             },
-            alertId: alertId,
+            alertId,
           })
           .then((response) => {
             const parsedResponses = parseQuestionResponse(response);
