@@ -63,14 +63,16 @@ const TableList = () => {
 
   useEffect(() => {
     if ((location.state as NavigationState)?.isInitialised !== true) {
-      // Initial load - set default params
+      // Initialize from URL parameters if they exist, otherwise use defaults
       const defaultParams = {
         ...params,
-        timestamp: [
+        ...parsedParams,
+        timestamp: parsedParams.timestamp || [
           dayjs(defaultTimestamps().afterTimestamp).format(),
           dayjs(defaultTimestamps().beforeTimestamp).format(),
         ],
       };
+      setParams(defaultParams);
       pushParamsToNavigation(defaultParams);
     }
     setIsReadyToFetch(true);

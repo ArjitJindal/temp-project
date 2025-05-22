@@ -84,7 +84,13 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
   useEffect(() => {
     if ((location.state as NavigationState)?.isInitialised !== true) {
-      pushParamsToNavigation(params);
+      // Initialize from URL parameters if they exist, otherwise use defaults
+      const defaultParams = {
+        ...params,
+        ...parsedParams,
+      };
+      setParams(defaultParams);
+      pushParamsToNavigation(defaultParams);
     }
     setIsReadyToFetch(true);
   }, [location.state, parsedParams, pushParamsToNavigation, params]);
