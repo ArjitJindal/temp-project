@@ -17860,6 +17860,8 @@ components:
           type: number
         usersHit:
           type: number
+        createdAt:
+          type: number
       required:
         - varKey
         - threshold

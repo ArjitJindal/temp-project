@@ -189,7 +189,14 @@ export default function RuleThresholdRecommendation(props: Props) {
               ]}
               isExpandable={() => true}
               renderExpanded={(data) => {
-                return <ExtendedRowRenderer data={data} />;
+                return (
+                  <ExtendedRowRenderer
+                    data={{
+                      ...data,
+                      createdAt: ruleInstance.createdAt,
+                    }}
+                  />
+                );
               }}
             />
           </Modal>

@@ -10,14 +10,25 @@ import DownwardZigZagIcon from '@/components/ui/icons/downward-line-zig-zag.reac
 import { VarThresholdData } from '@/apis';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Tooltip from '@/components/library/Tooltip';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+
 interface Props {
   data: VarThresholdData;
 }
 
 export default function ExtendedRowRenderer(props: Props) {
-  const { falsePositivesReduced, timeReduced, transactionsHit, usersHit } = props.data;
+  const { falsePositivesReduced, timeReduced, transactionsHit, usersHit, createdAt } = props.data;
   const settings = useSettings();
 
+  const formatDate = (timestamp?: number): string => {
+    return dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT);
+  };
+
+  const tooltipExplanation = `Total amount of time saved if the rule had been activated with the recommended threshold from ${formatDate(
+    createdAt,
+  )}`;
   return (
     <div className={s.metricGrid}>
       <OverviewCard
@@ -43,7 +54,10 @@ export default function ExtendedRowRenderer(props: Props) {
             title: (
               <div className={s.title}>
                 <TimeLineIcon className={s.titleIcon} />
-                <>Total work hours saved since rule enabled</>
+                <>Estimated time saved</>
+                <Tooltip title={tooltipExplanation}>
+                  <InformationLineIcon className={s.infoIcon} />
+                </Tooltip>
               </div>
             ),
             valueComponent: (
