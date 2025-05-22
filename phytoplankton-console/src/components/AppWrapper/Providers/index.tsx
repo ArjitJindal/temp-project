@@ -15,6 +15,7 @@ import { PostHogProviderWrapper } from './PostHogProvider';
 import SessionTimeoutProvider from './SessionTimeoutDetector';
 import ActiveSessionProvider from './ActiveSessionsProvider';
 import { StatementsProvider } from './StatementsProvider';
+import StatementsProviderMock from './mocks/StatementsProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 import ToastsProvider from '@/components/AppWrapper/Providers/ToastsProvider';
@@ -35,6 +36,7 @@ const StoryBookProviders = withProviders(
   AntConfigProvider,
   QueryClientProvider,
   FlagrightUserProviderMock,
+  StatementsProviderMock,
   SettingsProviderMock,
   SideBarProvider,
 );

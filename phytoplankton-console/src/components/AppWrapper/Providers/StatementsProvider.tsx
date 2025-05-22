@@ -10,7 +10,7 @@ interface StatementsContextValue {
   statements: PermissionStatements[];
 }
 
-const StatementsContext = createContext<StatementsContextValue | undefined>(undefined);
+export const StatementsContext = createContext<StatementsContextValue | undefined>(undefined);
 
 export const useStatements = () => {
   const context = useContext(StatementsContext);

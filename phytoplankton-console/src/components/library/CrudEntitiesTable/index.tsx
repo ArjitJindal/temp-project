@@ -54,7 +54,9 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   tableId: string;
   entityIdField: keyof Entity;
   readPermissions?: Permission[];
+  readStatements?: (entity: Entity) => string[];
   writePermissions?: Permission[];
+  writeStatements?: (entity?: Entity) => string[];
   columns: TableColumn<Entity>[];
   apiOperations: {
     GET: (params: GetParams) => Promise<{ total: number; data: Entity[] }>;
@@ -73,23 +75,37 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
 export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any }>(
   props: Props<GetParams, Entity>,
 ) {
+  const {
+    entityName,
+    tableId,
+    entityIdField,
+    readPermissions,
+    readStatements,
+    writePermissions,
+    writeStatements,
+    columns,
+    apiOperations,
+    formSteps,
+    formWidth,
+    extraInfo,
+    onChange,
+    portal,
+    enableClone,
+  } = props;
   const [drawerMode, setDrawerMode] = useState<DrawerMode>('CLOSED');
-  const isReadOnly = !useHasPermissions(props.writePermissions ?? []);
+  const isReadOnly = !useHasPermissions(writePermissions ?? []);
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [params, setParams] = useState<AllParams<GetParams>>(DEFAULT_PARAMS_STATE as any);
-  const queryResult = usePaginatedQuery<Entity>(
-    [props.entityName, params],
-    async (paginationParams) => {
-      const { total, data } = await props.apiOperations.GET({ ...params, ...paginationParams });
-      return {
-        total,
-        items: data,
-      };
-    },
-  );
+  const queryResult = usePaginatedQuery<Entity>([entityName, params], async (paginationParams) => {
+    const { total, data } = await apiOperations.GET({ ...params, ...paginationParams });
+    return {
+      total,
+      items: data,
+    };
+  });
   const creationMutation = useMutation(
     async (entity: Entity) => {
-      return await props.apiOperations.CREATE(entity);
+      return await apiOperations.CREATE(entity);
     },
     {
       onSuccess: () => {
@@ -107,7 +123,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
       if (selectedEntity == null) {
         throw new Error(`Unable to update selectedEntity since it is null`);
       }
-      return await props.apiOperations.UPDATE(selectedEntity[props.entityIdField], entity);
+      return await apiOperations.UPDATE(selectedEntity[entityIdField], entity);
     },
     {
       onSuccess: () => {
@@ -122,7 +138,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
   );
   const deletionMutation = useMutation(
     async (entityId: string) => {
-      return await props.apiOperations.DELETE(entityId);
+      return await apiOperations.DELETE(entityId);
     },
     {
       onSuccess: () => {
@@ -161,8 +177,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     },
     [creationMutation, drawerMode, updateMutation],
   );
-  const entityName = props.entityName.toLowerCase();
-  const pluralEntityName = pluralize(entityName, 2);
+  const pluralEntityName = pluralize(entityName.toLowerCase(), 2);
   const actionColumn = useMemo(() => {
     const tableHelper = new ColumnHelper<Entity>();
     return tableHelper.display({
@@ -188,12 +203,13 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                 type="SECONDARY"
                 icon={readOnly ? <EyeLineIcon /> : <EditLineIcon />}
                 onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
-                requiredPermissions={readOnly ? props.readPermissions : props.writePermissions}
+                requiredPermissions={readOnly ? readPermissions : writePermissions}
+                requiredStatements={readOnly ? readStatements?.(entity) : writeStatements?.(entity)}
               >
                 {readOnly ? 'View' : 'Edit'}
               </Button>
             </div>
-            {props.enableClone && (
+            {enableClone && (
               <Button
                 testName="duplicate-button"
                 size="MEDIUM"
@@ -201,11 +217,12 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                 icon={<FileCopyLineIcon />}
                 onClick={() => {
                   const entityToClone = { ...entity, status: 'DRAFT' } as Entity;
-                  delete entityToClone[props.entityIdField]; // Remove ID from cloned entity
+                  delete entityToClone[entityIdField]; // Remove ID from cloned entity
                   setSelectedEntity(entityToClone);
                   setDrawerMode('CREATE');
                 }}
-                requiredPermissions={props.writePermissions}
+                requiredPermissions={writePermissions}
+                requiredStatements={writeStatements?.(entity)}
                 isDisabled={creationMutation.isLoading}
               >
                 Duplicate
@@ -215,7 +232,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
               <Confirm
                 title={`Are you sure you want to delete this ${entityName}?`}
                 onConfirm={() => {
-                  deletionMutation.mutate(entity[props.entityIdField]);
+                  deletionMutation.mutate(entity[entityIdField]);
                 }}
                 text={`Please confirm that you want to delete this ${entityName}. This action cannot be undone.`}
                 res={getMutationAsyncResource(deletionMutation)}
@@ -228,7 +245,8 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                     icon={<DeleteLineIcon />}
                     onClick={onClick}
                     isDisabled={deletionMutation.isLoading}
-                    requiredPermissions={props.writePermissions}
+                    requiredPermissions={writePermissions}
+                    requiredStatements={writeStatements?.(entity)}
                   >
                     Delete
                   </Button>
@@ -239,7 +257,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         );
       },
       defaultSticky: 'RIGHT',
-      defaultWidth: props.enableClone ? 321 : 201,
+      defaultWidth: enableClone ? 321 : 201,
     });
   }, [
     creationMutation,
@@ -248,21 +266,23 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     handleEntityEdit,
     handleEntityView,
     isReadOnly,
-    props.entityIdField,
-    props.writePermissions,
-    props.readPermissions,
-    props.enableClone,
+    entityIdField,
+    writePermissions,
+    readPermissions,
+    enableClone,
+    writeStatements,
+    readStatements,
   ]);
   const formInitialValues = useMemo(() => {
     return Object.fromEntries(
-      props.formSteps.map((step) => [
+      formSteps.map((step) => [
         step.step.key,
         pick(selectedEntity, Object.keys((step.jsonSchema as any).properties ?? {})) ?? {},
       ]),
     ) as any;
-  }, [props.formSteps, selectedEntity]);
+  }, [formSteps, selectedEntity]);
   return (
-    <Authorized required={props.readPermissions ?? []}>
+    <Authorized required={readPermissions ?? []}>
       <AsyncResourceRenderer resource={queryResult.data}>
         {(data) => {
           return data.total === 0 ? (
@@ -274,20 +294,21 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
             />
           ) : (
             <QueryResultsTable<Entity, AllParams<GetParams>>
-              rowKey={props.entityIdField as any}
-              tableId={props.tableId}
+              rowKey={entityIdField as any}
+              tableId={tableId}
               hideFilters={true}
               params={params}
               onChangeParams={setParams}
               queryResults={queryResult}
-              columns={props.columns.concat(actionColumn)}
+              columns={columns.concat(actionColumn)}
               extraTools={[
                 () =>
                   isReadOnly ? undefined : (
                     <Button
                       type="PRIMARY"
                       onClick={handleEntityCreation}
-                      requiredPermissions={props.writePermissions}
+                      requiredPermissions={writePermissions}
+                      requiredStatements={writeStatements?.()}
                     >
                       <PlusOutlined />
                       Create {`${entityName}`}
@@ -305,14 +326,14 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         title={getDrawerTitle(drawerMode, entityName)}
         description={getDrawerDescription(drawerMode, entityName)}
         mode={drawerMode}
-        steps={props.formSteps}
+        steps={formSteps}
         onSubmit={handleEntitySubmit}
-        drawerMaxWidth={props.formWidth}
+        drawerMaxWidth={formWidth}
         formInitialValues={formInitialValues}
         isSaving={updateMutation.isLoading || creationMutation.isLoading}
-        extraInfo={props.extraInfo}
-        onChange={props.onChange}
-        portal={props.portal}
+        extraInfo={extraInfo}
+        onChange={onChange}
+        portal={portal}
       />
     </Authorized>
   );

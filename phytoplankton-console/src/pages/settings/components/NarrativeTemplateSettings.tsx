@@ -35,6 +35,15 @@ export function NarrativeTemplatesSettings() {
         entityIdField="id"
         readPermissions={['settings:case-management:read']}
         writePermissions={['settings:case-management:write']}
+        readStatements={(entity) => {
+          return [`read:::settings/case-management/narrative-templates/template:${entity.id}/*`];
+        }}
+        writeStatements={(entity) => {
+          if (entity) {
+            return [`write:::settings/case-management/narrative-templates/template:${entity.id}/*`];
+          }
+          return ['write:::settings/case-management/narrative-templates/*'];
+        }}
         apiOperations={{
           GET: (params) => {
             return api.getNarratives(params).then((value) => {

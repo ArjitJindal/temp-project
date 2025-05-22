@@ -2,7 +2,8 @@ import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import { Permission } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasPermissions, useHasStatements } from '@/utils/user-utils';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER';
 
@@ -25,6 +26,7 @@ export interface ButtonProps {
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
   isLogout?: boolean;
+  requiredStatements?: string[];
 }
 
 interface BaseButtonProps extends Omit<ButtonProps, 'requiredPermissions'> {}
@@ -80,11 +82,21 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
 });
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
-  const { requiredPermissions = [], ...baseProps } = props;
+  const { requiredPermissions = [], requiredStatements = [], ...baseProps } = props;
   const hasUserPermissions = useHasPermissions(requiredPermissions);
+  const isRBACV2Enabled = useFeatureEnabled('RBAC_V2');
+  const hasRequiredStatements = useHasStatements(requiredStatements);
+
+  // if RBAC V2 is enabled, then we need to check if the user has the required statements else check if the user has the required permissions
+  const isNotEnoughPermissions =
+    isRBACV2Enabled && requiredStatements.length > 0 ? !hasRequiredStatements : !hasUserPermissions;
 
   return (
-    <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />
+    <BaseButton
+      {...baseProps}
+      isDisabled={baseProps.isDisabled || isNotEnoughPermissions}
+      ref={ref}
+    />
   );
 });
 
