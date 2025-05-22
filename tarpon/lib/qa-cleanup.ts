@@ -1,6 +1,4 @@
-import crypto from 'crypto'
 import { backOff } from 'exponential-backoff'
-import { Octokit } from '@octokit/core'
 import {
   CloudFormationClient,
   DeleteStackCommand,
@@ -8,7 +6,13 @@ import {
   DescribeStacksCommand,
   Stack,
 } from '@aws-sdk/client-cloudformation'
-import { getSecretByName } from '@/utils/secrets-manager'
+import {
+  CloudWatchLogsClient,
+  DescribeLogGroupsCommand,
+  DeleteLogGroupCommand,
+  LogGroup,
+} from '@aws-sdk/client-cloudwatch-logs'
+import { getLiveQAEnvs, getQAEnvName } from './utils'
 import { envIsNot } from '@/utils/env'
 import { logger } from '@/core/logger'
 
@@ -18,24 +22,8 @@ export async function cleanUpStaleQaEnvs() {
     logger.error('Not dev environment. Skipping...')
     return
   }
-  const githubAuth = await getSecretByName('githubCreds')
-  const octokit = new Octokit(githubAuth)
-  const response = await octokit.request('GET /repos/flagright/orca/pulls', {
-    owner: 'OWNER',
-    repo: 'REPO',
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    per_page: 100,
-  })
 
-  const liveQaEnvs: string[] = response.data.map((pr: any) => {
-    const hash = crypto.createHash('sha1')
-    // NOTE: Adding '\n' is important to have the same value as using the bash command `| shasum`
-    hash.update(pr.head.ref + '\n', 'utf-8')
-    return `qa${hash.digest('hex').slice(0, 5)}`
-  })
-
+  const liveQaEnvs = await getLiveQAEnvs()
   const client = new CloudFormationClient({ region: 'eu-central-1' })
   const orphanStackNames: string[] = []
 
@@ -71,6 +59,10 @@ export async function cleanUpStaleQaEnvs() {
         .join('\n')}\n`
     )
   }
+
+  const cloudWatchLogsClient = new CloudWatchLogsClient({
+    region: 'eu-central-1',
+  })
 
   for (const stackName of orphanStackNames) {
     await backOff(
@@ -125,6 +117,58 @@ export async function cleanUpStaleQaEnvs() {
         retry: (_e, attemptNumber) => {
           logger.warn(
             `Failed to delete ${stackName}. Retry (${attemptNumber} attempt)`
+          )
+          return true
+        },
+      }
+    )
+
+    await backOff(
+      async () => {
+        const qa = getQAEnvName(stackName)
+        logger.info(`Deleting ${stackName} log groups, containing ${qa}`)
+
+        let logGroupNextToken: string | undefined = undefined
+        do {
+          try {
+            const command = new DescribeLogGroupsCommand({
+              nextToken: logGroupNextToken,
+              logGroupNamePattern: qa,
+            })
+            const response = await cloudWatchLogsClient.send(command)
+
+            // promise to delete log groups
+            const promises = response.logGroups.map(async (group: LogGroup) => {
+              // using backoff to handle rate exceeded error
+              await backOff(
+                async () => {
+                  if (group.logGroupName) {
+                    const command = new DeleteLogGroupCommand({
+                      logGroupName: group.logGroupName,
+                    })
+                    await cloudWatchLogsClient.send(command)
+                    logger.info(`Deleted ${group.logGroupName} 🔪`)
+                  }
+                },
+                {
+                  maxDelay: 10 * 1000,
+                  numOfAttempts: 5,
+                  retry: (e) => !(e instanceof FatalError),
+                }
+              )
+            })
+            await Promise.all(promises)
+            logGroupNextToken = response.nextToken
+          } catch (error) {
+            logger.error(error)
+          }
+        } while (logGroupNextToken)
+      },
+      {
+        numOfAttempts: 3,
+        retry: (_e, attemptNumber) => {
+          logger.warn(
+            `Failed to delete ${stackName} log group. Retry (${attemptNumber} attempt)`
           )
           return true
         },
