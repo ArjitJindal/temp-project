@@ -136,7 +136,7 @@ const TableList = () => {
       });
       return {
         items: data.items,
-        total: data.count,
+        total: parseInt(`${data.count}`), // parse because clickhouse returns string
       };
     },
     { enabled: isReadyToFetch },

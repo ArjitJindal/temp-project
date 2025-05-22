@@ -232,19 +232,17 @@ export default function DownloadButton<T extends object, Params extends object>(
           next = nextCursor;
         }
         const totalItemsCount = total ?? items.length;
-        if (
-          pagesMode === 'ALL' &&
-          (totalItemsCount >= MAXIMUM_EXPORT_ITEMS || runningTotal >= MAXIMUM_EXPORT_ITEMS)
-        ) {
-          setIsDownloadError(true);
-          break;
-        }
 
         const flatData = flatDataItems<T>(items);
         allFlatData.push(...flatData);
         if (pagesMode === 'CURRENT') {
           break;
         }
+        if (pagesMode === 'ALL' && runningTotal >= MAXIMUM_EXPORT_ITEMS) {
+          setIsDownloadError(true);
+          break;
+        }
+
         totalPages = Math.ceil(totalItemsCount / pageSize);
         page++;
 
