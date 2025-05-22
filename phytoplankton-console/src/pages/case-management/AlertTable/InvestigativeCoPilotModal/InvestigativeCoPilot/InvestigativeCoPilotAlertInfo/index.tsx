@@ -115,11 +115,15 @@ export default function InvestigativeCoPilotAlertInfo(props: Props) {
             </Form.Layout.Label>
             <Form.Layout.Label title={'Priority'}>{alert.priority}</Form.Layout.Label>
             <Form.Layout.Label title={'Alert age'}>
-              {pluralize(
-                'day',
-                Math.floor(dayjs.duration(Date.now() - alert.createdTimestamp).asDays()),
-                true,
-              )}
+              {(() => {
+                const duration =
+                  alert.alertStatus === 'CLOSED' && alert.lastStatusChange?.timestamp
+                    ? dayjs.duration(alert.lastStatusChange.timestamp - alert.createdTimestamp)
+                    : dayjs.duration(Date.now() - alert.createdTimestamp);
+                return duration.asDays() < 1
+                  ? pluralize('hour', Math.floor(duration.asHours()), true)
+                  : pluralize('day', Math.floor(duration.asDays()), true);
+              })()}
             </Form.Layout.Label>
             <Form.Layout.Label title={'TX#'}>{alert.numberOfTransactionsHit}</Form.Layout.Label>
             <Form.Layout.Label title={'Alert status'}>

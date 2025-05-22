@@ -146,12 +146,18 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
       : caseUser?.destination?.userId
       ? caseUser?.destination
       : undefined;
-    const duration = dayjs.duration(Date.now() - alert.createdTimestamp);
+    const duration =
+      alert.alertStatus === 'CLOSED' && alert.lastStatusChange?.timestamp
+        ? dayjs.duration(alert.lastStatusChange.timestamp - alert.createdTimestamp)
+        : dayjs.duration(Date.now() - alert.createdTimestamp);
     return {
       ...alert,
       caseCreatedTimestamp: rest.caseCreatedTimestamp,
       caseUserName: getUserName(user as TableUser | undefined),
-      age: pluralize('day', Math.floor(duration.asDays()), true),
+      age:
+        duration.asDays() < 1
+          ? pluralize('hour', Math.floor(duration.asHours()), true)
+          : pluralize('day', Math.floor(duration.asDays()), true),
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
       caseType: rest.caseType,
       user: user as TableUser | undefined,
