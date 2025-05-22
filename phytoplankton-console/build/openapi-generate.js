@@ -31,8 +31,9 @@ function removeBadImports(paths) {
 function replaceUserSavedPaymentDetails(paths) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
-      return;
+      continue;
     }
+
     const newText = fs
       .readFileSync(path)
       .toString()
@@ -175,7 +176,8 @@ fi`);
     'src/apis/models/InternalBusinessUser.ts',
     'src/apis/models/BusinessOptional.ts',
     'src/apis/models/BusinessWithRulesResult.ts',
-    'src/apis/models/BusinessResponse.ts',
+    'src/apis/models/BatchBusinessUserWithRulesResult.ts',
+    'src/apis/models/BatchConsumerUserWithRulesResult.ts',
   ];
 
   removeBadImports(['src/apis/models/QuestionVariable.ts']);

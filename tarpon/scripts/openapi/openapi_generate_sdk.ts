@@ -158,7 +158,6 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/BusinessWithRulesResult.ts`,
     `src/@types/openapi-${type}/InternalUser.ts`,
     `src/@types/openapi-${type}/InternalBusinessUser.ts`,
-    `src/@types/openapi-${type}/BusinessResponse.ts`,
     `src/@types/openapi-${type}/QuestionVariable.ts`,
     `src/@types/openapi-${type}/SimulationGetResponse.ts`,
     `src/@types/openapi-${type}-custom/DefaultApi.ts`,
