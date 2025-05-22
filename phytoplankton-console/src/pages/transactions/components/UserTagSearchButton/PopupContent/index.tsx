@@ -86,6 +86,7 @@ export default function PopupContent(props: Props) {
                   allowClear={true}
                   className={s.select}
                   loading={isLoading(tagsValueResult.data)}
+                  disabled={!selectedKey}
                   options={(getOr(tagsValueResult.data, []) as unknown as Array<string>)
                     .filter((value) => value?.length > 0)
                     .map((value) => ({ label: value, value: value }))}
