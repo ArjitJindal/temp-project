@@ -187,12 +187,14 @@ const processOpenAPIFile = async (
   }
 }
 
-processOpenAPIFile(filePath, modelName, outputPath)
-  .then(() => {
-    console.log('Done')
-    exit(0)
-  })
-  .catch((error) => {
-    console.error(error)
-    exit(1)
-  })
+if (require.main === module) {
+  processOpenAPIFile(filePath, modelName, outputPath)
+    .then(() => {
+      console.log('Done')
+      exit(0)
+    })
+    .catch((error) => {
+      console.error(error)
+      exit(1)
+    })
+}

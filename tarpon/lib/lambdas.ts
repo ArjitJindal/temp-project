@@ -167,6 +167,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME]: {
+    codePath: 'console-api-flat-files',
+    handlerName: 'flatFilesHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.PUBLIC_API_USER_FUNCTION_NAME]: {
     codePath: 'public-api-user-management',
     handlerName: 'userHandler',

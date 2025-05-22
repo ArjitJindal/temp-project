@@ -253,6 +253,11 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
     })
 
+    /* Flat Files  */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
+    })
+
     /* Case */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

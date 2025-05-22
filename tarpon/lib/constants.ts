@@ -177,6 +177,9 @@ export const StackConstants = {
   CONSOLE_API_LISTS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiListsFunction'
   ),
+  CONSOLE_API_FLAT_FILES_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiFlatFilesFunction'
+  ),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
   CONSOLE_API_SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon(

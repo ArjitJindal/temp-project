@@ -37,7 +37,6 @@ import {
 import {
   ARRAY_ITEM_INDICATOR,
   EntityLeafValueInfo,
-  EntityModel,
   getPublicModelLeafAttrs,
   isArrayIntermediateNode,
   isArrayIntermediateNodeandHasLeafArrayNode,
@@ -75,6 +74,7 @@ import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { Amount } from '@/@types/openapi-public/Amount'
+import { EntityModel } from '@/@types/model'
 
 export const VARIABLE_NAMESPACE_SEPARATOR = ':'
 const ORIGIN_TRANSACTION_AMOUNT_KEY = 'originAmountDetails.transactionAmount'

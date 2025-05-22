@@ -14,14 +14,8 @@ import {
 import { isValidAcronyms } from '@flagright/lib/constants/acronyms'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
-export abstract class EntityModel {
-  static readonly attributeTypeMap: Array<{
-    name: string
-    baseName: string
-    type: string
-    format: string
-  }>
-}
+import { EntityModel } from '@/@types/model'
+
 export type LeafValueType = 'string' | 'number' | 'boolean'
 const LEAF_VALUE_TYPES: LeafValueType[] = ['string', 'number', 'boolean']
 export type EntityLeafValueInfo = {

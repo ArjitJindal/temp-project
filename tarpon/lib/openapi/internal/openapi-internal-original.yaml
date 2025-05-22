@@ -7996,8 +7996,75 @@ paths:
           in: query
           name: crmName
           required: true
+  /flat-files/generate-template:
+    post:
+      summary: Generate a flat file template
+      operationId: post-flat-files-generate-template
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatFileTemplateResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlatFileTemplateRequest'
+        required: true
 components:
   schemas:
+    FlatFileSchema:
+      title: FlatFileSchema
+      type: string
+      enum:
+        - BULK_CASE_CLOSURE
+    FlatFileTemplateFormat:
+      title: FlatFileTemplateFormat
+      type: string
+      enum:
+        - CSV
+    FlatFileTemplateRequest:
+      title: FlatFileTemplateRequest
+      type: object
+      properties:
+        schema:
+          $ref: '#/components/schemas/FlatFileSchema'
+        format:
+          $ref: '#/components/schemas/FlatFileTemplateFormat'
+      required:
+        - schema
+        - format
+    FlatFileTemplateResponse:
+      title: FlatFileTemplateResponse
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+        fileString:
+          type: string
+      required:
+        - keys
+        - formatString
+    CaseClosure:
+      title: CaseClosure
+      type: object
+      properties:
+        caseId:
+          type: string
+        reason:
+          type: string
+        otherReason:
+          type: string
+        comment:
+          type: string
+      required:
+        - caseId
+        - reason
+        - comment
     QuestionAutocompleteResponse:
       title: QuestionAutocompleteResponse
       type: object
