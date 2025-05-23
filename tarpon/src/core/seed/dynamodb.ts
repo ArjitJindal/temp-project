@@ -41,6 +41,7 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 import { TarponChangeMongoDbConsumer } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
+import { getQASamples } from '@/core/seed/samplers/qa-samples'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -278,5 +279,10 @@ export async function seedDynamo(
       id: `RF-${String(riskFactorCounter++).padStart(3, '0')}`,
       ...riskFactor,
     })
+  }
+
+  const alertsQaSampling = getQASamples()
+  for (const alertQaSampling of alertsQaSampling) {
+    await dynamoAlertRepository.saveQASampleData(alertQaSampling)
   }
 }

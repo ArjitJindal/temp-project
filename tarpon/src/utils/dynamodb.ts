@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { chunk, isNil, omitBy, wrap, omit, uniqBy } from 'lodash'
+import { chunk, isNil, omitBy, wrap, omit, uniqBy, isUndefined } from 'lodash'
 import {
   BatchGetCommand,
   BatchGetCommandInput,
@@ -529,15 +529,21 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
   UpdateExpression: string
   ExpressionAttributeValues: Record<string, AttributeValue>
 } {
+  const cleanedAttributes = omitBy(
+    omit(attributes, ['PartitionKeyID', 'SortKeyID']),
+    isUndefined
+  )
+
   const updateExpressions: string[] = []
-  const expresssionValues: { [key: string]: any } = {}
-  for (const key in omit(attributes, ['PartitionKeyID', 'SortKeyID'])) {
+  const expressionValues: { [key: string]: any } = {}
+
+  for (const key in cleanedAttributes) {
     updateExpressions.push(`${key} = :${key}`)
-    expresssionValues[`:${key}`] = attributes[key]
+    expressionValues[`:${key}`] = cleanedAttributes[key]
   }
   return {
     UpdateExpression: `SET ${updateExpressions.join(' ,')}`,
-    ExpressionAttributeValues: expresssionValues,
+    ExpressionAttributeValues: expressionValues,
   }
 }
 

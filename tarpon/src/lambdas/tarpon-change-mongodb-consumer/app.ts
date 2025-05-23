@@ -59,6 +59,8 @@ import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getAddedItems } from '@/utils/array'
 import dayjs from '@/utils/dayjs'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
+import { AlertsRepository } from '@/services/alerts/repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -173,6 +175,10 @@ export class TarponChangeMongoDbConsumer {
               newCrmUserRecordLinks,
               dbClients
             )
+        )
+        .setAlertsQaSamplingHandler(
+          (tenantId, oldAlertQaSampling, newAlertQaSampling, dbClients) =>
+            this.handleAlertsQaSampling(tenantId, newAlertQaSampling, dbClients)
         )
     )
   }
@@ -764,6 +770,23 @@ export class TarponChangeMongoDbConsumer {
       { executedRulesInstanceIds, hitRulesInstanceIds },
     ])
 
+    subSegment?.close()
+  }
+
+  async handleAlertsQaSampling(
+    tenantId: string,
+    newAlertQaSampling: AlertsQaSampling | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newAlertQaSampling) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleAlertsQaSampling'
+    )
+    const alertRepository = new AlertsRepository(tenantId, dbClients)
+    await alertRepository.linkQaSamplingClickhouse(newAlertQaSampling)
     subSegment?.close()
   }
 }

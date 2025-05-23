@@ -30,7 +30,7 @@ interface TableItem extends AlertsQaSampling {}
 interface TableParams {
   samplingName?: string;
   samplingId?: string;
-  priority?: Priority;
+  priority?: Priority[];
   createdAt?: number[];
   createdBy?: string[];
 }
@@ -53,6 +53,10 @@ const QASamplesTable = () => {
         sortOrder: params.sort?.[0]?.[1] ?? 'descend',
         filterSampleName: params.samplingName,
         filterSampleId: params.samplingId,
+        filterPriority: params.priority,
+        filterCreatedById: params.createdBy,
+        filterCreatedBeforeTimestamp: params.createdAt?.[1],
+        filterCreatedAfterTimestamp: params.createdAt?.[0],
       });
 
       return {

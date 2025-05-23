@@ -38,6 +38,7 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -146,6 +147,12 @@ type AlertFileHandler = (
   newAlertFile: FileInfo | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type AlertsQaSamplingHandler = (
+  tenantId: string,
+  oldAlertQaSampling: AlertsQaSampling | undefined,
+  newAlertQaSampling: AlertsQaSampling | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
@@ -172,6 +179,7 @@ export class StreamConsumerBuilder {
   alertFileHandler?: AlertFileHandler
   crmRecordHandler?: CrmRecordHandler
   crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
+  alertsQaSamplingHandler?: AlertsQaSamplingHandler
 
   constructor(
     name: string,
@@ -284,6 +292,13 @@ export class StreamConsumerBuilder {
     crmUserRecordLinkHandler: CrmUserRecordLinkHandler
   ): StreamConsumerBuilder {
     this.crmUserRecordLinkHandler = crmUserRecordLinkHandler
+    return this
+  }
+
+  public setAlertsQaSamplingHandler(
+    alertsQaSamplingHandler: AlertsQaSamplingHandler
+  ): StreamConsumerBuilder {
+    this.alertsQaSamplingHandler = alertsQaSamplingHandler
     return this
   }
 
@@ -499,6 +514,16 @@ export class StreamConsumerBuilder {
       await this.crmUserRecordLinkHandler(
         update.tenantId,
         update.NewImage as CRMRecordLink,
+        dbClients
+      )
+    } else if (
+      update.type === 'ALERTS_QA_SAMPLING' &&
+      this.alertsQaSamplingHandler
+    ) {
+      await this.alertsQaSamplingHandler(
+        update.tenantId,
+        update.OldImage as AlertsQaSampling,
+        update.NewImage as AlertsQaSampling,
         dbClients
       )
     }

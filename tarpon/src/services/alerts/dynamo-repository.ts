@@ -6,7 +6,7 @@ import {
   GetCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { concat, now, omit } from 'lodash'
+import { compact, concat, now, omit } from 'lodash'
 import {
   createUpdateCaseQueries,
   dynamoKey,
@@ -30,6 +30,7 @@ import {
   dangerouslyDeletePartitionKey,
   dangerouslyDeletePartition,
   dangerouslyQueryPaginateDelete,
+  transactWrite,
 } from '@/utils/dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
@@ -46,16 +47,29 @@ import {
   AlertCommentFileInternal,
   AlertCommentsInternal,
 } from '@/@types/alert/AlertsInternal'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 type caseUpdateOptions = {
   updateCase: boolean
   caseUpdateFields: Record<string, any>
 }
 
+const handleLocalChangeCapture = async (
+  tenantId: string,
+  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
+) => {
+  const { localTarponChangeCaptureHandler } = await import(
+    '@/utils/local-dynamodb-change-handler'
+  )
+
+  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
+}
 @traceable
 export class DynamoAlertRepository {
   private readonly tenantId: string
   private readonly dynamoDb: DynamoDBClient
   private readonly tableName: string
+  private readonly AlertsQaSamplingTableName: string
   private readonly CasesClickhouseTableName: string
   private readonly AlertsClickhouseTableName: string
 
@@ -65,6 +79,8 @@ export class DynamoAlertRepository {
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     this.CasesClickhouseTableName = CLICKHOUSE_DEFINITIONS.CASES_V2.tableName
     this.AlertsClickhouseTableName = CLICKHOUSE_DEFINITIONS.ALERTS.tableName
+    this.AlertsQaSamplingTableName =
+      CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName
   }
 
   public async saveAlertsForCase(
@@ -472,6 +488,8 @@ export class DynamoAlertRepository {
    * Updates the QA status for a alert
    * @param alertId - The ID of the alert to update
    * @param qaStatus - The updated QA status
+   * @param comment - The comment to associate with the QA status
+   * @param assignments - Optional new assignments to set
    * @returns Promise that resolves when the update is complete
    */
   public async updateAlertQaStatus(
@@ -1685,5 +1703,239 @@ export class DynamoAlertRepository {
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       ),
     ])
+  }
+
+  /**
+   * Update the QA count in the sampling table
+   *
+   * @param alert - The alert to update
+   * @param qaStatus - The QA status to update
+   */
+  public async updateAlertQACountInSampling(
+    alert: Alert,
+    qaStatus?: ChecklistStatus
+  ) {
+    const partitionKey = DynamoDbKeys.ALERTS_QA_SAMPLING(
+      this.tenantId,
+      ''
+    ).PartitionKeyID
+
+    const queryInput: QueryCommandInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression: 'contains(alertIds, :alertId)',
+      ExpressionAttributeValues: {
+        ':pk': partitionKey,
+        ':alertId': alert.alertId,
+      },
+    }
+
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+
+    if (!result.Items?.length) {
+      return
+    }
+
+    const increment =
+      alert.ruleQaStatus && !qaStatus
+        ? -1
+        : !alert.ruleQaStatus && qaStatus
+        ? 1
+        : 0
+
+    if (increment === 0) {
+      return
+    }
+
+    const operations: TransactWriteOperation[] = []
+    const keyLists: dynamoKeyList = []
+
+    for (const item of result.Items) {
+      const key = DynamoDbKeys.ALERTS_QA_SAMPLING(
+        this.tenantId,
+        item.samplingId
+      )
+
+      operations.push({
+        Update: {
+          TableName: this.tableName,
+          Key: key,
+          UpdateExpression:
+            'SET numberOfAlertsQaDone = numberOfAlertsQaDone + :inc',
+          ExpressionAttributeValues: {
+            ':inc': increment,
+          },
+        },
+      })
+
+      keyLists.push({ key })
+    }
+    await transactWrite(this.dynamoDb, operations)
+    if (process.env.NODE_ENV === 'development') {
+      for (const key of keyLists) {
+        await handleLocalChangeCapture(this.tenantId, key.key)
+      }
+    }
+  }
+  /**
+   * Save QA sample data to DynamoDB
+   *
+   * @param data - The QA sample data to save
+   */
+  public async saveQASampleData(data: AlertsQaSampling) {
+    const alert = omit(sanitizeMongoObject(data), ['_id'])
+    const writeRequests: TransactWriteOperation[] = []
+    const key = DynamoDbKeys.ALERTS_QA_SAMPLING(
+      this.tenantId,
+      alert.samplingId as string
+    )
+
+    writeRequests.push({
+      Put: {
+        TableName: this.tableName,
+        Item: {
+          ...key,
+          ...alert,
+        },
+      },
+    })
+
+    await transactWrite(this.dynamoDb, writeRequests)
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(this.tenantId, key)
+    }
+  }
+
+  /**
+   * Get QA sample data by sampling ID
+   *
+   * @param samplingId - The sampling ID to get data for
+   * @returns The QA sample data
+   */
+  public async getSamplingDataById(samplingId: string) {
+    const key = DynamoDbKeys.ALERTS_QA_SAMPLING(this.tenantId, samplingId)
+    const command = new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: key,
+    })
+
+    const commandResult = await this.dynamoDb.send(command)
+
+    return commandResult.Item as AlertsQaSampling | undefined
+  }
+
+  /**
+   * Update QA sample data
+   *
+   * @param data - The QA sample data to update
+   */
+  public async updateQASampleData(data: AlertsQaSampling) {
+    const now = Date.now()
+    const cleanData = omit(sanitizeMongoObject(data), ['_id', 'id'])
+
+    const updateExpressionRecord = {
+      ...cleanData,
+      updatedAt: now,
+    }
+
+    const alertQaSampling = await this.getSamplingDataById(data.samplingId)
+    if (!alertQaSampling) {
+      throw new Error(`Alert QASampling with ID ${data.samplingId} not found`)
+    }
+
+    const { UpdateExpression, ExpressionAttributeValues } =
+      getUpdateAttributesUpdateItemInput(updateExpressionRecord)
+
+    const key = DynamoDbKeys.ALERTS_QA_SAMPLING(this.tenantId, data.samplingId)
+    const writeRequests: TransactWriteOperation[] = [
+      {
+        Update: {
+          TableName: this.tableName,
+          Key: key,
+          UpdateExpression,
+          ExpressionAttributeValues,
+        },
+      },
+    ]
+
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
+      generateDynamoConsumerMessage(this.tenantId, [
+        {
+          keyLists: [{ key }],
+          tableName: this.AlertsQaSamplingTableName,
+        },
+      ])
+
+    await transactWriteWithClickhouse(
+      this.dynamoDb,
+      writeRequests,
+      dynamoDbConsumerMessage
+    )
+  }
+
+  /**
+   * Get all sampling IDs
+   *
+   * @returns An array of sampling IDs and names
+   */
+  public async getSamplingIds(): Promise<
+    { samplingId: string; samplingName: string }[]
+  > {
+    const partitionKey = DynamoDbKeys.ALERTS_QA_SAMPLING(
+      this.tenantId,
+      ''
+    ).PartitionKeyID
+
+    const queryInput: QueryCommandInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': partitionKey,
+      },
+      ProjectionExpression: 'samplingId, samplingName',
+    }
+
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+
+    return compact(
+      (result.Items || []).map((item) => ({
+        samplingId: item.samplingId,
+        samplingName: item.samplingName,
+      }))
+    )
+  }
+
+  /**
+   * Delete QA sample data
+   *
+   * @param sampleId - The sampling ID to delete
+   */
+  public async deleteSample(sampleId: string): Promise<void> {
+    const key = DynamoDbKeys.ALERTS_QA_SAMPLING(this.tenantId, sampleId)
+    await dangerouslyDeletePartitionKey(this.dynamoDb, key, this.tableName)
+    const query = `ALTER TABLE ${this.AlertsQaSamplingTableName} UPDATE is_deleted = 1 WHERE samplingId = '${sampleId}'`
+    const client = await getClickhouseClient(this.tenantId)
+    await client.query({ query })
+  }
+
+  public async getAlertsQASamplingFromIds(
+    ids: string[]
+  ): Promise<AlertsQaSampling[]> {
+    const alerts = await batchGet<AlertsQaSampling>(
+      this.dynamoDb,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      ids.map((id) => DynamoDbKeys.ALERTS_QA_SAMPLING(this.tenantId, id))
+    )
+
+    const alertMap = alerts.reduce((acc, item) => {
+      const alertId = item.samplingId as string
+      acc[alertId] = omit(item, [
+        'PartitionKeyID',
+        'SortKeyID',
+      ]) as AlertsQaSampling
+      return acc
+    }, {} as Record<string, AlertsQaSampling>)
+
+    return ids.map((id) => alertMap[id]).filter(Boolean)
   }
 }

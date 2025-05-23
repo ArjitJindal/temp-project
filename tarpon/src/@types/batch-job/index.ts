@@ -144,6 +144,16 @@ export type CasesBackfillDynamoBatchJob = {
   tenantId: string
 }
 
+/* Dynamodb Clickhouse backfill */
+export type DynamodbClickhouseBackfillBatchJob = {
+  type: 'DYNAMODB_CLICKHOUSE_BACKFILL'
+  tenantId: string
+  parameters: {
+    entity: 'ALERTS_QA_SAMPLING'
+    saveToClickhouse: boolean
+  }
+}
+
 /* Sync Indexes */
 export type SyncDatabasesBatchJob = {
   type: 'SYNC_DATABASES'
@@ -478,6 +488,7 @@ export type BatchJob =
   | PeriodicScreeningUserRuleBatchJob
   | QACleanupBatchJob
   | PnbPullUsersData
+  | DynamodbClickhouseBackfillBatchJob
   | ManualTransactionReverification
 
 export type BatchJobWithId = BatchJob & {

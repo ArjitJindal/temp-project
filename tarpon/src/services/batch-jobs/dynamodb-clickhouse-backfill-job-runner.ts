@@ -1,0 +1,64 @@
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
+import { DynamodbClickhouseBackfillBatchJob } from '@/@types/batch-job'
+import { logger } from '@/core/logger'
+import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
+
+@traceable
+export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
+  protected async run(job: DynamodbClickhouseBackfillBatchJob): Promise<void> {
+    const { entity } = job.parameters
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    switch (entity) {
+      case 'ALERTS_QA_SAMPLING':
+        await handleAlertsQaSamplingBatchJob(job, {
+          mongoDb,
+          dynamoDb,
+        })
+        break
+      default:
+        throw new Error(`Unknown entity: ${entity}`)
+    }
+  }
+}
+
+const handleAlertsQaSamplingBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoAlertRepository } = await import('../alerts/dynamo-repository')
+  const { ALERTS_QA_SAMPLING_COLLECTION } = await import(
+    '@/utils/mongodb-definitions'
+  )
+
+  const dynamoAlertRepository = new DynamoAlertRepository(
+    job.tenantId,
+    dynamoDb
+  )
+  const db = mongoDb.db()
+  const alertsCollection = db.collection<AlertsQaSampling>(
+    ALERTS_QA_SAMPLING_COLLECTION(job.tenantId)
+  )
+
+  await processCursorInBatch(
+    alertsCollection.find({}),
+    async (alerts) => {
+      for (const alert of alerts) {
+        await dynamoAlertRepository.saveQASampleData(alert)
+      }
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+  logger.info(`Completed dynamoDB backfill for alerts_qa_sampling`)
+}

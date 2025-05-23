@@ -48,7 +48,7 @@ import { SyncDatabases } from '@/services/batch-jobs/sync-mongo-indexes-job-runn
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
 import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-summary-batch-job-runner'
 import { SanctionsDataFetchBatchJobRunner } from '@/services/batch-jobs/sanctions-data-fetch-job-runner'
-
+import { DynamodbClickhouseBackfillBatchJobRunner } from '@/services/batch-jobs/dynamodb-clickhouse-backfill-job-runner'
 type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
 export function getBatchJobRunner(type: BatchJobType, jobId: string) {
@@ -123,6 +123,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     PERIODIC_SCREENING_USER_RULE: (jobId) =>
       new PeriodicScreeningUserRuleBatchJobRunner(jobId),
     PNB_PULL_USERS_DATA: (jobId) => new PnbPullUsersDataBatchJobRunner(jobId),
+    DYNAMODB_CLICKHOUSE_BACKFILL: (jobId) =>
+      new DynamodbClickhouseBackfillBatchJobRunner(jobId),
     MANUAL_TRANSACTION_REVERIFICATION: (jobId) =>
       new ManualTransactionReverificationBatchJobRunner(jobId),
   }

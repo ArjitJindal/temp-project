@@ -47,6 +47,7 @@ import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceA
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AccountsService } from '@/services/accounts'
 import {
+  batchInsertToClickhouse,
   getClickhouseClient,
   isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
@@ -56,6 +57,7 @@ import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export interface AlertParams
   extends OptionalPagination<
@@ -1763,6 +1765,9 @@ export class AlertsRepository {
   }
 
   public async saveQASampleData(data: AlertsQaSampling) {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoAlertRepository.saveQASampleData(data)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1774,6 +1779,9 @@ export class AlertsRepository {
   }
 
   public async updateQASampleData(data: AlertsQaSampling) {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoAlertRepository.updateQASampleData(data)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1790,6 +1798,19 @@ export class AlertsRepository {
     data: AlertsQaSampling[]
     total: number
   }> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseAlertRepository =
+        await this.getClickhouseAlertRepository()
+      const { items, total } = await clickhouseAlertRepository.getSamplingData(
+        params
+      )
+      const alerts =
+        await this.dynamoAlertRepository.getAlertsQASamplingFromIds(items)
+      return {
+        data: alerts,
+        total,
+      }
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1876,6 +1897,12 @@ export class AlertsRepository {
   public async getSamplingDataById(
     sampleId: string
   ): Promise<AlertsQaSampling | null> {
+    if (isClickhouseMigrationEnabled()) {
+      const data = await this.dynamoAlertRepository.getSamplingDataById(
+        sampleId
+      )
+      return data ?? null
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1889,6 +1916,10 @@ export class AlertsRepository {
   }
 
   public async getSamplingIds(): Promise<AlertsQASampleIds[]> {
+    if (isClickhouseMigrationEnabled()) {
+      const data = await this.dynamoAlertRepository.getSamplingIds()
+      return data
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1907,6 +1938,9 @@ export class AlertsRepository {
   }
 
   public async deleteSample(sampleId: string): Promise<void> {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoAlertRepository.deleteSample(sampleId)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -2089,6 +2123,16 @@ export class AlertsRepository {
       filter,
       update,
       options
+    )
+  }
+
+  public async linkQaSamplingClickhouse(
+    alertQaSampling: AlertsQaSampling
+  ): Promise<void> {
+    await batchInsertToClickhouse(
+      this.tenantId,
+      CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
+      [alertQaSampling]
     )
   }
 }

@@ -21,6 +21,7 @@ import {
   ALERT_FILE_ID_IDENTIFIER,
   CRM_RECORD_KEY_IDENTIFIER,
   CRM_USER_RECORD_LINK_KEY_IDENTIFIER,
+  ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -48,6 +49,7 @@ export type DynamoDbEntityType =
   | 'ALERT_FILE'
   | 'CRM_RECORD'
   | 'CRM_USER_RECORD_LINK'
+  | 'ALERTS_QA_SAMPLING'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -215,6 +217,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'CRM_USER_RECORD_LINK',
       entityId: `CRM_USER_RECORD_LINK:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(ALERTS_QA_SAMPLING_KEY_IDENTIFIER)) {
+    const entityId = entity.samplingId
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'ALERTS_QA_SAMPLING',
+      entityId: `ALERTS_QA_SAMPLING:${entityId}`,
     }
   }
   return null

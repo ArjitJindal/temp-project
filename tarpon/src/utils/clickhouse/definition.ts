@@ -151,6 +151,7 @@ export enum ClickhouseTableNames {
   CrmRecords = 'crm_records',
   CrmUserRecordLink = 'crm_user_record_link',
   DynamicPermissionsItems = 'dynamic_permissions_items',
+  AlertsQaSampling = 'alerts_qa_sampling',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -300,6 +301,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   DYNAMIC_PERMISSIONS_ITEMS: {
     tableName: ClickhouseTableNames.DynamicPermissionsItems,
+  },
+  ALERTS_QA_SAMPLING: {
+    tableName: ClickhouseTableNames.AlertsQaSampling,
   },
 } as const
 
@@ -955,6 +959,26 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "name String MATERIALIZED JSONExtractString(data, 'name')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
+    idColumn: 'samplingId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, samplingId)',
+    orderBy: '(timestamp, samplingId)',
+    materializedColumns: [
+      "samplingId String MATERIALIZED JSONExtractString(data, 'samplingId')",
+      "samplingType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'samplingType')",
+      "samplingQuantity Int32 MATERIALIZED JSONExtractInt(data, 'samplingQuantity')",
+      "samplingName String MATERIALIZED JSONExtractString(data, 'samplingName')",
+      "samplingDescription String MATERIALIZED JSONExtractString(data, 'samplingDescription')",
+      "priority String MATERIALIZED JSONExtractString(data, 'priority')",
+      "createdBy String MATERIALIZED JSONExtractString(data, 'createdBy')",
+      "alertIds Array(String) MATERIALIZED JSONExtract(data, 'alertIds', 'Array(String)')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -980,6 +1004,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
+    CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

@@ -21,6 +21,7 @@ import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 import { traceable } from '@/core/xray'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
+import { DefaultApiGetAlertsQaSamplingRequest } from '@/@types/openapi-internal/RequestParameters'
 export interface AlertClickhouse extends Alert {
   caseStatus?: string
 }
@@ -32,6 +33,8 @@ type StatusChanges = {
 // Note: Do not export this variables as they are not used outside this file
 const CASES_TABLE_NAME_CH = CLICKHOUSE_DEFINITIONS.CASES_V2.tableName
 const ALERTS_TABLE_NAME_CH = CLICKHOUSE_DEFINITIONS.ALERTS.tableName
+const ALERTS_QA_SAMPLING_TABLE_NAME_CH =
+  CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName
 @traceable
 export class ClickhouseAlertRepository {
   private clickhouseClient: ClickHouseClient
@@ -690,5 +693,79 @@ export class ClickhouseAlertRepository {
       query
     )
     return alerts.map((alert) => alert.alertId as string)
+  }
+
+  private getQaSamplingConditions(
+    params: DefaultApiGetAlertsQaSamplingRequest
+  ) {
+    const conditions: string[] = []
+
+    if (params.filterSampleId) {
+      conditions.push(`samplingId ILIKE '${params.filterSampleId}%'`)
+    }
+
+    if (params.filterSampleName) {
+      conditions.push(`samplingName ILIKE '${params.filterSampleName}%'`)
+    }
+
+    if (params.filterCreatedById) {
+      conditions.push(`createdBy = '${params.filterCreatedById}'`)
+    }
+
+    if (params.filterPriority?.length) {
+      conditions.push(`priority IN ('${params.filterPriority.join("','")}')`)
+    }
+
+    if (
+      params.filterCreatedAfterTimestamp != null &&
+      params.filterCreatedBeforeTimestamp != null
+    ) {
+      conditions.push(
+        `createdAt BETWEEN ${params.filterCreatedAfterTimestamp} AND ${params.filterCreatedBeforeTimestamp}`
+      )
+    }
+
+    if (params.filterDescription) {
+      conditions.push(
+        `samplingDescription ILIKE '%${params.filterDescription}%'`
+      )
+    }
+
+    conditions.push(`is_deleted = 0`)
+
+    return conditions.join(' AND ')
+  }
+  public async getSamplingData(params: DefaultApiGetAlertsQaSamplingRequest) {
+    let sortField: string
+    switch (params.sortField) {
+      case 'createdAt':
+        sortField = 'timestamp'
+        break
+      default:
+        sortField = 'timestamp'
+    }
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const query = this.getQaSamplingConditions(params)
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    const { items, count } = await offsetPaginateClickhouseWithoutDataTable(
+      this.clickhouseClient,
+      ALERTS_QA_SAMPLING_TABLE_NAME_CH,
+      {
+        pageSize,
+        page,
+        sortField,
+        sortOrder,
+      },
+      query
+    )
+
+    return {
+      items,
+      total: count,
+      page,
+      pageSize,
+    }
   }
 }
