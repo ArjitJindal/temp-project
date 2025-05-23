@@ -8,13 +8,13 @@ import { DefaultAlertStatusInput } from '../../../RuleConfigurationV8/RuleConfig
 import s from './style.module.less';
 import Label from '@/components/library/Label';
 import {
+  DefaultAlertStatusForCaseCreation,
   DerivedStatus,
   Priority,
   Rule,
   RuleExecutionMode,
   RuleLabels,
   RuleNature,
-  RuleInstanceAlertConfigDefaultAlertStatusEnum,
   ScreeningAlertCreationLogic,
 } from '@/apis';
 import TextInput from '@/components/library/TextInput';
@@ -69,7 +69,7 @@ export interface FormValues {
   checksFor: string[];
   frozenStatuses: DerivedStatus[];
   ruleExecutionMode: RuleExecutionMode;
-  defaultAlertStatus?: RuleInstanceAlertConfigDefaultAlertStatusEnum;
+  defaultAlertStatus?: DefaultAlertStatusForCaseCreation;
   alertCreationOnHit?: boolean;
   screeningAlertCreationLogic?: ScreeningAlertCreationLogic;
 }

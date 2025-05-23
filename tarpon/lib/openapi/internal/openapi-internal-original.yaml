@@ -8909,6 +8909,14 @@ components:
         - TRANSACTION
         - USER
         - USER_ONGOING_SCREENING
+    DefaultAlertStatusForCaseCreation:
+      title: DefaultAlertStatusForCaseCreation
+      type: string
+      enum:
+        - OPEN
+        - OPEN_ON_HOLD
+        - CLOSED
+        - OPEN_IN_PROGRESS
     RuleInstance:
       title: RuleInstance
       type: object
@@ -9017,11 +9025,7 @@ components:
                 type: string
               maxItems: 5
             defaultAlertStatus:
-              type: string
-              enum:
-                - OPEN
-                - OPEN_ON_HOLD
-                - CLOSED
+              $ref: '#/components/schemas/DefaultAlertStatusForCaseCreation'
         checksFor:
           type: array
           items:

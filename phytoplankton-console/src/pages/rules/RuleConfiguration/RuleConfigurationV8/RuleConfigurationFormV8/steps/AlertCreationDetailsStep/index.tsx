@@ -14,7 +14,7 @@ import {
   DerivedStatus,
   Priority,
   RuleType,
-  RuleInstanceAlertConfigDefaultAlertStatusEnum,
+  DefaultAlertStatusForCaseCreation,
 } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { AlertCreatedForEnum, RULE_CASE_PRIORITY, getAlertCreatedFor } from '@/pages/rules/utils';
@@ -35,7 +35,7 @@ export interface FormValues {
   checklistTemplateId?: string;
   frozenStatuses: DerivedStatus[];
   slaPolicies?: string[];
-  defaultAlertStatus?: RuleInstanceAlertConfigDefaultAlertStatusEnum;
+  defaultAlertStatus?: DefaultAlertStatusForCaseCreation;
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
