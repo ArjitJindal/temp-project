@@ -185,7 +185,7 @@ export default function InvestigativeCoPilot(props: Props) {
               for (const x of items) {
                 if (x.questionType === 'SKELETON' && x.requestId === requestId) {
                   result.push(...parsedResponses);
-                } else if (x.questionType === 'EMBEDDED') {
+                } else if (x.questionType === 'EMBEDDED' && x.questionId === 'Recommendation') {
                   embeddedItems.push(x);
                 } else {
                   result.push(x);
