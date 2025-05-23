@@ -22,7 +22,7 @@ export default function SimulationHistoryPage() {
         },
         {
           title: 'Simulations history',
-          to: '/rules/simulation-history',
+          to: `/rules/${rulesTab}/simulation-history`,
         },
       ]}
       simulationHistoryUrl="/rules/simulation-history"
