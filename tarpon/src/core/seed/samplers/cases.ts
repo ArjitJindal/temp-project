@@ -523,7 +523,7 @@ export class AuditLogForStatusChangeSampler extends BaseSampler<AuditLog> {
       },
       oldImage: {},
       subtype: 'STATUS_CHANGE',
-      timestamp: Date.now(),
+      timestamp: this.sampleTimestamp(),
       type: 'CASE',
       user: this.rng.r(1).pickRandom(getAccounts()),
     }
