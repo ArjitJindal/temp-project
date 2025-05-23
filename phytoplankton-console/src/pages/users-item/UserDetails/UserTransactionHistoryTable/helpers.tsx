@@ -15,6 +15,7 @@ export function prepareTableData(
 
     const dataItem: DataItem = {
       index,
+      type: item.type ?? '',
       rowKey: item.transactionId,
       transactionId: item.transactionId,
       timestamp: item.timestamp,

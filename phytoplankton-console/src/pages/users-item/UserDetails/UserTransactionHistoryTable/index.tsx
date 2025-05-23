@@ -31,6 +31,7 @@ import {
   RULE_ACTION_STATUS,
   STRING,
   TRANSACTION_STATE,
+  TRANSACTION_TYPE,
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
 import Id from '@/components/ui/Id';
@@ -56,6 +57,7 @@ export type DataItem = {
   status?: RuleAction;
   rowKey: string;
   transactionId: string;
+  type: string;
   timestamp?: number;
   originAmountDetails?: TransactionAmountDetails;
   destinationAmountDetails?: TransactionAmountDetails;
@@ -148,6 +150,11 @@ export function Content(props: { userId: string }) {
             );
           },
         },
+      }),
+      helper.simple<'type'>({
+        title: 'Transaction Type',
+        key: 'type',
+        type: TRANSACTION_TYPE,
       }),
       ...(isRiskScoringEnabled
         ? [
