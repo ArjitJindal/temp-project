@@ -63,6 +63,8 @@ export function useRoutes(): RouteItem[] {
   const hasAuditLogPermission = useHasPermissions(['audit-log:export:read']);
   const user = useAuth0User();
   const isAtLeastAdminUser = isAtLeastAdmin(user);
+  const isRiskLevelSimulationMode =
+    localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -337,13 +339,17 @@ export function useRoutes(): RouteItem[] {
             ? [
                 {
                   name: 'risk-factors',
-                  path: '/risk-levels/risk-factors',
+                  path: isRiskLevelSimulationMode
+                    ? '/risk-levels/risk-factors/simulation'
+                    : '/risk-levels/risk-factors',
                   component: RiskFactorPage,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
                 },
                 {
                   name: 'risk-factors',
-                  path: '/risk-levels/risk-factors/:type',
+                  path: isRiskLevelSimulationMode
+                    ? '/risk-levels/risk-factors/simulation/:type'
+                    : '/risk-levels/risk-factors/:type',
                   component: RiskFactorPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
@@ -651,17 +657,18 @@ export function useRoutes(): RouteItem[] {
   }, [
     lastActiveTab,
     lastActiveRuleTab,
-    isRiskLevelsEnabled,
     isSarEnabled,
+    isRiskLevelsEnabled,
+    isRiskScoringEnabled,
+    isRiskLevelSimulationMode,
     lastActiveList,
     isSanctionsEnabled,
     lastActiveSanctionsTab,
+    isWorkflowsEnabled,
     isAtLeastAdminUser,
     hasAuditLogPermission,
-    permissions,
     hasMachineLearningFeature,
-    isRiskScoringEnabled,
-    isWorkflowsEnabled,
+    permissions,
   ]);
 }
 

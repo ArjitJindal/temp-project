@@ -405,16 +405,16 @@ export function RuleConfigurationSimulation(props: Props) {
                     }}
                   >
                     {jobId && (
-                      <div>
-                        <Label label={iteration.name}>{iteration.description}</Label>
-                      </div>
-                    )}
-                    {jobId && (
-                      <div className={s.result} ref={setPdfRef}>
-                        {iterationResults.length > 0 ? (
-                          <SimulationStatistics pdfMode={true} iteration={iterationResults[i]} />
-                        ) : undefined}
-                      </div>
+                      <>
+                        <div>
+                          <Label label={iteration.name}>{iteration.description}</Label>
+                        </div>
+                        <div className={s.result} ref={setPdfRef}>
+                          {iterationResults.length > 0 ? (
+                            <SimulationStatistics pdfMode iteration={iterationResults[i]} />
+                          ) : undefined}
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
@@ -464,23 +464,23 @@ export function RuleConfigurationSimulation(props: Props) {
               ) : (
                 <>
                   {jobId && (
-                    <div>
-                      <Label label={iteration.name}>{iteration.description}</Label>
-                    </div>
-                  )}
-                  {jobId && (
-                    <div className={s.result}>
-                      {iterationResults.length > 0 ? (
-                        <SimulationStatistics iteration={iterationResults[i]} />
-                      ) : undefined}
-                      {iterations[i].taskId && (
-                        <SimulationTransactionsHit taskId={iterations[i].taskId as string} />
-                      )}
-                      {iterations[i].taskId && (
-                        <SimulationUsersHit taskId={iterations[i].taskId as string} />
-                      )}
-                      <H4>Changed rule parameters</H4>
-                    </div>
+                    <>
+                      <div>
+                        <Label label={iteration.name}>{iteration.description}</Label>
+                      </div>
+                      <div className={s.result}>
+                        {iterationResults.length > 0 ? (
+                          <SimulationStatistics iteration={iterationResults[i]} />
+                        ) : undefined}
+                        {iterations[i].taskId && (
+                          <>
+                            <SimulationTransactionsHit taskId={iterations[i].taskId as string} />
+                            <SimulationUsersHit taskId={iterations[i].taskId as string} />
+                          </>
+                        )}
+                        <H4>Changed rule parameters</H4>
+                      </div>
+                    </>
                   )}
 
                   {v8Mode ? (

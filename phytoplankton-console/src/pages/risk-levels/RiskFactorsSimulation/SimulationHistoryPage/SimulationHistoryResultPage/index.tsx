@@ -3,39 +3,41 @@ import { SimulationResult } from '../../SimulationResult';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import { notEmpty } from '@/utils/array';
-import { useSafeLocalStorageState } from '@/utils/hooks';
-
-const BASE_URL = '/risk-levels';
+import { makeUrl } from '@/utils/routing';
 
 export const SimulationHistoryResultPage = () => {
   const { jobId } = useParams();
   const { pathname } = useLocation();
-  const type = 'risk-factors';
-  const [isSimulationMode] = useSafeLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
-
-  const getUrl = (path: string) => `${BASE_URL}/${type}${path}`;
 
   const breadcrumbs = [
     {
+      title: 'Risk scoring',
+      to: makeUrl('/risk-levels/risk-factors/simulation'),
+    },
+    {
       title: 'Risk factors',
-      to: getUrl(isSimulationMode ? '/simulation' : ''),
+      to: makeUrl(`/risk-levels/risk-factors/simulation`),
     },
     ...(pathname.includes('simulation-history')
       ? [
           {
             title: 'Simulation history',
-            to: getUrl('/simulation-history'),
+            to: makeUrl('/risk-levels/risk-factors/simulation-history'),
           },
         ]
       : [
           {
-            title: 'Simulation',
-            to: getUrl('/simulation'),
+            title: 'Simulate',
+            to: makeUrl('/risk-levels/risk-factors/simulation'),
           },
         ]),
     {
       title: `${jobId}`,
-      to: getUrl(`/simulation-history/${jobId}`),
+      to: makeUrl(
+        `/risk-levels/risk-factors/${
+          pathname.includes('simulation-history') ? 'simulation-history' : 'simulation'
+        }/${jobId}`,
+      ),
     },
   ].filter(notEmpty);
 
@@ -43,10 +45,10 @@ export const SimulationHistoryResultPage = () => {
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper
         storageKey="SIMULATION_CUSTOM_RISK_FACTORS"
-        nonSimulationDefaultUrl={getUrl('')}
-        simulationDefaultUrl={getUrl('/simulation')}
+        nonSimulationDefaultUrl={makeUrl('/risk-levels/risk-factors/consumer')}
+        simulationDefaultUrl={makeUrl('/risk-levels/risk-factors/simulation')}
         breadcrumbs={breadcrumbs}
-        simulationHistoryUrl={getUrl('/simulation-history')}
+        simulationHistoryUrl={makeUrl('/risk-levels/risk-factors/simulation-history')}
       >
         <SimulationResult jobId={jobId ?? ''} />
       </BreadcrumbsSimulationPageWrapper>

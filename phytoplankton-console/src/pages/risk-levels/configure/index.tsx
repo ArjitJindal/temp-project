@@ -22,13 +22,19 @@ export default function () {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
 
   const isSimulationMode = localStorage.getItem('SIMULATION_RISK_LEVELS') === 'true';
+  const isRiskFactorSimulationMode =
+    localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
   const navigate = useNavigate();
 
   const handleTabChange = (key: ScopeSelectorValue) => {
     if (key === 'risk-level') {
       navigate(makeUrl('/risk-levels/configure'));
     } else {
-      navigate(makeUrl('/risk-levels/risk-factors/consumer'));
+      if (isRiskFactorSimulationMode) {
+        navigate(makeUrl('/risk-levels/risk-factors/simulation'));
+      } else {
+        navigate(makeUrl('/risk-levels/risk-factors/consumer'));
+      }
     }
   };
 
@@ -52,8 +58,20 @@ export default function () {
         simulationDefaultUrl="/risk-levels/configure/simulation"
         simulationHistoryUrl="/risk-levels/configure/simulation-history"
         breadcrumbs={[
-          { title: 'Risk scoring', to: makeUrl('/risk-levels') },
-          { title: 'Risk levels', to: makeUrl('/risk-levels/configure') },
+          {
+            title: 'Risk scoring',
+            to: isRiskFactorSimulationMode
+              ? makeUrl('/risk-levels/risk-factors/simulation')
+              : makeUrl('/risk-levels/risk-factors/consumer'),
+          },
+          {
+            title: 'Risk levels',
+            to: makeUrl(`/risk-levels/configure${isSimulationMode ? '/simulation' : ''}`),
+          },
+          isSimulationMode && {
+            title: 'Simulate',
+            to: makeUrl('/risk-levels/configure/simulation'),
+          },
         ].filter(notEmpty)}
       >
         <Tabs

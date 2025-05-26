@@ -244,10 +244,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
               isDisabled={values.length >= MAX_ITERATIONS}
               requiredPermissions={['simulator:simulations:write']}
             >
-              <Tooltip
-                title="You can simulate a maximum of 3 iterations for this rule at once."
-                placement="top"
-              >
+              <Tooltip title="You can simulate a maximum of 3 iterations at once." placement="top">
                 <PlusOutlined /> Duplicate
               </Tooltip>
             </Button>

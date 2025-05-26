@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
 import s from './style.module.less';
@@ -48,6 +48,10 @@ interface Props {
   dataKey?: string;
 }
 
+interface LocationState {
+  prefill?: RiskFactor;
+}
+
 export const RiskFactorConfiguration = (props: Props) => {
   const {
     riskItemType,
@@ -60,13 +64,22 @@ export const RiskFactorConfiguration = (props: Props) => {
     dataKey,
   } = props;
   const navigate = useNavigate();
+  const location = useLocation();
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
 
   const isMutable = useMemo(() => ['CREATE', 'EDIT', 'DUPLICATE'].includes(mode), [mode]);
-  const formInitialValues = riskItem ? deserializeRiskItem(riskItem) : undefined;
+
+  const locationState = location.state as LocationState;
+  const prefillData = locationState?.prefill;
+  const formInitialValues = prefillData
+    ? deserializeRiskItem(prefillData)
+    : riskItem
+    ? deserializeRiskItem(riskItem)
+    : undefined;
+
   const navigateToRiskFactors = () => {
     dataKey
       ? navigate(

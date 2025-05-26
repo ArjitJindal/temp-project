@@ -1,21 +1,23 @@
 import { SimulationHistory } from './SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
-import { useSafeLocalStorageState } from '@/utils/hooks';
+import { makeUrl } from '@/utils/routing';
 
 const ROOT_PATH = '/risk-levels';
 
 export const SimulationHistoryPage = () => {
   const type = 'risk-factors';
 
-  const [isSimulationMode] = useSafeLocalStorageState('SIMULATION_CUSTOM_RISK_FACTORS', false);
-
   const buildUrl = (path: string) => `${ROOT_PATH}/${type}${path}`;
 
   const breadcrumbs = [
     {
+      title: 'Risk scoring',
+      to: makeUrl('/risk-levels/risk-factors/simulation'),
+    },
+    {
       title: 'Risk factors',
-      to: buildUrl(isSimulationMode ? '/simulation' : ''),
+      to: makeUrl(`/risk-levels/risk-factors/simulation`),
     },
     {
       title: 'Simulation history',

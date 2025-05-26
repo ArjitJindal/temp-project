@@ -206,51 +206,106 @@ export default function RiskFactorsTable(props: Props) {
         handleEditRiskFactor(entity);
       } else if (action === 'duplicate') {
         if (entity.parameter) {
-          const duplicateParameterRiskFactor = async () => {
-            try {
-              const hideSavingMessage = message.loading('Duplicating risk factor...');
-              const newRiskFactor = await api.postCreateRiskFactor({
-                RiskFactorsPostRequest: {
-                  parameter: entity.parameter as any,
-                  type: entity.type,
-                  status: 'ACTIVE',
-                  name: `${entity.name} (Copy)`,
-                  description: entity.description || '',
-                  baseCurrency: entity.baseCurrency,
-                  riskLevelAssignmentValues: entity.riskLevelAssignmentValues || [],
-                  defaultRiskLevel: entity.defaultRiskLevel || 'LOW',
-                  defaultWeight: entity.defaultWeight || 1,
-                  defaultRiskScore: entity.defaultRiskScore || 0,
-                  logicAggregationVariables: [],
-                  logicEntityVariables: [],
-                  riskLevelLogic: [],
-                  isDerived: entity.isDerived || false,
-                  riskFactorId: entity.id,
-                },
-              });
+          if (isSimulation) {
+            const updatedRiskFactors = simulationRiskFactorsMap[
+              scopeToRiskEntityType(selectedSection)
+            ].map((rf) => rf);
 
-              await queryClient.invalidateQueries(RISK_FACTORS_V8(selectedSection));
+            const newRiskFactor = {
+              ...entity,
+              id: `${entity.id} (Copy)`,
+              name: `${entity.name} (Copy)`,
+            };
 
-              hideSavingMessage();
-              message.success(`Risk factor duplicated - ${newRiskFactor.id}`);
-            } catch (err) {
-              message.fatal(`Unable to duplicate the risk factor`, err);
+            updatedRiskFactors.push(newRiskFactor);
+
+            setSimulationRiskFactorsMap({
+              ...simulationRiskFactorsMap,
+              [scopeToRiskEntityType(selectedSection)]: updatedRiskFactors,
+            });
+
+            if (handleSimulationSave) {
+              handleSimulationSave(updatedRiskFactors);
             }
-          };
 
-          duplicateParameterRiskFactor();
+            message.success('Risk factor duplicated');
+          } else {
+            const duplicateParameterRiskFactor = async () => {
+              try {
+                const hideSavingMessage = message.loading('Duplicating risk factor...');
+                const newRiskFactor = await api.postCreateRiskFactor({
+                  RiskFactorsPostRequest: {
+                    parameter: entity.parameter as any,
+                    type: entity.type,
+                    status: 'ACTIVE',
+                    name: `${entity.name} (Copy)`,
+                    description: entity.description || '',
+                    baseCurrency: entity.baseCurrency,
+                    riskLevelAssignmentValues: entity.riskLevelAssignmentValues || [],
+                    defaultRiskLevel: entity.defaultRiskLevel || 'LOW',
+                    defaultWeight: entity.defaultWeight || 1,
+                    defaultRiskScore: entity.defaultRiskScore || 0,
+                    logicAggregationVariables: [],
+                    logicEntityVariables: [],
+                    riskLevelLogic: [],
+                    isDerived: entity.isDerived || false,
+                    riskFactorId: entity.id,
+                  },
+                });
+
+                await queryClient.invalidateQueries(RISK_FACTORS_V8(selectedSection));
+
+                hideSavingMessage();
+                message.success(`Risk factor duplicated - ${newRiskFactor.id}`);
+              } catch (err) {
+                message.fatal(`Unable to duplicate the risk factor`, err);
+              }
+            };
+
+            duplicateParameterRiskFactor();
+          }
         } else {
-          navigate(
-            makeUrl(`/risk-levels/risk-factors/:type/:id/duplicate`, {
-              type: selectedSection,
-              id: entity.id,
-            }),
-            { replace: true },
-          );
+          if (isSimulation) {
+            navigate(
+              makeUrl(`/risk-levels/risk-factors/simulation-mode/:key/:type/create`, {
+                key: `${jobId ? jobId : 'new'}-${activeIterationIndex}`,
+                type: selectedSection,
+              }),
+              {
+                replace: true,
+                state: {
+                  prefill: {
+                    ...entity,
+                    name: `${entity.name} (Copy)`,
+                  },
+                },
+              },
+            );
+          } else {
+            navigate(
+              makeUrl(`/risk-levels/risk-factors/:type/:id/duplicate`, {
+                type: selectedSection,
+                id: entity.id,
+              }),
+              { replace: true },
+            );
+          }
         }
       }
     },
-    [handleEditRiskFactor, navigate, selectedSection, api, queryClient],
+    [
+      handleEditRiskFactor,
+      navigate,
+      selectedSection,
+      api,
+      queryClient,
+      isSimulation,
+      simulationRiskFactorsMap,
+      setSimulationRiskFactorsMap,
+      handleSimulationSave,
+      jobId,
+      activeIterationIndex,
+    ],
   );
 
   const columnHelper = new ColumnHelper<RiskFactor>();
@@ -371,45 +426,26 @@ export default function RiskFactorsTable(props: Props) {
       defaultWidth: 250,
       enableResizing: false,
       render: (entity) => {
-        if (isSimulation) {
-          return (
-            <div className={s.actionIconsContainer}>
+        return (
+          <div className={s.actions}>
+            {canWriteRiskFactors && (
               <Button
-                onClick={() => {
-                  handleEditRiskFactor(entity);
-                }}
                 icon={<EditOutlined />}
                 size="MEDIUM"
                 type="SECONDARY"
-                isDisabled={!canWriteRiskFactors}
+                onClick={() => handleEditRiskFactor(entity)}
                 testName="risk-factor-edit-button"
               >
                 Edit
               </Button>
-            </div>
-          );
-        } else {
-          return (
-            <div className={s.actions}>
-              {canWriteRiskFactors && (
-                <Button
-                  icon={<EditOutlined />}
-                  size="MEDIUM"
-                  type="SECONDARY"
-                  onClick={() => handleEditRiskFactor(entity)}
-                  testName="risk-factor-edit-button"
-                >
-                  Edit
-                </Button>
-              )}
-              <ActionMenu
-                entity={entity}
-                onDuplicate={(entity) => onActionsMenuClick('duplicate', entity)}
-                canWriteRiskFactors={canWriteRiskFactors}
-              />
-            </div>
-          );
-        }
+            )}
+            <ActionMenu
+              entity={entity}
+              onDuplicate={(entity) => onActionsMenuClick('duplicate', entity)}
+              canWriteRiskFactors={canWriteRiskFactors}
+            />
+          </div>
+        );
       },
     }),
   ]);
@@ -505,7 +541,7 @@ export default function RiskFactorsTable(props: Props) {
         isDisabled={!canWriteRiskFactors}
         testName="create-risk-factor-button"
       >
-        Custom risk factor
+        {isSimulation ? 'Simulate risk factor' : 'Custom risk factor'}
       </Button>
     </div>
   );

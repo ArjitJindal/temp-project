@@ -93,10 +93,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
   return (
     <SimulationPageWrapper
       key={`${isSimulationEnabled}`}
-      isSimulationModeEnabled={
-        localStorage.getItem(props.storageKey) === 'true' ||
-        location.pathname.includes('simulation')
-      }
+      isSimulationModeEnabled={localStorage.getItem(props.storageKey) === 'true'}
       onSimulationModeChange={handleSimulationModeChange}
       header={(actionButton) => (
         <div className={s.header}>

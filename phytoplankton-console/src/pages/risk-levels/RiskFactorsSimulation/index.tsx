@@ -182,57 +182,55 @@ export function RiskFactorsSimulation(props: Props) {
   };
   return (
     <div className={s.root}>
-      <div className={s.main}>
-        <Card.Root>
-          <Card.Section>
-            <div className={s.simulationHeader}>
-              <Tabs
-                type="editable-card"
-                activeKey={`${activeIterationIndex}`}
-                onChange={(key) => {
-                  if (key !== DUPLICATE_TAB_KEY) {
-                    setActiveIterationIndex(parseInt(key));
-                  }
-                }}
-                onEdit={(action, key) => onEdit(action, key)}
-                addIcon={
-                  <Tooltip
-                    title="You can simulate a maximum of 3 iterations for this rule at once."
-                    placement="bottom"
-                  >
-                    <div className={s.duplicateButton}>
-                      <AddLineIcon width={20} /> <span>Duplicate</span>
-                    </div>
-                  </Tooltip>
+      <Card.Root>
+        <Card.Section>
+          <div className={s.simulationHeader}>
+            <Tabs
+              type="editable-card"
+              activeKey={`${activeIterationIndex}`}
+              onChange={(key) => {
+                if (key !== DUPLICATE_TAB_KEY) {
+                  setActiveIterationIndex(parseInt(key));
                 }
-                hideAdd={iterations.length >= MAX_SIMULATION_ITERATIONS}
-                items={[
-                  ...iterations.map((_iteration, index) => ({
-                    title: `Iteration ${index + 1}`,
-                    key: `${index + 1}`,
-                    isClosable: iterations.length > 1,
-                    children: (
-                      <RiskFactorsSimulationForm
-                        isV8
-                        onChangeIterationInfo={onChangeIterationInfo}
-                        currentIterationIndex={activeIterationIndex}
-                        allIterations={iterations}
-                      />
-                    ),
-                  })),
-                ]}
-              />
-            </div>
-          </Card.Section>
-        </Card.Root>
-        <div className={s.riskFactorsTableContainer}>
-          <SimulationCustomRiskFactorsTable
-            riskFactors={riskFactors}
-            canEditRiskFactors={true}
-            activeIterationIndex={activeIterationIndex}
-            jobId={createdJobId}
-          />
-        </div>
+              }}
+              onEdit={(action, key) => onEdit(action, key)}
+              addIcon={
+                <Tooltip
+                  title="You can simulate a maximum of 3 iterations at once."
+                  placement="bottom"
+                >
+                  <div className={s.duplicateButton}>
+                    <AddLineIcon width={20} /> <span>Duplicate</span>
+                  </div>
+                </Tooltip>
+              }
+              hideAdd={iterations.length >= MAX_SIMULATION_ITERATIONS}
+              items={[
+                ...iterations.map((_iteration, index) => ({
+                  title: `Iteration ${index + 1}`,
+                  key: `${index + 1}`,
+                  isClosable: iterations.length > 1,
+                  children: (
+                    <RiskFactorsSimulationForm
+                      isV8
+                      onChangeIterationInfo={onChangeIterationInfo}
+                      currentIterationIndex={activeIterationIndex}
+                      allIterations={iterations}
+                    />
+                  ),
+                })),
+              ]}
+            />
+          </div>
+        </Card.Section>
+      </Card.Root>
+      <div className={s.riskFactorsTableContainer}>
+        <SimulationCustomRiskFactorsTable
+          riskFactors={riskFactors}
+          canEditRiskFactors={true}
+          activeIterationIndex={activeIterationIndex}
+          jobId={createdJobId}
+        />
       </div>
       <div className={s.footer}>
         <div className={s.footerButtons}>
