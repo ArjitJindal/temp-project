@@ -7,16 +7,27 @@ type Sizes = 'S' | 'M' | 'L';
 
 export interface Props extends InputProps<boolean> {
   size?: Sizes;
+  name?: string;
   testName?: string;
 }
 
 export default function Radio(props: Props) {
-  const { size = 'M', isDisabled, value, onChange, isError: _isError, testName, ...rest } = props;
+  const {
+    size = 'M',
+    isDisabled,
+    value,
+    onChange,
+    isError: _isError,
+    name,
+    testName,
+    ...rest
+  } = props;
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className={cn(s.root, s[`size-${size}`])}>
       <input
         ref={ref}
+        name={name}
         className={s.input}
         type="checkbox"
         disabled={isDisabled}

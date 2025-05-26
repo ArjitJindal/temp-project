@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-import { get } from 'lodash';
 import { Popover, Radio } from 'antd';
-import type { CellObject, CellStyle } from 'xlsx-js-style';
 import {
-  applyFieldAccessor,
   DerivedColumn,
   FieldAccessor,
   isDerivedColumn,
@@ -20,21 +17,19 @@ import {
   DEFAULT_PAGINATION_ENABLED,
 } from '../../../consts';
 import s from './styles.module.less';
+import { iterateItems } from './helpers';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import Button from '@/components/library/Button';
 import { flatDataItems } from '@/components/library/Table/internal/helpers';
-import { download } from '@/utils/browser';
 import * as Form from '@/components/ui/Form';
 import { getErrorMessage } from '@/utils/lang';
-import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
+import { downloadAsCSV } from '@/utils/csv';
 import { PaginationParams } from '@/utils/queries/hooks';
-import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import { xlsxValue } from '@/utils/xlsx';
-import { getCurrentDomain } from '@/utils/routing';
+import { downloadAsXLSX } from '@/utils/xlsx';
 import Alert from '@/components/library/Alert';
 import { message } from '@/components/library/Message';
-
-const MAXIMUM_EXPORT_ITEMS = 100000;
+import { generateTableExportData } from '@/components/library/Table/Header/Tools/DownloadButton/helpers';
+import { ExportData, MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
 
 type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
@@ -43,140 +38,6 @@ type Props<Item extends object, Params extends object> = {
   cursorPagination?: boolean;
   totalPages?: number;
 };
-
-export function transformCSVTableRows<T extends object>(
-  items: T[],
-  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
-  props: Props<T, any>,
-): CsvRow[] {
-  const result: CsvRow[] = [];
-  const columnTitles: string[] = [];
-  const columnsWithLinks: Set<number> = new Set();
-  let index = 0;
-  columnsToExport.map((column) => {
-    columnTitles.push(getColumnTitile(column, props));
-    if (column.type?.link) {
-      columnsWithLinks.add(index);
-      columnTitles.push(`${getColumnTitile(column, props)} Link`);
-    }
-    index++;
-  });
-
-  result.push(columnTitles.map((title) => csvValue(title)));
-
-  for (const row of items) {
-    const csvRow: CsvValue[] = [];
-    let index = 0;
-    columnsToExport.map((column) => {
-      const columnDataType = { ...UNKNOWN, ...column.type };
-      const value = isSimpleColumn(column)
-        ? applyFieldAccessor(row, column.key)
-        : column.value(row);
-
-      csvRow.push(csvValue(columnDataType.stringify?.(value as any, row)));
-
-      if (columnsWithLinks.has(index)) {
-        const link = columnDataType.link?.(value as any, row);
-        csvRow.push(csvValue(link ? `${getCurrentDomain()}${link}` : ''));
-      }
-      index++;
-    });
-    result.push(csvRow);
-  }
-
-  return result;
-}
-
-function processTableCSVDownload<T extends object>(
-  items: T[],
-  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
-  props: Props<T, any>,
-) {
-  const rows = transformCSVTableRows(items, columnsToExport, props);
-
-  const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
-  message.success(`Data export finished!`, { details: 'Download should start in a moment!' });
-  download(fileName, serialize(rows));
-}
-
-export function transformXLSXTableRows<T extends object>(
-  items: T[],
-  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
-  props: Props<T, any>,
-) {
-  const columnTitles: string[] = [];
-  const columnsWithLinks: Set<number> = new Set();
-  let index = 0;
-  columnsToExport.map((column) => {
-    columnTitles.push(getColumnTitile(column, props));
-    if (column.type?.link) {
-      columnsWithLinks.add(index);
-      columnTitles.push(`${getColumnTitile(column, props)} Link`);
-    }
-    index++;
-  });
-
-  const style: CellStyle = {
-    font: {
-      bold: true,
-    },
-  };
-
-  const rows: CellObject[][] = [
-    columnTitles.map((title) => ({
-      t: 's',
-      v: title,
-      s: style,
-    })),
-  ];
-
-  const dataRows = items.map((row) => {
-    const rowData: CellObject[] = [];
-    let index = 0;
-    columnsToExport.map((column) => {
-      const columnDataType = { ...UNKNOWN, ...column.type };
-      const value = isSimpleColumn<T>(column)
-        ? applyFieldAccessor(row, column.key)
-        : column.value(row);
-      const link = columnDataType.link?.(value as any, row);
-
-      rowData.push({
-        t: 's',
-        v: xlsxValue(columnDataType.stringify?.(value as any, row)),
-      });
-
-      if (columnsWithLinks.has(index)) {
-        rowData.push({
-          t: 's',
-          v: link ? `${getCurrentDomain()}${link}` : '',
-        });
-      }
-      index++;
-    });
-    return rowData;
-  });
-
-  rows.push(...dataRows);
-
-  return rows;
-}
-
-async function processTableExcelDownload<T extends object>(
-  items: T[],
-  columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
-  props: Props<T, any>,
-) {
-  const lib = await import('xlsx-js-style');
-  const { utils, writeFile } = lib.default;
-  // import { utils, CellStyle, CellObject, writeFile } from 'xlsx-js-style';
-  const rows = transformXLSXTableRows(items, columnsToExport, props);
-
-  const wb = utils.book_new();
-  const ws = utils.aoa_to_sheet(rows);
-
-  utils.book_append_sheet(wb, ws, 'data_sheet');
-  writeFile(wb, `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.xlsx`);
-}
 
 export default function DownloadButton<T extends object, Params extends object>(
   props: Props<T, Params>,
@@ -187,7 +48,6 @@ export default function DownloadButton<T extends object, Params extends object>(
     params: {
       pageSize = DEFAULT_PAGE_SIZE,
       pagination = DEFAULT_PAGINATION_ENABLED,
-      page: currentPage = 1,
       view = DEFAULT_DOWNLOAD_VIEW,
     },
     totalPages = 1,
@@ -199,95 +59,54 @@ export default function DownloadButton<T extends object, Params extends object>(
   const [isDownloadError, setIsDownloadError] = useState<boolean>(false);
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const result: CsvRow[] = [];
-      const columnsToExport = prepareColumns(columns);
-      result.push(
-        columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
-      );
-      let totalPages = 1;
-      let page = pagesMode === 'ALL' ? 1 : currentPage;
-
-      // Params for cursor pagination.
-      let from = '';
-      let next = '';
-      let runningTotal = 0;
-      let cursorPaginated = false;
-      const allFlatData: T[] = [];
-      do {
-        setProgress({
-          page: pagesMode === 'CURRENT' ? 1 : page,
-          totalPages: from ? undefined : totalPages,
-        });
-        const {
-          total,
-          items,
-          next: nextCursor,
-        } = await onPaginateData({ from, page, pageSize, view });
-        // If a cursor is returned, this is cursor paginated.
-        cursorPaginated = nextCursor !== undefined;
-
-        runningTotal += items.length;
-        if (cursorPaginated && nextCursor) {
-          next = nextCursor;
-        }
-        const totalItemsCount = total ?? items.length;
-
-        const flatData = flatDataItems<T>(items);
-        allFlatData.push(...flatData);
-        if (pagesMode === 'CURRENT') {
-          break;
-        }
-        if (pagesMode === 'ALL' && runningTotal >= MAXIMUM_EXPORT_ITEMS) {
-          setIsDownloadError(true);
-          break;
-        }
-
-        totalPages = Math.ceil(totalItemsCount / pageSize);
-        page++;
-
-        if (cursorPaginated) {
-          if (!next || next == '') {
-            break;
-          }
-          if (from == next) {
-            break;
-          }
-          from = next;
-        }
-      } while ((totalPages && page <= totalPages) || cursorPaginated);
-      if (format === 'csv') {
-        processTableCSVDownload(allFlatData, columnsToExport, props);
-      } else {
-        processTableExcelDownload(allFlatData, columnsToExport, props);
+    setIsDownloadError(false);
+    const columnsToExport = prepareColumns(columns);
+    const allFlatData: T[] = [];
+    for await (const item of iterateItems({
+      pagesMode,
+      onPaginateData,
+      params: props.params,
+      setProgress,
+    })) {
+      allFlatData.push(item);
+      if (allFlatData.length >= MAXIMUM_EXPORT_ITEMS) {
+        setIsDownloadError(true);
+        break;
       }
-    } catch (e) {
-      message.error(`Unable to export data. ${getErrorMessage(e)}`);
-      console.error(e);
-    } finally {
-      setProgress(null);
+    }
+    const exportData: ExportData = generateTableExportData(
+      allFlatData,
+      columnsToExport,
+      props.params,
+    );
+    if (format === 'csv') {
+      await downloadAsCSV(exportData);
+    } else {
+      await downloadAsXLSX(exportData);
     }
   };
 
   const handleNonPaginatedDownload = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsDownloadError(false);
     try {
       const columnsToExport = prepareColumns(columns);
       const { total, items } = await onPaginateData({ pageSize, view });
       const totalItemsCount = total ?? items.length;
       if (totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
-        message.error(
-          `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
-        );
         setIsDownloadError(true);
-        return;
       }
       const flatData = flatDataItems<T>(items);
+      const exportData: ExportData = generateTableExportData(
+        flatData,
+        columnsToExport,
+        props.params,
+      );
 
       if (format === 'csv') {
-        processTableCSVDownload(flatData, columnsToExport, props);
+        await downloadAsCSV(exportData);
       } else {
-        processTableExcelDownload(flatData, columnsToExport, props);
+        await downloadAsXLSX(exportData);
       }
     } catch (e) {
       message.error(`Unable to export data. ${getErrorMessage(e)}`);
@@ -335,8 +154,8 @@ export default function DownloadButton<T extends object, Params extends object>(
             )}
             {isDownloadError && (
               <Alert type="ERROR">
-                Download failed for all pages due to browser capacity. Please try downloading for up
-                to {new Intl.NumberFormat().format(MAXIMUM_EXPORT_ITEMS)} rows.
+                Download failed for several pages due to a browser capacity. Please try downloading
+                for up to {new Intl.NumberFormat().format(MAXIMUM_EXPORT_ITEMS)} rows.
               </Alert>
             )}
             <Form.Layout.Label title="Format">
@@ -396,29 +215,4 @@ function prepareColumns<T extends object>(
     }
   }
   return result;
-}
-
-function getColumnTitile<T extends object>(column: TableColumn<T>, props: Props<T, any>) {
-  let title = column.headerTitle;
-
-  if (!title) {
-    title = typeof column.title === 'string' ? column.title : '-';
-  }
-
-  const key = isSimpleColumn(column) ? column.key : column.id;
-  const filterValue = key ? get(props.params, key) : null;
-  if (filterValue) {
-    let filterValueOptions = '';
-
-    if (typeof filterValue === 'object' && Array.isArray(filterValue)) {
-      filterValueOptions = filterValue.join(', ');
-    } else if (typeof filterValue === 'string') {
-      filterValueOptions = filterValue;
-    } else if (typeof filterValue === 'number') {
-      filterValueOptions = filterValue.toString();
-    }
-
-    title += ` (Filter: ${filterValueOptions})`;
-  }
-  return title;
 }

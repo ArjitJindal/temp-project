@@ -1,10 +1,11 @@
-import React from 'react';
 import { DeepKeys, DeepValue } from '@tanstack/react-table';
 import { cloneDeep, get, set } from 'lodash';
+import React from 'react';
+import { ExportDataStructure, ExportKey } from './export';
+import { AutoFilterDataType } from '@/components/library/Filter/types';
+import { ExportDataRow } from '@/utils/data-export';
 import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import { StatePair } from '@/utils/state';
-import { AutoFilterDataType } from '@/components/library/Filter/types';
-
 /*
   Contexts
  */
@@ -113,6 +114,12 @@ export interface FullColumnDataType<Value, Item = unknown> {
   link?: (value: Value | undefined, item: Item) => string | undefined; // can be used for export
   defaultWrapMode?: 'WRAP' | 'OVERFLOW';
   autoFilterDataType?: AutoFilterDataType;
+  export?:
+    | {
+        dataStructure: ExportDataStructure;
+        execute: (keys: ExportKey[], value: Value | undefined, item: Item) => ExportDataRow;
+      }
+    | undefined;
 }
 
 // Simplified variant of a data type which doesn't use parent item

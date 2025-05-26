@@ -1,3 +1,7 @@
+import { CellObject, CellStyle } from 'xlsx-js-style';
+import { ExportData } from './data-export';
+import { getCurrentDomain } from './routing';
+
 const EXCEL_CHAR_LIMIT = Math.pow(2, 15) - 1;
 
 export function xlsxValue(value: unknown): string {
@@ -27,4 +31,56 @@ export function xlsxValue(value: unknown): string {
     str = str.substring(0, EXCEL_CHAR_LIMIT - label.length) + label;
   }
   return str;
+}
+
+export function transformXLSXTableRows(data: ExportData) {
+  const columnTitles: string[] = data.headers;
+
+  const style: CellStyle = {
+    font: {
+      bold: true,
+    },
+  };
+
+  const rows: CellObject[][] = [
+    columnTitles.map((title) => ({
+      t: 's',
+      v: title,
+      s: style,
+    })),
+  ];
+
+  const dataRows = data.rows.map((row) => {
+    const rowData: CellObject[] = [];
+    for (const { value, link } of row) {
+      rowData.push({
+        t: 's',
+        v: xlsxValue(value),
+      });
+
+      if (link) {
+        rowData.push({
+          t: 's',
+          v: link ? `${getCurrentDomain()}${link}` : '',
+        });
+      }
+    }
+    return rowData;
+  });
+
+  rows.push(...dataRows);
+
+  return rows;
+}
+
+export async function downloadAsXLSX(data: ExportData) {
+  const lib = await import('xlsx-js-style');
+  const { utils, writeFile } = lib.default;
+  const rows = transformXLSXTableRows(data);
+
+  const wb = utils.book_new();
+  const ws = utils.aoa_to_sheet(rows);
+
+  utils.book_append_sheet(wb, ws, 'data_sheet');
+  writeFile(wb, `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.xlsx`);
 }

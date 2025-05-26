@@ -1,21 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import { groupBy } from 'lodash';
-import { BOOLEAN, LONG_TEXT, NUMBER, RISK_LEVEL, STRING } from './standardDataTypes';
-import { AllParams, CommonParams, SimpleColumn } from './types';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DEFAULT_PARAMS_STATE } from './consts';
+import { BOOLEAN, LONG_TEXT, NUMBER, RISK_LEVEL, STRING } from './standardDataTypes';
+import { AllParams, CommonParams, SimpleColumn, TableData } from './types';
 import Table from './index';
-import { UseCase } from '@/pages/storybook/components';
-import Button from '@/components/library/Button';
-import { PaginatedData } from '@/utils/queries/hooks';
-import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { RiskLevel } from '@/utils/risk-levels';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import Button from '@/components/library/Button';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { UseCase } from '@/pages/storybook/components';
+import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
+import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
+import { RiskLevel } from '@/utils/risk-levels';
 
 interface TableItem {
   id: string; // guid
   isBlocked: boolean;
   firstName: string;
+  website?: string;
   lastName: string;
   age: number;
   bio: string; // short biography of a person
@@ -867,6 +868,120 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title="Advanced export">
+        <WithParams>
+          {(params, onChangeParams) => {
+            const helper = new ColumnHelper<TableItem>();
+            return (
+              <Table<TableItem>
+                tableId="header_subtitle"
+                rowKey="id"
+                params={params}
+                onChangeParams={onChangeParams}
+                toolsOptions={{
+                  download: true,
+                }}
+                columns={helper.list([
+                  helper.simple<'firstName'>({
+                    key: 'firstName',
+                    title: 'First name',
+                    subtitle: 'Simple column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                  }),
+                  helper.simple<'website'>({
+                    key: 'website',
+                    title: 'Website',
+                    type: {
+                      link: (value) => value,
+                    },
+                  }),
+                  helper.derived({
+                    id: 'custom-data',
+                    title: 'Custom data',
+                    value: () => 'custom data render',
+                    type: {
+                      export: {
+                        dataStructure: {
+                          fields: [
+                            {
+                              id: 'f1',
+                              label: 'String field',
+                              type: 'string',
+                            },
+                            {
+                              id: 'f2',
+                              label: 'Number field',
+                              type: 'number',
+                            },
+                            {
+                              id: 'f3',
+                              label: 'Boolean field',
+                              type: 'boolean',
+                            },
+                          ],
+                        },
+                        execute: (keys) => {
+                          return keys.map((key) => {
+                            if (key.length === 0) {
+                              return { value: '-' };
+                            }
+                            const field = key[0];
+                            if (field === 'f1') {
+                              return { value: 'test', link: 'https://www.google.com' };
+                            }
+                            if (field === 'f2') {
+                              return { value: 123 };
+                            }
+                            if (field === 'f3') {
+                              return { value: true };
+                            }
+                            return { value: '-' };
+                          });
+                        },
+                      },
+                    },
+                  }),
+                  helper.derived<string>({
+                    title: 'Full name',
+                    subtitle: 'Derived column subtitle',
+                    tooltip: 'Tooltip text',
+                    sorting: true,
+                    value: (entity): string => `${entity.firstName} ${entity.lastName}`,
+                  }),
+                  helper.display({
+                    title: 'Actions',
+                    subtitle: 'Display column subtitle',
+                    tooltip: 'Tooltip text',
+                    render: () => <></>,
+                  }),
+                  helper.group({
+                    title: 'Address',
+                    subtitle: 'Group column subtitle',
+                    tooltip: 'Tooltip text',
+                    children: [
+                      helper.simple<'address.street'>({
+                        key: 'address.street',
+                        title: 'Street',
+                        sorting: true,
+                      }),
+                      helper.simple<'address.city'>({
+                        key: 'address.city',
+                        title: 'City',
+                        sorting: true,
+                      }),
+                    ],
+                  }),
+                ])}
+                data={dataSource(params)}
+                onPaginateData={async (params: PaginationParams): Promise<TableData<TableItem>> => {
+                  return dataSource(params);
+                }}
+              />
+            );
+          }}
+        </WithParams>
+      </UseCase>
     </>
   );
 }
@@ -1117,6 +1232,7 @@ const data: TableItem[] = [
     firstName:
       'Pablo Diego José Francisco de Paula Juan Nepomuceno María de los Remedios Cipriano de la Santísima Trinidad Ruiz y',
     lastName: 'Picasso',
+    website: 'http://www.picasso.com',
     age: 91,
     bio: "Pablo Ruiz Picasso was a Spanish painter, sculptor, printmaker, ceramicist and theatre designer who spent most of his adult life in France. One of the most influential artists of the 20th century, he is known for co-founding the Cubist movement, the invention of constructed sculpture,[8][9] the co-invention of collage, and for the wide variety of styles that he helped develop and explore. Among his most famous works are the proto-Cubist Les Demoiselles d'Avignon (1907), and the anti-war painting Guernica (1937), a dramatic portrayal of the bombing of Guernica by German and Italian air forces during the Spanish Civil War.",
     address: {
@@ -1136,6 +1252,7 @@ const data: TableItem[] = [
     isBlocked: false,
     firstName: 'Sophia',
     lastName: 'Miller',
+    website: 'http://www.sophia.com',
     age: 32,
     bio: 'Sophia is a graphic designer with a passion for creating beautiful and functional designs. She has a degree in graphic design from Parsons School of Design and has worked for several design agencies. In her free time, she enjoys painting and visiting art galleries.',
     address: {

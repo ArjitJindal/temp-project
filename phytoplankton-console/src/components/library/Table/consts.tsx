@@ -9,6 +9,7 @@ import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';
 import { TableListViewEnum } from '@/apis';
 
 export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_EXPORT_PAGE_SIZE = 100; // to do fewer requests
 export const DEFAULT_PAGINATION_ENABLED = true;
 export const DEFAULT_PAGINATION_VIEW: TableListViewEnum = 'TABLE';
 export const DEFAULT_DOWNLOAD_VIEW: TableListViewEnum = 'DOWNLOAD';

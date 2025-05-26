@@ -24,6 +24,9 @@ export function getErrorMessage(e: unknown) {
 }
 
 export function isEqual<T>(a: T, b: T): boolean {
+  if (a === b) {
+    return true;
+  }
   if (a == null || b == null) {
     return a == b; // For null to be equal to undefined
   }
@@ -71,4 +74,21 @@ export function denseArray<T>(array: SparseArray<T>): T[] {
 
 export function objectKeys<T extends object>(obj: T): (keyof T)[] {
   return Object.keys(obj) as (keyof T)[];
+}
+
+export async function* iterateChunks<T>(
+  generator: AsyncGenerator<T>,
+  chunkSize: number,
+): AsyncGenerator<T[]> {
+  let chunk: T[] = [];
+  for await (const item of generator) {
+    chunk.push(item);
+    if (chunk.length === chunkSize) {
+      yield chunk;
+      chunk = [];
+    }
+  }
+  if (chunk.length > 0) {
+    yield chunk;
+  }
 }

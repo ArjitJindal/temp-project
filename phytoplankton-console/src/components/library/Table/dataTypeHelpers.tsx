@@ -32,6 +32,7 @@ export function array<Value, Item = unknown>(
     link: () => {
       return '';
     },
+    export: undefined,
   };
 }
 

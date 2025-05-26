@@ -60,7 +60,6 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 import { DEFAULT_PAGINATION_VIEW } from '@/components/library/Table/consts';
-
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
   timestamp?: string[];
@@ -443,7 +442,7 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'originPayment.paymentDetails'>({
         title: showDetailsView ? 'Origin payment details' : 'Origin method',
         key: 'originPayment.paymentDetails',
-        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView, 'Origin payment details'),
       }),
       helper.simple<'originPayment.paymentMethodId'>({
         title: 'Origin payment identifier',
@@ -494,7 +493,7 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'destinationPayment.paymentDetails'>({
         title: showDetailsView ? 'Destination payment details' : 'Destination method',
         key: 'destinationPayment.paymentDetails',
-        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+        type: PAYMENT_DETAILS_OR_METHOD(showDetailsView, 'Destination payment details'),
       }),
       helper.simple<'destinationPayment.paymentMethodId'>({
         title: 'Destination payment identifier',
@@ -658,6 +657,7 @@ export default function TransactionsTable(props: Props) {
         download: isTransactionsDownloadEnabled,
         reload: true,
         setting: true,
+        advancedDownload: true,
       }}
     />
   );

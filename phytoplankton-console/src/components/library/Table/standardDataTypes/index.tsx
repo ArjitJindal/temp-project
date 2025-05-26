@@ -78,7 +78,8 @@ import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 import { FeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 
-export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
+export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export'>> &
+  Pick<FullColumnDataType<unknown>, 'export'> = {
   render: (value) => {
     if (
       value == null ||

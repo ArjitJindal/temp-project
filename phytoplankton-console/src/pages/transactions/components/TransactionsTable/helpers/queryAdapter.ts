@@ -28,7 +28,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       'originAmountDetails.country': params['originAmountDetails.country']?.join(',') ?? '',
       'destinationAmountDetails.country':
         params['destinationAmountDetails.country']?.join(',') ?? '',
-      includePaymentDetails: params.showDetailedView ? 'true' : 'false',
+      includePaymentDetails: 'true',
       filterOriginPaymentMethodId: params['originPayment.paymentMethodId'],
       filterDestinationPaymentMethodId: params['destinationPayment.paymentMethodId'],
       filterPaymentDetailName: params.filterPaymentDetailName,
