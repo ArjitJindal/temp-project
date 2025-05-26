@@ -15,6 +15,7 @@ import {
   transactWriteWithClickhouse,
 } from '../case-alerts-common/utils'
 import { CaseWithoutCaseTransactions } from '../cases/repository'
+import { SlaUpdates } from '../sla/sla-service'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
@@ -36,7 +37,6 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { logger } from '@/core/logger'
-import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { getContext } from '@/core/utils/context-storage'
@@ -248,31 +248,36 @@ export class DynamoAlertRepository {
    * @returns Promise that resolves when the update is complete
    */
   public async updateAlertSlaPolicyDetails(
-    alertIds: string[],
-    slaPolicyDetails: SLAPolicyDetails[]
+    updates: SlaUpdates[]
   ): Promise<void> {
     const now = Date.now()
 
     const updateExpression = `SET slaPolicyDetails = :slaPolicyDetails, updatedAt = :updatedAt`
 
-    const expressionAttributeValues = {
-      ':slaPolicyDetails': slaPolicyDetails,
-      ':updatedAt': now,
-    }
-
+    const alertIds = updates.map((update) => update.entityId)
     const alertItems = await this.getAlertsFromAlertIds(alertIds)
     if (!alertItems) {
       throw new Error(`Alert with ID ${alertIds} not found`)
     }
     let operations: TransactWriteOperation[] = []
     let keyLists: dynamoKeyList = []
-    for (const alertItem of alertItems) {
+    for (const update of updates) {
+      const targetAlert = alertItems.find(
+        (item) => item.alertId === update.entityId
+      )
+      if (!targetAlert) {
+        continue
+      }
+      const expressionAttributeValues = {
+        ':slaPolicyDetails': update.slaPolicyDetails,
+        ':updatedAt': now,
+      }
       const { operations: alertOperations, keyLists: alertKeyLists } =
         await this.createAlertUpdatesQueries(
-          alertItem.alertId as string,
+          update.entityId,
           updateExpression,
           expressionAttributeValues,
-          alertItem
+          targetAlert
         )
       operations = concat(operations, alertOperations)
       keyLists = concat(keyLists, alertKeyLists)

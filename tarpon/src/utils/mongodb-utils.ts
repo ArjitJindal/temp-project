@@ -13,6 +13,7 @@ import {
   ObjectId,
   OptionalUnlessRequiredId,
   UpdateFilter,
+  UpdateOneModel,
   UpdateResult,
   WithId,
 } from 'mongodb'
@@ -26,7 +27,10 @@ import {
   getMongoDbIndexDefinitions,
   getSearchIndexName,
 } from './mongodb-definitions'
-import { sendMessageToMongoConsumer } from './clickhouse/utils'
+import {
+  sendBulkMessagesToMongoConsumer,
+  sendMessageToMongoConsumer,
+} from './clickhouse/utils'
 import { envIs, envIsNot } from './env'
 import { isDemoTenant } from './tenant'
 import { getSQSClient } from './sns-sqs-client'
@@ -51,7 +55,6 @@ import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 import { hasFeature } from '@/core/utils/context'
 import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
-
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
@@ -624,6 +627,30 @@ export async function internalMongoInsert<T extends Document>(
     operationType: 'insert',
     clusterTime: Date.now(),
   })
+}
+
+export async function internalMongoBulkUpdate<T extends Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  operations: {
+    updateOne: UpdateOneModel<T>
+  }[]
+) {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  await collection.bulkWrite(operations)
+
+  await sendBulkMessagesToMongoConsumer(
+    operations.map((operation) => ({
+      collectionName,
+      documentKey: {
+        type: 'filter',
+        value: operation.updateOne.filter as Filter<Document>,
+      },
+      operationType: 'update',
+      clusterTime: Date.now(),
+    }))
+  )
 }
 
 export interface MongoUpdateMessage<T extends Document = Document> {

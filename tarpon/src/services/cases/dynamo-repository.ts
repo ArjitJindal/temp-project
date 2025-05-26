@@ -15,6 +15,7 @@ import {
   getCaseAuxiliaryIndexes,
   transactWriteWithClickhouse,
 } from '../case-alerts-common/utils'
+import { SlaUpdates } from '../sla/sla-service'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -41,7 +42,6 @@ import { logger } from '@/core/logger'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
-import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { traceable } from '@/core/xray'
 import {
   CaseCommentFileInternal,
@@ -1449,30 +1449,40 @@ export class DynamoCaseRepository {
    * @returns Promise that resolves when the update is complete
    */
   public async updateCaseSlaPolicyDetails(
-    caseId: string,
-    slaPolicyDetails: SLAPolicyDetails[]
+    updates: SlaUpdates[]
   ): Promise<void> {
     const updateExpression = `SET slaPolicyDetails = :slaPolicyDetails`
-
-    const expressionAttributeValues = {
-      ':slaPolicyDetails': slaPolicyDetails,
+    const caseIds = updates.map((u) => u.entityId)
+    const caseItems = await this.getCases(caseIds)
+    if (caseItems.length !== caseIds.length) {
+      throw new Error(
+        `Case with ID ${caseIds.find(
+          (id) => !caseItems.find((c) => c.caseId === id)
+        )} not found`
+      )
     }
-
-    const caseItem = await this.getCaseById(caseId)
-    if (!caseItem) {
-      throw new Error(`Case with ID ${caseId} not found`)
+    const operations: TransactWriteOperation[] = []
+    const keyLists: dynamoKeyList = []
+    for (const update of updates) {
+      const { operations: ops, keyLists: keys } = await createUpdateCaseQueries(
+        this.tenantId,
+        this.tableName,
+        {
+          caseId: update.entityId,
+          UpdateExpression: updateExpression,
+          ExpressionAttributeValues: {
+            ':slaPolicyDetails': update.slaPolicyDetails,
+          },
+          caseItem: caseItems.find((c) => c.caseId === update.entityId),
+        }
+      )
+      ops.map((op) => {
+        operations.push(op)
+      })
+      keys.map((key) => {
+        keyLists.push(key)
+      })
     }
-
-    const { operations, keyLists } = await createUpdateCaseQueries(
-      this.tenantId,
-      this.tableName,
-      {
-        caseId,
-        UpdateExpression: updateExpression,
-        ExpressionAttributeValues: expressionAttributeValues,
-        caseItem,
-      }
-    )
 
     const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
       generateDynamoConsumerMessage(this.tenantId, [
@@ -1485,7 +1495,7 @@ export class DynamoCaseRepository {
       dynamoDbConsumerMessage
     )
 
-    logger.debug(`Updated SLA policy details for case ${caseId}`)
+    logger.debug(`Updated SLA policy details for cases ${caseIds.join(', ')}`)
   }
 
   /**

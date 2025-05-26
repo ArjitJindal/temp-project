@@ -12,6 +12,7 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { intersection, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { SlaUpdates } from '../sla/sla-service'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseClickhouseRepository } from '@/services/cases/clickhouse-repository'
 import {
@@ -22,6 +23,7 @@ import {
   internalMongoUpdateMany,
   internalMongoUpdateOne,
   withTransaction,
+  internalMongoBulkUpdate,
 } from '@/utils/mongodb-utils'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -48,7 +50,6 @@ import { CounterRepository } from '@/services/counter/repository'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
-import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import {
   getClickhouseClient,
@@ -1668,18 +1669,33 @@ export class CaseRepository {
   }
 
   public async updateCaseSlaPolicyDetails(
-    caseId: string,
-    slaPolicyDetails: SLAPolicyDetails[]
+    updates: SlaUpdates[]
   ): Promise<void> {
     if (isClickhouseMigrationEnabled()) {
-      await this.dynamoCaseRepository.updateCaseSlaPolicyDetails(
-        caseId,
-        slaPolicyDetails
-      )
+      await this.dynamoCaseRepository.updateCaseSlaPolicyDetails(updates)
     }
-    await this.updateOneCase(
-      { caseId },
-      { $set: { slaPolicyDetails: slaPolicyDetails } }
+    const operations = updates.map((update) => ({
+      updateOne: {
+        filter: { caseId: update.entityId },
+        update: { $set: { slaPolicyDetails: update.slaPolicyDetails } },
+      },
+    }))
+    await this.bulkUpdateCases(operations)
+  }
+
+  private async bulkUpdateCases(
+    operations: {
+      updateOne: {
+        filter: Filter<Case>
+        update: Document
+        arrayFilters?: Document[]
+      }
+    }[]
+  ) {
+    await internalMongoBulkUpdate(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      operations
     )
   }
 

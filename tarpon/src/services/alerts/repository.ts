@@ -5,11 +5,13 @@ import { cloneDeep, compact, intersection, isEmpty, last, uniqBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
+import { SlaUpdates } from '../sla/sla-service'
 import { DynamoAlertRepository } from './dynamo-repository'
 import { ClickhouseAlertRepository } from './clickhouse-repository'
 import {
   convertQueryToAggregationExpression,
   getSkipAndLimit,
+  internalMongoBulkUpdate,
   internalMongoUpdateMany,
   internalMongoUpdateOne,
   paginatePipeline,
@@ -53,7 +55,6 @@ import {
 } from '@/utils/clickhouse/utils'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
-import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
@@ -1153,23 +1154,44 @@ export class AlertsRepository {
   }
 
   public async updateAlertSlaPolicyDetails(
-    alertIds: string[],
-    slaPolicyDetails: SLAPolicyDetails[]
+    updates: SlaUpdates[]
   ): Promise<void> {
     if (isClickhouseMigrationEnabled()) {
-      await this.dynamoAlertRepository.updateAlertSlaPolicyDetails(
-        alertIds,
-        slaPolicyDetails
-      )
+      await this.dynamoAlertRepository.updateAlertSlaPolicyDetails(updates)
     }
-    await this.updateManyAlerts(
-      { 'alerts.alertId': { $in: alertIds } },
-      {
-        $set: {
-          'alerts.$[alert].slaPolicyDetails': slaPolicyDetails,
+    const operations: {
+      updateOne: {
+        filter: Filter<Case>
+        update: Document
+        arrayFilters?: Document[]
+      }
+    }[] = updates.map((update) => ({
+      updateOne: {
+        filter: { 'alerts.alertId': update.entityId },
+        update: {
+          $set: {
+            'alerts.$[alert].slaPolicyDetails': update.slaPolicyDetails,
+          },
         },
+        arrayFilters: [{ 'alert.alertId': update.entityId }],
       },
-      { arrayFilters: [{ 'alert.alertId': { $in: alertIds } }] }
+    }))
+    await this.bulkUpdateAlerts(operations)
+  }
+
+  private async bulkUpdateAlerts(
+    operations: {
+      updateOne: {
+        filter: Filter<Case>
+        update: Document
+        arrayFilters?: Document[]
+      }
+    }[]
+  ) {
+    await internalMongoBulkUpdate(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      operations
     )
   }
 

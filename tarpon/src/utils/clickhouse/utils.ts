@@ -13,6 +13,7 @@ import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { ConnectionCredentials } from 'thunder-schema'
 import { envIs, envIsNot } from '../env'
+import { bulkSendMessages } from '../sns-sqs-client'
 import {
   ClickHouseTables,
   MaterializedViewDefinition,
@@ -668,6 +669,26 @@ export const sendMessageToMongoConsumer = async (
       MessageBody: JSON.stringify(message),
       QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
     })
+  )
+}
+
+// send bulk messages to mongo consumer
+export async function sendBulkMessagesToMongoConsumer(
+  messages: MongoConsumerMessage[]
+) {
+  if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
+    return
+  }
+  if (envIs('local') || envIs('test')) {
+    await handleMongoConsumerSQSMessage(messages)
+    return
+  }
+  await bulkSendMessages(
+    sqs,
+    process.env.MONGO_DB_CONSUMER_QUEUE_URL as string,
+    messages.map((message) => ({
+      MessageBody: JSON.stringify(message),
+    }))
   )
 }
 

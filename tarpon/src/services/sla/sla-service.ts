@@ -31,6 +31,11 @@ import { Account } from '@/@types/openapi-internal/Account'
 const CONCURRENCY = 50
 const BATCH_SIZE = 10000
 
+export type SlaUpdates = {
+  entityId: string
+  slaPolicyDetails: SLAPolicyDetails[]
+}
+
 @traceable
 export class SLAService {
   private alertsRepository: AlertsRepository
@@ -180,15 +185,16 @@ export class SLAService {
   public async calculateAndUpdateSLAStatusesForEntity<T extends Alert | Case>(
     type: 'alert' | 'case',
     cursor: AggregationCursor<T>,
-    updateEntity: (
-      updatedPolicyDetails: SLAPolicyDetails[],
-      entity: T
-    ) => Promise<void>
+    updateEntity: (updates: SlaUpdates[]) => Promise<void>
   ) {
     await processCursorInBatch(
       cursor,
       async (entities) => {
         logger.debug(`Updating SLA Statuses for ${entities.length} ${type}s`)
+        const updates: {
+          entityId: string
+          slaPolicyDetails: SLAPolicyDetails[]
+        }[] = []
         await pMap(
           entities,
           async (entity) => {
@@ -215,16 +221,22 @@ export class SLAService {
                 }
               })
             )
-
-            await updateEntity(
-              updatedSlaPolicyDetails,
-              omit(entity, '_id') as T
-            )
+            const entityId =
+              type === 'alert'
+                ? (entity as Alert).alertId
+                : (entity as Case).caseId
+            if (entityId) {
+              updates.push({
+                entityId,
+                slaPolicyDetails: updatedSlaPolicyDetails,
+              })
+            }
           },
           {
             concurrency: CONCURRENCY,
           }
         )
+        await updateEntity(updates)
         logger.debug(`SLA Statuses updated for ${entities.length} ${type}s`)
       },
       { mongoBatchSize: BATCH_SIZE, processBatchSize: BATCH_SIZE }
@@ -244,15 +256,12 @@ export class SLAService {
     await this.calculateAndUpdateSLAStatusesForEntity<Alert>(
       'alert',
       alertsCursor,
-      async (updatedPolicyDetails, entity) => {
-        if (!entity.alertId) {
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
           return
         }
 
-        await this.alertsRepository.updateAlertSlaPolicyDetails(
-          [entity.alertId],
-          updatedPolicyDetails
-        )
+        await this.alertsRepository.updateAlertSlaPolicyDetails(updates)
       }
     )
     logger.debug('SLA Statuses updated for all alerts')
@@ -268,15 +277,12 @@ export class SLAService {
     await this.calculateAndUpdateSLAStatusesForEntity<Case>(
       'case',
       casesCursor,
-      async (updatedPolicyDetails, entity) => {
-        if (!entity.caseId) {
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
           return
         }
 
-        await this.caseRepository.updateCaseSlaPolicyDetails(
-          entity.caseId,
-          updatedPolicyDetails
-        )
+        await this.caseRepository.updateCaseSlaPolicyDetails(updates)
       }
     )
     logger.debug('SLA Statuses updated for all manual cases')
