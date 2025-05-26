@@ -1,8 +1,8 @@
 import React from 'react';
-import { Alert } from 'antd';
 import s from './index.module.less';
 import * as ar from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
+import Alert from '@/components/library/Alert';
 
 interface Props<T> {
   resource: ar.AsyncResource<T>;
@@ -28,7 +28,7 @@ export function AsyncResourceRenderer<T>(props: Props<T>): JSX.Element {
       );
     },
     renderFailed = (reason) => {
-      return <Alert message={reason} type="error" />;
+      return <Alert type="ERROR">{reason}</Alert>;
     },
   } = props;
   return (

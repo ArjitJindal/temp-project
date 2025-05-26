@@ -20,7 +20,7 @@ import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 function parseWorkflow(request): CaseWorkflow | AlertWorkflow {
   let workflow: CaseWorkflow | AlertWorkflow
   // TODO: fix this!
-  const inlineObject = request.InlineObject3 || request.InlineObject4
+  const inlineObject = request.CreateWorkflowType || request.UpdateWorkflowType
 
   if (request.workflowType === 'case') {
     workflow = inlineObject.caseWorkflow as CaseWorkflow

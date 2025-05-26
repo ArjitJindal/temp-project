@@ -25,6 +25,7 @@ paths:
           application/json:
             schema:
               type: object
+              title: UpdateWorkflowType
               properties:
                 caseWorkflow:
                   $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
@@ -108,6 +109,7 @@ paths:
         content:
           application/json:
             schema:
+              title: CreateWorkflowType
               type: object
               properties:
                 caseWorkflow:

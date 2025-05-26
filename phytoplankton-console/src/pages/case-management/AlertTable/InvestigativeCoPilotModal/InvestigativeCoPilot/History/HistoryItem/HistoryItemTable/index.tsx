@@ -11,7 +11,7 @@ import {
   DATE_TIME,
   PAYMENT_METHOD,
   UNKNOWN,
-  TAG,
+  TAG_LIST,
   MONEY_AMOUNT,
   MONEY_CURRENCY,
   COUNTRIES_MULTIPLE,
@@ -71,7 +71,7 @@ export const typeAssigner = (columnType: string | undefined, tenantSettings?: Te
       break;
     }
     case 'TAG': {
-      type = TAG;
+      type = TAG_LIST;
       break;
     }
     case 'MONEY_AMOUNT': {

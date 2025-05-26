@@ -72,7 +72,6 @@
     "@ant-design/pro-card": "1.20.13",
     "@antv/l7-react": "^2.1.9",
     "@auth0/auth0-react": "^1.9.0",
-    "@dagrejs/dagre": "^1.1.4",
     "@fingerprintjs/fingerprintjs": "^4.5.0",
     "@flagright/lib": "link:../lib",
     "@nangohq/frontend": "^0.57.1",

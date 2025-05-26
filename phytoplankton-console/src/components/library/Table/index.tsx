@@ -518,10 +518,10 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
                 (header) => !header.column.getIsPinned(),
               );
 
-              const rowId = `row-${applyFieldAccessor(
-                row.original.content,
-                rowKey as FieldAccessor<Item>,
-              )}`;
+              const rowId = showSkeleton
+                ? `row-skeleton-${index}`
+                : `row-${applyFieldAccessor(row.original.content, rowKey as FieldAccessor<Item>)}`;
+
               return (
                 <React.Fragment key={rowId}>
                   <tr id={`row_${index}`} data-cy={`${cyId}-data-row`}>

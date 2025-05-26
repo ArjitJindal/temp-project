@@ -490,3 +490,4 @@ export const SANCTIONS_SOURCES = (type: SanctionsSourceType): QueryKey => [
 export const PERMISSIONS_STATEMENTS = (): QueryKey => ['permissions-statements'];
 
 export const WORKFLOWS_LIST = (params?: AnyParameters): QueryKey => ['workflows', 'list', params];
+export const WORKFLOWS_ITEM = (id: string): QueryKey => ['workflows', 'item', id];

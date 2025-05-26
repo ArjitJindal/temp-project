@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useImperativeHandle, useRef } from 'react';
 import cn from 'clsx';
+import { Link, LinkProps } from 'react-router-dom';
 import s from './index.module.less';
 import { Permission } from '@/apis';
 import { useHasPermissions, useHasStatements } from '@/utils/user-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
+export type ButtonRef = {
+  click: () => void;
+};
+
 export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER';
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
-export interface ButtonProps {
+export interface CommonButtonProps {
   type?: ButtonType;
   icon?: React.ReactNode;
   size?: ButtonSize;
@@ -19,7 +24,6 @@ export interface ButtonProps {
   isDisabled?: boolean;
   isLoading?: boolean;
   htmlType?: 'submit' | 'button';
-  htmlAttrs?: React.ButtonHTMLAttributes<unknown>;
   style?: React.CSSProperties;
   className?: string;
   testName?: string;
@@ -29,9 +33,21 @@ export interface ButtonProps {
   requiredStatements?: string[];
 }
 
-interface BaseButtonProps extends Omit<ButtonProps, 'requiredPermissions'> {}
+export interface ButtonProps extends CommonButtonProps {
+  asLink?: false | undefined;
+  htmlAttrs?: React.ButtonHTMLAttributes<unknown>;
+}
 
-const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, ref) => {
+export interface ButtonLinkProps
+  extends CommonButtonProps,
+    Pick<LinkProps, 'to' | 'reloadDocument' | 'replace' | 'state'> {
+  asLink: true;
+  htmlAttrs?: React.AnchorHTMLAttributes<unknown>;
+}
+
+export type Props = ButtonProps | ButtonLinkProps;
+
+const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
   const {
     type = 'PRIMARY',
     htmlType = 'button',
@@ -41,7 +57,6 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
     children,
     isDisabled,
     isLoading,
-    htmlAttrs = {},
     style,
     testName,
     className,
@@ -51,37 +66,77 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
 
   const handleClick = () => {
     if (onClick) {
-      onClick();
+      onClick?.();
     }
   };
 
-  return (
-    <button
-      style={style}
-      ref={ref}
-      className={cn(
-        s.root,
-        s[`size-${size}`],
-        s[`type-${type}`],
-        (children === '' || children == null) && s.iconOnly,
-        className,
-      )}
-      onClick={handleClick}
-      disabled={isDisabled || isLoading}
-      type={htmlType}
-      data-cy={testName}
-      data-attr={analyticsName}
-      data-sentry-allow={true}
-      {...htmlAttrs}
-    >
+  const isLink = 'asLink' in props && props.asLink === true;
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  useImperativeHandle(
+    ref,
+    () => {
+      if (isLink) {
+        return {
+          click: () => {
+            linkRef.current?.click();
+          },
+        };
+      } else {
+        return {
+          click: () => {
+            buttonRef.current?.click();
+          },
+        };
+      }
+    },
+    [isLink],
+  );
+
+  const buttonDisabled = isDisabled || isLoading;
+
+  const sharedProps = {
+    style: style,
+    className: cn(
+      s.root,
+      s[`size-${size}`],
+      s[`type-${type}`],
+      buttonDisabled && s.isDisabled,
+      (children === '' || children == null) && s.iconOnly,
+      className,
+    ),
+    onClick: handleClick,
+    disabled: buttonDisabled,
+    type: htmlType,
+    'data-cy': testName,
+    'data-attr': analyticsName,
+    'data-sentry-allow': true,
+  };
+
+  const newChildren = (
+    <>
       {icon && <div className={s.icon}>{icon}</div>}
       {children}
       {iconRight && <div className={s.icon}>{iconRight}</div>}
+    </>
+  );
+
+  if ('asLink' in props && props.asLink === true) {
+    return (
+      <Link ref={linkRef} to={props.to} {...sharedProps} {...props.htmlAttrs}>
+        {newChildren}
+      </Link>
+    );
+  }
+
+  return (
+    <button ref={buttonRef} {...sharedProps} {...props.htmlAttrs}>
+      {newChildren}
     </button>
   );
 });
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
   const { requiredPermissions = [], requiredStatements = [], ...baseProps } = props;
   const hasUserPermissions = useHasPermissions(requiredPermissions);
   const isRBACV2Enabled = useFeatureEnabled('RBAC_V2');

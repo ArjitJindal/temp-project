@@ -79,7 +79,26 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
     }
     if (prop === 'getRoles') {
       return (): Promise<Array<AccountRole>> => {
-        return Promise.resolve([]);
+        return Promise.resolve([
+          {
+            id: 'mock-role-1',
+            name: '1.0 Maker',
+            description: 'Mock role for maker',
+            permissions: [],
+          },
+          {
+            id: 'mock-role-2',
+            name: '1.5 Maker',
+            description: 'Mock role for checker',
+            permissions: [],
+          },
+          {
+            id: 'mock-role-3',
+            name: 'Actor',
+            description: 'Mock role for actor',
+            permissions: [],
+          },
+        ]);
       };
     }
     if (prop === 'getAlertList') {

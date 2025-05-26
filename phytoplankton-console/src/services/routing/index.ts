@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import RulesItemPage from 'src/pages/rules/rules-item';
 import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
+import WorkflowsItemPage from 'src/pages/workflows/workflows-item-page';
 import { Permission } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ForbiddenPage from '@/pages/403';
@@ -34,8 +35,8 @@ import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
 import UsersItemPage from '@/pages/users-item';
 import UsersUsersListPage from '@/pages/users/users-list';
-import WorkflowsPage from '@/pages/workflows';
-import WorkflowsItemPage from '@/pages/workflows-item';
+import WorkflowsPage from '@/pages/workflows/workflows-page';
+import WorkflowsCreatePage from '@/pages/workflows/workflows-create-page';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import {
   isAtLeastAdmin,
@@ -51,7 +52,7 @@ export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isSarEnabled = useFeatureEnabled('SAR');
-  const isWorkflowsEnabled = useFeatureEnabled('CUSTOM_WORKFLOWS');
+  const isWorkflowsEnabled = useFeatureEnabled('WORKFLOWS_BUILDER');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const [lastActiveTab] = useSafeLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useSafeLocalStorageState('rule-active-tab', 'rules-library');
@@ -537,7 +538,7 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         position: 'top',
         disabled: !isWorkflowsEnabled,
-        associatedFeatures: ['CUSTOM_WORKFLOWS'],
+        associatedFeatures: ['WORKFLOWS_BUILDER'],
         // permissions: ['workflows:all:read'],
         routes: [
           {
@@ -545,9 +546,14 @@ export function useRoutes(): RouteItem[] {
             redirect: '/workflows/list',
           },
           {
-            path: '/workflows/item/:id',
-            name: 'workflows-item',
+            path: '/workflows/:type/item/:id',
+            name: 'workflows-item-page',
             component: WorkflowsItemPage,
+          },
+          {
+            path: '/workflows/:type/create/:templateId',
+            name: 'workflows-create-page',
+            component: WorkflowsCreatePage,
           },
           {
             path: '/workflows/:section',

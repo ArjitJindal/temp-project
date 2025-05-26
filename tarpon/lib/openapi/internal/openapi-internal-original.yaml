@@ -11846,7 +11846,6 @@ components:
         - CHAINALYSIS
         - RBAC_V2
         - WORKFLOWS_BUILDER
-        - CUSTOM_WORKFLOWS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

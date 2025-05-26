@@ -104,7 +104,7 @@ export default function Drawer(props: Props) {
             <CrossIcon className={s.icon} onClick={handleClose} data-cy={`drawer-close-button`} />
           </div>
         </div>
-        {isVisible && <div className={s.children}>{children}</div>}
+        <div className={s.children}>{isVisible && children}</div>
         {(footer != null || footerRight != null) && (
           <div className={cn(s.footer)} data-cy="drawer-footer">
             {footer && <div className={cn(s.footerSection, s.left)}>{footer}</div>}

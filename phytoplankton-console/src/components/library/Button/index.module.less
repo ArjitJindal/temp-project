@@ -27,7 +27,8 @@
 
   .outline(@figma-vars--primitives-colorBrand500);
 
-  &:disabled {
+  &:disabled,
+  &.isDisabled {
     pointer-events: none;
     color: @figma-vars--tokens-colorTextDisabled;
   }
@@ -43,7 +44,8 @@
       border-color: @figma-vars--tokens-colorButtonFillPrimaryHover;
     }
 
-    &:disabled {
+    &:disabled,
+    &.isDisabled {
       border-color: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
       background: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
       color: @figma-vars--tokens-colorTextDisabled;
@@ -63,7 +65,8 @@
       background: @figma-vars--tokens-colorButtonFillDangerHover;
     }
 
-    &:disabled {
+    &:disabled,
+    &.isDisabled {
       border-color: @figma-vars--tokens-colorButtonFillDangerDisabled;
       background: @figma-vars--tokens-colorButtonFillDangerDisabled;
       color: @figma-vars--tokens-colorTextInvert;
@@ -82,7 +85,8 @@
       color: @figma-vars--tokens-colorTextHover;
     }
 
-    &:disabled {
+    &:disabled,
+    &.isDisabled {
       border-color: @figma-vars--tokens-colorButtonStrokeSecondaryDisabled;
       background: @figma-vars--tokens-colorButtonFillSecondaryDisabled;
       color: @figma-vars--tokens-colorTextDisabled;
@@ -101,7 +105,8 @@
       color: @figma-vars--tokens-colorTextPrimary;
     }
 
-    &:disabled {
+    &:disabled,
+    &.isDisabled {
       border-color: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
       background: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
       color: @figma-vars--tokens-colorTextDisabled;
@@ -118,7 +123,8 @@
       color: @figma-vars--tokens-colorLinkHover;
     }
 
-    &:disabled {
+    &:disabled,
+    &.isDisabled {
       color: @figma-vars--tokens-colorLinkDisabled;
     }
   }

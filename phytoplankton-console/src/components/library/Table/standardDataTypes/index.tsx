@@ -722,7 +722,7 @@ export const USER_STATE_TAG: ColumnDataType<UserState> = {
   stringify: (userState) => userState ?? '',
 };
 
-export const TAG: ColumnDataType<string | string[] | undefined> = {
+export const TAG_LIST: ColumnDataType<string | string[] | undefined> = {
   render: (value: string | string[] | undefined) => {
     if (Array.isArray(value)) {
       return (
@@ -736,6 +736,13 @@ export const TAG: ColumnDataType<string | string[] | undefined> = {
     return value ? <Tag>{capitalize(value)}</Tag> : <></>;
   },
   stringify: (value) => (Array.isArray(value) ? value.join(',') : value ?? ''),
+};
+
+export const TAG: ColumnDataType<string | undefined> = {
+  render: (value: string | undefined) => {
+    return <Tag>{capitalize(value)}</Tag>;
+  },
+  stringify: (value) => value ?? '',
 };
 
 export const EXTERNAL_LINK: ColumnDataType<string> = {

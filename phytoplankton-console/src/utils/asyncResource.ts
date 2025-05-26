@@ -243,6 +243,11 @@ export function useFinishedFailed<T>(resource: AsyncResource<T>): boolean {
   return wasLoading == true && isErrorNow;
 }
 
+export function useIsResourceChangedStatus<T>(resource: AsyncResource<T>): boolean {
+  const previous = usePrevious(resource);
+  return previous?.kind !== resource.kind;
+}
+
 export function useLastSuccessValue<T>(resource: AsyncResource<T>, defaultValue: T): T {
   const value = getOr(resource, defaultValue);
 

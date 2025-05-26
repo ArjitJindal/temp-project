@@ -2807,22 +2807,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dagrejs/dagre@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "@dagrejs/dagre@npm:1.1.4"
-  dependencies:
-    "@dagrejs/graphlib": "npm:2.2.4"
-  checksum: 1717ecb1667a70199881871a69990fc2521b9e002e9cc5088cad55ae6fffe349b0bfd8fcb8a7c30e6d19c29dc6a080138bff2e675336bb5f85d5439e12581bf5
-  languageName: node
-  linkType: hard
-
-"@dagrejs/graphlib@npm:2.2.4":
-  version: 2.2.4
-  resolution: "@dagrejs/graphlib@npm:2.2.4"
-  checksum: 14597ea9294c46b2571aee78bcaad3a24e3e5e0ebcdf198b6eae5b3805f99af727ac54a477dd9152e8b0a576efea0528fb7d4919c74801e9f669c90e5e6f5bd9
-  languageName: node
-  linkType: hard
-
 "@esbuild/linux-loong64@npm:0.15.5":
   version: 0.15.5
   resolution: "@esbuild/linux-loong64@npm:0.15.5"
@@ -15897,7 +15881,6 @@ __metadata:
     "@babel/plugin-transform-modules-commonjs": "npm:^7.24.8"
     "@babel/preset-typescript": "npm:^7.26.0"
     "@cypress/skip-test": "npm:^2.6.1"
-    "@dagrejs/dagre": "npm:^1.1.4"
     "@fingerprintjs/fingerprintjs": "npm:^4.5.0"
     "@flagright/lib": "link:../lib"
     "@nangohq/frontend": "npm:^0.57.1"

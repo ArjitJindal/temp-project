@@ -1,75 +1,64 @@
-import React from 'react';
-import NodeCanvas from './NodeCanvas';
-import { EdgeDescription, NodeDescription } from './types';
+import React, { useReducer } from 'react';
+import WorkflowBuilder from '.';
 import { UseCase } from '@/pages/storybook/components';
+import { WORKFLOW_BUILDER_STATE_REDUCER } from '@/components/WorkflowBuilder/helpers';
+import { FINAL_STATE, START_STATE } from '@/components/WorkflowBuilder/consts';
 
 export default function (): JSX.Element {
+  const statePair = useReducer(WORKFLOW_BUILDER_STATE_REDUCER, {
+    transitions: [
+      {
+        id: '1',
+        fromStatus: START_STATE,
+        condition: {
+          action: 'TO_REVIEW',
+        },
+        outcome: {
+          status: 'IN_REVIEW',
+          assignee: 'mock-role-1',
+        },
+      },
+      {
+        id: '2',
+        fromStatus: 'IN_REVIEW',
+        condition: {
+          action: 'CLOSE',
+        },
+        outcome: {
+          status: FINAL_STATE,
+          assignee: 'mock-role-2',
+        },
+      },
+      {
+        id: '3',
+        fromStatus: 'IN_REVIEW',
+        condition: {
+          action: 'REOPEN',
+        },
+        outcome: {
+          status: 'OPEN',
+          assignee: 'mock-role-3',
+        },
+      },
+      {
+        id: '4',
+        fromStatus: 'OPEN',
+        condition: {
+          action: 'CLOSE',
+        },
+        outcome: {
+          status: FINAL_STATE,
+          assignee: 'mock-role-1',
+        },
+      },
+    ],
+  });
   return (
     <>
-      <UseCase title="NodeCanvas">
-        {() => {
-          const nodes: NodeDescription[] = [
-            {
-              id: 'node-1',
-              type: 'StatusNode',
-              data: { status: 'OPEN' },
-            },
-            {
-              id: 'node-2',
-              type: 'IfNode',
-              data: { logic: false },
-            },
-            {
-              id: 'node-3',
-              type: 'ThenNode',
-              data: { logic: false },
-            },
-            {
-              id: 'node-4',
-              type: 'IfNode',
-              data: { logic: false },
-            },
-            {
-              id: 'node-5',
-              type: 'ThenNode',
-              data: { logic: false },
-            },
-            {
-              id: 'node-6',
-              type: 'StatusNode',
-              data: { status: 'CLOSED' },
-            },
-            {
-              id: 'node-7',
-              type: 'NewBranchButtonNode',
-              data: {},
-            },
-            {
-              id: 'node-8',
-              type: 'NewBranchButtonNode',
-              data: {
-                text: 'Add If/Then condition',
-              },
-            },
-          ];
-
-          const edges: EdgeDescription[] = [
-            { id: 'e1', source: 'node-1', target: 'node-2' },
-            { id: 'e2', source: 'node-2', target: 'node-3' },
-            { id: 'e3', source: 'node-1', target: 'node-4' },
-            { id: 'e4', source: 'node-4', target: 'node-5' },
-            { id: 'e5', source: 'node-3', target: 'node-6' },
-            { id: 'e6', source: 'node-5', target: 'node-6' },
-            { id: 'e7', source: 'node-1', target: 'node-7' },
-            { id: 'e8', source: 'node-4', target: 'node-8' },
-          ];
-
-          return (
-            <div style={{ height: 450 }}>
-              <NodeCanvas nodes={nodes} edges={edges} />
-            </div>
-          );
-        }}
+      <UseCase title="WorkflowBuilder">
+        <div style={{ height: 450 }}>
+          <WorkflowBuilder workflowType={'alert'} state={statePair} />
+        </div>
       </UseCase>
     </>
   );
