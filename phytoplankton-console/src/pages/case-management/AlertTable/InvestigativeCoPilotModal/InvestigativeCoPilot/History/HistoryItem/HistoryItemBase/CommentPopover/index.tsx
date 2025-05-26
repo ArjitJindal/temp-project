@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
 import Popover from '@/components/ui/Popover';
