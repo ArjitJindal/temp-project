@@ -81,7 +81,7 @@ export const CardMerchantIdentifier: TableQuestion<
       },
       summary:
         items.length === 0
-          ? `${username} has not transaction counterparty. `
+          ? `${username} has not transacted with counterparty. `
           : `The top counterparty merchant having card payment indentifier transacted with ${username} as ${direction.toLowerCase()} was ${topMerchantName} which was a ${
               items.at(0)?.[1]
             }.`,
