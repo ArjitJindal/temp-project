@@ -1,12 +1,32 @@
 import { FlatFilesService } from '..'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 
+// Mock dependencies
+jest.mock('@/utils/clickhouse/utils', () => ({
+  getClickhouseClient: jest.fn().mockResolvedValue({}),
+  getClickhouseCredentials: jest.fn().mockResolvedValue({
+    url: 'http://localhost:8123',
+    username: 'default',
+    password: '',
+    database: 'test',
+  }),
+}))
+
+jest.mock('@/utils/dynamodb', () => ({
+  getDynamoDbClient: jest.fn().mockReturnValue({}),
+}))
+
+jest.mock('@/utils/mongodb-utils', () => ({
+  getMongoDbClient: jest.fn().mockResolvedValue({}),
+}))
+
 describe('FlatFilesService', () => {
   const TEST_TENANT_ID = 'test-tenant'
   let service: FlatFilesService
 
   beforeEach(() => {
     service = new FlatFilesService(TEST_TENANT_ID)
+    jest.clearAllMocks()
   })
 
   describe('generateTemplate', () => {
@@ -37,7 +57,7 @@ describe('FlatFilesService', () => {
       await expect(
         service.generateTemplate('BULK_CASE_CLOSURE', unsupportedFormat)
       ).rejects.toThrow(
-        `Format ${unsupportedFormat} not found for tenant id ${TEST_TENANT_ID}`
+        `Unsupported format '${unsupportedFormat}' for tenant ${TEST_TENANT_ID}`
       )
     })
 

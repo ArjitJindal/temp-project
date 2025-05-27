@@ -38,3 +38,19 @@ export async function readFileFromS3(
     throw error
   }
 }
+
+export async function getStreamFromS3(
+  bucketName: string,
+  key: string
+): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+  const s3Client = getS3Client()
+  const command = new GetObjectCommand({ Bucket: bucketName, Key: key })
+  const { Body } = await s3Client.send(command)
+  const stream = Body?.transformToWebStream()
+  if (!stream) {
+    throw new Error('Stream is undefined')
+  }
+
+  const reader = stream.getReader()
+  return reader
+}

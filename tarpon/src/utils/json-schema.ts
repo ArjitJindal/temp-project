@@ -1,13 +1,19 @@
 import { snakeCase } from 'lodash'
+import { JSONSchema } from 'json-schema-to-typescript'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 import { EntityModel } from '@/@types/model'
 
+const formatTypes = ['date', 'date-time', 'datetime']
+
 export function generateJsonSchemaFromEntityClass(
   entityClass: typeof EntityModel
-): any {
+): JSONSchema {
   // Map attribute type to JSON schema type
-  function mapType(attributeType: string, attribute: any): any {
+  function mapType(
+    attributeType: string,
+    attribute: (typeof EntityModel.attributeTypeMap)[number]
+  ): JSONSchema {
     // Handle union types
     if (attributeType.includes(' | ') && !attributeType.includes('Array')) {
       return {
@@ -45,15 +51,11 @@ export function generateJsonSchemaFromEntityClass(
     const enumKey = `${snakeCase(attributeType).toUpperCase()}S`
     const enumValues = CustomModelData[enumKey] as string[]
     if (enumValues) {
-      const schema: any = { type: 'string', enum: enumValues }
-      if (attribute.options?.length) {
-        schema.enumNames = attribute.options.map((opt: any) => opt.title)
-      }
-      return schema
+      return { type: 'string', enum: enumValues }
     }
 
     // Handle primitive types
-    const typeMap: Record<string, any> = {
+    const typeMap: Record<string, JSONSchema> = {
       string: { type: 'string' },
       number: { type: 'number' },
       boolean: { type: 'boolean' },
@@ -64,7 +66,8 @@ export function generateJsonSchemaFromEntityClass(
     }
 
     if (typeMap[attributeType]) {
-      if (attribute.format && !typeMap[attributeType].format) {
+      // Only add format for date-related types
+      if (formatTypes.includes(attributeType)) {
         return { ...typeMap[attributeType], format: attribute.format }
       }
       return typeMap[attributeType]
@@ -79,7 +82,7 @@ export function generateJsonSchemaFromEntityClass(
     return { type: 'string' }
   }
 
-  const properties: Record<string, any> = {}
+  const properties: Record<string, JSONSchema> = {}
   const required: string[] = []
 
   // Process all attributes
@@ -95,7 +98,7 @@ export function generateJsonSchemaFromEntityClass(
   }
 
   // Build the schema
-  const schema: any = {
+  const schema: JSONSchema = {
     type: 'object',
     properties,
     ...(required.length > 0 && { required }),

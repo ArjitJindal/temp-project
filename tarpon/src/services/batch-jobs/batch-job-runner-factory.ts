@@ -35,6 +35,7 @@ import { PeriodicScreeningUserRuleBatchJobRunner } from './periodic-screening-us
 import { QACleanupBatchJobRunner } from './qa-cleanup-batchjob'
 import { PnbPullUsersDataBatchJobRunner } from './pnb-pull-users-data-batch-job-runner'
 import { ManualTransactionReverificationBatchJobRunner } from './manual-transaction-reverification-batch-job-runner'
+import { FlatFilesValidationBatchJobRunner } from './flat-files-validation-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -101,6 +102,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new PnbBackfillWebhookDeliveriesBatchJobRunner(jobId),
     FIX_RISK_SCORES_FOR_PNB_USERS: (jobId) =>
       new FixRiskScoresForPnbUsersBatchJobRunner(jobId),
+    FLAT_FILES_VALIDATION: (jobId) =>
+      new FlatFilesValidationBatchJobRunner(jobId),
     WEBHOOK_RETRY: (jobId) => new WebhookRetryBatchJobRunner(jobId),
     NANGO_DATA_FETCH: (jobId) => new NangoDataFetchBatchJobRunner(jobId),
     FINCEN_REPORT_STATUS_REFRESH: (jobId) =>

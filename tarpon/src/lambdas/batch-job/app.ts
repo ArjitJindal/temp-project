@@ -124,6 +124,7 @@ export const jobDecisionHandler = async (
     QA_CLEANUP: 'LAMBDA',
     DYNAMODB_CLICKHOUSE_BACKFILL: 'FARGATE',
     MANUAL_TRANSACTION_REVERIFICATION: 'FARGATE',
+    FLAT_FILES_VALIDATION: 'FARGATE',
   }
 
   return {

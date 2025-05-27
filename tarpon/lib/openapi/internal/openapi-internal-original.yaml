@@ -3550,6 +3550,8 @@ paths:
       summary: Role - Get Statements by Name
       operationId: get-roles-by-name-statements
       tags: []
+      x-flagright:
+        alwaysAllowedAccess: true
       responses:
         '200':
           description: OK

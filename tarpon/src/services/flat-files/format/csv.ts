@@ -1,8 +1,14 @@
+import { Readable } from 'stream'
+import { set } from 'lodash'
+import { GetObjectCommand } from '@aws-sdk/client-s3'
+import { parse } from 'csv-parse'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'
 import { FlatFileFormat } from '@/services/flat-files/format'
 import { EntityModel } from '@/@types/model'
 import * as Models from '@/@types/openapi-public/all'
-
+import { FlatFileRecord } from '@/@types/flat-files'
+import { getS3Client } from '@/utils/s3'
+import { logger } from '@/core/logger'
 export class CsvFormat extends FlatFileFormat {
   static readonly format = 'CSV'
 
@@ -11,6 +17,10 @@ export class CsvFormat extends FlatFileFormat {
     prefix: string = ''
   ): FlatFileTemplateResponse {
     const headers: string[] = []
+
+    logger.info('Generating CSV template from entity class', {
+      entityClass: entityClass.name,
+    })
 
     // Process all attributes
     for (const attribute of entityClass.attributeTypeMap) {
@@ -54,14 +64,63 @@ export class CsvFormat extends FlatFileFormat {
     // Create CSV string with headers
     const fileString = headers.join(',') + '\n'
 
-    return {
-      keys: headers,
-      fileString,
-    }
+    logger.info('Generated CSV template')
+    return { keys: headers, fileString }
   }
 
   public getTemplate(): FlatFileTemplateResponse {
     const model = this.model
     return this.generateCsvTemplateFromEntityClass(model)
+  }
+
+  public async *readAndParse(s3Key: string): AsyncGenerator<FlatFileRecord> {
+    const s3 = getS3Client()
+
+    logger.info('Reading and parsing CSV file', {
+      s3Key,
+    })
+
+    const { Body } = await s3.send(
+      new GetObjectCommand({
+        Bucket: process.env.IMPORT_BUCKET,
+        Key: s3Key,
+      })
+    )
+    if (!(Body instanceof Readable)) {
+      throw new Error('Expected Body to be a Node.js Readable stream')
+    }
+
+    const parser = Body.setEncoding('utf-8').pipe(
+      parse({
+        columns: true,
+        skip_empty_lines: true,
+        relax_quotes: true,
+        relax_column_count: true,
+        cast: true,
+      })
+    )
+
+    let index = 0
+    for await (const flatRow of parser) {
+      try {
+        const nested: Record<string, any> = {}
+
+        for (const [key, value] of Object.entries(flatRow)) {
+          set(nested, key, value) // expand dotted keys
+        }
+
+        yield { index: index++, record: nested }
+      } catch (error) {
+        await this.saveError(
+          flatRow,
+          { index: index++, record: { record: flatRow } },
+          error,
+          'PARSE'
+        )
+        throw error
+      }
+    }
+
+    logger.info('Finished reading and parsing CSV file')
   }
 }

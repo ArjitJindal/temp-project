@@ -8952,6 +8952,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json-stringify-safe@npm:^5.0.3":
+  version: 5.0.3
+  resolution: "@types/json-stringify-safe@npm:5.0.3"
+  checksum: 66826a59b53ce5a5becc9c05cd0bdadb7e2032e02803a9dd13137de134a0882a6c67ae334371ccff07a20b1d2b2c23fa3a81b5e23f40b27cfcf553c7cce06e35
+  languageName: node
+  linkType: hard
+
 "@types/json5@npm:^0.0.29":
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
@@ -11709,6 +11716,13 @@ __metadata:
   version: 4.2.0
   resolution: "crypto-js@npm:4.2.0"
   checksum: c7bcc56a6e01c3c397e95aa4a74e4241321f04677f9a618a8f48a63b5781617248afb9adb0629824792e7ec20ca0d4241a49b6b2938ae6f973ec4efc5c53c924
+  languageName: node
+  linkType: hard
+
+"csv-parse@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "csv-parse@npm:5.6.0"
+  checksum: 4c82e11f50ae0ccbac2aed716ef2502d0468bf96552083561db789fc0258ee4bb0a30106fcfb2684f153cb4042f0413e0eac3645d5466874803b7ccdeba67ac8
   languageName: node
   linkType: hard
 
@@ -15862,6 +15876,13 @@ __metadata:
     jsonify: "npm:^0.0.1"
     object-keys: "npm:^1.1.1"
   checksum: 60853c1f63451319b5c7953465a555aa816cf84e60e3ca36b6c05225d8fdc4615127fb4ecb92f9f5ad880c552ab8cbae9a519f78b995e7788d6d89e57afafdeb
+  languageName: node
+  linkType: hard
+
+"json-stringify-safe@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "json-stringify-safe@npm:5.0.1"
+  checksum: 59169a081e4eeb6f9559ae1f938f656191c000e0512aa6df9f3c8b2437a4ab1823819c6b9fd1818a4e39593ccfd72e9a051fdd3e2d1e340ed913679e888ded8c
   languageName: node
   linkType: hard
 
@@ -20071,6 +20092,7 @@ __metadata:
     "@types/isomorphic-fetch": "npm:^0.0.36"
     "@types/jest": "npm:^28.1.8"
     "@types/js-yaml": "npm:^4.0.5"
+    "@types/json-stringify-safe": "npm:^5.0.3"
     "@types/jsonpath-plus": "npm:^5.0.5"
     "@types/jsonwebtoken": "npm:^8.5.8"
     "@types/lodash": "npm:^4.14.180"
@@ -20110,6 +20132,7 @@ __metadata:
     commander: "npm:^9.2.0"
     constructs: "npm:^10.4.2"
     coverage-diff: "npm:^3.2.0"
+    csv-parse: "npm:^5.6.0"
     csvtojson: "npm:^2.0.10"
     currency-symbol-map: "npm:^5.1.0"
     deep-object-diff: "npm:^1.1.7"
@@ -20147,6 +20170,7 @@ __metadata:
     js-yaml: "npm:^4.1.0"
     json-logic-engine: "npm:^1.3.1"
     json-schema-to-typescript: "npm:^13.0.1"
+    json-stringify-safe: "npm:^5.0.1"
     jsonpath-plus: "npm:^10.2.0"
     jsonwebtoken: "npm:^9.0.2"
     jwks-rsa: "npm:^2.0.5"
@@ -20181,7 +20205,7 @@ __metadata:
     ssh2-sftp-client: "npm:^10.0.3"
     stopword: "npm:^3.0.1"
     swagger-routes-express: "npm:^3.3.2"
-    thunder-schema: "npm:^1.0.18"
+    thunder-schema: "npm:1.0.21"
     timeout-signal: "npm:^1.1.0"
     ts-jest: "npm:^28.0.8"
     ts-loader: "npm:^9.2.6"
@@ -20264,15 +20288,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"thunder-schema@npm:^1.0.18":
-  version: 1.0.18
-  resolution: "thunder-schema@npm:1.0.18"
+"thunder-schema@npm:1.0.21":
+  version: 1.0.21
+  resolution: "thunder-schema@npm:1.0.21"
   dependencies:
     "@clickhouse/client": "npm:^1.11.1"
     path: "npm:^0.12.7"
   bin:
     thunder-schema: dist/cli/index.js
-  checksum: b181a637eea18441eeb9896a49238eb65d20b3865db15ff52d9886ae1b3d66123a3a6881e7660d6e2d83b9ca8d5251b2cbe7d14f79c0d2fa3ee9902d7514f4aa
+  checksum: b5182f4acfb0ef5190b09643f5432a36e00c0ca1658967694ed446a9595a39413c99cc982cce24b26789b2557e7c169353b9243d54760beaf752c26c8c6fc8c0
   languageName: node
   linkType: hard
 

@@ -11,6 +11,8 @@ import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProv
 import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
 import { SanctionsSettingsProviderScreeningTypes } from '../openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { SanctionsEntityType } from '../openapi-internal/SanctionsEntityType'
+import { FlatFileSchema } from '../openapi-internal/FlatFileSchema'
+import { FlatFileTemplateFormat } from '../openapi-internal/FlatFileTemplateFormat'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -441,6 +443,16 @@ export type ManualTransactionReverification = {
   }
 }
 
+export type FlatFilesValidationBatchJob = {
+  type: 'FLAT_FILES_VALIDATION'
+  tenantId: string
+  parameters: {
+    s3Key: string
+    schema: FlatFileSchema
+    format: FlatFileTemplateFormat
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -490,7 +502,7 @@ export type BatchJob =
   | PnbPullUsersData
   | DynamodbClickhouseBackfillBatchJob
   | ManualTransactionReverification
-
+  | FlatFilesValidationBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }
