@@ -44,17 +44,10 @@ export default function SubHeader(props: Props) {
   const settings = useSettings();
   const { caseId, caseItemRes } = props;
   const caseItem = getOr(caseItemRes, undefined);
-  const caseUsers = caseItem?.caseUsers;
-  const subjectType = caseItem?.caseUsers ?? 'USER';
-
   const api = useApi();
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
-  const isUserSubject = subjectType === 'USER';
-  let caseUser;
-  if (isUserSubject && caseUsers) {
-    caseUser = caseUsers?.origin ?? caseUsers?.destination;
-  }
+  const caseUser = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination;
   const isCaseInReview = statusInReview(caseItem?.caseStatus);
   const isCaseEscalated = statusEscalated(caseItem?.caseStatus);
 
