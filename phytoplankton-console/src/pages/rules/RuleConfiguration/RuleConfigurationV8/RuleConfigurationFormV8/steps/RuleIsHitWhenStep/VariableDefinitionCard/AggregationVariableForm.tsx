@@ -177,7 +177,7 @@ function validateAggregationTimeWindow(timeWindow: LogicAggregationVariableTimeW
     return (
       <>
         For <b>Day</b> granularity with rolling basis, the total duration cannot exceed{' '}
-        <b>{HOUR_GRANULARITY_MAX_DAYS} days</b>
+        <b>{HOUR_GRANULARITY_MAX_DAYS} days due to time granularity down to the second.</b>
       </>
     );
   }
