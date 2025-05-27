@@ -894,32 +894,6 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    return {
-      id: 'R-99',
-      type: 'TRANSACTION',
-      name: 'Transaction value exceeds expected limit',
-      description:
-        'For a given user, compares the expected transaction count or transaction amount per payment method or in aggregate for multiple time intervals',
-      descriptionTemplate: '{{ hitDescription }}',
-      defaultParameters: {},
-      defaultAction: 'FLAG',
-      ruleImplementationName: 'user-transaction-limits',
-      labels: [],
-      checksFor: [
-        RuleChecksForField.TransactionAmount,
-        RuleChecksForField.NumberOfTransactions,
-        RuleChecksForField.TransactionPaymentMethodCount,
-      ],
-      defaultNature: RuleNature.AML,
-      defaultCasePriority: 'P1',
-      defaultFalsePositiveCheckEnabled: true,
-      types: [RuleTypeField.VolumeComparison],
-      typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
-      sampleUseCases:
-        'A user initiates a transaction that exceeds the expected limit.',
-    }
-  },
-  () => {
     const defaultParameters: SenderLocationChangesFrequencyRuleParameters = {
       uniqueCitiesCountThreshold: 1,
       timeWindow: {

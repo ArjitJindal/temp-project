@@ -14,7 +14,6 @@ import TestFailureRule from './tests/test-failure-rule'
 import TestNonHitRule from './tests/test-non-hit-rule'
 import TestSuccessRule from './tests/test-success-rule'
 import TransactionAmountRule from './transaction-amount'
-import UserTransactionLimitsRule from './user-transaction-limits'
 import TransactionNewCountryRule from './transaction-new-country'
 import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionReferenceKeywordRule from './transaction-reference-keyword'
@@ -73,7 +72,6 @@ export const _TRANSACTION_RULES = {
   'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
   'transaction-reference-keyword': TransactionReferenceKeywordRule,
   'transaction-amount': TransactionAmountRule,
-  'user-transaction-limits': UserTransactionLimitsRule,
   'transaction-new-country': TransactionNewCountryRule,
   'transaction-new-currency': TransactionNewCurrencyRule,
   'transactions-velocity': TransactionsVelocityRule,
