@@ -188,11 +188,21 @@ export class CaseClickhouseRepository {
       )
     }
     // Filter by user ID (either origin or destination)
-    if (params.filterUserId != null) {
+    if (params.filterUserId != null || params.filterUserIds != null) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
+
       conditions.push(`
-        (originUserId = '${params.filterUserId}' 
+        (originUserId IN ('${userIds.join("','")}') 
         OR 
-        destinationUserId = '${params.filterUserId}')
+        destinationUserId IN ('${userIds.join("','")}'))
       `)
     } else {
       // Handle separate origin and destination user ID filters

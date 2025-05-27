@@ -1216,9 +1216,19 @@ paths:
           in: query
           name: filterDestinationCountries
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
+        - schema:
             type: string
           in: query
           name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterParentUserId
         - schema:
             type: string
           in: query
@@ -1433,6 +1443,16 @@ paths:
             type: string
           in: query
           name: filterUserId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentUserId
         - schema:
             type: string
           in: query
@@ -1991,6 +2011,16 @@ paths:
           in: query
           name: filterId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentId
+        - schema:
             type: string
           in: query
           name: filterName
@@ -2103,6 +2133,16 @@ paths:
         - schema:
             type: string
           in: query
+          name: filterParentId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
+        - schema:
+            type: string
+          in: query
           name: filterName
         - schema:
             type: string
@@ -2196,6 +2236,16 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentId
         - schema:
             type: string
           in: query
@@ -2294,6 +2344,16 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterParentId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
         - schema:
             type: string
           in: query
@@ -2529,6 +2589,16 @@ paths:
           in: query
           name: filterId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentId
+        - schema:
             type: string
           in: query
           name: filterName
@@ -2624,6 +2694,16 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterParentId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIds
         - schema:
             type: string
           in: query
@@ -4920,6 +5000,16 @@ paths:
           in: query
           name: filterUserId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentUserId
+        - schema:
             type: string
           in: query
           name: filterOriginUserId
@@ -5546,6 +5636,16 @@ paths:
           in: query
           name: filterUserId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
+        - schema:
+            type: string
+          in: query
+          name: filterParentUserId
+        - schema:
             type: string
           in: query
           name: filterOriginUserId
@@ -5893,6 +5993,12 @@ paths:
             type: string
           in: query
           name: filterUserId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterUserIds
         - schema:
             type: string
           in: query

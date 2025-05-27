@@ -163,6 +163,23 @@ const TableList = () => {
               ),
             },
             {
+              key: 'parentUserId',
+              title: `Parent ${settings.userAlias} ID/name`,
+              showFilterByDefault: false,
+              renderer: ({ params, setParams }) => (
+                <UserSearchButton
+                  title={`Parent ${settings.userAlias} ID/name`}
+                  userId={params.parentUserId ?? null}
+                  onConfirm={(userId) => {
+                    setParams((state) => ({
+                      ...state,
+                      parentUserId: userId ?? undefined,
+                    }));
+                  }}
+                />
+              ),
+            },
+            {
               key: 'tagKey',
               title: 'Tags',
               renderer: ({ params, setParams }) => (

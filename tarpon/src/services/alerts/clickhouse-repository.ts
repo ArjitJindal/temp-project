@@ -215,9 +215,21 @@ export class ClickhouseAlertRepository {
         `caseType IN ('${params.filterCaseTypes.join("','")}')`
       )
     }
-    if (params.filterUserId != null) {
+    if (params.filterUserId != null || params.filterUserIds != null) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
+
       whereConditions.push(
-        `(originUserId = '${params.filterUserId}' OR destinationUserId = '${params.filterUserId}')`
+        `(originUserId IN ('${userIds.join(
+          "','"
+        )}') OR destinationUserId IN ('${userIds.join("','")}'))`
       )
     }
     if (params.filterBusinessIndustries != null) {

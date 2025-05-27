@@ -14,6 +14,7 @@ import { intersection, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { SlaUpdates } from '../sla/sla-service'
 import { DynamoCaseRepository } from './dynamo-repository'
+import { LinkerService } from '@/services/linker'
 import { CaseClickhouseRepository } from '@/services/cases/clickhouse-repository'
 import {
   internalMongoInsert,
@@ -541,11 +542,21 @@ export class CaseRepository {
       conditions.push({ caseType: { $in: params.filterCaseTypes } })
     }
 
-    if (params.filterUserId != null) {
+    if (params.filterUserId != null || params.filterUserIds != null) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
+
       conditions.push({
         $or: [
-          { 'caseUsers.origin.userId': { $in: [params.filterUserId] } },
-          { 'caseUsers.destination.userId': { $in: [params.filterUserId] } },
+          { 'caseUsers.origin.userId': { $in: userIds } },
+          { 'caseUsers.destination.userId': { $in: userIds } },
         ],
       })
     } else {
@@ -1013,6 +1024,13 @@ export class CaseRepository {
     params: DefaultApiGetCaseListRequest,
     options: CaseListOptions = {}
   ): Promise<{ total: number; data: Case[] }> {
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
     if (isClickhouseMigrationEnabled()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       const data = await clickhouseCaseRepository.getCases(params)

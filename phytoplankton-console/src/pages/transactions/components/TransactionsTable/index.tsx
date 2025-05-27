@@ -69,6 +69,7 @@ export interface TransactionsTableParams extends CommonParams {
   originCurrenciesFilter?: string[];
   destinationCurrenciesFilter?: string[];
   userId?: string;
+  parentUserId?: string;
   tagKey?: string;
   tagValue?: string;
   originMethodFilter?: PaymentMethod;
@@ -135,6 +136,9 @@ export const transactionParamsToRequest = (
     direction,
     status,
     userId,
+    parentUserId,
+    filterPaymentDetailName,
+    showDetailedView,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -173,8 +177,8 @@ export const transactionParamsToRequest = (
     filterDestinationCountries: params['destinationPayment.country'],
     filterOriginCountries: params['originPayment.country'],
     filterStatus: status ? [status] : undefined,
-    includePaymentDetails: params.showDetailedView,
-    filterPaymentDetailName: params.filterPaymentDetailName,
+    includePaymentDetails: showDetailedView,
+    filterPaymentDetailName: filterPaymentDetailName,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;
@@ -182,6 +186,7 @@ export const transactionParamsToRequest = (
     requestParams.filterDestinationUserId = userId;
   } else {
     requestParams.filterUserId = userId;
+    requestParams.filterParentUserId = parentUserId;
   }
   return requestParams;
 };

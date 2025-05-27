@@ -76,9 +76,20 @@ export class ClickhouseTransactionsRepository {
       whereConditions.push(`id IN ('${params.filterIdList.join("','")}')`)
     }
 
-    if (params.filterUserId) {
+    if (params.filterUserId || params.filterUserIds) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
       whereConditions.push(
-        `(originUserId = '${params.filterUserId}' OR destinationUserId = '${params.filterUserId}')`
+        `(originUserId IN ('${userIds.join(
+          "','"
+        )}') OR destinationUserId IN ('${userIds.join("','")}'))`
       )
     }
 

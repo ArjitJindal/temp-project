@@ -59,6 +59,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
       userId: params.userId,
+      parentUserId: params.parentUserId,
       status: params.status?.join(','),
       originMethodFilter: params.originMethodFilter?.join(','),
       destinationMethodFilter: params.destinationMethodFilter?.join(','),
@@ -117,6 +118,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: raw.rulesHitFilter?.split(','),
       rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
       userId: raw.userId,
+      parentUserId: raw.parentUserId,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
       originMethodFilter: raw.originMethodFilter?.split(',') as PaymentMethod[],
       destinationMethodFilter: raw.destinationMethodFilter?.split(',') as PaymentMethod[],
@@ -305,6 +307,23 @@ export const useCaseAlertFilters = (
             setParams((state) => ({
               ...state,
               userId: userId ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'parentUserId',
+      title: `Parent ${settings.userAlias} ID/Name`,
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          title={`Parent ${settings.userAlias} ID/Name`}
+          userId={params.parentUserId ?? null}
+          onConfirm={(parentUserId) => {
+            setParams((state) => ({
+              ...state,
+              parentUserId: parentUserId ?? undefined,
             }));
           }}
         />

@@ -1169,6 +1169,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     'caseTypesFilter',
     'rulesHitFilter',
     showUserFilters && 'userId',
+    showUserFilters && 'parentUserId',
     'tagKey',
     'businessIndustryFilter',
     'riskLevels',

@@ -516,14 +516,23 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterUserId) {
+    if (params.filterUserId || params.filterUserIds) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
       conditions.push({
         $or: [
           {
-            originUserId: { $in: [params.filterUserId] },
+            originUserId: { $in: userIds },
           },
           {
-            destinationUserId: { $in: [params.filterUserId] },
+            destinationUserId: { $in: userIds },
           },
         ],
       })

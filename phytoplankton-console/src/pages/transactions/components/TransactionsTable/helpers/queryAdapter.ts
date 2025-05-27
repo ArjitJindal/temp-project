@@ -16,6 +16,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       originCurrenciesFilter: params.originCurrenciesFilter?.join(',') ?? '',
       destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(',') ?? '',
       userId: params.userId,
+      parentUserId: params.parentUserId,
       tagKey: params.tagKey,
       status: params.status,
       tagValue: params.tagValue,
@@ -53,6 +54,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
         ? raw.destinationCurrenciesFilter.split(',')
         : undefined,
       userId: raw.userId,
+      parentUserId: raw.parentUserId,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
       status: raw.status as RuleAction & 'all',

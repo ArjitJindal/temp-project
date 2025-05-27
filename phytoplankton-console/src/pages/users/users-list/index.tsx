@@ -24,6 +24,7 @@ export interface UserSearchParams extends CommonParams {
   pepRank?: PepRank;
   riskLevels?: RiskLevel[];
   userId?: string;
+  parentUserId?: string;
   tagKey?: string;
   tagValue?: string;
   createdTimestamp?: string[];
@@ -120,6 +121,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           ? dayjs(params.createdTimestamp[1]).valueOf()
           : undefined,
         filterId: params.userId,
+        filterParentId: params.parentUserId,
         filterTagKey: params.tagKey,
         filterTagValue: params.tagValue,
         filterRiskLevel: params.riskLevels,
@@ -181,6 +183,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           ? dayjs(params.createdTimestamp[1]).valueOf()
           : undefined,
         filterId: params.userId,
+        filterParentId: params.parentUserId,
         filterTagKey: params.tagKey,
         filterTagValue: params.tagValue,
         filterRiskLevel: params.riskLevels,

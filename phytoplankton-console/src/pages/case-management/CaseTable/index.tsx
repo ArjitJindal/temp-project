@@ -657,6 +657,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     'caseTypesFilter',
     'rulesHitFilter',
     'userId',
+    'parentUserId',
     'tagKey',
     'businessIndustryFilter',
     'riskLevels',

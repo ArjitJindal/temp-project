@@ -43,7 +43,7 @@ const extraFilters = (
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
       key: 'userId',
-      title: `${userAlias} ID/Name`,
+      title: `${firstLetterUpper(userAlias)} ID/Name`,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
           userId={params.userId ?? null}
@@ -51,6 +51,23 @@ const extraFilters = (
             setParams((state) => ({
               ...state,
               userId: userId ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'parentUserId',
+      title: `Parent ${userAlias} ID/Name`,
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          title={`Parent ${userAlias} ID/Name`}
+          userId={params.parentUserId ?? null}
+          onConfirm={(parentUserId) => {
+            setParams((state) => ({
+              ...state,
+              parentUserId: parentUserId ?? undefined,
             }));
           }}
         />
@@ -229,7 +246,7 @@ export const UsersTable = (props: Props) => {
     <QueryResultsTable<AllUsersTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type, params, firstLetterUpper(settings.userAlias))}
+      extraFilters={extraFilters(type, params, settings.userAlias || '')}
       columns={columns}
       queryResults={queryResults}
       params={params}

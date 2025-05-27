@@ -5,6 +5,7 @@ import { cloneDeep, compact, intersection, isEmpty, last, uniqBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
+import { LinkerService } from '../linker'
 import { SlaUpdates } from '../sla/sla-service'
 import { DynamoAlertRepository } from './dynamo-repository'
 import { ClickhouseAlertRepository } from './clickhouse-repository'
@@ -139,6 +140,13 @@ export class AlertsRepository {
 
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
 
     if (isClickhouseMigrationEnabled()) {
       const clickhouse = await getClickhouseClient(this.tenantId)

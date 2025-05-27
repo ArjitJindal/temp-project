@@ -11,6 +11,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       riskLevels: params.riskLevels?.join(',') ?? '',
       createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       userId: params.userId,
+      parentUserId: params.parentUserId,
       tagKey: params.tagKey,
       tagValue: params.tagValue,
       userRegistrationStatus: params.userRegistrationStatus?.join(',') ?? '',
@@ -30,6 +31,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       userId: raw.userId,
+      parentUserId: raw.parentUserId,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
       userRegistrationStatus: raw.userRegistrationStatus

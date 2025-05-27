@@ -10,12 +10,13 @@ import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupC
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   userId: string | null;
+  title?: string;
   onConfirm: (userId: string | null) => void;
   onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { userId, onConfirm, onUpdateFilterClose } = props;
+  const { userId, title, onConfirm, onUpdateFilterClose } = props;
   const settings = useSettings();
   const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
@@ -64,7 +65,7 @@ export default function UserSearchButton(props: Props) {
 
   return (
     <QuickFilterBase
-      title={`${firstLetterUpper(settings.userAlias)} ID/Name`}
+      title={title ?? `${firstLetterUpper(settings.userAlias)} ID/Name`}
       icon={<UserProfileIcon />}
       buttonText={user?.name ?? userId}
       onClear={

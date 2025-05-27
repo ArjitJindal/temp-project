@@ -25,6 +25,7 @@ import {
   AllUsersTableItem,
   RiskClassificationScore,
 } from '@/@types/openapi-internal/all'
+import { LinkerService } from '@/services/linker'
 
 type UserCasesCount = {
   casesCount: number
@@ -71,6 +72,12 @@ export class UserClickhouseRepository {
         hasNext: false,
         items: [],
       }
+    }
+
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
     }
 
     const isPulseEnabled = this.isPulseEnabled()
@@ -178,6 +185,12 @@ export class UserClickhouseRepository {
       }
     }
 
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
+    }
+
     const whereClause = await this.buildWhereClause(params, userType)
     const sortField =
       (params.sortField === 'createdTimestamp'
@@ -245,11 +258,13 @@ export class UserClickhouseRepository {
       whereClauses.push(`type = '${userType}'`)
     }
 
-    // Filter conditions (can be OR-ed or AND-ed)
-    if (params.filterId) {
-      filterConditions.push(
-        `ilike(id, '${params.filterId.replace(/'/g, "''")}%')`
-      )
+    if (params.filterIds || params.filterId) {
+      const allIds = [
+        ...(params.filterId ? [params.filterId] : []),
+        ...(params.filterIds || []),
+      ]
+      const escapedIds = allIds.map((id) => id.replace(/'/g, "''"))
+      filterConditions.push(`id IN ('${escapedIds.join("','")}')`)
     }
 
     if (params.filterName) {

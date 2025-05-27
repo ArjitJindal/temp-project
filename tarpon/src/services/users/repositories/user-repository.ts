@@ -99,12 +99,14 @@ import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
 import { batchGet } from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+import { LinkerService } from '@/services/linker'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
   DefaultApiGetConsumerUsersListRequest &
   DefaultApiGetBusinessUsersListRequest & {
     filterEmail?: string
+    filterUserId?: string
     filterUserIds?: string[]
   }
 
@@ -175,6 +177,11 @@ export class UserRepository {
     >(USERS_COLLECTION(this.tenantId))
     const isPulseEnabled = this.isPulseEnabled()
     const riskClassificationValues = await this.getRiskClassificationValues()
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
+    }
     const query = await this.getMongoUsersQuery(
       params,
       isPulseEnabled,
@@ -304,19 +311,29 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
-    if (params.filterId != null) {
+    if (params.filterId || params.filterIds) {
+      const allIds: string[] = []
+      if (params.filterId != null) {
+        allIds.push(params.filterId)
+      }
+      if (params.filterIds && params.filterIds.length > 0) {
+        allIds.push(...params.filterIds)
+      }
+
       const db = this.mongoDb.db()
       const collection = db.collection<
         InternalConsumerUser | InternalBusinessUser
       >(USERS_COLLECTION(this.tenantId))
-      const count = await collection.countDocuments({ userId: params.filterId })
+      const count = await collection.countDocuments({
+        userId: { $in: allIds },
+      })
       if (count > 0) {
-        // If we can find the user by exact ID match, we don't need to filter by name
+        // If we can find users by exact ID match, we don't need to filter by name
         delete params.filterName
       }
 
       filterConditions.push({
-        userId: params.filterId,
+        userId: { $in: allIds },
       })
     }
     if (params.filterName != null) {
@@ -375,10 +392,20 @@ export class UserRepository {
       }
     }
 
-    if (params.filterUserIds != null) {
+    if (params.filterUserId != null || params.filterUserIds != null) {
+      const userIds: string[] = []
+
+      if (params.filterUserId != null) {
+        userIds.push(params.filterUserId)
+      }
+
+      if (params.filterUserIds != null) {
+        userIds.push(...params.filterUserIds)
+      }
+
       filterConditions.push({
         userId: {
-          $in: params.filterUserIds,
+          $in: userIds,
         },
       })
     }

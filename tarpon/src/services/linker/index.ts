@@ -106,7 +106,7 @@ export class LinkerService {
   private getAllContactDetails(user: UsersProjectedData): ContactDetails[] {
     const sharedHolders = user.shareHolders || []
     const directors = user.directors || []
-    const contactDetails = [user.contactDetails] ?? []
+    const contactDetails = user.contactDetails ? [user.contactDetails] : []
     const legalEntityContact = user.legalEntity?.contactDetails || {}
     return [
       ...contactDetails,
@@ -314,6 +314,29 @@ export class LinkerService {
     const entity = await this.entity(userId, afterTimestamp, beforeTimestamp)
     entity.linkedUsers.delete(userId)
     return [...entity.linkedUsers.keys()]
+  }
+
+  public async getLinkedChildUsers(parentUserId: string): Promise<string[]> {
+    const entity = await this.entity(parentUserId)
+    const linkedChildrenKeysIterator = entity.childrenLinked.keys()
+    const linkedChildrenKeysArray = Array.from(linkedChildrenKeysIterator)
+
+    if (linkedChildrenKeysArray.length === 0) {
+      return []
+    }
+
+    const childrenKeysString = linkedChildrenKeysArray[0]
+
+    if (!childrenKeysString || childrenKeysString.trim() === '') {
+      return []
+    }
+
+    const linkedChildrenUserIds = childrenKeysString
+      ?.split(',')
+      ?.map((id) => id.trim())
+      .filter((id) => id !== '')
+
+    return linkedChildrenUserIds
   }
 
   public async entity(

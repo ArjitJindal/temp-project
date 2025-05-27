@@ -49,6 +49,7 @@ import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { LinkerService } from '@/services/linker'
 
 @traceable
 export class TransactionService {
@@ -122,6 +123,14 @@ export class TransactionService {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
       new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
+
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
 
     const data = await clickhouseTransactionsRepository.getTransactions(params)
 
@@ -263,6 +272,13 @@ export class TransactionService {
           params.filterOriginPaymentMethodId = filterPaymentMethodId
         }
       }
+    }
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
     }
     let response = await this.getTransactions(params, alert)
     if (alert && params.alertId) {
