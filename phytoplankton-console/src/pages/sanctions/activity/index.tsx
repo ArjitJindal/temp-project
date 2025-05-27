@@ -239,6 +239,17 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
             lastScreenedAt ? new Date(lastScreenedAt).toISOString() : '-',
         },
       }),
+      helper.simple<'lastScreenedAt'>({
+        title: 'Original screened at',
+        key: 'lastScreenedAt',
+        defaultWidth: 100,
+        type: {
+          render: (lastScreenedAt) =>
+            lastScreenedAt ? <TimestampDisplay timestamp={lastScreenedAt} /> : <>-</>,
+          stringify: (lastScreenedAt) =>
+            lastScreenedAt ? new Date(lastScreenedAt).toISOString() : '-',
+        },
+      }),
       helper.simple<'isNew'>({
         title: 'New',
         key: 'isNew',

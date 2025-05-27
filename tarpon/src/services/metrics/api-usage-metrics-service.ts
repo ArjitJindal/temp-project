@@ -484,6 +484,7 @@ export class ApiUsageMetricsService {
       .aggregate<{ _id: string; count: number }>([
         {
           $match: {
+            version: 0,
             [createdAtField]: {
               $gte: dayjs(timeRange.startTimestamp).valueOf(),
               $lte: dayjs(timeRange.endTimestamp).valueOf(),

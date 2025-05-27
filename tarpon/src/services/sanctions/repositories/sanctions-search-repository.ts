@@ -1,5 +1,5 @@
-import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { intersection, isNil, omit, omitBy } from 'lodash'
+import { MongoClient, Filter, UpdateFilter, Document } from 'mongodb'
+import { intersection, isEqual, isNil, omit, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -51,6 +51,53 @@ export class SanctionsSearchRepository {
     this.mongoDb = mongoDb
   }
 
+  public getVersionFromExistingSearch(
+    response: SanctionsSearchResponse,
+    existingSearch: SanctionsSearchHistory
+  ) {
+    // checking for search id only
+    const oldSearchIds = (
+      existingSearch.response?.data?.map((d) => d.id) ?? []
+    ).sort()
+    const newSearchIds = (response?.data?.map((d) => d.id) ?? []).sort()
+    if (!isEqual(oldSearchIds, newSearchIds)) {
+      return (existingSearch.version ?? -1) + 1
+    }
+
+    return existingSearch.version ?? 0
+  }
+
+  // 0 index based versioning
+  private async getVersionNumber(
+    providerSearchId: string,
+    request: SanctionsSearchRequest,
+    response: SanctionsSearchResponse
+  ) {
+    const collectionName = SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+
+    const filters: Filter<SanctionsSearchHistory>[] = [
+      { 'request.monitoring.enabled': request.monitoring?.enabled },
+      ...(!request.monitoring?.enabled
+        ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
+        : []),
+      { 'request.fuzziness': request.fuzziness },
+      { 'response.providerSearchId': providerSearchId },
+    ]
+    const [existingSearch] = await db
+      .collection<SanctionsSearchHistory>(collectionName)
+      .find({ $and: filters })
+      .sort({ version: -1 })
+      .limit(1)
+      .toArray()
+
+    if (!existingSearch || !existingSearch.version) {
+      return 0
+    }
+
+    return this.getVersionFromExistingSearch(response, existingSearch)
+  }
+
   public async saveSearchResult(props: {
     provider: SanctionsDataProviderName
     request: SanctionsSearchRequest
@@ -61,12 +108,33 @@ export class SanctionsSearchRepository {
     hitContext: SanctionsHitContext | undefined
     providerConfigHash?: string
     requestHash?: string
+    version?: number
     screeningEntity?: 'USER' | 'TRANSACTION'
   }): Promise<void> {
-    const { provider, request, response, createdAt, updatedAt } = props
-    const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
+    const {
+      provider,
+      request,
+      response,
+      createdAt,
+      updatedAt,
+      version: oldVersion,
+    } = props
+    const version = oldVersion
+      ? oldVersion
+      : await this.getVersionNumber(
+          response.providerSearchId,
+          request,
+          response
+        )
+
+    const filter: Filter<SanctionsSearchHistory> = {
+      _id: response.searchId,
+      version,
+    }
     const updateMessage: UpdateFilter<SanctionsSearchHistory> = {
       $set: {
+        _id: response.searchId,
+        version,
         provider,
         request,
         response,
@@ -100,8 +168,8 @@ export class SanctionsSearchRepository {
 
     try {
       await sendMessageToMongoUpdateConsumer({
-        filter: { _id: response.searchId },
-        updateMessage,
+        filter: filter as Filter<Document>,
+        updateMessage: updateMessage as UpdateFilter<Document>,
         collectionName: SANCTIONS_SEARCHES_COLLECTION(this.tenantId),
         upsert: true,
         operationType: 'updateOne',
@@ -188,9 +256,15 @@ export class SanctionsSearchRepository {
       provider,
     })
 
-    return await collection.findOne({
-      $and: filters,
-    })
+    return (
+      await collection
+        .find({
+          $and: filters,
+        })
+        .sort({ version: -1 })
+        .limit(1)
+        .toArray()
+    )?.[0]
   }
 
   private getSanctionsSearchHistoryCondition(

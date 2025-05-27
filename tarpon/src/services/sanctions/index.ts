@@ -376,6 +376,12 @@ export class SanctionsService {
                   providerOverrides.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
               })
             : undefined,
+        version: existedSearch
+          ? this.sanctionsSearchRepository.getVersionFromExistingSearch(
+              response,
+              existedSearch
+            )
+          : 0,
         ...(context?.ruleInstanceId
           ? {
               screeningEntity,
