@@ -1004,7 +1004,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   ...(orFilters.length > 0
                     ? { should: orFilters, minimumShouldMatch: 1 }
                     : {}),
-                  filter: andFilters,
+                  ...(andFilters?.length
+                    ? {
+                        filter: andFilters,
+                      }
+                    : {}),
                 },
               },
             },
