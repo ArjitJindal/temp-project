@@ -54,7 +54,7 @@ describe('similar-to-lists', () => {
       { tenantId: TEST_TENANT_ID, dynamoDb }
     )
 
-    expect(result).toBe(false)
+    expect(result).toBe(true)
   })
 
   test('Fuzziness 100 should return true', async () => {

@@ -49,7 +49,7 @@ export const SIMILAR_TO_LISTS_OPERATOR: TextLogicOperator = {
             value
           )
 
-          if (levenshteinDistance >= fuzziness) {
+          if (fuzziness >= 100 - levenshteinDistance) {
             return true
           }
         }
