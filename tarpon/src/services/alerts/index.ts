@@ -213,7 +213,9 @@ export class AlertsService extends CaseAlertsCommonService {
       'Case Service',
       'Mongo Get Alerts Query'
     )
-
+    if (params.view === 'DOWNLOAD') {
+      options = { ...options, hideTransactionIds: false }
+    }
     try {
       const alerts: AlertListResponse = await this.alertsRepository.getAlerts(
         params,
