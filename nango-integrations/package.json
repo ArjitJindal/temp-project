@@ -5,7 +5,7 @@
     "deploy:dev": "ENV=dev ts-node scripts/deploy.ts",
     "deploy:sandbox": "ENV=sandbox ts-node scripts/deploy.ts",
     "deploy:prod": "ENV=prod ts-node scripts/deploy.ts",
-    "generate": "nango generate"
+    "generate": "NANGO_CLI_UPGRADE_MODE=ignore nango generate"
   },
   "author": "",
   "license": "ISC",

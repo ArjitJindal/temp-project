@@ -30,7 +30,7 @@ export const tarponDeployStage = (
             nodejs: 20,
           },
           commands: [
-            'npm install -g nango',
+            'npm install -g nango@0.59.7',
             'corepack enable && yarn set version 4.0.2',
             'yarn install --immutable',
             'cd tarpon',

@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths-ignore:
       - "tarpon/**"
+      - "nango-integrations/**"
 jobs:
   test:
     name: test-tarpon

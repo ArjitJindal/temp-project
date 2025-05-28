@@ -18,7 +18,7 @@ export const phytoplanktonDeployStage = (
           },
           commands: [
             'corepack enable && yarn set version 4.0.2',
-            'npm install -g nango',
+            'npm install -g nango@0.59.7',
             'yarn install --immutable',
             'yarn add @tsconfig/node20@20.1.5 ts-node@10.9.1 typescript@5.2.2',
             'cd phytoplankton-console',

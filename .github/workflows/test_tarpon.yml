@@ -17,6 +17,7 @@ on:
     paths:
       - "tarpon/**"
       - "lib/**"
+      - "nango-integrations/**"
   workflow_call:
     inputs:
       llm:
@@ -78,7 +79,13 @@ jobs:
         run: yarn install --immutable
         working-directory: "tarpon"
       - name: Install nango
-        run: npm install -g nango
+        run: npm install -g nango@0.59.7
+      - name: Build nango-integrations
+        run: |
+          nango version
+          ls
+          nango generate
+        working-directory: "nango-integrations"
       - name: Build tarpon
         run: yarn run build:local
         working-directory: "tarpon"

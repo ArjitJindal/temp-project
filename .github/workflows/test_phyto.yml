@@ -44,7 +44,7 @@ jobs:
       - run: yarn install --immutable
         working-directory: "tarpon"
       - name: Install nango
-        run: npm install -g nango
+        run: npm install -g nango@0.59.7
         working-directory: "tarpon"
       - name: Build Tarpon Openapi
         run: npm run openapi:build
