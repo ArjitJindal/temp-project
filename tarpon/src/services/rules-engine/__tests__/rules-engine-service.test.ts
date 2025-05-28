@@ -724,11 +724,13 @@ describe('Verify Transaction Event', () => {
         transaction.transactionId as string
       )
 
-      expect(events.length).toEqual(2)
+      expect(events.length).toEqual(3)
 
       const lastEvent = events.find((e) => e.eventId === '1')
 
-      expect(lastEvent?.executedRules).toEqual([
+      const latestEvent = events[events.length - 1]
+
+      expect(latestEvent?.executedRules).toEqual([
         {
           ruleId: 'TEST-R-2',
           executedAt: expect.any(Number),
@@ -744,6 +746,26 @@ describe('Verify Transaction Event', () => {
             hitDirections: ['ORIGIN', 'DESTINATION'],
           },
         },
+      ])
+
+      expect(latestEvent?.hitRules).toEqual([
+        {
+          ruleId: 'TEST-R-2',
+          executedAt: expect.any(Number),
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: '',
+          ruleAction: 'FLAG',
+          nature: 'AML',
+          labels: [],
+          isShadow: false,
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN', 'DESTINATION'],
+          },
+        },
+      ])
+
+      expect(lastEvent?.executedRules).toEqual([
         {
           ruleId: 'TEST-R-1',
           executedAt: expect.any(Number),

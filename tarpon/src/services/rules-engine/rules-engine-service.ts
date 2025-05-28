@@ -121,6 +121,7 @@ import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { AccountsService } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -855,6 +856,13 @@ export class RulesEngineService {
     return keyBy(rules, 'id')
   }
 
+  private isMoreSevereAction(
+    action1: RuleAction,
+    action2: RuleAction
+  ): boolean {
+    return RULE_ACTIONS.indexOf(action1) > RULE_ACTIONS.indexOf(action2)
+  }
+
   private async verifyAsyncRulesTransactionInternal(
     transaction: Transaction,
     transactionEvents: TransactionEvent[],
@@ -894,29 +902,44 @@ export class RulesEngineService {
 
     const mergedHitRules = mergeRules(transactionInDb.hitRules, hitRules)
 
-    const status = getAggregatedRuleStatus(mergedHitRules)
+    const status = getAggregatedRuleStatus(hitRules)
+    const finalStatus = this.isMoreSevereAction(status, oldStatus)
+      ? status
+      : oldStatus
 
-    const transactionEventsSorted = transactionEvents.sort(
-      (a, b) => a.timestamp - b.timestamp
-    )
+    const newTransactionEvent: TransactionEvent = {
+      transactionId: transaction.transactionId,
+      timestamp: Date.now(),
+      transactionState: transaction.transactionState || 'CREATED',
+      eventId: uuidv4(),
+      updatedTransactionAttributes: transaction,
+      eventDescription: `Transaction event created as a result of asynchronous rule execution.`,
+    }
 
     await Promise.all([
       this.transactionRepository.updateTransactionRulesResult(
         transaction.transactionId,
-        { status, executedRules: mergedExecutedRules, hitRules: mergedHitRules }
+        {
+          status: finalStatus,
+          executedRules: mergedExecutedRules,
+          hitRules: mergedHitRules,
+        }
       ),
-      this.transactionEventRepository.updateTransactionEventRulesResult(
-        transaction.transactionId,
-        last(transactionEventsSorted) as TransactionEvent,
-        { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
+      this.transactionEventRepository.saveTransactionEvent(
+        newTransactionEvent,
+        {
+          executedRules: executedRules,
+          hitRules: hitRules,
+          status: finalStatus,
+        }
       ),
       sendTransactionAggregationTasks(aggregationMessages),
     ])
-    if (status !== oldStatus) {
+    if (finalStatus !== oldStatus) {
       await sendStatusChangeWebhook(
         this.tenantId,
         transaction.transactionId,
-        status
+        finalStatus
       )
     }
   }
