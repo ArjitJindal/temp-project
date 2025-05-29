@@ -23,7 +23,7 @@ describe('Breadcrumbs check in risk factors', () => {
 });
 
 function simulationModeCheck() {
-  cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Simulation');
+  cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Simulate');
   cy.get('[data-cy="simulation-history-link"]').click();
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Simulation history');
 }
