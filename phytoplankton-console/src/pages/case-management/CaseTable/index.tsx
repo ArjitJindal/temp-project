@@ -12,6 +12,7 @@ import {
   Case,
   CasesAssignmentsUpdateRequest,
   CasesReviewAssignmentsUpdateRequest,
+  CaseStatus,
   Comment,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
@@ -708,30 +709,30 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
       selectionActions={[
         ({ selectedIds, selectedItems, isDisabled }) => {
           const selectedCaseStatuses = new Set(
-            Object.values(selectedItems).map((item) => item.caseStatus),
+            Object.values(selectedItems).map((item) => {
+              const status = item.caseStatus;
+              // Strip _IN_PROGRESS and _ON_HOLD suffixes to treat them as the base status
+              return status?.replace(/_(IN_PROGRESS|ON_HOLD)$/, '') as CaseStatus;
+            }),
+          );
+
+          // ensure cases are all in the same status else disable the button
+          const multipleStatuses = selectedCaseStatuses.size > 1;
+
+          const selectedCaseStatus = Array.from(selectedCaseStatuses)[0];
+          const someEscalated = [...selectedCaseStatuses].some(
+            (status) => statusEscalated(status) || statusEscalatedL2(status),
           );
 
           // this is for multi-level escalation (PNB)
           // if any of the selected cases have a different escalation level, then we don't allow the assignment
-          if (isMultiLevelEscalationEnabled) {
-            // ensure cases are all escalated and of the same level
-            const someEscalated = [...selectedCaseStatuses].some(
-              (status) => statusEscalated(status) || statusEscalatedL2(status),
-            );
-            if (!someEscalated) {
-              return;
-            }
-            if (selectedCaseStatuses.size > 1) {
-              return;
-            }
-
-            // get the escalation level from selectedCaseStatuses[0]
-            const isL2Escalated = statusEscalatedL2(selectedCaseStatuses[0]);
+          if (isMultiLevelEscalationEnabled && someEscalated) {
+            // all cases are all escalated and of the same level
+            // get the escalation level from selectedCaseStatus
+            const isL2Escalated = statusEscalatedL2(selectedCaseStatus);
             const escalationLevel = isL2Escalated ? 'L2' : 'L1';
-
             return (
               <AssignToButton
-                isDisabled={isDisabled}
                 userFilter={(account) => account?.escalationLevel === escalationLevel}
                 onSelect={(account) => {
                   casesReviewAssignmentUpdateMutation.mutate({
@@ -746,22 +747,17 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                     ],
                   });
                 }}
+                isDisabled={isDisabled || multipleStatuses}
+                tooltip={multipleStatuses ? 'Please select alerts of the same status' : ''}
               />
             );
           }
 
-          // ensure cases are all in the same status
-          if (selectedCaseStatuses.size > 1) {
-            return;
-          }
-          const caseStatus = selectedCaseStatuses[0];
-
           return (
             <AssignToButton
-              isDisabled={isDisabled}
               onSelect={(account) => {
                 const [assignments, isReview] = createAssignments(
-                  caseStatus,
+                  selectedCaseStatus,
                   [account.id],
                   isMultiLevelEscalationEnabled,
                   user.userId,
@@ -779,6 +775,8 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                   });
                 }
               }}
+              isDisabled={isDisabled || multipleStatuses}
+              tooltip={multipleStatuses ? 'Please select alerts of the same status' : ''}
             />
           );
         },

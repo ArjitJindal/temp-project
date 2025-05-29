@@ -1346,25 +1346,27 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       }
 
       const selectedAlertStatuses = new Set(
-        Object.values(selectedItems).map((item) => item.alertStatus),
+        Object.values(selectedItems).map((item) => {
+          const status = item.alertStatus;
+          // Strip _IN_PROGRESS and _ON_HOLD suffixes to treat them as the base status
+          return status?.replace(/_(IN_PROGRESS|ON_HOLD)$/, '') as AlertStatus;
+        }),
+      );
+
+      // ensure alerts are all in the same status else disable the button
+      const multipleStatuses = selectedAlertStatuses.size > 1;
+
+      const selectedAlertStatus = Array.from(selectedAlertStatuses)[0];
+      const someEscalated = [...selectedAlertStatuses].some(
+        (status) => statusEscalated(status) || statusEscalatedL2(status),
       );
 
       // this is for multi-level escalation (PNB)
       // if any of the selected alerts have a different escalation level, then we don't allow the assignment
-      if (isMultiEscalationEnabled) {
-        // ensure alerts are all escalated and of the same level
-        const someEscalated = [...selectedAlertStatuses].some(
-          (status) => statusEscalated(status) || statusEscalatedL2(status),
-        );
-        if (!someEscalated) {
-          return;
-        }
-        if (selectedAlertStatuses.size > 1) {
-          return;
-        }
-
-        // get the escalation level from selectedCaseStatuses[0]
-        const isL2Escalated = statusEscalatedL2(selectedAlertStatuses[0]);
+      if (isMultiEscalationEnabled && someEscalated) {
+        // all alerts are all escalated and of the same level
+        // get the escalation level from selectedAlertStatus
+        const isL2Escalated = statusEscalatedL2(selectedAlertStatus);
         const escalationLevel = isL2Escalated ? 'L2' : 'L1';
 
         return (
@@ -1383,22 +1385,18 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 ],
               })
             }
-            isDisabled={isDisabled}
+            isDisabled={isDisabled || multipleStatuses}
+            tooltip={multipleStatuses ? 'Please select alerts of the same status' : ''}
           />
         );
       }
 
       // ensure alerts are all in the same status
-      if (selectedAlertStatuses.size > 1) {
-        return;
-      }
-      const alertStatus = selectedAlertStatuses[0];
-
       return (
         <AssignToButton
           onSelect={(account) => {
             const [assignments, isReview] = createAssignments(
-              alertStatus,
+              selectedAlertStatus,
               [account.id],
               isMultiEscalationEnabled,
               user.userId,
@@ -1416,16 +1414,21 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               });
             }
           }}
-          isDisabled={isDisabled}
+          isDisabled={isDisabled || multipleStatuses}
+          tooltip={multipleStatuses ? 'Please select alerts of the same status' : ''}
         />
       );
     },
     ({ selectedIds, selectedItems, params, isDisabled }) => {
       const selectedAlertStatuses = [
         ...new Set(
-          Object.values(selectedItems).map((item) =>
-            item.alertStatus === 'REOPENED' ? 'OPEN' : item.alertStatus,
-          ),
+          Object.values(selectedItems).map((item) => {
+            const status = item.alertStatus;
+            // Strip _IN_PROGRESS and _ON_HOLD suffixes to treat them as the base status
+            const baseStatus = status?.replace(/_(IN_PROGRESS|ON_HOLD)$/, '') as AlertStatus;
+            // map REOPENED to OPEN
+            return baseStatus === 'REOPENED' ? 'OPEN' : baseStatus;
+          }),
         ),
       ];
       const selectedAlertStatus =
