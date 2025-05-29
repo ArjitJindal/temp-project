@@ -315,6 +315,7 @@ export class AlertsService extends CaseAlertsCommonService {
     return { valid }
   }
 
+  // TODO: FIX THIS
   @auditLog('ALERT', 'STATUS_CHANGE', 'ESCALATE')
   public async escalateAlerts(
     caseId: string,
@@ -329,6 +330,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const accounts = await accountsService.getAllActiveAccounts()
     const currentUserId = getContext()?.user?.id
     const currentUserAccount = accounts.find((a) => a.id === currentUserId)
+    const isPNB = hasFeature('PNB')
 
     if (!currentUserAccount) {
       throw new Forbidden('User not found or deleted')
@@ -402,10 +404,98 @@ export class AlertsService extends CaseAlertsCommonService {
     )
 
     // if there are no remaining alerts, then we are escalating the entire case
-    if (!remainingAlerts?.length && caseUpdateRequest) {
+    // except for PNB (quickfix for escalation bugs)
+    if (!isPNB && !remainingAlerts?.length && caseUpdateRequest) {
+      // TODO: issue is here, we are escalating the case but case is already escalated compared to the alert
+      //       we only want to escalate the only alert inside the case. we have to handle this differently
       const response = await caseService.escalateCase(caseId, caseUpdateRequest)
       return {
         result: response.result,
+        publishAuditLog: () => false,
+        entities: [],
+      }
+    }
+
+    // this is for PNB only, escalate the alert without escalating the case
+    if (isPNB && !remainingAlerts?.length && caseUpdateRequest) {
+      if (!escalatedAlerts?.length) {
+        throw new BadRequest('No alerts found to escalate')
+      }
+
+      const firstAlert = escalatedAlerts?.[0]
+      const isAlreadyEscalated =
+        statusEscalated(firstAlert?.alertStatus) &&
+        !isStatusInReview(firstAlert?.alertStatus)
+      const alertStatus = isAlreadyEscalated
+        ? 'ESCALATED_L2'
+        : isReviewRequired
+        ? 'IN_REVIEW_ESCALATED'
+        : 'ESCALATED'
+      await this.updateStatus(
+        alertIds,
+        {
+          alertStatus: alertStatus,
+          reason: caseUpdateRequest?.reason ?? [],
+          comment: caseUpdateRequest?.comment ?? '',
+          files: caseUpdateRequest?.files ?? [],
+          otherReason: caseUpdateRequest?.otherReason ?? '',
+          priority: caseUpdateRequest?.priority,
+          closeSourceCase: caseEscalationRequest.closeSourceCase,
+          tags: caseUpdateRequest?.tags,
+          screeningDetails: caseUpdateRequest?.screeningDetails,
+          listId: caseUpdateRequest?.listId,
+        },
+        { cascadeCaseUpdates: false }
+      )
+
+      let assignee
+
+      // this step is only necessary when escalating to L1 or L2
+      // if (!(alertStatus === 'IN_REVIEW_ESCALATED')) {
+      // we need to update reviewAsssignment structure with L1 or L2 assignments when escalating
+      const newReviewAssignments =
+        alertStatus === 'IN_REVIEW_ESCALATED'
+          ? ([
+              {
+                assignedByUserId: currentUserId ?? '',
+                assigneeUserId: currentUserAccount.reviewerId,
+                timestamp: currentTimestamp,
+              },
+            ] as Assignment[])
+          : await this.getEscalationAssignments(
+              firstAlert?.alertStatus as CaseStatus,
+              firstAlert.reviewAssignments || [],
+              accounts
+            )
+
+      const reviewAssignments = uniqBy(
+        [...newReviewAssignments, ...(firstAlert.reviewAssignments ?? [])],
+        'assigneeUserId'
+      )
+
+      await this.alertsRepository.updateReviewAssignments(
+        escalatedAlerts.map((alert) => alert.alertId ?? ''), // alertId is always defined
+        reviewAssignments
+      )
+
+      if (alertStatus.startsWith('IN_REVIEW_ESCALATED')) {
+        assignee = reviewAssignments.filter((r) => !r.escalationLevel)[0]
+          ?.assigneeUserId
+      } else if (statusEscalatedL2(alertStatus)) {
+        assignee = reviewAssignments.filter(
+          (r) => r.escalationLevel === 'L2'
+        )[0]?.assigneeUserId
+      } else if (statusEscalated(alertStatus)) {
+        assignee = reviewAssignments.filter(
+          (r) => r.escalationLevel === 'L1'
+        )[0]?.assigneeUserId
+      }
+      // }
+
+      return {
+        result: {
+          assigneeIds: [assignee],
+        },
         publishAuditLog: () => false,
         entities: [],
       }
@@ -415,11 +505,13 @@ export class AlertsService extends CaseAlertsCommonService {
       isReviewRequired &&
       alertEscalations &&
       !isStatusInReview(remainingAlerts?.[0]?.alertStatus) &&
-      !isTransactionsEscalation
+      !isTransactionsEscalation &&
+      !isPNB
     ) {
       await this.updateStatus(
         alertIds,
         {
+          // alertStatus: 'IN_REVIEW_ESCALATED',
           alertStatus: 'ESCALATED',
           reason: caseUpdateRequest?.reason ?? [],
           comment: caseUpdateRequest?.comment ?? '',
@@ -475,8 +567,10 @@ export class AlertsService extends CaseAlertsCommonService {
       statusEscalated(c.caseStatus) && !isStatusInReview(c.caseStatus)
         ? firstAlert?.reviewAssignments ?? []
         : []
+
+    const assignmentStatus = isPNB ? firstAlert?.alertStatus : c.caseStatus
     const reviewAssignments = await this.getEscalationAssignments(
-      c.caseStatus as CaseStatus,
+      assignmentStatus as CaseStatus,
       existingReviewAssignments,
       accounts
     )
@@ -495,7 +589,10 @@ export class AlertsService extends CaseAlertsCommonService {
         const lastStatusChange: CaseStatusChange = {
           userId: currentUserId ?? '',
           caseStatus:
-            isTransactionsEscalation && isReviewRequired && !isAlreadyEscalated
+            // overriding isTransactionsEscalation == true for PNB
+            (isPNB || isTransactionsEscalation) &&
+            isReviewRequired &&
+            !isAlreadyEscalated
               ? 'IN_REVIEW_ESCALATED'
               : isAlreadyEscalated &&
                 !isInReviewEscalatedL1 && // Added this as isAlreadyEscalated also returns true for status 'IN_REVIEW_ESCALATED'
@@ -536,7 +633,6 @@ export class AlertsService extends CaseAlertsCommonService {
                     assignedByUserId: currentUserId ?? '',
                     assigneeUserId: currentUserAccount.reviewerId,
                     timestamp: currentTimestamp,
-                    // TODO: I think we need to add the escalationLevel here
                   },
                 ]
               : !isStatusInReview(escalatedAlert.alertStatus)
@@ -941,6 +1037,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  // TODO: FIX THIS
   @auditLog('ALERT', 'ASSIGNMENT', 'UPDATE')
   public async updateAssignments(
     alertIds: string[],
@@ -1286,6 +1383,7 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
+  // TODO: FIX THIS
   @auditLog('ALERT', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     alertIds: string[],
@@ -1309,12 +1407,18 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const {
       bySystem,
-      cascadeCaseUpdates = true,
+      // cascadeCaseUpdates = true,
       skipReview = false,
       account,
       updateChecklistStatus = true,
       externalRequest = false,
     } = options ?? {}
+
+    // override the case updates as a quickfix for PNB bugs
+    const isPNB = hasFeature('PNB')
+    const isClosing = statusUpdateRequest.alertStatus === 'CLOSED'
+    const cascadeCaseUpdates = isPNB && !isClosing ? false : true
+
     const userId = externalRequest ? API_USER : getContext()?.user?.id
     const statusChange: CaseStatusChange = {
       userId: bySystem

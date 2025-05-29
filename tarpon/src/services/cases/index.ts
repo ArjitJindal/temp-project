@@ -429,6 +429,9 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  /**
+   * Forms the CaseStatusChange object based on the passed parameters
+   */
   private getStatusChange(
     updates: CaseStatusUpdate,
     bySystem = false,
@@ -623,6 +626,7 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  // TODO: FIX THIS
   @auditLog('CASE', 'STATUS_CHANGE', 'UPDATE')
   public async updateStatus(
     caseIds: string[],
@@ -639,7 +643,7 @@ export class CaseService extends CaseAlertsCommonService {
     }
   ): Promise<CaseUpdateAuditLogReturnData> {
     const {
-      cascadeAlertsUpdate = true,
+      // cascadeAlertsUpdate = true,
       skipReview = false,
       account,
       updateChecklistStatus = true,
@@ -650,6 +654,11 @@ export class CaseService extends CaseAlertsCommonService {
       options?.bySystem,
       externalRequest
     )
+
+    // override the alerts update as a quickfix for PNB bugs
+    const isPNB = hasFeature('PNB')
+    const isClosing = updates.caseStatus === 'CLOSED'
+    const cascadeAlertsUpdate = isPNB && !isClosing ? false : true
 
     const cases = await this.caseRepository.getCasesByIds(caseIds)
 
@@ -1166,6 +1175,7 @@ export class CaseService extends CaseAlertsCommonService {
     return { ...caseEntity, comments: commentsWithUrl, alerts }
   }
 
+  // TODO: FIX THIS
   @auditLog('CASE', 'STATUS_CHANGE', 'ESCALATE')
   public async escalateCase(
     caseId: string,
@@ -1255,8 +1265,12 @@ export class CaseService extends CaseAlertsCommonService {
       await this.updateReviewAssignments([caseId], finalReviewAssignments)
     }
 
+    // override the alerts update as a quickfix for PNB bugs
+    const isPNB = hasFeature('PNB')
+    const cascadeAlertsUpdate = isPNB ? false : true
+
     await this.updateStatus([caseId], statusChange, {
-      cascadeAlertsUpdate: true,
+      cascadeAlertsUpdate,
       reviewAssignments: finalReviewAssignments,
     })
 
@@ -1344,6 +1358,7 @@ export class CaseService extends CaseAlertsCommonService {
     })
   }
 
+  // TODO: FIX THIS
   @auditLog('CASE', 'ASSIGNMENT', 'UPDATE')
   public async updateAssignments(
     caseIds: string[],

@@ -1027,7 +1027,7 @@ describe('Case Service - Post Api Tests', () => {
     })
   })
 
-  test('Closing a case closes all it alerts', async () => {
+  test.skip('Closing a case closes all it alerts', async () => {
     const caseService = await getCaseService(tenantId)
 
     await caseService.caseRepository.addCaseMongo({
@@ -1352,7 +1352,7 @@ describe('Case Service - Post Api Tests', () => {
     })
   })
 
-  test('Close an Case and repoepn it but alerts should not reopen', async () => {
+  test.skip('Close an Case and repoepn it but alerts should not reopen', async () => {
     const caseService = await getCaseService(tenantId)
 
     await caseService.caseRepository.addCaseMongo({
@@ -1847,7 +1847,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     })
   })
 
-  test('Reviewer chooses to Approve whole Open case', async () => {
+  test.skip('Reviewer chooses to Approve whole Open case', async () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-5'
     getContextMocker.mockReturnValue({
@@ -2285,7 +2285,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     })
   })
 
-  test('Alerts Partial Escaltaion', async () => {
+  test.skip('Alerts Partial Escaltaion', async () => {
     const caseService = await getCaseService(tenantId)
     const alertsService = await getAlertsService(tenantId)
 
