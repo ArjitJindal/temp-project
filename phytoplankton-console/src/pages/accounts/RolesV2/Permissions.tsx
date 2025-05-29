@@ -2,20 +2,19 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { DownOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import SubPermissions from './SubPermissions';
 import s from './style.module.less';
-import { doesResourceMatch } from './utils';
+import { PermissionNode, PermissionTreeTraverser, PermissionPathBuilder } from './utils';
 import {
   AccountRole,
   PermissionsResponse,
-  StaticPermissionsNode,
-  DynamicPermissionsNode,
   Permission,
+  PermissionsAction,
+  StaticPermissionsNode,
 } from '@/apis';
 import Button from '@/components/library/Button';
 import Form from '@/components/library/Form';
 import TextInput from '@/components/library/TextInput';
 import InputField from '@/components/library/Form/InputField';
-
-type PermissionNode = StaticPermissionsNode | DynamicPermissionsNode;
+import { useAuth0User } from '@/utils/user-utils';
 
 interface SearchFormValues {
   query: string;
@@ -32,12 +31,17 @@ const Permissions = ({
   role?: AccountRole | any;
   permissions: PermissionsResponse;
   mode: 'view' | 'edit';
-  onPermissionChange: (permission: Permission, action: 'read' | 'write', checked: boolean) => void;
+  onPermissionChange: (permission: Permission, action: PermissionsAction, checked: boolean) => void;
   onQueryChange: (query: string) => void;
   query: string;
 }) => {
   const [searchQuery, setSearchQuery] = useState(query);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  const auth0User = useAuth0User();
+
+  const tenantName = auth0User?.tenantName?.toLowerCase() || '';
+  const pathBuilder = useMemo(() => new PermissionPathBuilder(tenantName), [tenantName]);
+  const traverser = useMemo(() => new PermissionTreeTraverser(pathBuilder), [pathBuilder]);
 
   useEffect(() => {
     setSearchQuery(query);
@@ -50,107 +54,23 @@ const Permissions = ({
     }));
   }, []);
 
-  const isDynamicPermission = useCallback(
-    (permission: PermissionNode | null): permission is DynamicPermissionsNode => {
-      return permission?.type === 'DYNAMIC';
-    },
-    [],
-  );
-
   const permissionNodes = useMemo(() => {
-    const nodes = permissions.permissions || [];
-    const processedNodes: PermissionNode[] = [];
-
-    nodes.forEach((node) => {
-      if (isDynamicPermission(node) && node.items?.length) {
-        const items = node.items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          type: 'STATIC' as const,
-          actions: node.actions,
-        }));
-        processedNodes.push(...items);
-      } else {
-        processedNodes.push(node);
-      }
-    });
-
-    return processedNodes;
-  }, [permissions.permissions, isDynamicPermission]);
+    return traverser.flattenNodes(permissions.permissions || []);
+  }, [permissions.permissions, traverser]);
 
   const countGrantedPermissions = useCallback(
     (node: PermissionNode) => {
-      let readCount = 0;
-      let writeCount = 0;
+      if (!role?.statements) {
+        return {};
+      }
 
-      const countPermissionsRecursively = (currentNode: PermissionNode, path: string) => {
-        const nodePath = path ? `${path}/${currentNode.id}` : currentNode.id;
-
-        if (isDynamicPermission(currentNode) && currentNode.items?.length) {
-          currentNode.items.forEach((item) => {
-            const itemPath = `${nodePath}/${item.id}`;
-
-            if (
-              currentNode.actions?.includes('read') &&
-              role?.statements?.some(
-                (statement) =>
-                  statement.actions.includes('read') &&
-                  statement.resources.some((resource) => doesResourceMatch(itemPath, resource)),
-              )
-            ) {
-              readCount++;
-            }
-
-            if (
-              currentNode.actions?.includes('write') &&
-              role?.statements?.some(
-                (statement) =>
-                  statement.actions.includes('write') &&
-                  statement.resources.some((resource) => doesResourceMatch(itemPath, resource)),
-              )
-            ) {
-              writeCount++;
-            }
-          });
-        } else {
-          if (
-            currentNode.actions?.includes('read') &&
-            role?.statements?.some(
-              (statement) =>
-                statement.actions.includes('read') &&
-                statement.resources.some((resource) => doesResourceMatch(nodePath, resource)),
-            )
-          ) {
-            readCount++;
-          }
-
-          if (
-            currentNode.actions?.includes('write') &&
-            role?.statements?.some(
-              (statement) =>
-                statement.actions.includes('write') &&
-                statement.resources.some((resource) => doesResourceMatch(nodePath, resource)),
-            )
-          ) {
-            writeCount++;
-          }
-        }
-
-        if (currentNode.children && currentNode.children.length > 0) {
-          currentNode.children.forEach((child) => {
-            countPermissionsRecursively(child, nodePath);
-          });
-        }
-      };
-
-      countPermissionsRecursively(node, '');
-      return { readCount, writeCount };
+      return traverser.countNodePermissions(node, role.statements);
     },
-    [role, isDynamicPermission],
+    [role, traverser],
   );
 
   const permissionCounts = useMemo(() => {
-    const counts: Record<string, { readCount: number; writeCount: number }> = {};
+    const counts: Record<string, Record<string, number>> = {};
     permissionNodes.forEach((node) => {
       counts[node.id] = countGrantedPermissions(node);
     });
@@ -180,8 +100,8 @@ const Permissions = ({
     (node: PermissionNode) => {
       const nodeId = node.id;
       const isExpanded = expandedNodes[nodeId];
-
-      const { readCount, writeCount } = permissionCounts[nodeId];
+      const counts = permissionCounts[nodeId] || {};
+      const availableActions = node.actions || [];
 
       return (
         <div key={nodeId} className={s.permissionNodeContainer}>
@@ -190,15 +110,16 @@ const Permissions = ({
               <span className={s.expandIcon}>
                 {isExpanded ? <DownOutlined /> : <RightOutlined />}
               </span>
-              <span>{'name' in node ? node.name : ''}</span>
+              <span>{(node as StaticPermissionsNode).name || ''}</span>
             </div>
             <div className={s.permissionDetails}>
-              <div className={s.permissionAction}>
-                <span>{readCount} read</span>
-              </div>
-              <div className={s.permissionAction}>
-                <span>{writeCount} write</span>
-              </div>
+              {availableActions.map((action) => (
+                <div key={action} className={s.permissionAction}>
+                  <span>
+                    {counts[action] || 0} {action}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -208,7 +129,7 @@ const Permissions = ({
                 subPermissions={node.children || []}
                 mode={mode}
                 role={role}
-                parentPath={nodeId}
+                parentSegments={[nodeId]}
                 onPermissionChange={onPermissionChange}
               />
             </div>

@@ -1,22 +1,25 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import cn from 'clsx';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
-import { doesResourceMatch } from './utils';
-import { StaticPermissionsNode } from '@/apis/models/StaticPermissionsNode';
-import { DynamicPermissionsNode } from '@/apis/models/DynamicPermissionsNode';
+import {
+  PermissionNode,
+  PermissionChecker,
+  PermissionTreeTraverser,
+  PermissionPathBuilder,
+  isPermissionCoveredByWildcard,
+} from './utils';
 import Checkbox from '@/components/library/Checkbox';
-import { AccountRole, Permission } from '@/apis';
-
-type PermissionNode = StaticPermissionsNode | DynamicPermissionsNode;
-type Action = 'read' | 'write';
+import { AccountRole, Permission, PermissionsAction, StaticPermissionsNode } from '@/apis';
+import { useAuth0User } from '@/utils/user-utils';
 
 interface SubPermissionsProps {
   subPermissions: PermissionNode[];
   mode: 'view' | 'edit';
   role?: AccountRole;
-  onPermissionChange?: (permission: Permission, action: Action, value: boolean) => void;
-  parentPath?: string;
+  onPermissionChange?: (permission: Permission, action: PermissionsAction, value: boolean) => void;
+  parentSegments?: string[];
 }
 
 const SubPermissions = ({
@@ -24,145 +27,128 @@ const SubPermissions = ({
   mode,
   role,
   onPermissionChange,
-  parentPath = '',
+  parentSegments = [],
 }: SubPermissionsProps) => {
   const [selectedSubPermission, setSelectedSubPermission] = useState<PermissionNode | null>(null);
+  const auth0User = useAuth0User();
 
-  useEffect(() => {
-    setSelectedSubPermission(null);
-  }, [parentPath]);
+  const tenantName = auth0User?.tenantName?.toLowerCase() || '';
+  const checker = useMemo(() => new PermissionChecker(tenantName), [tenantName]);
+  const pathBuilder = useMemo(() => new PermissionPathBuilder(tenantName), [tenantName]);
+  const traverser = useMemo(() => new PermissionTreeTraverser(pathBuilder), [pathBuilder]);
 
-  const isDynamicPermission = useCallback(
-    (permission: PermissionNode | null): permission is DynamicPermissionsNode => {
-      return permission?.type === 'DYNAMIC';
-    },
-    [],
-  );
+  const isPermissionChecked = useCallback(
+    (
+      permission: PermissionNode,
+      action: PermissionsAction,
+      nodeParentSegments: string[] = [],
+    ): boolean => {
+      const children = traverser.getChildNodes(permission);
+      const hasDirectPerm = checker.hasPermission(
+        permission,
+        action,
+        role?.statements || [],
+        nodeParentSegments,
+      );
 
-  const getPermissionPath = useCallback(
-    (p: PermissionNode): string => {
-      const currentSegment = isDynamicPermission(p) ? `${p.id}/${p.subType}` : p.id;
-      const result = parentPath ? `${parentPath}/${currentSegment}` : currentSegment;
-      return result;
-    },
-    [parentPath, isDynamicPermission],
-  );
-
-  const getChildPermissions = useCallback(
-    (permission: PermissionNode): PermissionNode[] => {
-      if (isDynamicPermission(permission)) {
-        return (
-          permission.items?.map(
-            (item) =>
-              ({
-                id: item.id,
-                name: item.name,
-                type: 'STATIC',
-                actions: permission.actions,
-              } as StaticPermissionsNode),
-          ) ?? []
-        );
+      if (children.length === 0) {
+        return hasDirectPerm;
       }
 
-      const children = permission.children ?? [];
-      const flattenedChildren: PermissionNode[] = [];
-
-      children.forEach((child) => {
-        if (isDynamicPermission(child) && child.items?.length) {
-          const dynamicItems = child.items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            type: 'STATIC' as const,
-            actions: child.actions,
-          }));
-          flattenedChildren.push(...dynamicItems);
-        } else {
-          flattenedChildren.push(child);
-        }
-      });
-
-      return flattenedChildren.filter((child) => {
-        return !isDynamicPermission(child) || !!child.items?.length;
-      });
-    },
-    [isDynamicPermission],
-  );
-
-  const permissionMap = useMemo(() => {
-    if (!role?.statements) {
-      return new Map<string, { read: boolean; write: boolean }>();
-    }
-
-    const map = new Map<string, { read: boolean; write: boolean }>();
-    const statements = role.statements;
-
-    subPermissions.forEach((permission) => {
-      const permPath = getPermissionPath(permission);
-      const nodeActions = permission.actions ?? [];
-
-      const hasRead =
-        nodeActions.includes('read') &&
-        statements.some(
-          (statement) =>
-            statement.actions.includes('read') &&
-            statement.resources.some((resource) => doesResourceMatch(permPath, resource)),
-        );
-
-      const hasWrite =
-        nodeActions.includes('write') &&
-        statements.some(
-          (statement) =>
-            statement.actions.includes('write') &&
-            statement.resources.some((resource) => doesResourceMatch(permPath, resource)),
-        );
-
-      map.set(permPath, { read: hasRead, write: hasWrite });
-    });
-
-    return map;
-  }, [subPermissions, role, getPermissionPath]);
-
-  const hasPermission = useCallback(
-    (permission: PermissionNode, action: Action): boolean => {
-      const permPath = getPermissionPath(permission);
-      const permissions = permissionMap.get(permPath);
-
-      if (!permissions) {
-        return false;
+      if (hasDirectPerm) {
+        return true;
       }
 
-      return action === 'read' ? permissions.read : permissions.write;
+      const currentPath = traverser.getNodePath(permission, nodeParentSegments);
+      const allChildrenChecked = children.every((child) =>
+        isPermissionChecked(child, action, currentPath.segments),
+      );
+
+      return allChildrenChecked;
     },
-    [permissionMap, getPermissionPath],
+    [traverser, checker, role?.statements],
+  );
+
+  // Check if node should be visually checked
+  const isNodeChecked = useCallback(
+    (permission: PermissionNode, action: PermissionsAction): boolean => {
+      return isPermissionChecked(permission, action, parentSegments);
+    },
+    [isPermissionChecked, parentSegments],
   );
 
   const handlePermissionChange = useCallback(
-    (permission: PermissionNode, action: Action, checked: boolean) => {
+    (permission: PermissionNode, action: PermissionsAction, checked: boolean) => {
       if (!onPermissionChange) {
         return;
       }
-      const permissionString = `${getPermissionPath(permission)}:${action}` as Permission;
+
+      const nodePath = traverser.getNodePath(permission, parentSegments);
+      const permissionString = `${nodePath.full}::::${action}` as Permission;
+
+      if (!checked) {
+        const coveredByWildcard = isPermissionCoveredByWildcard(
+          nodePath.full,
+          role?.statements || [],
+          action,
+          tenantName,
+        );
+
+        if (coveredByWildcard) {
+          // This child is covered by a parent wildcard, the removePermission utility
+          // will handle the wildcard expansion automatically
+        }
+      }
 
       if (action === 'read' && !checked) {
-        if (hasPermission(permission, 'write')) {
-          const writePermissionString = `${getPermissionPath(permission)}:write` as Permission;
+        const availableActions = permission.actions || [];
+        if (availableActions.includes('write') && isNodeChecked(permission, 'write')) {
+          const writePermissionString = `${nodePath.full}::::write` as Permission;
           onPermissionChange(writePermissionString, 'write', false);
         }
       }
 
+      // Apply permission to current node
       onPermissionChange(permissionString, action, checked);
+
+      const children = traverser.getChildNodes(permission);
+      const currentPath = traverser.getNodePath(permission, parentSegments);
+
+      children.forEach((child) => {
+        const childPath = traverser.getNodePath(child, currentPath.segments);
+        const childPermissionString = `${childPath.full}::::${action}` as Permission;
+
+        onPermissionChange(childPermissionString, action, checked);
+
+        const grandChildren = traverser.getChildNodes(child);
+        if (grandChildren.length > 0) {
+          const processGrandChildren = (parent: PermissionNode, parentSegs: string[]) => {
+            const gChildren = traverser.getChildNodes(parent);
+            gChildren.forEach((gChild) => {
+              const gChildPath = traverser.getNodePath(gChild, parentSegs);
+              const gChildPermissionString = `${gChildPath.full}::::${action}` as Permission;
+              onPermissionChange(gChildPermissionString, action, checked);
+
+              if (traverser.getChildNodes(gChild).length > 0) {
+                processGrandChildren(gChild, gChildPath.segments);
+              }
+            });
+          };
+          processGrandChildren(child, childPath.segments);
+        }
+      });
     },
-    [onPermissionChange, getPermissionPath, hasPermission],
+    [onPermissionChange, traverser, parentSegments, isNodeChecked, role?.statements, tenantName],
   );
 
   const renderRecursiveSubPermissions = useCallback(
     (selectedPerm: PermissionNode) => {
-      const children = getChildPermissions(selectedPerm);
+      const children = traverser.getChildNodes(selectedPerm);
       if (!children.length) {
         return null;
       }
 
-      const currentFullPath = getPermissionPath(selectedPerm);
+      const currentPath = traverser.getNodePath(selectedPerm, parentSegments);
 
       return (
         <SubPermissions
@@ -170,44 +156,30 @@ const SubPermissions = ({
           mode={mode}
           role={role}
           onPermissionChange={onPermissionChange}
-          parentPath={currentFullPath}
+          parentSegments={currentPath.segments}
         />
       );
     },
-    [getChildPermissions, mode, role, onPermissionChange, getPermissionPath],
+    [traverser, mode, role, onPermissionChange, parentSegments],
   );
 
   const processedPermissions = useMemo(() => {
-    const processed: PermissionNode[] = [];
+    return traverser.flattenNodes(subPermissions);
+  }, [subPermissions, traverser]);
 
-    subPermissions.forEach((permission) => {
-      if (isDynamicPermission(permission) && permission.items?.length) {
-        const items = permission.items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          type: 'STATIC' as const,
-          actions: permission.actions,
-        }));
-        processed.push(...items);
-      } else {
-        processed.push(permission);
-      }
-    });
-
-    return processed;
-  }, [subPermissions, isDynamicPermission]);
+  useEffect(() => {
+    setSelectedSubPermission(null);
+  }, [parentSegments]);
 
   return (
     <div className={s.subPermissionsWrapper}>
       <div className={s.subPermissions}>
         {processedPermissions.map((permission) => {
-          const clickable = getChildPermissions(permission).length > 0;
-          const hasReadPerm = hasPermission(permission, 'read');
-          const hasWritePerm = hasPermission(permission, 'write');
-          const permissionName = isDynamicPermission(permission)
-            ? permission.subType
-            : permission.name;
-          const uniqueKey = getPermissionPath(permission);
+          const children = traverser.getChildNodes(permission);
+          const clickable = children.length > 0;
+          const availableActions = permission.actions || [];
+          const nodePath = traverser.getNodePath(permission, parentSegments);
+          const uniqueKey = nodePath.full;
 
           return (
             <div
@@ -233,49 +205,34 @@ const SubPermissions = ({
                 ) : (
                   <div className={s.arrow} />
                 )}
-                <div>{permissionName}</div>
+                <div>{(permission as StaticPermissionsNode).name || ''}</div>
               </div>
               <div className={s.permissionActions}>
-                <div
-                  key={`read-${uniqueKey}`}
-                  className={cn(s.permissionAction, {
-                    [s.hidden]: !permission.actions?.includes('read'),
-                  })}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <Checkbox
-                    value={hasReadPerm}
-                    isDisabled={mode === 'view'}
-                    onChange={(newValue) => {
-                      if (newValue !== undefined) {
-                        handlePermissionChange(permission, 'read', newValue);
-                      }
-                    }}
-                  />
-                  <div key={`read-label-${uniqueKey}`}>Read</div>
-                </div>
-                <div
-                  key={`write-${uniqueKey}`}
-                  className={cn(s.permissionAction, {
-                    [s.hidden]: !permission.actions?.includes('write'),
-                  })}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <Checkbox
-                    value={hasWritePerm}
-                    isDisabled={mode === 'view'}
-                    onChange={(newValue) => {
-                      if (newValue !== undefined) {
-                        handlePermissionChange(permission, 'write', newValue);
-                      }
-                    }}
-                  />
-                  <div key={`write-label-${uniqueKey}`}>Write</div>
-                </div>
+                {availableActions.map((action) => {
+                  const isChecked = isNodeChecked(permission, action);
+                  const actionKey = `${action}-${uniqueKey}`;
+
+                  return (
+                    <div
+                      key={actionKey}
+                      className={s.permissionAction}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      <Checkbox
+                        value={isChecked}
+                        isDisabled={mode === 'view'}
+                        onChange={(newValue) => {
+                          if (newValue !== undefined) {
+                            handlePermissionChange(permission, action, newValue);
+                          }
+                        }}
+                      />
+                      <div key={`${action}-label-${uniqueKey}`}>{firstLetterUpper(action)}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
