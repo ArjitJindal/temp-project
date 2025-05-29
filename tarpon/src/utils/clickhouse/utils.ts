@@ -154,6 +154,11 @@ export async function getClickhouseCredentials(
   return getConnectionCredentials(config, dbName)
 }
 
+export async function getClickhouseDefaultCredentials(): Promise<ConnectionCredentials> {
+  const config = await getClickhouseClientConfig('default')
+  return getConnectionCredentials(config, 'default')
+}
+
 export async function getDefualtConfig(): Promise<ConnectionCredentials> {
   const config = await getClickhouseClientConfig('default')
   return getConnectionCredentials(config, 'default')

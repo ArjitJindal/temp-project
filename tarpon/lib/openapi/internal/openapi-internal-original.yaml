@@ -10066,6 +10066,7 @@ components:
         - API_USAGE_METRICS
         - PNB_PULL_USERS_DATA
         - CLICKHOUSE_DATA_BACKFILL
+        - SYNC_DATABASES
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string

@@ -423,6 +423,13 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'SYNC_DATABASES': {
+          await sendBatchJobCommand({
+            type: 'SYNC_DATABASES',
+            tenantId: tenantId,
+          })
+          break
+        }
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
         }

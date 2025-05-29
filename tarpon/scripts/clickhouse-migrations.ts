@@ -16,6 +16,7 @@ export async function migrateClickhouse() {
     return
   }
   const defaultConfig = await getDefualtConfig()
+  execSync(`npm run clickhouse:schema:migrate`)
   ConnectionManager.setDefault({
     credentials: defaultConfig,
   })
