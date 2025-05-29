@@ -1,8 +1,65 @@
 import { chunk, groupBy, mapValues } from 'lodash'
+import {
+  getAllUsagePlans,
+  getTenantIdFromUsagePlanName,
+} from '@flagright/lib/tenants/usage-plans'
+import {
+  APIGatewayClient,
+  GetUsagePlanKeysCommand,
+  UpdateApiKeyCommand,
+} from '@aws-sdk/client-api-gateway'
 import dayjs from './dayjs'
+import { envIs } from './env'
 import { TenantInfo } from '@/services/tenants'
 import { logger } from '@/core/logger'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+
+export async function toggleApiKeys(tenantId: string, newState: boolean) {
+  const allUsagePlans = await getAllUsagePlans(
+    envIs('local') ? 'eu-central-1' : (process.env.AWS_REGION as string)
+  )
+
+  const usagePlan = allUsagePlans.find(
+    (usagePlan) =>
+      getTenantIdFromUsagePlanName(usagePlan.name as string) === tenantId
+  )
+
+  if (!usagePlan) {
+    logger.warn(`Usage plan not found for tenant ${tenantId}`)
+    return
+  }
+
+  const apigateway = new APIGatewayClient({
+    region: process.env.AWS_REGION,
+    maxAttempts: 10,
+  })
+
+  const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
+    usagePlanId: usagePlan.id,
+  })
+
+  const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
+
+  if (!usagePlanKeys.items?.length) {
+    logger.warn(`Usage plan ${usagePlan.id} does not have any keys`)
+    return
+  }
+
+  for (const key of usagePlanKeys.items) {
+    await apigateway.send(
+      new UpdateApiKeyCommand({
+        apiKey: key.id,
+        patchOperations: [
+          {
+            op: 'replace',
+            path: '/enabled',
+            value: newState ? 'true' : 'false',
+          },
+        ],
+      })
+    )
+  }
+}
 
 export async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
   const tenantData = tenantInfos.map((t) => {

@@ -6,15 +6,6 @@ import {
 import { memoize, orderBy } from 'lodash'
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import {
-  getAllUsagePlans,
-  getTenantIdFromUsagePlanName,
-} from '@flagright/lib/tenants/usage-plans'
-import {
-  APIGatewayClient,
-  GetUsagePlanKeysCommand,
-  UpdateApiKeyCommand,
-} from '@aws-sdk/client-api-gateway'
 import { AccountsService } from '../accounts'
 import {
   getNonUserReceiverKeys,
@@ -50,13 +41,14 @@ import {
   TENANT_DELETION_COLLECTION,
   DYNAMODB_PARTITIONKEYS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { envIs, envIsNot } from '@/utils/env'
+import { envIsNot } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
 import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { CRM_MODEL_TYPES } from '@/@types/openapi-internal-custom/CRMModelType'
+import { toggleApiKeys } from '@/utils/api-usage'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -245,46 +237,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deactivateApiKeys(tenantId: string) {
-    const allUsagePlans = await getAllUsagePlans(
-      envIs('local') ? 'eu-central-1' : (process.env.AWS_REGION as string)
-    )
-
-    const usagePlan = allUsagePlans.find(
-      (usagePlan) =>
-        getTenantIdFromUsagePlanName(usagePlan.name as string) === tenantId
-    )
-
-    if (!usagePlan) {
-      logger.warn(`Usage plan not found for tenant ${tenantId}`)
-      return
-    }
-
-    const apigateway = new APIGatewayClient({
-      region: process.env.AWS_REGION,
-      maxAttempts: 10,
-    })
-
-    const usagePlanKeysCommand = new GetUsagePlanKeysCommand({
-      usagePlanId: usagePlan.id,
-    })
-
-    const usagePlanKeys = await apigateway.send(usagePlanKeysCommand)
-
-    if (!usagePlanKeys.items?.length) {
-      logger.warn(`Usage plan ${usagePlan.id} does not have any keys`)
-      return
-    }
-
-    for (const key of usagePlanKeys.items) {
-      await apigateway.send(
-        new UpdateApiKeyCommand({
-          apiKey: key.id,
-          patchOperations: [
-            { op: 'replace', path: '/enabled', value: 'false' },
-          ],
-        })
-      )
-    }
+    await toggleApiKeys(tenantId, false)
   }
 
   private async deactivateAuth0Users(tenantId: string) {

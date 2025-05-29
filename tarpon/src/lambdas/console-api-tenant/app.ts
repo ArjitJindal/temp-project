@@ -47,7 +47,7 @@ import {
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
 import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
-import { createApiUsageJobs } from '@/utils/api-usage'
+import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
 import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -232,6 +232,11 @@ export const tenantsHandler = lambdaApi()(
       const updatedResult = await tenantService.createOrUpdateTenantSettings(
         changedTenantSettings
       )
+
+      // toggling usage plan
+      if (changedTenantSettings.isAccountSuspended != null) {
+        await toggleApiKeys(tenantId, !changedTenantSettings.isAccountSuspended)
+      }
 
       const auditLog: AuditLog = {
         type: 'TENANT',
