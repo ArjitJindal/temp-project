@@ -5,7 +5,6 @@ import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
-import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';
 import { TableListViewEnum } from '@/apis';
 
 export const DEFAULT_PAGE_SIZE = 20;
@@ -43,7 +42,7 @@ export const SELECT_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
   header: ({ table }) => {
     return (
       <Checkbox
-        value={table.getIsSomePageRowsSelected() ? undefined : table.getIsAllPageRowsSelected()}
+        value={table.getIsSomePageRowsSelected() ? false : table.getIsAllPageRowsSelected()}
         onChange={(newValue) => {
           table.toggleAllPageRowsSelected(newValue);
         }}
@@ -67,19 +66,13 @@ export const SELECT_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
 
 const ExpandCheckbox = <Item extends object>({
   row,
-  table,
   partiallySelectedIds,
-  selectionInfo,
 }: {
   row: TanTable.Row<TableRow<Item>>;
   table: TanTable.Table<TableRow<Item>>;
   partiallySelectedIds?: string[];
   selectionInfo?: SelectionInfo;
 }) => {
-  const count = useMemo(() => {
-    return selectionInfo?.entityCount ?? Object.keys(table.getState().rowSelection).length;
-  }, [selectionInfo, table]);
-
   const isDisabled = useMemo(() => {
     if (!row.getCanSelect()) {
       return true;
@@ -89,16 +82,12 @@ const ExpandCheckbox = <Item extends object>({
       return false;
     }
 
-    if (count >= DEFAULT_BULK_ACTIONS_LIMIT) {
-      return true;
-    }
-
     return false;
-  }, [row, count]);
+  }, [row]);
 
   return (
     <Checkbox
-      value={partiallySelectedIds?.includes(row.id) ? undefined : row.getIsSelected()}
+      value={partiallySelectedIds?.includes(row.id) ? false : row.getIsSelected()}
       isDisabled={isDisabled}
       onChange={(newValue) => {
         row.toggleSelected(newValue);

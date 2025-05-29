@@ -53,6 +53,9 @@ export class MongoSanctionSourcesRepository
               provider,
               version,
               updatedAt: Date.now(),
+              ...(document.displayName && {
+                displayName: document.displayName,
+              }),
             },
           }
           if (document.entityIds && document.entityIds.length > 0) {
@@ -65,6 +68,7 @@ export class MongoSanctionSourcesRepository
           const updateOne: UpdateOneModel<SourceDocumentWithEntityIds> = {
             filter: {
               sourceName: document.sourceName,
+              sourceCountry: document.sourceCountry,
               provider,
               entityType: document.entityType,
               sourceType: document.sourceType,
@@ -115,8 +119,9 @@ export class MongoSanctionSourcesRepository
   async getSanctionsSources(
     filterSourceType?: SanctionsSourceType,
     filterSourceIds?: string[],
-    unique?: boolean
-  ): Promise<SourceDocument[]> {
+    unique?: boolean,
+    searchTerm?: string
+  ): Promise<(SourceDocument & { entityCount: number })[]> {
     const collection = this.mongoClient
       .db()
       .collection<SourceDocument>(this.collectionName)
@@ -127,18 +132,78 @@ export class MongoSanctionSourcesRepository
     if (filterSourceIds && filterSourceIds.length > 0) {
       matchStage.id = { $in: filterSourceIds }
     }
-    const pipeline =
-      Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []
-    let sources = await collection.aggregate(pipeline).toArray()
-    if (unique) {
-      const uniqueSources = new Map<string, SourceDocument>()
-      for (const source of sources) {
-        if (!uniqueSources.has(source.sourceName)) {
-          uniqueSources.set(source.sourceName, source)
-        }
-      }
-      sources = Array.from(uniqueSources.values())
+    if (searchTerm) {
+      matchStage.$or = [
+        { sourceName: { $regex: searchTerm, $options: 'i' } },
+        { sourceCountry: { $regex: searchTerm, $options: 'i' } },
+      ]
     }
-    return sources as SourceDocument[]
+
+    const pipeline: any[] =
+      Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []
+
+    if (unique) {
+      pipeline.push({
+        $group: {
+          _id: '$sourceName',
+          id: { $first: '$id' },
+          sourceName: { $first: '$sourceName' },
+          sourceCountry: { $first: '$sourceCountry' },
+          displayName: { $first: '$displayName' },
+          sourceType: { $first: '$sourceType' },
+          entityType: { $first: '$entityType' },
+          entityCount: {
+            $sum: {
+              $size: {
+                $ifNull: ['$entityIds', []],
+              },
+            },
+          },
+        },
+      })
+      pipeline.push({
+        $project: {
+          _id: 0,
+          id: 1,
+          sourceName: 1,
+          sourceCountry: 1,
+          displayName: 1,
+          sourceType: 1,
+          entityType: 1,
+          entityCount: 1,
+        },
+      })
+    }
+
+    // Add sorting based on filterSourceType (same for both unique and non-unique cases)
+    if (
+      filterSourceType === 'REGULATORY_ENFORCEMENT_LIST' ||
+      filterSourceType === 'SANCTIONS'
+    ) {
+      pipeline.push({ $sort: { sourceCountry: 1 } })
+    } else if (filterSourceType === 'PEP') {
+      pipeline.push({
+        $addFields: {
+          sortOrder: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$sourceName', 'PEP Tier 1'] }, then: 1 },
+                { case: { $eq: ['$sourceName', 'PEP Tier 2'] }, then: 2 },
+                { case: { $eq: ['$sourceName', 'PEP Tier 3'] }, then: 3 },
+                {
+                  case: { $eq: ['$sourceName', 'PEP by Association'] },
+                  then: 4,
+                },
+              ],
+              default: 5,
+            },
+          },
+        },
+      })
+      pipeline.push({ $sort: { sortOrder: 1 } })
+    }
+
+    const sources = await collection.aggregate(pipeline).toArray()
+    return sources as (SourceDocument & { entityCount: number })[]
   }
 }

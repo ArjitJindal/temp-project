@@ -37,7 +37,6 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
 import { shouldShowSkeleton } from '@/components/library/Skeleton';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
-import { useIsChanged } from '@/utils/hooks';
 
 type RowHeightMode = 'FIXED' | 'AUTO';
 
@@ -185,13 +184,6 @@ function Table<Item extends object, Params extends object = CommonParams>(
     onSelect?.([]);
     table.resetRowSelection();
   }, [onSelect, table]);
-
-  const isDataResChanged = useIsChanged(dataRes.kind);
-  useEffect(() => {
-    if (isDataResChanged) {
-      handleResetSelection();
-    }
-  }, [isDataResChanged, handleResetSelection]);
 
   const handleReload = useCallback(() => {
     handleResetSelection();

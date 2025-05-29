@@ -653,19 +653,29 @@ export class SanctionsService {
   }
 
   public async getSanctionsSources(
-    filterSourceType?: SanctionsSourceType
+    filterSourceType?: SanctionsSourceType,
+    searchTerm?: string
   ): Promise<SanctionsSourceListResponse> {
     await this.initialize()
     const sources = await this.sanctionsSourcesRepository.getSanctionsSources(
       filterSourceType,
       [],
-      true
+      true,
+      searchTerm
     )
     return {
       items:
-        sources?.map((source) =>
-          pick(source, ['id', 'sourceName', 'sourceType'])
-        ) ?? [],
+        sources?.map((source) => {
+          const picked = pick(source, [
+            'id',
+            'sourceName',
+            'sourceType',
+            'sourceCountry',
+            'displayName',
+            'entityCount',
+          ])
+          return picked
+        }) ?? [],
     }
   }
 

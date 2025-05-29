@@ -79,6 +79,47 @@ export function humanizeStrings(items: string[]): string {
   }, '')
 }
 
+function titleCaseWord(word: string, isFirst: boolean): string {
+  const SMALL_WORDS = new Set([
+    'and',
+    'or',
+    'the',
+    'of',
+    'in',
+    'on',
+    'at',
+    'for',
+    'to',
+    'a',
+    'an',
+  ])
+  const ACRONYMS = new Set(['USA', 'UK', 'UAE', 'UN', 'EU'])
+
+  const upperWord = word.toUpperCase()
+  if (ACRONYMS.has(upperWord)) return upperWord
+
+  const lowerWord = word.toLowerCase()
+
+  if (!isFirst && SMALL_WORDS.has(lowerWord)) return lowerWord
+
+  return lowerWord.charAt(0).toUpperCase() + lowerWord.slice(1)
+}
+
+export function humanizeCountryName(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word, index) =>
+      word
+        .split('-')
+        .map((subword, subIndex) =>
+          titleCaseWord(subword, index === 0 && subIndex === 0)
+        )
+        .join('-')
+    )
+    .join(' ')
+}
+
 export function recognizeCase(
   string: string
 ): 'CAMEL_CASE' | 'SNAKE_CASE' | 'CONSTANT' | 'UNKNOWN' | 'KEBAB' {

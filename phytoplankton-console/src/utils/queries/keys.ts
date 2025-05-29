@@ -482,9 +482,10 @@ export const DEFAULT_MANUAL_SCREENING_FILTERS = (): QueryKey => [
   'default-manual-screening-filters',
 ];
 
-export const SANCTIONS_SOURCES = (type: SanctionsSourceType): QueryKey => [
+export const SANCTIONS_SOURCES = (type: SanctionsSourceType, searchQuery?: string): QueryKey => [
   'sanctions-sources',
   type,
+  searchQuery,
 ];
 
 export const PERMISSIONS_STATEMENTS = (): QueryKey => ['permissions-statements'];

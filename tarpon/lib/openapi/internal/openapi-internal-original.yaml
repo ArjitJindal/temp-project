@@ -6512,7 +6512,7 @@ paths:
         - schema:
             type: string
           in: query
-          name: filterSourceName
+          name: searchTerm
       responses:
         '200':
           description: OK
@@ -13871,6 +13871,12 @@ components:
           type: string
         sourceType:
           $ref: '#/components/schemas/SanctionsSourceType'
+        sourceCountry:
+          type: string
+        displayName:
+          type: string
+        entityCount:
+          type: number
     SanctionsSourceListResponse:
       title: SanctionsSourceListResponse
       type: object
@@ -13893,9 +13899,9 @@ components:
       type: string
       enum:
         - SANCTIONS
-        - REGULATORY_ENFORCEMENT_LIST
         - PEP
         - ADVERSE_MEDIA
+        - REGULATORY_ENFORCEMENT_LIST
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
@@ -13954,7 +13960,6 @@ components:
       enum:
         - POI
         - PEP
-        - RCA
     RELSourceRelevance:
       title: RELSourceRelevance
       type: string
@@ -14494,6 +14499,10 @@ components:
         id:
           type: string
         sourceName:
+          type: string
+        sourceCountry:
+          type: string
+        displayName:
           type: string
         entityIds:
           type: array

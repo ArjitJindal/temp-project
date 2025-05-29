@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsDataProviders } from './types'
+import { countryMapping } from './providers/country-mapping'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { hasFeature } from '@/core/utils/context'
@@ -179,4 +180,31 @@ export function shouldBuildSearchIndexForUsers() {
       hasFeature('OPEN_SANCTIONS')) &&
     envIs('prod')
   )
+}
+
+export function extractCountryFromSource(
+  sourceName?: string,
+  sourceType?: string
+): string | undefined {
+  if (!sourceName || !sourceType) {
+    return undefined
+  }
+
+  let name
+  if (sourceType === 'REGULATORY_ENFORCEMENT_LIST') {
+    const normalizedSource = sourceName.replace(/[–—]/g, '-')
+    const parts = normalizedSource.split('-')
+    name = parts[parts.length - 1]
+  }
+  if (sourceType === 'SANCTIONS') {
+    const normalizedSource = sourceName.replace(/[–—]/g, '-')
+    const parts = normalizedSource.split('-')
+    name = parts[0]
+  }
+
+  if (!name) {
+    return undefined
+  }
+  const normalizedName = name.toLowerCase().trim()
+  return countryMapping[normalizedName] || normalizedName
 }

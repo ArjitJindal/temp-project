@@ -253,7 +253,7 @@ export function useTanstackTable<
           enableResizing: column.enableResizing ?? true,
           enableSorting: column.sorting === true || column.sorting === 'desc',
           sortDescFirst: column.sorting === 'desc',
-          cell: showSkeleton ? SkeletonCell : SimpleColumnCellComponent,
+          cell: (showSkeleton ? SkeletonCell : SimpleColumnCellComponent) as any,
           meta: {
             rowKey: rowKey,
             column: column,

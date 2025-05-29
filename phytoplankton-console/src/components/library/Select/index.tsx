@@ -125,7 +125,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     (newValue: Value | Value[] | undefined) => {
       if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
         if (Array.isArray(newValue)) {
-          props.onChange?.(newValue.length === 0 ? undefined : newValue);
+          props.onChange?.(newValue.length === 0 ? [] : newValue);
         }
       } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
         if (!Array.isArray(newValue)) {

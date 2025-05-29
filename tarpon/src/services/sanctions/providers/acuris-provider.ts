@@ -4,7 +4,11 @@ import { promisify } from 'util'
 import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
-import { COLLECTIONS_MAP, getSanctionsCollectionName } from '../utils'
+import {
+  COLLECTIONS_MAP,
+  extractCountryFromSource,
+  getSanctionsCollectionName,
+} from '../utils'
 import { MongoSanctionsRepository } from '../repositories/sanctions-repository'
 import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
 import { getNameAndAka } from './utils'
@@ -351,9 +355,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const sourceDocuments: [Action, SourceDocument][] = []
     // Process Sanctions Sources for Persons
     for (const [
-      sourceName,
+      displayName,
       entityIds,
     ] of this.SanctionsSourceToEntityIdMapPerson.entries()) {
+      const sourceName = normalizeSource(displayName)
       sourceDocuments.push([
         'add',
         {
@@ -361,15 +366,18 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityIds,
           entityType: 'PERSON',
           sourceType: 'SANCTIONS',
+          sourceCountry: extractCountryFromSource(sourceName, 'SANCTIONS'),
+          displayName: displayName,
         },
       ])
     }
 
     // Process Sanctions Sources for Businesses
     for (const [
-      sourceName,
+      displayName,
       entityIds,
     ] of this.SanctionsSourceToEntityIdMapBusiness.entries()) {
+      const sourceName = normalizeSource(displayName)
       sourceDocuments.push([
         'add',
         {
@@ -377,15 +385,18 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityIds,
           entityType: 'BUSINESS',
           sourceType: 'SANCTIONS',
+          sourceCountry: extractCountryFromSource(sourceName, 'SANCTIONS'),
+          displayName: displayName,
         },
       ])
     }
 
     // Process PEP Tiers for Persons
     for (const [
-      sourceName,
+      displayName,
       entityIds,
     ] of this.PEPTierToEntityIdMapPerson.entries()) {
+      const sourceName = normalizeSource(displayName)
       sourceDocuments.push([
         'add',
         {
@@ -393,15 +404,17 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityIds,
           entityType: 'PERSON',
           sourceType: 'PEP',
+          displayName: displayName,
         },
       ])
     }
 
     // Process REL Sources for Persons
     for (const [
-      sourceName,
+      displayName,
       entityIds,
     ] of this.RELSourceToEntityIdMapPerson.entries()) {
+      const sourceName = normalizeSource(displayName)
       sourceDocuments.push([
         'add',
         {
@@ -409,15 +422,21 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityIds,
           entityType: 'PERSON',
           sourceType: 'REGULATORY_ENFORCEMENT_LIST',
+          sourceCountry: extractCountryFromSource(
+            sourceName,
+            'REGULATORY_ENFORCEMENT_LIST'
+          ),
+          displayName: displayName,
         },
       ])
     }
 
     // Process REL Sources for Businesses
     for (const [
-      sourceName,
+      displayName,
       entityIds,
     ] of this.RELSourceToEntityIdMapBusiness.entries()) {
+      const sourceName = normalizeSource(displayName)
       sourceDocuments.push([
         'add',
         {
@@ -425,6 +444,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityIds,
           entityType: 'BUSINESS',
           sourceType: 'REGULATORY_ENFORCEMENT_LIST',
+          sourceCountry: extractCountryFromSource(
+            sourceName,
+            'REGULATORY_ENFORCEMENT_LIST'
+          ),
+          displayName: displayName,
         },
       ])
     }
@@ -768,12 +792,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
           const evidenceName = matchingSanEntry?.regime.name
           const description = matchingSanEntry?.regime.body
           const normalisedSourceName = normalizeSource(evidenceName ?? 'Other')
-          if (normalisedSourceName) {
+          const displayName = evidenceName ?? 'Other'
+          if (displayName) {
             const existingIds =
-              this.SanctionsSourceToEntityIdMapPerson.get(
-                normalisedSourceName
-              ) || []
-            this.SanctionsSourceToEntityIdMapPerson.set(normalisedSourceName, [
+              this.SanctionsSourceToEntityIdMapPerson.get(displayName) || []
+            this.SanctionsSourceToEntityIdMapPerson.set(displayName, [
               ...existingIds,
               entity.qrCode,
             ])
@@ -812,10 +835,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
               pepEntry.evidenceIds.includes(evidence.evidenceId)
             )?.segment
           const normalisedPepTier = normalizeSource(pepTier)
-          if (normalisedPepTier) {
+          const displayName = pepTier
+          if (displayName) {
             const existingIds =
-              this.PEPTierToEntityIdMapPerson.get(normalisedPepTier) || []
-            this.PEPTierToEntityIdMapPerson.set(normalisedPepTier, [
+              this.PEPTierToEntityIdMapPerson.get(displayName) || []
+            this.PEPTierToEntityIdMapPerson.set(displayName, [
               ...existingIds,
               entity.qrCode,
             ])
@@ -878,12 +902,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 )
               )?.subcategory
               const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
-              if (normalisedEvidenceName) {
+              const displayName = evidenceName ?? ''
+              if (displayName) {
                 const existingIds =
-                  this.RELSourceToEntityIdMapPerson.get(
-                    normalisedEvidenceName
-                  ) || []
-                this.RELSourceToEntityIdMapPerson.set(normalisedEvidenceName, [
+                  this.RELSourceToEntityIdMapPerson.get(displayName) || []
+                this.RELSourceToEntityIdMapPerson.set(displayName, [
                   ...existingIds,
                   entity.qrCode,
                 ])
@@ -901,7 +924,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   ? REL_SOURCE_RELEVANCES[0]
                   : category === 'Law Enforcement'
                   ? REL_SOURCE_RELEVANCES[1]
-                  : undefined
+                  : undefined,
+                normalisedEvidenceName
               )
             }),
         },
@@ -975,18 +999,15 @@ export class AcurisProvider extends SanctionsDataFetcher {
               ? SANCTIONS_SOURCE_RELEVANCES[0]
               : SANCTIONS_SOURCE_RELEVANCES[1]
             : undefined
-          const normalisedEvidenceName = normalizeSource(
-            evidenceName ?? 'Other'
-          )
-          if (normalisedEvidenceName) {
+          const displayName = evidenceName ?? 'Other'
+          const normalisedEvidenceName = normalizeSource(displayName)
+          if (displayName) {
             const existingIds =
-              this.SanctionsSourceToEntityIdMapBusiness.get(
-                normalisedEvidenceName
-              ) || []
-            this.SanctionsSourceToEntityIdMapBusiness.set(
-              normalisedEvidenceName,
-              [...existingIds, entity.qrCode]
-            )
+              this.SanctionsSourceToEntityIdMapBusiness.get(displayName) || []
+            this.SanctionsSourceToEntityIdMapBusiness.set(displayName, [
+              ...existingIds,
+              entity.qrCode,
+            ])
           }
           return this.getOtherSources(
             evidence,
@@ -1037,16 +1058,15 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   event.evidenceIds.includes(evidence.evidenceId)
                 )
               )?.subcategory
-              const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
-              if (normalisedEvidenceName) {
+              const displayName = evidenceName ?? ''
+              const normalisedEvidenceName = normalizeSource(displayName)
+              if (displayName) {
                 const existingIds =
-                  this.RELSourceToEntityIdMapBusiness.get(
-                    normalisedEvidenceName
-                  ) || []
-                this.RELSourceToEntityIdMapBusiness.set(
-                  normalisedEvidenceName,
-                  [...existingIds, entity.qrCode]
-                )
+                  this.RELSourceToEntityIdMapBusiness.get(displayName) || []
+                this.RELSourceToEntityIdMapBusiness.set(displayName, [
+                  ...existingIds,
+                  entity.qrCode,
+                ])
               }
               const category = entity.relEntries.find((relEntry) =>
                 relEntry.events.some((event) =>

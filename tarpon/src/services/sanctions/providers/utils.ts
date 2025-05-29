@@ -199,6 +199,7 @@ export function sanitizeAcurisEntities(
   entities: SanctionsEntity[],
   sanctionSourceNames?: string[],
   pepSourceNames?: string[],
+  relSourceNames?: string[],
   sanctionsCategory?: SanctionsSourceRelevance[],
   pepCategory?: PEPSourceRelevance[],
   relCategory?: RELSourceRelevance[],
@@ -288,6 +289,15 @@ export function sanitizeAcurisEntities(
         ? entity.otherSources?.filter(
             (source) =>
               source.type === 'REGULATORY_ENFORCEMENT_LIST' &&
+              (!relSourceNames?.length ||
+                (source.value?.some(
+                  (value) =>
+                    value.sourceName &&
+                    relSourceNames
+                      .map((s) => s.toLowerCase())
+                      .includes(humanizeAuto(value.sourceName).toLowerCase())
+                ) ??
+                  false)) &&
               (!relCategory ||
                 (source.value?.some(
                   (value) =>

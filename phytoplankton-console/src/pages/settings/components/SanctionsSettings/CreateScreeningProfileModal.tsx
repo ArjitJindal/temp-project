@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { humanizeAuto, normalizeCase } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, humanizeCountryName } from '@flagright/lib/utils/humanize';
+import { SearchOutlined } from '@ant-design/icons';
+import { useDebounce } from 'ahooks';
 import s from './styles.module.less';
 import { relevanceOptionsMap } from './contants';
 import Modal from '@/components/library/Modal';
@@ -27,12 +29,12 @@ import Tabs from '@/components/library/Tabs';
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/apis/models-custom/SanctionsSourceRelevance';
 import { SANCTIONS_SOURCE_TYPES } from '@/apis/models-custom/SanctionsSourceType';
 import Select from '@/components/library/Select';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/PEPSourceRelevance';
 import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/apis/models-custom/AdverseMediaSourceRelevance';
 import { REL_SOURCE_RELEVANCES } from '@/apis/models-custom/RELSourceRelevance';
-import { isSuccess } from '@/utils/asyncResource';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 const DEFAULT_INITIAL_VALUES: ScreeningProfileRequest = {
   screeningProfileName: '',
@@ -57,6 +59,10 @@ type SourceConfiguration = {
   )[];
 };
 
+interface SearchFormValues {
+  query: string;
+}
+
 const defaultConfig = {
   SANCTIONS: {
     selectedSources: [] as string[],
@@ -71,12 +77,48 @@ const defaultConfig = {
   },
   REGULATORY_ENFORCEMENT_LIST: {
     relevance: REL_SOURCE_RELEVANCES,
+    selectedSources: [] as string[],
   },
 };
+
+const columnHelper = new ColumnHelper<any>();
+
+const columns = columnHelper.list([
+  columnHelper.simple<'sourceCountry'>({
+    key: 'sourceCountry',
+    title: 'Country',
+    defaultWidth: 200,
+    enableResizing: false,
+    type: {
+      render: (value) => <div>{humanizeCountryName(value ?? '')}</div>,
+    },
+  }),
+  columnHelper.simple<'displayName'>({
+    key: 'displayName',
+    title: 'Source',
+    defaultWidth: 700,
+    enableResizing: false,
+    type: {
+      render: (value) => {
+        return <div>{value ?? ''}</div>;
+      },
+    },
+  }),
+  columnHelper.simple<'entityCount'>({
+    key: 'entityCount',
+    title: 'Number of entities',
+    defaultWidth: 100,
+    enableResizing: false,
+    type: {
+      render: (value) => <div>{value}</div>,
+    },
+  }),
+]);
 
 export default function CreateScreeningProfileModal({ isOpen, onClose, initialValues }: Props) {
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(isOpen || false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const api = useApi();
   const queryClient = useQueryClient();
   const formRef = useRef<any>(null);
@@ -108,12 +150,50 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
       if (initialValues.rel) {
         defaultConfig.REGULATORY_ENFORCEMENT_LIST = {
           relevance: initialValues.rel.relevance || [],
+          selectedSources: initialValues.rel.sourceIds || [],
         };
       }
     }
 
     return defaultConfig;
   });
+
+  const hasSelectedSources = useCallback(() => {
+    const hasAtLeastOneSource = Object.entries(sourceConfigurations).some(([type, config]) => {
+      if (type === 'ADVERSE_MEDIA') {
+        return false;
+      }
+      return (config.selectedSources?.length ?? 0) > 0;
+    });
+
+    const hasAtLeastOneRelevance = Object.values(sourceConfigurations).some(
+      (config) => config.relevance?.length > 0,
+    );
+
+    return hasAtLeastOneSource && hasAtLeastOneRelevance;
+  }, [sourceConfigurations]);
+
+  const validateSourcesAndRelevance = useCallback(() => {
+    const errors: Record<string, string> = {};
+
+    Object.entries(sourceConfigurations).forEach(([type, config]) => {
+      if (type === 'ADVERSE_MEDIA') {
+        return;
+      }
+
+      if (
+        config.relevance?.length > 0 &&
+        (!config.selectedSources || config.selectedSources.length === 0)
+      ) {
+        errors[type] = `${humanizeAuto(
+          type,
+        )} has relevance selected but no sources. Please select at least one source.`;
+      }
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [sourceConfigurations]);
 
   const updateSourceConfiguration = useCallback(
     (type: SanctionsSourceType, update: Partial<SourceConfiguration>) => {
@@ -145,6 +225,10 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
           updateSourceConfiguration(type, {
             selectedSources: initialValues.pep.sourceIds,
           });
+        } else if (type === 'REGULATORY_ENFORCEMENT_LIST' && initialValues.rel?.sourceIds) {
+          updateSourceConfiguration(type, {
+            selectedSources: initialValues.rel.sourceIds,
+          });
         }
       } else if (response?.items.length) {
         const sourceIds = response.items.map((source) => source.id).filter(Boolean) as string[];
@@ -154,6 +238,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     loadSources('SANCTIONS');
     loadSources('PEP');
+    loadSources('REGULATORY_ENFORCEMENT_LIST');
   }, [isModalOpen, api, updateSourceConfiguration, initialValues]);
 
   const getInitialValues = (): ScreeningProfileRequest => {
@@ -190,6 +275,8 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
     if (sourceConfigurations.REGULATORY_ENFORCEMENT_LIST) {
       sourceConfig.regulatoryEnforcementListRelevance =
         sourceConfigurations.REGULATORY_ENFORCEMENT_LIST.relevance;
+      sourceConfig.regulatoryEnforcementListSources =
+        sourceConfigurations.REGULATORY_ENFORCEMENT_LIST.selectedSources;
     }
 
     return {
@@ -251,12 +338,22 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
   const handleSubmit = (values: ScreeningProfileRequest) => {
     setAlwaysShowErrors(true);
+
+    if (!validateSourcesAndRelevance()) {
+      return;
+    }
+
     const payload = buildPayload(values);
     mutation.mutate(payload);
   };
 
   const handleModalSubmit = () => {
     setAlwaysShowErrors(true);
+
+    if (!validateSourcesAndRelevance()) {
+      return;
+    }
+
     if (formRef.current) {
       formRef.current.submit();
     }
@@ -288,7 +385,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
         onOk={handleModalSubmit}
         okProps={{
           isLoading: mutation.isLoading,
-          isDisabled: false,
+          isDisabled: !hasSelectedSources(),
         }}
       >
         <div className={s.root}>
@@ -335,6 +432,17 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
               )}
             </InputField>
           </Form>
+
+          {Object.keys(validationErrors).length > 0 && (
+            <div className={s.validationErrors}>
+              {Object.values(validationErrors).map((error, index) => (
+                <div className={s.validationError} key={index}>
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
+
           <Tabs
             items={SANCTIONS_SOURCE_TYPES.map((type) => ({
               title: humanizeAuto(type),
@@ -343,7 +451,16 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
                 <SanctionsSourceTypeTab
                   type={type}
                   config={sourceConfigurations[type]}
-                  onChange={(update) => updateSourceConfiguration(type, update)}
+                  onChange={(update) => {
+                    updateSourceConfiguration(type, update);
+                    if (validationErrors[type]) {
+                      setValidationErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors[type];
+                        return newErrors;
+                      });
+                    }
+                  }}
                 />
               ),
             }))}
@@ -365,6 +482,9 @@ const SanctionsSourceTypeTab = ({
   onChange: (update: Partial<SourceConfiguration>) => void;
 }) => {
   const api = useApi();
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, { wait: 200 });
+
   const options = {
     SANCTIONS: SANCTIONS_SOURCE_RELEVANCES,
     PEP: PEP_SOURCE_RELEVANCES,
@@ -372,52 +492,68 @@ const SanctionsSourceTypeTab = ({
     REGULATORY_ENFORCEMENT_LIST: REL_SOURCE_RELEVANCES,
   };
 
-  const { data: sourcesData } = useQuery(SANCTIONS_SOURCES(type), () =>
+  const queryResults = useQuery(SANCTIONS_SOURCES(type, debouncedSearch), () =>
     api.getSanctionsSources({
       filterSourceType: type,
+      searchTerm: debouncedSearch,
     }),
   );
 
-  const handleSourceToggle = (sourceId: string, isSelected: boolean) => {
-    if (isSelected) {
-      onChange({
-        selectedSources: [...(config.selectedSources ?? []), sourceId],
-      });
-    } else {
-      onChange({
-        selectedSources: (config.selectedSources ?? []).filter((id) => id !== sourceId),
-      });
-    }
-  };
-
-  const handleSelectAll = (isSelected: boolean | undefined) => {
-    if (!isSelected) {
-      onChange({ selectedSources: [] });
+  const handleRelevanceChange = (
+    value:
+      | (
+          | SanctionsSourceRelevance
+          | PEPSourceRelevance
+          | AdverseMediaSourceRelevance
+          | RELSourceRelevance
+        )[]
+      | undefined,
+  ) => {
+    if (!value) {
       return;
     }
 
-    if (isSuccess(sourcesData)) {
-      const sources = sourcesData.value.items || [];
-      const sourceIds = sources.map((source) => source.id).filter(Boolean) as string[];
+    const wasEmpty = !config.relevance?.length;
+    const isNowEmpty = value.length === 0;
 
-      onChange({ selectedSources: sourceIds });
+    if (isNowEmpty) {
+      onChange({
+        relevance: value,
+        selectedSources: [],
+      });
+    } else if (wasEmpty && value.length > 0) {
+      let sourceIds: string[] = [];
+
+      if (
+        queryResults.data &&
+        queryResults.data.kind === 'SUCCESS' &&
+        queryResults.data.value?.items
+      ) {
+        sourceIds = queryResults.data.value.items
+          .map((source) => source.id)
+          .filter(Boolean) as string[];
+      }
+
+      onChange({
+        relevance: value,
+        selectedSources: sourceIds,
+      });
+    } else if (type === 'PEP' && !value.includes('PEP')) {
+      onChange({
+        relevance: value,
+        selectedSources: [],
+      });
+    } else {
+      onChange({
+        relevance: value,
+      });
     }
   };
 
-  const areAllSourcesSelected = (): boolean => {
-    if (!isSuccess(sourcesData)) {
-      return false;
-    }
-
-    const sources = sourcesData.value.items || [];
-    if (sources.length === 0) {
-      return false;
-    }
-
-    const validSourceIds = sources.map((source) => source.id).filter(Boolean) as string[];
-
-    return validSourceIds.length > 0 && config.selectedSources?.length === validSourceIds.length;
-  };
+  const showSourcesTable =
+    type !== 'ADVERSE_MEDIA' &&
+    (type !== 'PEP' || config.relevance?.includes('PEP')) &&
+    config.relevance?.length > 0;
 
   return (
     <div className={s.sourceTabContainer}>
@@ -426,64 +562,50 @@ const SanctionsSourceTypeTab = ({
         className={s.select}
         mode="MULTIPLE"
         value={config.relevance}
-        onChange={(value) =>
-          onChange({
-            relevance: value as (
-              | SanctionsSourceRelevance
-              | PEPSourceRelevance
-              | AdverseMediaSourceRelevance
-              | RELSourceRelevance
-            )[],
-          })
-        }
+        onChange={handleRelevanceChange}
         options={options[type].map((option) => ({
           label: relevanceOptionsMap[option],
           value: option,
         }))}
       />
-      {type !== 'REGULATORY_ENFORCEMENT_LIST' && (
-        <div className={s.sourceListContainer}>
-          <AsyncResourceRenderer resource={sourcesData}>
-            {(response) => {
-              if (!response.items || response.items.length === 0) {
-                return (
-                  <div className={s.emptyState}>
-                    <p>No sources available for this type.</p>
-                  </div>
-                );
-              }
 
-              return (
-                <div className={s.tableContainer}>
-                  <div className={s.sourceHeaderFlex}>
-                    <Checkbox
-                      value={areAllSourcesSelected()}
-                      onChange={(checked) => handleSelectAll(!!checked)}
-                    />
-                    <div>Source</div>
-                  </div>
-                  <div className={s.sourceList}>
-                    {response.items.map((source) => {
-                      const isSelected = config.selectedSources?.includes(source.id ?? '');
-                      return (
-                        <div key={source.id} className={s.source}>
-                          <Checkbox
-                            value={isSelected}
-                            onChange={(checked) => {
-                              handleSourceToggle(source.id ?? '', checked ?? false);
-                            }}
-                          />
-                          {normalizeCase(source.sourceName ?? '')}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            }}
-          </AsyncResourceRenderer>
-        </div>
+      {showSourcesTable && (
+        <Form initialValues={{ query: searchQuery }}>
+          <InputField<SearchFormValues, 'query'> name="query" label="" hideLabel>
+            {(inputProps) => (
+              <TextInput
+                {...inputProps}
+                placeholder="Search by country or source name"
+                value={searchQuery}
+                allowClear
+                onChange={(value) => setSearchQuery(value || '')}
+                icon={<SearchOutlined />}
+              />
+            )}
+          </InputField>
+        </Form>
       )}
+
+      <div className={s.sourceListContainer}>
+        {!showSourcesTable ? (
+          <div className={s.emptyState}>
+            <p>No sources available for this type.</p>
+          </div>
+        ) : (
+          <QueryResultsTable
+            rowKey="id"
+            queryResults={queryResults}
+            columns={columns}
+            toolsOptions={false}
+            selection={true}
+            pagination={false}
+            selectedIds={config.selectedSources}
+            onSelect={(selectedIds) => {
+              onChange({ selectedSources: selectedIds });
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };

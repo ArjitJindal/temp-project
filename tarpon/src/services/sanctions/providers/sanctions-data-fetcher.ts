@@ -188,6 +188,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private applySourceCategoryFilters(
     sanctionProviderNames?: string[],
     pepProviderNames?: string[],
+    relProviderNames?: string[],
     sanctionsCategory?: SanctionsSourceRelevance[],
     pepCategory?: PEPSourceRelevance[],
     relCategory?: RELSourceRelevance[],
@@ -251,12 +252,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
-    if (relCategory) {
+    if (relCategory && relProviderNames) {
       conditions.push({
-        'otherSources.type': 'REGULATORY_ENFORCEMENT_LIST',
-        'otherSources.value.category': {
-          $in: relCategory,
-        },
+        $and: [
+          {
+            'otherSources.type': 'REGULATORY_ENFORCEMENT_LIST',
+            'otherSources.value.category': {
+              $in: relCategory,
+            },
+          },
+          {
+            'otherSources.value.sourceName': {
+              $in: relProviderNames.map((name) =>
+                humanizeAuto(name).toLowerCase()
+              ),
+            },
+          },
+        ],
       })
     }
 
@@ -277,6 +289,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsSearchRequest,
     sanctionProviderNames?: string[],
     pepProviderNames?: string[],
+    relProviderNames?: string[],
     sanctionsCategory?: SanctionsSourceRelevance[],
     pepCategory?: PEPSourceRelevance[],
     relCategory?: RELSourceRelevance[],
@@ -310,6 +323,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const sourceCategoryFilters = this.applySourceCategoryFilters(
       sanctionProviderNames,
       pepProviderNames,
+      relProviderNames,
       sanctionsCategory,
       pepCategory,
       relCategory,
@@ -565,6 +579,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     limit: number = 200,
     sanctionProviderNames?: string[],
     pepProviderNames?: string[],
+    relProviderNames?: string[],
     sanctionsCategory?: SanctionsSourceRelevance[],
     pepCategory?: PEPSourceRelevance[],
     relCategory?: RELSourceRelevance[],
@@ -962,6 +977,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 request,
                 sanctionProviderNames,
                 pepProviderNames,
+                relProviderNames,
                 sanctionsCategory,
                 pepCategory,
                 relCategory,
@@ -1028,6 +1044,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 ...this.applySourceCategoryFilters(
                   sanctionProviderNames,
                   pepProviderNames,
+                  relProviderNames,
                   sanctionsCategory,
                   pepCategory,
                   relCategory,
@@ -1164,11 +1181,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       )
     const sanctionSourceIds = screeningProfile.sanctions?.sourceIds
     const pepSourceIds = screeningProfile.pep?.sourceIds
+    const relSourceIds = screeningProfile.rel?.sourceIds
     const sanctionsCategory = screeningProfile.sanctions?.relevance
     const pepCategory = screeningProfile.pep?.relevance
     const relCategory = screeningProfile.rel?.relevance
     const adverseMediaCategory = screeningProfile.adverseMedia?.relevance
-    const sourceIds = [...(sanctionSourceIds ?? []), ...(pepSourceIds ?? [])]
+    const sourceIds = [
+      ...(sanctionSourceIds ?? []),
+      ...(pepSourceIds ?? []),
+      ...(relSourceIds ?? []),
+    ]
     return {
       sourceIds,
       sanctionsCategory,
@@ -1187,6 +1209,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     let result: SanctionsProviderResponse
     const sanctionSourceNames: string[] = []
     const pepSourceNames: string[] = []
+    const relSourceNames: string[] = []
     let sourceIds: string[] = []
     let sanctionsCategory: SanctionsSourceRelevance[] | undefined
     let pepCategory: PEPSourceRelevance[] | undefined
@@ -1218,6 +1241,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             sanctionSourceNames.push(source.sourceName)
           } else if (source.sourceType === 'PEP') {
             pepSourceNames.push(source.sourceName)
+          } else if (source.sourceType === 'REGULATORY_ENFORCEMENT_LIST') {
+            relSourceNames.push(source.sourceName)
           }
         }
       }
@@ -1253,6 +1278,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         isMigration || request.manualSearch ? 500 : 200,
         sanctionSourceNames,
         pepSourceNames,
+        relSourceNames,
         sanctionsCategory,
         pepCategory,
         relCategory,
@@ -1273,6 +1299,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         data,
         sanctionSourceNames,
         pepSourceNames,
+        relSourceNames,
         sanctionsCategory,
         pepCategory,
         relCategory,
@@ -1285,6 +1312,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     data: SanctionsEntity[] | undefined,
     sanctionSourceNames?: string[],
     pepSourceNames?: string[],
+    relSourceNames?: string[],
     sanctionsCategory?: SanctionsSourceRelevance[],
     pepCategory?: PEPSourceRelevance[],
     relCategory?: RELSourceRelevance[],
@@ -1309,6 +1337,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         acurisEntities,
         sanctionSourceNames,
         pepSourceNames,
+        relSourceNames,
         sanctionsCategory,
         pepCategory,
         relCategory,
