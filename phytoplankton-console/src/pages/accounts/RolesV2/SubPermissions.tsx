@@ -167,9 +167,11 @@ const SubPermissions = ({
     return traverser.flattenNodes(subPermissions);
   }, [subPermissions, traverser]);
 
+  const parentPath = useMemo(() => parentSegments.join('/'), [parentSegments]);
+
   useEffect(() => {
     setSelectedSubPermission(null);
-  }, [parentSegments]);
+  }, [parentPath]);
 
   return (
     <div className={s.subPermissionsWrapper}>

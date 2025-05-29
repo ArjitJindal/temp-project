@@ -1,17 +1,12 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize, uniq } from 'lodash'
+import { memoize } from 'lodash'
 import { AccountsService } from '../accounts'
 import { Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
-import {
-  convertV1PermissionToV2,
-  convertV2PermissionToV1,
-  getOptimizedPermissions,
-} from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
-import { isInNamespace, transformRole } from './utils'
+import { convertPermissions, isInNamespace, transformRole } from './utils'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -80,30 +75,19 @@ export class RoleService {
     tenantId: string,
     inputRole: CreateAccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
-    const v1V2Permissions = convertV1PermissionToV2(
+    const { statements, permissions } = convertPermissions(
       tenantId,
-      inputRole.permissions ?? []
-    )
-    const statements = getOptimizedPermissions(
-      tenantId,
-      (inputRole.statements ?? []).concat(v1V2Permissions)
-    )
-    const convertedPermissions = uniq(
-      convertV2PermissionToV1(tenantId, statements).concat(
-        inputRole.permissions ?? []
-      )
+      inputRole.permissions,
+      inputRole.statements
     )
 
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
-      params: { ...inputRole, permissions: convertedPermissions },
+      params: { ...inputRole, permissions, statements },
     })
     await this.cache.createRole(tenantId, {
       type: 'DATABASE',
-      params: {
-        ...data,
-        statements,
-      },
+      params: { ...data, permissions, statements },
     })
     const transformedRole = transformRole(
       data,
@@ -129,25 +113,18 @@ export class RoleService {
     inputRole: AccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
     const oldRole = await this.getRole(id)
-    const v1V2Permissions = convertV1PermissionToV2(
+    const { statements, permissions } = convertPermissions(
       tenantId,
-      inputRole.permissions ?? []
-    )
-    const statements = getOptimizedPermissions(
-      tenantId,
-      (inputRole.statements ?? []).concat(v1V2Permissions)
-    )
-    const convertedPermissions = uniq(
-      convertV2PermissionToV1(tenantId, statements).concat(
-        inputRole.permissions ?? []
-      )
+      inputRole.permissions,
+      inputRole.statements
     )
     await this.auth0.updateRole(tenantId, oldRole.id, {
       ...inputRole,
-      permissions: convertedPermissions,
+      permissions,
     })
     await this.cache.updateRole(tenantId, oldRole.id, {
       ...inputRole,
+      permissions,
       statements,
     })
     const accountsService = AccountsService.getInstance(this.dynamoDb)

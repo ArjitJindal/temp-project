@@ -6,8 +6,9 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { memoize, uniq } from 'lodash'
+import { memoize } from 'lodash'
 import {
+  convertPermissions,
   getNamespace,
   getNamespacedRoleName,
   getRoleDisplayName,
@@ -24,11 +25,6 @@ import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { logger } from '@/core/logger'
-import {
-  convertV1PermissionToV2,
-  convertV2PermissionToV1,
-  getOptimizedPermissions,
-} from '@/services/rbac/utils/permissions'
 import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
 
 @traceable
@@ -51,24 +47,16 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Invalid role type')
     }
 
-    const v1V2Permissions = convertV1PermissionToV2(
+    const { statements, permissions } = convertPermissions(
       namespace,
-      data.params.permissions ?? []
-    )
-
-    const statements = getOptimizedPermissions(
-      namespace,
-      (data.params.statements ?? []).concat(v1V2Permissions)
+      data.params.permissions,
+      data.params.statements
     )
 
     const role: AccountRole = {
       ...data.params,
       statements,
-      permissions: uniq(
-        convertV2PermissionToV1(namespace, statements).concat(
-          data.params.permissions ?? []
-        )
-      ),
+      permissions,
     }
 
     await this.dynamoClient.send(
