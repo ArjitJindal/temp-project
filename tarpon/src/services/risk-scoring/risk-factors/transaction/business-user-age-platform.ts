@@ -34,7 +34,7 @@ export const businessUserAgePlatformV8Logic: RiskFactorLogicGenerator = (
         {
           '<=': [
             range.start,
-            { var: 'BUSINESS_USER:creationAgeDays__SENDER' },
+            { var: 'BUSINESS_USER:creationAgeDays__BOTH' },
             range.end,
           ],
         },
