@@ -66,124 +66,126 @@ ruleVariantsTest({ aggregation: true }, () => {
     )
   })
 
-  describe.each<TransactionRuleTestCase>([
-    {
-      name: 'Same users using different identifiers - hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: '1-1',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-        getTestTransaction({
-          originUserId: '1-1',
-          timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CHECK',
-            checkIdentifier: '456',
-          },
-        }),
-      ],
-      expectedHits: [false, true],
-    },
-    {
-      name: 'Different users using different cards - not hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: '2-1',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-        getTestTransaction({
-          originUserId: '2-2',
-          timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '456',
-          },
-        }),
-      ],
-      expectedHits: [false, false],
-    },
-    {
-      name: 'Same users using the same card - not hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: '3-1',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-        getTestTransaction({
-          originUserId: '3-1',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-      ],
-      expectedHits: [false, false],
-    },
-    {
-      name: 'Different users using the same card - not hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: '4-1',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-        getTestTransaction({
-          originUserId: '4-2',
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-      ],
-      expectedHits: [false, false],
-    },
-    {
-      name: 'Undefined originUserID with same card - not hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: undefined,
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-        getTestTransaction({
-          originUserId: undefined,
-          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-          originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: '123',
-          },
-        }),
-      ],
-      expectedHits: [false, false],
-    },
-  ])('', ({ name, transactions, expectedHits }) => {
-    createTransactionRuleTestCase(
-      name,
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
+  describe('Core logic', () => {
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Same users using different identifiers - hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CHECK',
+              checkIdentifier: '456',
+            },
+          }),
+        ],
+        expectedHits: [false, true],
+      },
+      {
+        name: 'Different users using different cards - not hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '2-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '2-2',
+            timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '456',
+            },
+          }),
+        ],
+        expectedHits: [false, false],
+      },
+      {
+        name: 'Same users using the same card - not hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '3-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '3-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+        ],
+        expectedHits: [false, false],
+      },
+      {
+        name: 'Different users using the same card - not hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '4-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '4-2',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+        ],
+        expectedHits: [false, false],
+      },
+      {
+        name: 'Undefined originUserID with same card - not hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: undefined,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+          getTestTransaction({
+            originUserId: undefined,
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+            originPaymentDetails: {
+              method: 'CARD',
+              cardFingerprint: '123',
+            },
+          }),
+        ],
+        expectedHits: [false, false],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
   })
 })
 

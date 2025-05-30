@@ -21,6 +21,7 @@ import { TransactionsOutflowInflowVolumeRuleParameters } from '../transaction-ru
 import { SenderLocationChangesFrequencyRuleParameters } from '../transaction-rules/sender-location-changes-frequency'
 import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
 import { PaymentDetailChangeRuleParameters } from '../transaction-rules/payment-detail-change-base'
+import { SameUserUsingTooManyPaymentIdentifiersParameters } from '../transaction-rules/same-user-using-too-many-payment-identifiers'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -1983,6 +1984,38 @@ const V8_CONVERSION: Readonly<
         ],
       })
     }
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-55': (params: SameUserUsingTooManyPaymentIdentifiersParameters) => {
+    const { uniquePaymentIdentifiersCountThreshold, timeWindow } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+    logicAggregationVariables.push({
+      key: 'agg:uniquePaymentIdentifiersCount',
+      type: 'PAYMENT_DETAILS_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:originPaymentDetails-identifier',
+      aggregationFunc: 'UNIQUE_COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    const conditions: any[] = []
+
+    conditions.push({
+      '>=': [
+        { var: 'agg:uniquePaymentIdentifiersCount' },
+        uniquePaymentIdentifiersCountThreshold,
+      ],
+    })
 
     return {
       logic: { and: conditions },
