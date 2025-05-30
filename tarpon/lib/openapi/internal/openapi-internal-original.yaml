@@ -10087,9 +10087,13 @@ components:
                 type: string
               status_ALLOW:
                 type: number
+              status_ALLOW_MANUAL:
+                type: number
               status_FLAG:
                 type: number
               status_BLOCK:
+                type: number
+              status_BLOCK_MANUAL:
                 type: number
               status_SUSPEND:
                 type: number

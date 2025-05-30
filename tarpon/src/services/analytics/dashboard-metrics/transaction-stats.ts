@@ -45,6 +45,7 @@ import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-i
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { notEmpty, notNullish } from '@/utils/array'
 import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStatsClosingReasonsData'
+
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
   for (const collection of [
@@ -112,6 +113,94 @@ export class TransactionStatsDashboardMetric {
         { allowDiskUse: true }
       )
       .next()
+
+    // aggregate all manual allow/block
+    await transactionsCollection
+      .aggregate(
+        withUpdatedAt(
+          getAttributeCountStatsPipeline(
+            aggregatedHourlyCollectionName,
+            'HOUR',
+            'timestamp',
+            'status',
+            ['status'],
+            timeRange,
+            {
+              attributeSuffix: '_MANUAL',
+              lookupPipeline: [
+                {
+                  $lookup: {
+                    from: TRANSACTION_EVENTS_COLLECTION(tenantId),
+                    let: {
+                      txId: '$transactionId',
+                      txStatus: '$status',
+                    },
+                    pipeline: [
+                      {
+                        $match: {
+                          $expr: {
+                            $and: [
+                              {
+                                $eq: ['$transactionId', '$$txId'],
+                              },
+                              {
+                                $eq: ['$status', '$$txStatus'],
+                              },
+                              {
+                                $ne: ['$timestamp', 0],
+                              },
+                              {
+                                $regexMatch: {
+                                  input: '$eventDescription',
+                                  regex: /.*manually.*(ALLOW|BLOCK).*/i,
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                      {
+                        $sort: {
+                          timestamp: -1,
+                        },
+                      },
+                      {
+                        $group: {
+                          _id: '$transactionId',
+                          latestEvent: {
+                            $first: '$$ROOT',
+                          },
+                        },
+                      },
+                      {
+                        $replaceRoot: {
+                          newRoot: '$latestEvent',
+                        },
+                      },
+                    ],
+                    as: 'manualEvent',
+                  },
+                },
+                {
+                  $match: {
+                    manualEvent: {
+                      $exists: true,
+                      $ne: [],
+                    },
+                  },
+                },
+                {
+                  $unwind: '$manualEvent',
+                },
+              ],
+            }
+          ),
+          lastUpdatedAt
+        ),
+        { allowDiskUse: true }
+      )
+      .next()
+
     await transactionsCollection
       .aggregate(
         withUpdatedAt(
@@ -283,18 +372,62 @@ export class TransactionStatsDashboardMetric {
         ? `, ${ruleActions}, ${arsRiskLevels}`
         : ''
 
-    return await executeTimeBasedClickhouseQuery<DashboardStatsTransactionsCountData>(
-      tenantId,
-      tableName,
-      granularity,
-      `
+    const data =
+      await executeTimeBasedClickhouseQuery<DashboardStatsTransactionsCountData>(
+        tenantId,
+        tableName,
+        granularity,
+        `
       ${paymentMethods}
       ${dateRangeQuery}
       `,
-      { startTimestamp, endTimestamp },
-      'timestamp != 0',
-      { countOnly: returnDataType === 'TOTAL' }
-    )
+        { startTimestamp, endTimestamp },
+        'timestamp != 0',
+        { countOnly: returnDataType === 'TOTAL' }
+      )
+
+    // using a subquery to filter txn that were suspended and then manually allowed
+    const manuallyActionedTransactionsWithTime =
+      await executeTimeBasedClickhouseQuery<DashboardStatsTransactionsCountData>(
+        tenantId,
+        (gte: string, lte: string) => `(
+        SELECT timestamp, t2.status as status
+        FROM (SELECT id, timestamp, status FROM ${tableName} FINAL) AS t1
+        INNER JOIN (
+            SELECT * FROM (
+                SELECT
+                    transactionId,
+                    status,
+                    row_number() OVER (PARTITION BY transactionId ORDER BY timestamp DESC) AS row_rank
+                FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} FINAL
+                WHERE status IN ('ALLOW', 'BLOCK')
+                  AND manualAllowBlockEvent = 1
+                  AND toDate(timestamp / 1000) BETWEEN toDate('${gte}') AND toDate('${lte}')
+                  AND timestamp != 0
+            ) AS ranked_events
+            WHERE row_rank = 1
+          ) AS t2
+          ON t1.id = t2.transactionId AND t1.status = t2.status
+        )`,
+        granularity,
+        `COUNTIf(status = 'ALLOW') as status_ALLOW_MANUAL, COUNTIf(status = 'BLOCK') as status_BLOCK_MANUAL`,
+        { startTimestamp, endTimestamp },
+        'timestamp != 0',
+        { countOnly: returnDataType === 'TOTAL' }
+      )
+
+    // populating the manual allow/block to data
+    data.forEach((d, index) => {
+      const manuallyAllowed =
+        manuallyActionedTransactionsWithTime[index].status_ALLOW_MANUAL ?? 0
+      const manuallyBlocked =
+        manuallyActionedTransactionsWithTime[index].status_BLOCK_MANUAL ?? 0
+
+      d.status_ALLOW_MANUAL = manuallyAllowed
+      d.status_BLOCK_MANUAL = manuallyBlocked
+    })
+
+    return data
   }
 
   public static async get(

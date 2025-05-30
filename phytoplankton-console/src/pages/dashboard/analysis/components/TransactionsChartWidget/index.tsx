@@ -25,6 +25,8 @@ import { RuleAction } from '@/apis';
 import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 
+export type TransactionChartSeries = RuleAction | 'ALLOW (MANUAL)' | 'BLOCK (MANUAL)';
+
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
@@ -52,12 +54,12 @@ export default function TransactionsChartWidget(props: WidgetProps) {
 
   const dataResource = map(
     queryResult.data,
-    ({ data }): BarChartData<string, RuleAction> =>
-      data.flatMap((item): BarChartData<string, RuleAction> => {
+    ({ data }): BarChartData<string, TransactionChartSeries> =>
+      data.flatMap((item): BarChartData<string, TransactionChartSeries> => {
         return [
           {
             category: item.time,
-            value: item.status_BLOCK ?? 0,
+            value: (item.status_BLOCK ?? 0) - (item.status_BLOCK_MANUAL ?? 0),
             series: 'BLOCK',
           },
           {
@@ -72,8 +74,18 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           },
           {
             category: item.time,
-            value: item.status_ALLOW ?? 0,
+            value: (item.status_ALLOW ?? 0) - (item.status_ALLOW_MANUAL ?? 0),
             series: 'ALLOW',
+          },
+          {
+            category: item.time,
+            value: item.status_ALLOW_MANUAL ?? 0,
+            series: 'ALLOW (MANUAL)',
+          },
+          {
+            category: item.time,
+            value: item.status_BLOCK_MANUAL ?? 0,
+            series: 'BLOCK (MANUAL)',
           },
         ];
       }),
@@ -123,7 +135,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
         {isSuccess(dataResource) && dataResource.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
-          <BarChart<string, RuleAction>
+          <BarChart<string, TransactionChartSeries>
             grouping={'STACKED'}
             data={dataResource}
             height={400}

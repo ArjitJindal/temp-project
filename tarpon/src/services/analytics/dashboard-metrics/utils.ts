@@ -79,9 +79,12 @@ export function getAttributeCountStatsPipeline(
   timeRange?: TimeRange,
   options?: {
     attributeFieldMapper?: any
+    attributeSuffix?: string
+    lookupPipeline?: any[]
   }
 ) {
   let timestampMatch: any = undefined
+  const attributeSuffix = options?.attributeSuffix ?? ''
   if (timeRange) {
     const { start, end } = getAffectedInterval(timeRange, granularity)
     timestampMatch = {
@@ -93,6 +96,7 @@ export function getAttributeCountStatsPipeline(
   }
   return [
     { $match: { ...timestampMatch } },
+    ...(options?.lookupPipeline ? options.lookupPipeline : []),
     {
       $addFields: {
         targetFields: attributeFields.map((f) => `$${f}`),
@@ -130,7 +134,11 @@ export function getAttributeCountStatsPipeline(
             },
           },
           attr: {
-            $concat: [`${attributePrefix}_`, '$targetFields'],
+            $concat: [
+              `${attributePrefix}_`,
+              '$targetFields',
+              `${attributeSuffix}`,
+            ],
           },
         },
         count: {
@@ -316,7 +324,7 @@ export const executeTimeBasedClickhouseQuery = async <
   T extends TimeQueryResult<object>
 >(
   tenantId: string,
-  tableName: string,
+  tableName: string | ((gte: string, lte: string) => string),
   granularity: 'HOUR' | 'DAY' | 'MONTH',
   selectStatement: string,
   timeRange: { startTimestamp: number; endTimestamp: number },
@@ -331,15 +339,23 @@ export const executeTimeBasedClickhouseQuery = async <
   const lte = dayjs(endTimestamp).format(timestampFormat)
   const timezone = await tenantTimezone(tenantId)
 
+  let finalTableName = ''
+  if (typeof tableName === 'string') {
+    finalTableName = tableName + ' ' + 'FINAL'
+  } else {
+    // for handling cte subqueries
+    finalTableName = tableName(gte, lte)
+  }
+
   const query = `
-    SELECT 
+    SELECT
       ${
         !countOnly
           ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000, '${timezone}'))`
           : `''`
       } as time,
       ${selectStatement}
-    FROM ${tableName} FINAL
+    FROM ${finalTableName}
     WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}') ${
     additionalWhereClause ? `AND ${additionalWhereClause}` : ''
   }

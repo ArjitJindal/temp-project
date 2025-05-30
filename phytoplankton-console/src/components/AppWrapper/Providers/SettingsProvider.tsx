@@ -23,6 +23,7 @@ import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { PageLoading } from '@/components/PageLoading';
 import { SuspendedAccount } from '@/components/SuspendedAccount';
 import Alert from '@/components/library/Alert';
+import { TransactionChartSeries } from '@/pages/dashboard/analysis/components/TransactionsChartWidget';
 
 interface ContextValue {
   features: FeatureName[];
@@ -178,7 +179,7 @@ export function Roles(props: {
 }
 
 export function getRuleActionLabel(
-  ruleAction: RuleAction | undefined,
+  ruleAction: RuleAction | TransactionChartSeries | undefined,
   settings: TenantSettings,
 ): string | undefined {
   if (!ruleAction) {
