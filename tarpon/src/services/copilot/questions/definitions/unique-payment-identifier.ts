@@ -20,6 +20,7 @@ type PaymentIdentifier = {
   paymentMethod: string
   count: number
   sum: number
+  names: string[]
 }
 
 export const UniquePaymentIdentifier: TableQuestion<
@@ -44,21 +45,40 @@ export const UniquePaymentIdentifier: TableQuestion<
     const directionSmall = direction.toLowerCase()
 
     const query = `
+    SELECT
+      any(${directionSmall}PaymentMethod) AS paymentMethod,
+      count(*) AS count,
+      sum(originAmountDetails_amountInUsd) AS sum,
+      ${directionSmall}PaymentMethodId AS paymentIdentifier,
+      arrayDistinct(
+        arrayFilter(x -> x != '', arrayFlatten(groupArray(names)))
+      ) AS names
+    FROM (
       SELECT
-        any(${directionSmall}PaymentMethod) as paymentMethod,
-        count(*) as count,
-        sum(originAmountDetails_amountInUsd) as sum,
-        ${directionSmall}PaymentMethodId as paymentIdentifier
-      FROM
-        transactions FINAL
+        ${directionSmall}PaymentMethodId,
+        ${directionSmall}PaymentMethod,
+        originAmountDetails_amountInUsd,
+        CASE
+          WHEN ${directionSmall}PaymentMethod = 'CARD' THEN concatWithSpace(
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'firstName'),
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'middleName'),
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'lastName')
+          )
+          WHEN ${directionSmall}PaymentMethod = 'NPP' THEN concatWithSpace(
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'firstName'),
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'middleName'),
+            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'lastName')
+          )
+          ELSE JSONExtractString(data, '${directionSmall}PaymentDetails', 'name')
+        END AS names
+      FROM transactions FINAL
       WHERE
         ${directionSmall}UserId = '{{ userId }}'
-        and timestamp between {{ from }} and {{ to }}
-      GROUP BY
-        ${directionSmall}PaymentMethodId
-      ORDER BY
-        sum desc
-      `
+        AND timestamp BETWEEN {{ from }} AND {{ to }}
+    ) AS pre_aggregated
+    GROUP BY ${directionSmall}PaymentMethodId
+    ORDER BY sum DESC
+`
 
     let topPaymentIdentifier: PaymentIdentifier | undefined = undefined
 
@@ -93,6 +113,7 @@ export const UniquePaymentIdentifier: TableQuestion<
             r.paymentMethod,
             r.count,
             convert(r.sum, currency),
+            r.names.join(', '),
           ]
         }),
         total: resultTotal,
@@ -113,6 +134,7 @@ export const UniquePaymentIdentifier: TableQuestion<
     { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
     { name: 'Transaction Count', columnType: 'NUMBER' },
     { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
+    { name: 'Account names', columnType: 'STRING' },
   ],
   variableOptions: {
     ...periodVars,
