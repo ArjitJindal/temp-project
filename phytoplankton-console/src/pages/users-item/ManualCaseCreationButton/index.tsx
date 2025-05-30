@@ -20,6 +20,7 @@ export const ManualCaseCreationButton = (props: Props) => {
           setIsModalOpen(true);
         }}
         requiredPermissions={['case-management:case-details:write']}
+        requiredResources={['write:::case-management/case-details/*']}
         className={props.className}
       >
         <CaseIcon height={15} />

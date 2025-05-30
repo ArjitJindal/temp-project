@@ -158,6 +158,7 @@ export function ChecklistTemplatesSettings() {
     <SettingsCard
       title="Investigation checklist"
       description="Define investigation checklist for analysts to refer while investigation an alert"
+      minRequiredResources={['read:::settings/case-management/checklist-templates/*']}
     >
       <CrudEntitiesTable<DefaultApiGetChecklistTemplatesRequest, ChecklistTemplate>
         tableId="checklist-templates"
@@ -227,6 +228,7 @@ export function ChecklistTemplatesSettings() {
                       isDisabled={isActive}
                       onClick={onClick}
                       requiredPermissions={['settings:case-management:write']}
+                      requiredResources={['write:::settings/case-management/*']}
                     >
                       {isActive ? 'Active' : 'Draft'}
                     </Button>

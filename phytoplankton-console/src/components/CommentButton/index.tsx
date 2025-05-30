@@ -14,16 +14,18 @@ import WechatLineIcon from '@/components/ui/icons/Remix/logos/wechat-line.react.
 import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { Comment, Permission } from '@/apis';
+import { Resource } from '@/utils/user-utils';
 
 interface Props {
   submitRequest: (values: CommentEditorFormValues) => Promise<Comment>;
   onSuccess: (createdComment: Comment) => void;
   disabled?: boolean;
   requiredPermissions?: Permission[];
+  requiredResources?: Resource[];
 }
 
 export default function CommentButton(props: Props) {
-  const { submitRequest, onSuccess, requiredPermissions = [] } = props;
+  const { submitRequest, onSuccess, requiredPermissions = [], requiredResources = [] } = props;
   const [commentFormValues, setCommentFormValues] = useState<CommentEditorFormValues>({
     comment: '',
     files: [],
@@ -86,6 +88,7 @@ export default function CommentButton(props: Props) {
           isDisabled={props.disabled}
           icon={<WechatLineIcon />}
           requiredPermissions={requiredPermissions}
+          requiredResources={requiredResources}
           testName="comment-button"
         >
           Comment

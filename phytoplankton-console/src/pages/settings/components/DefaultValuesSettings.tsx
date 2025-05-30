@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
+  useFeatureEnabled,
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -11,12 +12,14 @@ import Table from '@/components/library/Table';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasPermissions, Resource, hasResources } from '@/utils/user-utils';
+import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 
 type TableItem = {
   valueType: string;
   options: SelectProps['options'];
   label: string;
+  requiredResources: { read: Resource[]; write: Resource[] };
 };
 
 type ExternalState = {
@@ -35,7 +38,14 @@ export const DefaultValuesSettings = () => {
   const [value, setValue] = useState<{ [key: string]: string }>(DEFAULT_VALUES);
   const settings = useSettings();
 
-  const hasSystemConfigWrite = useHasPermissions(['settings:system-config:write']);
+  const hasSystemConfigWrite = useHasPermissions(
+    ['settings:system-config:write'],
+    ['write:::settings/system-config/default-values/*'],
+  );
+
+  const isRbacV2Enabled = useFeatureEnabled('RBAC_V2');
+
+  const { statements } = useResources();
 
   const columns = useMemo(
     () =>
@@ -63,7 +73,11 @@ export const DefaultValuesSettings = () => {
                 defaultValue={DEFAULT_VALUES[record.valueType]}
                 showSearch
                 style={{ width: '100%' }}
-                disabled={!hasSystemConfigWrite}
+                disabled={
+                  isRbacV2Enabled
+                    ? !hasResources(statements, record.requiredResources.write)
+                    : !hasSystemConfigWrite
+                }
               />
             );
           },
@@ -85,6 +99,7 @@ export const DefaultValuesSettings = () => {
                 }}
                 isLoading={saving}
                 requiredPermissions={['settings:system-config:write']}
+                requiredResources={record.requiredResources.write}
               >
                 Save
               </Button>
@@ -92,7 +107,7 @@ export const DefaultValuesSettings = () => {
           },
         }),
       ]),
-    [hasSystemConfigWrite],
+    [hasSystemConfigWrite, isRbacV2Enabled, statements],
   );
 
   useEffect(() => {
@@ -121,31 +136,45 @@ export const DefaultValuesSettings = () => {
     saving: mutateTenantSettings.isLoading,
     onSave: handleSave,
   };
+
+  const items: TableItem[] = useMemo(() => {
+    const items: TableItem[] = [
+      {
+        valueType: 'currency',
+        options: CURRENCIES_SELECT_OPTIONS,
+        label: 'Currency',
+        requiredResources: {
+          read: ['read:::settings/system-config/default-values/currency/*'],
+          write: ['write:::settings/system-config/default-values/currency/*'],
+        },
+      },
+      {
+        valueType: 'tenantTimezone',
+        options: TIMEZONES.map((x) => ({ label: x, value: x })),
+        label: 'Time zone',
+        requiredResources: {
+          read: ['read:::settings/system-config/default-values/timezone/*'],
+          write: ['write:::settings/system-config/default-values/timezone/*'],
+        },
+      },
+    ];
+
+    return items.filter((item) => hasResources(statements, item.requiredResources.read));
+  }, [statements]);
+
   return (
     <div>
       <SettingsCard
         title="Default values"
         description="Define values that are constant throughout the console."
+        minRequiredResources={['read:::settings/system-config/default-values/*']}
       >
         <Table<TableItem>
           rowKey="label"
           sizingMode="FULL_WIDTH"
           toolsOptions={false}
           columns={columns}
-          data={{
-            items: [
-              {
-                valueType: 'currency',
-                options: CURRENCIES_SELECT_OPTIONS,
-                label: 'Currency',
-              },
-              {
-                valueType: 'tenantTimezone',
-                options: TIMEZONES.map((x) => ({ label: x, value: x })),
-                label: 'Time zone',
-              },
-            ],
-          }}
+          data={{ items }}
           pagination={false}
           externalState={externalState}
         />

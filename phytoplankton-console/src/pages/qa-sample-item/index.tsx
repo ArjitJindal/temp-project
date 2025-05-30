@@ -66,7 +66,11 @@ export const QASamplePage = () => {
   );
 
   return (
-    <Authorized required={['case-management:qa:read']} showForbiddenPage>
+    <Authorized
+      required={['case-management:qa:read']}
+      requiredResources={['read:::case-management/qa/*']}
+      showForbiddenPage
+    >
       <PageWrapper
         header={
           <div className={s.header}>
@@ -99,7 +103,10 @@ export const QASamplePage = () => {
                       </Link>
                     </div>
                     <div className={s.cardSection}>
-                      <Authorized required={['case-management:qa:write']}>
+                      <Authorized
+                        required={['case-management:qa:write']}
+                        requiredResources={['write:::case-management/qa/*']}
+                      >
                         <div className={s.actions}>
                           <Button
                             type="TETRIARY"

@@ -25,7 +25,10 @@ interface Props {
 export default function CommentsTab(props: Props) {
   const { alert } = props;
   const user = useAuth0User();
-  const hasCommentWritePermission = useHasPermissions(['case-management:case-details:write']);
+  const hasCommentWritePermission = useHasPermissions(
+    ['case-management:case-details:write'],
+    ['write:::case-management/case-details/*'],
+  );
   const api = useApi();
   const currentUserId = user.userId ?? undefined;
   const commentEditorRef = useRef<CommentEditorRef>(null);

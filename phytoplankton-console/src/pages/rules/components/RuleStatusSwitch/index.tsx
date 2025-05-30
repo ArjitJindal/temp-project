@@ -13,7 +13,7 @@ interface RuleStatusSwitchProps {
 }
 
 export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleStatusSwitchProps) => {
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
   const { entity, type = 'RULE', onToggle, isDisabled = false } = props;
   const isDeploying = entity.status === 'DEPLOYING';
   const tooltipText = isDeploying

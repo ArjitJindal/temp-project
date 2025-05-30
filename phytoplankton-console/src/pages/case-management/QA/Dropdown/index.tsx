@@ -23,7 +23,10 @@ export const QAButton = (props: Props) => {
   const { params } = props;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const isQAWriteEnabled = useHasPermissions(['case-management:qa:write']);
+  const isQAWriteEnabled = useHasPermissions(
+    ['case-management:qa:write'],
+    ['write:::case-management/qa/*'],
+  );
   const user = useAuth0User();
 
   const options: DropdownOption<OptionTypes>[] = useMemo(() => {

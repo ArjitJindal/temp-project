@@ -22,6 +22,7 @@ export function RuleQueuesSettings() {
     <SettingsCard
       title="Queue"
       description="Define queues for the alerts. You can select a queue when setting up a rule."
+      minRequiredResources={['read:::settings/case-management/rule-queues/*']}
     >
       <CrudEntitiesTable<DefaultApiGetRuleQueuesRequest, RuleQueue>
         tableId="rule-queues-table"
@@ -29,6 +30,8 @@ export function RuleQueuesSettings() {
         entityIdField="id"
         readPermissions={['settings:case-management:read']}
         writePermissions={['settings:case-management:write']}
+        readResources={() => ['read:::settings/case-management/rule-queues/*']}
+        writeResources={() => ['write:::settings/case-management/rule-queues/*']}
         apiOperations={{
           GET: (params) => api.getRuleQueues(params),
           CREATE: (entity) => api.postRuleQueue({ RuleQueue: entity }),

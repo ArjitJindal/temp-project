@@ -23,7 +23,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { Permission } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { Resource, useHasPermissions } from '@/utils/user-utils';
 
 function getDrawerTitle(drawerMode: DrawerMode, entityName: string): string {
   let verb = '';
@@ -54,9 +54,9 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   tableId: string;
   entityIdField: keyof Entity;
   readPermissions?: Permission[];
-  readStatements?: (entity: Entity) => string[];
+  readResources?: (entity: Entity) => Resource[];
   writePermissions?: Permission[];
-  writeStatements?: (entity?: Entity) => string[];
+  writeResources?: (entity?: Entity) => Resource[];
   columns: TableColumn<Entity>[];
   apiOperations: {
     GET: (params: GetParams) => Promise<{ total: number; data: Entity[] }>;
@@ -80,9 +80,9 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     tableId,
     entityIdField,
     readPermissions,
-    readStatements,
+    readResources,
     writePermissions,
-    writeStatements,
+    writeResources,
     columns,
     apiOperations,
     formSteps,
@@ -93,7 +93,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     enableClone,
   } = props;
   const [drawerMode, setDrawerMode] = useState<DrawerMode>('CLOSED');
-  const isReadOnly = !useHasPermissions(writePermissions ?? []);
+  const isReadOnly = !useHasPermissions(writePermissions ?? [], writeResources?.() ?? []);
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [params, setParams] = useState<AllParams<GetParams>>(DEFAULT_PARAMS_STATE as any);
   const queryResult = usePaginatedQuery<Entity>([entityName, params], async (paginationParams) => {
@@ -204,7 +204,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                 icon={readOnly ? <EyeLineIcon /> : <EditLineIcon />}
                 onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
                 requiredPermissions={readOnly ? readPermissions : writePermissions}
-                requiredStatements={readOnly ? readStatements?.(entity) : writeStatements?.(entity)}
+                requiredResources={readOnly ? readResources?.(entity) : writeResources?.(entity)}
               >
                 {readOnly ? 'View' : 'Edit'}
               </Button>
@@ -222,7 +222,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                   setDrawerMode('CREATE');
                 }}
                 requiredPermissions={writePermissions}
-                requiredStatements={writeStatements?.(entity)}
+                requiredResources={writeResources?.(entity)}
                 isDisabled={creationMutation.isLoading}
               >
                 Duplicate
@@ -246,7 +246,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                     onClick={onClick}
                     isDisabled={deletionMutation.isLoading}
                     requiredPermissions={writePermissions}
-                    requiredStatements={writeStatements?.(entity)}
+                    requiredResources={writeResources?.(entity)}
                   >
                     Delete
                   </Button>
@@ -270,8 +270,8 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     writePermissions,
     readPermissions,
     enableClone,
-    writeStatements,
-    readStatements,
+    writeResources,
+    readResources,
   ]);
   const formInitialValues = useMemo(() => {
     return Object.fromEntries(
@@ -281,8 +281,12 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
       ]),
     ) as any;
   }, [formSteps, selectedEntity]);
+
+  const requiredResources = selectedEntity
+    ? readResources?.(selectedEntity)
+    : readResources?.({} as Entity);
   return (
-    <Authorized required={readPermissions ?? []}>
+    <Authorized required={readPermissions ?? []} requiredResources={requiredResources ?? []}>
       <AsyncResourceRenderer resource={queryResult.data}>
         {(data) => {
           return data.total === 0 ? (
@@ -308,7 +312,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                       type="PRIMARY"
                       onClick={handleEntityCreation}
                       requiredPermissions={writePermissions}
-                      requiredStatements={writeStatements?.()}
+                      requiredResources={writeResources?.()}
                     >
                       <PlusOutlined />
                       Create {`${entityName}`}

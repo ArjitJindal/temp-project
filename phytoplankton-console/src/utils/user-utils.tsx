@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
@@ -7,15 +7,17 @@ import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
 import { useApi } from '@/api';
-import { Account, AccountRole, Permission, PermissionStatements } from '@/apis';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useStatements } from '@/components/AppWrapper/Providers/StatementsProvider';
+import { Account, AccountRole, Permission, PermissionsAction, PermissionStatements } from '@/apis';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 
 export enum CommentType {
   COMMENT,
   USER,
   SHAREHOLDERDIRECTOR,
 }
+
+export type Resource = `${PermissionsAction}:::${string}/*`;
 
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
@@ -103,10 +105,93 @@ export function usePermissions(): Map<Permission, boolean> {
   return user.permissions || new Map<Permission, boolean>();
 }
 
-export function useHasPermissions(requiredPermissions: Permission[]): boolean {
+export function useHasPermissions(
+  requiredPermissions: Permission[],
+  requiredResources: Resource[],
+): boolean {
   const permissions = usePermissions();
-  const missingPermissions = requiredPermissions.filter((p) => !permissions.has(p));
-  return missingPermissions.length == 0;
+  const resources = useHasResources(requiredResources ?? []);
+  const isRbacV2Enabled = useFeatureEnabled('RBAC_V2');
+
+  const isEnabled = useMemo(() => {
+    if (isRbacV2Enabled && requiredResources?.length) {
+      return resources;
+    }
+    return requiredPermissions.every((p) => permissions.has(p));
+  }, [isRbacV2Enabled, permissions, requiredPermissions, resources, requiredResources]);
+
+  return isEnabled;
+}
+
+export function hasMinimumPermission(
+  statements: PermissionStatements[],
+  requiredResources: Resource[],
+): boolean {
+  if (requiredResources.length === 0) {
+    return true;
+  }
+
+  const resourcesByAction = requiredResources.reduce((acc, resource) => {
+    const [action, resourcePath] = resource.split(':::');
+    if (!acc[action]) {
+      acc[action] = [];
+    }
+    acc[action].push(resourcePath);
+    return acc;
+  }, {} as Record<string, string[]>);
+
+  return Object.entries(resourcesByAction).every(([action, resources]) => {
+    return statements.some((statement) => {
+      let hasAction = false;
+      if (action === 'read') {
+        hasAction = statement.actions.includes('read') || statement.actions.includes('write');
+      } else {
+        hasAction = statement.actions.includes(action as 'read' | 'write');
+      }
+
+      if (!hasAction) {
+        return false;
+      }
+
+      return statement.resources.some((statementResource) => {
+        const [, normalizedResource] = statementResource.split(':::');
+        if (!normalizedResource) {
+          return false;
+        }
+
+        return resources.some((requiredResource) => {
+          if (normalizedResource === requiredResource || normalizedResource === '*') {
+            return true;
+          } else if (
+            normalizedResource.endsWith('/*') &&
+            requiredResource.startsWith(normalizedResource.slice(0, -2))
+          ) {
+            return true;
+          } else if (
+            requiredResource.endsWith('/*') &&
+            normalizedResource.startsWith(requiredResource.slice(0, -2))
+          ) {
+            return true;
+          }
+          return false;
+        });
+      });
+    });
+  });
+}
+
+// Keep the hook as a wrapper for convenience
+export function useHasMinimumPermission(
+  requiredPermissions: Permission[],
+  requiredResources: Resource[],
+): boolean {
+  const { statements } = useResources();
+  const permissions = usePermissions();
+  const isRbacV2Enabled = useFeatureEnabled('RBAC_V2');
+  if (isRbacV2Enabled) {
+    return hasMinimumPermission(statements, requiredResources);
+  }
+  return requiredPermissions.some((permission) => permissions.has(permission));
 }
 
 /**
@@ -135,15 +220,15 @@ export function useHasPermissions(requiredPermissions: Permission[]): boolean {
  * }
  *
  */
-export function hasStatements(
+export function hasResources(
   statements: PermissionStatements[],
-  requiredStatements: string[],
+  requiredResources: Resource[],
 ): boolean {
-  if (requiredStatements.length === 0) {
+  if (requiredResources.length === 0) {
     return true;
   }
 
-  for (const requiredStatement of requiredStatements) {
+  for (const requiredStatement of requiredResources) {
     const [requiredAction, requiredResource] = requiredStatement.split(':::');
 
     if (!requiredAction || !requiredResource) {
@@ -196,9 +281,9 @@ export function hasStatements(
   return true;
 }
 
-export function useHasStatements(requiredStatements: string[]): boolean {
-  const { statements } = useStatements();
-  return hasStatements(statements, requiredStatements);
+export function useHasResources(requiredResources: Resource[]): boolean {
+  const { statements } = useResources();
+  return hasResources(statements, requiredResources);
 }
 
 export function parseUserRole(role: string | null): UserRole {

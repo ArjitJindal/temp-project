@@ -90,7 +90,10 @@ export default function CreateSearchProfileModal({
     }
     return initialFilters;
   });
-  const isReadOnly = !useHasPermissions(['screening:search-profiles:write']);
+  const isReadOnly = !useHasPermissions(
+    ['screening:search-profiles:write'],
+    ['write:::screening/search-profiles/*'],
+  );
   const api = useApi();
   const queryClient = useQueryClient();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
@@ -254,6 +257,7 @@ export default function CreateSearchProfileModal({
           type="PRIMARY"
           key="create-search-profile"
           requiredPermissions={['screening:search-profiles:write']}
+          requiredResources={['write:::screening/search-profiles/*']}
           onClick={() => setIsModalOpen(true)}
         >
           Create

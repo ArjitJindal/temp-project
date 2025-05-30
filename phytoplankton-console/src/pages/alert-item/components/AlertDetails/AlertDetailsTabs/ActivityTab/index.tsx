@@ -158,6 +158,7 @@ export default function ActivityTab(props: Props) {
       }}
       comments={{
         writePermissions: ['case-management:case-details:write'],
+        writeResources: ['write:::case-management/case-details/*'],
         handleAddComment: async (commentFormValues, groupId) => {
           return commentSubmitMutation.mutateAsync({
             alertId: groupId,

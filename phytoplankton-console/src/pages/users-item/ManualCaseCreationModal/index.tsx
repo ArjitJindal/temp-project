@@ -175,6 +175,7 @@ export const MannualCaseCreationModal = (props: Props) => {
         }
       }}
       writePermissions={['case-management:case-details:write']}
+      writeResources={['write:::case-management/case-details/*']}
       okText={type === 'CREATE' ? 'Create' : 'Add'}
     >
       <Form<FormValues>

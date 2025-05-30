@@ -11,7 +11,10 @@ export const ProductionAccessControl = () => {
   const settings = useSettings();
   const user = useAuth0User();
   const mutateTenantSettings = useUpdateTenantSettings();
-  const hasSystemConfigWrite = useHasPermissions(['settings:system-config:write']);
+  const hasSystemConfigWrite = useHasPermissions(
+    ['settings:system-config:write'],
+    ['write:::settings/system-config/production-access-control/*'],
+  );
 
   const handleToggleOff = () => {
     if (user.tenantId === 'flagright') {
@@ -32,6 +35,7 @@ export const ProductionAccessControl = () => {
     <SettingsCard
       title="Production access control"
       description="When enabled, Flagright support team can access the production environment for troubleshooting & bug fixes."
+      minRequiredResources={['read:::settings/system-config/production-access-control/*']}
     >
       <Toggle
         onChange={!settings.isProductionAccessEnabled ? handleToggleOn : handleToggleOff}

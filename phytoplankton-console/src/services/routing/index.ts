@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import RulesItemPage from 'src/pages/rules/rules-item';
 import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
 import WorkflowsItemPage from 'src/pages/workflows/workflows-item-page';
-import { Permission } from '@/apis';
+import { Permission, PermissionStatements } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ForbiddenPage from '@/pages/403';
 import Page404 from '@/pages/404';
@@ -43,9 +43,12 @@ import {
   useAuth0User,
   useHasPermissions,
   usePermissions,
+  hasMinimumPermission,
+  Resource,
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
+import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -59,8 +62,13 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveList] = useSafeLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useSafeLocalStorageState('sanctions-active-tab', 'search');
   const permissions = usePermissions();
+  const { statements } = useResources();
+  const isRbacV2Enabled = useFeatureEnabled('RBAC_V2');
 
-  const hasAuditLogPermission = useHasPermissions(['audit-log:export:read']);
+  const hasAuditLogPermission = useHasPermissions(
+    ['audit-log:export:read'],
+    ['read:::audit-log/export/*'],
+  );
   const user = useAuth0User();
   const isAtLeastAdminUser = isAtLeastAdmin(user);
   const isRiskLevelSimulationMode =
@@ -75,6 +83,7 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         hideChildrenInMenu: true,
         permissions: ['dashboard:download-data:read'],
+        minRequiredResources: ['read:::dashboard/download-data/*'],
         routes: [
           {
             path: '/dashboard',
@@ -98,30 +107,35 @@ export function useRoutes(): RouteItem[] {
           'case-management:qa:read',
           'transactions:overview:read',
         ],
+        minRequiredResources: ['read:::case-management/*'],
         routes: [
           {
             path: '/case-management/case/:id',
             component: CaseManagementItemPage,
             name: 'item',
             permissions: ['case-management:case-details:read'],
+            minRequiredResources: ['read:::case-management/case-details/*'],
           },
           {
             path: '/case-management/alerts/:id',
             component: AlertItemPage,
             name: 'alert-item',
             permissions: ['case-management:case-details:read'],
+            minRequiredResources: ['read:::case-management/case-details/*'],
           },
           {
             path: '/case-management/alerts/:id/:tab',
             component: AlertItemPage,
             name: 'alert-item',
             permissions: ['case-management:case-details:read'],
+            minRequiredResources: ['read:::case-management/case-details/*'],
           },
           {
             path: '/case-management/case/:id/:tab',
             component: CaseManagementItemPage,
             name: 'item-tab',
             permissions: ['case-management:case-details:read'],
+            minRequiredResources: ['read:::case-management/case-details/*'],
           },
           {
             path: '/case-management',
@@ -130,6 +144,11 @@ export function useRoutes(): RouteItem[] {
               'case-management:case-overview:read',
               'case-management:qa:read',
               'transactions:overview:read',
+            ],
+            minRequiredResources: [
+              'read:::case-management/case-overview/*',
+              'read:::case-management/qa/*',
+              'read:::transactions/overview/*',
             ],
           },
           {
@@ -141,18 +160,25 @@ export function useRoutes(): RouteItem[] {
               'case-management:qa:read',
               'transactions:overview:read',
             ],
+            minRequiredResources: [
+              'read:::case-management/case-overview/*',
+              'read:::case-management/qa/*',
+              'read:::transactions/overview/*',
+            ],
           },
           {
             path: '/case-management/qa-sampling',
             component: QASamplesTable,
             name: 'qa-sampling',
             permissions: ['case-management:qa:read'],
+            minRequiredResources: ['read:::case-management/qa/*'],
           },
           {
             path: '/case-management/qa-sampling/:samplingId',
             component: QASamplePage,
             name: 'qa-sampling-item',
             permissions: ['case-management:qa:read'],
+            minRequiredResources: ['read:::case-management/qa/*'],
           },
         ],
       },
@@ -163,18 +189,21 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         position: 'top',
         permissions: ['transactions:overview:read'],
+        minRequiredResources: ['read:::transactions/overview/*'],
         routes: [
           {
             path: '/transactions/item/:id',
             component: TransactionsItemPage,
             name: 'transactions-item',
             permissions: ['transactions:details:read'],
+            minRequiredResources: ['read:::transactions/details/*'],
           },
           {
             path: '/transactions/item/:id/:tab',
             component: TransactionsItemPage,
             name: 'transactions-item-tab',
             permissions: ['transactions:details:read'],
+            minRequiredResources: ['read:::transactions/details/*'],
           },
           {
             name: 'transactions-list',
@@ -194,6 +223,7 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         position: 'top',
         permissions: ['users:user-overview:read'],
+        minRequiredResources: ['read:::users/user-overview/*'],
         routes: [
           {
             path: '/users',
@@ -239,6 +269,7 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         permissions: ['rules:library:read'],
         position: 'top',
+        minRequiredResources: ['read:::rules/library/*'],
         routes: [
           {
             path: '/rules',
@@ -292,6 +323,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'reports',
         hideChildrenInMenu: true,
         permissions: ['reports:generated:read'],
+        minRequiredResources: ['read:::reports/generated/*'],
         position: 'top',
         routes: [
           {
@@ -316,6 +348,11 @@ export function useRoutes(): RouteItem[] {
           'risk-scoring:risk-levels:read',
           'risk-scoring:risk-algorithms:read',
         ],
+        minRequiredResources: [
+          'read:::risk-scoring/risk-factors/*',
+          'read:::risk-scoring/risk-levels/*',
+          'read:::risk-scoring/risk-algorithms/*',
+        ],
         routes: [
           ...(isRiskLevelsEnabled
             ? [
@@ -325,6 +362,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskLevelsConfigurePage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-levels:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
                 },
                 {
                   name: 'risk-levels-configure',
@@ -332,6 +370,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskLevelsConfigurePage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-levels:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
                 },
               ]
             : []),
@@ -344,6 +383,7 @@ export function useRoutes(): RouteItem[] {
                     : '/risk-levels/risk-factors',
                   component: RiskFactorPage,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors',
@@ -353,6 +393,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors',
@@ -360,6 +401,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorsSimulationHistoryPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors',
@@ -367,6 +409,7 @@ export function useRoutes(): RouteItem[] {
                   component: SimulationHistoryResultPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors',
@@ -374,6 +417,7 @@ export function useRoutes(): RouteItem[] {
                   component: SimulationHistoryResultPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
               ]
             : []),
@@ -381,7 +425,8 @@ export function useRoutes(): RouteItem[] {
             name: 'risk-algorithms',
             path: '/risk-levels/risk-algorithms',
             component: RiskAlgorithmTable,
-            permissions: ['risk-scoring:risk-algorithms:read'],
+            permissions: ['risk-scoring:risk-algorithms:read'] as Permission[],
+            minRequiredResources: ['read:::risk-scoring/risk-algorithms/*'] as Resource[],
           },
           ...(isRiskScoringEnabled
             ? [
@@ -391,6 +436,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-edit',
@@ -398,6 +444,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-read',
@@ -405,6 +452,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-duplicate',
@@ -412,6 +460,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-simulation-mode-create',
@@ -419,6 +468,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-simulation-mode-edit',
@@ -426,6 +476,7 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:write'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   name: 'risk-factors-simulation-mode-read',
@@ -433,11 +484,13 @@ export function useRoutes(): RouteItem[] {
                   component: RiskFactorItemPage,
                   hideInMenu: true,
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
                 {
                   path: '/risk-levels',
                   redirect: '/risk-levels/risk-factors',
                   permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
               ]
             : []),
@@ -450,30 +503,35 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         hideChildrenInMenu: true,
         permissions: [],
+        minRequiredResources: ['read:::lists/*'],
         routes: [
           {
             path: '/lists/whitelist',
             name: 'lists-whitelist',
             component: CreatedListsPage,
             permissions: ['lists:whitelist:read'],
+            minRequiredResources: ['read:::lists/whitelist/*'],
           },
           {
             path: '/lists/blacklist',
             name: 'lists-blacklist',
             component: CreatedListsPage,
             permissions: ['lists:blacklist:read'],
+            minRequiredResources: ['read:::lists/blacklist/*'],
           },
           {
             path: '/lists/whitelist/:id',
             name: 'lists-whitelist-item',
             component: ListsItemPage,
             permissions: ['lists:whitelist:read'],
+            minRequiredResources: ['read:::lists/whitelist/*'],
           },
           {
             path: '/lists/blacklist/:id',
             name: 'lists-blacklist-item',
             component: ListsItemPage,
             permissions: ['lists:blacklist:read'],
+            minRequiredResources: ['read:::lists/blacklist/*'],
           },
           {
             path: '/lists',
@@ -515,6 +573,7 @@ export function useRoutes(): RouteItem[] {
         disabled: !isSanctionsEnabled,
         associatedFeatures: ['SANCTIONS'],
         permissions: ['sanctions:search:read'],
+        minRequiredResources: ['read:::sanctions/search/*'],
         routes: isSanctionsEnabled
           ? [
               {
@@ -546,6 +605,7 @@ export function useRoutes(): RouteItem[] {
         disabled: !isWorkflowsEnabled,
         associatedFeatures: ['WORKFLOWS_BUILDER'],
         // permissions: ['workflows:all:read'],
+        // requiredResources: ['read:::workflows/all/*'],
         routes: [
           {
             path: '/workflows',
@@ -574,6 +634,7 @@ export function useRoutes(): RouteItem[] {
         name: 'auditlog',
         position: 'top',
         permissions: ['audit-log:export:read'],
+        minRequiredResources: ['read:::audit-log/export/*'],
         component: AuditLogPage,
       },
       ...(hasMachineLearningFeature
@@ -593,7 +654,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'settings',
         name: 'settings',
         position: 'bottom',
-
+        minRequiredResources: ['read:::settings/*'],
         hideChildrenInMenu: true,
         component: SettingsPage,
         routes: [
@@ -636,6 +697,7 @@ export function useRoutes(): RouteItem[] {
         path: '/',
         redirect: '/dashboard/analysis',
         permissions: ['dashboard:download-data:read'],
+        minRequiredResources: ['read:::dashboard/analysis/*'],
       },
       {
         path: '/auth/clueso',
@@ -653,7 +715,7 @@ export function useRoutes(): RouteItem[] {
 
     return routes
       .filter((x): x is RouteItem => x !== false)
-      .map((r) => disableForbiddenRoutes(r, permissions));
+      .map((r) => disableForbiddenRoutes(r, isRbacV2Enabled, permissions, statements));
   }, [
     lastActiveTab,
     lastActiveRuleTab,
@@ -669,22 +731,37 @@ export function useRoutes(): RouteItem[] {
     hasAuditLogPermission,
     hasMachineLearningFeature,
     permissions,
+    statements,
+    isRbacV2Enabled,
   ]);
 }
 
-function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, boolean>): RouteItem {
+function disableForbiddenRoutes(
+  r: RouteItem,
+  isRbacV2Enabled: boolean,
+  permissions?: Map<Permission, boolean>,
+  statements?: PermissionStatements[],
+): RouteItem {
   if (!(isLeaf(r) || isTree(r))) {
     return r;
   }
+
   const result: RouteItem = { ...r };
   const routePermissions = r.permissions ?? [];
-  const hasAnyOnePermission = routePermissions.some((p) => permissions?.get(p));
-  if (routePermissions.length > 0 && !hasAnyOnePermission) {
+  const minRequiredResources = r.minRequiredResources ?? [];
+
+  const hasAccess =
+    isRbacV2Enabled && statements && minRequiredResources.length > 0
+      ? hasMinimumPermission(statements, minRequiredResources)
+      : routePermissions.some((p) => permissions?.get(p));
+
+  if ((routePermissions.length > 0 || minRequiredResources.length > 0) && !hasAccess) {
     if (isLeaf(result)) {
       result.component = ForbiddenPage;
     }
     result.disabled = true;
   }
+
   if (isTree(result)) {
     // If parent disabled, disable children.
     if (result.disabled) {
@@ -695,7 +772,7 @@ function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, bool
       }));
     } else {
       result.routes = result.routes.map((r) => {
-        return disableForbiddenRoutes(r, permissions);
+        return disableForbiddenRoutes(r, isRbacV2Enabled, permissions, statements);
       });
     }
   }

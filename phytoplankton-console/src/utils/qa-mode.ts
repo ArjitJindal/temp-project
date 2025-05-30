@@ -10,6 +10,9 @@ export function useQaMode(): [boolean, (value: boolean) => void] {
 
 export function useQaEnabled(): boolean {
   const qaEnabled = useFeatureEnabled('QA');
-  const hasPermissions = useHasPermissions(['case-management:qa:write']);
+  const hasPermissions = useHasPermissions(
+    ['case-management:qa:write'],
+    ['write:::case-management/qa/*'],
+  );
   return qaEnabled && hasPermissions;
 }

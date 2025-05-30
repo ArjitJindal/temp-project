@@ -133,7 +133,11 @@ function CaseManagementItemPage() {
 
 export default function CaseManagementItemPageWrapper() {
   return (
-    <Authorized required={['case-management:case-details:read']} showForbiddenPage>
+    <Authorized
+      required={['case-management:case-details:read']}
+      requiredResources={['read:::case-management/case-details/*']}
+      showForbiddenPage
+    >
       <CaseManagementItemPage />
     </Authorized>
   );

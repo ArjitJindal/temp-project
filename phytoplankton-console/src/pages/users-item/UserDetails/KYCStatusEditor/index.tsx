@@ -23,7 +23,10 @@ export default function KycStatusEditor(props: Props) {
   const [kycChanged, setKycChanged] = useState(false);
   const [newKycStatus, setnewKycStatus] = useState('');
   const settings = useSettings();
-  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
+  const hasUserOveviewWritePermissions = useHasPermissions(
+    ['users:user-overview:write'],
+    ['write:::users/user-overview/*'],
+  );
   return (
     <div>
       <div className={s.row}>

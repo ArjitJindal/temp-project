@@ -15,7 +15,10 @@ export default function KycRiskDisplay({ userId }: Props) {
   const api = useApi();
 
   const queryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => api.getKrsValue({ userId }));
-  const isKycPermissionEnabled = useHasPermissions(['risk-scoring:risk-score-details:read']);
+  const isKycPermissionEnabled = useHasPermissions(
+    ['risk-scoring:risk-score-details:read'],
+    ['read:::risk-scoring/risk-score-details/*'],
+  );
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>

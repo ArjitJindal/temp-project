@@ -128,6 +128,7 @@ export function DeleteUser(props: DeleteUserProps) {
         isDisabled={isDisabled(item)}
         icon={<DeleteOutlined />}
         requiredPermissions={['accounts:overview:write']}
+        requiredResources={['write:::accounts/overview/*']}
       >
         Delete
       </Button>

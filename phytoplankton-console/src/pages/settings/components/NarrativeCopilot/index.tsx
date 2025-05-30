@@ -13,7 +13,10 @@ import Label from '@/components/library/Label';
 export const NarrativeCopilot = () => {
   const settings = useSettings();
   const settingsMutaion = useUpdateTenantSettings();
-  const isComponentAccessible = useHasPermissions(['settings:case-management:write']);
+  const isComponentAccessible = useHasPermissions(
+    ['settings:case-management:write'],
+    ['write:::settings/case-management/*'],
+  );
   if (!settings.isAiEnabled) {
     return <></>;
   }
@@ -25,6 +28,7 @@ export const NarrativeCopilot = () => {
       info={
         !isComponentAccessible ? 'User must have permission to write, to perform this action' : ''
       }
+      minRequiredResources={['read:::settings/case-management/narrative-copilot/*']}
     >
       <>
         <H4 className={s.heading}>Default narrative mode</H4>

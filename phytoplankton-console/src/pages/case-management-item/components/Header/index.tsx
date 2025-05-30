@@ -138,7 +138,10 @@ export default function Header(props: Props) {
   const navigate = useNavigate();
   const user = useAuth0User();
   const userAccount = useUser(user.userId);
-  const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
+  const isReopenEnabled = useHasPermissions(
+    ['case-management:case-reopen:write'],
+    ['write:::case-management/case-reopen/*'],
+  );
 
   const api = useApi();
   const queryClient = useQueryClient();
@@ -268,6 +271,7 @@ export default function Header(props: Props) {
             });
           }}
           requiredPermissions={['case-management:case-overview:write']}
+          requiredResources={['write:::case-management/case-overview/*']}
         />,
         ...getOr(
           map(caseItemRes, (caseItem) => {

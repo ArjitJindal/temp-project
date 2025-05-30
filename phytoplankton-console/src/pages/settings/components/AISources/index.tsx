@@ -31,6 +31,7 @@ export const AISources = () => {
     <SettingsCard
       title="AI Sources"
       description="Select the data sources to be used by the AI engine while generating narratives"
+      minRequiredResources={['read:::settings/case-management/ai-sources/*']}
     >
       <AsyncResourceRenderer resource={AI_SOURCES.data}>
         {({ aiSources }) => {
@@ -101,6 +102,7 @@ export const AISources = () => {
                     });
                   }}
                   requiredPermissions={['settings:case-management:write']}
+                  requiredResources={['write:::settings/case-management/*']}
                 >
                   Save
                 </Button>

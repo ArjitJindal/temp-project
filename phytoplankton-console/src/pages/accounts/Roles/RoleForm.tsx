@@ -215,6 +215,7 @@ export default function RoleForm(props: RoleFormProps) {
             testName="edit-role"
             onClick={() => setEdit(true)}
             requiredPermissions={['roles:overview:write']}
+            requiredResources={['write:::roles/overview/*']}
           >
             Edit
           </Button>
@@ -231,6 +232,7 @@ export default function RoleForm(props: RoleFormProps) {
               });
             }}
             requiredPermissions={['roles:overview:write']}
+            requiredResources={['write:::roles/overview/*']}
             icon={<FileCopyOutlined />}
           >
             Duplicate

@@ -145,6 +145,7 @@ const UserTagSelection = (props: {
                 }
               }}
               requiredPermissions={['users:user-tags:write']}
+              requiredResources={['write:::users/user-tags/*']}
             >
               Add
             </Button>

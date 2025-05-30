@@ -23,9 +23,15 @@ const options: { label: string; value: ReRunTrigger }[] = [
 function ReRunTriggerSettings() {
   const settings = useSettings();
   const updateTenantSettings = useUpdateTenantSettings();
-  const permissions = useHasPermissions(['settings:risk-scoring:write']);
+  const permissions = useHasPermissions(
+    ['settings:risk-scoring:write'],
+    ['write:::settings/risk-scoring/rerun-trigger-settings/*'],
+  );
   return (
-    <SettingsCard title="Re-run trigger settings">
+    <SettingsCard
+      title="Re-run trigger settings"
+      minRequiredResources={['read:::settings/risk-scoring/rerun-trigger-settings/*']}
+    >
       <div className={s.root}>
         <SelectionGroup
           mode="MULTIPLE"

@@ -57,7 +57,10 @@ function ValuesTable(props: Props) {
   const configSetting = useSettings();
   const defaultCurrency = configSetting?.defaultValues?.currency ?? 'USD';
   const hasWritePermissions =
-    useHasPermissions(['risk-scoring:risk-factors:write']) && canEditParameters;
+    useHasPermissions(
+      ['risk-scoring:risk-factors:write'],
+      ['write:::risk-scoring/risk-factors/*'],
+    ) && canEditParameters;
 
   const [values, setValues] = useState<RiskParameterLevelKeyValue[]>(
     entity.riskLevelAssignmentValues || [],

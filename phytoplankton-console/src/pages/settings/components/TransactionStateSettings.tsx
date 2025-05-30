@@ -29,7 +29,10 @@ const columnHelper = new ColumnHelper<TableItem>();
 
 export const TransactionStateSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:transactions:write']);
+  const permissions = useHasPermissions(
+    ['settings:transactions:write'],
+    ['write:::settings/transactions/transaction-state-alias/*'],
+  );
 
   const columns = useMemo(
     () =>
@@ -79,6 +82,7 @@ export const TransactionStateSettings: React.FC = () => {
                 }
                 isLoading={item.state === savingState}
                 requiredPermissions={['settings:transactions:write']}
+                requiredResources={['write:::settings/transactions/*']}
               >
                 Update
               </Button>
@@ -188,6 +192,7 @@ export const TransactionStateSettings: React.FC = () => {
     <SettingsCard
       title="Transaction state alias"
       description="Configure transaction states display name in console"
+      minRequiredResources={['read:::settings/transactions/transaction-state-alias/*']}
     >
       <Table<TableItem>
         rowKey="state"

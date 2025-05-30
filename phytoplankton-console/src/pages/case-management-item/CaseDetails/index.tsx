@@ -435,6 +435,7 @@ function useTabs(
               }}
               comments={{
                 writePermissions: ['case-management:case-details:write'],
+                writeResources: ['write:::case-management/case-details/*'],
                 handleAddComment: comments.handleAddComment,
                 onCommentAdded: (newComment, _, groupId) => {
                   return comments.onCommentAdded(newComment, groupId);

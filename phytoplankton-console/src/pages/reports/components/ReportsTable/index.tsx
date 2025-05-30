@@ -78,7 +78,7 @@ export default function ReportsTable() {
   const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
 
   const queryClient = useQueryClient();
-  const canWrite = useHasPermissions(['reports:generated:write']);
+  const canWrite = useHasPermissions(['reports:generated:write'], ['write:::reports/generated/*']);
 
   useDeepEqualEffect(() => {
     setParams((prevState: AllParams<TableParams>) => ({

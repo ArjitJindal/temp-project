@@ -23,7 +23,11 @@ const UserAliasSettings = () => {
   const [isDisabled, setIsDisabled] = useState(false);
 
   return (
-    <SettingsCard title="User alias" description="Configure the user's display name in the console">
+    <SettingsCard
+      title="User alias"
+      description="Configure the user's display name in the console"
+      minRequiredResources={['read:::settings/users/user-alias/*']}
+    >
       <Form<FormValues>
         className={s.root}
         initialValues={{

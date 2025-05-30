@@ -9,7 +9,10 @@ import { useHasPermissions } from '@/utils/user-utils';
 export default function CraToggleSettings() {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
-  const permissions = useHasPermissions(['settings:risk-scoring:write']);
+  const permissions = useHasPermissions(
+    ['settings:risk-scoring:write'],
+    ['write:::settings/risk-scoring/risk-scoring-cra/*'],
+  );
   const handleDisable = () => {
     mutateTenantSettings.mutate({ riskScoringCraEnabled: false });
   };
@@ -23,6 +26,7 @@ export default function CraToggleSettings() {
       <SettingsCard
         title="Risk scoring CRA"
         description={`Turn on risk scoring CRA for all ${settings.userAlias}s`}
+        minRequiredResources={['read:::settings/risk-scoring/risk-scoring-cra/*']}
       >
         <div>
           <Toggle

@@ -25,7 +25,11 @@ export const CRMSettings = () => {
   };
 
   return (
-    <SettingsCard title="CRM Settings" description="Create and manage your CRM connections">
+    <SettingsCard
+      title="CRM Settings"
+      description="Create and manage your CRM connections"
+      minRequiredResources={['read:::settings/add-ons/crm-integrations/*']}
+    >
       <AsyncResourceRenderer resource={queryResults.data}>
         {(data) => {
           return (
@@ -45,6 +49,7 @@ export const CRMSettings = () => {
                     icon={<DeleteLineIcon />}
                     size="SMALL"
                     requiredPermissions={['settings:add-ons:write']}
+                    requiredResources={['write:::settings/add-ons/crm-integrations/*']}
                     onClick={async () => {
                       await api.deleteTenantsNangoConnections({
                         NangoPostConnect: {
@@ -62,6 +67,7 @@ export const CRMSettings = () => {
                 type="TETRIARY"
                 size="LARGE"
                 requiredPermissions={['settings:add-ons:write']}
+                requiredResources={['write:::settings/add-ons/*']}
                 onClick={() => {
                   nango.openConnectUI({
                     sessionToken: data.token,

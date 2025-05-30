@@ -8,6 +8,7 @@ export const SlackNotificationsSettings = () => {
       <SettingsCard
         title="Slack notifications"
         description="Receive real-time notifications on Slack whenever a new case is created."
+        minRequiredResources={['write:::settings/case-management/slack-notifications/*']}
       >
         <AddToSlackButton />
       </SettingsCard>

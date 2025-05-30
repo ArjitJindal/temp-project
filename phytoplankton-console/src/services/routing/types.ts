@@ -1,4 +1,5 @@
 import { Feature, Permission } from '@/apis';
+import { Resource } from '@/utils/user-utils';
 
 export interface RouteCommonProps {
   path: string;
@@ -13,6 +14,7 @@ export interface LeafRouteItem extends RouteCommonProps {
   disabled?: boolean;
   permissions?: Permission[];
   associatedFeatures?: Feature[];
+  minRequiredResources?: Resource[];
 }
 
 export interface TreeRouteItem extends RouteCommonProps {
@@ -24,6 +26,7 @@ export interface TreeRouteItem extends RouteCommonProps {
   disabled?: boolean;
   permissions?: Permission[];
   associatedFeatures?: Feature[];
+  minRequiredResources?: Resource[];
 }
 
 export interface RedirectRouteItem extends RouteCommonProps {

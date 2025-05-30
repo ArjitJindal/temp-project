@@ -160,7 +160,10 @@ const columns = helper.list([
 ]);
 function TagSettings() {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:users:write']);
+  const permissions = useHasPermissions(
+    ['settings:users:write'],
+    ['write:::settings/users/tags/*'],
+  );
   const mutateTenantSettings = useUpdateTenantSettings();
   const [newStateDetails, setNewStateDetails] = useState<Item | undefined>();
   const [isMaxTags, setIsMaxTags] = useState(false);
@@ -200,6 +203,7 @@ function TagSettings() {
     <SettingsCard
       title="Tags"
       description={`Define custom tag keys here, with values added on the ${settings.userAlias} details page. Note that only a maximum of 10 keys can be added.`}
+      minRequiredResources={['read:::settings/users/tags/*']}
     >
       <Table
         toolsOptions={false}

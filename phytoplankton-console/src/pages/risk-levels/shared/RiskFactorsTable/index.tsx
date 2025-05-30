@@ -149,7 +149,10 @@ export default function RiskFactorsTable(props: Props) {
   );
 
   const canWriteRiskFactors =
-    useHasPermissions(['risk-scoring:risk-factors:write']) && canEditRiskFactors;
+    useHasPermissions(
+      ['risk-scoring:risk-factors:write'],
+      ['write:::risk-scoring/risk-factors/*'],
+    ) && canEditRiskFactors;
 
   const handleActivationChangeMutation = useCallback(
     async ({ id, status }: { id: string; status: RuleInstanceStatus }) => {

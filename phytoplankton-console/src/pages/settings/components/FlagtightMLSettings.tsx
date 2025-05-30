@@ -12,7 +12,10 @@ import { useHasPermissions } from '@/utils/user-utils';
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightMLSettings = () => {
-  const permissions = useHasPermissions(['settings:add-ons:read']);
+  const permissions = useHasPermissions(
+    ['settings:add-ons:read'],
+    ['read:::settings/add-ons/ai-detections/*'],
+  );
   const settings = useSettings();
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
@@ -26,6 +29,7 @@ export const FlagrightMLSettings = () => {
         <SettingsCard
           title={whiteLabeled ? 'AI detections' : 'Flagright AI detections'}
           description="Enable ‘Flagright AI’ Machine learning detection models to be used during rule configuration."
+          minRequiredResources={['read:::settings/add-ons/ai-detections/*']}
         >
           {hasMachineLearningFeature ? (
             <Toggle

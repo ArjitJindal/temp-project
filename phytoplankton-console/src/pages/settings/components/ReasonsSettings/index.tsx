@@ -77,6 +77,7 @@ export const ReasonsSettings = () => {
     <SettingsCard
       title="Closure reasons"
       description="Add reasons for closing cases and alerts, and set defaults. Note that any updates will only apply to new, not closed and re-opened cases and alerts."
+      minRequiredResources={['read:::settings/case-management/closure-reasons/*']}
     >
       <div className={s.root}>
         {REASON_TYPE_LABEL_MAP.map((data, index) => (
@@ -89,6 +90,8 @@ export const ReasonsSettings = () => {
                 onClick={() => {
                   setCreateMode(data.type);
                 }}
+                requiredPermissions={['settings:case-management:write']}
+                requiredResources={['write:::settings/case-management/closure-reasons/*']}
               >
                 Add reason
               </Button>

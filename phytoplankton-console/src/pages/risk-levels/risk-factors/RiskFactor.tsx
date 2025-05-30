@@ -40,7 +40,10 @@ export const CustomRiskFactors = (props: Props) => {
     });
   });
 
-  const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
+  const canWriteRiskFactors = useHasPermissions(
+    ['risk-scoring:risk-factors:write'],
+    ['write:::risk-scoring/risk-factors/*'],
+  );
   const queryClient = useQueryClient();
 
   const handleSaveParameters = useCallback(

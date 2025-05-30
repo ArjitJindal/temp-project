@@ -22,7 +22,10 @@ type Props = {
 
 export default function RiskQualification(props: Props) {
   const api = useApi();
-  const hasRiskLevelPermission = useHasPermissions(['risk-scoring:risk-levels:write']);
+  const hasRiskLevelPermission = useHasPermissions(
+    ['risk-scoring:risk-levels:write'],
+    ['write:::risk-scoring/risk-levels/*'],
+  );
   const { riskValues, state, setState, riskValuesRefetch } = props;
 
   const saveRiskValuesMutation = useMutation<ApiState, Error, State>(

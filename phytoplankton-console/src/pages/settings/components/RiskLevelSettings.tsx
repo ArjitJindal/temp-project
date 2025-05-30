@@ -58,6 +58,7 @@ const columns = helper.list([
           }
           isLoading={item.level === savingLevel}
           requiredPermissions={['settings:risk-scoring:write']}
+          requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
         >
           Update
         </Button>
@@ -113,6 +114,7 @@ export const RiskLevelSettings: React.FC = () => {
     },
     [savedLevelToAlias, newLevelToAlias, mutateTenantSettings],
   );
+
   const tableData = useMemo<TableItem[]>(
     () => [
       {
@@ -138,16 +140,19 @@ export const RiskLevelSettings: React.FC = () => {
     ],
     [newLevelToAlias],
   );
+
   const externalState: ExternalState = {
     savingLevel,
     newLevelToAlias,
     handleSaveAlias,
     savedLevelToAlias,
   };
+
   return (
     <SettingsCard
       title="Risk levels alias"
       description="Configure risk levels display name in console."
+      minRequiredResources={['read:::settings/risk-scoring/risk-levels-alias/*']}
     >
       <Table<TableItem>
         sizingMode="FULL_WIDTH"

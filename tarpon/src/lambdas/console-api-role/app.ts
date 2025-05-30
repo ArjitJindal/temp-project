@@ -9,6 +9,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { PermissionsService } from '@/services/rbac'
 import { DynamoRolesRepository } from '@/services/roles/repository/dynamo'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const rolesHandler = lambdaApi()(
   async (
@@ -23,6 +24,7 @@ export const rolesHandler = lambdaApi()(
       auth0Domain,
       dynamoDbClient
     )
+    const mongoClient = await getMongoDbClient()
     const { tenantId } = event.requestContext.authorizer
 
     const handlers = new Handlers()
@@ -57,7 +59,7 @@ export const rolesHandler = lambdaApi()(
     )
 
     handlers.registerGetAllPermissions(async (ctx, request) => {
-      const rbacService = new PermissionsService(ctx.tenantId)
+      const rbacService = new PermissionsService(ctx.tenantId, mongoClient)
       return rbacService.getAllPermissions(request.search)
     })
 

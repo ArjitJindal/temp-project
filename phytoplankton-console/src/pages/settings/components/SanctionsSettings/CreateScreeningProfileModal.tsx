@@ -365,7 +365,8 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
         <Button
           type="PRIMARY"
           key="create-screening-profile"
-          // requiredPermissions={['screening:screening-profiles:write']}
+          requiredResources={['write:::settings/screening/*']}
+          requiredPermissions={['screening:screening-profiles:write']}
           onClick={() => setIsModalOpen(true)}
         >
           Create

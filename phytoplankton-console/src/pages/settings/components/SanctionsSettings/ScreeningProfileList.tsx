@@ -240,7 +240,10 @@ export const ScreeningProfileList = ({ hasFeature }) => {
   }
 
   return (
-    <SettingsCard title="Screening profiles">
+    <SettingsCard
+      title="Screening profiles"
+      minRequiredResources={['read:::settings/screening/screening-profiles/*']}
+    >
       <div className={s.sanctionsSettingsRoot}>
         <QueryResultsTable<ScreeningProfileResponse>
           queryResults={queryResult}

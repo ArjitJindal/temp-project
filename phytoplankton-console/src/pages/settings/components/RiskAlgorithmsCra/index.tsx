@@ -14,17 +14,25 @@ export default function RiskAlgorithmsCra() {
   const mutateTenantSettings = useUpdateTenantSettings();
   const user = useAuth0User();
   const superAdmin = isSuperAdmin(user);
-  const permissions = useHasPermissions(['risk-scoring:risk-algorithms:read']);
+  const permissions = useHasPermissions(
+    ['risk-scoring:risk-algorithms:read'],
+    ['read:::settings/risk-scoring/risk-algorithms-cra/*'],
+  );
   const currentAlgorithm = settings.riskScoringAlgorithm;
   const isCraEnabled = settings.riskScoringCraEnabled ?? true;
   const [localAlgorithm, setLocalAlgorithm] = useState<RiskScoringCraAlgorithm | undefined>(
     currentAlgorithm,
   );
+
   const handleUpdateRiskAlgorithm = useCallback((riskAlgorithm: RiskScoringCraAlgorithm) => {
     setLocalAlgorithm(riskAlgorithm);
   }, []);
+
   return isCraEnabled ? (
-    <SettingsCard title={'Risk algorithms for CRA'}>
+    <SettingsCard
+      title={'Risk algorithms for CRA'}
+      minRequiredResources={['read:::settings/risk-scoring/risk-algorithms-cra/*']}
+    >
       <RiskAlgorithmsSelector
         hasPermissions={permissions}
         handleUpdateAlgorithm={handleUpdateRiskAlgorithm}

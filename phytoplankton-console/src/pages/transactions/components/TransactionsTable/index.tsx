@@ -593,7 +593,10 @@ export default function TransactionsTable(props: Props) {
     } as ExtraFilterProps<TransactionsTableParams>,
   ];
 
-  const isTransactionsDownloadEnabled = useHasPermissions(['transactions:export:read']);
+  const isTransactionsDownloadEnabled = useHasPermissions(
+    ['transactions:export:read'],
+    ['read:::transactions/export/*'],
+  );
 
   return (
     <QueryResultsTable<TransactionTableItem, TransactionsTableParams>

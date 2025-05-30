@@ -21,7 +21,10 @@ const SanctionsProviderSettings = ({
     return null;
   }
   return (
-    <SettingsCard title={`${title} settings`}>
+    <SettingsCard
+      title={`${title} settings`}
+      minRequiredResources={['write:::settings/sanctions/screening-settings/*']}
+    >
       <div className={s.sanctionsSettingsRoot}>
         <Label title={`Screening types for ${title}`} color="dark">
           <Select

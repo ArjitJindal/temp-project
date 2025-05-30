@@ -670,7 +670,11 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     'caseSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
-  const exportPermissions = useHasPermissions(['case-management:export:read']);
+  const exportPermissions = useHasPermissions(
+    ['case-management:export:read'],
+    ['read:::case-management/export/*'],
+  );
+
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
       innerRef={tableRef}

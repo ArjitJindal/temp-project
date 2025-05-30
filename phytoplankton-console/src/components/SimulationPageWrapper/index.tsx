@@ -45,7 +45,10 @@ export const SimulationPageWrapper = forwardRef<
   );
   const actionButton = (
     <div className={s.simulationRoot}>
-      <Authorized required={['simulator:simulations:read']}>
+      <Authorized
+        required={['simulator:simulations:read']}
+        requiredResources={['read:::simulator/simulations/*']}
+      >
         <div className={s.right}>
           <Label label="Simulator" position="RIGHT">
             {!isSimulationFeatureEnabled ? (

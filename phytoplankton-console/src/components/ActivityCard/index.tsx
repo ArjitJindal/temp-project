@@ -11,7 +11,7 @@ import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogI
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import DownloadFilesButton from '@/components/library/DownloadFilesButton';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
-import { CommentType } from '@/utils/user-utils';
+import { CommentType, Resource } from '@/utils/user-utils';
 
 export type Tab = ScopeSelectorValue;
 
@@ -30,6 +30,7 @@ interface Props<FilterParams> {
     ) => Promise<Comment>;
     onCommentAdded?: (newComment: Comment, commentType: CommentType, groupId: string) => void;
     writePermissions: Permission[];
+    writeResources: Resource[];
   };
 }
 
@@ -67,6 +68,7 @@ export default function ActivityCard<FilterParams>(props: Props<FilterParams>) {
             handleAddComment={comments.handleAddComment}
             onCommentAdded={comments.onCommentAdded}
             writePermissions={comments.writePermissions}
+            writeResources={comments.writeResources}
           />
         )}
         {selectedSection === 'LOG' && (

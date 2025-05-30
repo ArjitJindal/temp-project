@@ -4,7 +4,7 @@ import s from './index.module.less';
 import Comment from './Comment';
 import { getCommentsWithReplies } from './utils';
 import * as Card from '@/components/ui/Card';
-import { CommentType, useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { CommentType, Resource, useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { Comment as ApiComment, Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Mutation } from '@/utils/queries/types';
@@ -38,6 +38,7 @@ interface Props {
     personId?: string,
   ) => void;
   writePermissions: Permission[];
+  writeResources: Resource[];
 }
 
 export default function CommentsCard(props: Props) {
@@ -47,6 +48,7 @@ export default function CommentsCard(props: Props) {
     handleAddComment,
     onCommentAdded,
     writePermissions,
+    writeResources,
   } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
@@ -100,6 +102,7 @@ export default function CommentsCard(props: Props) {
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
                           writePermissions={writePermissions}
+                          writeResources={writeResources}
                           hanldeAddComment={(commentFormValues) =>
                             handleAddComment(commentFormValues, group.id)
                           }
@@ -124,6 +127,7 @@ export default function CommentsCard(props: Props) {
                           onCommentAdded={(newComment) =>
                             onCommentAdded?.(newComment, CommentType.COMMENT, group.id)
                           }
+                          writeResources={writeResources}
                         />
                       </div>
                     );
@@ -143,6 +147,7 @@ function Comments(props: {
   currentUserId: string;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
   writePermissions: Permission[];
+  writeResources: Resource[];
   hanldeAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
   onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
 }) {
@@ -151,11 +156,12 @@ function Comments(props: {
     currentUserId,
     deleteCommentMutation,
     writePermissions,
+    writeResources,
     hanldeAddComment,
     onCommentAdded,
   } = props;
 
-  const hasCommentWritePermission = useHasPermissions(writePermissions);
+  const hasCommentWritePermission = useHasPermissions(writePermissions, writeResources);
   return (
     <div className={s.comments}>
       {comments.map((comment) => (

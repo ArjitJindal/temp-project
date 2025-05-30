@@ -612,6 +612,23 @@ export async function internalMongoUpdateMany<T extends Document = Document>(
   return result
 }
 
+export async function internalMongoDeleteOne<T extends Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  filter: Filter<T>
+): Promise<void> {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  await collection.deleteOne(filter)
+
+  await sendMessageToMongoConsumer({
+    collectionName,
+    documentKey: { type: 'filter', value: filter as Filter<Document> },
+    operationType: 'delete',
+    clusterTime: Date.now(),
+  })
+}
+
 export async function internalMongoInsert<T extends Document>(
   mongoClient: MongoClient,
   collectionName: string,

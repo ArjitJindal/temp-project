@@ -27,7 +27,10 @@ export default function Attachment(props: Props) {
   const { userId, personId, currentUserId, attachments, personType, onNewComment } = props;
   const [modalOpen, setModalOpenStatus] = useState(false);
   const [userAttachment, setAttachment] = useState(attachments);
-  const hasUserPermissions = useHasPermissions(['users:user-details:read']);
+  const hasUserPermissions = useHasPermissions(
+    ['users:user-details:read'],
+    ['read:::users/user-details/*'],
+  );
 
   const updateAttachment = (attachment: PersonAttachment) => {
     setAttachment((attachments) => [attachment, ...attachments]);

@@ -213,9 +213,10 @@ export function getAugmentedOpenapi(
           const parentPathParameters = schema?.parameters
             ?.filter((p: any) => p.in === 'path')
             .map((p: any) => p.name)
+
           const pathParameterNames = Object.keys(schema).flatMap((key) =>
             schema[key].parameters
-              .filter((p: any) => p.in === 'path')
+              ?.filter((p: any) => p.in === 'path')
               .map((p: any) => p.name)
           )
 

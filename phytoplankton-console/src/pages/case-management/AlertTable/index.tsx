@@ -1793,7 +1793,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     },
   ];
 
-  const exportPermissions = useHasPermissions(['case-management:export:read']);
+  const exportPermissions = useHasPermissions(
+    ['case-management:export:read'],
+    ['read:::case-management/export/*'],
+  );
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>

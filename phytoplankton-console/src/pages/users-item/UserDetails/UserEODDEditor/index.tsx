@@ -20,7 +20,10 @@ export default function UserEODDEditor(props: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const [newUserEODDDate, setNewUserEODDDate] = useState('');
   const [userEODDDateChanged, setUserEODDDateChanged] = useState(false);
-  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
+  const hasUserOveviewWritePermissions = useHasPermissions(
+    ['users:user-overview:write'],
+    ['write:::users/user-overview/*'],
+  );
 
   if (!useFeatureEnabled('PNB')) {
     return null;

@@ -15,7 +15,10 @@ export default function DynamicRiskDisplay({ userId }: Props) {
   const api = useApi();
 
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
-  const isDrsPermissionEnabled = useHasPermissions(['risk-scoring:risk-score-details:read']);
+  const isDrsPermissionEnabled = useHasPermissions(
+    ['risk-scoring:risk-score-details:read'],
+    ['read:::risk-scoring/risk-score-details/*'],
+  );
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>

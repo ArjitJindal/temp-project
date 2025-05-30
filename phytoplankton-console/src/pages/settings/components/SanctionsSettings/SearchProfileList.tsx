@@ -44,7 +44,10 @@ export const SearchProfileList = ({ hasFeature }) => {
     }
   });
 
-  const isReadOnly = !useHasPermissions(['screening:search-profiles:write']);
+  const isReadOnly = !useHasPermissions(
+    ['screening:search-profiles:write'],
+    ['write:::screening/search-profiles/*'],
+  );
 
   const updateStatusMutation = useMutation<
     void,
@@ -239,7 +242,10 @@ export const SearchProfileList = ({ hasFeature }) => {
   }
 
   return (
-    <SettingsCard title="Search profiles">
+    <SettingsCard
+      title="Search profiles"
+      minRequiredResources={['read:::settings/screening/search-profiles/*']}
+    >
       <div className={s.sanctionsSettingsRoot}>
         <QueryResultsTable<SearchProfileResponse>
           queryResults={queryResult}

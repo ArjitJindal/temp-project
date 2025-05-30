@@ -3,8 +3,7 @@ import cn from 'clsx';
 import { Link, LinkProps } from 'react-router-dom';
 import s from './index.module.less';
 import { Permission } from '@/apis';
-import { useHasPermissions, useHasStatements } from '@/utils/user-utils';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Resource, useHasPermissions } from '@/utils/user-utils';
 
 export type ButtonRef = {
   click: () => void;
@@ -30,7 +29,7 @@ export interface CommonButtonProps {
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
   isLogout?: boolean;
-  requiredStatements?: string[];
+  requiredResources?: Resource[];
 }
 
 export interface ButtonProps extends CommonButtonProps {
@@ -137,21 +136,11 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
 });
 
 const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
-  const { requiredPermissions = [], requiredStatements = [], ...baseProps } = props;
-  const hasUserPermissions = useHasPermissions(requiredPermissions);
-  const isRBACV2Enabled = useFeatureEnabled('RBAC_V2');
-  const hasRequiredStatements = useHasStatements(requiredStatements);
-
-  // if RBAC V2 is enabled, then we need to check if the user has the required statements else check if the user has the required permissions
-  const isNotEnoughPermissions =
-    isRBACV2Enabled && requiredStatements.length > 0 ? !hasRequiredStatements : !hasUserPermissions;
+  const { requiredPermissions = [], requiredResources = [], ...baseProps } = props;
+  const hasUserPermissions = useHasPermissions(requiredPermissions, requiredResources);
 
   return (
-    <BaseButton
-      {...baseProps}
-      isDisabled={baseProps.isDisabled || isNotEnoughPermissions}
-      ref={ref}
-    />
+    <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />
   );
 });
 

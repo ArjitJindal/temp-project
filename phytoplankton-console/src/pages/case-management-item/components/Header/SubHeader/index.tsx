@@ -54,7 +54,10 @@ export default function SubHeader(props: Props) {
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const queryClient = useQueryClient();
-  const hasEditingPermission = useHasPermissions(['case-management:case-overview:write']);
+  const hasEditingPermission = useHasPermissions(
+    ['case-management:case-overview:write'],
+    ['write:::case-management/case-overview/*'],
+  );
   const updateCaseQueryData = useUpdateCaseQueryData();
   const handleUpdateCaseMutation = useMutation<
     unknown,

@@ -27,6 +27,7 @@ function EditTagsButton(props: Props) {
         icon={<DeleteBackLineIcon />}
         className={props.className}
         requiredPermissions={['users:user-tags:write']}
+        requiredResources={['write:::users/users-tags/*']}
       >
         Edit tags
       </Button>

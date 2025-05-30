@@ -43,9 +43,11 @@ function ListTable(props: Props, ref: ListTableRef) {
     return api.getBlacklist();
   });
 
-  const hasListWritePermissions = useHasPermissions([
-    listType === 'WHITELIST' ? 'lists:whitelist:write' : 'lists:blacklist:write',
-  ]);
+  const hasListWritePermissions = useHasPermissions(
+    [listType === 'WHITELIST' ? 'lists:whitelist:write' : 'lists:blacklist:write'],
+    [listType === 'WHITELIST' ? 'write:::lists/whitelist/*' : 'write:::lists/blacklist/*'],
+  );
+
   useImperativeHandle(ref, () => ({
     reload: queryResults.refetch,
   }));

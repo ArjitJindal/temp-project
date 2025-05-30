@@ -60,6 +60,7 @@ export default function Header(props: Props) {
             });
           }}
           requiredPermissions={['users:user-comments:write']}
+          requiredResources={['write:::users/user-comments/*']}
           key="comment-button"
         />,
         isSuccess(userRes) ? (

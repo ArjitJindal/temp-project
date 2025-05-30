@@ -23,7 +23,10 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   const api = useApi();
   const client = useQueryClient();
   const user = useAuth0User();
-  const hasEditingPermission = useHasPermissions(['case-management:case-overview:write']);
+  const hasEditingPermission = useHasPermissions(
+    ['case-management:case-overview:write'],
+    ['write:::case-management/case-overview/*'],
+  );
   const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const reviewAssignmentsToMutationAlerts = useMutation<

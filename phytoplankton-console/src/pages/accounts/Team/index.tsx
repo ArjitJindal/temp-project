@@ -134,7 +134,10 @@ export default function Team() {
   );
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
-  const isAccountPermissionsEnabled = useHasPermissions(['accounts:overview:write']);
+  const isAccountPermissionsEnabled = useHasPermissions(
+    ['accounts:overview:write'],
+    ['write:::accounts/overview/*'],
+  );
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const columnHelper = new ColumnHelper<Account>();
 
@@ -419,6 +422,7 @@ export default function Team() {
                 icon={<EditOutlined />}
                 isDisabled={item.blocked}
                 requiredPermissions={['accounts:overview:write']}
+                requiredResources={['write:::accounts/overview/*']}
               >
                 Edit
               </Button>

@@ -21,6 +21,7 @@ export default function PaymentApprovalButton({ ids, action, onSuccess }: Props)
         }}
         isDisabled={!ids.length}
         requiredPermissions={['transactions:overview:write']}
+        requiredResources={['write:::transactions/overview/*']}
       >
         {humanizeConstant(action)}
       </Button>

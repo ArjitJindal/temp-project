@@ -9,7 +9,10 @@ import { useHasPermissions } from '@/utils/user-utils';
 
 export const PepStatusConfigSettings = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:users:write']);
+  const permissions = useHasPermissions(
+    ['settings:users:write'],
+    ['write:::settings/users/pep-status-lock/*'],
+  );
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {
@@ -24,6 +27,7 @@ export const PepStatusConfigSettings = () => {
     <SettingsCard
       title="PEP status lock"
       description={`When enabled, prevents editing of PEP status on ${settings.userAlias} details page.`}
+      minRequiredResources={['read:::settings/users/pep-status-lock/*']}
     >
       <Tooltip title={!permissions ? 'User must have permissions to update settings' : ''}>
         <Toggle

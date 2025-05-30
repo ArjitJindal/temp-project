@@ -95,6 +95,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         type="SECONDARY"
         onClick={onQAStatusChangeClick}
         requiredPermissions={['case-management:qa:write']}
+        requiredResources={['write:::case-management/qa/*']}
       >
         QA {displayStatus}
       </Button>
@@ -104,6 +105,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         onCancel={() => setIsOpen(false)}
         onOk={onSubmit}
         writePermissions={['case-management:qa:write']}
+        writeResources={['write:::case-management/qa/*']}
       >
         <Narrative
           ref={narrativeRef}

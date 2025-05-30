@@ -25,7 +25,7 @@ export class NarrativeService {
       mongoClient,
       clickhouseConfig
     )
-    this.permissionsService = new PermissionsService(tenantId)
+    this.permissionsService = new PermissionsService(tenantId, mongoClient)
   }
 
   public async getNarrativeTemplate(

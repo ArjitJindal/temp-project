@@ -17,7 +17,10 @@ export const PaymentApprovalSettings = () => {
     mutateTenantSettings.mutate({ isPaymentApprovalEnabled: true });
   };
 
-  const permissions = useHasPermissions(['settings:transactions:write']);
+  const permissions = useHasPermissions(
+    ['settings:transactions:write'],
+    ['write:::settings/transactions/payment-approval/*'],
+  );
 
   return (
     <div>
@@ -25,6 +28,7 @@ export const PaymentApprovalSettings = () => {
         title="Payment approval"
         description="Turn on manual approval for all transactions with ‘SUSPEND’ state rule action in case
           management for transaction rules."
+        minRequiredResources={['read:::settings/transactions/payment-approval/*']}
       >
         <div>
           <Toggle

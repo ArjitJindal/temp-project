@@ -155,6 +155,7 @@ export default function UserActivityCard(props: Props) {
       }}
       comments={{
         writePermissions: ['users:user-comments:write'],
+        writeResources: ['write:::users/user-comments/*'],
         handleAddComment: comments.handleAddComment,
         onCommentAdded: comments.onCommentAdded,
         dataRes: success([

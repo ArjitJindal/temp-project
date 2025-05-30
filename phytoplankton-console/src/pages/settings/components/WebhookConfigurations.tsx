@@ -47,7 +47,10 @@ export const WebhookConfigurations: React.FC = () => {
     [api],
   );
 
-  const isDevelopersWriteEnabled = useHasPermissions(['settings:developers:write']);
+  const isDevelopersWriteEnabled = useHasPermissions(
+    ['settings:developers:write'],
+    ['write:::settings/developers/*'],
+  );
 
   const helper = new ColumnHelper<WebhookConfiguration>();
   const columns: TableColumn<WebhookConfiguration>[] = helper.list([
@@ -145,13 +148,19 @@ export const WebhookConfigurations: React.FC = () => {
     };
 
   return (
-    <SettingsCard title="Webhooks" description="">
+    <SettingsCard
+      title="Webhooks"
+      description="Configure webhooks to receive events from the platform"
+      minRequiredResources={['read:::settings/developers/webhooks-configurations/*']}
+    >
       <CrudEntitiesTable<DefaultApiGetWebhooksRequest, WebhookConfiguration>
         tableId="webhooks-table"
         entityName="endpoint"
         entityIdField="_id"
         readPermissions={['settings:developers:read']}
         writePermissions={['settings:developers:write']}
+        readResources={() => ['read:::settings/developers/webhooks-configurations/*']}
+        writeResources={() => ['write:::settings/developers/webhooks-configurations/*']}
         apiOperations={{
           GET: () => {
             return api.getWebhooks(100).then((value) => {

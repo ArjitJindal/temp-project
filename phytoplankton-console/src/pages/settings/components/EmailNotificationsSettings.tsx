@@ -6,11 +6,15 @@ import { useHasPermissions } from '@/utils/user-utils';
 const branding = getBranding();
 
 export const EmailNotificationsSettings = () => {
-  const permissions = useHasPermissions(['settings:notifications:write']);
+  const permissions = useHasPermissions(
+    ['settings:notifications:write'],
+    ['write:::settings/notifications/email-notifications/*'],
+  );
   return (
     <SettingsCard
       title="Email notifications"
       description="Receive real-time notifications on email whenever a new case is created."
+      minRequiredResources={['write:::settings/notifications/email-notifications/*']}
     >
       <div>
         <a href={`mailto:${branding.supportEmail}`}>

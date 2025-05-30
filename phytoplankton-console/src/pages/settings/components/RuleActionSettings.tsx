@@ -29,7 +29,10 @@ const columnHelper = new ColumnHelper<TableItem>();
 
 export const RuleActionSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:rules:write']);
+  const permissions = useHasPermissions(
+    ['settings:rules:write'],
+    ['write:::settings/rules/rule-action-alias/*'],
+  );
   const columns = useMemo(
     () =>
       columnHelper.list([
@@ -80,6 +83,7 @@ export const RuleActionSettings: React.FC = () => {
                 }
                 isLoading={item.action === savingAction}
                 requiredPermissions={['settings:rules:write']}
+                requiredResources={['write:::settings/rules/*']}
               >
                 Update
               </Button>
@@ -163,6 +167,7 @@ export const RuleActionSettings: React.FC = () => {
     <SettingsCard
       title="Rule action alias"
       description="Configure rule actions display name in console"
+      minRequiredResources={['read:::settings/rules/rule-action-alias/*']}
     >
       <Table<TableItem>
         rowKey="action"

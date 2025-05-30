@@ -298,7 +298,10 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
     useState<TransactionLimitsPaymentMethodLimits>(
       user.transactionLimits?.paymentMethodLimits ?? {},
     );
-  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
+  const hasUserOveviewWritePermissions = useHasPermissions(
+    ['users:user-overview:write'],
+    ['write:::users/user-overview/*'],
+  );
   const handleSavePaymentMethodLimits = useCallback(
     async (
       paymentMethod: PaymentMethod,

@@ -12,10 +12,10 @@ interface StatementsContextValue {
 
 export const StatementsContext = createContext<StatementsContextValue | undefined>(undefined);
 
-export const useStatements = () => {
+export const useResources = () => {
   const context = useContext(StatementsContext);
   if (!context) {
-    throw new Error('useStatements must be used within a StatementsProvider');
+    throw new Error('useResources must be used within a StatementsProvider');
   }
   return context;
 };

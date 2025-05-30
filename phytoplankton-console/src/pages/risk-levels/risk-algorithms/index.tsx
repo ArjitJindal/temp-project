@@ -13,7 +13,11 @@ export default function () {
         title={i18n('menu.risk-levels.risk-algorithms')}
         description={i18n('menu.risk-levels.risk-algorithms.description')}
       >
-        <Authorized required={['risk-scoring:risk-algorithms:read']} showForbiddenPage>
+        <Authorized
+          required={['risk-scoring:risk-algorithms:read']}
+          requiredResources={['read:::risk-scoring/risk-algorithms/*']}
+          showForbiddenPage
+        >
           <RiskAlgorithmTable />
         </Authorized>
       </PageWrapper>

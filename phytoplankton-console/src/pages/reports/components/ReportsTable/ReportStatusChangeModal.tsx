@@ -25,7 +25,7 @@ export default function ReportStatusChangeModal(props: {
   const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
   const api = useApi();
   const queryClient = useQueryClient();
-  const canEdit = useHasPermissions(['reports:generated:write']);
+  const canEdit = useHasPermissions(['reports:generated:write'], ['write:::reports/generated/*']);
   return (
     <Modal
       title={

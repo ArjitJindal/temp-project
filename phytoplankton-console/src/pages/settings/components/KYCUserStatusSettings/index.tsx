@@ -10,7 +10,10 @@ import { useHasPermissions } from '@/utils/user-utils';
 
 export const KYCUserStatusSettings = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:users:write']);
+  const permissions = useHasPermissions(
+    ['settings:users:write'],
+    ['write:::settings/users/kyc-user-status-lock/*'],
+  );
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {
@@ -27,6 +30,7 @@ export const KYCUserStatusSettings = () => {
     <SettingsCard
       title={`KYC/${capitalizeUserAlias} status lock`}
       description={`When enabled, prevents editing of 'KYC status' and '${settings.userAlias} status' fields on ${settings.userAlias} details page.`}
+      minRequiredResources={['read:::settings/users/kyc-user-status-lock/*']}
     >
       <Tooltip
         title={

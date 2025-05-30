@@ -187,6 +187,7 @@ export default function ChecklistTab(props: Props) {
                 }}
                 minWidth={150}
                 writePermissions={['case-management:case-overview:write']}
+                writeResources={['write:::case-management/case-overview/*']}
               >
                 <div>
                   {humanizeConstant(state.done === 'NOT_STARTED' ? 'SELECT_STATUS' : state.done)}
@@ -250,6 +251,7 @@ export default function ChecklistTab(props: Props) {
                   minWidth={200}
                   selectedKeys={state?.qaStatus ? [state?.qaStatus] : undefined}
                   writePermissions={['case-management:qa:write']}
+                  writeResources={['write:::case-management/qa/*']}
                 >
                   <div>{label}</div>
                 </Dropdown>

@@ -46,7 +46,8 @@ export default function CreatedListsPage() {
                               onClick={() => {
                                 setNewModalOpen(true);
                               }}
-                              requiredPermissions={['lists:all:write']}
+                              requiredPermissions={['lists:whitelist:write']}
+                              requiredResources={['write:::lists/whitelist/*']}
                             >
                               Add new whitelist
                             </Button>
@@ -74,7 +75,8 @@ export default function CreatedListsPage() {
                               onClick={() => {
                                 setNewModalOpen(true);
                               }}
-                              requiredPermissions={['lists:all:write']}
+                              requiredPermissions={['lists:blacklist:write']}
+                              requiredResources={['write:::lists/blacklist/*']}
                             >
                               Add new blacklist
                             </Button>

@@ -60,7 +60,10 @@ export const WebhookSettings: React.FC = () => {
   const settingsMutation = useUpdateTenantSettings();
 
   return (
-    <SettingsCard title="Webhook settings">
+    <SettingsCard
+      title="Webhook settings"
+      minRequiredResources={['write:::settings/notifications/webhook-settings/*']}
+    >
       <div className={s.webhookSettings}>
         <Label
           label="Retry duration"

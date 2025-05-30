@@ -11,6 +11,7 @@ import Tabs, { TabItem } from '@/components/library/Tabs';
 import { Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Resource } from '@/utils/user-utils';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -36,6 +37,7 @@ interface Props {
   children?: React.ReactNode;
   disablePadding?: boolean;
   writePermissions?: Permission[];
+  writeResources?: Resource[];
   hideOk?: boolean;
   maskClosable?: boolean;
   footerExtra?: React.ReactNode;
@@ -78,6 +80,7 @@ export default function Modal(props: Props) {
     tabs = [],
     disablePadding = false,
     writePermissions = [],
+    writeResources = [],
     hideOk = false,
     maskClosable = true,
     footerExtra,
@@ -165,6 +168,7 @@ export default function Modal(props: Props) {
                   {...okProps}
                   testName={`modal-ok`}
                   requiredPermissions={writePermissions}
+                  requiredResources={writeResources}
                 >
                   {okText ?? 'OK'}
                 </Button>

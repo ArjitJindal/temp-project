@@ -19,7 +19,7 @@ async function migrateTenant(tenant: Tenant) {
     pageSize: 10000,
   })
 
-  const permissionsService = new PermissionsService(tenant.id)
+  const permissionsService = new PermissionsService(tenant.id, mongoClient)
 
   for (const template of narrativeTemplates.items) {
     await permissionsService.insertDynamicPermission('NARRATIVE_TEMPLATES', {

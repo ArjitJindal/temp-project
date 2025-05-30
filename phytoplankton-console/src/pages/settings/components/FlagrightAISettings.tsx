@@ -13,7 +13,10 @@ import { useHasPermissions } from '@/utils/user-utils';
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightAISettings = () => {
-  const permissions = useHasPermissions(['settings:add-ons:write']);
+  const permissions = useHasPermissions(
+    ['settings:add-ons:write'],
+    ['write:::settings/add-ons/ai-features/*'],
+  );
   const settings = useSettings();
   const isNarrativeCopilotEnabled = useFeatureEnabled('NARRATIVE_COPILOT');
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
@@ -35,6 +38,7 @@ export const FlagrightAISettings = () => {
       <SettingsCard
         title={whiteLabeled ? 'AI Features' : 'Flagright AI features'}
         description="Supercharge your productivity with AI Features including GPT."
+        minRequiredResources={['write:::settings/add-ons/ai-features/*']}
       >
         {isNarrativeCopilotEnabled || isAiForensicsEnabled ? (
           <Confirm title="Are you sure?" text={displayText} onConfirm={handleEnable}>

@@ -220,7 +220,10 @@ const ScreeningProfileDefaultFilters = () => {
 
   return (
     <div className={s.defaultFiltersContainer}>
-      <SettingsCard title="Manual screening default filters">
+      <SettingsCard
+        title="Manual screening default filters"
+        minRequiredResources={['write:::settings/screening/screening-profile-default-filters/*']}
+      >
         <div className={s.filtersContainer}>
           {filters.map((filter) => (
             <Filter

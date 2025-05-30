@@ -29,6 +29,7 @@ export function AssignmentSelect(props: Props) {
         inputProps?.onChange?.(value);
       }}
       requiredPermissions={['accounts:overview:write']}
+      requiredResources={['write:::accounts/overview/*']}
     />
   );
 }

@@ -65,7 +65,10 @@ export const RiskFactorConfiguration = (props: Props) => {
   } = props;
   const navigate = useNavigate();
   const location = useLocation();
-  const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
+  const canWriteRiskFactors = useHasPermissions(
+    ['risk-scoring:risk-factors:write'],
+    ['write:::risk-scoring/risk-factors/*'],
+  );
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
@@ -241,6 +244,7 @@ export const RiskFactorConfiguration = (props: Props) => {
                 formRef?.current?.submit();
               }}
               requiredPermissions={['risk-scoring:risk-factors:write']}
+              requiredResources={['write:::risk-scoring/risk-factors/*']}
               testName="drawer-create-save-button"
             >
               Create

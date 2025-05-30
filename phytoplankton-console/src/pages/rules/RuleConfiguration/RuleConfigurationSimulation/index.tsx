@@ -584,6 +584,7 @@ export function RuleConfigurationSimulation(props: Props) {
               }}
               isDisabled={isLoading}
               requiredPermissions={['rules:my-rules:write']}
+              requiredResources={['write:::rules/my-rules/*']}
             >
               {iterations[activeTabIndex]?.ruleInstance?.id ? 'Update rule' : 'Create rule'}
             </Button>

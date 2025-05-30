@@ -28,6 +28,7 @@ export function NarrativeTemplatesSettings() {
     <SettingsCard
       title="Narrative templates"
       description="Define your own narrative templates to use in your case management."
+      minRequiredResources={['read:::settings/case-management/narrative-templates/*']}
     >
       <CrudEntitiesTable<DefaultApiGetNarrativesRequest, NarrativeTemplate>
         tableId="narrative-templates-table"
@@ -35,10 +36,10 @@ export function NarrativeTemplatesSettings() {
         entityIdField="id"
         readPermissions={['settings:case-management:read']}
         writePermissions={['settings:case-management:write']}
-        readStatements={(entity) => {
+        readResources={(entity) => {
           return [`read:::settings/case-management/narrative-templates/template:${entity.id}/*`];
         }}
-        writeStatements={(entity) => {
+        writeResources={(entity) => {
           if (entity) {
             return [`write:::settings/case-management/narrative-templates/template:${entity.id}/*`];
           }

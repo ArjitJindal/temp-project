@@ -16,7 +16,11 @@ import { NotificationType } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 
 export const NotificationsSettings = () => {
-  const permissions = useHasPermissions(['settings:notifications:write']);
+  const permissions = useHasPermissions(
+    ['settings:notifications:write'],
+    ['write:::settings/notifications/notification-settings/*'],
+  );
+
   const types = Object.keys(NOTIFICATION_TYPES);
   const { notificationsSubscriptions } = useSettings();
   const [consoleNotificationSettings, setConsoleNotificationSettings] = useState(

@@ -48,7 +48,7 @@ export function canSimulate(ruleInstance: RuleInstance) {
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
   const api = useApi();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );

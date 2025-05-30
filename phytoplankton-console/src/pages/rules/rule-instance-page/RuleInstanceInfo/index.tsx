@@ -58,7 +58,7 @@ export const RuleInstanceInfo = (props: Props) => {
       ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
       : 0;
   const navigate = useNavigate();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
 
   const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useSafeLocalStorageState(
     'SIMULATION_RULES',

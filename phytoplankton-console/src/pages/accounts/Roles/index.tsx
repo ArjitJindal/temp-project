@@ -58,6 +58,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
               style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
               onClick={() => setIsCreateRoleForm(true)}
               requiredPermissions={['roles:overview:write']}
+              requiredResources={['write:::roles/overview/*']}
             >
               + Create role
             </Button>
@@ -67,6 +68,7 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
               style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
               onClick={() => exportRolesDetails(roles)}
               requiredPermissions={['roles:overview:read']}
+              requiredResources={['read:::roles/overview/*']}
             >
               <DownloadLineIcon height={12} /> Download
             </Button>

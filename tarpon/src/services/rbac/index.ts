@@ -1,3 +1,4 @@
+import { MongoClient } from 'mongodb'
 import { hydratePermissions, PERMISSIONS_LIBRARY } from './utils/permissions'
 import { PermissionsRepository } from './repository'
 import { PermissionsResponse } from '@/@types/openapi-internal/PermissionsResponse'
@@ -6,27 +7,37 @@ import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/Dynamic
 import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResourcesData'
 import { PermissionsNode } from '@/@types/rbac/permissions'
 import { PermissionsCountResponse } from '@/@types/openapi-internal/PermissionsCountResponse'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
 
 @traceable
 export class PermissionsService {
   tenantId: string
-  clickhouseRepository: PermissionsRepository
+  repository: PermissionsRepository
 
-  constructor(tenantId: string) {
+  constructor(tenantId: string, mongoClient: MongoClient) {
     this.tenantId = tenantId
-    this.clickhouseRepository = new PermissionsRepository(tenantId)
+    this.repository = new PermissionsRepository(tenantId, mongoClient)
   }
 
   private async getDynamicResources(
     type: DynamicPermissionsNodeSubType,
     search?: string
   ): Promise<DynamicResourcesData[]> {
-    const permissions = await this.clickhouseRepository.dynamicPermissionItems(
+    if (isClickhouseEnabledInRegion()) {
+      const permissions = await this.repository.dynamicPermissionItems(
+        type,
+        search
+      )
+
+      return permissions
+    }
+
+    const mongoPermissions = await this.repository.dynamicPermissionItemsMongo(
       type,
       search
     )
 
-    return permissions
+    return mongoPermissions
   }
 
   private async traverseHydratedPermissions(
@@ -181,7 +192,18 @@ export class PermissionsService {
     subType: DynamicPermissionsNodeSubType,
     permission: DynamicResourcesData
   ): Promise<void> {
-    await this.clickhouseRepository.insertPermission({
+    if (isClickhouseEnabledInRegion()) {
+      await this.repository.insertPermission({
+        createdAt: Date.now(),
+        id: permission.id,
+        name: permission.name,
+        subType,
+      })
+
+      return
+    }
+
+    await this.repository.insertPermissionMongo({
       createdAt: Date.now(),
       id: permission.id,
       name: permission.name,
@@ -193,6 +215,10 @@ export class PermissionsService {
     subType: DynamicPermissionsNodeSubType,
     id: string
   ): Promise<void> {
-    await this.clickhouseRepository.deletePermission(subType, id)
+    if (isClickhouseEnabledInRegion()) {
+      await this.repository.deletePermission(subType, id)
+    } else {
+      await this.repository.deletePermissionMongo(subType, id)
+    }
   }
 }

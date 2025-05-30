@@ -347,6 +347,7 @@ export function SearchResultTable(props: Props) {
                 setSearchParams(params);
               }}
               requiredPermissions={['sanctions:search:read']}
+              requiredResources={['read:::sanctions/search/*']}
             >
               Search
             </Button>
@@ -360,6 +361,7 @@ export function SearchResultTable(props: Props) {
                 navigate(makeUrl(`/screening/manual-screening`, {}, {}));
               }}
               requiredPermissions={['sanctions:search:read']}
+              requiredResources={['read:::sanctions/search/*']}
             >
               New search
             </Button>

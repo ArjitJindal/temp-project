@@ -411,6 +411,10 @@ export const REASONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-reasons`
 }
 
+export const DYNAMIC_PERMISSIONS_ITEMS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-dynamic-permissions-items`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 export const DELTA_SANCTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-delta-sanctions`

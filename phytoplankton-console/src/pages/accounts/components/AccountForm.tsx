@@ -335,6 +335,7 @@ export default function AccountForm(props: Props) {
         isDisabled: isInviteButtonDisabled,
         isLoading: inviteMutation.isLoading || editMutation.isLoading,
         requiredPermissions: ['accounts:overview:write'],
+        requiredResources: ['write:::accounts/overview/*'],
       }}
       onCancel={() => props.onChangeVisibility(false)}
       cancelProps={{
@@ -520,6 +521,7 @@ export default function AccountForm(props: Props) {
                     }
                   }}
                   requiredPermissions={['accounts:overview:write']}
+                  requiredResources={['write:::accounts/overview/*']}
                   style={{ width: 'fit-content' }}
                 >
                   Resend invitation
@@ -532,6 +534,7 @@ export default function AccountForm(props: Props) {
                     }
                   }}
                   requiredPermissions={['accounts:overview:write']}
+                  requiredResources={['write:::accounts/overview/*']}
                   style={{ width: 'fit-content' }}
                 >
                   Reset password

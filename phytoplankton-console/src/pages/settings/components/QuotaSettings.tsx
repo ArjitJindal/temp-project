@@ -38,7 +38,11 @@ export function QuotaSettings() {
   ]);
 
   return (
-    <SettingsCard title="Quotas" description="Find your provisioned API Quota and rate limits.">
+    <SettingsCard
+      title="Quotas"
+      description="Find your provisioned API Quota and rate limits."
+      minRequiredResources={['read:::settings/developers/quotas/*']}
+    >
       <AsyncResourceRenderer<Array<Record<string, string | number>>>
         resource={usagePlanQueryResult.data}
       >

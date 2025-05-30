@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import cn from 'clsx';
 import s from './index.module.less';
 import { Permission } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { Resource, useHasPermissions } from '@/utils/user-utils';
 
 export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT';
 
@@ -24,6 +24,7 @@ export interface ButtonProps {
   testName?: string;
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
+  requiredResources?: Resource[];
   isLogout?: boolean;
 }
 
@@ -92,8 +93,8 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
 });
 
 const AnimatedButton = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
-  const { requiredPermissions = [], ...baseProps } = props;
-  const hasUserPermissions = useHasPermissions(requiredPermissions);
+  const { requiredPermissions = [], requiredResources = [], ...baseProps } = props;
+  const hasUserPermissions = useHasPermissions(requiredPermissions, requiredResources);
 
   return (
     <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />

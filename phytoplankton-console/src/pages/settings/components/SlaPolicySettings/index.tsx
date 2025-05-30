@@ -70,7 +70,10 @@ export function SlaPolicySettings() {
       return await api.getSlaPolicies({ ...params, ...paginationParams });
     },
   );
-  const isReadOnly = !useHasPermissions(['settings:case-management:write']);
+  const isReadOnly = !useHasPermissions(
+    ['settings:case-management:write'],
+    ['write:::settings/case-management/*'],
+  );
   const formRef = useRef<FormRef<any>>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const currentUser = useCurrentUser();
@@ -270,7 +273,11 @@ export function SlaPolicySettings() {
   }, [deletionMutation, handleOpenForm, users, loadingUsers, handleCopySlaPolicy, isPnb]);
   const initialValues = selectedSlaPolicy ?? defaultValues;
   return (
-    <SettingsCard title="SLA Policy" description="Define SLA policies for investigation">
+    <SettingsCard
+      title="SLA Policy"
+      description="Define SLA policies for investigation"
+      minRequiredResources={['read:::settings/case-management/sla-policies/*']}
+    >
       <AsyncResourceRenderer resource={slaPoliciesResult.data}>
         {(slaPolicies) => {
           if (slaPolicies.items.length === 0) {
@@ -301,6 +308,7 @@ export function SlaPolicySettings() {
                       type="PRIMARY"
                       onClick={handleOpenForm}
                       requiredPermissions={['settings:case-management:write']}
+                      requiredResources={['write:::settings/case-management/*']}
                     >
                       <PlusOutlined />
                       Create SLA

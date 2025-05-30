@@ -38,7 +38,10 @@ export default function UserManualRiskPanel(props: Props) {
   const [isLocked, setIsLocked] = useState(false);
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
   const settings = useSettings();
-  const canUpdateManualRiskLevel = useHasPermissions(['users:user-manual-risk-levels:write']);
+  const canUpdateManualRiskLevel = useHasPermissions(
+    ['users:user-manual-risk-levels:write'],
+    ['write:::users/user-manual-risk-levels/*'],
+  );
   const drsScore = useMemo(() => {
     if (isSuccess(queryResult.data)) {
       return queryResult.data.value;

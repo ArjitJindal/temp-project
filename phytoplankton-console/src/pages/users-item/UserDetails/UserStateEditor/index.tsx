@@ -23,7 +23,10 @@ export default function UserStateEditor(props: Props) {
   const [newUserStatus, setnewUserStatus] = useState('');
   const [userStatusChanged, setUserStatusChanged] = useState(false);
   const settings = useSettings();
-  const hasUserOveviewWritePermissions = useHasPermissions(['users:user-overview:write']);
+  const hasUserOveviewWritePermissions = useHasPermissions(
+    ['users:user-overview:write'],
+    ['write:::users/user-overview/*'],
+  );
   return (
     <div>
       <div className={s.row}>

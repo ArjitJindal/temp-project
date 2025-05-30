@@ -14,7 +14,7 @@ type Props = V8Props &
   };
 
 export default function RuleConfiguration(props: Props) {
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
   const useV8Configuration = useShouldUseV8Configuration(props.rule, props.ruleInstance);
   const readOnly = !canWriteRules || props.readOnly;
 

@@ -95,7 +95,7 @@ const Random3Reasons = () => {
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write']);
+  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
   const [demoMode] = useDemoMode();
@@ -258,6 +258,11 @@ export const RulesTable: React.FC<Props> = (props) => {
                 isDisabled={!canWriteRules || (simulationMode && !canSimulate(entity))}
                 requiredPermissions={
                   simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
+                }
+                requiredResources={
+                  simulationMode
+                    ? ['write:::simulator/simulations/*']
+                    : ['write:::rules/my-rules/*']
                 }
                 testName="configure-rule-button"
               >

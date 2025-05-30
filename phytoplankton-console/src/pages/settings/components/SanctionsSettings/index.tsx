@@ -27,10 +27,10 @@ import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesS
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 
 export const SanctionsSettings = () => {
-  const screeningPermissions = useHasPermissions([
-    'settings:screening:read',
-    'settings:screening:write',
-  ]);
+  const screeningPermissions = useHasPermissions(
+    ['settings:screening:read', 'settings:screening:write'],
+    ['read:::settings/screening/*', 'write:::settings/screening/*'],
+  );
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAcurisEnabled = useFeatureEnabled('ACURIS');
   const branding = getBranding();
@@ -171,6 +171,7 @@ export const SanctionsSettings = () => {
             : 'Sanctions/PEP/Adverse media screening'
         }
         description={isSanctionsEnabled ? '' : 'Screen individuals and entities in a single API.'}
+        minRequiredResources={['read:::settings/screening/screening-sources/*']}
       >
         {isSanctionsEnabled && hasNoSanctionsProviders ? (
           <>

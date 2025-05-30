@@ -65,6 +65,7 @@ export const CaseStatusWithDropDown = (props: Props) => {
         }
       }}
       writePermissions={['case-management:case-overview:write']}
+      writeResources={['write:::case-management/case-overview/*']}
       arrow={'FILLED'}
     >
       <div>

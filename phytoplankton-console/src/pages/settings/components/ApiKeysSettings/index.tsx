@@ -59,7 +59,11 @@ export const ApiKeysSettings = () => {
   const columnHelper = new ColumnHelper<TenantApiKey>();
 
   return (
-    <SettingsCard title="API details" description="View your API details.">
+    <SettingsCard
+      title="API details"
+      description="View your API details."
+      minRequiredResources={['read:::settings/developers/api-keys/*']}
+    >
       <AsyncResourceRenderer resource={queryResult.data}>
         {(apiKeys) => (
           <>

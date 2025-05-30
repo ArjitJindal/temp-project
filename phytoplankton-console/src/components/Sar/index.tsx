@@ -89,6 +89,7 @@ export function SarButton(props: UserProps | CaseProps) {
         isDisabled={isDisabled}
         testName="sar-button"
         requiredPermissions={['case-management:case-details:write']}
+        requiredResources={['write:::case-management/case-details/*']}
       >
         Generate SAR
       </Button>
@@ -107,6 +108,7 @@ export function SarButton(props: UserProps | CaseProps) {
           }
         }}
         writePermissions={['case-management:case-details:write']}
+        writeResources={['write:::case-management/case-details/*']}
       >
         <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
           {(result) => {

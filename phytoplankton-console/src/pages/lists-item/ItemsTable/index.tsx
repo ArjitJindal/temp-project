@@ -37,6 +37,7 @@ import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
+import { Resource } from '@/utils/user-utils';
 
 interface ExistedTableItemData {
   value: string;
@@ -109,6 +110,12 @@ export default function ItemsTable(props: Props) {
   });
   const requiredWritePermissions: Permission[] = useMemo(
     () => (listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']),
+    [listType],
+  );
+
+  const requiredWriteResources: Resource[] = useMemo(
+    () =>
+      listType === 'WHITELIST' ? ['write:::lists/whitelist/*'] : ['write:::lists/blacklist/*'],
     [listType],
   );
 
@@ -301,6 +308,7 @@ export default function ItemsTable(props: Props) {
     isNewUserValid,
     isEditUserValid,
     requiredWritePermissions,
+    requiredWriteResources,
   });
 
   return (
@@ -328,6 +336,7 @@ export default function ItemsTable(props: Props) {
                   onClick={() => clearListMutation.mutate()}
                   isDisabled={clearListMutation.isLoading}
                   requiredPermissions={requiredWritePermissions}
+                  requiredResources={requiredWriteResources}
                 >
                   Clear list
                 </Button>
@@ -350,6 +359,7 @@ function useColumns(options: {
   isNewUserValid: boolean;
   isEditUserValid: boolean;
   requiredWritePermissions: Permission[];
+  requiredWriteResources: Resource[];
 }): TableColumn<TableItem>[] {
   const {
     listSubtype,
@@ -358,6 +368,7 @@ function useColumns(options: {
     isNewUserValid,
     isEditUserValid,
     requiredWritePermissions,
+    requiredWriteResources,
   } = options;
   const settings = useSettings();
 
@@ -497,6 +508,7 @@ function useColumns(options: {
                     isDisabled={!isNewUserValid}
                     onClick={onAdd}
                     requiredPermissions={requiredWritePermissions}
+                    requiredResources={requiredWriteResources}
                   >
                     Add
                   </Button>
@@ -512,6 +524,7 @@ function useColumns(options: {
                       onClick={onSave}
                       isDisabled={isEditUserLoading || !isEditUserValid}
                       requiredPermissions={requiredWritePermissions}
+                      requiredResources={requiredWriteResources}
                     >
                       Save
                     </Button>
@@ -543,6 +556,7 @@ function useColumns(options: {
                       setEditUserData(editTarget);
                     }}
                     requiredPermissions={requiredWritePermissions}
+                    requiredResources={requiredWriteResources}
                   >
                     Edit
                   </Button>
@@ -554,6 +568,7 @@ function useColumns(options: {
                       onDelete(entity.value ?? '');
                     }}
                     requiredPermissions={requiredWritePermissions}
+                    requiredResources={requiredWriteResources}
                   >
                     Remove
                   </Button>
@@ -571,6 +586,7 @@ function useColumns(options: {
     isNewUserValid,
     listSubtype,
     requiredWritePermissions,
+    requiredWriteResources,
     settings,
     existingCountryCodes,
   ]);

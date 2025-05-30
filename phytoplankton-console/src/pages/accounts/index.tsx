@@ -81,7 +81,11 @@ export default function () {
             key: 'team',
             title: startCase(isRBACV2Enabled ? 'Accounts' : i18n('menu.accounts.team')),
             children: (
-              <Authorized required={['accounts:overview:read']} showForbiddenPage>
+              <Authorized
+                required={['accounts:overview:read']}
+                requiredResources={['read:::accounts/overview/*']}
+                showForbiddenPage
+              >
                 <Team />
               </Authorized>
             ),
@@ -90,7 +94,11 @@ export default function () {
             key: 'roles',
             title: startCase(isRBACV2Enabled ? 'Roles' : i18n('menu.accounts.roles')),
             children: (
-              <Authorized required={['roles:overview:read']} showForbiddenPage>
+              <Authorized
+                required={['roles:overview:read']}
+                requiredResources={['read:::roles/overview/*']}
+                showForbiddenPage
+              >
                 {isRBACV2Enabled ? <RolesV2 /> : <Roles />}
               </Authorized>
             ),
