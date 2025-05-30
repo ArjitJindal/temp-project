@@ -405,20 +405,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
@@ -689,20 +687,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
@@ -1104,20 +1100,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
@@ -1165,20 +1159,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
@@ -1652,20 +1644,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
@@ -1713,20 +1703,18 @@ paths:
           style: simple
           schema:
             type: string
-        - name: pageSize
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          name: pageSize
           description: Page size (default 20)
           in: query
-          schema:
-            $ref: '#/components/schemas/PageSize'
           required: false
-          style: simple
-        - name: page
+        - schema:
+            $ref: '#/components/schemas/Page'
+          name: page
           description: Page
           in: query
-          schema:
-            $ref: '#/components/schemas/Page'
           required: false
-          style: simple
       responses:
         '200':
           description: OK
