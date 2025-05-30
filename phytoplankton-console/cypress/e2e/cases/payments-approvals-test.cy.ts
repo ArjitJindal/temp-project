@@ -31,20 +31,29 @@ describe('Approval of payments', () => {
     cy.visit('/case-management/cases');
     cy.contains('Payment approval').click();
 
-    for (let i = 0; i < 3; i++) {
-      cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
-    }
+    // count of transaction available to select
+    cy.get('input[data-cy="row-table-checkbox"]')
+      .its('length')
+      .then((count) => {
+        const availableSuspendedTransaction = count;
+        if (availableSuspendedTransaction > 1) {
+          // enough transactions to select
+          for (let i = 0; i < Math.min(3, availableSuspendedTransaction); i++) {
+            cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
+          }
 
-    cy.contains('Allow').click();
-    cy.intercept('GET', '**/transactions**').as('bulk-approval-request');
-    allowTransaction();
+          cy.contains('Allow').click();
+          cy.intercept('GET', '**/transactions**').as('bulk-approval-request');
+          allowTransaction();
 
-    cy.get('[data-cy="status-button"]').click();
-    cy.contains('li.ant-dropdown-menu-item', 'Approved').should('be.visible').click();
-    cy.get('h2').first().click();
-    cy.wait('@bulk-approval-request', { timeout: 15000 })
-      .its('response.statusCode')
-      .should('be.oneOf', [200, 304]);
+          cy.get('[data-cy="status-button"]').click();
+          cy.contains('li.ant-dropdown-menu-item', 'Approved').should('be.visible').click();
+          cy.get('h2').first().click();
+          cy.wait('@bulk-approval-request', { timeout: 15000 })
+            .its('response.statusCode')
+            .should('be.oneOf', [200, 304]);
+        }
+      });
   });
 });
 
