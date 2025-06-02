@@ -31,60 +31,7 @@
     "permissions": [
       {
         "actions": ["read", "write"],
-        "resources": [
-          "frn:console:<default>:::case-management/case-overview/*",
-          "frn:console:<default>:::case-management/case-details/*",
-          "frn:console:<default>:::case-management/case-reopen/*",
-          "frn:console:<default>:::case-management/qa/*",
-          "frn:console:<default>:::case-management/export/*",
-          "frn:console:<default>:::case-management/case-assignment/*",
-          "frn:console:<default>:::rules/my-rules/*",
-          "frn:console:<default>:::rules/library/*",
-          "frn:console:<default>:::risk-scoring/risk-levels/*",
-          "frn:console:<default>:::risk-scoring/risk-factors/*",
-          "frn:console:<default>:::risk-scoring/risk-algorithms/*",
-          "frn:console:<default>:::risk-scoring/risk-score-details/*",
-          "frn:console:<default>:::users/user-overview/*",
-          "frn:console:<default>:::users/user-comments/*",
-          "frn:console:<default>:::users/user-details/*",
-          "frn:console:<default>:::users/user-pep-status/*",
-          "frn:console:<default>:::users/user-tags/*",
-          "frn:console:<default>:::users/user-manual-risk-levels/*",
-          "frn:console:<default>:::dashboard/download-data/*",
-          "frn:console:<default>:::settings/system-config/*",
-          "frn:console:<default>:::settings/case-management/*",
-          "frn:console:<default>:::settings/security/*",
-          "frn:console:<default>:::settings/transactions/*",
-          "frn:console:<default>:::settings/users/*",
-          "frn:console:<default>:::settings/rules/*",
-          "frn:console:<default>:::settings/risk-scoring/*",
-          "frn:console:<default>:::settings/notifications/*",
-          "frn:console:<default>:::settings/add-ons/*",
-          "frn:console:<default>:::settings/developers/*",
-          "frn:console:<default>:::settings/screening/*",
-          "frn:console:<default>:::sanctions/search/*",
-          "frn:console:<default>:::transactions/overview/*",
-          "frn:console:<default>:::transactions/details/*",
-          "frn:console:<default>:::transactions/export/*",
-          "frn:console:<default>:::audit-log/export/*",
-          "frn:console:<default>:::lists/all/*",
-          "frn:console:<default>:::lists/whitelist/*",
-          "frn:console:<default>:::lists/blacklist/*",
-          "frn:console:<default>:::lists/export/*",
-          "frn:console:<default>:::simulator/simulations/*",
-          "frn:console:<default>:::reports/schema/*",
-          "frn:console:<default>:::reports/generated/*",
-          "frn:console:<default>:::copilot/narrative/*",
-          "frn:console:<default>:::notifications/all/*",
-          "frn:console:<default>:::accounts/overview/*",
-          "frn:console:<default>:::roles/overview/*",
-          "frn:console:<default>:::screening/search-profiles/*",
-          "frn:console:<default>:::screening/screening-profiles/*"
-        ]
-      },
-      {
-        "actions": ["read"],
-        "resources": []
+        "resources": ["frn:console:<default>:::*"]
       }
     ],
     "description": "Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins."
@@ -99,12 +46,12 @@
           "frn:console:<default>:::case-management/export/*",
           "frn:console:<default>:::rules/library/*",
           "frn:console:<default>:::risk-scoring/risk-algorithms/*",
-          "frn:console:<default>:::dashboard/download-data/*",
+          "frn:console:<default>:::dashboard/*",
           "frn:console:<default>:::transactions/details/*",
           "frn:console:<default>:::transactions/export/*",
-          "frn:console:<default>:::audit-log/export/*",
+          "frn:console:<default>:::audit-log/*",
           "frn:console:<default>:::lists/export/*",
-          "frn:console:<default>:::notifications/all/*"
+          "frn:console:<default>:::notifications/*"
         ]
       },
       {
@@ -112,16 +59,15 @@
         "resources": [
           "frn:console:<default>:::case-management/case-overview/*",
           "frn:console:<default>:::case-management/case-details/*",
-          "frn:console:<default>:::sanctions/search/*",
+          "frn:console:<default>:::sanctions/*",
           "frn:console:<default>:::rules/my-rules/*",
           "frn:console:<default>:::risk-scoring/risk-levels/*",
           "frn:console:<default>:::risk-scoring/risk-factors/*",
           "frn:console:<default>:::transactions/overview/*",
           "frn:console:<default>:::lists/whitelist/*",
           "frn:console:<default>:::lists/blacklist/*",
-          "frn:console:<default>:::simulator/simulations/*",
-          "frn:console:<default>:::screening/search-profiles/*",
-          "frn:console:<default>:::screening/screening-profiles/*"
+          "frn:console:<default>:::simulator/*",
+          "frn:console:<default>:::screening/*"
         ]
       }
     ],
@@ -138,16 +84,16 @@
           "frn:console:<default>:::case-management/case-details/*",
           "frn:console:<default>:::case-management/case-reopen/*",
           "frn:console:<default>:::case-management/export/*",
-          "frn:console:<default>:::sanctions/search/*",
+          "frn:console:<default>:::sanctions/*",
           "frn:console:<default>:::rules/library/*",
           "frn:console:<default>:::risk-scoring/risk-algorithms/*",
+          "frn:console:<default>:::risk-scoring/risk-score-details/*",
           "frn:console:<default>:::transactions/details/*",
           "frn:console:<default>:::transactions/export/*",
           "frn:console:<default>:::users/user-details/*",
-          "frn:console:<default>:::risk-scoring/risk-score-details/*",
           "frn:console:<default>:::users/user-comments/*",
-          "frn:console:<default>:::copilot/narrative/*",
-          "frn:console:<default>:::notifications/all/*"
+          "frn:console:<default>:::copilot/*",
+          "frn:console:<default>:::notifications/*"
         ]
       },
       {
@@ -158,8 +104,7 @@
           "frn:console:<default>:::risk-scoring/risk-factors/*",
           "frn:console:<default>:::transactions/overview/*",
           "frn:console:<default>:::users/user-overview/*",
-          "frn:console:<default>:::screening/search-profiles/*",
-          "frn:console:<default>:::screening/screening-profiles/*"
+          "frn:console:<default>:::screening/*"
         ]
       }
     ],
@@ -176,18 +121,18 @@
           "frn:console:<default>:::case-management/case-details/*",
           "frn:console:<default>:::case-management/case-reopen/*",
           "frn:console:<default>:::case-management/export/*",
-          "frn:console:<default>:::sanctions/search/*",
+          "frn:console:<default>:::sanctions/*",
           "frn:console:<default>:::rules/library/*",
           "frn:console:<default>:::risk-scoring/risk-algorithms/*",
-          "frn:console:<default>:::dashboard/download-data/*",
+          "frn:console:<default>:::risk-scoring/risk-score-details/*",
+          "frn:console:<default>:::dashboard/*",
           "frn:console:<default>:::transactions/details/*",
           "frn:console:<default>:::transactions/export/*",
-          "frn:console:<default>:::audit-log/export/*",
+          "frn:console:<default>:::audit-log/*",
           "frn:console:<default>:::lists/export/*",
           "frn:console:<default>:::users/user-details/*",
-          "frn:console:<default>:::risk-scoring/risk-score-details/*",
           "frn:console:<default>:::users/user-comments/*",
-          "frn:console:<default>:::notifications/all/*"
+          "frn:console:<default>:::notifications/*"
         ]
       },
       {
@@ -199,10 +144,9 @@
           "frn:console:<default>:::transactions/overview/*",
           "frn:console:<default>:::lists/whitelist/*",
           "frn:console:<default>:::lists/blacklist/*",
-          "frn:console:<default>:::simulator/simulations/*",
+          "frn:console:<default>:::simulator/*",
           "frn:console:<default>:::users/user-overview/*",
-          "frn:console:<default>:::screening/search-profiles/*",
-          "frn:console:<default>:::screening/screening-profiles/*"
+          "frn:console:<default>:::screening/*"
         ]
       }
     ],
@@ -218,15 +162,15 @@
           "frn:console:<default>:::case-management/export/*",
           "frn:console:<default>:::rules/library/*",
           "frn:console:<default>:::risk-scoring/risk-algorithms/*",
-          "frn:console:<default>:::users/user-details/*",
           "frn:console:<default>:::risk-scoring/risk-score-details/*",
-          "frn:console:<default>:::dashboard/download-data/*",
+          "frn:console:<default>:::users/user-details/*",
+          "frn:console:<default>:::dashboard/*",
           "frn:console:<default>:::settings/developers/*",
           "frn:console:<default>:::transactions/details/*",
           "frn:console:<default>:::transactions/export/*",
-          "frn:console:<default>:::audit-log/export/*",
+          "frn:console:<default>:::audit-log/*",
           "frn:console:<default>:::lists/export/*",
-          "frn:console:<default>:::notifications/all/*"
+          "frn:console:<default>:::notifications/*"
         ]
       },
       {
@@ -251,9 +195,8 @@
           "frn:console:<default>:::transactions/overview/*",
           "frn:console:<default>:::lists/whitelist/*",
           "frn:console:<default>:::lists/blacklist/*",
-          "frn:console:<default>:::simulator/simulations/*",
-          "frn:console:<default>:::screening/search-profiles/*",
-          "frn:console:<default>:::screening/screening-profiles/*"
+          "frn:console:<default>:::simulator/*",
+          "frn:console:<default>:::screening/*"
         ]
       }
     ],

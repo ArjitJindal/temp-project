@@ -1,8 +1,7 @@
 import { ManagedRoleName } from '@/@types/openapi-internal/ManagedRoleName'
-import { Permission } from '@/@types/openapi-internal/Permission'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
-import { convertV1PermissionToV2 } from '@/services/rbac/utils/permissions'
+import { Permission } from '@/@types/openapi-internal/Permission'
 
 export const DEFAULT_ROLES: {
   role: ManagedRoleName
@@ -171,10 +170,7 @@ export const DEFAULT_ROLES_V2: {
   {
     role: 'root',
     permissions: [
-      {
-        actions: ['read', 'write'],
-        resources: ['frn:console:*:::*'], // Permissions for all resources in all tenants
-      },
+      { actions: ['read', 'write'], resources: ['frn:console:*:::*'] },
     ],
     description: 'Root role',
     metadata: {
@@ -184,10 +180,7 @@ export const DEFAULT_ROLES_V2: {
   {
     role: 'whitelabel-root',
     permissions: [
-      {
-        actions: ['read', 'write'],
-        resources: ['frn:console:*:::*'], // Permissions for all resources in all tenants
-      },
+      { actions: ['read', 'write'], resources: ['frn:console:*:::*'] },
     ],
     description: 'Whitelabel root role',
     metadata: {
@@ -197,46 +190,179 @@ export const DEFAULT_ROLES_V2: {
   },
   {
     role: 'admin',
-    permissions: convertV1PermissionToV2(
-      '<default>',
-      DEFAULT_ROLES.find((role) => role.role === 'admin')?.permissions ?? []
-    ),
+    permissions: [
+      { actions: ['read', 'write'], resources: ['frn:console:<default>:::*'] },
+    ],
     description:
       'Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins.',
   },
   {
     role: 'auditor',
-    permissions: convertV1PermissionToV2(
-      '<default>',
-      DEFAULT_ROLES.find((role) => role.role === 'auditor')?.permissions ?? []
-    ),
+    permissions: [
+      {
+        actions: ['read', 'write'],
+        resources: [
+          'frn:console:<default>:::case-management/case-reopen/*',
+          'frn:console:<default>:::case-management/export/*',
+          'frn:console:<default>:::rules/library/*',
+          'frn:console:<default>:::risk-scoring/risk-algorithms/*',
+          'frn:console:<default>:::dashboard/*',
+          'frn:console:<default>:::transactions/details/*',
+          'frn:console:<default>:::transactions/export/*',
+          'frn:console:<default>:::audit-log/*',
+          'frn:console:<default>:::lists/export/*',
+          'frn:console:<default>:::notifications/*',
+        ],
+      },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::case-management/case-overview/*',
+          'frn:console:<default>:::case-management/case-details/*',
+          'frn:console:<default>:::sanctions/*',
+          'frn:console:<default>:::rules/my-rules/*',
+          'frn:console:<default>:::risk-scoring/risk-levels/*',
+          'frn:console:<default>:::risk-scoring/risk-factors/*',
+          'frn:console:<default>:::transactions/overview/*',
+          'frn:console:<default>:::lists/whitelist/*',
+          'frn:console:<default>:::lists/blacklist/*',
+          'frn:console:<default>:::simulator/*',
+          'frn:console:<default>:::screening/*',
+        ],
+      },
+    ],
     description:
       'Auditor has read-only access to the Dashboard, Case management, Rules, Risk scoring, and Audit log. They also have access to download information.',
   },
   {
     role: 'analyst',
-    permissions: convertV1PermissionToV2(
-      '<default>',
-      DEFAULT_ROLES.find((role) => role.role === 'analyst')?.permissions ?? []
-    ),
+    permissions: [
+      {
+        actions: ['read', 'write'],
+        resources: [
+          'frn:console:<default>:::case-management/case-overview/*',
+          'frn:console:<default>:::case-management/case-assignment/*',
+          'frn:console:<default>:::case-management/case-details/*',
+          'frn:console:<default>:::case-management/case-reopen/*',
+          'frn:console:<default>:::case-management/export/*',
+          'frn:console:<default>:::sanctions/*',
+          'frn:console:<default>:::rules/library/*',
+          'frn:console:<default>:::risk-scoring/risk-algorithms/*',
+          'frn:console:<default>:::risk-scoring/risk-score-details/*',
+          'frn:console:<default>:::transactions/details/*',
+          'frn:console:<default>:::transactions/export/*',
+          'frn:console:<default>:::users/user-details/*',
+          'frn:console:<default>:::users/user-comments/*',
+          'frn:console:<default>:::copilot/*',
+          'frn:console:<default>:::notifications/*',
+        ],
+      },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::rules/my-rules/*',
+          'frn:console:<default>:::risk-scoring/risk-levels/*',
+          'frn:console:<default>:::risk-scoring/risk-factors/*',
+          'frn:console:<default>:::transactions/overview/*',
+          'frn:console:<default>:::users/user-overview/*',
+          'frn:console:<default>:::screening/*',
+        ],
+      },
+    ],
     description:
       'Analyst has unrestricted access to case management, but only has read-only rights to Audit log, Rules and Risk scoring.',
   },
   {
     role: 'approver',
-    permissions: convertV1PermissionToV2(
-      '<default>',
-      DEFAULT_ROLES.find((role) => role.role === 'approver')?.permissions ?? []
-    ),
+    permissions: [
+      {
+        actions: ['read', 'write'],
+        resources: [
+          'frn:console:<default>:::case-management/case-overview/*',
+          'frn:console:<default>:::case-management/case-assignment/*',
+          'frn:console:<default>:::case-management/case-details/*',
+          'frn:console:<default>:::case-management/case-reopen/*',
+          'frn:console:<default>:::case-management/export/*',
+          'frn:console:<default>:::sanctions/*',
+          'frn:console:<default>:::rules/library/*',
+          'frn:console:<default>:::risk-scoring/risk-algorithms/*',
+          'frn:console:<default>:::risk-scoring/risk-score-details/*',
+          'frn:console:<default>:::dashboard/*',
+          'frn:console:<default>:::transactions/details/*',
+          'frn:console:<default>:::transactions/export/*',
+          'frn:console:<default>:::audit-log/*',
+          'frn:console:<default>:::lists/export/*',
+          'frn:console:<default>:::users/user-details/*',
+          'frn:console:<default>:::users/user-comments/*',
+          'frn:console:<default>:::notifications/*',
+        ],
+      },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::rules/my-rules/*',
+          'frn:console:<default>:::risk-scoring/risk-levels/*',
+          'frn:console:<default>:::risk-scoring/risk-factors/*',
+          'frn:console:<default>:::transactions/overview/*',
+          'frn:console:<default>:::lists/whitelist/*',
+          'frn:console:<default>:::lists/blacklist/*',
+          'frn:console:<default>:::simulator/*',
+          'frn:console:<default>:::users/user-overview/*',
+          'frn:console:<default>:::screening/*',
+        ],
+      },
+    ],
     description:
       'Approver has unrestricted access to case management but only has read-only rights to Audit log, Rules and Risk scoring. Alerts are received when an analyst requires approval to close a case.',
   },
   {
     role: 'developer',
-    permissions: convertV1PermissionToV2(
-      '<default>',
-      DEFAULT_ROLES.find((role) => role.role === 'developer')?.permissions ?? []
-    ),
+    permissions: [
+      {
+        actions: ['read', 'write'],
+        resources: [
+          'frn:console:<default>:::case-management/case-reopen/*',
+          'frn:console:<default>:::case-management/export/*',
+          'frn:console:<default>:::rules/library/*',
+          'frn:console:<default>:::risk-scoring/risk-algorithms/*',
+          'frn:console:<default>:::risk-scoring/risk-score-details/*',
+          'frn:console:<default>:::users/user-details/*',
+          'frn:console:<default>:::dashboard/*',
+          'frn:console:<default>:::settings/developers/*',
+          'frn:console:<default>:::transactions/details/*',
+          'frn:console:<default>:::transactions/export/*',
+          'frn:console:<default>:::audit-log/*',
+          'frn:console:<default>:::lists/export/*',
+          'frn:console:<default>:::notifications/*',
+        ],
+      },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::case-management/case-overview/*',
+          'frn:console:<default>:::case-management/case-details/*',
+          'frn:console:<default>:::rules/my-rules/*',
+          'frn:console:<default>:::risk-scoring/risk-levels/*',
+          'frn:console:<default>:::risk-scoring/risk-factors/*',
+          'frn:console:<default>:::users/user-overview/*',
+          'frn:console:<default>:::settings/system-config/*',
+          'frn:console:<default>:::settings/case-management/*',
+          'frn:console:<default>:::settings/security/*',
+          'frn:console:<default>:::settings/transactions/*',
+          'frn:console:<default>:::settings/users/*',
+          'frn:console:<default>:::settings/rules/*',
+          'frn:console:<default>:::settings/screening/*',
+          'frn:console:<default>:::settings/risk-scoring/*',
+          'frn:console:<default>:::settings/notifications/*',
+          'frn:console:<default>:::settings/add-ons/*',
+          'frn:console:<default>:::transactions/overview/*',
+          'frn:console:<default>:::lists/whitelist/*',
+          'frn:console:<default>:::lists/blacklist/*',
+          'frn:console:<default>:::simulator/*',
+          'frn:console:<default>:::screening/*',
+        ],
+      },
+    ],
     description:
       'Developer have unrestricted access to the developer section on the console,  under settings. They have read-only access to all other features.',
   },

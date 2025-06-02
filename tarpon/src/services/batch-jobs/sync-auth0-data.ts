@@ -4,12 +4,14 @@ import { TenantService } from '../tenants'
 import { RoleService } from '../roles'
 import { getNamespacedRoleName } from '../roles/utils'
 import { DEFAULT_NAMESPACE } from '../roles/repository'
+import { convertV1PermissionToV2 } from '../rbac/utils/permissions'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SyncAuth0DataBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { traceable } from '@/core/xray'
+import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
 
 @traceable
 export class SyncAuth0DataRunner extends BatchJobRunner {
@@ -57,6 +59,9 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
           params: {
             ...role,
             name: getNamespacedRoleName(DEFAULT_NAMESPACE, role.name),
+            statements: DEFAULT_ROLES_V2.find(
+              (r) => r.role.toLowerCase() === role.name.toLowerCase()
+            )?.permissions,
           },
         })
       }
@@ -68,6 +73,9 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
           params: {
             ...rootRole,
             name: getNamespacedRoleName(DEFAULT_NAMESPACE, rootRole.name),
+            statements: DEFAULT_ROLES_V2.find(
+              (r) => r.role.toLowerCase() === rootRole.name.toLowerCase()
+            )?.permissions,
           },
         })
       }
@@ -84,6 +92,10 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
               DEFAULT_NAMESPACE,
               whitelabelRootRole.name
             ),
+            statements: DEFAULT_ROLES_V2.find(
+              (r) =>
+                r.role.toLowerCase() === whitelabelRootRole.name.toLowerCase()
+            )?.permissions,
           },
         })
       }
@@ -145,11 +157,21 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     }
 
     for (const role of auth0Roles) {
+      let statements = role.statements ?? []
+
+      if (statements.length === 0) {
+        statements = convertV1PermissionToV2(
+          getNonDemoTenantId(tenant.id),
+          role.permissions
+        )
+      }
+
       await cache.createRole(tenant.id, {
         type: 'DATABASE',
         params: {
           ...role,
           name: getNamespacedRoleName(tenant.id, role.name),
+          statements,
         },
       })
     }

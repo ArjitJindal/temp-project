@@ -929,10 +929,12 @@ export const convertV1PermissionToV2 = (
     }
   }
 
-  return [
+  const optimized = getOptimizedPermissions(tenantId, [
     { actions: ['read', 'write'], resources: Array.from(readWrite) },
     { actions: ['read'], resources: Array.from(readOnly) },
-  ]
+  ])
+
+  return optimized
 }
 
 export const convertV2PermissionToV1 = (
@@ -1074,67 +1076,68 @@ export const getOptimizedPermissions = (
   tenantId: string,
   resources: PermissionStatements[]
 ): PermissionStatements[] => {
-  const map = new Map<
+  const actionMap = new Map<
     string,
     { actions: PermissionsAction[]; resources: Set<string> }
   >()
   const optimizedPermissions: PermissionStatements[] = []
 
-  for (const statement of resources) {
-    const hashOfActions = generateChecksum(statement.actions)
-    if (!map.has(hashOfActions)) {
-      map.set(hashOfActions, {
-        actions: statement.actions,
-        resources: new Set(statement.resources),
-      })
-    } else {
-      for (const resource of statement.resources) {
-        map.get(hashOfActions)?.resources.add(resource)
-      }
-    }
-  }
+  // Group resources by action hash and handle wildcards
+  resources.forEach((statement) => {
+    const actionHash = generateChecksum(statement.actions)
+    const hasWildcard = statement.resources.some((resource) =>
+      resource.endsWith(':::*')
+    )
 
-  for (const [_, { actions, resources }] of map.entries()) {
-    const grantedTree = buildGrantedTree(Array.from(resources))
-    if (grantedTree.length === 0) {
+    if (!actionMap.has(actionHash)) {
+      actionMap.set(actionHash, {
+        actions: statement.actions,
+        resources: new Set(
+          hasWildcard ? [`frn:console:${tenantId}:::*`] : statement.resources
+        ),
+      })
+    } else if (!hasWildcard) {
+      statement.resources.forEach((resource) =>
+        actionMap.get(actionHash)?.resources.add(resource)
+      )
+    }
+  })
+
+  // Process each action group
+  for (const { actions, resources } of actionMap.values()) {
+    if (resources.has(`frn:console:${tenantId}:::*`)) {
+      optimizedPermissions.push({
+        actions,
+        resources: [`frn:console:${tenantId}:::*`],
+      })
       continue
     }
-    const optimized = optimizePermissions(
-      grantedTree,
-      PERMISSIONS_LIBRARY
-    ).optimized
 
-    const noChildrenInAll = optimized.every(
-      (node) => !node.children || node.children.length === 0
-    )
+    const grantedTree = buildGrantedTree(Array.from(resources))
+    if (!grantedTree.length) {
+      continue
+    }
+
+    const { optimized } = optimizePermissions(grantedTree, PERMISSIONS_LIBRARY)
+    const noChildrenInAll = optimized.every((node) => !node.children?.length)
 
     if (noChildrenInAll) {
       const allFirstLevelResources = new Set(
         PERMISSIONS_LIBRARY.map((node) => node.id)
       )
-      const allFirstLevelResourcesInOptimized = new Set(
-        optimized.map((node) => node.id)
-      )
+      const optimizedFirstLevel = new Set(optimized.map((node) => node.id))
 
-      const everyResourceOfLevel1Exists = Array.from(
-        allFirstLevelResources
-      ).every((node) => allFirstLevelResourcesInOptimized.has(node))
-
-      if (everyResourceOfLevel1Exists) {
+      if (
+        Array.from(allFirstLevelResources).every((node) =>
+          optimizedFirstLevel.has(node)
+        )
+      ) {
         optimizedPermissions.push({
           actions,
           resources: [`frn:console:${tenantId}:::*`],
         })
-
         continue
       }
-
-      optimizedPermissions.push({
-        actions,
-        resources: convertToFrns(tenantId, optimized),
-      })
-
-      continue
     }
 
     optimizedPermissions.push({
