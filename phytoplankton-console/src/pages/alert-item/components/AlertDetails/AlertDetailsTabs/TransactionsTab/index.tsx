@@ -59,7 +59,7 @@ export default function TransactionsTab(props: Props) {
   > = {
     NAME_ON_CARD: ['CARD'],
     BANK_ACCOUNT_HOLDER_NAME: ['GENERIC_BANK_ACCOUNT', 'IBAN'],
-    PAYMENT_NAME: ['SWIFT', 'UPI', 'WALLET', 'CHECK', 'ACH', 'IBAN'],
+    PAYMENT_NAME: ['SWIFT', 'UPI', 'WALLET', 'CHECK', 'ACH', 'IBAN', 'NPP'],
     PAYMENT_BENEFICIARY_NAME: ['ACH'],
   };
 

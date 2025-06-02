@@ -180,19 +180,32 @@ const userNameCasesV2MaterializedColumn = `
 export const gerneratePaymentDetailsName = (prefix: string) => {
   return [
     `${prefix}PaymentDetails_name String MATERIALIZED 
-    IF(JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'CARD',
-      trimBoth(
-        replaceRegexpAll(
-          concat(
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.firstName'), ''), ' ',
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.middleName'), ''), ' ',
-            COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.lastName'), '')
-          ),
-          '\\s+', ' '
+    CASE
+      WHEN JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'CARD' THEN
+        trimBoth(
+          replaceRegexpAll(
+            concat(
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.firstName'), ''), ' ',
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.middleName'), ''), ' ',
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.lastName'), '')
+            ),
+            '\\s+', ' '
+          )
         )
-      ),
-      COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name'), '')
-    )`,
+      WHEN JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'NPP' THEN
+        trimBoth(
+          replaceRegexpAll(
+            concat(
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.firstName'), ''), ' ',
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.middleName'), ''), ' ',
+              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.lastName'), '')
+            ),
+            '\\s+', ' '
+          )
+        )
+      ELSE
+        COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name'), '')
+    END`,
   ]
 }
 

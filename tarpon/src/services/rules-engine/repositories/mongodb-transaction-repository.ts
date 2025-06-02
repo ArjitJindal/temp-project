@@ -267,7 +267,39 @@ export class MongoDbTransactionRepository
                 ],
               },
               {
-                [`${prefix}.method`]: { $ne: 'CARD' },
+                $and: [
+                  { [`${prefix}.method`]: 'NPP' },
+                  {
+                    $expr: {
+                      $reduce: {
+                        input: {
+                          $filter: {
+                            input: [
+                              `$${prefix}.name.firstName`,
+
+                              `$${prefix}.name.middleName`,
+
+                              `$${prefix}.name.lastName`,
+                            ],
+                            as: 'part',
+                            cond: { $ne: ['$$part', null] },
+                          },
+                        },
+                        initialValue: '',
+                        in: {
+                          $cond: [
+                            { $eq: ['$$value', ''] },
+                            '$$this',
+                            { $concat: ['$$value', ' ', '$$this'] },
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                [`${prefix}.method`]: { $nin: ['CARD', 'NPP'] },
                 [`${prefix}.name`]: params.filterPaymentDetailName,
               },
               {
