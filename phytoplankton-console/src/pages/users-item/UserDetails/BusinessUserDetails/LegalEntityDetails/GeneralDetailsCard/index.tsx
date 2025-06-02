@@ -149,22 +149,6 @@ export default function GeneralDetailsCard(props: Props) {
           label: 'Acquisition channel',
           value: <GenericConstantTag>{user.acquisitionChannel}</GenericConstantTag>,
         },
-        ...(user.mccDetails?.code
-          ? [
-              {
-                label: 'MCC Code',
-                value: <div>{user.mccDetails.code}</div>,
-              },
-            ]
-          : []),
-        ...(user.mccDetails?.description
-          ? [
-              {
-                label: 'MCC Description',
-                value: <div>{user.mccDetails?.description}</div>,
-              },
-            ]
-          : []),
       ]}
     />
   );
