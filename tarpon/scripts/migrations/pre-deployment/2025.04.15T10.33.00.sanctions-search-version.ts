@@ -1,5 +1,6 @@
 import { omit } from 'lodash'
-import { Document } from 'mongodb'
+import { ObjectId } from 'mongodb'
+import pMap from 'p-map'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClientDb, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -14,11 +15,10 @@ async function migrateTenant(tenant: Tenant) {
   }
 
   const db = await getMongoDbClientDb()
-
-  // adding request hash
   const searchesCollection = db.collection(
     SANCTIONS_SEARCHES_COLLECTION(tenant.id)
   )
+
   const cursor = searchesCollection.find({
     requestHash: { $exists: false },
   })
@@ -42,82 +42,62 @@ async function migrateTenant(tenant: Tenant) {
     await searchesCollection.bulkWrite(bulkUpdates)
   })
 
-  const aggCursor = db
-    .collection(SANCTIONS_SEARCHES_COLLECTION(tenant.id))
-    .aggregate([
-      // oldest timestamp document
-      {
-        $sort: {
-          createdAt: 1,
-        },
-      },
-      // grouping by requestHash
-      {
-        $group: {
-          _id: '$requestHash',
-          docs: { $push: '$$ROOT' },
-        },
-      },
-      // adding version to each document
-      {
-        $project: {
-          docs: 1,
-          computedKey: '$_id',
-          versionedDocs: {
-            $map: {
-              input: { $range: [0, { $size: '$docs' }] },
-              as: 'idx',
-              in: {
-                $mergeObjects: [
-                  { $arrayElemAt: ['$docs', '$$idx'] },
-                  { version: '$$idx' },
-                ],
-              },
-            },
-          },
-        },
-      },
-      // unwinding each versioned document
-      { $unwind: '$versionedDocs' },
-      // replacing the document
-      { $replaceRoot: { newRoot: '$versionedDocs' } },
-    ])
+  const requestHashes = await searchesCollection.distinct('requestHash', {
+    requestHash: { $exists: true, $ne: null },
+  })
 
-  let buffer: Document[] = []
   const BATCH_SIZE = 1000
+  const processARequestHash = async (requestHash: string) => {
+    let batchProcessedCounter = 0
 
-  async function flushBuffer() {
-    if (buffer.length === 0) {
-      return
+    const isProcessing = true
+    while (isProcessing) {
+      const batchCursor = searchesCollection
+        .find({ requestHash: requestHash })
+        .sort({ createdAt: 1 })
+        .project({ _id: 1 })
+        .skip(batchProcessedCounter)
+        .limit(BATCH_SIZE)
+
+      const batch = await batchCursor.toArray()
+      if (batch.length === 0) {
+        break
+      }
+
+      const bulkOps: {
+        updateOne: {
+          filter: { _id: ObjectId }
+          update: { $set: { version: number } }
+          upsert: boolean
+        }
+      }[] = []
+
+      batch.forEach((doc, index) => {
+        const version = index + batchProcessedCounter
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: doc._id },
+            update: { $set: { version: version } },
+            upsert: false,
+          },
+        })
+      })
+
+      if (bulkOps.length > 0) {
+        await searchesCollection.bulkWrite(bulkOps, { ordered: false })
+      }
+
+      batchProcessedCounter += batch.length
     }
-    const bulkOps = buffer.map((doc) => ({
-      updateOne: {
-        filter: { _id: doc._id },
-        update: { $set: doc },
-        upsert: false,
-      },
-    }))
-    await searchesCollection.bulkWrite(bulkOps, { ordered: false })
-    buffer = []
   }
 
-  while (await aggCursor.hasNext()) {
-    const doc = await aggCursor.next()
-    if (doc) {
-      buffer.push(doc)
-    }
-
-    if (buffer.length >= BATCH_SIZE) {
-      await flushBuffer()
-    }
-  }
-
-  await flushBuffer()
+  await pMap(requestHashes, processARequestHash, { concurrency: 100 })
 }
 
 export const up = async () => {
   await migrateAllTenants(migrateTenant)
 }
+
 export const down = async () => {
   // skip
 }
