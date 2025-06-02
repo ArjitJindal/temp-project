@@ -1,7 +1,8 @@
 import { Collection, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { compact, uniq } from 'lodash'
+import { compact, omit, startCase, uniq } from 'lodash'
+import { sanitizeString } from '@flagright/lib/utils'
 import { GenericSanctionsConsumerUserRuleParameters } from '../rules-engine/user-rules/generic-sanctions-consumer-user'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { SanctionsDataProvider } from '../sanctions/providers/types'
@@ -10,12 +11,11 @@ import { SanctionsSearchRepository } from '../sanctions/repositories/sanctions-s
 import { CounterRepository } from '../counter/repository'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { FEATURE_FLAG_PROVIDER_MAP } from '../sanctions/utils'
+import { AcurisProvider } from '../sanctions/providers/acuris-provider'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InHouseScreeningMigrationBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import {
-  SANCTIONS_HITS_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -36,12 +36,10 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   provider: SanctionsDataProviderName = 'open-sanctions'
   whitelistEntitiesTempCollection!: Collection<SanctionsWhitelistEntity>
-  hitsCollection!: Collection<SanctionsHit>
   whitelistEntitiesCollection!: Collection<SanctionsWhitelistEntity>
   sanctionsSearchesCollection!: Collection<SanctionsSearchHistory>
   dataProvider!: SanctionsDataProvider
   searchRepository!: SanctionsSearchRepository
-  collator!: Intl.Collator
   counterRepository!: CounterRepository
   ruleInstanceService!: RuleInstanceService
   tenantRepository!: TenantRepository
@@ -49,28 +47,26 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   private async init(
     tenantId: string,
     mongoDb: MongoClient,
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBClient,
+    provider: SanctionsDataProviderName
   ) {
     const db = mongoDb.db()
+    this.provider = provider
     this.tenantId = tenantId
     this.ruleInstanceService = new RuleInstanceService(tenantId, {
       mongoDb,
       dynamoDb,
     })
-    this.collator = new Intl.Collator('en-US', {
-      sensitivity: 'base',
-      ignorePunctuation: true,
-    })
-    this.hitsCollection = db.collection<SanctionsHit>(
-      SANCTIONS_HITS_COLLECTION(tenantId)
-    )
     this.whitelistEntitiesCollection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)
     )
     this.sanctionsSearchesCollection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(tenantId)
     )
-    this.dataProvider = await OpenSanctionsProvider.build(tenantId)
+    this.dataProvider =
+      provider === 'open-sanctions'
+        ? await OpenSanctionsProvider.build(tenantId)
+        : await AcurisProvider.build(tenantId)
     this.searchRepository = new SanctionsSearchRepository(tenantId, mongoDb)
     this.counterRepository = new CounterRepository(tenantId, mongoDb)
     this.tenantRepository = new TenantRepository(tenantId, {
@@ -83,20 +79,22 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     const { settings, providers } = parameters
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    await this.init(tenantId, mongoDb, dynamoDb)
+    await this.init(tenantId, mongoDb, dynamoDb, providers[0])
     const lastCompletedId =
       (await getMigrationLastCompletedId(
         `IN_HOUSE_SCREENING_MIGRATION-${tenantId}`
       )) ?? '0'
-    const cursor = this.hitsCollection
+    const cursor = this.whitelistEntitiesCollection
       .find({
-        sanctionsHitId: { $gt: lastCompletedId },
+        sanctionsWhitelistId: { $gt: lastCompletedId },
       })
       .sort({
-        sanctionsHitId: 1,
+        sanctionsWhitelistId: 1,
       })
+      .addCursorFlag('noCursorTimeout', true)
     await processCursorInBatch(cursor, this.processHits.bind(this))
-    logger.info('Hits processed')
+
+    logger.info('Whitelist entities processed')
     const r16Rule = await this.getTenantR16Rule()
     if (r16Rule) {
       await this.handleRuleInstance(r16Rule)
@@ -120,93 +118,118 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     logger.info('Tenant settings updated')
   }
 
-  private async processHits(hits: SanctionsHit[]) {
+  private async processHits(whitelistEntities: SanctionsWhitelistEntity[]) {
+    const newRecords: SanctionsWhitelistEntity[] = []
+    const whitelistSet = new Set<string>()
     await pMap(
-      hits,
-      async (hit) => {
-        const hitContext = hit.hitContext
-        const subject = {
-          userId: hitContext?.userId,
-          entity: hitContext?.entity,
-          entityType: hitContext?.entityType,
-          searchTerm: hitContext?.searchTerm,
+      whitelistEntities,
+      async (whitelistEntity) => {
+        if (whitelistEntity.sanctionsWhitelistId.includes(this.provider)) {
+          return
         }
-        const complyAdvantageProviderName: SanctionsDataProviderName =
-          'comply-advantage'
-        const filters = [
-          {
-            $or: [
-              { 'sanctionsEntity.id': hit.entity.id },
-              { 'caEntity.id': hit.entity.id },
-            ],
-          },
-          {
-            provider: complyAdvantageProviderName,
-          },
-          ...Object.keys(subject).map((key) => ({
-            $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],
-          })),
-        ]
-        const whitelistEntity = await this.whitelistEntitiesCollection.findOne({
-          $and: filters,
-        })
-        if (whitelistEntity && this.dataProvider && this.searchRepository) {
-          const request: SanctionsSearchRequest | undefined = (
-            await this.sanctionsSearchesCollection.findOne({
-              _id: hit.searchId,
-            })
-          )?.request
-          if (request) {
-            const response = (
-              await this.dataProvider.search(
-                {
-                  ...request,
-                  fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-                  manualSearch: true,
-                },
-                true
+        const whitelistIdentifier =
+          whitelistEntity.userId ?? whitelistEntity.paymentMethodId ?? ''
+        try {
+          const searchTerm =
+            whitelistEntity.searchTerm ?? whitelistEntity.sanctionsEntity?.name
+          if (searchTerm && this.dataProvider && this.searchRepository) {
+            const request: SanctionsSearchRequest | undefined = (
+              await this.sanctionsSearchesCollection
+                .find({
+                  'request.searchTerm': {
+                    $regex: `^${startCase(searchTerm)}$`,
+                    $options: 'i',
+                  },
+                })
+                .sort({
+                  createdAt: -1,
+                })
+                .limit(1)
+                .toArray()
+            )?.[0]?.request
+
+            if (request) {
+              const response = (
+                await this.dataProvider.search(
+                  {
+                    ...request,
+                    fuzzinessRange: { upperBound: 100, lowerBound: 0 },
+                    manualSearch: true,
+                  },
+                  true
+                )
+              ).data as SanctionsEntity[]
+              const sanctionsEntityMatch = this.getSanctionsEntityMatch(
+                response ?? [],
+                whitelistEntity.sanctionsEntity
               )
-            ).data as SanctionsEntity[]
-            const sanctionsEntityMatch = this.getSanctionsEntityMatch(
-              response,
-              hit.entity
-            )
-            if (sanctionsEntityMatch.length > 0 && this.counterRepository) {
-              const newRecords: SanctionsWhitelistEntity[] = []
-              for (const entity of sanctionsEntityMatch) {
+              if (sanctionsEntityMatch.length > 0 && this.counterRepository) {
+                for (const entity of sanctionsEntityMatch) {
+                  const id =
+                    await this.counterRepository.getNextCounterAndUpdate(
+                      'SanctionsWhitelist'
+                    )
+                  if (whitelistSet.has(`${whitelistIdentifier}-${entity.id}`)) {
+                    continue
+                  }
+                  newRecords.push({
+                    ...omit(whitelistEntity, ['_id']),
+                    provider: this.provider,
+                    sanctionsWhitelistId: `SW-${id}-${this.provider}`,
+                    createdAt: Date.now(),
+                    sanctionsEntity: entity,
+                  })
+                  whitelistSet.add(`${whitelistIdentifier}-${entity.id}`)
+                }
+              }
+            } else if (this.dataProvider && this.searchRepository) {
+              const request: SanctionsSearchRequest = {
+                types: whitelistEntity.sanctionsEntity?.sanctionSearchTypes,
+                searchTerm,
+                fuzzinessRange: { upperBound: 100, lowerBound: 0 },
+                manualSearch: true,
+              }
+              const response = await this.dataProvider.search(request, true)
+              const sanctionsEntityMatch = this.getSanctionsEntityMatch(
+                response.data ?? [],
+                whitelistEntity.sanctionsEntity
+              )
+              if (sanctionsEntityMatch.length > 0 && this.counterRepository) {
+                const newRecords: SanctionsWhitelistEntity[] = []
                 const id = await this.counterRepository.getNextCounterAndUpdate(
                   'SanctionsWhitelist'
                 )
-                newRecords.push({
-                  provider: this.provider,
-                  sanctionsWhitelistId: `SW-${id}`,
-                  createdAt: Date.now(),
-                  sanctionsEntity: entity,
-                  userId: subject.userId,
-                  entity: subject.entity,
-                  entityType: subject.entityType,
-                  searchTerm: subject.searchTerm,
-                  ...(whitelistEntity.reason && {
-                    reason: whitelistEntity.reason,
-                  }),
-                  ...(whitelistEntity.comment && {
-                    comment: whitelistEntity.comment,
-                  }),
-                })
+                for (const entity of sanctionsEntityMatch) {
+                  if (whitelistSet.has(`${whitelistIdentifier}-${entity.id}`)) {
+                    continue
+                  }
+                  newRecords.push({
+                    ...omit(whitelistEntity, ['_id']),
+                    provider: this.provider,
+                    sanctionsWhitelistId: `SW-${id}-${this.provider}`,
+                    createdAt: Date.now(),
+                    sanctionsEntity: entity,
+                  })
+                  whitelistSet.add(`${whitelistIdentifier}-${entity.id}`)
+                }
               }
-              await this.whitelistEntitiesCollection.insertMany(newRecords)
             }
           }
+          await updateMigrationLastCompletedId(
+            `IN_HOUSE_SCREENING_MIGRATION-${this.tenantId}`,
+            whitelistEntity.sanctionsWhitelistId
+          )
+        } catch (e) {
+          console.log(e)
         }
-        await updateMigrationLastCompletedId(
-          `IN_HOUSE_SCREENING_MIGRATION-${this.tenantId}`,
-          hit.sanctionsHitId
-        )
       },
       {
-        concurrency: 10,
+        concurrency: 100,
       }
     )
+    if (newRecords.length > 0) {
+      await this.whitelistEntitiesCollection.insertMany(newRecords)
+    }
   }
 
   private getSanctionsEntityMatch(
@@ -217,20 +240,25 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   }
 
   private isTrueMatch(hit: SanctionsEntity, whitelistEntity: SanctionsEntity) {
-    const whitelistEntityName = [
+    const whitelistEntityNames = [
       whitelistEntity.name,
       ...(whitelistEntity.aka || []),
-    ].map((name) => name.toLowerCase())
+    ].map((name) => sanitizeString(name))
     const nameMatch = [hit.name, ...(hit.aka || [])].some((name) =>
-      whitelistEntityName.some(
-        (whitelistName) => this.collator?.compare(name, whitelistName) === 0
-      )
+      whitelistEntityNames.some((whitelistName) => whitelistName === name)
     )
     if (!nameMatch) {
       return false
     }
-    if (hit.yearOfBirth && whitelistEntity.yearOfBirth) {
-      return hit.yearOfBirth === whitelistEntity.yearOfBirth
+    if (
+      hit.yearOfBirth &&
+      whitelistEntity.yearOfBirth &&
+      hit.yearOfBirth.length > 0 &&
+      whitelistEntity.yearOfBirth.length > 0
+    ) {
+      return hit.yearOfBirth.some((year) =>
+        whitelistEntity.yearOfBirth?.includes(year)
+      )
     }
     return true
   }
