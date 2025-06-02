@@ -59,7 +59,11 @@ import TextArea from '@/components/library/TextArea';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, getCaseUrl, makeUrl } from '@/utils/routing';
-import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
+import {
+  findLastStatusForInReview,
+  statusInProgressOrOnHold,
+  statusInReview,
+} from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
@@ -77,6 +81,7 @@ import { statusToOperationName } from '@/pages/case-management/components/Status
 import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 import { FeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
+import Tooltip from '@/components/library/Tooltip';
 
 export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export'>> &
   Pick<FullColumnDataType<unknown>, 'export'> = {
@@ -632,11 +637,25 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
 }): ColumnDataType<CaseStatus, T> => ({
   render: (caseStatus, { item: entity }) => {
     return caseStatus && entity ? (
-      <StatusChangeDropDown<T>
-        entity={entity}
-        caseStatus={caseStatus}
-        reload={options?.reload ?? (() => {})}
-      />
+      statusInProgressOrOnHold(caseStatus) ? (
+        <Tooltip
+          title={humanizeConstant(
+            caseStatus.replace('_IN_PROGRESS', ', In Progress').replace('_ON_HOLD', ', On Hold'),
+          )}
+        >
+          <StatusChangeDropDown<T>
+            entity={entity}
+            caseStatus={caseStatus}
+            reload={options?.reload ?? (() => {})}
+          />
+        </Tooltip>
+      ) : (
+        <StatusChangeDropDown<T>
+          entity={entity}
+          caseStatus={caseStatus}
+          reload={options?.reload ?? (() => {})}
+        />
+      )
     ) : (
       <></>
     );
