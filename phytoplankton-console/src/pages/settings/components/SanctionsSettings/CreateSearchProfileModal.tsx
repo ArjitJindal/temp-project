@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
+import { getSanctionsSearchTypeOptions } from './utils';
 import Modal from '@/components/library/Modal';
 import TextInput from '@/components/library/TextInput';
 import { useApi } from '@/api';
@@ -12,14 +13,22 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import NumberInput from '@/components/library/NumberInput';
-import { SanctionsSearchType, SearchProfileRequest, SearchProfileResponse } from '@/apis';
+import {
+  SanctionsSearchType,
+  SearchProfileRequest,
+  SearchProfileResponse,
+  TenantSettings,
+} from '@/apis';
 import Button from '@/components/library/Button';
 import { useHasPermissions } from '@/utils/user-utils';
 import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import DeleteIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import Checkbox from '@/components/library/Checkbox';
-import { useHasNoSanctionsProviders } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useHasNoSanctionsProviders,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface FilterRow {
   filter: string;
@@ -27,23 +36,31 @@ interface FilterRow {
   isLocked: boolean;
 }
 
-const AVAILABLE_FILTERS = [
-  {
-    label: 'Matched type',
-    value: 'types',
-    type: 'multi',
-    options: SANCTIONS_SEARCH_TYPES.map((type) => ({ label: humanizeAuto(type), value: type })),
-  },
-  {
-    label: 'Fuzziness',
-    value: 'fuzziness',
-    type: 'number',
-    min: 0,
-    max: 1,
-    step: 0.01,
-    defaultValue: 0.5,
-  },
-];
+const AVAILABLE_FILTERS = (settings?: TenantSettings) => {
+  const matchTypesOptions = settings
+    ? getSanctionsSearchTypeOptions(
+        settings?.features ?? [],
+        settings?.sanctions?.providerScreeningTypes,
+      ).map((type) => ({ label: humanizeAuto(type), value: type }))
+    : SANCTIONS_SEARCH_TYPES.map((type) => ({ label: humanizeAuto(type), value: type }));
+  return [
+    {
+      label: 'Matched type',
+      value: 'types',
+      type: 'multi',
+      options: matchTypesOptions,
+    },
+    {
+      label: 'Fuzziness',
+      value: 'fuzziness',
+      type: 'number',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      defaultValue: 0.5,
+    },
+  ];
+};
 
 const DEFAULT_INITIAL_VALUES: SearchProfileRequest = {
   searchProfileName: '',
@@ -97,9 +114,10 @@ export default function CreateSearchProfileModal({
   const api = useApi();
   const queryClient = useQueryClient();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
-
-  if (isSanctionsEnabledWithDataProvider && AVAILABLE_FILTERS.length === 2) {
-    AVAILABLE_FILTERS.push({
+  const settings = useSettings();
+  const availableFilters = AVAILABLE_FILTERS(settings);
+  if (isSanctionsEnabledWithDataProvider && availableFilters.length === 2) {
+    availableFilters.push({
       label: 'Nationality',
       value: 'nationality',
       type: 'multi',
@@ -192,7 +210,7 @@ export default function CreateSearchProfileModal({
   }
 
   const renderFilterValue = (filterType: string, value?: any, onChange?: (value: any) => void) => {
-    const filterConfig = AVAILABLE_FILTERS.find((f) => f.value === filterType);
+    const filterConfig = availableFilters.find((f) => f.value === filterType);
     const currentValue = value !== undefined ? value : selectedValue;
 
     const handleChange = (newValue: any) => {
@@ -344,7 +362,7 @@ export default function CreateSearchProfileModal({
               <div className={s.filtersSectionHeader}>
                 <div className={s.filtersSectionTitle}>Set default filters</div>
               </div>
-              {filters.length < AVAILABLE_FILTERS.length && (
+              {filters.length < availableFilters.length && (
                 <div className={s.filterInputRow}>
                   <div className={s.filterSelect}>
                     <label className={s.filterSelectLabel}>Set default filter</label>
@@ -359,12 +377,12 @@ export default function CreateSearchProfileModal({
                       }}
                       placeholder="Set default filter"
                       dropdownMatchWidth={true}
-                      options={AVAILABLE_FILTERS.filter(
-                        (filter) => !filters.some((f) => f.filter === filter.value),
-                      ).map((filter) => ({
-                        label: filter.label,
-                        value: filter.value,
-                      }))}
+                      options={availableFilters
+                        .filter((filter) => !filters.some((f) => f.filter === filter.value))
+                        .map((filter) => ({
+                          label: filter.label,
+                          value: filter.value,
+                        }))}
                     />
                   </div>
                   <div className={s.filterValue}>
@@ -384,7 +402,7 @@ export default function CreateSearchProfileModal({
               )}
               <div className={s.filtersList}>
                 {filters.map((filterRow, index) => {
-                  const filterConfig = AVAILABLE_FILTERS.find((f) => f.value === filterRow.filter);
+                  const filterConfig = availableFilters.find((f) => f.value === filterRow.filter);
 
                   const handleFilterValueChange = (newValue: any) => {
                     const updatedFilters = [...filters];

@@ -2,13 +2,13 @@ import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import s from './styles.module.less';
+import { getSanctionsSearchTypeOptions } from './utils';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useQuery } from '@/utils/queries/hooks';
 import { DEFAULT_MANUAL_SCREENING_FILTERS, SCREENING_PROFILES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import Filter from '@/components/library/Filter';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearchType';
 import { getErrorMessage } from '@/utils/lang';
@@ -32,9 +32,9 @@ const ScreeningProfileDefaultFilters = () => {
   const [params, setParams] = useState<ScreeningProfileDefaultFiltersParams>({});
 
   const matchedTypeOptions = useMemo(() => {
-    return (
-      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'acuris')
-        ?.screeningTypes ?? ACURIS_SANCTIONS_SEARCH_TYPES
+    return getSanctionsSearchTypeOptions(
+      settings?.features ?? [],
+      settings?.sanctions?.providerScreeningTypes,
     );
   }, [settings]);
 
