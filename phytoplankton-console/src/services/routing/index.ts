@@ -503,7 +503,7 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         hideChildrenInMenu: true,
         permissions: [],
-        minRequiredResources: ['read:::lists/*'],
+        // minRequiredResources: ['read:::lists/*'], Will Enabled After we Completely Migrated to RBAC V2
         routes: [
           {
             path: '/lists/whitelist',
@@ -654,7 +654,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'settings',
         name: 'settings',
         position: 'bottom',
-        minRequiredResources: ['read:::settings/*'],
+        // minRequiredResources: ['read:::settings/*'], Will Enabled After we Completely Migrated to RBAC V2
         hideChildrenInMenu: true,
         component: SettingsPage,
         routes: [
