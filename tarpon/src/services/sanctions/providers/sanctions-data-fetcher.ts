@@ -1110,8 +1110,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     fuzzinessSettings: FuzzinessSetting | undefined,
     stopwordSet: Set<string> | undefined
   ): SanctionsEntity[] {
-    const keepSpaces =
-      Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness) && false
+    const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
     const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
       fuzzinessSettings?.similarTermsConsideration ||

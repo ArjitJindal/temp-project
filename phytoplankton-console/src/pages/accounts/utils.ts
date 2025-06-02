@@ -41,7 +41,7 @@ export const formatRoleName = (roleName: string | undefined) => {
   }
   const sanitized = getSantiziedRoleName(roleName);
 
-  // Remove special characters except spaces and hyphens, preserving alphanumeric sequences
+  // Remove special characters, preserving alphanumeric sequences
   const cleanedName = sanitizeString(sanitized, true);
 
   // Split at spaces and hyphens, preserving alphanumeric sequences

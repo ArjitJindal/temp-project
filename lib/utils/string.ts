@@ -9,7 +9,7 @@ export function getEditDistance(str1: string, str2: string): number {
 export function getEditDistancePercentage(str1: string, str2: string): number {
   return (getEditDistance(str1, str2) / str1.length) * 100
 }
-// Function to remove special charcters excluding '-'
+// Function to remove special characters
 export function sanitizeString(
   str: string,
   preserveSpaces = true,
@@ -18,12 +18,20 @@ export function sanitizeString(
   if (typeof str !== 'string') {
     throw new TypeError('Input must be a string')
   }
-  const pattern = preserveSpaces ? /[^a-zA-Z0-9\s-]/g : /[^a-zA-Z0-9]/g
-  const sanitized = normalizeString
-    ? normalize(str).replace(pattern, '')
-    : str.replace(pattern, '')
+  const toSpacePattern = /[,\-_/|&~:;]/g // Characters to treat as spaces
 
-  return preserveSpaces ? sanitized.replace(/\s+/g, ' ').trim() : sanitized
+  const sanitizePattern = preserveSpaces ? /[^a-zA-Z0-9\s]/g : /[^a-zA-Z0-9]/g // Pattern to remove unwanted characters
+
+  let processed = normalizeString ? normalize(str) : str
+  processed = processed
+    .replace(toSpacePattern, ' ')
+    .replace(sanitizePattern, '')
+
+  if (preserveSpaces) {
+    return processed.replace(/\s+/g, ' ').trim()
+  } else {
+    return processed.replace(/\s+/g, '')
+  }
 }
 
 export function normalize(str: string): string {

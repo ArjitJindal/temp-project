@@ -279,7 +279,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
         'puganeshwari raju',
         'manjula mani',
         'shahira saip',
-        'abigail thien may-jiuan',
+        'abigail thien may jiuan',
         'viezyeci hebron',
         'suchada oui hui qing',
         'manord ai rong',
