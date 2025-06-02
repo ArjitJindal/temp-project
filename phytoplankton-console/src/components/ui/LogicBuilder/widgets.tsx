@@ -230,6 +230,20 @@ const customTextWidget: CoreWidgets['text'] = {
         fieldSettings.uniqueType,
       );
 
+      if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator as LogicOperatorType)) {
+        return (
+          <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+            <MultiListSelectDynamic
+              uniqueTypeProps={uniqueTypeProps}
+              value={props.value as any}
+              onChange={(newValue) => {
+                const formattedValue = newValue?.map((v) => v.trim());
+                props.setValue(formattedValue as any);
+              }}
+            />
+          </WidgetWrapper>
+        );
+      }
       return (
         <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
           <SingleListSelectDynamic
