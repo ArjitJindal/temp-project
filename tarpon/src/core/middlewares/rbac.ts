@@ -101,7 +101,11 @@ export const rbacMiddleware =
     const sessionsService = new SessionsService(tenantId, dynamoDb)
     const maxActiveSessions = getContext()?.settings?.maxActiveSessions
 
-    if (maxActiveSessions && !event.path.includes('/post-login')) {
+    if (
+      maxActiveSessions &&
+      !event.path.includes('/post-login') &&
+      !event.path.endsWith('/statements')
+    ) {
       const userAgent =
         event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
       const deviceFingerprint = event.headers['x-fingerprint'] || 'unknown'
