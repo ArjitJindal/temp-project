@@ -11,7 +11,7 @@ describe('Close Alerts from Table', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { NOTIFICATIONS: true },
+      features: { NOTIFICATIONS: true, RBAC_V2: true },
     });
   });
 

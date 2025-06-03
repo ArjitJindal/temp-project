@@ -218,7 +218,12 @@ export default function RoleDetails({
       {mode === 'edit' && (
         <Card.Root className={s.stickyFooter}>
           <Card.Section direction="horizontal" className={s.footer}>
-            <Button type="PRIMARY" onClick={handleSave} isLoading={isLoading}>
+            <Button
+              type="PRIMARY"
+              onClick={handleSave}
+              isLoading={isLoading}
+              testName="save-role-button"
+            >
               {role?.id ? 'Save' : 'Create'}
             </Button>
             <Button type="SECONDARY" onClick={handleCancelEdit} isDisabled={isLoading}>

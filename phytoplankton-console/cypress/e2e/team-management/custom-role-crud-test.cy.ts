@@ -8,7 +8,10 @@ describe('Custom Role - CRUD Test', () => {
       ...PERMISSIONS.ACCOUNTS,
       ...PERMISSIONS.ROLES,
     ];
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { RBAC_V2: true },
+    });
   });
 
   it('perform crud operation on custom role', () => {
@@ -19,31 +22,30 @@ describe('Custom Role - CRUD Test', () => {
 
     //create a custom role
     cy.get('input[placeholder="Enter role name"]').type(`${roleName}`);
-    cy.get('input[placeholder="Enter a description"]').type('Custom test role description');
-    cy.contains('Save').click();
-    cy.message(`${roleName} role saved`).should('exist');
+    cy.get('textarea[placeholder="Enter role description"]').type('Custom test role description');
+    cy.get('button[data-cy="save-role-button"]').click();
+    cy.message(`Role '${roleName.toLowerCase()}' created successfully`).should('exist');
     cy.message().should('not.exist');
     cy.waitNothingLoading();
 
     //update a custom role
-    cy.get('div[data-cy="roles-menu-item"]').contains(roleName).click();
-    cy.get('button[data-cy="edit-role"]').click();
-    cy.get('input[placeholder="Enter a description"]').type(
+    cy.get(`[data-cy="role-name-${roleName.toLowerCase()}"]`).click();
+    cy.get(`[data-cy="edit-role-button-${roleName.toLowerCase()}"]`).click();
+    cy.get('textarea[placeholder="Enter role description"]').type(
       'Custom test role description after changing',
     );
     cy.contains('Save').click();
-    cy.message(`${roleName} role saved`).should('exist');
+    cy.message(`Role '${roleName.toLowerCase()}' updated successfully`).should('exist');
     cy.message().should('not.exist');
     cy.waitNothingLoading();
 
     //delete a custom role
-    cy.get('div[data-cy="roles-menu-item"]').contains(`${roleName}`).click();
-    cy.get('button[data-cy="edit-role"]').click();
-    cy.get('button[data-cy="delete-role"]').click();
-    cy.message(`${roleName} was deleted.`).should('exist');
+    cy.get(`[data-cy="delete-role-button-${roleName.toLowerCase()}"]`).click();
+    cy.get('button[data-cy="modal-ok"]').click();
+    cy.message(`Role "${roleName}" has been deleted`).should('exist');
     cy.message().should('not.exist');
     cy.waitNothingLoading();
 
-    cy.get('div[data-cy="roles-menu-item"]').contains(`${roleName}`).should('not.exist');
+    cy.get(`[data-cy="role-name-${roleName.toLowerCase()}"]`).should('not.exist');
   });
 });

@@ -8,7 +8,7 @@ describe('Breadcrumbs check in risk factors', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RISK_SCORING: true, RISK_LEVELS: true, SIMULATOR: true },
+      features: { RISK_SCORING: true, RISK_LEVELS: true, SIMULATOR: true, RBAC_V2: true },
     });
   });
 

@@ -5,7 +5,10 @@ describe('Audit log filter - entity type', () => {
     const REQUIRED_PERMISSIONS = PERMISSIONS.AUDIT_LOG;
 
     beforeEach(() => {
-      cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+      cy.loginWithPermissions({
+        permissions: REQUIRED_PERMISSIONS,
+        features: { RBAC_V2: true },
+      });
     });
 
     it('should filter according to entity type', () => {

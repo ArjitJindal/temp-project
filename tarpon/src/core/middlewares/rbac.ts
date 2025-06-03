@@ -51,12 +51,6 @@ export const rbacMiddleware =
       httpMethod
     )
 
-    assertPermissions(requiredPermissions)
-    // if api path ends with any of the exemptedApiPaths, then skip production access check
-    if (!getAlwaysAllowedAccess(apiPath, httpMethod)) {
-      assertProductionAccess()
-    }
-
     if (hasFeature('RBAC_V2')) {
       const statements = await tenantStatements(
         event.requestContext.authorizer.tenantId
@@ -93,6 +87,13 @@ export const rbacMiddleware =
           }
         }
       }
+    } else {
+      assertPermissions(requiredPermissions)
+    }
+
+    // if api path ends with any of the exemptedApiPaths, then skip production access check
+    if (!getAlwaysAllowedAccess(apiPath, httpMethod)) {
+      assertProductionAccess()
     }
 
     const tenantId = event.requestContext.authorizer.tenantId

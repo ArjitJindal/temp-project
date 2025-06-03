@@ -3,7 +3,10 @@ import { PERMISSIONS } from '../../support/permissions';
 describe('Rule create and delete', () => {
   const REQUIRED_PERMISSIONS = [...PERMISSIONS.RULES];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { RBAC_V2: true },
+    });
   });
 
   it('should create a rule and delete it', () => {

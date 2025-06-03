@@ -5,7 +5,7 @@ describe('Escalating and Sending back the cases', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { ADVANCED_WORKFLOWS: true },
+      features: { ADVANCED_WORKFLOWS: true, RBAC_V2: true },
     });
   });
   it('should escalate a case and send it back', () => {

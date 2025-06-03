@@ -1,68 +1,181 @@
-import { Permission } from '../../src/apis';
+import { PermissionStatements } from '../../src/apis';
 
-const CASE_DETAILS: Permission[] = [
-  'case-management:case-details:read',
-  'case-management:case-details:write',
-  'case-management:case-assignment:write',
+const CASE_DETAILS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::case-management/case-details/*',
+      'frn:console:cypress-tenant:::case-management/case-assignment/*',
+    ],
+  },
 ];
-const CASE_OVERVIEW: Permission[] = [
-  'case-management:case-overview:read',
-  'case-management:case-overview:write',
-  'case-management:case-assignment:write',
+const CASE_OVERVIEW: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::case-management/case-overview/*',
+      'frn:console:cypress-tenant:::case-management/case-assignment/*',
+    ],
+  },
 ];
-const CASE_REOPEN: Permission[] = ['case-management:case-reopen:write'];
-const QA: Permission[] = ['case-management:qa:read', 'case-management:qa:write'];
-const RULES: Permission[] = ['rules:my-rules:read', 'rules:my-rules:write', 'rules:library:read'];
-const RISK_SCORING_RISK_LEVELS: Permission[] = [
-  'risk-scoring:risk-levels:read',
-  'risk-scoring:risk-levels:write',
+const CASE_REOPEN: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::case-management/case-reopen/*'],
+  },
 ];
-const RISK_SCORING_RISK_FACTORS: Permission[] = [
-  'risk-scoring:risk-factors:read',
-  'risk-scoring:risk-factors:write',
+const QA: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::case-management/qa/*'],
+  },
 ];
-const RISK_SCORING_RISK_ALGORITHMS: Permission[] = ['risk-scoring:risk-algorithms:read'];
-const USERS_USER_OVERVIEW: Permission[] = [
-  'users:user-overview:read',
-  'users:user-overview:write',
-  'users:user-tags:write',
-  'users:user-manual-risk-levels:write',
-  'users:user-pep-status:write',
+const RULES: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::rules/my-rules/*',
+      'frn:console:cypress-tenant:::rules/library/*',
+    ],
+  },
 ];
-const USERS_USER_COMMENTS: Permission[] = ['users:user-comments:write'];
-const USERS_USER_DETAILS: Permission[] = ['users:user-details:read'];
-const TRANSACTION_OVERVIEW: Permission[] = [
-  'transactions:overview:read',
-  'transactions:overview:write',
+const RISK_SCORING_RISK_LEVELS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::risk-scoring/risk-levels/*'],
+  },
 ];
-const TRANSACTION_DETAILS: Permission[] = ['transactions:details:read'];
-const DASHBOARD: Permission[] = ['dashboard:download-data:read'];
-const AUDIT_LOG: Permission[] = ['audit-log:export:read'];
-const COPILOT: Permission[] = ['copilot:narrative:read', 'copilot:narrative:write'];
-const REPORTS: Permission[] = [
-  'reports:schema:read',
-  'reports:generated:read',
-  'reports:generated:write',
+const RISK_SCORING_RISK_FACTORS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::risk-scoring/risk-factors/*'],
+  },
 ];
-const SETTINGS_ORGANIZATION: Permission[] = [
-  'settings:transactions:read',
-  'settings:transactions:write',
-  'settings:users:read',
-  'settings:users:write',
+const RISK_SCORING_RISK_ALGORITHMS: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::risk-scoring/risk-algorithms/*'],
+  },
 ];
-const ACCOUNTS: Permission[] = ['accounts:overview:read', 'accounts:overview:write'];
-const ROLES: Permission[] = ['roles:overview:read', 'roles:overview:write'];
-const SANCTIONS: Permission[] = ['sanctions:search:read'];
-const SETTINGS_DEVELOPER: Permission[] = ['settings:developers:read', 'settings:developers:write'];
-const SIMULATION: Permission[] = ['simulator:simulations:read', 'simulator:simulations:write'];
-const NOTIFICATIONS: Permission[] = [
-  'notifications:all:read',
-  'settings:notifications:write',
-  'settings:notifications:read',
+const USERS_USER_OVERVIEW: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::users/user-overview/*',
+      'frn:console:cypress-tenant:::users/user-tags/*',
+      'frn:console:cypress-tenant:::users/user-manual-risk-levels/*',
+    ],
+  },
+];
+const USERS_USER_COMMENTS: PermissionStatements[] = [
+  {
+    actions: ['write'],
+    resources: ['frn:console:cypress-tenant:::users/user-comments/*'],
+  },
+];
+const USERS_USER_DETAILS: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::users/user-details/*'],
+  },
+];
+const TRANSACTION_OVERVIEW: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::transactions/overview/*'],
+  },
+];
+const TRANSACTION_DETAILS: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::transactions/details/*'],
+  },
+];
+const DASHBOARD: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::dashboard/download-data/*'],
+  },
+];
+const AUDIT_LOG: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::audit-log/export/*'],
+  },
+];
+const COPILOT: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::copilot/narrative/*'],
+  },
+];
+const REPORTS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::reports/schema/*',
+      'frn:console:cypress-tenant:::reports/generated/*',
+    ],
+  },
+];
+const SETTINGS_ORGANIZATION: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: [
+      'frn:console:cypress-tenant:::settings/transactions/*',
+      'frn:console:cypress-tenant:::settings/users/*',
+    ],
+  },
+];
+const SETTINGS_USERS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::settings/users/*'],
+  },
+];
+const ACCOUNTS: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::accounts/overview/*'],
+  },
+];
+const ROLES: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::roles/overview/*'],
+  },
+];
+const SANCTIONS: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::sanctions/search/*'],
+  },
+];
+const SIMULATION: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::simulator/simulations/*'],
+  },
+];
+const NOTIFICATIONS: PermissionStatements[] = [
+  {
+    actions: ['read'],
+    resources: ['frn:console:cypress-tenant:::notifications/all/*'],
+  },
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::settings/notifications/*'],
+  },
+];
+const SETTINGS_DEVELOPER: PermissionStatements[] = [
+  {
+    actions: ['read', 'write'],
+    resources: ['frn:console:cypress-tenant:::settings/developers/*'],
+  },
 ];
 
 export const PERMISSIONS: {
-  [key: string]: Permission[];
+  [key: string]: PermissionStatements[];
 } = {
   CASE_DETAILS,
   CASE_OVERVIEW,
@@ -88,4 +201,5 @@ export const PERMISSIONS: {
   SANCTIONS,
   ACCOUNTS,
   ROLES,
+  SETTINGS_USERS,
 };

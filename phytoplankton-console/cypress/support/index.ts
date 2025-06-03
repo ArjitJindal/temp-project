@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { Feature, TenantSettings } from '../../src/apis';
+import { Feature, PermissionStatements, TenantSettings } from '../../src/apis';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -15,7 +15,7 @@ declare global {
         sessionSuffix?: string,
       ): Chainable<Element>;
       loginWithPermissions(props: {
-        permissions: string[];
+        permissions: PermissionStatements[];
         features?: Partial<Record<Feature, boolean>>;
         settings?: TenantSettings;
         loginWithRole?: 'custom_role' | 'admin';
@@ -45,7 +45,7 @@ declare global {
        */
       message(text?: string): Chainable<Element>;
       logout(): Chainable<Promise<Element>>;
-      setPermissions(permissions: string[]): Chainable<Promise<Element>>;
+      setPermissions(permissions: PermissionStatements[]): Chainable<Promise<Element>>;
       apiHandler(props: {
         endpoint: string;
         method: string;

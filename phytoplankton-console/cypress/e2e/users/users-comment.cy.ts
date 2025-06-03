@@ -7,7 +7,10 @@ describe('Add a comment to a user', () => {
     ...PERMISSIONS.USERS_USER_COMMENTS,
   ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { RBAC_V2: true },
+    });
   });
 
   it('should be able to create a comment for a first consumer user with file attachment', () => {

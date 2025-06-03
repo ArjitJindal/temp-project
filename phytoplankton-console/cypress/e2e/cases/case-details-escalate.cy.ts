@@ -10,7 +10,12 @@ describe('Escalate a case from case-details', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { ADVANCED_WORKFLOWS: true, NOTIFICATIONS: true, MULTI_LEVEL_ESCALATION: false },
+      features: {
+        ADVANCED_WORKFLOWS: true,
+        NOTIFICATIONS: true,
+        MULTI_LEVEL_ESCALATION: false,
+        RBAC_V2: true,
+      },
     });
   });
   const selectCase = (status: CaseStatus[]) => {

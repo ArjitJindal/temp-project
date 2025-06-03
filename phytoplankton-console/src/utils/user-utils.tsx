@@ -331,13 +331,21 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useRoles(): [AccountRole[], boolean, () => void] {
+export function useRolesQueryResult() {
   const api = useApi();
-  const rolesQueryResult = useQuery(ROLES_LIST(), async () => {
-    return await api.getRoles();
+  return useQuery(ROLES_LIST(), async () => {
+    const roles = await api.getRoles();
+    return {
+      items: roles,
+      total: roles.length,
+    };
   });
+}
+
+export function useRoles(): [AccountRole[], boolean, () => void] {
+  const rolesQueryResult = useRolesQueryResult();
   return [
-    getOr(rolesQueryResult.data, []),
+    getOr(rolesQueryResult.data, { items: [], total: 0 }).items,
     isLoading(rolesQueryResult.data),
     rolesQueryResult.refetch,
   ];

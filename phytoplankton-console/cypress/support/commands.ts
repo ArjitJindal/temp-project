@@ -55,8 +55,9 @@ Cypress.Commands.add(
   },
 );
 
-Cypress.Commands.add('setPermissions', (permissions) => {
+Cypress.Commands.add('setPermissions', (statements) => {
   const roleId = 'rol_BxM56v32qGhImCzc';
+
   cy.apiHandler({
     endpoint: `roles/${roleId}`,
     method: 'PATCH',
@@ -64,7 +65,8 @@ Cypress.Commands.add('setPermissions', (permissions) => {
       id: roleId,
       name: 'Custom_role',
       description: 'Custom role for RBAC testing',
-      permissions: permissions,
+      permissions: [],
+      statements,
     },
   });
 });

@@ -14,6 +14,7 @@ describe('Closing and Re-Opening the cases', () => {
       permissions: REQUIRED_PERMISSIONS,
       features: {
         NOTIFICATIONS: true,
+        RBAC_V2: true,
       },
     });
   });

@@ -3,7 +3,10 @@ import { PERMISSIONS } from '../../support/permissions';
 describe('Using Assignment filter and assigning cases', () => {
   const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.CASE_DETAILS];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { RBAC_V2: true },
+    });
   });
 
   it('should assign single and multiple cases', () => {

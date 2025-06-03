@@ -9,7 +9,10 @@ describe('QA Assignee Column', () => {
       ...PERMISSIONS.CASE_DETAILS,
       ...PERMISSIONS.TRANSACTION_OVERVIEW,
     ];
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS, features: { QA: qaFlag } });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { QA: qaFlag, RBAC_V2: true },
+    });
   });
 
   it('Dropdown should not be visible if QA flag is false', () => {

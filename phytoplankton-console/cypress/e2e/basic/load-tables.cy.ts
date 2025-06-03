@@ -5,6 +5,7 @@ describe.skip('Main pages loading', () => {
       loginWithRole: 'admin',
       features: {
         CLICKHOUSE_ENABLED: false,
+        RBAC_V2: true,
       },
     });
   });
