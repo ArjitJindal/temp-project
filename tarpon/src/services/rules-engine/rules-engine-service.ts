@@ -121,7 +121,7 @@ import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { AccountsService } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
+import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -860,7 +860,7 @@ export class RulesEngineService {
     action1: RuleAction,
     action2: RuleAction
   ): boolean {
-    return RULE_ACTIONS.indexOf(action1) > RULE_ACTIONS.indexOf(action2)
+    return RULE_ACTIONS.indexOf(action1) < RULE_ACTIONS.indexOf(action2)
   }
 
   private async verifyAsyncRulesTransactionInternal(
