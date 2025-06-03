@@ -36,23 +36,27 @@ export class RuleInstanceClickhouseRepository {
             COUNT(*) as hitCount,
             uniqExact(
               arrayJoin(
-                arrayConcat(
-                  if(${isShadow},
-                    if(has(originShadowHitRuleIds, '${ruleInstanceId}'), [originUserId], []),
-                    if(has(originNonShadowHitRuleIds, '${ruleInstanceId}'), [originUserId], [])
+                arrayMap(x -> 
+                  arrayConcat(
+                    if(hasAny(tupleElement(x, 'hitDirections'), ['"ORIGIN"']), [originUserId], []),
+                    if(hasAny(tupleElement(x, 'hitDirections'), ['"DESTINATION"']), [destinationUserId], [])
                   ),
-                  if(${isShadow},
-                    if(has(destinationShadowHitRuleIds, '${ruleInstanceId}'), [destinationUserId], []),
-                    if(has(destinationNonShadowHitRuleIds, '${ruleInstanceId}'), [destinationUserId], [])
+                  arrayFilter(x -> 
+                    tupleElement(x, 'ruleInstanceId') = '${ruleInstanceId}' AND 
+                    tupleElement(x, 'isShadow') = ${isShadow},
+                    hitRulesWithMeta
                   )
                 )
               )
             ) as hitUsersCount
           FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
           WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp}
-            AND if(${isShadow},
-              has(originShadowHitRuleIds, '${ruleInstanceId}') OR has(destinationShadowHitRuleIds, '${ruleInstanceId}'),
-              has(originNonShadowHitRuleIds, '${ruleInstanceId}') OR has(destinationNonShadowHitRuleIds, '${ruleInstanceId}')
+            AND hasAny(
+              arrayMap(x -> tupleElement(x, 'ruleInstanceId'),
+                arrayFilter(x -> tupleElement(x, 'isShadow') = ${isShadow}, 
+                hitRulesWithMeta)
+              ),
+              ['${ruleInstanceId}']
             )
           GROUP BY time
         ),
