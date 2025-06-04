@@ -264,6 +264,7 @@ export const RiskFactorConfiguration = (props: Props) => {
               formRef?.current?.submit();
             }}
             requiredPermissions={['risk-scoring:risk-factors:write']}
+            requiredResources={['write:::risk-scoring/risk-factors/*']}
             testName="drawer-create-save-button"
           >
             Save
