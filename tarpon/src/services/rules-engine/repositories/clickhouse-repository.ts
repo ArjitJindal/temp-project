@@ -379,7 +379,9 @@ export class ClickhouseTransactionsRepository {
               }[])
             : undefined,
           originFundsInfo: item.originFundsInfo as OriginFundsInfo,
-          alertIds: JSON.parse(item.alertIds as string) as string[],
+          alertIds: item.alertIds
+            ? (JSON.parse(item.alertIds as string) as string[])
+            : [],
         }
       }
     )
