@@ -27,17 +27,6 @@ type FormValues = {
   searchString: string;
 };
 
-let SUGGESTIONS_ORDER: QuestionId[] = [
-  COPILOT_QUESTIONS.USER_DETAILS,
-  COPILOT_QUESTIONS.ALERTS,
-  COPILOT_QUESTIONS.TRS_SCORE,
-  COPILOT_QUESTIONS.TRANSACTIONS,
-  COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
-  COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
-  COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
-  COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
-];
-
 interface Props {
   searchMutation: UseMutationResult<unknown, unknown, FormValues[]>;
   alertId: string;
@@ -54,6 +43,17 @@ export const SearchBar = (props: Props) => {
   const [searchText, setSearchText] = useState<string>('');
   const debouncedSearch = useDebounce(searchText, { wait: 500 });
   const [clickedSuggestions, setClickedSuggestions] = useState<Set<string>>(new Set());
+
+  let SUGGESTIONS_ORDER: QuestionId[] = [
+    COPILOT_QUESTIONS.USER_DETAILS,
+    COPILOT_QUESTIONS.ALERTS,
+    COPILOT_QUESTIONS.TRS_SCORE,
+    COPILOT_QUESTIONS.TRANSACTIONS,
+    COPILOT_QUESTIONS.TRANSACTION_INSIGHTS,
+    COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
+    COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
+    COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
+  ];
 
   const api = useApi();
   const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
