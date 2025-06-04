@@ -1,5 +1,4 @@
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { uniq } from 'lodash';
 import { useMemo } from 'react';
 import { useApi } from '@/api';
@@ -38,7 +37,7 @@ const useOptions = (data: string[], uniqueType: TransactionsUniquesField | Users
     () =>
       uniq([...(data ?? []), ...(STATIC_VALUES[uniqueType as TransactionsUniquesField] ?? [])]).map(
         (x) => ({
-          label: humanizeAuto(x),
+          label: x,
           value: x,
         }),
       ),
