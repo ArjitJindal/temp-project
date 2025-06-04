@@ -27,6 +27,7 @@
     }
 
     .rc-picker-content {
+      justify-content: center;
       th {
         font-weight: 600;
       }
@@ -56,6 +57,7 @@
 
     .rc-picker-header-view {
       display: flex;
+      justify-content: center;
       gap: 8px;
       margin: 0 8px;
     }
@@ -87,6 +89,16 @@
   }
 }
 
+.panels {
+  display: flex;
+  flex-direction: row;
+}
+
+@media (max-width: 728px) {
+  .panels {
+    flex-direction: column;
+  }
+}
 .navButton {
   width: 12px;
   color: @fr-colors-v2-gray-6;
