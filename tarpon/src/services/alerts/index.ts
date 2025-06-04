@@ -1503,6 +1503,11 @@ export class AlertsService extends CaseAlertsCommonService {
       statusEscalated(alert.alertStatus)
     )
 
+    // get the first alert
+    const firstAlert = alerts[0]
+    // get all the users accounts
+    const accounts = await accountsService.getAllActiveAccounts()
+
     await withTransaction(async () => {
       const [response] = await Promise.all([
         this.alertsRepository.updateStatus(
@@ -1535,6 +1540,24 @@ export class AlertsService extends CaseAlertsCommonService {
                     timestamp: Date.now(),
                   },
                 ]
+              ),
+            ]
+          : []),
+        ...(isPNB && !isReview
+          ? [
+              await this.alertsRepository.updateReviewAssignments(
+                alertIds,
+                uniqBy(
+                  [
+                    ...(await this.getEscalationAssignments(
+                      firstAlert?.alertStatus as CaseStatus,
+                      firstAlert.reviewAssignments || [],
+                      accounts
+                    )),
+                    ...(firstAlert.reviewAssignments ?? []),
+                  ],
+                  'assigneeUserId'
+                )
               ),
             ]
           : []),

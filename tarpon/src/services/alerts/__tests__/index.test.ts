@@ -69,6 +69,12 @@ jest
     return TEST_ACCOUNT
   })
 
+jest
+  .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
+  .mockImplementation(async () => {
+    return [TEST_ACCOUNT]
+  })
+
 describe('test closeAlertIfAllTransactionsApproved', () => {
   const tenantId = getTestTenantId()
   const transactionIds = Array.from({ length: 20 }, (_, i) => `T-${i}`)
