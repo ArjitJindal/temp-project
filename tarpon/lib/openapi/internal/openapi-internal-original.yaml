@@ -14501,8 +14501,6 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
         requestHash:
           type: string
-        version:
-          type: number
         metadata:
           type: object
           properties:
