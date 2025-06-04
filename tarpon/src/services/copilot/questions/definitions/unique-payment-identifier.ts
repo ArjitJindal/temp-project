@@ -59,17 +59,27 @@ export const UniquePaymentIdentifier: TableQuestion<
         ${directionSmall}PaymentMethod,
         originAmountDetails_amountInUsd,
         CASE
-          WHEN ${directionSmall}PaymentMethod = 'CARD' THEN concatWithSpace(
+          WHEN ${directionSmall}PaymentMethod = 'CARD' THEN trimBoth(replaceRegexpAll(CONCAT(
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'firstName'),
+            ' ',
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'middleName'),
+            ' ',
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'lastName')
-          )
-          WHEN ${directionSmall}PaymentMethod = 'NPP' THEN concatWithSpace(
+          ),
+          '\\s+',
+          ' '
+        ))
+          WHEN ${directionSmall}PaymentMethod = 'NPP' THEN trimBoth(replaceRegexpAll(CONCAT(
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'firstName'),
+            ' ',
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'middleName'),
+            ' ',
             JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'lastName')
-          )
-          ELSE JSONExtractString(data, '${directionSmall}PaymentDetails', 'name')
+          ),
+          '\\s+',
+          ' '
+        ))
+          ELSE trimBoth(JSONExtractString(data, '${directionSmall}PaymentDetails', 'name'))
         END AS names
       FROM transactions FINAL
       WHERE
