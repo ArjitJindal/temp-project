@@ -1,28 +1,21 @@
 import React from 'react';
 import { formatRoleName } from '../../utils';
 import Select, { SingleProps as SelectSingleProps } from '@/components/library/Select';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { AccountRole } from '@/apis';
-import { ROLES_LIST } from '@/utils/queries/keys';
-import { getOr, isLoading } from '@/utils/asyncResource';
+import { useRoles } from '@/utils/user-utils';
 
 interface Props extends Partial<SelectSingleProps<string>> {}
 
 export function RoleSelect(props: Props) {
   const { ...rest } = props;
-  const api = useApi();
-  const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
-    return await api.getRoles();
-  });
+  const [roles, isLoading] = useRoles();
 
   return (
     <Select<string>
       {...rest}
-      isLoading={isLoading(rolesResp.data)}
-      options={getOr(rolesResp.data, []).map((name) => ({
-        value: name.name,
-        label: formatRoleName(name.name),
+      isLoading={isLoading}
+      options={roles.map((role) => ({
+        value: role.name,
+        label: formatRoleName(role.name),
       }))}
     />
   );

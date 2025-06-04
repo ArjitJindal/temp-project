@@ -5,9 +5,8 @@ import s from './index.module.less';
 import { exportRolesDetails } from './utils';
 import { getSantiziedRoleName, formatRoleName } from '@/pages/accounts/utils';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { AccountRole } from '@/apis';
-import { ROLE, ROLES_LIST } from '@/utils/queries/keys';
+import { ROLE } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import RoleForm from '@/pages/accounts/Roles/RoleForm';
@@ -16,18 +15,17 @@ import Button from '@/components/library/Button';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
+import { useRolesQueryResult } from '@/utils/user-utils';
+import { useQuery } from '@/utils/queries/hooks';
 
 export default function Roles() {
-  const api = useApi();
-  const result = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
-    return await api.getRoles();
-  });
+  const result = useRolesQueryResult();
 
   return (
     <div className={s.container}>
       <Card className={s.container}>
         <AsyncResourceRenderer resource={result.data}>
-          {(roles) => <RolesLayout roles={roles} onChange={result.refetch} />}
+          {(roles) => <RolesLayout roles={roles.items} onChange={result.refetch} />}
         </AsyncResourceRenderer>
       </Card>
     </div>
