@@ -1054,7 +1054,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       />
                     </div>
                   )}
-                  {handleInvestigateAlert && clickhouseEnabled && (
+                  {handleInvestigateAlert && icpFeatureEnabled && clickhouseEnabled && (
                     <Link
                       to={makeUrl(
                         location.pathname,
@@ -1126,6 +1126,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     handleAlertAssignments,
     handleAlertsReviewAssignments,
     icpEnabled,
+    icpFeatureEnabled,
     user.userId,
     reloadTable,
     isFalsePositiveEnabled,
