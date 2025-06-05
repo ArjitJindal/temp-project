@@ -9,10 +9,12 @@ import {
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
+  FUZZY_ADDRESS_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
+  getFuzzyAddressMatchingParameters,
   getIsActiveParameters,
   getPartialMatchParameters,
   getStopwordSettings,
@@ -42,6 +44,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   isActive?: boolean
   partialMatch?: boolean
   ruleStages: RuleStage[]
+  fuzzyAddressMatching?: boolean
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -73,6 +76,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
+        fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: ['fuzzinessRange', 'fuzzinessSetting', 'ruleStages'],
     }
@@ -90,6 +94,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       isActive,
       partialMatch,
       screeningProfileId,
+      fuzzyAddressMatching,
     } = this.parameters
     const user = this.user as User
     if (
@@ -163,6 +168,11 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         ...(providers.includes(SanctionsDataProviders.ACURIS)
           ? { screeningProfileId: screeningProfileId ?? undefined }
           : {}),
+        ...getFuzzyAddressMatchingParameters(
+          providers,
+          fuzzyAddressMatching,
+          user.contactDetails?.addresses
+        ),
       },
       hitContext,
       undefined

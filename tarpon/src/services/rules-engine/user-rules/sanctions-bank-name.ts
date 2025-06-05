@@ -11,11 +11,13 @@ import {
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
+  FUZZY_ADDRESS_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getFuzzyAddressMatchingParameters,
   getIsActiveParameters,
   getPartialMatchParameters,
   getStopwordSettings,
@@ -28,10 +30,11 @@ import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { Address } from '@/@types/openapi-public/Address'
 
 const caConcurrencyLimit = pLimit(10)
 
-type BankInfo = { bankName?: string; iban?: string }
+type BankInfo = { bankName?: string; iban?: string; address?: Address }
 
 export type SanctionsBankUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
@@ -42,6 +45,7 @@ export type SanctionsBankUserRuleParameters = {
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
+  fuzzyAddressMatching?: boolean
 }
 
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
@@ -60,6 +64,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
+        fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: ['fuzziness', 'fuzzinessSetting', 'ruleStages'],
       additionalProperties: false,
@@ -76,6 +81,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       isActive,
       partialMatch,
       screeningProfileId,
+      fuzzyAddressMatching,
     } = this.parameters
 
     if (
@@ -92,6 +98,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
           return {
             bankName: paymentDetails.bankName,
             iban: paymentDetails.IBAN,
+            address: paymentDetails.bankAddress,
           }
         }
         if (
@@ -102,6 +109,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
           return {
             bankName: paymentDetails.bankName,
             iban: paymentDetails.accountNumber,
+            address: paymentDetails.bankAddress,
           }
         }
       })
@@ -145,6 +153,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 ...(providers.includes(SanctionsDataProviders.ACURIS)
                   ? { screeningProfileId: screeningProfileId ?? undefined }
                   : {}),
+                ...getFuzzyAddressMatchingParameters(
+                  providers,
+                  fuzzyAddressMatching,
+                  bankInfo.address ? [bankInfo.address] : undefined
+                ),
               },
               hitContext
             )

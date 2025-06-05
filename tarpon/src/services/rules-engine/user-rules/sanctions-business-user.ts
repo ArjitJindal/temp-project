@@ -10,12 +10,14 @@ import {
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
+  FUZZY_ADDRESS_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getFuzzyAddressMatchingParameters,
   getIsActiveParameters,
   getPartialMatchParameters,
   getStopwordSettings,
@@ -31,6 +33,7 @@ import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { Address } from '@/@types/openapi-public/Address'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -51,6 +54,7 @@ export type SanctionsBusinessUserRuleParameters = {
   isActive?: boolean
   partialMatch?: boolean
   screeningProfileId?: string
+  fuzzyAddressMatching?: boolean
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -82,6 +86,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
+        fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: ['fuzziness', 'ruleStages', 'fuzzinessSetting'],
       additionalProperties: false,
@@ -99,6 +104,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       isActive,
       partialMatch,
       screeningProfileId,
+      fuzzyAddressMatching,
     } = this.parameters
 
     if (
@@ -113,20 +119,24 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       entityType: SanctionsDetailsEntityType
       name: string | undefined
       dateOfBirth?: string
+      addresses?: Address[]
     }> = [
       {
         entityType: 'LEGAL_NAME' as const,
         name: business.legalEntity.companyGeneralDetails.legalName ?? '',
+        addresses: business.legalEntity.contactDetails?.addresses,
       },
       ...(business.directors?.map((person) => ({
         entityType: 'DIRECTOR' as const,
         name: formatConsumerName(person.generalDetails?.name) || '',
         dateOfBirth: person.generalDetails.dateOfBirth,
+        addresses: person.contactDetails?.addresses,
       })) ?? []),
       ...(business.shareHolders?.map((person) => ({
         entityType: 'SHAREHOLDER' as const,
         name: formatConsumerName(person.generalDetails?.name) || '',
         dateOfBirth: person.generalDetails?.dateOfBirth,
+        addresses: person.contactDetails?.addresses,
       })) ?? []),
     ].filter(
       (entity) => entity.name && entityTypes?.includes(entity.entityType)
@@ -171,6 +181,11 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               screeningProfileId
                 ? { screeningProfileId }
                 : {}),
+              ...getFuzzyAddressMatchingParameters(
+                providers,
+                fuzzyAddressMatching,
+                entity.addresses
+              ),
             },
             hitContext
           )

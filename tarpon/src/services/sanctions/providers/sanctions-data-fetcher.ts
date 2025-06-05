@@ -2,6 +2,7 @@ import { uniq, uniqBy } from 'lodash'
 import { normalize, sanitizeString } from '@flagright/lib/utils'
 import { Db } from 'mongodb'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
+import { CommonOptions, format } from '@fragaria/address-formatter'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
 import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
@@ -44,6 +45,8 @@ import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { Address } from '@/@types/openapi-public/Address'
+import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -1161,6 +1164,74 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return result
   }
 
+  private isAddressFuzzyMatch(
+    userAddresses: Address[],
+    entityAddresses: SanctionsEntityAddress[]
+  ) {
+    for (const entityAddress of entityAddresses) {
+      for (const userAddress of userAddresses) {
+        if (
+          userAddress.postcode &&
+          entityAddress.postalCode &&
+          userAddress.postcode === entityAddress.postalCode
+        ) {
+          return true
+        }
+        if (
+          userAddress.city &&
+          entityAddress.city &&
+          userAddress.city === entityAddress.city
+        ) {
+          return true
+        }
+        if (
+          userAddress.addressLines?.every((line) => !line.trim()) ||
+          !entityAddress.addressLine?.trim()
+        ) {
+          return true
+        }
+        if (
+          userAddress.addressLines?.some((line) => line.trim()) &&
+          entityAddress.addressLine?.trim()
+        ) {
+          const options: CommonOptions & { output: 'array' } = {
+            abbreviate: true,
+            output: 'array',
+          }
+
+          const formattedUserAddress = format(
+            {
+              street: userAddress.addressLines.join(', '),
+              country: entityAddress.country,
+            },
+            options
+          ).join(', ')
+          const formattedEntityAddress = format(
+            {
+              street: entityAddress.addressLine,
+              country: entityAddress.country,
+            },
+            options
+          ).join(', ')
+
+          const percentageSimilarity = token_similarity_sort_ratio(
+            sanitizeString(formattedUserAddress),
+            sanitizeString(formattedEntityAddress),
+            {
+              omitSpaces: false,
+              partialMatch: true,
+              partialMatchLength: formattedUserAddress.split(' ').length,
+            }
+          )
+          if (percentageSimilarity >= 70) {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
   private filterResults(
     results: SanctionsEntity[],
     request: SanctionsSearchRequest,
@@ -1184,6 +1255,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       : normalize(modifiedTerm)
     const searchTermTokensLength = searchTerm.split(' ').length
     return results.filter((entity) => {
+      if (
+        !this.isAddressFuzzyMatch(
+          request.addresses ?? [],
+          entity.addresses ?? []
+        )
+      ) {
+        return false
+      }
       const values = uniq(entity.normalizedAka || []).map((name) =>
         this.processNameWithStopwords(name, stopwordSet)
       )

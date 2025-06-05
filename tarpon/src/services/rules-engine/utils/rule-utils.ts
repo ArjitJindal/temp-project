@@ -11,6 +11,8 @@ import { SanctionsSearchRequestEntityType } from '@/@types/openapi-internal/Sanc
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { PaymentDetailsName } from '@/utils/helpers'
 import dayjs from '@/utils/dayjs'
+import { Address } from '@/@types/openapi-public/Address'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -58,7 +60,7 @@ export function getEntityTypeForSearch(
 ): {
   entityType?: SanctionsSearchRequestEntityType
 } {
-  if (providers.includes('comply-advantage')) {
+  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
     return {}
   }
   return {
@@ -70,7 +72,7 @@ export function getFuzzinessSettings(
   providers: SanctionsDataProviderName[],
   fuzzinessSetting?: FuzzinessSettingOptions
 ): { fuzzinessSettings?: FuzzinessSetting } {
-  if (providers.includes('comply-advantage')) {
+  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
     return {}
   }
   return fuzzinessSetting
@@ -94,7 +96,7 @@ export function getStopwordSettings(
 ): {
   stopwords?: string[]
 } {
-  if (providers.includes('comply-advantage')) {
+  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
     return {}
   }
   return stopwords?.length
@@ -112,7 +114,10 @@ export function getIsActiveParameters(
   isActivePep?: boolean
   isActiveSanctioned?: boolean
 } {
-  if (providers.includes('comply-advantage') || !isActive) {
+  if (
+    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
+    !isActive
+  ) {
     return {}
   }
 
@@ -136,7 +141,10 @@ export function getPartialMatchParameters(
 ): {
   partialMatch?: boolean
 } {
-  if (providers.includes('comply-advantage') || !partialMatch) {
+  if (
+    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
+    !partialMatch
+  ) {
     return {}
   }
   return {
@@ -153,7 +161,7 @@ export function getScreeningValues(
   yearOfBirth?: number
 } {
   if (
-    providers.includes('comply-advantage') ||
+    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
     !paymentDetails ||
     !screeningValues
   ) {
@@ -168,4 +176,24 @@ export function getScreeningValues(
       ? { yearOfBirth: dayjs(paymentDetails.dateOfBirth).year() }
       : {}),
   }
+}
+
+export function getFuzzyAddressMatchingParameters(
+  providers: SanctionsDataProviderName[],
+  fuzzyAddressMatching?: boolean,
+  addresses?: Address[]
+): {
+  addresses?: Address[]
+} {
+  if (
+    providers.includes(SanctionsDataProviders.ACURIS) &&
+    fuzzyAddressMatching &&
+    addresses?.length
+  ) {
+    return {
+      addresses,
+    }
+  }
+
+  return {}
 }

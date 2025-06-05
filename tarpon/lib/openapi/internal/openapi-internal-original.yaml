@@ -14042,6 +14042,10 @@ components:
           type: boolean
         partialMatch:
           type: boolean
+        addresses:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Address
       required:
         - searchTerm
     ListSearchProfileResponse:

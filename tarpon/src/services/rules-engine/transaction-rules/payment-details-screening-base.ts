@@ -3,6 +3,7 @@ import { compact, uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
+  FUZZY_ADDRESS_MATCHING_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   GENERIC_SCREENING_VALUES_SCHEMA,
   IS_ACTIVE_SCHEMA,
@@ -16,6 +17,7 @@ import { RuleHitResult } from '../rule'
 import {
   getEntityTypeForSearch,
   getFuzzinessSettings,
+  getFuzzyAddressMatchingParameters,
   getIsActiveParameters,
   getPartialMatchParameters,
   getScreeningValues,
@@ -27,7 +29,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import {
-  getBankNameFromPaymentDetails,
+  extractBankInfoFromPaymentDetails,
   getPaymentDetailsName,
 } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
@@ -56,6 +58,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   isActive?: boolean
   partialMatch?: boolean
   screeningValues?: GenericScreeningValues[]
+  fuzzyAddressMatching?: boolean
 }
 
 @traceable
@@ -85,6 +88,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           },
           ['YOB', 'NATIONALITY']
         ),
+        fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: ['fuzziness', 'fuzzinessSetting', 'screeningFields'],
       additionalProperties: false,
@@ -107,13 +111,14 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       partialMatch,
       screeningProfileId,
       screeningValues,
+      fuzzyAddressMatching,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
       : []
 
-    const bankNames = screeningFields.includes('BANK_NAME')
-      ? compact([getBankNameFromPaymentDetails(paymentDetails)])
+    const bankInfos = screeningFields.includes('BANK_NAME')
+      ? compact([extractBankInfoFromPaymentDetails(paymentDetails)])
       : []
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const providers = getDefaultProviders()
@@ -148,6 +153,11 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
               ...getScreeningValues(providers, screeningValues, paymentDetail),
+              ...getFuzzyAddressMatchingParameters(
+                providers,
+                fuzzyAddressMatching,
+                paymentDetail.address ? [paymentDetail.address] : undefined
+              ),
             },
             hitContext,
             undefined,
@@ -164,20 +174,23 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           }
         }
       ),
-      ...bankNames.map(
-        async (bankName): Promise<SanctionsDetails | undefined> => {
+      ...bankInfos.map(
+        async (bankInfo): Promise<SanctionsDetails | undefined> => {
           const paymentMethodId = getPaymentMethodId(paymentDetails)
           const hitContext: SanctionsHitContext = {
             entity: 'BANK' as const,
             ruleInstanceId: this.ruleInstance.id ?? '',
             transactionId: this.transaction.transactionId,
             userId: user?.userId ?? paymentMethodId,
-            searchTerm: bankName,
+            searchTerm: bankInfo.bankName,
             entityType: 'BANK_NAME',
+          }
+          if (!bankInfo.bankName) {
+            return
           }
           const result = await this.sanctionsService.search(
             {
-              searchTerm: bankName,
+              searchTerm: bankInfo.bankName,
               types: this.parameters.screeningTypes || [],
               fuzziness: fuzziness / 100,
               monitoring: {
@@ -188,6 +201,11 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getStopwordSettings(providers, stopwords),
               ...getIsActiveParameters(providers, screeningTypes, isActive),
               ...getPartialMatchParameters(providers, partialMatch),
+              ...getFuzzyAddressMatchingParameters(
+                providers,
+                fuzzyAddressMatching,
+                bankInfo.address ? [bankInfo.address] : undefined
+              ),
             },
             hitContext,
             undefined,
@@ -196,7 +214,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
 
           if (result.hitsCount > 0) {
             return {
-              name: bankName,
+              name: bankInfo.bankName,
               searchId: result.searchId,
               entityType: 'BANK_NAME',
               hitContext,

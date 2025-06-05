@@ -13,6 +13,7 @@ import { User } from '@/@types/openapi-public/User'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { Address } from '@/@types/openapi-public/Address'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -145,17 +146,26 @@ export type PaymentDetailsName = {
   entityType: SanctionsDetailsEntityType
   countryOfNationality?: CountryCode
   dateOfBirth?: string
+  address?: Address
 }
 
-export const getBankNameFromPaymentDetails = (
+export const extractBankInfoFromPaymentDetails = (
   paymentDetails: PaymentDetails
-): string | undefined => {
+):
+  | {
+      bankName?: string
+      address?: Address
+    }
+  | undefined => {
   switch (paymentDetails.method) {
     case 'GENERIC_BANK_ACCOUNT':
     case 'IBAN':
     case 'ACH':
     case 'SWIFT':
-      return paymentDetails.bankName
+      return {
+        bankName: paymentDetails.bankName,
+        address: paymentDetails.bankAddress,
+      }
     default:
       return undefined
   }
@@ -235,6 +245,7 @@ export const getPaymentDetailsName = (
           namesToSearch.push({
             name: formattedName,
             entityType: 'PAYMENT_NAME',
+            address: paymentDetails.address,
           })
         }
       }

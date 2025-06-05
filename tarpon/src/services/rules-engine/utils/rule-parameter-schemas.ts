@@ -898,7 +898,18 @@ export const IS_ACTIVE_SCHEMA = {
     }
   ),
 } as const
-
+export const FUZZY_ADDRESS_MATCHING_SCHEMA = {
+  type: 'boolean',
+  nullable: true,
+  title: 'Fuzzy address matching',
+  description: `If true, fuzzy address matching will be applied with tuned threshold`,
+  ...uiSchema(
+    {},
+    {
+      requiredFeatures: ['ACURIS'],
+    }
+  ),
+} as const
 export const PARTIAL_MATCH_SCHEMA = {
   type: 'boolean',
   nullable: true,
