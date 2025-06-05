@@ -300,7 +300,10 @@ export class RuleHitsStatsDashboardMetric {
       },
     ]
 
-    const buildPipeline = (timestampMatch?: Record<string, any>) => [
+    const buildPipeline = (
+      timestampMatch?: Record<string, any>,
+      fieldName: string = 'timestamp'
+    ) => [
       {
         $match: {
           ...timestampMatch,
@@ -324,7 +327,7 @@ export class RuleHitsStatsDashboardMetric {
                 format: HOUR_DATE_FORMAT,
                 date: {
                   $toDate: {
-                    $toLong: '$timestamp',
+                    $toLong: `$${fieldName}`,
                   },
                 },
               },
@@ -353,7 +356,10 @@ export class RuleHitsStatsDashboardMetric {
 
     await transactions
       .aggregate(
-        withUpdatedAt(buildPipeline(transactionTimestampMatch), lastUpdatedAt),
+        withUpdatedAt(
+          buildPipeline(transactionTimestampMatch, 'timestamp'),
+          lastUpdatedAt
+        ),
         {
           allowDiskUse: true,
         }
@@ -362,7 +368,10 @@ export class RuleHitsStatsDashboardMetric {
 
     await users
       .aggregate(
-        withUpdatedAt(buildPipeline(userTimestampMatch), lastUpdatedAt),
+        withUpdatedAt(
+          buildPipeline(userTimestampMatch, 'createdTimestamp'),
+          lastUpdatedAt
+        ),
         {
           allowDiskUse: true,
         }
