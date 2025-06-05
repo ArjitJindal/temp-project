@@ -1175,29 +1175,43 @@ export class UserRepository {
       const uniqueTagsCollection = db.collection(
         UNIQUE_TAGS_COLLECTION(this.tenantId)
       )
+      const pipeline: Document[] = [
+        {
+          $match: {
+            type: 'USER',
+            tag: { $ne: null },
+          },
+        },
+        { $group: { _id: '$tag' } },
+      ]
 
       const uniqueTags = await uniqueTagsCollection
-        .find({ type: 'USER' })
-        .project({ tag: 1 })
+        .aggregate<{ _id: string }>(pipeline)
         .toArray()
 
-      return uniqueTags.map((doc) => doc.tag)
+      return uniqueTags.map((doc) => doc._id)
     }
     if (params.field === 'TAGS_VALUE') {
       const uniqueTagsCollection = db.collection(
         UNIQUE_TAGS_COLLECTION(this.tenantId)
       )
+      const pipeline: Document[] = [
+        {
+          $match: {
+            type: 'USER',
+            ...(params.filter ? { tag: params.filter } : {}),
+            value: { $ne: null },
+          },
+        },
+        { $group: { _id: '$value' } },
+        { $limit: 100 },
+      ]
+
       const uniqueTags = await uniqueTagsCollection
-        .find({
-          type: 'USER',
-          ...(params.filter
-            ? { tag: prefixRegexMatchFilter(params.filter) }
-            : {}),
-        })
-        .project({ value: 1 })
+        .aggregate<{ _id: string }>(pipeline)
         .toArray()
 
-      return uniqueTags.map((doc) => doc.value)
+      return uniqueTags.map((doc) => doc._id)
     }
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
