@@ -532,8 +532,8 @@ export class RuleHitsStatsDashboardMetric {
 
     const finalQuery = `
       WITH
-        transaction AS (${transactionsQuery}),
-        alerts AS (${alertsQuery}),
+        txn AS (${transactionsQuery}),
+        alerts_ct AS (${alertsQuery}),
         transactionExecutedRules AS (${transactionExecutedRulesQuery}),
         userExecutedRules AS (${userExecutedRulesQuery}),
         combined AS (
@@ -543,8 +543,8 @@ export class RuleHitsStatsDashboardMetric {
             coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
             coalesce(a.openAlertsCount, 0) as openAlertsCount,
             coalesce(tra.executedCount, 0) + coalesce(user.executedCount, 0) as runCount
-          FROM transaction t
-          FULL OUTER JOIN alerts a ON t.ruleInstanceId = a.ruleInstanceId AND t.ruleId = a.ruleId
+          FROM txn t
+          FULL OUTER JOIN alerts_ct a ON t.ruleInstanceId = a.ruleInstanceId AND t.ruleId = a.ruleId
           FULL OUTER JOIN transactionExecutedRules tra ON t.ruleInstanceId = tra.ruleInstanceId AND t.ruleId = tra.ruleId
           FULL OUTER JOIN userExecutedRules user ON a.ruleInstanceId = user.ruleInstanceId AND a.ruleId = user.ruleId
 

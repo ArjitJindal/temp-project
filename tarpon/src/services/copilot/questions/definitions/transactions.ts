@@ -50,7 +50,7 @@ const clickhouseTransactionQuery = async (
     `
 
   const query = `
-  WITH transactions AS (
+  WITH txn AS (
     ${transactionsQuery}
     LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
   ),
@@ -64,11 +64,11 @@ const clickhouseTransactionQuery = async (
         OR u.id = t.destinationUserId
   ) 
   SELECT
-    transactions.*,
+    txn.*,
     users.username as originConsumerName,
     users.username as destinationConsumerName
-  FROM transactions
-  LEFT JOIN users ON transactions.originUserId = users.userId
+  FROM txn
+  LEFT JOIN users ON txn.originUserId = users.userId
   `
 
   const countQuery = `

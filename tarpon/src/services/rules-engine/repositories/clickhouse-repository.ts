@@ -408,7 +408,7 @@ export class ClickhouseTransactionsRepository {
     const whereClause = await this.getTransactionsWhereConditions(params)
 
     const query = `
-      WITH transactions AS (
+      WITH txn AS (
         SELECT type as transactionType, originAmountDetails_amountInUsd
         FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
         WHERE ${whereClause} ORDER BY ${sortField} ${
@@ -423,7 +423,8 @@ export class ClickhouseTransactionsRepository {
         min(originAmountDetails_amountInUsd) as min,
           max(originAmountDetails_amountInUsd) as max,
         median(originAmountDetails_amountInUsd) as median
-      FROM transactions
+      FROM txn
+      WHERE transactionType != ''
       GROUP BY transactionType
     `
 
