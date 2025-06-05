@@ -1094,14 +1094,71 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (!stopwords) {
       return name
     }
+
     const normalizedText = name.replace(/\.(?!\s)/g, '. ')
+
     const words = normalizedText.split(' ')
+
     const filteredWords = words.filter((word) => {
       const lowerCaseWord = word.toLowerCase()
-      return !stopwords.has(lowerCaseWord)
+      if (stopwords.has(lowerCaseWord)) {
+        return false
+      }
+
+      // Keep Very Short Words (If Not Exact Stopwords)
+      // If the word is very short (less than 3 chars) and wasn't an exact stopword,
+      // keep it. Fuzzy matching on very short words is unreliable.
+      if (lowerCaseWord.length < 3) {
+        return true
+      }
+
+      // Check if the word is a close misspelling of any stopword.
+      const isStopwordByFuzzyMatch = Array.from(stopwords).some((stopword) => {
+        // Skip Very Short Stopwords for Fuzzy Matching
+        // Do not attempt to fuzzy match against stopwords that are themselves very short (e.g., "co", "l").
+        if (stopword.length < 3) {
+          return false // Stopword is too short for reliable fuzzy comparison target.
+        }
+
+        // Length Similarity Pre-check
+        // Only perform fuzzy matching if the word and stopword lengths are reasonably close
+        // (absolute difference no more than 2 characters).
+        if (Math.abs(lowerCaseWord.length - stopword.length) > 2) {
+          return false // Lengths are too different for a likely meaningful fuzzy match.
+        }
+
+        const similarity = jaro_winkler_distance(lowerCaseWord, stopword, {
+          omitSpaces: true,
+          partialMatch: false,
+          partialMatchLength: 0,
+        })
+
+        // Dynamic Jaro-Winkler Threshold
+        // Adjust the similarity threshold based on the length of the stopword.
+        // Shorter stopwords might need a slightly different sensitivity.
+        let dynamicThreshold = 82.0 // Default threshold for longer stopwords (e.g., "corporation", "limited").
+        if (stopword.length <= 4) {
+          // For shorter stopwords (length 3 or 4, e.g., "inc", "ltd", "bank").
+          dynamicThreshold = 80.0 // Use a slightly different threshold.
+        }
+
+        // If the similarity score exceeds the dynamic threshold, consider it a fuzzy match.
+        if (similarity > dynamicThreshold) {
+          return true // Word is a stopword by fuzzy match.
+        }
+        return false // Not a fuzzy match with this particular stopword.
+      })
+
+      // If the word was identified as a stopword by fuzzy match, filter it out.
+      // Otherwise (not an exact match, not a fuzzy match), keep it.
+      return !isStopwordByFuzzyMatch
     })
 
-    return filteredWords.join(' ')
+    // Join the remaining (filtered) words back into a string, separated by spaces.
+    const result = filteredWords.join(' ').trim()
+
+    // Return the final processed name.
+    return result
   }
 
   private filterResults(
