@@ -78,10 +78,12 @@ paths:
             Boolean string whether Flagright should validate if provided
             transactionId exist. True by default
           name: validateTransactionId
+          x-fern-ignore: true
         - schema:
             $ref: '#/components/schemas/BooleanString'
           in: query
           name: _trsOnly
+          x-fern-ignore: true
       requestBody:
         description: ''
         content:
@@ -846,6 +848,7 @@ paths:
             $ref: '#/components/schemas/BooleanString'
           in: query
           name: _krsOnly
+          x-fern-ignore: true
       requestBody:
         description: ''
         content:
@@ -1256,6 +1259,7 @@ paths:
             $ref: '#/components/schemas/BooleanString'
           in: query
           name: _krsOnly
+          x-fern-ignore: true
       requestBody:
         description: ''
         content:
@@ -2297,6 +2301,7 @@ components:
           $ref: '#/components/schemas/KYCStatusDetails'
         eoddDate:
           type: number
+          x-fern-ignore: true
         employmentStatus:
           $ref: '#/components/schemas/EmploymentStatus'
         occupation:
@@ -2341,6 +2346,7 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
+          x-fern-ignore: true
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         savedPaymentDetails:
@@ -4417,6 +4423,7 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
+          x-fern-ignore: true
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         acquisitionChannel:
