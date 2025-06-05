@@ -102,10 +102,17 @@ export class DashboardStatsRepository {
       timeRange
     )
   }
+  public async recalculateRuleRunCountStats(timeRange?: TimeRange) {
+    await RuleHitsStatsDashboardMetric.refreshRuleRunCount(
+      this.tenantId,
+      timeRange
+    )
+  }
 
   public async refreshRuleHitStats(timeRange?: TimeRange) {
     await this.recalculateRuleHitStats(timeRange)
     await this.recalculateRuleHitAlertsStats(timeRange)
+    await this.recalculateRuleRunCountStats(timeRange)
   }
   public async getRuleHitCountStats(
     startTimestamp: number,

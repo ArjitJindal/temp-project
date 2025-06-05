@@ -2,6 +2,7 @@ import {
   getCaseRepo,
   getStatsRepo,
   getTransactionsRepo,
+  getUserRepo,
   hitRule,
 } from './helpers'
 import dayjs from '@/utils/dayjs'
@@ -13,6 +14,8 @@ import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
+import { getTestUser } from '@/test-utils/user-test-utils'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 dynamoDbSetupHook()
 
@@ -38,9 +41,15 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
       const caseRepository = await getCaseRepo(TENANT_ID)
       const statsRepository = await getStatsRepo(TENANT_ID)
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-
-      const originUserId = 'test-user-id'
-      const destinationUserId = 'test-user-id-2'
+      const userRepository = await getUserRepo(TENANT_ID)
+      const originUser = (await getTestUser({
+        userId: 'test-user-id',
+      })) as InternalConsumerUser
+      const destinationUser = (await getTestUser({
+        userId: 'test-user-id-2',
+      })) as InternalConsumerUser
+      await userRepository.saveUserMongo(originUser)
+      await userRepository.saveUserMongo(destinationUser)
       const hitRules = [hitRule()]
       const transactions = [
         {
@@ -50,8 +59,8 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
           status: 'BLOCK' as RuleAction,
           hitRules: hitRules,
           executedRules: hitRules,
-          originUserId: originUserId,
-          destinationUserId: destinationUserId,
+          originUserId: originUser.userId,
+          destinationUserId: destinationUser.userId,
         },
         {
           ...getTestTransaction({
@@ -60,13 +69,19 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
           status: 'BLOCK' as RuleAction,
           hitRules: hitRules,
           executedRules: hitRules,
-          originUserId: originUserId,
-          destinationUserId: destinationUserId,
+          originUserId: originUser.userId,
+          destinationUserId: destinationUser.userId,
         },
       ]
 
       await Promise.all(
-        transactions.map((t) => transactionRepository.addTransactionToMongo(t))
+        transactions.map((t) =>
+          transactionRepository.addTransactionToMongo({
+            ...t,
+            originUserId: t.originUserId,
+            destinationUserId: t.destinationUserId,
+          })
+        )
       )
 
       const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
@@ -100,6 +115,7 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
             ruleInstanceId: '1',
             hitCount: 1,
             openAlertsCount: 1,
+            runCount: 1,
           },
         ],
         total: 1,
@@ -111,11 +127,17 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
       const caseRepository = await getCaseRepo(TENANT_ID)
       const statsRepository = await getStatsRepo(TENANT_ID)
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-
+      const userRepository = await getUserRepo(TENANT_ID)
+      const originUser = (await getTestUser({
+        userId: 'test-user-id',
+      })) as InternalConsumerUser
+      const destinationUser = (await getTestUser({
+        userId: 'test-user-id-2',
+      })) as InternalConsumerUser
+      await userRepository.saveUserMongo(originUser)
+      await userRepository.saveUserMongo(destinationUser)
       const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
-      const originUserId = 'test-user-id'
-      const destinationUserId = 'test-user-id-2'
       const transaction = {
         ...getTestTransaction({
           timestamp,
@@ -123,8 +145,8 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
         status: 'BLOCK' as RuleAction,
         hitRules: [hitRule()],
         executedRules: [hitRule()],
-        originUserId: originUserId,
-        destinationUserId: destinationUserId,
+        originUserId: originUser.userId,
+        destinationUserId: destinationUser.userId,
         caseAggregates: DEFAULT_CASE_AGGREGATES,
       }
 
@@ -190,6 +212,7 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
             ruleInstanceId: '1',
             hitCount: 1,
             openAlertsCount: 3,
+            runCount: 1,
           },
         ],
         total: 1,
@@ -201,11 +224,17 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
       const caseRepository = await getCaseRepo(TENANT_ID)
       const statsRepository = await getStatsRepo(TENANT_ID)
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-
+      const userRepository = await getUserRepo(TENANT_ID)
+      const originUser = (await getTestUser({
+        userId: 'test-user-id',
+      })) as InternalConsumerUser
+      const destinationUser = (await getTestUser({
+        userId: 'test-user-id-2',
+      })) as InternalConsumerUser
+      await userRepository.saveUserMongo(originUser)
+      await userRepository.saveUserMongo(destinationUser)
       const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
-      const originUserId = 'test-user-id'
-      const destinationUserId = 'test-user-id-2'
       const transaction = {
         ...getTestTransaction({
           timestamp,
@@ -213,8 +242,8 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
         status: 'BLOCK' as RuleAction,
         hitRules: [hitRule()],
         executedRules: [hitRule()],
-        originUserId: originUserId,
-        destinationUserId: destinationUserId,
+        originUserId: originUser.userId,
+        destinationUserId: destinationUser.userId,
       }
 
       await transactionRepository.addTransactionToMongo(transaction)
@@ -302,6 +331,7 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
             ruleInstanceId: '1',
             hitCount: 1,
             openAlertsCount: 3,
+            runCount: 1,
           },
         ],
         total: 1,

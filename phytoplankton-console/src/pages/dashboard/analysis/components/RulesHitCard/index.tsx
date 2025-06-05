@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
+import { Tooltip } from 'antd';
 import { generateAlertsListUrl } from '../HitsPerUserCard/utils';
+import s from './style.module.less';
 import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -17,6 +19,8 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsRulesCount } from '@/apis';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
+import { formatNumber } from '@/utils/number';
+import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 
 export default function RuleHitCard(props: WidgetProps) {
   const api = useApi();
@@ -50,6 +54,39 @@ export default function RuleHitCard(props: WidgetProps) {
     helper.simple<'hitCount'>({
       title: 'Rule hits',
       key: 'hitCount',
+    }),
+    helper.derived<string>({
+      id: 'runCount',
+      title: 'Hit rate',
+      value: (row) => {
+        if (row.hitCount && row.runCount) {
+          return `${((row.hitCount / row.runCount) * 100).toFixed(2)}%`;
+        }
+        return '0%';
+      },
+      sorting: true,
+      type: {
+        render: (_value, { item: ruleInstance }) => {
+          const displayHitCount = formatNumber(ruleInstance.hitCount ?? 0);
+          const displayRunCount = formatNumber(ruleInstance.runCount ?? 0);
+          const percent =
+            ruleInstance.hitCount && ruleInstance.runCount
+              ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
+              : 0;
+          return (
+            <>
+              <div className={s.tag}>
+                <Tooltip title={<>{`Hit: ${displayHitCount} / Run: ${displayRunCount}`}</>}>
+                  {(percent ?? 0.0)?.toFixed(2)}%
+                </Tooltip>
+                {percent > 10 && (
+                  <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
+                )}
+              </div>
+            </>
+          );
+        },
+      },
     }),
     helper.simple<'openAlertsCount'>({
       title: 'Open alerts',
@@ -89,7 +126,6 @@ export default function RuleHitCard(props: WidgetProps) {
         pageSize: p?.pageSize ?? paginationParams.pageSize,
         page: p?.page ?? paginationParams.page,
       });
-
       return {
         items: result.data,
         total: result.total,

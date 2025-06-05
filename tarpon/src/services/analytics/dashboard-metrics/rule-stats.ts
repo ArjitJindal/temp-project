@@ -11,6 +11,7 @@ import {
   CASES_COLLECTION,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
   TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 
 import { Case } from '@/@types/openapi-internal/Case'
@@ -44,6 +45,7 @@ function getRuleStatsConditions(startDateText: string, endDateText: string) {
         },
         hitCount: { $sum: '$hitCount' },
         openAlertsCount: { $sum: '$openAlertsCount' },
+        runCount: { $sum: '$runCount' },
       },
     },
   ]
@@ -254,6 +256,128 @@ export class RuleHitsStatsDashboardMetric {
       { hitCount: { $exists: true } }
     )
   }
+  // Aggregate and store run counts per rule from transactions and users collections.
+  public static async refreshRuleRunCount(
+    tenantId,
+    timeRange?: TimeRange
+  ): Promise<void> {
+    const db = await getMongoDbClientDb()
+    const transactions = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(tenantId)
+    )
+    const users = db.collection<any>(USERS_COLLECTION(tenantId))
+    await this.createIndexes(tenantId)
+    const aggregationCollection =
+      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+
+    const getTimestampMatch = (
+      fieldName: string,
+      range?: TimeRange
+    ): Record<string, any> | undefined => {
+      if (!range) {
+        return undefined
+      }
+      const { start, end } = getAffectedInterval(range, 'HOUR')
+      return {
+        [fieldName]: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
+
+    const transactionTimestampMatch = getTimestampMatch('timestamp', timeRange)
+    const userTimestampMatch = getTimestampMatch('createdTimestamp', timeRange)
+
+    const mergePipeline = [
+      {
+        $merge: {
+          into: aggregationCollection,
+          on: ['date', 'ruleId', 'ruleInstanceId'],
+          whenMatched: 'merge',
+          whenNotMatched: 'insert',
+        },
+      },
+    ]
+
+    const buildPipeline = (timestampMatch?: Record<string, any>) => [
+      {
+        $match: {
+          ...timestampMatch,
+        },
+      },
+      {
+        $unwind: { path: '$executedRules' },
+      },
+      {
+        $match: {
+          'executedRules.ruleId': { $exists: true },
+          'executedRules.ruleInstanceId': { $exists: true },
+          'executedRules.isShadow': { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: {
+                format: HOUR_DATE_FORMAT,
+                date: {
+                  $toDate: {
+                    $toLong: '$timestamp',
+                  },
+                },
+              },
+            },
+            ruleId: '$executedRules.ruleId',
+            ruleInstanceId: '$executedRules.ruleInstanceId',
+          },
+          rulesRunCount: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          ruleId: '$_id.ruleId',
+          ruleInstanceId: '$_id.ruleInstanceId',
+          runCount: '$rulesRunCount',
+        },
+      },
+      ...mergePipeline,
+    ]
+
+    const lastUpdatedAt = Date.now()
+
+    await transactions
+      .aggregate(
+        withUpdatedAt(buildPipeline(transactionTimestampMatch), lastUpdatedAt),
+        {
+          allowDiskUse: true,
+        }
+      )
+      .next()
+
+    await users
+      .aggregate(
+        withUpdatedAt(buildPipeline(userTimestampMatch), lastUpdatedAt),
+        {
+          allowDiskUse: true,
+        }
+      )
+      .next()
+
+    await cleanUpStaleData(
+      aggregationCollection,
+      'date',
+      lastUpdatedAt,
+      timeRange,
+      'HOUR',
+      { runCount: { $exists: true } }
+    )
+  }
 
   private static async createIndexes(tenantId: string) {
     const db = await getMongoDbClientDb()
@@ -310,6 +434,7 @@ export class RuleHitsStatsDashboardMetric {
           _id: { ruleId: string; ruleInstanceId: string }
           hitCount: number
           openAlertsCount: number
+          runCount: number
         }[]
         totalCount: { count: number }[]
       }>(
@@ -335,6 +460,7 @@ export class RuleHitsStatsDashboardMetric {
         ruleInstanceId: x._id.ruleInstanceId,
         hitCount: x.hitCount,
         openAlertsCount: x.openAlertsCount,
+        runCount: x.runCount,
       })),
       total: result.totalCount[0]?.count ?? 0,
     }
@@ -359,14 +485,37 @@ export class RuleHitsStatsDashboardMetric {
     // data in a new table
 
     const transactionsQuery = `
+
     SELECT
       arrayJoin(nonShadowHitRuleIdPairs).1 AS ruleInstanceId,
       arrayJoin(nonShadowHitRuleIdPairs).2 AS ruleId,
       count() as hitCount
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
     WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
     GROUP BY ruleInstanceId, ruleId
   `
+
+    const transactionExecutedRulesQuery = `
+    SELECT
+      tupleElement(ruleTuple, 1) AS ruleInstanceId,
+      tupleElement(ruleTuple, 2) AS ruleId,
+      count() as executedCount
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+    ARRAY JOIN nonShadowExecutedRuleIdPairs AS ruleTuple
+    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
+    GROUP BY ruleInstanceId, ruleId
+
+    `
+    const userExecutedRulesQuery = `
+    SELECT
+      tupleElement(ruleTuple, 1) AS ruleInstanceId,
+      tupleElement(ruleTuple, 2) AS ruleId,
+      count() as executedCount
+    FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+    ARRAY JOIN nonShadowExecutedRuleIdPairs AS ruleTuple
+    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
+    GROUP BY ruleInstanceId, ruleId
+    `
 
     const alertsQuery = `
     WITH
@@ -376,23 +525,29 @@ export class RuleHitsStatsDashboardMetric {
       alert.ruleId as ruleId,
       countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
       countIf(alert.numberOfTransactionsHit = 0) as hitCount
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     WHERE alert.createdTimestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
     GROUP BY ruleInstanceId, ruleId
   `
 
     const finalQuery = `
       WITH
-        transactions AS (${transactionsQuery}),
+        transaction AS (${transactionsQuery}),
         alerts AS (${alertsQuery}),
+        transactionExecutedRules AS (${transactionExecutedRulesQuery}),
+        userExecutedRules AS (${userExecutedRulesQuery}),
         combined AS (
           SELECT
             coalesce(NULLIF(t.ruleId, ''), NULLIF(a.ruleId, '')) as ruleId,
             coalesce(NULLIF(t.ruleInstanceId, ''), NULLIF(a.ruleInstanceId, '')) as ruleInstanceId,
             coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
-            coalesce(a.openAlertsCount, 0) as openAlertsCount
-          FROM transactions t
+            coalesce(a.openAlertsCount, 0) as openAlertsCount,
+            coalesce(tra.executedCount, 0) + coalesce(user.executedCount, 0) as runCount
+          FROM transaction t
           FULL OUTER JOIN alerts a ON t.ruleInstanceId = a.ruleInstanceId AND t.ruleId = a.ruleId
+          FULL OUTER JOIN transactionExecutedRules tra ON t.ruleInstanceId = tra.ruleInstanceId AND t.ruleId = tra.ruleId
+          FULL OUTER JOIN userExecutedRules user ON a.ruleInstanceId = user.ruleInstanceId AND a.ruleId = user.ruleId
+
         ),
         total_count AS (
           SELECT count(*) as total FROM combined
@@ -402,6 +557,7 @@ export class RuleHitsStatsDashboardMetric {
         ruleInstanceId,
         hitCount,
         openAlertsCount,
+        runCount,
         (SELECT total FROM total_count) as totalCount
       FROM combined
       ORDER BY hitCount DESC
@@ -420,6 +576,7 @@ export class RuleHitsStatsDashboardMetric {
         ruleInstanceId: item.ruleInstanceId,
         hitCount: Number(item.hitCount ?? 0),
         openAlertsCount: Number(item.openAlertsCount ?? 0),
+        runCount: Number(item.runCount ?? 0),
       })),
       total: Number(items[0]?.totalCount ?? 0),
     }

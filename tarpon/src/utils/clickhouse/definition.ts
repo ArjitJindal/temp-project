@@ -416,6 +416,16 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractArrayRaw(data, 'executedRules')
         )
       )`,
+      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+        arrayMap(x -> (
+          JSONExtractString(x, 'ruleInstanceId'),
+          JSONExtractString(x, 'ruleId')
+        ),
+        arrayFilter(
+          x -> JSONExtractBool(x, 'isShadow') != true,
+          JSONExtractArrayRaw(data, 'executedRules')
+        )
+      )`,
       "originAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'transactionAmount')",
       "originAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
       "destinationAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'transactionAmount')",
@@ -586,6 +596,16 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           WHEN JSON_VALUE(data, '$.drsScore.isUpdatable') = 'false' THEN 'Yes'
           ELSE NULL
       END`,
+      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+        arrayMap(x -> (
+          JSONExtractString(x, 'ruleInstanceId'),
+          JSONExtractString(x, 'ruleId')
+        ),
+        arrayFilter(
+          x -> JSONExtractBool(x, 'isShadow') != true,
+          JSONExtractArrayRaw(data, 'executedRules')
+        )
+      )`,
       `craRiskLevel Nullable(String) MATERIALIZED JSON_VALUE(data, '$.drsScore.manualRiskLevel')`,
       `drsScore_drsScore Float64 MATERIALIZED JSONExtractFloat(data, 'drsScore', 'drsScore')`,
       `krsScore_krsScore Float64 MATERIALIZED JSONExtractFloat(data, 'krsScore', 'krsScore')`,
