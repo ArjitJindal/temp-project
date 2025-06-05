@@ -857,13 +857,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             normalisedPepTier
           )
         }),
-      associates: entity.individualLinks.map((link) => ({
-        name: this.getEntityName(link, entityType),
-        association: link.relationship,
-        sanctionsSearchTypes: uniq(
-          link.datasets.map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-        ),
-      })),
+      associates: this.getAssociates(entity),
       mediaSources: entity.evidences
         .filter(
           ({ datasets }) =>
@@ -1017,13 +1011,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             normalisedEvidenceName
           )
         }),
-      associates: entity.businessLinks.map((link) => ({
-        name: this.getEntityName(link, entityType),
-        association: link.relationship,
-        sanctionsSearchTypes: uniq(
-          link.datasets.map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-        ),
-      })),
+      associates: this.getAssociates(entity),
       mediaSources: entity.evidences
         .filter(
           ({ datasets }) =>
@@ -1102,6 +1090,24 @@ export class AcurisProvider extends SanctionsDataFetcher {
       nationality: countryCodes,
       countries: compact(countryCodes.map((c) => COUNTRIES[c])),
     }
+  }
+
+  private getAssociates(entity: AcurisEntity) {
+    const individualLinks = entity.individualLinks.map((link) => ({
+      name: this.getEntityName(link, 'PERSON'),
+      association: link.relationship,
+      sanctionsSearchTypes: uniq(
+        link.datasets.map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
+      ),
+    }))
+    const businessLinks = entity.businessLinks.map((link) => ({
+      name: this.getEntityName(link, 'BUSINESS'),
+      association: link.relationship,
+      sanctionsSearchTypes: uniq(
+        link.datasets.map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
+      ),
+    }))
+    return [...individualLinks, ...businessLinks]
   }
 
   private getEntityName<
