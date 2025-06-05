@@ -6,15 +6,17 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
   }
 
   if (navigator.clipboard && window.isSecureContext) {
-    const permissionStatus = await navigator.permissions.query({
-      name: 'clipboard-write' as PermissionName,
-    });
-    if (permissionStatus.state === 'denied') {
-      throw new Error('Copy permission denied');
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      const permissionStatus = await navigator.permissions.query({
+        name: 'clipboard-write' as PermissionName,
+      });
+      if (permissionStatus.state === 'denied') {
+        throw new Error('Copy permission denied');
+      }
     }
-
-    await navigator.clipboard.writeText(text);
-    return true;
   }
 
   try {
