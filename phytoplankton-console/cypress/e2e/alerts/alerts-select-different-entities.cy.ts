@@ -14,7 +14,7 @@ describe('Selection of entities', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { ADVANCED_WORKFLOWS: true, RBAC_V2: true },
+      features: { ADVANCED_WORKFLOWS: true },
     });
   });
 

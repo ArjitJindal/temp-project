@@ -11967,7 +11967,6 @@ components:
         - 314A
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
-        - RBAC_V2
         - WORKFLOWS_BUILDER
       description: ''
     NewRiskFactorIdResponse:

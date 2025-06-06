@@ -10,7 +10,7 @@ describe('SAR Generate', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { SAR: true, RBAC_V2: true },
+      features: { SAR: true },
     });
   });
   it('should open SAR report form', () => {

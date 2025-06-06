@@ -14,7 +14,6 @@ describe('Escalate a case from case-details', () => {
         ADVANCED_WORKFLOWS: true,
         NOTIFICATIONS: true,
         MULTI_LEVEL_ESCALATION: false,
-        RBAC_V2: true,
       },
     });
   });

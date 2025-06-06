@@ -12,10 +12,7 @@ describe('Closing and Re-Opening the cases', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: {
-        NOTIFICATIONS: true,
-        RBAC_V2: true,
-      },
+      features: { NOTIFICATIONS: true },
     });
   });
   it('should close a case', () => {

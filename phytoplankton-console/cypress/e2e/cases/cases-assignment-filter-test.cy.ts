@@ -5,7 +5,6 @@ describe('Using Assignment filter and assigning cases', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
 

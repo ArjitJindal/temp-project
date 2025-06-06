@@ -7,7 +7,6 @@ describe('Audit log filter - entity type', () => {
     beforeEach(() => {
       cy.loginWithPermissions({
         permissions: REQUIRED_PERMISSIONS,
-        features: { RBAC_V2: true },
       });
     });
 

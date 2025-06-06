@@ -5,7 +5,6 @@ describe('Rule create and delete', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
 

@@ -8,7 +8,6 @@ describe('Accounts - CRUD Test', () => {
           seats: 10,
         },
       },
-      features: { RBAC_V2: true },
     });
   });
 

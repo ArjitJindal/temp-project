@@ -8,7 +8,6 @@ import {
 import { StackConstants } from '@lib/constants'
 import { memoize } from 'lodash'
 import {
-  convertPermissions,
   getNamespace,
   getNamespacedRoleName,
   getRoleDisplayName,
@@ -26,6 +25,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { logger } from '@/core/logger'
 import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
+import { getOptimizedPermissions } from '@/services/rbac/utils/permissions'
 
 @traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
@@ -47,16 +47,17 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Invalid role type')
     }
 
-    const { statements, permissions } = convertPermissions(
+    const { statements } = data.params
+
+    const optimizedStatements = getOptimizedPermissions(
       namespace,
-      data.params.permissions,
-      data.params.statements
+      statements ?? []
     )
 
     const role: AccountRole = {
       ...data.params,
-      statements,
-      permissions,
+      statements: optimizedStatements,
+      permissions: data.params.permissions,
     }
 
     await this.dynamoClient.send(

@@ -10,7 +10,6 @@ describe('Custom Role - CRUD Test', () => {
     ];
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
 

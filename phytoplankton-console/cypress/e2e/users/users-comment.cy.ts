@@ -9,7 +9,6 @@ describe('Add a comment to a user', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
 

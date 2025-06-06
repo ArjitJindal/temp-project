@@ -11,7 +11,7 @@ describe('QA Assignee Column', () => {
     ];
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { QA: qaFlag, RBAC_V2: true },
+      features: { QA: qaFlag },
     });
   });
 

@@ -6,7 +6,6 @@ describe('Filter according to case id (optimized)', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
 

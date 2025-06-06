@@ -15,7 +15,6 @@ describe('Investigative Copilot', () => {
         ENTITY_LINKING: true,
         NARRATIVE_COPILOT: true,
         CLICKHOUSE_ENABLED: true,
-        RBAC_V2: true,
       },
     });
   });

@@ -19,7 +19,6 @@ describe('Case Creation test', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
     });
   });
   it('should create a case when the rule is hit', () => {

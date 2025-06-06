@@ -8,7 +8,7 @@ describe('Create and update risk factor', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RISK_SCORING: true, RISK_LEVELS: true, RULES_ENGINE_V8: true, RBAC_V2: true },
+      features: { RISK_SCORING: true, RISK_LEVELS: true, RULES_ENGINE_V8: true },
     });
   });
 

@@ -4,9 +4,10 @@ import { memoize } from 'lodash'
 import { AccountsService } from '../accounts'
 import { Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { getOptimizedPermissions } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
-import { convertPermissions, isInNamespace, transformRole } from './utils'
+import { isInNamespace, transformRole } from './utils'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -76,19 +77,18 @@ export class RoleService {
     tenantId: string,
     inputRole: CreateAccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
-    const { statements, permissions } = convertPermissions(
+    const { permissions, statements } = inputRole
+    const optimizedStatements = getOptimizedPermissions(
       tenantId,
-      inputRole.permissions,
-      inputRole.statements
+      statements ?? []
     )
-
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
-      params: { ...inputRole, permissions, statements },
+      params: { ...inputRole, permissions, statements: optimizedStatements },
     })
     await this.cache.createRole(tenantId, {
       type: 'DATABASE',
-      params: { ...data, permissions, statements },
+      params: { ...data, permissions, statements: optimizedStatements },
     })
     const transformedRole = transformRole(
       data,
@@ -114,10 +114,10 @@ export class RoleService {
     inputRole: AccountRole
   ): Promise<AuditLogReturnData<AccountRole, AccountRole, AccountRole>> {
     const oldRole = await this.getRole(id)
-    const { statements, permissions } = convertPermissions(
+    const { statements, permissions } = inputRole
+    const optimizedStatements = getOptimizedPermissions(
       tenantId,
-      inputRole.permissions,
-      inputRole.statements
+      statements ?? []
     )
     await this.auth0.updateRole(tenantId, oldRole.id, {
       ...inputRole,
@@ -126,7 +126,7 @@ export class RoleService {
     await this.cache.updateRole(tenantId, oldRole.id, {
       ...inputRole,
       permissions,
-      statements,
+      statements: optimizedStatements,
     })
     const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = (await accountsService.getTenantById(tenantId)) as Tenant

@@ -9,7 +9,6 @@ describe('check pagination', () => {
       permissions: REQUIRED_PERMISSIONS,
       features: {
         CLICKHOUSE_ENABLED: false,
-        RBAC_V2: true,
       },
     });
   });

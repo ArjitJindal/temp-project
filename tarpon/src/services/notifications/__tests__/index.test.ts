@@ -25,7 +25,7 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 
 dynamoDbSetupHook()
-withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS', 'RBAC_V2'])
+withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
 
 const allStatements = (tenantId: string): PermissionStatements[] => [
   {

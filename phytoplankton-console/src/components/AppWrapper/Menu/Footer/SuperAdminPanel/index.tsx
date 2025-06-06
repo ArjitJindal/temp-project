@@ -185,11 +185,6 @@ export const featureDescriptions: Record<
     description: 'Enables Chainalysis',
     tag: FeatureTag.ENG,
   },
-  RBAC_V2: {
-    title: 'RBAC V2',
-    description: 'Enables RBAC V2',
-    tag: FeatureTag.WIP,
-  },
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',

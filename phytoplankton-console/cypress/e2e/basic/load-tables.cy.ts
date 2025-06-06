@@ -3,10 +3,7 @@ describe.skip('Main pages loading', () => {
     cy.loginWithPermissions({
       permissions: [],
       loginWithRole: 'admin',
-      features: {
-        CLICKHOUSE_ENABLED: false,
-        RBAC_V2: true,
-      },
+      features: { CLICKHOUSE_ENABLED: false },
     });
   });
 

@@ -13,7 +13,6 @@ describe('Approval of payments', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { RBAC_V2: true },
       settings: { isPaymentApprovalEnabled: true },
     });
   });
