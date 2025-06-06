@@ -22,6 +22,8 @@ import { SenderLocationChangesFrequencyRuleParameters } from '../transaction-rul
 import { HighRiskIpAddressCountriesParameters } from '../transaction-rules/high-risk-ip-address-countries'
 import { PaymentDetailChangeRuleParameters } from '../transaction-rules/payment-detail-change-base'
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from '../transaction-rules/same-user-using-too-many-payment-identifiers'
+import { TransactionsPatternPercentageRuleParameters } from '../transaction-rules/transactions-pattern-percentage-base'
+import { SamePaymentDetailsParameters } from '../transaction-rules/same-payment-details'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -2019,6 +2021,313 @@ const V8_CONVERSION: Readonly<
 
     return {
       logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-124': (params: TransactionsPatternPercentageRuleParameters) => {
+    const { timeWindow, patternPercentageLimit } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    // Add aggregation for total transactions
+    logicAggregationVariables.push({
+      key: 'agg:totalTransactions',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    // Add aggregation for round value transactions
+    logicAggregationVariables.push({
+      key: 'agg:roundValueTransactions',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        or: [
+          {
+            '==': [
+              {
+                '%': [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                  },
+                  100,
+                ],
+              },
+              0,
+            ],
+          },
+          {
+            '==': [
+              {
+                '%': [
+                  {
+                    var: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+                  },
+                  100,
+                ],
+              },
+              0,
+            ],
+          },
+        ],
+      },
+    })
+
+    const conditions: any[] = []
+
+    conditions.push({
+      and: [
+        {
+          '>=': [
+            {
+              '*': [
+                {
+                  '/': [
+                    {
+                      var: 'agg:roundValueTransactions',
+                    },
+                    {
+                      var: 'agg:totalTransactions',
+                    },
+                  ],
+                },
+                100,
+              ],
+            },
+            patternPercentageLimit,
+          ],
+        },
+      ],
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-94': (parameters: SamePaymentDetailsParameters) => {
+    const { timeWindow, threshold, checkSender, checkReceiver } = parameters
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+    const conditionsToEvaluate: any[] = []
+
+    if (checkSender !== 'none') {
+      const senderAggVarConfig: Partial<LogicAggregationVariable> = {
+        key: 'agg:senderPaymentIdentifierCount',
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+      }
+
+      if (checkSender === 'all') {
+        senderAggVarConfig.userDirection = 'SENDER'
+        senderAggVarConfig.transactionDirection = 'SENDING_RECEIVING'
+        senderAggVarConfig.aggregationFieldKey =
+          'TRANSACTION:originPaymentDetailsIdentifier'
+        senderAggVarConfig.secondaryAggregationFieldKey =
+          'TRANSACTION:destinationPaymentDetailsIdentifier'
+        senderAggVarConfig.filtersLogic = {
+          or: [
+            {
+              and: [
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:originPaymentDetailsIdentifier' },
+                    null,
+                  ],
+                },
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:originPaymentDetailsIdentifier' },
+                    '',
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                    null,
+                  ],
+                },
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                    '',
+                  ],
+                },
+              ],
+            },
+          ],
+        }
+      } else {
+        senderAggVarConfig.userDirection = 'SENDER'
+        senderAggVarConfig.transactionDirection = 'SENDING'
+        senderAggVarConfig.aggregationFieldKey =
+          'TRANSACTION:originPaymentDetailsIdentifier'
+        senderAggVarConfig.filtersLogic = {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:originPaymentDetailsIdentifier' },
+                null,
+              ],
+            },
+            {
+              '!=': [{ var: 'TRANSACTION:originPaymentDetailsIdentifier' }, ''],
+            },
+          ],
+        }
+      }
+      logicAggregationVariables.push(
+        senderAggVarConfig as LogicAggregationVariable
+      )
+
+      conditionsToEvaluate.push({
+        and: [
+          { '>=': [{ var: 'agg:senderPaymentIdentifierCount' }, threshold] },
+          {
+            '!=': [{ var: 'TRANSACTION:originPaymentDetailsIdentifier' }, null],
+          },
+          { '!=': [{ var: 'TRANSACTION:originPaymentDetailsIdentifier' }, ''] },
+        ],
+      })
+    }
+
+    if (checkReceiver !== 'none') {
+      const receiverAggVarConfig: Partial<LogicAggregationVariable> = {
+        key: 'agg:receiverPaymentIdentifierCount',
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+      }
+
+      if (checkReceiver === 'all') {
+        receiverAggVarConfig.userDirection = 'RECEIVER'
+        receiverAggVarConfig.transactionDirection = 'SENDING_RECEIVING'
+        receiverAggVarConfig.aggregationFieldKey =
+          'TRANSACTION:originPaymentDetailsIdentifier'
+        receiverAggVarConfig.secondaryAggregationFieldKey =
+          'TRANSACTION:destinationPaymentDetailsIdentifier'
+        receiverAggVarConfig.filtersLogic = {
+          or: [
+            {
+              and: [
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:originPaymentDetailsIdentifier' },
+                    null,
+                  ],
+                },
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:originPaymentDetailsIdentifier' },
+                    '',
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                    null,
+                  ],
+                },
+                {
+                  '!=': [
+                    { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                    '',
+                  ],
+                },
+              ],
+            },
+          ],
+        }
+      } else {
+        // 'receiving'
+        receiverAggVarConfig.userDirection = 'RECEIVER'
+        receiverAggVarConfig.transactionDirection = 'RECEIVING'
+        receiverAggVarConfig.aggregationFieldKey =
+          'TRANSACTION:destinationPaymentDetailsIdentifier'
+        receiverAggVarConfig.filtersLogic = {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                null,
+              ],
+            },
+            {
+              '!=': [
+                { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+                '',
+              ],
+            },
+          ],
+        }
+      }
+      logicAggregationVariables.push(
+        receiverAggVarConfig as LogicAggregationVariable
+      )
+
+      conditionsToEvaluate.push({
+        and: [
+          { '>=': [{ var: 'agg:receiverPaymentIdentifierCount' }, threshold] },
+          {
+            '!=': [
+              { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+              null,
+            ],
+          },
+          {
+            '!=': [
+              { var: 'TRANSACTION:destinationPaymentDetailsIdentifier' },
+              '',
+            ],
+          },
+        ],
+      })
+    }
+
+    let finalLogic
+    if (conditionsToEvaluate.length === 0) {
+      finalLogic = { and: [false] } // No conditions, rule should not hit
+    } else if (conditionsToEvaluate.length === 1) {
+      finalLogic = conditionsToEvaluate[0]
+    } else {
+      finalLogic = { or: conditionsToEvaluate }
+    }
+
+    return {
+      logic: finalLogic,
       logicAggregationVariables,
       alertCreationDirection: 'AUTO',
     }

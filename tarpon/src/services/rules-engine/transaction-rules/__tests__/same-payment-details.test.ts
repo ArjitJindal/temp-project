@@ -46,7 +46,7 @@ function getDefaultParams(): SamePaymentDetailsParameters {
 
 const defaultParams = getDefaultParams()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('Core logic', () => {
     const now = dayjs('2022-01-01T00:00:00.000Z')
 

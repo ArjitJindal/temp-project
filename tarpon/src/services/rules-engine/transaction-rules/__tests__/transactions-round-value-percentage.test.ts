@@ -15,11 +15,11 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 100,
 }
 const TEST_TRANSACTION_AMOUNT_101: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 101,
 }
 const DEFAULT_RULE_PARAMETERS: TransactionsRoundValuePercentageRuleParameters =
@@ -33,7 +33,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsRoundValuePercentageRuleParameters =
   }
 
 dynamoDbSetupHook()
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('R-124 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
