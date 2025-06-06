@@ -3,13 +3,7 @@ import { DownOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import SubPermissions from './SubPermissions';
 import s from './style.module.less';
 import { PermissionNode, PermissionTreeTraverser, PermissionPathBuilder } from './utils';
-import {
-  AccountRole,
-  PermissionsResponse,
-  Permission,
-  PermissionsAction,
-  StaticPermissionsNode,
-} from '@/apis';
+import { AccountRole, PermissionsResponse, PermissionsAction, StaticPermissionsNode } from '@/apis';
 import Button from '@/components/library/Button';
 import Form from '@/components/library/Form';
 import TextInput from '@/components/library/TextInput';
@@ -31,7 +25,7 @@ const Permissions = ({
   role?: AccountRole | any;
   permissions: PermissionsResponse;
   mode: 'view' | 'edit';
-  onPermissionChange: (permission: Permission, action: PermissionsAction, checked: boolean) => void;
+  onPermissionChange: (permission: string, action: PermissionsAction, checked: boolean) => void;
   onQueryChange: (query: string) => void;
   query: string;
 }) => {

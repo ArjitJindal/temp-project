@@ -18,7 +18,7 @@ import {
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE_TIME, STRING } from '@/components/library/Table/standardDataTypes';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import Id from '@/components/ui/Id';
 import { RuleStatusSwitch } from '@/pages/rules/components/RuleStatusSwitch';
@@ -149,10 +149,7 @@ export default function RiskFactorsTable(props: Props) {
   );
 
   const canWriteRiskFactors =
-    useHasPermissions(
-      ['risk-scoring:risk-factors:write'],
-      ['write:::risk-scoring/risk-factors/*'],
-    ) && canEditRiskFactors;
+    useHasResources(['write:::risk-scoring/risk-factors/*']) && canEditRiskFactors;
 
   const handleActivationChangeMutation = useCallback(
     async ({ id, status }: { id: string; status: RuleInstanceStatus }) => {

@@ -22,7 +22,7 @@ import {
   ScreeningProfileResponse,
 } from '@/apis';
 import Button from '@/components/library/Button';
-// import { useHasPermissions } from '@/utils/user-utils';
+// import { useHasResources } from '@/utils/user-utils';
 import { SCREENING_PROFILES, SANCTIONS_SOURCES } from '@/utils/queries/keys';
 import Checkbox from '@/components/library/Checkbox';
 import Tabs from '@/components/library/Tabs';
@@ -366,7 +366,6 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
           type="PRIMARY"
           key="create-screening-profile"
           requiredResources={['write:::settings/screening/*']}
-          requiredPermissions={['screening:screening-profiles:write']}
           onClick={() => setIsModalOpen(true)}
         >
           Create

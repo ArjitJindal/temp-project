@@ -5,16 +5,15 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 
 export const ProductionAccessControl = () => {
   const settings = useSettings();
   const user = useAuth0User();
   const mutateTenantSettings = useUpdateTenantSettings();
-  const hasSystemConfigWrite = useHasPermissions(
-    ['settings:system-config:write'],
-    ['write:::settings/system-config/production-access-control/*'],
-  );
+  const hasSystemConfigWrite = useHasResources([
+    'write:::settings/system-config/production-access-control/*',
+  ]);
 
   const handleToggleOff = () => {
     if (user.tenantId === 'flagright') {

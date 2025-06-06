@@ -48,7 +48,6 @@ export const CRMSettings = () => {
                     type="TEXT"
                     icon={<DeleteLineIcon />}
                     size="SMALL"
-                    requiredPermissions={['settings:add-ons:write']}
                     requiredResources={['write:::settings/add-ons/crm-integrations/*']}
                     onClick={async () => {
                       await api.deleteTenantsNangoConnections({
@@ -66,7 +65,6 @@ export const CRMSettings = () => {
                 className={s.crmSettingsButton}
                 type="TETRIARY"
                 size="LARGE"
-                requiredPermissions={['settings:add-ons:write']}
                 requiredResources={['write:::settings/add-ons/*']}
                 onClick={() => {
                   nango.openConnectUI({

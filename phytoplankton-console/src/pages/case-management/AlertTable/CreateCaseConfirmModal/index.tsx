@@ -29,7 +29,6 @@ export default function CreateCaseConfirmModal(props: ConfirmModalProps) {
         <Button
           type="TETRIARY"
           onClick={onClick}
-          requiredPermissions={['case-management:case-details:write']}
           requiredResources={['write:::case-management/case-details/*']}
         >
           Create new case

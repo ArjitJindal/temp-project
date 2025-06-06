@@ -12,13 +12,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { PERMISSIONS, ROLES_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import {
-  AccountRole,
-  CreateAccountRole,
-  PermissionStatements,
-  Permission,
-  PermissionsAction,
-} from '@/apis';
+import { AccountRole, CreateAccountRole, PermissionStatements, PermissionsAction } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useRoles } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
@@ -65,7 +59,7 @@ export default function RoleDetails({
   }, [role]);
 
   const handlePermissionChange = useCallback(
-    (permission: Permission, action: PermissionsAction, checked: boolean) => {
+    (permission: string, action: PermissionsAction, checked: boolean) => {
       if (mode !== 'edit') {
         return;
       }

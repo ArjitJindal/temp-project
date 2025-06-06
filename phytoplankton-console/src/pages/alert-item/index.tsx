@@ -71,11 +71,7 @@ function AlertItemPage() {
 
 export default function CaseManagementItemPageWrapper() {
   return (
-    <Authorized
-      required={['case-management:case-details:read']}
-      requiredResources={['read:::case-management/case-details/*']}
-      showForbiddenPage
-    >
+    <Authorized minRequiredResources={['read:::case-management/case-details/*']}>
       <AlertItemPage />
     </Authorized>
   );

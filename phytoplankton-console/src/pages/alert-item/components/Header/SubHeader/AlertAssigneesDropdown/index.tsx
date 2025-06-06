@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useApi } from '@/api';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { ALERT_ITEM } from '@/utils/queries/keys';
@@ -23,10 +23,7 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   const api = useApi();
   const client = useQueryClient();
   const user = useAuth0User();
-  const hasEditingPermission = useHasPermissions(
-    ['case-management:case-overview:write'],
-    ['write:::case-management/case-overview/*'],
-  );
+  const hasEditingPermission = useHasResources(['write:::case-management/case-overview/*']);
   const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const reviewAssignmentsToMutationAlerts = useMutation<

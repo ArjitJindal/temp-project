@@ -9,7 +9,7 @@ import {
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 interface TableItem {
   action: RuleAction;
@@ -29,10 +29,7 @@ const columnHelper = new ColumnHelper<TableItem>();
 
 export const RuleActionSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(
-    ['settings:rules:write'],
-    ['write:::settings/rules/rule-action-alias/*'],
-  );
+  const permissions = useHasResources(['write:::settings/rules/rule-action-alias/*']);
   const columns = useMemo(
     () =>
       columnHelper.list([
@@ -82,7 +79,6 @@ export const RuleActionSettings: React.FC = () => {
                   !permissions
                 }
                 isLoading={item.action === savingAction}
-                requiredPermissions={['settings:rules:write']}
                 requiredResources={['write:::settings/rules/*']}
               >
                 Update

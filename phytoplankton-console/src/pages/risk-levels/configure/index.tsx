@@ -116,11 +116,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
   }, [state, riskValuesQueryResults.data]);
 
   return (
-    <Authorized
-      required={['risk-scoring:risk-levels:read']}
-      requiredResources={['read:::risk-scoring/risk-levels/*']}
-      showForbiddenPage
-    >
+    <Authorized minRequiredResources={['read:::risk-scoring/risk-levels/*']} showForbiddenPage>
       <div style={{ maxWidth: isSimulationMode ? '100%' : 800 }}>
         {!isSimulationMode ? (
           <RiskClassification

@@ -8,15 +8,12 @@ import {
 import { isWhiteLabeled } from '@/utils/branding';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightAISettings = () => {
-  const permissions = useHasPermissions(
-    ['settings:add-ons:write'],
-    ['write:::settings/add-ons/ai-features/*'],
-  );
+  const permissions = useHasResources(['write:::settings/add-ons/ai-features/*']);
   const settings = useSettings();
   const isNarrativeCopilotEnabled = useFeatureEnabled('NARRATIVE_COPILOT');
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');

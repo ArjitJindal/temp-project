@@ -59,11 +59,7 @@ export default function SimulationHistoryItemPage() {
       nonSimulationDefaultUrl="/rules/my-rules"
       simulationDefaultUrl="/rules/my-rules"
     >
-      <Authorized
-        required={['simulator:simulations:read']}
-        requiredResources={['read:::simulator/simulations/*']}
-        showForbiddenPage
-      >
+      <Authorized minRequiredResources={['read:::simulator/simulations/*']} showForbiddenPage>
         <AsyncResourceRenderer resource={queryResult.data}>
           {(job) => <Content job={job} />}
         </AsyncResourceRenderer>

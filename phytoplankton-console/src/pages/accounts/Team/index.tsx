@@ -10,7 +10,7 @@ import {
   parseUserRole,
   useAccountsQueryResult,
   useAuth0User,
-  useHasPermissions,
+  useHasResources,
   useInvalidateUsers,
   UserRole,
 } from '@/utils/user-utils';
@@ -134,10 +134,7 @@ export default function Team() {
   );
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
-  const isAccountPermissionsEnabled = useHasPermissions(
-    ['accounts:overview:write'],
-    ['write:::accounts/overview/*'],
-  );
+  const isAccountPermissionsEnabled = useHasResources(['write:::accounts/overview/*']);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const columnHelper = new ColumnHelper<Account>();
 
@@ -421,7 +418,6 @@ export default function Team() {
                 }}
                 icon={<EditOutlined />}
                 isDisabled={item.blocked}
-                requiredPermissions={['accounts:overview:write']}
                 requiredResources={['write:::accounts/overview/*']}
               >
                 Edit

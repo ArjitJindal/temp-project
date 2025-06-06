@@ -44,7 +44,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
     }
   });
 
-  const isReadOnly = false; // !useHasPermissions(['screening:screening-profiles:write']);
+  const isReadOnly = false; // !useHasResources(['screening:screening-profiles:write']);
 
   const updateStatusMutation = useMutation<
     void,

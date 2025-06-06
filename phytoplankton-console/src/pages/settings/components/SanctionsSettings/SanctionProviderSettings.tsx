@@ -5,18 +5,33 @@ import Label from '@/components/ui/Form/Layout/Label';
 import SettingsCard from '@/components/library/SettingsCard';
 import Button from '@/components/library/Button';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
+import { GenericSanctionsSearchType, SanctionsSettingsProviderScreeningTypes } from '@/apis';
 
-const SanctionsProviderSettings = ({
-  title,
-  hasFeature,
-  screeningTypes,
-  searchTypes,
-  onScreeningTypesChange,
-  isLoading,
-  onSave,
-  isSanctionsEnabled,
-  hasPermissions,
-}) => {
+type SanctionsProviderSettingsProps = {
+  title: string;
+  hasFeature: boolean;
+  screeningTypes: SanctionsSettingsProviderScreeningTypes;
+  searchTypes: GenericSanctionsSearchType[];
+  onScreeningTypesChange: (values: SanctionsSettingsProviderScreeningTypes) => void;
+  isLoading: boolean;
+  onSave: (values: SanctionsSettingsProviderScreeningTypes) => void;
+  isSanctionsEnabled: boolean;
+  hasPermissions: boolean;
+};
+
+const SanctionsProviderSettings = (props: SanctionsProviderSettingsProps) => {
+  const {
+    title,
+    hasFeature,
+    screeningTypes,
+    searchTypes,
+    onScreeningTypesChange,
+    isLoading,
+    onSave,
+    isSanctionsEnabled,
+    hasPermissions,
+  } = props;
+
   if (!hasFeature || !isSanctionsEnabled) {
     return null;
   }

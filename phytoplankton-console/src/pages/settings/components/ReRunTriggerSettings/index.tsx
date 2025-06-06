@@ -7,7 +7,7 @@ import {
 import SelectionGroup from '@/components/library/SelectionGroup';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ReRunTrigger } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 const options: { label: string; value: ReRunTrigger }[] = [
   {
@@ -23,10 +23,7 @@ const options: { label: string; value: ReRunTrigger }[] = [
 function ReRunTriggerSettings() {
   const settings = useSettings();
   const updateTenantSettings = useUpdateTenantSettings();
-  const permissions = useHasPermissions(
-    ['settings:risk-scoring:write'],
-    ['write:::settings/risk-scoring/rerun-trigger-settings/*'],
-  );
+  const permissions = useHasResources(['write:::settings/risk-scoring/rerun-trigger-settings/*']);
   return (
     <SettingsCard
       title="Re-run trigger settings"

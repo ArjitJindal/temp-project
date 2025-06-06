@@ -4,15 +4,12 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 export default function CraToggleSettings() {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
-  const permissions = useHasPermissions(
-    ['settings:risk-scoring:write'],
-    ['write:::settings/risk-scoring/risk-scoring-cra/*'],
-  );
+  const permissions = useHasResources(['write:::settings/risk-scoring/risk-scoring-cra/*']);
   const handleDisable = () => {
     mutateTenantSettings.mutate({ riskScoringCraEnabled: false });
   };

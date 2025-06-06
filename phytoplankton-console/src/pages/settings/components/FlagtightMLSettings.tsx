@@ -7,15 +7,12 @@ import {
 import { isWhiteLabeled } from '@/utils/branding';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightMLSettings = () => {
-  const permissions = useHasPermissions(
-    ['settings:add-ons:read'],
-    ['read:::settings/add-ons/ai-detections/*'],
-  );
+  const permissions = useHasResources(['read:::settings/add-ons/ai-detections/*']);
   const settings = useSettings();
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 

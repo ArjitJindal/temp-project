@@ -26,7 +26,7 @@ import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -58,7 +58,7 @@ export const RuleInstanceInfo = (props: Props) => {
       ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
       : 0;
   const navigate = useNavigate();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
+  const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
 
   const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useSafeLocalStorageState(
     'SIMULATION_RULES',

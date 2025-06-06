@@ -23,10 +23,7 @@ function UserDetails(props: Props) {
       {userId == null ? (
         <Small>No {settings.userAlias} details found</Small>
       ) : (
-        <Authorized
-          required={['users:user-details:read']}
-          requiredResources={['read:::users/user-details/*']}
-        >
+        <Authorized minRequiredResources={['read:::users/user-details/*']} showForbiddenPage>
           <UserDetailData userId={userId} onNewComment={onNewComment} />
         </Authorized>
       )}

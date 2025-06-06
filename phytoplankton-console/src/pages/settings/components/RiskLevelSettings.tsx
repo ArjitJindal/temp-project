@@ -57,7 +57,6 @@ const columns = helper.list([
             (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
           }
           isLoading={item.level === savingLevel}
-          requiredPermissions={['settings:risk-scoring:write']}
           requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
         >
           Update

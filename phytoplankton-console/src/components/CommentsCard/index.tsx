@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { maxBy, orderBy } from 'lodash';
+import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import Comment from './Comment';
 import { getCommentsWithReplies } from './utils';
 import * as Card from '@/components/ui/Card';
-import { CommentType, Resource, useAuth0User, useHasPermissions } from '@/utils/user-utils';
-import { Comment as ApiComment, Permission } from '@/apis';
+import { CommentType, useAuth0User, useHasResources } from '@/utils/user-utils';
+import { Comment as ApiComment } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Mutation } from '@/utils/queries/types';
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
@@ -37,19 +38,13 @@ interface Props {
     groupId: string,
     personId?: string,
   ) => void;
-  writePermissions: Permission[];
   writeResources: Resource[];
 }
 
 export default function CommentsCard(props: Props) {
-  const {
-    commentsQuery,
-    deleteCommentMutation,
-    handleAddComment,
-    onCommentAdded,
-    writePermissions,
-    writeResources,
-  } = props;
+  const { commentsQuery, deleteCommentMutation, handleAddComment, onCommentAdded, writeResources } =
+    props;
+
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const orderedCommentsRes = useMemo(() => {
@@ -73,6 +68,7 @@ export default function CommentsCard(props: Props) {
     (acc, group) => acc + group.comments.length,
     0,
   );
+
   return (
     <>
       <Card.Root>
@@ -101,7 +97,6 @@ export default function CommentsCard(props: Props) {
                           comments={commentsWithReplies}
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
-                          writePermissions={writePermissions}
                           writeResources={writeResources}
                           hanldeAddComment={(commentFormValues) =>
                             handleAddComment(commentFormValues, group.id)
@@ -120,7 +115,6 @@ export default function CommentsCard(props: Props) {
                           comments={commentsWithReplies}
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
-                          writePermissions={writePermissions}
                           hanldeAddComment={(commentFormValues) =>
                             handleAddComment(commentFormValues, group.id)
                           }
@@ -146,7 +140,6 @@ function Comments(props: {
   comments: CommentWithReplies[];
   currentUserId: string;
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
-  writePermissions: Permission[];
   writeResources: Resource[];
   hanldeAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
   onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
@@ -155,13 +148,12 @@ function Comments(props: {
     comments,
     currentUserId,
     deleteCommentMutation,
-    writePermissions,
     writeResources,
     hanldeAddComment,
     onCommentAdded,
   } = props;
 
-  const hasCommentWritePermission = useHasPermissions(writePermissions, writeResources);
+  const hasCommentWritePermission = useHasResources(writeResources);
   return (
     <div className={s.comments}>
       {comments.map((comment) => (

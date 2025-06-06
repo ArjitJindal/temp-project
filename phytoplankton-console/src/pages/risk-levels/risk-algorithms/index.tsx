@@ -14,8 +14,7 @@ export default function () {
         description={i18n('menu.risk-levels.risk-algorithms.description')}
       >
         <Authorized
-          required={['risk-scoring:risk-algorithms:read']}
-          requiredResources={['read:::risk-scoring/risk-algorithms/*']}
+          minRequiredResources={['read:::risk-scoring/risk-algorithms/*']}
           showForbiddenPage
         >
           <RiskAlgorithmTable />

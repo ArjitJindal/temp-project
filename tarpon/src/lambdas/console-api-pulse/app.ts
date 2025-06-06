@@ -3,13 +3,14 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { omit } from 'lodash'
+import { hasResources } from '@flagright/lib/utils'
 import { RiskService } from '@/services/risk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { hasPermission } from '@/utils/auth0-utils'
+import { userStatements } from '@/core/utils/context'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -155,9 +156,10 @@ export const riskLevelAndScoreHandler = lambdaApi({
 
     handlers.registerGetKrsValue(async (ctx, request) => {
       const result = await riskService.getKrsScoreFromDynamo(request.userId)
-      const isKycPermissionEnabled = hasPermission(
-        'risk-scoring:risk-score-details:read'
-      )
+      const statements = await userStatements(tenantId)
+      const isKycPermissionEnabled = hasResources(statements, [
+        'read:::risk-scoring/risk-score-details/*',
+      ])
       if (isKycPermissionEnabled) {
         return result
       }
@@ -167,9 +169,10 @@ export const riskLevelAndScoreHandler = lambdaApi({
     })
 
     handlers.registerGetArsValue(async (ctx, request) => {
-      const isKycPermissionEnabled = hasPermission(
-        'risk-scoring:risk-score-details:read'
-      )
+      const statements = await userStatements(tenantId)
+      const isKycPermissionEnabled = hasResources(statements, [
+        'read:::risk-scoring/risk-score-details/*',
+      ])
       const result = await riskService.getArsScoreFromDynamo(
         request.transactionId
       )
@@ -190,9 +193,10 @@ export const riskLevelAndScoreHandler = lambdaApi({
       const dynamoResult = await riskService.getDrsScoreFromDynamo(
         request.userId
       )
-      const isKycPermissionEnabled = hasPermission(
-        'risk-scoring:risk-score-details:read'
-      )
+      const statements = await userStatements(tenantId)
+      const isKycPermissionEnabled = hasResources(statements, [
+        'read:::risk-scoring/risk-score-details/*',
+      ])
       if (isKycPermissionEnabled && dynamoResult) {
         return [dynamoResult]
       }
@@ -206,9 +210,10 @@ export const riskLevelAndScoreHandler = lambdaApi({
     })
 
     handlers.registerGetDrsValues(async (ctx, request) => {
-      const isDetailsPermissionEnabled = hasPermission(
-        'risk-scoring:risk-score-details:read'
-      )
+      const statements = await userStatements(tenantId)
+      const isDetailsPermissionEnabled = hasResources(statements, [
+        'read:::risk-scoring/risk-score-details/*',
+      ])
       const result = await riskService.getDrsValuesFromMongo(request)
       if (!isDetailsPermissionEnabled) {
         const updatedData = result.items.map((val) =>

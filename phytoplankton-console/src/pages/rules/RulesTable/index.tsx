@@ -10,7 +10,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { ENUM, LONG_TEXT, RULE_ACTION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -95,7 +95,7 @@ const Random3Reasons = () => {
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
   const api = useApi();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
+  const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
   const [demoMode] = useDemoMode();
@@ -256,9 +256,6 @@ export const RulesTable: React.FC<Props> = (props) => {
                 type="PRIMARY"
                 onClick={() => onEditRule(entity)}
                 isDisabled={!canWriteRules || (simulationMode && !canSimulate(entity))}
-                requiredPermissions={
-                  simulationMode ? ['simulator:simulations:write'] : ['rules:my-rules:write']
-                }
                 requiredResources={
                   simulationMode
                     ? ['write:::simulator/simulations/*']

@@ -67,6 +67,7 @@ export class RoleService {
 
       return roles
     }
+
     return roles.map((r) => transformRole(r, r.permissions, r.statements ?? []))
   }
 

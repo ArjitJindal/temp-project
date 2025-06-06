@@ -16,7 +16,7 @@ import {
   Comment,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import {
   AllParams,
   DerivedColumn,
@@ -670,10 +670,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     'caseSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
-  const exportPermissions = useHasPermissions(
-    ['case-management:export:read'],
-    ['read:::case-management/export/*'],
-  );
+  const exportPermissions = useHasResources(['read:::case-management/export/*']);
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>

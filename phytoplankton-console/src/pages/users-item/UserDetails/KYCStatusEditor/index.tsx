@@ -5,7 +5,7 @@ import KYCChangeModal from './KYCChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { KYCStatus } from '@/apis/models/KYCStatus';
-import { CommentType, useHasPermissions } from '@/utils/user-utils';
+import { CommentType, useHasResources } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Skeleton from '@/components/library/Skeleton';
@@ -23,10 +23,8 @@ export default function KycStatusEditor(props: Props) {
   const [kycChanged, setKycChanged] = useState(false);
   const [newKycStatus, setnewKycStatus] = useState('');
   const settings = useSettings();
-  const hasUserOveviewWritePermissions = useHasPermissions(
-    ['users:user-overview:write'],
-    ['write:::users/user-overview/*'],
-  );
+  const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
+
   return (
     <div>
       <div className={s.row}>

@@ -25,7 +25,7 @@ import { TransactionCountLimit } from '@/apis/models/TransactionCountLimit';
 import { TransactionAmountLimit } from '@/apis/models/TransactionAmountLimit';
 import { useApi } from '@/api';
 import COLORS from '@/components/ui/colors';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PAYMENT_METHOD } from '@/components/library/Table/standardDataTypes';
 import NumberInput from '@/components/library/NumberInput';
@@ -298,10 +298,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
     useState<TransactionLimitsPaymentMethodLimits>(
       user.transactionLimits?.paymentMethodLimits ?? {},
     );
-  const hasUserOveviewWritePermissions = useHasPermissions(
-    ['users:user-overview:write'],
-    ['write:::users/user-overview/*'],
-  );
+  const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
   const handleSavePaymentMethodLimits = useCallback(
     async (
       paymentMethod: PaymentMethod,

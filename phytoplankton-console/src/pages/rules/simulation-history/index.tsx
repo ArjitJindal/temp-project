@@ -29,11 +29,7 @@ export default function SimulationHistoryPage() {
       nonSimulationDefaultUrl="/rules/my-rules"
       simulationDefaultUrl="/rules/my-rules"
     >
-      <Authorized
-        required={['simulator:simulations:read']}
-        requiredResources={['read:::simulator/simulations/*']}
-        showForbiddenPage
-      >
+      <Authorized minRequiredResources={['read:::simulator/simulations/*']} showForbiddenPage>
         <SimulationHistoryTable rulesTab={rulesTab} />
       </Authorized>
     </BreadcrumbsSimulationPageWrapper>

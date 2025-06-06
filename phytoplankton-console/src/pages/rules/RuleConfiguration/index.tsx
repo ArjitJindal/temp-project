@@ -5,7 +5,7 @@ import {
   RuleConfigurationSimulation,
 } from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation';
 import { useShouldUseV8Configuration } from '@/pages/rules/utils';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 type Props = V8Props &
   V2Props &
@@ -14,7 +14,7 @@ type Props = V8Props &
   };
 
 export default function RuleConfiguration(props: Props) {
-  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
+  const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const useV8Configuration = useShouldUseV8Configuration(props.rule, props.ruleInstance);
   const readOnly = !canWriteRules || props.readOnly;
 

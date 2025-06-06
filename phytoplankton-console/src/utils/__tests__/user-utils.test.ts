@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { hasMinimumPermission, hasResources, Resource } from '../user-utils';
+import { Resource, hasResources } from '@flagright/lib/utils';
+import { hasMinimumPermission } from '../user-utils';
 import { PermissionStatements } from '@/apis';
 
 describe('hasResources', () => {

@@ -184,11 +184,7 @@ const QASamplesTable = () => {
   }, [users, deleteMutation, editMutation, isEditModalOpen, selectedIdForEdit]);
 
   return (
-    <Authorized
-      required={['case-management:qa:read']}
-      requiredResources={['read:::case-management/qa/*']}
-      showForbiddenPage
-    >
+    <Authorized minRequiredResources={['read:::case-management/qa/*']} showForbiddenPage>
       <PageWrapper
         header={
           <Breadcrumbs

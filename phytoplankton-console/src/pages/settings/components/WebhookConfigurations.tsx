@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { CrudEntitiesTable } from '@/components/library/CrudEntitiesTable';
 import { DefaultApiGetWebhooksRequest } from '@/apis/types/ObjectParamAPI';
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
@@ -47,10 +47,7 @@ export const WebhookConfigurations: React.FC = () => {
     [api],
   );
 
-  const isDevelopersWriteEnabled = useHasPermissions(
-    ['settings:developers:write'],
-    ['write:::settings/developers/*'],
-  );
+  const isDevelopersWriteEnabled = useHasResources(['write:::settings/developers/*']);
 
   const helper = new ColumnHelper<WebhookConfiguration>();
   const columns: TableColumn<WebhookConfiguration>[] = helper.list([
@@ -157,8 +154,6 @@ export const WebhookConfigurations: React.FC = () => {
         tableId="webhooks-table"
         entityName="endpoint"
         entityIdField="_id"
-        readPermissions={['settings:developers:read']}
-        writePermissions={['settings:developers:write']}
         readResources={() => ['read:::settings/developers/webhooks-configurations/*']}
         writeResources={() => ['write:::settings/developers/webhooks-configurations/*']}
         apiOperations={{

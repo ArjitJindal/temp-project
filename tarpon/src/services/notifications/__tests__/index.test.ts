@@ -13,7 +13,6 @@ import * as Context from '@/core/utils/context-storage'
 import { NotificationsService } from '@/services/notifications'
 import { Account } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
-import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Case } from '@/@types/openapi-internal/Case'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
@@ -23,9 +22,17 @@ import { getTestUser } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
 import { Notification } from '@/@types/openapi-internal/Notification'
+import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 
 dynamoDbSetupHook()
-withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'])
+withFeatureHook(['NOTIFICATIONS', 'ADVANCED_WORKFLOWS', 'RBAC_V2'])
+
+const allStatements = (tenantId: string): PermissionStatements[] => [
+  {
+    actions: ['read', 'write'],
+    resources: [`frn:console:${tenantId}:::*`],
+  },
+]
 
 const getContextMocker = jest.spyOn(Context, 'getContext')
 
@@ -112,7 +119,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -180,13 +188,19 @@ describe('Test notifications service', () => {
       id: 'SOME_ROLE',
       name: 'Some role',
       permissions: ['audit-log:export:read'],
+      statements: [
+        {
+          actions: ['read'],
+          resources: [`frn:console:${tenantId}:::audit-log/export/*`],
+        },
+      ],
     }
 
     const role2: AccountRole = {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
     }
 
     const roles: AccountRole[] = [role1, role2]
@@ -253,7 +267,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -333,7 +348,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -446,7 +462,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -455,7 +472,6 @@ describe('Test notifications service', () => {
       {
         id: user,
         email: `${user}@test.com`,
-
         role: 'Admin',
       } as Account,
       {
@@ -537,7 +553,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
     const roles: AccountRole[] = [role]
 
@@ -613,7 +630,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
     const roles: AccountRole[] = [role]
 
@@ -686,7 +704,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -782,7 +801,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -873,7 +893,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]
@@ -945,7 +966,8 @@ describe('Test notifications service', () => {
       description: 'Admin',
       id: 'ADMIN',
       name: 'Admin',
-      permissions: PERMISSIONS,
+      permissions: [],
+      statements: allStatements(tenantId),
     }
 
     const roles: AccountRole[] = [role]

@@ -1,10 +1,10 @@
 import { Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Resource } from '@flagright/lib/utils';
 import { sanitizeComment } from '../markdown/MarkdownEditor/mention-utlis';
 import s from './styles.module.less';
 import { message } from '@/components/library/Message';
-
 import Button from '@/components/library/Button';
 import CommentEditor, {
   CommentEditorRef,
@@ -13,19 +13,17 @@ import CommentEditor, {
 import WechatLineIcon from '@/components/ui/icons/Remix/logos/wechat-line.react.svg';
 import { getErrorMessage } from '@/utils/lang';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
-import { Comment, Permission } from '@/apis';
-import { Resource } from '@/utils/user-utils';
+import { Comment } from '@/apis';
 
 interface Props {
   submitRequest: (values: CommentEditorFormValues) => Promise<Comment>;
   onSuccess: (createdComment: Comment) => void;
   disabled?: boolean;
-  requiredPermissions?: Permission[];
   requiredResources?: Resource[];
 }
 
 export default function CommentButton(props: Props) {
-  const { submitRequest, onSuccess, requiredPermissions = [], requiredResources = [] } = props;
+  const { submitRequest, onSuccess, requiredResources = [] } = props;
   const [commentFormValues, setCommentFormValues] = useState<CommentEditorFormValues>({
     comment: '',
     files: [],
@@ -87,7 +85,6 @@ export default function CommentButton(props: Props) {
         <Button
           isDisabled={props.disabled}
           icon={<WechatLineIcon />}
-          requiredPermissions={requiredPermissions}
           requiredResources={requiredResources}
           testName="comment-button"
         >

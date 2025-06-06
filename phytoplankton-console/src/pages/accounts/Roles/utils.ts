@@ -18,7 +18,7 @@ import { download } from '@/utils/browser';
  *     case-details
  *        read: true
  **/
-export function permissionsToRows(permissions: Set<Permission>): PermissionRow[] {
+export function permissionsToRows(permissions: Set<string>): PermissionRow[] {
   // For matching "case-management:case-overview:read"
   const regex = /^([a-z-]+):([a-z-]+):([a-z-]+)$/;
   const permsMap: { [key: string]: { [key: string]: { [key: string]: boolean } } } = {};

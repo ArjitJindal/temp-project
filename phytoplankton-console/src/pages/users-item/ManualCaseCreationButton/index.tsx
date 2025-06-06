@@ -19,7 +19,6 @@ export const ManualCaseCreationButton = (props: Props) => {
         onClick={() => {
           setIsModalOpen(true);
         }}
-        requiredPermissions={['case-management:case-details:write']}
         requiredResources={['write:::case-management/case-details/*']}
         className={props.className}
       >

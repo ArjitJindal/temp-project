@@ -583,7 +583,6 @@ export function RuleConfigurationSimulation(props: Props) {
                 }
               }}
               isDisabled={isLoading}
-              requiredPermissions={['rules:my-rules:write']}
               requiredResources={['write:::rules/my-rules/*']}
             >
               {iterations[activeTabIndex]?.ruleInstance?.id ? 'Update rule' : 'Create rule'}
@@ -592,7 +591,7 @@ export function RuleConfigurationSimulation(props: Props) {
             <Button
               isLoading={startSimulationMutation.isLoading}
               onClick={handleStartSimulation}
-              requiredPermissions={['simulator:simulations:write']}
+              requiredResources={['write:::simulator/simulations/*']}
               testName="run-simulation-button"
             >
               Run simulation

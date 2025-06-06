@@ -90,7 +90,6 @@ export const ReasonsSettings = () => {
                 onClick={() => {
                   setCreateMode(data.type);
                 }}
-                requiredPermissions={['settings:case-management:write']}
                 requiredResources={['write:::settings/case-management/closure-reasons/*']}
               >
                 Add reason

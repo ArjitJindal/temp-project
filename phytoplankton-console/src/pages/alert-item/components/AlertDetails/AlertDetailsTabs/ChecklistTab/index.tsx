@@ -186,7 +186,6 @@ export default function ChecklistTab(props: Props) {
                   edit.onConfirm(newState);
                 }}
                 minWidth={150}
-                writePermissions={['case-management:case-overview:write']}
                 writeResources={['write:::case-management/case-overview/*']}
               >
                 <div>
@@ -250,7 +249,6 @@ export default function ChecklistTab(props: Props) {
                   }}
                   minWidth={200}
                   selectedKeys={state?.qaStatus ? [state?.qaStatus] : undefined}
-                  writePermissions={['case-management:qa:write']}
                   writeResources={['write:::case-management/qa/*']}
                 >
                   <div>{label}</div>

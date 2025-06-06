@@ -113,7 +113,6 @@ export default function Header(props: Props) {
               },
             });
           }}
-          requiredPermissions={['case-management:case-overview:write']}
           requiredResources={['write:::case-management/case-overview/*']}
         />,
         ...getOr(actionsRes, []),

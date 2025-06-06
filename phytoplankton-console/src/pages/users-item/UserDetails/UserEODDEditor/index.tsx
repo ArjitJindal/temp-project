@@ -3,7 +3,7 @@ import s from './index.module.less';
 import EODDChangeModal from './EODDChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import Skeleton from '@/components/library/Skeleton';
@@ -20,10 +20,7 @@ export default function UserEODDEditor(props: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const [newUserEODDDate, setNewUserEODDDate] = useState('');
   const [userEODDDateChanged, setUserEODDDateChanged] = useState(false);
-  const hasUserOveviewWritePermissions = useHasPermissions(
-    ['users:user-overview:write'],
-    ['write:::users/user-overview/*'],
-  );
+  const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
 
   if (!useFeatureEnabled('PNB')) {
     return null;

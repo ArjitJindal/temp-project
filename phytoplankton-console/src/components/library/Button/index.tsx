@@ -1,9 +1,9 @@
 import React, { useImperativeHandle, useRef } from 'react';
 import cn from 'clsx';
 import { Link, LinkProps } from 'react-router-dom';
+import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
-import { Permission } from '@/apis';
-import { Resource, useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 export type ButtonRef = {
   click: () => void;
@@ -27,7 +27,6 @@ export interface CommonButtonProps {
   className?: string;
   testName?: string;
   iconRight?: React.ReactNode;
-  requiredPermissions?: Permission[];
   isLogout?: boolean;
   requiredResources?: Resource[];
 }
@@ -136,8 +135,8 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
 });
 
 const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
-  const { requiredPermissions = [], requiredResources = [], ...baseProps } = props;
-  const hasUserPermissions = useHasPermissions(requiredPermissions, requiredResources);
+  const { requiredResources = [], ...baseProps } = props;
+  const hasUserPermissions = useHasResources(requiredResources);
 
   return (
     <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />

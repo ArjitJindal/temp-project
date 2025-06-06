@@ -11,7 +11,7 @@ import { SearchProfileResponse } from '@/apis';
 import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
-import { useHasPermissions, useUsers } from '@/utils/user-utils';
+import { useHasResources, useUsers } from '@/utils/user-utils';
 import Tag from '@/components/library/Tag';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -44,10 +44,7 @@ export const SearchProfileList = ({ hasFeature }) => {
     }
   });
 
-  const isReadOnly = !useHasPermissions(
-    ['screening:search-profiles:write'],
-    ['write:::screening/search-profiles/*'],
-  );
+  const isReadOnly = !useHasResources(['write:::screening/search-profiles/*']);
 
   const updateStatusMutation = useMutation<
     void,

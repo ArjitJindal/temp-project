@@ -64,7 +64,6 @@ export function ResetUserMfa(props: ResetMFAProps) {
         onClick={handleDelete}
         isDisabled={isDisabled(item)}
         icon={<DeleteOutlined />}
-        requiredPermissions={['accounts:overview:write']}
         requiredResources={['write:::accounts/overview/*']}
       >
         Reset MFA

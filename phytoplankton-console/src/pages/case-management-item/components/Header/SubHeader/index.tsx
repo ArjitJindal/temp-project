@@ -6,7 +6,7 @@ import { message } from '@/components/library/Message';
 import { Assignment, Case } from '@/apis';
 import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import {
   Feature,
@@ -54,10 +54,7 @@ export default function SubHeader(props: Props) {
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const queryClient = useQueryClient();
-  const hasEditingPermission = useHasPermissions(
-    ['case-management:case-overview:write'],
-    ['write:::case-management/case-overview/*'],
-  );
+  const hasEditingPermission = useHasResources(['write:::case-management/case-overview/*']);
   const updateCaseQueryData = useUpdateCaseQueryData();
   const handleUpdateCaseMutation = useMutation<
     unknown,

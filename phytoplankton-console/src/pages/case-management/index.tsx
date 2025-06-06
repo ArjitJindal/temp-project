@@ -188,8 +188,7 @@ function getTable(
     case 'MY_ALERTS':
       return (
         <Authorized
-          required={['case-management:case-overview:read']}
-          requiredResources={['read:::case-management/case-overview/*']}
+          minRequiredResources={['read:::case-management/case-overview/*']}
           showForbiddenPage
         >
           <AlertTableWrapper
@@ -203,8 +202,7 @@ function getTable(
     case 'ALL_ALERTS':
       return (
         <Authorized
-          required={['case-management:case-overview:read']}
-          requiredResources={['read:::case-management/case-overview/*']}
+          minRequiredResources={['read:::case-management/case-overview/*']}
           showForbiddenPage
         >
           <AlertTableWrapper
@@ -220,8 +218,7 @@ function getTable(
     case 'ALL':
       return (
         <Authorized
-          required={['case-management:case-overview:read']}
-          requiredResources={['read:::case-management/case-overview/*']}
+          minRequiredResources={['read:::case-management/case-overview/*']}
           showForbiddenPage
         >
           <CaseTableWrapper params={params} onChangeParams={handleChangeParams} />
@@ -229,11 +226,7 @@ function getTable(
       );
     case 'PAYMENT_APPROVALS':
       return (
-        <Authorized
-          required={['transactions:details:read']}
-          requiredResources={['read:::transactions/details/*']}
-          showForbiddenPage
-        >
+        <Authorized minRequiredResources={['read:::transactions/details/*']} showForbiddenPage>
           <PaymentApprovalsTable
             params={params.paymentApprovals ?? DEFAULT_PARAMS_STATE}
             onChangeParams={(newParams) => {
@@ -247,11 +240,7 @@ function getTable(
       );
     case 'QA_UNCHECKED_ALERTS':
       return (
-        <Authorized
-          required={['case-management:qa:read']}
-          requiredResources={['read:::case-management/qa/*']}
-          showForbiddenPage
-        >
+        <Authorized minRequiredResources={['read:::case-management/qa/*']} showForbiddenPage>
           <QaTable
             params={{ ...params, alertStatus: ['CLOSED'], filterQaStatus: "NOT_QA'd" }}
             onChangeParams={handleChangeParams}
@@ -261,11 +250,7 @@ function getTable(
       );
     case 'QA_PASSED_ALERTS':
       return (
-        <Authorized
-          required={['case-management:qa:read']}
-          requiredResources={['read:::case-management/qa/*']}
-          showForbiddenPage
-        >
+        <Authorized minRequiredResources={['read:::case-management/qa/*']} showForbiddenPage>
           <QaTable
             params={{ ...params, filterQaStatus: 'PASSED', alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}
@@ -275,11 +260,7 @@ function getTable(
       );
     case 'QA_FAILED_ALERTS':
       return (
-        <Authorized
-          required={['case-management:qa:read']}
-          requiredResources={['read:::case-management/qa/*']}
-          showForbiddenPage
-        >
+        <Authorized minRequiredResources={['read:::case-management/qa/*']} showForbiddenPage>
           <QaTable
             params={{ ...params, filterQaStatus: 'FAILED', alertStatus: ['CLOSED'] }}
             onChangeParams={handleChangeParams}

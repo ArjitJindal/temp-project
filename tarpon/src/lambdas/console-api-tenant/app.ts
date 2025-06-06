@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { shortId } from '@flagright/lib/utils'
+import { hasResources, Resource, shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
 import { isEmpty, isEqual, random } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
@@ -33,10 +33,13 @@ import {
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
 import { getFullTenantId, isDemoTenant } from '@/utils/tenant'
-import { addSentryExtras, tenantSettings } from '@/core/utils/context'
+import {
+  addSentryExtras,
+  tenantSettings,
+  userStatements,
+} from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
-import { Permission } from '@/@types/openapi-internal/Permission'
 import { NangoService } from '@/services/nango'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
@@ -49,6 +52,7 @@ import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
 import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
 import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -56,60 +60,60 @@ const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'isAccountSuspended',
 ]
 
-const assertSettings = (settings: TenantSettings) => {
+const assertSettings = (
+  settings: TenantSettings,
+  statements: PermissionStatements[]
+) => {
+  console.log('statements', statements)
+
   const settingsKeys = Object.keys(settings).filter(
     (key) => settings[key as keyof TenantSettings] != null
-  )
-
-  const userPermissions: Permission[] = Array.from(
-    getContext()?.authz?.permissions.keys() ?? []
-  )
+  ) as (keyof TenantSettings)[]
 
   // We cannot make new api for every settings page hence we are using this
-  const settingPermissions: Partial<
-    Record<keyof TenantSettings, Permission[]>
-  > = {
-    defaultValues: ['settings:system-config:write'],
-    isProductionAccessEnabled: ['settings:system-config:write'],
-    mfaEnabled: ['settings:security:write'],
-    passwordResetDays: ['settings:security:write'],
-    accountDormancyAllowedDays: ['settings:security:write'],
-    sessionTimeoutMinutes: ['settings:security:write'],
-    maxActiveSessions: ['settings:security:write'],
-    isPaymentApprovalEnabled: ['settings:transactions:write'],
-    transactionStateAlias: ['settings:transactions:write'],
-    kycUserStatusLock: ['settings:transactions:write'],
-    pepStatusLock: ['settings:transactions:write'],
-    consoleTags: ['settings:transactions:write'],
-    ruleActionAliases: ['settings:rules:write'],
-    riskLevelAlias: ['settings:risk-scoring:write'],
-    notificationsSubscriptions: ['settings:notifications:write'],
-    isAiEnabled: ['settings:add-ons:write'],
-    isMlEnabled: ['settings:add-ons:write'],
-    webhookSettings: ['settings:developers:write'],
-    crmIntegrationName: ['settings:users:write'],
-  }
+  const settingPermissions: Partial<Record<keyof TenantSettings, Resource[]>> =
+    {
+      defaultValues: ['write:::settings/system-config/*'],
+      isProductionAccessEnabled: ['write:::settings/system-config/*'],
+      mfaEnabled: ['write:::settings/security/*'],
+      passwordResetDays: ['write:::settings/security/*'],
+      accountDormancyAllowedDays: ['write:::settings/security/*'],
+      sessionTimeoutMinutes: ['write:::settings/security/*'],
+      maxActiveSessions: ['write:::settings/security/*'],
+      isPaymentApprovalEnabled: ['write:::settings/transactions/*'],
+      transactionStateAlias: ['write:::settings/transactions/*'],
+      kycUserStatusLock: ['write:::settings/transactions/*'],
+      pepStatusLock: ['write:::settings/transactions/*'],
+      consoleTags: ['write:::settings/transactions/*'],
+      ruleActionAliases: ['write:::settings/rules/*'],
+      riskLevelAlias: ['write:::settings/risk-scoring/*'],
+      notificationsSubscriptions: ['write:::settings/notifications/*'],
+      isAiEnabled: ['write:::settings/add-ons/*'],
+      isMlEnabled: ['write:::settings/add-ons/*'],
+      webhookSettings: ['write:::settings/developers/*'],
+      crmIntegrationName: ['write:::settings/users/*'],
+      bruteForceAccountBlockingEnabled: [
+        'write:::settings/security/brute-force-account-blocking/*',
+      ],
+      narrativeMode: ['write:::settings/case-management/narrative-copilot/*'],
+    }
 
-  let hasPermission = true
+  for (const settingsKey in settingsKeys) {
+    const requiredResources = settingPermissions[settingsKey] as
+      | Resource[]
+      | undefined
 
-  for (const setting of settingsKeys) {
-    if (!settingPermissions[setting]?.length) {
+    if (!requiredResources?.length) {
       continue
     }
 
-    if (
-      !settingPermissions[setting]?.every((permission) =>
-        userPermissions.includes(permission)
-      )
-    ) {
-      hasPermission = false
-    }
-  }
+    const hasPermission = hasResources(statements, requiredResources)
 
-  if (!hasPermission) {
-    throw new createHttpError.Forbidden(
-      `User does not have permission to change settings`
-    )
+    if (!hasPermission) {
+      throw new createHttpError.Forbidden(
+        `User does not have permission to change settings`
+      )
+    }
   }
 }
 
@@ -188,7 +192,9 @@ export const tenantsHandler = lambdaApi()(
           ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
         )
       )
-      assertSettings(changedTenantSettings)
+      const statements = await userStatements()
+
+      assertSettings(changedTenantSettings, statements)
       const dynamoDb = getDynamoDbClientByEvent(event)
 
       if (isEmpty(changedTenantSettings)) {

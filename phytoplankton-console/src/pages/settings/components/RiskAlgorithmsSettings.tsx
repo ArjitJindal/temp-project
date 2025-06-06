@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 export const RiskAlgorithmsSettings = () => {
-  const permissions = useHasPermissions(
-    ['settings:risk-scoring:write'],
-    ['write:::settings/risk-scoring/risk-algorithms/*'],
-  );
+  const permissions = useHasResources(['write:::settings/risk-scoring/risk-algorithms/*']);
   const [value, setValue] = useState<string>('HEURISTIC');
   return (
     <SettingsCard

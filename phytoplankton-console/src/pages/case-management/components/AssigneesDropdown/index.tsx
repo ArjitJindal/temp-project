@@ -2,10 +2,11 @@ import { Avatar, Select } from 'antd';
 import cn from 'clsx';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
-import { useHasPermissions, useSortedUsers, Resource } from '@/utils/user-utils';
-import { Account, Assignment, Permission } from '@/apis';
+import { useHasResources, useSortedUsers } from '@/utils/user-utils';
+import { Account, Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';
 import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
@@ -18,7 +19,6 @@ interface Props {
   placeholder?: string;
   fixSelectorHeight?: boolean;
   customFilter?: (option: Account) => boolean;
-  requiredPermissions?: Permission[];
   requiredResources?: Resource[];
 }
 
@@ -30,11 +30,10 @@ const AssigneesDropdownContent: React.FC<Props> = ({
   placeholder,
   customFilter,
   fixSelectorHeight = false,
-  requiredPermissions = ['case-management:case-assignment:write'],
   requiredResources = ['write:::case-management/case-assignment/*'],
 }) => {
   const [users, loadingUsers] = useSortedUsers();
-  const canEditAssignees = useHasPermissions(requiredPermissions, requiredResources);
+  const canEditAssignees = useHasResources(requiredResources);
 
   const filteredUsers = useMemo(() => {
     if (!customFilter) {

@@ -40,7 +40,7 @@ export default function RoleForm(props: RoleFormProps) {
   const [duplicate, setDuplicate] = useState(false);
   const [roleName, setRoleName] = useState(getSantiziedRoleName(role?.name));
   const [isLoading, setLoading] = useState(false);
-  const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role?.permissions || []));
+  const [permissions, setPermissions] = useState<Set<string>>(new Set(role?.permissions || []));
   const rows = permissionsToRows(permissions);
   const fieldValidators: FieldValidators<FormValues> = {
     roleName: notEmpty,
@@ -96,7 +96,7 @@ export default function RoleForm(props: RoleFormProps) {
         const accountRole: CreateAccountRole = {
           name: roleName,
           description,
-          permissions: [...permissions],
+          permissions: [...permissions] as Permission[],
         };
 
         if (duplicate || !role?.id) {
@@ -139,11 +139,11 @@ export default function RoleForm(props: RoleFormProps) {
   }, []);
 
   const onPermissionChange = useCallback(
-    (permission: Permission, enabled: boolean) => {
+    (permission: string, enabled: boolean) => {
       if (enabled) {
         permissions.add(permission);
         if (permission.endsWith(':write')) {
-          const readPerm = permission.replace(/(.*:)write$/, '$1read') as Permission;
+          const readPerm = permission.replace(/(.*:)write$/, '$1read');
           if (isValidPermission(readPerm)) {
             permissions.add(readPerm);
           }
@@ -151,7 +151,7 @@ export default function RoleForm(props: RoleFormProps) {
       } else {
         permissions.delete(permission);
         if (permission.endsWith(':read')) {
-          const readPerm = permission.replace(/(.*:)read$/, '$1write') as Permission;
+          const readPerm = permission.replace(/(.*:)read$/, '$1write');
           if (isValidPermission(readPerm)) {
             permissions.delete(readPerm);
           }
@@ -214,7 +214,6 @@ export default function RoleForm(props: RoleFormProps) {
           <Button
             testName="edit-role"
             onClick={() => setEdit(true)}
-            requiredPermissions={['roles:overview:write']}
             requiredResources={['write:::roles/overview/*']}
           >
             Edit
@@ -231,7 +230,6 @@ export default function RoleForm(props: RoleFormProps) {
                 roleName: `${roleName} Copy`,
               });
             }}
-            requiredPermissions={['roles:overview:write']}
             requiredResources={['write:::roles/overview/*']}
             icon={<FileCopyOutlined />}
           >

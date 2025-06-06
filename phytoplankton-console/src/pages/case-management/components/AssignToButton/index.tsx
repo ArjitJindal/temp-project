@@ -43,7 +43,6 @@ export default function AssignToButton(props: Props) {
           type="TETRIARY"
           onClick={() => {}}
           testName="update-assignment-button"
-          requiredPermissions={['case-management:case-overview:write']}
           requiredResources={['write:::case-management/case-overview/*']}
           isDisabled={props.isDisabled}
         >

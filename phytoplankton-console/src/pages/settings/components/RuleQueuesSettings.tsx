@@ -28,8 +28,6 @@ export function RuleQueuesSettings() {
         tableId="rule-queues-table"
         entityName="queue"
         entityIdField="id"
-        readPermissions={['settings:case-management:read']}
-        writePermissions={['settings:case-management:write']}
         readResources={() => ['read:::settings/case-management/rule-queues/*']}
         writeResources={() => ['write:::settings/case-management/rule-queues/*']}
         apiOperations={{

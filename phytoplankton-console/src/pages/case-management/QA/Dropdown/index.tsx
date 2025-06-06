@@ -10,7 +10,7 @@ import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import { AllParams } from '@/components/library/Table/types';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 
 type OptionTypes = 'CREATE_SAMPLE' | 'VIEW_SAMPLE';
@@ -23,10 +23,7 @@ export const QAButton = (props: Props) => {
   const { params } = props;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const isQAWriteEnabled = useHasPermissions(
-    ['case-management:qa:write'],
-    ['write:::case-management/qa/*'],
-  );
+  const isQAWriteEnabled = useHasResources(['write:::case-management/qa/*']);
   const user = useAuth0User();
 
   const options: DropdownOption<OptionTypes>[] = useMemo(() => {

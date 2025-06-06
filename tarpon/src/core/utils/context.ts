@@ -415,9 +415,15 @@ export async function tenantHasEitherFeatures(
   )
 }
 
-export async function tenantStatements(
-  tenantId: string
+export async function userStatements(
+  tenantId?: string
 ): Promise<PermissionStatements[]> {
+  const finalTenantId = tenantId ?? getContext()?.tenantId
+
+  if (!finalTenantId) {
+    throw new Error('Tenant ID is required for userStatements')
+  }
+
   const context = getContext()
   const contextStatements = context?.statements
   if (contextStatements && !isEmpty(contextStatements)) {
@@ -429,7 +435,7 @@ export async function tenantStatements(
     getDynamoDbClient()
   )
   const statements = await roleRepository.getRoleStatements(
-    tenantId,
+    finalTenantId,
     context?.user?.role ?? ''
   )
 
@@ -437,7 +443,7 @@ export async function tenantStatements(
     return {
       ...statement,
       resources: statement.resources.map((resource) =>
-        resource.replace('<default>', tenantId)
+        resource.replace('<default>', finalTenantId)
       ),
     }
   })

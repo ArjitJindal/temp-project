@@ -21,7 +21,7 @@ import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import {
   getDisplayedUserInfo,
   useCurrentUser,
-  useHasPermissions,
+  useHasResources,
   useUsers,
 } from '@/utils/user-utils';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -70,10 +70,7 @@ export function SlaPolicySettings() {
       return await api.getSlaPolicies({ ...params, ...paginationParams });
     },
   );
-  const isReadOnly = !useHasPermissions(
-    ['settings:case-management:write'],
-    ['write:::settings/case-management/*'],
-  );
+  const isReadOnly = !useHasResources(['write:::settings/case-management/*']);
   const formRef = useRef<FormRef<any>>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const currentUser = useCurrentUser();
@@ -307,7 +304,6 @@ export function SlaPolicySettings() {
                     <Button
                       type="PRIMARY"
                       onClick={handleOpenForm}
-                      requiredPermissions={['settings:case-management:write']}
                       requiredResources={['write:::settings/case-management/*']}
                     >
                       <PlusOutlined />

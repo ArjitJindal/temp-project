@@ -7,7 +7,7 @@ import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { map } from '@/utils/queries/types';
@@ -40,10 +40,7 @@ export const CustomRiskFactors = (props: Props) => {
     });
   });
 
-  const canWriteRiskFactors = useHasPermissions(
-    ['risk-scoring:risk-factors:write'],
-    ['write:::risk-scoring/risk-factors/*'],
-  );
+  const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
   const queryClient = useQueryClient();
 
   const handleSaveParameters = useCallback(

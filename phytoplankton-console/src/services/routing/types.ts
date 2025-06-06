@@ -1,5 +1,5 @@
-import { Feature, Permission } from '@/apis';
-import { Resource } from '@/utils/user-utils';
+import { Resource } from '@flagright/lib/utils';
+import { Feature } from '@/apis';
 
 export interface RouteCommonProps {
   path: string;
@@ -12,7 +12,6 @@ export interface LeafRouteItem extends RouteCommonProps {
   hideInMenu?: boolean;
   component: React.FC<any>; // todo: improve types
   disabled?: boolean;
-  permissions?: Permission[];
   associatedFeatures?: Feature[];
   minRequiredResources?: Resource[];
 }
@@ -24,7 +23,6 @@ export interface TreeRouteItem extends RouteCommonProps {
   hideInMenu?: boolean;
   hideChildrenInMenu?: boolean;
   disabled?: boolean;
-  permissions?: Permission[];
   associatedFeatures?: Feature[];
   minRequiredResources?: Resource[];
 }

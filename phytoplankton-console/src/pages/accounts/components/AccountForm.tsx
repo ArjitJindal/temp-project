@@ -334,7 +334,6 @@ export default function AccountForm(props: Props) {
         testName: 'accounts-invite',
         isDisabled: isInviteButtonDisabled,
         isLoading: inviteMutation.isLoading || editMutation.isLoading,
-        requiredPermissions: ['accounts:overview:write'],
         requiredResources: ['write:::accounts/overview/*'],
       }}
       onCancel={() => props.onChangeVisibility(false)}
@@ -520,7 +519,6 @@ export default function AccountForm(props: Props) {
                       });
                     }
                   }}
-                  requiredPermissions={['accounts:overview:write']}
                   requiredResources={['write:::accounts/overview/*']}
                   style={{ width: 'fit-content' }}
                 >
@@ -533,7 +531,6 @@ export default function AccountForm(props: Props) {
                       resetPasswordMutation.mutate({ accountId: editAccount.id });
                     }
                   }}
-                  requiredPermissions={['accounts:overview:write']}
                   requiredResources={['write:::accounts/overview/*']}
                   style={{ width: 'fit-content' }}
                 >

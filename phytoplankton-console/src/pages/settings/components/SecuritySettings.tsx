@@ -5,7 +5,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
-import { MAX_LOGIN_ATTEMPTS_BEFORE_BLOCKING, useHasPermissions } from '@/utils/user-utils';
+import { MAX_LOGIN_ATTEMPTS_BEFORE_BLOCKING, useHasResources } from '@/utils/user-utils';
 import Select from '@/components/library/Select';
 
 type SelectOption = {
@@ -58,10 +58,7 @@ type SecuritySetting =
   | 'brute-force';
 
 const useSecuritySettings = (setting: SecuritySetting) => {
-  const isEnabled = useHasPermissions(
-    ['settings:security:write'],
-    [`write:::settings/security/${setting}/*`],
-  );
+  const isEnabled = useHasResources([`write:::settings/security/${setting}/*`]);
 
   return isEnabled;
 };

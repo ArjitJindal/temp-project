@@ -6,9 +6,8 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { uniq } from 'lodash'
 import { getContext } from '../utils/context-storage'
-import { hasFeature, tenantStatements } from '../utils/context'
+import { userStatements } from '../utils/context'
 import {
-  assertPermissions,
   assertProductionAccess,
   assertResourceAccess,
   JWTAuthorizerResult,
@@ -16,7 +15,6 @@ import {
 import {
   getAlwaysAllowedAccess,
   getApiRequiredResources,
-  getApiRequiredPermissions as getInternalApiRequiredPermissions,
 } from '@/@types/openapi-internal-custom/DefaultApi'
 import { determineApi } from '@/core/utils/api'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -46,49 +44,40 @@ export const rbacMiddleware =
     const apiPath: string = event.resource
     const httpMethod: string = event.httpMethod
 
-    const requiredPermissions = getInternalApiRequiredPermissions(
-      apiPath,
-      httpMethod
+    const statements = await userStatements(
+      event.requestContext.authorizer.tenantId
     )
 
-    if (hasFeature('RBAC_V2')) {
-      const statements = await tenantStatements(
-        event.requestContext.authorizer.tenantId
-      )
+    const requiredResources = getApiRequiredResources(apiPath, httpMethod)
+    // replace path parameters with actual values
+    const pathParameters = event.pathParameters
+    const requiredResourcesWithValues = requiredResources.map((resource) => {
+      for (const [key, value] of Object.entries(pathParameters ?? {})) {
+        resource = resource.replace(new RegExp(`{${key}}`, 'g'), value ?? '')
+      }
+      return resource
+    })
 
-      const requiredResources = getApiRequiredResources(apiPath, httpMethod)
-      // replace path parameters with actual values
-      const pathParameters = event.pathParameters
-      const requiredResourcesWithValues = requiredResources.map((resource) => {
-        for (const [key, value] of Object.entries(pathParameters ?? {})) {
-          resource = resource.replace(new RegExp(`{${key}}`, 'g'), value ?? '')
-        }
-        return resource
-      })
+    assertResourceAccess(requiredResourcesWithValues, statements)
 
-      assertResourceAccess(requiredResourcesWithValues, statements)
+    const dynamicPermissions = getDynamicPermissionsType(
+      uniq(statements.flatMap((statement) => statement.resources))
+    ) // Even if its write we consider it as read and read is considered as read
 
-      const dynamicPermissions = getDynamicPermissionsType(
-        uniq(statements.flatMap((statement) => statement.resources))
-      ) // Even if its write we consider it as read and read is considered as read
+    for (const permission of dynamicPermissions) {
+      const filterKey = subTypeFilterMap[permission.subType]
 
-      for (const permission of dynamicPermissions) {
-        const filterKey = subTypeFilterMap[permission.subType]
-
-        if (filterKey) {
-          const currentFilterValue =
-            event.queryStringParameters?.[filterKey] ?? ''
-          event.queryStringParameters = {
-            ...event.queryStringParameters,
-            [filterKey]: currentFilterValue.concat(
-              permission.ids.length && currentFilterValue.length ? ',' : '',
-              ...permission.ids
-            ),
-          }
+      if (filterKey) {
+        const currentFilterValue =
+          event.queryStringParameters?.[filterKey] ?? ''
+        event.queryStringParameters = {
+          ...event.queryStringParameters,
+          [filterKey]: currentFilterValue.concat(
+            permission.ids.length && currentFilterValue.length ? ',' : '',
+            ...permission.ids
+          ),
         }
       }
-    } else {
-      assertPermissions(requiredPermissions)
     }
 
     // if api path ends with any of the exemptedApiPaths, then skip production access check

@@ -12,7 +12,7 @@ import { message } from '@/components/library/Message';
 import COLORS from '@/components/ui/colors';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
-import { CommentType, useHasPermissions } from '@/utils/user-utils';
+import { CommentType, useHasResources } from '@/utils/user-utils';
 
 interface Props {
   attachments: PersonAttachment[];
@@ -27,10 +27,7 @@ export default function Attachment(props: Props) {
   const { userId, personId, currentUserId, attachments, personType, onNewComment } = props;
   const [modalOpen, setModalOpenStatus] = useState(false);
   const [userAttachment, setAttachment] = useState(attachments);
-  const hasUserPermissions = useHasPermissions(
-    ['users:user-details:read'],
-    ['read:::users/user-details/*'],
-  );
+  const hasUserPermissions = useHasResources(['read:::users/user-details/*']);
 
   const updateAttachment = (attachment: PersonAttachment) => {
     setAttachment((attachments) => [attachment, ...attachments]);

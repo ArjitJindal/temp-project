@@ -52,7 +52,7 @@ import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
@@ -593,10 +593,7 @@ export default function TransactionsTable(props: Props) {
     } as ExtraFilterProps<TransactionsTableParams>,
   ];
 
-  const isTransactionsDownloadEnabled = useHasPermissions(
-    ['transactions:export:read'],
-    ['read:::transactions/export/*'],
-  );
+  const isTransactionsDownloadEnabled = useHasResources(['read:::transactions/export/*']);
 
   return (
     <QueryResultsTable<TransactionTableItem, TransactionsTableParams>

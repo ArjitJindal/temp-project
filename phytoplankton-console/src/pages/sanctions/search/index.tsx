@@ -346,7 +346,6 @@ export function SearchResultTable(props: Props) {
               onClick={() => {
                 setSearchParams(params);
               }}
-              requiredPermissions={['sanctions:search:read']}
               requiredResources={['read:::sanctions/search/*']}
             >
               Search
@@ -360,7 +359,6 @@ export function SearchResultTable(props: Props) {
                 hasSetDefaultProfile.current = false;
                 navigate(makeUrl(`/screening/manual-screening`, {}, {}));
               }}
-              requiredPermissions={['sanctions:search:read']}
               requiredResources={['read:::sanctions/search/*']}
             >
               New search

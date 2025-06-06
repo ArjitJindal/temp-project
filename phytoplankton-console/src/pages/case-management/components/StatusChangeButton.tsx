@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { compact } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { Resource } from '@flagright/lib/utils';
 import { ActionLabel } from './StatusChangeModal';
-import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
+import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
 import Button, { ButtonProps } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { getNextStatus } from '@/utils/case-utils';
-import { Resource } from '@/utils/user-utils';
 
 export const statusToOperationName = (
   status: AlertStatus | CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD',
@@ -92,12 +92,6 @@ export function StatusChangeButton(
     () => overridenStatus?.status ?? getNextStatus(status),
     [overridenStatus, status],
   );
-  const requiredPermissions: Permission[] = useMemo(() => {
-    return compact([
-      'case-management:case-overview:write',
-      status === 'CLOSED' ? 'case-management:case-reopen:write' : undefined,
-    ]);
-  }, [status]);
 
   const requiredResources: Resource[] = useMemo(() => {
     return compact([
@@ -112,7 +106,6 @@ export function StatusChangeButton(
         <ModalWrapper
           newStatus={newStatus}
           buttonProps={props as StatusChangeButtonWithModalProps}
-          requiredPermissions={requiredPermissions}
           requiredResources={requiredResources}
           overridenStatus={overridenStatus}
         >
@@ -122,7 +115,6 @@ export function StatusChangeButton(
         <ModalButton
           {...props}
           newStatus={newStatus}
-          requiredPermissions={requiredPermissions}
           overridenStatus={overridenStatus}
           requiredResources={requiredResources}
         />
@@ -134,21 +126,13 @@ export function StatusChangeButton(
 const ModalWrapper = ({
   newStatus,
   buttonProps,
-  requiredPermissions,
   requiredResources,
   overridenStatus,
   children,
 }: {
   newStatus: CaseStatus;
-  requiredPermissions: Permission[];
   requiredResources: Resource[];
-  overridenStatus:
-    | {
-        status: CaseStatus;
-        actionLabel: ActionLabel;
-      }
-    | null
-    | undefined;
+  overridenStatus: { status: CaseStatus; actionLabel: ActionLabel } | null | undefined;
   buttonProps: StatusChangeButtonWithModalProps;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
 }) => {
@@ -165,7 +149,6 @@ const ModalWrapper = ({
           haveModal={false}
           updateModalState={(_: CaseStatus) => {}}
           setModalVisibility={handleModalState}
-          requiredPermissions={requiredPermissions}
           overridenStatus={overridenStatus}
           newStatus={newStatus}
           requiredResources={requiredResources}
@@ -179,15 +162,8 @@ const ModalWrapper = ({
 const ModalButton = (
   props: StatusChangeButtonWithoutModalProps & {
     newStatus: CaseStatus;
-    requiredPermissions: Permission[];
     requiredResources: Resource[];
-    overridenStatus:
-      | {
-          status: CaseStatus;
-          actionLabel: ActionLabel;
-        }
-      | null
-      | undefined;
+    overridenStatus: { status: CaseStatus; actionLabel: ActionLabel } | null | undefined;
   },
 ) => {
   const {
@@ -198,7 +174,6 @@ const ModalButton = (
     updateModalState,
     setModalVisibility,
     newStatus,
-    requiredPermissions,
     overridenStatus,
     requiredResources,
   } = props;
@@ -216,7 +191,6 @@ const ModalButton = (
           isDisabled={isDisabled ? isDisabled : !ids.length}
           style={{ width: 'max-content' }}
           testName="update-status-button"
-          requiredPermissions={requiredPermissions}
           requiredResources={requiredResources}
           className={className}
           {...buttonProps}

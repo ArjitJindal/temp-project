@@ -11,7 +11,7 @@ import { FincenReportValidStatus, NonFincenReportValidStatus, Report, ReportStat
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { REPORTS_LIST } from '@/utils/queries/keys';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 type StatusUpdate = { status: ReportStatus; statusInfo: string };
 
@@ -25,7 +25,7 @@ export default function ReportStatusChangeModal(props: {
   const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
   const api = useApi();
   const queryClient = useQueryClient();
-  const canEdit = useHasPermissions(['reports:generated:write'], ['write:::reports/generated/*']);
+  const canEdit = useHasResources(['write:::reports/generated/*']);
   return (
     <Modal
       title={

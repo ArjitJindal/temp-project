@@ -3,11 +3,12 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Input } from 'antd';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Resource } from '@flagright/lib/utils';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
 import { TableParams } from './types';
 import { useApi } from '@/api';
-import { ListHeaderInternal, ListSubtypeInternal, ListType, Permission } from '@/apis';
+import { ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
 import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
@@ -37,7 +38,6 @@ import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
-import { Resource } from '@/utils/user-utils';
 
 interface ExistedTableItemData {
   value: string;
@@ -108,16 +108,15 @@ export default function ItemsTable(props: Props) {
     reason: '',
     meta: {},
   });
-  const requiredWritePermissions: Permission[] = useMemo(
-    () => (listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']),
-    [listType],
-  );
 
-  const requiredWriteResources: Resource[] = useMemo(
-    () =>
-      listType === 'WHITELIST' ? ['write:::lists/whitelist/*'] : ['write:::lists/blacklist/*'],
-    [listType],
-  );
+  const requiredWriteResources: Resource[] = useMemo(() => {
+    if (listType === 'WHITELIST') {
+      return ['write:::lists/whitelist/*'];
+    } else if (listType === 'BLACKLIST') {
+      return ['write:::lists/blacklist/*'];
+    }
+    return [];
+  }, [listType]);
 
   const tableRef = useRef<TableRefType>(null);
 
@@ -307,7 +306,6 @@ export default function ItemsTable(props: Props) {
     isAddUserLoading,
     isNewUserValid,
     isEditUserValid,
-    requiredWritePermissions,
     requiredWriteResources,
   });
 
@@ -335,7 +333,6 @@ export default function ItemsTable(props: Props) {
                   type="TETRIARY"
                   onClick={() => clearListMutation.mutate()}
                   isDisabled={clearListMutation.isLoading}
-                  requiredPermissions={requiredWritePermissions}
                   requiredResources={requiredWriteResources}
                 >
                   Clear list
@@ -358,7 +355,6 @@ function useColumns(options: {
   isAddUserLoading: boolean;
   isNewUserValid: boolean;
   isEditUserValid: boolean;
-  requiredWritePermissions: Permission[];
   requiredWriteResources: Resource[];
 }): TableColumn<TableItem>[] {
   const {
@@ -367,7 +363,6 @@ function useColumns(options: {
     isAddUserLoading,
     isNewUserValid,
     isEditUserValid,
-    requiredWritePermissions,
     requiredWriteResources,
   } = options;
   const settings = useSettings();
@@ -507,7 +502,6 @@ function useColumns(options: {
                     isLoading={isAddUserLoading}
                     isDisabled={!isNewUserValid}
                     onClick={onAdd}
-                    requiredPermissions={requiredWritePermissions}
                     requiredResources={requiredWriteResources}
                   >
                     Add
@@ -523,7 +517,6 @@ function useColumns(options: {
                       type="PRIMARY"
                       onClick={onSave}
                       isDisabled={isEditUserLoading || !isEditUserValid}
-                      requiredPermissions={requiredWritePermissions}
                       requiredResources={requiredWriteResources}
                     >
                       Save
@@ -555,7 +548,6 @@ function useColumns(options: {
                       };
                       setEditUserData(editTarget);
                     }}
-                    requiredPermissions={requiredWritePermissions}
                     requiredResources={requiredWriteResources}
                   >
                     Edit
@@ -567,7 +559,6 @@ function useColumns(options: {
                     onClick={() => {
                       onDelete(entity.value ?? '');
                     }}
-                    requiredPermissions={requiredWritePermissions}
                     requiredResources={requiredWriteResources}
                   >
                     Remove
@@ -585,7 +576,6 @@ function useColumns(options: {
     isEditUserValid,
     isNewUserValid,
     listSubtype,
-    requiredWritePermissions,
     requiredWriteResources,
     settings,
     existingCountryCodes,

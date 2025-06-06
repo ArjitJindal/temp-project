@@ -62,10 +62,7 @@ function Content(props: { tab: string }) {
         key: 'my-rules',
         children: (
           <PageWrapperContentContainer>
-            <Authorized
-              required={['rules:my-rules:read']}
-              requiredResources={['read:::rules/my-rules/*']}
-            >
+            <Authorized minRequiredResources={['read:::rules/my-rules/*']}>
               <MyRule simulationMode={isSimulationEnabled} />
             </Authorized>
           </PageWrapperContentContainer>
@@ -76,10 +73,7 @@ function Content(props: { tab: string }) {
         key: 'rules-library',
         children: (
           <PageWrapperContentContainer>
-            <Authorized
-              required={['rules:library:read']}
-              requiredResources={['read:::rules/library/*']}
-            >
+            <Authorized minRequiredResources={['read:::rules/library/*']}>
               <RulesTable
                 simulationMode={isSimulationEnabled}
                 onCreateRule={

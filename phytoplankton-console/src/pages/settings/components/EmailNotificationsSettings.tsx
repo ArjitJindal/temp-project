@@ -1,15 +1,12 @@
 import SettingsCard from '@/components/library/SettingsCard';
 import Button from '@/components/library/Button';
 import { getBranding } from '@/utils/branding';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 const branding = getBranding();
 
 export const EmailNotificationsSettings = () => {
-  const permissions = useHasPermissions(
-    ['settings:notifications:write'],
-    ['write:::settings/notifications/email-notifications/*'],
-  );
+  const permissions = useHasResources(['write:::settings/notifications/email-notifications/*']);
   return (
     <SettingsCard
       title="Email notifications"

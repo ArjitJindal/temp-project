@@ -34,8 +34,6 @@ export function NarrativeTemplatesSettings() {
         tableId="narrative-templates-table"
         entityName="narrative template"
         entityIdField="id"
-        readPermissions={['settings:case-management:read']}
-        writePermissions={['settings:case-management:write']}
         readResources={(entity) => {
           return [`read:::settings/case-management/narrative-templates/template:${entity.id}/*`];
         }}

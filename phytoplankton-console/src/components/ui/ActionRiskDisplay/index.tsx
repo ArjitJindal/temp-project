@@ -5,7 +5,7 @@ import { TRANSACTIONS_ITEM_RISKS_ARS } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 interface Props {
   transactionId: string;
@@ -18,10 +18,7 @@ export default function ActionRiskDisplay({ transactionId }: Props) {
     api.getArsValue({ transactionId }),
   );
 
-  const isArsPermissionEnabled = useHasPermissions(
-    ['risk-scoring:risk-score-details:read'],
-    ['read:::risk-scoring/risk-score-details/*'],
-  );
+  const isArsPermissionEnabled = useHasResources(['read:::risk-scoring/risk-score-details/*']);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>

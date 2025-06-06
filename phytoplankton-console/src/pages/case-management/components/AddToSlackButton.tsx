@@ -1,12 +1,9 @@
 import { Tooltip } from 'antd';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 
 export const AddToSlackButton: React.FC = () => {
   const user = useAuth0User();
-  const permissions = useHasPermissions(
-    ['settings:notifications:write'],
-    ['write:::settings/notifications/slack-notifications/*'],
-  );
+  const permissions = useHasResources(['write:::settings/notifications/slack-notifications/*']);
   const redirectUri = `${user.tenantConsoleApiUrl}/slack/oauth_redirect`;
   const href = `https://slack.com/oauth/v2/authorize?scope=incoming-webhook&redirect_uri=${redirectUri}&client_id=${SLACK_CLIENT_ID}&state=${user.tenantId}`;
   return (

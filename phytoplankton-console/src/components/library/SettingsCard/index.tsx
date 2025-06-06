@@ -1,10 +1,10 @@
+import { Resource } from '@flagright/lib/utils';
 import s from './style.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Tooltip from '@/components/library/Tooltip';
 import * as Card from '@/components/ui/Card';
 import { H4, P } from '@/components/ui/Typography';
-import { Resource } from '@/utils/user-utils';
-import { AuthorizedResource } from '@/components/utils/Authorized';
+import { Authorized } from '@/components/utils/Authorized';
 
 interface Props {
   title: string;
@@ -17,7 +17,7 @@ interface Props {
 export default function SettingsCard(props: Props) {
   const { title, description, children, info, minRequiredResources } = props;
   return (
-    <AuthorizedResource minRequiredResources={minRequiredResources ?? []}>
+    <Authorized minRequiredResources={minRequiredResources ?? []}>
       <Card.Root noBorder className={s.root}>
         <section className={s.headingContainer}>
           <H4 className={s.heading}>{title}</H4>
@@ -30,6 +30,6 @@ export default function SettingsCard(props: Props) {
         {description && <P className={s.paragraph}>{description}</P>}
         {children}
       </Card.Root>
-    </AuthorizedResource>
+    </Authorized>
   );
 }

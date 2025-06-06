@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb'
 import { compact, memoize } from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { hasResources, Resource } from '@flagright/lib/utils'
 import { AccountsService } from '../accounts'
 import { RoleService } from '../roles'
 import { NotificationsChannels } from './notifications-channels'
@@ -28,7 +29,6 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
 import { NotificationType } from '@/@types/openapi-internal/NotificationType'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
-import { Permission } from '@/@types/openapi-internal/Permission'
 import {
   NotificationRawPayload,
   PartialNotification,
@@ -128,24 +128,26 @@ export class NotificationsService {
     recipientId: string,
     notificationType: NotificationType
   ): Promise<boolean> {
-    const notificationTypeToPermission: Record<NotificationType, Permission[]> =
-      {
-        ALERT_ASSIGNMENT: ['case-management:case-overview:read'],
-        CASE_ASSIGNMENT: ['case-management:case-overview:read'],
-        CASE_UNASSIGNMENT: ['case-management:case-overview:read'],
-        ALERT_UNASSIGNMENT: ['case-management:case-overview:read'],
-        CASE_ESCALATION: ['case-management:case-overview:read'],
-        ALERT_ESCALATION: ['case-management:case-overview:read'],
-        ALERT_COMMENT_MENTION: ['case-management:case-details:read'],
-        CASE_COMMENT_MENTION: ['case-management:case-details:read'],
-        USER_COMMENT_MENTION: ['users:user-details:read'],
-        ALERT_IN_REVIEW: ['case-management:case-overview:read'],
-        CASE_IN_REVIEW: ['case-management:case-overview:read'],
-        ALERT_COMMENT: ['case-management:case-details:read'],
-        CASE_COMMENT: ['case-management:case-details:read'],
-        ALERT_STATUS_UPDATE: ['case-management:case-overview:read'],
-        CASE_STATUS_UPDATE: ['case-management:case-overview:read'],
-      }
+    const CASE_OVERVIEW_READ: Resource = `read:::case-management/case-overview/*`
+    const CASE_DETAILS_READ: Resource = `read:::case-management/case-details/*`
+    const USER_DETAILS_READ: Resource = `read:::users/user-details/*`
+    const notificationTypeToPermission: Record<NotificationType, Resource[]> = {
+      ALERT_ASSIGNMENT: [CASE_OVERVIEW_READ],
+      CASE_ASSIGNMENT: [CASE_OVERVIEW_READ],
+      CASE_UNASSIGNMENT: [CASE_OVERVIEW_READ],
+      ALERT_UNASSIGNMENT: [CASE_OVERVIEW_READ],
+      CASE_ESCALATION: [CASE_OVERVIEW_READ],
+      ALERT_ESCALATION: [CASE_OVERVIEW_READ],
+      ALERT_COMMENT_MENTION: [CASE_DETAILS_READ],
+      CASE_COMMENT_MENTION: [CASE_DETAILS_READ],
+      USER_COMMENT_MENTION: [USER_DETAILS_READ],
+      ALERT_IN_REVIEW: [CASE_OVERVIEW_READ],
+      CASE_IN_REVIEW: [CASE_OVERVIEW_READ],
+      ALERT_COMMENT: [CASE_DETAILS_READ],
+      CASE_COMMENT: [CASE_DETAILS_READ],
+      ALERT_STATUS_UPDATE: [CASE_OVERVIEW_READ],
+      CASE_STATUS_UPDATE: [CASE_OVERVIEW_READ],
+    }
 
     const [allUsers, allRoles] = await Promise.all([
       this.getAllUsers(),
@@ -170,10 +172,9 @@ export class NotificationsService {
       return false
     }
 
-    const rolePermissions = (await this.getRoleById(role.id)).permissions
-
-    const isAllPermissions = permissionsRequired.every((permission) =>
-      rolePermissions.includes(permission)
+    const isAllPermissions = hasResources(
+      role.statements ?? [],
+      permissionsRequired
     )
 
     return isAllPermissions

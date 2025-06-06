@@ -6,17 +6,14 @@ import {
 import SelectionGroup from '@/components/library/SelectionGroup';
 import SettingsCard from '@/components/library/SettingsCard';
 import { H4, P } from '@/components/ui/Typography';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
 
 export const NarrativeCopilot = () => {
   const settings = useSettings();
   const settingsMutaion = useUpdateTenantSettings();
-  const isComponentAccessible = useHasPermissions(
-    ['settings:case-management:write'],
-    ['write:::settings/case-management/*'],
-  );
+  const isComponentAccessible = useHasResources(['write:::settings/case-management/*']);
   if (!settings.isAiEnabled) {
     return <></>;
   }

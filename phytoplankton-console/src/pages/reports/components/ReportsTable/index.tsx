@@ -15,7 +15,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams, CommonParams } from '@/components/library/Table/types';
-import { getDisplayedUserInfo, useHasPermissions, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, useHasResources, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl, parseQueryString } from '@/utils/routing';
@@ -78,7 +78,7 @@ export default function ReportsTable() {
   const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
 
   const queryClient = useQueryClient();
-  const canWrite = useHasPermissions(['reports:generated:write'], ['write:::reports/generated/*']);
+  const canWrite = useHasResources(['write:::reports/generated/*']);
 
   useDeepEqualEffect(() => {
     setParams((prevState: AllParams<TableParams>) => ({

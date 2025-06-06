@@ -7,7 +7,7 @@ import {
   SanctionsScreeningEntity,
   SanctionsWhitelistEntity,
 } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
@@ -162,10 +162,7 @@ export function useColumns(
   deleteMutation: Mutation<unknown, unknown, { ids: string[] }>,
   selectedState: StatePair<SanctionsWhitelistEntity | undefined>,
 ): TableColumn<SanctionsWhitelistEntity>[] {
-  const hasWritePermissions = useHasPermissions(
-    ['sanctions:search:write'],
-    ['write:::sanctions/search/*'],
-  );
+  const hasWritePermissions = useHasResources(['write:::sanctions/search/*']);
   const settings = useSettings();
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   return useMemo(() => {

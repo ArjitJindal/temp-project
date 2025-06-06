@@ -11,7 +11,7 @@ import RiskFactorConfigurationForm, {
 import { BasicDetailsFormValues } from './RiskFactorConfigurationForm/BasicDetailsStep';
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import {
@@ -65,10 +65,7 @@ export const RiskFactorConfiguration = (props: Props) => {
   } = props;
   const navigate = useNavigate();
   const location = useLocation();
-  const canWriteRiskFactors = useHasPermissions(
-    ['risk-scoring:risk-factors:write'],
-    ['write:::risk-scoring/risk-factors/*'],
-  );
+  const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
@@ -243,7 +240,6 @@ export const RiskFactorConfiguration = (props: Props) => {
                 }
                 formRef?.current?.submit();
               }}
-              requiredPermissions={['risk-scoring:risk-factors:write']}
               requiredResources={['write:::risk-scoring/risk-factors/*']}
               testName="drawer-create-save-button"
             >
@@ -263,7 +259,6 @@ export const RiskFactorConfiguration = (props: Props) => {
               }
               formRef?.current?.submit();
             }}
-            requiredPermissions={['risk-scoring:risk-factors:write']}
             requiredResources={['write:::risk-scoring/risk-factors/*']}
             testName="drawer-create-save-button"
           >
@@ -294,7 +289,7 @@ export const RiskFactorConfiguration = (props: Props) => {
               }
             }}
             icon={<EditOutlined />}
-            requiredPermissions={['risk-scoring:risk-factors:write']}
+            requiredResources={['write:::risk-scoring/risk-factors/*']}
           >
             Edit
           </Button>

@@ -9,7 +9,7 @@ import {
 import { TransactionState, TransactionStateAlias } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 interface TableItem {
   state: TransactionState;
@@ -29,10 +29,7 @@ const columnHelper = new ColumnHelper<TableItem>();
 
 export const TransactionStateSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(
-    ['settings:transactions:write'],
-    ['write:::settings/transactions/transaction-state-alias/*'],
-  );
+  const permissions = useHasResources(['write:::settings/transactions/transaction-state-alias/*']);
 
   const columns = useMemo(
     () =>
@@ -81,7 +78,6 @@ export const TransactionStateSettings: React.FC = () => {
                     (newStateToAlias.get(item.state) || '')
                 }
                 isLoading={item.state === savingState}
-                requiredPermissions={['settings:transactions:write']}
                 requiredResources={['write:::settings/transactions/*']}
               >
                 Update

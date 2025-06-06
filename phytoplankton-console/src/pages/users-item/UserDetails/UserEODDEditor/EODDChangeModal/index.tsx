@@ -93,7 +93,7 @@ export default function EODDChangeModal(props: Props) {
           mutation.mutate(formState.values);
         }
       }}
-      writePermissions={['users:user-overview:write']}
+      writeResources={['write:::users/user-overview/*']}
     >
       <Form<FormValues>
         initialValues={DEFAULT_INITIAL_VALUES}

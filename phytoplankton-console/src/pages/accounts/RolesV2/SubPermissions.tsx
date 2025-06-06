@@ -18,7 +18,7 @@ interface SubPermissionsProps {
   subPermissions: PermissionNode[];
   mode: 'view' | 'edit';
   role?: AccountRole;
-  onPermissionChange?: (permission: Permission, action: PermissionsAction, value: boolean) => void;
+  onPermissionChange?: (permission: string, action: PermissionsAction, value: boolean) => void;
   parentSegments?: string[];
 }
 

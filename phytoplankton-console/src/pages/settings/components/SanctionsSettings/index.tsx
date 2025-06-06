@@ -17,7 +17,7 @@ import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
@@ -27,10 +27,10 @@ import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesS
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 
 export const SanctionsSettings = () => {
-  const screeningPermissions = useHasPermissions(
-    ['settings:screening:read', 'settings:screening:write'],
-    ['read:::settings/screening/*', 'write:::settings/screening/*'],
-  );
+  const screeningPermissions = useHasResources([
+    'read:::settings/screening/*',
+    'write:::settings/screening/*',
+  ]);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAcurisEnabled = useFeatureEnabled('ACURIS');
   const branding = getBranding();

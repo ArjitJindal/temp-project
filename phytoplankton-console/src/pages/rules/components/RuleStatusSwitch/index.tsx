@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { RiskFactor, RuleInstance } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
 import { dayjs } from '@/utils/dayjs';
@@ -13,7 +13,7 @@ interface RuleStatusSwitchProps {
 }
 
 export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleStatusSwitchProps) => {
-  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
+  const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const { entity, type = 'RULE', onToggle, isDisabled = false } = props;
   const isDeploying = entity.status === 'DEPLOYING';
   const tooltipText = isDeploying

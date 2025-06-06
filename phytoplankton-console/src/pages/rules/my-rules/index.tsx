@@ -21,7 +21,7 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getErrorMessage } from '@/utils/lang';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standardDataTypes';
@@ -48,7 +48,7 @@ export function canSimulate(ruleInstance: RuleInstance) {
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
   const api = useApi();
-  const canWriteRules = useHasPermissions(['rules:my-rules:write'], ['write:::rules/my-rules/*']);
+  const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );

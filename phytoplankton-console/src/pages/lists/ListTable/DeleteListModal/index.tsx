@@ -60,8 +60,8 @@ export default function DeleteListModal(props: Props) {
       onOk={handleOk}
       okText={'Delete'}
       okProps={{ type: 'DANGER', isLoading: isLoading }}
-      writePermissions={
-        listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']
+      writeResources={
+        listType === 'WHITELIST' ? ['write:::lists/whitelist/*'] : ['write:::lists/blacklist/*']
       }
     >
       <div className={s.title}>

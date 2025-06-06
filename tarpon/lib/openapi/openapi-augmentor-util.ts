@@ -200,14 +200,6 @@ export function getAugmentedOpenapi(
       if (methodSetting['x-flagright']) {
         const flagrightExtension = methodSetting['x-flagright']
 
-        if (flagrightExtension['permissions']) {
-          flagrightExtension['permissions'].forEach((p: string) => {
-            if (openapi.components.schemas['Permission'].enum.indexOf(p) < 0) {
-              throw new Error(`Invalid x-flagright permission: ${p}`)
-            }
-          })
-        }
-
         if (flagrightExtension['resources']) {
           const schema = openapi.paths[path]
           const parentPathParameters = schema?.parameters

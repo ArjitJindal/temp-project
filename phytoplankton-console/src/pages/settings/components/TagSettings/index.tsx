@@ -12,7 +12,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TextInput from '@/components/library/TextInput';
 import { StatePair } from '@/utils/state';
 import Alert from '@/components/library/Alert';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ConsoleTag, ConsoleTagTypeEnum } from '@/apis';
 import Select from '@/components/library/Select';
 interface CommonItem {
@@ -160,10 +160,7 @@ const columns = helper.list([
 ]);
 function TagSettings() {
   const settings = useSettings();
-  const permissions = useHasPermissions(
-    ['settings:users:write'],
-    ['write:::settings/users/tags/*'],
-  );
+  const permissions = useHasResources(['write:::settings/users/tags/*']);
   const mutateTenantSettings = useUpdateTenantSettings();
   const [newStateDetails, setNewStateDetails] = useState<Item | undefined>();
   const [isMaxTags, setIsMaxTags] = useState(false);

@@ -6,7 +6,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import SettingsCard from '@/components/library/SettingsCard';
-import { isSuperAdmin, useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import Button from '@/components/library/Button';
 
 export default function RiskAlgorithmsCra() {
@@ -14,10 +14,7 @@ export default function RiskAlgorithmsCra() {
   const mutateTenantSettings = useUpdateTenantSettings();
   const user = useAuth0User();
   const superAdmin = isSuperAdmin(user);
-  const permissions = useHasPermissions(
-    ['risk-scoring:risk-algorithms:read'],
-    ['read:::settings/risk-scoring/risk-algorithms-cra/*'],
-  );
+  const permissions = useHasResources(['read:::settings/risk-scoring/risk-algorithms-cra/*']);
   const currentAlgorithm = settings.riskScoringAlgorithm;
   const isCraEnabled = settings.riskScoringCraEnabled ?? true;
   const [localAlgorithm, setLocalAlgorithm] = useState<RiskScoringCraAlgorithm | undefined>(

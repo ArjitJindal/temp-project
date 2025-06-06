@@ -46,7 +46,7 @@ import { getAlertUrl, makeUrl } from '@/utils/routing';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -1794,10 +1794,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     },
   ];
 
-  const exportPermissions = useHasPermissions(
-    ['case-management:export:read'],
-    ['read:::case-management/export/*'],
-  );
+  const exportPermissions = useHasResources(['read:::case-management/export/*']);
   return (
     <>
       <QueryResultsTable<TableAlertItem, AlertTableParams>

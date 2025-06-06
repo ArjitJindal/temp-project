@@ -93,8 +93,6 @@ paths:
       summary: Rules - List
       tags: []
       x-flagright:
-        permissions:
-          - rules:library:read
         resources:
           - read:::rules/library
       responses:
@@ -122,8 +120,6 @@ paths:
       summary: Rules - Create
       operationId: post-rules
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -144,8 +140,6 @@ paths:
       summary: Rules - Search
       tags: []
       x-flagright:
-        permissions:
-          - rules:library:read
         resources:
           - read:::rules/library
       responses:
@@ -199,8 +193,6 @@ paths:
       summary: Rule Filters - List
       tags: []
       x-flagright:
-        permissions:
-          - rules:library:read
         resources:
           - read:::rules/library
       responses:
@@ -229,8 +221,6 @@ paths:
       summary: Rule - Get
       operationId: get-rule
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       responses:
@@ -244,8 +234,6 @@ paths:
       summary: Rule - Update
       operationId: put-rule-ruleId
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -261,8 +249,6 @@ paths:
       summary: Rule - Delete
       operationId: delete-rules-ruleId
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -279,8 +265,6 @@ paths:
       summary: Rule Instance - Stats
       operationId: get-rule_instances-ruleInstanceId-stats
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       parameters:
@@ -312,8 +296,6 @@ paths:
       summary: Rule Instance - threshold recommendations
       operationId: get-rule-instance-ruleInstanceId-recommendation
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       responses:
@@ -328,8 +310,6 @@ paths:
       summary: Rule Instance - Create
       operationId: post-rule_instances
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -361,8 +341,6 @@ paths:
           in: query
           name: mode
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       responses:
@@ -385,8 +363,6 @@ paths:
       summary: Rule Instance - Delete
       operationId: delete-rule_instances-ruleInstanceId
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -396,8 +372,6 @@ paths:
       summary: Rule Instance - Update
       operationId: put-rule_instances-ruleInstanceId
       x-flagright:
-        permissions:
-          - rules:my-rules:write
         resources:
           - write:::rules/my-rules
       responses:
@@ -423,8 +397,6 @@ paths:
       summary: Rule Instance - Get
       operationId: get-rule-instances-item
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       responses:
@@ -542,9 +514,6 @@ paths:
           in: query
           name: filterShadowHit
       x-flagright:
-        permissions:
-          - rules:my-rules:read
-          - users:user-overview:read
         resources:
           - read:::rules/my-rules
           - read:::users/user-overview
@@ -560,8 +529,6 @@ paths:
       summary: Get Distinct Rule Instance IDs with Alerts
       operationId: get-rules-with-alerts
       x-flagright:
-        permissions:
-          - rules:my-rules:read
         resources:
           - read:::rules/my-rules
       responses:
@@ -631,8 +598,6 @@ paths:
       summary: Get all lists
       tags: []
       x-flagright:
-        permissions:
-          - lists:whitelist:read
         resources:
           - read:::lists/whitelist
       parameters:
@@ -663,8 +628,6 @@ paths:
       summary: White Lists - Get All By Type
       tags: []
       x-flagright:
-        permissions:
-          - lists:whitelist:read
         resources:
           - read:::lists/whitelist
       responses:
@@ -681,8 +644,6 @@ paths:
       summary: White Lists - Post
       tags: []
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       requestBody:
@@ -704,8 +665,6 @@ paths:
       summary: Black Lists - Get All
       tags: []
       x-flagright:
-        permissions:
-          - lists:blacklist:read
         resources:
           - read:::lists/blacklist
       responses:
@@ -722,8 +681,6 @@ paths:
       summary: Black Lists - Post
       tags: []
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       requestBody:
@@ -751,8 +708,6 @@ paths:
       summary: White Lists - Delete
       tags: []
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       responses:
@@ -764,8 +719,6 @@ paths:
       tags: []
       operationId: patch-white-list
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       requestBody:
@@ -786,8 +739,6 @@ paths:
       tags: []
       operationId: get-whitelist-list-header
       x-flagright:
-        permissions:
-          - lists:whitelist:read
         resources:
           - read:::lists/whitelist
       parameters:
@@ -815,8 +766,6 @@ paths:
       summary: Black Lists - Delete
       tags: []
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       responses:
@@ -828,8 +777,6 @@ paths:
       tags: []
       operationId: patch-blacklist
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       requestBody:
@@ -850,8 +797,6 @@ paths:
       tags: []
       operationId: get-blacklist-list-header
       x-flagright:
-        permissions:
-          - lists:blacklist:read
         resources:
           - read:::lists/blacklist
       responses:
@@ -875,8 +820,6 @@ paths:
       tags: []
       operationId: white-list-import-csv
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       requestBody:
@@ -909,8 +852,6 @@ paths:
       tags: []
       operationId: blacklist-import-csv
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       requestBody:
@@ -942,8 +883,6 @@ paths:
       summary: White Lists - Clear list items
       operationId: clear-white-list-items
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       responses:
@@ -964,8 +903,6 @@ paths:
       tags: []
       operationId: get-white-list-items
       x-flagright:
-        permissions:
-          - lists:whitelist:read
         resources:
           - read:::lists/whitelist
       parameters:
@@ -1025,8 +962,6 @@ paths:
       tags: []
       operationId: post-white-list-item
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       requestBody:
@@ -1049,8 +984,6 @@ paths:
       summary: Black Lists - Clear list items
       operationId: clear-blacklist-items
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       responses:
@@ -1071,8 +1004,6 @@ paths:
       tags: []
       operationId: get-blacklist-items
       x-flagright:
-        permissions:
-          - lists:blacklist:read
         resources:
           - read:::lists/blacklist
       parameters:
@@ -1132,8 +1063,6 @@ paths:
       tags: []
       operationId: post-blacklist-item
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       requestBody:
@@ -1162,8 +1091,6 @@ paths:
       tags: []
       operationId: delete-white-list-item
       x-flagright:
-        permissions:
-          - lists:whitelist:write
         resources:
           - write:::lists/whitelist
       responses:
@@ -1186,8 +1113,6 @@ paths:
       tags: []
       operationId: delete-blacklist-item
       x-flagright:
-        permissions:
-          - lists:blacklist:write
         resources:
           - write:::lists/blacklist
       responses:
@@ -1198,8 +1123,6 @@ paths:
       summary: Transaction - List V2
       tags: []
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -1385,8 +1308,6 @@ paths:
       summary: Transaction - List
       tags: []
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -1659,8 +1580,6 @@ paths:
       summary: Transaction - Export
       tags: []
       x-flagright:
-        permissions:
-          - transactions:export:read
         resources:
           - read:::transactions/export
       responses:
@@ -1756,8 +1675,6 @@ paths:
     get:
       summary: Transaction - Unique values for different fields
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       parameters:
@@ -1792,8 +1709,6 @@ paths:
       summary: Transaction - Get
       operationId: get-transaction
       x-flagright:
-        permissions:
-          - transactions:details:read
         resources:
           - read:::transactions/details
       responses:
@@ -1811,8 +1726,6 @@ paths:
       summary: Transaction - Stats
       tags: []
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -1871,8 +1784,6 @@ paths:
       summary: Transaction - Stats
       tags: []
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -1948,8 +1859,6 @@ paths:
     get:
       summary: CRM Account - List
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -1971,8 +1880,6 @@ paths:
     get:
       summary: Entity
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2002,8 +1909,6 @@ paths:
     get:
       summary: Transaction Linking
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2033,8 +1938,6 @@ paths:
     get:
       summary: Screening Status
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2062,8 +1965,6 @@ paths:
       summary: Consumer Users - List
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2183,8 +2084,6 @@ paths:
       summary: Consumer Users - List V2
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2292,8 +2191,6 @@ paths:
       summary: All Users - List
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2401,8 +2298,6 @@ paths:
       summary: All Users - List V2
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2490,8 +2385,6 @@ paths:
       summary: Create a User Comment
       operationId: post-user-comments
       x-flagright:
-        permissions:
-          - users:user-comments:write
         resources:
           - write:::users/user-comments
       responses:
@@ -2512,8 +2405,6 @@ paths:
       summary: Generate an AI narrative
       operationId: generate-narrative
       x-flagright:
-        permissions:
-          - copilot:narrative:write
         resources:
           - write:::copilot/narrative
       responses:
@@ -2534,8 +2425,6 @@ paths:
       summary: Format AI narrative
       operationId: format-narrative
       x-flagright:
-        permissions:
-          - copilot:narrative:write
         resources:
           - write:::copilot/narrative
       responses:
@@ -2556,8 +2445,6 @@ paths:
       summary: Get an AI sources
       operationId: get-ai-sources
       x-flagright:
-        permissions:
-          - copilot:narrative:read
         resources:
           - read:::copilot/narrative
       responses:
@@ -2583,8 +2470,6 @@ paths:
       summary: Delete a User Comment
       operationId: delete-users-userId-comments-commentId
       x-flagright:
-        permissions:
-          - users:user-comments:write
         resources:
           - write:::users/user-comments
       responses:
@@ -2594,8 +2479,6 @@ paths:
       summary: Create a User Comment Reply
       operationId: post-users-comments-reply
       x-flagright:
-        permissions:
-          - users:user-comments:write
         resources:
           - write:::users/user-comments
       responses:
@@ -2618,8 +2501,6 @@ paths:
       summary: Consumer Users - Item - GET
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2642,8 +2523,6 @@ paths:
       summary: Consumer Users - Item - POST
       operationId: post-consumer-users-userId
       x-flagright:
-        permissions:
-          - users:user-overview:write
         resources:
           - write:::users/user-overview
       responses:
@@ -2664,8 +2543,6 @@ paths:
       summary: Business Users - List
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2771,8 +2648,6 @@ paths:
       summary: Business Users - List V2
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2860,8 +2735,6 @@ paths:
       summary: Users - Item - Get
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2885,8 +2758,6 @@ paths:
       summary: Users - Attachment - Post
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2924,8 +2795,6 @@ paths:
     get:
       summary: Events - List
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2964,8 +2833,6 @@ paths:
       summary: Business Users - Item - Get
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -2988,8 +2855,6 @@ paths:
       summary: Business Users - Item - POST
       operationId: post-business-users-userId
       x-flagright:
-        permissions:
-          - users:user-overview:write
         resources:
           - write:::users/user-overview
       responses:
@@ -3010,8 +2875,6 @@ paths:
       summary: User - Unique values for different fields
       tags: []
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       parameters:
@@ -3039,8 +2902,6 @@ paths:
       summary: DashboardStats - Transactions
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3076,8 +2937,6 @@ paths:
       summary: DashboardStats - Transactions - Total
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3109,8 +2968,6 @@ paths:
       summary: DashboardStats - Rule hit
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3145,8 +3002,6 @@ paths:
       summary: DashboardStats - Users - By time
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3190,8 +3045,6 @@ paths:
       summary: DashboardStats - Hits per user
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3231,8 +3084,6 @@ paths:
       summary: DashboardStats - Team
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3280,8 +3131,6 @@ paths:
       summary: DashboardStats - Latest Team
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3315,8 +3164,6 @@ paths:
       summary: DashboardStats - Team SLA
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3350,8 +3197,6 @@ paths:
       summary: DashboardStats - Overview
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3368,8 +3213,6 @@ paths:
       summary: DashboardStats - ClosingReasonDistributionStats
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3403,8 +3246,6 @@ paths:
       summary: DashboardStats - AlertAndCaseStatusDistributionStats
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3452,8 +3293,6 @@ paths:
       summary: DashboardStats - AlertPriorityDistributionStats
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3479,8 +3318,6 @@ paths:
       summary: DashboardStats - Alerts by rule hit
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3507,8 +3344,6 @@ paths:
       summary: DashboardStats - Alerts stats by checklist reason
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3543,8 +3378,6 @@ paths:
       summary: DashboardStats - QA overview
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3571,8 +3404,6 @@ paths:
       summary: DashboardStats - Alerts by assignee
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3599,8 +3430,6 @@ paths:
       summary: DashboardStats - Transaction Type Distribution
       tags: []
       x-flagright:
-        permissions:
-          - dashboard:download-data:read
         resources:
           - read:::dashboard/download-data
       responses:
@@ -3768,8 +3597,6 @@ paths:
           name: unmaskApiKeyId
           in: query
       x-flagright:
-        permissions:
-          - settings:developers:read
         resources:
           - read:::settings/developers
       summary: Tenant - Get API Keys
@@ -3836,8 +3663,6 @@ paths:
       operationId: create-role
       tags: []
       x-flagright:
-        permissions:
-          - roles:overview:write
         resources:
           - write:::roles/overview
       requestBody:
@@ -3867,8 +3692,6 @@ paths:
           in: path
           required: true
       x-flagright:
-        permissions:
-          - roles:overview:write
         resources:
           - write:::roles/overview
       requestBody:
@@ -3893,8 +3716,6 @@ paths:
           in: path
           required: true
       x-flagright:
-        permissions:
-          - roles:overview:write
         resources:
           - write:::roles/overview
       responses:
@@ -3907,8 +3728,6 @@ paths:
       operationId: get-role
       tags: []
       x-flagright:
-        permissions:
-          - roles:overview:read
         resources:
           - read:::roles/overview
       parameters:
@@ -3974,8 +3793,6 @@ paths:
       summary: Tenant - Get Usage Data
       operationId: get-tenant-usage-data
       x-flagright:
-        permissions:
-          - settings:developers:read
         resources:
           - read:::settings/developers
       responses:
@@ -4056,8 +3873,6 @@ paths:
       summary: Account - Delete
       operationId: accounts-delete
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
       responses:
@@ -4093,8 +3908,6 @@ paths:
       summary: Account - Resend Invite
       operationId: accounts-resend-invite
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
       requestBody:
@@ -4119,8 +3932,6 @@ paths:
       summary: Account - Reset Password
       operationId: accounts-reset-password
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
       responses:
@@ -4141,8 +3952,6 @@ paths:
       summary: Account - Deactivate
       operationId: accounts-deactivate
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
       responses:
@@ -4184,8 +3993,6 @@ paths:
         required: true
       operationId: accounts-invite
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
     get:
@@ -4219,8 +4026,6 @@ paths:
           description: Account not found
       operationId: reset-account-mfa
       x-flagright:
-        permissions:
-          - accounts:overview:write
         resources:
           - write:::accounts/overview
   /pulse/risk-classification:
@@ -4228,8 +4033,6 @@ paths:
       summary: Risk classification - GET
       tags: []
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4247,8 +4050,6 @@ paths:
       summary: Risk classification - POST
       operationId: post-pulse-risk-classification
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:write
         resources:
           - write:::risk-scoring/risk-levels
       responses:
@@ -4277,8 +4078,6 @@ paths:
       summary: Risk Level - Manual Assignment
       operationId: pulse-manual-risk-assignment
       x-flagright:
-        permissions:
-          - users:user-manual-risk-levels:write
         resources:
           - write:::users/user-manual-risk-levels
       requestBody:
@@ -4314,8 +4113,6 @@ paths:
       summary: Risk Level - Get Manual Assignment
       operationId: get-pulse-risk-assignment
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4340,8 +4137,6 @@ paths:
       summary: KYC Risk Value
       operationId: get-krs-value
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4366,8 +4161,6 @@ paths:
       summary: Action Risk Value
       operationId: get-ars-value
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4392,8 +4185,6 @@ paths:
       summary: Dynamic Risk Value
       operationId: get-drs-value
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4420,8 +4211,6 @@ paths:
       summary: Dynamic Risk Values
       operationId: get-drs-values
       x-flagright:
-        permissions:
-          - risk-scoring:risk-levels:read
         resources:
           - read:::risk-scoring/risk-levels
       responses:
@@ -4458,8 +4247,6 @@ paths:
     get:
       summary: TRS Scores of User
       x-flagright:
-        permissions:
-          - users:user-overview:read
         resources:
           - read:::users/user-overview
       responses:
@@ -4477,8 +4264,6 @@ paths:
       summary: AuditLog
       operationId: get-auditlog
       x-flagright:
-        permissions:
-          - audit-log:export:read
         resources:
           - read:::audit-log/export
       responses:
@@ -4570,8 +4355,6 @@ paths:
       summary: Risk Factors - POST
       operationId: post-create-risk-factor
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
         resources:
           - write:::risk-scoring/risk-factors
       requestBody:
@@ -4595,8 +4378,6 @@ paths:
       summary: Risk factors - GET
       operationId: get-all-risk-factors
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
         resources:
           - read:::risk-scoring/risk-factors
       parameters:
@@ -4624,8 +4405,6 @@ paths:
       summary: Risk factors - POST Bulk
       operationId: post-bulk-risk-factors
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
         resources:
           - write:::risk-scoring/risk-factors
       requestBody:
@@ -4650,8 +4429,6 @@ paths:
       summary: Get a new unique risk ID
       operationId: get-new-risk-factor-id
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
         resources:
           - write:::risk-scoring/risk-factors
       responses:
@@ -4679,8 +4456,6 @@ paths:
       summary: Risk factor - PUT
       operationId: put-risk-factors
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
         resources:
           - write:::risk-scoring/risk-factors
       requestBody:
@@ -4704,8 +4479,6 @@ paths:
       summary: Risk factor - GET
       operationId: get-risk-factor
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
         resources:
           - read:::risk-scoring/risk-factors
       responses:
@@ -4719,8 +4492,6 @@ paths:
       summary: Risk factors - DELETE
       operationId: delete-risk-factor
       x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
         resources:
           - write:::risk-scoring/risk-factors
       responses:
@@ -4732,6 +4503,9 @@ paths:
     get:
       summary: Slack OAuth Redirect
       tags: []
+      x-flagright:
+        resources:
+          - write:::settings/notifications/slack-notifications
       responses:
         '200':
           description: OK
@@ -4742,10 +4516,8 @@ paths:
       summary: Create a new webhook
       operationId: post-webhooks
       x-flagright:
-        permissions:
-          - settings:developers:write
         resources:
-          - write:::settings/developers
+          - write:::settings/developers/webhooks-configurations
       responses:
         '200':
           description: OK
@@ -4763,10 +4535,8 @@ paths:
       summary: Get all webhooks
       operationId: get-webhooks
       x-flagright:
-        permissions:
-          - settings:developers:read
         resources:
-          - read:::settings/developers
+          - read:::settings/developers/webhooks-configurations
       responses:
         '200':
           description: OK
@@ -4781,10 +4551,8 @@ paths:
       summary: Update a webhook
       operationId: post-webhooks-webhookid
       x-flagright:
-        permissions:
-          - settings:developers:write
         resources:
-          - write:::settings/developers
+          - write:::settings/developers/webhooks-configurations
       responses:
         '200':
           description: OK
@@ -4808,10 +4576,8 @@ paths:
       summary: Delete a webhook
       operationId: delete-webhooks-webhookId
       x-flagright:
-        permissions:
-          - settings:developers:write
         resources:
-          - write:::settings/developers
+          - write:::settings/developers/webhooks-configurations
       responses:
         '200':
           description: OK
@@ -4825,10 +4591,8 @@ paths:
     get:
       summary: Get secret of a webhook
       x-flagright:
-        permissions:
-          - settings:developers:read
         resources:
-          - read:::settings/developers
+          - read:::settings/developers/webhooks-configurations
       tags: []
       responses:
         '200':
@@ -4848,10 +4612,8 @@ paths:
     get:
       summary: Get webhook deliveries
       x-flagright:
-        permissions:
-          - settings:developers:read
         resources:
-          - read:::settings/developers
+          - read:::settings/developers/webhooks-configurations
       tags: []
       responses:
         '200':
@@ -4927,10 +4689,8 @@ paths:
       summary: Resend a webhook event
       operationId: post-webhook-event-resend
       x-flagright:
-        permissions:
-          - settings:developers:write
         resources:
-          - write:::settings/developers
+          - write:::settings/developers/webhooks-configurations
       responses:
         '200':
           description: OK
@@ -4953,8 +4713,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - transactions:overview:write
         resources:
           - write:::transactions/overview
       requestBody:
@@ -5084,8 +4842,6 @@ paths:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -5114,8 +4870,6 @@ paths:
       summary: Alerts - Item - Transaction Stats
       operationId: get-alert-transaction-stats
       x-flagright:
-        permissions:
-          - transactions:overview:read
         resources:
           - read:::transactions/overview
       responses:
@@ -5130,8 +4884,6 @@ paths:
       summary: Alerts - List
       tags: []
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -5414,8 +5166,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -5432,8 +5182,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5453,8 +5201,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateAlertsQAStatusResponse'
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5477,8 +5223,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5501,8 +5245,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -5525,8 +5267,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5543,8 +5283,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-assignment:write
         resources:
           - write:::case-management/case-assignment
       requestBody:
@@ -5561,8 +5299,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-assignment:write
         resources:
           - write:::case-management/case-assignment
       requestBody:
@@ -5600,8 +5336,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertsQaSampling'
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5707,8 +5441,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertsQaSampling'
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
       requestBody:
@@ -5724,8 +5456,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:qa:write
         resources:
           - write:::case-management/qa
   /alerts/qa-sample-ids:
@@ -5753,8 +5483,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Case'
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -5781,8 +5509,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Comment'
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -5810,8 +5536,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
     post:
@@ -5825,8 +5549,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Comment'
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -5840,8 +5562,6 @@ paths:
       summary: Cases - List
       tags: []
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -6058,8 +5778,6 @@ paths:
       summary: Create a Manual Case
       operationId: post-cases-manual
       x-flagright:
-        permissions:
-          - case-management:case-details:write
         resources:
           - write:::case-management/case-details
       responses:
@@ -6079,8 +5797,6 @@ paths:
       summary: Update a Manual Case
       operationId: patch-cases-manual
       x-flagright:
-        permissions:
-          - case-management:case-details:write
         resources:
           - write:::case-management/case-details
       responses:
@@ -6100,8 +5816,6 @@ paths:
     post:
       operationId: create-case-report
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       summary: Create a transaction
@@ -6155,8 +5869,6 @@ paths:
       summary: Get transactions for a case
       tags: []
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -6390,8 +6102,6 @@ paths:
       summary: Get caseIds for a user
       operationId: get-caseIds
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -6409,8 +6119,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -6427,8 +6135,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-assignment:write
         resources:
           - write:::case-management/case-assignment
       requestBody:
@@ -6445,8 +6151,6 @@ paths:
         '200':
           description: OK
       x-flagright:
-        permissions:
-          - case-management:case-assignment:write
         resources:
           - write:::case-management/case-assignment
       requestBody:
@@ -6466,8 +6170,6 @@ paths:
       summary: Get a Case
       operationId: get-case
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -6490,8 +6192,6 @@ paths:
       summary: Escalate a case or alerts
       operationId: post-cases-caseId-escalate
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       responses:
@@ -6518,8 +6218,6 @@ paths:
       summary: Create a Case Comment
       operationId: post-case-comments
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       responses:
@@ -6551,8 +6249,6 @@ paths:
       summary: Delete a Case Comment
       operationId: delete-cases-caseId-comments-commentId
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       responses:
@@ -6562,8 +6258,6 @@ paths:
       summary: Create a Comment Reply
       operationId: post-case-comments-reply
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       requestBody:
@@ -6603,8 +6297,6 @@ paths:
       summary: Create a Default Manual Screening Filters
       operationId: post-default-manual-screening-filters
       x-flagright:
-        permissions:
-          - screening:search-profiles:write
         resources:
           - write:::screening/search-profiles
       requestBody:
@@ -6624,8 +6316,6 @@ paths:
       summary: Get a Default Manual Screening Filters
       operationId: get-default-manual-screening-filters
       x-flagright:
-        permissions:
-          - screening:search-profiles:read
         resources:
           - read:::screening/search-profiles
       responses:
@@ -6640,8 +6330,6 @@ paths:
       summary: Create a Search Profile
       operationId: post-search-profiles
       x-flagright:
-        permissions:
-          - screening:search-profiles:write
         resources:
           - write:::screening/search-profiles
       requestBody:
@@ -6661,8 +6349,6 @@ paths:
       summary: Get search profiles
       operationId: get-search-profiles
       x-flagright:
-        permissions:
-          - screening:search-profiles:read
         resources:
           - read:::screening/search-profiles
       responses:
@@ -6694,8 +6380,6 @@ paths:
       summary: Update a Search Profile
       operationId: update-search-profile
       x-flagright:
-        permissions:
-          - screening:search-profiles:write
         resources:
           - write:::screening/search-profiles
       parameters:
@@ -6721,8 +6405,6 @@ paths:
       summary: Delete a Search Profile
       operationId: delete-search-profile
       x-flagright:
-        permissions:
-          - screening:search-profiles:write
         resources:
           - write:::screening/search-profiles
       parameters:
@@ -6739,8 +6421,6 @@ paths:
       summary: Get screening profiles
       operationId: get-screening-profiles
       x-flagright:
-        permissions:
-          - screening:screening-profiles:read
         resources:
           - read:::screening/screening-profiles
       parameters:
@@ -6771,8 +6451,6 @@ paths:
       summary: Create a Screening Profile
       operationId: post-screening-profiles
       x-flagright:
-        permissions:
-          - screening:screening-profiles:write
         resources:
           - write:::screening/screening-profiles
       requestBody:
@@ -6793,8 +6471,6 @@ paths:
       summary: Update a Screening Profile
       operationId: update-screening-profile
       x-flagright:
-        permissions:
-          - screening:screening-profiles:write
         resources:
           - write:::screening/screening-profiles
       parameters:
@@ -6820,8 +6496,6 @@ paths:
       summary: Delete a Screening Profile
       operationId: delete-screening-profile
       x-flagright:
-        permissions:
-          - screening:screening-profiles:write
         resources:
           - write:::screening/screening-profiles
       parameters:
@@ -6838,8 +6512,6 @@ paths:
       summary: Get sanctions sources
       operationId: get-sanctions-sources
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       parameters:
@@ -6863,8 +6535,6 @@ paths:
       summary: Search Sanctions
       operationId: post-sanctions
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -6884,8 +6554,6 @@ paths:
       summary: Get all search history
       operationId: get-sanctions-search
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -6937,8 +6605,6 @@ paths:
       summary: Get sanctions screening activity stats
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -6963,8 +6629,6 @@ paths:
       summary: Get sanctions screening activity details
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -7019,8 +6683,6 @@ paths:
       summary: Get single search history
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -7054,8 +6716,6 @@ paths:
       summary: Get hits for a search
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -7120,8 +6780,6 @@ paths:
       summary: Get whitelist records
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:read
         resources:
           - read:::sanctions/search
       responses:
@@ -7171,8 +6829,6 @@ paths:
       summary: Delete whitelist record
       tags: []
       x-flagright:
-        permissions:
-          - sanctions:search:write
         resources:
           - write:::sanctions/search
       responses:
@@ -7247,8 +6903,6 @@ paths:
       summary: Create new simulation task
       operationId: post-simulation
       x-flagright:
-        permissions:
-          - simulator:simulations:write
         resources:
           - write:::simulator/simulations
       responses:
@@ -7268,8 +6922,6 @@ paths:
       summary: Get simulation tasks
       operationId: get-simulations
       x-flagright:
-        permissions:
-          - simulator:simulations:read
         resources:
           - read:::simulator/simulations
       responses:
@@ -7316,8 +6968,6 @@ paths:
       summary: Get a simulation task by test ID
       operationId: get-simulation-test-id
       x-flagright:
-        permissions:
-          - simulator:simulations:read
         resources:
           - read:::simulator/simulations
       responses:
@@ -7343,8 +6993,6 @@ paths:
       summary: Get a simulation task result by task ID
       operationId: get-simulation-task-id-result
       x-flagright:
-        permissions:
-          - simulator:simulations:read
         resources:
           - read:::simulator/simulations
       responses:
@@ -7455,8 +7103,6 @@ paths:
       summary: Get simulation tasks count
       operationId: get-simulation-jobs-count
       x-flagright:
-        permissions:
-          - simulator:simulations:read
         resources:
           - read:::simulator/simulations
       responses:
@@ -7498,8 +7144,6 @@ paths:
       summary: Create narrative
       operationId: post-narrative-template
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management/narrative-templates
       responses:
@@ -7520,8 +7164,6 @@ paths:
       summary: Update narrative
       operationId: put-narrative-template
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management/narrative-templates/template:{narrativeTemplateId}
       responses:
@@ -7547,8 +7189,6 @@ paths:
       summary: Delete narrative
       operationId: delete-narrative-template
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management/narrative-templates/template:{narrativeTemplateId}
       responses:
@@ -7565,8 +7205,6 @@ paths:
       summary: Get a list of report types
       tags: []
       x-flagright:
-        permissions:
-          - reports:schema:read
         resources:
           - read:::reports/schema
       parameters:
@@ -7595,8 +7233,6 @@ paths:
       summary: Get Action reasons
       operationId: get-action-reasons
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -7618,8 +7254,6 @@ paths:
       summary: Create New Action Reasons
       operationId: create-action-reasons
       x-flagright:
-        permissions:
-          - settings:case-management:read
         resources:
           - read:::settings/case-management
       responses:
@@ -7642,8 +7276,6 @@ paths:
       summary: Toggle Action Reason
       operationId: toggle-action-reason
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -7670,8 +7302,6 @@ paths:
       summary: Get SLA Policies
       operationId: get-sla-policies
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -7698,8 +7328,6 @@ paths:
       summary: Create SLA Policy
       operationId: post-sla-policy
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -7720,8 +7348,6 @@ paths:
       summary: Get SLA Policy
       operationId: get-sla-policy
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -7741,8 +7367,6 @@ paths:
       summary: Update SLA Policy
       operationId: put-sla-policy
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -7768,8 +7392,6 @@ paths:
       summary: Delete SLA Policy
       operationId: delete-sla-policy
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -7786,8 +7408,6 @@ paths:
       summary: Get new SLA ID
       operationId: get-new-sla-id
       x-flagright:
-        permissions:
-          - settings:case-management:read
         resources:
           - read:::settings/case-management
       responses:
@@ -7803,8 +7423,6 @@ paths:
       summary: Get a report draft
       tags: []
       x-flagright:
-        permissions:
-          - reports:generated:read
         resources:
           - read:::reports/generated
       responses:
@@ -7846,8 +7464,6 @@ paths:
       summary: Get created reports
       tags: []
       x-flagright:
-        permissions:
-          - reports:generated:read
         resources:
           - read:::reports/generated
       responses:
@@ -7915,8 +7531,6 @@ paths:
       summary: Create a new report
       operationId: post-reports
       x-flagright:
-        permissions:
-          - reports:generated:write
         resources:
           - write:::reports/generated
       responses:
@@ -7936,8 +7550,6 @@ paths:
       summary: Delete reports
       operationId: delete-reports
       x-flagright:
-        permissions:
-          - reports:generated:write
         resources:
           - write:::reports/generated
       responses:
@@ -7968,8 +7580,6 @@ paths:
       summary: Get a created report
       tags: []
       x-flagright:
-        permissions:
-          - reports:generated:read
         resources:
           - read:::reports/generated
       responses:
@@ -7991,8 +7601,6 @@ paths:
       summary: Save a report draft
       tags: []
       x-flagright:
-        permissions:
-          - reports:generated:write
         resources:
           - write:::reports/generated
       responses:
@@ -8020,8 +7628,6 @@ paths:
       summary: Update report status
       tags: []
       x-flagright:
-        permissions:
-          - reports:generated:write
         resources:
           - write:::reports/generated
       responses:
@@ -8067,8 +7673,6 @@ paths:
       summary: Create a checklist template
       operationId: post-checklist-templates
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8089,8 +7693,6 @@ paths:
       summary: Delete a tenant
       operationId: delete-tenant
       x-flagright:
-        permissions:
-          - settings:system-config:write
         resources:
           - write:::settings/system-config
       responses:
@@ -8107,8 +7709,6 @@ paths:
       summary: Get tenant deletion data
       operationId: get-tenants-deletion-data
       x-flagright:
-        permissions:
-          - settings:system-config:read
         resources:
           - read:::settings/system-config
       responses:
@@ -8152,8 +7752,6 @@ paths:
       summary: Update a checklist template
       operationId: put-checklist-templates
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8173,8 +7771,6 @@ paths:
       summary: Delete a checklist template
       operationId: delete-checklist-template
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8213,8 +7809,6 @@ paths:
       summary: Create a rule queue
       operationId: post-rule-queue
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8251,8 +7845,6 @@ paths:
       summary: Update a rule queue
       operationId: put-rule-queue
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8272,8 +7864,6 @@ paths:
       summary: Delete a rule queue
       operationId: delete-rule-queue
       x-flagright:
-        permissions:
-          - settings:case-management:write
         resources:
           - write:::settings/case-management
       responses:
@@ -8283,8 +7873,6 @@ paths:
     get:
       summary: Get question autocompletion
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -8310,8 +7898,6 @@ paths:
     get:
       summary: Get question variable autocompletion
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       responses:
@@ -8343,8 +7929,6 @@ paths:
       summary: Get questions
       operationId: get-questions
       x-flagright:
-        permissions:
-          - case-management:case-overview:read
         resources:
           - read:::case-management/case-overview
       parameters:
@@ -8377,8 +7961,6 @@ paths:
                 $ref: '#/components/schemas/GetQuestionsResponse'
       operationId: post-question
       x-flagright:
-        permissions:
-          - case-management:case-overview:write
         resources:
           - write:::case-management/case-overview
       description: ''
@@ -8393,8 +7975,6 @@ paths:
       summary: Get notifications
       operationId: get-notifications
       x-flagright:
-        permissions:
-          - notifications:all:read
         resources:
           - read:::notifications/all
       responses:
@@ -8427,8 +8007,6 @@ paths:
       summary: Mark notification as read
       operationId: post-notifications-read-notificationId
       x-flagright:
-        permissions:
-          - notifications:all:read
         resources:
           - read:::notifications/all
       responses:
@@ -8439,8 +8017,6 @@ paths:
       summary: Mark all notifications as read
       operationId: post-notifications-mark-all-read
       x-flagright:
-        permissions:
-          - notifications:all:read
         resources:
           - read:::notifications/all
       responses:

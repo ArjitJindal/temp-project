@@ -32,7 +32,7 @@ import {
   DEFAULT_COUNTRY_RISK_VALUES,
   DEFAULT_CPI_COUNTRY_RISK_VALUES,
 } from '@/utils/defaultCountriesRiskLevel';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { levelToAlias, useRiskClassificationScores } from '@/utils/risk-levels';
@@ -57,10 +57,7 @@ function ValuesTable(props: Props) {
   const configSetting = useSettings();
   const defaultCurrency = configSetting?.defaultValues?.currency ?? 'USD';
   const hasWritePermissions =
-    useHasPermissions(
-      ['risk-scoring:risk-factors:write'],
-      ['write:::risk-scoring/risk-factors/*'],
-    ) && canEditParameters;
+    useHasResources(['write:::risk-scoring/risk-factors/*']) && canEditParameters;
 
   const [values, setValues] = useState<RiskParameterLevelKeyValue[]>(
     entity.riskLevelAssignmentValues || [],

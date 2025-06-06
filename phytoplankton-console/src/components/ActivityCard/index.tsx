@@ -1,17 +1,18 @@
 import { useState } from 'react';
+import { Resource } from '@flagright/lib/utils';
 import CommentsCard, { CommentGroup } from '../CommentsCard';
 import ScopeSelector, { ScopeSelectorValue } from './ScopeSelector';
 import s from './index.module.less';
 import LogCard from './LogCard';
 import * as Card from '@/components/ui/Card';
-import { Comment, Permission } from '@/apis';
+import { Comment } from '@/apis';
 import { Mutation } from '@/utils/queries/types';
 import { StatePair } from '@/utils/state';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import DownloadFilesButton from '@/components/library/DownloadFilesButton';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
-import { CommentType, Resource } from '@/utils/user-utils';
+import { CommentType } from '@/utils/user-utils';
 
 export type Tab = ScopeSelectorValue;
 
@@ -29,7 +30,6 @@ interface Props<FilterParams> {
       groupId: string,
     ) => Promise<Comment>;
     onCommentAdded?: (newComment: Comment, commentType: CommentType, groupId: string) => void;
-    writePermissions: Permission[];
     writeResources: Resource[];
   };
 }
@@ -67,7 +67,6 @@ export default function ActivityCard<FilterParams>(props: Props<FilterParams>) {
             deleteCommentMutation={comments.deleteCommentMutation}
             handleAddComment={comments.handleAddComment}
             onCommentAdded={comments.onCommentAdded}
-            writePermissions={comments.writePermissions}
             writeResources={comments.writeResources}
           />
         )}

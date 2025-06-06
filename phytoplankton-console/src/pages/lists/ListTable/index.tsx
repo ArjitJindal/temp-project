@@ -14,7 +14,7 @@ import { map } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
@@ -43,10 +43,9 @@ function ListTable(props: Props, ref: ListTableRef) {
     return api.getBlacklist();
   });
 
-  const hasListWritePermissions = useHasPermissions(
-    [listType === 'WHITELIST' ? 'lists:whitelist:write' : 'lists:blacklist:write'],
-    [listType === 'WHITELIST' ? 'write:::lists/whitelist/*' : 'write:::lists/blacklist/*'],
-  );
+  const hasListWritePermissions = useHasResources([
+    listType === 'WHITELIST' ? 'write:::lists/whitelist/*' : 'write:::lists/blacklist/*',
+  ]);
 
   useImperativeHandle(ref, () => ({
     reload: queryResults.refetch,

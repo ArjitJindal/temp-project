@@ -20,7 +20,7 @@ import {
   TenantSettings,
 } from '@/apis';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import DeleteIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
@@ -107,10 +107,7 @@ export default function CreateSearchProfileModal({
     }
     return initialFilters;
   });
-  const isReadOnly = !useHasPermissions(
-    ['screening:search-profiles:write'],
-    ['write:::screening/search-profiles/*'],
-  );
+  const isReadOnly = !useHasResources(['write:::screening/search-profiles/*']);
   const api = useApi();
   const queryClient = useQueryClient();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
@@ -274,7 +271,6 @@ export default function CreateSearchProfileModal({
         <Button
           type="PRIMARY"
           key="create-search-profile"
-          requiredPermissions={['screening:search-profiles:write']}
           requiredResources={['write:::screening/search-profiles/*']}
           onClick={() => setIsModalOpen(true)}
         >

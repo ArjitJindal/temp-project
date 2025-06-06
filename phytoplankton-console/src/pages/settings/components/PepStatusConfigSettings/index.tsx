@@ -5,14 +5,11 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 
 export const PepStatusConfigSettings = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(
-    ['settings:users:write'],
-    ['write:::settings/users/pep-status-lock/*'],
-  );
+  const permissions = useHasResources(['write:::settings/users/pep-status-lock/*']);
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {

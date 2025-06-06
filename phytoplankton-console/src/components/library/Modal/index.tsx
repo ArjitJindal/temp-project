@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { Modal as AntModal, Typography } from 'antd';
 import cn from 'clsx';
 import { useLocalStorageState } from 'ahooks';
+import { Resource } from '@flagright/lib/utils';
 import s from './style.module.less';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import ExpandAltOutlined from '@/components/ui/icons/expand-diagonal-s-line.react.svg';
 import CollapseAltOutlined from '@/components/ui/icons/collapse-diagonal-line.react.svg';
 import Button, { ButtonProps } from '@/components/library/Button';
 import Tabs, { TabItem } from '@/components/library/Tabs';
-import { Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { Resource } from '@/utils/user-utils';
 
 export const MODAL_WIDTHS = ['S', 'M', 'L', 'XL'] as const;
 export type ModalWidth = typeof MODAL_WIDTHS[number];
@@ -36,7 +35,6 @@ interface Props {
   tabs?: TabItem[];
   children?: React.ReactNode;
   disablePadding?: boolean;
-  writePermissions?: Permission[];
   writeResources?: Resource[];
   hideOk?: boolean;
   maskClosable?: boolean;
@@ -79,7 +77,6 @@ export default function Modal(props: Props) {
     height = 'AUTO',
     tabs = [],
     disablePadding = false,
-    writePermissions = [],
     writeResources = [],
     hideOk = false,
     maskClosable = true,
@@ -167,7 +164,6 @@ export default function Modal(props: Props) {
                   onClick={onOk}
                   {...okProps}
                   testName={`modal-ok`}
-                  requiredPermissions={writePermissions}
                   requiredResources={writeResources}
                 >
                   {okText ?? 'OK'}

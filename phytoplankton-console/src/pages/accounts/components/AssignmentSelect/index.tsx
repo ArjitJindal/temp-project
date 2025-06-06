@@ -28,7 +28,6 @@ export function AssignmentSelect(props: Props) {
       onChange={(value) => {
         inputProps?.onChange?.(value);
       }}
-      requiredPermissions={['accounts:overview:write']}
       requiredResources={['write:::accounts/overview/*']}
     />
   );

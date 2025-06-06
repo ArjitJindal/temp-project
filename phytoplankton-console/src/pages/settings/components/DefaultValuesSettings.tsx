@@ -1,9 +1,9 @@
 import { Select, SelectProps } from 'antd';
 import { useState, useEffect, useMemo } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
+import { Resource, hasResources } from '@flagright/lib/utils';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
-  useFeatureEnabled,
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -12,7 +12,6 @@ import Table from '@/components/library/Table';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
-import { useHasPermissions, Resource, hasResources } from '@/utils/user-utils';
 import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 
 type TableItem = {
@@ -37,13 +36,6 @@ const columnHelper = new ColumnHelper<TableItem>();
 export const DefaultValuesSettings = () => {
   const [value, setValue] = useState<{ [key: string]: string }>(DEFAULT_VALUES);
   const settings = useSettings();
-
-  const hasSystemConfigWrite = useHasPermissions(
-    ['settings:system-config:write'],
-    ['write:::settings/system-config/default-values/*'],
-  );
-
-  const isRbacV2Enabled = useFeatureEnabled('RBAC_V2');
 
   const { statements } = useResources();
 
@@ -73,11 +65,7 @@ export const DefaultValuesSettings = () => {
                 defaultValue={DEFAULT_VALUES[record.valueType]}
                 showSearch
                 style={{ width: '100%' }}
-                disabled={
-                  isRbacV2Enabled
-                    ? !hasResources(statements, record.requiredResources.write)
-                    : !hasSystemConfigWrite
-                }
+                disabled={!hasResources(statements, record.requiredResources.write)}
               />
             );
           },
@@ -98,7 +86,6 @@ export const DefaultValuesSettings = () => {
                   onSave(record.valueType, value[record.valueType]);
                 }}
                 isLoading={saving}
-                requiredPermissions={['settings:system-config:write']}
                 requiredResources={record.requiredResources.write}
               >
                 Save
@@ -107,7 +94,7 @@ export const DefaultValuesSettings = () => {
           },
         }),
       ]),
-    [hasSystemConfigWrite, isRbacV2Enabled, statements],
+    [statements],
   );
 
   useEffect(() => {

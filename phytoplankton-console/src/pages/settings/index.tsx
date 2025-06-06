@@ -43,7 +43,7 @@ import { makeUrl } from '@/utils/routing';
 import Alert from '@/components/library/Alert';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
-import { AuthorizedResource } from '@/components/utils/Authorized';
+import { Authorized } from '@/components/utils/Authorized';
 
 export default function SettingsPage() {
   const { section = 'system' } = useParams<'section'>() as {
@@ -73,7 +73,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.system'),
             key: 'system',
-            requiredPermissions: ['settings:system-config:read'],
             minRequiredResources: ['read:::settings/system-config/*'],
             children: (
               <>
@@ -86,14 +85,12 @@ export default function SettingsPage() {
             title: i18n('menu.settings.security'),
             key: 'security',
             children: <SecuritySettings />,
-            requiredPermissions: ['settings:security:read'],
             minRequiredResources: ['read:::settings/security/*'],
           },
 
           {
             title: i18n('menu.settings.case-management'),
             key: 'case-management',
-            requiredPermissions: ['settings:case-management:read'],
             minRequiredResources: ['read:::settings/case-management/*'],
             children: (
               <>
@@ -116,7 +113,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.transactions'),
             key: 'transactions',
-            requiredPermissions: ['settings:transactions:read'],
             minRequiredResources: ['read:::settings/transactions/*'],
             children: (
               <>
@@ -128,7 +124,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.users'),
             key: 'users',
-            requiredPermissions: ['settings:users:read'],
             minRequiredResources: ['read:::settings/users/*'],
             children: (
               <>
@@ -142,14 +137,12 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.rules'),
             key: 'rules',
-            requiredPermissions: ['settings:rules:read'],
             minRequiredResources: ['read:::settings/rules/*'],
             children: <RuleActionSettings />,
           },
           {
             title: i18n('menu.settings.risk-scoring'),
             key: 'risk-scoring',
-            requiredPermissions: ['settings:risk-scoring:read'],
             minRequiredResources: ['read:::settings/risk-scoring/*'],
             children: (
               <>
@@ -168,31 +161,29 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.notifications'),
             key: 'notifications',
-            requiredPermissions: ['settings:notifications:read'],
             minRequiredResources: ['read:::settings/notifications/*'],
             children: (
               <>
                 <SlackNotificationsSettings />
                 <EmailNotificationsSettings />
-                <AuthorizedResource
+                <Authorized
                   minRequiredResources={['read:::settings/notifications/notification-settings/*']}
+                  showForbiddenPage
                 >
                   <NotificationsSettings />
-                </AuthorizedResource>
+                </Authorized>
               </>
             ),
           },
           {
             title: i18n('menu.settings.screening'),
             key: 'sanctions',
-            requiredPermissions: ['settings:screening:read'],
             minRequiredResources: ['read:::settings/screening/*'],
             children: <SanctionsSettings />,
           },
           {
             title: i18n('menu.settings.addons'),
             key: 'addons',
-            requiredPermissions: ['settings:add-ons:read'],
             minRequiredResources: ['read:::settings/add-ons/*'],
             children: (
               <>
@@ -205,7 +196,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.developers'),
             key: 'developers',
-            requiredPermissions: ['settings:developers:read'],
             minRequiredResources: ['read:::settings/developers/*'],
             children: (
               <>

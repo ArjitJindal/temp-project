@@ -101,7 +101,6 @@ export const AISources = () => {
                       aiSourcesDisabled: aiSourcesDisabled.filter(isValidAIAttribute),
                     });
                   }}
-                  requiredPermissions={['settings:case-management:write']}
                   requiredResources={['write:::settings/case-management/*']}
                 >
                   Save

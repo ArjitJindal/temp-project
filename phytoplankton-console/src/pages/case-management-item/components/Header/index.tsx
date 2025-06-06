@@ -18,7 +18,7 @@ import {
   statusEscalatedL2,
   statusInReview,
 } from '@/utils/case-utils';
-import { useAuth0User, useHasPermissions, useUser } from '@/utils/user-utils';
+import { useAuth0User, useHasResources, useUser } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
@@ -138,10 +138,7 @@ export default function Header(props: Props) {
   const navigate = useNavigate();
   const user = useAuth0User();
   const userAccount = useUser(user.userId);
-  const isReopenEnabled = useHasPermissions(
-    ['case-management:case-reopen:write'],
-    ['write:::case-management/case-reopen/*'],
-  );
+  const isReopenEnabled = useHasResources(['write:::case-management/case-reopen/*']);
 
   const api = useApi();
   const queryClient = useQueryClient();
@@ -270,7 +267,6 @@ export default function Header(props: Props) {
               ...commentData,
             });
           }}
-          requiredPermissions={['case-management:case-overview:write']}
           requiredResources={['write:::case-management/case-overview/*']}
         />,
         ...getOr(

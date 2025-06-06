@@ -4,7 +4,7 @@ import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { Alert, Comment as ApiComment } from '@/apis';
 import Comment from '@/components/CommentsCard/Comment';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import CommentEditor, {
   CommentEditorRef,
@@ -25,10 +25,7 @@ interface Props {
 export default function CommentsTab(props: Props) {
   const { alert } = props;
   const user = useAuth0User();
-  const hasCommentWritePermission = useHasPermissions(
-    ['case-management:case-details:write'],
-    ['write:::case-management/case-details/*'],
-  );
+  const hasCommentWritePermission = useHasResources(['write:::case-management/case-details/*']);
   const api = useApi();
   const currentUserId = user.userId ?? undefined;
   const commentEditorRef = useRef<CommentEditorRef>(null);

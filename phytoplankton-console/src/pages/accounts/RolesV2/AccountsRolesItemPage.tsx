@@ -181,8 +181,7 @@ const AccountsRolesItemPage = () => {
                 },
                 children: (
                   <Authorized
-                    required={['accounts:overview:read']}
-                    requiredResources={['read:::accounts/overview/*']}
+                    minRequiredResources={['read:::accounts/overview/*']}
                     showForbiddenPage
                   >
                     <Team />
@@ -201,11 +200,7 @@ const AccountsRolesItemPage = () => {
                   }
                 },
                 children: (
-                  <Authorized
-                    required={['roles:overview:read']}
-                    requiredResources={['read:::roles/overview/*']}
-                    showForbiddenPage
-                  >
+                  <Authorized minRequiredResources={['read:::roles/overview/*']} showForbiddenPage>
                     {roleId === 'new' ? (
                       renderNewRole()
                     ) : (

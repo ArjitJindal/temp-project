@@ -152,11 +152,7 @@ export default function RuleConfigurationV2(props: Props) {
                   title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
                 >
                   <div>
-                    <Button
-                      isDisabled={true}
-                      requiredPermissions={['rules:my-rules:write']}
-                      requiredResources={['write:::rules/my-rules/*']}
-                    >
+                    <Button isDisabled={true} requiredResources={['write:::rules/my-rules/*']}>
                       Create
                     </Button>
                   </div>
@@ -174,7 +170,6 @@ export default function RuleConfigurationV2(props: Props) {
 
                     setIsRuleModeModalOpen(true);
                   }}
-                  requiredPermissions={['rules:my-rules:write']}
                   requiredResources={['write:::rules/my-rules/*']}
                   testName="drawer-create-save-button"
                 >
@@ -191,7 +186,6 @@ export default function RuleConfigurationV2(props: Props) {
               onClick={() => {
                 formRef?.current?.submit(); // To show errors
               }}
-              requiredPermissions={['rules:my-rules:write']}
               requiredResources={['write:::rules/my-rules/*']}
               testName="drawer-create-save-button"
             >
@@ -207,7 +201,6 @@ export default function RuleConfigurationV2(props: Props) {
                 }
               }}
               icon={<EditOutlined />}
-              requiredPermissions={['rules:my-rules:write']}
               requiredResources={['write:::rules/my-rules/*']}
             >
               Edit
