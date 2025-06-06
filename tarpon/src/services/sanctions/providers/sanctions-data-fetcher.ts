@@ -1168,6 +1168,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     userAddresses: Address[],
     entityAddresses: SanctionsEntityAddress[]
   ) {
+    if (userAddresses.length === 0 || entityAddresses.length === 0) {
+      return true
+    }
     for (const entityAddress of entityAddresses) {
       for (const userAddress of userAddresses) {
         if (
