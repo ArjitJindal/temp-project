@@ -69,11 +69,14 @@ export class ClickhouseTransactionsRepository {
     const whereConditions: string[] = []
 
     if (params.filterId) {
-      whereConditions.push(`id = '${params.filterId}'`)
+      whereConditions.push(`id ILIKE '%${params.filterId}%'`)
     }
 
     if (params.filterIdList?.length) {
-      whereConditions.push(`id IN ('${params.filterIdList.join("','")}')`)
+      const ilikeClauses = params.filterIdList
+        .map((id) => `id ILIKE '%${id}%'`)
+        .join(' OR ')
+      whereConditions.push(`(${ilikeClauses})`)
     }
 
     if (params.filterUserId || params.filterUserIds) {

@@ -44,6 +44,8 @@ import {
   paginateFindOptions,
   paginatePipeline,
   prefixRegexMatchFilter,
+  regexMatchFilter,
+  regexMatchFilterForArray,
 } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
@@ -351,12 +353,12 @@ export class MongoDbTransactionRepository
 
     if (params.filterIdList != null) {
       conditions.push({
-        transactionId: { $in: params.filterIdList },
+        transactionId: regexMatchFilterForArray(params.filterIdList),
       })
     }
     if (params.filterId != null) {
       conditions.push({
-        transactionId: prefixRegexMatchFilter(params.filterId),
+        transactionId: regexMatchFilter(params.filterId),
       })
     }
 
