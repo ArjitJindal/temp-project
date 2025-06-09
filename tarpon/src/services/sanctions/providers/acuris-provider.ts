@@ -4,6 +4,7 @@ import { promisify } from 'util'
 import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
+import { Client } from '@opensearch-project/opensearch/.'
 import {
   COLLECTIONS_MAP,
   extractCountryFromSource,
@@ -37,6 +38,8 @@ import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourc
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { hasFeature } from '@/core/utils/context'
+import { getOpensearchClient } from '@/utils/opensearch-utils'
 
 const pipelineAsync = promisify(pipeline)
 
@@ -587,7 +590,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
     )
   }
 
-  private getFullExtractRepo(entityType: SanctionsEntityType) {
+  private getFullExtractRepo(
+    entityType: SanctionsEntityType,
+    opensearchClient?: Client
+  ) {
     return new MongoSanctionsRepository(
       getSanctionsCollectionName(
         {
@@ -596,7 +602,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
         },
         '', // Tenant independent
         'full'
-      )
+      ),
+      opensearchClient
     )
   }
 
@@ -618,9 +625,18 @@ export class AcurisProvider extends SanctionsDataFetcher {
     entityType?: SanctionsEntityType,
     runFullLoad?: boolean
   ) {
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getOpensearchClient()
+      : undefined
     const types = this.getEntityTypesToLoad(entityType)
-    const fullExtractPersonRepo = this.getFullExtractRepo('PERSON')
-    const fullExtractBusinessRepo = this.getFullExtractRepo('BUSINESS')
+    const fullExtractPersonRepo = this.getFullExtractRepo(
+      'PERSON',
+      opensearchClient
+    )
+    const fullExtractBusinessRepo = this.getFullExtractRepo(
+      'BUSINESS',
+      opensearchClient
+    )
     for (const type of types) {
       let timestamp = runFullLoad
         ? dayjs().startOf('month').valueOf()

@@ -11968,6 +11968,7 @@ components:
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
         - WORKFLOWS_BUILDER
+        - OPEN_SEARCH
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
