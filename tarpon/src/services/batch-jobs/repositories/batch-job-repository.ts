@@ -1,4 +1,4 @@
-import { MongoClient, UpdateFilter } from 'mongodb'
+import { Filter, MongoClient, UpdateFilter } from 'mongodb'
 import { omit } from 'lodash'
 import { BatchJobInDb, BatchJobType, BatchJobWithId } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
@@ -98,5 +98,19 @@ export class BatchJobRepository {
       .collection<BatchJobInDb>(collection)
       .findOneAndUpdate({ jobId }, updater, { returnDocument: 'after' })
     return result.value as BatchJobInDb
+  }
+
+  public async getJobs(
+    filters: Filter<BatchJobInDb>,
+    limit: number = 20
+  ): Promise<BatchJobInDb[]> {
+    const collection = JOBS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    return db
+      .collection<BatchJobInDb>(collection)
+      .find(filters)
+      .sort({ 'latestStatus.timestamp': -1 })
+      .limit(limit)
+      .toArray()
   }
 }

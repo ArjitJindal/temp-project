@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb'
 import { getSanctionsCollectionName } from '../sanctions/utils'
 import { SanctionsDataProviders } from '../sanctions/types'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { BatchJobRepository } from './repositories/batch-job-repository'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetcher } from '@/services/sanctions/data-fetchers'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
@@ -18,6 +19,28 @@ import { envIsNot } from '@/utils/env'
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
     const client = await getMongoDbClient()
+    const batchJobRepository = new BatchJobRepository(job.tenantId, client)
+    const existingJobs = await batchJobRepository.getJobs(
+      {
+        type: job.type,
+        tenantId: job.tenantId,
+        'latestStatus.status': 'IN_PROGRESS',
+        'latestStatus.timestamp': {
+          $gt: dayjs().subtract(1, 'day').millisecond(),
+        },
+        providers: job.providers,
+        parameters: {
+          entityType: job.parameters.entityType,
+        },
+      },
+      1
+    )
+    if (existingJobs.length > 0) {
+      logger.info(
+        `Skipping ${job.type} job because it's already running ${existingJobs[0].jobId}`
+      )
+      return
+    }
     await runSanctionsDataFetchJob(job, client)
   }
 }
