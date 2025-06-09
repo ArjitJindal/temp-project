@@ -7,7 +7,7 @@ const FOREIGN_ORIGIN_BUSINESS_COUNTRY_RISK_FACTOR = (
   entityType: RiskEntityType
 ): V2V8RiskFactor => ({
   parameter: 'domesticOrForeignOriginCountryBusiness',
-  name: 'Foreign destination country (Consumer)',
+  name: 'Foreign origin country (Business)',
   description:
     'Risk value based on whether the user country of residence is same as transaction destination country',
   defaultRiskLevel: 'VERY_HIGH',
