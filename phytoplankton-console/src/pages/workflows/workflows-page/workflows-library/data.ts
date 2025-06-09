@@ -22,6 +22,7 @@ export const TEMPLATE_GROUPS: {
         id: 'test1',
         description: 'Set up an case investigation workflow that has only a checker.',
         item: {
+          author: '', // TODO: add author
           workflowType: 'case',
           name: 'Checker',
           statuses: ['OPEN', 'CLOSED'],
@@ -49,6 +50,7 @@ export const TEMPLATE_GROUPS: {
         description:
           'Set up an case investigation workflow with one checker that escalates to escalation maker.',
         item: {
+          author: '', // TODO: add author
           workflowType: 'case',
           name: 'Checker and escalation maker',
           statuses: ['OPEN', 'ESCALATED', 'CLOSED'],

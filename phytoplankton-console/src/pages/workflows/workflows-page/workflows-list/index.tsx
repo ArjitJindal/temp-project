@@ -4,7 +4,7 @@ import s from './index.module.less';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 import { useApi } from '@/api';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { ID, STRING, TAG } from '@/components/library/Table/standardDataTypes';
+import { ID, NUMBER, TAG } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
@@ -56,7 +56,14 @@ export default function WorkflowsList() {
         title: 'Last version',
         key: 'version',
         type: {
-          ...STRING,
+          ...NUMBER,
+          link: (value) => {
+            return makeUrl(`/workflows/:type/item/:id`, {
+              type: 'case',
+              id: value,
+            });
+          },
+          stringify: (value) => String(value),
           render: (timestamp) => {
             const parsedTimestamp = timestamp ? Number(timestamp) : null;
             if (parsedTimestamp == null || Number.isNaN(parsedTimestamp)) {

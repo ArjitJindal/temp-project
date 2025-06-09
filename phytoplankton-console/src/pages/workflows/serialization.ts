@@ -23,6 +23,7 @@ export function serialize(workflowBuilderState: WorkflowBuilderState): WorkflowI
       .filter(notEmpty),
   );
   return {
+    author: '', // TODO: add author
     statuses: statuses,
     transitions: workflowBuilderState.transitions,
     statusAssignments: statuses.reduce((acc, status) => {
