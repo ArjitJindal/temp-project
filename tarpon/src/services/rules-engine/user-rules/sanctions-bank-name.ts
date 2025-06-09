@@ -41,7 +41,7 @@ export type SanctionsBankUserRuleParameters = {
   ruleStages: RuleStage[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
-  screeningProfileId?: string
+  screeningProfileId: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -66,7 +66,12 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
-      required: ['fuzziness', 'fuzzinessSetting', 'ruleStages'],
+      required: [
+        'fuzziness',
+        'fuzzinessSetting',
+        'ruleStages',
+        'screeningProfileId',
+      ],
       additionalProperties: false,
     }
   }

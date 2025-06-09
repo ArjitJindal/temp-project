@@ -2273,6 +2273,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [
@@ -2348,6 +2349,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [

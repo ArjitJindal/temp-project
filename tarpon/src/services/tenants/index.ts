@@ -32,6 +32,7 @@ import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { CounterRepository } from '../counter/repository'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
+import { ScreeningProfileService } from '@/services/screening-profile'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
@@ -58,6 +59,8 @@ import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
+import { SanctionsService } from '@/services/sanctions'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -246,6 +249,21 @@ export class TenantService {
     return features
   }
 
+  async createDefaultScreeningProfile(tenantId: string) {
+    const mongoDb = this.mongoDb
+    const dynamoDb = this.dynamoDb
+    const counterRepository = new CounterRepository(tenantId, mongoDb)
+    const sanctionsService = new SanctionsService(tenantId)
+    const screeningProfileService = new ScreeningProfileService(
+      tenantId,
+      sanctionsService
+    )
+    await screeningProfileService.createDefaultScreeningProfile(
+      dynamoDb,
+      counterRepository
+    )
+  }
+
   async createTenant(
     tenantData: TenantCreationRequest
   ): Promise<TenantCreationResponse> {
@@ -423,6 +441,8 @@ export class TenantService {
       type: 'SYNC_DATABASES',
       tenantId,
     })
+
+    await this.createDefaultScreeningProfile(tenantId)
 
     return {
       tenantId,
@@ -716,6 +736,22 @@ export class TenantService {
       ...existingTenantSettings,
       ...newTenantSettings,
     })
+    const providerScreeningTypes =
+      newTenantSettings.sanctions?.providerScreeningTypes
+    const acurisSanctionsSearchType = providerScreeningTypes?.find(
+      (type) => type.provider === 'acuris'
+    )?.screeningTypes
+    if (acurisSanctionsSearchType) {
+      const sanctionsService = new SanctionsService(this.tenantId)
+      const screeningProfileService = new ScreeningProfileService(
+        this.tenantId,
+        sanctionsService
+      )
+      await screeningProfileService.updateScreeningProfilesOnSanctionsSettingsChange(
+        acurisSanctionsSearchType as AcurisSanctionsSearchType[],
+        this.dynamoDb
+      )
+    }
 
     // Update auth0 tenant metadata for the selected tenant setting properties
     if (!isDemoTenant(this.tenantId)) {

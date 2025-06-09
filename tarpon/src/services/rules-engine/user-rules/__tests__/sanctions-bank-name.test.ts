@@ -213,6 +213,7 @@ describe('Skip if ongoing screening mode if on but ongoingScreening is false', (
         fuzziness: 0.5,
         ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
         fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
         ongoingScreening: false,
       } as SanctionsBankUserRuleParameters,
     },

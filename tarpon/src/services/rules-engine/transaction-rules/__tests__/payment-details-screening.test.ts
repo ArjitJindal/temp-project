@@ -109,6 +109,7 @@ ruleVariantsTest({ aggregation: false }, () => {
             INR: 1,
           },
           fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])

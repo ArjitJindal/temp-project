@@ -282,6 +282,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
           fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
           transactionAmountThreshold: {
             EUR: 1000,
           },

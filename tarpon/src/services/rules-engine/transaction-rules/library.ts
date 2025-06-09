@@ -1600,6 +1600,7 @@ const _RULES_LIBRARY: Array<
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+      screeningProfileId: '',
     }
 
     return {
@@ -1633,6 +1634,7 @@ const _RULES_LIBRARY: Array<
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+      screeningProfileId: '',
     }
 
     return {
@@ -1689,6 +1691,7 @@ const _RULES_LIBRARY: Array<
       fuzziness: 20,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      screeningProfileId: '',
     }
 
     return {
@@ -1758,6 +1761,7 @@ const _RULES_LIBRARY: Array<
       screeningValues: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+      screeningProfileId: '',
     }
 
     return {
@@ -1977,6 +1981,7 @@ const _RULES_LIBRARY: Array<
       fuzziness: 20,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      screeningProfileId: '',
     }
 
     return {

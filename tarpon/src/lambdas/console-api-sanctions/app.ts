@@ -203,23 +203,22 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         const counterRepository = new CounterRepository(tenantId, mongoDb)
         const screeningProfileService = new ScreeningProfileService(
           tenantId,
-          counterRepository
+          sanctionsService
         )
         return await screeningProfileService.createScreeningProfile(
           dynamoDb,
-          request.ScreeningProfileRequest
+          request.ScreeningProfileRequest,
+          counterRepository
         )
       }
     )
 
     handlers.registerGetScreeningProfiles(
       async (_ctx, request: DefaultApiGetScreeningProfilesRequest) => {
-        const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
         const screeningProfileService = new ScreeningProfileService(
           tenantId,
-          counterRepository
+          sanctionsService
         )
         return await screeningProfileService.getScreeningProfiles(
           dynamoDb,
@@ -232,12 +231,10 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerUpdateScreeningProfile(
       async (_ctx, request: DefaultApiUpdateScreeningProfileRequest) => {
-        const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
         const screeningProfileService = new ScreeningProfileService(
           tenantId,
-          counterRepository
+          sanctionsService
         )
         return await screeningProfileService.updateScreeningProfile(
           dynamoDb,
@@ -249,12 +246,10 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerDeleteScreeningProfile(
       async (_ctx, request: DefaultApiDeleteScreeningProfileRequest) => {
-        const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
         const screeningProfileService = new ScreeningProfileService(
           tenantId,
-          counterRepository
+          sanctionsService
         )
         return await screeningProfileService.deleteScreeningProfile(
           dynamoDb,

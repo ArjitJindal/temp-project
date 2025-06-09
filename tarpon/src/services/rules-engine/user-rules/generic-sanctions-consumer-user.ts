@@ -39,7 +39,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   screeningValues?: GenericScreeningValues[]
   // PEPRank?: PepRank //Open-sanctions does not provide PEP rank data
   fuzzinessSetting: FuzzinessSettingOptions
-  screeningProfileId?: string
+  screeningProfileId: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -78,7 +78,12 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
-      required: ['fuzzinessRange', 'fuzzinessSetting', 'ruleStages'],
+      required: [
+        'fuzzinessRange',
+        'fuzzinessSetting',
+        'ruleStages',
+        'screeningProfileId',
+      ],
     }
   }
 

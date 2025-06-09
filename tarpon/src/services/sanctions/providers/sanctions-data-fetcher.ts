@@ -39,7 +39,6 @@ import { getNonDemoTenantId } from '@/utils/tenant'
 import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { ScreeningProfileService } from '@/services/screening-profile'
-import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
@@ -1305,12 +1304,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async getSanctionSourceDetails(screeningProfileId: string) {
-    const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const { SanctionsService } = await import('@/services/sanctions')
+    const sanctionsService = new SanctionsService(this.tenantId)
     const screeningProfileService = new ScreeningProfileService(
       this.tenantId,
-      counterRepository
+      sanctionsService
     )
     const screeningProfile =
       await screeningProfileService.getExistingScreeningProfile(

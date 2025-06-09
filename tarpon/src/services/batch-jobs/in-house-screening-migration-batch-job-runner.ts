@@ -12,6 +12,8 @@ import { CounterRepository } from '../counter/repository'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { FEATURE_FLAG_PROVIDER_MAP } from '../sanctions/utils'
 import { AcurisProvider } from '../sanctions/providers/acuris-provider'
+import { ScreeningProfileService } from '../screening-profile'
+import { SanctionsService } from '../sanctions'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InHouseScreeningMigrationBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -275,6 +277,17 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     const ruleInstanceId = await this.ruleInstanceService?.getNewRuleInstanceId(
       'R-17'
     )
+    const sanctionsService = new SanctionsService(this.tenantId)
+    const screeningProfileService = new ScreeningProfileService(
+      this.tenantId,
+      sanctionsService
+    )
+    const screeningProfiles =
+      await screeningProfileService.getScreeningProfiles(getDynamoDbClient())
+    const defaultScreeningProfileId = screeningProfiles.items.find(
+      (profile) => profile.isDefault
+    )?.screeningProfileId
+
     const newRuleParameters: GenericSanctionsConsumerUserRuleParameters = {
       screeningTypes: parameters.screeningTypes,
       fuzzinessRange: {
@@ -284,6 +297,7 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
       screeningValues: ['YOB'],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+      screeningProfileId: defaultScreeningProfileId ?? '',
     }
     await this.ruleInstanceService?.createOrUpdateRuleInstance({
       ruleId: 'R-17',

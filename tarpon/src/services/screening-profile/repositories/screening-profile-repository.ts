@@ -13,6 +13,7 @@ import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningPro
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getContext } from '@/core/utils/context-storage'
+import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
 
 @traceable
 export class ScreeningProfileRepository {
@@ -143,6 +144,33 @@ export class ScreeningProfileRepository {
 
     await dynamoDb.send(command)
     return this.mapDynamoItemToScreeningProfile(updatedProfile)
+  }
+
+  public async batchUpdateScreeningProfiles(
+    dynamoDb: DynamoDBClient,
+    profiles: ScreeningProfileResponse[]
+  ): Promise<void> {
+    const timestamp = Date.now()
+    const updatedBy = getContext()?.user?.id
+    const batchUpdateList: BatchWriteRequestInternal[] = []
+    for (const profile of profiles) {
+      const key = DynamoDbKeys.SCREENING_PROFILE(
+        this.tenantId,
+        profile.screeningProfileId
+      )
+      const item = {
+        ...key,
+        ...profile,
+        updatedAt: timestamp,
+        updatedBy: updatedBy,
+      }
+      batchUpdateList.push({
+        PutRequest: {
+          Item: item,
+        },
+      })
+    }
+    await batchWrite(dynamoDb, batchUpdateList, this.tableName)
   }
 
   public async getScreeningProfiles(

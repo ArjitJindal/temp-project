@@ -53,7 +53,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
-  screeningProfileId?: string
+  screeningProfileId: string
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -90,7 +90,12 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         ),
         fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
-      required: ['fuzziness', 'fuzzinessSetting', 'screeningFields'],
+      required: [
+        'fuzziness',
+        'fuzzinessSetting',
+        'screeningFields',
+        'screeningProfileId',
+      ],
       additionalProperties: false,
     }
   }

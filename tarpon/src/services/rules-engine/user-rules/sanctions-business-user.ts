@@ -49,11 +49,11 @@ export type SanctionsBusinessUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
+  screeningProfileId: string
   ruleStages: RuleStage[]
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
-  screeningProfileId?: string
   fuzzyAddressMatching?: boolean
 }
 
@@ -88,7 +88,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
-      required: ['fuzziness', 'ruleStages', 'fuzzinessSetting'],
+      required: [
+        'fuzziness',
+        'ruleStages',
+        'fuzzinessSetting',
+        'screeningProfileId',
+      ],
       additionalProperties: false,
     }
   }

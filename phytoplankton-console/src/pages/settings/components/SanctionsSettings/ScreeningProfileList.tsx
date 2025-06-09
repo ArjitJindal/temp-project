@@ -20,6 +20,7 @@ import Id from '@/components/ui/Id';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
+import { getErrorMessage } from '@/utils/lang';
 
 export const ScreeningProfileList = ({ hasFeature }) => {
   const api = useApi();
@@ -71,7 +72,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       queryResult.refetch();
     },
     onError: (error) => {
-      message.error(`Failed to update screening profile status: ${error.message}`);
+      message.error(getErrorMessage(error) || `Failed to update screening profile status`);
     },
   });
 
@@ -85,7 +86,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       setDeleting(false);
     },
     onError: (error) => {
-      message.error(`Failed to delete screening profile: ${error.message}`);
+      message.error(getErrorMessage(error) || `Failed to delete screening profile`);
       setDeleting(false);
     },
   });
@@ -110,7 +111,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       queryResult.refetch();
     },
     onError: (error) => {
-      message.error(`Failed to duplicate screening profile: ${error.message}`);
+      message.error(getErrorMessage(error) || `Failed to duplicate screening profile`);
     },
   });
 

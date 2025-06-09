@@ -873,7 +873,6 @@ export const FUZZINESS_SCHEMA = (options: PercentSchemaOptions = {}) =>
 export const SCREENING_PROFILE_ID_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
-    nullable: true,
     ...uiSchema(
       options?.uiSchema,
       {

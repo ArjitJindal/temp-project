@@ -35,6 +35,8 @@ import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/apis/models-custom/AdverseMed
 import { REL_SOURCE_RELEVANCES } from '@/apis/models-custom/RELSourceRelevance';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { getErrorMessage } from '@/utils/lang';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DEFAULT_INITIAL_VALUES: ScreeningProfileRequest = {
   screeningProfileName: '',
@@ -122,7 +124,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
   const api = useApi();
   const queryClient = useQueryClient();
   const formRef = useRef<any>(null);
-
+  const settings = useSettings();
   const [sourceConfigurations, setSourceConfigurations] = useState<
     Record<string, SourceConfiguration>
   >(() => {
@@ -330,9 +332,9 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
       setIsModalOpen(false);
       onClose?.();
     },
-    onError: () => {
+    onError: (error) => {
       const action = initialValues ? 'update' : 'create';
-      message.error(`Failed to ${action} screening profile`);
+      message.error(getErrorMessage(error) || `Failed to ${action} screening profile`);
     },
   });
 
@@ -444,7 +446,11 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
           )}
 
           <Tabs
-            items={SANCTIONS_SOURCE_TYPES.map((type) => ({
+            items={SANCTIONS_SOURCE_TYPES.filter((type) =>
+              settings.sanctions?.providerScreeningTypes
+                ?.find((p) => p.provider === 'acuris')
+                ?.screeningTypes?.includes(type),
+            ).map((type) => ({
               title: humanizeAuto(type),
               key: type,
               children: (
