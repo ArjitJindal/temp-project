@@ -1,6 +1,7 @@
 import React from 'react';
 import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import Money from '../../Money';
 import { RiskLevelTableItem } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
 import { RiskEntityType, RiskFactorDataType, RiskFactorParameter } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -40,6 +41,13 @@ export const CONSTANT_RENDERER: ParameterRenderer<string> = (value) => {
   return {
     stringify: humanizeConstant(value),
     renderer: <>{humanizeConstant(value)}</>,
+  };
+};
+
+export const AMOUNT_RANGE_RENDERER: ParameterRenderer<any> = (value) => {
+  return {
+    stringify: `${value.transactionCurrency} ${value.transactionAmount}`,
+    renderer: <Money value={value.transactionAmount} currency={value.transactionCurrency} />,
   };
 };
 
@@ -90,7 +98,7 @@ export const PARAMETER_RENDERERS: Record<RiskFactorDataType, ParameterRenderer<a
   BOOLEAN: DEFAULT_RENDERER,
   CARD_3DS_STATUS: DEFAULT_RENDERER,
   SOURCE_OF_FUNDS: DEFAULT_RENDERER,
-  AMOUNT_RANGE: DEFAULT_RENDERER,
+  AMOUNT_RANGE: AMOUNT_RANGE_RENDERER,
 };
 
 export function findParameter(
