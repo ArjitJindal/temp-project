@@ -13,18 +13,25 @@ components:
         workflowType:
           $ref: '#/components/schemas/WorkflowType'
         version:
-          type: string
+          type: integer
           format: int64
           description: Timestamp in milliseconds when the document was saved
-          example: '1710834000000'
+          example: 1710834000000
         name:
           type: string
           description: Human readable name for the workflow
+        description:
+          type: string
+          description: Detailed description of the workflow
+        author:
+          type: string
+          description: The account that created or last modified the workflow
       required:
         - id
         - workflowType
         - version
         - name
+        - author
 
     BaseCaseAlertWorkflow:
       allOf:

@@ -16,6 +16,8 @@ export type CounterEntity =
   | 'EscalationReason'
   | 'SearchProfile'
   | 'ScreeningProfile'
+  | 'WorkflowCase'
+  | 'WorkflowAlert'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
@@ -29,6 +31,8 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'EscalationReason',
   'SearchProfile',
   'ScreeningProfile',
+  'WorkflowCase',
+  'WorkflowAlert',
 ]
 
 export type EntityCounter = {

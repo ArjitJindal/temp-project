@@ -7,16 +7,14 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
-import { nanoid } from 'nanoid'
 import { StackConstants } from '@lib/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
-
-function generateUniqueId(): string {
-  return nanoid()
-}
+import { getContext } from '@/core/utils/context-storage'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
+import { CounterRepository, CounterEntity } from '@/services/counter/repository'
 
 interface WorkflowServiceDeps {
   dynamoDb: DynamoDBClient
@@ -32,6 +30,7 @@ type InternalWorkflow = Workflow & {
 export class WorkflowService {
   private readonly docClient: DynamoDBDocumentClient
   private readonly tableName: string
+  private readonly counterRepo: CounterRepository
 
   private cleanWorkflow(workflow: InternalWorkflow): Workflow {
     const {
@@ -48,6 +47,20 @@ export class WorkflowService {
   ) {
     this.docClient = DynamoDBDocumentClient.from(deps.dynamoDb)
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    this.counterRepo = new CounterRepository(tenantId, deps.mongoDb)
+  }
+
+  private async getNextWorkflowId(workflowType: WorkflowType): Promise<string> {
+    // build the prefix from the workflow type (first letter capitalized)
+    const prefix = `W${workflowType.charAt(0).toUpperCase()}`
+    // build the counter entity from the workflow type (ie: case -> WorkflowCase)
+    const counterEntity = ('Workflow' +
+      workflowType.charAt(0).toUpperCase() +
+      workflowType.slice(1)) as CounterEntity
+    const nextNumber = await this.counterRepo.getNextCounterAndUpdate(
+      counterEntity
+    )
+    return `${prefix}-${nextNumber}`
   }
 
   async getWorkflows(workflowType?: WorkflowType): Promise<Workflow[]> {
@@ -128,7 +141,7 @@ export class WorkflowService {
         this.tenantId,
         workflowType,
         workflowId,
-        version
+        version.toString()
       ),
       ConsistentRead: true,
     }
@@ -169,19 +182,22 @@ export class WorkflowService {
     workflowId: string | undefined,
     workflow: Workflow
   ): Promise<Workflow> {
-    const version = Date.now().toString()
-    const finalWorkflowId = workflowId || generateUniqueId()
+    const version = Date.now()
+    const finalWorkflowId =
+      workflowId || (await this.getNextWorkflowId(workflowType))
+    const author = getContext()?.user?.id || FLAGRIGHT_SYSTEM_USER
 
     const item = {
       ...workflow,
       id: finalWorkflowId,
       version,
       workflowType,
+      author,
       ...DynamoDbKeys.WORKFLOWS(
         this.tenantId,
         workflowType,
         finalWorkflowId,
-        version
+        version.toString()
       ),
     }
 
