@@ -37,7 +37,8 @@ import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesS
 import { useQuery } from '@/utils/queries/hooks';
 import { SEARCH_PROFILES, SCREENING_PROFILES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
-import { getOr } from '@/utils/asyncResource';
+import { getOr, match } from '@/utils/asyncResource';
+import { getErrorMessage } from '@/utils/lang';
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
   searchTerm?: string;
@@ -348,8 +349,22 @@ export default function SanctionsSearchTable(props: Props) {
   ];
 
   if (hasFeatureAcuris) {
-    const screeningProfiles =
-      getOr(screeningProfilesResult.data, { items: [], total: 0 }).items || [];
+    const options = match(screeningProfilesResult.data, {
+      init: () => [],
+      loading: () => [{ label: 'Loading profiles...', value: '', isDisabled: true }],
+      success: ({ items: screeningProfiles }) =>
+        screeningProfiles.map((profile) => ({
+          label: profile.screeningProfileName ?? '',
+          value: profile.screeningProfileId ?? '',
+        })),
+      failed: (error) => [
+        {
+          label: `Error while loading profiles! ${getErrorMessage(error)}`,
+          value: '',
+          isDisabled: true,
+        },
+      ],
+    });
 
     extraFilters.unshift({
       title: 'Screening profile',
@@ -358,13 +373,7 @@ export default function SanctionsSearchTable(props: Props) {
       showFilterByDefault: true,
       renderer: {
         kind: 'select',
-        options:
-          screeningProfiles.length > 0
-            ? screeningProfiles.map((profile) => ({
-                label: profile.screeningProfileName ?? '',
-                value: profile.screeningProfileId ?? '',
-              }))
-            : [{ label: 'Loading profiles...', value: '' }], // Show a loading state if no profiles yet
+        options: options,
         mode: 'SINGLE',
         displayMode: 'select',
       },

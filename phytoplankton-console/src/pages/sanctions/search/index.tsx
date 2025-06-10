@@ -1,35 +1,27 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ComplyAdvantageHitTable from 'src/components/ComplyAdvantageHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { OccupationCode, SanctionsEntity, SanctionsSearchType } from '@/apis';
-import {
-  AsyncResource,
-  getOr,
-  init,
-  isLoading,
-  isSuccess,
-  loading,
-  map,
-  success,
-} from '@/utils/asyncResource';
-import { AllParams, TableData } from '@/components/library/Table/types';
+import { OccupationCode, SanctionsSearchType } from '@/apis';
+import { getOr, isLoading, isSuccess, map } from '@/utils/asyncResource';
+import { map as mapQuery } from '@/utils/queries/types';
+import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import {
-  SANCTIONS_SEARCH,
-  SANCTIONS_SEARCH_HISTORY,
-  SEARCH_PROFILES,
-  SCREENING_PROFILES,
   DEFAULT_MANUAL_SCREENING_FILTERS,
+  SANCTIONS_SEARCH_HISTORY,
+  SCREENING_PROFILES,
+  SEARCH_PROFILES,
 } from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
-import { QueryResult } from '@/utils/queries/types';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { getErrorMessage } from '@/utils/lang';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -55,6 +47,7 @@ export function SearchResultTable(props: Props) {
   const currentUser = useAuth0User();
   const hasSetDefaultProfile = useRef(false);
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
+  const navigate = useNavigate();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
@@ -220,35 +213,32 @@ export function SearchResultTable(props: Props) {
     }
   }, [historyItem?.request?.searchTerm, setSearchTerm]);
 
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
-  const searchEnabled = !!searchParams.searchTerm;
+  const searchEnabled = !!params.searchTerm;
 
   const selectedSearchProfileResult = useQuery(
-    ['selected-search-profile', searchParams.searchProfileId],
+    ['selected-search-profile', params.searchProfileId],
     async () => {
-      if (!searchParams.searchProfileId) {
+      if (!params.searchProfileId) {
         return null;
       }
       const response = await api.getSearchProfiles({
-        filterSearchProfileId: [searchParams.searchProfileId],
+        filterSearchProfileId: [params.searchProfileId],
       });
       return response.items?.[0] || null;
     },
     {
-      enabled: !!searchParams.searchProfileId,
+      enabled: !!params.searchProfileId,
     },
   );
 
   const selectedSearchProfile = getOr(selectedSearchProfileResult.data, null);
 
-  const newSearchQueryResults = useQuery(
-    SANCTIONS_SEARCH({
-      ...searchParams,
-      pageSize: params.pageSize,
-      page: params.page,
-    }),
-    () => {
+  const newSearchMutation = useMutation(
+    (searchParams: TableSearchParams) => {
+      const searchTerm = searchParams.searchTerm;
+      if (!searchTerm) {
+        throw new Error('Search term is required');
+      }
       return api.postSanctions({
         SanctionsSearchRequest: {
           searchTerm: searchParams.searchTerm ?? '',
@@ -265,19 +255,18 @@ export function SearchResultTable(props: Props) {
       });
     },
     {
-      enabled: searchEnabled,
+      onError: (error) => {
+        console.error(error);
+        message.error(`Unable to run a search!`, {
+          details: getErrorMessage(error),
+        });
+      },
       onSuccess: (data) => {
         if (data.searchId) {
           navigate(
-            makeUrl(
-              `/screening/manual-screening/:searchId`,
-              {
-                searchId: data.searchId,
-                page: params.page,
-                pageSize: params.pageSize,
-              },
-              {},
-            ),
+            makeUrl(`/screening/manual-screening/:searchId`, {
+              searchId: data.searchId,
+            }),
           );
         }
       },
@@ -290,39 +279,9 @@ export function SearchResultTable(props: Props) {
       isSuperAdmin(currentUser) &&
       !currentUser.tenantName.toLowerCase().includes('flagright'));
 
-  const newQueryResult: QueryResult<TableData<SanctionsEntity>> = useMemo(() => {
-    let items;
-    let refetch;
-    let count;
-    let pageSize;
-    if (isSuccess(historyItemQueryResults.data)) {
-      if (!historyItemQueryResults.data.value) {
-        message.error('No search results found for this search id');
-      }
-      items = historyItemQueryResults.data.value?.response?.data;
-      count = historyItemQueryResults.data.value?.response?.hitsCount;
-      pageSize = historyItemQueryResults.data.value?.response?.pageSize;
-      refetch = historyItemQueryResults.refetch;
-    }
-    const dataRes: AsyncResource<TableData<SanctionsEntity>> =
-      items != null
-        ? success({
-            total: count,
-            items: items,
-            pageSize: pageSize,
-          })
-        : isLoading(newSearchQueryResults.data) || isLoading(historyItemQueryResults.data)
-        ? loading()
-        : init();
-    return {
-      data: dataRes,
-      refetch: refetch ?? (() => {}),
-    };
-  }, [historyItemQueryResults, newSearchQueryResults]);
-
   const pageSize =
     getOr(
-      map(newQueryResult.data, (x) => x.pageSize),
+      map(historyItemQueryResults.data, (x) => x?.response?.pageSize),
       null,
     ) ?? DEFAULT_PAGE_SIZE;
 
@@ -342,9 +301,9 @@ export function SearchResultTable(props: Props) {
         searchId == null &&
           (() => (
             <Button
-              isDisabled={searchDisabled}
+              isDisabled={searchDisabled || isLoading(newSearchMutation.dataResource)}
               onClick={() => {
-                setSearchParams(params);
+                newSearchMutation.mutate(params);
               }}
               requiredResources={['read:::sanctions/search/*']}
             >
@@ -365,7 +324,11 @@ export function SearchResultTable(props: Props) {
             </Button>
           )),
       ].filter(notEmpty)}
-      queryResult={newQueryResult}
+      queryResult={mapQuery(historyItemQueryResults, (x) => ({
+        items: x?.response?.data ?? [],
+        total: x?.response?.hitsCount ?? 0,
+        pageSize: x?.response?.pageSize ?? DEFAULT_PAGE_SIZE,
+      }))}
       searchedAt={
         searchEnabled
           ? Date.now()
