@@ -265,7 +265,7 @@ export async function offsetPaginateClickhouse<T>(
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
   const findSql = `SELECT ${
     columnsProjectionString.length > 0 ? columnsProjectionString : '*'
-  } FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
+  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
     where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
