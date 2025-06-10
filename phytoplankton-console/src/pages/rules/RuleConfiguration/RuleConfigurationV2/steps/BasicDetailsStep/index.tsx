@@ -74,6 +74,9 @@ export interface FormValues {
   screeningAlertCreationLogic?: ScreeningAlertCreationLogic;
 }
 
+export const defaultAlertCreatedFor: AlertCreatedForEnum[] = ['USER'];
+export const defaultAlertCreatedForR170: AlertCreatedForEnum[] = ['PAYMENT_DETAILS'];
+
 export const INITIAL_VALUES: FormValues = {
   ruleName: undefined,
   ruleDescription: undefined,
@@ -87,7 +90,7 @@ export const INITIAL_VALUES: FormValues = {
   alertAssigneesType: 'EMAIL',
   checksFor: [],
   frozenStatuses: [],
-  alertCreatedFor: ['USER'],
+  alertCreatedFor: defaultAlertCreatedFor,
   ruleExecutionMode: 'SYNC',
   alertCreationOnHit: true,
   screeningAlertCreationLogic: 'SINGLE_ALERT',

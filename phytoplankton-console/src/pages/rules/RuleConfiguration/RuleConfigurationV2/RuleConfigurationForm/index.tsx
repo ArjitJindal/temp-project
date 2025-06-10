@@ -8,6 +8,8 @@ import { message } from '@/components/library/Message';
 import BasicDetailsStep, {
   FormValues as BasicDetailsStepFormValues,
   INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
+  defaultAlertCreatedFor,
+  defaultAlertCreatedForR170,
 } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/BasicDetailsStep';
 import RuleParametersStep, {
   FormValues as RuleParametersStepFormValues,
@@ -391,7 +393,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         falsePositiveCheckEnabled: rule?.defaultFalsePositiveCheckEnabled ?? false,
         checksFor: rule?.checksFor ?? BASIC_DETAILS_STEP_INITIAL_VALUES.checksFor,
         frozenStatuses: BASIC_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
-        alertCreatedFor: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
+        alertCreatedFor: rule?.id === 'R-170' ? defaultAlertCreatedForR170 : defaultAlertCreatedFor,
         ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
         screeningAlertCreationLogic: BASIC_DETAILS_STEP_INITIAL_VALUES.screeningAlertCreationLogic,
       },
@@ -401,6 +403,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
   }, [
     orderedProps,
     isRiskLevelsEnabled,
+    rule?.id,
     rule?.name,
     rule?.description,
     rule?.defaultNature,
