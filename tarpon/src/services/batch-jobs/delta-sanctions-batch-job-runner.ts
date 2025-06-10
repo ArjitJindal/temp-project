@@ -16,8 +16,6 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
 
 export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: DeltaSanctionsDataFetchBatchJob): Promise<void> {
@@ -42,10 +40,6 @@ export async function runDeltaSanctionsDataFetchJob(
   const { tenantId, providers, settings } = job
   const version = Date.now().toString()
   logger.info(`Running delta`)
-
-  const opensearchClient = envIsNot('prod')
-    ? await getOpensearchClient()
-    : undefined
 
   const deltaSanctionsCollectionNames = providers.map((p) => {
     return {
@@ -87,10 +81,8 @@ export async function runDeltaSanctionsDataFetchJob(
     }
 
     logger.info(`Running delta ${fetcher.constructor.name}`)
-    const deltaRepo = new MongoSanctionsRepository(
-      deltaSanctionsCollectionName,
-      opensearchClient
-    )
+
+    const deltaRepo = new MongoSanctionsRepository(deltaSanctionsCollectionName)
     await fetcher.delta(deltaRepo, version, dayjs(job.parameters.from).toDate())
 
     await checkSearchIndexesReady(deltaSanctionsCollectionName)

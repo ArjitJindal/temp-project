@@ -190,10 +190,6 @@ export const featureDescriptions: Record<
     description: 'Enables workflows builder',
     tag: FeatureTag.WIP,
   },
-  OPEN_SEARCH: {
-    title: 'Opensearch (Engineering)',
-    description: 'Enables opensearch for screening searches',
-  },
 };
 
 export default function SuperAdminPanel() {

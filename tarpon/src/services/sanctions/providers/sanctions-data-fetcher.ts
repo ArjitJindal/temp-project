@@ -2,8 +2,6 @@ import { uniq, uniqBy } from 'lodash'
 import { normalize, sanitizeString } from '@flagright/lib/utils'
 import { Db } from 'mongodb'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import { Client } from '@opensearch-project/opensearch/.'
-import { Search_Response } from '@opensearch-project/opensearch/api'
 import { CommonOptions, format } from '@fragaria/address-formatter'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
@@ -46,10 +44,6 @@ import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { hasFeature } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
-import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 
@@ -162,8 +156,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           )
         ) {
           matchTypes.push('aka_exact')
-        } else {
-          matchTypes.push('aka_fuzzy')
+        } else if (
+          request.fuzzinessRange?.upperBound &&
+          request.fuzzinessRange?.upperBound < 100
+        ) {
+          matchTypes.push('name_fuzzy')
         }
       }
 
@@ -538,7 +535,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const match = this.getNonSearchIndexQuery(request)
     const providers = getDefaultProviders()
     const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
-    const entityTypes: SanctionsEntityType[] = this.getEntityTypes(request)
+    const entityTypes: SanctionsEntityType[] =
+      request.entityType === 'EXTERNAL_USER'
+        ? ['PERSON', 'BUSINESS', 'BANK']
+        : request.entityType !== 'PERSON'
+        ? ['BUSINESS', 'BANK']
+        : ['PERSON']
     const collectionNames = uniq(
       providers.flatMap((p) => {
         return entityTypes.map((entityType) =>
@@ -947,7 +949,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
     const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
-    const entityTypes: SanctionsEntityType[] = this.getEntityTypes(request)
+    const entityTypes: SanctionsEntityType[] =
+      request.entityType === 'EXTERNAL_USER' || request.manualSearch
+        ? ['PERSON', 'BUSINESS', 'BANK']
+        : request.entityType !== 'PERSON'
+        ? ['BUSINESS', 'BANK']
+        : ['PERSON']
     const collectionNames = uniq(
       providers.flatMap((p) => {
         return entityTypes.map((entityType) =>
@@ -1330,421 +1337,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
   }
 
-  async searchWithOpensearch(
-    request: SanctionsSearchRequest,
-    client: Client
-  ): Promise<SanctionsProviderResponse> {
-    const shouldConditions: any[] = []
-    const mustConditions: any[] = []
-    const searchTerm = normalize(request.searchTerm)
-    if (request.yearOfBirth) {
-      const yearOfBirthCondition = [
-        { term: { yearOfBirth: request.yearOfBirth } },
-        { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
-      ]
-      if (request.orFilters?.includes('yearOfBirth')) {
-        shouldConditions.push(...yearOfBirthCondition)
-      } else {
-        mustConditions.push({
-          bool: {
-            should: yearOfBirthCondition,
-            minimum_should_match: 1,
-          },
-        })
-      }
-    }
-
-    if (request.gender) {
-      const genderCondition = [
-        { term: { gender: request.gender } },
-        { term: { gender: 'Unknown' } },
-        { bool: { must_not: { exists: { field: 'gender' } } } },
-      ]
-      if (request.orFilters?.includes('gender')) {
-        shouldConditions.push(...genderCondition)
-      } else {
-        mustConditions.push({
-          bool: {
-            should: genderCondition,
-            minimum_should_match: 1,
-          },
-        })
-      }
-    }
-    if (request.nationality) {
-      const nationalityCondition = [
-        ...[...request.nationality, 'XX', 'ZZ'].map((nationality) => ({
-          term: { nationality: nationality },
-        })),
-        { bool: { must_not: { exists: { field: 'nationality' } } } },
-      ]
-      if (request.orFilters?.includes('nationality')) {
-        shouldConditions.push(...nationalityCondition)
-      } else {
-        mustConditions.push({
-          bool: {
-            should: nationalityCondition,
-            minimum_should_match: 1,
-          },
-        })
-      }
-    }
-    if (request.types) {
-      const typesCondition = request.types.flatMap((type) => [
-        { term: { sanctionSearchTypes: type } },
-        { term: { 'associates.sanctionsSearchTypes': type } },
-      ])
-      mustConditions.push({
-        bool: {
-          should: typesCondition,
-          minimum_should_match: 1,
-        },
-      })
-    }
-    if (
-      (request.allowDocumentMatches || request.manualSearch) &&
-      request.documentId
-    ) {
-      const documentIdMatch =
-        request.documentId.length > 0
-          ? request.documentId.flatMap((docId) => [
-              {
-                term: {
-                  'documents.formattedId': docId,
-                },
-              },
-              {
-                term: {
-                  'documents.id': docId,
-                },
-              },
-            ])
-          : [
-              {
-                term: {
-                  'documents.formattedId': '__no_match__',
-                },
-              },
-            ]
-      if (request.orFilters?.includes('documentId')) {
-        shouldConditions.push(...documentIdMatch)
-        mustConditions.push({
-          bool: {
-            must_not: {
-              exists: {
-                field: 'documents.id',
-              },
-            },
-          },
-        })
-      } else {
-        mustConditions.push({
-          bool: {
-            should: documentIdMatch,
-            must_not: [
-              {
-                exists: {
-                  field: 'documents.id',
-                },
-              },
-            ],
-            minimum_should_match: 1,
-          },
-        })
-      }
-    }
-    if (
-      !(request.allowDocumentMatches || request.manualSearch) &&
-      request.documentId?.length
-    ) {
-      mustConditions.push({
-        bool: {
-          must_not: request.documentId.flatMap((docId) => [
-            {
-              term: {
-                'documents.id': docId,
-              },
-            },
-            {
-              term: {
-                'documents.formattedId': docId,
-              },
-            },
-          ]),
-        },
-      })
-    }
-    if (request.isActivePep) {
-      const isActivePepCondition = [
-        { term: { isActivePep: true } },
-        { bool: { must_not: { exists: { field: 'isActivePep' } } } },
-      ]
-      mustConditions.push({
-        bool: {
-          should: [
-            {
-              bool: {
-                should: isActivePepCondition,
-                minimum_should_match: 1,
-              },
-            },
-            {
-              bool: {
-                must_not: {
-                  term: {
-                    sanctionSearchTypes: 'PEP',
-                  },
-                },
-              },
-            },
-          ],
-          minimum_should_match: 1,
-        },
-      })
-    }
-    if (request.isActiveSanctioned) {
-      const isActiveSanctionedCondition = [
-        { term: { isActiveSanctioned: true } },
-        { bool: { must_not: { exists: { field: 'isActiveSanctioned' } } } },
-      ]
-      mustConditions.push({
-        bool: {
-          should: [
-            {
-              bool: {
-                should: isActiveSanctionedCondition,
-                minimum_should_match: 1,
-              },
-            },
-            {
-              bool: {
-                must_not: {
-                  term: {
-                    sanctionSearchTypes: 'SANCTIONS',
-                  },
-                },
-              },
-            },
-          ],
-          minimum_should_match: 1,
-        },
-      })
-    }
-    const providers = getDefaultProviders()
-    if (request.isOngoingScreening) {
-      const isOngoingScreeningCondition = providers.map((provider) => ({
-        term: { provider: provider },
-      }))
-      mustConditions.push({
-        bool: {
-          should: isOngoingScreeningCondition,
-          minimum_should_match: 1,
-        },
-      })
-    }
-
-    if (request.PEPRank) {
-      const PEPRankCondition = [
-        { term: { PEPRank: request.PEPRank } },
-        { bool: { must_not: { exists: { field: 'PEPRank' } } } },
-      ]
-      mustConditions.push({
-        bool: {
-          should: PEPRankCondition,
-          minimum_should_match: 1,
-        },
-      })
-    }
-    const stopwordSet = request.stopwords?.length
-      ? new Set(request.stopwords.map((word) => word.toLowerCase()))
-      : undefined
-    const nonDemoTenantId = getNonDemoTenantId(this.tenantId)
-    const entityTypes: SanctionsEntityType[] = this.getEntityTypes(request)
-    const collectionNames = uniq(
-      providers.flatMap((p) => {
-        return entityTypes.map((entityType) =>
-          getSanctionsCollectionName(
-            {
-              provider: p,
-              entityType: entityType,
-            },
-            nonDemoTenantId,
-            request.isOngoingScreening ? 'delta' : 'full'
-          )
-        )
-      })
-    )
-    const queryWithoutStopwords = this.getOpensearchQuery({
-      searchTerm,
-      shouldConditions,
-      mustConditions,
-      onlyFuzzyQuery: false,
-    })
-    const queryWithStopwords = searchTerm.split(' ').includes('the')
-      ? this.getOpensearchQuery({
-          searchTerm,
-          shouldConditions,
-          mustConditions,
-          onlyFuzzyQuery: true,
-        })
-      : undefined
-    const results = await Promise.allSettled(
-      collectionNames.flatMap((c) => [
-        client.search({
-          index: c,
-          body: queryWithoutStopwords,
-        }),
-        ...(queryWithStopwords
-          ? [
-              client.search({
-                index: c,
-                body: queryWithStopwords,
-              }),
-            ]
-          : []),
-      ])
-    )
-    if (results.some((r) => r.status === 'rejected')) {
-      logger.error(
-        `Error in opensearch search: ${JSON.stringify(
-          results
-            .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-            .map((r) => r.reason)
-        )}`
-      )
-    }
-    const hits = results
-      .filter(
-        (r): r is PromiseFulfilledResult<Search_Response> =>
-          r.status === 'fulfilled'
-      )
-      .map((r) => r.value)
-      .flatMap((r) =>
-        r.body.hits.hits.map((h) => h._source)
-      ) as SanctionsEntity[]
-    const fuzzinessSettings = request?.fuzzinessSettings
-    const filteredResults = this.hydrateHitsWithMatchTypes(
-      this.filterResults(
-        uniqBy(hits, (s) => s.id),
-        request,
-        fuzzinessSettings,
-        stopwordSet
-      ),
-      request
-    )
-
-    return this.searchRepository.saveSearch(filteredResults, request)
-  }
-
-  private getOpensearchQuery({
-    searchTerm,
-    shouldConditions,
-    mustConditions,
-    onlyFuzzyQuery,
-  }) {
-    return {
-      size: 1000,
-      query: {
-        bool: {
-          must: [
-            ...(shouldConditions.length
-              ? [
-                  {
-                    bool: {
-                      should: shouldConditions,
-                      minimum_should_match: 1,
-                    },
-                  },
-                ]
-              : []),
-            ...mustConditions,
-            {
-              bool: {
-                should: [
-                  ...(onlyFuzzyQuery
-                    ? [
-                        {
-                          match: {
-                            'normalizedAka.fuzzy': {
-                              query: searchTerm,
-                              fuzziness: 'AUTO',
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
-                          },
-                        },
-                      ]
-                    : [
-                        {
-                          match: {
-                            'normalizedAka.exact': {
-                              query: searchTerm,
-                              boost: 5,
-                            },
-                          },
-                        },
-                        {
-                          match: {
-                            'normalizedAka.fuzzy_with_stopwords': {
-                              query: searchTerm,
-                              fuzziness: 'AUTO',
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
-                          },
-                        },
-                      ]),
-                ],
-                minimum_should_match: 1,
-              },
-            },
-          ],
-        },
-      },
-    }
-  }
-
-  getEntityTypes(request: SanctionsSearchRequest): SanctionsEntityType[] {
-    let entityTypes: SanctionsEntityType[]
-    if (request.entityType === 'EXTERNAL_USER' || request.manualSearch) {
-      entityTypes = ['PERSON', 'BUSINESS', 'BANK']
-    } else if (request.entityType !== 'PERSON') {
-      entityTypes = ['BUSINESS', 'BANK']
-    } else {
-      entityTypes = ['PERSON']
-    }
-    return entityTypes
-  }
-
   async search(
     request: SanctionsSearchRequest,
     isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
-    let result: SanctionsProviderResponse
-    if (
-      hasFeature('OPEN_SEARCH') &&
-      !request.screeningProfileId &&
-      envIsNot('prod')
-    ) {
-      const client = await getOpensearchClient()
-      result = await this.searchWithOpensearch(request, client)
-      const data = result.data?.map(
-        (entity: SanctionsEntity): SanctionsEntity => ({
-          ...entity,
-          matchTypeDetails: [
-            SanctionsDataFetcher.deriveMatchingDetails(request, entity),
-          ],
-        })
-      )
-      return {
-        ...result,
-        data: await this.sanitizeEntities(data),
-      }
-    }
     const db = await getMongoDbClientDb()
     const mongoDb = await getMongoDbClient()
+    let result: SanctionsProviderResponse
     const sanctionSourceNames: string[] = []
     const pepSourceNames: string[] = []
     const relSourceNames: string[] = []

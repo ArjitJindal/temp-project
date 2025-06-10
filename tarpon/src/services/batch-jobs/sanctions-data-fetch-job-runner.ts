@@ -13,8 +13,6 @@ import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
@@ -50,9 +48,6 @@ export async function runSanctionsDataFetchJob(
   client: MongoClient
 ) {
   const { tenantId, providers, settings } = job
-  const opensearchClient = envIsNot('prod')
-    ? await getOpensearchClient()
-    : undefined
   const runFullLoad = job.parameters?.from
     ? new Date(job.parameters.from).getDay() === 0
     : true
@@ -86,17 +81,11 @@ export async function runSanctionsDataFetchJob(
 
     logger.info(`Running ${fetcher.constructor.name}`)
     if (runFullLoad) {
-      const repo = new MongoSanctionsRepository(
-        sanctionsCollectionName,
-        opensearchClient
-      )
+      const repo = new MongoSanctionsRepository(sanctionsCollectionName)
       await fetcher.fullLoad(repo, version, job.parameters.entityType)
     }
 
-    const repo = new MongoSanctionsRepository(
-      sanctionsCollectionName,
-      opensearchClient
-    )
+    const repo = new MongoSanctionsRepository(sanctionsCollectionName)
     if (provider !== SanctionsDataProviders.ACURIS || runFullLoad) {
       // To avoid fetching delta for Acuris daily separately, instead it's fetched in delta load
       await fetcher.delta(
