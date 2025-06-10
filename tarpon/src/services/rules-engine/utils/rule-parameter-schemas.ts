@@ -912,8 +912,10 @@ export const FUZZY_ADDRESS_MATCHING_SCHEMA = {
 export const PARTIAL_MATCH_SCHEMA = {
   type: 'boolean',
   nullable: true,
-  title: 'Partial match',
-  description: `If true, partial fuzzy matching will be applied`,
+  title: 'Partial name matching',
+  labelProps: {
+    hint: 'Allows the screening list name include extra words without blocking a match. As long as all parts of the input name are found (exactly or approximately) in the list name, it will count as a match. This helps when input names are shorter, missing middle names, or slightly misspelled.',
+  },
   ...uiSchema(
     {},
     {
