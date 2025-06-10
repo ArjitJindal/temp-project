@@ -2003,7 +2003,10 @@ export class CdkTarponStack extends cdk.Stack {
                 Permission: ['aoss:*'],
               },
             ],
-            Principal: [lambdaExecutionRole.roleArn],
+            Principal: [
+              lambdaExecutionRole.roleArn,
+              `arn:aws:iam::${this.config.env.account}:role/CodePipelineDeployRole`,
+            ],
           },
         ]),
       }
