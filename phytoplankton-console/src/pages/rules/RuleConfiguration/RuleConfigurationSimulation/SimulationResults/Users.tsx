@@ -131,7 +131,7 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
   return (
     <Card.Root className={s.card}>
       <Card.Section>
-        <H4>Simulated users</H4>
+        <H4>{`Simulated ${settings.userAlias}s`}</H4>
         <QueryResultsTable<SimulationBeaconResultUser, TableParams>
           columns={columns}
           queryResults={userResults}
