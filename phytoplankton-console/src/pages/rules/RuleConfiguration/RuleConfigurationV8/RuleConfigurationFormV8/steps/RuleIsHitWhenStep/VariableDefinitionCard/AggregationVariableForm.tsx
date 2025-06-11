@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { round } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/constants';
@@ -593,7 +593,8 @@ export const AggregationVariableFormContent: React.FC<
           {(formValues.aggregationFunc === 'UNIQUE_COUNT' ||
             formValues.aggregationFunc === 'UNIQUE_VALUES') && (
             <div className={s.hint}>
-              Please note that unique count aggregation is limited to 25,000.
+              {`Please note that ${humanizeConstant(formValues.aggregationFunc).toLowerCase()}
+              aggregation is limited to 25,000.`}
             </div>
           )}
         </div>
