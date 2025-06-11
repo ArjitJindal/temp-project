@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { memoize, omit, random } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
-import { demoRiskFactorsSimulation } from '../utils/demo-risk-factors-simulation'
 import { demoRiskFactorsV8Simulation } from '../utils/demo-risk-factors-v8-simulation'
 import { SimulationResultRepository } from './simulation-result-repository'
 import { paginatePipeline } from '@/utils/mongodb-utils'
@@ -30,11 +29,6 @@ import { isCurrentUserAtLeastRole } from '@/@types/jwt'
 import { traceable } from '@/core/xray'
 import { isDemoTenant } from '@/utils/tenant'
 import { TXN_COUNT } from '@/core/seed/data/transactions'
-import { SimulationRiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskFactorsStatisticsResult'
-import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
-import { SimulationRiskFactorsJob } from '@/@types/openapi-internal/SimulationRiskFactorsJob'
-import { SimulationRiskFactorsIteration } from '@/@types/openapi-internal/SimulationRiskFactorsIteration'
-import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/SimulationV8RiskFactorsJob'
 import { SimulationV8RiskFactorsIteration } from '@/@types/openapi-internal/SimulationV8RiskFactorsIteration'
 import { SimulationV8RiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsStatisticsResult'
 import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
@@ -49,29 +43,26 @@ import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/Sim
 import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest
   | SimulationBeaconParametersRequest
-  | SimulationRiskFactorsParametersRequest
   | SimulationV8RiskFactorsParametersRequest
 
 type SimulationIteration =
   | SimulationRiskLevelsIteration
   | SimulationBeaconIteration
-  | SimulationRiskFactorsIteration
   | SimulationV8RiskFactorsIteration
 
 type SimulationAllJobs =
   | SimulationRiskLevelsJob
   | SimulationBeaconJob
-  | SimulationRiskFactorsJob
-  | SimulationV8RiskFactorsJob
+  | V8RiskSimulationJob
 
 type SimulationStatisticsResult =
   | SimulationRiskLevelsStatisticsResult
   | SimulationBeaconStatisticsResult
-  | SimulationRiskFactorsStatisticsResult
   | SimulationV8RiskFactorsStatisticsResult
 
 @traceable
@@ -110,10 +101,7 @@ export class SimulationTaskRepository {
           current: {},
           simulated: {},
         }
-      } else if (
-        simulationRequest.type === 'RISK_FACTORS' ||
-        simulationRequest.type === 'RISK_FACTORS_V8'
-      ) {
+      } else if (simulationRequest.type === 'RISK_FACTORS_V8') {
         statistics = {
           current: {},
           simulated: {},
@@ -141,9 +129,7 @@ export class SimulationTaskRepository {
       ? (result as SimulationRiskLevelsIteration[])
       : simulationRequest.type === 'BEACON'
       ? (result as SimulationBeaconIteration[])
-      : simulationRequest.type === 'RISK_FACTORS_V8'
-      ? (result as SimulationV8RiskFactorsIteration[])
-      : (result as SimulationRiskFactorsIteration[])
+      : (result as SimulationV8RiskFactorsIteration[])
   }
 
   public async createSimulationJob(
@@ -200,18 +186,12 @@ export class SimulationTaskRepository {
           defaultRuleInstance: simulationRequest.defaultRuleInstance,
           iterations: this.generateIterationsObject(simulationRequest, taskIds),
         } as SimulationBeaconJob
-      } else if (simulationRequest.type === 'RISK_FACTORS_V8') {
+      } else {
         job = {
           ...baseJob,
           type: 'RISK_FACTORS_V8',
           iterations: this.generateIterationsObject(simulationRequest, taskIds),
-        } as SimulationV8RiskFactorsJob
-      } else {
-        job = {
-          ...baseJob,
-          type: 'RISK_FACTORS',
-          iterations: this.generateIterationsObject(simulationRequest, taskIds),
-        } as SimulationRiskFactorsJob
+        } as V8RiskSimulationJob
       }
 
       if (isDemoTenant(this.tenantId)) {
@@ -221,17 +201,11 @@ export class SimulationTaskRepository {
             taskIds,
             simulationRequest as SimulationBeaconParametersRequest
           )
-        } else if (simulationRequest.type === 'RISK_FACTORS_V8') {
+        } else {
           return this.createRiskFactorsV8SimulationJob(
             jobId,
             taskIds,
             simulationRequest as SimulationV8RiskFactorsParametersRequest
-          )
-        } else if (simulationRequest.type === 'RISK_FACTORS') {
-          return this.createRiskFactorsSimulationJob(
-            jobId,
-            taskIds,
-            simulationRequest as SimulationRiskFactorsParametersRequest
           )
         }
       }
@@ -321,9 +295,7 @@ export class SimulationTaskRepository {
 
   private getStats(
     usersResult: SimulationV8RiskFactorsResult[]
-  ):
-    | SimulationV8RiskFactorsStatisticsResult
-    | SimulationRiskFactorsStatisticsResult {
+  ): SimulationV8RiskFactorsStatisticsResult {
     return {
       current: RISK_LEVELS.flatMap((riskLevel) => {
         return [
@@ -374,69 +346,6 @@ export class SimulationTaskRepository {
     }
   }
 
-  private async createRiskFactorsSimulationJob(
-    jobId: string,
-    taskIds: string[],
-    simulationRequest: SimulationRiskFactorsParametersRequest
-  ) {
-    const now = Date.now()
-    const demoJob: SimulationRiskFactorsJob = demoRiskFactorsSimulation
-    const createdByUser = getContext()?.user as Account
-    demoJob.jobId = jobId
-    demoJob.createdAt = now
-    demoJob.createdBy = createdByUser?.id
-    demoJob.internal = isCurrentUserAtLeastRole('root')
-    const usersResult = await this.getUserResults(taskIds)
-
-    demoJob.iterations = simulationRequest.parameters.map(
-      (parameter, index) => {
-        const parameters: SimulationRiskFactorsIteration['parameters'] = {
-          type: 'RISK_FACTORS',
-          parameterAttributeRiskValues: parameter.parameterAttributeRiskValues,
-          description: parameter.description ?? '',
-          name: parameter.name,
-        }
-        const iteration: SimulationRiskFactorsIteration = {
-          ...demoJob.iterations[0],
-          taskId: taskIds[index],
-          type: 'RISK_FACTORS',
-          name: parameter.name,
-          description: parameter.description,
-          parameters,
-          statistics: this.getStats(
-            usersResult
-          ) as SimulationRiskFactorsStatisticsResult,
-          latestStatus: demoJob.iterations[0].latestStatus as TaskStatusChange,
-          progress: demoJob.iterations[0].progress,
-          statuses: demoJob.iterations[0].statuses as TaskStatusChange[],
-          createdAt: now,
-          totalEntities: usersResult.length,
-        }
-
-        return iteration
-      }
-    )
-
-    const simulationResultRepository = new SimulationResultRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    const db = this.mongoDb.db()
-    const collection = db.collection<SimulationAllJobs>(
-      SIMULATION_TASK_COLLECTION(this.tenantId)
-    )
-
-    await collection.insertOne({
-      _id: demoJob.jobId as any,
-      ...demoJob,
-    })
-
-    await simulationResultRepository.saveSimulationResults(usersResult)
-
-    return { jobId: demoJob.jobId, taskIds }
-  }
-
   private async createRiskFactorsV8SimulationJob(
     jobId: string,
     taskIds: string[],
@@ -476,6 +385,7 @@ export class SimulationTaskRepository {
             name: parameter.name,
             parameters: parameter.parameters,
             jobId: jobId,
+            sampling: parameter.sampling,
           },
           statistics: this.getStats(usersResult),
           latestStatus: demoJob.iterations[0].latestStatus,

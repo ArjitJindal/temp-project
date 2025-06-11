@@ -108,16 +108,16 @@ function replaceSimulationGetResponse(paths) {
       .readFileSync(path)
       .toString()
       .replace(
-        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob } from './SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | V8RiskSimulationJob } from './SimulationRiskLevelsJob | SimulationBeaconJob | V8RiskSimulationJob';",
         '',
       )
       .replace(
-        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob } from '../models/SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | V8RiskSimulationJob } from '../models/SimulationRiskLevelsJob | SimulationBeaconJob | V8RiskSimulationJob';",
         '',
       )
       .replace(
-        "import { SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType } from './SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType';",
-        'import { SimulationRiskLevelsType } from "../models/SimulationRiskLevelsType"; import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationRiskFactorsType } from "../models/SimulationRiskFactorsType"; import { SimulationV8RiskFactorsType } from "../models/SimulationV8RiskFactorsType";',
+        "import { SimulationBeaconType | SimulationV8RiskFactorsType } from './SimulationBeaconType | SimulationV8RiskFactorsType';",
+        'import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationV8RiskFactorsType } from "../models/SimulationV8RiskFactorsType";',
       )
       .replace(
         "import { SimulationRiskLevelsAndRiskFactorsResult | SimulationBeaconTransactionResult | SimulationBeaconResultUser } from './SimulationRiskLevelsAndRiskFactorsResult | SimulationBeaconTransactionResult | SimulationBeaconResultUser';",

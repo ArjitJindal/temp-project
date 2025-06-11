@@ -6954,7 +6954,6 @@ paths:
             enum:
               - PULSE
               - BEACON
-              - RISK_FACTORS
               - RISK_FACTORS_V8
           in: query
           name: type
@@ -6979,8 +6978,7 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/SimulationRiskLevelsJob'
                   - $ref: '#/components/schemas/SimulationBeaconJob'
-                  - $ref: '#/components/schemas/SimulationRiskFactorsJob'
-                  - $ref: '#/components/schemas/SimulationV8RiskFactorsJob'
+                  - $ref: '#/components/schemas/V8RiskSimulationJob'
       parameters: []
     parameters:
       - schema:
@@ -15445,24 +15443,6 @@ components:
       required:
         - type
         - name
-    SimulationRiskFactorsParameters:
-      title: SimulationRiskFactorsParameters
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/SimulationRiskFactorsType'
-        parameterAttributeRiskValues:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParameterAttributeRiskValues'
-        name:
-          type: string
-        description:
-          type: string
-      required:
-        - type
-        - name
-        - parameterAttributeRiskValues
     SimulationBeaconSampling:
       title: SimulationBeaconSampling
       type: object
@@ -15603,24 +15583,6 @@ components:
         - parameters
         - type
         - defaultRiskClassifications
-    SimulationRiskFactorsParametersRequest:
-      title: SimulationRiskFactorsParametersRequest
-      type: object
-      properties:
-        jobId:
-          type: string
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/SimulationRiskFactorsParameters'
-        type:
-          $ref: '#/components/schemas/SimulationRiskFactorsType'
-        sampling:
-          $ref: '#/components/schemas/SimulationRiskFactorsSampling'
-      required:
-        - parameters
-        - type
-        - sampling
     SimulationV8RiskFactorsParametersRequest:
       title: SimulationV8RiskFactorsParametersRequest
       type: object
@@ -15633,14 +15595,11 @@ components:
             $ref: '#/components/schemas/SimulationV8RiskFactorsParameters'
         type:
           $ref: '#/components/schemas/SimulationV8RiskFactorsType'
-        sampling:
-          $ref: '#/components/schemas/SimulationRiskFactorsSampling'
       required:
         - parameters
         - type
-        - sampling
-    SimulationV8RiskFactorsJob:
-      title: SimulationV8RiskFactorsJob
+    V8RiskSimulationJob:
+      title: V8RiskSimulationJob
       allOf:
         - $ref: '#/components/schemas/SimulationJob'
         - type: object
@@ -15675,16 +15634,14 @@ components:
             - $ref: '#/components/schemas/FormulaLegacyMovingAvg'
             - $ref: '#/components/schemas/FormulaSimpleAvg'
             - $ref: '#/components/schemas/FormulaCustom'
+        sampling:
+          $ref: '#/components/schemas/SimulationRiskFactorsSampling'
       required:
         - parameters
         - name
         - description
         - type
-    SimulationRiskFactorsType:
-      title: SimulationRiskFactorsType
-      type: string
-      enum:
-        - RISK_FACTORS
+        - sampling
     SimulationRiskLevelsSampling:
       title: SimulationRiskLevelsSampling
       type: object
@@ -15697,11 +15654,66 @@ components:
       title: SimulationRiskFactorsSampling
       type: object
       properties:
-        usersCount:
-          type: string
+        sample:
+          oneOf:
+            - $ref: '#/components/schemas/AllUserSample'
+            - $ref: '#/components/schemas/RandomUserSample'
+      required:
+        - sample
+    AllUserSample:
+      title: AllUserSample
+      type: object
+      properties:
+        type:
           enum:
             - ALL
+      required:
+        - type
+    RandomUserSample:
+      title: RandomUserSample
+      type: object
+      properties:
+        type:
+          enum:
             - RANDOM
+        sampleDetails:
+          $ref: '#/components/schemas/RiskFactorSampleDetails'
+      required:
+        - type
+        - sampleDetails
+    RiskFactorSampleDetails:
+      title: RandomRiskFactorSample
+      type: object
+      properties:
+        userCount:
+          type: number
+        userRiskRange:
+          $ref: '#/components/schemas/RiskRange'
+        userIds:
+          type: array
+          items:
+            type: string
+        listIds:
+          type: array
+          items:
+            type: string
+        transactionIds:
+          type: array
+          items:
+            type: string
+      required:
+        - userCount
+    RiskRange:
+      title: Risk Range
+      type: object
+      properties:
+        startScore:
+          type: number
+        endScore:
+          type: number
+      required:
+        - startScore
+        - endScore
     SimulationJob:
       title: SimulationRiskLevelsJob
       type: object
@@ -15773,26 +15785,6 @@ components:
             - type
             - iterations
             - defaultRiskClassifications
-    SimulationRiskFactorsJob:
-      title: SimulationRiskFactorsJob
-      allOf:
-        - $ref: '#/components/schemas/SimulationJob'
-        - type: object
-          properties:
-            type:
-              $ref: '#/components/schemas/SimulationRiskFactorsType'
-            iterations:
-              type: array
-              items:
-                $ref: '#/components/schemas/SimulationRiskFactorsIteration'
-            defaultParameterRiskValues:
-              type: array
-              items:
-                $ref: '#/components/schemas/ParameterAttributeRiskValues'
-          required:
-            - type
-            - iterations
-            - defaultParameterRiskValues
     SimulationBeaconJob:
       title: SimulationBeaconJob
       allOf:
@@ -15874,22 +15866,6 @@ components:
             - DRS
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-    SimulationRiskFactorsIteration:
-      title: SimulationRiskFactorsIteration
-      allOf:
-        - $ref: '#/components/schemas/SimulationIteration'
-        - type: object
-          properties:
-            type:
-              $ref: '#/components/schemas/SimulationRiskFactorsType'
-            parameters:
-              $ref: '#/components/schemas/SimulationRiskFactorsParameters'
-            statistics:
-              $ref: '#/components/schemas/SimulationRiskFactorsStatisticsResult'
-          required:
-            - type
-            - parameters
-            - statistics
     TrsScoresResponse:
       title: TrsScoresResponse
       type: object
@@ -15976,19 +15952,6 @@ components:
             - ARS
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-    SimulationRiskFactorsStatistics:
-      type: object
-      title: SimulationRiskLevelsStatistics
-      properties:
-        count:
-          type: number
-        riskType:
-          type: string
-          enum:
-            - KRS
-            - ARS
-        riskLevel:
-          $ref: '#/components/schemas/RiskLevel'
     SimulationRiskLevelsStatisticsResult:
       type: object
       title: SimulationRiskLevelsStatisticsResult
@@ -16001,18 +15964,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimulationRiskLevelsStatistics'
-    SimulationRiskFactorsStatisticsResult:
-      type: object
-      title: SimulationRiskLevelsStatisticsResult
-      properties:
-        current:
-          type: array
-          items:
-            $ref: '#/components/schemas/SimulationRiskFactorsStatistics'
-        simulated:
-          type: array
-          items:
-            $ref: '#/components/schemas/SimulationRiskFactorsStatistics'
     SimulationRiskLevelsType:
       title: SimulationRiskLevelsType
       type: string
@@ -16023,17 +15974,6 @@ components:
       type: string
       enum:
         - BEACON
-    SimulationRiskFactorsRiskScoreResult:
-      title: SimulationRiskFactorsRiskScoreResult
-      type: object
-      properties:
-        krs:
-          type: object
-          properties:
-            riskScore:
-              type: number
-            riskLevel:
-              $ref: '#/components/schemas/RiskLevel'
     SimulationRiskLevelsRiskScoreResult:
       title: SimulationRiskLevelsResult
       type: object
@@ -16206,33 +16146,6 @@ components:
         - old
         - new
         - userName
-    SimulationRiskFactorsResult:
-      title: SimulationRiskFactorsResult
-      type: object
-      properties:
-        taskId:
-          type: string
-        type:
-          type: string
-          enum:
-            - RISK_FACTORS
-        userId:
-          type: string
-        userType:
-          type: string
-        current:
-          $ref: '#/components/schemas/SimulationRiskFactorsRiskScoreResult'
-        simulated:
-          $ref: '#/components/schemas/SimulationRiskFactorsRiskScoreResult'
-        userName:
-          type: string
-      required:
-        - taskId
-        - type
-        - userId
-        - old
-        - new
-        - userName
     SimulationRiskLevelsAndRiskFactorsResult:
       title: SimulationRiskLevelsAndRiskFactorsResult
       type: object
@@ -16243,7 +16156,6 @@ components:
           type: string
           enum:
             - PULSE
-            - RISK_FACTORS
             - RISK_FACTORS_V8
         userId:
           type: string
@@ -16291,19 +16203,6 @@ components:
       required:
         - items
         - total
-    SimulationRiskFactorsResultResponse:
-      title: SimulationRiskFactorsResultResponse
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/SimulationRiskFactorsResult'
-        total:
-          type: number
-      required:
-        - items
-        - total
     SortOrder:
       type: string
       enum:
@@ -16323,8 +16222,6 @@ components:
           $ref: '#/components/schemas/SimulationRiskLevelsParametersRequest'
         beaconParameters:
           $ref: '#/components/schemas/SimulationBeaconParametersRequest'
-        riskFactorsParameters:
-          $ref: '#/components/schemas/SimulationRiskFactorsParametersRequest'
         riskFactorsV8Parameters:
           $ref: '#/components/schemas/SimulationV8RiskFactorsParametersRequest'
     SimulationPostResponse:
@@ -16351,8 +16248,7 @@ components:
             oneOf:
               - $ref: '#/components/schemas/SimulationRiskLevelsJob'
               - $ref: '#/components/schemas/SimulationBeaconJob'
-              - $ref: '#/components/schemas/SimulationRiskFactorsJob'
-              - $ref: '#/components/schemas/SimulationV8RiskFactorsJob'
+              - $ref: '#/components/schemas/V8RiskSimulationJob'
       required:
         - total
         - data

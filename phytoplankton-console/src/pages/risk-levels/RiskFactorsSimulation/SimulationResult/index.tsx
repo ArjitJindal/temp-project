@@ -10,13 +10,11 @@ import {
   RiskEntityType,
   RiskFactorParameter,
   RiskLevel,
-  SimulationRiskFactorsIteration,
-  SimulationRiskFactorsJob,
   SimulationRiskLevelsAndRiskFactorsResult,
   SimulationV8RiskFactorsIteration,
-  SimulationV8RiskFactorsJob,
   SimulationV8RiskFactorsParameters,
   SimulationV8RiskFactorsStatisticsRiskTypeEnum,
+  V8RiskSimulationJob,
 } from '@/apis';
 import {
   AsyncResource,
@@ -85,9 +83,7 @@ export const SimulationResult = (props: Props) => {
     }
   }, [isGeneratingPdf]);
 
-  function isAllIterationsCompleted(
-    iterations: SimulationRiskFactorsIteration[] | SimulationV8RiskFactorsIteration[],
-  ): boolean {
+  function isAllIterationsCompleted(iterations: SimulationV8RiskFactorsIteration[]): boolean {
     return iterations.every(
       (iteration) =>
         iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
@@ -99,7 +95,7 @@ export const SimulationResult = (props: Props) => {
     () =>
       api.getSimulationTestId({
         jobId: jobId ?? '',
-      }) as Promise<SimulationRiskFactorsJob | SimulationV8RiskFactorsJob>,
+      }) as Promise<V8RiskSimulationJob>,
     {
       refetchInterval: (data) =>
         isAllIterationsCompleted(data?.iterations || [])
@@ -234,7 +230,7 @@ export const SimulationResult = (props: Props) => {
 };
 
 interface WidgetProps {
-  iteration: SimulationRiskFactorsIteration | SimulationV8RiskFactorsIteration;
+  iteration: SimulationV8RiskFactorsIteration;
   activeIterationIndex: number;
   jobId: string;
   showDemoProgress: boolean;

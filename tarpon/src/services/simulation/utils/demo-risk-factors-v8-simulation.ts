@@ -1,6 +1,6 @@
-import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/SimulationV8RiskFactorsJob'
+import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
 
-export const demoRiskFactorsV8Simulation: SimulationV8RiskFactorsJob = {
+export const demoRiskFactorsV8Simulation: V8RiskSimulationJob = {
   createdAt: 1741710269555,
   jobId: 'e6317a01-c69a-4425-b124-f0cc23e7d6f3',
   createdBy: 'auth0|66f2d7d4097e0006f28b7490',
@@ -11,6 +11,11 @@ export const demoRiskFactorsV8Simulation: SimulationV8RiskFactorsJob = {
       taskId: '4a5f36ee-23bf-44b6-93bc-c5f75d5b5db4',
       parameters: {
         type: 'RISK_FACTORS_V8',
+        sampling: {
+          sample: {
+            type: 'ALL',
+          },
+        },
         parameters: [
           {
             id: 'RF-001',

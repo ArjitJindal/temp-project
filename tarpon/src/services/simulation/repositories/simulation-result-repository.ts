@@ -5,7 +5,6 @@ import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
-import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/SimulationRiskFactorsResult'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
@@ -14,7 +13,6 @@ import { isDemoTenant } from '@/utils/tenant'
 
 type SimulationResult =
   | SimulationRiskLevelsResult
-  | SimulationRiskFactorsResult
   | SimulationV8RiskFactorsResult
   | SimulationBeaconResultUser
   | SimulationBeaconTransactionResult

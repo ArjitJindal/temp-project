@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import SimulationCustomRiskFactorsTable, {
   LocalStorageKey,
 } from './SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
+import { FormValues, RiskFactorsSimulationForm } from './SimulationDetailsForm';
 import * as Card from '@/components/ui/Card';
-import Form from '@/components/library/Form';
-import InputField from '@/components/library/Form/InputField';
-import TextInput from '@/components/library/TextInput';
-import SelectionGroup from '@/components/library/SelectionGroup';
-import { useId, useSafeLocalStorageState } from '@/utils/hooks';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 import Button from '@/components/library/Button';
 import { ParameterSettings } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
 import { AsyncResource } from '@/utils/asyncResource';
@@ -25,14 +21,9 @@ import {
   RiskEntityType,
   RiskFactorParameter,
   SimulationPostResponse,
-  SimulationRiskFactorsParametersRequest,
   SimulationV8RiskFactorsParametersRequest,
 } from '@/apis';
 import Tabs from '@/components/library/Tabs';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import RiskAlgorithmsSelector, {
-  RiskScoringCraAlgorithm,
-} from '@/pages/settings/components/RiskAlgorithmsCra/RiskAlgorithmsSelector';
 
 export type ParameterValue = {
   [key in RiskEntityType]?: {
@@ -44,17 +35,13 @@ interface Props {
   riskFactors: RiskFactor[];
 }
 
-interface FormValues {
-  name: string;
-  description: string;
-  samplingSize: 'ALL' | 'RANDOM';
-  riskAlgorithm?: RiskScoringCraAlgorithm;
-}
-
 const DEFAULT_ITERATION: FormValues = {
   name: 'Iteration 1',
   description: '',
-  samplingSize: 'RANDOM',
+  samplingType: 'ALL',
+  sampleDetails: {
+    userCount: 100,
+  },
 };
 
 const DUPLICATE_TAB_KEY = 'DUPLICATE';
@@ -69,7 +56,7 @@ export function RiskFactorsSimulation(props: Props) {
   const [iterations, setIterations] = useState(storedIterations);
   const api = useApi();
   const navigate = useNavigate();
-
+  const [showIterationModal, setShowIterationModal] = useState(false);
   const [createdJobId, setCreatedJobId] = useState<string | undefined>(undefined);
   const [activeIterationIndex, setActiveIterationIndex] = useState(1);
   useEffect(() => {
@@ -81,22 +68,14 @@ export function RiskFactorsSimulation(props: Props) {
   const startSimulationMutation = useMutation<
     SimulationPostResponse,
     unknown,
-    SimulationRiskFactorsParametersRequest | SimulationV8RiskFactorsParametersRequest
+    SimulationV8RiskFactorsParametersRequest
   >(
     async (simulationData) => {
-      if (simulationData.type === 'RISK_FACTORS_V8') {
-        return api.postSimulation({
-          SimulationPostRequest: {
-            riskFactorsV8Parameters: simulationData,
-          },
-        });
-      } else {
-        return api.postSimulation({
-          SimulationPostRequest: {
-            riskFactorsParameters: simulationData,
-          },
-        });
-      }
+      return api.postSimulation({
+        SimulationPostRequest: {
+          riskFactorsV8Parameters: simulationData,
+        },
+      });
     },
     {
       onSuccess: (data) => {
@@ -124,15 +103,18 @@ export function RiskFactorsSimulation(props: Props) {
     };
     const simulationData: SimulationV8RiskFactorsParametersRequest = {
       type: 'RISK_FACTORS_V8',
-      sampling: {
-        usersCount: iterations[0].samplingSize,
-      },
       parameters: iterations.map((iteration, index) => {
         return {
           name: iteration.name,
           description: iteration.description,
           parameters: getRiskFactors(index),
           type: 'RISK_FACTORS_V8',
+          sampling: {
+            sample: {
+              type: iteration.samplingType,
+              sampleDetails: iteration.sampleDetails,
+            },
+          },
           riskScoringAlgorithm: iteration.riskAlgorithm,
         };
       }),
@@ -161,6 +143,7 @@ export function RiskFactorsSimulation(props: Props) {
     ]);
     setStoredIterations([...storedIterations, DEFAULT_ITERATION]);
     setActiveIterationIndex(iterations.length + 1);
+    setShowIterationModal(true);
   };
 
   const handleDeleteIteration = (index: number) => {
@@ -180,9 +163,10 @@ export function RiskFactorsSimulation(props: Props) {
       handleDeleteIteration(parseInt(key) - 1);
     }
   };
+
   return (
     <div className={s.root}>
-      <Card.Root>
+      <Card.Root className={s.cardRoot}>
         <Card.Section>
           <div className={s.simulationHeader}>
             <Tabs
@@ -212,10 +196,14 @@ export function RiskFactorsSimulation(props: Props) {
                   isClosable: iterations.length > 1,
                   children: (
                     <RiskFactorsSimulationForm
-                      isV8
                       onChangeIterationInfo={onChangeIterationInfo}
                       currentIterationIndex={activeIterationIndex}
                       allIterations={iterations}
+                      isVisible={showIterationModal}
+                      setIsVisible={(value: boolean) => {
+                        setShowIterationModal(value);
+                      }}
+                      onDuplicate={handleDuplicate}
                     />
                   ),
                 })),
@@ -242,120 +230,3 @@ export function RiskFactorsSimulation(props: Props) {
     </div>
   );
 }
-
-interface FormProps {
-  allIterations: FormValues[];
-  currentIterationIndex: number;
-  onChangeIterationInfo: (iteration: FormValues) => void;
-  isV8: boolean;
-}
-
-const RiskFactorsSimulationForm = (props: FormProps) => {
-  const { allIterations, currentIterationIndex, onChangeIterationInfo, isV8 } = props;
-  const iteration: FormValues = allIterations[currentIterationIndex - 1];
-  const settings = useSettings();
-  const formId = useId();
-  return (
-    <Form<FormValues>
-      key={formId}
-      id={formId}
-      initialValues={iteration}
-      onSubmit={() => {}}
-      onChange={({ values }) => {
-        onChangeIterationInfo(values);
-      }}
-    >
-      <Card.Root noBorder>
-        <Card.Section>
-          <div className={s.layout}>
-            <InputField<FormValues, 'name'>
-              name={'name'}
-              label={'Iteration name'}
-              labelProps={{
-                required: {
-                  value: false,
-                  showHint: true,
-                },
-              }}
-            >
-              {(inputProps) => (
-                <TextInput
-                  {...inputProps}
-                  value={iteration.name}
-                  placeholder={'Enter iteration name'}
-                />
-              )}
-            </InputField>
-            <InputField<FormValues, 'description'>
-              name={'description'}
-              label={'Description'}
-              labelProps={{
-                required: {
-                  value: false,
-                  showHint: true,
-                },
-              }}
-            >
-              {(inputProps) => (
-                <TextInput
-                  {...inputProps}
-                  value={iteration.description}
-                  placeholder={'Enter iteration description'}
-                />
-              )}
-            </InputField>
-          </div>
-          <InputField<FormValues, 'samplingSize'>
-            name={'samplingSize'}
-            label={`${humanizeAuto(settings.userAlias ?? 'User')} sampling size`}
-            labelProps={{ required: true }}
-          >
-            {(inputProps) => (
-              <SelectionGroup
-                {...inputProps}
-                mode="SINGLE"
-                value={iteration.samplingSize}
-                options={[
-                  {
-                    value: 'RANDOM',
-                    label: 'Random sample',
-                    description: `Run the simulation on a randomly selected subset of ${settings.userAlias}s.`,
-                  },
-                  ...(!isV8
-                    ? [
-                        {
-                          value: 'ALL' as 'ALL' | 'RANDOM',
-                          label: `All ${settings.userAlias}s`,
-                          description: `Run the simulation for all ${settings.userAlias}s. It may take time to process results, check progress under simulation history.`,
-                        },
-                      ]
-                    : []),
-                ]}
-                {...inputProps}
-              />
-            )}
-          </InputField>
-          <InputField<FormValues, 'riskAlgorithm'>
-            name={'riskAlgorithm'}
-            label={'Risk algorithms for CRA'}
-            labelProps={{ required: true }}
-          >
-            {(inputProps) => (
-              <RiskAlgorithmsSelector
-                currentAlgorithm={inputProps.value}
-                defaultAlgorithmType="FORMULA_SIMPLE_AVG"
-                handleUpdateAlgorithm={(riskAlgorithm) => {
-                  if (inputProps) {
-                    inputProps.onChange?.(riskAlgorithm);
-                  }
-                }}
-                isUpdateDisabled={false}
-                hasPermissions={true}
-              />
-            )}
-          </InputField>
-        </Card.Section>
-      </Card.Root>
-    </Form>
-  );
-};

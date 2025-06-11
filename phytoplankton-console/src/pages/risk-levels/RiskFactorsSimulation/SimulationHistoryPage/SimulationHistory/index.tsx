@@ -1,6 +1,5 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { useApi } from '@/api';
-import { SimulationRiskFactorsJob, SimulationV8RiskFactorsJob } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -14,10 +13,11 @@ import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
+import { V8RiskSimulationJob } from '@/apis';
 
 const type = 'RISK_FACTORS_V8';
 
-export type SimulationJob = SimulationRiskFactorsJob | SimulationV8RiskFactorsJob;
+export type SimulationJob = V8RiskSimulationJob;
 export function SimulationHistory() {
   const api = useApi();
   const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });

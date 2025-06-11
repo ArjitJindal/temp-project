@@ -28,7 +28,6 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
     handlers.registerPostSimulation(async (ctx, request) => {
       const parameters =
         request.SimulationPostRequest.beaconParameters ||
-        request.SimulationPostRequest.riskFactorsParameters ||
         request.SimulationPostRequest.riskLevelsParameters ||
         request.SimulationPostRequest.riskFactorsV8Parameters
 

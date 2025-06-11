@@ -12,12 +12,10 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
-import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
 import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
 
 type SimulationParameters =
   | SimulationRiskLevelsParametersRequest
-  | SimulationRiskFactorsParametersRequest
   | SimulationBeaconParametersRequest
   | SimulationV8RiskFactorsParametersRequest
 
@@ -93,8 +91,8 @@ export class SimulationService {
             parameters: {
               taskId: taskIds[i],
               jobId,
-              sampling: parameters.sampling ?? {
-                usersCount: 'RANDOM',
+              sampling: parameters.parameters[i].sampling ?? {
+                type: 'ALL',
               },
             },
           })

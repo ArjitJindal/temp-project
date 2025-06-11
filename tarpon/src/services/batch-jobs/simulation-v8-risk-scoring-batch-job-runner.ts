@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { cloneDeep, memoize } from 'lodash'
+import { chunk, cloneDeep, flatMap, memoize, uniq } from 'lodash'
 import pMap from 'p-map'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
@@ -15,12 +15,12 @@ import {
   RiskScoringV8Service,
   UserKrsData,
 } from '../risk-scoring/risk-scoring-v8-service'
+import { ListService } from '../list'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsV8BatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/SimulationV8RiskFactorsJob'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
@@ -35,11 +35,15 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { getUserName } from '@/utils/helpers'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { SimulationRiskFactorsSampling } from '@/@types/openapi-internal/SimulationRiskFactorsSampling'
+import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
+import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 
 const MAX_USERS = 100000
 const CONCURRENCY = 200
 const SIMULATED_TRANSACTIONS_COUNT = 300000
-const BATCH_SIZE = 2000
+const MONGO_BATCH_SIZE = 2000
+const PROCESS_BATCH_SIZE = 600
 
 type SimulationRiskFactorsResultRaw = Record<
   RiskLevel,
@@ -70,6 +74,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
   private totalUsers: number = 0
   private transactionsProcessedCount = 0
   private progress: number = 0
+  private listService!: ListService
   private usersProgressQueue = new PQueue({ concurrency: 1 })
   private transactionsProgressQueue = new PQueue({ concurrency: 1 })
   private transactionIdsProcessed = new Map<
@@ -82,30 +87,27 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     | FormulaSimpleAvg = {
     type: 'FORMULA_SIMPLE_AVG',
   }
+  private sampling: SimulationRiskFactorsSampling = {
+    sample: {
+      type: 'ALL',
+    },
+  }
+  private allUsersCount!: number
+  private samplingPipeline?: object[]
 
-  protected async run(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
+  private async initalise(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
     this.job = job
     const { tenantId, parameters } = job
     this.tenantId = tenantId
-    const { taskId } = parameters
+    const { sampling } = parameters
+    this.sampling = sampling
     const dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
-    const simulationTaskRepository = new SimulationTaskRepository(
-      tenantId,
-      this.mongoDb
-    )
     this.dynamoDb = dynamoDb
-    const currentJob =
-      await simulationTaskRepository.getSimulationJob<SimulationV8RiskFactorsJob>(
-        parameters.jobId
-      )
-    const task = currentJob?.iterations.find((i) => i.taskId === taskId)
     this.userRepository = new UserRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb,
     })
-    this.riskScoringAlgorithm =
-      task?.parameters.riskScoringAlgorithm ?? this.riskScoringAlgorithm
     const logicEvaluator = new LogicEvaluator(this.tenantId, dynamoDb)
     logicEvaluator.setMode('MONGODB') // As we use mongoDb for simulation
     this.riskScoringV8Service = new RiskScoringV8Service(
@@ -116,9 +118,6 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         dynamoDb: dynamoDb,
       }
     )
-    this.riskFactors = this.segregateAndFilterRiskFactors(
-      task?.parameters.parameters ?? []
-    )
     this.transactionRepo = new MongoDbTransactionRepository(
       this.tenantId,
       this.mongoDb,
@@ -128,12 +127,137 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       mongoDb: this.mongoDb,
       dynamoDb,
     })
-    const simulationResultRepository = new SimulationResultRepository(
-      tenantId,
+    this.listService = new ListService(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    this.allUsersCount = await this.userRepository.getEstimatedUsersCount()
+  }
+
+  private async getSamplePipeline() {
+    const sample = this.sampling.sample
+    if (this.samplingPipeline) {
+      return this.samplingPipeline
+    }
+    if (sample.type === 'ALL') {
+      return [
+        {
+          $sample: { size: Math.min(this.allUsersCount, MAX_USERS) },
+        },
+      ]
+    }
+    const { userRiskRange, listIds, userIds, transactionIds, userCount } =
+      sample.sampleDetails
+    const orFilters: object[] = []
+    if (userRiskRange) {
+      orFilters.push({
+        'drsScore.drsScore': {
+          $gte: userRiskRange.startScore,
+          $lte: userRiskRange.endScore,
+        },
+      })
+    }
+    const inclusiveIds: string[] = []
+    if (userIds) {
+      inclusiveIds.push(...userIds)
+    }
+    if (listIds) {
+      for (const listId of listIds) {
+        const userIds = await this.getAllListUserIds(listId)
+        inclusiveIds.push(...userIds)
+      }
+    }
+    if (transactionIds) {
+      await pMap(
+        chunk(transactionIds, 50),
+        async (txIds) => {
+          const txns = await this.transactionRepo.getTransactionsByIds(txIds)
+          const userIds = uniq(
+            flatMap(
+              txns.map((txn) => {
+                return [txn.originUserId, txn.destinationUserId].filter(Boolean)
+              })
+            )
+          ) as string[]
+          inclusiveIds.push(...userIds)
+        },
+        { concurrency: 5 }
+      )
+    }
+    if (inclusiveIds.length > 0) {
+      orFilters.push({
+        userId: { $in: inclusiveIds },
+      })
+    }
+    const pipeline: object[] =
+      orFilters.length > 0
+        ? [
+            {
+              $match: {
+                $or: orFilters,
+              },
+            },
+          ]
+        : []
+
+    pipeline.push({
+      $sample: { size: Math.min(userCount, MAX_USERS) },
+    })
+    this.samplingPipeline = pipeline
+    return pipeline
+  }
+
+  private async getAllListUserIds(listId: string): Promise<string[]> {
+    let userIds: string[] = []
+    let next: string | undefined
+    let hasNext = true
+
+    while (hasNext) {
+      const data = await this.listService.getListItems(listId, {
+        fromCursorKey: next,
+        pageSize: 100,
+      })
+
+      userIds = userIds.concat(data?.items.map((item) => item.key) ?? [])
+      hasNext = data?.hasNext ?? false
+      next = data?.next
+    }
+
+    return userIds
+  }
+  protected async run(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
+    await this.initalise(job)
+    const taskId = job.parameters.taskId
+    const simulationTaskRepository = new SimulationTaskRepository(
+      this.tenantId,
       this.mongoDb
     )
-    const allUsersCount = await this.userRepository.getEstimatedUsersCount()
-    this.totalUsers = Math.min(MAX_USERS, allUsersCount)
+    const currentJob =
+      await simulationTaskRepository.getSimulationJob<V8RiskSimulationJob>(
+        job.parameters.jobId
+      )
+    const task = currentJob?.iterations.find((i) => i.taskId === taskId)
+    this.riskFactors = this.segregateAndFilterRiskFactors(
+      task?.parameters.parameters ?? []
+    )
+    this.riskScoringAlgorithm =
+      task?.parameters.riskScoringAlgorithm ?? this.riskScoringAlgorithm
+    const pipeline = await this.getSamplePipeline()
+    const sampledUserCount =
+      this.sampling.sample.type === 'ALL'
+        ? this.allUsersCount
+        : (
+            await this.mongoDb
+              .db()
+              .collection(USERS_COLLECTION(this.tenantId))
+              .aggregate([...pipeline, { $count: 'count' }])
+              .toArray()
+          )?.[0]?.count ?? 0
+    this.totalUsers = sampledUserCount
+    const simulationResultRepository = new SimulationResultRepository(
+      this.tenantId,
+      this.mongoDb
+    )
     await simulationTaskRepository.updateTaskStatus(
       taskId,
       'IN_PROGRESS',
@@ -187,12 +311,12 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
             this.getStatistics(
               this.extrapolateStats(
                 this.totalUsers,
-                allUsersCount,
+                this.allUsersCount,
                 usersKrsResult
               ),
               this.extrapolateStats(
                 this.totalUsers,
-                allUsersCount,
+                this.allUsersCount,
                 usersDrsResult
               ),
               this.extrapolateStats(
@@ -220,8 +344,11 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     riskClassificationValues: RiskClassificationScore[],
     updateProgress: (progress: number) => Promise<void>
   ) {
-    const usersCursor = this.userRepository
-      .sampleUsersCursor(this.totalUsers)
+    const pipeline = await this.getSamplePipeline()
+    const usersCursor = this.mongoDb
+      .db()
+      .collection(USERS_COLLECTION(this.tenantId))
+      .aggregate<InternalUser>(pipeline)
       .addCursorFlag('noCursorTimeout', true)
     await processCursorInBatch(
       usersCursor,
@@ -233,8 +360,8 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         )
       },
       {
-        processBatchSize: BATCH_SIZE,
-        mongoBatchSize: BATCH_SIZE,
+        processBatchSize: PROCESS_BATCH_SIZE,
+        mongoBatchSize: MONGO_BATCH_SIZE,
       }
     )
   }
@@ -461,7 +588,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       async (transactions) => {
         await this.processUserTransactionsBatch(transactions, updateArsStats)
       },
-      { processBatchSize: BATCH_SIZE, mongoBatchSize: BATCH_SIZE }
+      { processBatchSize: PROCESS_BATCH_SIZE, mongoBatchSize: MONGO_BATCH_SIZE }
     )
     return {
       avgArsScore: totalArs / (transactionsCount || 1),
