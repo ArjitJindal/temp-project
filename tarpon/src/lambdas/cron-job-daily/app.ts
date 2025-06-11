@@ -204,6 +204,13 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     })
   )
 
+  if (envIs('dev')) {
+    await sendBatchJobCommand({
+      type: 'QA_CLEANUP',
+      tenantId: FLAGRIGHT_TENANT_ID,
+    })
+  }
+
   try {
     if (!envIs('prod')) {
       return
@@ -224,13 +231,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       `Failed to check transactions deviation: ${(e as Error)?.message}`,
       e
     )
-  }
-
-  if (envIs('dev')) {
-    await sendBatchJobCommand({
-      type: 'QA_CLEANUP',
-      tenantId: FLAGRIGHT_TENANT_ID,
-    })
   }
 })
 

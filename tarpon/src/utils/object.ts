@@ -113,3 +113,23 @@ export function isJsonString(str: string) {
   }
   return true
 }
+
+export function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  const controller = new AbortController()
+
+  const timeout = setTimeout(() => {
+    controller.abort()
+  }, timeoutMs)
+
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      controller.signal.addEventListener('abort', () => {
+        reject(new Error('Operation timed out'))
+      })
+    ),
+  ]).finally(() => clearTimeout(timeout))
+}
