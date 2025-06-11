@@ -1,5 +1,9 @@
 import { uniq, uniqBy } from 'lodash'
-import { normalize, sanitizeString } from '@flagright/lib/utils'
+import {
+  normalize,
+  replaceRequiredCharactersWithSpace,
+  sanitizeString,
+} from '@flagright/lib/utils'
 import { Db } from 'mongodb'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { CommonOptions, format } from '@fragaria/address-formatter'
@@ -208,7 +212,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               ),
             },
             'sanctionsSources.category': {
-              $in: sanctionsCategory,
+              $in: [...sanctionsCategory, null],
             },
           },
         ],
@@ -311,7 +315,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       const matchTypeCondition = {
         $or: [
           {
-            normalizedAka: normalize(request.searchTerm),
+            normalizedAka: {
+              $in: [
+                normalize(request.searchTerm),
+                replaceRequiredCharactersWithSpace(
+                  normalize(request.searchTerm),
+                  true
+                ),
+              ],
+            },
           },
         ],
       }
@@ -1009,7 +1021,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   must: [
                     {
                       text: {
-                        query: normalize(request.searchTerm),
+                        query: replaceRequiredCharactersWithSpace(
+                          normalize(request.searchTerm),
+                          true
+                        ),
                         path: 'normalizedAka',
                         fuzzy: {
                           maxEdits: 2,
@@ -1255,6 +1270,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const searchTerm = shouldSanitizeString
       ? sanitizeString(modifiedTerm)
       : normalize(modifiedTerm)
+
     const searchTermTokensLength = searchTerm.split(' ').length
     return results.filter((entity) => {
       if (
