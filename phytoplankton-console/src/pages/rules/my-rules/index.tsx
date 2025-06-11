@@ -373,9 +373,14 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                       onEditRule(entity);
                     }
                   }}
-                  disabled={!canWriteRules || deleting}
+                  disabled={!canWriteRules || deleting || entity.status === 'DEPLOYING'}
                   data-cy="rule-edit-button"
-                  style={{ cursor: !canWriteRules || deleting ? 'not-allowed' : 'pointer' }}
+                  style={{
+                    cursor:
+                      !canWriteRules || deleting || entity.status === 'DEPLOYING'
+                        ? 'not-allowed'
+                        : 'pointer',
+                  }}
                 />
               )}
               {canWriteRules && (

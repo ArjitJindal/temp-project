@@ -227,7 +227,7 @@ export const RuleInstanceInfo = (props: Props) => {
               type="SECONDARY"
               icon={<EditIcon />}
               onClick={() => onEditRule(ruleInstance)}
-              isDisabled={!canWriteRules}
+              isDisabled={!canWriteRules || ruleInstance.status === 'DEPLOYING'}
               testName="rule-instance-page-edit-rule-button"
             >
               Edit rule
