@@ -63,3 +63,11 @@ export function isRuleInstanceUpdateOrOnboarding(
   }
   return checkForUpdatedEntity(ruleInstance.parameters)
 }
+
+export const RuleIdsFor314AConsumer = ['R-42']
+export const RuleIdsFor314ABusiness = ['R-43']
+export const RuleIdsFor314A: string[] = [
+  ...RuleIdsFor314AConsumer,
+  ...RuleIdsFor314ABusiness,
+]
+export const ListSubTypesFor314A = ['314A_INDIVIDUAL', '314A_BUSINESS']

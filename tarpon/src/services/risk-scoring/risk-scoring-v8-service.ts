@@ -949,7 +949,7 @@ export class RiskScoringV8Service {
     const pendingJobs = await this.batchJobRepository.getJobsByStatus(
       ['PENDING'],
       {
-        filterType: 'RISK_SCORING_RECALCULATION',
+        filterTypes: ['RISK_SCORING_RECALCULATION'],
       }
     )
     const jobsToCheck = pendingJobs.sort((jobA, jobB) => {

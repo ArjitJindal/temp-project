@@ -251,7 +251,6 @@ export class RuleRepository {
         ':pk': DynamoDbKeys.RULE().PartitionKeyID,
       },
     }
-
     const result = await paginateQuery(this.dynamoDb, queryInput)
     const rules =
       result.Items?.map(

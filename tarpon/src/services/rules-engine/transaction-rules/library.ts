@@ -1861,7 +1861,6 @@ const _RULES_LIBRARY: Array<
         upperBound: 20,
         lowerBound: 0,
       },
-      ongoingScreening: false,
       listId: '',
     }
 
@@ -1893,7 +1892,6 @@ const _RULES_LIBRARY: Array<
         upperBound: 20,
         lowerBound: 0,
       },
-      ongoingScreening: false,
       listId: '',
     }
 

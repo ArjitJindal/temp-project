@@ -426,6 +426,14 @@ export type PnbPullUsersData = {
   tenantId: string
 }
 
+export type UserRuleReRunBatchJob = {
+  type: 'USER_RULE_RE_RUN'
+  tenantId: string
+  parameters: {
+    ruleInstanceIds: string[]
+  }
+}
+
 /* Currently built to be used for preAggregated data 
   and with Sync rebuild aggregation
 */
@@ -502,7 +510,9 @@ export type BatchJob =
   | PnbPullUsersData
   | DynamodbClickhouseBackfillBatchJob
   | ManualTransactionReverification
+  | UserRuleReRunBatchJob
   | FlatFilesValidationBatchJob
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

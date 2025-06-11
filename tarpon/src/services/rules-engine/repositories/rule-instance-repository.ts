@@ -16,6 +16,7 @@ import dayjsLib from '@flagright/lib/utils/dayjs'
 import pMap from 'p-map'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { isV2RuleInstance } from '../utils'
+import { RuleIdsFor314A } from '../utils/user-rule-utils'
 import { getMigratedV8Config, V8_MIGRATED_RULES } from '../v8-migrations'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -457,6 +458,26 @@ export class RuleInstanceRepository {
     return result.Item ? toRuleInstance(result.Item) : null
   }
 
+  async getRuleInstancesByRuleIds(
+    ruleIds: string[]
+  ): Promise<Array<RuleInstance>> {
+    if (ruleIds.length === 0) {
+      return []
+    }
+    const expressionAttributeValues = {}
+    const filterValues: string[] = []
+    ruleIds.forEach((id, idx) => {
+      const key = `:r${idx}`
+      expressionAttributeValues[key] = id
+      filterValues.push(key)
+    })
+    const filterExpression = `ruleId IN (${filterValues.join(',')})`
+    return this.getRuleInstances({
+      FilterExpression: filterExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
+    })
+  }
+
   async getRuleInstancesByIds(
     ruleInstanceIds: string[]
   ): Promise<Array<RuleInstance>> {
@@ -487,6 +508,24 @@ export class RuleInstanceRepository {
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return result.Items?.map(toRuleInstance) || []
+  }
+
+  public async get314AIdsBasedOnAttachedList(listId: string) {
+    const ruleInstances = await this.getRuleInstancesByRuleIds(RuleIdsFor314A)
+    const ruleIdsToTrigger: string[] = []
+
+    ruleInstances.forEach((rule: RuleInstance) => {
+      const riskLevels = Object.keys(rule?.riskLevelParameters ?? {})
+      for (let i = 0; i < riskLevels.length; i++) {
+        const riskLevelConfig = rule?.riskLevelParameters?.[riskLevels[i]]
+        if (riskLevelConfig.listId === listId && rule.id) {
+          ruleIdsToTrigger.push(rule.id)
+          // breaking here so that there is just one instance of a rule id to trigger
+          break
+        }
+      }
+    })
+    return ruleIdsToTrigger
   }
 
   public async updateRuleInstancesStats(ruleStats: RuleStats[]) {

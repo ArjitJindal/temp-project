@@ -10,7 +10,6 @@ import dayjs from '@/utils/dayjs'
 import { CurrencyService } from '@/services/currency'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { tenantHasFeature } from '@/core/utils/context'
 import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 import {
@@ -28,6 +27,7 @@ import {
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { handleBatchJobTrigger } from '@/utils/cron'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -65,38 +65,6 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   } catch (e) {
     logger.error(
       `Failed to send dashboard refresh batch jobs: ${(e as Error)?.message}`,
-      e
-    )
-  }
-}
-
-async function handleRiskScoringTriggerBatchJob(tenantIds: string[]) {
-  const mongoDb = await getMongoDbClient()
-  try {
-    await Promise.all(
-      tenantIds.map(async (id) => {
-        const batchJobRepository = new BatchJobRepository(id, mongoDb)
-        const pendingTriggerJobs = await batchJobRepository.getJobsByStatus(
-          ['PENDING'],
-          {
-            filterType: 'RISK_SCORING_RECALCULATION',
-          }
-        )
-        for (const job of pendingTriggerJobs) {
-          if (
-            job.latestStatus.scheduledAt &&
-            job.latestStatus.scheduledAt <= Date.now()
-          ) {
-            await sendBatchJobCommand(job, job.jobId)
-          }
-        }
-      })
-    )
-  } catch (e) {
-    logger.error(
-      `Failed to send risk scoring re run on triggers batch jobs: ${
-        (e as Error)?.message
-      }`,
       e
     )
   }
@@ -150,7 +118,10 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       await handleSlaStatusCalculationBatchJob(tenantIds)
     }
 
-    await handleRiskScoringTriggerBatchJob(tenantIds)
+    await handleBatchJobTrigger(tenantIds, [
+      'RISK_SCORING_RECALCULATION',
+      'USER_RULE_RE_RUN',
+    ])
     await deleteOldWebhookRetryEvents(tenantIds)
 
     if (envIs('dev')) {

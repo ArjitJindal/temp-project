@@ -1,4 +1,5 @@
 import readline from 'node:readline'
+import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import * as csvParse from '@fast-csv/parse'
 import { S3 } from '@aws-sdk/client-s3'
@@ -9,8 +10,11 @@ import {
 } from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
 import { MongoClient } from 'mongodb'
+import { uniq } from 'lodash'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
+import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListData } from '@/@types/openapi-public/ListData'
@@ -44,6 +48,8 @@ import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
 import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
 import { notEmpty } from '@/utils/array'
+import { BatchJobInDb, UserRuleReRunBatchJob } from '@/@types/batch-job'
+import dayjs from '@/utils/dayjs'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -53,6 +59,8 @@ export class ListService {
   listRepository: ListRepository
   userRepository: UserRepository
   riskScoringService: RiskScoringV8Service
+  batchJobRepository: BatchJobRepository
+  ruleInstanceRepository: RuleInstanceRepository
   protected s3: S3 | undefined
   protected s3Config: S3Config | undefined
 
@@ -67,7 +75,15 @@ export class ListService {
     this.s3Config = s3Config
     this.listRepository = new ListRepository(tenantId, connections.dynamoDb)
     this.userRepository = new UserRepository(tenantId, connections)
+    this.batchJobRepository = new BatchJobRepository(
+      tenantId,
+      connections.mongoDb
+    )
+    this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb: connections.dynamoDb,
+    })
     const logicEvaluator = new LogicEvaluator(tenantId, connections.dynamoDb)
+
     this.riskScoringService = new RiskScoringV8Service(
       tenantId,
       logicEvaluator,
@@ -139,7 +155,6 @@ export class ListService {
     await this.listRepository.setListItem(listId, item)
     // To rerun risk scores for user
     await this.validateAndHandleReRunTriggers(listId, { items: [item] })
-    await this.sendListUpdatedWebhook(listId, 'SET', [item])
     return {
       result: undefined,
       entities: [
@@ -293,7 +308,7 @@ export class ListService {
         ...item,
       },
     ])
-    await this.sendListUpdatedWebhook(listId, 'SET', [item])
+    await this.handleListUpdate(listId)
     return {
       result: undefined,
       entities: [
@@ -326,6 +341,62 @@ export class ListService {
     }
   }
 
+  private async handleListUpdate(listId: string) {
+    // check if updates are made on 314A list
+    const is314AList = await this.listRepository.is314AList(listId)
+    if (is314AList) {
+      // trigger 314(a) rule to which this list is attached
+      const ruleInstanceIds = await this.getRuleInstancesBasedOnAttachedList(
+        listId
+      )
+      //  checking for existing pending jobs, instead of creating new one
+      const pendingJobs = await this.batchJobRepository.getJobsByStatus(
+        ['PENDING'],
+        {
+          filterTypes: ['USER_RULE_RE_RUN'],
+        }
+      )
+      const jobsToCheck = pendingJobs.sort((jobA, jobB) => {
+        return (
+          (jobB.latestStatus.scheduledAt ?? 0) -
+          (jobA.latestStatus.scheduledAt ?? 0)
+        )
+      })
+      if (
+        jobsToCheck.length > 0 &&
+        jobsToCheck[0].latestStatus.scheduledAt &&
+        jobsToCheck[0].latestStatus.scheduledAt - Date.now() > 5 * 1000
+      ) {
+        const targetJob = jobsToCheck[0] as UserRuleReRunBatchJob & BatchJobInDb
+        const updatedRuleInstanceIds = uniq([
+          ...targetJob.parameters.ruleInstanceIds,
+          ...ruleInstanceIds,
+        ])
+        const updateData: any = {
+          $set: {
+            'latestStatus.scheduledAt': {
+              $add: ['$latestStatus.scheduledAt', 30 * 60 * 1000],
+            },
+            'parameters.ruleInstanceIds': updatedRuleInstanceIds,
+          },
+        }
+        await this.batchJobRepository.updateJob(targetJob.jobId, updateData)
+      } else {
+        await this.batchJobRepository.insertJob(
+          {
+            tenantId: this.tenantId,
+            jobId: uuidv4(),
+            type: 'USER_RULE_RE_RUN',
+            parameters: {
+              ruleInstanceIds,
+            },
+          },
+          dayjs().add(30, 'minutes').valueOf()
+        )
+      }
+    }
+  }
+
   public async updateOrCreateListItem(
     listId: string,
     item: ListItem
@@ -335,6 +406,7 @@ export class ListService {
       ? await this.updateListItem(listId, item)
       : await this.setListItem(listId, item)
     await this.sendListUpdatedWebhook(listId, 'SET', [item])
+    await this.handleListUpdate(listId)
     return {
       result: undefined,
       entities: [
@@ -557,5 +629,14 @@ export class ListService {
       },
     }
     await sendWebhookTasks<ListUpdatedDetails>(this.tenantId, [webhookTask])
+  }
+
+  public async getRuleInstancesBasedOnAttachedList(
+    listId: string
+  ): Promise<string[]> {
+    // get all rule with which this list is attached
+    const ruleInstancesIds =
+      await this.ruleInstanceRepository.get314AIdsBasedOnAttachedList(listId)
+    return ruleInstancesIds
   }
 }

@@ -32,6 +32,8 @@ import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeIntern
 import { ListHeaderInternal } from '@/@types/openapi-internal/ListHeaderInternal'
 import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
 import { hasFeature } from '@/core/utils/context'
+import { ListSubTypesFor314A } from '@/services/rules-engine/utils/user-rule-utils'
+
 @traceable
 export class ListRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -541,6 +543,14 @@ export class ListRepository {
       })
     )
     return Items.length > 0
+  }
+
+  public async is314AList(listId: string): Promise<boolean> {
+    const listHeader = await this.getListHeader(listId)
+    if (!listHeader) {
+      return false
+    }
+    return ListSubTypesFor314A.includes(listHeader?.subtype)
   }
 }
 

@@ -1,8 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  ENABLE_ONGOING_SCREENING_SCHEMA,
-  FUZZINESS_RANGE_SCHEMA,
-} from '../utils/rule-parameter-schemas'
+import { FUZZINESS_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { getEntityTypeForSearch } from '../utils/rule-utils'
@@ -18,7 +15,6 @@ export type SubjectIdentificationBusinessUserRuleParameters = {
     lowerBound: number
     upperBound: number
   }
-  ongoingScreening: boolean
   listId: string
 }
 
@@ -35,10 +31,6 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
             subtype: 'NUMBER_SLIDER_SINGLE',
           },
         }),
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
-          description:
-            'It will do a screening every 24hrs of all the existing business users after it is enabled.',
-        }),
         listId: {
           type: 'string',
           title: 'List ID',
@@ -51,12 +43,9 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
   }
 
   public async computeRule() {
-    const { fuzzinessRange, ongoingScreening, listId } = this.parameters
+    const { fuzzinessRange, listId } = this.parameters
 
-    if (
-      !isBusinessUser(this.user) ||
-      (this.ongoingScreeningMode && !ongoingScreening)
-    ) {
+    if (!isBusinessUser(this.user)) {
       return
     }
     const business = this.user as Business
@@ -87,7 +76,6 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
             entityType: entity.entityType,
             userId: this.user.userId,
             ruleInstanceId: this.ruleInstance.id ?? '',
-            isOngoingScreening: this.ongoingScreeningMode,
             searchTerm: entity.name,
             yearOfBirth,
           }
@@ -97,7 +85,7 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
               yearOfBirth,
               fuzzinessRange,
               fuzziness: undefined,
-              monitoring: { enabled: ongoingScreening },
+              monitoring: { enabled: false },
               ...getEntityTypeForSearch(
                 providers,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'

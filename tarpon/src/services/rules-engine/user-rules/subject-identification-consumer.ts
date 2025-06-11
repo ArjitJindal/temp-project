@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import {
-  ENABLE_ONGOING_SCREENING_SCHEMA,
-  FUZZINESS_RANGE_SCHEMA,
-} from '../utils/rule-parameter-schemas'
+import { FUZZINESS_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
@@ -16,7 +13,6 @@ export type SubjectIdentificationConsumerUserRuleParameters = {
     lowerBound: number
     upperBound: number
   }
-  ongoingScreening: boolean
   listId: string
 }
 
@@ -33,10 +29,6 @@ export default class SubjectIdentificationConsumerUser extends UserRule<SubjectI
             subtype: 'NUMBER_SLIDER_SINGLE',
           },
         }),
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
-          description:
-            'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
-        }),
         listId: {
           type: 'string',
           title: 'List ID',
@@ -49,13 +41,12 @@ export default class SubjectIdentificationConsumerUser extends UserRule<SubjectI
   }
 
   public async computeRule() {
-    const { fuzzinessRange, ongoingScreening, listId } = this.parameters
+    const { fuzzinessRange, listId } = this.parameters
     const user = this.user as User
     if (
       !isConsumerUser(this.user) ||
       !user.userDetails ||
-      !user.userDetails.name ||
-      (this.ongoingScreeningMode && !ongoingScreening)
+      !user.userDetails.name
     ) {
       return
     }
@@ -84,7 +75,7 @@ export default class SubjectIdentificationConsumerUser extends UserRule<SubjectI
         searchTerm: name,
         fuzzinessRange,
         fuzziness: undefined,
-        monitoring: { enabled: ongoingScreening },
+        monitoring: { enabled: false },
         listVersion,
       },
       hitContext,
