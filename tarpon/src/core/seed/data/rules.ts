@@ -1933,6 +1933,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         screeningTypes: ['PEP'],
         ruleStages: ['INITIAL', 'UPDATE'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       } as SanctionsBankUserRuleParameters,
       action: 'SUSPEND',
       type: 'USER',
@@ -1946,26 +1947,31 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           fuzziness: 20,
           screeningTypes: ['PEP'],
           ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBankUserRuleParameters,
         HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
           ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBankUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
           ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBankUserRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
           ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBankUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP'],
           ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as SanctionsBankUserRuleParameters,
       },
       riskLevelActions: {
@@ -2289,22 +2295,27 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
       },
       riskLevelActions: {
@@ -2365,22 +2376,27 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         } as PaymentDetailsScreeningRuleParameters,
       },
       riskLevelActions: {
