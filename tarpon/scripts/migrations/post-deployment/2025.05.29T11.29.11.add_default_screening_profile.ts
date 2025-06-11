@@ -29,7 +29,12 @@ async function migrateTenant(tenant: Tenant) {
   const acurisSanctionsSearchType =
     tenantSettings.sanctions?.providerScreeningTypes?.find(
       (type) => type.provider === 'acuris'
-    )?.screeningTypes
+    )?.screeningTypes ?? [
+      'SANCTIONS',
+      'PEP',
+      'REGULATORY_ENFORCEMENT_LIST',
+      'ADVERSE_MEDIA',
+    ]
 
   await screeningProfileService.updateScreeningProfilesOnSanctionsSettingsChange(
     acurisSanctionsSearchType as AcurisSanctionsSearchType[],
