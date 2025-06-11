@@ -23,6 +23,7 @@ import {
 type ExtractedData = {
   userId: string
   krsScore: number
+  userStatus: string
   avgArsScore: number
   craScore: number
   riskLevel: string
@@ -135,7 +136,9 @@ export class PnbPullUsersDataBatchJobRunner extends BatchJobRunner {
     const passThrough = new PassThrough() // Will act as Body for S3 upload
 
     // Write CSV header
-    passThrough.write('UnitholderId,Risk Level,KRS,Average TRS,CRA\n')
+    passThrough.write(
+      'UnitholderId,Risk Level,KRS,Average TRS,CRA,User Status\n'
+    )
 
     let count = 0
     const interval = setInterval(() => {
@@ -227,7 +230,8 @@ export class PnbPullUsersDataBatchJobRunner extends BatchJobRunner {
         END AS riskLevel,
         krsScore_krsScore AS krsScore,
         JSONExtractFloat(data, 'avgArsScore', 'value') as avgArsScore,
-        drsScore_drsScore AS craScore
+        drsScore_drsScore AS craScore,
+        userStateDetails_state as userStatus
     FROM
         users FINAL
     WHERE
