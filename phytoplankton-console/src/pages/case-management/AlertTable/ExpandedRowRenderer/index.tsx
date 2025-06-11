@@ -67,53 +67,51 @@ function ExpandedRowRenderer(props: Props) {
       type="line"
       defaultActiveKey={AlertTabs.TRANSACTIONS}
       tabBarExtraContent={
-        <Select
-          value={
-            (selectedItem?.hitContext?.paymentMethodId ?? selectedItem?.searchId) +
-            ' ' +
-            selectedItem?.entityType +
-            ' ' +
-            selectedItem?.searchId
-          }
-          isDisabled={sanctionDetails.length < 2}
-          options={sanctionDetails.reduce((acc, detailsItem) => {
-            const paymentMethodId = detailsItem.hitContext?.paymentMethodId;
-            if (!paymentMethodId || !acc.some((item) => item.value.startsWith(paymentMethodId))) {
-              acc.push({
-                label: getOptionName(detailsItem),
-                value:
-                  (paymentMethodId ?? detailsItem.searchId) +
-                  ' ' +
-                  detailsItem.entityType +
-                  ' ' +
-                  detailsItem.searchId,
+        selectedItem && (
+          <Select
+            value={`${selectedItem?.hitContext?.paymentMethodId ?? selectedItem?.searchId} ${
+              selectedItem?.entityType
+            } ${selectedItem?.searchId}`}
+            isDisabled={sanctionDetails.length < 2}
+            options={sanctionDetails.reduce((acc, detailsItem) => {
+              const paymentMethodId = detailsItem.hitContext?.paymentMethodId;
+              if (!paymentMethodId || !acc.some((item) => item.value.startsWith(paymentMethodId))) {
+                acc.push({
+                  label: getOptionName(detailsItem),
+                  value:
+                    (paymentMethodId ?? detailsItem.searchId) +
+                    ' ' +
+                    detailsItem.entityType +
+                    ' ' +
+                    detailsItem.searchId,
+                });
+              }
+              return acc;
+            }, [] as { label: string; value: string }[])}
+            onChange={(value) => {
+              const selectedItem = sanctionDetails.find((item) => {
+                if (
+                  item.hitContext?.paymentMethodId === value?.split(' ')[0] &&
+                  item.entityType === value?.split(' ')[1] &&
+                  item.searchId === value?.split(' ')[2]
+                ) {
+                  return true;
+                }
+                if (
+                  item.searchId === value?.split(' ')[0] &&
+                  !item.hitContext?.paymentMethodId &&
+                  item.entityType === value?.split(' ')[1] &&
+                  item.searchId === value?.split(' ')[2]
+                ) {
+                  return true;
+                }
+                return false;
               });
-            }
-            return acc;
-          }, [] as { label: string; value: string }[])}
-          onChange={(value) => {
-            const selectedItem = sanctionDetails.find((item) => {
-              if (
-                item.hitContext?.paymentMethodId === value?.split(' ')[0] &&
-                item.entityType === value?.split(' ')[1] &&
-                item.searchId === value?.split(' ')[2]
-              ) {
-                return true;
-              }
-              if (
-                item.searchId === value?.split(' ')[0] &&
-                !item.hitContext?.paymentMethodId &&
-                item.entityType === value?.split(' ')[1] &&
-                item.searchId === value?.split(' ')[2]
-              ) {
-                return true;
-              }
-              return false;
-            });
-            setSelectedItem(selectedItem);
-          }}
-          allowClear={false}
-        />
+              setSelectedItem(selectedItem);
+            }}
+            allowClear={false}
+          />
+        )
       }
     />
   );
