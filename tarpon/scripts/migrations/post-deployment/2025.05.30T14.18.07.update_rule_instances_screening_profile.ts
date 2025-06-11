@@ -5,8 +5,12 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { SanctionsService } from '@/services/sanctions'
 import { ScreeningProfileService } from '@/services/screening-profile'
+import { isDemoTenant } from '@/utils/tenant'
 
 async function migrateTenant(tenant: Tenant) {
+  if (isDemoTenant(tenant.id)) {
+    return
+  }
   const dynamoDb = await getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const ruleInstanceService = new RuleInstanceService(tenant.id, {
