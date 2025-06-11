@@ -298,8 +298,7 @@ export class ClickhouseTransactionsRepository {
               "toJSONString(JSONExtract(data, 'hitRules', 'Array(Tuple(ruleName String, ruleDescription String))'))",
           }
         : {}),
-      isAnySanctionsExecutedRules:
-        "length(flatten(arrayMap(y -> y.searchId, arrayMap(x -> x.ruleHitMeta.sanctionsDetails, JSONExtract(data, 'executedRules', 'Array(Tuple(ruleHitMeta Tuple(sanctionsDetails Array(Tuple(searchId String)))))'))))) > 0",
+      hasHitRules: `length(arrayFilter(hitRule -> NOT isNull(hitRule),JSONExtractArrayRaw(data, 'hitRules'))) > 0`,
       originFundsInfo:
         "JSONExtract(data, 'originFundsInfo', 'Tuple(sourceOfFunds String, sourceOfWealth String)')",
       alertIds: "toJSONString(JSONExtract(data, 'alertIds', 'Array(String)'))",
@@ -372,9 +371,7 @@ export class ClickhouseTransactionsRepository {
           status: item.status as RuleAction,
           transactionState: item.state as TransactionState,
           reference: item.reference as string,
-          isAnySanctionsExecutedRules: Boolean(
-            item.isAnySanctionsExecutedRules
-          ),
+          hasHitRules: Boolean(item.hasHitRules ?? false),
           hitRules: item.hitRules
             ? (JSON.parse(item.hitRules as string) as {
                 ruleName: string

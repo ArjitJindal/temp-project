@@ -195,11 +195,7 @@ export class TransactionService {
         paymentMethodId: transaction?.originPaymentMethodId,
         paymentDetails: transaction?.originPaymentDetails,
       },
-      isAnySanctionsExecutedRules: !!(transaction?.executedRules ?? [])
-        ?.map((rule) =>
-          rule?.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
-        )
-        .flat().length,
+      hasHitRules: !!(transaction?.hitRules ?? []).length,
       destinationUser: { id: transaction?.destinationUserId },
       originUser: { id: transaction?.originUserId },
       productType: transaction?.productType,

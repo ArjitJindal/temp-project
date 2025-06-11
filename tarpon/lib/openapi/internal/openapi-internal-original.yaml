@@ -9871,7 +9871,7 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
         reference:
           type: string
-        isAnySanctionsExecutedRules:
+        hasHitRules:
           type: boolean
         hitRules:
           type: array

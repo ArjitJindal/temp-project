@@ -7,6 +7,5 @@ export function isTransactionHasDetails(
   if (settings.isPaymentApprovalEnabled && transaction.status === 'SUSPEND') {
     return true;
   }
-
-  return !!transaction.isAnySanctionsExecutedRules;
+  return !!transaction.hasHitRules;
 }
