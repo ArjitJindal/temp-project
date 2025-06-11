@@ -47,7 +47,6 @@ import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskService } from '@/services/risk'
-import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { envIsNot } from '@/utils/env'
@@ -345,10 +344,6 @@ export class TarponChangeMongoDbConsumer {
       mongoDb,
       dynamoDb
     )
-    const casesRepo = new CaseRepository(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
 
     const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
       dynamoDb,
@@ -517,42 +512,6 @@ export class TarponChangeMongoDbConsumer {
         DESTINATION?.type === 'USER' ? DESTINATION?.user : null
       )
       userServiceSubSegment?.close()
-    }
-
-    // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
-    if (isRiskScoringEnabled) {
-      const riskScoringV8Service = new RiskScoringV8Service(
-        tenantId,
-        logicEvaluator,
-        {
-          dynamoDb,
-          mongoDb,
-        }
-      )
-      const drsScoreSubSegment = await addNewSubsegment(
-        'StreamConsumer',
-        'handleTransaction drsScore'
-      )
-      const [originDrsScore, destinationDrsScore] = await Promise.all([
-        ORIGIN?.type === 'USER'
-          ? riskScoringV8Service.getDrsScore(ORIGIN.user.userId)
-          : Promise.resolve(undefined),
-        DESTINATION?.type === 'USER'
-          ? riskScoringV8Service.getDrsScore(DESTINATION.user.userId)
-          : Promise.resolve(undefined),
-      ])
-      drsScoreSubSegment?.close()
-      const updateDrsScoreSubSegment = await addNewSubsegment(
-        'StreamConsumer',
-        'handleTransaction updateDrsScore'
-      )
-      await casesRepo.updateDynamicRiskScores(
-        pick(transaction, ['transactionId', 'hitRules']),
-        originDrsScore?.drsScore,
-        destinationDrsScore?.drsScore
-      )
-      updateDrsScoreSubSegment?.close()
-      logger.info(`DRS Updated in Cases`)
     }
 
     const handleNewCasesSubSegment = await addNewSubsegment(

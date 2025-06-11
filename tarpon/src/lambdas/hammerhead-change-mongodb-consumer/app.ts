@@ -18,7 +18,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { mergeUserTags } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
 import { addNewSubsegment } from '@/core/xray'
-
+import { CaseRepository } from '@/services/cases/repository'
 export async function arsScoreEventHandler(
   tenantId: string,
   arsScore: ArsScore | undefined,
@@ -65,6 +65,8 @@ export async function drsScoreEventHandler(
   )
   const riskRepository = new RiskRepository(tenantId, dbClients)
   const userRepository = new UserRepository(tenantId, dbClients)
+  const casesRepo = new CaseRepository(tenantId, dbClients)
+
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
 
   if (newDrsScore.triggeredBy !== 'PUBLIC_API' && newDrsScore.userId) {
@@ -125,10 +127,20 @@ export async function drsScoreEventHandler(
     }
   }
 
+  const caseIds = newDrsScore.userId
+    ? await casesRepo.getCaseIdsByUserId(newDrsScore.userId)
+    : []
+  const caseIdStrings = caseIds
+    .map((c) => c.caseId)
+    .filter((id): id is string => id !== undefined)
+
   await Promise.all([
     riskRepository.addDrsValueToMongo(newDrsScore),
     newDrsScore.userId
       ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
+      : undefined,
+    caseIdStrings.length > 0 && newDrsScore.userId
+      ? casesRepo.updateCasesDrsScores(caseIdStrings, newDrsScore.drsScore)
       : undefined,
   ])
   subSegment?.close()

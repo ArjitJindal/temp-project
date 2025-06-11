@@ -1701,9 +1701,14 @@ export class CaseRepository {
     await this.bulkUpdateCases(operations)
   }
 
-  private async bulkUpdateCases(
+  public async bulkUpdateCases(
     operations: {
-      updateOne: {
+      updateOne?: {
+        filter: Filter<Case>
+        update: Document
+        arrayFilters?: Document[]
+      }
+      updateMany?: {
         filter: Filter<Case>
         update: Document
         arrayFilters?: Document[]
@@ -1730,6 +1735,42 @@ export class CaseRepository {
         { 'caseUsers.destination.userId': newUser.userId },
         { $set: { 'caseUsers.destination': newUser } }
       ),
+    ])
+  }
+
+  public async updateCasesDrsScores(
+    caseIds: string[],
+    drsScore: number
+  ): Promise<void> {
+    if (caseIds.length === 0) {
+      return
+    }
+
+    await this.bulkUpdateCases([
+      {
+        updateMany: {
+          filter: { caseId: { $in: caseIds } },
+          update: {
+            $set: {
+              'caseUsers.originUserDrsScore': {
+                $cond: {
+                  if: { $ne: ['$caseUsers.origin', null] },
+                  then: drsScore,
+                  else: '$caseUsers.originUserDrsScore',
+                },
+              },
+              'caseUsers.destinationUserDrsScore': {
+                $cond: {
+                  if: { $eq: ['$caseUsers.origin', null] },
+                  then: drsScore,
+                  else: '$caseUsers.destinationUserDrsScore',
+                },
+              },
+              updatedAt: Date.now(),
+            },
+          },
+        },
+      },
     ])
   }
 }

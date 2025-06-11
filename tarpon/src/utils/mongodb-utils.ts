@@ -16,6 +16,8 @@ import {
   UpdateOneModel,
   UpdateResult,
   WithId,
+  UpdateManyModel,
+  AnyBulkWriteOperation,
 } from 'mongodb'
 
 import { isEqual, memoize } from 'lodash'
@@ -660,19 +662,35 @@ export async function internalMongoBulkUpdate<T extends Document>(
   mongoClient: MongoClient,
   collectionName: string,
   operations: {
-    updateOne: UpdateOneModel<T>
+    updateOne?: UpdateOneModel<T>
+    updateMany?: UpdateManyModel<T>
   }[]
 ) {
   const db = mongoClient.db()
   const collection = db.collection<T>(collectionName)
-  await collection.bulkWrite(operations)
+
+  // Convert operations to the format MongoDB expects
+  const bulkOperations = operations
+    .map((op) => {
+      if (op.updateOne) {
+        return { updateOne: op.updateOne } as AnyBulkWriteOperation<T>
+      }
+      if (op.updateMany) {
+        return { updateMany: op.updateMany } as AnyBulkWriteOperation<T>
+      }
+      return null
+    })
+    .filter((op): op is AnyBulkWriteOperation<T> => op !== null)
+
+  await collection.bulkWrite(bulkOperations)
 
   await sendBulkMessagesToMongoConsumer(
     operations.map((operation) => ({
       collectionName,
       documentKey: {
         type: 'filter',
-        value: operation.updateOne.filter as Filter<Document>,
+        value: (operation.updateOne?.filter ||
+          operation.updateMany?.filter) as Filter<Document>,
       },
       operationType: 'update',
       clusterTime: Date.now(),
