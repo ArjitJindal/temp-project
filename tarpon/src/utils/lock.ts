@@ -23,6 +23,9 @@ export async function acquireLock(
     ttlSeconds?: number
   }
 ): Promise<void> {
+  if (!lockKey) {
+    return
+  }
   await backOff(
     async () => {
       await acquireLockInternal(
@@ -70,6 +73,9 @@ export async function releaseLock(
   client: DynamoDBDocumentClient,
   lockKey: string
 ): Promise<void> {
+  if (!lockKey) {
+    return
+  }
   const partitionKey = DynamoDbKeys.SHARED_LOCKS(lockKey).PartitionKeyID
   await client.send(
     new DeleteCommand({
