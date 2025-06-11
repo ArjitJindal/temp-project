@@ -355,20 +355,26 @@ export default React.forwardRef(RuleConfigurationForm);
 
 function useDefaultInitialValues(rule: Rule | undefined | null) {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isAcurisEnabled = useFeatureEnabled('ACURIS');
+  const isOpenSanctionsEnabled = useFeatureEnabled('OPEN_SANCTIONS');
+  const useTokenizedDefault = isAcurisEnabled || isOpenSanctionsEnabled;
   const orderedProps = useOrderedProps(rule?.parametersSchema);
-
   return useMemo(() => {
     const ruleParametersDefaultState = makeDefaultState(orderedProps);
     const ruleParametersStep = {
       ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
     };
+    const defaultParams = { ...rule?.defaultParameters };
+    if (useTokenizedDefault) {
+      defaultParams.fuzzinessSetting = 'TOKENIZED_SIMILARITY_MATCHING';
+    }
     if (isRiskLevelsEnabled) {
       ruleParametersStep.riskLevelParameters = rule?.defaultRiskLevelParameters ?? {
-        VERY_HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        HIGH: rule?.defaultParameters ?? ruleParametersDefaultState,
-        MEDIUM: rule?.defaultParameters ?? ruleParametersDefaultState,
-        LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
-        VERY_LOW: rule?.defaultParameters ?? ruleParametersDefaultState,
+        VERY_HIGH: defaultParams ?? ruleParametersDefaultState,
+        HIGH: defaultParams ?? ruleParametersDefaultState,
+        MEDIUM: defaultParams ?? ruleParametersDefaultState,
+        LOW: defaultParams ?? ruleParametersDefaultState,
+        VERY_LOW: defaultParams ?? ruleParametersDefaultState,
       };
       ruleParametersStep.riskLevelActions = rule?.defaultRiskLevelActions ?? {
         VERY_HIGH: 'FLAG',
@@ -403,6 +409,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
   }, [
     orderedProps,
     isRiskLevelsEnabled,
+    useTokenizedDefault,
     rule?.id,
     rule?.name,
     rule?.description,

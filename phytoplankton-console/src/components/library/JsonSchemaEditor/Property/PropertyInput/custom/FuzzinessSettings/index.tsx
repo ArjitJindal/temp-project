@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { UiSchemaFuzzinessSettings } from '../../../../types';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
@@ -7,6 +7,7 @@ import Radio from '@/components/library/Radio';
 import { FUZZINESS_SETTING_OPTIONSS } from '@/apis/models-custom/FuzzinessSettingOptions';
 import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type ValueType = FuzzinessSettingOptions;
 
@@ -17,7 +18,7 @@ interface Props extends InputProps<ValueType> {
 const optionsMap: Record<FuzzinessSettingOptions, React.ReactNode> = {
   LEVENSHTEIN_DISTANCE_DEFAULT: (
     <span className={s.option}>
-      Levenshtein distance (default)
+      Levenshtein distance
       <Tooltip
         title={`Measures the minimum number of edits (insertions, deletions, or substitutions) needed to transform one term into another.`}
       >
@@ -59,18 +60,45 @@ const optionsMap: Record<FuzzinessSettingOptions, React.ReactNode> = {
 
 export const FuzzinessSettingsInput = (props: Props) => {
   const { value, onChange, ...rest } = props;
-  useEffect(() => {
-    if (!value && onChange) {
-      onChange?.('LEVENSHTEIN_DISTANCE_DEFAULT');
+  const isAcurisEnabled = useFeatureEnabled('ACURIS');
+  const isOpenSanctionsEnabled = useFeatureEnabled('OPEN_SANCTIONS');
+  const useTokenizedDefault = isAcurisEnabled || isOpenSanctionsEnabled;
+  const DEFAULT_VALUE = useTokenizedDefault
+    ? 'TOKENIZED_SIMILARITY_MATCHING'
+    : 'LEVENSHTEIN_DISTANCE_DEFAULT';
+
+  const orderedOptions = useMemo(() => {
+    let options = [...FUZZINESS_SETTING_OPTIONSS];
+    // Always put the default value first
+    const defaultIndex = options.indexOf(DEFAULT_VALUE);
+    options = [
+      DEFAULT_VALUE,
+      ...options.slice(0, defaultIndex),
+      ...options.slice(defaultIndex + 1),
+    ];
+    return options;
+  }, [DEFAULT_VALUE]);
+
+  const getOptionLabel = (option: FuzzinessSettingOptions) => {
+    const optionContent = optionsMap[option];
+    if (option === DEFAULT_VALUE) {
+      return (
+        <span className={s.option}>
+          {optionContent}
+          <span className={s.defaultLabel}> (default)</span>
+        </span>
+      );
     }
-  }, [value, onChange]);
+    return optionContent;
+  };
+
   return (
     <div className={s.root}>
-      {FUZZINESS_SETTING_OPTIONSS.map((option) => (
+      {orderedOptions.map((option) => (
         <label key={option} className={s.item}>
           <div className={s.radio}>
             <Radio
-              value={(value ?? 'LEVENSHTEIN_DISTANCE_DEFAULT') === option}
+              value={value === option}
               onChange={(checked) => {
                 if (checked) {
                   onChange?.(option);
@@ -80,7 +108,7 @@ export const FuzzinessSettingsInput = (props: Props) => {
             />
           </div>
           <div className={s.text}>
-            <div>{optionsMap[option]}</div>
+            <div>{getOptionLabel(option)}</div>
           </div>
         </label>
       ))}
