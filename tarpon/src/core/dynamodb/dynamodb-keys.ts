@@ -69,6 +69,7 @@ export const CASE_SUBJECT_KEY_IDENTIFIER = '#case-subject'
 export const CRM_RECORD_KEY_IDENTIFIER = '#crm-record'
 export const CRM_RECORD_MODEL_KEY_IDENTIFIER = '#crm-record-model'
 export const CRM_USER_RECORD_LINK_KEY_IDENTIFIER = '#crm-user-record-link'
+export const COUNTER_KEY_IDENTIFIER = '#counter'
 export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
 
 type AuxiliaryIndexTransactionSortKeyData = {
@@ -564,6 +565,10 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}#${WORKFLOWS_PREFIX}#${workflowType}`,
     SortKeyID: `${workflowId}#${version}`,
+  }),
+  COUNTER: (tenantId: string, entity: string) => ({
+    PartitionKeyID: `${tenantId}${COUNTER_KEY_IDENTIFIER}`,
+    SortKeyID: entity,
   }),
   ALERTS_QA_SAMPLING: (tenantId: string, sampleId: string) => ({
     PartitionKeyID: `${tenantId}${ALERTS_QA_SAMPLING_KEY_IDENTIFIER}`,

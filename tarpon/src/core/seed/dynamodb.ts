@@ -41,6 +41,8 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 import { TarponChangeMongoDbConsumer } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
+import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
+import { getCounterCollectionData } from '@/core/seed/data/counter'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
@@ -281,6 +283,11 @@ export async function seedDynamo(
     })
   }
 
+  const counterRepo = new DynamoCounterRepository(tenantId, dynamoDb)
+  await counterRepo.initialize()
+  for (const item of getCounterCollectionData()) {
+    await counterRepo.setCounterValue(item.entity, item.count)
+  }
   const alertsQaSampling = getQASamples()
   for (const alertQaSampling of alertsQaSampling) {
     await dynamoAlertRepository.saveQASampleData(alertQaSampling)

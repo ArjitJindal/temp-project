@@ -1,5 +1,9 @@
 import { MongoClient } from 'mongodb'
+import * as Sentry from '@sentry/serverless'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export type CounterEntity =
   | 'Case'
@@ -44,16 +48,23 @@ export type EntityCounter = {
 export class CounterRepository {
   private tenantId: string
   private mongoDb: MongoClient
-
+  private dynamoCounterRepository: DynamoCounterRepository
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.dynamoCounterRepository = new DynamoCounterRepository(
+      tenantId,
+      getDynamoDbClient()
+    )
   }
 
   // If an entity doesn't have a counter yet, we need to initialize it with 0. Otherwise,
   // if multilpe callers call `getNextCounterAndUpdate` concurrently, we could end up with
   // duplicate counters.
   public async initialize(): Promise<void> {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoCounterRepository.initialize()
+    }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -65,6 +76,11 @@ export class CounterRepository {
   }
 
   public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
+    let dynamoCounter: number | undefined
+    if (isClickhouseMigrationEnabled()) {
+      dynamoCounter =
+        await this.dynamoCounterRepository.getNextCounterAndUpdate(entity)
+    }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -74,14 +90,23 @@ export class CounterRepository {
       { $inc: { count: 1 } },
       { upsert: true, returnDocument: 'after' }
     )
-
-    return data.value?.count ?? 1
+    const mongoCounter = data.value?.count ?? 1
+    if (dynamoCounter && dynamoCounter !== mongoCounter) {
+      Sentry.captureMessage(
+        `Counter mismatch: Dynamo=${dynamoCounter}, Mongo=${mongoCounter}, Entity=${entity}`,
+        'warning'
+      )
+    }
+    return mongoCounter
   }
 
   public async getNextCountersAndUpdate(
     entity: CounterEntity,
     count: number
   ): Promise<number[]> {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoCounterRepository.getNextCountersAndUpdate(entity, count)
+    }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -97,6 +122,9 @@ export class CounterRepository {
   }
 
   public async getNextCounter(entity: CounterEntity): Promise<number> {
+    if (isClickhouseMigrationEnabled()) {
+      return await this.dynamoCounterRepository.getNextCounter(entity)
+    }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -109,6 +137,9 @@ export class CounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<void> {
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoCounterRepository.setCounterValue(entity, count)
+    }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)

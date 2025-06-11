@@ -151,8 +151,8 @@ export type DynamodbClickhouseBackfillBatchJob = {
   type: 'DYNAMODB_CLICKHOUSE_BACKFILL'
   tenantId: string
   parameters: {
-    entity: 'ALERTS_QA_SAMPLING'
-    saveToClickhouse: boolean
+    entity: 'ALERTS_QA_SAMPLING' | 'COUNTERS'
+    saveToClickhouse?: boolean
   }
 }
 
