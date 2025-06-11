@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten, isEmpty } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +22,15 @@ import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
-import { all, AsyncResource, getOr, map, success } from '@/utils/asyncResource';
+import {
+  all,
+  AsyncResource,
+  getOr,
+  isSuccess,
+  map,
+  success,
+  useFinishedSuccessfully,
+} from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -132,17 +140,32 @@ function CaseDetails(props: Props) {
   );
 }
 
-function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
-  const api = useApi({ debounce: 500 });
+function useAlertsComments(
+  caseRes: AsyncResource<Case>,
+  alertIds: string[],
+): AsyncResource<CommentGroup[]> {
+  const queryClient = useQueryClient();
+  const caseItem = getOr(caseRes, undefined);
+  const isJustLoaded = useFinishedSuccessfully(caseRes);
+  useEffect(() => {
+    if (isJustLoaded && isSuccess(caseRes)) {
+      const caseItem = caseRes.value;
+      for (const alert of caseItem.alerts ?? []) {
+        if (alert.alertId) {
+          queryClient.setQueryData<ApiComment[]>(
+            ALERT_ITEM_COMMENTS(alert.alertId),
+            alert.comments ?? [],
+          );
+        }
+      }
+    }
+  }, [queryClient, isJustLoaded, caseRes]);
 
   const results = useQueries<ApiComment[]>({
     queries: alertIds.map((alertId) => ({
       queryKey: ALERT_ITEM_COMMENTS(alertId),
       queryFn: async (): Promise<ApiComment[]> => {
-        const alert = await api.getAlert({
-          alertId: alertId,
-        });
-        return alert.comments ?? [];
+        return caseItem?.alerts?.find((alert) => alert.alertId === alertId)?.comments ?? [];
       },
     })),
   });
@@ -178,7 +201,7 @@ function useTabs(
   const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
   const isUserSubject = subjectType === 'USER';
   const isPaymentSubject = subjectType === 'PAYMENT';
-  const alertCommentsRes = useAlertsComments(alertIds);
+  const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
 

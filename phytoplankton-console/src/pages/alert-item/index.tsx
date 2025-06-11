@@ -11,7 +11,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { Alert, Comment } from '@/apis';
 import { useApi } from '@/api';
-import { useUpdateAlertQueryData } from '@/utils/api/alerts';
+import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 
 function AlertItemPage() {
   const { id: alertId } = useParams<'id'>() as { id: string };
@@ -25,6 +25,7 @@ function AlertItemPage() {
   );
 
   const updateAlertQueryData = useUpdateAlertQueryData();
+  const updateAlertItemCommentsData = useUpdateAlertItemCommentsData();
 
   const handleCommentAdded = async (newComment: Comment, groupId: string) => {
     updateAlertQueryData(groupId, (alertItem) => {
@@ -35,6 +36,9 @@ function AlertItemPage() {
         ...alertItem,
         comments: [...(alertItem?.comments ?? []), newComment],
       };
+    });
+    updateAlertItemCommentsData(groupId, (comments) => {
+      return [...(comments ?? []), newComment];
     });
   };
 
