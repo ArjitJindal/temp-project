@@ -10,12 +10,17 @@ import { useApi } from '@/api';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
-export const Recommendation = ({ alertId }: { alertId: string }) => {
+
+export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?: boolean }) => {
   const settings = useSettings();
   const api = useApi();
-  const alertQuery = useQuery(ALERT_ITEM(alertId), async () => {
-    return await api.getAlert({ alertId });
-  });
+  const alertQuery = useQuery(
+    ALERT_ITEM(alertId),
+    async () => {
+      return await api.getAlert({ alertId });
+    },
+    { enabled: !pdfMode },
+  );
   const isEscalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
   const userAlias = firstLetterUpper(settings.userAlias);
@@ -34,65 +39,67 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
         <li>{`View past communications with the ${settings.userAlias} in CRM.`}</li>
         <li>{`Investigate linked transactions.`}</li>
       </ul>
-      <AsyncResourceRenderer resource={alertQuery.data}>
-        {(alert) => (
-          <div className={s.recommandationActionButtons}>
-            {!statusInReview(alert.alertStatus) ? (
-              <AlertsStatusChangeButton
-                ids={[alert.alertId].filter(notEmpty)}
-                onSaved={() => {}}
-                transactionIds={{}}
-                caseId={alert.caseId}
-                status={alert.alertStatus}
-                statusTransitions={{
-                  OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                  OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                  ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                  ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                }}
-                haveModal={true}
-              />
-            ) : (
-              <ApproveSendBackButton
-                ids={[alert.alertId].filter(notEmpty)}
-                onReload={() => {}}
-                previousStatus={findLastStatusForInReview(alert.statusChanges ?? [])}
-                status={alert.alertStatus}
-                type="ALERT"
-                key={alert.alertId}
-                selectedCaseId={alert.caseId}
-              />
-            )}
-            {isEscalationEnabled && !statusInReview(alert.alertStatus) && (
-              <AlertsStatusChangeButton
-                ids={[alert.alertId].filter(notEmpty)}
-                transactionIds={{}}
-                onSaved={() => {}}
-                status={alert.alertStatus}
-                caseId={alert.caseId}
-                statusTransitions={{
-                  OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
-                  CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
-                  ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
-                }}
-                haveModal={true}
-              />
-            )}
-            {alert.caseId && (
-              <SarButton
-                alertIds={[alert.alertId].filter(notEmpty)}
-                caseId={alert.caseId}
-                transactionIds={alert?.transactionIds ?? []}
-              />
-            )}
-          </div>
-        )}
-      </AsyncResourceRenderer>
+      {!pdfMode && (
+        <AsyncResourceRenderer resource={alertQuery.data}>
+          {(alert) => (
+            <div className={s.recommandationActionButtons}>
+              {!statusInReview(alert.alertStatus) ? (
+                <AlertsStatusChangeButton
+                  ids={[alert.alertId].filter(notEmpty)}
+                  onSaved={() => {}}
+                  transactionIds={{}}
+                  caseId={alert.caseId}
+                  status={alert.alertStatus}
+                  statusTransitions={{
+                    OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                    OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                    ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                  }}
+                  haveModal={true}
+                />
+              ) : (
+                <ApproveSendBackButton
+                  ids={[alert.alertId].filter(notEmpty)}
+                  onReload={() => {}}
+                  previousStatus={findLastStatusForInReview(alert.statusChanges ?? [])}
+                  status={alert.alertStatus}
+                  type="ALERT"
+                  key={alert.alertId}
+                  selectedCaseId={alert.caseId}
+                />
+              )}
+              {isEscalationEnabled && !statusInReview(alert.alertStatus) && (
+                <AlertsStatusChangeButton
+                  ids={[alert.alertId].filter(notEmpty)}
+                  transactionIds={{}}
+                  onSaved={() => {}}
+                  status={alert.alertStatus}
+                  caseId={alert.caseId}
+                  statusTransitions={{
+                    OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
+                    CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                    ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
+                    ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
+                  }}
+                  haveModal={true}
+                />
+              )}
+              {alert.caseId && (
+                <SarButton
+                  alertIds={[alert.alertId].filter(notEmpty)}
+                  caseId={alert.caseId}
+                  transactionIds={alert?.transactionIds ?? []}
+                />
+              )}
+            </div>
+          )}
+        </AsyncResourceRenderer>
+      )}
     </>
   );
 };

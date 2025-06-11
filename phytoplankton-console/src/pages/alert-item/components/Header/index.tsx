@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import StatusChangeMenu from './StatusChangeMenu';
 import SubHeader from './SubHeader';
+import AiForensicsPdfDownloadButton from './AiForensicsPdfDownloadButton';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -58,6 +59,7 @@ export default function Header(props: Props) {
     },
   );
   const api = useApi();
+  const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
   return (
     <EntityHeader
@@ -115,8 +117,11 @@ export default function Header(props: Props) {
           }}
           requiredResources={['write:::case-management/case-overview/*']}
         />,
+        alertId && isAiForensicsEnabled && (
+          <AiForensicsPdfDownloadButton key="ai-forensics-pdf-download" alertId={alertId} />
+        ),
         ...getOr(actionsRes, []),
-      ]}
+      ].filter(notEmpty)}
       subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItemRes={alertItemRes} />}
     />
   );
