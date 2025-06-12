@@ -1,5 +1,5 @@
 import { compact, intersection, uniq } from 'lodash'
-import { normalize, sanitizeString } from '@flagright/lib/utils'
+import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { SanctionsDataProviders } from '../types'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
@@ -190,7 +190,7 @@ export function getNameAndAka(
     name,
     aka: uniq(compact([...aka])),
     normalizedAka: getUniqueStrings(uniq(compact([...aka, name])), true).filter(
-      (n) => /[a-z]/.test(n) // Check if the string contains any alphabet
+      isLatinScript
     ),
   }
 }
