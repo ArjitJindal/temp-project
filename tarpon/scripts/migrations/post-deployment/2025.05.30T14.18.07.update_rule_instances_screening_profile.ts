@@ -6,9 +6,10 @@ import { Tenant } from '@/services/accounts/repository'
 import { SanctionsService } from '@/services/sanctions'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { isDemoTenant } from '@/utils/tenant'
+import { hasFeature } from '@/core/utils/context'
 
 async function migrateTenant(tenant: Tenant) {
-  if (isDemoTenant(tenant.id)) {
+  if (isDemoTenant(tenant.id) || !hasFeature('ACURIS')) {
     return
   }
   const dynamoDb = await getDynamoDbClient()
