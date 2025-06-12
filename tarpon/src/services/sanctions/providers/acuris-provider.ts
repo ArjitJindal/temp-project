@@ -1075,6 +1075,27 @@ export class AcurisProvider extends SanctionsDataFetcher {
             }),
         },
       ].filter((e) => e.value.length),
+      pepSources: entity.evidences
+        .filter(
+          ({ datasets }) =>
+            datasets.some(
+              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
+            ) && sanctionSearchTypes.includes('PEP')
+        )
+        .map((evidence) => {
+          const evidenceName = entity.evidences.find(
+            (e) => e.evidenceId === evidence.evidenceId
+          )?.title
+          const displayName = evidenceName ?? ''
+          const normalisedEvidenceName = normalizeSource(displayName)
+          return this.getOtherSources(
+            evidence,
+            evidenceName,
+            undefined,
+            'POI',
+            normalisedEvidenceName
+          )
+        }),
       rawResponse: entity,
       profileImagesUrls: entity.profileImages,
       freetext: entity.notes.map((note) => note.value).join(' '),
