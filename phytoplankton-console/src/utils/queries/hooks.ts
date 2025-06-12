@@ -17,6 +17,7 @@ import { Cursor, QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 import { TableListViewEnum } from '@/apis';
 import { useApi } from '@/api';
+import { NotFoundError } from '@/utils/errors';
 
 export function useQuery<
   TQueryFnData = unknown,
@@ -75,6 +76,14 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
     };
   }
   if (results.isError) {
+    let error = results.error as any;
+    while (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      error = error.cause || error.originalError;
+    }
+
     return {
       data: failed<TData>(getErrorMessage(results.error)),
       refetch: results.refetch,
@@ -222,6 +231,15 @@ function convertInfiniteQueryResult<TData>(results: UseInfiniteQueryResult<TData
   } else if (results.isSuccess) {
     data = success<InfiniteData<TData>>(results.data);
   } else if (results.isError) {
+    // Check if the original error was a NotFoundError and re-throw it to bubble up to ErrorBoundary
+    let error = results.error as any;
+    while (error) {
+      if (error instanceof NotFoundError || error?.name === 'NotFoundError') {
+        throw error;
+      }
+      error = error.cause || error.originalError;
+    }
+
     data = failed<InfiniteData<TData>>(getErrorMessage(results.error));
   } else {
     throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);

@@ -12,6 +12,7 @@ import { ALERT_ITEM } from '@/utils/queries/keys';
 import { Alert, Comment } from '@/apis';
 import { useApi } from '@/api';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
+import { notFound } from '@/utils/errors';
 
 function AlertItemPage() {
   const { id: alertId } = useParams<'id'>() as { id: string };
@@ -19,10 +20,16 @@ function AlertItemPage() {
   const api = useApi();
   const queryClient = useQueryClient();
 
-  const alertQueryResults = useQuery(
-    ALERT_ITEM(alertId),
-    (): Promise<Alert> => api.getAlert({ alertId }),
-  );
+  const alertQueryResults = useQuery(ALERT_ITEM(alertId), async (): Promise<Alert> => {
+    try {
+      return await api.getAlert({ alertId });
+    } catch (error: any) {
+      if (error?.code === 404) {
+        notFound(`Alert with ID "${alertId}" not found`);
+      }
+      throw error;
+    }
+  });
 
   const updateAlertQueryData = useUpdateAlertQueryData();
   const updateAlertItemCommentsData = useUpdateAlertItemCommentsData();

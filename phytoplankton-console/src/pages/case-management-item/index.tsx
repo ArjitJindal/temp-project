@@ -16,6 +16,7 @@ import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
+import { notFound } from '@/utils/errors';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -31,10 +32,21 @@ function CaseManagementItemPage() {
   const updateAlertQueryData = useUpdateAlertQueryData();
   const updateCaseQueryData = useUpdateCaseQueryData();
   const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
-  const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
+  const queryResults = useQuery(CASES_ITEM(caseId), async (): Promise<Case> => {
+    try {
+      return await api.getCase({ caseId });
+    } catch (error: any) {
+      if (error?.code === 404) {
+        notFound(`Case with ID "${caseId}" not found`);
+      }
+      throw error;
+    }
+  });
+
+  const caseItemRes = queryResults.data;
 
   useNewUpdatesMessage(
-    isSuccess(queryResults.data) ? queryResults.data.value.updatedAt : undefined,
+    isSuccess(caseItemRes) ? caseItemRes.value.updatedAt : undefined,
     async () => (await api.getCase({ caseId })).updatedAt,
     () => `Case ${caseId} has new updates. Please refresh the page to see the updates.`,
     { refetchIntervalSeconds: CASE_REFETCH_INTERVAL_SECONDS },
@@ -99,8 +111,6 @@ function CaseManagementItemPage() {
   };
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);
-
-  const caseItemRes = queryResults.data;
 
   return (
     <PageWrapper

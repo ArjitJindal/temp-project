@@ -2,12 +2,18 @@ import React from 'react';
 import * as Sentry from '@sentry/react';
 import { Alert } from 'antd';
 import { FallbackRender } from '@sentry/react/types/errorboundary';
+import { NotFoundError } from '@/utils/errors';
+import NoFoundPage from '@/pages/404';
 
 interface Props {
   children: React.ReactNode;
 }
 
 const Fallback: FallbackRender = (errorData) => {
+  if (errorData.error instanceof NotFoundError) {
+    return <NoFoundPage />;
+  }
+
   return (
     <Alert
       style={{
@@ -53,5 +59,17 @@ const Fallback: FallbackRender = (errorData) => {
 };
 
 export default function ErrorBoundary(props: Props) {
-  return <Sentry.ErrorBoundary fallback={Fallback}>{props.children}</Sentry.ErrorBoundary>;
+  return (
+    <Sentry.ErrorBoundary
+      fallback={Fallback}
+      beforeCapture={(scope, error) => {
+        // Don't send 404 errors to Sentry as they're user behavior, not bugs
+        if (error instanceof NotFoundError) {
+          return false;
+        }
+      }}
+    >
+      {props.children}
+    </Sentry.ErrorBoundary>
+  );
 }
