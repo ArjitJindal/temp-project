@@ -57,3 +57,7 @@ export function normalize(str: string): string {
   }
   return compact(result.toLowerCase().split(' ')).join(' ')
 }
+
+export function isLatinScript(str: string): boolean {
+  return /^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?\s]+$/.test(str)
+}

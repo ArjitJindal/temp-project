@@ -1,5 +1,6 @@
-import { uniq, uniqBy } from 'lodash'
+import { cloneDeep, uniq, uniqBy } from 'lodash'
 import {
+  isLatinScript,
   normalize,
   replaceRequiredCharactersWithSpace,
   sanitizeString,
@@ -50,6 +51,8 @@ import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
+import { hasFeature } from '@/core/utils/context'
+import { ask } from '@/utils/openai'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -587,8 +590,20 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
   }
 
+  private async transliterateName(name: string): Promise<string> {
+    try {
+      const transliteratedName = await ask(
+        `convert the given name to latin script and only return the name in latin script. The name to convert is ${name}`
+      )
+      return transliteratedName
+    } catch (e) {
+      console.log('error', e)
+      return name
+    }
+  }
+
   async searchWithMatchingNames(
-    request: SanctionsSearchRequest,
+    requestOriginal: SanctionsSearchRequest,
     db: Db,
     limit: number = 200,
     sanctionProviderNames?: string[],
@@ -599,6 +614,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     relCategory?: RELSourceRelevance[],
     adverseMediaCategory?: AdverseMediaSourceRelevance[]
   ): Promise<SanctionsProviderResponse> {
+    const request = cloneDeep(requestOriginal)
+    if (
+      hasFeature('TRANSLITERATION') &&
+      !isLatinScript(normalize(request.searchTerm))
+    ) {
+      request.searchTerm = await this.transliterateName(request.searchTerm)
+    }
     const match = {}
     const providers = getDefaultProviders()
     const andFilters: any[] = []
@@ -1089,7 +1111,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       request
     )
 
-    return this.searchRepository.saveSearch(filteredResults, request)
+    return this.searchRepository.saveSearch(filteredResults, requestOriginal)
   }
 
   private getFuzzinessFunction(

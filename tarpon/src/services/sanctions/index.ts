@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
-import { sanitizeString } from '@flagright/lib/utils'
+import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
 import pluralize from 'pluralize'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -244,6 +244,31 @@ export class SanctionsService {
     )
   }
 
+  private isSearchTermInvalid(
+    searchTerm: string,
+    providerName: SanctionsDataProviderName
+  ): boolean {
+    if (!searchTerm) {
+      return true
+    }
+    if (providerName !== 'comply-advantage') {
+      if (
+        hasFeature('TRANSLITERATION') &&
+        !isLatinScript(normalize(searchTerm))
+      ) {
+        return false
+      }
+      if (!sanitizeString(searchTerm)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private isYearOfBirthInvalid(yearOfBirth: number | undefined): boolean {
+    return !!yearOfBirth && (yearOfBirth < 1900 || yearOfBirth > dayjs().year())
+  }
+
   public async search(
     request: SanctionsSearchRequest,
     context?: SanctionsHitContext & {
@@ -274,13 +299,11 @@ export class SanctionsService {
       providerName === 'comply-advantage'
         ? startCase(request.searchTerm.toLowerCase())
         : request.searchTerm
+
     if (
-      !request.searchTerm ||
-      (providerName !== 'comply-advantage' &&
-        !sanitizeString(request.searchTerm)) ||
+      this.isSearchTermInvalid(request.searchTerm, providerName) ||
       !providerName ||
-      (request.yearOfBirth &&
-        (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
+      this.isYearOfBirthInvalid(request.yearOfBirth)
     ) {
       return {
         providerSearchId: 'invalid_search',

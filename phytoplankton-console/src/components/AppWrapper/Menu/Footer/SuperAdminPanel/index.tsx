@@ -190,6 +190,11 @@ export const featureDescriptions: Record<
     description: 'Enables workflows builder',
     tag: FeatureTag.WIP,
   },
+  TRANSLITERATION: {
+    title: "Transliteration (Don't use)",
+    description: 'Enables transliteration for screening',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
