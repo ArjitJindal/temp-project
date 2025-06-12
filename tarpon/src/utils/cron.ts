@@ -1,8 +1,21 @@
+import { Stage } from '@flagright/lib/constants/deploy'
 import { getMongoDbClient } from './mongodb-utils'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { BatchJobType } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
+
+export const skippedTenantsClickhouseCheckForDashboardRefresh: Record<
+  Stage,
+  string[]
+> = {
+  sandbox: ['1d2bd6c62c', 'flagright_kevin', 'flagright'],
+  test: [],
+  deploy: [],
+  local: [],
+  dev: [],
+  prod: [],
+}
 
 export async function handleBatchJobTrigger(
   tenantIds: string[],

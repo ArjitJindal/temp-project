@@ -1,3 +1,4 @@
+import { Stage } from '@flagright/lib/constants/deploy'
 import { LinearClient } from '@linear/sdk'
 import { WebClient } from '@slack/web-api'
 import { isQaEnv } from '@flagright/lib/qa'
@@ -27,7 +28,10 @@ import {
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
-import { handleBatchJobTrigger } from '@/utils/cron'
+import {
+  skippedTenantsClickhouseCheckForDashboardRefresh,
+  handleBatchJobTrigger,
+} from '@/utils/cron'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -50,7 +54,11 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
         if (await tenantHasFeature(tenantId, 'MANUAL_DASHBOARD_REFRESH')) {
           return
         }
-        if (isClickhouseEnabled()) {
+        const skippedTenants =
+          skippedTenantsClickhouseCheckForDashboardRefresh[
+            process.env.ENV as Stage
+          ] ?? []
+        if (isClickhouseEnabled() && !skippedTenants?.includes(tenantId)) {
           return
         }
         return sendBatchJobCommand({
