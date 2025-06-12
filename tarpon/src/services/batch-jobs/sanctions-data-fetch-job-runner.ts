@@ -30,6 +30,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         parameters: {
           entityType: job.parameters.entityType,
         },
+        jobId: { $ne: job['jobId'] },
       },
       1
     )
