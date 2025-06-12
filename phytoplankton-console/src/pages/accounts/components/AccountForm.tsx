@@ -350,15 +350,29 @@ export default function AccountForm(props: Props) {
         formValidators={[
           isReviewerIdAlreadyUsed &&
             ((values) => {
-              return values?.reviewPermissions !== 'CHECKER'
-                ? 'This checker is already assigned to a maker'
-                : null;
+              if (values?.reviewPermissions !== 'CHECKER') {
+                const associatedMakers = accounts
+                  .filter((account) => account.reviewerId === accountId)
+                  .map((account) => account.email)
+                  .join(', ');
+                return `This checker is assigned to the following makers: ${associatedMakers}. Please reassign these makers before changing the role.`;
+              }
+              return null;
             }),
           isEscalationV2AlreadyUsed &&
             ((values) => {
-              return values?.reviewPermissions !== 'ESCALATION_L2'
-                ? 'This checker is already assigned to a maker'
-                : null;
+              if (values?.reviewPermissions !== 'ESCALATION_L2') {
+                const associatedEscalationL1 = accounts
+                  .filter(
+                    (account) =>
+                      account.escalationReviewerId === accountId &&
+                      account.escalationLevel === 'L1',
+                  )
+                  .map((account) => account.email)
+                  .join(', ');
+                return `This escalation L2 is assigned to the following escalation L1 users: ${associatedEscalationL1}. Please reassign these users before changing the role.`;
+              }
+              return null;
             }),
         ].filter(ArrayUtils.notEmpty)}
         fieldValidators={({ values }) => ({

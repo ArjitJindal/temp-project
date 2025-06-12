@@ -68,8 +68,12 @@ export function DeleteUser(props: DeleteUserProps) {
       const isReviewerIdAlreadyUsed = accounts.some((account) => account.reviewerId === item.id);
 
       if (isReviewerIdAlreadyUsed) {
+        const associatedMakers = accounts
+          .filter((account) => account.reviewerId === item.id)
+          .map((account) => account.email)
+          .join(', ');
         message.error(
-          'This checker is already assigned to a maker, please check before deleting the checker',
+          `This checker is assigned to the following makers: ${associatedMakers}. Please reassign these makers before deleting the checker.`,
         );
 
         return;
@@ -80,7 +84,16 @@ export function DeleteUser(props: DeleteUserProps) {
       );
 
       if (isEscalationReviewerIdAlreadyUsed) {
-        message.error('This escalation L2 is already assigned to a maker');
+        const associatedEscalationL1 = accounts
+          .filter(
+            (account) =>
+              account.escalationReviewerId === item.id && account.escalationLevel === 'L1',
+          )
+          .map((account) => account.email)
+          .join(', ');
+        message.error(
+          `This escalation L2 is assigned to the following escalation L1 users: ${associatedEscalationL1}. Please reassign these users before deleting the escalation L2.`,
+        );
         return;
       }
 
