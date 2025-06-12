@@ -43,6 +43,19 @@ Sentry.init({
   environment: process.env.ENV_NAME,
   enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {
+    const originalException = hint.originalException;
+    // This specific issue is caused by the MetaMask browser extension, in future we could add more specific rules
+    if (
+      originalException != null &&
+      typeof originalException === 'object' &&
+      !(originalException instanceof Error)
+    ) {
+      const asRecord = originalException as Record<string, unknown>;
+      if (asRecord.code === 4001 && asRecord.message === 'wallet must has at least one account') {
+        return null;
+      }
+    }
+
     // Errors of these types are most probably caused by Outlook 365 scanning
     // emails for links and crawl link targets, so we could ignoring them
     // details: https://github.com/getsentry/sentry-javascript/issues/3440#issuecomment-865857552
