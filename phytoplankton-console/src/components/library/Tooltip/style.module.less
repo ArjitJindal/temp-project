@@ -1,4 +1,59 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
 .root {
   display: flex;
   align-items: center;
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition-property: opacity, visibility;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  z-index: @tooltip-z-index;
+
+  &[data-show='true'] {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  &[data-popper-placement^='top'] {
+    .arrow {
+      bottom: 0;
+    }
+    .arrowSvg {
+      transform: translateY(-4px) translateY(100%) rotate(180deg);
+    }
+  }
+
+  &[data-popper-placement^='bottom'] {
+    .arrow {
+      top: 0;
+    }
+    .arrowSvg {
+      transform: translateY(4px) translateY(-100%) rotate(0);
+    }
+  }
+}
+
+.overlay {
+  background: @figma-vars--tokens-colorBackgroundPrimary;
+  color: @figma-vars--tokens-colorTextInvert;
+  padding: @figma-vars--tokens-spacingSpacing3xs @figma-vars--tokens-spacingSpacingXs;
+  border-radius: @figma-vars--tokens-borderRadiusBorderradiusXs;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
+  font-weight: normal;
+  box-shadow: 0 8px 30px 0 fade(#00003d, 30%);
+}
+
+.arrow {
+  fill: @figma-vars--tokens-colorBackgroundPrimary;
+}
+
+.arrowSvg {
+  color: @figma-vars--tokens-colorBackgroundPrimary;
 }

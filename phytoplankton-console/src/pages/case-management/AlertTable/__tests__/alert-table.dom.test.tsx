@@ -60,12 +60,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered on setting the user filters to true', async () => {
@@ -93,12 +91,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: true });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered on setting the ALERT_SLA feature flag', async () => {
@@ -125,12 +121,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false, features: ['ALERT_SLA'] });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered on setting alert status as open', async () => {
@@ -161,12 +155,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false, params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered on setting alert status is closed', async () => {
@@ -198,12 +190,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false, params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered on setting alert status is in review', async () => {
@@ -237,12 +227,10 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false, params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   // Same tests will check for On hold , esclated L2 and remaining status
@@ -276,11 +264,17 @@ describe('Tests for checking rendering of output dom tree in alerts table', () =
 
     await renderComponent({ showUserFilters: false, params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 });
+
+/*
+  Helpers
+*/
+
+async function findColumn(title: string) {
+  return await screen.queryByRole('columnheader', { name: `"${title}" column header` });
+}

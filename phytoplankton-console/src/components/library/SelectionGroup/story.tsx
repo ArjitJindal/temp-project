@@ -14,7 +14,7 @@ export default function (): JSX.Element {
           value={selected1}
           onChange={setSelected1}
           options={[
-            { value: 'fraud', label: 'Fraud' },
+            { value: 'fraud', label: 'Fraud', tooltip: 'Options can have tooltips' },
             { value: 'aml', label: 'AML' },
             { value: 'disabled', label: 'Disabled option', isDisabled: true },
           ]}
@@ -32,7 +32,6 @@ export default function (): JSX.Element {
           ]}
         />
       </UseCase>
-
       <UseCase title={'With descriptions'}>
         <Component
           mode="SINGLE"

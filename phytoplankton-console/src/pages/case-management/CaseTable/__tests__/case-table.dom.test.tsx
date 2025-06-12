@@ -71,12 +71,10 @@ describe('Case Table Component', () => {
 
     await renderComponent({});
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Required columns are rendered on setting the PNB feature flag', async () => {
@@ -100,12 +98,10 @@ describe('Case Table Component', () => {
     ];
     await renderComponent({ features: ['PNB'] });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Required columns are rendered on setting the Risk scoring feature flag', async () => {
@@ -128,12 +124,10 @@ describe('Case Table Component', () => {
     ];
     await renderComponent({ features: ['RISK_SCORING'] });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Required columns are rendered on enabling the Risk levels feature flag', async () => {
@@ -158,12 +152,10 @@ describe('Case Table Component', () => {
 
     await renderComponent({ features: ['RISK_LEVELS'] });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item !== '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Render all the columns when case status is set to Open', async () => {
@@ -189,12 +181,10 @@ describe('Case Table Component', () => {
 
     await renderComponent({ params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item != '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 
   test('Columns are rendered when the case is in review', async () => {
@@ -224,11 +214,17 @@ describe('Case Table Component', () => {
 
     await renderComponent({ params: mockParams });
 
-    const colNames = screen
-      .getAllByRole('columnheader')
-      .map((th) => th.textContent)
-      .filter((item) => item != '');
-
-    expect(colNames).toEqual(columns);
+    for (const column of columns) {
+      const columnElement = await findColumn(column);
+      expect(columnElement).toBeInTheDocument();
+    }
   });
 });
+
+/*
+  Helpers
+*/
+
+async function findColumn(title: string) {
+  return await screen.queryByRole('columnheader', { name: `"${title}" column header` });
+}

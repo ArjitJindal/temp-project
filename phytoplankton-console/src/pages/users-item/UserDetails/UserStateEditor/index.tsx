@@ -29,11 +29,7 @@ export default function UserStateEditor(props: Props) {
       <div className={s.row}>
         <span className={s.title}>{title}</span>
         {hasUserOveviewWritePermissions && !settings.kycUserStatusLock ? (
-          <Tooltip
-            placement="bottomLeft"
-            arrowPointAtCenter
-            title="Click to edit or update user status of the user. "
-          >
+          <Tooltip placement="bottomLeft" title="Click to edit or update user status of the user. ">
             <Icon onClick={() => setModalVisible(true)} className={s.icon} />
           </Tooltip>
         ) : (

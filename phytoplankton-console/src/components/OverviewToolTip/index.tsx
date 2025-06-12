@@ -12,7 +12,7 @@ interface Props {
 
 const TooltipContent = (props: Props) => {
   return (
-    <div className={cn(s.tooltip, 'ant-tooltip-inner-overview-tooltip')}>
+    <div className={cn(s.tooltip)}>
       <div className={s.tooltipTitle}>
         <div className={s.tooltipTitleLeft}>
           <AiForensicsLogo size="SMALL" variant="OVERVIEW" />
@@ -30,7 +30,7 @@ const TooltipContent = (props: Props) => {
 
 export const OverviewToolTip = (props: Props) => {
   return (
-    <Tooltip overlay={<TooltipContent {...props} />} color={COLORS.white} placement="rightTop">
+    <Tooltip overlay={<TooltipContent {...props} />} arrowColor={COLORS.white} placement="topLeft">
       {props.children}
     </Tooltip>
   );

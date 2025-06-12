@@ -71,7 +71,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
           </div>
         </OverviewToolTip>
       ) : (
-        <Tooltip overlay="Accuracy increases as you close more cases.">
+        <Tooltip title="Accuracy increases as you close more cases.">
           <div>
             <FalsePostiveLabel confidence={confidence} onClick={() => setModalVisible(true)} />
           </div>

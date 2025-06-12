@@ -45,11 +45,7 @@ export default function UserEODDEditor(props: Props) {
       <div className={s.row}>
         <span className={s.title}>{title}</span>
         {hasUserOveviewWritePermissions ? (
-          <Tooltip
-            placement="bottomLeft"
-            arrowPointAtCenter
-            title="Click to edit or update EODD of the user. "
-          >
+          <Tooltip placement="bottomLeft" title="Click to edit or update EODD of the user. ">
             <Icon onClick={() => setModalVisible(true)} className={s.icon} />
           </Tooltip>
         ) : (

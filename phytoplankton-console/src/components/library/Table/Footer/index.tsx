@@ -1,11 +1,10 @@
 import React from 'react';
 import pluralize from 'pluralize';
 import * as TanTable from '@tanstack/react-table';
-import { TooltipProps } from 'antd';
 import { AllParams, SelectionAction, TableRow } from '../types';
 import SelectionActions from '../Header/SelectionActions';
 import Checkbox from '../../Checkbox';
-import Tooltip from '../../Tooltip';
+import Tooltip, { Props as TooltipProps } from '../../Tooltip';
 import s from './index.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';

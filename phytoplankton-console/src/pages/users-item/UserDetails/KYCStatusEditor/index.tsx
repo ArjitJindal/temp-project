@@ -30,11 +30,7 @@ export default function KycStatusEditor(props: Props) {
       <div className={s.row}>
         <span className={s.title}>{title}</span>
         {hasUserOveviewWritePermissions && !settings.kycUserStatusLock ? (
-          <Tooltip
-            placement="bottomLeft"
-            arrowPointAtCenter
-            title="Click to edit or update KYC status of the user. "
-          >
+          <Tooltip placement="bottomLeft" title="Click to edit or update KYC status of the user. ">
             <Icon className={s.icon} onClick={() => setModalVisible(true)} />
           </Tooltip>
         ) : (
