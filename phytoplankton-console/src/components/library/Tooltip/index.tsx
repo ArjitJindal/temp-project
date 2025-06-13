@@ -40,7 +40,7 @@ export interface Props {
 const ARROW_HEIGHT = 7;
 const GAP = 2;
 
-export default function Tooltip(props: Props) {
+function TooltipRoot(props: Props) {
   const {
     title,
     children,
@@ -118,6 +118,13 @@ export default function Tooltip(props: Props) {
       {portaled ? <FloatingPortal>{tooltipNode}</FloatingPortal> : tooltipNode}
     </>
   );
+}
+
+export default function Tooltip(props: Props) {
+  if (props.title == null && props.overlay == null) {
+    return <>{props.children}</>;
+  }
+  return <TooltipRoot {...props} />;
 }
 
 /*
