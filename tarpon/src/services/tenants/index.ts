@@ -736,11 +736,19 @@ export class TenantService {
       ...existingTenantSettings,
       ...newTenantSettings,
     })
+    const isAcurisEnabled =
+      newTenantSettings.features?.includes('ACURIS') &&
+      !existingTenantSettings?.features?.includes('ACURIS')
+    // if acuris is enabled, create a default screening profile
+    if (isAcurisEnabled) {
+      await this.createDefaultScreeningProfile(this.tenantId)
+    }
     const providerScreeningTypes =
       newTenantSettings.sanctions?.providerScreeningTypes
     const acurisSanctionsSearchType = providerScreeningTypes?.find(
       (type) => type.provider === 'acuris'
     )?.screeningTypes
+    // if acuris settings are changed, update the screening profiles
     if (acurisSanctionsSearchType) {
       const sanctionsService = new SanctionsService(this.tenantId)
       const screeningProfileService = new ScreeningProfileService(

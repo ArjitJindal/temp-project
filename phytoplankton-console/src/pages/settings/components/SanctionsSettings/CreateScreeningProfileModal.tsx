@@ -446,11 +446,12 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
           )}
 
           <Tabs
-            items={SANCTIONS_SOURCE_TYPES.filter((type) =>
-              settings.sanctions?.providerScreeningTypes
-                ?.find((p) => p.provider === 'acuris')
-                ?.screeningTypes?.includes(type),
-            ).map((type) => ({
+            items={SANCTIONS_SOURCE_TYPES.filter((type) => {
+              const acurisProvider = settings.sanctions?.providerScreeningTypes?.find(
+                (p) => p.provider === 'acuris',
+              );
+              return !acurisProvider || acurisProvider.screeningTypes?.includes(type);
+            }).map((type) => ({
               title: humanizeAuto(type),
               key: type,
               children: (
