@@ -89,6 +89,7 @@ export const typeAssigner = (columnType: string | undefined, tenantSettings?: Te
   }
   return type;
 };
+
 export default function HistoryItemTable(props: Props) {
   const { item, pageParams, onPageParams } = props;
   const settings = useSettings();
@@ -101,7 +102,7 @@ export default function HistoryItemTable(props: Props) {
         (acc, header, i) => {
           return {
             ...acc,
-            [header.name]: row[i] ?? '-',
+            [header.columnId ?? header.name]: row[i] ?? '-',
           };
         },
         { index: i },
@@ -132,7 +133,8 @@ export default function HistoryItemTable(props: Props) {
       columns={(item.headers ?? []).map((header) => {
         return columnHelper.simple({
           title: header.name,
-          key: header.name,
+          key: header.columnId ?? header.name,
+          sorting: header.sortable,
           type: typeAssigner(header.columnType, settings),
           ...(header.columnWidth ? { defaultWidth: header.columnWidth } : {}),
         });

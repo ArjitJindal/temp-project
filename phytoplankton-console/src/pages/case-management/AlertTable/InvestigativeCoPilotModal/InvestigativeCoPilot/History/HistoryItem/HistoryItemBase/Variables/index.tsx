@@ -111,7 +111,7 @@ export function VariablesPopoverContent(
     <div
       className={cn(
         modal ? s.variablesModal : s.variables,
-        variables.length === 1 ?? s.singleVariable,
+        variables.length === 1 && s.singleVariable,
       )}
     >
       {variables.map((variable) => {

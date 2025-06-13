@@ -64,11 +64,30 @@ const clickhouseTransactionQuery = async (
         OR u.id = t.destinationUserId
   ) 
   SELECT
-    txn.*,
+    txn.transactionId as transactionId,
+    txn.type as type,
+    txn.timestamp as timestamp,
+    txn.transactionState as transactionState,
+    txn.originUserId as originUserId,
+    txn.originAmount as originAmount,
+    txn.originCurrency as originCurrency,
+    txn.originCountry as originCountry,
+    txn.destinationUserId as destinationUserId,
+    txn.destinationAmount as destinationAmount,
+    txn.destinationCurrency as destinationCurrency,
+    txn.destinationCountry as destinationCountry,
+    txn.reference as reference,
     users.username as originConsumerName,
     users.username as destinationConsumerName
   FROM txn
   LEFT JOIN users ON txn.originUserId = users.userId
+  ${
+    period.sortField && period.sortOrder
+      ? `ORDER BY txn.${period.sortField} ${
+          period.sortOrder === 'descend' ? 'DESC' : 'ASC'
+        }`
+      : ''
+  }
   `
 
   const countQuery = `
@@ -130,7 +149,12 @@ export const transactionQuestion = (
   headers: [
     { name: 'Transaction ID', columnType: 'ID' },
     { name: 'Transaction type', columnType: 'TAG' },
-    { name: 'Timestamp', columnType: 'DATE_TIME' },
+    {
+      name: 'Timestamp',
+      columnType: 'DATE_TIME',
+      columnId: 'timestamp',
+      sortable: true,
+    },
     { name: 'Last transaction state', columnType: 'TAG' },
     { name: 'Origin user ID', columnType: 'ID' },
     { name: 'Origin user', columnType: 'STRING' },
@@ -192,7 +216,9 @@ const UserTransactions = transactionQuestion(
 const AlertTransactions = transactionQuestion(
   COPILOT_QUESTIONS.ALERT_TRANSACTIONS,
   async (ctx) => `Transactions for alert ${ctx.alertId}`,
-  (ctx) => `id in ('${ctx.alert.transactionIds?.join("','")}')`
+  (ctx) => {
+    return `id in ('${ctx.alert.transactionIds?.join("','")}')`
+  }
 )
 
 export const TransactionQuestions = [UserTransactions, AlertTransactions]

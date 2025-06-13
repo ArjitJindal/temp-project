@@ -28,7 +28,12 @@ export const currencyDefault: { currency: CurrencyCode } = {
   currency: 'USD',
 }
 
-export type Period = { from?: number; to?: number }
+export type Period = {
+  from?: number
+  to?: number
+  sortField?: string
+  sortOrder?: string
+}
 export const periodVars: VariableOptions<Period> = {
   from: 'DATE',
   to: 'DATE',

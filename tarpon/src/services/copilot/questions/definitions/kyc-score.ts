@@ -6,14 +6,21 @@ import { searchUser } from '@/services/copilot/questions/definitions/common/sear
 import { queryUsername } from '@/services/copilot/questions/definitions/util'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
-export const KycScoring: TableQuestion<{ userId: string }> = {
+export const KycScoring: TableQuestion<{
+  userId: string
+  sortField?: string
+  sortOrder?: string
+}> = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.KYC_SCORING,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ userId }) => {
     return `KYC risk score (KRS) for ${await queryUsername(userId)}`
   },
-  aggregationPipeline: async ({ tenantId }, { userId }) => {
+  aggregationPipeline: async (
+    { tenantId },
+    { userId, sortField, sortOrder }
+  ) => {
     const client = await getMongoDbClient()
     const db = client.db()
     const krsScore = await db
@@ -45,10 +52,22 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
       krsScore?.krsScore,
       krsScore?.riskLevel,
     ])
+
+    if (sortField && sortOrder) {
+      const columnIndex = sortField === 'krsScore' ? 2 : 0
+
+      items.sort((a, b) => {
+        const aVal = a[columnIndex]
+        const bVal = b[columnIndex]
+        const comparison = String(aVal).localeCompare(String(bVal), 'en', {
+          numeric: true,
+        })
+        return sortOrder === 'descend' ? -comparison : comparison
+      })
+    }
+
     return {
-      data: {
-        items,
-      },
+      data: { items },
       summary: ``,
     }
   },
@@ -64,6 +83,8 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
     {
       name: 'Risk score',
       columnType: 'FLOAT',
+      columnId: 'krsScore',
+      sortable: true,
     },
     {
       name: 'Risk level',

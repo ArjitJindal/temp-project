@@ -37,6 +37,11 @@ export const CaseHistory: TableQuestion<Period> = {
         ...matchPeriod('createdTimestamp', period),
         $or: condition,
       })
+      .sort(
+        period.sortField && period.sortOrder
+          ? { [period.sortField]: period.sortOrder === 'descend' ? -1 : 1 }
+          : {}
+      )
       .toArray()
 
     const items = result.map((r) => {
@@ -66,11 +71,26 @@ export const CaseHistory: TableQuestion<Period> = {
     }
   },
   headers: [
-    { name: 'Case ID', columnType: 'ID' },
-    { name: 'Created on', columnType: 'DATE_TIME' },
-    { name: 'Transactions hit', columnType: 'NUMBER' },
+    { name: 'Case ID', columnType: 'ID', columnId: 'caseId', sortable: true },
+    {
+      name: 'Created on',
+      columnType: 'DATE_TIME',
+      columnId: 'createdTimestamp',
+      sortable: true,
+    },
+    {
+      name: 'Transactions hit',
+      columnType: 'NUMBER',
+      columnId: 'caseTransactionsCount',
+      sortable: true,
+    },
     { name: 'Status', columnType: 'TAG' },
-    { name: 'Last updated at', columnType: 'DATE_TIME' },
+    {
+      name: 'Last updated at',
+      columnType: 'DATE_TIME',
+      columnId: 'updatedAt',
+      sortable: true,
+    },
     { name: 'Closing reason', columnType: 'STRING' },
   ],
   variableOptions: {

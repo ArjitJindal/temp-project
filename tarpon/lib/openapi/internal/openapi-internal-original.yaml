@@ -8215,6 +8215,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/QuestionVariable'
+        createdAt:
+          type: number
     GetQuestionsResponse:
       title: GetQuestionsResponse
       type: object
@@ -8309,6 +8311,10 @@ components:
             - MERCHANT_NAME
         columnWidth:
           type: number
+        columnId:
+          type: string
+        sortable:
+          type: boolean
       required:
         - name
         - columnType

@@ -49,6 +49,15 @@ export const SarsFiled: TableQuestion<Period> = {
             path: '$user',
           },
         },
+        ...(period.sortField && period.sortOrder
+          ? [
+              {
+                $sort: {
+                  [period.sortField]: period.sortOrder === 'descend' ? -1 : 1,
+                },
+              },
+            ]
+          : []),
       ])
       .toArray()
 
@@ -80,7 +89,12 @@ export const SarsFiled: TableQuestion<Period> = {
     { name: 'Description', columnType: 'STRING' },
     { name: 'Created by', columnType: 'STRING' },
     { name: 'Related case', columnType: 'ID' },
-    { name: 'Created at', columnType: 'DATE_TIME' },
+    {
+      name: 'Created at',
+      columnType: 'DATE_TIME',
+      columnId: 'createdAt',
+      sortable: true,
+    },
   ],
   variableOptions: {
     ...periodVars,

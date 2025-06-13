@@ -27,7 +27,11 @@ type Row = {
 }
 
 export const UsersTransactedWith: TableQuestion<
-  Period & { currency: CurrencyCode; direction: Direction }
+  Period & {
+    currency: CurrencyCode
+    direction: Direction
+    sort?: [string, string]
+  }
 > = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
@@ -39,7 +43,7 @@ export const UsersTransactedWith: TableQuestion<
   },
   aggregationPipeline: async (
     { convert, userId, username },
-    { page, pageSize, direction, currency, ...period }
+    { page, pageSize, direction, currency, sortField, sortOrder, ...period }
   ) => {
     const userIdKey =
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
@@ -60,6 +64,13 @@ export const UsersTransactedWith: TableQuestion<
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
     `
+
+    let orderByClause = ''
+
+    if (sortField && sortOrder) {
+      const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+      orderByClause = `ORDER BY ${sortField} ${direction}`
+    }
 
     const clickhouseQuery = `
       WITH transactions_data AS (
@@ -94,6 +105,7 @@ export const UsersTransactedWith: TableQuestion<
       FROM transactions_data
       LEFT JOIN users_data
           ON transactions_data.userId = users_data.id
+      ${orderByClause}
       `
 
     const tenantId = getContext()?.tenantId ?? ''
@@ -131,8 +143,18 @@ export const UsersTransactedWith: TableQuestion<
     { name: 'User ID', columnType: 'ID' },
     { name: 'Username', columnType: 'STRING' },
     { name: 'User type', columnType: 'TAG' },
-    { name: 'Transaction Count', columnType: 'NUMBER' },
-    { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
+    {
+      name: 'Transaction Count',
+      columnType: 'NUMBER',
+      columnId: 'count',
+      sortable: true,
+    },
+    {
+      name: 'Total Amount',
+      columnType: 'MONEY_AMOUNT',
+      columnId: 'sum',
+      sortable: true,
+    },
   ],
   variableOptions: {
     ...periodVars,

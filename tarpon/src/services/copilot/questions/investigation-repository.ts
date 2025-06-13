@@ -28,19 +28,31 @@ export class InvestigationRepository {
       {
         alertId,
       },
-      {
-        $set: {
-          alertId,
-        },
-        $push: {
-          questions: {
-            questionId,
-            variables,
-            createdById,
-            createdAt,
+      [
+        {
+          $set: {
+            alertId,
+            questions: {
+              $concatArrays: [
+                {
+                  $filter: {
+                    input: { $ifNull: ['$questions', []] },
+                    cond: { $ne: ['$$this.questionId', questionId] },
+                  },
+                },
+                [
+                  {
+                    questionId,
+                    variables,
+                    createdById,
+                    createdAt,
+                  },
+                ],
+              ],
+            },
           },
         },
-      },
+      ],
       { upsert: true }
     )
   }

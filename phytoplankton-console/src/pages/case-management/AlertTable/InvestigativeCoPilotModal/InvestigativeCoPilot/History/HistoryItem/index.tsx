@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { parseQuestionResponse, QuestionResponse, QuestionResponseRuleHit } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
@@ -28,6 +28,27 @@ interface Props {
   observe?: (el: Element) => () => void;
 }
 
+/**
+ * Extracts pagination parameters from item variables and returns CommonParams
+ */
+function extractPageParamsFromVariables(item: QuestionResponse): CommonParams {
+  const variables = item.variables || [];
+  const params: CommonParams = { ...DEFAULT_PARAMS_STATE };
+
+  variables.forEach((variable) => {
+    if (variable.name === 'page' && typeof variable.value === 'number') {
+      params.page = variable.value;
+    } else if (variable.name === 'pageSize' && typeof variable.value === 'number') {
+      params.pageSize = variable.value;
+    } else if (variable.name === 'sort' && Array.isArray(variable.value)) {
+      // Handle sort parameter if it exists in variables
+      params.sort = variable.value;
+    }
+  });
+
+  return params;
+}
+
 export default function HistoryItem(props: Props) {
   const { isUnread, item, alertId, observe } = props;
   const [itemState, setItemState] = useState<QuestionResponse>(item);
@@ -55,6 +76,7 @@ export default function HistoryItem(props: Props) {
         alertId,
         QuestionRequest: {
           question: questionId,
+          createdAt: itemState.createdAt,
           variables: Object.entries(variables)
             .filter(([_, value]) => value != null)
             .map(([name, value]) => ({ name, value })),
@@ -89,13 +111,24 @@ export default function HistoryItem(props: Props) {
     },
   );
 
-  const [pageParams, setPageParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+  // Initialize pageParams with values from item.variables instead of DEFAULT_PARAMS_STATE
+  const [pageParams, setPageParams] = useState<CommonParams>(() =>
+    extractPageParamsFromVariables(itemState),
+  );
+
+  // Update pageParams when itemState changes (e.g., after a mutation)
+  useEffect(() => {
+    setPageParams(extractPageParamsFromVariables(itemState));
+  }, [itemState]);
 
   const onPageParams = (newParams: CommonParams) => {
     updateVarsMutation.mutate({
       ...updateVarsMutation.variables,
       page: newParams.page,
       pageSize: newParams.pageSize,
+      sortField: newParams.sort[0][0],
+      sortOrder: newParams.sort[0][1],
+      sort: newParams.sort,
     });
     setPageParams((pageParams) => ({ ...pageParams, ...newParams }));
   };

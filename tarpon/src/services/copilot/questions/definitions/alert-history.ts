@@ -38,6 +38,11 @@ export const AlertHistory: TableQuestion<Period> = {
         ...matchPeriod('createdTimestamp', period),
         $or: condition,
       })
+      .sort(
+        period.sortField
+          ? { [period.sortField]: period.sortOrder === 'descend' ? -1 : 1 }
+          : {}
+      )
       .toArray()
 
     const alerts = result.flatMap((r) => r.alerts)
@@ -80,7 +85,12 @@ export const AlertHistory: TableQuestion<Period> = {
     { name: 'Alert ID', columnType: 'ID' },
     { name: 'Case ID', columnType: 'ID' },
     { name: 'Created on', columnType: 'DATE_TIME' },
-    { name: '#TX', columnType: 'NUMBER' },
+    {
+      name: '#TX',
+      columnType: 'NUMBER',
+      columnId: 'numberOfTransactionsHit',
+      sortable: true,
+    },
     { name: 'Rule ID', columnType: 'ID' },
     { name: 'Rule name', columnType: 'STRING' },
     { name: 'Rule description', columnType: 'STRING' },
@@ -89,7 +99,12 @@ export const AlertHistory: TableQuestion<Period> = {
     { name: 'Alert status', columnType: 'TAG' },
     { name: 'Case status', columnType: 'TAG' },
     { name: 'Closing reason', columnType: 'STRING' },
-    { name: 'Last updated at', columnType: 'DATE_TIME' },
+    {
+      name: 'Last updated at',
+      columnType: 'DATE_TIME',
+      columnId: 'updatedAt',
+      sortable: true,
+    },
   ],
   variableOptions: {
     ...periodVars,

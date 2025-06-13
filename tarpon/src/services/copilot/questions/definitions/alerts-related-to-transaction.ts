@@ -32,34 +32,48 @@ export const AlertsRelatedToTransaction: TableQuestion<
   },
   aggregationPipeline: async (
     { tenantId, humanReadableId },
-    { transactionId, ...period }
+    { transactionId, sortField, sortOrder, ...period }
   ) => {
     const client = await getMongoDbClient()
     const db = client.db()
+
+    const pipeline: any[] = [
+      {
+        $match: {
+          ...matchPeriod('createdTimestamp', period),
+          caseTransactionsIds: transactionId,
+        },
+      },
+    ]
+
+    if (sortField && sortOrder) {
+      pipeline.push({
+        $sort: { [sortField]: sortOrder === 'descend' ? -1 : 1 },
+      })
+    }
+
+    pipeline.push(
+      {
+        $project: {
+          alerts: 1,
+          caseId: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: REPORT_COLLECTION(tenantId),
+          localField: 'caseId',
+          foreignField: 'caseId',
+          as: 'reports',
+        },
+      }
+    )
+
     const result = await db
       .collection<Case>(CASES_COLLECTION(tenantId))
-      .aggregate<{ alerts: Alert[]; caseId: string; reports: Report[] }>([
-        {
-          $match: {
-            ...matchPeriod('createdTimestamp', period),
-            caseTransactionsIds: transactionId,
-          },
-        },
-        {
-          $project: {
-            alerts: 1,
-            caseId: 1,
-          },
-        },
-        {
-          $lookup: {
-            from: REPORT_COLLECTION(tenantId),
-            localField: 'caseId',
-            foreignField: 'caseId',
-            as: 'reports',
-          },
-        },
-      ])
+      .aggregate<{ alerts: Alert[]; caseId: string; reports: Report[] }>(
+        pipeline
+      )
       .toArray()
 
     const alerts = result.flatMap((r) => r.alerts)
@@ -96,12 +110,17 @@ export const AlertsRelatedToTransaction: TableQuestion<
     }
   },
   headers: [
-    { name: 'Alert ID', columnType: 'ID' },
-    { name: 'Case ID', columnType: 'ID' },
-    { name: 'Rule ID', columnType: 'ID' },
+    { name: 'Alert ID', columnType: 'ID', columnId: 'alertId', sortable: true },
+    { name: 'Case ID', columnType: 'ID', columnId: 'caseId', sortable: true },
+    { name: 'Rule ID', columnType: 'ID', columnId: 'ruleId', sortable: true },
     { name: 'Rule description', columnType: 'STRING' },
     { name: 'Status', columnType: 'STRING' },
-    { name: 'Created on', columnType: 'DATE_TIME' },
+    {
+      name: 'Created on',
+      columnType: 'DATE_TIME',
+      columnId: 'timestamp',
+      sortable: true,
+    },
     { name: 'Closing reason', columnType: 'STRING' },
     { name: "SAR's filed", columnType: 'STRING' },
   ],

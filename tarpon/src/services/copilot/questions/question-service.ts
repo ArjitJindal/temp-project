@@ -74,6 +74,7 @@ export class QuestionService {
   async addQuestion(
     createdById: string,
     questionId: string,
+    createdAt: number,
     vars: QuestionVariable[],
     c: Case,
     a: Alert
@@ -90,12 +91,12 @@ export class QuestionService {
     const answer = await this.answer(question, varObject, c, a)
     if (answer) {
       const questionResponse = {
-        createdAt: Date.now().valueOf(),
+        createdAt: createdAt,
         createdById,
         ...answer,
       }
       await this.investigationRepository.addQuestion(
-        { createdAt: Date.now().valueOf(), createdById, ...answer },
+        { createdAt: createdAt, createdById, ...answer },
         a.alertId,
         varObject
       )
@@ -109,7 +110,8 @@ export class QuestionService {
     questionString: string,
     vars: QuestionVariable[],
     c: Case,
-    a: Alert
+    a: Alert,
+    createdAt?: number
   ): Promise<GetQuestionsResponse> {
     const question = getQuestions().find(
       (qt) => qt.questionId === questionString
@@ -118,6 +120,7 @@ export class QuestionService {
       const answer = await this.addQuestion(
         createdById,
         questionString,
+        createdAt ?? Date.now().valueOf(),
         vars,
         c,
         a
@@ -140,6 +143,7 @@ export class QuestionService {
           return await this.addQuestion(
             createdById,
             question.questionId,
+            createdAt ?? Date.now().valueOf(),
             question.variables,
             c,
             a
@@ -298,7 +302,6 @@ export class QuestionService {
       ...question.defaults(ctx),
       ...varObject,
     }
-
     const common = {
       questionId: question.questionId,
       variableOptions: await Promise.all(
@@ -346,6 +349,8 @@ export class QuestionService {
           name: c.name,
           columnType: c.columnType,
           columnWidth: c.width,
+          columnId: c.columnId,
+          sortable: c.sortable,
         })),
       }
     }

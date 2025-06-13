@@ -24,7 +24,10 @@ type PaymentIdentifier = {
 }
 
 export const UniquePaymentIdentifier: TableQuestion<
-  Period & { currency: CurrencyCode; direction: Direction }
+  Period & {
+    currency: CurrencyCode
+    direction: Direction
+  }
 > = {
   type: 'TABLE',
   questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
@@ -36,13 +39,26 @@ export const UniquePaymentIdentifier: TableQuestion<
   },
   aggregationPipeline: async (
     { convert, userId, username },
-    { page, pageSize, direction, currency, ...period }
+    { page, pageSize, direction, currency, sortField, sortOrder, ...period }
   ) => {
     if (!isClickhouseEnabled()) {
       throw new Error('Clickhouse is not enabled')
     }
 
     const directionSmall = direction.toLowerCase()
+
+    let orderByClause = 'ORDER BY sum DESC'
+    if (sortField && sortOrder) {
+      const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+
+      const sortFieldMap: Record<string, string> = {
+        count: 'count',
+        sum: 'sum',
+      }
+
+      const actualSortField = sortFieldMap[sortField] || 'sum'
+      orderByClause = `ORDER BY ${actualSortField} ${direction}`
+    }
 
     const query = `
     SELECT
@@ -87,7 +103,7 @@ export const UniquePaymentIdentifier: TableQuestion<
         AND timestamp BETWEEN {{ from }} AND {{ to }}
     ) AS pre_aggregated
     GROUP BY ${directionSmall}PaymentMethodId
-    ORDER BY sum DESC
+    ${orderByClause}
 `
 
     let topPaymentIdentifier: PaymentIdentifier | undefined = undefined
@@ -142,8 +158,18 @@ export const UniquePaymentIdentifier: TableQuestion<
   headers: [
     { name: `Payment identifier`, columnType: 'ID' },
     { name: 'Payment type', columnType: 'PAYMENT_METHOD' },
-    { name: 'Transaction Count', columnType: 'NUMBER' },
-    { name: 'Total Amount', columnType: 'MONEY_AMOUNT' },
+    {
+      name: 'Transaction Count',
+      columnType: 'NUMBER',
+      columnId: 'count',
+      sortable: true,
+    },
+    {
+      name: 'Total Amount',
+      columnType: 'MONEY_AMOUNT',
+      columnId: 'sum',
+      sortable: true,
+    },
     { name: 'Account names', columnType: 'STRING' },
   ],
   variableOptions: {

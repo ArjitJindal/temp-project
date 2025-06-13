@@ -84,6 +84,8 @@ export type ColumnDefinition = {
   name: string
   columnType: TableHeadersColumnTypeEnum
   width?: number
+  columnId?: string
+  sortable?: boolean
 }
 
 export type TableQuestion<V extends Variables> = {

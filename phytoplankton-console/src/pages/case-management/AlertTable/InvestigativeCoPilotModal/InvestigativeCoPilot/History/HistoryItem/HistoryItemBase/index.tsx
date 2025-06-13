@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import { omit, snakeCase } from 'lodash';
+import cn from 'clsx';
 import { QuestionResponse, QuestionResponseBase } from '../../../types';
 import HistoryItemLayout from '../HistoryItemLayout';
 import s from './index.module.less';
@@ -78,7 +79,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
       count={item.questionType === 'TABLE' ? item.total : undefined}
     >
       {item.explained && <div className={s.explained}>{item.explained}</div>}
-      <div>{children}</div>
+      <div className={cn(item.questionType === 'TABLE' && s.children)}>{children}</div>
       <MetaInfo item={item} />
     </HistoryItemLayout>
   );

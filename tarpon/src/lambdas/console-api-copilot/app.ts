@@ -95,7 +95,8 @@ export const copilotHandler = lambdaApi({})(
         request.QuestionRequest.question || '',
         request.QuestionRequest.variables || [],
         c,
-        alert
+        alert,
+        request.QuestionRequest.createdAt
       )
     })
 
