@@ -2,16 +2,13 @@ import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import TransactionsTable, {
-  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { useApi } from '@/api';
 import PaymentApprovalButton from '@/pages/case-management/components/PaymentApprovalButton';
 import { TransactionsResponse } from '@/apis';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useTransactionsQuery } from '@/pages/transactions/utils';
 
 interface Props {
   params: TransactionsTableParams;
@@ -20,23 +17,19 @@ interface Props {
 
 export default function PaymentApprovalsTable(props: Props) {
   const { params, onChangeParams: setParams } = props;
-  const api = useApi({ debounce: 500 });
   const settings = useSettings();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
-  const filterStatus = [params.status ?? 'SUSPEND'];
-  const queryKey = TRANSACTIONS_LIST({ ...params, filterStatus });
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
-    return await api.getTransactionsList({
-      ...transactionParamsToRequest(params, { ignoreDefaultTimestamps: true }),
-      filterStatus,
-      start: from || params.from,
-    });
-  });
+  const filterStatus = params.status ?? 'SUSPEND';
+
+  const { queryResult, cacheKey } = useTransactionsQuery(
+    { ...params, status: filterStatus },
+    { isReadyToFetch: true, debounce: 500 },
+  );
 
   const updateCacheData = useCallback(() => {
     queryClient.setQueryData<TransactionsResponse>(
-      queryKey,
+      cacheKey,
       (data: TransactionsResponse | undefined): TransactionsResponse | undefined => {
         if (data == null) {
           return undefined;
@@ -47,7 +40,7 @@ export default function PaymentApprovalsTable(props: Props) {
         };
       },
     );
-  }, [queryKey, selectedIds, queryClient]);
+  }, [cacheKey, selectedIds, queryClient]);
 
   return (
     <TransactionsTable

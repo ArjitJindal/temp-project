@@ -4,32 +4,26 @@ import { useLocation, useNavigate } from 'react-router';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import UniquesSearchButton from './components/UniquesSearchButton';
-import { useApi } from '@/api';
+import { useTransactionsQuery } from './utils';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import TransactionsTable, {
   defaultTimestamps,
-  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { NavigationState } from '@/utils/queries/types';
 import { dayjs } from '@/utils/dayjs';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { TransactionTableItem } from '@/apis';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useDeepEqualEffect } from '@/utils/hooks';
 
 const TableList = () => {
-  const api = useApi();
   const i18n = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const settings = useSettings();
 
   const parsedParams = useMemo(
@@ -95,52 +89,7 @@ const TableList = () => {
     [pushParamsToNavigation],
   );
 
-  const queryResult = useCursorQuery<TransactionTableItem>(
-    TRANSACTIONS_LIST(parsedParams),
-    async ({ from, view }) => {
-      if (isClickhouseEnabled) {
-        return {
-          count: 0,
-          hasNext: false,
-          items: [],
-          hasPrev: false,
-          last: '',
-          next: '',
-          prev: '',
-          limit: 0,
-        };
-      }
-      return await api.getTransactionsList({
-        start: from || parsedParams.from,
-        ...transactionParamsToRequest({ ...parsedParams, view }, { ignoreDefaultTimestamps: true }),
-      });
-    },
-    { enabled: isReadyToFetch },
-  );
-
-  const queryResultOffset = usePaginatedQuery<TransactionTableItem>(
-    TRANSACTIONS_LIST({ ...params, offset: true }),
-    async (paginationParams) => {
-      if (!isClickhouseEnabled) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-      const data = await api.getTransactionsV2List({
-        ...transactionParamsToRequest(
-          { ...parsedParams, view: paginationParams.view },
-          { ignoreDefaultTimestamps: true },
-        ),
-        ...paginationParams,
-      });
-      return {
-        items: data.items,
-        total: parseInt(`${data.count}`), // parse because clickhouse returns string
-      };
-    },
-    { enabled: isReadyToFetch },
-  );
+  const { queryResult } = useTransactionsQuery(parsedParams, { isReadyToFetch });
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
@@ -242,7 +191,7 @@ const TableList = () => {
               ),
             },
           ]}
-          queryResult={isClickhouseEnabled ? queryResultOffset : queryResult}
+          queryResult={queryResult}
           params={params}
           onChangeParams={handleChangeParams}
           fitHeight
