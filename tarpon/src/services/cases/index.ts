@@ -337,10 +337,12 @@ export class CaseService extends CaseAlertsCommonService {
   @auditLog('CASE', 'CASE_LIST', 'DOWNLOAD')
   public async getCases(
     params: DefaultApiGetCaseListRequest,
-    options?: { hideOptionalData?: boolean }
+    options?: {
+      hideOptionalData?: boolean
+      includeAlertTransactionIds?: boolean
+    }
   ): Promise<AuditLogReturnData<CasesListResponse>> {
     const result = await this.caseRepository.getCases(params, options)
-
     result.data = await Promise.all(
       result.data.map(
         async (caseEntity) => await this.getAugmentedCase(caseEntity)
@@ -906,9 +908,10 @@ export class CaseService extends CaseAlertsCommonService {
   }
 
   public async applyTransactionAction(transactionAction: TransactionAction) {
-    const cases = await this.getCases({
-      filterTransactionIds: transactionAction.transactionIds,
-    })
+    const cases = await this.getCases(
+      { filterTransactionIds: transactionAction.transactionIds },
+      { includeAlertTransactionIds: true }
+    )
     if (!cases) {
       throw new NotFound('Case(s) not found for transactions')
     }
@@ -925,7 +928,6 @@ export class CaseService extends CaseAlertsCommonService {
           const txnIds = transactionAction.transactionIds.filter((tid) =>
             alert.transactionIds?.includes(tid)
           )
-
           if (txnIds.length > 0 && alert.alertId) {
             const promises: Promise<any>[] = []
 

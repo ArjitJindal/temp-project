@@ -78,6 +78,7 @@ export function getRuleQueueFilter(ruleQueueIds: string[]) {
 
 export type CaseListOptions = {
   includeCaseTransactionIds?: boolean
+  includeAlertTransactionIds?: boolean
   hideOptionalData?: boolean
 }
 
@@ -828,7 +829,11 @@ export class CaseRepository {
         caseTransactionsCount: 1,
         lastStatusChange: 1,
         statusChanges: 1,
-        alerts: { comments: 1 },
+        alerts: {
+          ...(options.includeAlertTransactionIds
+            ? { transactionIds: 1, alertId: 1, comments: 1 }
+            : { comments: 1 }),
+        },
         caseType: 1,
         comments: params.view === ('TABLE' as TableListViewEnum) ? [] : 1,
         slaPolicyDetails:
