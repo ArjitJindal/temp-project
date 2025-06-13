@@ -5,7 +5,6 @@ import {
   getTransactionsRepo,
   hitRule,
   notHitRule,
-  getTransactionsEventRepo,
 } from './helpers'
 import dayjs from '@/utils/dayjs'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -13,65 +12,25 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
-import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
-import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { RuleAction } from '@/@types/openapi-internal/RuleAction'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { Transaction } from '@/@types/openapi-internal/Transaction'
-
-type RuleResult = {
-  executedRules: Array<ExecutedRulesResult>
-  hitRules: Array<HitRulesDetails>
-  status: RuleAction
-}
-
-const createTransactionAndEvent = async (
-  transactionRepository: MongoDbTransactionRepository,
-  transactionEventRepository: TransactionEventRepository,
-  transaction: Transaction,
-  ruleResult: RuleResult
-) => {
-  await transactionRepository.addTransactionToMongo({
-    ...transaction,
-    ...ruleResult,
-  })
-  await transactionEventRepository.saveTransactionEventToMongo(
-    {
-      transactionState: transaction.transactionState ?? 'CREATED',
-      timestamp: transaction.timestamp,
-      transactionId: transaction.transactionId,
-    },
-    ruleResult
-  )
-}
 
 withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
   describe('Verify transactions counting statistics', () => {
     test('Single transaction with no hits should only count 1 total transaction', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-      })
-      const ruleResult: RuleResult = {
+
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -90,59 +49,35 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Single hit rule for each rule actions', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
 
-      const transaction1 = getTestTransaction({
-        timestamp: timestamp,
-      })
-      const ruleResult1: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         status: 'BLOCK',
         hitRules: [hitRule('BLOCK')],
         executedRules: [hitRule('BLOCK')],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction1,
-        ruleResult1
-      )
-
-      const transaction2 = getTestTransaction({
-        timestamp: timestamp + 1000,
       })
-      const ruleResult2: RuleResult = {
-        status: 'SUSPEND',
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         hitRules: [hitRule('SUSPEND')],
+        status: 'SUSPEND',
         executedRules: [hitRule('SUSPEND')],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction2,
-        ruleResult2
-      )
-
-      const transaction3 = getTestTransaction({
-        timestamp: timestamp + 2000,
       })
-      const ruleResult3: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         status: 'FLAG',
         hitRules: [hitRule('FLAG')],
         executedRules: [hitRule('FLAG')],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction3,
-        ruleResult3
-      )
-
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -163,9 +98,6 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Hit result should be the most strict action', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
@@ -178,20 +110,14 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
         hitRule('ALLOW'),
       ]
 
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-      })
-      const ruleResult: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         status: 'BLOCK',
         hitRules: hitRules,
         executedRules: hitRules,
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -210,27 +136,19 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Executed rules should not be counted', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-      })
-      const ruleResult: RuleResult = {
+
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [notHitRule(), notHitRule(), notHitRule()],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -249,33 +167,23 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('One transaction every hour with no hits', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
       const d = dayjs('2022-01-30T01:00:00.000Z')
       const initialTimestamp = d.valueOf()
       for (let i = 0; i < 3; i += 1) {
         const timestamp = initialTimestamp + i * 3600 * 1000
-        const transaction = getTestTransaction({
-          timestamp: timestamp,
-        })
-        const ruleResult: RuleResult = {
+        await transactionRepository.addTransactionToMongo({
+          ...getTestTransaction({
+            timestamp,
+          }),
           status: 'ALLOW',
           hitRules: [],
           executedRules: [],
-        }
-        await createTransactionAndEvent(
-          transactionRepository,
-          transactionEventRepository,
-          transaction,
-          ruleResult
-        )
+        })
         await statsRepository.refreshTransactionStats({
           startTimestamp: timestamp,
         })
       }
-
       const stats = await statsRepository.getTransactionCountStats(
         dayjs('2022-01-30T01:00:00.000Z').valueOf(),
         dayjs('2022-01-30T03:00:00.000Z').valueOf(),
@@ -299,9 +207,6 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('One transaction every hour with hit', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T01:00:00.000Z')
@@ -309,20 +214,14 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
 
       for (let i = 0; i < 3; i += 1) {
         const timestamp = initialTimestamp + i * 3600 * 1000
-        const transaction = getTestTransaction({
-          timestamp: timestamp,
-        })
-        const ruleResult: RuleResult = {
+        await transactionRepository.addTransactionToMongo({
+          ...getTestTransaction({
+            timestamp,
+          }),
           status: 'SUSPEND',
           hitRules: [hitRule('SUSPEND')],
           executedRules: [],
-        }
-        await createTransactionAndEvent(
-          transactionRepository,
-          transactionEventRepository,
-          transaction,
-          ruleResult
-        )
+        })
         await statsRepository.refreshTransactionStats({
           startTimestamp: timestamp,
         })
@@ -351,28 +250,19 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Hourly, Daily, Monthly granularity', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const initialTimestamp = dayjs('2022-01-30T01:00:00.000Z').valueOf()
       for (let i = 0; i < 3; i += 1) {
         const timestamp = initialTimestamp + i * 3600 * 1000
-        const transaction = getTestTransaction({
-          timestamp: timestamp,
-        })
-        const ruleResult: RuleResult = {
+        await transactionRepository.addTransactionToMongo({
+          ...getTestTransaction({
+            timestamp,
+          }),
           status: 'BLOCK',
           hitRules: [hitRule('BLOCK')],
           executedRules: [hitRule('BLOCK')],
-        }
-        await createTransactionAndEvent(
-          transactionRepository,
-          transactionEventRepository,
-          transaction,
-          ruleResult
-        )
+        })
         await statsRepository.refreshTransactionStats({
           startTimestamp: timestamp,
         })
@@ -441,32 +331,24 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Single transaction with very high risk level', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-        arsScore: {
-          createdAt: timestamp,
-          arsScore: 100,
-          riskLevel: 'VERY_HIGH',
-        },
-      })
-      const ruleResult: RuleResult = {
+
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+          arsScore: {
+            createdAt: timestamp,
+            arsScore: 100,
+            riskLevel: 'VERY_HIGH',
+          },
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -486,9 +368,6 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Every level with 5-4-3-2-1 count', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
@@ -501,25 +380,19 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
             DEFAULT_CLASSIFICATION_SETTINGS,
             risklevel
           )
-          const transaction = getTestTransaction({
-            timestamp: timestamp,
-            arsScore: {
-              createdAt: timestamp,
-              arsScore,
-              riskLevel: risklevel,
-            },
-          })
-          const ruleResult: RuleResult = {
+          await transactionRepository.addTransactionToMongo({
+            ...getTestTransaction({
+              timestamp: timestamp,
+              arsScore: {
+                createdAt: timestamp,
+                arsScore,
+                riskLevel: risklevel,
+              },
+            }),
             status: 'ALLOW',
             hitRules: [],
             executedRules: [],
-          }
-          await createTransactionAndEvent(
-            transactionRepository,
-            transactionEventRepository,
-            transaction,
-            ruleResult
-          )
+          })
         }
       }
 
@@ -548,36 +421,27 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Single transaction with origin payment details', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
 
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-        originPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: uuidv4(),
-          cardIssuedCountry: 'US',
-          transactionReferenceField: 'DEPOSIT',
-          '3dsDone': true,
-        },
-        destinationPaymentDetails: undefined,
-      })
-      const ruleResult: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: uuidv4(),
+            cardIssuedCountry: 'US',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+          destinationPaymentDetails: undefined,
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -596,37 +460,27 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Single transaction with destination payment details', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
 
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-        originPaymentDetails: undefined,
-        destinationPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: uuidv4(),
-          cardIssuedCountry: 'US',
-          transactionReferenceField: 'DEPOSIT',
-          '3dsDone': true,
-        },
-      })
-      const ruleResult: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+          originPaymentDetails: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: uuidv4(),
+            cardIssuedCountry: 'US',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
-
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })
@@ -645,42 +499,33 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
     test('Single transaction with both payment details', async () => {
       const TENANT_ID = getTestTenantId()
       const transactionRepository = await getTransactionsRepo(TENANT_ID)
-      const transactionEventRepository = await getTransactionsEventRepo(
-        TENANT_ID
-      )
       const statsRepository = await getStatsRepo(TENANT_ID)
 
       const d = dayjs('2022-01-30T12:00:00.000Z')
       const timestamp = d.valueOf()
 
-      const transaction = getTestTransaction({
-        timestamp: timestamp,
-        originPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: uuidv4(),
-          cardIssuedCountry: 'US',
-          transactionReferenceField: 'DEPOSIT',
-          '3dsDone': true,
-        },
-        destinationPaymentDetails: {
-          method: 'CARD',
-          cardFingerprint: uuidv4(),
-          cardIssuedCountry: 'US',
-          transactionReferenceField: 'DEPOSIT',
-          '3dsDone': true,
-        },
-      })
-      const ruleResult: RuleResult = {
+      await transactionRepository.addTransactionToMongo({
+        ...getTestTransaction({
+          timestamp: timestamp,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: uuidv4(),
+            cardIssuedCountry: 'US',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: uuidv4(),
+            cardIssuedCountry: 'US',
+            transactionReferenceField: 'DEPOSIT',
+            '3dsDone': true,
+          },
+        }),
         status: 'ALLOW',
         hitRules: [],
         executedRules: [],
-      }
-      await createTransactionAndEvent(
-        transactionRepository,
-        transactionEventRepository,
-        transaction,
-        ruleResult
-      )
+      })
       await statsRepository.refreshTransactionStats({
         startTimestamp: timestamp,
       })

@@ -9264,6 +9264,12 @@ components:
         - BLOCK
         - ALLOW
         - SUSPEND
+    ExtraTransactionStatus:
+      title: ExtraTransactionStatus
+      type: string
+      enum:
+        - ALLOW_MANUAL
+        - BLOCK_MANUAL
     RuleActionAlias:
       type: object
       title: RuleActionAlias

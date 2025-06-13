@@ -8,7 +8,6 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { internalMongoUpdateOne } from '@/utils/mongodb-utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -54,21 +53,6 @@ export class TransactionEventRepository {
       { transactionEvent, rulesResult },
     ])
     return eventIds[0]
-  }
-
-  // only to used for tests
-  public async saveTransactionEventToMongo(
-    transactionEvent: InternalTransactionEvent,
-    rulesResult: Undefined<TransactionMonitoringResult> = {}
-  ) {
-    await Promise.all([
-      internalMongoUpdateOne(
-        this.mongoDb,
-        TRANSACTION_EVENTS_COLLECTION(this.tenantId),
-        { transactionId: transactionEvent.transactionId },
-        { $set: { ...transactionEvent, ...rulesResult } }
-      ),
-    ])
   }
 
   public async saveTransactionEvents(

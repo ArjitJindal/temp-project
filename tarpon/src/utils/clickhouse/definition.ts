@@ -487,6 +487,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
             hitRulesWithMeta
           )
         )`,
+      "ruleAction Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleAction'), JSONExtractArrayRaw(data, 'hitRules'))",
+      `derived_status String
+        MATERIALIZED
+          CASE
+            WHEN
+              length(ruleAction) > 0 AND
+              has(ruleAction, 'SUSPEND') AND
+              NOT has(ruleAction, 'BLOCK') AND
+              status IN ('ALLOW', 'BLOCK')
+            THEN concat(status, '_MANUAL')
+            ELSE status
+          END`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
@@ -734,11 +746,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         splitByChar(',', JSON_VALUE(data, '$.reason')),
         []
       )`,
-      `manualAllowBlockEvent UInt8 MATERIALIZED
-         (positionCaseInsensitive(JSON_VALUE(data, '$.eventDescription'), 'manually') > 0 AND
-          (positionCaseInsensitive(JSON_VALUE(data, '$.eventDescription'), 'allow') > 0 OR
-           positionCaseInsensitive(JSON_VALUE(data, '$.eventDescription'), 'block') > 0))
-      `,
     ],
   },
   {

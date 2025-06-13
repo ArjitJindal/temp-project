@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Empty } from 'antd';
-import React, { MutableRefObject, useRef, useState } from 'react';
+import React, { MutableRefObject, useMemo, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import GranularDatePicker, {
   DEFAULT_DATE_RANGE,
@@ -26,10 +26,13 @@ import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 
 export type TransactionChartSeries = RuleAction | 'ALLOW (MANUAL)' | 'BLOCK (MANUAL)';
-
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
+
+  const isPaymentApprovalEnabled = useMemo(() => {
+    return settings.isPaymentApprovalEnabled;
+  }, [settings]);
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
@@ -59,7 +62,9 @@ export default function TransactionsChartWidget(props: WidgetProps) {
         return [
           {
             category: item.time,
-            value: (item.status_BLOCK ?? 0) - (item.status_BLOCK_MANUAL ?? 0),
+            value: isPaymentApprovalEnabled
+              ? (item.status_BLOCK ?? 0) - (item.status_BLOCK_MANUAL ?? 0)
+              : item.status_BLOCK ?? 0,
             series: 'BLOCK',
           },
           {
@@ -74,19 +79,25 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           },
           {
             category: item.time,
-            value: (item.status_ALLOW ?? 0) - (item.status_ALLOW_MANUAL ?? 0),
+            value: isPaymentApprovalEnabled
+              ? (item.status_ALLOW ?? 0) - (item.status_ALLOW_MANUAL ?? 0)
+              : item.status_ALLOW ?? 0,
             series: 'ALLOW',
           },
-          {
-            category: item.time,
-            value: item.status_ALLOW_MANUAL ?? 0,
-            series: 'ALLOW (MANUAL)',
-          },
-          {
-            category: item.time,
-            value: item.status_BLOCK_MANUAL ?? 0,
-            series: 'BLOCK (MANUAL)',
-          },
+          ...(isPaymentApprovalEnabled
+            ? [
+                {
+                  category: item.time,
+                  value: item.status_ALLOW_MANUAL ?? 0,
+                  series: 'ALLOW (MANUAL)' as TransactionChartSeries,
+                },
+                {
+                  category: item.time,
+                  value: item.status_BLOCK_MANUAL ?? 0,
+                  series: 'BLOCK (MANUAL)' as TransactionChartSeries,
+                },
+              ]
+            : []),
         ];
       }),
   );
