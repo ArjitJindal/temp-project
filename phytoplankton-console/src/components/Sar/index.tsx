@@ -17,7 +17,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { ReportSubjectType } from '@/apis/models/ReportSubjectType';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface CommonProps {
   alertIds?: string[];
@@ -82,7 +82,7 @@ export function SarButton(props: UserProps | CaseProps) {
   }
 
   return (
-    <>
+    <Feature name="SAR">
       <Button
         type="TETRIARY"
         onClick={() => setIsModalVisible(true)}
@@ -130,7 +130,7 @@ export function SarButton(props: UserProps | CaseProps) {
           onChangeVisibility={() => draft.reset()}
         />
       )}
-    </>
+    </Feature>
   );
 }
 
