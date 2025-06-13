@@ -97,6 +97,7 @@ export const config: Config = {
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
+    DYNAMO_PROD_WRITE_CAPACITY_THRESHOLD: 470,
   },
   viper: {
     ADMIN_EMAILS: ADMIN_EMAILS,
