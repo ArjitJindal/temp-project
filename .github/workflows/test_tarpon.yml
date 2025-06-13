@@ -79,7 +79,7 @@ jobs:
         run: yarn install --immutable
         working-directory: "tarpon"
       - name: Install nango
-        run: npm install -g nango@0.59.7
+        run: npm install -g nango@0.61.1
       - name: Build nango-integrations
         run: |
           nango version

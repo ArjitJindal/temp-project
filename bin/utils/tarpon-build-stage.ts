@@ -17,7 +17,7 @@ export const buildTarpon = (scope: Construct, role: iam.IRole) => {
           commands: [
             'corepack enable',
             'yarn set version 4.0.2',
-            'npm install -g nango@0.59.7',
+            'npm install -g nango@0.61.1',
             'yarn install --immutable',
             'cd lib',
             'yarn install --immutable',

@@ -31,7 +31,7 @@ jobs:
         working-directory: "phytoplankton-console"
       - name: Install Nango
         run: |
-          npm install -g nango@0.59.7
+          npm install -g nango@0.61.1
       - name: Destroy
         run: |
           echo "Creating default AWS profile"
