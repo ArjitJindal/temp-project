@@ -79,6 +79,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   externalState?: unknown;
   selectionInfo?: SelectionInfo;
   expandedRowId?: string;
+  emptyText?: string;
 }
 
 export type SelectionInfo = {
@@ -125,6 +126,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     rowHeightMode = 'FIXED',
     expandedRowId,
     leftTools,
+    emptyText,
   } = props;
   const persistedSettingsContextValue = usePersistedSettingsContext();
   const [persistedSorting] = persistedSettingsContextValue.sort;
@@ -288,6 +290,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
               rowHeightMode={rowHeightMode}
               fixedExpandedContainer={fixedExpandedContainer}
               renderExpanded={renderExpanded}
+              emptyText={emptyText}
             />
           );
         }}
@@ -390,6 +393,7 @@ interface ScrollContainerChildProps<Item extends object> {
   fixedExpandedContainer: boolean;
   renderExpanded?: (item: Item) => JSX.Element;
   columns: TableColumn<Item>[];
+  emptyText?: string;
 }
 
 function ScrollContainerChild<Item extends object>(props: ScrollContainerChildProps<Item>) {
@@ -404,6 +408,7 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
     fixedExpandedContainer,
     rowKey,
     renderExpanded,
+    emptyText,
   } = props;
   const showSkeleton = shouldShowSkeleton(dataRes);
   const rows = table.getRowModel().rows;
@@ -493,7 +498,7 @@ function ScrollContainerChild<Item extends object>(props: ScrollContainerChildPr
                   style={{ paddingLeft: containerWidth / 2 }}
                   colSpan={table.getAllFlatColumns().length}
                 >
-                  {'No data to display'}
+                  {emptyText ?? 'No data to display'}
                 </td>
               </tr>
             )}

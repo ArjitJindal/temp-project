@@ -256,6 +256,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
           onChangeParams={setParams}
           rowKey="transactionId"
           fitHeight
+          emptyText="Simulated entities will be shown after the simulation has finalized"
           extraFilters={[
             {
               key: 'userId',

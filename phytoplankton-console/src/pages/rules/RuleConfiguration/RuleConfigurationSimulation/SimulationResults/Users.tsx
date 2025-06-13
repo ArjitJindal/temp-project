@@ -139,6 +139,7 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
           onChangeParams={setParams}
           rowKey="userId"
           fitHeight
+          emptyText="Simulated entities will be shown after the simulation has finalized"
           extraFilters={[
             {
               key: 'userId',
