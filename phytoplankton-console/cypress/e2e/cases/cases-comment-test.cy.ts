@@ -92,44 +92,44 @@ describe('Add a comment to a case', () => {
           cy.get('[data-cy="segmented-control-log"]', { timeout: 10000 }).click();
           cy.wait('@comments', { timeout: 15000 }).then((intercept) => {
             expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
+            cy.get('[data-cv="log-entry-item"]')
+              .should('exist')
+              .first()
+              .then((log) => {
+                // Get the text and time values from the latest log entry
+                const textValue = log.find('[data-cv="log-entry-item-text"]').text().trim();
+                const timeValue = log.find('[data-cv="log-entry-item-date"]').text().trim();
+
+                cy.wrap(textValue).should(
+                  'include',
+                  'Cypress+custom@flagright.com deleted a comment',
+                );
+
+                // Parse timeValue into a JavaScript Date object
+                const timeParts = timeValue.split(':');
+                const hours = parseInt(timeParts[0]);
+                const minutes = parseInt(timeParts[1].split(' ')[0]);
+                const period = timeParts[1].split(' ')[1];
+                const logEntryTime = new Date();
+
+                if (period === 'pm' && hours !== 12) {
+                  logEntryTime.setHours(hours + 12);
+                } else if (period === 'am' && hours === 12) {
+                  logEntryTime.setHours(0);
+                } else {
+                  logEntryTime.setHours(hours);
+                }
+
+                logEntryTime.setMinutes(minutes);
+
+                // Get the current time in milliseconds
+                const currentTime = new Date().getTime();
+                cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 150000);
+              });
+            cy.checkNotification([
+              `'cypress+custom@flagright.com' added a comment for a case '${caseId}'.`,
+            ]);
           });
-          cy.get('[data-cv="log-entry-item"]')
-            .should('exist')
-            .first()
-            .then((log) => {
-              // Get the text and time values from the latest log entry
-              const textValue = log.find('[data-cv="log-entry-item-text"]').text().trim();
-              const timeValue = log.find('[data-cv="log-entry-item-date"]').text().trim();
-
-              cy.wrap(textValue).should(
-                'include',
-                'Cypress+custom@flagright.com deleted a comment',
-              );
-
-              // Parse timeValue into a JavaScript Date object
-              const timeParts = timeValue.split(':');
-              const hours = parseInt(timeParts[0]);
-              const minutes = parseInt(timeParts[1].split(' ')[0]);
-              const period = timeParts[1].split(' ')[1];
-              const logEntryTime = new Date();
-
-              if (period === 'pm' && hours !== 12) {
-                logEntryTime.setHours(hours + 12);
-              } else if (period === 'am' && hours === 12) {
-                logEntryTime.setHours(0);
-              } else {
-                logEntryTime.setHours(hours);
-              }
-
-              logEntryTime.setMinutes(minutes);
-
-              // Get the current time in milliseconds
-              const currentTime = new Date().getTime();
-              cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 150000);
-            });
-          cy.checkNotification([
-            `'cypress+custom@flagright.com' added a comment for a case '${caseId}'.`,
-          ]);
         });
       });
   });

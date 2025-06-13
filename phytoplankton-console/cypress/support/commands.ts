@@ -376,9 +376,17 @@ Cypress.Commands.add('asertInputDisabled', (label: string) => {
 });
 
 Cypress.Commands.add('waitNothingLoading', () => {
-  cy.get('.cy-loading').should(($div) => {
-    if ($div.length !== 0) {
-      throw new Error(`There are still ${$div.length} elements under loading state`);
+  // wait cy loading element to be removed
+  cy.get('body').then(($body) => {
+    if ($body.find('.cy-loading').length > 0) {
+      cy.get('.cy-loading', { timeout: 10000 }).should('not.exist');
+    } else {
+      cy.log('No loader found, continuing...');
+      if ($body.find('[data-cy="skeleton"]').length > 0) {
+        cy.get('[data-cy="skeleton"]', { timeout: 10000 }).should('not.exist');
+      } else {
+        cy.log('No skeleton found, continuing...');
+      }
     }
   });
 });
