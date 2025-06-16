@@ -10,7 +10,6 @@ import LinkedEntitiesCard from './LinkedEntitiesCard';
 import TransactionAndPaymentMethodLimits from './TransactionAndPaymentMethodLimits';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { InternalBusinessUser } from '@/apis';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   user: InternalBusinessUser;
@@ -18,7 +17,6 @@ interface Props {
 
 export default function LegalEntityDetails(props: Props) {
   const { user } = props;
-  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   return (
     <EntityInfoGrid.Root columns={3}>
@@ -48,17 +46,15 @@ export default function LegalEntityDetails(props: Props) {
       <EntityInfoGrid.Cell columnSpan={1} rowSpan={2} maxHeight={350}>
         <Tags tags={user.tags ?? []} />
       </EntityInfoGrid.Cell>
-      <EntityInfoGrid.Cell columnSpan={isEntityLinkingEnabled ? 1 : 2} rowSpan={2} maxHeight={350}>
+      <EntityInfoGrid.Cell columnSpan={1} rowSpan={2} maxHeight={350}>
         <TransactionAndPaymentMethodLimits user={user} />
       </EntityInfoGrid.Cell>
-      {isEntityLinkingEnabled && (
-        <EntityInfoGrid.ColumnGroup
-          columnSpan={1}
-          rowSpan={2}
-          maxHeight={350}
-          childrens={[<LinkedEntitiesCard user={user} key="linked-entities-card" />]}
-        />
-      )}
+      <EntityInfoGrid.ColumnGroup
+        columnSpan={1}
+        rowSpan={2}
+        maxHeight={350}
+        childrens={[<LinkedEntitiesCard user={user} key="linked-entities-card" />]}
+      />
       <EntityInfoGrid.Cell columnSpan={3}>
         <SavedPaymentDetailsCard user={user} />
       </EntityInfoGrid.Cell>
