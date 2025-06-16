@@ -12,6 +12,7 @@ import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchTy
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { hasFeature } from '@/core/utils/context'
 
 export type SanctionsConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
@@ -41,6 +42,14 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
 
   public async computeRule() {
     const { fuzziness, screeningTypes, ruleStages } = this.parameters
+
+    if (
+      hasFeature('ACURIS') ||
+      hasFeature('DOW_JONES') ||
+      hasFeature('OPEN_SANCTIONS')
+    ) {
+      return
+    }
 
     if (
       ruleStages &&
