@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Graph, InternalBusinessUser } from '@/apis';
+import { InternalBusinessUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ENTITY } from '@/utils/queries/keys';
@@ -18,21 +18,31 @@ export default function LinkedEntities(props: Props) {
   const settings = useSettings();
   const api = useApi();
 
-  const queryResult = useQuery<Graph>(USERS_ENTITY(user.userId), async (): Promise<Graph> => {
-    if (user.userId == null) {
-      throw new Error(`Id is not defined`);
-    }
-    return await api.getUserEntity({ userId: user.userId });
-  });
+  const queryResult = useQuery<{
+    childUserIds: string[];
+    parentUserIds: string[];
+  }>(
+    USERS_ENTITY(user.userId),
+    async (): Promise<{
+      childUserIds: string[];
+      parentUserIds: string[];
+    }> => {
+      if (user.userId == null) {
+        throw new Error(`Id is not defined`);
+      }
+      const graph = await api.getUserEntityNodesOnly({ userId: user.userId });
+      return {
+        childUserIds: graph.childUserIds || [],
+        parentUserIds: graph.parentUserIds || [],
+      };
+    },
+  );
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(graph) => {
-        const childIds = graph.nodes
-          ?.filter(({ id }) => id.startsWith('children:'))
-          .flatMap(({ id }) => id.substring('children:'.length).split(/,\s/));
-
         const parentUserId = user.linkedEntities?.parentUserId;
+        const childIds = graph.childUserIds || [];
         return (
           <EntityPropertiesCard
             title={'Linked entities'}

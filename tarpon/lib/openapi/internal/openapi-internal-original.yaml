@@ -1905,6 +1905,44 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
+  /users/{userId}/entity/linked-users:
+    get:
+      summary: Entity - Linked Users
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  childUserIds:
+                    type: array
+                    items:
+                      type: string
+                  parentUserIds:
+                    type: array
+                    items:
+                      type: string
+      operationId: get-user-entity-nodes-only
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          required: true
+          in: path
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
   /users/{userId}/txn-links:
     get:
       summary: Transaction Linking

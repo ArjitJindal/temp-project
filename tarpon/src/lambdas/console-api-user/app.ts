@@ -178,6 +178,10 @@ export const allUsersViewHandler = lambdaApi()(
       )
     })
 
+    handlers.registerGetUserEntityNodesOnly(async (ctx, request) => {
+      return await linkerService.entityGraphNodesOnly(request.userId)
+    })
+
     handlers.registerGetTxnLinking(async (ctx, request) => {
       return linkerService.transactions(
         request.userId,

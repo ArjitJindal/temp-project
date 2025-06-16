@@ -15,6 +15,12 @@ import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
 import { traceable } from '@/core/xray'
 import dayjs from '@/utils/dayjs'
+import {
+  executeClickhouseQuery,
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type UsersProjectedData = Pick<
   InternalUser,
@@ -100,6 +106,83 @@ export class LinkerService {
     return {
       nodes,
       edges: linkedEdges,
+    }
+  }
+
+  public async entityGraphNodesOnly(
+    userId: string
+  ): Promise<{ childUserIds: string[]; parentUserIds: string[] }> {
+    if (isClickhouseEnabled()) {
+      const client = await getClickhouseClient(this.tenantId)
+      const usersTable = CLICKHOUSE_DEFINITIONS.USERS.tableName
+      const query = `
+      SELECT
+          'childUser' AS type,
+          id,
+          NULL AS parentUserId
+      FROM ${usersTable} FINAL
+      WHERE JSONExtractString(data, 'linkedEntities', 'parentUserId') = '${userId}'
+
+      UNION ALL
+
+      SELECT
+          'currentUser' AS type,
+          NULL AS userId,
+          JSONExtractString(data, 'linkedEntities', 'parentUserId') AS parentUserId
+      FROM ${usersTable} FINAL
+      WHERE id = '${userId}'`
+      const result = await executeClickhouseQuery<
+        {
+          type: 'childUser' | 'currentUser'
+          id: string | null
+          parentUserId: string | null
+        }[]
+      >(client, query)
+
+      const childUserIds = result
+        .filter((row) => row.type === 'childUser' && row.id)
+        .map((row) => row.id as string)
+
+      const parentUserId = result.find(
+        (row) => row.type === 'currentUser'
+      )?.parentUserId
+      const parentUserIds = parentUserId ? [parentUserId] : []
+
+      return {
+        childUserIds,
+        parentUserIds,
+      }
+    }
+    const mongoClient = await getMongoDbClient()
+    const db = mongoClient.db()
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const [result] = await userCollection
+      .aggregate([
+        {
+          $facet: {
+            childUsers: [
+              { $match: { 'linkedEntities.parentUserId': userId } },
+              { $project: { userId: 1 } },
+            ],
+            currentUser: [
+              { $match: { userId } },
+              { $project: { 'linkedEntities.parentUserId': 1 } },
+            ],
+          },
+        },
+      ])
+      .toArray()
+
+    const childUserIds = result.childUsers.map((child: any) => child.userId)
+    const parentUserId = result.currentUser[0]?.linkedEntities?.parentUserId
+    const parentUserIds = parentUserId ? [parentUserId] : []
+
+    return {
+      childUserIds,
+      parentUserIds,
     }
   }
 
