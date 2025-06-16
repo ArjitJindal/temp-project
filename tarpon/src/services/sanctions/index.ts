@@ -629,19 +629,22 @@ export class SanctionsService {
         }
         params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails
           ?.filter((data) => {
+            const paymentMethodId = data.hitContext?.paymentMethodId
+            const matchesEntityType =
+              !params.filterScreeningHitEntityType ||
+              data.entityType === params.filterScreeningHitEntityType
+
             if (params.filterPaymentMethodId) {
-              return params.filterPaymentMethodId.includes(
-                data.hitContext?.paymentMethodId ?? ''
-              )
-            }
-            if (params.filterSearchId) {
               return (
-                params.filterSearchId.includes(data.searchId) &&
-                (!params.filterScreeningHitEntityType ||
-                  data.entityType === params.filterScreeningHitEntityType)
+                matchesEntityType &&
+                params.filterPaymentMethodId.includes(paymentMethodId ?? '')
               )
             }
-            return false
+
+            const matchesSearchId = params.filterSearchId?.includes(
+              data.searchId
+            )
+            return matchesSearchId && matchesEntityType && !paymentMethodId
           })
           .flatMap(({ sanctionHitIds }) => sanctionHitIds ?? [])
         params.ruleId = alert.ruleId
