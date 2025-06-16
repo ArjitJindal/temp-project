@@ -153,6 +153,7 @@ export enum ClickhouseTableNames {
   DynamicPermissionsItems = 'dynamic_permissions_items',
   AlertsQaSampling = 'alerts_qa_sampling',
   ApiRequestLogs = 'api_request_logs',
+  Notifications = 'notifications',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -321,6 +322,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   API_REQUEST_LOGS: {
     tableName: ClickhouseTableNames.ApiRequestLogs,
+  },
+  NOTIFICATIONS: {
+    tableName: ClickhouseTableNames.Notifications,
   },
 } as const
 
@@ -1042,6 +1046,24 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "userId String MATERIALIZED JSONExtractString(data, 'userId')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
+    idColumn: 'id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: 'id',
+    orderBy: 'id',
+    materializedColumns: [
+      "triggeredBy String MATERIALIZED JSONExtractString(data, 'triggeredBy')",
+      "entityId String MATERIALIZED JSONExtractString(data, 'entityId')",
+      "entityType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'entityType')",
+      "notificationChannel LowCardinality(String) MATERIALIZED JSONExtractString(data, 'notificationChannel')",
+      "notificationType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'notificationType')",
+      "recievers Array(String) MATERIALIZED JSONExtract(data, 'recievers', 'Array(String)')",
+      "consoleNotificationStatuses Array(Tuple(status String, statusUpdatedAt UInt64, recieverUserId String)) MATERIALIZED JSONExtract(data, 'consoleNotificationStatuses', 'Array(Tuple(status String, statusUpdatedAt UInt64, recieverUserId String))')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -1071,6 +1093,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
     CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
   [MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS]:
     CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.NOTIFICATIONS]:
+    CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

@@ -8221,6 +8221,7 @@ components:
             - ALERTS_QA_SAMPLING
             - COUNTERS
             - API_REQUEST_LOGS
+            - NOTIFICATIONS
     FlatFileSchema:
       title: FlatFileSchema
       type: string

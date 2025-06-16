@@ -23,6 +23,7 @@ import {
   CRM_USER_RECORD_LINK_KEY_IDENTIFIER,
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
   API_REQUEST_LOGS_KEY_IDENTIFIER,
+  NOTIFICATIONS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -52,7 +53,7 @@ export type DynamoDbEntityType =
   | 'CRM_USER_RECORD_LINK'
   | 'ALERTS_QA_SAMPLING'
   | 'API_REQUEST_LOGS'
-
+  | 'NOTIFICATION'
 export type DynamoDbEntityUpdate = {
   tenantId: string
   type?: DynamoDbEntityType
@@ -228,6 +229,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'ALERTS_QA_SAMPLING',
       entityId: `ALERTS_QA_SAMPLING:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(NOTIFICATIONS_KEY_IDENTIFIER)) {
+    const entityId = entity.id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'NOTIFICATION',
+      entityId: `NOTIFICATION:${entityId}`,
     }
   } else if (partitionKeyId.includes(API_REQUEST_LOGS_KEY_IDENTIFIER)) {
     const entityId = entity.requestId

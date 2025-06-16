@@ -254,7 +254,10 @@ const clickhouseInsert = async (
 
 const testCache = new Set()
 
-async function prepareClickhouseInsert(tableName: TableName, tenantId: string) {
+export async function prepareClickhouseInsert(
+  tableName: TableName,
+  tenantId: string
+) {
   if (!isClickhouseEnabledInRegion()) {
     return false
   }
@@ -924,16 +927,17 @@ export async function executeClickhouseQuery<T extends object>(
   let client: ClickHouseClient
   let queryParams: Parameters<ClickHouseClient['query']>[0]
   if (typeof queryOrParams === 'string') {
-    let formattedQuery = queryOrParams
-    for (const [key, value] of Object.entries(params)) {
-      formattedQuery = formattedQuery.replace(
-        new RegExp(`{{ ${key} }}`, 'g'),
-        value
+    // Validate that no direct substitution patterns exist
+    if (queryOrParams.includes('{{') && Object.keys(params).length > 0) {
+      throw new Error(
+        'Use parameterized queries instead of template substitution for security'
       )
     }
+
     queryParams = {
-      query: `${formattedQuery} SETTINGS output_format_json_quote_64bit_integers=0`,
+      query: `${queryOrParams} SETTINGS output_format_json_quote_64bit_integers=0`,
       format: 'JSONEachRow',
+      query_params: params,
     }
   } else {
     queryParams = queryOrParams

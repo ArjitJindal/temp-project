@@ -72,6 +72,7 @@ export const CRM_USER_RECORD_LINK_KEY_IDENTIFIER = '#crm-user-record-link'
 export const COUNTER_KEY_IDENTIFIER = '#counter'
 export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
 export const API_REQUEST_LOGS_KEY_IDENTIFIER = '#api-request-logs'
+export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -602,6 +603,10 @@ export const DynamoDbKeys = {
   BATCH_BUSINESS_USER_EVENT: (tenantId: string, batchId: string) => ({
     PartitionKeyID: `${tenantId}#${BATCH_BUSINESS_USER_EVENTS_IDENTIFIER}`,
     SortKeyID: `${batchId}}`,
+  }),
+  NOTIFICATIONS: (tenantId: string, id: string) => ({
+    PartitionKeyID: `${tenantId}${NOTIFICATIONS_KEY_IDENTIFIER}`,
+    SortKeyID: id,
   }),
 }
 

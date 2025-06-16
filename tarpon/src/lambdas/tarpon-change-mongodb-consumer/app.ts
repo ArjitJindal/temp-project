@@ -63,7 +63,8 @@ import { AlertsRepository } from '@/services/alerts/repository'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { ApiRequestLog } from '@/@types/request-logger'
-
+import { NotificationRepository } from '@/services/notifications/notifications-repository'
+import { Notification } from '@/@types/openapi-internal/Notification'
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
   newExecutedRules: ExecutedRulesResult[]
@@ -184,6 +185,10 @@ export class TarponChangeMongoDbConsumer {
         )
         .setApiRequestLogsHandler((tenantId, newApiRequestLog) =>
           this.handleApiRequestLogs(tenantId, newApiRequestLog)
+        )
+        .setNotificationsHandler(
+          (tenantId, oldNotifications, newNotifications, dbClients) =>
+            this.handleNotifications(tenantId, newNotifications, dbClients)
         )
     )
   }
@@ -771,6 +776,28 @@ export class TarponChangeMongoDbConsumer {
       CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
       [newApiRequestLog]
     )
+    subSegment?.close()
+  }
+
+  async handleNotifications(
+    tenantId: string,
+    newNotifications: Notification | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newNotifications) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleNotifications'
+    )
+    const notificationsRepository = new NotificationRepository(
+      tenantId,
+      dbClients
+    )
+    await notificationsRepository.linkNotificationsToClickhouse([
+      newNotifications,
+    ])
     subSegment?.close()
   }
 }

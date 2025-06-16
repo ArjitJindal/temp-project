@@ -40,6 +40,7 @@ import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { ApiRequestLog } from '@/@types/request-logger'
+import { Notification } from '@/@types/openapi-internal/Notification'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -159,6 +160,12 @@ type ApiRequestLogsHandler = (
   newApiRequestLog: ApiRequestLog,
   dbClients: DbClients
 ) => Promise<void>
+type NotificationsHandler = (
+  tenantId: string,
+  oldNotifications: Notification | undefined,
+  newNotifications: Notification | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
@@ -187,7 +194,7 @@ export class StreamConsumerBuilder {
   crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
   apiRequestLogsHandler?: ApiRequestLogsHandler
-
+  notificationsHandler?: NotificationsHandler
   constructor(
     name: string,
     fanOutSqsQueue: string,
@@ -313,6 +320,13 @@ export class StreamConsumerBuilder {
     apiRequestLogsHandler: ApiRequestLogsHandler
   ): StreamConsumerBuilder {
     this.apiRequestLogsHandler = apiRequestLogsHandler
+    return this
+  }
+
+  public setNotificationsHandler(
+    notificationsHandler: NotificationsHandler
+  ): StreamConsumerBuilder {
+    this.notificationsHandler = notificationsHandler
     return this
   }
 
@@ -547,6 +561,13 @@ export class StreamConsumerBuilder {
       await this.apiRequestLogsHandler(
         update.tenantId,
         update.NewImage as ApiRequestLog,
+        dbClients
+      )
+    } else if (update.type === 'NOTIFICATION' && this.notificationsHandler) {
+      await this.notificationsHandler(
+        update.tenantId,
+        update.OldImage as Notification,
+        update.NewImage as Notification,
         dbClients
       )
     }

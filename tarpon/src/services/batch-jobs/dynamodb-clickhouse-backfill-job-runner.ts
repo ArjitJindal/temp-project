@@ -10,6 +10,8 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { saveApiRequestLogsToDynamo } from '@/lambdas/request-logger/app'
+import { Notification } from '@/@types/openapi-internal/Notification'
+
 @traceable
 export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
   protected async run(job: DynamodbClickhouseBackfillBatchJob): Promise<void> {
@@ -86,6 +88,41 @@ const handleApiRequestLogsBatchJob = async (
     apiRequestLogsCollection.find({}),
     async (apiRequestLogs) => {
       await saveApiRequestLogsToDynamo(apiRequestLogs, job.tenantId)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+export const handleNotificationsBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoNotificationRepository } = await import(
+    '../notifications/dynamo-repository'
+  )
+  const { NOTIFICATIONS_COLLECTION } = await import(
+    '@/utils/mongodb-definitions'
+  )
+  const db = mongoDb.db()
+  const notificationsCollection = db.collection<Notification>(
+    NOTIFICATIONS_COLLECTION(job.tenantId)
+  )
+  const notificationsRepository = new DynamoNotificationRepository(
+    job.tenantId,
+    dynamoDb
+  )
+  await processCursorInBatch(
+    notificationsCollection.find({}),
+    async (notifications) => {
+      await notificationsRepository.saveToDynamoDb(
+        notifications as Notification[]
+      )
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )

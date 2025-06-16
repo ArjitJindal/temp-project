@@ -7,6 +7,7 @@ import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { riskFactors } from './data/risk-factors'
+import { getNotifications } from './data/notifications'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { users } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -44,7 +45,7 @@ import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { getCounterCollectionData } from '@/core/seed/data/counter'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
-
+import { DynamoNotificationRepository } from '@/services/notifications/dynamo-repository'
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
 export async function seedDynamo(
@@ -292,4 +293,11 @@ export async function seedDynamo(
   for (const alertQaSampling of alertsQaSampling) {
     await dynamoAlertRepository.saveQASampleData(alertQaSampling)
   }
+
+  const notifications = getNotifications()
+  const dynamoNotificationRepository = new DynamoNotificationRepository(
+    tenantId,
+    dynamoDb
+  )
+  await dynamoNotificationRepository.saveToDynamoDb(notifications)
 }
