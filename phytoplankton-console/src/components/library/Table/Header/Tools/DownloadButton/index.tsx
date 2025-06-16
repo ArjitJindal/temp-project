@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Popover, Radio } from 'antd';
+import { Radio } from 'antd';
 import {
   DerivedColumn,
   FieldAccessor,
@@ -18,6 +18,7 @@ import {
 } from '../../../consts';
 import s from './styles.module.less';
 import { iterateItems } from './helpers';
+import Popover from '@/components/ui/Popover';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import Button from '@/components/library/Button';
 import { flatDataItems } from '@/components/library/Table/internal/helpers';

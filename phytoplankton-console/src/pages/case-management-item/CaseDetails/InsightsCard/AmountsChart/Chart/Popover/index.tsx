@@ -1,7 +1,7 @@
 import React from 'react';
-import { Popover as AntPopover } from 'antd';
 import { Currency } from '@flagright/lib/constants';
 import s from './styles.module.less';
+import PopoverComponent from '@/components/ui/Popover';
 import { P } from '@/components/ui/Typography';
 import { ColorIndicator } from '@/pages/case-management-item/CaseDetails/InsightsCard/components/Legend';
 import {
@@ -54,9 +54,9 @@ export default function Popover(props: Props) {
     </div>
   );
   return (
-    <AntPopover visible={isVisible} content={content} placement="topLeft">
+    <PopoverComponent visible={isVisible} content={content} placement="topLeft">
       {children}
-    </AntPopover>
+    </PopoverComponent>
   );
 }
 

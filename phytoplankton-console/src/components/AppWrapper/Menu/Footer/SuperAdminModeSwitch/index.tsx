@@ -1,7 +1,7 @@
 import cn from 'clsx';
 import { useContext, useState } from 'react';
-import { Popover } from 'antd';
 import s from './index.module.less';
+import Popover from '@/components/ui/Popover';
 import AdminIcon from '@/components/ui/icons/Remix/user/admin-line.react.svg';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';

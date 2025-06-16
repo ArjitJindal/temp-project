@@ -1,9 +1,9 @@
 import cn from 'clsx';
 import { NavLink as ReactRouterNavLink } from 'react-router-dom';
-import { Popover } from 'antd';
 import s from './index.module.less';
 import SubMenu, { SubMenuItem } from './SubMenu';
 import ChevronDownIcon from './chevron-down.react.svg';
+import Popover from '@/components/ui/Popover';
 import { getBranding } from '@/utils/branding';
 
 interface Props {
@@ -108,7 +108,10 @@ export default function TopLevelLink(props: Props) {
 
   return (
     <Popover
-      overlayClassName={s.popover}
+      hideArrow
+      disableInnerPadding
+      hideBoxShadow
+      hideBackground
       content={<SubMenu items={submenu} />}
       placement="rightTop"
     >

@@ -1,78 +1,40 @@
-import { Popover as PopoverAntd, PopoverProps } from 'antd';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Popover as AntPopover, PopoverProps } from 'antd';
+import cn from 'classnames';
+import s from './index.module.less';
 
-interface Props extends PopoverProps {
-  color?: string;
-  content: React.ReactNode;
-  title?: string;
-  trigger?: 'click' | 'hover' | 'focus';
-  children: React.ReactNode;
-  wrapText?: boolean;
-  visible?: boolean;
-  onVisibleChange?: (visible: boolean) => void;
+interface Props
+  extends Pick<
+    PopoverProps,
+    | 'title'
+    | 'content'
+    | 'autoAdjustOverflow'
+    | 'arrowPointAtCenter'
+    | 'mouseLeaveDelay'
+    | 'trigger'
+    | 'placement'
+    | 'children'
+    | 'getPopupContainer'
+    | 'visible'
+    | 'onVisibleChange'
+  > {
+  disablePointerEvents?: boolean;
+  hideArrow?: boolean;
+  hideBoxShadow?: boolean;
+  hideBackground?: boolean;
+  disableInnerPadding?: boolean;
 }
 
-export const Popover = (props: Props): JSX.Element => {
-  const {
-    color,
-    content,
-    title,
-    trigger = 'hover',
-    children,
-    visible,
-    onVisibleChange,
-    ...rest
-  } = props;
-  const [isVisible, setIsVisible] = useState(visible);
-  const triggerRef = useRef<HTMLDivElement>(null);
-
-  const handleVisibilityChange = useCallback(
-    (visible: boolean) => {
-      setIsVisible(visible);
-      onVisibleChange?.(visible);
-    },
-    [onVisibleChange],
-  );
-
-  useEffect(() => {
-    if (!isVisible || !triggerRef.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (!entry.isIntersecting && isVisible) {
-          handleVisibilityChange(false);
-        }
-      },
-      {
-        threshold: 0.1,
-        root: null,
-      },
-    );
-
-    observer.observe(triggerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isVisible, handleVisibilityChange]);
-
+export default function Popover(props: Props) {
   return (
-    <PopoverAntd
-      content={content}
-      title={title}
-      color={color}
-      trigger={trigger}
-      visible={isVisible}
-      onVisibleChange={handleVisibilityChange}
-      getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
-      {...rest}
-    >
-      <div ref={triggerRef}>{children}</div>
-    </PopoverAntd>
+    <AntPopover
+      {...props}
+      overlayClassName={cn(s.root, {
+        [s.disablePointerEvents]: props.disablePointerEvents,
+        [s.hideArrow]: props.hideArrow,
+        [s.hideBoxShadow]: props.hideBoxShadow,
+        [s.hideBackground]: props.hideBackground,
+        [s.disableInnerPadding]: props.disableInnerPadding,
+      })}
+    />
   );
-};
-
-export default Popover;
+}

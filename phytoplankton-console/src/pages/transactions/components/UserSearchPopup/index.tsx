@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Popover } from 'antd';
 import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
+import Popover from '@/components/ui/Popover';
 import { AllUsersTableItem } from '@/apis';
 
 interface Props {
@@ -19,8 +19,7 @@ export default function UserSearchPopup(props: Props) {
 
   return (
     <Popover
-      overlayClassName={s.popover}
-      overlayInnerStyle={{ padding: 0 }}
+      disableInnerPadding
       content={
         <div className={s.popupContentWrapper}>
           <PopupContent

@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
-import { AutoComplete, Popover } from 'antd';
+import { AutoComplete } from 'antd';
 import { DataSourceItemType } from 'antd/lib/auto-complete';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
+import Popover from '@/components/ui/Popover';
 import { QuestionVariableOption } from '@/apis';
 import Label from '@/components/library/Label';
 import TextInput from '@/components/library/TextInput';
@@ -74,7 +75,6 @@ export default function Variables(props: Props) {
   return (
     <Popover
       visible={isVisible}
-      overlayClassName={s.popoverRoot}
       trigger="click"
       content={
         <div className={s.root}>

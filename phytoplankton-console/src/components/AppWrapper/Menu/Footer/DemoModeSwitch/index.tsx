@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import cn from 'clsx';
-import { Popover } from 'antd';
 import { useDemoMode } from '../../../Providers/DemoModeProvider';
 import { getOr } from '../../../../../utils/asyncResource';
 import s from './index.module.less';
 import PlayCircleLineIcon from '@/components/ui/icons/Remix/media/play-circle-line.react.svg';
+import Popover from '@/components/ui/Popover';
 
 interface Props {
   isCollapsed: boolean;

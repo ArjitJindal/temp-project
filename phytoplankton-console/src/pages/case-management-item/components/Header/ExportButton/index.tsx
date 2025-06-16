@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Popover } from 'antd';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
+import Popover from '@/components/ui/Popover';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select'; // Import Select component

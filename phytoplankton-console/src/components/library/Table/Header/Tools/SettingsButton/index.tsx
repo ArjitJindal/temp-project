@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Popover } from 'antd';
 import * as TanTable from '@tanstack/react-table';
 import cn from 'clsx';
 import { SPECIAL_COLUMN_IDS } from '../../../consts';
 import s from './index.module.less';
+import Popover from '@/components/ui/Popover';
 import Settings3LineIcon from '@/components/ui/icons/Remix/system/settings-3-line.react.svg';
 import More2Icon from '@/components/ui/icons/Remix/system/more-2-line.react.svg';
 import { TableRow } from '@/components/library/Table/types';
@@ -62,7 +62,6 @@ export default function SettingsButton<Item extends object>(props: Props<Item>) 
   return (
     <div className={s.root}>
       <Popover
-        overlayClassName={'overlayClassName'}
         trigger="click"
         placement="bottomLeft"
         content={

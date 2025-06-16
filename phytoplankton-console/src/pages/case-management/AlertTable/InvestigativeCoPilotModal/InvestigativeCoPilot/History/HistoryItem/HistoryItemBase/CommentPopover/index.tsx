@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
-import Popover from '@/components/ui/Popover';
+import Popover from '@/components/ui/Popover/AutoHidePopover';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,

@@ -25,7 +25,7 @@ import {
 } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
-import { Popover } from '@/components/ui/Popover';
+import Popover from '@/components/ui/Popover/AutoHidePopover';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';

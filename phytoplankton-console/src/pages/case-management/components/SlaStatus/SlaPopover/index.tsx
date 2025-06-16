@@ -1,7 +1,7 @@
-import { Popover } from 'antd';
 import cn from 'clsx';
 import SlaPolicyDetails, { SLAPolicyStatusDetails, statusClass } from '../SlaPolicyDetails';
 import s from './styles.module.less';
+import Popover from '@/components/ui/Popover';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SLA_POLICY } from '@/utils/queries/keys';

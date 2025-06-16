@@ -12,6 +12,14 @@ rules:
       category: best-practice
       technology:
         - typescript
+  - id: antd_no_popover
+    pattern: import { Popover } from 'antd'
+    message: use "import Popover from '@/components/ui/Popover'" instead
+    paths:
+      include:
+        - 'phytoplankton-console'
+      exclude:
+        - 'phytoplankton-console/src/components/ui/Popover'   
   - id: antd_no_tooltip
     pattern: import { Tooltip } from 'antd'
     message: use "import Tooltip from '@/components/library/Tooltip'" instead

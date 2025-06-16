@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Popover } from 'antd';
 import s from './style.module.less';
+import Popover from '@/components/ui/Popover';
 import QuickFilterButton from '@/components/library/QuickFilter/QuickFilterButton';
 
 export type ChildrenProps = {
@@ -83,7 +83,8 @@ export default function QuickFilterBase(props: Props) {
         }
       >
         <Popover
-          overlayClassName={s.popoverRoot}
+          disableInnerPadding
+          hideArrow
           trigger="click"
           visible={isOpen}
           content={

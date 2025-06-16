@@ -1,10 +1,10 @@
 import cn from 'clsx';
 import React, { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Popover } from 'antd';
 import s from './index.module.less';
 import LogOutIcon from './log-out.react.svg';
 import Avatar from './Avatar';
+import Popover from '@/components/ui/Popover';
 import { useAuth0User } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 
