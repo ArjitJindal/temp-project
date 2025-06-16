@@ -88,7 +88,7 @@ export const config: Config = {
     },
     INSPECTOR_ENABLED: false,
     ATLAS_SEARCH_ENABLED: true,
-    DYNAMO_PROD_WRITE_CAPACITY_THRESHOLD: 400,
+    DYNAMO_WRITE_CAPACITY_THRESHOLD: 400,
   },
   clickhouse: {
     ipAccess: [{ source: '0.0.0.0/0', description: 'Allow all IP addresses' }],
