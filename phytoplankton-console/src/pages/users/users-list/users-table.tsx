@@ -1,4 +1,4 @@
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEmpty } from 'lodash';
 import { getBusinessUserColumns } from './business-user-columns';
@@ -113,7 +113,7 @@ const extraFilters = (
       title: 'User state',
       renderer: {
         kind: 'select',
-        options: USER_STATES.map((state) => ({ value: state, label: state })),
+        options: USER_STATES.map((state) => ({ value: state, label: humanizeAuto(state) })),
         mode: 'MULTIPLE',
         displayMode: 'list',
       },
