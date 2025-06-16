@@ -14,6 +14,8 @@
   transition-duration: @default-animation-speed;
   transition-timing-function: @default-animation-function;
   z-index: @tooltip-z-index;
+  white-space: normal; // required when used inside of a Tag, it uses white-space: nowrap
+  pointer-events: none;
 
   &[data-show='true'] {
     visibility: visible;

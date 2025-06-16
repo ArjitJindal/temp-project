@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
 import {
   formValuesToRuleInstanceV8,
   ruleInstanceToFormValuesV8,
@@ -13,6 +12,7 @@ import RuleConfigurationFormV8, {
   RuleConfigurationFormV8Values,
   STEPS,
 } from './RuleConfigurationFormV8';
+import Tooltip from '@/components/library/Tooltip';
 import { Rule, RuleInstance, RuleRunMode } from '@/apis';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';

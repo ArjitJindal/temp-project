@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import Tag from '../index';
 import style from './index.module.less';
+import Tooltip from '@/components/library/Tooltip';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 
 interface Props {

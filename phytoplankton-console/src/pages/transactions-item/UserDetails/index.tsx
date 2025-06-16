@@ -1,5 +1,4 @@
 import cn from 'clsx';
-import { Tooltip } from 'antd';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import React from 'react';
@@ -7,6 +6,7 @@ import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
 import DestinationIcon from './destination-icon.react.svg';
+import Tooltip from '@/components/library/Tooltip';
 import {
   DeviceData,
   InternalBusinessUser,
@@ -72,9 +72,12 @@ export default function UserDetails(props: Props) {
             {user ? (
               getUserName(user)
             ) : (
-              <Tooltip title={getUnknownUserTooltipMessage(userId, settings.userAlias)}>
-                Unknown {settings.userAlias} <QuestionCircleOutlined />
-              </Tooltip>
+              <>
+                Unknown {settings.userAlias}{' '}
+                <Tooltip title={getUnknownUserTooltipMessage(userId, settings.userAlias)}>
+                  {(childrenProps) => <QuestionCircleOutlined {...childrenProps} />}
+                </Tooltip>
+              </>
             )}
           </span>
           {user && (

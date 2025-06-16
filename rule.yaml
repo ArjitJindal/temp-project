@@ -4,7 +4,20 @@ rules:
     message: use "import Form from '@/components/library/Form'" instead
     paths:
       include:
-        - "phytoplankton-console"
+        - 'phytoplankton-console'
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: antd_no_tooltip
+    pattern: import { Tooltip } from 'antd'
+    message: use "import Tooltip from '@/components/library/Tooltip'" instead
+    paths:
+      include:
+        - 'phytoplankton-console'
     languages:
       - typescript
     severity: ERROR
@@ -45,7 +58,7 @@ rules:
   - id: ock_string
     paths:
       include:
-        - "phytoplankton-console"
+        - 'phytoplankton-console'
     patterns:
       - pattern-regex: "ock\\("
     message: This is crazy, but files should not include "ock(" string to make it work with `esbuild-jest`. See https://github.com/aelbore/esbuild-jest/issues/57#issuecomment-1005756206 for details

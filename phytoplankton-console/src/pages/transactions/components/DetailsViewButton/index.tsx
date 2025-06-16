@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Tooltip } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
+import Tooltip from '@/components/library/Tooltip';
 import FileListIcon from '@/components/ui/icons/Remix/document/file-list-3-line.react.svg';
 
 interface Props {

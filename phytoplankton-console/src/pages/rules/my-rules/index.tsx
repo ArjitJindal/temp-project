@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
@@ -7,6 +6,7 @@ import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import RuleActionsMenu from '../components/RuleActionsMenu';
 import s from './style.module.less';
+import Tooltip from '@/components/library/Tooltip';
 import { RuleInstance, RuleRunMode } from '@/apis';
 import { useApi } from '@/api';
 import {

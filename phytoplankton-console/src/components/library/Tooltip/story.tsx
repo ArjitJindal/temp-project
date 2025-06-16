@@ -1,11 +1,9 @@
-import React from 'react';
 import TextInput from '../TextInput';
 import Component, { Placement, Trigger } from './index';
 import { UseCase } from '@/pages/storybook/components';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 import Select from '@/components/library/Select';
 import Label from '@/components/library/Label';
-import Toggle from '@/components/library/Toggle';
 
 const targetDivStyle = {
   border: '1px solid green',
@@ -43,9 +41,8 @@ export default function (): JSX.Element {
         initialState={{
           position: 'top',
           trigger: 'hover',
-          autoUpdateEnabled: false,
-          tooltip: 'Short text',
-          portaled: false,
+          tooltip:
+            'Sample tooltip text to demonstrate how it works. It should be long enough to wrap to the next line.',
         }}
       >
         {([state, setState]) => (
@@ -77,18 +74,6 @@ export default function (): JSX.Element {
                   onChange={(value) => setState({ ...state, trigger: value })}
                 />
               </Label>
-              <Label label="Auto update">
-                <Toggle
-                  value={state.autoUpdateEnabled}
-                  onChange={(value) => setState({ ...state, autoUpdateEnabled: value })}
-                />
-              </Label>
-              <Label label="Portaled">
-                <Toggle
-                  value={state.portaled}
-                  onChange={(value) => setState({ ...state, portaled: value })}
-                />
-              </Label>
             </div>
             <Label label="Tooltip">
               <TextInput
@@ -98,13 +83,7 @@ export default function (): JSX.Element {
             </Label>
             <div style={{ display: 'flex', gap: 10 }}>
               <Label label="Large target">
-                <Component
-                  title={state.tooltip}
-                  placement={state.position}
-                  trigger={state.trigger}
-                  autoUpdateEnabled={state.autoUpdateEnabled}
-                  portaled={state.portaled}
-                >
+                <Component title={state.tooltip} placement={state.position} trigger={state.trigger}>
                   {({ style, ...props }) => (
                     <div
                       style={{ ...style, ...targetDivStyle, width: '100px', height: '100px' }}
@@ -116,13 +95,7 @@ export default function (): JSX.Element {
                 </Component>
               </Label>
               <Label label="Small target">
-                <Component
-                  title={state.tooltip}
-                  placement={state.position}
-                  trigger={state.trigger}
-                  autoUpdateEnabled={state.autoUpdateEnabled}
-                  portaled={state.portaled}
-                >
+                <Component title={state.tooltip} placement={state.position} trigger={state.trigger}>
                   {({ style, ...props }) => (
                     <div
                       style={{ ...style, ...targetDivStyle, width: '10px', height: '10px' }}
@@ -130,6 +103,41 @@ export default function (): JSX.Element {
                     ></div>
                   )}
                 </Component>
+              </Label>
+              <Label label="Inside scrollable container">
+                <div
+                  style={{
+                    overflow: 'scroll',
+                    height: '300px',
+                    width: '300px',
+                    backgroundColor: '#AFA',
+                  }}
+                >
+                  <div
+                    style={{
+                      height: '2000px',
+                      width: '2000px',
+                      position: 'relative',
+                      left: '150px',
+                      top: '150px',
+                    }}
+                  >
+                    <Component
+                      title={state.tooltip}
+                      placement={state.position}
+                      trigger={state.trigger}
+                    >
+                      {({ style, ...props }) => (
+                        <div
+                          style={{ ...style, ...targetDivStyle, width: '50px', height: '50px' }}
+                          {...props}
+                        >
+                          Target
+                        </div>
+                      )}
+                    </Component>
+                  </div>
+                </div>
               </Label>
             </div>
           </>

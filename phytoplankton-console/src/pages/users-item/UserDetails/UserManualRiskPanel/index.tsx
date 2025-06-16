@@ -1,9 +1,9 @@
-import { Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import cn from 'clsx';
 import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
+import Tooltip from '@/components/library/Tooltip';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useApi } from '@/api';
 import { RiskLevel, useRiskLevel, useRiskScore } from '@/utils/risk-levels';
@@ -176,7 +176,6 @@ export default function UserManualRiskPanel(props: Props) {
               : `Click here to lock ${settings.userAlias} risk level. This prevents the system from changing the ${settings.userAlias} risk level automatically.`
           }
           placement="bottomLeft"
-          arrowPointAtCenter
         >
           {isLocked ? (
             <LockLineIcon className={cn(s.lockIcon)} onClick={handleLockingAndUnlocking} />
