@@ -13,6 +13,7 @@ import { SanctionsSettingsProviderScreeningTypes } from '../openapi-internal/San
 import { SanctionsEntityType } from '../openapi-internal/SanctionsEntityType'
 import { FlatFileSchema } from '../openapi-internal/FlatFileSchema'
 import { FlatFileTemplateFormat } from '../openapi-internal/FlatFileTemplateFormat'
+import { DynamoDbClickhouseBackfillBatchJobEntityEntityEnum } from '../openapi-internal/DynamoDbClickhouseBackfillBatchJobEntity'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -151,8 +152,8 @@ export type DynamodbClickhouseBackfillBatchJob = {
   type: 'DYNAMODB_CLICKHOUSE_BACKFILL'
   tenantId: string
   parameters: {
-    entity: 'ALERTS_QA_SAMPLING' | 'COUNTERS'
-    saveToClickhouse?: boolean
+    entity: DynamoDbClickhouseBackfillBatchJobEntityEntityEnum
+    saveToClickhouse: boolean
   }
 }
 

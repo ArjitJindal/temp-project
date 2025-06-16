@@ -152,6 +152,7 @@ export enum ClickhouseTableNames {
   CrmUserRecordLink = 'crm_user_record_link',
   DynamicPermissionsItems = 'dynamic_permissions_items',
   AlertsQaSampling = 'alerts_qa_sampling',
+  ApiRequestLogs = 'api_request_logs',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -317,6 +318,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   ALERTS_QA_SAMPLING: {
     tableName: ClickhouseTableNames.AlertsQaSampling,
+  },
+  API_REQUEST_LOGS: {
+    tableName: ClickhouseTableNames.ApiRequestLogs,
   },
 } as const
 
@@ -1024,6 +1028,20 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
+    idColumn: 'requestId',
+    timestampColumn: 'timestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    materializedColumns: [
+      "requestId String MATERIALIZED JSONExtractString(data, 'requestId')",
+      "path String MATERIALIZED JSONExtractString(data, 'path')",
+      "method String MATERIALIZED JSONExtractString(data, 'method')",
+      "userId String MATERIALIZED JSONExtractString(data, 'userId')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -1051,6 +1069,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
   [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
     CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS]:
+    CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

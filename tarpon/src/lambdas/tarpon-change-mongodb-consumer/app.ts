@@ -60,6 +60,9 @@ import { getAddedItems } from '@/utils/array'
 import dayjs from '@/utils/dayjs'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertsRepository } from '@/services/alerts/repository'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { ApiRequestLog } from '@/@types/request-logger'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -178,6 +181,9 @@ export class TarponChangeMongoDbConsumer {
         .setAlertsQaSamplingHandler(
           (tenantId, oldAlertQaSampling, newAlertQaSampling, dbClients) =>
             this.handleAlertsQaSampling(tenantId, newAlertQaSampling, dbClients)
+        )
+        .setApiRequestLogsHandler((tenantId, newApiRequestLog) =>
+          this.handleApiRequestLogs(tenantId, newApiRequestLog)
         )
     )
   }
@@ -746,6 +752,25 @@ export class TarponChangeMongoDbConsumer {
     )
     const alertRepository = new AlertsRepository(tenantId, dbClients)
     await alertRepository.linkQaSamplingClickhouse(newAlertQaSampling)
+    subSegment?.close()
+  }
+
+  async handleApiRequestLogs(
+    tenantId: string,
+    newApiRequestLog: ApiRequestLog
+  ): Promise<void> {
+    if (!newApiRequestLog) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleApiRequestLogs'
+    )
+    await batchInsertToClickhouse(
+      tenantId,
+      CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
+      [newApiRequestLog]
+    )
     subSegment?.close()
   }
 }

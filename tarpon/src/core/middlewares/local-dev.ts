@@ -6,6 +6,7 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import { Credentials } from '@aws-sdk/client-sts'
+import { v4 as uuidv4 } from 'uuid'
 import { getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Permission } from '@/@types/openapi-internal/Permission'
@@ -30,6 +31,11 @@ export const localDev =
   ): Promise<APIGatewayProxyResult> => {
     if (envIsNot('local')) {
       return handler(event, context, callback)
+    }
+
+    const mockContext = {
+      ...context,
+      awsRequestId: uuidv4(),
     }
 
     const authorizer = event.requestContext.authorizer || {}
@@ -98,7 +104,7 @@ export const localDev =
       }
     }
     const result = await Promise.race([
-      handler(event, context, callback),
+      handler(event, mockContext, callback),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), AWS_API_GATEWAY_TIMEOUT)
       ),

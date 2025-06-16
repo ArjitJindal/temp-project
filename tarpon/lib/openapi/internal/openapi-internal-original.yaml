@@ -8211,6 +8211,16 @@ paths:
         required: true
 components:
   schemas:
+    DynamoDbClickhouseBackfillBatchJobEntity:
+      title: DynamoDbClickhouseBackfillBatchJobEntity
+      type: object
+      properties:
+        entity:
+          type: string
+          enum:
+            - ALERTS_QA_SAMPLING
+            - COUNTERS
+            - API_REQUEST_LOGS
     FlatFileSchema:
       title: FlatFileSchema
       type: string
