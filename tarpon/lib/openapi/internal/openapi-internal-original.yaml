@@ -2116,6 +2116,12 @@ paths:
               type: string
           in: query
           name: filterCountryOfNationality
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
     parameters: []
   /consumer/users-v2:
     get:
@@ -2224,6 +2230,12 @@ paths:
               type: string
           in: query
           name: filterCountryOfNationality
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
   /users:
     get:
       summary: All Users - List
@@ -2330,6 +2342,12 @@ paths:
             type: boolean
           in: query
           name: filterShadowHit
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
     parameters: []
   /users-v2:
     get:
@@ -2412,6 +2430,13 @@ paths:
             type: string
           in: query
           name: filterRiskLevelLocked
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+
   /users/{userId}/comments:
     parameters:
       - schema:
@@ -2680,6 +2705,12 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
     parameters: []
   /business/users-v2:
     get:
@@ -2768,6 +2799,12 @@ paths:
             type: string
           in: query
           name: filterRiskLevelLocked
+        - name: filterUserState
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
   /users/{userId}:
     get:
       summary: Users - Item - Get

@@ -26,6 +26,7 @@ import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchBu
 import { QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
+import { USER_STATES } from '@/apis/models-custom/UserState';
 
 type Props = {
   type: 'all' | 'business' | 'consumer';
@@ -106,6 +107,16 @@ const extraFilters = (
           }}
         />
       ),
+    },
+    {
+      key: 'userState',
+      title: 'User state',
+      renderer: {
+        kind: 'select',
+        options: USER_STATES.map((state) => ({ value: state, label: state })),
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+      },
     },
     {
       key: 'riskLevelLocked',

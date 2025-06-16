@@ -522,6 +522,12 @@ export class UserRepository {
       })
     }
 
+    if (params.filterUserState) {
+      filterConditions.push({
+        'userStateDetails.state': { $in: params.filterUserState },
+      })
+    }
+
     const queryConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = [

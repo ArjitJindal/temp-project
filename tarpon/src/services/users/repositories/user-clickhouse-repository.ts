@@ -361,6 +361,12 @@ export class UserClickhouseRepository {
       )
     }
 
+    if (params.filterUserState) {
+      filterConditions.push(
+        `userStateDetails_state IN ('${params.filterUserState.join("','")}')`
+      )
+    }
+
     // Combine all conditions
     if (filterConditions.length > 0) {
       whereClauses.push(

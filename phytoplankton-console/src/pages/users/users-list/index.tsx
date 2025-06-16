@@ -5,7 +5,14 @@ import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { AllUsersTableItem, CountryCode, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
+import {
+  AllUsersTableItem,
+  CountryCode,
+  PepRank,
+  RiskLevel,
+  UserRegistrationStatus,
+  UserState,
+} from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
@@ -32,6 +39,7 @@ export interface UserSearchParams extends CommonParams {
   riskLevelLocked?: 'true' | 'false';
   countryOfResidence?: CountryCode[];
   countryOfNationality?: CountryCode[];
+  userState?: UserState[];
 }
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
@@ -136,6 +144,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterPepCountry: params.pepCountry,
         filterCountryOfResidence: params.countryOfResidence,
         filterCountryOfNationality: params.countryOfNationality,
+        filterUserState: params.userState,
       };
 
       const queryParam = {
@@ -193,6 +202,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterPepRank: params.pepRank,
         filterCountryOfResidence: params.countryOfResidence,
         filterCountryOfNationality: params.countryOfNationality,
+        filterUserState: params.userState,
       };
 
       const response =
