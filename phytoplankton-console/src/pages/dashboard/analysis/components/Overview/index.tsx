@@ -26,6 +26,7 @@ export default function Overview(props: Props) {
             {
               title: 'Open cases',
               value: map(dataRes, ({ totalOpenCases }) => totalOpenCases || '0'),
+              toolTipInfo: 'Count includes Open and Re-Opened cases',
             },
           ]}
         />
@@ -34,6 +35,7 @@ export default function Overview(props: Props) {
             {
               title: 'Open alerts',
               value: map(dataRes, ({ totalOpenAlerts }) => totalOpenAlerts || '0'),
+              toolTipInfo: 'Count includes Open and Re-Opened alerts',
             },
           ]}
         />
