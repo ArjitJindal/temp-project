@@ -161,7 +161,15 @@ export class ClickhouseTransactionsRepository {
     }
 
     if (params.filterStatus?.length) {
-      whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
+      if (params.isPaymentApprovals && params.filterStatus.includes('ALLOW')) {
+        whereConditions.push(
+          `status IN ('${params.filterStatus.join(
+            "','"
+          )}') AND length(nonShadowHitRules) > 0`
+        )
+      } else {
+        whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
+      }
     }
 
     if (params.filterDestinationCurrencies?.length) {

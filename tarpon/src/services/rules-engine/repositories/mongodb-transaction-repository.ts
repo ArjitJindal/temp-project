@@ -393,15 +393,16 @@ export class MongoDbTransactionRepository
         type: { $in: params.filterTransactionTypes },
       })
     }
+
     if (params.filterStatus != null) {
-      if (params.filterStatus.includes('ALLOW')) {
+      if (params.filterStatus.includes('ALLOW') && params.isPaymentApprovals) {
         params.filterStatus.splice(params.filterStatus.indexOf('ALLOW'), 1)
         conditions.push(this.getApproveTransactionsMongoQuery())
-      }
-      if (params.filterStatus.length > 0) {
+      } else if (params.filterStatus.length > 0) {
         conditions.push({ status: { $in: params.filterStatus } })
       }
     }
+
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $in: [params.filterCaseStatus] } })
     }

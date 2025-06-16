@@ -92,6 +92,7 @@ export interface TransactionsTableParams extends CommonParams {
   filterSanctionsHitIds?: string[];
   filterPaymentDetailName?: string;
   filterPaymentMethodId?: string;
+  isPaymentApprovals?: boolean;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -139,6 +140,7 @@ export const transactionParamsToRequest = (
     parentUserId,
     filterPaymentDetailName,
     showDetailedView,
+    isPaymentApprovals,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -179,6 +181,7 @@ export const transactionParamsToRequest = (
     filterStatus: status ? [status] : undefined,
     includePaymentDetails: showDetailedView,
     filterPaymentDetailName: filterPaymentDetailName,
+    isPaymentApprovals: isPaymentApprovals,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;

@@ -23,7 +23,7 @@ export default function PaymentApprovalsTable(props: Props) {
   const filterStatus = params.status ?? 'SUSPEND';
 
   const { queryResult, cacheKey } = useTransactionsQuery(
-    { ...params, status: filterStatus },
+    { ...params, status: filterStatus, isPaymentApprovals: true },
     { isReadyToFetch: true, debounce: 500 },
   );
 

@@ -1303,6 +1303,10 @@ paths:
             type: boolean
           in: query
           name: includeRuleHitDetails
+        - schema:
+            type: boolean
+          in: query
+          name: isPaymentApprovals
   /transactions:
     get:
       summary: Transaction - List
@@ -1547,6 +1551,10 @@ paths:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleHitDirection
           in: query
           name: filterRuleHitDirection
+        - schema:
+            type: boolean
+          in: query
+          name: isPaymentApprovals
   /transactions/{transactionId}/events:
     parameters:
       - schema:
@@ -2436,7 +2444,6 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
-
   /users/{userId}/comments:
     parameters:
       - schema:
