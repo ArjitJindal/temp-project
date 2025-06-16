@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { compact, uniqBy } from 'lodash'
 import {
+  ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
@@ -59,6 +60,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   partialMatch?: boolean
   screeningValues?: GenericScreeningValues[]
   fuzzyAddressMatching?: boolean
+  enableShortNameMatching?: boolean
 }
 
 @traceable
@@ -77,6 +79,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           multipleOf: 1,
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
@@ -117,6 +120,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       screeningProfileId,
       screeningValues,
       fuzzyAddressMatching,
+      enableShortNameMatching,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
@@ -163,6 +167,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
                 fuzzyAddressMatching,
                 paymentDetail.address ? [paymentDetail.address] : undefined
               ),
+              ...(enableShortNameMatching
+                ? { enableShortNameMatching }
+                : false),
             },
             hitContext,
             undefined,

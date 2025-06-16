@@ -86,6 +86,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   ): boolean {
     const percentageDissimilarity = 100 - percentageSimilarity
 
+    // If short name matching is enabled, calculate the fuzziness floor
+    if (request.enableShortNameMatching) {
+      let fuzziness
+      if (request.fuzzinessRange?.upperBound != null) {
+        fuzziness = request.fuzzinessRange.upperBound / 100
+      } else if (request.fuzziness != null) {
+        fuzziness = request.fuzziness
+      }
+
+      const fuzzinessFloor = Math.floor(100 / (fuzziness * 100))
+      const searchTermLength = request.searchTerm?.length ?? 0
+
+      // For names shorter than or equal to the floor, allow at least 1 character mismatch
+      if (searchTermLength <= fuzzinessFloor) {
+        // Calculate the effective number of character differences from the percentage.
+        const effectiveCharDifferences =
+          (percentageDissimilarity / 100) * searchTermLength
+
+        // Round to the nearest whole number to correct for floating-point inaccuracies
+        // and check if the number of differences is at most 1.
+        return Math.round(effectiveCharDifferences) <= 1
+      }
+    }
+
     if (
       request.fuzzinessRange?.lowerBound != null &&
       request.fuzzinessRange?.upperBound != null

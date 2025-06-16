@@ -13720,6 +13720,8 @@ components:
           type: boolean
         partialMatch:
           type: boolean
+        enableShortNameMatching:
+          type: boolean
         addresses:
           type: array
           items:

@@ -311,4 +311,176 @@ describe('SanctionsDataFetcher Integration Tests', () => {
       expect(searchTerm).toBe(data.result[index])
     }
   })
+
+  describe('Short Name Matching', () => {
+    test('should match short names with one character difference when enabled', () => {
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'Kevin',
+        fuzziness: 0.15,
+        enableShortNameMatching: true,
+      }
+
+      // Test with one character difference (20% dissimilarity for 5 characters)
+      const result1 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request,
+        80 // 80% similarity means 1 character difference for "Kevin"
+      )
+      expect(result1).toBe(true)
+
+      // Test with two character differences (40% dissimilarity for 5 characters)
+      const result2 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request,
+        60 // 60% similarity means 2 character differences for "Kevin"
+      )
+      expect(result2).toBe(false)
+    })
+
+    test('should not apply short name matching when disabled', () => {
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'Kevin',
+        fuzziness: 0.15,
+        enableShortNameMatching: false,
+      }
+
+      // Test with one character difference
+      const result = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request,
+        80 // 80% similarity means 1 character difference for "Kevin"
+      )
+      expect(result).toBe(false)
+    })
+
+    test('should handle different name lengths correctly', () => {
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'John',
+        fuzziness: 0.15,
+        enableShortNameMatching: true,
+      }
+
+      // Test with one character difference in a short name (25% dissimilarity for 4 characters)
+      const result1 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request,
+        75 // 75% similarity means 1 character difference for "John"
+      )
+      expect(result1).toBe(true)
+
+      // Test with one character difference in a longer name that is *above* the floor
+      const request2: SanctionsSearchRequest = {
+        ...request,
+        searchTerm: 'Christopher', // length 11, above floor of 6
+      }
+      // 1-char diff is ~9% dissimilarity (1/11), which is within the 15% fuzziness
+      const result2 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request2,
+        90.9
+      )
+      expect(result2).toBe(true)
+
+      // 2-char diff is ~18% dissimilarity (2/11), which is outside the 15% fuzziness
+      const result3 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request2,
+        81.8
+      )
+      expect(result3).toBe(false)
+    })
+
+    test('should handle fuzziness floor boundary correctly', () => {
+      // With 15% fuzziness, floor should be 6. Names with length <= 6 use the special rule.
+      const request: SanctionsSearchRequest = {
+        searchTerm: 'Thomas', // length 6, exactly at the floor
+        fuzziness: 0.15,
+        enableShortNameMatching: true,
+      }
+
+      // Test with a name AT the floor boundary (should use short name rule: 1 mismatch allowed)
+      const result1 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request,
+        83.33 // 16.67% dissimilarity -> ~1 char diff for length 6 -> Math.round -> 1. Match.
+      )
+      expect(result1).toBe(true)
+
+      // Test with a name JUST ABOVE the floor (should use standard percentage rule)
+      const request2: SanctionsSearchRequest = {
+        ...request,
+        searchTerm: 'Thomas1', // 7 characters, just above the floor
+      }
+      // 1-char diff is ~14.3% dissimilarity (1/7), which is inside the 15% fuzziness.
+      const result2 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request2,
+        85.71
+      )
+      expect(result2).toBe(true) // This should match based on the standard fuzziness rule.
+    })
+
+    test('should handle Levenshtein matching with 12% fuzziness correctly', () => {
+      // Test 1: Zulfikar (8 chars) with 1 mismatch should match
+      const request1: SanctionsSearchRequest = {
+        searchTerm: 'Zulfikar',
+        fuzziness: 0.12,
+        enableShortNameMatching: true,
+      }
+      const result1 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request1,
+        87.5 // 1 char diff in 8 chars = 12.5% dissimilarity
+      )
+      expect(result1).toBe(true)
+
+      // Test 2: Zulfikar (8 chars) with 2 mismatches should not match
+      const result2 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request1,
+        75 // 2 char diff in 8 chars = 25% dissimilarity
+      )
+      expect(result2).toBe(false)
+
+      // Test 3: Zhen Liu (8 chars) with 1 mismatch should match
+      const request3: SanctionsSearchRequest = {
+        searchTerm: 'Zhen Liu',
+        fuzziness: 0.12,
+        enableShortNameMatching: true,
+      }
+      const result3 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request3,
+        87.5 // 1 char diff in 8 chars = 12.5% dissimilarity
+      )
+      expect(result3).toBe(true)
+    })
+
+    test('should handle Tokenized matching with 10% fuzziness correctly', () => {
+      // Test 4: Inc Group (9 chars) with 1 mismatch should match
+      const request1: SanctionsSearchRequest = {
+        searchTerm: 'Inc Group',
+        fuzziness: 0.1,
+        enableShortNameMatching: true,
+      }
+      const result1 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request1,
+        88.89 // 1 char diff in 9 chars = 11.11% dissimilarity
+      )
+      expect(result1).toBe(true)
+
+      // Test 5: Mal Corp. (9 chars) with 1 mismatch should match
+      const request2: SanctionsSearchRequest = {
+        searchTerm: 'Mal Corp.',
+        fuzziness: 0.1,
+        enableShortNameMatching: true,
+      }
+      const result2 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request2,
+        88.89 // 1 char diff in 9 chars = 11.11% dissimilarity
+      )
+      expect(result2).toBe(true)
+
+      // Test 6: Bonifacy (8 chars) with 1 mismatch should match
+      const request3: SanctionsSearchRequest = {
+        searchTerm: 'Bonifacy',
+        fuzziness: 0.1,
+        enableShortNameMatching: true,
+      }
+      const result3 = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+        request3,
+        87.5 // 1 char diff in 8 chars = 12.5% dissimilarity
+      )
+      expect(result3).toBe(true)
+    })
+  })
 })

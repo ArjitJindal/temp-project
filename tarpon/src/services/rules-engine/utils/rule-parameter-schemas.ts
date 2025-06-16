@@ -914,7 +914,9 @@ export const PARTIAL_MATCH_SCHEMA = {
   nullable: true,
   title: 'Partial name matching',
   labelProps: {
-    hint: 'Allows the screening list name include extra words without blocking a match. As long as all parts of the input name are found (exactly or approximately) in the list name, it will count as a match. This helps when input names are shorter, missing middle names, or slightly misspelled.',
+    hint: `Allows the screening list name include extra words without blocking a match. 
+    As long as all parts of the input name are found (exactly or approximately) in the list name, it will count as a match. 
+    This helps when input names are shorter, missing middle names, or slightly misspelled.`,
   },
   ...uiSchema(
     {},
@@ -1096,6 +1098,22 @@ export const FUZZINESS_SETTINGS_SCHEMA = (options?: SchemaOptions) =>
     description:
       options?.description || `Select a method for calculating fuzziness`,
     enum: FUZZINESS_SETTING_OPTIONSS,
+  } as const)
+
+export const ENABLE_SHORT_NAME_MATCHING_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'boolean',
+    nullable: true,
+    title: 'Short name matching adjustment',
+    labelProps: {
+      hint: `Ensures fair fuzzy matching for short names by allowing at least one mismatch when names are too short for the configured fuzziness to permit any. 
+      The threshold is calculated as 1 ÷ fuzziness % (e.g., 15% → names ≤6 characters). This improves accuracy for short or misspelled names.`,
+      hidden: true,
+    },
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS', 'DOW_JONES'],
+      subtype: 'ENABLE_SHORT_NAME_MATCHING',
+    }),
   } as const)
 
 export const PEP_RANK_SCHEMA = (options?: SchemaOptions) =>

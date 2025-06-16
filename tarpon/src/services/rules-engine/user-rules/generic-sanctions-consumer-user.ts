@@ -10,6 +10,7 @@ import {
   RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
+  ENABLE_SHORT_NAME_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -45,6 +46,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   partialMatch?: boolean
   ruleStages: RuleStage[]
   fuzzyAddressMatching?: boolean
+  enableShortNameMatching?: boolean
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -68,6 +70,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         }),
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
+        enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
         ruleStages: RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
@@ -100,6 +103,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       partialMatch,
       screeningProfileId,
       fuzzyAddressMatching,
+      enableShortNameMatching,
     } = this.parameters
     const user = this.user as User
     if (
@@ -178,6 +182,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           fuzzyAddressMatching,
           user.contactDetails?.addresses
         ),
+        ...(enableShortNameMatching ? { enableShortNameMatching } : false),
       },
       hitContext,
       undefined

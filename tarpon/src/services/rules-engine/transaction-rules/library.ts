@@ -1601,6 +1601,7 @@ const _RULES_LIBRARY: Array<
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       screeningProfileId: '',
+      enableShortNameMatching: true,
     }
 
     return {
@@ -1635,6 +1636,7 @@ const _RULES_LIBRARY: Array<
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       screeningProfileId: '',
+      enableShortNameMatching: true,
     }
 
     return {
@@ -1692,6 +1694,7 @@ const _RULES_LIBRARY: Array<
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       screeningProfileId: '',
+      enableShortNameMatching: true,
     }
 
     return {
@@ -1762,6 +1765,7 @@ const _RULES_LIBRARY: Array<
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       screeningProfileId: '',
+      enableShortNameMatching: true,
     }
 
     return {
@@ -1980,6 +1984,7 @@ const _RULES_LIBRARY: Array<
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       screeningProfileId: '',
+      enableShortNameMatching: true,
     }
 
     return {

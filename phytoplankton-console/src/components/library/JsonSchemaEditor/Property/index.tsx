@@ -101,6 +101,10 @@ export default function Property(props: Props) {
     return defaultValue;
   };
 
+  if (schema.labelProps?.hidden) {
+    return null;
+  }
+
   return canShowProperty ? (
     <PropertyContext.Provider value={{ item, label: humanizeFunction(name) }}>
       <InputField<any>

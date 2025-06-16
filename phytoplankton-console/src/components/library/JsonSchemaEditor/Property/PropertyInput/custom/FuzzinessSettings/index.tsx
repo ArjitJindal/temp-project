@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { UiSchemaFuzzinessSettings } from '../../../../types';
+import { ShortNameAdjustmentInput } from '../ShortNameAdjustment';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 import { FuzzinessSettingOptions } from '@/apis';
@@ -93,25 +94,28 @@ export const FuzzinessSettingsInput = (props: Props) => {
   };
 
   return (
-    <div className={s.root}>
-      {orderedOptions.map((option) => (
-        <label key={option} className={s.item}>
-          <div className={s.radio}>
-            <Radio
-              value={value === option}
-              onChange={(checked) => {
-                if (checked) {
-                  onChange?.(option);
-                }
-              }}
-              {...rest}
-            />
-          </div>
-          <div className={s.text}>
-            <div>{getOptionLabel(option)}</div>
-          </div>
-        </label>
-      ))}
-    </div>
+    <>
+      <div className={s.root}>
+        {orderedOptions.map((option) => (
+          <label key={option} className={s.item}>
+            <div className={s.radio}>
+              <Radio
+                value={value === option}
+                onChange={(checked) => {
+                  if (checked) {
+                    onChange?.(option);
+                  }
+                }}
+                {...rest}
+              />
+            </div>
+            <div className={s.text}>
+              <div>{getOptionLabel(option)}</div>
+            </div>
+          </label>
+        ))}
+      </div>
+      <ShortNameAdjustmentInput />
+    </>
   );
 };
