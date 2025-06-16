@@ -31,13 +31,58 @@ export type CaseSubject =
   | { type: 'USER'; user: InternalUser }
   | { type: 'PAYMENT'; paymentDetails: PaymentDetails }
 
+async function truncateDynamoConsumerMessageItems(
+  dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
+) {
+  const MAX_SIZE_KB = 250 // Keeping it 250KB instead of 256KB for some buffer
+  const toReturnDynamoDbConsumerMessage: DynamoConsumerMessage[] = []
+
+  for (const message of dynamoDbConsumerMessage) {
+    const items = message.items
+    const messageSize = Buffer.from(JSON.stringify(message)).length / 1024
+
+    if (messageSize <= MAX_SIZE_KB) {
+      toReturnDynamoDbConsumerMessage.push(message)
+      continue
+    }
+
+    // Calculate how many full messages we need
+    const ratio = messageSize / MAX_SIZE_KB
+    const fullMessagesCount = Math.floor(ratio)
+    const itemsPerMessage = Math.floor(items.length / ratio)
+
+    // Create full messages
+    for (let i = 0; i < fullMessagesCount; i++) {
+      const startIndex = i * itemsPerMessage
+      const endIndex = startIndex + itemsPerMessage
+      toReturnDynamoDbConsumerMessage.push({
+        ...message,
+        items: items.slice(startIndex, endIndex),
+      })
+    }
+
+    // Handle remaining items
+    const remainingItems = items.slice(fullMessagesCount * itemsPerMessage)
+    if (remainingItems.length > 0) {
+      toReturnDynamoDbConsumerMessage.push({
+        ...message,
+        items: remainingItems,
+      })
+    }
+  }
+
+  return toReturnDynamoDbConsumerMessage
+}
+
 export async function transactWriteWithClickhouse(
   dynamoDb: DynamoDBDocumentClient,
   operations: TransactWriteOperation[],
   dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
 ): Promise<void> {
   await transactWrite(dynamoDb, operations)
-  for (const message of dynamoDbConsumerMessage) {
+  const truncatedDynamoDbConsumerMessage =
+    await truncateDynamoConsumerMessageItems(dynamoDbConsumerMessage)
+  for (const message of truncatedDynamoDbConsumerMessage) {
     await sendMessageToDynamoDbConsumer(message)
   }
 }
