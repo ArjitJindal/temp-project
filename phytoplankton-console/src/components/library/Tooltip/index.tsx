@@ -142,7 +142,7 @@ function TooltipRoot(props: Props) {
 }
 
 export default function Tooltip(props: Props) {
-  if (props.title == null && props.overlay == null) {
+  if ((props.title == null || props.title === '') && props.overlay == null) {
     return <>{props.children}</>;
   }
   return <TooltipRoot {...props} />;
