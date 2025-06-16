@@ -113,7 +113,6 @@ import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
-import { ActionReason } from '@/@types/openapi-internal/ActionReason'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
 
@@ -684,13 +683,16 @@ export class CaseCreationService {
         })
         const newAlertStatus =
           ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN'
-        const newAlertCreationReason =
-          newAlertStatus === 'CLOSED'
+        const statusChange =
+          newAlertStatus !== 'OPEN'
             ? ({
-                reasons: ['Other'],
-                comment: "Alert default status set to 'CLOSED'",
+                userId: FLAGRIGHT_SYSTEM_USER,
+                reason: ['Other'],
                 timestamp: now,
-              } as ActionReason)
+                caseStatus: newAlertStatus,
+                otherReason: 'Status set by rule',
+                comment: `Alert default status set to '${newAlertStatus}' by rule configuration`,
+              } as CaseStatusChange)
             : undefined
 
         const newAlert: Alert = {
@@ -700,7 +702,6 @@ export class CaseCreationService {
           latestTransactionArrivalTimestamp,
           updatedAt: now,
           alertStatus: newAlertStatus,
-          creationReason: newAlertCreationReason,
           ruleId: hitRule.ruleId,
           availableAfterTimestamp: availableAfterTimestamp,
           ruleInstanceId: hitRule.ruleInstanceId,
@@ -714,12 +715,23 @@ export class CaseCreationService {
           transactionIds: transaction ? [transaction.transactionId] : [],
           priority: (ruleInstanceMatch?.casePriority ??
             last(PRIORITYS)) as Priority,
+          lastStatusChange: statusChange,
+          statusChanges: statusChange ? [statusChange] : [],
           originPaymentMethods: transaction?.originPaymentDetails?.method
             ? [transaction?.originPaymentDetails?.method]
             : [],
           destinationPaymentMethods: transaction?.destinationPaymentDetails
             ?.method
             ? [transaction?.destinationPaymentDetails?.method]
+            : [],
+          comments: statusChange
+            ? [
+                {
+                  body: statusChange.comment as string,
+                  createdAt: statusChange.timestamp,
+                  userId: FLAGRIGHT_SYSTEM_USER,
+                },
+              ]
             : [],
           ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
           ruleChecklist: ruleChecklist?.categories.flatMap(
