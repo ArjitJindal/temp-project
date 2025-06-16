@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import { isEmpty } from 'lodash';
 import { useCallback } from 'react';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
@@ -10,7 +11,7 @@ import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useCurrentUser, useUsers } from '@/utils/user-utils';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
@@ -21,6 +22,7 @@ import {
 } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
 import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { makeUrl } from '@/utils/routing';
 
 export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
@@ -36,6 +38,7 @@ export default function AlertsStatusChangeModal(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
   const [users] = useUsers();
+  const auth0User = useAuth0User();
   const currentUser = useCurrentUser();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
 
@@ -110,7 +113,18 @@ export default function AlertsStatusChangeModal(props: Props) {
         queryClient.refetchQueries({ queryKey: ALERT_ITEM(alertId) });
       });
       if (!currentUser?.reviewerId) {
-        message.success('Saved');
+        message.success(`Alert ${props.newStatus.toLowerCase()} successfully`, {
+          details: `${capitalizeNameFromEmail(
+            auth0User?.name || '',
+          )} ${props.newStatus.toLowerCase()} the alert ${props.entityIds[0]} ${
+            updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+          }`,
+          link: makeUrl(`/case-management/alerts/:id`, {
+            id: props.entityIds[0],
+          }),
+          linkTitle: 'View alert',
+          copyFeedback: 'Alert URL copied to clipboard',
+        });
       }
 
       if (currentUser?.reviewerId) {
@@ -126,7 +140,15 @@ export default function AlertsStatusChangeModal(props: Props) {
         return;
       }
     },
-    [props.entityIds, api, currentUser?.reviewerId, queryClient, users],
+    [
+      api,
+      props.entityIds,
+      props.newStatus,
+      currentUser?.reviewerId,
+      queryClient,
+      auth0User?.name,
+      users,
+    ],
   );
 
   const updateMutation = useMutation<unknown, unknown, FormValues>(

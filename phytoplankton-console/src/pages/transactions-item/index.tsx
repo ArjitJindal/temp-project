@@ -92,7 +92,7 @@ export default function TransactionsItem() {
         ),
         reportTitle: 'Transaction report',
       });
-      message.success('Report successfully downloaded');
+      message.success('Report downloaded successfully');
     } catch (err) {
       message.fatal('Unable to complete the download!', err);
     } finally {

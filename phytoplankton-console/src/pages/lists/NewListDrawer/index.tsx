@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Select } from 'antd';
 import { useMutation } from '@tanstack/react-query';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import NewValueInput from './NewValueInput';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
-import { ListSubtypeInternal, ListType } from '@/apis';
+import { ListExistedInternal, ListSubtypeInternal, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
@@ -22,6 +23,8 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import { DefaultApiPostWhiteListRequest } from '@/apis/types/ObjectParamAPI';
 import NumberInput from '@/components/library/NumberInput';
 import Alert from '@/components/library/Alert';
+import { makeUrl } from '@/utils/routing';
+import { useAuth0User } from '@/utils/user-utils';
 
 interface FormValues {
   subtype: ListSubtypeInternal | null;
@@ -57,7 +60,7 @@ export default function NewListDrawer(props: Props) {
   const { isOpen, listType, onCancel, onSuccess } = props;
   const settings = useSettings();
   const [formId] = useState(nanoid());
-
+  const auth0User = useAuth0User();
   const formRef = useRef<FormRef<FormValues>>(null);
 
   useEffect(() => {
@@ -67,7 +70,11 @@ export default function NewListDrawer(props: Props) {
   }, [isOpen]);
   const is314aEnabled = useFeatureEnabled('314A');
   const api = useApi();
-  const handleFinishMutation = useMutation<unknown, unknown, { values: FormValues }>(
+  const handleFinishMutation = useMutation<
+    ListExistedInternal | undefined,
+    unknown,
+    { values: FormValues }
+  >(
     async (event) => {
       const { values } = event;
 
@@ -93,18 +100,33 @@ export default function NewListDrawer(props: Props) {
         };
 
         if (listType === 'WHITELIST') {
-          await api.postWhiteList(payload);
+          return await api.postWhiteList(payload);
         } else {
-          await api.postBlacklist(payload);
+          return await api.postBlacklist(payload);
         }
       }
     },
     {
       retry: false,
-      onSuccess: () => {
-        formRef.current?.resetFields(); // todo: implement
-        onSuccess();
-        message.success('List created');
+      onSuccess: (list) => {
+        if (list) {
+          formRef.current?.resetFields(); // todo: implement
+          onSuccess();
+          message.success(
+            `A new ${listType === 'WHITELIST' ? 'whitelist' : 'blacklist'} is created successfully`,
+            {
+              link: makeUrl(`/lists/:type/:id`, {
+                type: listType,
+                id: list.listId,
+              }),
+              linkTitle: 'View list',
+              details: `${capitalizeNameFromEmail(auth0User?.name || '')} created a new ${
+                listType === 'WHITELIST' ? 'whitelist' : 'blacklist'
+              } ${list.header.metadata?.name}`,
+              copyFeedback: 'List URL copied to clipboard',
+            },
+          );
+        }
       },
       onError: (error) => {
         message.fatal(`Unable to create list! ${getErrorMessage(error)}`, error);

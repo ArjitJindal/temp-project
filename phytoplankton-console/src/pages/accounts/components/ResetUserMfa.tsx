@@ -33,7 +33,7 @@ export function ResetUserMfa(props: ResetMFAProps) {
     {
       onSuccess: () => {
         messageVar?.();
-        message.success(`User MFA methods resetted`);
+        message.success(`User MFA methods resetted successfully`);
         setIsModalVisible(false);
         onSuccess();
       },

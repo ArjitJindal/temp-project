@@ -64,7 +64,7 @@ function ExportButton(props: Props) {
     },
     {
       onSuccess: () => {
-        message.success('Report created successfully!'); // Show success message
+        message.success('Report created successfully'); // Show success message
         setIsVisible(false);
       },
       onError: (error) => {

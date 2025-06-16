@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import RuleActionsMenu from '../components/RuleActionsMenu';
@@ -21,7 +22,7 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getErrorMessage } from '@/utils/lang';
-import { useHasResources } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standardDataTypes';
@@ -48,6 +49,7 @@ export function canSimulate(ruleInstance: RuleInstance) {
 const MyRule = (props: { simulationMode?: boolean }) => {
   useScrollToFocus();
   const api = useApi();
+  const auth0User = useAuth0User();
   const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
@@ -137,8 +139,12 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const handleDeleteRuleInstanceMutation = useMutation<void, Error, string>(
     async (ruleInstanceId) => await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId }),
     {
-      onSuccess: () => {
-        message.success('Rule deleted');
+      onSuccess: (ruleInstanceId) => {
+        message.success('Rule deleted successfully', {
+          details: `${capitalizeNameFromEmail(
+            auth0User?.name || '',
+          )} deleted the rule ${ruleInstanceId}`,
+        });
         reloadTable();
         setDeleting(false);
       },

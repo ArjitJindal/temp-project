@@ -132,7 +132,7 @@ export const ApiKeysSettings = () => {
                                   onClick={async () => {
                                     try {
                                       await copyTextToClipboard(key ?? '');
-                                      message.success('Copied');
+                                      message.success('API key copied to clipboard');
                                     } catch (error) {
                                       message.error(`Failed to copy: ${getErrorMessage(error)}`);
                                     }

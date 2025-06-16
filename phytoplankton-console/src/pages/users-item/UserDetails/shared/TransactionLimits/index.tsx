@@ -321,7 +321,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
           ? api.postConsumerUsersUserId(params)
           : api.postBusinessUsersUserId(params));
 
-        message.success('Saved');
+        message.success('Transaction limits saved successfully');
         setPaymentMethodLimits({
           ...paymentMethodLimits,
           [paymentMethod]: newPaymentMethodTransactionLimit,

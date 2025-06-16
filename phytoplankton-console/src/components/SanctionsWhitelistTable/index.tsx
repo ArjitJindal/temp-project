@@ -44,7 +44,7 @@ export default function SanctionsWhitelistTable(props: Props) {
     },
     {
       onSuccess: () => {
-        message.success('Record deleted');
+        message.success('Record deleted successfully');
         queryResult.refetch();
       },
       onError: (e) => {

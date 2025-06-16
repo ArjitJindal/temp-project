@@ -105,7 +105,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     },
     {
       onSuccess: () => {
-        message.success('Successfully created');
+        message.success(`A new ${entityName} is created successfully`);
         setDrawerMode('CLOSED');
         queryResult.refetch();
       },
@@ -117,13 +117,13 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
   const updateMutation = useMutation(
     async (entity: Entity) => {
       if (selectedEntity == null) {
-        throw new Error(`Unable to update selectedEntity since it is null`);
+        throw new Error(`Unable to update ${entityName} since it is null`);
       }
       return await apiOperations.UPDATE(selectedEntity[entityIdField], entity);
     },
     {
       onSuccess: () => {
-        message.success('Successfully updated');
+        message.success(`${entityName} is updated successfully`);
         setDrawerMode('CLOSED');
         queryResult.refetch();
       },
@@ -138,7 +138,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     },
     {
       onSuccess: () => {
-        message.success('Successfully deleted');
+        message.success(`${entityName} is deleted successfully`);
         queryResult.refetch();
       },
       onError: (error: Error) => {
@@ -295,6 +295,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
               hideFilters={true}
               params={params}
               onChangeParams={setParams}
+              externalHeader
               queryResults={queryResult}
               columns={columns.concat(actionColumn)}
               extraTools={[

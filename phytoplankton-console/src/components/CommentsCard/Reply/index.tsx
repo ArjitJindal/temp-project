@@ -29,7 +29,7 @@ export const Reply = (props: Props) => {
     submitRequest,
     {
       onSuccess: (data) => {
-        message.success('Comment successfully added!');
+        message.success('Comment added successfully');
         onSuccess(data);
         commentEditorRef.current?.reset();
         setCommentFormValues((prev) => {

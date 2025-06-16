@@ -65,7 +65,7 @@ export default function ReportStatusChangeModal(props: {
             await queryClient.invalidateQueries({ queryKey: REPORTS_LIST() });
             setStatusInfoEditing(false);
             onClose();
-            message.success('Saved');
+            message.success('Report status updated successfully');
           } catch (e) {
             message.error(`Failed to save: ${e}`);
           }

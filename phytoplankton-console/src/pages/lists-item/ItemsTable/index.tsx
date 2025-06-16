@@ -146,7 +146,7 @@ export default function ItemsTable(props: Props) {
         .then(() => {
           hideMessage();
           setNewUserData({ value: [], reason: '', meta: {} });
-          message.success(`Item successfully added!`);
+          message.success(`Item added successfully`);
           tableRef.current?.reload();
         })
         .catch((e) => {

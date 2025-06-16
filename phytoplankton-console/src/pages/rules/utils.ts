@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
-import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
+import {
+  capitalizeNameFromEmail,
+  firstLetterUpper,
+  humanizeConstant,
+} from '@flagright/lib/utils/humanize';
+import { useAuth0User } from '@/utils/user-utils';
 import { Option } from '@/components/library/SelectionGroup';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
@@ -23,6 +28,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { GET_RULE_INSTANCE, GET_RULE_INSTANCES, RULES } from '@/utils/queries/keys';
+import { makeUrl } from '@/utils/routing';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -542,6 +548,7 @@ export function useUpdateRuleInstance(
 ) {
   const api = useApi();
   const queryClient = useQueryClient();
+  const auth0User = useAuth0User();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
       if (ruleInstance.id == null) {
@@ -566,7 +573,17 @@ export function useUpdateRuleInstance(
             `Rule ${updatedRuleInstance.id} has been successfully updated and will be live once deployed.`,
           );
         } else {
-          message.success(`Rule updated - ${updatedRuleInstance.id}`);
+          message.success(`Rule updated successfully`, {
+            details: `${capitalizeNameFromEmail(auth0User?.name || '')} updated the rule ${
+              updatedRuleInstance.id
+            }`,
+            link: makeUrl('/rules/my-rules/:id/:mode', {
+              id: updatedRuleInstance.id,
+              mode: 'view',
+            }),
+            linkTitle: 'View rule',
+            copyFeedback: 'Rule URL copied to clipboard',
+          });
         }
       },
       onError: async (err) => {
@@ -580,6 +597,7 @@ export function useCreateRuleInstance(
   onRuleInstanceCreated?: (ruleInstance: RuleInstance) => void,
 ) {
   const api = useApi();
+  const auth0User = useAuth0User();
   const queryClient = useQueryClient();
   return useMutation<RuleInstance, unknown, RuleInstance>(
     async (ruleInstance: RuleInstance) => {
@@ -593,7 +611,17 @@ export function useCreateRuleInstance(
           onRuleInstanceCreated(newRuleInstance);
         }
         await queryClient.invalidateQueries(GET_RULE_INSTANCES());
-        message.success(`Rule created - ${newRuleInstance.id}`);
+        message.success(`A new rule has been created successfully`, {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} created the rule ${
+            newRuleInstance.id
+          }`,
+          link: makeUrl('/rules/my-rules/:id/:mode', {
+            id: newRuleInstance.id,
+            mode: 'view',
+          }),
+          linkTitle: 'View rule',
+          copyFeedback: 'Rule URL copied to clipboard',
+        });
       },
       onError: async (err) => {
         message.fatal(`Unable to create the rule - Some parameters are missing`, err);

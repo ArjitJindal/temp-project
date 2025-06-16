@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { uniqBy } from 'lodash';
 import { useLocation, useNavigate } from 'react-router';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { capitalizeNameFromEmail, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import s from './index.module.less';
@@ -15,7 +15,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams, CommonParams } from '@/components/library/Table/types';
-import { getDisplayedUserInfo, useHasResources, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl, parseQueryString } from '@/utils/routing';
@@ -57,7 +57,7 @@ export default function ReportsTable() {
     () => sarQueryAdapter.deserializer(parseQueryString(location.search)),
     [location.search],
   );
-
+  const auth0User = useAuth0User();
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
   const api = useApi({ debounce: 500 });
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
@@ -121,7 +121,12 @@ export default function ReportsTable() {
             reportIds: variables.reportIds,
           },
         });
-        message.success(`${pluralize('Report', variables.reportIds.length)} deleted!`);
+        message.success(`${pluralize('Report', variables.reportIds.length)} deleted successfully`, {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} deleted the ${pluralize(
+            'report',
+            variables.reportIds.length,
+          )} ${variables.reportIds.join(', ')}`,
+        });
       } catch (e) {
         console.error(e);
         message.error(`Unable to delete reports: ${getErrorMessage(e)}`);

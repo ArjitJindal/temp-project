@@ -232,7 +232,7 @@ export function useTransactionStateLabel(
   return getTransactionStateLabel(transactionState, settings);
 }
 
-export function useUpdateTenantSettings() {
+export function useUpdateTenantSettings(successMessage?: string) {
   const api = useApi();
   const reloadSettings = useReloadSettings();
   return useMutation<unknown, unknown, TenantSettings>(
@@ -244,7 +244,7 @@ export function useUpdateTenantSettings() {
     {
       retry: false,
       onSuccess: () => {
-        message.success('Settings saved');
+        message.success(successMessage || 'Settings saved successfully');
         reloadSettings();
       },
       onError: (e) => {

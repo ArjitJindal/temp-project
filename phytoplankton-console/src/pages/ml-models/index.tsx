@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import { useI18n } from '@/locales';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -17,6 +18,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
+import { useAuth0User } from '@/utils/user-utils';
 
 interface TableSearchParams extends CommonParams {
   modelId?: string;
@@ -30,6 +32,7 @@ export const MlModelsPage = () => {
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
   });
+  const auth0User = useAuth0User();
 
   const queryResult = usePaginatedQuery(
     MACHINE_LEARNING_MODELS(params),
@@ -48,14 +51,19 @@ export const MlModelsPage = () => {
 
   const updateModelMutation = useMutation(
     async (mlModel: RuleMLModel) => {
-      return await api.updateRuleMlModelModelId({
+      await api.updateRuleMlModelModelId({
         modelId: mlModel.id,
         RuleMLModel: mlModel,
       });
+      return mlModel;
     },
     {
-      onSuccess: () => {
-        message.success('Model updated successfully');
+      onSuccess: (mlModel) => {
+        message.success(`Model ${mlModel.enabled ? 'enabled' : 'disabled'} successfully`, {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} ${
+            mlModel.enabled ? 'enabled' : 'disabled'
+          } the model ${mlModel.id}`,
+        });
         queryResult.refetch();
       },
       onError: (error: Error) => {

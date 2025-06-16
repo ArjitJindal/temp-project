@@ -127,7 +127,7 @@ export default function KYCChangeModal(props: Props) {
     },
     {
       onSuccess: async (data) => {
-        message.success(`KYC status updated`);
+        message.success('KYC status updated successfully');
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.kycStatus, data.updatedComment);
         onClose();

@@ -121,6 +121,10 @@
   }
 }
 
+.largeMessage {
+  padding: @figma-vars--tokens-spacingSpacingM;
+}
+
 @keyframes Message_show {
   0% {
     transform: scaleY(0) scaleX(0.85) translateY(100%);
@@ -144,7 +148,7 @@
 .iconWrapper {
   display: flex;
   align-items: center;
-  height: @figma-vars--primitives-typographyFontLineHeightM;
+  padding-top: 2px;
 }
 
 .icon {
@@ -164,10 +168,17 @@
 }
 
 .messageLink {
-  margin-left: 16px;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
+  font-weight: 500;
+  width: fit-content;
 }
 
 .messageBody {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-weight: 400;
   font-size: @figma-vars--primitives-typographyFontSizeS;
   line-height: @figma-vars--primitives-typographyFontLineHeightS;
@@ -176,11 +187,23 @@
 .closeIcon {
   display: flex;
   align-items: center;
-  height: @figma-vars--primitives-typographyFontLineHeightM;
   cursor: pointer;
   flex-shrink: 0;
 
   > svg {
     height: @figma-vars--tokens-sizeIconIconsizeS;
   }
+}
+
+.copyIcon {
+  cursor: pointer;
+}
+
+.messageActions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding-top: 2px;
+  margin-left: 36px;
 }

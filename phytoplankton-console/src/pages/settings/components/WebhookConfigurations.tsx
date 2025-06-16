@@ -37,7 +37,7 @@ export const WebhookConfigurations: React.FC = () => {
           });
           actionRef.current?.reload();
         }
-        message.success('Saved');
+        message.success('Webhook configuration saved successfully');
       } catch (e) {
         message.fatal(`Failed to save`, e);
       } finally {

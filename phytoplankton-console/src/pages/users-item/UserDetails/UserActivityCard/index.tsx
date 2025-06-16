@@ -78,7 +78,7 @@ export default function UserActivityCard(props: Props) {
     },
     {
       onSuccess: (data, variables) => {
-        message.success('Comment deleted!');
+        message.success('Comment deleted successfully');
         queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
           USERS_ITEM(user.userId),
           (user) => {
@@ -113,7 +113,7 @@ export default function UserActivityCard(props: Props) {
       },
       onError: (e) => {
         console.error(e);
-        message.success('Unable to delete comment!');
+        message.error('Unable to delete comment');
       },
     },
   );

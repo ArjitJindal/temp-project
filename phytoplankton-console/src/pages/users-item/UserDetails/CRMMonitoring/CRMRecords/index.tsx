@@ -58,11 +58,11 @@ export default function CRMRecords({ userId }: Props) {
     {
       onError: () => {
         messageData?.();
-        messageData = message.fatal('Failed to link CRM record');
+        messageData = message.error('Failed to link CRM record');
       },
       onSuccess: () => {
         messageData?.();
-        messageData = message.success('CRM record linked successfully it will refresh shortly');
+        messageData = message.info('CRM record linked successfully it will refresh shortly');
         setTimeout(() => {
           queryResults.refetch();
         }, 3000);

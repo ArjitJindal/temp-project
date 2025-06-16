@@ -101,7 +101,7 @@ export default function NotificationsDrawer(props: Props) {
       onSuccess: async (data, variables) => {
         const { notificationId } = variables;
         if (!notificationId) {
-          message.success('All notifications marked as read');
+          message.success('All notifications marked as read successfully');
         }
         await invalidateAll();
         markAsRead();

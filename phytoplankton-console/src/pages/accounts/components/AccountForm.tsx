@@ -192,7 +192,7 @@ export default function AccountForm(props: Props) {
         if (!data) {
           return;
         }
-        message.success('User invited!');
+        message.success('New account invited successfully');
         onSuccess();
         props.onChangeVisibility(false);
         await new Promise((resolve) => setTimeout(resolve, 3000)); // sleep for 3 seconds to let the account get synced
@@ -247,7 +247,7 @@ export default function AccountForm(props: Props) {
         if (!data) {
           return;
         }
-        message.success('Account updated!');
+        message.success('Account updated successfully');
         onSuccess();
         props.onChangeVisibility(false);
         invalidateUsers.invalidate();
@@ -272,7 +272,7 @@ export default function AccountForm(props: Props) {
     },
     {
       onSuccess: () => {
-        message.success('Invitation resent!');
+        message.success('Invitation resent successfully');
         onSuccess();
       },
       onError: (e) => {
@@ -292,7 +292,7 @@ export default function AccountForm(props: Props) {
     },
     {
       onSuccess: () => {
-        message.success('Password reset!');
+        message.success('Password reset successfully');
         onSuccess();
       },
       onError: (e) => {

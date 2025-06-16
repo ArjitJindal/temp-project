@@ -39,6 +39,7 @@ import { notEmpty } from '@/utils/array';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { Feature } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { message } from '@/components/library/Message';
 
 type KeyValues =
   | 'OVERVIEW'
@@ -441,6 +442,7 @@ function Analysis() {
               style={{ width: '100%' }}
               type="PRIMARY"
               onClick={() => {
+                message.success('Dashboard updated successfully');
                 setDashboardSettings(() =>
                   Object.keys(WIDGETS).reduce((acc, group) => {
                     WIDGETS[group].items.forEach((widget: WidgetType) => {
@@ -449,6 +451,7 @@ function Analysis() {
                     return acc;
                   }, {} as DashboardSettings),
                 );
+                setDrawerVisible(false);
               }}
               testName="update-dashboard-button"
             >

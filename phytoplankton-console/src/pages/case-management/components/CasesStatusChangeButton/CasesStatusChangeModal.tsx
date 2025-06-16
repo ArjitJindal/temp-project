@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { capitalizeNameFromEmail, humanizeConstant } from '@flagright/lib/utils/humanize';
 import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
@@ -10,7 +10,7 @@ import { useApi } from '@/api';
 import { CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useCurrentUser, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
 import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
@@ -21,6 +21,7 @@ import {
 } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
 import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { makeUrl } from '@/utils/routing';
 
 export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   onSaved: () => void;
@@ -28,6 +29,7 @@ export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'upda
 
 export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
+  const auth0User = useAuth0User();
   const [users] = useUsers();
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
@@ -92,7 +94,6 @@ export default function CasesStatusChangeModal(props: Props) {
                   `'${users[assignment.assigneeUserId]?.name || assignment.assigneeUserId}'`,
               )
               .join(', ');
-
         message.success(
           `Case '${
             props.entityIds[0]
@@ -103,10 +104,21 @@ export default function CasesStatusChangeModal(props: Props) {
           }'.`,
         );
       } else {
-        message.success('Saved');
+        message.success(`Case ${props.newStatus.toLowerCase()} successfully`, {
+          details: `${capitalizeNameFromEmail(
+            auth0User?.name || '',
+          )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
+            updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+          }`,
+          link: makeUrl(`/case-management/case/:id`, {
+            id: props.entityIds[0],
+          }),
+          linkTitle: 'View case',
+          copyFeedback: 'Case URL copied to clipboard',
+        });
       }
     },
-    [api, props.entityIds, users, props.newStatusActionLabel],
+    [api, props.entityIds, props.newStatusActionLabel, props.newStatus, users, auth0User?.name],
   );
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {

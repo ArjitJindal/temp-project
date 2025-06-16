@@ -37,14 +37,14 @@ export const SanctionsSettings = () => {
   const hasNoSanctionsProviders = useHasNoSanctionsProviders();
 
   const handleDownload = () => {
-    message.success('Screening list download started');
+    message.info('Screening list download started');
     const downloadUrl =
       'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+September+2024.xlsx';
     downloadLink(downloadUrl, 'SanctionsList-September-2024.xlsx');
   };
 
   const handleKYC6Download = () => {
-    message.success('KYC6 download started');
+    message.info('KYC6 download started');
 
     const downloadUrl1 =
       'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Acuris_Risk_Intelligence_May.zip';

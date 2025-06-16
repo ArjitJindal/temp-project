@@ -170,6 +170,10 @@ export function capitalizeWords(text: string): string {
   return startCase(toLower(text))
 }
 
+export function capitalizeNameFromEmail(email: string): string {
+  return capitalizeWords(email.split('@')[0])
+}
+
 // startCase from loadsh removes accents and symbols
 export function capitalizeWordsInternal(text: string): string {
   return text

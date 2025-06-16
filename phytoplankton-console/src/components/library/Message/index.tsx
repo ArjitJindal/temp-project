@@ -3,12 +3,14 @@ import cn from 'clsx';
 import * as Sentry from '@sentry/react';
 import toast, { ToastPosition } from 'react-hot-toast';
 import s from './index.module.less';
+import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import CloseFillIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
 import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.svg';
 import Link from '@/components/ui/Link';
+import { copyTextToClipboard } from '@/utils/browser';
 
 const errorsCaptured: string[] = [];
 
@@ -21,6 +23,7 @@ type ShowNotificationOptions = {
   link?: string;
   linkTitle?: string;
   position?: ToastPosition;
+  copyFeedback?: string;
 };
 
 export type ShowNotification = (
@@ -113,18 +116,11 @@ function open(
   type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
   options?: ShowNotificationOptions,
 ): CloseMessage {
-  let defaultDuration;
-  switch (type) {
-    case 'INFO':
-    case 'SUCCESS':
-      defaultDuration = 3500;
-      break;
-    case 'ERROR':
-    case 'WARNING':
-      defaultDuration = 6000;
-      break;
-    case 'LOADING':
-      defaultDuration = Number.POSITIVE_INFINITY;
+  let defaultDuration = 5000;
+  if (options?.link && options.linkTitle) {
+    defaultDuration = 8000;
+  } else if (type === 'LOADING') {
+    defaultDuration = Infinity;
   }
   const toastId = toast(
     (t) => {
@@ -133,18 +129,32 @@ function open(
           isVisible={t.visible}
           type={type}
           title={title}
+          link={options?.link}
+          linkTitle={options?.linkTitle}
+          options={options}
           onClose={() => {
             toast.dismiss(t.id);
             options?.onClose?.();
           }}
         >
           {options?.details}
+          {options?.link && (
+            <Link
+              className={s.messageLink}
+              to={options?.link}
+              onClick={() => {
+                toast.dismiss(t.id);
+              }}
+            >
+              {options?.linkTitle ?? 'Link'}
+            </Link>
+          )}
         </MessageBody>
       );
     },
     {
-      position: options?.position,
-      duration: options?.duration ?? defaultDuration ?? 5000,
+      position: options?.position ?? (options?.link ? 'bottom-right' : 'top-center'),
+      duration: options?.duration ?? defaultDuration,
     },
   );
   return () => {
@@ -160,19 +170,20 @@ export function MessageBody(props: {
   children?: React.ReactNode;
   onClose?: () => void;
   isVisible?: boolean;
+  options?: ShowNotificationOptions;
 }) {
-  const { type, title, children, link, linkTitle, onClose, isVisible } = props;
+  const { type, title, children, options, onClose, link, isVisible } = props;
 
   let icon: React.ReactNode | undefined = undefined;
   let isClosable = true;
   if (type === 'INFO') {
-    icon = <InformationFillIcon className={cn(s.icon)} />;
+    icon = <InformationFillIcon className={s.icon} height={16} width={16} />;
   } else if (type === 'SUCCESS') {
-    icon = <CheckboxCircleFillIcon className={cn(s.icon)} />;
+    icon = <CheckboxCircleFillIcon className={s.icon} height={16} width={16} />;
   } else if (type === 'ERROR') {
-    icon = <AlertFillIcon className={cn(s.icon)} />;
+    icon = <AlertFillIcon className={s.icon} height={16} width={16} />;
   } else if (type === 'WARNING') {
-    icon = <ErrorWarningFillIcon className={cn(s.icon)} />;
+    icon = <ErrorWarningFillIcon className={s.icon} height={16} width={16} />;
   } else if (type === 'LOADING') {
     isClosable = false;
   }
@@ -184,6 +195,7 @@ export function MessageBody(props: {
         s[`type-${type}`],
         isVisible != null && s.isAnimationEnabled,
         !isVisible && s.isHidden,
+        (options?.details || options?.link) && s.largeMessage,
       )}
       data-sentry-allow={type === 'ERROR'}
       data-cy="toast-body"
@@ -192,19 +204,25 @@ export function MessageBody(props: {
       <div className={s.messageText}>
         <div className={s.messageTitle} data-cy={'toast-message-title'}>
           {title}
-          {link && (
-            <Link className={s.messageLink} to={link}>
-              {linkTitle ?? 'Link'}
-            </Link>
-          )}
         </div>
-        <div className={s.messageBody}>{children}</div>
+        {(options?.details || options?.link) && <div className={s.messageBody}>{children}</div>}
       </div>
-      {isClosable && (
-        <div className={s.closeIcon} onClick={onClose}>
-          <CloseFillIcon />
-        </div>
-      )}
+      <div className={s.messageActions}>
+        {isClosable && (
+          <CloseFillIcon className={s.closeIcon} height={16} width={16} onClick={onClose} />
+        )}
+        {link && (
+          <FileCopyOutlined
+            height={16}
+            width={16}
+            className={s.copyIcon}
+            onClick={() => {
+              message.success(options?.copyFeedback ?? 'Link copied to clipboard');
+              copyTextToClipboard(link ?? '');
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

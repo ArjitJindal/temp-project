@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { useEffect } from 'react';
 import { RiskFactorConfiguration, serializeRiskItem } from '../RiskFactorConfiguration';
 import { RiskFactorConfigurationFormValues } from '../RiskFactorConfiguration/RiskFactorConfigurationForm';
@@ -21,6 +22,7 @@ import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis
 import { message } from '@/components/library/Message';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { useAuth0User } from '@/utils/user-utils';
 
 export default function () {
   const isSimulationMode = window.localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
@@ -290,6 +292,7 @@ function RiskItemForm(props: RiskItemFormProps) {
   const { type, id, riskClassificationValues, mode } = props;
   const navigate = useNavigate();
   const api = useApi();
+  const user = useAuth0User();
   const queryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
     if (id) {
       return await api.getRiskFactor({ riskFactorId: id });
@@ -327,7 +330,17 @@ function RiskItemForm(props: RiskItemFormProps) {
       onSuccess: async (newRiskFactor) => {
         navigateToRiskFactor();
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
-        message.success(`Risk factor updated - ${newRiskFactor.id}`);
+        message.success('Risk factor updated successfully', {
+          link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
+            type,
+            id: newRiskFactor.id,
+          }),
+          linkTitle: 'View risk factor',
+          details: `${capitalizeNameFromEmail(user?.name || '')} updated a risk factor ${
+            newRiskFactor.id
+          }`,
+          copyFeedback: 'Risk factor URL copied to clipboard',
+        });
       },
       onError: async (err) => {
         message.fatal(`Unable to update the risk factor - Some parameters are missing`, err);
@@ -350,7 +363,17 @@ function RiskItemForm(props: RiskItemFormProps) {
       onSuccess: async (newRiskFactor) => {
         navigateToRiskFactor();
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
-        message.success(`Risk factor created - ${newRiskFactor.id}`);
+        message.success('Risk factor created successfully', {
+          link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
+            type,
+            id: newRiskFactor.id,
+          }),
+          linkTitle: 'View risk factor',
+          details: `${capitalizeNameFromEmail(user?.name || '')} created a risk factor ${
+            newRiskFactor.id
+          }`,
+          copyFeedback: 'Risk factor URL copied to clipboard',
+        });
       },
       onError: async (err) => {
         message.fatal(`Unable to create the risk factor - Some parameters are missing`, err);

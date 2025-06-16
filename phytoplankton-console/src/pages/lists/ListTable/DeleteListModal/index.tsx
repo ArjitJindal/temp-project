@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Typography } from 'antd';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import Icon from './icon-judge.react.svg';
 import s from './index.module.less';
 import Spam2FillIcon from '@/components/ui/icons/Remix/system/spam-2-fill.react.svg';
@@ -10,6 +11,7 @@ import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useAuth0User } from '@/utils/user-utils';
 interface Props {
   listType: ListType;
   list: ListHeaderInternal | null;
@@ -21,6 +23,7 @@ export default function DeleteListModal(props: Props) {
   const api = useApi();
   const settings = useSettings();
   const { list, onCancel, onSuccess } = props;
+  const auth0User = useAuth0User();
 
   const isOpen = list != null;
   const [isLoading, setLoading] = useState(false);
@@ -37,7 +40,14 @@ export default function DeleteListModal(props: Props) {
       promise
         .then(
           () => {
-            message.success('List deleted!');
+            message.success(
+              `${listType === 'WHITELIST' ? 'Whitelist' : 'Blacklist'} is deleted successfully`,
+              {
+                details: `${capitalizeNameFromEmail(auth0User?.name || '')} deleted a ${
+                  listType === 'WHITELIST' ? 'whitelist' : 'blacklist'
+                } ${list?.metadata?.name}`,
+              },
+            );
             onSuccess();
           },
           (e) => {
@@ -48,7 +58,7 @@ export default function DeleteListModal(props: Props) {
           setLoading(false);
         });
     }
-  }, [onSuccess, listId, listType, api]);
+  }, [listId, listType, api, auth0User?.name, list?.metadata?.name, onSuccess]);
 
   // todo: i18n
   return (

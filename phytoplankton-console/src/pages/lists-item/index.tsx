@@ -60,7 +60,7 @@ export default function ListsItemPage() {
     },
     {
       onSuccess: () => {
-        message.success('List items successfully cleared!');
+        message.success('List items cleared successfully');
       },
       onError: (error) => {
         message.fatal(`Unable to clear list items! ${getErrorMessage(error)}`, error);

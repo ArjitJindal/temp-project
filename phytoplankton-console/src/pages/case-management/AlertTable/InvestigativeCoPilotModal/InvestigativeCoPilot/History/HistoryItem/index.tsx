@@ -103,7 +103,7 @@ export default function HistoryItem(props: Props) {
     },
     {
       onSuccess: () => {
-        message.success('Comment successfully added!');
+        message.success('Comment added successfully');
       },
       onError: (error) => {
         message.fatal(`Unable to add comment! ${getErrorMessage(error)}`, error);

@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import Permissions from './Permissions';
 import RoleHeader from './RoleHeader';
@@ -16,6 +17,7 @@ import { AccountRole, CreateAccountRole, PermissionStatements, PermissionsAction
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useRoles } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
+import { makeUrl } from '@/utils/routing';
 
 interface RoleDetailsProps {
   mode: 'view' | 'edit';
@@ -121,13 +123,29 @@ export default function RoleDetails({
 
     try {
       if (!role?.id) {
-        await api.createRole({ CreateAccountRole: payload as CreateAccountRole });
-        message.success(`Role '${payload.name}' created successfully.`);
+        const newRole = await api.createRole({ CreateAccountRole: payload as CreateAccountRole });
+        message.success('New role created successfully', {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} created a new role ${
+            newRole.name
+          }`,
+          link: makeUrl(`/accounts/roles/:id/read`, {
+            id: newRole.id,
+          }),
+          linkTitle: 'View role',
+          copyFeedback: 'Role URL copied to clipboard',
+        });
         queryClient.invalidateQueries(ROLES_LIST());
         handleSuccess?.();
       } else if (role?.id) {
         await api.updateRole({ roleId: role.id, AccountRole: { id: role.id, ...payload } });
-        message.success(`Role '${payload.name}' updated successfully.`);
+        message.success('Role updated successfully', {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} updated role ${role.name}`,
+          link: makeUrl(`/accounts/roles/:id/read`, {
+            id: role.id,
+          }),
+          linkTitle: 'View role',
+          copyFeedback: 'Role URL copied to clipboard',
+        });
         queryClient.invalidateQueries(ROLES_LIST());
         handleSuccess?.();
       } else {
@@ -138,7 +156,18 @@ export default function RoleDetails({
     } finally {
       setIsLoading(false);
     }
-  }, [name, currentStatements, description, role?.id, api, queryClient, handleSuccess, allRoles]);
+  }, [
+    name,
+    role?.id,
+    role?.name,
+    allRoles,
+    currentStatements,
+    description,
+    api,
+    auth0User?.name,
+    queryClient,
+    handleSuccess,
+  ]);
 
   const handleDelete = useCallback(async () => {
     if (!role?.id) {

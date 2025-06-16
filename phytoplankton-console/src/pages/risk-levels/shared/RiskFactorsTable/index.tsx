@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { EditOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import ValuesTable from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/ValuesTable';
 import * as Card from '@/components/ui/Card';
@@ -18,7 +19,7 @@ import {
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE_TIME, STRING } from '@/components/library/Table/standardDataTypes';
-import { useHasResources } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import Id from '@/components/ui/Id';
 import { RuleStatusSwitch } from '@/pages/rules/components/RuleStatusSwitch';
@@ -93,6 +94,7 @@ export default function RiskFactorsTable(props: Props) {
   const queryClient = useQueryClient();
   const actionRef = useRef<TableRefType>(null);
   const api = useApi();
+  const user = useAuth0User();
 
   const [updatedRiskFactor, setUpdatedRiskFactor] = useState<{ [key: string]: RiskFactor }>({});
   const [selectedSection, setSelectedSection] = useState<ScopeSelectorValue>(
@@ -163,13 +165,23 @@ export default function RiskFactorsTable(props: Props) {
           });
           await queryClient.invalidateQueries(['RISK_FACTORS_V8', selectedSection]);
           setUpdatedRiskFactor((prev) => ({ ...prev, [data.id]: data }));
-          message.success(`Risk factor updated`);
+          message.success('Risk factor updated successfully', {
+            link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
+              type: selectedSection,
+              id,
+            }),
+            linkTitle: 'View risk factor',
+            details: `${capitalizeNameFromEmail(user?.name || '')} ${
+              status === 'ACTIVE' ? 'enabled' : 'disabled'
+            } a risk factor ${data.id}`,
+            copyFeedback: 'Risk factor URL copied to clipboard',
+          });
         } catch (err) {
           message.fatal(`Unable to update the risk factor - Some parameters are missing`, err);
         }
       }
     },
-    [isSimulation, api, queryClient, selectedSection],
+    [isSimulation, api, queryClient, selectedSection, user?.name],
   );
 
   const handleEditRiskFactor = useCallback(
@@ -228,7 +240,18 @@ export default function RiskFactorsTable(props: Props) {
               handleSimulationSave(updatedRiskFactors);
             }
 
-            message.success('Risk factor duplicated');
+            message.success('Risk factor duplicated successfully', {
+              link: makeUrl(`/risk-levels/risk-factors/simulation-mode/:key/:type/:id/read`, {
+                key: `${jobId ? jobId : 'new'}-${activeIterationIndex}`,
+                type: selectedSection,
+                id: newRiskFactor.id,
+              }),
+              linkTitle: 'View risk factor',
+              copyFeedback: 'Risk factor URL copied to clipboard',
+              details: `${capitalizeNameFromEmail(user?.name || '')} duplicated a risk factor ${
+                newRiskFactor.id
+              }`,
+            });
           } else {
             const duplicateParameterRiskFactor = async () => {
               try {
@@ -256,7 +279,17 @@ export default function RiskFactorsTable(props: Props) {
                 await queryClient.invalidateQueries(RISK_FACTORS_V8(selectedSection));
 
                 hideSavingMessage();
-                message.success(`Risk factor duplicated - ${newRiskFactor.id}`);
+                message.success('Risk factor duplicated successfully', {
+                  link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
+                    type: selectedSection,
+                    id: newRiskFactor.id,
+                  }),
+                  linkTitle: 'View risk factor',
+                  details: `${capitalizeNameFromEmail(user?.name || '')} duplicated a risk factor ${
+                    newRiskFactor.id
+                  }`,
+                  copyFeedback: 'Risk factor URL copied to clipboard',
+                });
               } catch (err) {
                 message.fatal(`Unable to duplicate the risk factor`, err);
               }
@@ -295,16 +328,17 @@ export default function RiskFactorsTable(props: Props) {
     },
     [
       handleEditRiskFactor,
-      navigate,
-      selectedSection,
-      api,
-      queryClient,
       isSimulation,
       simulationRiskFactorsMap,
+      selectedSection,
       setSimulationRiskFactorsMap,
       handleSimulationSave,
       jobId,
       activeIterationIndex,
+      user?.name,
+      api,
+      queryClient,
+      navigate,
     ],
   );
 

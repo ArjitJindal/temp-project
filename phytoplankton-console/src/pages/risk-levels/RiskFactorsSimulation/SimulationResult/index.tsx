@@ -156,7 +156,7 @@ export const SimulationResult = (props: Props) => {
         },
       });
 
-      message.success('Report successfully downloaded');
+      message.success('Report downloaded successfully');
     } catch (err) {
       message.fatal(
         'Unable to complete the download!',

@@ -29,7 +29,7 @@ export default function RiskQualification(props: Props) {
     (state) => api.postPulseRiskClassification({ RiskClassificationScore: prepareApiState(state) }),
     {
       onSuccess: () => {
-        message.success('Risk values saved');
+        message.success('Risk values saved successfully');
         riskValuesRefetch();
       },
       onError: (e) => {

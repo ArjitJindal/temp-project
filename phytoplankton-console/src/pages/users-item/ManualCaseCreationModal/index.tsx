@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { compact } from 'lodash';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { Case, CaseReasons, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
@@ -18,6 +19,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import Label from '@/components/library/Label';
+import { useAuth0User } from '@/utils/user-utils';
 
 type Props = {
   isOpen: boolean;
@@ -53,6 +55,7 @@ const MANUAL_CASE_CREATION_REASONSS: readonly CaseReasons[] = [
 export const MannualCaseCreationModal = (props: Props) => {
   const { isOpen, setIsOpen, type, transactionIds } = props;
   const ref = useRef<FormRef<FormValues>>(null);
+  const user = useAuth0User();
   const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({
     values: INITIAL_VALUES,
     isValid: false,
@@ -96,7 +99,14 @@ export const MannualCaseCreationModal = (props: Props) => {
     },
     {
       onSuccess: (data) => {
-        message.success(`Case ${data.caseId} created successfully`);
+        message.success('A new case is created successfully', {
+          link: `/case-management/case/${data?.caseId}`,
+          linkTitle: 'View case',
+          details: `${capitalizeNameFromEmail(user?.name || '')} created a new case ${
+            data?.caseId
+          }`,
+          copyFeedback: 'Case URL copied to clipboard',
+        });
         setIsOpen(false);
         messageLoading?.();
       },
@@ -134,7 +144,14 @@ export const MannualCaseCreationModal = (props: Props) => {
     },
     {
       onSuccess: (data) => {
-        message.success(`Case ${data?.caseId} edited successfully`);
+        message.success('Case edited successfully', {
+          link: `/case-management/case/${data?.caseId}`,
+          linkTitle: 'View case',
+          details: `${capitalizeNameFromEmail(user?.name || '')} created a new manual case ${
+            data?.caseId
+          }`,
+          copyFeedback: 'Case URL copied to clipboard',
+        });
         setIsOpen(false);
         messageLoading?.();
       },

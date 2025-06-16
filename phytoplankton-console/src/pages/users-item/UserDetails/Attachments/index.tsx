@@ -154,7 +154,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
     {
       onSuccess: (data) => {
         console.info('new attachment', data);
-        message.success('Attachment successfully added!');
+        message.success('Attachment added successfully');
         updateAttachment(data);
         if (onNewComment) {
           onNewComment(

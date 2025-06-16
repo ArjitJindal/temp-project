@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
-import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
+import {
+  capitalizeNameFromEmail,
+  humanizeAuto,
+  humanizeConstant,
+} from '@flagright/lib/utils/humanize';
 import {
   getRuleInstanceDisplayId,
   isShadowRule,
@@ -26,7 +30,7 @@ import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';
-import { useHasResources } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -44,6 +48,7 @@ export const RuleInstanceInfo = (props: Props) => {
   const { ruleInstance: _ruleInstance } = props;
   const [ruleInstance, setRuleInstance] = useState(_ruleInstance);
   const api = useApi();
+  const auth0User = useAuth0User();
 
   const handleRuleInstanceUpdate = useCallback(async (ruleInstance: RuleInstance) => {
     const ruleInstanceId = ruleInstance.id;
@@ -112,8 +117,12 @@ export const RuleInstanceInfo = (props: Props) => {
   const handleDeleteRuleInstanceMutation = useMutation<void, Error, string>(
     async (ruleInstanceId) => await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId }),
     {
-      onSuccess: () => {
-        message.success('Rule deleted');
+      onSuccess: (ruleInstanceId) => {
+        message.success('Rule deleted successfully', {
+          details: `${capitalizeNameFromEmail(
+            auth0User?.name || '',
+          )} deleted the rule ${ruleInstanceId}`,
+        });
         navigate('/rules/my-rules');
       },
       onError: (e) => {

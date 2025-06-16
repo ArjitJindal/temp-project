@@ -230,7 +230,7 @@ function useTabs(
     },
     {
       onSuccess: (data, variables) => {
-        message.success('Comment deleted!');
+        message.success('Comment deleted successfully');
         const { commentId, groupId } = variables;
         if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
           const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');

@@ -73,7 +73,7 @@ export function ChecklistTemplatesSettings() {
     },
     {
       onSuccess: () => {
-        message.success('Successfully updated status');
+        message.success('Checklist template status updated successfully');
       },
       onError: (error: Error) => {
         message.error(`Error: ${error.message}`);

@@ -134,7 +134,7 @@ export default function UserManualRiskPanel(props: Props) {
         })
         .then(async (response) => {
           // todo: i18n
-          message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully!`);
+          message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully`);
           setSyncState(success(response));
           await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
         })

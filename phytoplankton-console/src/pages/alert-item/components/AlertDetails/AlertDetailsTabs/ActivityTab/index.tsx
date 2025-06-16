@@ -82,7 +82,7 @@ export default function ActivityTab(props: Props) {
     },
     {
       onSuccess: async (_, { commentId, groupId: alertId }) => {
-        message.success('Comment deleted!');
+        message.success('Comment deleted successfully');
         queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
           if (!alert) {
             return undefined;

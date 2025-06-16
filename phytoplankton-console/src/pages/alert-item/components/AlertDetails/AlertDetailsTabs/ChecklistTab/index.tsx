@@ -81,7 +81,7 @@ export default function ChecklistTab(props: Props) {
         if (alert.alertId == null) {
           throw new Error(`Unable to update status, alertId is null`);
         }
-        message.success(`Checklist items marked as ${status}`);
+        message.success(`Checklist items marked as ${status} successfully`);
         updateQueryData(alert.alertId, checklistItemIds, { qaStatus: status });
       },
       onError: (err: Error) => {
@@ -118,9 +118,11 @@ export default function ChecklistTab(props: Props) {
     {
       onSuccess: (_, { item, changes }) => {
         if (changes.done != null && changes.done != item.done) {
-          message.success(`Checklist item marked as ${changes.done ? 'done' : 'not done'}`);
+          message.success(
+            `Checklist item marked as ${changes.done ? 'done' : 'not done'} successfully`,
+          );
         } else if (changes.comment != null && changes.comment != item.comment) {
-          message.success(`Checklist item comment updated`);
+          message.success('Checklist item comment updated successfully');
         }
         if (alert.alertId != null && item.id != null) {
           updateQueryData(alert.alertId, [item.id], {

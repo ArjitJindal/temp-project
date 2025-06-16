@@ -1,7 +1,7 @@
 import PlusOutlined from '@ant-design/icons/lib/icons/PlusOutlined';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { capitalizeNameFromEmail, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import PolicyForm from './PolicyForm';
 import { FormValues, formValuesToSlaPolicy } from './utils/utils';
@@ -20,6 +20,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import {
   getDisplayedUserInfo,
+  useAuth0User,
   useCurrentUser,
   useHasResources,
   useUsers,
@@ -58,6 +59,7 @@ const defaultValues: FormValues = {
 
 export function SlaPolicySettings() {
   const api = useApi();
+  const auth0User = useAuth0User();
   const [users, loadingUsers] = useUsers();
   const [params, setParams] = useState<AllParams<DefaultApiGetSlaPoliciesRequest>>({
     ...DEFAULT_PARAMS_STATE,
@@ -82,8 +84,12 @@ export function SlaPolicySettings() {
       });
     },
     {
-      onSuccess: async () => {
-        message.success('Successfully created');
+      onSuccess: async (response) => {
+        message.success('A new SLA policy is created successfully', {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} created a new SLA policy ${
+            response.id
+          }`,
+        });
         setIsDrawerVisible(false);
         setSelectedSlaPolicy(undefined);
         slaPoliciesResult.refetch();
@@ -105,7 +111,11 @@ export function SlaPolicySettings() {
     },
     {
       onSuccess: () => {
-        message.success('Successfully updated');
+        message.success('SLA policy is updated successfully', {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} updated the SLA policy ${
+            selectedSlaPolicy?.id
+          }`,
+        });
         setSelectedSlaPolicy(undefined);
         setIsDrawerVisible(false);
         slaPoliciesResult.refetch();
@@ -121,7 +131,11 @@ export function SlaPolicySettings() {
     },
     {
       onSuccess: () => {
-        message.success('Successfully deleted');
+        message.success('SLA policy deleted successfully', {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} deleted the SLA policy ${
+            selectedSlaPolicy?.id
+          }`,
+        });
         slaPoliciesResult.refetch();
       },
       onError: (error: Error) => {
@@ -297,6 +311,7 @@ export function SlaPolicySettings() {
               tableId="sla-policy-table"
               hideFilters={true}
               params={params}
+              externalHeader
               onChangeParams={setParams}
               extraTools={[
                 () =>

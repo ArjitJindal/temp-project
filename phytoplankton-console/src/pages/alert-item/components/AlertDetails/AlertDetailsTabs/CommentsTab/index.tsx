@@ -49,7 +49,7 @@ export default function CommentsTab(props: Props) {
     },
     {
       onSuccess: async (newComment, { alertId }) => {
-        message.success('Comment successfully added!');
+        message.success('Comment added successfully');
         commentEditorRef.current?.reset();
         queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
           if (!alert) {
@@ -83,7 +83,7 @@ export default function CommentsTab(props: Props) {
     },
     {
       onSuccess: async (_, { alertId, commentId }) => {
-        message.success('Comment deleted!');
+        message.success('Comment deleted successfully');
         queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
           if (!alert) {
             return undefined;

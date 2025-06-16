@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { capitalizeNameFromEmail, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { message } from '@/components/library/Message';
@@ -86,7 +86,11 @@ export default function SubHeader(props: Props) {
           });
         }
 
-        message.success('Saved');
+        message.success('Case assignments saved successfully', {
+          details: `${capitalizeNameFromEmail(
+            user?.name || '',
+          )} saved the case assignments for case ${caseId}`,
+        });
       } catch (error) {
         message.fatal(`Failed to save ${getErrorMessage(error)}`, error);
       } finally {

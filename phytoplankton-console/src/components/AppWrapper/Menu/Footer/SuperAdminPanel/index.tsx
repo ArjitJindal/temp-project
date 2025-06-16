@@ -662,7 +662,7 @@ export default function SuperAdminPanel() {
               text={`Are you sure you want to run ${humanizeConstant(batchJobName)} batch job?`}
               onSuccess={() => {
                 batchJobMessage();
-                message.success(`${humanizeConstant(batchJobName)} started`);
+                message.success(`${humanizeConstant(batchJobName)} started successfully`);
               }}
             >
               {(props) => (
@@ -775,7 +775,7 @@ export default function SuperAdminPanel() {
                   text={`Are you sure you want to delete ${tenantIdToDelete} tenant?`}
                   onSuccess={() => {
                     batchJobMessage();
-                    message.success(`${tenantIdToDelete} deleted`);
+                    message.success(`${tenantIdToDelete} deleted successfully`);
                   }}
                 >
                   {(props) => (

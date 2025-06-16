@@ -36,7 +36,9 @@ export const ReasonsSettings = () => {
     {
       retry: false,
       onSuccess: (actionReason: ConsoleActionReason) => {
-        message.success(`Reason ${actionReason.isActive ? 'activated' : 'deactivated'}`);
+        message.success(
+          `Reason ${actionReason.isActive ? 'activated' : 'deactivated'} successfully`,
+        );
         asyncResourceReasons.refetch();
       },
       onError: (e) => {
@@ -51,8 +53,10 @@ export const ReasonsSettings = () => {
     },
     {
       retry: false,
-      onSuccess: () => {
-        message.success('Reasons successfully created');
+      onSuccess: (data) => {
+        message.success(
+          `${data.length > 1 ? 'New' : 'A new'} case and alert closure reason added successfully`,
+        );
         asyncResourceReasons.refetch();
         setCreateMode(undefined);
       },
