@@ -8222,6 +8222,7 @@ components:
             - COUNTERS
             - API_REQUEST_LOGS
             - NOTIFICATIONS
+            - GPT_REQUEST_LOGS
     FlatFileSchema:
       title: FlatFileSchema
       type: string

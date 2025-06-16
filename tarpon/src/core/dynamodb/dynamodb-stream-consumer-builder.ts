@@ -41,6 +41,7 @@ import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { Notification } from '@/@types/openapi-internal/Notification'
+import { GPTLogObject } from '@/utils/openai'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -166,6 +167,11 @@ type NotificationsHandler = (
   newNotifications: Notification | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type GptRequestsHandler = (
+  tenantId: string,
+  newGptRequests: GPTLogObject | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
@@ -195,6 +201,7 @@ export class StreamConsumerBuilder {
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
   apiRequestLogsHandler?: ApiRequestLogsHandler
   notificationsHandler?: NotificationsHandler
+  gptRequestsHandler?: GptRequestsHandler
   constructor(
     name: string,
     fanOutSqsQueue: string,
@@ -327,6 +334,13 @@ export class StreamConsumerBuilder {
     notificationsHandler: NotificationsHandler
   ): StreamConsumerBuilder {
     this.notificationsHandler = notificationsHandler
+    return this
+  }
+
+  public setGptRequestsHandler(
+    gptRequestsHandler: GptRequestsHandler
+  ): StreamConsumerBuilder {
+    this.gptRequestsHandler = gptRequestsHandler
     return this
   }
 
@@ -568,6 +582,12 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as Notification,
         update.NewImage as Notification,
+        dbClients
+      )
+    } else if (update.type === 'GPT_REQUESTS' && this.gptRequestsHandler) {
+      await this.gptRequestsHandler(
+        update.tenantId,
+        update.NewImage as GPTLogObject,
         dbClients
       )
     }

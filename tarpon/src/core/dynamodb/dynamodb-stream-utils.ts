@@ -24,6 +24,7 @@ import {
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
   API_REQUEST_LOGS_KEY_IDENTIFIER,
   NOTIFICATIONS_KEY_IDENTIFIER,
+  GPT_REQUESTS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -54,6 +55,8 @@ export type DynamoDbEntityType =
   | 'ALERTS_QA_SAMPLING'
   | 'API_REQUEST_LOGS'
   | 'NOTIFICATION'
+  | 'GPT_REQUESTS'
+
 export type DynamoDbEntityUpdate = {
   tenantId: string
   type?: DynamoDbEntityType
@@ -238,6 +241,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'NOTIFICATION',
       entityId: `NOTIFICATION:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(GPT_REQUESTS_KEY_IDENTIFIER)) {
+    const entityId = entity._id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'GPT_REQUESTS',
+      entityId: `GPT_REQUESTS:${entityId}`,
     }
   } else if (partitionKeyId.includes(API_REQUEST_LOGS_KEY_IDENTIFIER)) {
     const entityId = entity.requestId

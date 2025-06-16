@@ -73,6 +73,7 @@ export const COUNTER_KEY_IDENTIFIER = '#counter'
 export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
 export const API_REQUEST_LOGS_KEY_IDENTIFIER = '#api-request-logs'
 export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
+export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -606,6 +607,10 @@ export const DynamoDbKeys = {
   }),
   NOTIFICATIONS: (tenantId: string, id: string) => ({
     PartitionKeyID: `${tenantId}${NOTIFICATIONS_KEY_IDENTIFIER}`,
+    SortKeyID: id,
+  }),
+  GPT_REQUESTS: (tenantId: string, id: string) => ({
+    PartitionKeyID: `${tenantId}${GPT_REQUESTS_KEY_IDENTIFIER}`,
     SortKeyID: id,
   }),
 }

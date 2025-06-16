@@ -65,6 +65,8 @@ import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { NotificationRepository } from '@/services/notifications/notifications-repository'
 import { Notification } from '@/@types/openapi-internal/Notification'
+import { GPTLogObject, linkGPTRequestClickhouse } from '@/utils/openai'
+
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
   newExecutedRules: ExecutedRulesResult[]
@@ -189,6 +191,9 @@ export class TarponChangeMongoDbConsumer {
         .setNotificationsHandler(
           (tenantId, oldNotifications, newNotifications, dbClients) =>
             this.handleNotifications(tenantId, newNotifications, dbClients)
+        )
+        .setGptRequestsHandler((tenantId, newGptRequests) =>
+          this.handleGptRequests(tenantId, newGptRequests)
         )
     )
   }
@@ -798,6 +803,21 @@ export class TarponChangeMongoDbConsumer {
     await notificationsRepository.linkNotificationsToClickhouse([
       newNotifications,
     ])
+    subSegment?.close()
+  }
+
+  async handleGptRequests(
+    tenantId: string,
+    newGptRequests: GPTLogObject | undefined
+  ): Promise<void> {
+    if (!newGptRequests) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleGptRequests'
+    )
+    await linkGPTRequestClickhouse(tenantId, newGptRequests)
     subSegment?.close()
   }
 }

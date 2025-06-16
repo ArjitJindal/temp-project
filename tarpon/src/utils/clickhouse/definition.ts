@@ -154,6 +154,7 @@ export enum ClickhouseTableNames {
   AlertsQaSampling = 'alerts_qa_sampling',
   ApiRequestLogs = 'api_request_logs',
   Notifications = 'notifications',
+  GptRequests = 'gpt_request_logs',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -325,6 +326,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   NOTIFICATIONS: {
     tableName: ClickhouseTableNames.Notifications,
+  },
+  GPT_REQUESTS: {
+    tableName: ClickhouseTableNames.GptRequests,
   },
 } as const
 
@@ -1063,6 +1067,16 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "consoleNotificationStatuses Array(Tuple(status String, statusUpdatedAt UInt64, recieverUserId String)) MATERIALIZED JSONExtract(data, 'consoleNotificationStatuses', 'Array(Tuple(status String, statusUpdatedAt UInt64, recieverUserId String))')",
       "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
     ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.GPT_REQUESTS.tableName,
+    idColumn: '_id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: 'id',
+    orderBy: 'id',
+    mongoIdColumn: true,
+    materializedColumns: [],
   },
 ] as const
 
