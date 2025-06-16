@@ -106,7 +106,7 @@ export default function SimplePropertyInput(props: Props) {
         );
       }
 
-      if (schema.maximum != null && schema.minimum != null) {
+      if (schema.maximum != null && schema.minimum != null && schema.format !== 'input') {
         return (
           <div className={s.header}>
             <div className={s.inputGroup}>

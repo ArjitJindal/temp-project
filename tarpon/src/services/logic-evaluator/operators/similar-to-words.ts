@@ -12,6 +12,7 @@ export const FUZZINESS_PARAMETER: JSONSchemaType<any> = {
   type: 'number',
   minimum: 0,
   maximum: 100,
+  format: 'input',
 }
 
 export const SIMILAR_TO_WORDS_OPERATOR: TextLogicOperator = {
