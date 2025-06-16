@@ -154,6 +154,210 @@ ruleVariantsTest({ aggregation: true, v8: true }, () => {
       )
     })
   })
+
+  describe('Sender and receiver checks', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    const baseRuleConfig = {
+      type: 'TRANSACTION' as const,
+      ruleImplementationName: 'transactions-round-value-percentage',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+        initialTransactions: 2,
+        patternPercentageLimit: 35,
+      },
+      defaultAction: 'FLAG',
+    }
+
+    describe('With checkSender: sending and checkReceiver: receiving', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          ...baseRuleConfig,
+          defaultParameters: {
+            ...baseRuleConfig.defaultParameters,
+            checkSender: 'sending',
+            checkReceiver: 'receiving',
+          },
+        },
+      ])
+
+      describe.each<
+        TransactionRuleTestCase<TransactionsRoundValuePercentageRuleParameters>
+      >([
+        {
+          name: 'Check sender sending only',
+          transactions: [
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+            }),
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+            }),
+            // 2/2 = 100% round values for sender
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+            }),
+          ],
+          expectedHits: [false, false, true],
+        },
+        {
+          name: 'Check receiver receiving only',
+          transactions: [
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '6',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+            }),
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '6',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+            }),
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '6',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+            }),
+          ],
+          expectedHits: [false, false, true],
+        },
+      ])('', ({ name, transactions, expectedHits }) => {
+        createTransactionRuleTestCase(
+          name,
+          TEST_TENANT_ID,
+          transactions,
+          expectedHits
+        )
+      })
+    })
+
+    describe('With checkSender: none', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          ...baseRuleConfig,
+          defaultParameters: {
+            ...baseRuleConfig.defaultParameters,
+            checkSender: 'none',
+            checkReceiver: 'receiving',
+          },
+        },
+      ])
+
+      describe.each<
+        TransactionRuleTestCase<TransactionsRoundValuePercentageRuleParameters>
+      >([
+        {
+          name: 'Check sender none',
+          transactions: [
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+            }),
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+            }),
+            // Should not hit even with 100% round values for sender
+            getTestTransaction({
+              originUserId: '1',
+              destinationUserId: '2',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+            }),
+          ],
+          expectedHits: [false, false, false],
+        },
+      ])('', ({ name, transactions, expectedHits }) => {
+        createTransactionRuleTestCase(
+          name,
+          TEST_TENANT_ID,
+          transactions,
+          expectedHits
+        )
+      })
+    })
+
+    describe('With checkReceiver: none', () => {
+      setUpRulesHooks(TEST_TENANT_ID, [
+        {
+          ...baseRuleConfig,
+          defaultParameters: {
+            ...baseRuleConfig.defaultParameters,
+            checkSender: 'sending',
+            checkReceiver: 'none',
+          },
+        },
+      ])
+
+      describe.each<
+        TransactionRuleTestCase<TransactionsRoundValuePercentageRuleParameters>
+      >([
+        {
+          name: 'Check receiver none',
+          transactions: [
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '1',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+            }),
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '1',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+            }),
+            // Should not hit even with 100% round values for receiver
+            getTestTransaction({
+              originUserId: '2',
+              destinationUserId: '1',
+              originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+              destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+              timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+            }),
+          ],
+          expectedHits: [false, false, false],
+        },
+      ])('', ({ name, transactions, expectedHits }) => {
+        createTransactionRuleTestCase(
+          name,
+          TEST_TENANT_ID,
+          transactions,
+          expectedHits
+        )
+      })
+    })
+  })
 })
 
 const TEST_TENANT_ID = getTestTenantId()

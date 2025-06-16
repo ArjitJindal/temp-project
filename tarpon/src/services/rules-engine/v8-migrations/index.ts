@@ -36,6 +36,7 @@ import { TransactionsExceedPastPeriodRuleParameters } from '@/services/rules-eng
 import { TransactionNewCountryRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-currency'
 import { IpAddressUnexpectedLocationRuleParameters } from '@/services/rules-engine/transaction-rules/ip-address-unexpected-location'
+import { LogicAggregationUserDirection } from '@/@types/openapi-internal/LogicAggregationUserDirection'
 
 export type RuleMigrationConfig = {
   logic: object
@@ -2026,98 +2027,140 @@ const V8_CONVERSION: Readonly<
     }
   },
   'R-124': (params: TransactionsPatternPercentageRuleParameters) => {
-    const { timeWindow, patternPercentageLimit } = params
+    const {
+      timeWindow,
+      patternPercentageLimit,
+      initialTransactions,
+      checkSender,
+      checkReceiver,
+    } = params
+
+    const directions = [
+      {
+        check: checkSender,
+        userDirection: 'SENDER' as LogicAggregationUserDirection,
+        primaryAmount: 'originAmountDetails-transactionAmount',
+        secondaryAmount: 'destinationAmountDetails-transactionAmount',
+        name: 'sender',
+      },
+      {
+        check: checkReceiver,
+        userDirection: 'RECEIVER' as LogicAggregationUserDirection,
+        primaryAmount: 'destinationAmountDetails-transactionAmount',
+        secondaryAmount: 'originAmountDetails-transactionAmount',
+        name: 'receiver',
+      },
+    ]
+
     const logicAggregationVariables: LogicAggregationVariable[] = []
+    const conditionsToEvaluate: any[] = []
 
-    // Add aggregation for total transactions
-    logicAggregationVariables.push({
-      key: 'agg:totalTransactions',
-      type: 'USER_TRANSACTIONS',
-      userDirection: 'SENDER_OR_RECEIVER',
-      transactionDirection: 'SENDING_RECEIVING',
-      aggregationFieldKey: 'TRANSACTION:transactionId',
-      aggregationFunc: 'COUNT',
-      timeWindow: {
-        start: timeWindow,
-        end: { units: 0, granularity: 'now' },
-      },
-      includeCurrentEntity: true,
-    })
+    for (const direction of directions) {
+      if (direction.check === 'none') {
+        continue
+      }
 
-    // Add aggregation for round value transactions
-    logicAggregationVariables.push({
-      key: 'agg:roundValueTransactions',
-      type: 'USER_TRANSACTIONS',
-      userDirection: 'SENDER_OR_RECEIVER',
-      transactionDirection: 'SENDING_RECEIVING',
-      aggregationFieldKey: 'TRANSACTION:transactionId',
-      aggregationFunc: 'COUNT',
-      timeWindow: {
-        start: timeWindow,
-        end: { units: 0, granularity: 'now' },
-      },
-      includeCurrentEntity: true,
-      filtersLogic: {
-        or: [
-          {
-            '==': [
+      const totalAggVarKey = `agg:${direction.name}TotalTransactions`
+      const roundAggVarKey = `agg:${direction.name}RoundValueTransactions`
+      const transactionDirection =
+        direction.check === 'all'
+          ? 'SENDING_RECEIVING'
+          : direction.userDirection === 'SENDER'
+          ? 'SENDING'
+          : 'RECEIVING'
+
+      logicAggregationVariables.push(
+        {
+          key: totalAggVarKey,
+          type: 'USER_TRANSACTIONS',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: timeWindow,
+            end: { units: 0, granularity: 'now' },
+          },
+          includeCurrentEntity: true,
+          userDirection: direction.userDirection,
+          transactionDirection,
+        },
+        {
+          key: roundAggVarKey,
+          type: 'USER_TRANSACTIONS',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: timeWindow,
+            end: { units: 0, granularity: 'now' },
+          },
+          includeCurrentEntity: true,
+          userDirection: direction.userDirection,
+          transactionDirection,
+          filtersLogic: {
+            or: [
               {
-                '%': [
+                '==': [
                   {
-                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                    '%': [
+                      {
+                        var: `TRANSACTION:${direction.primaryAmount}`,
+                      },
+                      100,
+                    ],
                   },
-                  100,
+                  0,
                 ],
               },
-              0,
+              ...(direction.check === 'all'
+                ? [
+                    {
+                      '==': [
+                        {
+                          '%': [
+                            {
+                              var: `TRANSACTION:${direction.secondaryAmount}`,
+                            },
+                            100,
+                          ],
+                        },
+                        0,
+                      ],
+                    },
+                  ]
+                : []),
             ],
           },
+        }
+      )
+
+      conditionsToEvaluate.push({
+        and: [
           {
-            '==': [
+            '>': [{ var: totalAggVarKey }, initialTransactions],
+          },
+          {
+            '>=': [
               {
-                '%': [
+                '*': [
                   {
-                    var: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+                    '/': [{ var: roundAggVarKey }, { var: totalAggVarKey }],
                   },
                   100,
                 ],
               },
-              0,
+              patternPercentageLimit,
             ],
           },
         ],
-      },
-    })
-
-    const conditions: any[] = []
-
-    conditions.push({
-      and: [
-        {
-          '>=': [
-            {
-              '*': [
-                {
-                  '/': [
-                    {
-                      var: 'agg:roundValueTransactions',
-                    },
-                    {
-                      var: 'agg:totalTransactions',
-                    },
-                  ],
-                },
-                100,
-              ],
-            },
-            patternPercentageLimit,
-          ],
-        },
-      ],
-    })
+      })
+    }
 
     return {
-      logic: { and: conditions },
+      logic:
+        conditionsToEvaluate.length > 1
+          ? { or: conditionsToEvaluate }
+          : conditionsToEvaluate.length === 1
+          ? conditionsToEvaluate[0]
+          : { and: [false] },
       logicAggregationVariables,
       alertCreationDirection: 'AUTO',
     }
