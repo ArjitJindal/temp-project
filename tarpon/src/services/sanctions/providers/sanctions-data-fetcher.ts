@@ -229,7 +229,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }> = [
         {
           'pepSources.sourceName': {
-            $in: pepProviderNames.map((name) =>
+            $in: [...pepProviderNames, ''].map((name) =>
               humanizeAuto(name).toLowerCase()
             ),
           },
@@ -272,7 +272,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
           {
             'otherSources.value.sourceName': {
-              $in: relProviderNames.map((name) =>
+              $in: [...relProviderNames, ''].map((name) =>
                 humanizeAuto(name).toLowerCase()
               ),
             },
