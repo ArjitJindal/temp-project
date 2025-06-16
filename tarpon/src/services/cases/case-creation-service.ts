@@ -113,6 +113,7 @@ import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import { ActionReason } from '@/@types/openapi-internal/ActionReason'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
 
@@ -681,14 +682,25 @@ export class CaseCreationService {
           mongoDb: this.mongoDb,
           dynamoDb: this.caseRepository.dynamoDb,
         })
+        const newAlertStatus =
+          ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN'
+        const newAlertCreationReason =
+          newAlertStatus === 'CLOSED'
+            ? ({
+                reasons: ['Other'],
+                comment: "Alert default status set to 'CLOSED'",
+                timestamp: now,
+              } as ActionReason)
+            : undefined
+
         const newAlert: Alert = {
           _id: alertCount,
           alertId: `A-${alertCount}`,
           createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
           latestTransactionArrivalTimestamp,
           updatedAt: now,
-          alertStatus:
-            ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN',
+          alertStatus: newAlertStatus,
+          creationReason: newAlertCreationReason,
           ruleId: hitRule.ruleId,
           availableAfterTimestamp: availableAfterTimestamp,
           ruleInstanceId: hitRule.ruleInstanceId,
