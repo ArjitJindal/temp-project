@@ -19,7 +19,14 @@ rules:
       include:
         - 'phytoplankton-console'
       exclude:
-        - 'phytoplankton-console/src/components/ui/Popover'   
+        - 'phytoplankton-console/src/components/ui/Popover'
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
   - id: antd_no_tooltip
     pattern: import { Tooltip } from 'antd'
     message: use "import Tooltip from '@/components/library/Tooltip'" instead

@@ -199,7 +199,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
                 threshold:
                   props.config.resource.DYNAMO_WRITE_CAPACITY_THRESHOLD ?? 100,
                 statistic: 'Average',
-                period: Duration.minutes(5),
+                period: Duration.minutes(15),
               }
         )
       }
