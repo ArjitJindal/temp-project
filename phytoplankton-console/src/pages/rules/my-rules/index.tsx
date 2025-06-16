@@ -369,11 +369,10 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 <EditOutlined
                   className={s.actionIcons}
                   onClick={() => {
-                    if (canWriteRules && !deleting) {
+                    if (canWriteRules && !deleting && entity.status !== 'DEPLOYING') {
                       onEditRule(entity);
                     }
                   }}
-                  disabled={!canWriteRules || deleting || entity.status === 'DEPLOYING'}
                   data-cy="rule-edit-button"
                   style={{
                     cursor:
