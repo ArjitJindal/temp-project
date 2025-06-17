@@ -32,6 +32,14 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
+  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
+    setParams((prev) => ({
+      ...prev,
+      ...newParams,
+      start: newParams.from,
+    }));
+  };
+
   const queryResults = useCursorQuery<SanctionsSearchHistory>(
     SANCTIONS_SEARCH(params),
     async ({ from }) => {
@@ -134,7 +142,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         rowKey="createdAt"
         queryResults={queryResults}
         params={params}
-        onChangeParams={setParams}
+        onChangeParams={handleChangeParams}
         columns={columns}
         fitHeight
         pagination

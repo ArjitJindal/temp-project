@@ -464,6 +464,7 @@ export default function SanctionsSearchTable(props: Props) {
         fitHeight
         cursor={queryResult.cursor}
         readOnlyFilters={readOnly}
+        sizingMode="FULL_WIDTH"
       />
       <ComplyAdvantageHitDetailsDrawer
         hit={selectedSearchHit ?? null}

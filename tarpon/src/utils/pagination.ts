@@ -188,14 +188,22 @@ export async function cursorPaginate<T extends Document>(
     .project(projection ?? {}) as FindCursor<WithId<T>>
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
 
-  const [count, items, { hasPrev, prev }, lastItems] = await Promise.all([
-    countDocuments(collection, filter),
+  const count = await countDocuments(collection, filter)
+
+  const itemsOnLastPage = count % pageSize || pageSize
+  const hasLastPage = count > pageSize
+
+  // For the "last" cursor, we need the item BEFORE the last page starts
+  // so that when using $gt, we get the first item of the last page.
+  // This is because the last page is not included in the results.
+
+  const [items, { hasPrev, prev }, lastItems] = await Promise.all([
     findCursor.limit(pageSize + 1).toArray(),
     getPrevCursor(prevFindCursor, query),
-    lastFindCursor.skip(pageSize).limit(1).toArray(),
+    hasLastPage ? lastFindCursor.skip(itemsOnLastPage).limit(1).toArray() : [],
   ])
-  const lastItem = lastItems.at(-1)
 
+  const lastItem = hasLastPage ? lastItems.at(0) : undefined
   const last = cursor(lastItem, field)
 
   // Remove extra item

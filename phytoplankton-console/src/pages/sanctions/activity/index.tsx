@@ -281,7 +281,7 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
       <QueryResultsTable<SanctionsScreeningDetails, TableSearchParams>
         tableId={'sanctions-screening-details'}
         pagination={true}
-        rowKey="name"
+        rowKey="searchId"
         queryResults={detailsResult}
         columns={detailsColumns}
         fitHeight={true}
@@ -295,7 +295,6 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
           download: true,
           setting: true,
         }}
-        leftTools={[]}
       />
     </>
   );
