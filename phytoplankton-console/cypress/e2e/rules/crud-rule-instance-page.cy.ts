@@ -19,7 +19,8 @@ describe('Rule create and delete from rule instance page', () => {
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
-      cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
+      cy.message('A new rule has been created successfully').should('exist');
+      cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
       editRule(ruleInstanceId);
       simulateRule(ruleInstanceId);
       deleteRule(ruleInstanceId);
@@ -37,7 +38,8 @@ describe('Rule create and delete from rule instance page', () => {
 
     cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
     cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
-    cy.message(`Rule deleted`).should('exist');
+    cy.message(`Rule deleted successfully`).should('exist');
+    cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
   }
 
   function editRule(ruleInstanceId: string) {
@@ -49,7 +51,8 @@ describe('Rule create and delete from rule instance page', () => {
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('input[data-cy="rule-action-selector"]').eq(2).click();
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
-    cy.message(`Rule updated - ${ruleInstanceId}`).should('exist');
+    cy.message(`Rule updated successfully`).should('exist');
+    cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
   }
 
   function simulateRule(ruleInstanceId: string) {

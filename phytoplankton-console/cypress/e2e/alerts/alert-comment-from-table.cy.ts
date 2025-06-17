@@ -27,7 +27,7 @@ describe('Comment Alerts from Table', () => {
       cy.get('button[data-cy="add-comment-button"]', { timeout: 8000 }).first().click();
       cy.wait(1000);
     });
-    cy.message('Comment successfully added!').should('exist');
+    cy.message('Comment added successfully').should('exist');
 
     // Make sure that there are now "length + 1" comments
     cy.wait(1000);

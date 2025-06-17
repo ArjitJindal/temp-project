@@ -45,7 +45,7 @@ describe('Case Creation test', () => {
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
-      cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
+      cy.messageBody(`${ruleInstanceId}`).should('exist');
 
       //2.create case and verify
       //making a post request to api.dev.flagright/transactions to hit the rule R-2 i

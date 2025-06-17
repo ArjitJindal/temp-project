@@ -23,7 +23,8 @@ describe('Custom Role - CRUD Test', () => {
     cy.get('input[placeholder="Enter role name"]').type(`${roleName}`);
     cy.get('textarea[placeholder="Enter role description"]').type('Custom test role description');
     cy.get('button[data-cy="save-role-button"]').click();
-    cy.message(`Role '${roleName.toLowerCase()}' created successfully`).should('exist');
+    cy.message(`New role created successfully`).should('exist');
+    cy.messageBody(`role ${roleName.toLowerCase()}`).should('exist');
     cy.message().should('not.exist');
     cy.waitNothingLoading();
 
@@ -34,8 +35,8 @@ describe('Custom Role - CRUD Test', () => {
       'Custom test role description after changing',
     );
     cy.contains('Save').click();
-    cy.message(`Role '${roleName.toLowerCase()}' updated successfully`).should('exist');
-    cy.message().should('not.exist');
+    cy.message(`Role updated successfully`).should('exist');
+    cy.messageBody(`role ${roleName.toLowerCase()}`).should('exist');
     cy.waitNothingLoading();
 
     //delete a custom role

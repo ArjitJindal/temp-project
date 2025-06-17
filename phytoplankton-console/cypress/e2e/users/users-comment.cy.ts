@@ -38,7 +38,7 @@ describe('Add a comment to a user', () => {
     cy.message('Uploading...').should('exist');
     cy.message().should('not.exist');
     cy.get('button[data-cy="add-comment-button"]').click();
-    cy.message('Comment successfully added!').should('exist');
+    cy.message('Comment added successfully').should('exist');
     cy.get('[data-cy="comment-editor"]').should('not.be.visible');
 
     // Open comments and make sure that comment is created

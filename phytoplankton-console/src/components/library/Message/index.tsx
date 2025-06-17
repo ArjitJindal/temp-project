@@ -205,7 +205,11 @@ export function MessageBody(props: {
         <div className={s.messageTitle} data-cy={'toast-message-title'}>
           {title}
         </div>
-        {(options?.details || options?.link) && <div className={s.messageBody}>{children}</div>}
+        {(options?.details || options?.link) && (
+          <div className={s.messageBody} data-cy={'toast-message-body'}>
+            {children}
+          </div>
+        )}
       </div>
       <div className={s.messageActions}>
         {isClosable && (

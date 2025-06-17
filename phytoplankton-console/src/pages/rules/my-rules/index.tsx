@@ -136,8 +136,11 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   }, []);
   const updateRuleInstanceMutation = useUpdateRuleInstance(handleRuleInstanceUpdate);
 
-  const handleDeleteRuleInstanceMutation = useMutation<void, Error, string>(
-    async (ruleInstanceId) => await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId }),
+  const handleDeleteRuleInstanceMutation = useMutation<string, Error, string>(
+    async (ruleInstanceId) => {
+      await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId });
+      return ruleInstanceId;
+    },
     {
       onSuccess: (ruleInstanceId) => {
         message.success('Rule deleted successfully', {

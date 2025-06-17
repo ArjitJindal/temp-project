@@ -67,7 +67,8 @@ describe('Create scenario', () => {
     cy.wait('@createdRule').then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
-      cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
+      cy.message('A new rule has been created successfully').should('exist');
+      cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
       editRule(ruleInstanceId);
       cy.visit(`/rules/my-rules/${ruleInstanceId}`);
       cy.deleteRuleInstance(ruleInstanceId);

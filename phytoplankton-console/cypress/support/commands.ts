@@ -198,6 +198,13 @@ Cypress.Commands.add('message', (text?: string) => {
   }
 });
 
+Cypress.Commands.add('messageBody', (text?: string) => {
+  cy.get('[data-cy="toast-message-body"]').as('messageBody');
+  if (text) {
+    cy.get('@messageBody').contains(text);
+  }
+});
+
 Cypress.Commands.add('navigateToPage', (url: string, pageTitle: string) => {
   cy.visit(url, { timeout: 20000 });
   cy.get('h2', { timeout: 20000 }).contains(pageTitle);
@@ -429,7 +436,8 @@ Cypress.Commands.add('deleteRuleInstance', (ruleInstanceId: string) => {
       cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
       cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
       cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
-      cy.message(`Rule deleted`).should('exist');
+      cy.message(`Rule deleted successfully`).should('exist');
+      cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
       cy.get('td[data-cy="ruleId"]').should('not.contain', ruleInstanceId);
     });
   });

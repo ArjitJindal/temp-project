@@ -44,6 +44,7 @@ declare global {
        * @param text
        */
       message(text?: string): Chainable<Element>;
+      messageBody(text?: string): Chainable<Element>;
       logout(): Chainable<Promise<Element>>;
       setPermissions(permissions: PermissionStatements[]): Chainable<Promise<Element>>;
       apiHandler(props: {
