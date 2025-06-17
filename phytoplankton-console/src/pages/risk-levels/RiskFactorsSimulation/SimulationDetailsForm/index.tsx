@@ -29,6 +29,8 @@ import { P } from '@/components/ui/Typography';
 import Button from '@/components/library/Button';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { message } from '@/components/library/Message';
+import UserIdsSelect from '@/components/UserIdsSelect';
+import TransactionIdsSelect from '@/components/TransactionIdsSelect';
 export interface FormValues {
   name: string;
   description: string;
@@ -305,16 +307,10 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                       labelProps={{ required: { value: false, showHint: true } }}
                     >
                       {(inputProps) => (
-                        <Select<string>
-                          mode="TAGS"
-                          options={[]}
+                        <UserIdsSelect
+                          mode="MULTIPLE"
                           {...inputProps}
-                          onChange={(values) => {
-                            if (inputProps.onChange) {
-                              inputProps.onChange(values);
-                            }
-                          }}
-                          placeholder="Enter user ID"
+                          placeholder="Search for user ID"
                         />
                       )}
                     </InputField>
@@ -346,16 +342,10 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                       labelProps={{ required: { value: false, showHint: true } }}
                     >
                       {(inputProps) => (
-                        <Select<string>
-                          mode="TAGS"
-                          options={[]}
+                        <TransactionIdsSelect
+                          mode="MULTIPLE"
+                          placeholder="Search for transaction ID"
                           {...inputProps}
-                          onChange={(values) => {
-                            if (inputProps.onChange) {
-                              inputProps.onChange(values);
-                            }
-                          }}
-                          placeholder="Enter transaction ID"
                         />
                       )}
                     </InputField>
