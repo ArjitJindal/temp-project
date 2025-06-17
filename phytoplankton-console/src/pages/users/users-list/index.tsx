@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
@@ -17,13 +17,13 @@ import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapp
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
-import { makeUrl, parseQueryString } from '@/utils/routing';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
 import { USERS } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { NavigationState } from '@/utils/queries/types';
-import { useDeepEqualEffect, useSafeLocalStorageState } from '@/utils/hooks';
+import { useSafeLocalStorageState } from '@/utils/hooks';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 export interface UserSearchParams extends CommonParams {
   isPepHit?: 'true' | 'false';
@@ -45,64 +45,28 @@ export interface UserSearchParams extends CommonParams {
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
   const api = useApi({ debounce: 500 });
-  const navigate = useNavigate();
-  const location = useLocation();
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
-  const parsedParams = useMemo(
-    () => queryAdapter.deserializer(parseQueryString(location.search)),
-    [location.search],
-  );
-
-  const [params, setParams] = useState<UserSearchParams>({
-    sort: [],
-    pageSize: 20,
-  });
-
-  const [isReadyToFetch, setIsReadyToFetch] = useState(false);
-
-  const pushParamsToNavigation = useCallback(
-    (params: UserSearchParams) => {
-      const state: NavigationState = {
-        isInitialised: true,
-      };
-      navigate(makeUrl('/users/list/:list/all', { list: type }, queryAdapter.serializer(params)), {
-        replace: true,
-        state: state,
-      });
+  const [params, setParams] = useNavigationParams<UserSearchParams>({
+    queryAdapter: {
+      serializer: queryAdapter.serializer,
+      deserializer: (raw) => ({
+        ...DEFAULT_PARAMS_STATE,
+        ...queryAdapter.deserializer(raw),
+      }),
     },
-    [navigate, type],
-  );
+    makeUrl: (rawQueryParams) => makeUrl('/users/list/:list/all', { list: type }, rawQueryParams),
+    persist: {
+      id: `users-list-navigation-params-${type}`,
+    },
+  });
 
   const handleChangeParams = useCallback(
     (newParams: UserSearchParams) => {
-      pushParamsToNavigation(newParams);
+      setParams(newParams);
     },
-    [pushParamsToNavigation],
+    [setParams],
   );
-
-  useDeepEqualEffect(() => {
-    if ((location.state as NavigationState)?.isInitialised !== true) {
-      return;
-    }
-    setParams((prevState: UserSearchParams) => ({
-      ...prevState,
-      ...parsedParams,
-    }));
-  }, [parsedParams]);
-
-  useEffect(() => {
-    if ((location.state as NavigationState)?.isInitialised !== true) {
-      // Initialize from URL parameters if they exist, otherwise use defaults
-      const defaultParams = {
-        ...params,
-        ...parsedParams,
-      };
-      setParams(defaultParams);
-      pushParamsToNavigation(defaultParams);
-    }
-    setIsReadyToFetch(true);
-  }, [location.state, parsedParams, pushParamsToNavigation, params]);
 
   const queryResults = useCursorQuery<AllUsersTableItem>(
     USERS(type, { ...params, isClickhouseEnabled }),
@@ -165,9 +129,6 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         items: response.items,
       };
     },
-    {
-      enabled: isReadyToFetch,
-    },
   );
 
   const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
@@ -219,9 +180,6 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         total: response.count,
         items: response.items,
       };
-    },
-    {
-      enabled: isReadyToFetch,
     },
   );
 

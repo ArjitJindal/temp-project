@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { uniqBy } from 'lodash';
-import { useLocation, useNavigate } from 'react-router';
 import { capitalizeNameFromEmail, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
@@ -18,16 +17,16 @@ import { AllParams, CommonParams } from '@/components/library/Table/types';
 import { getDisplayedUserInfo, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
-import { makeUrl, parseQueryString } from '@/utils/routing';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS, REPORTS_LIST } from '@/utils/queries/keys';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getOr } from '@/utils/asyncResource';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
-import { useDeepEqualEffect } from '@/utils/hooks';
 import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
@@ -51,44 +50,35 @@ export type TableParams = AllParams<TableSearchParams>;
 
 export default function ReportsTable() {
   const settings = useSettings();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const parsedParams = useMemo(
-    () => sarQueryAdapter.deserializer(parseQueryString(location.search)),
-    [location.search],
-  );
-  const auth0User = useAuth0User();
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
   const api = useApi({ debounce: 500 });
-  const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
+  const auth0User = useAuth0User();
 
-  const pushParamsToNavigation = useCallback(
-    (params) => {
-      navigate(makeUrl('/reports', {}, sarQueryAdapter.serializer(params)), {
-        replace: true,
-      });
+  const [params, setParams] = useNavigationParams<TableParams>({
+    queryAdapter: {
+      serializer: sarQueryAdapter.serializer,
+      deserializer: (raw) => ({
+        ...DEFAULT_PARAMS_STATE,
+        ...sarQueryAdapter.deserializer(raw),
+      }),
     },
-    [navigate],
-  );
+    makeUrl: (rawQueryParams) => makeUrl('/reports', {}, rawQueryParams),
+    persist: {
+      id: 'reports-navigation-params',
+    },
+  });
 
-  const handleChangeParams = (newParams: AllParams<TableParams>) => {
-    pushParamsToNavigation(newParams);
-  };
+  const handleChangeParams = useCallback(
+    (newParams: AllParams<TableParams>) => {
+      setParams(newParams);
+    },
+    [setParams],
+  );
 
   const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
 
   const queryClient = useQueryClient();
   const canWrite = useHasResources(['write:::reports/generated/*']);
-
-  useDeepEqualEffect(() => {
-    setParams((prevState: AllParams<TableParams>) => ({
-      ...prevState,
-      ...parsedParams,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PARAMS_STATE.pageSize,
-      page: parsedParams.page ?? DEFAULT_PARAMS_STATE.page,
-    }));
-  }, [parsedParams]);
 
   const reportListQueryKeys = REPORTS_LIST(params);
   const queryResult = usePaginatedQuery<Report>(reportListQueryKeys, async (paginationParams) => {

@@ -2,7 +2,6 @@ import { useRef, useState, useContext, useMemo, useCallback } from 'react';
 import { Typography } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
-import { useLocation, useNavigate } from 'react-router';
 import { HighlightOutlined } from '@ant-design/icons';
 import RuleAuditLogModal from '../RuleAuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
@@ -14,7 +13,6 @@ import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.s
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
 import { AllParams, TableColumn, TableRefType } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AuditLog } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -27,43 +25,34 @@ import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
-import { makeUrl, parseQueryString } from '@/utils/routing';
-import { useDeepEqualEffect } from '@/utils/hooks';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
 import TagList from '@/components/library/Tag/TagList';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
 export default function AuditLogTable() {
   const api = useApi({ debounce: 500 });
-  const location = useLocation();
-  const parsedParams = useMemo(
-    () => auditLogQueryAdapter.deserializer(parseQueryString(location.search)),
-    [location.search],
-  );
 
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
-  const navigate = useNavigate();
-
-  const pushParamsToNavigation = useCallback(
-    (params) => {
-      navigate(makeUrl('/auditlog', {}, auditLogQueryAdapter.serializer(params)), {
-        replace: true,
-      });
+  const [params, setParams] = useNavigationParams<AllParams<TableSearchParams>>({
+    queryAdapter: {
+      serializer: auditLogQueryAdapter.serializer,
+      deserializer: (raw) => ({
+        ...DEFAULT_PARAMS_STATE,
+        ...auditLogQueryAdapter.deserializer(raw),
+      }),
     },
-    [navigate],
+    makeUrl: (rawQueryParams) => makeUrl('/auditlog', {}, rawQueryParams),
+    persist: {
+      id: 'auditlog-navigation-params',
+    },
+  });
+
+  const handleChangeParams = useCallback(
+    (newParams: AllParams<TableSearchParams>) => {
+      setParams(newParams);
+    },
+    [setParams],
   );
 
-  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
-    pushParamsToNavigation(newParams);
-  };
-
-  useDeepEqualEffect(() => {
-    setParams((prevState: AllParams<TableSearchParams>) => ({
-      ...prevState,
-      ...parsedParams,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PARAMS_STATE.pageSize,
-      page: parsedParams.page ?? DEFAULT_PARAMS_STATE.page,
-    }));
-  }, [parsedParams]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(

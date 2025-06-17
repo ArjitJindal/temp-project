@@ -351,7 +351,6 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       >
         <Card.Section direction="vertical">
           <Select<string | null>
-            value={null}
             onChange={(variableKey) => {
               setSearchKey(variableKey ?? undefined);
               if (variableKey) {

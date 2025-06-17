@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { useLocation, useNavigate } from 'react-router';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import UniquesSearchButton from './components/UniquesSearchButton';
@@ -14,82 +13,48 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
-import { makeUrl, parseQueryString } from '@/utils/routing';
-import { NavigationState } from '@/utils/queries/types';
+import { makeUrl, useNavigationParams } from '@/utils/routing';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { dayjs } from '@/utils/dayjs';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useDeepEqualEffect } from '@/utils/hooks';
 
 const TableList = () => {
   const i18n = useI18n();
-  const navigate = useNavigate();
-  const location = useLocation();
   const settings = useSettings();
 
-  const parsedParams = useMemo(
-    () => queryAdapter.deserializer(parseQueryString(location.search)),
-    [location.search],
-  );
+  const [params, setParams] = useNavigationParams<TransactionsTableParams>({
+    queryAdapter: {
+      serializer: queryAdapter.serializer,
+      deserializer: (raw) => {
+        const baseParams = {
+          ...DEFAULT_PARAMS_STATE,
+          ...queryAdapter.deserializer(raw),
+        };
 
-  const [params, setParams] = useState<TransactionsTableParams>({
-    sort: [],
-    pageSize: 20,
-    timestamp: [
-      dayjs(defaultTimestamps().afterTimestamp).format(),
-      dayjs(defaultTimestamps().beforeTimestamp).format(),
-    ],
-  });
+        if (!baseParams.timestamp) {
+          baseParams.timestamp = [
+            dayjs(defaultTimestamps().afterTimestamp).format(),
+            dayjs(defaultTimestamps().beforeTimestamp).format(),
+          ];
+        }
 
-  const [isReadyToFetch, setIsReadyToFetch] = useState(false);
-
-  const pushParamsToNavigation = useCallback(
-    (params: TransactionsTableParams) => {
-      const state: NavigationState = {
-        isInitialised: true,
-      };
-      navigate(makeUrl('/transactions/list', {}, queryAdapter.serializer(params)), {
-        replace: true,
-        state,
-      });
+        return baseParams;
+      },
     },
-    [navigate],
-  );
-
-  useEffect(() => {
-    if ((location.state as NavigationState)?.isInitialised !== true) {
-      // Initialize from URL parameters if they exist, otherwise use defaults
-      const defaultParams = {
-        ...params,
-        ...parsedParams,
-        timestamp: parsedParams.timestamp || [
-          dayjs(defaultTimestamps().afterTimestamp).format(),
-          dayjs(defaultTimestamps().beforeTimestamp).format(),
-        ],
-      };
-      setParams(defaultParams);
-      pushParamsToNavigation(defaultParams);
-    }
-    setIsReadyToFetch(true);
-  }, [location.state, params, parsedParams, pushParamsToNavigation]);
-
-  useDeepEqualEffect(() => {
-    if ((location.state as NavigationState)?.isInitialised !== true) {
-      return;
-    }
-    setParams((prevState: TransactionsTableParams) => ({
-      ...prevState,
-      ...parsedParams,
-    }));
-  }, [parsedParams]);
+    makeUrl: (rawQueryParams) => makeUrl('/transactions/list', {}, rawQueryParams),
+    persist: {
+      id: 'transactions-navigation-params',
+    },
+  });
 
   const handleChangeParams = useCallback(
     (newParams: TransactionsTableParams) => {
-      pushParamsToNavigation(newParams);
+      setParams(newParams);
     },
-    [pushParamsToNavigation],
+    [setParams],
   );
 
-  const { queryResult } = useTransactionsQuery(parsedParams, { isReadyToFetch });
+  const { queryResult } = useTransactionsQuery(params);
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
