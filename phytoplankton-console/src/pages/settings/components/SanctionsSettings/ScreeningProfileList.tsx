@@ -17,14 +17,14 @@ import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING, DATE } from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
-import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 import { getErrorMessage } from '@/utils/lang';
+import AccountTag from '@/components/AccountTag';
 
 export const ScreeningProfileList = ({ hasFeature }) => {
   const api = useApi();
-  const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [deleting, setDeleting] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ScreeningProfileResponse | undefined>(
     undefined,
@@ -163,11 +163,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
             return `${value === undefined ? '' : users[value]?.name ?? value}`;
           },
           render: (userId, _) => {
-            return userId ? (
-              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
-            ) : (
-              <>-</>
-            );
+            return userId ? <AccountTag accountId={userId} /> : <>-</>;
           },
         },
       }),
@@ -228,7 +224,6 @@ export const ScreeningProfileList = ({ hasFeature }) => {
     ];
   }, [
     users,
-    loadingUsers,
     isReadOnly,
     updateStatusMutation,
     duplicateScreeningProfileMutation,
