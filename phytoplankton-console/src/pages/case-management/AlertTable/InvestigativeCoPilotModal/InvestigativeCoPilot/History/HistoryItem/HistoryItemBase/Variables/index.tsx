@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
 import { AutoComplete } from 'antd';
 import { DataSourceItemType } from 'antd/lib/auto-complete';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Popover from '@/components/ui/Popover';
 import { QuestionVariableOption } from '@/apis';
@@ -17,6 +17,7 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { useApi } from '@/api';
 import Checkbox from '@/components/library/Checkbox';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type VariablesValues = Record<string, any>;
 
@@ -107,6 +108,7 @@ export function VariablesPopoverContent(
   const { variables, modal, questionId } = props;
   const labelPosition = modal ? 'TOP' : 'LEFT';
   const [varsValues, setVarsValues] = props.varsValuesState;
+  const { userAlias } = useSettings();
   return (
     <div
       className={cn(
@@ -123,7 +125,9 @@ export function VariablesPopoverContent(
         return (
           <Label
             key={varName}
-            label={humanizeAuto(varName ?? 'N/A')}
+            label={humanizeAuto(
+              varName.replace('userId', `${firstLetterUpper(userAlias)} ID` || '') ?? 'N/A',
+            )}
             position={variableLabelPosition}
           >
             <div className={cn(s.input, s[`labelPosition-${variableLabelPosition}`])}>

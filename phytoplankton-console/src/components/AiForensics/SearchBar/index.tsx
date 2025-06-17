@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useFinishedSuccessfully } from '../../../utils/asyncResource';
 import s from './styles.module.less';
 import ExpandIcon from '@/components/library/ExpandIcon';
@@ -20,7 +21,7 @@ import {
   QuestionResponseSkeleton,
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
 type FormValues = {
@@ -43,7 +44,7 @@ export const SearchBar = (props: Props) => {
   const [searchText, setSearchText] = useState<string>('');
   const debouncedSearch = useDebounce(searchText, { wait: 500 });
   const [clickedSuggestions, setClickedSuggestions] = useState<Set<string>>(new Set());
-
+  const { userAlias } = useSettings();
   let SUGGESTIONS_ORDER: QuestionId[] = [
     COPILOT_QUESTIONS.USER_DETAILS,
     COPILOT_QUESTIONS.ALERTS,
@@ -120,7 +121,9 @@ export const SearchBar = (props: Props) => {
                 className={cn(s.suggestion, highlightedSuggestionIndex === i && s.isHighlighted)}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
-                {suggestion}
+                {suggestion
+                  .replace('user', userAlias || '')
+                  .replace('User', firstLetterUpper(userAlias) || '')}
               </button>
             ))}
           </div>

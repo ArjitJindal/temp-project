@@ -14,7 +14,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
   questionId: COPILOT_QUESTIONS.USER_DETAILS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, { userId }) => {
-    return `User details for ${userId}`
+    return `{{UserAlias}} details for ${userId}`
   },
   aggregationPipeline: async ({ tenantId }, { userId }) => {
     const client = await getMongoDbClient()
@@ -27,8 +27,8 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
 
     return {
       data: [
-        { key: 'User ID', value: result?.userId || '' },
-        { key: 'User name', value: getUserName(result) },
+        { key: '{{UserAlias}} ID', value: result?.userId || '' },
+        { key: '{{UserAlias}} name', value: getUserName(result) },
         { key: 'Type', value: result?.type },
         { key: 'State', value: result?.userStateDetails?.state },
         { key: 'Acquisition Channel', value: result?.acquisitionChannel },
@@ -100,7 +100,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
               },
               ...contactDetails(result.legalEntity),
               {
-                key: 'User segment',
+                key: '{{UserAlias}} segment',
                 value: result.legalEntity.companyGeneralDetails.userSegment,
               },
               {

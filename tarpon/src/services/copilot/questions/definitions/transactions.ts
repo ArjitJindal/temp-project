@@ -156,13 +156,13 @@ export const transactionQuestion = (
       sortable: true,
     },
     { name: 'Last transaction state', columnType: 'TAG' },
-    { name: 'Origin user ID', columnType: 'ID' },
-    { name: 'Origin user', columnType: 'STRING' },
+    { name: 'Origin {{userAlias}} ID', columnType: 'ID' },
+    { name: 'Origin {{userAlias}}', columnType: 'STRING' },
     { name: 'Origin amount', columnType: 'MONEY_AMOUNT' },
     { name: 'Origin currency', columnType: 'MONEY_CURRENCY' },
     { name: 'Origin country', columnType: 'COUNTRY' },
-    { name: 'Destination user ID', columnType: 'ID' },
-    { name: 'Destination user', columnType: 'STRING' },
+    { name: 'Destination {{userAlias}} ID', columnType: 'ID' },
+    { name: 'Destination {{userAlias}}', columnType: 'STRING' },
     { name: 'Destination amount', columnType: 'MONEY_AMOUNT' },
     { name: 'Destination currency', columnType: 'MONEY_CURRENCY' },
     { name: 'Destination country', columnType: 'COUNTRY' },
@@ -204,7 +204,7 @@ export const transactionQuestion = (
 
 const UserTransactions = transactionQuestion(
   COPILOT_QUESTIONS.USER_TRANSACTIONS,
-  async (ctx) => `Transactions for user ${ctx.userId}`,
+  async (ctx) => `Transactions for {{userAlias}} ${ctx.userId}`,
   (ctx) => {
     const condition = ctx.userId
       ? `originUserId = '{{ userId }}' or destinationUserId = '{{ userId }}'`

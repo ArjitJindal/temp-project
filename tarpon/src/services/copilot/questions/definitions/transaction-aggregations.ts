@@ -125,7 +125,7 @@ export const transactionAggregationQuestion = (
       data: [
         { label: '', values },
         userLimitValues && {
-          label: "User's transactions limits",
+          label: "{{UserAlias}}'s transactions limits",
           values: userLimitValues,
         },
       ].filter(notEmpty),

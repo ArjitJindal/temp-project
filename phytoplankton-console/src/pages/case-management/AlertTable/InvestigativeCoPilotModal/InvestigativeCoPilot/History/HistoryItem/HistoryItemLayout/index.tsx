@@ -1,6 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import s from './index.module.less';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   dataKey: string;
@@ -15,6 +17,7 @@ interface Props {
 
 function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement | null>) {
   const { dataKey, title, tools, isLoading, isUnread, children, count, hideTitle = false } = props;
+  const { userAlias } = useSettings();
   return (
     <div
       data-key={dataKey}
@@ -24,7 +27,8 @@ function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement
       {!hideTitle && (
         <div className={s.header}>
           <div className={s.title}>
-            {title} {count != null ? `(${count})` : ''}
+            {setUserAlias(title, userAlias)}
+            {count != null ? `(${count})` : ''}
           </div>
           {tools && <div className={s.tools}>{tools}</div>}
         </div>

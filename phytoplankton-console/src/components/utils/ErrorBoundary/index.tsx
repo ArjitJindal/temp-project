@@ -8,12 +8,10 @@ import NoFoundPage from '@/pages/404';
 interface Props {
   children: React.ReactNode;
 }
-
 const Fallback: FallbackRender = (errorData) => {
   if (errorData.error instanceof NotFoundError) {
     return <NoFoundPage />;
   }
-
   return (
     <Alert
       style={{

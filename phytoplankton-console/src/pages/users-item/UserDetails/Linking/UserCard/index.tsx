@@ -1,4 +1,4 @@
-import React from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import * as Form from '@/components/ui/Form';
@@ -9,6 +9,7 @@ import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.s
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import Tag from '@/components/library/Tag';
 import UserTypeTag from '@/components/library/Tag/UserTypeTag';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type UserProps = {
   user: InternalBusinessUser | InternalConsumerUser;
@@ -16,10 +17,11 @@ type UserProps = {
 
 export const UserCard = (props: UserProps) => {
   const { user } = props;
+  const { userAlias } = useSettings();
   return (
     <PropertyColumns>
       <Form.Layout.Label title={'Name'}>{getUserName(user)}</Form.Layout.Label>
-      <Form.Layout.Label icon={<User3Line />} title={'User type'}>
+      <Form.Layout.Label icon={<User3Line />} title={`${firstLetterUpper(userAlias)} type`}>
         <div>
           <UserTypeTag type={user.type} />
         </div>

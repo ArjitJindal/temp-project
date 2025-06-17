@@ -37,7 +37,7 @@ export const UsersTransactedWith: TableQuestion<
   questionId: COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top users they have transacted with as ${vars.direction.toLowerCase()} ${humanReadablePeriod(
+    return `Top {{userAlias}}s they have transacted with as ${vars.direction.toLowerCase()} ${humanReadablePeriod(
       vars
     )}`
   },
@@ -140,9 +140,9 @@ export const UsersTransactedWith: TableQuestion<
     }
   },
   headers: [
-    { name: 'User ID', columnType: 'ID' },
-    { name: 'Username', columnType: 'STRING' },
-    { name: 'User type', columnType: 'TAG' },
+    { name: '{{UserAlias}} ID', columnType: 'ID' },
+    { name: '{{UserAlias}} name', columnType: 'STRING' },
+    { name: '{{UserAlias}} type', columnType: 'TAG' },
     {
       name: 'Transaction Count',
       columnType: 'NUMBER',

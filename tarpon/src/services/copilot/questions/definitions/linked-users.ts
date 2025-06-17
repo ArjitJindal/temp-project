@@ -12,7 +12,7 @@ export const LinkedUsers: TableQuestion<any> = {
   questionId: COPILOT_QUESTIONS.LINKED_USERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async ({ username }) => {
-    return `Linked users for ${username} over the last 30 days`
+    return `Linked {{userAlias}}s for ${username} over the last 30 days`
   },
   aggregationPipeline: async ({ tenantId, userId, username }) => {
     const linker = new LinkerService(tenantId)
@@ -43,9 +43,9 @@ export const LinkedUsers: TableQuestion<any> = {
     }
   },
   headers: [
-    { name: 'User ID', columnType: 'ID' },
-    { name: 'Username', columnType: 'STRING' },
-    { name: 'User type', columnType: 'TAG' },
+    { name: '{{UserAlias}} ID', columnType: 'ID' },
+    { name: '{{UserAlias}} name', columnType: 'STRING' },
+    { name: '{{UserAlias}} type', columnType: 'TAG' },
   ],
   variableOptions: {},
   defaults: () => {
