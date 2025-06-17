@@ -16,7 +16,7 @@ import {
 } from '@react-awesome-query-builder/ui';
 import moment from 'moment';
 import { TimePicker } from 'antd';
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { isArray, isEmpty } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import DatePicker from '../DatePicker';
@@ -90,6 +90,88 @@ const isTransactionKeyField = (
   }
   return false;
 };
+
+function isTagsValueField(field: TextWidgetProps['field'], uniqueType?: string): boolean {
+  const result =
+    uniqueType === 'TAGS_VALUE' && typeof field === 'string' && field.endsWith('.value');
+  return result;
+}
+
+function isTagsKeyField(field: TextWidgetProps['field'], uniqueType?: string): boolean {
+  const result = uniqueType === 'TAGS_KEY' && typeof field === 'string' && field.endsWith('.key');
+  return result;
+}
+
+const tagKeyStore: Record<string, string> = {};
+const valueFieldForceUpdateCallbacks: Record<string, Set<() => void>> = {};
+
+function setTagKeyValue(entityId: string, keyValue: string | undefined) {
+  const previousValue = tagKeyStore[entityId];
+
+  if (keyValue) {
+    tagKeyStore[entityId] = keyValue;
+  } else {
+    delete tagKeyStore[entityId];
+  }
+
+  // If the key value changed, trigger all value field callbacks for this entity
+  if (previousValue !== keyValue) {
+    const callbacks = valueFieldForceUpdateCallbacks[entityId];
+    if (callbacks && callbacks.size > 0) {
+      callbacks.forEach((callback) => callback());
+    }
+  }
+}
+
+function registerValueFieldForceUpdate(entityId: string, callback: () => void) {
+  if (!valueFieldForceUpdateCallbacks[entityId]) {
+    valueFieldForceUpdateCallbacks[entityId] = new Set();
+  }
+  valueFieldForceUpdateCallbacks[entityId].add(callback);
+
+  return () => {
+    const callbacks = valueFieldForceUpdateCallbacks[entityId];
+    if (callbacks) {
+      callbacks.delete(callback);
+      if (callbacks.size === 0) {
+        delete valueFieldForceUpdateCallbacks[entityId];
+      }
+    }
+  };
+}
+
+function getTagKeyValue(entityId: string): string | undefined {
+  const keyValue = tagKeyStore[entityId];
+  return keyValue;
+}
+
+function getEntityIdFromField(fieldPath: string): string | undefined {
+  if (
+    typeof fieldPath === 'string' &&
+    (fieldPath.endsWith('.key') || fieldPath.endsWith('.value'))
+  ) {
+    return fieldPath.replace(/\.(key|value)$/, '');
+  }
+  return undefined;
+}
+
+// Component wrapper for value fields that need to update when key changes
+function DynamicValueFieldWrapper(props: {
+  entityId: string;
+  children: (keyFilter: string | undefined, forceUpdateTrigger: number) => React.ReactNode;
+}) {
+  const [forceUpdateTrigger, setForceUpdateTrigger] = useState(0);
+  const keyFilter = getTagKeyValue(props.entityId);
+
+  useEffect(() => {
+    const cleanup = registerValueFieldForceUpdate(props.entityId, () => {
+      setForceUpdateTrigger((prev) => prev + 1);
+    });
+    return cleanup;
+  }, [props.entityId]);
+
+  return <>{props.children(keyFilter, forceUpdateTrigger)}</>;
+}
 
 function WidgetWrapper(props: {
   widgetFactoryProps: WidgetProps<Config>;
@@ -229,6 +311,59 @@ const customTextWidget: CoreWidgets['text'] = {
         props.config,
         fieldSettings.uniqueType,
       );
+
+      const isKeyField = isTagsKeyField(props.field, fieldSettings.uniqueType);
+      const isValueField = isTagsValueField(props.field, fieldSettings.uniqueType);
+
+      if (isKeyField) {
+        const entityId = getEntityIdFromField(String(props.field));
+        if (entityId) {
+          const keyValue =
+            typeof props.value === 'string' ? props.value : String(props.value || '');
+          setTagKeyValue(entityId, keyValue);
+        }
+      } else if (isValueField) {
+        const entityId = getEntityIdFromField(String(props.field));
+        if (entityId) {
+          return (
+            <DynamicValueFieldWrapper entityId={entityId}>
+              {(dynamicKeyFilter, forceUpdateTrigger) => {
+                const currentValue = forceUpdateTrigger > 0 ? undefined : props.value;
+
+                if (forceUpdateTrigger > 0 && props.value !== undefined) {
+                  setTimeout(() => props.setValue(undefined), 0);
+                }
+
+                if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator as LogicOperatorType)) {
+                  return (
+                    <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+                      <MultiListSelectDynamic
+                        uniqueTypeProps={uniqueTypeProps}
+                        value={currentValue as any}
+                        onChange={(newValue) => {
+                          const formattedValue = newValue?.map((v) => v.trim());
+                          props.setValue(formattedValue as any);
+                        }}
+                        filter={dynamicKeyFilter}
+                      />
+                    </WidgetWrapper>
+                  );
+                }
+                return (
+                  <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+                    <SingleListSelectDynamic
+                      uniqueTypeProps={uniqueTypeProps}
+                      value={currentValue as string}
+                      onChange={(val) => props.setValue(val)}
+                      filter={dynamicKeyFilter}
+                    />
+                  </WidgetWrapper>
+                );
+              }}
+            </DynamicValueFieldWrapper>
+          );
+        }
+      }
 
       if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator as LogicOperatorType)) {
         return (

@@ -45,7 +45,6 @@ export default function Footer<Item extends object, Params extends object>(
     <div className={s.tableSelectionFooter} data-cy="table-footer">
       {showSelectionInfo && (
         <div className={s.selectionInfo} data-cy="selection-info">
-          {' '}
           <Checkbox value={true} />
           <span data-cy="selection-info-text">
             {pluralize(selectionInfo.entityName, selectionInfo.entityCount, true)} selected{' '}

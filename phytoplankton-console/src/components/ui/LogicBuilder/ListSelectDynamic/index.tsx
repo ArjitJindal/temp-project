@@ -16,18 +16,28 @@ type UniqueTypeProps =
   | { type: 'transactions'; uniqueType: TransactionsUniquesField }
   | { type: 'users'; uniqueType: UsersUniquesField };
 
-const useUniquesData = (uniqueTypeProps: UniqueTypeProps) => {
+const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string) => {
   const api = useApi();
+
+  // For TAGS_VALUE fields, don't fetch data if no filter is provided
+  const shouldFetch = uniqueTypeProps.uniqueType !== 'TAGS_VALUE' || !!filterKey;
+
   const result = useQuery(
-    UNIQUES(uniqueTypeProps.type, uniqueTypeProps.uniqueType),
+    UNIQUES(uniqueTypeProps.type, uniqueTypeProps.uniqueType, { filter: filterKey }),
     () => {
       if (uniqueTypeProps.type === 'transactions') {
-        return api.getTransactionsUniques({ field: uniqueTypeProps.uniqueType });
+        return api.getTransactionsUniques({
+          field: uniqueTypeProps.uniqueType,
+          filter: filterKey,
+        });
       } else {
-        return api.getUsersUniques({ field: uniqueTypeProps.uniqueType });
+        return api.getUsersUniques({
+          field: uniqueTypeProps.uniqueType,
+          filter: filterKey,
+        });
       }
     },
-    { enabled: !!uniqueTypeProps.uniqueType },
+    { enabled: !!uniqueTypeProps.uniqueType && shouldFetch },
   );
   return getOr(result.data, []);
 };
@@ -49,8 +59,9 @@ export const SingleListSelectDynamic = (props: {
   value?: string | null;
   uniqueTypeProps: UniqueTypeProps;
   onChange: (val: string | undefined) => void;
+  filter?: string;
 }) => {
-  const data = useUniquesData(props.uniqueTypeProps);
+  const data = useUniquesData(props.uniqueTypeProps, props.filter);
   const options = useOptions(data, props.uniqueTypeProps.uniqueType);
 
   return (
@@ -67,8 +78,9 @@ export const MultiListSelectDynamic = (props: {
   uniqueTypeProps: UniqueTypeProps;
   value?: string[];
   onChange: (val: string[] | undefined) => void;
+  filter?: string;
 }) => {
-  const data = useUniquesData(props.uniqueTypeProps);
+  const data = useUniquesData(props.uniqueTypeProps, props.filter);
   const options = useOptions(data, props.uniqueTypeProps.uniqueType);
 
   return (
