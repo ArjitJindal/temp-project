@@ -43,12 +43,17 @@ export const getUsersFilterByRiskLevel = (
         $or: filterRiskLevels.map((riskLevel) => {
           const { lowerBoundRiskScore, upperBoundRiskScore } =
             getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
-          return {
-            'drsScore.drsScore': {
-              $gte: lowerBoundRiskScore,
-              $lt: upperBoundRiskScore,
-            },
-          }
+          return lowerBoundRiskScore === upperBoundRiskScore &&
+            upperBoundRiskScore === 100
+            ? {
+                'drsScore.drsScore': lowerBoundRiskScore,
+              }
+            : {
+                'drsScore.drsScore': {
+                  $gte: lowerBoundRiskScore,
+                  $lt: upperBoundRiskScore,
+                },
+              }
         }),
       },
     ],

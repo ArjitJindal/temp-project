@@ -282,9 +282,11 @@ export class UserClickhouseRepository {
         .map((riskLevel) =>
           getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
         )
-        .map(
-          (bounds) =>
-            `(drsScore_drsScore >= ${bounds.lowerBoundRiskScore} AND drsScore_drsScore < ${bounds.upperBoundRiskScore})`
+        .map((bounds) =>
+          bounds.lowerBoundRiskScore === bounds.upperBoundRiskScore &&
+          bounds.upperBoundRiskScore === 100
+            ? `(drsScore_drsScore=${bounds.lowerBoundRiskScore})`
+            : `(drsScore_drsScore >= ${bounds.lowerBoundRiskScore} AND drsScore_drsScore < ${bounds.upperBoundRiskScore})`
         )
         .join(' OR ')
 
