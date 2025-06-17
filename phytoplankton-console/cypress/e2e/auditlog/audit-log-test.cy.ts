@@ -13,6 +13,7 @@ describe('Audit log filter - entity type', () => {
     it('should filter according to entity type', () => {
       cy.visit('/auditlog');
 
+      cy.waitNothingLoading();
       cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
       cy.get('.ant-checkbox-wrapper:contains("CASE")').first().click();
       cy.get('[data-cy="auditlog-entity-confirm"]').click();
@@ -25,7 +26,7 @@ describe('Audit log filter - entity type', () => {
           cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
           cy.get('[data-cy="auditlog-entity-reset"]').click();
 
-          cy.get('[data-cy="rules-filter"]:contains("Entity ID")').first().click();
+          cy.get('[data-cy="rules-filter"]:contains("Entity ID")').first().focus().click();
 
           cy.get(
             '.ant-popover-content:contains("Entity ID") .ant-popover-inner-content input',

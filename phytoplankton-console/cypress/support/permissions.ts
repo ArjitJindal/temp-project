@@ -100,7 +100,7 @@ const DASHBOARD: PermissionStatements[] = [
 const AUDIT_LOG: PermissionStatements[] = [
   {
     actions: ['read'],
-    resources: ['frn:console:cypress-tenant:::audit-log/export/*'],
+    resources: ['frn:console:cypress-tenant:::audit-log/*'],
   },
 ];
 const COPILOT: PermissionStatements[] = [
