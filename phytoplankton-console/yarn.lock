@@ -7919,17 +7919,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001332":
-  version: 1.0.30001334
-  resolution: "caniuse-lite@npm:1.0.30001334"
-  checksum: b83566754f0f654d279b6ec85390ddf15376df3774a454b0bb9379fa479e27b8812d6c6d4d8c47725c3f025ed4e0a16fd20da463399f2bead22e73ce71dd9e9b
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001400":
-  version: 1.0.30001425
-  resolution: "caniuse-lite@npm:1.0.30001425"
-  checksum: ae6c3ef46ef62fa18ca31ab049d00ce63ed84bf3c4aa8e2a723b3907eb15341b6456538cab6a52f228bd90b201deba62c105767989b35294dd8ff9188ac0a1fc
+"caniuse-lite@npm:^1.0.30001109, caniuse-lite@npm:^1.0.30001332, caniuse-lite@npm:^1.0.30001400":
+  version: 1.0.30001723
+  resolution: "caniuse-lite@npm:1.0.30001723"
+  checksum: e019503061759b96017c4d27ddd7ca1b48533eabcd0431b51d2e3156f99f6b031075e46c279c0db63424cdfc874bba992caec2db51b922a0f945e686246886f6
   languageName: node
   linkType: hard
 

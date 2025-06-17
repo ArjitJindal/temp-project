@@ -48,3 +48,6 @@ config/openapi.yaml
 cypress.env.json
 cypress/screenshots
 cypress/videos
+
+# analyze-bundle.js
+stats.html

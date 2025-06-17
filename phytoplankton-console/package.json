@@ -50,7 +50,9 @@
     "semgrep": "semgrep scan --config ../rule.yaml --error",
     "test": "npm run tsc && npm run test:unit && npm run format:check",
     "test:coverage": "jest src --silent --coverage && node ../scripts/generate-coverage-stats.js",
-    "test:coverage:compare": "OUTPUT_FILE=coverage/coverage-stats.new.json npm run test:coverage && node ../scripts/compare-coverage-stats.js"
+    "test:coverage:compare": "OUTPUT_FILE=coverage/coverage-stats.new.json npm run test:coverage && node ../scripts/compare-coverage-stats.js",
+    "analyze": "npm run build:prod && node analyze-bundle.js",
+    "analyze:visual": "npm run build:prod && npx esbuild-visualizer --metadata esbuild.json && open stats.html"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",
