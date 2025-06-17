@@ -25,8 +25,7 @@ describe('RuleThresholdOptimizer', () => {
       }
 
       const result = optimizer.calculateThreshold(testData)
-      expect(result.varKey).toBe('test_var')
-      expect(result.threshold).toBeDefined()
+      expect(result).toBeDefined()
     })
 
     it('should handle edge case with zero counts', () => {
@@ -44,8 +43,7 @@ describe('RuleThresholdOptimizer', () => {
         },
       }
       const result = optimizer.calculateThreshold(testData)
-      expect(result.varKey).toBe('test_var')
-      expect(result.threshold).toBe(0)
+      expect(result).toBe(0)
     })
 
     it('should handle undefined data', () => {
@@ -56,8 +54,7 @@ describe('RuleThresholdOptimizer', () => {
       }
 
       const result = optimizer.calculateThreshold(testData)
-      expect(result.varKey).toBe('test_var')
-      expect(result.threshold).toBe(0)
+      expect(result).toBe(0)
     })
 
     it('should handle negative values', () => {
@@ -76,9 +73,8 @@ describe('RuleThresholdOptimizer', () => {
       }
 
       const result = optimizer.calculateThreshold(testData)
-      expect(result.varKey).toBe('test_var')
-      expect(result.threshold).toBeDefined()
-      expect(typeof result.threshold).toBe('number')
+      expect(result).toBeDefined()
+      expect(typeof result).toBe('number')
     })
   })
 })

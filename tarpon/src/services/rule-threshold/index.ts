@@ -35,6 +35,7 @@ import {
   isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { ClickhouseAlertRepository } from '@/services/alerts/clickhouse-repository'
+import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
 
 const MIN_DISPOSED_LIMIT = 15
 
@@ -105,18 +106,18 @@ export class RuleThresholdOptimizer {
     ruleInstanceId: string
   ): Promise<RuleThresholdRecommendations> {
     const isDemo = isDemoMode()
+    const ruleInstanceService = new RuleInstanceService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    const [ruleInstance, currentInstanceStats] = await Promise.all([
+      ruleInstanceService.getRuleInstanceById(ruleInstanceId),
+      ruleInstanceService.getRuleInstanceStats(ruleInstanceId, {
+        afterTimestamp: 0,
+        beforeTimestamp: Date.now(),
+      }),
+    ])
     if (isDemo) {
-      const ruleInstanceService = new RuleInstanceService(this.tenantId, {
-        mongoDb: this.mongoDb,
-        dynamoDb: this.dynamoDb,
-      })
-      const [ruleInstance, currentInstanceStats] = await Promise.all([
-        ruleInstanceService.getRuleInstanceById(ruleInstanceId),
-        ruleInstanceService.getRuleInstanceStats(ruleInstanceId, {
-          afterTimestamp: 0,
-          beforeTimestamp: Date.now(),
-        }),
-      ])
       const data = getNumericVarKeyData(ruleInstance?.logic)
       const newThresholdsData = data.map((value) => {
         return generateDemoThresholdData(value, currentInstanceStats)
@@ -160,10 +161,15 @@ export class RuleThresholdOptimizer {
         ruleInstanceId
       )
 
-    const thresholdData =
-      optimizationData?.variablesOptimizationData.map((val) => {
-        return this.calculateThreshold(val)
+    const thresholdData = await Promise.all(
+      optimizationData?.variablesOptimizationData.map(async (val) => {
+        return await this.generateRecommendationData(
+          val,
+          currentInstanceStats,
+          ruleInstance
+        )
       }) ?? []
+    )
     return {
       ruleInstanceId: ruleInstanceId,
       varsThresholdData: thresholdData,
@@ -171,7 +177,40 @@ export class RuleThresholdOptimizer {
     }
   }
 
-  public calculateThreshold(data: VarOptimizationData): VarThresholdData {
+  public async generateRecommendationData(
+    data: VarOptimizationData,
+    currentRuleInstanceStats: RuleInstanceStats,
+    ruleInstance: RuleInstance
+  ): Promise<VarThresholdData> {
+    const threshold = this.calculateThreshold(data)
+    const fpCount = data.FP?.count ?? 0
+    const falsePositivesReduced = fpCount
+    const timeReduced =
+      (currentRuleInstanceStats.investigationTime ?? 0) * falsePositivesReduced
+    const transactionsHit = (data.TP?.count ?? 0) + fpCount
+    const alertCreationDirection =
+      ruleInstance.alertConfig?.alertCreationDirection
+    let additionalHits = fpCount
+
+    if (
+      !alertCreationDirection ||
+      ['ALL', 'AUTO'].includes(alertCreationDirection)
+    ) {
+      additionalHits = 2 * fpCount
+    }
+
+    const usersHit = (currentRuleInstanceStats.usersHit ?? 0) + additionalHits
+    return {
+      varKey: data.varKey,
+      threshold,
+      usersHit,
+      transactionsHit,
+      falsePositivesReduced,
+      timeReduced,
+    }
+  }
+
+  public calculateThreshold(data: VarOptimizationData): number {
     const calcStats = (d: typeof data.FP) => {
       const mean = (d?.sum ?? 0) / (d?.count || 1)
       const variance = (d?.sumOfSquares ?? 0) / (d?.count || 1) - mean * mean
@@ -182,17 +221,9 @@ export class RuleThresholdOptimizer {
     }
     const { mean: FpMean, stdDev: FpStdDev } = calcStats(data.FP)
     const { mean: TpMean, stdDev: TpStdDev } = calcStats(data.TP)
-    return {
-      varKey: data.varKey,
-      threshold: parseFloat(
-        (TpMean + (TpMean - FpMean) * (TpStdDev / (FpStdDev + 1))).toFixed(4)
-      ),
-      // Todo: Update the logic to calculate these values
-      falsePositivesReduced: 1,
-      timeReduced: 1000,
-      transactionsHit: 1,
-      usersHit: 1,
-    }
+    return parseFloat(
+      (TpMean + (TpMean - FpMean) * (TpStdDev / (FpStdDev + 1))).toFixed(4)
+    )
   }
 
   private async getRiskLevel(
