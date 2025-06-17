@@ -1,7 +1,10 @@
 import { MongoClient } from 'mongodb'
 import * as Sentry from '@sentry/serverless'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
-import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import {
+  isClickhouseEnabledInRegion,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
@@ -62,7 +65,7 @@ export class CounterRepository {
   // if multilpe callers call `getNextCounterAndUpdate` concurrently, we could end up with
   // duplicate counters.
   public async initialize(): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCounterRepository.initialize()
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
@@ -77,7 +80,7 @@ export class CounterRepository {
 
   public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
     let dynamoCounter: number | undefined
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       dynamoCounter =
         await this.dynamoCounterRepository.getNextCounterAndUpdate(entity)
     }
@@ -104,7 +107,7 @@ export class CounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<number[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCounterRepository.getNextCountersAndUpdate(entity, count)
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
@@ -137,7 +140,7 @@ export class CounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCounterRepository.setCounterValue(entity, count)
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)

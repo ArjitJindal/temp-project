@@ -1,4 +1,4 @@
-import { ScanCommand } from '@aws-sdk/lib-dynamodb'
+import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { omit } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
@@ -43,6 +43,7 @@ import {
 import { TenantService } from '@/services/tenants'
 import { AccountsService } from '@/services/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
@@ -1018,12 +1019,13 @@ describe('Verify Transaction for Simulation', () => {
     })
 
     // Check transaction not saved and aggregation not run
-    const dynamoDbData = await dynamoDb.send(
-      new ScanCommand({
+    const transactionDynamoData = await dynamoDb.send(
+      new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(TEST_TENANT_ID),
+        Key: DynamoDbKeys.TRANSACTION(TEST_TENANT_ID, testTransactionId),
       })
     )
-    expect(dynamoDbData.Count).toBe(0)
+    expect(transactionDynamoData.Item).toBeUndefined()
     const transactionRepository = new MongoDbTransactionRepository(
       TEST_TENANT_ID,
       await getMongoDbClient(),

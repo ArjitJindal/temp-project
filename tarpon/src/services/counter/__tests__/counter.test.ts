@@ -6,7 +6,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 dynamoDbSetupHook()
 
-withFeaturesToggled([], ['CLICKHOUSE_MIGRATION'], () => {
+withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
   describe('CounterRepository', () => {
     it('should initialize counters', async () => {
       const tenantId = getTestTenantId()
