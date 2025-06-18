@@ -32,38 +32,52 @@ export const AlertHistory: TableQuestion<Period> = {
           { 'caseUsers.destination.userId': userId },
         ]
       : casePaymentIdentifierQuery(paymentIdentifier)
+
+    const pipeline: any[] = [
+      {
+        $match: { ...matchPeriod('createdTimestamp', period), $or: condition },
+      },
+      { $unwind: '$alerts' },
+    ]
+
+    if (period.sortField) {
+      pipeline.push({
+        $sort: {
+          [`alerts.${period.sortField}`]:
+            period.sortOrder === 'descend' ? -1 : 1,
+        },
+      })
+    }
+
+    if (period.page && period.pageSize) {
+      pipeline.push({ $skip: (period.page - 1) * period.pageSize })
+      pipeline.push({ $limit: period.pageSize })
+    }
+
     const result = await db
       .collection<Case>(CASES_COLLECTION(tenantId))
-      .find({
-        ...matchPeriod('createdTimestamp', period),
-        $or: condition,
-      })
-      .sort(
-        period.sortField
-          ? { [period.sortField]: period.sortOrder === 'descend' ? -1 : 1 }
-          : {}
-      )
+      .aggregate(pipeline)
       .toArray()
 
-    const alerts = result.flatMap((r) => r.alerts)
-    const items = result.flatMap((r) => {
-      return (
-        r.alerts?.map((a) => [
-          a.alertId,
-          a.caseId,
-          r.createdTimestamp,
-          a.numberOfTransactionsHit,
-          a.ruleId,
-          a.ruleName,
-          a.ruleDescription,
-          a.ruleAction,
-          a.ruleNature,
-          a.alertStatus,
-          r.caseStatus,
-          r.lastStatusChange?.reason?.join(', '),
-          a.updatedAt,
-        ]) || []
-      )
+    // Now, result is one document per alert (with parent case fields)
+    const alerts = result.map((r) => r.alerts)
+    const items = result.map((r) => {
+      const a = r.alerts
+      return [
+        a.alertId,
+        a.caseId,
+        r.createdTimestamp,
+        a.numberOfTransactionsHit,
+        a.ruleId,
+        a.ruleName,
+        a.ruleDescription,
+        a.ruleAction,
+        a.ruleNature,
+        a.alertStatus,
+        r.caseStatus,
+        r.lastStatusChange?.reason?.join(', '),
+        a.updatedAt,
+      ]
     })
     return {
       data: {

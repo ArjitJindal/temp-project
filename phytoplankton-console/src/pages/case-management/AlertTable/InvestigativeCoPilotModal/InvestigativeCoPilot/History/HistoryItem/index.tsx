@@ -126,8 +126,8 @@ export default function HistoryItem(props: Props) {
       ...updateVarsMutation.variables,
       page: newParams.page,
       pageSize: newParams.pageSize,
-      sortField: newParams.sort[0][0],
-      sortOrder: newParams.sort[0][1],
+      sortField: newParams.sort[0]?.[0],
+      sortOrder: newParams.sort[0]?.[1],
       sort: newParams.sort,
     });
     setPageParams((pageParams) => ({ ...pageParams, ...newParams }));

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { QuestionResponseTable } from '../../../types';
 import Table from '@/components/library/Table';
