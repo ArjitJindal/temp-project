@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Alert } from 'antd';
 import { FallbackRender } from '@sentry/react/types/errorboundary';
+import { useLocation } from 'react-router';
 import { NotFoundError } from '@/utils/errors';
 import NoFoundPage from '@/pages/404';
 
@@ -56,7 +57,7 @@ const Fallback: FallbackRender = (errorData) => {
   );
 };
 
-export default function ErrorBoundary(props: Props) {
+function ErrorBoundaryWithLocationReset(props: Props) {
   return (
     <Sentry.ErrorBoundary
       fallback={Fallback}
@@ -69,5 +70,24 @@ export default function ErrorBoundary(props: Props) {
     >
       {props.children}
     </Sentry.ErrorBoundary>
+  );
+}
+
+export default function ErrorBoundary(props: Props) {
+  const location = useLocation();
+  const previousLocationRef = useRef<string>();
+
+  // Generate a new key whenever the pathname changes
+  const resetKey = useMemo(() => {
+    const currentLocation = location.pathname + location.search + location.hash;
+    if (previousLocationRef.current !== currentLocation) {
+      previousLocationRef.current = currentLocation;
+      return Date.now();
+    }
+    return previousLocationRef.current || currentLocation;
+  }, [location.pathname, location.search, location.hash]);
+
+  return (
+    <ErrorBoundaryWithLocationReset key={resetKey}>{props.children}</ErrorBoundaryWithLocationReset>
   );
 }
