@@ -49,6 +49,12 @@ export type DynamoDbEntityType =
   | 'NOTIFICATION'
   | 'GPT_REQUESTS'
 
+export const LOCK_FREE_ENTITIES: DynamoDbEntityType[] = [
+  'GPT_REQUESTS',
+  'ALERTS_QA_SAMPLING',
+  'NOTIFICATION',
+  'CRM_RECORD',
+]
 export type DynamoDbEntityUpdate = {
   tenantId: string
   type?: DynamoDbEntityType

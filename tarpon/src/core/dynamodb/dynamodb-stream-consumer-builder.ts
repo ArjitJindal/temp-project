@@ -12,6 +12,7 @@ import { addNewSubsegment, traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
+  LOCK_FREE_ENTITIES,
   savePartitionKey,
 } from './dynamodb-stream-utils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -296,7 +297,12 @@ export class StreamConsumerBuilder {
             'StreamConsumer',
             `handleDynamoDbUpdates lock ${update.entityId} ${update.type}`
           )
-          if (update.entityId && envIsNot('test', 'local')) {
+          const shouldLock =
+            envIsNot('test', 'local') &&
+            update.type &&
+            !LOCK_FREE_ENTITIES.includes(update.type)
+
+          if (shouldLock && update.entityId) {
             await acquireLock(dbClients.dynamoDb, update.entityId, {
               startingDelay: 100,
               maxDelay: 5000,
@@ -305,7 +311,7 @@ export class StreamConsumerBuilder {
           try {
             await this.handleDynamoDbUpdate(update, dbClients)
           } finally {
-            if (update.entityId && envIsNot('test', 'local')) {
+            if (shouldLock && update.entityId) {
               await releaseLock(dbClients.dynamoDb, update.entityId)
             }
           }
