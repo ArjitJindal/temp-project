@@ -90,6 +90,20 @@ export function getFuzzinessSettings(
     : {}
 }
 
+export function getEnableShortNameMatchingParameters(
+  providers: SanctionsDataProviderName[],
+  enableShortNameMatching?: boolean
+): {
+  enableShortNameMatching?: boolean
+} {
+  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
+    return {}
+  }
+  return {
+    enableShortNameMatching,
+  }
+}
+
 export function getStopwordSettings(
   providers: SanctionsDataProviderName[],
   stopwords?: string[]

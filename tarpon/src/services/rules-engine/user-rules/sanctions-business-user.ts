@@ -16,6 +16,7 @@ import {
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
+  getEnableShortNameMatchingParameters,
   getEntityTypeForSearch,
   getFuzzinessSettings,
   getFuzzyAddressMatchingParameters,
@@ -195,9 +196,10 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
                 fuzzyAddressMatching,
                 entity.addresses
               ),
-              ...(enableShortNameMatching
-                ? { enableShortNameMatching }
-                : false),
+              ...getEnableShortNameMatchingParameters(
+                providers,
+                enableShortNameMatching
+              ),
             },
             hitContext
           )

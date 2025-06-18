@@ -15,6 +15,7 @@ import {
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
+  getEnableShortNameMatchingParameters,
   getFuzzyAddressMatchingParameters,
   getIsActiveParameters,
   getPartialMatchParameters,
@@ -182,7 +183,10 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           fuzzyAddressMatching,
           user.contactDetails?.addresses
         ),
-        ...(enableShortNameMatching ? { enableShortNameMatching } : false),
+        ...getEnableShortNameMatchingParameters(
+          providers,
+          enableShortNameMatching
+        ),
       },
       hitContext,
       undefined

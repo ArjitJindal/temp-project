@@ -16,6 +16,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
+  getEnableShortNameMatchingParameters,
   getEntityTypeForSearch,
   getFuzzinessSettings,
   getFuzzyAddressMatchingParameters,
@@ -167,9 +168,10 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                   fuzzyAddressMatching,
                   bankInfo.address ? [bankInfo.address] : undefined
                 ),
-                ...(enableShortNameMatching
-                  ? { enableShortNameMatching }
-                  : false),
+                ...getEnableShortNameMatchingParameters(
+                  providers,
+                  enableShortNameMatching
+                ),
               },
               hitContext
             )
