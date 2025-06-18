@@ -1368,13 +1368,15 @@ export class CaseCreationService {
               compact(caseAlerts?.flatMap((a) => a.transactionIds))
             )
             logger.debug('Update existed case with transaction')
+            const transactionArrivalTimestamps = compact(
+              caseAlerts.map((a) => a.latestTransactionArrivalTimestamp)
+            )
             result.push({
               ...existedCase,
-              latestTransactionArrivalTimestamp: Math.max(
-                ...compact(
-                  caseAlerts.map((a) => a.latestTransactionArrivalTimestamp)
-                )
-              ),
+              latestTransactionArrivalTimestamp:
+                transactionArrivalTimestamps.length > 0
+                  ? Math.max(...transactionArrivalTimestamps)
+                  : 0,
               caseTransactionsIds,
               caseAggregates:
                 filteredTransaction?.transactionId &&
