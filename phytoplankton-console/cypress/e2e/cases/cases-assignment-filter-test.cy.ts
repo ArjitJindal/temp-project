@@ -85,6 +85,7 @@ describe('Using Assignment filter and assigning cases', () => {
               .its('response.statusCode')
               .should('eq', 200)
               .then(() => {
+                cy.waitNothingLoading();
                 cy.get('tbody')
                   .first()
                   .should(($element) => {
@@ -95,7 +96,7 @@ describe('Using Assignment filter and assigning cases', () => {
                     cy.get('tr [data-cy="_assignmentName"]').each(($element) => {
                       cy.wrap($element)
                         .invoke('text')
-                        .should('contain', 'Ccypress+admin@flagright.com');
+                        .should('contain', 'cypress+admin@flagright.com');
                     });
                   });
               });

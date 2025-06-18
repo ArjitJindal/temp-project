@@ -95,8 +95,8 @@ describe('Case Creation test', () => {
             .should('exist')
             .first()
             .click()
-            .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`)
-            .click();
+            .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`);
+          cy.waitNothingLoading();
         });
       };
 
