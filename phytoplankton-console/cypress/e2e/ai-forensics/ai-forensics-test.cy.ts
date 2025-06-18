@@ -38,8 +38,11 @@ describe('Investigative Copilot', () => {
     cy.intercept('GET', '**/questions/**').as('query');
 
     // See if the natural language query works
+    cy.waitNothingLoading();
     cy.get('[data-cy="investigation-input"]').type('Show me transactions for the last 180 days');
     cy.get('[data-cy="ask-ai-button"]').first().click();
+    cy.waitNothingLoading();
+
     cy.get('.ant-modal-root table tr', { timeout: 60000 }).should((tableRows) => {
       expect(tableRows.length).to.be.greaterThan(1);
     });
@@ -53,6 +56,7 @@ describe('Investigative Copilot', () => {
       })
       .click();
     cy.get('[data-cy="investigation-input"]').clear();
+
     // Go through each question type
     ['TRS score', 'Ontology', 'User details', 'Transactions by rule action'].forEach((text) => {
       cy.get('[data-cy="investigation-input"]').type(text);

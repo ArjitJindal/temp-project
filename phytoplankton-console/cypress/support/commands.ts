@@ -101,6 +101,7 @@ Cypress.Commands.add('checkAndSwitchToTenant', (tenantDisplayName: string) => {
   cy.intercept('GET', '**/tenants').as('tenants');
   cy.intercept('POST', '**/change_tenant').as('changeTenant');
   cy.visit('/');
+  cy.waitNothingLoading();
   cy.get("button[data-cy='superadmin-panel-button']").then((button) => {
     if (button.text() !== tenantDisplayName) {
       cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
