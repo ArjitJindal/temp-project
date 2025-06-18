@@ -28,7 +28,7 @@ export default function SanctionsWhitelistTable(props: Props) {
 
   const queryResult = useCursorQuery(SANCTIONS_WHITELIST_SEARCH(params), async ({ from }) => {
     return api.searchSanctionsWhitelist({
-      start: from,
+      start: from || params.from,
       pageSize: params.pageSize,
       filterUserId: params.userId ? [params.userId] : undefined,
       filterEntity: params.entity ? [params.entity] : undefined,
