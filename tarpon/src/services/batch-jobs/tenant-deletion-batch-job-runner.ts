@@ -360,10 +360,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteDefaultFilters.bind(this),
         order: 19,
       },
-      API_REQUEST_LOGS: {
-        method: this.apiRequestLogs.bind(this),
-        order: 20,
-      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -973,19 +969,5 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       )
       await collection.deleteOne({ _id: doc._id })
     }
-  }
-  private async apiRequestLogs(tenantId: string) {
-    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
-    const partitionKeyId = DynamoDbKeys.API_REQUEST_LOGS(
-      tenantId,
-      ''
-    ).PartitionKeyID
-    await dangerouslyDeletePartition(
-      this.dynamoDb(),
-      tenantId,
-      partitionKeyId,
-      tableName,
-      'API Request Logs'
-    )
   }
 }

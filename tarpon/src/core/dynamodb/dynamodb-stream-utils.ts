@@ -22,7 +22,6 @@ import {
   CRM_RECORD_KEY_IDENTIFIER,
   CRM_USER_RECORD_LINK_KEY_IDENTIFIER,
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
-  API_REQUEST_LOGS_KEY_IDENTIFIER,
   NOTIFICATIONS_KEY_IDENTIFIER,
   GPT_REQUESTS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
@@ -53,7 +52,6 @@ export type DynamoDbEntityType =
   | 'CRM_RECORD'
   | 'CRM_USER_RECORD_LINK'
   | 'ALERTS_QA_SAMPLING'
-  | 'API_REQUEST_LOGS'
   | 'NOTIFICATION'
   | 'GPT_REQUESTS'
 
@@ -250,15 +248,6 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'GPT_REQUESTS',
       entityId: `GPT_REQUESTS:${entityId}`,
-    }
-  } else if (partitionKeyId.includes(API_REQUEST_LOGS_KEY_IDENTIFIER)) {
-    const entityId = entity.requestId
-    if (!entityId) {
-      return null
-    }
-    return {
-      type: 'API_REQUEST_LOGS',
-      entityId: `API_REQUEST_LOGS:${entityId}`,
     }
   }
 

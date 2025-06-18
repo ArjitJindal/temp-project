@@ -8220,7 +8220,6 @@ components:
           enum:
             - ALERTS_QA_SAMPLING
             - COUNTERS
-            - API_REQUEST_LOGS
             - NOTIFICATIONS
             - GPT_REQUEST_LOGS
     FlatFileSchema:

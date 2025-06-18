@@ -71,7 +71,6 @@ export const CRM_RECORD_MODEL_KEY_IDENTIFIER = '#crm-record-model'
 export const CRM_USER_RECORD_LINK_KEY_IDENTIFIER = '#crm-user-record-link'
 export const COUNTER_KEY_IDENTIFIER = '#counter'
 export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
-export const API_REQUEST_LOGS_KEY_IDENTIFIER = '#api-request-logs'
 export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
 
@@ -572,10 +571,6 @@ export const DynamoDbKeys = {
   COUNTER: (tenantId: string, entity: string) => ({
     PartitionKeyID: `${tenantId}${COUNTER_KEY_IDENTIFIER}`,
     SortKeyID: entity,
-  }),
-  API_REQUEST_LOGS: (tenantId: string, requestId: string) => ({
-    PartitionKeyID: `${tenantId}${API_REQUEST_LOGS_KEY_IDENTIFIER}`,
-    SortKeyID: requestId,
   }),
   ALERTS_QA_SAMPLING: (tenantId: string, sampleId: string) => ({
     PartitionKeyID: `${tenantId}${ALERTS_QA_SAMPLING_KEY_IDENTIFIER}`,

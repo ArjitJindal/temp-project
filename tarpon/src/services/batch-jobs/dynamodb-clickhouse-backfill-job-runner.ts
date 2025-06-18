@@ -7,12 +7,7 @@ import { traceable } from '@/core/xray'
 import { DynamodbClickhouseBackfillBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
-import {
-  API_REQUEST_LOGS_COLLECTION,
-  GPT_REQUESTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
-import { ApiRequestLog } from '@/@types/request-logger'
-import { saveApiRequestLogsToDynamo } from '@/lambdas/request-logger/app'
+import { GPT_REQUESTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
 
 import { linkGPTRequestDynamoDB, GPTLogObject } from '@/utils/openai'
@@ -28,11 +23,6 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
         await handleAlertsQaSamplingBatchJob(job, {
           mongoDb,
           dynamoDb,
-        })
-        break
-      case 'API_REQUEST_LOGS':
-        await handleApiRequestLogsBatchJob(job, {
-          mongoDb,
         })
         break
       case 'GPT_REQUEST_LOGS':
@@ -80,27 +70,6 @@ const handleAlertsQaSamplingBatchJob = async (
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )
   logger.info(`Completed dynamoDB backfill for alerts_qa_sampling`)
-}
-
-const handleApiRequestLogsBatchJob = async (
-  job: DynamodbClickhouseBackfillBatchJob,
-  {
-    mongoDb,
-  }: {
-    mongoDb: MongoClient
-  }
-) => {
-  const db = mongoDb.db()
-  const apiRequestLogsCollection = db.collection<ApiRequestLog>(
-    API_REQUEST_LOGS_COLLECTION(job.tenantId)
-  )
-  await processCursorInBatch(
-    apiRequestLogsCollection.find({}),
-    async (apiRequestLogs) => {
-      await saveApiRequestLogsToDynamo(apiRequestLogs, job.tenantId)
-    },
-    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
-  )
 }
 
 export const handleNotificationsBatchJob = async (

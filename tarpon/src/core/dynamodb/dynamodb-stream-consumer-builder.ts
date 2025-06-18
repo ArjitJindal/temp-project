@@ -39,7 +39,6 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
-import { ApiRequestLog } from '@/@types/request-logger'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { GPTLogObject } from '@/utils/openai'
 
@@ -156,11 +155,6 @@ type AlertsQaSamplingHandler = (
   newAlertQaSampling: AlertsQaSampling | undefined,
   dbClients: DbClients
 ) => Promise<void>
-type ApiRequestLogsHandler = (
-  tenantId: string,
-  newApiRequestLog: ApiRequestLog,
-  dbClients: DbClients
-) => Promise<void>
 type NotificationsHandler = (
   tenantId: string,
   oldNotifications: Notification | undefined,
@@ -199,7 +193,6 @@ export class StreamConsumerBuilder {
   crmRecordHandler?: CrmRecordHandler
   crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
-  apiRequestLogsHandler?: ApiRequestLogsHandler
   notificationsHandler?: NotificationsHandler
   gptRequestsHandler?: GptRequestsHandler
   constructor(
@@ -320,13 +313,6 @@ export class StreamConsumerBuilder {
     alertsQaSamplingHandler: AlertsQaSamplingHandler
   ): StreamConsumerBuilder {
     this.alertsQaSamplingHandler = alertsQaSamplingHandler
-    return this
-  }
-
-  public setApiRequestLogsHandler(
-    apiRequestLogsHandler: ApiRequestLogsHandler
-  ): StreamConsumerBuilder {
-    this.apiRequestLogsHandler = apiRequestLogsHandler
     return this
   }
 
@@ -566,15 +552,6 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as AlertsQaSampling,
         update.NewImage as AlertsQaSampling,
-        dbClients
-      )
-    } else if (
-      update.type === 'API_REQUEST_LOGS' &&
-      this.apiRequestLogsHandler
-    ) {
-      await this.apiRequestLogsHandler(
-        update.tenantId,
-        update.NewImage as ApiRequestLog,
         dbClients
       )
     } else if (update.type === 'NOTIFICATION' && this.notificationsHandler) {
