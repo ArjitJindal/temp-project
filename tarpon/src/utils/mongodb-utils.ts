@@ -55,7 +55,6 @@ import {
 } from '@/core/constants'
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
-import { hasFeature } from '@/core/utils/context'
 import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
@@ -334,10 +333,7 @@ export const createGlobalMongoDBCollections = async (
 }
 
 const shouldBuildSearchIndex = (tenantId?: string) => {
-  return (
-    envIsNot('test') &&
-    (!tenantId || (!isDemoTenant(tenantId) && hasFeature('DOW_JONES')))
-  )
+  return envIsNot('test') && (!tenantId || !isDemoTenant(tenantId))
 }
 
 const createMongoDBCollectionsInternal = async (
