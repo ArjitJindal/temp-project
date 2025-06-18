@@ -16,9 +16,6 @@ import {
   DRS_KEY_IDENTIFIER,
   RULE_INSTANCE_IDENTIFIER,
   AVG_ARS_KEY_IDENTIFIER,
-  ALERT_KEY_IDENTIFIER,
-  ALERT_COMMENT_KEY_IDENTIFIER,
-  ALERT_FILE_ID_IDENTIFIER,
   CRM_RECORD_KEY_IDENTIFIER,
   CRM_USER_RECORD_LINK_KEY_IDENTIFIER,
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
@@ -46,9 +43,6 @@ export type DynamoDbEntityType =
   | 'ARS_VALUE'
   | 'DRS_VALUE'
   | 'AVG_ARS_VALUE'
-  | 'ALERT'
-  | 'ALERT_COMMENT'
-  | 'ALERT_FILE'
   | 'CRM_RECORD'
   | 'CRM_USER_RECORD_LINK'
   | 'ALERTS_QA_SAMPLING'
@@ -170,39 +164,6 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'RULE_INSTANCE',
       entityId: `RULE_INSTANCE:${entityId}`,
-    }
-  } else if (partitionKeyId.includes(ALERT_KEY_IDENTIFIER)) {
-    const entityId = entity.alertId
-
-    if (!entityId) {
-      return null
-    }
-
-    return {
-      type: 'ALERT',
-      entityId: `ALERT:${entityId}`,
-    }
-  } else if (partitionKeyId.includes(ALERT_COMMENT_KEY_IDENTIFIER)) {
-    const entityId = entity.commentId
-
-    if (!entityId) {
-      return null
-    }
-
-    return {
-      type: 'ALERT_COMMENT',
-      entityId: `ALERT:${entityId}`,
-    }
-  } else if (partitionKeyId.includes(ALERT_FILE_ID_IDENTIFIER)) {
-    const entityId = entity.fileId
-
-    if (!entityId) {
-      return null
-    }
-
-    return {
-      type: 'ALERT_FILE',
-      entityId: `ALERT:${entityId}`,
     }
   } else if (partitionKeyId.includes(CRM_RECORD_KEY_IDENTIFIER)) {
     const entityId = entity.id

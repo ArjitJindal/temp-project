@@ -8,14 +8,12 @@ import {
   updateLogMetadata,
   withContext,
 } from '../utils/context'
-import { logger } from '../logger'
 import { addNewSubsegment, traceable } from '../xray'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
   savePartitionKey,
 } from './dynamodb-stream-utils'
-import { ALERT_COMMENT_KEY_IDENTIFIER, ALERT_ID_PREFIX } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -33,9 +31,6 @@ import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithR
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { generateChecksum } from '@/utils/object'
-import { Alert } from '@/@types/openapi-internal/Alert'
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { Comment } from '@/@types/openapi-internal/Comment'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
@@ -128,27 +123,6 @@ type RuleInstanceHandler = (
   newRuleInstance: RuleInstance | undefined,
   dbClients: DbClients
 ) => Promise<void>
-type AlertHandler = (
-  tenantId: string,
-  oldAlert: Alert | undefined,
-  newAlert: Alert | undefined,
-  dbClients: DbClients
-) => Promise<void>
-type AlertCommentHandler = (
-  tenantId: string,
-  alertId: string,
-  oldAlertComment: Comment | undefined,
-  newAlertComment: Comment | undefined,
-  dbClients: DbClients
-) => Promise<void>
-type AlertFileHandler = (
-  tenantId: string,
-  alertId: string,
-  commentId: string,
-  oldAlertFile: FileInfo | undefined,
-  newAlertFile: FileInfo | undefined,
-  dbClients: DbClients
-) => Promise<void>
 type AlertsQaSamplingHandler = (
   tenantId: string,
   oldAlertQaSampling: AlertsQaSampling | undefined,
@@ -187,9 +161,6 @@ export class StreamConsumerBuilder {
   avgArsScoreEventHandler?: AvgArsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
   concurrentGroupBy?: ConcurrentGroupBy
-  alertHandler?: AlertHandler
-  alertCommentHandler?: AlertCommentHandler
-  alertFileHandler?: AlertFileHandler
   crmRecordHandler?: CrmRecordHandler
   crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
@@ -275,26 +246,6 @@ export class StreamConsumerBuilder {
     this.ruleInstanceHandler = ruleInstanceHandler
     return this
   }
-
-  public setAlertHandler(alertHandler: AlertHandler): StreamConsumerBuilder {
-    this.alertHandler = alertHandler
-    return this
-  }
-
-  public setAlertCommentHandler(
-    alertCommentHandler: AlertCommentHandler
-  ): StreamConsumerBuilder {
-    this.alertCommentHandler = alertCommentHandler
-    return this
-  }
-
-  public setAlertFileHandler(
-    alertFileHandler: AlertFileHandler
-  ): StreamConsumerBuilder {
-    this.alertFileHandler = alertFileHandler
-    return this
-  }
-
   public setCrmRecordHandler(
     crmRecordHandler: CrmRecordHandler
   ): StreamConsumerBuilder {
@@ -484,49 +435,6 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as RuleInstance,
         update.NewImage as RuleInstance,
-        dbClients
-      )
-    } else if (update.type === 'ALERT' && this.alertHandler) {
-      await this.alertHandler(
-        update.tenantId,
-        update.OldImage as Alert,
-        update.NewImage as Alert,
-        dbClients
-      )
-    } else if (update.type === 'ALERT_COMMENT' && this.alertCommentHandler) {
-      const alertId = update.entityId
-        ?.split(ALERT_ID_PREFIX)[1]
-        .split(ALERT_COMMENT_KEY_IDENTIFIER)[0]
-
-      if (!alertId) {
-        logger.error(`Cannot get alert ID from entity ID: ${update.entityId}`)
-        return
-      }
-
-      await this.alertCommentHandler(
-        update.tenantId,
-        alertId,
-        update.OldImage as Comment,
-        update.NewImage as Comment,
-        dbClients
-      )
-    } else if (update.type === 'ALERT_FILE' && this.alertFileHandler) {
-      const alertId = update.entityId?.split(ALERT_ID_PREFIX)[1]
-      const commentId = update.sortKeyId?.split('#')[0]
-
-      if (!alertId || !commentId) {
-        logger.error(
-          `Cannot get alert ID or file ID from entity ID: ${update.entityId}`
-        )
-        return
-      }
-
-      await this.alertFileHandler(
-        update.tenantId,
-        alertId,
-        commentId,
-        update.OldImage as FileInfo,
-        update.NewImage as FileInfo,
         dbClients
       )
     } else if (update.type === 'CRM_RECORD' && this.crmRecordHandler) {

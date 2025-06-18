@@ -170,11 +170,6 @@ export const featureDescriptions: Record<
     description: 'Enables concurrent DynamoDB consumer',
     tag: FeatureTag.ENG,
   },
-  ALERTS_DYNAMO_POC: {
-    title: 'Alerts Dynamo POC (Experimental)',
-    description: 'Enables alerts Dynamo POC (Experimental)',
-    tag: FeatureTag.ENG,
-  },
   '314A': {
     title: '314A',
     description: 'Enables 314A',

@@ -157,16 +157,6 @@ export class TarponChangeMongoDbConsumer {
           (tenantId, oldAvgArs, newAvgArs, dbClients) =>
             avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
         )
-        .setAlertHandler((tenantId, oldAlert, newAlert, dbClients) =>
-          this.handleAlert(tenantId, newAlert, dbClients)
-        )
-        .setAlertCommentHandler((tenantId, alertId, oldComment, newComment) =>
-          this.handleAlertComment(tenantId, alertId, newComment)
-        )
-        .setAlertFileHandler(
-          (tenantId, alertId, commentId, oldAlertFile, newAlertFile) =>
-            this.handleAlertFile(tenantId, alertId, commentId, newAlertFile)
-        )
         .setCrmRecordHandler((tenantId, newCrmRecords, dbClients) =>
           this.handleCrmRecord(tenantId, newCrmRecords, dbClients)
         )
