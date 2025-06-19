@@ -279,12 +279,13 @@ export class UserClickhouseRepository {
       ]
 
       const riskScoreBounds = params.filterRiskLevel
-        .map((riskLevel) =>
-          getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
-        )
+        .map((riskLevel) => ({
+          ...getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel),
+          riskLevel,
+        }))
         .map((bounds) =>
           bounds.lowerBoundRiskScore === bounds.upperBoundRiskScore &&
-          bounds.upperBoundRiskScore === 100
+          bounds.riskLevel === 'VERY_HIGH'
             ? `(drsScore_drsScore=${bounds.lowerBoundRiskScore})`
             : `(drsScore_drsScore >= ${bounds.lowerBoundRiskScore} AND drsScore_drsScore < ${bounds.upperBoundRiskScore})`
         )

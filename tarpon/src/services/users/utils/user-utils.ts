@@ -44,7 +44,7 @@ export const getUsersFilterByRiskLevel = (
           const { lowerBoundRiskScore, upperBoundRiskScore } =
             getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
           return lowerBoundRiskScore === upperBoundRiskScore &&
-            upperBoundRiskScore === 100
+            riskLevel === 'VERY_HIGH'
             ? {
                 'drsScore.drsScore': lowerBoundRiskScore,
               }
