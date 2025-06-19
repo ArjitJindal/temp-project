@@ -71,7 +71,6 @@ export const webhooksHandler = lambdaApi()(
           `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${providerSearchId})`
         )
         const allTenantIds = await TenantService.getAllTenantIds()
-        const dynamoDb = getDynamoDbClient()
         for (const tenantId of allTenantIds) {
           const tenantRepository = new TenantRepository(tenantId, {
             dynamoDb,
@@ -81,7 +80,7 @@ export const webhooksHandler = lambdaApi()(
           if (tenantSettings.features?.includes('SANCTIONS')) {
             const sanctionsService = new SanctionsService(tenantId, {
               mongoDb,
-              dynamoDb: getDynamoDbClient(),
+              dynamoDb,
             })
             const refreshed = await sanctionsService.refreshSearch(
               providerSearchId,
