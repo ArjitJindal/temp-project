@@ -379,7 +379,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       orConditions.push(sourceCategoryFilters)
     }
 
-    if (request.types) {
+    if (request.types && request.types.length > 0) {
       const matchTypeCondition = {
         $or: [
           {
@@ -680,7 +680,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       }
     }
-    if (request.types) {
+    if (request.types && request.types.length > 0) {
       const matchTypes = request.types.flatMap((type) => [
         {
           text: {
