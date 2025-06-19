@@ -1800,7 +1800,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       <QueryResultsTable<TableAlertItem, AlertTableParams>
         expandedRowId={expandedAlertId}
         tableId={isEmbedded ? 'alerts-list-embedded' : 'alerts-list'}
-        rowKey={'alertId'}
+        rowKey="alertId"
         fitHeight={isEmbedded ? 500 : true}
         hideFilters={isEmbedded}
         innerRef={actionRef}

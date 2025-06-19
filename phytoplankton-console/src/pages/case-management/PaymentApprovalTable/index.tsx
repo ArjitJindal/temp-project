@@ -37,6 +37,7 @@ export default function PaymentApprovalsTable(props: Props) {
         return {
           ...data,
           items: data.items.filter((x) => !selectedIds.includes(x.transactionId)),
+          count: data.count - selectedIds.length,
         };
       },
     );

@@ -1,8 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { ParamsType } from '@ant-design/pro-provider';
 import Table, { Props as TableProps } from '@/components/library/Table';
 import { QueryResult } from '@/utils/queries/types';
-import { CommonParams, TableData } from '@/components/library/Table/types';
+import { CommonParams, TableData, TableDataItem } from '@/components/library/Table/types';
+import { getOr, isSuccess } from '@/utils/asyncResource';
 
 type Props<Item extends object, Params extends object = ParamsType> = Omit<
   TableProps<Item, Params>,
@@ -16,10 +17,33 @@ export default function QueryResultsTable<T extends object, Params extends objec
   props: Props<T, Params>,
 ): JSX.Element {
   const { queryResults, showResultsInfo = true, expandedRowId, ...rest } = props;
+  const { selectedIds, rowKey, onSelect } = rest;
   const handleReload = useCallback(() => {
     rest.onReload?.();
     queryResults.refetch();
   }, [queryResults, rest]);
+
+  const items: TableDataItem<T>[] = useMemo(() => {
+    if (isSuccess(queryResults.data)) {
+      return getOr(queryResults.data, { items: [] }).items;
+    }
+    return [];
+  }, [queryResults.data]);
+
+  useEffect(() => {
+    if (!selectedIds?.length) {
+      return;
+    }
+
+    const filtered = selectedIds.filter((id) =>
+      items.some((item) => item[rowKey as keyof CommonParams] === id),
+    );
+
+    if (filtered.length !== selectedIds.length) {
+      onSelect?.(filtered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   return (
     <Table

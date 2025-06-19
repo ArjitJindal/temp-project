@@ -1078,7 +1078,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         },
       ]}
       selectedIds={selectedCases}
-      onSelect={(ids) => setSelectedCases(ids)}
+      onSelect={setSelectedCases}
       rowKey="caseId"
       columns={columns}
       pagination={true}
