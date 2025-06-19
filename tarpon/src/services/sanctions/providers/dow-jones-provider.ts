@@ -30,13 +30,12 @@ import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { OccupationCode } from '@/@types/openapi-internal/OccupationCode'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesSanctionsSearchType'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
+import { tenantSettings } from '@/core/utils/context'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -223,15 +222,11 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   private entityTypes: SanctionsEntityType[]
 
   static async build(tenantId: string) {
-    const tenantRepository = new TenantRepository(tenantId, {
-      dynamoDb: getDynamoDbClient(),
-    })
-    const { sanctions } = await tenantRepository.getTenantSettings([
-      'sanctions',
-    ])
-    const dowJonesSettings = sanctions?.providerScreeningTypes?.find(
+    const settings = await tenantSettings(tenantId)
+    const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
       (type) => type.provider === SanctionsDataProviders.DOW_JONES
     )
+    const sanctions = settings?.sanctions
     let types: DowJonesSanctionsSearchType[] | undefined
     let entityTypes: SanctionsEntityType[] | undefined
     if (dowJonesSettings) {

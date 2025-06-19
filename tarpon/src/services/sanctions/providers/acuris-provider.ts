@@ -23,8 +23,6 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
@@ -37,6 +35,7 @@ import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourc
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { tenantSettings } from '@/core/utils/context'
 
 const pipelineAsync = promisify(pipeline)
 
@@ -312,13 +311,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
       types = settings.screeningTypes as AcurisSanctionsSearchType[]
       entityTypes = settings.entityTypes as SanctionsEntityType[]
     } else {
-      const tenantRepository = new TenantRepository(tenantId, {
-        dynamoDb: getDynamoDbClient(),
-      })
-      const { sanctions } = await tenantRepository.getTenantSettings([
-        'sanctions',
-      ])
-      const acurisSettings = sanctions?.providerScreeningTypes?.find(
+      const settings = await tenantSettings(tenantId)
+      const acurisSettings = settings?.sanctions?.providerScreeningTypes?.find(
         (type) => type.provider === SanctionsDataProviders.ACURIS
       )
       if (acurisSettings) {

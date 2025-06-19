@@ -11,14 +11,13 @@ import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-d
 import { traceable } from '@/core/xray'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
+import { tenantSettings } from '@/core/utils/context'
 type OpenSanctionsLine = {
   op: string
   entity: OpenSanctionsPersonEntity
@@ -142,15 +141,11 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
       types = settings.screeningTypes as OpenSanctionsSearchType[]
       entityTypes = settings.entityTypes as SanctionsEntityType[]
     } else {
-      const tenantRepository = new TenantRepository(tenantId, {
-        dynamoDb: getDynamoDbClient(),
-      })
-      const { sanctions } = await tenantRepository.getTenantSettings([
-        'sanctions',
-      ])
-      const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
-        (type) => type.provider === SanctionsDataProviders.OPEN_SANCTIONS
-      )
+      const settings = await tenantSettings(tenantId)
+      const openSanctionSettings =
+        settings?.sanctions?.providerScreeningTypes?.find(
+          (type) => type.provider === SanctionsDataProviders.OPEN_SANCTIONS
+        )
       if (openSanctionSettings) {
         types = openSanctionSettings.screeningTypes as OpenSanctionsSearchType[]
         entityTypes = openSanctionSettings.entityTypes as SanctionsEntityType[]
