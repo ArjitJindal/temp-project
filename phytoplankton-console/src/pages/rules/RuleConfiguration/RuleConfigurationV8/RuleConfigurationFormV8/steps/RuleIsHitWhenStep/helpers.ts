@@ -152,7 +152,13 @@ export function useLogicBuilderConfig(
           if (v.name) {
             definition.uiDefinition.label = v.name;
           }
-          return definition;
+          return {
+            ...definition,
+            uiDefinition: {
+              ...definition.uiDefinition,
+              fieldName: v.key,
+            },
+          };
         });
 
         const filteredEntityVariables = entityVariablesInUse
