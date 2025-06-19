@@ -79,13 +79,13 @@ export default function ErrorBoundary(props: Props) {
 
   // Generate a new key whenever the pathname changes
   const resetKey = useMemo(() => {
-    const currentLocation = location.pathname + location.search + location.hash;
+    const currentLocation = location.pathname;
     if (previousLocationRef.current !== currentLocation) {
       previousLocationRef.current = currentLocation;
       return Date.now();
     }
     return previousLocationRef.current || currentLocation;
-  }, [location.pathname, location.search, location.hash]);
+  }, [location.pathname]);
 
   return (
     <ErrorBoundaryWithLocationReset key={resetKey}>{props.children}</ErrorBoundaryWithLocationReset>
