@@ -1,6 +1,7 @@
 import { range } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getSanctionsCollectionName } from '../sanctions/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DeltaSanctionsDataFetchBatchJob } from '@/@types/batch-job'
@@ -16,11 +17,13 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: DeltaSanctionsDataFetchBatchJob): Promise<void> {
     const client = await getMongoDbClient()
-    await runDeltaSanctionsDataFetchJob(job, client)
+    const dynamoDb = getDynamoDbClient()
+    await runDeltaSanctionsDataFetchJob(job, client, dynamoDb)
     // Once lists are updated, run the ongoing screening jobs'
     if (job.parameters.from && job.parameters.ongoingScreeningTenantIds) {
       const tenantIds = job.parameters.ongoingScreeningTenantIds
@@ -35,7 +38,8 @@ export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
 
 export async function runDeltaSanctionsDataFetchJob(
   job: DeltaSanctionsDataFetchBatchJob,
-  client: MongoClient
+  client: MongoClient,
+  dynamoDb: DynamoDBClient
 ) {
   const { tenantId, providers, settings } = job
   const version = Date.now().toString()
@@ -70,6 +74,7 @@ export async function runDeltaSanctionsDataFetchJob(
     const fetcher = await sanctionsDataFetcher(
       tenantId,
       provider,
+      { mongoDb: client, dynamoDb },
       settings ?? [
         {
           provider,

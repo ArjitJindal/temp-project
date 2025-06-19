@@ -18,10 +18,19 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
+const TEST_TENANT_ID = getTestTenantId()
+
+const getTestSanctionsService = async () => {
+  return new SanctionsService(TEST_TENANT_ID, {
+    mongoDb: await getMongoDbClient(),
+    dynamoDb: getDynamoDbClient(),
+  })
+}
 
 const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
   (acc, x) => acc + x.content.length,
@@ -29,7 +38,6 @@ const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
 )
 
 describe('Sanctions Service', () => {
-  const TEST_TENANT_ID = getTestTenantId()
   let testSearchId = ''
 
   beforeEach(() => {
@@ -38,7 +46,7 @@ describe('Sanctions Service', () => {
 
   describe('Search', () => {
     test('Search CA and persist the result', async () => {
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       const request: SanctionsSearchRequest = {
         searchTerm: '  fOO   Bar  ',
         fuzziness: 0.5,
@@ -107,7 +115,7 @@ describe('Sanctions Service', () => {
 
     describe('Getting existed searches', () => {
       test('It should hit the cache when searching with fuzinessRange and it is not defined in original search', async () => {
-        const service = new SanctionsService(TEST_TENANT_ID)
+        const service = await getTestSanctionsService()
         const request1: SanctionsSearchRequest = {
           searchTerm: 'Putin',
           fuzziness: 0.5,
@@ -131,7 +139,7 @@ describe('Sanctions Service', () => {
         expect(searchId1).toEqual(searchId2)
       })
       test('It should hit the cache when searching with fuzzinessRange and it is matched in original search', async () => {
-        const service = new SanctionsService(TEST_TENANT_ID)
+        const service = await getTestSanctionsService()
         const request1: SanctionsSearchRequest = {
           searchTerm: 'Putin 2',
           fuzzinessRange: {
@@ -159,7 +167,7 @@ describe('Sanctions Service', () => {
       })
 
       test('It should not hit the cache when searching with fuzzinessRange and it is not matching in original search', async () => {
-        const service = new SanctionsService(TEST_TENANT_ID)
+        const service = await getTestSanctionsService()
         const request1: SanctionsSearchRequest = {
           searchTerm: 'Putin 3',
           fuzzinessRange: {
@@ -188,7 +196,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Skip searching CA on cache hit', async () => {
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       const mongoDb = await getMongoDbClient()
       const db = mongoDb.db()
       const collection = db.collection<SanctionsSearchHistory>(
@@ -211,8 +219,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Filter out whitelist entities (global level)', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -252,8 +259,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Filter out whitelist entities (user level)', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -318,7 +324,7 @@ describe('Sanctions Service', () => {
 
   describe('Update search', () => {
     test('Update CA and persist the result', async () => {
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       await service.updateSearch(testSearchId, {
         enabled: false,
       })
@@ -373,8 +379,9 @@ describe('Sanctions Service', () => {
     })
 
     test('Old hits entities should be updated properly', async () => {
+      const tenantId = getTestTenantId()
       const repository = new SanctionsHitsRepository(
-        TEST_TENANT_ID,
+        tenantId,
         await getMongoDbClient()
       )
 
@@ -423,7 +430,7 @@ describe('Sanctions Service', () => {
 
   describe('Get search histories', () => {
     test('Get search histories', async () => {
-      const service = new SanctionsService(TEST_TENANT_ID)
+      const service = await getTestSanctionsService()
       const result = await service.getSearchHistories({})
       expect(mockFetch).toBeCalledTimes(0)
       expect(result.count).toBeGreaterThan(0)

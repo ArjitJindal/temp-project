@@ -1,7 +1,8 @@
 import { BadRequest } from 'http-errors'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { MongoClient } from 'mongodb'
 import { CounterRepository } from '../counter/repository'
-import { SanctionsService } from '../sanctions'
+import { MongoSanctionSourcesRepository } from '../sanctions/repositories/sanction-source-repository'
 import { ScreeningProfileRepository } from './repositories/screening-profile-repository'
 import { ScreeningProfileRequest } from '@/@types/openapi-internal/ScreeningProfileRequest'
 import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningProfileResponse'
@@ -15,13 +16,19 @@ import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanct
 @traceable
 export class ScreeningProfileService {
   private screeningProfileRepository: ScreeningProfileRepository
-  private tenantId: string
-  private sanctionsService: SanctionsService // done to prevent circular dependency
+  private mongoDb: MongoClient
+  private dynamoDb: DynamoDBClient
 
-  constructor(tenantId: string, sanctionsService: SanctionsService) {
-    this.screeningProfileRepository = new ScreeningProfileRepository(tenantId)
-    this.tenantId = tenantId
-    this.sanctionsService = sanctionsService
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
+    this.screeningProfileRepository = new ScreeningProfileRepository(
+      tenantId,
+      connections.dynamoDb
+    )
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
 
   public async getScreeningProfileId(
@@ -36,11 +43,10 @@ export class ScreeningProfileService {
   }
 
   public async getExistingScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfileId: string
   ): Promise<ScreeningProfileResponse> {
     const screeningProfile =
-      await this.screeningProfileRepository.getScreeningProfiles(dynamoDb, [
+      await this.screeningProfileRepository.getScreeningProfiles([
         screeningProfileId,
       ])
     if (!screeningProfile.items.length) {
@@ -50,7 +56,6 @@ export class ScreeningProfileService {
   }
 
   public async createScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfile: ScreeningProfileRequest,
     counterRepository: CounterRepository
   ): Promise<ScreeningProfileResponse> {
@@ -58,19 +63,15 @@ export class ScreeningProfileService {
       counterRepository
     )
     if (screeningProfile.isDefault) {
-      await this.screeningProfileRepository.markAllProfilesAsNonDefault(
-        dynamoDb
-      )
+      await this.screeningProfileRepository.markAllProfilesAsNonDefault()
     }
     return this.screeningProfileRepository.createScreeningProfile(
-      dynamoDb,
       screeningProfile,
       screeningProfileId
     )
   }
 
   public async getScreeningProfiles(
-    dynamoDb: DynamoDBClient,
     filterScreeningProfileId?: string[],
     filterScreeningProfileName?: string[],
     filterScreeningProfileStatus?: string
@@ -79,7 +80,6 @@ export class ScreeningProfileService {
     total: number
   }> {
     return this.screeningProfileRepository.getScreeningProfiles(
-      dynamoDb,
       filterScreeningProfileId,
       filterScreeningProfileName,
       filterScreeningProfileStatus
@@ -87,10 +87,9 @@ export class ScreeningProfileService {
   }
 
   public async updateScreeningProfilesOnSanctionsSettingsChange(
-    acurisSanctionsSearchType: AcurisSanctionsSearchType[],
-    dynamoDb: DynamoDBClient
+    acurisSanctionsSearchType: AcurisSanctionsSearchType[]
   ) {
-    const screeningProfiles = await this.getScreeningProfiles(dynamoDb)
+    const screeningProfiles = await this.getScreeningProfiles()
     const batchUpdateList: ScreeningProfileResponse[] = []
     for (const profile of screeningProfiles.items) {
       if (!acurisSanctionsSearchType.includes('SANCTIONS')) {
@@ -120,19 +119,16 @@ export class ScreeningProfileService {
     }
     if (batchUpdateList.length > 0) {
       await this.screeningProfileRepository.batchUpdateScreeningProfiles(
-        dynamoDb,
         batchUpdateList
       )
     }
   }
 
   public async updateScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfileId: string,
     screeningProfile: ScreeningProfileRequest
   ): Promise<ScreeningProfileResponse> {
     const existingScreeningProfile = await this.getExistingScreeningProfile(
-      dynamoDb,
       screeningProfileId
     )
     if (existingScreeningProfile.isDefault && !screeningProfile.isDefault) {
@@ -143,30 +139,26 @@ export class ScreeningProfileService {
 
     if (screeningProfile.isDefault) {
       await this.screeningProfileRepository.markAllProfilesAsNonDefault(
-        dynamoDb,
         screeningProfileId
       )
     }
     return this.screeningProfileRepository.updateScreeningProfile(
-      dynamoDb,
+      this.dynamoDb,
       existingScreeningProfile,
       screeningProfile
     )
   }
 
   public async deleteScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfileId: string
   ): Promise<void> {
     const existingScreeningProfile = await this.getExistingScreeningProfile(
-      dynamoDb,
       screeningProfileId
     )
     if (existingScreeningProfile.isDefault) {
       throw new BadRequest('Default screening profile cannot be deleted')
     }
     return this.screeningProfileRepository.deleteScreeningProfile(
-      dynamoDb,
       screeningProfileId
     )
   }
@@ -180,21 +172,27 @@ export class ScreeningProfileService {
   }
 
   public async createDefaultScreeningProfile(
-    dynamoDb: DynamoDBClient,
     counterRepository: CounterRepository,
     acurisSanctionsSearchType?: AcurisSanctionsSearchType[]
   ) {
-    const sources = await this.sanctionsService.getSanctionsSources()
+    const mongoSanctionSourcesRepository = new MongoSanctionSourcesRepository(
+      this.mongoDb
+    )
+    const sources = await mongoSanctionSourcesRepository.getSanctionsSources(
+      undefined,
+      [],
+      true
+    )
 
-    const sanctionSourceIds = sources.items
+    const sanctionSourceIds = sources
       .filter((source) => source.sourceType === 'SANCTIONS')
       .map((source) => source.id)
       .filter((id): id is string => id !== undefined)
-    const pepSourceIds = sources.items
+    const pepSourceIds = sources
       .filter((source) => source.sourceType === 'PEP')
       .map((source) => source.id)
       .filter((id): id is string => id !== undefined)
-    const relSourceIds = sources.items
+    const relSourceIds = sources
       .filter((source) => source.sourceType === 'REGULATORY_ENFORCEMENT_LIST')
       .map((source) => source.id)
       .filter((id): id is string => id !== undefined)
@@ -261,16 +259,13 @@ export class ScreeningProfileService {
     }
 
     await this.createScreeningProfile(
-      dynamoDb,
       defaultScreeningProfile,
       counterRepository
     )
   }
 
-  public async checkIfDefaultScreeningProfileExists(
-    dynamoDb: DynamoDBClient
-  ): Promise<boolean> {
-    const screeningProfiles = await this.getScreeningProfiles(dynamoDb)
+  public async checkIfDefaultScreeningProfileExists(): Promise<boolean> {
+    const screeningProfiles = await this.getScreeningProfiles()
     return screeningProfiles.items.some((profile) => profile.isDefault)
   }
 }

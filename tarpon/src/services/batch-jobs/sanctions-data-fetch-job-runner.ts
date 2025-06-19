@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getSanctionsCollectionName } from '../sanctions/utils'
 import { SanctionsDataProviders } from '../sanctions/types'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -13,10 +14,12 @@ import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
     const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const batchJobRepository = new BatchJobRepository(job.tenantId, client)
     const existingJobs = await batchJobRepository.getJobs(
       {
@@ -40,13 +43,14 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       )
       return
     }
-    await runSanctionsDataFetchJob(job, client)
+    await runSanctionsDataFetchJob(job, client, dynamoDb)
   }
 }
 
 export async function runSanctionsDataFetchJob(
   job: SanctionsDataFetchBatchJob,
-  client: MongoClient
+  client: MongoClient,
+  dynamoDb: DynamoDBClient
 ) {
   const { tenantId, providers, settings } = job
   const runFullLoad = job.parameters?.from
@@ -58,20 +62,14 @@ export async function runSanctionsDataFetchJob(
     const fetcher = await sanctionsDataFetcher(
       tenantId,
       provider,
-      settings ?? [
-        {
-          provider,
-        },
-      ]
+      { mongoDb: client, dynamoDb },
+      settings
     )
     if (!fetcher) {
       continue
     }
     const sanctionsCollectionName = getSanctionsCollectionName(
-      {
-        provider,
-        entityType: job.parameters.entityType,
-      },
+      { provider, entityType: job.parameters.entityType },
       tenantId,
       'full'
     )

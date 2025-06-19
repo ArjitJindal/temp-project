@@ -1,3 +1,5 @@
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { AcurisProvider } from './providers/acuris-provider'
 import { SanctionsDataProviders } from './types'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
@@ -9,14 +11,19 @@ import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-intern
 export async function sanctionsDataFetcher(
   tenantId: string,
   provider: SanctionsDataProviderName,
+  connections: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  },
   settings?: SanctionsSettingsProviderScreeningTypes[]
 ): Promise<SanctionsDataFetcher | undefined> {
   if (provider === SanctionsDataProviders.DOW_JONES) {
-    return await DowJonesProvider.build(tenantId)
+    return await DowJonesProvider.build(tenantId, connections)
   }
   if (provider === SanctionsDataProviders.OPEN_SANCTIONS) {
     return await OpenSanctionsProvider.build(
       tenantId,
+      connections,
       settings?.find(
         (setting) => setting.provider === SanctionsDataProviders.OPEN_SANCTIONS
       )
@@ -25,6 +32,7 @@ export async function sanctionsDataFetcher(
   if (provider === SanctionsDataProviders.ACURIS) {
     return await AcurisProvider.build(
       tenantId,
+      connections,
       settings?.find(
         (setting) => setting.provider === SanctionsDataProviders.ACURIS
       )

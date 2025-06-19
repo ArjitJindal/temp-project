@@ -3,7 +3,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
-import { SanctionsService } from '@/services/sanctions'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { isDemoTenant } from '@/utils/tenant'
 import { hasFeature } from '@/core/utils/context'
@@ -27,14 +26,11 @@ async function migrateTenant(tenant: Tenant) {
   if (filteredRuleInstances.length === 0) {
     return
   }
-  const sanctionsService = new SanctionsService(tenant.id)
-  const screeningProfileService = new ScreeningProfileService(
-    tenant.id,
-    sanctionsService
-  )
-  const screeningProfiles = await screeningProfileService.getScreeningProfiles(
-    dynamoDb
-  )
+  const screeningProfileService = new ScreeningProfileService(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
+  const screeningProfiles = await screeningProfileService.getScreeningProfiles()
   const defaultScreeningProfileId = screeningProfiles.items.find(
     (profile) => profile.isDefault
   )?.screeningProfileId

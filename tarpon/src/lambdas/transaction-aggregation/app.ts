@@ -245,6 +245,7 @@ export async function handleTransactionAggregationTask(
   task: TransactionAggregationTask
 ) {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   const ruleInstanceRepository = new RuleInstanceRepository(task.tenantId, {
     dynamoDb,
   })
@@ -330,7 +331,10 @@ export async function handleTransactionAggregationTask(
     { parameters, filters: ruleInstance.filters },
     { ruleInstance, rule },
     {
-      sanctionsService: new SanctionsService(task.tenantId),
+      sanctionsService: new SanctionsService(task.tenantId, {
+        mongoDb,
+        dynamoDb,
+      }),
       geoIpService: new GeoIPService(task.tenantId, dynamoDb),
     },
     mode,

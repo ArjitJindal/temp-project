@@ -4,6 +4,7 @@ import { promisify } from 'util'
 import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import {
   COLLECTIONS_MAP,
   extractCountryFromSource,
@@ -33,7 +34,6 @@ import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntit
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
 import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { tenantSettings } from '@/core/utils/context'
 
@@ -303,6 +303,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: AcurisSanctionsSearchType[] | undefined
@@ -329,7 +330,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
       tenantId,
       apiKey,
       types ?? ACURIS_SANCTIONS_SEARCH_TYPES,
-      entityTypes ?? COLLECTIONS_MAP[SanctionsDataProviders.ACURIS]
+      entityTypes ?? COLLECTIONS_MAP[SanctionsDataProviders.ACURIS],
+      connections
     )
   }
 
@@ -337,9 +339,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
     tenantId: string,
     apiKey: string,
     screeningTypes: AcurisSanctionsSearchType[],
-    entityTypes: SanctionsEntityType[]
+    entityTypes: SanctionsEntityType[],
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
   ) {
-    super(SanctionsDataProviders.ACURIS, tenantId)
+    super(SanctionsDataProviders.ACURIS, tenantId, connections)
     this.apiKey = apiKey
     this.screeningTypes = screeningTypes
     this.entityTypes = entityTypes
@@ -575,10 +578,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
   }
 
   private getSourceDocumentsRepo(mongoDb: MongoClient) {
-    return new MongoSanctionSourcesRepository(
-      SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
-      mongoDb
-    )
+    return new MongoSanctionSourcesRepository(mongoDb)
   }
 
   private getFullExtractRepo(entityType: SanctionsEntityType) {

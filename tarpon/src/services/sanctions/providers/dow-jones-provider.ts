@@ -9,6 +9,8 @@ import unzipper from 'unzipper'
 import { compact, intersection, replace, uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -221,7 +223,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   private screeningTypes: DowJonesSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
 
-  static async build(tenantId: string) {
+  static async build(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     const settings = await tenantSettings(tenantId)
     const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
       (type) => type.provider === SanctionsDataProviders.DOW_JONES
@@ -242,7 +247,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         sanctions.dowjonesCreds.password,
         tenantId,
         types ?? DOW_JONES_SANCTIONS_SEARCH_TYPES,
-        entityTypes ?? SANCTIONS_ENTITY_TYPES
+        entityTypes ?? SANCTIONS_ENTITY_TYPES,
+        connections
       )
     }
     throw new Error(`No credentials found for Dow Jones for tenant ${tenantId}`)
@@ -253,9 +259,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     password: string,
     tenantId: string,
     screeningTypes: DowJonesSanctionsSearchType[],
-    entityTypes: SanctionsEntityType[]
+    entityTypes: SanctionsEntityType[],
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
   ) {
-    super(SanctionsDataProviders.DOW_JONES, tenantId)
+    super(SanctionsDataProviders.DOW_JONES, tenantId, connections)
     this.authHeader =
       'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
     this.screeningTypes = screeningTypes

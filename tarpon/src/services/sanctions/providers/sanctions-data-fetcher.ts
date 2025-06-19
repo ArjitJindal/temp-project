@@ -5,9 +5,10 @@ import {
   replaceRequiredCharactersWithSpace,
   sanitizeString,
 } from '@flagright/lib/utils'
-import { Db } from 'mongodb'
+import { Db, MongoClient } from 'mongodb'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { CommonOptions, format } from '@fragaria/address-formatter'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsDataProviders } from '../types'
 import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
@@ -28,10 +29,7 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import {
-  getSearchIndexName,
-  SANCTIONS_SOURCE_DOCUMENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
@@ -48,7 +46,6 @@ import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSou
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 import { hasFeature } from '@/core/utils/context'
@@ -59,11 +56,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository
   private readonly tenantId: string
+  private readonly mongoDb: MongoClient
+  private readonly dynamoDb: DynamoDBClient
 
-  constructor(provider: SanctionsDataProviderName, tenantId: string) {
+  constructor(
+    provider: SanctionsDataProviderName,
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     this.providerName = provider
     this.searchRepository = new SanctionsProviderSearchRepository()
     this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
 
   abstract fullLoad(
@@ -1366,16 +1371,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async getSanctionSourceDetails(screeningProfileId: string) {
-    const dynamoDb = getDynamoDbClient()
-    const { SanctionsService } = await import('@/services/sanctions')
-    const sanctionsService = new SanctionsService(this.tenantId)
-    const screeningProfileService = new ScreeningProfileService(
-      this.tenantId,
-      sanctionsService
-    )
+    const screeningProfileService = new ScreeningProfileService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const screeningProfile =
       await screeningProfileService.getExistingScreeningProfile(
-        dynamoDb,
         screeningProfileId
       )
     const sanctionSourceIds = screeningProfile.sanctions?.sourceIds
@@ -1426,10 +1427,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
       // Only fetch sources if we have sourceIds
       if (sourceIds?.length) {
-        const repo = new MongoSanctionSourcesRepository(
-          SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
-          mongoDb
-        )
+        const repo = new MongoSanctionSourcesRepository(mongoDb)
         const sources = await repo.getSanctionsSources(undefined, sourceIds)
         for (const source of sources) {
           if (!source.sourceName) {

@@ -8,6 +8,8 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { AlertsRepository } from '../alerts/repository'
 import { AlertsService } from '../alerts'
 import { CaseService } from '../cases'
@@ -70,11 +72,10 @@ import {
   getDefaultProviders,
 } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -98,9 +99,14 @@ export class SanctionsService {
   caseService!: CaseService
   userService!: UserService
   alertsService!: AlertsService
+  connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
 
-  constructor(tenantId: string) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     this.tenantId = tenantId
+    this.connections = connections
   }
 
   public static async fromEvent(
@@ -114,7 +120,12 @@ export class SanctionsService {
       UserService.fromEvent(event),
       AlertsService.fromEvent(event),
     ])
-    const sanctionsService = new SanctionsService(tenantId)
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
+    const sanctionsService = new SanctionsService(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     sanctionsService.caseService = caseService
     sanctionsService.userService = userService
     sanctionsService.alertsService = alertsService
@@ -137,13 +148,13 @@ export class SanctionsService {
       mongoDb
     )
     this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
-      SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(),
       mongoDb
     )
   }
 
   private async getProvider(
     provider: SanctionsDataProviderName,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient },
     providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
@@ -153,11 +164,11 @@ export class SanctionsService {
           providerConfig?.stage
         )
       case 'dowjones':
-        return await DowJonesProvider.build(this.tenantId)
+        return await DowJonesProvider.build(this.tenantId, connections)
       case 'open-sanctions':
-        return OpenSanctionsProvider.build(this.tenantId)
+        return OpenSanctionsProvider.build(this.tenantId, connections)
       case 'acuris':
-        return AcurisProvider.build(this.tenantId)
+        return AcurisProvider.build(this.tenantId, connections)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)
@@ -189,7 +200,7 @@ export class SanctionsService {
     if (!result) {
       return false
     }
-    const provider = await this.getProvider(providerName)
+    const provider = await this.getProvider(providerName, this.connections)
     const response = await provider.getSearch(providerSearchId)
 
     await this.sanctionsHitsRepository.addNewHits(
@@ -338,7 +349,11 @@ export class SanctionsService {
     const shouldSearch =
       !existedSearch?.response || providerName !== 'comply-advantage'
     if (shouldSearch) {
-      const provider = await this.getProvider(providerName, providerOverrides)
+      const provider = await this.getProvider(
+        providerName,
+        this.connections,
+        providerOverrides
+      )
 
       if (providerName !== 'comply-advantage') {
         let existedSearch: SanctionsSearchHistory | null
@@ -520,7 +535,11 @@ export class SanctionsService {
       throw new Error(`Unable to get search id from response`)
     }
 
-    const provider = await this.getProvider(search.provider, providerOverrides)
+    const provider = await this.getProvider(
+      search.provider,
+      this.connections,
+      providerOverrides
+    )
     await provider.setMonitoring(providerSearchId, update.enabled)
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,

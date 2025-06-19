@@ -1,6 +1,7 @@
 import { MongoClient, Collection } from 'mongodb'
 import { intersection, sample } from 'lodash'
 import { sanitizeString } from '@flagright/lib/utils/string'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'
 import data from './ongoing_search_results.json'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
@@ -14,7 +15,10 @@ import {
 } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
+dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS', 'DOW_JONES'])
 // Mock getContext
 jest.mock('@/core/utils/context-storage', () => ({
@@ -23,8 +27,11 @@ jest.mock('@/core/utils/context-storage', () => ({
 
 // Extend the SanctionsDataFetcher for testing purposes
 class TestSanctionsDataFetcher extends SanctionsDataFetcher {
-  constructor(tenantId: string) {
-    super(SanctionsDataProviders.DOW_JONES, tenantId)
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
+    super(SanctionsDataProviders.DOW_JONES, tenantId, connections)
   }
   // Implement abstract methods as no-op for this test
   async fullLoad() {}
@@ -92,7 +99,10 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('setMonitoring should update the monitoring field', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant', {
+      mongoDb: client,
+      dynamoDb: getDynamoDbClient(),
+    })
 
     const providerSearchId = 'monitoring-test-id'
     await searchCollection.insertOne({
@@ -122,7 +132,10 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     await sanctionsCollection.insertMany(screeningEntities)
     const db = await getMongoDbClientDb()
     const randomEntity1 = sample(screeningEntities)
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant', {
+      mongoDb: client,
+      dynamoDb: getDynamoDbClient(),
+    })
     const searchResult1 = await sanctionsFetcher.searchWithoutMatchingNames(
       {
         searchTerm: randomEntity1.name,
@@ -299,7 +312,10 @@ describe('SanctionsDataFetcher Integration Tests', () => {
         'sylvia tati sheila emily sitaim',
       ],
     }
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant', {
+      mongoDb: client,
+      dynamoDb: getDynamoDbClient(),
+    })
     const stopwordSet = new Set(data.stopwords)
     for (let index = 0; index < data.names.length; index++) {
       const name = data.names[index]

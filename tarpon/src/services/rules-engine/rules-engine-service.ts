@@ -275,7 +275,10 @@ export class RulesEngineService {
         dynamoDb,
       }
     )
-    this.sanctionsService = new SanctionsService(this.tenantId)
+    this.sanctionsService = new SanctionsService(this.tenantId, {
+      mongoDb: mongoDb as MongoClient,
+      dynamoDb: dynamoDb as DynamoDBDocumentClient,
+    })
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
 

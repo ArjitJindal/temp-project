@@ -5,10 +5,15 @@ import { SanctionsRepository } from '@/services/sanctions/providers/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 jest.mock('axios')
 jest.mock('unzipper')
 jest.mock('fs-extra')
+
+dynamoDbSetupHook()
 
 describe('DowJonesProvider', () => {
   let fetcher: DowJonesProvider
@@ -20,7 +25,11 @@ describe('DowJonesProvider', () => {
       'testpass',
       'test',
       DOW_JONES_SANCTIONS_SEARCH_TYPES,
-      SANCTIONS_ENTITY_TYPES
+      SANCTIONS_ENTITY_TYPES,
+      {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      }
     )
     repo = {
       save: jest.fn(),
@@ -53,7 +62,11 @@ describe('DowJonesProvider', () => {
       'testpass',
       'test',
       DOW_JONES_SANCTIONS_SEARCH_TYPES,
-      ['PERSON']
+      ['PERSON'],
+      {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      }
     )
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
@@ -146,7 +159,11 @@ Jubilant Pharmova Ltd.`,
       'testpass',
       'test',
       DOW_JONES_SANCTIONS_SEARCH_TYPES,
-      SANCTIONS_ENTITY_TYPES
+      SANCTIONS_ENTITY_TYPES,
+      {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      }
     )
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',

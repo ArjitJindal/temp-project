@@ -6,7 +6,10 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
+dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS', 'OPEN_SANCTIONS'])
 
 describe('OpenSanctionsProvider', () => {
@@ -15,7 +18,11 @@ describe('OpenSanctionsProvider', () => {
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
       OPEN_SANCTIONS_SEARCH_TYPES,
-      ['PERSON']
+      ['PERSON'],
+      {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      }
     )
     // Mock input JSON
     const mockJson = {
@@ -45,7 +52,7 @@ describe('OpenSanctionsProvider', () => {
     expect(result).toEqual(expectedUrls)
   })
 
-  it('should transform a valid OpenSanctionsEntity correctly', () => {
+  it('should transform a valid OpenSanctionsEntity correctly', async () => {
     const mockEntity = {
       id: 'entity123',
       caption: 'John Doe',
@@ -66,7 +73,8 @@ describe('OpenSanctionsProvider', () => {
     const openSanctionsProvider = new OpenSanctionsProvider(
       'test',
       OPEN_SANCTIONS_SEARCH_TYPES,
-      ['PERSON']
+      ['PERSON'],
+      { mongoDb: await getMongoDbClient(), dynamoDb: getDynamoDbClient() }
     )
 
     const result = openSanctionsProvider.transformInput(mockEntity)
@@ -104,7 +112,8 @@ describe('OpenSanctionsProvider', () => {
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
       OPEN_SANCTIONS_SEARCH_TYPES,
-      ['PERSON']
+      ['PERSON'],
+      { mongoDb: await getMongoDbClient(), dynamoDb: getDynamoDbClient() }
     )
     const repo = new MongoSanctionsRepository(
       DELTA_SANCTIONS_COLLECTION(tenantId)
@@ -116,7 +125,8 @@ describe('OpenSanctionsProvider', () => {
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
       OPEN_SANCTIONS_SEARCH_TYPES,
-      ['PERSON']
+      ['PERSON'],
+      { mongoDb: await getMongoDbClient(), dynamoDb: getDynamoDbClient() }
     )
     const client = await getMongoDbClient()
     const collectionName = getSanctionsCollectionName(

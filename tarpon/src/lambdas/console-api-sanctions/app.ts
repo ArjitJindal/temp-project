@@ -201,12 +201,11 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         const mongoDb = await getMongoDbClient()
         const dynamoDb = getDynamoDbClient()
         const counterRepository = new CounterRepository(tenantId, mongoDb)
-        const screeningProfileService = new ScreeningProfileService(
-          tenantId,
-          sanctionsService
-        )
-        return await screeningProfileService.createScreeningProfile(
+        const screeningProfileService = new ScreeningProfileService(tenantId, {
+          mongoDb,
           dynamoDb,
+        })
+        return await screeningProfileService.createScreeningProfile(
           request.ScreeningProfileRequest,
           counterRepository
         )
@@ -216,12 +215,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerGetScreeningProfiles(
       async (_ctx, request: DefaultApiGetScreeningProfilesRequest) => {
         const dynamoDb = getDynamoDbClient()
-        const screeningProfileService = new ScreeningProfileService(
-          tenantId,
-          sanctionsService
-        )
-        return await screeningProfileService.getScreeningProfiles(
+        const mongoDb = await getMongoDbClient()
+        const screeningProfileService = new ScreeningProfileService(tenantId, {
+          mongoDb,
           dynamoDb,
+        })
+        return await screeningProfileService.getScreeningProfiles(
           request.filterScreeningProfileId,
           request.filterScreeningProfileName,
           request.filterScreeningProfileStatus
@@ -232,12 +231,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerUpdateScreeningProfile(
       async (_ctx, request: DefaultApiUpdateScreeningProfileRequest) => {
         const dynamoDb = getDynamoDbClient()
-        const screeningProfileService = new ScreeningProfileService(
-          tenantId,
-          sanctionsService
-        )
-        return await screeningProfileService.updateScreeningProfile(
+        const mongoDb = await getMongoDbClient()
+        const screeningProfileService = new ScreeningProfileService(tenantId, {
+          mongoDb,
           dynamoDb,
+        })
+        return await screeningProfileService.updateScreeningProfile(
           request.screeningProfileId,
           request.ScreeningProfileRequest
         )
@@ -247,12 +246,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerDeleteScreeningProfile(
       async (_ctx, request: DefaultApiDeleteScreeningProfileRequest) => {
         const dynamoDb = getDynamoDbClient()
-        const screeningProfileService = new ScreeningProfileService(
-          tenantId,
-          sanctionsService
-        )
-        return await screeningProfileService.deleteScreeningProfile(
+        const mongoDb = await getMongoDbClient()
+        const screeningProfileService = new ScreeningProfileService(tenantId, {
+          mongoDb,
           dynamoDb,
+        })
+        return await screeningProfileService.deleteScreeningProfile(
           request.screeningProfileId
         )
       }

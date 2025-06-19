@@ -13,7 +13,6 @@ import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { FEATURE_FLAG_PROVIDER_MAP } from '../sanctions/utils'
 import { AcurisProvider } from '../sanctions/providers/acuris-provider'
 import { ScreeningProfileService } from '../screening-profile'
-import { SanctionsService } from '../sanctions'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InHouseScreeningMigrationBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -46,6 +45,7 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   ruleInstanceService!: RuleInstanceService
   tenantRepository!: TenantRepository
   tenantId!: string
+
   private async init(
     tenantId: string,
     mongoDb: MongoClient,
@@ -67,8 +67,14 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     )
     this.dataProvider =
       provider === 'open-sanctions'
-        ? await OpenSanctionsProvider.build(tenantId)
-        : await AcurisProvider.build(tenantId)
+        ? await OpenSanctionsProvider.build(tenantId, {
+            mongoDb,
+            dynamoDb,
+          })
+        : await AcurisProvider.build(tenantId, {
+            mongoDb,
+            dynamoDb,
+          })
     this.searchRepository = new SanctionsSearchRepository(tenantId, mongoDb)
     this.counterRepository = new CounterRepository(tenantId, mongoDb)
     this.tenantRepository = new TenantRepository(tenantId, {
@@ -94,12 +100,15 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
         sanctionsWhitelistId: 1,
       })
       .addCursorFlag('noCursorTimeout', true)
-    await processCursorInBatch(cursor, this.processHits.bind(this))
+    await processCursorInBatch(cursor, (batch) => this.processHits(batch))
 
     logger.info('Whitelist entities processed')
     const r16Rule = await this.getTenantR16Rule()
     if (r16Rule) {
-      await this.handleRuleInstance(r16Rule)
+      await this.handleRuleInstance(r16Rule, {
+        mongoDb,
+        dynamoDb,
+      })
     }
     const tenantSettings = await this.tenantRepository?.getTenantSettings()
     const features = compact(
@@ -272,18 +281,20 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     return ruleInstances.find((ruleInstance) => ruleInstance.ruleId === 'R-16')
   }
 
-  private async handleRuleInstance(ruleInstance: RuleInstance) {
+  private async handleRuleInstance(
+    ruleInstance: RuleInstance,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     const parameters = ruleInstance.parameters
     const ruleInstanceId = await this.ruleInstanceService?.getNewRuleInstanceId(
       'R-17'
     )
-    const sanctionsService = new SanctionsService(this.tenantId)
     const screeningProfileService = new ScreeningProfileService(
       this.tenantId,
-      sanctionsService
+      connections
     )
     const screeningProfiles =
-      await screeningProfileService.getScreeningProfiles(getDynamoDbClient())
+      await screeningProfileService.getScreeningProfiles()
     const defaultScreeningProfileId = screeningProfiles.items.find(
       (profile) => profile.isDefault
     )?.screeningProfileId

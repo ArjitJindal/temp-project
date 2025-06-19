@@ -19,14 +19,15 @@ import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
 export class ScreeningProfileRepository {
   private tenantId: string
   private tableName: string
+  private dynamoDb: DynamoDBClient
 
-  constructor(tenantId: string) {
+  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
     this.tenantId = tenantId
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    this.dynamoDb = dynamoDb
   }
 
   public async markAllProfilesAsNonDefault(
-    dynamoDb: DynamoDBClient,
     excludeProfileId?: string
   ): Promise<void> {
     const timestamp = Date.now()
@@ -44,7 +45,7 @@ export class ScreeningProfileRepository {
       },
     }
 
-    const { Items: defaultProfiles } = await dynamoDb.send(
+    const { Items: defaultProfiles } = await this.dynamoDb.send(
       new QueryCommand(queryInput)
     )
 
@@ -54,7 +55,7 @@ export class ScreeningProfileRepository {
           this.tenantId,
           profile.screeningProfileId
         )
-        await dynamoDb.send(
+        await this.dynamoDb.send(
           new UpdateCommand({
             TableName: this.tableName,
             Key: {
@@ -74,7 +75,6 @@ export class ScreeningProfileRepository {
   }
 
   public async createScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfile: ScreeningProfileRequest,
     screeningProfileId: string
   ): Promise<ScreeningProfileResponse> {
@@ -95,7 +95,7 @@ export class ScreeningProfileRepository {
       updatedBy,
     }
 
-    await dynamoDb.send(
+    await this.dynamoDb.send(
       new PutCommand({
         TableName: this.tableName,
         Item: item,
@@ -142,12 +142,11 @@ export class ScreeningProfileRepository {
       },
     })
 
-    await dynamoDb.send(command)
+    await this.dynamoDb.send(command)
     return this.mapDynamoItemToScreeningProfile(updatedProfile)
   }
 
   public async batchUpdateScreeningProfiles(
-    dynamoDb: DynamoDBClient,
     profiles: ScreeningProfileResponse[]
   ): Promise<void> {
     const timestamp = Date.now()
@@ -170,11 +169,10 @@ export class ScreeningProfileRepository {
         },
       })
     }
-    await batchWrite(dynamoDb, batchUpdateList, this.tableName)
+    await batchWrite(this.dynamoDb, batchUpdateList, this.tableName)
   }
 
   public async getScreeningProfiles(
-    dynamoDb: DynamoDBClient,
     filterScreeningProfileIds?: string[],
     filterScreeningProfileNames?: string[],
     filterScreeningProfileStatus?: string
@@ -231,7 +229,7 @@ export class ScreeningProfileRepository {
       queryInput.FilterExpression = filterExpressions.join(' AND ')
     }
 
-    const { Items: allItems } = await dynamoDb.send(
+    const { Items: allItems } = await this.dynamoDb.send(
       new QueryCommand(queryInput)
     )
 
@@ -246,21 +244,20 @@ export class ScreeningProfileRepository {
   }
 
   public async deleteScreeningProfile(
-    dynamoDb: DynamoDBClient,
     screeningProfileId: string
   ): Promise<void> {
     const key = DynamoDbKeys.SCREENING_PROFILE(
       this.tenantId,
       screeningProfileId
     )
-    const { items: existingItems } = await this.getScreeningProfiles(dynamoDb, [
+    const { items: existingItems } = await this.getScreeningProfiles([
       screeningProfileId,
     ])
     if (!existingItems || existingItems.length === 0) {
       throw new BadRequest('Screening profile not found')
     }
 
-    await dynamoDb.send(
+    await this.dynamoDb.send(
       new DeleteCommand({
         TableName: this.tableName,
         Key: {

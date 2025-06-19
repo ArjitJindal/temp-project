@@ -23,6 +23,7 @@ import {
   verifyInternalProxyWebhook,
 } from '@/utils/internal-proxy'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -55,8 +56,11 @@ export const webhooksHandler = lambdaApi()(
           )
         }
       }
+
       const webhookEvent = request.ComplyAdvantageWebhookEvent
       if (webhookEvent.event === 'monitored_search_updated') {
+        const mongoDb = await getMongoDbClient()
+        const dynamoDb = getDynamoDbClient()
         const searchUpdated =
           webhookEvent.data as ComplyAdvantageMonitoredSearchUpdated
         if (!searchUpdated.search_id) {
@@ -69,12 +73,15 @@ export const webhooksHandler = lambdaApi()(
         const allTenantIds = await TenantService.getAllTenantIds()
         for (const tenantId of allTenantIds) {
           const tenantRepository = new TenantRepository(tenantId, {
-            dynamoDb: getDynamoDbClient(),
+            dynamoDb,
           })
           updateLogMetadata({ tenantId })
           const tenantSettings = await tenantRepository.getTenantSettings()
           if (tenantSettings.features?.includes('SANCTIONS')) {
-            const sanctionsService = new SanctionsService(tenantId)
+            const sanctionsService = new SanctionsService(tenantId, {
+              mongoDb,
+              dynamoDb: getDynamoDbClient(),
+            })
             const refreshed = await sanctionsService.refreshSearch(
               providerSearchId,
               'comply-advantage'

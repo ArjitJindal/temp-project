@@ -13,6 +13,7 @@ import {
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { SanctionsSourceType } from '@/@types/openapi-internal/SanctionsSourceType'
+import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 
 interface SourceDocumentWithEntityIds extends Document {
   entityIds?: string[]
@@ -21,11 +22,11 @@ interface SourceDocumentWithEntityIds extends Document {
 export class MongoSanctionSourcesRepository
   implements SanctionsSourceRepository
 {
-  collectionName: string
   mongoClient: MongoClient
+  collectionName: string
 
-  constructor(collectionName: string, mongoClient: MongoClient) {
-    this.collectionName = collectionName
+  constructor(mongoClient: MongoClient) {
+    this.collectionName = SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()
     this.mongoClient = mongoClient
   }
 

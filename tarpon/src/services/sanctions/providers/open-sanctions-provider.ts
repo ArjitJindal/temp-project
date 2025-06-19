@@ -1,5 +1,7 @@
 import { compact, concat, startCase, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { COLLECTIONS_MAP } from '../utils'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
@@ -131,8 +133,10 @@ type OpenSanctionsOrganizationEntity = OpenSanctionsEntity & {
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
+
   static async build(
     tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: OpenSanctionsSearchType[] | undefined
@@ -154,16 +158,18 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     return new OpenSanctionsProvider(
       tenantId,
       types ?? OPEN_SANCTIONS_SEARCH_TYPES,
-      entityTypes ?? COLLECTIONS_MAP[SanctionsDataProviders.OPEN_SANCTIONS]
+      entityTypes ?? COLLECTIONS_MAP[SanctionsDataProviders.OPEN_SANCTIONS],
+      connections
     )
   }
 
   constructor(
     tenantId: string,
     types: OpenSanctionsSearchType[],
-    entityTypes: SanctionsEntityType[]
+    entityTypes: SanctionsEntityType[],
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
   ) {
-    super(SanctionsDataProviders.OPEN_SANCTIONS, tenantId)
+    super(SanctionsDataProviders.OPEN_SANCTIONS, tenantId, connections)
     this.types = types
     this.entityTypes = entityTypes
   }

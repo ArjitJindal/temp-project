@@ -589,7 +589,10 @@ export function testAggregationRebuild(
           { parameters: rule.defaultParameters, filters: ruleInstance.filters },
           { ruleInstance, rule },
           {
-            sanctionsService: new SanctionsService(tenantId),
+            sanctionsService: new SanctionsService(tenantId, {
+              mongoDb: await getMongoDbClient(),
+              dynamoDb,
+            }),
             geoIpService: new GeoIPService(tenantId, dynamoDb),
           },
           'DYNAMODB',

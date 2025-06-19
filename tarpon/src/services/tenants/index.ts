@@ -60,7 +60,6 @@ import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
-import { SanctionsService } from '@/services/sanctions'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -253,13 +252,11 @@ export class TenantService {
     const mongoDb = this.mongoDb
     const dynamoDb = this.dynamoDb
     const counterRepository = new CounterRepository(tenantId, mongoDb)
-    const sanctionsService = new SanctionsService(tenantId)
-    const screeningProfileService = new ScreeningProfileService(
-      tenantId,
-      sanctionsService
-    )
-    await screeningProfileService.createDefaultScreeningProfile(
+    const screeningProfileService = new ScreeningProfileService(tenantId, {
+      mongoDb,
       dynamoDb,
+    })
+    await screeningProfileService.createDefaultScreeningProfile(
       counterRepository
     )
   }
@@ -750,14 +747,15 @@ export class TenantService {
     )?.screeningTypes
     // if acuris settings are changed, update the screening profiles
     if (acurisSanctionsSearchType) {
-      const sanctionsService = new SanctionsService(this.tenantId)
       const screeningProfileService = new ScreeningProfileService(
         this.tenantId,
-        sanctionsService
+        {
+          mongoDb: this.mongoDb,
+          dynamoDb: this.dynamoDb,
+        }
       )
       await screeningProfileService.updateScreeningProfilesOnSanctionsSettingsChange(
-        acurisSanctionsSearchType as AcurisSanctionsSearchType[],
-        this.dynamoDb
+        acurisSanctionsSearchType as AcurisSanctionsSearchType[]
       )
     }
 
