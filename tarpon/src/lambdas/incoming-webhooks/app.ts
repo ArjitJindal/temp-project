@@ -71,6 +71,7 @@ export const webhooksHandler = lambdaApi()(
           `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${providerSearchId})`
         )
         const allTenantIds = await TenantService.getAllTenantIds()
+        const dynamoDb = getDynamoDbClient()
         for (const tenantId of allTenantIds) {
           const tenantRepository = new TenantRepository(tenantId, {
             dynamoDb,
