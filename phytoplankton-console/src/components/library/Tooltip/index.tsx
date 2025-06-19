@@ -55,10 +55,6 @@ function TooltipRoot(props: Props) {
     open: isVisibleState,
     onOpenChange: setIsVisibleState,
     middleware: [
-      arrow({
-        element: arrowRef,
-        padding: 6,
-      }),
       offset(ARROW_HEIGHT + GAP),
       flip({
         fallbackPlacements: [
@@ -72,6 +68,10 @@ function TooltipRoot(props: Props) {
           'left',
           'top-start',
         ],
+      }),
+      arrow({
+        element: arrowRef,
+        padding: 6,
       }),
       size({
         apply({ availableWidth, ...state }) {
