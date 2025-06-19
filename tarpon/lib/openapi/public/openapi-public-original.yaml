@@ -3741,6 +3741,8 @@ components:
           description: Address(es) of the company
           items:
             $ref: '#/components/schemas/Address'
+        name:
+          $ref: '#/components/schemas/ConsumerName'
     CompanyFinancialDetails:
       title: CompanyFinancialDetails
       type: object
