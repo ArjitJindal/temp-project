@@ -22,6 +22,7 @@ export default function Spinner(props: Props) {
       className={CY_LOADING_FLAG_CLASS}
       size={size.toLowerCase() as SpinSize}
       indicator={<LoadingOutlined spin style={{ fontSize: SIZES[size] }} />}
+      data-cy={CY_LOADING_FLAG_CLASS}
     >
       {children}
     </Spin>

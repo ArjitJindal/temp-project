@@ -30,6 +30,7 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
     { cacheAcrossSpecs: true },
   );
   cy.visit('/');
+  cy.waitNothingLoading();
   cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
   cy.wait('@tenantSettings');
   if (role === 'super_admin') {
@@ -388,13 +389,18 @@ Cypress.Commands.add('waitNothingLoading', () => {
   cy.get('body').then(($body) => {
     if ($body.find('.cy-loading').length > 0) {
       cy.get('.cy-loading', { timeout: 10000 }).should('not.exist');
+    }
+
+    cy.waitSkeletonLoader();
+  });
+});
+
+Cypress.Commands.add('waitSkeletonLoader', () => {
+  cy.get('body').then(($body) => {
+    if ($body.find('[data-cy="skeleton"]').length > 0) {
+      cy.get('[data-cy="skeleton"]', { timeout: 10000 }).should('not.exist');
     } else {
-      cy.log('No loader found, continuing...');
-      if ($body.find('[data-cy="skeleton"]').length > 0) {
-        cy.get('[data-cy="skeleton"]', { timeout: 10000 }).should('not.exist');
-      } else {
-        cy.log('No skeleton found, continuing...');
-      }
+      cy.log('No skeleton found, continuing...');
     }
   });
 });

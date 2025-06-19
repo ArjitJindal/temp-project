@@ -60,7 +60,8 @@ declare global {
       selectSegmentedControl(title: string): Chainable<Element>;
       selectTab(title: string): Chainable<Element>;
       asertInputDisabled(label: string): Chai.Assertion;
-      waitNothingLoading(): Chainable<Element>;
+      waitNothingLoading(): Chai.Assertion;
+      waitSkeletonLoader(): Chai.Assertion;
       assertSkeletonLoader(): Chai.Assertion;
       checkNotification(statement: string[]): Chainable<Element>;
       deleteRuleInstance(ruleInstanceId: string): Chainable<Element>;

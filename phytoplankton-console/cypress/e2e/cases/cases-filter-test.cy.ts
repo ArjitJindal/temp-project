@@ -11,30 +11,34 @@ describe('Filter according to case id (optimized)', () => {
 
   /* eslint-disable cypress/no-unnecessary-waiting */
   it('should be able to filter according to case id', () => {
-    cy.intercept('GET', '**/cases**').as('cases');
+    cy.intercept('GET', '**/console/cases**').as('cases');
 
     cy.visit('/case-management/cases');
-    cy.assertSkeletonLoader();
 
-    cy.get('[data-cy="caseId"]')
-      .first()
-      .then(($caseId) => {
-        const caseId = $caseId.text();
-        cy.get('[data-cy="rules-filter"]').contains('Case ID').click();
-        cy.wait(300);
-        cy.focused().type(caseId);
-        cy.wait('@cases').then((casesInterception) => {
-          expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
-          cy.url().should('include', 'caseId');
-          cy.get('[data-cy="table-case-table-body"] [data-cy="caseId"]').each(($caseId) => {
-            const caseIdText = $caseId.text();
+    cy.wait('@cases').then((casesInterception) => {
+      expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
+      cy.waitNothingLoading();
 
-            if (caseIdText.startsWith('C')) {
-              expect(caseIdText).to.include(caseId);
-            }
+      cy.get('[data-cy="caseId"]')
+        .first()
+        .then(($caseId) => {
+          const caseId = $caseId.text();
+          cy.get('[data-cy="rules-filter"]').contains('Case ID').click();
+          cy.wait(300);
+          cy.focused().type(caseId);
+          cy.wait('@cases').then((casesInterception) => {
+            expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
+            cy.url().should('include', 'caseId');
+            cy.get('[data-cy="table-case-table-body"] [data-cy="caseId"]').each(($caseId) => {
+              const caseIdText = $caseId.text();
+
+              if (caseIdText.startsWith('C')) {
+                expect(caseIdText).to.include(caseId);
+              }
+            });
           });
         });
-      });
+    });
   });
 
   it('should filter according to alert priority of the cases', () => {
