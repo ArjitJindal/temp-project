@@ -116,9 +116,9 @@ function open(
   type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
   options?: ShowNotificationOptions,
 ): CloseMessage {
-  let defaultDuration = 5000;
+  let defaultDuration = 3000;
   if (options?.link && options.linkTitle) {
-    defaultDuration = 8000;
+    defaultDuration = 6000;
   } else if (type === 'LOADING') {
     defaultDuration = Infinity;
   }
@@ -222,7 +222,7 @@ export function MessageBody(props: {
             className={s.copyIcon}
             onClick={() => {
               message.success(options?.copyFeedback ?? 'Link copied to clipboard');
-              copyTextToClipboard(link ?? '');
+              copyTextToClipboard(`${window.location.origin}${link}`);
             }}
           />
         )}

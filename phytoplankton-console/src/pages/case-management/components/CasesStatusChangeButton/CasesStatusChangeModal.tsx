@@ -53,15 +53,23 @@ export default function CasesStatusChangeModal(props: Props) {
         return;
       }
 
-      message.success(
-        `Case '${
-          props.entityIds[0]
-        }' is escalated successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to ${humanizeConstant(
+      message.success(`${pluralize('Case', props.entityIds.length)} escalated successfully`, {
+        details: `${capitalizeNameFromEmail(auth0User?.name || '')} escalated ${pluralize(
+          'case',
+          props.entityIds.length,
+          true,
+        )} '${props.entityIds.join(
+          ', ',
+        )}' successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to ${humanizeConstant(
           updates.caseStatus as string,
         )}`,
-      );
+        link: makeUrl(`/case-management/case/:id`, {
+          id: props.entityIds[0],
+        }),
+        linkTitle: 'View case',
+      });
     },
-    [api, props.entityIds, users, currentUser?.reviewerId],
+    [props.entityIds, api, users, currentUser?.reviewerId, auth0User?.name],
   );
 
   const statusChangeCallback = useCallback(
@@ -94,28 +102,43 @@ export default function CasesStatusChangeModal(props: Props) {
                   `'${users[assignment.assigneeUserId]?.name || assignment.assigneeUserId}'`,
               )
               .join(', ');
-        message.success(
-          `Case '${
-            props.entityIds[0]
-          }' and the alerts under it are sent back successfully to ${assignees}. The case status and all '${
+        message.success(`${pluralize('Case', props.entityIds.length)} sent back successfully`, {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} sent back ${pluralize(
+            'case',
+            props.entityIds.length,
+            true,
+          )} '${props.entityIds.join(
+            ', ',
+          )}' successfully to ${assignees}. The case status and all '${
             sendBackL2Escalated ? 'Escalated L2' : 'Escalated'
           }' alert statuses under it are changed to '${
             sendBackL2Escalated ? 'Escalated' : 'Open'
           }'.`,
-        );
-      } else {
-        message.success(`Case ${props.newStatus.toLowerCase()} successfully`, {
-          details: `${capitalizeNameFromEmail(
-            auth0User?.name || '',
-          )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
-            updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
-          }`,
           link: makeUrl(`/case-management/case/:id`, {
             id: props.entityIds[0],
           }),
           linkTitle: 'View case',
           copyFeedback: 'Case URL copied to clipboard',
         });
+      } else {
+        message.success(
+          `${pluralize(
+            'Case',
+            props.entityIds.length,
+          )} ${props.newStatus.toLowerCase()} successfully`,
+          {
+            details: `${capitalizeNameFromEmail(
+              auth0User?.name || '',
+            )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
+              updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+            }`,
+            link: makeUrl(`/case-management/case/:id`, {
+              id: props.entityIds[0],
+            }),
+            linkTitle: 'View case',
+            copyFeedback: 'Case URL copied to clipboard',
+          },
+        );
       }
     },
     [api, props.entityIds, props.newStatusActionLabel, props.newStatus, users, auth0User?.name],

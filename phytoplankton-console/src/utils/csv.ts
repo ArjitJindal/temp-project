@@ -63,6 +63,6 @@ export async function downloadAsCSV(data: ExportData) {
   const rows = transformCSVTableRows(data);
 
   const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
-  message.success(`Data export finished`, { details: 'Download should start in a moment' });
+  message.success(`Data export finished`, { details: 'Download should start in a moment.' });
   download(fileName, serialize(rows));
 }

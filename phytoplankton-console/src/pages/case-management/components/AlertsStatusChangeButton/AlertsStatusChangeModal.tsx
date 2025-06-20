@@ -70,15 +70,43 @@ export default function AlertsStatusChangeModal(props: Props) {
         if (isEmpty(transactionIds)) {
           if (childCaseId) {
             message.success(
-              `Alerts '${entities}' are added to a new child case '${childCaseId}' and ${
+              `${pluralize('Alert', props.entityIds.length)} ${
                 statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
-              } successfully to ${assignees}`,
+              } successfully`,
+              {
+                details: `${capitalizeNameFromEmail(auth0User?.name || '')} added ${pluralize(
+                  'alert',
+                  props.entityIds.length,
+                  true,
+                )} '${entities}' to a new child case '${childCaseId}' and ${
+                  statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
+                } successfully to ${assignees}`,
+                link: makeUrl(`/case-management/alerts/:id`, {
+                  id: props.entityIds[0],
+                }),
+                linkTitle: 'View alert',
+                copyFeedback: 'Alert URL copied to clipboard',
+              },
             );
           } else {
             message.success(
-              `Alerts '${entities}' ${
+              `${pluralize('Alert', props.entityIds.length)} ${
                 statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
-              } successfully to ${assignees}`,
+              } successfully`,
+              {
+                details: `${capitalizeNameFromEmail(auth0User?.name || '')} ${
+                  statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
+                } ${pluralize(
+                  'alert',
+                  props.entityIds.length,
+                  true,
+                )} '${entities}' successfully to ${assignees}`,
+                link: makeUrl(`/case-management/alerts/:id`, {
+                  id: props.entityIds[0],
+                }),
+                linkTitle: 'View alert',
+                copyFeedback: 'Alert URL copied to clipboard',
+              },
             );
           }
         } else {
@@ -98,7 +126,16 @@ export default function AlertsStatusChangeModal(props: Props) {
         await queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
       }
     },
-    [props.caseId, props.entityIds, props.transactionIds, api, currentUser, queryClient, users],
+    [
+      api,
+      props.caseId,
+      props.entityIds,
+      props.transactionIds,
+      users,
+      currentUser?.reviewerId,
+      queryClient,
+      auth0User?.name,
+    ],
   );
 
   const statusChangeCallback = useCallback(

@@ -90,7 +90,9 @@ export function DownloadButton(props: {
     } finally {
       setLoading(false);
       hideMessage && hideMessage();
-      message.success('File downloaded successfully');
+      message.success('Data export finished', {
+        details: 'Download should start in a moment.',
+      });
     }
   }, [onDownload]);
   return (
