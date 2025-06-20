@@ -607,6 +607,7 @@ const SanctionsSourceTypeTab = ({
             selection={true}
             pagination={false}
             selectedIds={config.selectedSources}
+            retainSelectedIds
             onSelect={(selectedIds) => {
               onChange({ selectedSources: selectedIds });
             }}

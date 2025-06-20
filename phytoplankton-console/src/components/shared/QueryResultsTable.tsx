@@ -11,12 +11,13 @@ type Props<Item extends object, Params extends object = ParamsType> = Omit<
 > & {
   queryResults: QueryResult<TableData<Item>>;
   showResultsInfo?: boolean;
+  retainSelectedIds?: boolean;
 };
 
 export default function QueryResultsTable<T extends object, Params extends object = CommonParams>(
   props: Props<T, Params>,
 ): JSX.Element {
-  const { queryResults, showResultsInfo = true, expandedRowId, ...rest } = props;
+  const { queryResults, showResultsInfo = true, expandedRowId, retainSelectedIds, ...rest } = props;
   const { selectedIds, rowKey, onSelect } = rest;
   const handleReload = useCallback(() => {
     rest.onReload?.();
@@ -31,7 +32,7 @@ export default function QueryResultsTable<T extends object, Params extends objec
   }, [queryResults.data]);
 
   useEffect(() => {
-    if (!selectedIds?.length) {
+    if (!selectedIds?.length || !isSuccess(queryResults.data) || retainSelectedIds) {
       return;
     }
 
