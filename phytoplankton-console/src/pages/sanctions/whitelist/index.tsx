@@ -16,9 +16,6 @@ export default function WhitelistTab() {
       }),
     },
     makeUrl: (rawQueryParams) => makeUrl('/screening/whitelist', {}, rawQueryParams),
-    persist: {
-      id: 'sanctions-whitelist-navigation-params',
-    },
   });
 
   const handleChangeParams = useCallback(
