@@ -25,9 +25,11 @@ import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
+  DELTA_SANCTIONS_COLLECTION,
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
   getSearchIndexName,
+  SANCTIONS_COLLECTION,
 } from './mongodb-definitions'
 import {
   sendBulkMessagesToMongoConsumer,
@@ -56,6 +58,7 @@ import {
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
+import { hasFeature } from '@/core/utils/context'
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
@@ -332,8 +335,26 @@ export const createGlobalMongoDBCollections = async (
   await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
 }
 
-const shouldBuildSearchIndex = (tenantId?: string) => {
-  return envIsNot('test') && (!tenantId || !isDemoTenant(tenantId))
+const isNotSanctionsCollection = (
+  collectionName?: string,
+  tenantId?: string
+) => {
+  if (!tenantId || !collectionName) {
+    return false
+  }
+  return (
+    collectionName !== SANCTIONS_COLLECTION(tenantId) &&
+    collectionName !== DELTA_SANCTIONS_COLLECTION(tenantId)
+  )
+}
+
+const shouldBuildSearchIndex = (tenantId?: string, collectionName?: string) => {
+  return (
+    envIsNot('test') &&
+    (!tenantId || !isDemoTenant(tenantId)) &&
+    (hasFeature('DOW_JONES') ||
+      isNotSanctionsCollection(collectionName, tenantId))
+  )
 }
 
 const createMongoDBCollectionsInternal = async (
@@ -357,7 +378,7 @@ const createMongoDBCollectionsInternal = async (
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
     if (definition.getSearchIndex) {
-      if (shouldBuildSearchIndex(tenantId)) {
+      if (shouldBuildSearchIndex(tenantId, collectionName)) {
         await createSearchIndex(
           db,
           collectionName,
