@@ -121,7 +121,8 @@ export class MongoSanctionSourcesRepository
     filterSourceType?: SanctionsSourceType,
     filterSourceIds?: string[],
     unique?: boolean,
-    searchTerm?: string
+    searchTerm?: string,
+    projection?: Document
   ): Promise<(SourceDocument & { entityCount: number })[]> {
     const collection = this.mongoClient
       .db()
@@ -203,6 +204,10 @@ export class MongoSanctionSourcesRepository
         },
       })
       pipeline.push({ $sort: { sortOrder: 1 } })
+    }
+
+    if (!unique && projection) {
+      pipeline.push({ $project: projection })
     }
 
     const sources = await collection.aggregate(pipeline).toArray()

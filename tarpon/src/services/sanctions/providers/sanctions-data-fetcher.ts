@@ -1428,7 +1428,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       // Only fetch sources if we have sourceIds
       if (sourceIds?.length) {
         const repo = new MongoSanctionSourcesRepository(mongoDb)
-        const sources = await repo.getSanctionsSources(undefined, sourceIds)
+        const sources = await repo.getSanctionsSources(
+          undefined,
+          sourceIds,
+          undefined,
+          undefined,
+          { sourceName: 1, sourceType: 1 }
+        )
         for (const source of sources) {
           if (!source.sourceName) {
             continue
