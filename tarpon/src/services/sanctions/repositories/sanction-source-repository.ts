@@ -134,9 +134,10 @@ export class MongoSanctionSourcesRepository
       matchStage.id = { $in: filterSourceIds }
     }
     if (searchTerm) {
+      const sanitizedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '')
       matchStage.$or = [
-        { sourceName: { $regex: searchTerm, $options: 'i' } },
-        { sourceCountry: { $regex: searchTerm, $options: 'i' } },
+        { sourceName: { $regex: sanitizedSearchTerm, $options: 'i' } },
+        { sourceCountry: { $regex: sanitizedSearchTerm, $options: 'i' } },
       ]
     }
 
