@@ -332,3 +332,18 @@ export function isUserReceiverVariable(variableKey: string) {
 export function isUserSenderOrReceiverVariable(variableKey: string) {
   return variableKey.endsWith('__BOTH');
 }
+export function isDirectionlessVariable(variableKey: string): boolean {
+  if (variableKey.startsWith('TRANSACTION:')) {
+    return (
+      !variableKey.startsWith('TRANSACTION:origin') &&
+      !variableKey.startsWith('TRANSACTION:destination') &&
+      !variableKey.endsWith('__BOTH')
+    );
+  }
+
+  return (
+    !variableKey.endsWith('__SENDER') &&
+    !variableKey.endsWith('__RECEIVER') &&
+    !variableKey.endsWith('__BOTH')
+  );
+}

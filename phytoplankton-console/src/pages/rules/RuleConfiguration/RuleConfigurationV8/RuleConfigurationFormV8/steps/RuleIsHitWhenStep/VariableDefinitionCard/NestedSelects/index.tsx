@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useRef, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import Label from '@/components/library/Label';
 import Select, { Option as SelectOption } from '@/components/library/Select';
@@ -36,15 +36,21 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
   });
   const childRef = useRef<RefType>(null);
 
+  useEffect(() => {
+    if (value || !options.find((x) => x.value === localValue)) {
+      setLocalValue(calcLocalValue(value, options));
+    }
+  }, [value, options, localValue]);
+
   useImperativeHandle(
     ref,
     () => ({
       reset: (valueToSet?: string) => {
-        setLocalValue(calcLocalValue(valueToSet ?? value, options));
+        setLocalValue(calcLocalValue(valueToSet, options));
         childRef.current?.reset(valueToSet);
       },
     }),
-    [value, options],
+    [options],
   );
 
   const selectedOption = options.find((x) => x.value === localValue);
@@ -55,7 +61,7 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
     const isLeaf = newSelectedOption != null && (newSelectedOption?.children?.length ?? 0) === 0;
     if (isLeaf) {
       onChange?.(newValue);
-    } else if (value !== undefined) {
+    } else if (value) {
       onChange?.(undefined);
     }
   };

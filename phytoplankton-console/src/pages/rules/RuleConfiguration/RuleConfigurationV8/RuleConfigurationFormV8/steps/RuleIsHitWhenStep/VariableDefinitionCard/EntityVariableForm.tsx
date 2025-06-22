@@ -3,6 +3,7 @@ import { shortId } from '@flagright/lib/utils';
 import { Link } from 'react-router-dom';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import {
+  isDirectionlessVariable,
   isTransactionDestinationVariable,
   isTransactionOriginOrDestinationVariable,
   isTransactionOriginVariable,
@@ -351,6 +352,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       >
         <Card.Section direction="vertical">
           <Select<string | null>
+            value={formValues.entityVariableKey ?? null}
             onChange={(variableKey) => {
               setSearchKey(variableKey ?? undefined);
               if (variableKey) {
@@ -366,7 +368,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             placeholder={
               <span>
                 <SearchIcon style={{ width: 12, height: 12 }} />
-                {'  '}Search for entity variable here or configure below
+                Search for entity variable here or configure below
               </span>
             }
             portaled={true}
@@ -389,7 +391,13 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             <Label label="Variable type" required={{ value: true, showHint: true }}>
               <SelectionGroup
                 value={formValues.type}
-                onChange={(type) => handleUpdateForm({ type: type as 'TRANSACTION' | 'USER' })}
+                onChange={(type) =>
+                  handleUpdateForm({
+                    type: type as 'TRANSACTION' | 'USER',
+                    entityVariableKey: undefined,
+                    userNatures: undefined,
+                  })
+                }
                 mode={'SINGLE'}
                 options={
                   ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS
@@ -402,7 +410,16 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
               <Label label="Transaction direction">
                 <SelectionGroup
                   value={formValues.transactionDirection}
-                  onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
+                  onChange={(transactionDirection) => {
+                    const shouldResetVariable =
+                      formValues.entityVariableKey &&
+                      !isDirectionlessVariable(formValues.entityVariableKey);
+
+                    handleUpdateForm({
+                      transactionDirection,
+                      ...(shouldResetVariable && { entityVariableKey: undefined }),
+                    });
+                  }}
                   mode={'SINGLE'}
                   options={TX_DIRECTION_OPTIONS}
                   testName="variable-tx-direction-v8"
@@ -419,7 +436,16 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                   >
                     <SelectionGroup
                       value={formValues.userType}
-                      onChange={(userType) => handleUpdateForm({ userType })}
+                      onChange={(userType) => {
+                        const shouldResetVariable =
+                          formValues.entityVariableKey &&
+                          !isDirectionlessVariable(formValues.entityVariableKey);
+
+                        handleUpdateForm({
+                          userType,
+                          ...(shouldResetVariable && { entityVariableKey: undefined }),
+                        });
+                      }}
                       mode={'SINGLE'}
                       options={USER_TYPE_OPTIONS}
                       testName="variable-user-type-v8"
@@ -437,7 +463,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                         ? ([entity] as ('CONSUMER_USER' | 'BUSINESS_USER')[])
                         : formValues.userNatures
                     }
-                    onChange={(userNatures) => handleUpdateForm({ userNatures })}
+                    onChange={(userNatures) =>
+                      handleUpdateForm({ userNatures, entityVariableKey: undefined })
+                    }
                     mode={'MULTIPLE'}
                     options={USER_NATURE_OPTIONS.filter((opt) =>
                       isEntityUser ? opt.value === entity : true,
