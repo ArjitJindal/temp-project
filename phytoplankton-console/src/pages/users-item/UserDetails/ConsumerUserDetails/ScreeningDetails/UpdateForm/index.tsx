@@ -9,6 +9,7 @@ import { ModalWidth, isModalWidthGreatherThan } from '@/components/library/Modal
 import Select from '@/components/library/Select';
 import Alert from '@/components/library/Alert';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import Spinner from '@/components/library/Spinner';
 
 interface ScreeningDetailsUpdateFormProps {
   extraClassName?: string;
@@ -16,6 +17,7 @@ interface ScreeningDetailsUpdateFormProps {
   showDeleteIcon?: boolean;
   addFormAtTop?: boolean;
   updatePepValidationResult?: (result: string | null) => void;
+  isLoading?: boolean;
 }
 
 export interface ScreeningDetailsValue {
@@ -31,6 +33,7 @@ export const ScreeningDetailsUpdateForm = (props: ScreeningDetailsUpdateFormProp
     extraClassName,
     showDeleteIcon = false,
     addFormAtTop = false,
+    isLoading = false,
   } = props;
 
   const { values, setValues } = useFormContext<ScreeningDetails>();
@@ -91,7 +94,7 @@ export const ScreeningDetailsUpdateForm = (props: ScreeningDetailsUpdateFormProp
     return result;
   }, [pepStatusToUpdate, updatePepValidationResult]);
 
-  return (
+  return !isLoading ? (
     <div className={cn(s.form, extraClassName)}>
       <div className={s.flexDisplay}>
         <Label label="Sanction Status">
@@ -147,5 +150,7 @@ export const ScreeningDetailsUpdateForm = (props: ScreeningDetailsUpdateFormProp
       ))}
       {pepValidationResult !== null && <Alert type="ERROR">{pepValidationResult}</Alert>}
     </div>
+  ) : (
+    <Spinner />
   );
 };
