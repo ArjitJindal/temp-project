@@ -2,6 +2,7 @@ import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 
 import { omit } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import {
   paginatePipeline,
@@ -11,27 +12,66 @@ import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { traceable } from '@/core/xray'
+import {
+  batchInsertToClickhouse,
+  getClickhouseClient,
+  isClickhouseEnabledInRegion,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { ClickhouseAuditLogRepository } from '@/services/audit-log/repositories/clickhouse-repository'
+import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
 
 @traceable
 export class AuditLogRepository {
   tenantId: string
   mongoDb: MongoClient
-
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  clickhouseAuditLogRepository?: ClickhouseAuditLogRepository
+  dynamoDb: DynamoDBDocumentClient
+  dynamoAuditLogRepository: DynamoAuditLogRepository
+  auditLogTableName: string
+  constructor(
+    tenantId: string,
+    connections: { mongoDb?: MongoClient; dynamoDb?: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
+    this.mongoDb = connections.mongoDb as MongoClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+    this.dynamoAuditLogRepository = new DynamoAuditLogRepository(
+      tenantId,
+      this.dynamoDb
+    )
+    this.auditLogTableName = CLICKHOUSE_DEFINITIONS.AUDIT_LOGS.tableName
+  }
+
+  private async getClickhouseAuditLogRepository(): Promise<ClickhouseAuditLogRepository> {
+    if (this.clickhouseAuditLogRepository) {
+      return this.clickhouseAuditLogRepository
+    }
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    this.clickhouseAuditLogRepository = new ClickhouseAuditLogRepository(
+      this.tenantId,
+      {
+        clickhouseClient,
+      }
+    )
+    return this.clickhouseAuditLogRepository
   }
 
   public async saveAuditLog(auditLog: AuditLog): Promise<AuditLog> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<AuditLog>(
-      AUDITLOG_COLLECTION(this.tenantId)
-    )
     const newAuditLog: AuditLog = {
       auditlogId: uuidv4(),
       timestamp: Date.now(),
       ...auditLog,
     }
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoAuditLogRepository.saveAuditLog(newAuditLog)
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<AuditLog>(
+      AUDITLOG_COLLECTION(this.tenantId)
+    )
+
     await collection.insertOne({
       _id: newAuditLog.auditlogId as any,
       ...newAuditLog,
@@ -40,6 +80,9 @@ export class AuditLogRepository {
   }
 
   public async getAuditLog(auditlogId: string): Promise<AuditLog | null> {
+    if (isClickhouseMigrationEnabled()) {
+      return await this.dynamoAuditLogRepository.getAuditLogById(auditlogId)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(this.tenantId)
@@ -180,6 +223,11 @@ export class AuditLogRepository {
   public async getAuditLogCount(
     params: DefaultApiGetAuditlogRequest
   ): Promise<number> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseAuditLogRepository =
+        await this.getClickhouseAuditLogRepository()
+      return clickhouseAuditLogRepository.getAuditLogCount(params)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(this.tenantId)
@@ -194,8 +242,24 @@ export class AuditLogRepository {
   public async getAllAuditLogs(
     params: DefaultApiGetAuditlogRequest
   ): Promise<{ total: number; data: AuditLog[] }> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseAuditLogRepository =
+        await this.getClickhouseAuditLogRepository()
+      const auditLogs = await clickhouseAuditLogRepository.getAllAuditLogs(
+        params
+      )
+      return { total: Number(auditLogs.total), data: auditLogs.data }
+    }
     const cursor = this.getAuditLogCursor(params)
     const total = this.getAuditLogCount(params)
     return { total: await total, data: await cursor.toArray() }
+  }
+
+  public async linkAuditLogClickhouse(auditLog: AuditLog) {
+    await batchInsertToClickhouse(
+      this.tenantId,
+      CLICKHOUSE_DEFINITIONS.AUDIT_LOGS.tableName,
+      [auditLog]
+    )
   }
 }

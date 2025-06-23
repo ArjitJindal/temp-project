@@ -4,6 +4,7 @@ import { AuditLogRepository } from '@/services/audit-log/repositories/auditlog-r
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const auditLogConsumerHandler = handler as any as (event: SQSEvent) => void
 
@@ -28,10 +29,10 @@ describe('Audit Log Consumer', () => {
         } as SQSRecord,
       ],
     })
-    const auditLogRepository = new AuditLogRepository(
-      TEST_TENANT_ID,
-      await getMongoDbClient()
-    )
+    const auditLogRepository = new AuditLogRepository(TEST_TENANT_ID, {
+      mongoDb: await getMongoDbClient(),
+      dynamoDb: getDynamoDbClient(),
+    })
     const savedAuditLog = await auditLogRepository.getAuditLog(TEST_AUDITLOG_ID)
     expect(savedAuditLog).toEqual(auditLog.payload)
   })

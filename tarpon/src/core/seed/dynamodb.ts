@@ -8,6 +8,7 @@ import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { riskFactors } from './data/risk-factors'
 import { getNotifications } from './data/notifications'
+import { auditlogs } from './data/auditlogs'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { users } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -44,6 +45,7 @@ import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { getCounterCollectionData } from '@/core/seed/data/counter'
+import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
 import { DynamoNotificationRepository } from '@/services/notifications/dynamo-repository'
 
@@ -281,6 +283,11 @@ export async function seedDynamo(
       id: `RF-${String(riskFactorCounter++).padStart(3, '0')}`,
       ...riskFactor,
     })
+  }
+
+  const auditLogRepository = new DynamoAuditLogRepository(tenantId, dynamoDb)
+  for (const auditLog of auditlogs()) {
+    await auditLogRepository.saveAuditLog(auditLog)
   }
 
   const counterRepo = new DynamoCounterRepository(tenantId, dynamoDb)

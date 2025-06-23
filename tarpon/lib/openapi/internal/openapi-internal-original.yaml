@@ -7780,16 +7780,15 @@ components:
   schemas:
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
-      type: object
-      properties:
-        entity:
-          type: string
-          enum:
-            - ALERTS_QA_SAMPLING
-            - COUNTERS
-            - NOTIFICATIONS
-            - GPT_REQUEST_LOGS
-            - API_REQUEST_LOGS
+      type: string
+      enum:
+        - ALERTS_QA_SAMPLING
+        - COUNTERS
+        - NOTIFICATIONS
+        - GPT_REQUEST_LOGS
+        - API_REQUEST_LOGS
+        - AUDIT_LOG
+
     FlatFileSchema:
       title: FlatFileSchema
       type: string

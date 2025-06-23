@@ -3,6 +3,7 @@ import { Document, WithId } from 'mongodb'
 import { logger } from '../logger'
 import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
+import { auditlogs } from './data/auditlogs'
 import {
   CLICKHOUSE_DEFINITIONS,
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -130,6 +131,13 @@ export const seedClickhouse = async (tenantId: string) => {
       table: 'CRM_USER_RECORD_LINK',
       sync: async (_: TableName, table: ClickhouseTableDefinition) => {
         const data = getCrmUserRecordLinks()
+        await batchInsertToClickhouse(tenantId, table.table, data)
+      },
+    },
+    {
+      table: 'AUDIT_LOGS',
+      sync: async (_: TableName, table: ClickhouseTableDefinition) => {
+        const data = auditlogs()
         await batchInsertToClickhouse(tenantId, table.table, data)
       },
     },

@@ -151,6 +151,7 @@ export enum ClickhouseTableNames {
   CrmRecords = 'crm_records',
   CrmUserRecordLink = 'crm_user_record_link',
   DynamicPermissionsItems = 'dynamic_permissions_items',
+  AuditLogs = 'audit_logs',
   AlertsQaSampling = 'alerts_qa_sampling',
   ApiRequestLogs = 'api_request_logs',
   Notifications = 'notifications',
@@ -317,6 +318,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   DYNAMIC_PERMISSIONS_ITEMS: {
     tableName: ClickhouseTableNames.DynamicPermissionsItems,
+  },
+  AUDIT_LOGS: {
+    tableName: ClickhouseTableNames.AuditLogs,
   },
   ALERTS_QA_SAMPLING: {
     tableName: ClickhouseTableNames.AlertsQaSampling,
@@ -1015,6 +1019,26 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedColumns: [
       "subType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'subType')",
       "name String MATERIALIZED JSONExtractString(data, 'name')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.AUDIT_LOGS.tableName,
+    idColumn: 'auditlogId',
+    timestampColumn: 'timestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    materializedColumns: [
+      "auditlogId String MATERIALIZED JSONExtractString(data, 'auditlogId')",
+      "userRole LowCardinality(String) MATERIALIZED JSONExtractString(data, 'user', 'role')",
+      "type LowCardinality(String) MATERIALIZED JSONExtractString(data, 'type')",
+      "entityId String MATERIALIZED JSONExtractString(data, 'entityId')",
+      "entityType LowCardinality(String) MATERIALIZED JSONExtractString(data, 'entityType')",
+      "subtype LowCardinality(String) MATERIALIZED JSONExtractString(data, 'subtype')",
+      "newImageCaseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'newImage', 'caseStatus')",
+      "newImageAlertStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'newImage', 'alertStatus')",
+      "userId String MATERIALIZED JSONExtractString(data, 'user', 'id')",
+      "action LowCardinality(String) MATERIALIZED JSONExtractString(data, 'action')",
     ],
   },
   {

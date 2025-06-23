@@ -10,11 +10,13 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import {
   API_REQUEST_LOGS_COLLECTION,
   GPT_REQUESTS_COLLECTION,
+  AUDITLOG_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 @traceable
 export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
@@ -36,6 +38,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
         break
       case 'NOTIFICATIONS':
         await handleNotificationsBatchJob(job, {
+          mongoDb,
+          dynamoDb,
+        })
+        break
+      case 'AUDIT_LOG':
+        await handleAuditLogBatchJob(job, {
           mongoDb,
           dynamoDb,
         })
@@ -157,4 +165,34 @@ export const handleApiRequestLogsBatchJob = async (
     },
     { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
   )
+}
+
+export const handleAuditLogBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoAuditLogRepository } = await import(
+    '../audit-log/repositories/dynamo-repository'
+  )
+
+  const auditLogRepository = new DynamoAuditLogRepository(
+    job.tenantId,
+    dynamoDb
+  )
+  const db = mongoDb.db()
+  const auditLogCollection = db.collection<AuditLog>(
+    AUDITLOG_COLLECTION(job.tenantId)
+  )
+
+  await processCursorInBatch(auditLogCollection.find({}), async (auditLogs) => {
+    for (const auditLog of auditLogs) {
+      await auditLogRepository.saveAuditLog(auditLog)
+    }
+  })
 }
