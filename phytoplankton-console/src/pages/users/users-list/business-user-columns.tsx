@@ -2,7 +2,13 @@ import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize
 import { BusinessUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes';
+import {
+  DATE,
+  MONEY,
+  TAGS,
+  USER_KYC_STATUS_TAG,
+  USER_STATE_TAG,
+} from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import Tag from '@/components/library/Tag';
@@ -46,6 +52,28 @@ export function getBusinessUserColumns(userAlias?: string): TableColumn<Business
           );
         },
       },
+    }),
+    helper.simple<'kycStatus'>({
+      title: 'KYC status',
+      key: 'kycStatus',
+      type: USER_KYC_STATUS_TAG,
+    }),
+    helper.simple<'kycStatusReason'>({
+      title: 'KYC status reason',
+      key: 'kycStatusReason',
+      defaultVisibility: false,
+    }),
+    helper.simple<'userState'>({
+      title: `${firstLetterUpper(userAlias)} status`,
+      type: USER_STATE_TAG,
+      key: 'userState',
+      id: 'userStatus',
+      tooltip: `Status of ${userAlias}.`,
+    }),
+    helper.simple<'userStateReason'>({
+      title: `${firstLetterUpper(userAlias)} status reason`,
+      key: 'userStateReason',
+      defaultVisibility: false,
     }),
     helper.simple<'userRegistrationStatus'>({
       title: `${firstLetterUpper(userAlias)} registration status`,

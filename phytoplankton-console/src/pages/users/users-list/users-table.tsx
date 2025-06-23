@@ -27,6 +27,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import { USER_STATES } from '@/apis/models-custom/UserState';
+import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 
 type Props = {
   type: 'all' | 'business' | 'consumer';
@@ -110,10 +111,20 @@ const extraFilters = (
     },
     {
       key: 'userState',
-      title: 'User state',
+      title: `${firstLetterUpper(userAlias)} status`,
       renderer: {
         kind: 'select',
         options: USER_STATES.map((state) => ({ value: state, label: humanizeAuto(state) })),
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+      },
+    },
+    {
+      key: 'kycStatus',
+      title: 'KYC status',
+      renderer: {
+        kind: 'select',
+        options: KYC_STATUSS.map((status) => ({ value: status, label: humanizeAuto(status) })),
         mode: 'MULTIPLE',
         displayMode: 'list',
       },

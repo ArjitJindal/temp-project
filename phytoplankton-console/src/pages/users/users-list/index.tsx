@@ -12,6 +12,7 @@ import {
   RiskLevel,
   UserRegistrationStatus,
   UserState,
+  KYCStatus,
 } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
@@ -40,6 +41,7 @@ export interface UserSearchParams extends CommonParams {
   countryOfResidence?: CountryCode[];
   countryOfNationality?: CountryCode[];
   userState?: UserState[];
+  kycStatus?: KYCStatus[];
 }
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
@@ -109,6 +111,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterCountryOfResidence: params.countryOfResidence,
         filterCountryOfNationality: params.countryOfNationality,
         filterUserState: params.userState,
+        filterKycStatus: params.kycStatus,
       };
 
       const queryParam = {
@@ -164,6 +167,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterCountryOfResidence: params.countryOfResidence,
         filterCountryOfNationality: params.countryOfNationality,
         filterUserState: params.userState,
+        filterKycStatus: params.kycStatus,
       };
 
       const response =

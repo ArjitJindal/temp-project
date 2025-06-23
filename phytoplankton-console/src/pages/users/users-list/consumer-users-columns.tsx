@@ -76,6 +76,7 @@ export function getConsumerUserColumns(userAlias?: string): TableColumn<Consumer
     helper.simple<'kycStatusReason'>({
       title: 'KYC status reason',
       key: 'kycStatusReason',
+      defaultVisibility: false,
     }),
     helper.simple<'userState'>({
       title: `${firstLetterUpper(userAlias)} status`,
@@ -83,6 +84,11 @@ export function getConsumerUserColumns(userAlias?: string): TableColumn<Consumer
       key: 'userState',
       id: 'userStatus',
       tooltip: `Status of ${userAlias}.`,
+    }),
+    helper.simple<'userStateReason'>({
+      title: `${firstLetterUpper(userAlias)} status reason`,
+      key: 'userStateReason',
+      defaultVisibility: false,
     }),
     helper.simple<'pepDetails'>({
       title: 'PEP status',

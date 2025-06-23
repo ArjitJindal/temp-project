@@ -528,6 +528,12 @@ export class UserRepository {
       })
     }
 
+    if (params.filterKycStatus) {
+      filterConditions.push({
+        'kycStatusDetails.status': { $in: params.filterKycStatus },
+      })
+    }
+
     const queryConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = [

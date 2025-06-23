@@ -630,6 +630,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             createdTimestamp: 1,
           },
           { 'linkedEntities.parentUserId': 1 },
+          { 'kycStatusDetails.status': 1 },
           { createdTimestamp: 1 },
         ].map((index) => ({ index }))
 

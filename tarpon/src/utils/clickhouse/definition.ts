@@ -635,6 +635,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `krsScore_krsScore Float64 MATERIALIZED JSONExtractFloat(data, 'krsScore', 'krsScore')`,
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
       `userStateDetails_state String MATERIALIZED JSONExtractString(data, 'userStateDetails', 'state')`,
+      `userStateDetails_reason String MATERIALIZED JSONExtractString(data, 'userStateDetails', 'reason')`,
       `kycStatusDetails_status String MATERIALIZED JSONExtractString(data, 'kycStatusDetails', 'status')`,
       `executedRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
         JSONExtract(JSONExtractRaw(data, 'executedRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,

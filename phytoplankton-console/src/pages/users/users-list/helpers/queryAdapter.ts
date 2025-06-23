@@ -2,7 +2,14 @@ import { UserSearchParams } from '..';
 import { Adapter } from '@/utils/routing';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
-import { PepRank, CountryCode, RiskLevel, UserRegistrationStatus, UserState } from '@/apis';
+import {
+  PepRank,
+  CountryCode,
+  RiskLevel,
+  UserRegistrationStatus,
+  UserState,
+  KYCStatus,
+} from '@/apis';
 
 export const queryAdapter: Adapter<UserSearchParams> = {
   serializer: (params: UserSearchParams) => {
@@ -22,6 +29,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       countryOfNationality: params.countryOfNationality?.join(',') ?? '',
       countryOfResidence: params.countryOfResidence?.join(',') ?? '',
       userState: params.userState?.join(',') ?? '',
+      kycStatus: params.kycStatus?.join(',') ?? '',
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -49,6 +57,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         ? (raw.countryOfResidence.split(',') as CountryCode[])
         : undefined,
       userState: raw.userState ? (raw.userState.split(',') as UserState[]) : undefined,
+      kycStatus: raw.kycStatus ? (raw.kycStatus.split(',') as KYCStatus[]) : undefined,
     };
   },
 };

@@ -70,12 +70,22 @@ export function getAllUserColumns(userAlias?: string): TableColumn<AllUsersTable
       key: 'kycStatus',
       tooltip: `KYC status of ${userAlias}.`,
     }),
+    helper.simple<'kycStatusReason'>({
+      title: 'KYC status reason',
+      key: 'kycStatusReason',
+      defaultVisibility: false,
+    }),
     helper.simple<'userState'>({
       title: `${firstLetterUpper(userAlias)} status`,
       type: USER_STATE_TAG,
       key: 'userState',
       id: 'userStatus',
       tooltip: `Status of ${userAlias}.`,
+    }),
+    helper.simple<'userStateReason'>({
+      title: `${firstLetterUpper(userAlias)} status reason`,
+      key: 'userStateReason',
+      defaultVisibility: false,
     }),
     helper.simple<'tags'>({
       title: 'Tags',

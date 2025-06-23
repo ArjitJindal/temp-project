@@ -393,7 +393,9 @@ export class UserService {
       drsScore: "JSONExtractFloat(data, 'drsScore', 'drsScore')",
       isRiskLevelLocked: "JSONExtractBool(data, 'drsScore', 'isUpdatable')",
       kycStatus: "JSONExtractString(data, 'kycStatusDetails', 'status')",
+      kycStatusReason: "JSONExtractString(data, 'kycStatusDetails', 'reason')",
       userState: "JSONExtractString(data, 'userStateDetails', 'state')",
+      userStateReason: "JSONExtractString(data, 'userStateDetails', 'reason')",
       manualRiskLevel: "JSONExtractString(data, 'drsScore', 'manualRiskLevel')",
       riskLevel: "JSONExtractString(data, 'riskLevel')",
     }
@@ -406,7 +408,6 @@ export class UserService {
       ...this.getUserCommonColumns(),
       consumerUserName: "JSONExtractString(data, 'userDetails', 'name')",
       pepDetails: "JSONExtractString(data, 'pepStatus')",
-      kycStatusReason: "JSONExtractString(data, 'kycStatusDetails', 'reason')",
       countryOfResidence:
         "JSONExtractString(data, 'userDetails', 'countryOfResidence')",
       countryOfNationality:
@@ -434,6 +435,7 @@ export class UserService {
         countryOfResidence: data.countryOfResidence as CountryCode,
         countryOfNationality: data.countryOfNationality as CountryCode,
         userState: data.userState as UserState,
+        userStateReason: data.userStateReason as string,
         dateOfBirth: data.dateOfBirth as string,
         tags: data.tags ? JSON.parse(data.tags as string) : [],
         drsScore: data.drsScore as number,

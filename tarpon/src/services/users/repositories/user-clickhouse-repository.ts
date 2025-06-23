@@ -370,6 +370,12 @@ export class UserClickhouseRepository {
       )
     }
 
+    if (params.filterKycStatus) {
+      filterConditions.push(
+        `kycStatusDetails_status IN ('${params.filterKycStatus.join("','")}')`
+      )
+    }
+
     // Combine all conditions
     if (filterConditions.length > 0) {
       whereClauses.push(

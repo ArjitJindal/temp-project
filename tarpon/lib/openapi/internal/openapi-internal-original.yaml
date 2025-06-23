@@ -2130,6 +2130,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
   /consumer/users-v2:
     get:
@@ -2244,6 +2250,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
   /users:
     get:
       summary: All Users - List
@@ -2356,6 +2368,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
   /users-v2:
     get:
@@ -2444,6 +2462,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
   /users/{userId}/comments:
     parameters:
       - schema:
@@ -2718,6 +2742,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
   /business/users-v2:
     get:
@@ -2812,6 +2842,12 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        - name: filterKycStatus
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
   /users/{userId}:
     get:
       summary: Users - Item - Get
@@ -9864,6 +9900,14 @@ components:
           $ref: '#/components/schemas/UserType'
         name:
           type: string
+        userState:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        userStateReason:
+          type: string
+        kycStatus:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        kycStatusReason:
+          type: string
       required:
         - userId
         - createdTimestamp
@@ -9902,12 +9946,6 @@ components:
               type: array
               items:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
-            kycStatusReason:
-              type: string
-            kycStatus:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
-            userState:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
     BusinessUserTableItem:
       title: BusinessUserTableItem
       allOf:
