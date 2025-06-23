@@ -26,7 +26,7 @@ describe('CsvFormat', () => {
     const mockBucket = 'test-bucket'
 
     beforeEach(() => {
-      process.env.IMPORT_BUCKET = mockBucket
+      process.env.DOCUMENT_BUCKET = mockBucket
     })
 
     it('should successfully parse CSV data from S3', async () => {

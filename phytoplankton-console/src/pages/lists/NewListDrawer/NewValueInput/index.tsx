@@ -37,7 +37,7 @@ export default function NewValueInput(props: Props) {
     return <CountriesInput {...rest} />;
   }
 
-  if (listSubtype === 'STRING') {
+  if (listSubtype === 'STRING' || listSubtype === 'CUSTOM') {
     return <Select<string> className={s.select} mode={'TAGS'} options={[]} {...rest} />;
   }
 
@@ -125,6 +125,7 @@ function SearchInput(
         return '314A_BUSINESS';
       case 'STRING':
       case 'COUNTRY':
+      case 'CUSTOM':
         throw new Error(`This value is not supported: ${listSubtype}`);
       default:
         throw neverThrow(listSubtype, `Unsupported type: ${listSubtype}`);

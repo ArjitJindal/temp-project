@@ -13,7 +13,9 @@ import {
 } from '@/@types/flat-files'
 import { logger } from '@/core/logger'
 
-export abstract class FlatFileRunner<T extends EntityModel> {
+export abstract class FlatFileRunner<
+  T extends EntityModel | { [key: string]: string }
+> {
   protected readonly tenantId: string
   protected readonly dynamoDb: DynamoDBDocumentClient
   protected readonly mongoDb: MongoClient
@@ -38,18 +40,23 @@ export abstract class FlatFileRunner<T extends EntityModel> {
   }
 
   public abstract concurrency: number
-  public abstract model: EntityModel
+  public abstract model: EntityModel | ((metadata: object) => EntityModel)
 
   abstract validate(
-    data: T
+    data: T,
+    metadata?: object
   ): Promise<Pick<FlatFileValidationResult, 'valid' | 'errors'>>
 
   protected abstract _run(
     data: T,
-    metadata: Omit<FlatFilesRecordsSchema, 'record'>
+    recordMetaData: Omit<FlatFilesRecordsSchema, 'parsedRecord'>,
+    metadata?: object
   ): Promise<void>
 
-  private async processRecord(record: FlatFilesRecordsSchema): Promise<void> {
+  private async processRecord(
+    record: FlatFilesRecordsSchema,
+    metadata: object
+  ): Promise<void> {
     const updateRecordInstance = new FlatFilesRecords({
       credentials: this.clickhouseConnectionConfig,
     })
@@ -67,7 +74,7 @@ export abstract class FlatFileRunner<T extends EntityModel> {
 
       // Parse and validate the record
       const data = this.parseRecord(record)
-      await this._run(data, omit(record, ['parsedRecord']))
+      await this._run(data, omit(record, ['parsedRecord']), metadata)
 
       // Update successful record
       await this.updateRecordStatus(updateRecordInstance, record, true)
@@ -126,16 +133,17 @@ export abstract class FlatFileRunner<T extends EntityModel> {
   }
 
   private async processBatch(
-    batch: Array<FlatFilesRecordsSchema>
+    batch: Array<FlatFilesRecordsSchema>,
+    metadata: object
   ): Promise<void> {
-    await pMap(batch, this.processRecord.bind(this), {
+    await pMap(batch, (record) => this.processRecord(record, metadata), {
       concurrency: this.concurrency,
     })
 
     logger.info(`Processed ${batch.length} records`)
   }
 
-  public async run(): Promise<void> {
+  public async run(metadata: object): Promise<void> {
     const flatFilesRecords = new FlatFilesRecords({
       credentials: this.clickhouseConnectionConfig,
     })
@@ -147,14 +155,14 @@ export abstract class FlatFileRunner<T extends EntityModel> {
       currentBatch.push(record)
 
       if (currentBatch.length >= batchSize) {
-        await this.processBatch(currentBatch)
+        await this.processBatch(currentBatch, metadata)
         currentBatch = []
       }
     }
 
     // Process remaining records
     if (currentBatch.length > 0) {
-      await this.processBatch(currentBatch)
+      await this.processBatch(currentBatch, metadata)
     }
   }
 }

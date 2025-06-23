@@ -43,13 +43,15 @@ export function getListSubtypeTitle(subtype: ListSubtypeInternal, tenantSettings
     case 'DEVICE_IDENTIFIER':
       return 'Device identifier';
     case 'STRING':
-      return 'Custom';
+      return 'String';
     case 'COUNTRY':
       return 'Country';
     case '314A_INDIVIDUAL':
       return 'Individual (314a)';
     case '314A_BUSINESS':
       return 'Business (314a)';
+    case 'CUSTOM':
+      return 'Custom';
   }
   return neverReturn(subtype, humanizeAuto(subtype));
 }

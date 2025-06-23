@@ -54,7 +54,9 @@ export const listsHandler = lambdaApi()(
       const result = await listService.createList(
         'WHITELIST',
         request.NewListPayload.subtype,
-        request.NewListPayload.data
+        request.NewListPayload.data,
+        undefined,
+        request.NewListPayload.file
       )
       return result.result
     })
@@ -63,7 +65,9 @@ export const listsHandler = lambdaApi()(
       const result = await listService.createList(
         'BLACKLIST',
         request.NewListPayload.subtype,
-        request.NewListPayload.data
+        request.NewListPayload.data,
+        undefined,
+        request.NewListPayload.file
       )
       return result.result
     })

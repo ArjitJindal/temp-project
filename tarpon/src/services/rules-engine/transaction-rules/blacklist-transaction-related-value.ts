@@ -317,7 +317,9 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
       case 'IP_ADDRESS':
       case 'DEVICE_IDENTIFIER':
       case 'STRING':
+      case 'CUSTOM':
         return []
+
       default:
         return neverReturn(listSubtype, [])
     }

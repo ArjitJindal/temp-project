@@ -9,6 +9,7 @@ import * as Models from '@/@types/openapi-public/all'
 import { FlatFileRecord } from '@/@types/flat-files'
 import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
+
 export class CsvFormat extends FlatFileFormat {
   static readonly format = 'CSV'
 
@@ -82,7 +83,7 @@ export class CsvFormat extends FlatFileFormat {
 
     const { Body } = await s3.send(
       new GetObjectCommand({
-        Bucket: process.env.IMPORT_BUCKET,
+        Bucket: process.env.DOCUMENT_BUCKET,
         Key: s3Key,
       })
     )

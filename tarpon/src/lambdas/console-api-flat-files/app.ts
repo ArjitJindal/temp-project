@@ -16,9 +16,13 @@ export const flatFilesHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerPostFlatFilesGenerateTemplate(async (ctx, request) => {
-      const { schema, format } = request.FlatFileTemplateRequest
+      const { schema, format, metadata } = request.FlatFileTemplateRequest
       const flatFilesService = new FlatFilesService(ctx.tenantId)
-      const template = await flatFilesService.generateTemplate(schema, format)
+      const template = await flatFilesService.generateTemplate(
+        schema,
+        format,
+        metadata
+      )
       return template
     })
 

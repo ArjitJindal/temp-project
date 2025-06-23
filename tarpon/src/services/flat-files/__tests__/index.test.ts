@@ -78,5 +78,18 @@ describe('FlatFilesService', () => {
       // This is a basic example - you should add more specific assertions based on your actual model
       expect(headers).toContain('caseId')
     })
+
+    it('should work for custom list upload', async () => {
+      const model = await service.getModel('CUSTOM_LIST_UPLOAD', {
+        items: [
+          {
+            key: 'key',
+            type: 'STRING',
+          },
+        ],
+      })
+
+      expect(model).toBeDefined()
+    })
   })
 })

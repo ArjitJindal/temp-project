@@ -7778,6 +7778,19 @@ paths:
         required: true
 components:
   schemas:
+    CustomListMetadataList:
+      title: CustomListMetadataList
+      type: object
+      properties:
+        listId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CustomColumn
+      required:
+        - listId
+        - items
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
       type: string
@@ -7794,6 +7807,7 @@ components:
       type: string
       enum:
         - BULK_CASE_CLOSURE
+        - CUSTOM_LIST_UPLOAD
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
@@ -7807,6 +7821,9 @@ components:
           $ref: '#/components/schemas/FlatFileSchema'
         format:
           $ref: '#/components/schemas/FlatFileTemplateFormat'
+        metadata:
+          oneOf:
+            - $ref: '#/components/schemas/CustomListMetadataList'
       required:
         - schema
         - format
@@ -14997,6 +15014,8 @@ components:
           $ref: '#/components/schemas/ListSubtypeInternal'
         data:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+        file:
+          $ref: '#/components/schemas/FileInfo'
       required:
         - subtype
         - data
@@ -15047,6 +15066,7 @@ components:
         - COUNTRY
         - 314A_INDIVIDUAL
         - 314A_BUSINESS
+        - CUSTOM
     SimulationRiskLevelsParameters:
       title: SimulationRiskLevelsParameters
       type: object

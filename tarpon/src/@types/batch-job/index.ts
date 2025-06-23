@@ -459,6 +459,18 @@ export type FlatFilesValidationBatchJob = {
     s3Key: string
     schema: FlatFileSchema
     format: FlatFileTemplateFormat
+    metadata?: object
+  }
+}
+
+export type FlatFilesRunnerBatchJob = {
+  type: 'FLAT_FILES_RUNNER'
+  tenantId: string
+  parameters: {
+    s3Key: string
+    schema: FlatFileSchema
+    format: FlatFileTemplateFormat
+    metadata?: object
   }
 }
 
@@ -513,6 +525,7 @@ export type BatchJob =
   | ManualTransactionReverification
   | UserRuleReRunBatchJob
   | FlatFilesValidationBatchJob
+  | FlatFilesRunnerBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

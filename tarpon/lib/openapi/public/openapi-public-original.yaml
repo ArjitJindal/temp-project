@@ -6056,6 +6056,7 @@ components:
         - DEVICE_IDENTIFIER
         - STRING
         - COUNTRY
+        - CUSTOM
     ListKeyMetadata:
       type: object
       title: ListKeyMetadata
@@ -6084,6 +6085,24 @@ components:
           type: number
       required:
         - key
+    ColumnType:
+      title: ColumnType
+      type: string
+      enum:
+        - STRING
+        - NUMBER
+        - DATE
+    CustomColumn:
+      title: CustomColumn
+      type: object
+      properties:
+        key:
+          type: string
+        type:
+          $ref: '#/components/schemas/ColumnType'
+      required:
+        - key
+        - type
     ListMetadata:
       title: ListMetadata
       type: object
@@ -6098,6 +6117,10 @@ components:
           type: boolean
         checksum:
           type: string
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomColumn'
         ttl:
           type: object
           properties:

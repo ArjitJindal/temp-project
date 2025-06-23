@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Select } from 'antd';
 import { useMutation } from '@tanstack/react-query';
-import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
+import cn from 'clsx';
+import { humanizeConstant, capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import NewValueInput from './NewValueInput';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
-import { ListExistedInternal, ListSubtypeInternal, ListType } from '@/apis';
+import { CustomColumn, FileInfo, ListExistedInternal, ListSubtypeInternal, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import { BLACKLIST_SUBTYPES, getListSubtypeTitle, WHITELIST_SUBTYPES } from '@/pages/lists/helpers';
 import { message } from '@/components/library/Message';
@@ -23,19 +24,21 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import { DefaultApiPostWhiteListRequest } from '@/apis/types/ObjectParamAPI';
 import NumberInput from '@/components/library/NumberInput';
 import Alert from '@/components/library/Alert';
+import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import { COLUMN_TYPES } from '@/apis/models-custom/ColumnType';
+import { download } from '@/utils/browser';
 import { makeUrl } from '@/utils/routing';
 import { useAuth0User } from '@/utils/user-utils';
 
 interface FormValues {
   subtype: ListSubtypeInternal | null;
+  columns?: CustomColumn[];
+  file?: FileInfo;
   name: string;
   description: string;
   status: boolean;
   values: string[];
-  ttl: {
-    value?: number;
-    unit: 'HOUR' | 'DAY';
-  };
+  ttl: { value?: number; unit: 'HOUR' | 'DAY' };
 }
 
 interface Props {
@@ -60,8 +63,32 @@ export default function NewListDrawer(props: Props) {
   const { isOpen, listType, onCancel, onSuccess } = props;
   const settings = useSettings();
   const [formId] = useState(nanoid());
+  const [newColumn, setNewColumn] = useState<CustomColumn>({
+    key: '',
+    type: 'STRING',
+  });
+  const api = useApi();
+
   const auth0User = useAuth0User();
   const formRef = useRef<FormRef<FormValues>>(null);
+  const getTemplate = async () => {
+    const response = await api.postFlatFilesGenerateTemplate({
+      FlatFileTemplateRequest: {
+        format: 'CSV',
+        schema: 'CUSTOM_LIST_UPLOAD',
+        metadata: {
+          items:
+            formRef.current?.getValues().columns?.map((col) => ({
+              key: col.key,
+              type: col.type,
+            })) ?? [],
+          listId: '',
+        },
+      },
+    });
+
+    download(`${listType}-${formRef.current?.getValues().name}.csv`, response.fileString ?? '');
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -69,7 +96,6 @@ export default function NewListDrawer(props: Props) {
     }
   }, [isOpen]);
   const is314aEnabled = useFeatureEnabled('314A');
-  const api = useApi();
   const handleFinishMutation = useMutation<
     ListExistedInternal | undefined,
     unknown,
@@ -88,14 +114,16 @@ export default function NewListDrawer(props: Props) {
                 description: values.description,
                 status: values.status,
                 ttl: values.ttl.value
-                  ? {
-                      value: values.ttl.value,
-                      unit: values.ttl.unit,
-                    }
+                  ? { value: values.ttl.value, unit: values.ttl.unit }
                   : undefined,
+                columns: values.columns?.map((col) => ({
+                  key: col.key,
+                  type: col.type,
+                })),
               },
               items: values.values?.map((key) => ({ key })) ?? [],
             },
+            file: values.file,
           },
         };
 
@@ -133,6 +161,67 @@ export default function NewListDrawer(props: Props) {
       },
     },
   );
+
+  const updateColumnField = useCallback(
+    (key: string, field: keyof CustomColumn, value: string | undefined) => {
+      if (!formRef.current) {
+        return;
+      }
+
+      const currentValues = formRef.current.getValues();
+      const currentColumns = currentValues.columns || [];
+
+      const updatedColumns = currentColumns.map((col: CustomColumn) => {
+        if (col.key === key) {
+          return { ...col, [field]: value };
+        }
+        return col;
+      });
+
+      formRef.current.setValues({
+        ...currentValues,
+        columns: updatedColumns,
+      });
+    },
+    [formRef],
+  );
+
+  const deleteColumn = useCallback(
+    (id: string) => {
+      if (!formRef.current) {
+        return;
+      }
+
+      const currentValues = formRef.current.getValues();
+      const currentColumns = currentValues?.columns || [];
+
+      const updatedColumns = currentColumns.filter((col: CustomColumn) => col.key !== id);
+
+      formRef.current?.setValues({
+        ...currentValues,
+        columns: updatedColumns,
+      });
+    },
+    [formRef],
+  );
+
+  const addNewColumn = useCallback(() => {
+    if (!formRef.current) {
+      return;
+    }
+
+    const currentValues = formRef.current.getValues();
+    const currentColumns = currentValues?.columns || [];
+
+    const updatedColumns = [...currentColumns, newColumn];
+
+    formRef.current?.setValues({
+      ...currentValues,
+      columns: updatedColumns,
+    });
+
+    setNewColumn({ key: '', type: 'STRING' });
+  }, [formRef, newColumn]);
 
   return (
     <Form<FormValues>
@@ -198,7 +287,7 @@ export default function NewListDrawer(props: Props) {
             )}
           </InputField>
           <UseFormState<FormValues>>
-            {({ values: { subtype } }) => (
+            {({ values: { subtype, columns } }) => (
               <>
                 {subtype != null && (
                   <>
@@ -209,7 +298,7 @@ export default function NewListDrawer(props: Props) {
                     >
                       {(inputProps) => <TextInput {...inputProps} />}
                     </InputField>
-                    {subtype !== 'USER_ID' && (
+                    {!['STRING', 'USER_ID'].includes(subtype) && (
                       <InputField<FormValues, 'values'>
                         name="values"
                         label={getListSubtypeTitle(subtype, settings)}
@@ -227,7 +316,7 @@ export default function NewListDrawer(props: Props) {
                     >
                       {(inputProps) => <Toggle size="S" {...inputProps} />}
                     </InputField>
-                    <InputField<FormValues, 'ttl'> name="ttl" label={'Item expiration time'}>
+                    <InputField<FormValues, 'ttl'> name="ttl" label={'Expiration time per item'}>
                       {(inputProps) => (
                         <div className={s.ttl}>
                           <NumberInput
@@ -272,6 +361,109 @@ export default function NewListDrawer(props: Props) {
                         new configuration.
                       </div>
                     </Alert>
+                    {subtype === 'CUSTOM' && (
+                      <>
+                        <InputField<FormValues, 'columns'> name="columns" label="Column details">
+                          {() => (
+                            <div className={s.columnDetailsSection}>
+                              <div className={s.columnHeaderFlex}>
+                                <div className={cn(s.columnName, s.headerText)}>Column name</div>
+                                <div className={cn(s.columnType, s.headerText)}>Column type</div>
+                                <div className={cn(s.columnActions, s.headerText)}>Actions</div>
+                              </div>
+                              {columns?.map((col) => (
+                                <div key={col.key} className={s.columnRowFlex}>
+                                  <div className={s.columnName}>
+                                    <TextInput
+                                      value={col.key}
+                                      onChange={(newValue) =>
+                                        updateColumnField(col.key, 'key', newValue)
+                                      }
+                                      placeholder="Enter column name"
+                                    />
+                                  </div>
+                                  <div className={s.columnType}>
+                                    <Select
+                                      value={col.type}
+                                      style={{ width: '100%' }}
+                                      onChange={(newValue) =>
+                                        updateColumnField(col.key, 'type', newValue)
+                                      }
+                                      options={COLUMN_TYPES.map((type) => ({
+                                        value: type,
+                                        label: humanizeConstant(type),
+                                      }))}
+                                    />
+                                  </div>
+                                  <div className={s.columnActions}>
+                                    <Button type="TETRIARY" onClick={() => deleteColumn(col.key)}>
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className={s.columnRowFlex}>
+                                <div className={s.columnName}>
+                                  <TextInput
+                                    value={newColumn.key}
+                                    onChange={(value) =>
+                                      setNewColumn((prev) => ({ ...prev, key: value || '' }))
+                                    }
+                                    placeholder="Select column name"
+                                  />
+                                </div>
+                                <div className={s.columnType}>
+                                  <Select
+                                    value={newColumn.type ?? undefined}
+                                    style={{ width: '100%' }}
+                                    onChange={(value) =>
+                                      setNewColumn((prev) => ({ ...prev, type: value }))
+                                    }
+                                    placeholder="Select column type"
+                                    options={COLUMN_TYPES.map((type) => ({
+                                      value: type,
+                                      label: humanizeConstant(type),
+                                    }))}
+                                  />
+                                </div>
+                                <div className={s.columnActions}>
+                                  <Button
+                                    type="PRIMARY"
+                                    onClick={addNewColumn}
+                                    isDisabled={!newColumn.key || !newColumn.type}
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </InputField>
+                        <InputField<FormValues, 'file'> name="file" label="Upload list">
+                          {() => (
+                            <FilesDraggerInput
+                              singleFile
+                              accept={['text/csv']}
+                              onChange={(file) => {
+                                formRef.current?.setValues({
+                                  ...formRef.current?.getValues(),
+                                  file: file?.[0],
+                                });
+                              }}
+                            />
+                          )}
+                        </InputField>
+                        <Button
+                          type="TETRIARY"
+                          size="SMALL"
+                          onClick={getTemplate}
+                          style={{ width: 'max-content' }}
+                          isDisabled={!columns?.length || !formRef.current?.getValues().name}
+                        >
+                          Download template
+                        </Button>
+                      </>
+                    )}
                   </>
                 )}
               </>

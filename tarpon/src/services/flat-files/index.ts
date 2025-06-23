@@ -6,6 +6,7 @@ import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
 import { FlatFileRunner } from './runner'
 import { BulkCaseClosureRunner } from './runner/bulk-case-clousre'
+import { CustomListUploadRunner } from './runner/custom-list-upload'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
@@ -30,6 +31,8 @@ const FlatFileSchemaToModel: Record<
 > = {
   BULK_CASE_CLOSURE: (tenantId, connections) =>
     new BulkCaseClosureRunner(tenantId, connections),
+  CUSTOM_LIST_UPLOAD: (tenantId, connections) =>
+    new CustomListUploadRunner(tenantId, connections),
 }
 
 const FlatFileFormatToModel: Record<
@@ -88,12 +91,23 @@ export class FlatFilesService {
     return Runner
   }
 
+  async getModel(
+    schema: FlatFileSchema,
+    metadata?: object
+  ): Promise<EntityModel> {
+    const runnerInstance = await this.getRunnerInstance(schema)
+    return typeof runnerInstance.model === 'function' &&
+      !runnerInstance.model.prototype
+      ? runnerInstance.model(metadata ?? {})
+      : runnerInstance.model
+  }
+
   async generateTemplate(
     schema: FlatFileSchema,
-    format: FlatFileTemplateFormat
+    format: FlatFileTemplateFormat,
+    metadata?: object
   ) {
-    const runnerInstance = await this.getRunnerInstance(schema)
-    const model = runnerInstance.model
+    const model = await this.getModel(schema, metadata)
     const formatInstance = await this.getFormatInstance(format, model)
     const template = formatInstance.getTemplate()
     return template
@@ -102,17 +116,21 @@ export class FlatFilesService {
   async validateAndStoreRecords(
     schema: FlatFileSchema,
     format: FlatFileTemplateFormat,
-    s3Key: string
+    s3Key: string,
+    metadata?: object
   ) {
     const runnerInstance = await this.getRunnerInstance(schema)
-    const formatInstance = await this.getFormatInstance(
-      format,
-      runnerInstance.model,
-      s3Key
-    )
+    const model = await this.getModel(schema, metadata)
+    const formatInstance = await this.getFormatInstance(format, model, s3Key)
     const isAllValid = await formatInstance.validateAndStoreRecords(
-      runnerInstance
+      runnerInstance,
+      metadata
     )
     return isAllValid
+  }
+
+  async run(schema: FlatFileSchema, metadata: object) {
+    const runnerInstance = await this.getRunnerInstance(schema)
+    await runnerInstance.run(metadata)
   }
 }

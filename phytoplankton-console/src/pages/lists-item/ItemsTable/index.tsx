@@ -2,13 +2,14 @@ import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Input } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Resource } from '@flagright/lib/utils';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
 import { TableParams } from './types';
 import { useApi } from '@/api';
-import { ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
+import { ColumnType, ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
 import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
@@ -38,6 +39,10 @@ import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
+import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
+import NumberInput from '@/components/library/NumberInput';
+import DatePicker from '@/components/ui/DatePicker';
+import { download } from '@/utils/browser';
 
 interface ExistedTableItemData {
   value: string;
@@ -100,8 +105,22 @@ const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
 
 export default function ItemsTable(props: Props) {
   const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
-
   const api = useApi();
+
+  const generateTemplateMutation = useCallback(async () => {
+    const columns = getOr<Partial<ListHeaderInternal>>(listHeaderRes, {}).metadata?.columns ?? [];
+    const listId = getOr<Partial<ListHeaderInternal>>(listHeaderRes, {}).listId ?? '';
+    const response = await api.postFlatFilesGenerateTemplate({
+      FlatFileTemplateRequest: {
+        format: 'CSV',
+        schema: 'CUSTOM_LIST_UPLOAD',
+        metadata: { items: columns, listId },
+      },
+    });
+
+    download(`${listId}-template.csv`, response.fileString ?? '');
+  }, [listHeaderRes, api]);
+
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
   const [newUserData, setNewUserData] = useState<NewTableItemData>({
     value: [],
@@ -120,7 +139,75 @@ export default function ItemsTable(props: Props) {
 
   const tableRef = useRef<TableRefType>(null);
 
-  const isNewUserValid = newUserData.value.length > 0;
+  const listSubtype = getOr(
+    map(listHeaderRes, ({ subtype }) => subtype),
+    null,
+  );
+
+  const getColumns = useMemo(
+    () =>
+      getOr(
+        map(listHeaderRes, (header) => header.metadata?.columns),
+        [],
+      ),
+    [listHeaderRes],
+  );
+
+  const validateMetaFields = useCallback(
+    (meta: Record<string, any> | undefined) => {
+      const columns = getColumns;
+      if (!columns || columns.length === 0) {
+        return true;
+      }
+
+      return columns.every((column) => {
+        const columnName = column?.key;
+        if (!columnName) {
+          return true;
+        }
+
+        if (!meta) {
+          return false;
+        }
+
+        return meta[columnName] != null && meta[columnName] != '';
+      });
+    },
+    [getColumns],
+  );
+
+  const isEditUserDataValid = useMemo(() => {
+    if (!editUserData) {
+      return false;
+    }
+
+    if (listSubtype !== 'CUSTOM' && !editUserData.reason) {
+      return false;
+    }
+
+    if (listSubtype === 'CUSTOM') {
+      return validateMetaFields(editUserData.meta);
+    }
+
+    return true;
+  }, [editUserData, listSubtype, validateMetaFields]);
+
+  const isNewUserValid = useMemo(() => {
+    if (!newUserData) {
+      return false;
+    }
+
+    if (listSubtype !== 'CUSTOM' && !newUserData.reason) {
+      return false;
+    }
+
+    if (listSubtype === 'CUSTOM') {
+      return validateMetaFields(newUserData.meta);
+    }
+
+    return newUserData.value.length > 0;
+  }, [newUserData, listSubtype, validateMetaFields]);
+
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
   const handleAddItem = useCallback(() => {
@@ -160,11 +247,11 @@ export default function ItemsTable(props: Props) {
   }, [isNewUserValid, newUserData, listId, api, listType]);
 
   const [isEditUserLoading, setEditUserLoading] = useState(false);
-  const isEditUserValid = !!editUserData?.reason;
 
   const handleSaveItem = () => {
-    if (isEditUserValid) {
+    if (isEditUserDataValid && editUserData) {
       setEditUserLoading(true);
+
       const payload: DefaultApiPostWhiteListItemRequest = {
         listId,
         ListItem: {
@@ -226,11 +313,6 @@ export default function ItemsTable(props: Props) {
       ),
     replace: true,
   });
-
-  const listSubtype = getOr(
-    map(listHeaderRes, ({ subtype }) => subtype),
-    null,
-  );
 
   const filterKeys = useMemo(() => {
     if (listSubtype === 'USER_ID' && params.userId != null) {
@@ -305,8 +387,9 @@ export default function ItemsTable(props: Props) {
     listResult,
     isAddUserLoading,
     isNewUserValid,
-    isEditUserValid,
+    isEditUserValid: isEditUserDataValid,
     requiredWriteResources,
+    listHeaderRes,
   });
 
   return (
@@ -319,15 +402,25 @@ export default function ItemsTable(props: Props) {
             rowKey="rowKey"
             innerRef={tableRef}
             columns={columns}
+            hideFilters={listSubtype === 'CUSTOM'}
+            sizingMode="FULL_WIDTH"
             params={params}
             onChangeParams={setParams}
             queryResults={listResult}
             fitHeight
-            sizingMode="SCROLL"
             externalState={externalState}
             extraFilters={extraFilters}
             extraTools={[
               () => <Button onClick={onImportCsv}>Import CSV</Button>,
+              ...(listSubtype === 'CUSTOM' && listHeader?.metadata?.columns?.length
+                ? [
+                    () => (
+                      <Button type="SECONDARY" onClick={generateTemplateMutation}>
+                        Generate template
+                      </Button>
+                    ),
+                  ]
+                : []),
               () => (
                 <Button
                   type="TETRIARY"
@@ -355,6 +448,7 @@ function useColumns(options: {
   isAddUserLoading: boolean;
   isNewUserValid: boolean;
   isEditUserValid: boolean;
+  listHeaderRes: AsyncResource<ListHeaderInternal>;
   requiredWriteResources: Resource[];
 }): TableColumn<TableItem>[] {
   const {
@@ -364,8 +458,10 @@ function useColumns(options: {
     isNewUserValid,
     isEditUserValid,
     requiredWriteResources,
+    listHeaderRes,
   } = options;
   const settings = useSettings();
+  const listHeader = getOr(listHeaderRes, null);
 
   const currentItems = getOr(listResult.data, DEFAULT_LIST_DATA).items;
 
@@ -384,6 +480,150 @@ function useColumns(options: {
   }, [currentItems, listSubtype]);
 
   return useMemo(() => {
+    if (listSubtype === 'CUSTOM') {
+      const customColumns =
+        listHeader?.metadata?.columns?.map((column) =>
+          helper.derived({
+            title: column.key || '',
+            value: (item) => item.meta[column.key || ''] || '',
+            type: {
+              render: (value, context) => {
+                const { item: entity } = context;
+                const externalState: ExternalState = context.external as ExternalState;
+                const [newUserData, setNewUserData] = externalState.newUserData;
+                const [editUserData, setEditUserData] = externalState.editUserData;
+                const columnName = column.key || '';
+
+                if (entity.type === 'NEW') {
+                  return renderInputForColumnType(
+                    column.type,
+                    newUserData.meta[columnName] || '',
+                    (newValue) => {
+                      setNewUserData((prevState) => ({
+                        ...prevState,
+                        value: prevState.value.length === 0 ? [uuidv4()] : prevState.value,
+                        meta: {
+                          ...prevState.meta,
+                          [columnName]: newValue,
+                        },
+                      }));
+                    },
+                    isAddUserLoading,
+                    columnName,
+                  );
+                } else if (editUserData?.value === entity.value) {
+                  return renderInputForColumnType(
+                    column.type,
+                    editUserData.meta[columnName] || '',
+                    (newValue) => {
+                      setEditUserData({
+                        ...editUserData,
+                        meta: { ...editUserData.meta, [columnName]: newValue },
+                      });
+                    },
+                    false,
+                    columnName,
+                  );
+                }
+                return (
+                  <>
+                    {column.type === 'DATE' ? dayjs(value).format(YEAR_MONTH_DATE_FORMAT) : value}
+                  </>
+                );
+              },
+            },
+          }),
+        ) || [];
+
+      return helper.list([
+        ...customColumns,
+        helper.display({
+          title: 'Actions',
+          defaultWidth: 170,
+          render: (entity, context) => {
+            const externalState: ExternalState = context.external as ExternalState;
+            const [editUserData, setEditUserData] = externalState.editUserData;
+            const [isEditUserLoading] = externalState.isEditUserLoading;
+            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
+            const { onAdd, onSave, onDelete } = externalState;
+            if (entity.type === 'NEW') {
+              return (
+                <div className={s.actions}>
+                  <Button
+                    type="PRIMARY"
+                    isLoading={isAddUserLoading}
+                    isDisabled={!isNewUserValid || !!editUserData}
+                    onClick={onAdd}
+                  >
+                    Add
+                  </Button>
+                </div>
+              );
+            } else if (entity.type === 'EXISTED') {
+              if (editUserData?.value === entity.value) {
+                return (
+                  <div className={s.actions}>
+                    <Button
+                      size="SMALL"
+                      type="PRIMARY"
+                      onClick={onSave}
+                      isDisabled={isEditUserLoading || !isEditUserValid}
+                      requiredResources={requiredWriteResources}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="SMALL"
+                      type="SECONDARY"
+                      isDisabled={isEditUserLoading}
+                      onClick={() => {
+                        setEditUserData(null);
+                      }}
+                      requiredResources={requiredWriteResources}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                );
+              }
+              return (
+                <div className={s.actions}>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isDisabled={isUserDeleteLoading}
+                    onClick={() => {
+                      const editTarget: ExistedTableItemData = {
+                        value: entity.value,
+                        reason: entity.reason,
+                        meta: entity.meta,
+                      };
+                      setEditUserData(editTarget);
+                    }}
+                    requiredResources={requiredWriteResources}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isLoading={isUserDeleteLoading}
+                    onClick={() => {
+                      onDelete(entity.value ?? '');
+                    }}
+                    requiredResources={requiredWriteResources}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              );
+            }
+            return null;
+          },
+        }),
+      ]);
+    }
+
     return helper.list(
       [
         listSubtype != null &&
@@ -453,29 +693,28 @@ function useColumns(options: {
 
               if (entity.type === 'NEW') {
                 return (
-                  <Input
-                    disabled={isAddUserLoading}
+                  <FocusRetainingInput
+                    uniqueKey="new-reason-input"
+                    isDisabled={isAddUserLoading}
                     value={newUserData.reason}
                     autoFocus
-                    onChange={(e) => {
+                    onChange={(value) => {
                       setNewUserData((prevState) => ({
                         ...prevState,
-                        reason: e.target.value,
+                        reason: value,
                       }));
                     }}
                   />
                 );
               } else if (entity.value === editUserData?.value) {
                 return (
-                  <Input
-                    disabled={isUserDeleteLoading}
+                  <FocusRetainingInput
+                    uniqueKey={`edit-reason-${entity.value}`}
+                    isDisabled={isUserDeleteLoading}
                     value={editUserData.reason}
                     autoFocus
-                    onChange={(e) => {
-                      setEditUserData({
-                        ...editUserData,
-                        reason: e.target.value,
-                      });
+                    onChange={(value) => {
+                      setEditUserData({ ...editUserData, reason: value });
                     }}
                   />
                 );
@@ -500,7 +739,7 @@ function useColumns(options: {
                   <Button
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid}
+                    isDisabled={!isNewUserValid || !editUserData}
                     onClick={onAdd}
                     requiredResources={requiredWriteResources}
                   >
@@ -579,6 +818,7 @@ function useColumns(options: {
     requiredWriteResources,
     settings,
     existingCountryCodes,
+    listHeader?.metadata?.columns,
   ]);
 }
 
@@ -636,4 +876,130 @@ function useExtraFilters(listSubtype: ListSubtypeInternal | null): ExtraFilterPr
       },
     ];
   }, [listSubtype, settings]);
+}
+
+function FocusRetainingInput({
+  value,
+  onChange,
+  isDisabled,
+  autoFocus,
+  uniqueKey,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  isDisabled?: boolean;
+  autoFocus?: boolean;
+  uniqueKey?: string;
+}) {
+  const [inputValue, setInputValue] = useState(value || '');
+  const isTypingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isTypingRef.current && value !== inputValue) {
+      setInputValue(value || '');
+    }
+  }, [value, inputValue]);
+
+  return (
+    <Input
+      key={uniqueKey}
+      disabled={isDisabled}
+      value={inputValue}
+      autoFocus={autoFocus}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => {
+        e.stopPropagation();
+        isTypingRef.current = true;
+        setInputValue(e.target.value);
+      }}
+      onBlur={() => {
+        setTimeout(() => {
+          isTypingRef.current = false;
+          onChange(inputValue);
+        }, 50);
+      }}
+    />
+  );
+}
+
+function FocusRetainingNumberInput({
+  value,
+  onChange,
+  isDisabled,
+  uniqueKey,
+}: {
+  value: number | undefined;
+  onChange: (value: number | undefined) => void;
+  isDisabled?: boolean;
+  uniqueKey?: string;
+}) {
+  const [inputValue, setInputValue] = useState<number | undefined>(value);
+  const isTypingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isTypingRef.current && value !== inputValue) {
+      setInputValue(value);
+    }
+  }, [value, inputValue]);
+
+  return (
+    <div onClick={(e) => e.stopPropagation()}>
+      <NumberInput
+        key={uniqueKey}
+        isDisabled={isDisabled}
+        value={inputValue}
+        onChange={(newValue) => {
+          isTypingRef.current = true;
+          setInputValue(newValue);
+        }}
+        onBlur={() => {
+          setTimeout(() => {
+            isTypingRef.current = false;
+            onChange(inputValue);
+          }, 50);
+        }}
+      />
+    </div>
+  );
+}
+
+function renderInputForColumnType<T>(
+  columnType: ColumnType,
+  value: T,
+  onChange: (newValue: T) => void,
+  isDisabled: boolean = false,
+  columnName?: string,
+) {
+  switch (columnType) {
+    case 'NUMBER':
+      return (
+        <FocusRetainingNumberInput
+          uniqueKey={`column-number-${columnName || 'unknown'}`}
+          isDisabled={isDisabled}
+          value={value !== undefined ? Number(value) : undefined}
+          onChange={(val) => onChange(val as T)}
+        />
+      );
+    case 'DATE': {
+      const dateValue = value ? dayjs(value as string) : null;
+      return (
+        <DatePicker
+          disabled={isDisabled}
+          value={dateValue}
+          onChange={(date) => {
+            onChange((date ? date.toISOString() : undefined) as T);
+          }}
+        />
+      );
+    }
+    case 'STRING':
+      return (
+        <FocusRetainingInput
+          uniqueKey={`column-${columnName || 'unknown'}-fallback`}
+          isDisabled={isDisabled}
+          value={value as string}
+          onChange={(val) => onChange(val as T)}
+        />
+      );
+  }
 }

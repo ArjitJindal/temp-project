@@ -13,6 +13,7 @@ import { MongoClient } from 'mongodb'
 import { uniq } from 'lodash'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { ListRepository } from './repositories/list-repository'
@@ -27,7 +28,7 @@ import {
   CursorPaginationResponse,
   iteratePages,
 } from '@/utils/pagination'
-import { S3Config } from '@/services/aws/s3-service'
+import { S3Config, S3Service } from '@/services/aws/s3-service'
 import {
   ThinWebhookDeliveryTask,
   sendWebhookTasks,
@@ -48,6 +49,7 @@ import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
 import { ListExistedInternal } from '@/@types/openapi-internal/ListExistedInternal'
 import { notEmpty } from '@/utils/array'
+import { CustomColumn } from '@/@types/openapi-internal/CustomColumn'
 import { BatchJobInDb, UserRuleReRunBatchJob } from '@/@types/batch-job'
 import dayjs from '@/utils/dayjs'
 
@@ -113,7 +115,8 @@ export class ListService {
     listType: ListType,
     subtype: ListSubtypeInternal,
     newList: ListData = {},
-    mannualListId?: string
+    mannualListId?: string,
+    fileInfo?: FileInfo
   ): Promise<AuditLogReturnData<ListExistedInternal>> {
     const list = await this.listRepository.createList(
       listType,
@@ -121,6 +124,33 @@ export class ListService {
       newList,
       mannualListId
     )
+
+    if (fileInfo && subtype === 'CUSTOM') {
+      const s3Service = new S3Service(this.s3 as S3, this.s3Config as S3Config)
+
+      const metadata: CustomColumn[] = newList.metadata?.columns ?? []
+
+      if (metadata.length === 0) {
+        throw new Error('No columns found in the file')
+      }
+
+      const files = await s3Service.copyFilesToPermanentBucket([fileInfo])
+
+      await sendBatchJobCommand({
+        tenantId: this.tenantId,
+        type: 'FLAT_FILES_VALIDATION',
+        parameters: {
+          format: 'CSV',
+          s3Key: files[0].s3Key,
+          schema: 'CUSTOM_LIST_UPLOAD',
+          metadata: {
+            items: metadata,
+            listId: list.listId,
+          },
+        },
+      })
+    }
+
     return {
       result: list,
       entities: [
@@ -591,10 +621,42 @@ export class ListService {
     }
   }
 
+  public async importCsvFromS3CustomList(
+    listHeader: ListHeader,
+    file: FileInfo
+  ): Promise<ListImportResponse> {
+    const s3Service = new S3Service(this.s3 as S3, this.s3Config as S3Config)
+    const files = await s3Service.copyFilesToPermanentBucket([file])
+    await sendBatchJobCommand({
+      tenantId: this.tenantId,
+      type: 'FLAT_FILES_VALIDATION',
+      parameters: {
+        format: 'CSV',
+        s3Key: files[0].s3Key,
+        schema: 'CUSTOM_LIST_UPLOAD',
+        metadata: {
+          items: listHeader.metadata?.columns ?? [],
+          listId: listHeader.listId,
+        },
+      },
+    })
+
+    return {
+      totalRows: 0,
+      successRows: 0,
+      failedRows: [],
+    }
+  }
+
   public async importCsvfromS3(
     listId: string,
     file: FileInfo
   ): Promise<ListImportResponse> {
+    const listHeader = await this.getListHeader(listId)
+    if (listHeader?.subtype === 'CUSTOM') {
+      return this.importCsvFromS3CustomList(listHeader, file)
+    }
+
     if (this.s3 == null || this.s3Config == null) {
       throw new Error(`ListService is not configured to work with S3`)
     }

@@ -39,7 +39,8 @@ export abstract class FlatFileFormat {
   protected async validateRecord(
     data: FlatFileRecord,
     validate: ValidateFunction,
-    runner: FlatFileRunner<any>
+    runner: FlatFileRunner<any>,
+    metadata?: object
   ): Promise<FlatFileValidationResult> {
     try {
       // First validate against JSON schema
@@ -50,7 +51,7 @@ export abstract class FlatFileFormat {
       }
 
       // Then validate using runner's custom validation
-      const validationResult = await runner.validate(data.record)
+      const validationResult = await runner.validate(data.record, metadata)
       return {
         valid: validationResult.valid,
         errors: validationResult.errors,
@@ -94,7 +95,8 @@ export abstract class FlatFileFormat {
   }
 
   public async *validateRecords(
-    runner: FlatFileRunner<any>
+    runner: FlatFileRunner<any>,
+    metadata?: object
   ): AsyncGenerator<FlatFileValidationResult> {
     const schema = this.generateJSONSchema()
     const ajv = new Ajv({ allErrors: true })
@@ -102,7 +104,8 @@ export abstract class FlatFileFormat {
 
     yield* asyncIterableBatchProcess(this.readAndParse(this.s3Key), {
       concurrency: runner.concurrency,
-      processor: (data) => this.validateRecord(data, validate, runner),
+      processor: (data) =>
+        this.validateRecord(data, validate, runner, metadata),
     })
   }
 
@@ -119,7 +122,9 @@ export abstract class FlatFileFormat {
         isError: !data.valid,
         isProcessed: false,
         initialRecord: JSON.stringify(data.record.record),
+        parsedRecord: JSON.stringify(data.record.record),
         row: data.record.index,
+        stage: 'VALIDATE',
       })
     } catch (error) {
       logger.error(
@@ -158,6 +163,7 @@ export abstract class FlatFileFormat {
     error: unknown,
     stage: FlatFilesErrorStage = 'RUNNER'
   ): Promise<void> {
+    console.log('error', error)
     try {
       flatFilesRecords.create({
         createdAt: Date.now(),
@@ -192,7 +198,8 @@ export abstract class FlatFileFormat {
   }
 
   public async validateAndStoreRecords(
-    runner: FlatFileRunner<any>
+    runner: FlatFileRunner<any>,
+    metadata?: object
   ): Promise<boolean> {
     const clickhouseConfig = await getClickhouseCredentials(this.tenantId)
     const flatFilesRecords = new FlatFilesRecords({
@@ -202,7 +209,7 @@ export abstract class FlatFileFormat {
     let isAllValid = true
 
     try {
-      for await (const data of this.validateRecords(runner)) {
+      for await (const data of this.validateRecords(runner, metadata)) {
         try {
           if (!data.valid) {
             await this.saveError(
@@ -210,7 +217,7 @@ export abstract class FlatFileFormat {
               data.record,
               {
                 name: 'VALIDATION_ERROR',
-                message: data.errors.map((e) => e.message).join(', '),
+                message: data?.errors?.map((e) => e.message).join(', '),
               },
               'VALIDATE'
             )
