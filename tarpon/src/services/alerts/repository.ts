@@ -60,6 +60,7 @@ import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 
 export interface AlertParams
   extends OptionalPagination<
@@ -2204,5 +2205,53 @@ export class AlertsRepository {
       CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
       [alertQaSampling]
     )
+  }
+
+  public async getComments(
+    alertIds: string[]
+  ): Promise<CommentsResponseItem[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const cases = await collection
+      .aggregate<{
+        alerts: {
+          alertId: string
+          comments: Comment[]
+        }[]
+      }>([
+        {
+          $project: {
+            alerts: {
+              $filter: {
+                input: '$alerts',
+                as: 'item',
+                cond: {
+                  $and: [{ $eq: ['$$item.alertId', { $in: alertIds }] }],
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            'alerts.alertId': 1,
+            'alerts.comments': 1,
+          },
+        },
+      ])
+      .toArray()
+
+    return cases.flatMap((caseItem) => {
+      return caseItem.alerts?.map(
+        (alert: Pick<Alert, 'comments' | 'alertId'>) => {
+          return {
+            comments: alert.comments ?? [],
+            entityId: alert.alertId as string,
+            entityType: 'ALERT',
+          }
+        }
+      )
+    })
   }
 }

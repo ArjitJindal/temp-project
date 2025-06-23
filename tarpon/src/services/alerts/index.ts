@@ -111,6 +111,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
+import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 
 type AlertViewAuditLogReturnData = AuditLogReturnData<Alert>
 
@@ -2319,5 +2320,11 @@ export class AlertsService extends CaseAlertsCommonService {
       })
 
     await sendWebhookTasks<AlertOpenedDetails>(this.tenantId, webhookTasks)
+  }
+
+  public async getComments(
+    alertIds: string[]
+  ): Promise<CommentsResponseItem[]> {
+    return await this.alertsRepository.getComments(alertIds)
   }
 }

@@ -57,6 +57,7 @@ import {
   isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
+import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 50_000
@@ -1777,5 +1778,26 @@ export class CaseRepository {
         },
       },
     ])
+  }
+
+  public async getComments(caseIds: string[]): Promise<CommentsResponseItem[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const caseComments = await casesCollection
+      .find({ caseId: { $in: caseIds } })
+      .project({
+        caseId: 1,
+        comments: 1,
+      })
+      .toArray()
+
+    return caseComments.map((comment) => {
+      return {
+        comments: comment.comments,
+        entityId: comment.caseId,
+        entityType: 'CASE',
+      }
+    })
   }
 }

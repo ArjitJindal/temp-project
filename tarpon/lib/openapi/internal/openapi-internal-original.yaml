@@ -6245,6 +6245,33 @@ paths:
             schema:
               $ref: '#/components/schemas/CasesStatusUpdateRequest'
         required: true
+  /cases/comments:
+    get:
+      summary: Get Comments
+      operationId: get-comments
+      x-flagright:
+        resources:
+          - read:::case-management/case-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentsResponse'
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterEntityIds
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CommentType'
+          in: query
+          name: filterEntityTypes
   /cases/assignments:
     patch:
       summary: Cases - Update
@@ -10779,6 +10806,32 @@ components:
               type: boolean
       required:
         - body
+    CommentsResponseItem:
+      type: object
+      title: CommentsResponseItem
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        entityId:
+          type: string
+        entityType:
+          $ref: '#/components/schemas/CommentType'
+      required:
+        - comments
+        - entityId
+        - entityType
+    CommentsResponse:
+      type: object
+      title: CommentsResponse
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentsResponseItem'
+      required:
+        - items
     NarrativeType:
       type: string
       enum:
@@ -10787,6 +10840,11 @@ components:
         - TRANSACTION
         - REPORT
         - SANCTIONS_HIT
+    CommentType:
+      type: string
+      enum:
+        - ALERT
+        - CASE
     NarrativeRequest:
       title: NarrativeRequest
       type: object

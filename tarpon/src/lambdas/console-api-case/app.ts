@@ -14,6 +14,7 @@ import { AlertTransactionsStats } from '@/@types/openapi-internal/AlertTransacti
 import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -208,6 +209,28 @@ export const casesHandler = lambdaApi()(
       const transactionService = await TransactionService.fromEvent(event)
 
       return await transactionService.getAlertsTransaction(request)
+    })
+
+    handlers.registerGetComments(async (ctx, request) => {
+      const caseIds = request?.filterEntityIds?.filter((id) =>
+        id.startsWith('C-')
+      )
+      const alertIds = request?.filterEntityIds?.filter((id) =>
+        id.startsWith('A-')
+      )
+
+      const promises: Promise<CommentsResponseItem[]>[] = []
+
+      if (request.filterEntityTypes?.includes('CASE') && caseIds) {
+        promises.push(caseService.getComments(caseIds))
+      }
+
+      if (request.filterEntityTypes?.includes('ALERT') && alertIds) {
+        promises.push(alertsService.getComments(alertIds))
+      }
+      const responses = await Promise.all(promises)
+
+      return { items: responses.flatMap((r) => r) }
     })
 
     handlers.registerGetAlertTransactionStats(

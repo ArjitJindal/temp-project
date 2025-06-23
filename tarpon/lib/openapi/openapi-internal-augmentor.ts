@@ -243,6 +243,7 @@ export const ConsoleApiPathToLambda: any = {
   '/cases/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/reviewAssignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/statusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/cases/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/statusChange': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/alerts/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

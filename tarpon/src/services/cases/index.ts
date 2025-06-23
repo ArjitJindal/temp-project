@@ -102,6 +102,7 @@ import {
   CommentAuditLogImage,
 } from '@/@types/audit-log'
 import { ListItem } from '@/@types/openapi-public/ListItem'
+import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 
 // Custom AuditLogReturnData types
 type CaseUpdateAuditLogReturnData = AuditLogReturnData<
@@ -256,6 +257,10 @@ export class CaseService extends CaseAlertsCommonService {
     return {
       caseIds: compact(cases.map((c) => c.caseId)),
     }
+  }
+
+  public async getComments(caseIds: string[]): Promise<CommentsResponseItem[]> {
+    return await this.caseRepository.getComments(caseIds)
   }
 
   @auditLog('CASE', 'MANUAL_CASE_TRANSACTIONS_ADDITION', 'UPDATE')
