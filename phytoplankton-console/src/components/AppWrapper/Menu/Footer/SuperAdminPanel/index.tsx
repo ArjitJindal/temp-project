@@ -496,6 +496,11 @@ export default function SuperAdminPanel() {
                 allowClear
                 isDisabled={!initialFeatures}
                 value={features || initialFeatures}
+                onDropdownVisibleChange={(visible) => {
+                  if (!visible) {
+                    setFeatures((f) => f?.sort() ?? []);
+                  }
+                }}
               />
             </Label>
 

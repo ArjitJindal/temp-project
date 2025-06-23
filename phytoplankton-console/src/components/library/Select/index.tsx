@@ -399,6 +399,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         searchValue={searchValue}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onDropdownVisibleChange={props?.onDropdownVisibleChange}
       >
         {filteredOptions?.map((option) => (
           <AntSelect.Option
