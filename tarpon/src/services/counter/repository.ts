@@ -96,9 +96,13 @@ export class CounterRepository {
     )
     const mongoCounter = data.value?.count ?? 1
     if (counter && counter !== mongoCounter) {
-      logger.info(
-        `Counter mismatch for getNextCounterAndUpdate: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
-      )
+      const deviation =
+        Math.abs(counter - mongoCounter) / Math.max(counter, mongoCounter)
+      if (deviation >= 0.1) {
+        logger.info(
+          `Counter mismatch for getNextCounterAndUpdate: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
+        )
+      }
     }
     return mongoCounter
   }
@@ -136,9 +140,13 @@ export class CounterRepository {
     const data = await collection.findOne({ entity })
     const mongoCounter = (data?.count ?? 0) + 1
     if (counter && counter !== mongoCounter) {
-      logger.info(
-        `Counter mismatch for getNextCounter: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
-      )
+      const deviation =
+        Math.abs(counter - mongoCounter) / Math.max(counter, mongoCounter)
+      if (deviation >= 0.1) {
+        logger.info(
+          `Counter mismatch for getNextCounter: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
+        )
+      }
     }
     return (data?.count ?? 0) + 1
   }
