@@ -1,5 +1,4 @@
 import { MongoClient } from 'mongodb'
-import * as Sentry from '@sentry/serverless'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   isClickhouseEnabledInRegion,
@@ -7,6 +6,7 @@ import {
 } from '@/utils/clickhouse/utils'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { logger } from '@/core/logger'
 
 export type CounterEntity =
   | 'Case'
@@ -79,10 +79,11 @@ export class CounterRepository {
   }
 
   public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
-    let dynamoCounter: number | undefined
+    let counter: number | undefined
     if (isClickhouseEnabledInRegion()) {
-      dynamoCounter =
-        await this.dynamoCounterRepository.getNextCounterAndUpdate(entity)
+      counter = await this.dynamoCounterRepository.getNextCounterAndUpdate(
+        entity
+      )
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
@@ -94,10 +95,9 @@ export class CounterRepository {
       { upsert: true, returnDocument: 'after' }
     )
     const mongoCounter = data.value?.count ?? 1
-    if (dynamoCounter && dynamoCounter !== mongoCounter) {
-      Sentry.captureMessage(
-        `Counter mismatch: Dynamo=${dynamoCounter}, Mongo=${mongoCounter}, Entity=${entity}`,
-        'warning'
+    if (counter && counter !== mongoCounter) {
+      logger.info(
+        `Counter mismatch for getNextCounterAndUpdate: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
       )
     }
     return mongoCounter
@@ -125,14 +125,21 @@ export class CounterRepository {
   }
 
   public async getNextCounter(entity: CounterEntity): Promise<number> {
+    let counter: number | undefined
     if (isClickhouseMigrationEnabled()) {
-      return await this.dynamoCounterRepository.getNextCounter(entity)
+      counter = await this.dynamoCounterRepository.getNextCounter(entity)
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
 
     const data = await collection.findOne({ entity })
+    const mongoCounter = (data?.count ?? 0) + 1
+    if (counter && counter !== mongoCounter) {
+      logger.info(
+        `Counter mismatch for getNextCounter: Dynamo=${counter}, Mongo=${mongoCounter}, Entity=${entity}`
+      )
+    }
     return (data?.count ?? 0) + 1
   }
 
