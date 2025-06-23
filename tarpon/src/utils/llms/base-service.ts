@@ -1,5 +1,4 @@
 import { GPT_REQUESTS_COLLECTION } from '../mongodb-definitions'
-import { getContext } from '@/core/utils/context-storage'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
 
@@ -34,6 +33,11 @@ export type GPTLogObject = {
 export abstract class BaseLLMService<Client> {
   protected client: Client | null = null
   protected abstract getClient(): Promise<Client>
+  protected tenantId: string
+
+  constructor(tenantId: string) {
+    this.tenantId = tenantId
+  }
 
   protected async getCachedClient(): Promise<Client> {
     if (!this.client) {
@@ -45,14 +49,6 @@ export abstract class BaseLLMService<Client> {
   protected abstract defaultMaxTokens: number
   protected abstract defaultTemperature: number
   protected abstract provider: LLMProvider
-
-  protected getTenantId(): string {
-    const tenantId = getContext()?.tenantId
-    if (!tenantId) {
-      throw new Error('Tenant ID is required')
-    }
-    return tenantId
-  }
 
   protected abstract modelClassification: Record<ModelTier, string>
 

@@ -26,7 +26,6 @@ export class AnthropicService extends BaseLLMService<Anthropic> {
     messages: Message[],
     options?: LLMOptions
   ): Promise<string> {
-    const tenantId = this.getTenantId()
     const configuredOptions = await this.getConfiguredOptions(options)
 
     // Convert messages to Anthropic's format
@@ -48,7 +47,7 @@ export class AnthropicService extends BaseLLMService<Anthropic> {
       completion.content[0].type === 'text' ? completion.content[0].text : ''
 
     if (response) {
-      await this.logResponse(tenantId, messages, response)
+      await this.logResponse(this.tenantId, messages, response)
     }
 
     return response

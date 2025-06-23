@@ -26,7 +26,6 @@ export class OpenAIService extends BaseLLMService<OpenAI> {
     messages: Message[],
     options?: LLMOptions
   ): Promise<string> {
-    const tenantId = this.getTenantId()
     const configuredOptions = await this.getConfiguredOptions(options)
 
     const client = await this.getCachedClient()
@@ -43,7 +42,7 @@ export class OpenAIService extends BaseLLMService<OpenAI> {
     const response = completion.choices[0].message.content || ''
 
     if (response) {
-      await this.logResponse(tenantId, messages, response)
+      await this.logResponse(this.tenantId, messages, response)
     }
 
     return response

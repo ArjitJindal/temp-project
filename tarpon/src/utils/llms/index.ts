@@ -18,24 +18,24 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 export type LLMLogObject = {
   _id: string | ObjectId
-  prompts: any
+  prompts: Message[]
   response: string
   createdAt: number
 }
 
-const getLLMService = (provider: LLMProvider) => {
+const getLLMService = (tenantId: string, provider: LLMProvider) => {
   switch (provider) {
     case 'OPEN_AI':
-      return new OpenAIService()
+      return new OpenAIService(tenantId)
     case 'ANTHROPIC':
-      return new AnthropicService()
+      return new AnthropicService(tenantId)
   }
 }
 
 const getLLMServiceForTenant = async (tenantId: string) => {
   const settings = await tenantSettings(tenantId)
   const provider = settings.llmProvider ?? 'ANTHROPIC'
-  return getLLMService(provider)
+  return getLLMService(tenantId, provider)
 }
 
 export const ask = async (
