@@ -35,6 +35,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
           mongoDb,
         })
         break
+      case 'NOTIFICATIONS':
+        await handleNotificationsBatchJob(job, {
+          mongoDb,
+          dynamoDb,
+        })
+        break
       default:
         throw new Error(`Unknown entity: ${entity}`)
     }

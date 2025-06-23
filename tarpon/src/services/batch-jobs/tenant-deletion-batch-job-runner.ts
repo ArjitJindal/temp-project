@@ -117,7 +117,6 @@ type ExcludedDynamoDbKey = Exclude<
   | 'BATCH_BUSINESS_USER'
   | 'BATCH_BUSINESS_USER_EVENT'
   | 'CASE_TRANSACTION_IDS'
-  | 'NOTIFICATIONS'
   | 'GPT_REQUESTS'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
@@ -360,6 +359,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       DEFAULT_FILTERS: {
         method: this.deleteDefaultFilters.bind(this),
         order: 19,
+      },
+      NOTIFICATIONS: {
+        method: this.deleteNotifications.bind(this),
+        order: 20,
       },
     }
 
@@ -970,5 +973,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       )
       await collection.deleteOne({ _id: doc._id })
     }
+  }
+
+  private async deleteNotifications(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.NOTIFICATIONS(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Notification'
+    )
   }
 }
