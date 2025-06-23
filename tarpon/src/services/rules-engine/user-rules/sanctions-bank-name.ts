@@ -11,8 +11,8 @@ import {
   PARTIAL_MATCH_SCHEMA,
   RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
-  FUZZY_ADDRESS_MATCHING_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
+  GENERIC_SCREENING_VALUES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
@@ -25,6 +25,7 @@ import {
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
+import { GenericScreeningValues } from './generic-sanctions-consumer-user'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
@@ -47,7 +48,7 @@ export type SanctionsBankUserRuleParameters = {
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
-  fuzzyAddressMatching?: boolean
+  screeningValues?: GenericScreeningValues[]
   enableShortNameMatching?: boolean
 }
 
@@ -64,11 +65,17 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
+        screeningValues: GENERIC_SCREENING_VALUES_SCHEMA(
+          {
+            description:
+              'Select the screening attributes to be used for the screening',
+          },
+          ['ADDRESS']
+        ),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
-        fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: [
         'fuzziness',
@@ -90,10 +97,10 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       isActive,
       partialMatch,
       screeningProfileId,
-      fuzzyAddressMatching,
       enableShortNameMatching,
+      screeningValues,
     } = this.parameters
-
+    const fuzzyAddressMatching = screeningValues?.includes('ADDRESS')
     if (
       ruleStages &&
       ruleStages.length > 0 &&

@@ -31,7 +31,11 @@ import { getDefaultProviders } from '@/services/sanctions/utils'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 
-export type GenericScreeningValues = 'NATIONALITY' | 'YOB' | 'GENDER'
+export type GenericScreeningValues =
+  | 'NATIONALITY'
+  | 'YOB'
+  | 'GENDER'
+  | 'ADDRESS'
 export type GenericSanctionsConsumerUserRuleParameters = {
   screeningTypes?: GenericSanctionsSearchType[]
   fuzzinessRange: {
@@ -65,10 +69,13 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           description:
             'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
         }),
-        screeningValues: GENERIC_SCREENING_VALUES_SCHEMA({
-          description:
-            'Select the screening attributes to be used for the screening',
-        }),
+        screeningValues: GENERIC_SCREENING_VALUES_SCHEMA(
+          {
+            description:
+              'Select the screening attributes to be used for the screening',
+          },
+          ['NATIONALITY', 'YOB', 'GENDER']
+        ),
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
