@@ -53,6 +53,8 @@ import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
 import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
+import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
+import { logger } from '@/core/logger'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -334,10 +336,25 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+
         case 'DEMO_MODE_DATA_LOAD': {
+          const tenantId = getFullTenantId(ctx.tenantId, true)
+          const batchJobRepository = new BatchJobRepository(tenantId, mongoDb)
+          const isAnyJobRunning = await batchJobRepository.isAnyJobRunning(
+            'DEMO_MODE_DATA_LOAD'
+          )
+
+          if (isAnyJobRunning) {
+            logger.warn(
+              `Demo mode data load is already running for tenant ${tenantId}`,
+              { tenantId }
+            )
+            return
+          }
+
           await sendBatchJobCommand({
             type: 'DEMO_MODE_DATA_LOAD',
-            tenantId: getFullTenantId(ctx.tenantId, true),
+            tenantId,
             awsCredentials: getCredentialsFromEvent(event),
           })
           break

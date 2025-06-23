@@ -1097,6 +1097,7 @@ export class UserService {
         publishAuditLog: () => params.view === 'DOWNLOAD',
       }
     }
+
     const data = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapAllUserToTableItem,

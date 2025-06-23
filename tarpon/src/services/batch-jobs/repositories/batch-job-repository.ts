@@ -90,6 +90,16 @@ export class BatchJobRepository {
     )
   }
 
+  public async isAnyJobRunning(type: BatchJobType): Promise<boolean> {
+    const collection = JOBS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const result = await db.collection<BatchJobInDb>(collection).findOne({
+      type,
+      'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS'] },
+    })
+    return result !== null
+  }
+
   public async updateJob(
     jobId: string,
     updater: UpdateFilter<BatchJobInDb>

@@ -49,6 +49,7 @@ import {
   REASONS_COLLECTION,
   USER_EVENTS_COLLECTION,
   NARRATIVE_TEMPLATE_COLLECTION,
+  JOBS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { users } from '@/core/seed/data/users'
@@ -120,6 +121,8 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [REASONS_COLLECTION, () => getDefaultReasonsData()],
 ]
 
+const skipCollections = (tenantId: string) => [JOBS_COLLECTION(tenantId)]
+
 export async function seedMongo(
   tenantId: string,
   client: MongoClient,
@@ -140,7 +143,12 @@ export async function seedMongo(
     logger.info('Get all collections')
     const col = await allCollections(tenantId, db)
     logger.info('Truncating collections')
-    await Promise.allSettled(col.map((c) => db.collection(c).deleteMany({})))
+
+    await Promise.allSettled(
+      col
+        .filter((c) => !skipCollections(tenantId).includes(c))
+        .map((c) => db.collection(c).deleteMany({}))
+    )
   } catch (e) {
     logger.info("Couldn't empty collections")
   }
@@ -178,6 +186,10 @@ export async function seedMongo(
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
+    if (skipCollections(tenantId).includes(collectionNameFn(tenantId))) {
+      continue
+    }
+
     const collection = db.collection(collectionNameFn(tenantId) as string)
     const collectionData = data()
     const clonedData = cloneDeep(collectionData)
