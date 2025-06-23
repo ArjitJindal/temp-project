@@ -5,7 +5,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { RULE_INSTANCES, USERS } from '@/utils/queries/keys';
 import { AsyncResource, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
-import { BusinessUsersListResponse, ConsumerUsersListResponse, RuleInstance } from '@/apis';
+import { AllUsersOffsetPaginateListResponse, RuleInstance } from '@/apis';
 
 export function header(input: string): React.ReactNode {
   return (
@@ -59,7 +59,7 @@ export function useUsersQuery(
   userType: 'BUSINESS' | 'CONSUMER',
   dateRange?: WidgetRangePickerValue,
 ): {
-  data: AsyncResource<ConsumerUsersListResponse | BusinessUsersListResponse>;
+  data: AsyncResource<AllUsersOffsetPaginateListResponse>;
   refetch: () => void;
 } {
   const api = useApi();

@@ -15,7 +15,6 @@ import {
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
-  DefaultApiGetTransactionsV2ListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -29,7 +28,6 @@ import {
   OptionalPagination,
 } from '@/utils/pagination'
 import { Currency, CurrencyService } from '@/services/currency'
-import { TransactionsResponse } from '@/@types/openapi-internal/TransactionsResponse'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import {
@@ -118,7 +116,7 @@ export class TransactionService {
 
   @auditLog('TRANSACTION', 'TRANSACTION_LIST', 'DOWNLOAD')
   public async getTransactionsListV2(
-    params: DefaultApiGetTransactionsV2ListRequest
+    params: DefaultApiGetTransactionsListRequest
   ): Promise<AuditLogReturnData<TransactionsResponseOffsetPaginated>> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
@@ -149,7 +147,7 @@ export class TransactionService {
 
   public async getCasesTransactions(
     params: DefaultApiGetCaseTransactionsRequest
-  ): Promise<CursorPaginationResponse<TransactionTableItem>> {
+  ) {
     const { caseId, ...rest } = params
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
@@ -166,10 +164,12 @@ export class TransactionService {
 
     const data = await this.getTransactionsList(
       { ...rest, filterIdList: caseTransactionsIds },
-      { includeUsers: true }
+      { includeUsers: true },
+      undefined,
+      'cursor'
     )
 
-    return data
+    return data as CursorPaginationResponse<TransactionTableItem>
   }
 
   private mongoTransactionMapper(
@@ -215,7 +215,7 @@ export class TransactionService {
 
   public async getAlertsTransaction(
     params: DefaultApiGetAlertTransactionListRequest
-  ) {
+  ): Promise<CursorPaginationResponse<TransactionTableItem>> {
     if (!params.filterPaymentDetailName && params.filterSanctionsHitId) {
       const sanctionsHitsRepository = new SanctionsHitsRepository(
         this.tenantId,
@@ -227,22 +227,23 @@ export class TransactionService {
       params.filterPaymentDetailName = hit?.items?.[0]?.hitContext?.searchTerm
     }
 
-    return this.getTransactionsList(
-      {
-        ...params,
-      },
-      {
-        includeUsers: true,
-      },
-      params.filterPaymentMethodId ? params.filterPaymentMethodId : undefined
-    )
+    return (await this.getTransactionsList(
+      { ...params },
+      { includeUsers: true },
+      params.filterPaymentMethodId ? params.filterPaymentMethodId : undefined,
+      'cursor'
+    )) as CursorPaginationResponse<TransactionTableItem>
   }
 
   public async getTransactionsList(
     params: DefaultApiGetTransactionsListRequest,
     options: { includeUsers?: boolean } = {},
-    filterPaymentMethodId?: string
-  ): Promise<TransactionsResponse> {
+    filterPaymentMethodId?: string,
+    type: 'offset' | 'cursor' = 'offset'
+  ): Promise<
+    | TransactionsResponseOffsetPaginated
+    | CursorPaginationResponse<TransactionTableItem>
+  > {
     const { includeUsers } = options
 
     let alert: Alert | null = null
@@ -276,7 +277,11 @@ export class TransactionService {
       )
       params.filterUserIds = userIds
     }
-    let response = await this.getTransactions(params, alert)
+    let response =
+      type === 'offset'
+        ? await this.getTransactionsOffsetPaginated(params, alert)
+        : await this.getTransactionsCursorPaginated(params, alert)
+
     if (alert && params.alertId) {
       response = {
         ...response,
@@ -306,12 +311,12 @@ export class TransactionService {
   }
 
   private async getTransactionUsers(
-    transaction: TransactionTableItem[]
+    transactions: TransactionTableItem[]
   ): Promise<TransactionTableItem[]> {
     const userIds = compact(
       Array.from(
         new Set<string | undefined>(
-          transaction.flatMap((t) => [t.originUser?.id, t.destinationUser?.id])
+          transactions.flatMap((t) => [t.originUser?.id, t.destinationUser?.id])
         )
       )
     )
@@ -328,7 +333,7 @@ export class TransactionService {
     const userMap = new Map()
     users.forEach((u) => userMap.set(u.userId, u))
 
-    transaction.map((t) => {
+    return transactions.map((t) => {
       if (t.originUser) {
         t.originUser.name = getUserName(userMap.get(t.originUser.id))
         t.originUser.type = userMap.get(t.originUser.id)?.type
@@ -339,60 +344,68 @@ export class TransactionService {
       }
       return t
     })
-
-    return transaction
   }
 
-  public async getTransactions(
+  private getProjection(view: TableListViewEnum) {
+    return {
+      projection: {
+        _id: 1,
+        type: 1,
+        transactionId: 1,
+        timestamp: 1,
+        originUserId: 1,
+        destinationUserId: 1,
+        transactionState: 1,
+        originAmountDetails: 1,
+        destinationAmountDetails: 1,
+        originPaymentDetails: 1,
+        destinationPaymentDetails: 1,
+        productType: 1,
+        tags: 1,
+        status: 1,
+        originPaymentMethodId: 1,
+        destinationPaymentMethodId: 1,
+        arsScore: {
+          arsScore: 1,
+        },
+        originFundsInfo: 1,
+        executedRules:
+          view === ('TABLE' as TableListViewEnum)
+            ? {
+                ruleInstanceId: 1,
+                ruleHitMeta: { sanctionsDetails: { searchId: 1 } },
+              }
+            : [],
+        hitRules:
+          view === ('TABLE' as TableListViewEnum)
+            ? { ruleName: 1, ruleDescription: 1 }
+            : [],
+        alertIds: 1,
+      },
+    }
+  }
+
+  public async getTransactionsOffsetPaginated(
     params: DefaultApiGetTransactionsListRequest,
     alert?: Alert | null
   ) {
     const result =
-      await this.transactionRepository.getTransactionsCursorPaginate(
+      await this.transactionRepository.getTransactionsOffsetPaginated(
         params,
-        {
-          projection: {
-            _id: 1,
-            type: 1,
-            transactionId: 1,
-            timestamp: 1,
-            originUserId: 1,
-            destinationUserId: 1,
-            transactionState: 1,
-            originAmountDetails: 1,
-            destinationAmountDetails: 1,
-            originPaymentDetails: 1,
-            destinationPaymentDetails: 1,
-            productType: 1,
-            tags: 1,
-            status: 1,
-            originPaymentMethodId: 1,
-            destinationPaymentMethodId: 1,
-            arsScore: {
-              arsScore: 1,
-            },
-            originFundsInfo: 1,
-            executedRules:
-              params.view === ('TABLE' as TableListViewEnum)
-                ? {
-                    ruleInstanceId: 1,
-                    ruleHitMeta: {
-                      sanctionsDetails: {
-                        searchId: 1,
-                      },
-                    },
-                  }
-                : [],
-            hitRules:
-              params.view === ('TABLE' as TableListViewEnum)
-                ? {
-                    ruleName: 1,
-                    ruleDescription: 1,
-                  }
-                : [],
-            alertIds: 1,
-          },
-        },
+        this.getProjection(params.view as TableListViewEnum),
+        alert
+      )
+    return result
+  }
+
+  public async getTransactionsCursorPaginated(
+    params: DefaultApiGetTransactionsListRequest,
+    alert?: Alert | null
+  ) {
+    const result =
+      await this.transactionRepository.getTransactionsCursorPaginated(
+        params,
+        this.getProjection(params.view as TableListViewEnum),
         alert
       )
     return result

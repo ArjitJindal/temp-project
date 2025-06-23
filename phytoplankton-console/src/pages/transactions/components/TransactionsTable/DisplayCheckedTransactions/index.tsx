@@ -33,12 +33,12 @@ const DisplayCheckedTransactions = (props: Props) => {
     return { value: action, label: action };
   });
 
-  const queryResult = useCheckedTransactionsQuery(alert, caseUserId, params);
+  const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId, params);
 
   const count = useMemo(() => {
     const [count, limit] =
       queryResult.data?.kind === 'SUCCESS'
-        ? [queryResult.data.value.count, queryResult.data.value.limit]
+        ? [queryResult.data.value.total ?? 0, queryResult.data.value.items.length]
         : [0, 0];
     return count > limit ? `${limit}+` : `${count}`;
   }, [queryResult.data]);

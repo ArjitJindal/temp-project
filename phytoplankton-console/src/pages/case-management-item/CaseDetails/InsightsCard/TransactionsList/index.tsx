@@ -2,15 +2,10 @@ import React, { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { Params } from '../TransactionsSelector';
-import { FIXED_API_PARAMS } from '..';
 import TransactionsTable, {
   defaultTimestamps,
-  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useApi } from '@/api';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
@@ -18,6 +13,8 @@ import { dayjs } from '@/utils/dayjs';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
+import { useTransactionsQuery } from '@/pages/transactions/utils';
+
 interface Props {
   userId: string;
   selectorParams: Params;
@@ -46,27 +43,14 @@ export default function TransactionsList(props: Props) {
     }));
   }, [selectorParams]);
 
-  const api = useApi();
-  const queryResult = useCursorQuery(
-    TRANSACTIONS_LIST({ ...tableParams, ...selectorParams, userId }),
-
-    async ({ from, view }) => {
-      return await api.getTransactionsList({
-        ...FIXED_API_PARAMS,
-        ...transactionParamsToRequest({ ...tableParams, view }, { ignoreDefaultTimestamps: true }),
-        pageSize: tableParams.pageSize,
-        start: from || tableParams.from,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        includeUsers: true,
-      });
-    },
+  const transactionsQueryResult = useTransactionsQuery(
+    { ...tableParams, ...selectorParams, userId },
+    { isReadyToFetch: true },
   );
 
   return (
     <TransactionsTable
-      queryResult={queryResult}
+      queryResult={transactionsQueryResult.queryResult}
       params={tableParams}
       onChangeParams={setTableParams}
       fitHeight={300}

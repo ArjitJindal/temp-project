@@ -42,6 +42,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   internalMongoUpdateOne,
+  paginateFindOptions,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
@@ -91,7 +92,6 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
@@ -100,6 +100,7 @@ import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic
 import { batchGet } from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
+import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
@@ -165,16 +166,17 @@ export class UserRepository {
       ? await riskRepository.getRiskClassificationValues()
       : []
   }
-  public async getMongoUsersCursorsPaginate(
+
+  public async getMongoUsersPaginate(
     params: OptionalPagination<Params>,
     mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
-  ): Promise<AllUsersListResponse> {
+  ): Promise<AllUsersOffsetPaginateListResponse> {
     const db = this.mongoDb.db()
-    const collection = db.collection<
-      InternalBusinessUser | InternalConsumerUser
-    >(USERS_COLLECTION(this.tenantId))
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
     const isPulseEnabled = this.isPulseEnabled()
     const riskClassificationValues = await this.getRiskClassificationValues()
     if (params.filterParentId) {
@@ -189,22 +191,20 @@ export class UserRepository {
       userType
     )
 
-    let result = await cursorPaginate<
-      InternalBusinessUser | InternalConsumerUser
-    >(
-      collection,
-      {
-        $and: query,
-      },
-      {
-        pageSize: params.pageSize ? (params.pageSize as number) : 20,
-        sortField: params.sortField || 'createdTimestamp',
-        fromCursorKey: params.start,
-        sortOrder: params.sortOrder,
-      },
-      options?.projection
-    )
-    const userIds = result.items.map((user) => user.userId)
+    const [users, count] = await Promise.all([
+      collection
+        .find(
+          { $and: query as Filter<InternalUser>[] },
+          {
+            projection: options?.projection,
+            ...paginateFindOptions(params),
+          }
+        )
+        .toArray(),
+      collection.countDocuments({ $and: query }),
+    ])
+
+    const userIds = users.map((user) => user.userId)
     const casesCountPipeline = [
       {
         $match: {
@@ -249,29 +249,22 @@ export class UserRepository {
       .aggregate(casesCountPipeline)
       .toArray()
 
-    result = {
-      ...result,
-      items: params.includeCasesCount
-        ? result.items.map((user) => {
-            const casesCountItem = casesCount.find(
-              (item) => item.userId === user.userId
-            )
-            return {
-              ...user,
-              casesCount: casesCountItem?.casesCount || 0,
-            }
-          })
-        : result.items,
-    }
-
-    const updatedItems = result.items.map((user) =>
-      mapper(user as InternalUser)
-    )
+    const updatedItems = params.includeCasesCount
+      ? users.map((user) => {
+          const casesCountItem = casesCount.find(
+            (item) => item.userId === user.userId
+          )
+          return {
+            ...user,
+            casesCount: casesCountItem?.casesCount || 0,
+          }
+        })
+      : users
 
     return {
-      ...result,
-      items: updatedItems,
-    } as AllUsersListResponse
+      items: updatedItems.map(mapper),
+      count,
+    }
   }
 
   public async getMongoAllUsers(
@@ -1600,8 +1593,10 @@ export class UserRepository {
   public async getRuleInstancesTransactionUsersHit(
     ruleInstanceId: string,
     params: DefaultApiGetRuleInstancesTransactionUsersHitRequest,
-    mapper: (user: InternalUser) => AllUsersTableItem
-  ): Promise<AllUsersListResponse> {
+    mapper: (
+      user: InternalUser | InternalBusinessUser | InternalConsumerUser
+    ) => AllUsersTableItem
+  ): Promise<AllUsersOffsetPaginateListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
@@ -1693,11 +1688,8 @@ export class UserRepository {
 
     const data = await result.next()
 
-    return this.getMongoUsersCursorsPaginate(
-      {
-        ...params,
-        filterUserIds: uniq(data?.userIds.flat()),
-      },
+    return this.getMongoUsersPaginate(
+      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
       mapper
     )
   }

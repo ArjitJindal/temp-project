@@ -14,10 +14,10 @@ import {
   TransactionState,
 } from '@/apis';
 import { useApi } from '@/api';
-import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
+import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { CASES_LIST, USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
+import { CASES_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -42,15 +42,13 @@ import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton
 import { PAYMENT_DETAILS_OR_METHOD } from '@/pages/transactions/components/TransactionsTable/helpers/tableDataTypes';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
-import {
-  transactionParamsToRequest,
-  TransactionsTableParams,
-} from '@/pages/transactions/components/TransactionsTable';
+import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 import { useRuleOptions } from '@/utils/rules';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
+import { useTransactionsQuery } from '@/pages/transactions/utils';
 
 export type DataItem = {
   index: number;
@@ -98,31 +96,14 @@ export function Content(props: { userId: string }) {
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
-  const responseRes = useCursorQuery(
-    USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
-    async ({ from, view }) => {
-      const requestParams = {
-        ...transactionParamsToRequest({ ...params, view }, { ignoreDefaultTimestamps: true }),
-        start: from || params.from,
-        includeUsers: false,
-      };
-
-      const data = await api.getTransactionsList({
-        ...requestParams,
-        includeRuleHitDetails: true,
-        includePaymentDetails: showDetailsView,
-      });
-
-      return {
-        next: data.next,
-        prev: data.prev,
-        last: data.last,
-        hasNext: data.hasNext,
-        hasPrev: data.hasPrev,
-        count: data.count,
-        limit: data.limit,
-        items: prepareTableData(userId, data.items ?? [], riskClassificationValues),
-      };
+  const responseRes = useTransactionsQuery<DataItem>(
+    { ...params, userId, includeRuleHitDetails: true, showDetailedView: showDetailsView },
+    {
+      isReadyToFetch: true,
+      mapper: (data) => {
+        const tableData = prepareTableData(userId, data, riskClassificationValues);
+        return tableData.flatMap((item) => ('rows' in item ? item.rows : [item]));
+      },
     },
   );
 
@@ -188,11 +169,7 @@ export function Content(props: { userId: string }) {
       helper.simple<'ruleName'>({
         title: 'Rules hit',
         key: 'ruleName',
-      }),
-      helper.simple<'ruleDescription'>({
-        title: 'Rules description',
-        tooltip: 'Describes the conditions required for this rule to be hit.',
-        key: 'ruleDescription',
+        type: STRING,
       }),
       helper.simple<'transactionState'>({
         id: 'transactionState',
@@ -404,10 +381,10 @@ export function Content(props: { userId: string }) {
   return (
     <QueryResultsTable<DataItem>
       tableId={'user-transaction-history'}
-      rowKey="rowKey"
+      rowKey="transactionId"
       params={params}
       onChangeParams={setParams}
-      queryResults={responseRes}
+      queryResults={responseRes.queryResult}
       rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
       columns={columns}
       renderExpanded={(item) => <TransactionEventsTable transactionId={item.transactionId} />}

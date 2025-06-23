@@ -22,10 +22,19 @@ import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
 import { USERS } from '@/utils/queries/keys';
-import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import {
+  DefaultApiGetAllUsersListRequest,
+  DefaultApiGetBusinessUsersListRequest,
+  DefaultApiGetConsumerUsersListRequest,
+} from '@/apis/types/ObjectParamAPI';
+
+type DefaultParams = DefaultApiGetAllUsersListRequest &
+  DefaultApiGetConsumerUsersListRequest &
+  DefaultApiGetBusinessUsersListRequest;
 
 export interface UserSearchParams extends CommonParams {
   isPepHit?: 'true' | 'false';
@@ -49,7 +58,6 @@ export interface UserSearchParams extends CommonParams {
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
   const api = useApi({ debounce: 500 });
-  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const [params, setParams] = useNavigationParams<UserSearchParams>({
     queryAdapter: {
@@ -72,83 +80,11 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     [setParams],
   );
 
-  const queryResults = useCursorQuery<AllUsersTableItem>(
-    USERS(type, { ...params, isClickhouseEnabled }),
-    async ({ from, view: tableView }) => {
-      if (isClickhouseEnabled) {
-        return {
-          from: from || params.from,
-          items: [],
-          next: '',
-          prev: '',
-          last: '',
-          hasNext: false,
-          hasPrev: false,
-          count: 0,
-          limit: 100000,
-        };
-      }
-
-      const queryObj = {
-        view: tableView ?? params.view,
-        pageSize: params.pageSize,
-        afterTimestamp: params.createdTimestamp ? dayjs(params.createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: params.createdTimestamp
-          ? dayjs(params.createdTimestamp[1]).valueOf()
-          : undefined,
-        filterId: params.userId,
-        filterParentId: params.parentUserId,
-        filterTagKey: params.tagKey,
-        filterTagValue: params.tagValue,
-        filterRiskLevel: params.riskLevels,
-        ...(type === 'business' && {
-          filterUserRegistrationStatus: params.userRegistrationStatus,
-        }),
-        sortField: params.sort[0]?.[0] ?? 'createdTimestamp',
-        sortOrder: params.sort[0]?.[1] ?? 'ascend',
-        filterIsPepHit: params.isPepHit,
-        filterPepRank: params.pepRank,
-        filterRiskLevelLocked: params.riskLevelLocked,
-        filterPepCountry: params.pepCountry,
-        filterCountryOfResidence: params.countryOfResidence,
-        filterCountryOfNationality: params.countryOfNationality,
-        filterUserState: params.userState,
-        filterKycStatus: params.kycStatus,
-      };
-
-      const queryParam = {
-        start: from || params.from,
-        ...queryObj,
-      };
-
-      const response =
-        type === 'business'
-          ? await api.getBusinessUsersList(queryParam)
-          : type === 'consumer'
-          ? await api.getConsumerUsersList(queryParam)
-          : await api.getAllUsersList(queryParam);
-
-      return {
-        ...response,
-        from: from || params.from,
-        items: response.items,
-      };
-    },
-  );
-
   const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
     USERS(type, params),
     async (paginationParams) => {
-      if (!isClickhouseEnabled) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-
-      const queryObj = {
+      const queryObj: DefaultParams = {
         ...paginationParams,
-        start: paginationParams.from || params.from,
         pageSize: params.pageSize,
         page: paginationParams.page || params.page,
         sortField: params.sort[0]?.[0],
@@ -174,13 +110,13 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
       const response =
         type === 'business'
-          ? await api.getBusinessUsersListV2({
+          ? await api.getBusinessUsersList({
               ...queryObj,
               filterUserRegistrationStatus: params.userRegistrationStatus,
             })
           : type === 'consumer'
-          ? await api.getConsumerUsersListV2({ ...queryObj, filterIsPepHit: params.isPepHit })
-          : await api.getAllUsersListV2({ ...queryObj });
+          ? await api.getConsumerUsersList({ ...queryObj, filterIsPepHit: params.isPepHit })
+          : await api.getAllUsersList({ ...queryObj });
 
       return {
         total: response.count,
@@ -193,7 +129,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     <PageWrapperContentContainer>
       <UsersTable
         type={type}
-        queryResults={isClickhouseEnabled ? offsetPaginateQueryResult : queryResults}
+        queryResults={offsetPaginateQueryResult}
         params={params}
         handleChangeParams={handleChangeParams}
         fitHeight

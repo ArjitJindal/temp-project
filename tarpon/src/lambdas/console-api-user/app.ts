@@ -17,6 +17,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments } from '@/utils/helpers'
 import { getPeriodicScreeningUserRuleInstances } from '@/services/batch-jobs/periodic-screening-user-rule-batch-job-runner'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -35,12 +36,11 @@ export const businessUsersViewHandler = lambdaApi()(
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
-    handlers.registerGetBusinessUsersList(
-      async (ctx, request) => await userService.getBusinessUsers(request)
-    )
-
-    handlers.registerGetBusinessUsersListV2(async (ctx, request) => {
-      return await userService.getBusinessUsersV2(request)
+    handlers.registerGetBusinessUsersList(async (ctx, request) => {
+      if (isClickhouseEnabled()) {
+        return await userService.getBusinessUsersV2(request)
+      }
+      return await userService.getBusinessUsers(request)
     })
 
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
@@ -76,12 +76,11 @@ export const consumerUsersViewHandler = lambdaApi()(
     const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
-    handlers.registerGetConsumerUsersList(
-      async (ctx, request) => await userService.getConsumerUsers(request)
-    )
-
-    handlers.registerGetConsumerUsersListV2(async (ctx, request) => {
-      return await userService.getConsumerUsersV2(request)
+    handlers.registerGetConsumerUsersList(async (ctx, request) => {
+      if (isClickhouseEnabled()) {
+        return await userService.getConsumerUsersV2(request)
+      }
+      return await userService.getConsumerUsers(request)
     })
 
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
@@ -114,11 +113,10 @@ export const allUsersViewHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetAllUsersList(async (ctx, request) => {
+      if (isClickhouseEnabled()) {
+        return await userService.getClickhouseUsers(request)
+      }
       return (await userService.getUsers(request)).result
-    })
-
-    handlers.registerGetAllUsersListV2(async (ctx, request) => {
-      return await userService.getClickhouseUsers(request)
     })
 
     handlers.registerGetUsersItem(

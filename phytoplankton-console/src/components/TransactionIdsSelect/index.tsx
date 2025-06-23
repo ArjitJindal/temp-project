@@ -18,12 +18,6 @@ function TransactionIdsSelect(props: LocalProps) {
   const options = getOr(queryResult.data, {
     items: [],
     count: 0,
-    prev: '',
-    hasNext: false,
-    hasPrev: false,
-    last: '',
-    limit: 10000,
-    next: '',
   }).items.map((val) => ({
     label: val.transactionId,
     value: val.transactionId,

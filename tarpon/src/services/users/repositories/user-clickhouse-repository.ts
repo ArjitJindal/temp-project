@@ -1,9 +1,9 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
 import {
-  DefaultApiGetAllUsersListV2Request,
-  DefaultApiGetBusinessUsersListV2Request,
-  DefaultApiGetConsumerUsersListV2Request,
+  DefaultApiGetAllUsersListRequest,
+  DefaultApiGetBusinessUsersListRequest,
+  DefaultApiGetConsumerUsersListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
@@ -21,9 +21,9 @@ import {
 } from '@/utils/clickhouse/utils'
 import { hasFeature } from '@/core/utils/context'
 import {
-  AllUsersListResponse,
   AllUsersTableItem,
   RiskClassificationScore,
+  AllUsersOffsetPaginateListResponse,
 } from '@/@types/openapi-internal/all'
 import { LinkerService } from '@/services/linker'
 
@@ -51,27 +51,18 @@ export class UserClickhouseRepository {
   }
 
   public async getClickhouseUsersPaginate<T extends AllUsersTableItem>(
-    params: DefaultApiGetAllUsersListV2Request,
+    params: DefaultApiGetAllUsersListRequest,
     filterOperator: 'AND' | 'OR',
     includeCasesCount: boolean,
     columns: Record<string, string>,
     callback: (data: Record<string, string | number>) => T,
     userType?: 'BUSINESS' | 'CONSUMER'
-  ): Promise<AllUsersListResponse> {
+  ): Promise<AllUsersOffsetPaginateListResponse> {
     if (!this.clickhouseClient) {
       if (isClickhouseEnabled()) {
         throw new Error('Clickhouse client is not initialized')
       }
-      return {
-        hasPrev: false,
-        prev: '',
-        next: '',
-        count: 0,
-        limit: 0,
-        last: '',
-        hasNext: false,
-        items: [],
-      }
+      return { items: [], count: 0 }
     }
 
     if (params.filterParentId) {
@@ -156,17 +147,11 @@ export class UserClickhouseRepository {
     return {
       items: result.items as AllUsersTableItem[],
       count: result.count,
-      hasPrev: page > 1,
-      hasNext: result.count > page * pageSize,
-      prev: page > 1 ? (page - 1).toString() : '',
-      next: result.count > page * pageSize ? (page + 1).toString() : '',
-      last: Math.ceil(result.count / pageSize).toString(),
-      limit: pageSize,
     }
   }
 
   public async getUsersV2<T>(
-    params: DefaultApiGetAllUsersListV2Request,
+    params: DefaultApiGetAllUsersListRequest,
     columns: Record<string, string>,
     callback: (data: Record<string, string | number>) => T,
     userType?: 'BUSINESS' | 'CONSUMER'
@@ -231,9 +216,9 @@ export class UserClickhouseRepository {
   }
 
   private async buildWhereClause(
-    params: DefaultApiGetAllUsersListV2Request &
-      DefaultApiGetConsumerUsersListV2Request &
-      DefaultApiGetBusinessUsersListV2Request,
+    params: DefaultApiGetAllUsersListRequest &
+      DefaultApiGetConsumerUsersListRequest &
+      DefaultApiGetBusinessUsersListRequest,
     userType?: 'BUSINESS' | 'CONSUMER',
     options?: {
       isPulseEnabled?: boolean

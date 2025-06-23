@@ -523,7 +523,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AllUsersListResponse'
+                $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
   /rule-instances/rules-with-alerts:
     get:
       summary: Get Distinct Rule Instance IDs with Alerts
@@ -1118,195 +1118,6 @@ paths:
       responses:
         '200':
           description: OK
-  /transactions-v2:
-    get:
-      summary: Transaction - List V2
-      tags: []
-      x-flagright:
-        resources:
-          - read:::transactions/overview
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionsResponseOffsetPaginated'
-      operationId: get-transactions-v2-list
-      description: ''
-      parameters:
-        - schema:
-            $ref: '#/components/schemas/TableListViewEnum'
-          in: query
-          name: view
-        - schema:
-            $ref: '#/components/schemas/PageSize'
-          in: query
-          name: pageSize
-        - schema:
-            $ref: '#/components/schemas/Page'
-          in: query
-          name: page
-        - schema:
-            type: string
-          in: query
-          name: sortField
-        - schema:
-            $ref: '#/components/schemas/SortOrder'
-          in: query
-          name: sortOrder
-        - schema:
-            type: number
-          in: query
-          name: afterTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-        - schema:
-            type: string
-          in: query
-          name: filterId
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterIdList
-        - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRuleInstancesExecuted
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterRuleInstancesHit
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterOriginCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCurrencies
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterOriginCountries
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterDestinationCountries
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterUserIds
-        - schema:
-            type: string
-          in: query
-          name: filterUserId
-        - schema:
-            type: string
-          in: query
-          name: filterParentUserId
-        - schema:
-            type: string
-          in: query
-          name: filterOriginUserId
-        - schema:
-            type: string
-          in: query
-          name: filterDestinationUserId
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterOriginPaymentMethods
-        - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
-          in: query
-          name: filterDestinationPaymentMethods
-        - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
-          in: query
-          name: filterTransactionState
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterTransactionTypes
-        - schema:
-            type: string
-          in: query
-          name: filterOriginPaymentMethodId
-        - schema:
-            type: string
-          in: query
-          name: filterDestinationPaymentMethodId
-        - schema:
-            type: string
-          in: query
-          name: filterPaymentDetailName
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterProductType
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterStatus
-        - schema:
-            type: boolean
-          in: query
-          name: includeUsers
-        - schema:
-            type: boolean
-          in: query
-          name: includePaymentDetails
-        - schema:
-            type: boolean
-          in: query
-          name: includeRuleHitDetails
-        - schema:
-            type: boolean
-          in: query
-          name: isPaymentApprovals
   /transactions:
     get:
       summary: Transaction - List
@@ -1320,7 +1131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionsResponse'
+                $ref: '#/components/schemas/TransactionsResponseOffsetPaginated'
       operationId: get-transactions-list
       description: ''
       parameters:
@@ -2019,7 +1830,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsumerUsersListResponse'
+                $ref: '#/components/schemas/ConsumerUsersOffsetPaginateListResponse'
       operationId: get-consumer-users-list
       description: ''
       parameters:
@@ -2032,9 +1843,9 @@ paths:
           in: query
           name: pageSize
         - schema:
-            type: string
+            $ref: '#/components/schemas/Page'
           in: query
-          name: start
+          name: page
         - schema:
             type: string
             enum:
@@ -2137,9 +1948,9 @@ paths:
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
-  /consumer/users-v2:
+  /users:
     get:
-      summary: Consumer Users - List V2
+      summary: All Users - List
       tags: []
       x-flagright:
         resources:
@@ -2150,8 +1961,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsumerUsersOffsetPaginateListResponse'
-      operationId: get-consumer-users-list-v2
+                $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
+      operationId: get-all-users-list
       description: ''
       parameters:
         - schema:
@@ -2166,125 +1977,6 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
-        - schema:
-            type: string
-          in: query
-          name: sortField
-        - schema:
-            $ref: '#/components/schemas/SortOrder'
-          in: query
-          name: sortOrder
-        - schema:
-            type: number
-          in: query
-          name: afterTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-        - schema:
-            type: string
-          in: query
-          name: filterId
-        - schema:
-            type: string
-          in: query
-          name: filterParentId
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterIds
-        - schema:
-            type: string
-          in: query
-          name: filterName
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RiskLevel'
-          in: query
-          name: filterRiskLevel
-        - schema:
-            type: string
-          in: query
-          name: filterRiskLevelLocked
-        - schema:
-            type: string
-          in: query
-          name: filterIsPepHit
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterPepCountry
-        - schema:
-            type: string
-          in: query
-          name: filterPepRank
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterCountryOfResidence
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterCountryOfNationality
-        - name: filterUserState
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
-        - name: filterKycStatus
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
-  /users:
-    get:
-      summary: All Users - List
-      tags: []
-      x-flagright:
-        resources:
-          - read:::users/user-overview
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AllUsersListResponse'
-      operationId: get-all-users-list
-      description: ''
-      parameters:
-        - schema:
-            $ref: '#/components/schemas/TableListViewEnum'
-          in: query
-          name: view
-        - schema:
-            $ref: '#/components/schemas/PageSize'
-          in: query
-          name: pageSize
-        - schema:
-            type: string
-          in: query
-          name: start
         - schema:
             type: string
             enum:
@@ -2379,99 +2071,6 @@ paths:
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
-  /users-v2:
-    get:
-      summary: All Users - List V2
-      tags: []
-      x-flagright:
-        resources:
-          - read:::users/user-overview
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
-      operationId: get-all-users-list-v2
-      description: ''
-      parameters:
-        - schema:
-            $ref: '#/components/schemas/TableListViewEnum'
-          in: query
-          name: view
-        - schema:
-            $ref: '#/components/schemas/PageSize'
-          in: query
-          name: pageSize
-        - schema:
-            $ref: '#/components/schemas/Page'
-          in: query
-          name: page
-        - schema:
-            type: string
-          in: query
-          name: sortField
-        - schema:
-            $ref: '#/components/schemas/SortOrder'
-          in: query
-          name: sortOrder
-        - schema:
-            type: number
-          in: query
-          name: afterTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-        - schema:
-            type: string
-          in: query
-          name: filterId
-        - schema:
-            type: string
-          in: query
-          name: filterParentId
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterIds
-        - schema:
-            type: string
-          in: query
-          name: filterName
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RiskLevel'
-          in: query
-          name: filterRiskLevel
-        - schema:
-            type: string
-          in: query
-          name: filterRiskLevelLocked
-        - name: filterUserState
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
-        - name: filterKycStatus
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
   /users/{userId}/comments:
     parameters:
       - schema:
@@ -2649,7 +2248,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BusinessUsersListResponse'
+                $ref: '#/components/schemas/BusinessUsersOffsetPaginateListResponse'
       operationId: get-business-users-list
       description: ''
       parameters:
@@ -2662,9 +2261,9 @@ paths:
           in: query
           name: pageSize
         - schema:
-            type: string
+            $ref: '#/components/schemas/Page'
           in: query
-          name: start
+          name: page
         - schema:
             type: string
             enum:
@@ -2753,105 +2352,6 @@ paths:
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
     parameters: []
-  /business/users-v2:
-    get:
-      summary: Business Users - List V2
-      tags: []
-      x-flagright:
-        resources:
-          - read:::users/user-overview
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BusinessUsersOffsetPaginateListResponse'
-      operationId: get-business-users-list-v2
-      description: ''
-      parameters:
-        - schema:
-            $ref: '#/components/schemas/TableListViewEnum'
-          in: query
-          name: view
-        - schema:
-            $ref: '#/components/schemas/PageSize'
-          in: query
-          name: pageSize
-        - schema:
-            $ref: '#/components/schemas/Page'
-          in: query
-          name: page
-        - schema:
-            type: string
-          in: query
-          name: sortField
-        - schema:
-            $ref: '#/components/schemas/SortOrder'
-          in: query
-          name: sortOrder
-        - schema:
-            type: number
-          in: query
-          name: afterTimestamp
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-        - schema:
-            type: string
-          in: query
-          name: filterId
-        - schema:
-            type: string
-          in: query
-          name: filterParentId
-        - schema:
-            type: array
-            items:
-              type: string
-          in: query
-          name: filterIds
-        - schema:
-            type: string
-          in: query
-          name: filterName
-        - schema:
-            type: string
-          in: query
-          name: filterTagKey
-        - schema:
-            type: string
-          in: query
-          name: filterTagValue
-        - schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserRegistrationStatus
-          in: query
-          name: filterUserRegistrationStatus
-        - schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/RiskLevel'
-          in: query
-          name: filterRiskLevel
-        - schema:
-            type: string
-          in: query
-          name: filterRiskLevelLocked
-        - name: filterUserState
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
-        - name: filterKycStatus
-          in: query
-          schema:
-            type: array
-            items:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
   /users/{userId}:
     get:
       summary: Users - Item - Get
@@ -9936,7 +9436,7 @@ components:
         userStateReason:
           type: string
         kycStatus:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
         kycStatusReason:
           type: string
       required:
@@ -10061,37 +9561,6 @@ components:
       required:
         - transactionId
         - timestamp
-    ConsumerUsersListResponse:
-      title: ConsumerUsersListResponse
-      type: object
-      properties:
-        hasPrev:
-          type: boolean
-        prev:
-          type: string
-        next:
-          type: string
-        count:
-          type: number
-        limit:
-          type: number
-        last:
-          type: string
-        hasNext:
-          type: boolean
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConsumerUserTableItem'
-      required:
-        - hasPrev
-        - prev
-        - next
-        - hasNext
-        - items
-        - count
-        - limit
-        - last
     ConsumerUsersOffsetPaginateListResponse:
       title: ConsumerUsersOffsetPaginateListResponse
       type: object
@@ -10105,37 +9574,6 @@ components:
       required:
         - count
         - items
-    BusinessUsersListResponse:
-      title: BusinessUsersListResponse
-      type: object
-      properties:
-        hasPrev:
-          type: boolean
-        prev:
-          type: string
-        next:
-          type: string
-        count:
-          type: number
-        limit:
-          type: number
-        last:
-          type: string
-        hasNext:
-          type: boolean
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/BusinessUserTableItem'
-      required:
-        - hasPrev
-        - prev
-        - next
-        - hasNext
-        - items
-        - count
-        - limit
-        - last
     BusinessUsersOffsetPaginateListResponse:
       title: BusinessUsersOffsetPaginateListResponse
       type: object
@@ -10149,37 +9587,6 @@ components:
       required:
         - count
         - items
-    AllUsersListResponse:
-      title: AllUsersListResponse
-      type: object
-      properties:
-        hasPrev:
-          type: boolean
-        prev:
-          type: string
-        next:
-          type: string
-        count:
-          type: number
-        limit:
-          type: number
-        last:
-          type: string
-        hasNext:
-          type: boolean
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/AllUsersTableItem'
-      required:
-        - hasPrev
-        - prev
-        - next
-        - hasNext
-        - items
-        - count
-        - limit
-        - last
     AllUsersOffsetPaginateListResponse:
       title: AllUsersOffsetPaginateListResponse
       type: object

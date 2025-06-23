@@ -23,7 +23,7 @@ interface StatsItem {
 export default function useStats(alert: Alert, caseUserId: string): StatsItem[] {
   const result: StatsItem[] = [];
 
-  const checkedTransactionsQuery = useCheckedTransactionsQuery(alert, caseUserId);
+  const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId);
 
   const api = useApi();
 
@@ -42,7 +42,7 @@ export default function useStats(alert: Alert, caseUserId: string): StatsItem[] 
 
   result.push({
     title: 'Transactions checked',
-    children: map(checkedTransactionsQuery.data, (x) => x.count.toString()),
+    children: map(queryResult.data, (x) => x.total?.toString() ?? '0'),
   });
 
   result.push({

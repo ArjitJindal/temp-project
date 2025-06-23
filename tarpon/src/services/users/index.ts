@@ -33,21 +33,15 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
   DefaultApiGetAllUsersListRequest,
-  DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListRequest,
-  DefaultApiGetBusinessUsersListV2Request,
   DefaultApiGetConsumerUsersListRequest,
-  DefaultApiGetConsumerUsersListV2Request,
   DefaultApiGetEventsListRequest,
   DefaultApiGetRuleInstancesTransactionUsersHitRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
-import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
-import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -264,8 +258,8 @@ export class UserService {
 
   public async getBusinessUsers(
     params: DefaultApiGetBusinessUsersListRequest
-  ): Promise<BusinessUsersListResponse> {
-    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+  ): Promise<BusinessUsersOffsetPaginateListResponse> {
+    const result = await this.userRepository.getMongoUsersPaginate(
       params,
       this.mapBusinessUserToTableItem,
       'BUSINESS',
@@ -313,7 +307,7 @@ export class UserService {
   }
 
   public async getBusinessUsersV2(
-    params: DefaultApiGetBusinessUsersListV2Request
+    params: DefaultApiGetBusinessUsersListRequest
   ): Promise<BusinessUsersOffsetPaginateListResponse> {
     const columns = {
       ...this.getUserCommonColumns(),
@@ -402,7 +396,7 @@ export class UserService {
   }
 
   public async getConsumerUsersV2(
-    params: DefaultApiGetConsumerUsersListV2Request
+    params: DefaultApiGetConsumerUsersListRequest
   ): Promise<ConsumerUsersOffsetPaginateListResponse> {
     const columns = {
       ...this.getUserCommonColumns(),
@@ -455,7 +449,7 @@ export class UserService {
   }
 
   public async getUsersV2(
-    params: DefaultApiGetAllUsersListV2Request
+    params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersOffsetPaginateListResponse> {
     const columns = {
       ...this.getUserCommonColumns(),
@@ -1039,8 +1033,8 @@ export class UserService {
 
   public async getConsumerUsers(
     params: DefaultApiGetConsumerUsersListRequest
-  ): Promise<ConsumerUsersListResponse> {
-    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+  ): Promise<ConsumerUsersOffsetPaginateListResponse> {
+    const result = await this.userRepository.getMongoUsersPaginate(
       params,
       this.mapConsumerUserToTableItem,
       'CONSUMER',
@@ -1086,7 +1080,7 @@ export class UserService {
   @auditLog('USER', 'USER_LIST', 'DOWNLOAD')
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
-  ): Promise<AuditLogReturnData<AllUsersListResponse>> {
+  ): Promise<AuditLogReturnData<AllUsersOffsetPaginateListResponse>> {
     if (isClickhouseEnabled()) {
       return {
         result: await this.getClickhouseUsers(params),
@@ -1097,8 +1091,7 @@ export class UserService {
         publishAuditLog: () => params.view === 'DOWNLOAD',
       }
     }
-
-    const data = await this.userRepository.getMongoUsersCursorsPaginate(
+    const data = await this.userRepository.getMongoUsersPaginate(
       params,
       this.mapAllUserToTableItem,
       params.filterUserType,
@@ -1144,7 +1137,7 @@ export class UserService {
 
   public async getClickhouseUsers(
     params: DefaultApiGetAllUsersListRequest
-  ): Promise<AllUsersListResponse> {
+  ): Promise<AllUsersOffsetPaginateListResponse> {
     const columns = this.getUserCommonColumns()
 
     const callback = (
@@ -1187,7 +1180,7 @@ export class UserService {
   public async getRuleInstancesTransactionUsersHit(
     ruleInstanceId: string,
     params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
-  ): Promise<AllUsersListResponse> {
+  ): Promise<AllUsersOffsetPaginateListResponse> {
     const result =
       await this.userRepository.getRuleInstancesTransactionUsersHit(
         ruleInstanceId,

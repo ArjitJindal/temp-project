@@ -92,6 +92,10 @@ export interface TransactionsTableParams extends CommonParams {
   filterSanctionsHitIds?: string[];
   filterPaymentDetailName?: string;
   filterPaymentMethodId?: string;
+  filterRuleInstancesExecuted?: string[];
+  includeRuleHitDetails?: boolean;
+  filterShadowHit?: boolean;
+  includeUsers?: boolean;
   isPaymentApprovals?: boolean;
 }
 
@@ -140,6 +144,10 @@ export const transactionParamsToRequest = (
     parentUserId,
     filterPaymentDetailName,
     showDetailedView,
+    filterRuleInstancesExecuted,
+    includeRuleHitDetails,
+    filterShadowHit,
+    includeUsers,
     isPaymentApprovals,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
@@ -164,7 +172,7 @@ export const transactionParamsToRequest = (
     filterTransactionState: transactionState,
     sortField: sortField ?? undefined,
     sortOrder: sortOrder ?? undefined,
-    includeUsers: true,
+    includeUsers: includeUsers ?? true,
     filterOriginPaymentMethods: originMethodFilter ? [originMethodFilter] : undefined,
     filterDestinationPaymentMethods: destinationMethodFilter
       ? [destinationMethodFilter]
@@ -181,6 +189,9 @@ export const transactionParamsToRequest = (
     filterStatus: status ? [status] : undefined,
     includePaymentDetails: showDetailedView,
     filterPaymentDetailName: filterPaymentDetailName,
+    filterRuleInstancesExecuted: filterRuleInstancesExecuted,
+    includeRuleHitDetails: includeRuleHitDetails,
+    filterShadowHit: filterShadowHit,
     isPaymentApprovals: isPaymentApprovals,
   };
   if (direction === 'outgoing') {

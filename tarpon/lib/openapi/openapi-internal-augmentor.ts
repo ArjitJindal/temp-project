@@ -109,8 +109,6 @@ export const ConsoleApiPathToLambda: any = {
   '/blacklist/{listId}/items/{key}':
     StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/transactions-v2':
-    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/action':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/stats/by-types':
@@ -130,30 +128,23 @@ export const ConsoleApiPathToLambda: any = {
   '/copilot/sources': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/alert/{alertId}/questions':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
-
   '/questions/autocomplete': StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/questions/{questionId}/{variableKey}/autocomplete':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/users/{userId}': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/attachment/{personType}/{userId}/{personId}':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-
   '/consumer/users':
-    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-  '/consumer/users-v2':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/business/users':
-    StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/business/users-v2':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/users-v2': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/crm':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/entity':

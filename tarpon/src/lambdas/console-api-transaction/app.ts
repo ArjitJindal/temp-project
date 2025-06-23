@@ -18,6 +18,7 @@ import { CaseService } from '@/services/cases'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -107,13 +108,14 @@ export const transactionsViewHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetTransactionsList(async (context, request) => {
-      return await transactionService.getTransactionsList(request, {
+      if (isClickhouseEnabled()) {
+        const result = await transactionService.getTransactionsListV2(request)
+        return result.result
+      }
+      const result = await transactionService.getTransactionsList(request, {
         includeUsers: request.includeUsers,
       })
-    })
-
-    handlers.registerGetTransactionsV2List(async (context, request) => {
-      return (await transactionService.getTransactionsListV2(request)).result
+      return result
     })
 
     handlers.registerGetTransactionsStatsByType(async (context, request) => ({

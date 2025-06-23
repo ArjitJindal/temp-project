@@ -853,17 +853,51 @@ export class MongoDbTransactionRepository
     return transactionsWithoutArsScore
   }
 
-  public async getTransactionsCursorPaginate(
+  public async getTransactionsOffsetPaginated(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
     options?: { projection?: Document },
     alert?: Alert | null
-  ): Promise<CursorPaginationResponse<InternalTransaction>> {
+  ): Promise<{
+    items: InternalTransaction[]
+    count: number
+  }> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
 
     const filter = this.getTransactionsMongoQuery(params, [], alert)
 
+    const limit = params.pageSize !== 'DISABLED' ? Number(params.pageSize) : 20
+    const page = params.page ?? 1
+
+    const [items, count] = await Promise.all([
+      collection
+        .find(filter, {
+          sort: {
+            [params.sortField ?? 'timestamp']:
+              params.sortOrder === 'ascend' ? 1 : -1,
+          },
+          limit,
+          skip: (page - 1) * limit,
+          projection: options?.projection,
+        })
+        .toArray(),
+      collection.countDocuments(filter),
+    ])
+
+    return { items, count }
+  }
+
+  public async getTransactionsCursorPaginated(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
+    options?: { projection?: Document },
+    alert?: Alert | null
+  ): Promise<CursorPaginationResponse<InternalTransaction>> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const filter = this.getTransactionsMongoQuery(params, [], alert)
     return await cursorPaginate<InternalTransaction>(
       collection,
       filter,

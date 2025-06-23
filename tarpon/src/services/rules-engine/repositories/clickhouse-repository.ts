@@ -5,9 +5,9 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import {
+  DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
-  DefaultApiGetTransactionsV2ListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
@@ -64,7 +64,7 @@ export class ClickhouseTransactionsRepository {
   }
 
   private async getTransactionsWhereConditions(
-    params: OptionalPagination<DefaultApiGetTransactionsV2ListRequest>
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<string> {
     const whereConditions: string[] = []
 
@@ -250,7 +250,7 @@ export class ClickhouseTransactionsRepository {
   }
 
   async getTransactions(
-    params: OptionalPagination<DefaultApiGetTransactionsV2ListRequest>
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<TransactionsResponseOffsetPaginated> {
     const whereClause = await this.getTransactionsWhereConditions(params)
 

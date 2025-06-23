@@ -7,11 +7,10 @@ import Widget from '@/components/library/Widget';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import TransactionsTable, {
-  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
-import { RULE_STATS, TRANSACTIONS_LIST, USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { RULE_STATS, USERS } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { H4 } from '@/components/ui/Typography';
 import { UserSearchParams } from '@/pages/users/users-list';
@@ -34,6 +33,7 @@ import { makeUrl } from '@/utils/routing';
 import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useTransactionsQuery } from '@/pages/transactions/utils';
 
 const HIT_RATE_SERIES = 'Hit rate';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
@@ -298,12 +298,6 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     sort: [['timestamp', 'descend']],
     timestamp,
   });
-  const api = useApi();
-  const queryKey = TRANSACTIONS_LIST({
-    ...params,
-    ruleInstanceId: ruleInstance.id,
-    isShadowHit: true,
-  });
 
   useEffect(() => {
     if (!isEqual(params.timestamp, timestamp)) {
@@ -314,19 +308,20 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     }
   }, [params, timestamp]);
 
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
-    return await api.getTransactionsList({
-      ...transactionParamsToRequest(params),
-      start: from || params.from,
+  const queryResult = useTransactionsQuery(
+    {
+      ...params,
       filterShadowHit: checkShadowRule(ruleInstance),
-      filterRuleInstancesHit: [ruleInstance.id as string],
-      includeUsers: true,
-    });
-  });
+      ruleInstancesHitFilter: [ruleInstance.id as string],
+    },
+    {
+      isReadyToFetch: true,
+    },
+  );
 
   return (
     <TransactionsTable
-      queryResult={queryResult}
+      queryResult={queryResult.queryResult}
       params={params}
       onChangeParams={setParams}
       isExpandable={false}
@@ -359,7 +354,7 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
   }, [params, createdTimestamp]);
   const api = useApi();
   const queryKey = USERS('ALL', { ...params, ruleInstanceId: ruleInstance.id, isShadowHit: true });
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+  const queryResult = usePaginatedQuery(queryKey, async (paginationParams) => {
     const {
       pageSize,
       createdTimestamp,
@@ -372,7 +367,7 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
     } = params;
 
     return await api.getAllUsersList({
-      start: params.from || from,
+      ...paginationParams,
       pageSize,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
       beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
@@ -416,7 +411,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
     isShadowHit: true,
   });
 
-  const queryResult = useCursorQuery(queryKey, async ({ from }) => {
+  const queryResult = usePaginatedQuery(queryKey, async (paginationParams) => {
     const {
       pageSize,
       userId,
@@ -429,7 +424,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
     } = params;
 
     return await api.getRuleInstancesTransactionUsersHit({
-      start: from || params.from,
+      ...paginationParams,
       pageSize,
       txAfterTimestamp: timeRange.afterTimestamp,
       txBeforeTimestamp: timeRange.beforeTimestamp,
