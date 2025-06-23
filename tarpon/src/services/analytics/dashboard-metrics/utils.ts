@@ -13,7 +13,6 @@ import {
   getTimeformatsByGranularity,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
-import { tenantTimezone } from '@/core/utils/context'
 
 export function withUpdatedAt(
   pipeline: Document[],
@@ -325,24 +324,21 @@ export const executeTimeBasedClickhouseQuery = async <
   additionalWhereClause: string,
   options?: { countOnly?: boolean }
 ): Promise<T[]> => {
-  const { clickhouseTimeMethod, dateFormatJs, timestampFormat } =
+  const { clickhouseTimeMethod, dateFormatJs } =
     getTimeformatsByGranularity(granularity)
   const countOnly = options?.countOnly ?? false
   const { startTimestamp, endTimestamp } = timeRange
-  const gte = dayjs(startTimestamp).format(timestampFormat)
-  const lte = dayjs(endTimestamp).format(timestampFormat)
-  const timezone = await tenantTimezone(tenantId)
 
   const query = `
     SELECT 
       ${
         !countOnly
-          ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000, '${timezone}'))`
+          ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000))`
           : `''`
       } as time,
       ${selectStatement}
     FROM ${tableName} FINAL
-    WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}') ${
+    WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime(${startTimestamp} / 1000) AND toDateTime(${endTimestamp} / 1000) ${
     additionalWhereClause ? `AND ${additionalWhereClause}` : ''
   }
     ${
@@ -351,14 +347,13 @@ export const executeTimeBasedClickhouseQuery = async <
     GROUP BY time
     ORDER BY time ASC
     WITH FILL
-    FROM ${clickhouseTimeMethod}(toDateTime(${startTimestamp} / 1000, '${timezone}'))
-    TO ${clickhouseTimeMethod}(toDateTime(${endTimestamp} / 1000, '${timezone}')) + INTERVAL 1 ${granularity.toUpperCase()}
+    FROM ${clickhouseTimeMethod}(toDateTime(${startTimestamp} / 1000))
+    TO ${clickhouseTimeMethod}(toDateTime(${endTimestamp} / 1000)) + INTERVAL 1 ${granularity.toUpperCase()}
     STEP INTERVAL 1 ${granularity.toUpperCase()}
     `
         : ''
     }
   `
-
   let data = await executeClickhouseQuery<T[]>(tenantId, query)
 
   if (!countOnly) {

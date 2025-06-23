@@ -7,7 +7,7 @@ export type Dayjs = dayjsLib.Dayjs;
 
 export const dayjs = (date?: ConfigType, option?: OptionType): Dayjs => {
   const dayjs = dayjsLib(date, option);
-  return dayjs;
+  return dayjs.utc();
 };
 
 export const duration: CreateDurationType = dayjsLib.duration;

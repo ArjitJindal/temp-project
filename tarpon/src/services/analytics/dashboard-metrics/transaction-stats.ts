@@ -40,7 +40,6 @@ import {
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
-import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { notEmpty, notNullish } from '@/utils/array'
@@ -317,18 +316,23 @@ export class TransactionStatsDashboardMetric {
       'destinationPaymentMethod'
     )
 
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
     const ruleActions = buildQueryPart(RULE_ACTIONS, 'status', 'status')
     const manualActions = buildQueryPart(
       EXTRA_TRANSACTION_STATUSS,
       'status',
       'derived_status'
     )
-    const arsRiskLevels = buildQueryPart(
-      RISK_LEVELS,
-      'arsRiskLevel',
-      'arsScore_riskLevel'
-    )
-
+    const arsRiskLevels = riskClassificationValues
+      .map(({ riskLevel, lowerBoundRiskScore, upperBoundRiskScore }) => {
+        const condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore <= ${upperBoundRiskScore}`
+        return `COUNTIf(${condition}) AS arsRiskLevel_${riskLevel}`
+      })
+      .join(', ')
     const dateRangeQuery =
       returnDataType === 'DATE_RANGE'
         ? `, ${ruleActions}, ${manualActions}, ${arsRiskLevels}`

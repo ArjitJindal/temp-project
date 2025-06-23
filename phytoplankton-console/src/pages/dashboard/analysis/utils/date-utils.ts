@@ -5,7 +5,7 @@ export const formatDate = (str: string): string => {
   if (str.match(/^\d{4}-\d{2}-\d{2}$/)) {
     str = dayjs(str, YEAR_MONTH_DATE_FORMAT).format('DD/MM');
   } else if (str.match(/^\d{4}-\d{2}$/)) {
-    str = dayjs(str, 'YYYY-MM').format('MM/YYYY');
+    str = dayjsLib(str, 'YYYY-MM').format('MM/YYYY');
   } else if (str.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
     str = dayjsLib.utc(str, 'YYYY-MM-DDTHH').tz(dayjsLib.tz.guess()).format('HH:mm DD/MM');
   }

@@ -39,8 +39,8 @@ export default function TransactionTRSChartCard(props: Partial<WidgetProps>) {
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
   const api = useApi();
   const [start, end] = dateRange ?? [];
-  const startTimestamp = start?.startOf('day').valueOf();
-  const endTimestamp = end?.endOf('day').valueOf();
+  const startTimestamp = start ? dayjs(start).utc().startOf('day').valueOf() : undefined;
+  const endTimestamp = end ? dayjs(end).utc().endOf('day').valueOf() : undefined;
 
   const params = {
     startTimestamp,
