@@ -3,6 +3,9 @@ import { sortBy } from 'lodash'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import dayjs from '@/utils/dayjs'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+dynamoDbSetupHook()
 
 describe('Autocompletion interpretQuestion', () => {
   const ac = new AutocompleteService('test-tenant')
@@ -27,7 +30,7 @@ describe('Autocompletion interpretQuestion', () => {
       prompt: 'transactions for the last 10 days',
       questions: [
         {
-          questionId: COPILOT_QUESTIONS.TRANSACTIONS,
+          questionId: COPILOT_QUESTIONS.USER_TRANSACTIONS,
           variables: [
             {
               name: 'from',

@@ -32,9 +32,12 @@ const getLLMService = (tenantId: string, provider: LLMProvider) => {
   }
 }
 
-const getLLMServiceForTenant = async (tenantId: string) => {
+const getLLMServiceForTenant = async (
+  tenantId: string,
+  defaultProvider?: LLMProvider
+) => {
   const settings = await tenantSettings(tenantId)
-  const provider = settings.llmProvider ?? 'ANTHROPIC'
+  const provider = defaultProvider ?? settings.llmProvider ?? 'ANTHROPIC'
   return getLLMService(tenantId, provider)
 }
 
@@ -52,7 +55,7 @@ export const prompt = async (
   messages: Message[],
   options?: LLMOptions
 ) => {
-  const service = await getLLMServiceForTenant(tenantId)
+  const service = await getLLMServiceForTenant(tenantId, options?.provider)
   return service.prompt(messages, options)
 }
 

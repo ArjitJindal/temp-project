@@ -283,11 +283,12 @@ export class AutocompleteService {
         ),
         {
           role: 'user',
-          content: `Please parse "${questionPrompt}" to give the best matching questionIds and variables in an array. Return the response in JSON format with a "response" key containing an array of objects with "questionId" and "variables" fields.`,
+          content: `Please parse "${questionPrompt}" to give the best matching questionIds and variables in an array. Return the response in JSON format with a "response" key containing an array of objects with "questionId" and "variables" fields. Only give json no markdown.`,
         },
       ],
       {
-        tier: ModelTier.PROFESSIONAL,
+        tier: ModelTier.ECONOMY,
+        provider: 'OPEN_AI',
       }
     )
     const results: {

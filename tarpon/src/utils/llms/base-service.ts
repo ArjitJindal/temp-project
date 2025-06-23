@@ -22,6 +22,7 @@ export type LLMOptions = {
   tier?: ModelTier
   maxTokens?: number
   temperature?: number
+  provider?: LLMProvider
 }
 
 export type GPTLogObject = {
@@ -59,6 +60,7 @@ export abstract class BaseLLMService<Client> {
       tier: options?.tier ?? ModelTier.ENTERPRISE,
       maxTokens: options?.maxTokens ?? this.defaultMaxTokens,
       temperature: options?.temperature ?? this.defaultTemperature,
+      provider: options?.provider ?? this.provider,
     }
   }
 
