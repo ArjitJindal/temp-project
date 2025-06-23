@@ -94,11 +94,13 @@ describe('Escalate a case from case-details', () => {
         cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
         cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();
         cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(1).click();
-        cy.wait('@case').its('response.statusCode').should('eq', 200);
-        cy.message(
-          `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
-        ).should('exist');
-        cy.message().should('not.exist');
+        cy.wait('@case').then((interception) => {
+          expect(interception?.response?.statusCode).to.eq(200);
+          cy.message('Case sent back successfully').should('exist');
+          cy.messageBody(
+            `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
+          ).should('exist');
+        });
 
         // cy.checkNotification([
         //   `‘cypress+custom@flagright.com’ escalated a case ‘${caseId}’ to you.`,
