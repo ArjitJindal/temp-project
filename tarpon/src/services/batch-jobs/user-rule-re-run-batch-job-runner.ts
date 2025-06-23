@@ -14,9 +14,11 @@ import { mergeRules } from '../rules-engine/utils/rule-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { UserRuleReRunBatchJob } from '@/@types/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { pickKnownEntityFields } from '@/utils/object'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -31,26 +33,27 @@ async function runRulesForUser(
   mongoDb: MongoClient,
   rulesEngineService: RulesEngineService
 ) {
-  try {
-    const userRepository = new UserRepository(tenantId, { dynamoDb, mongoDb })
+  const userRepository = new UserRepository(tenantId, { dynamoDb, mongoDb })
 
-    // get user cursor
-    const db = mongoDb.db()
-    const collectionName = USERS_COLLECTION(tenantId)
-    const collection = db.collection<
-      UserWithRulesResult | BusinessWithRulesResult
-    >(collectionName)
+  // get user cursor
+  const db = mongoDb.db()
+  const collectionName = USERS_COLLECTION(tenantId)
+  const collection = db.collection<InternalConsumerUser | InternalBusinessUser>(
+    collectionName
+  )
 
-    const cursor = collection.find({
-      type,
-    })
+  const cursor = collection.find({
+    type,
+  })
 
-    await processCursorInBatch(
-      cursor,
-      async (users) => {
-        await pMap(
-          users,
-          async (user) => {
+  await processCursorInBatch(
+    cursor,
+    async (users) => {
+      await pMap(
+        users,
+        async (u) => {
+          try {
+            const user = pickKnownEntityFields(u, UserWithRulesResult)
             const { hitRules, executedRules } =
               await rulesEngineService.verifyUserByRules(
                 user,
@@ -67,15 +70,15 @@ async function runRulesForUser(
               ),
             }
             await userRepository.saveUser(userToSave, type)
-          },
-          { concurrency: 100 }
-        )
-      },
-      { mongoBatchSize: 1000, processBatchSize: 1000 }
-    )
-  } catch (error) {
-    logger.error(`Falied to re run user rule job ${error}`)
-  }
+          } catch (error) {
+            logger.error(`Rule run failed for ${u.userId} : ${error}`)
+          }
+        },
+        { concurrency: 50 }
+      )
+    },
+    { mongoBatchSize: 1000, processBatchSize: 1000 }
+  )
 }
 
 export class UserRuleReRunBatchJobRunner extends BatchJobRunner {
@@ -123,24 +126,23 @@ export class UserRuleReRunBatchJobRunner extends BatchJobRunner {
         mongoDb,
         rulesEngineService
       )
-
-      if (businessRuleInstances.length > 0) {
-        // running for business user
-        const businessRules = await ruleRepository.getRulesByIds(
-          businessRuleInstances
-            .map((ruleInstance) => ruleInstance.ruleId)
-            .filter((ruleId): ruleId is string => ruleId !== undefined)
-        )
-        await runRulesForUser(
-          tenantId,
-          'BUSINESS',
-          businessRuleInstances,
-          businessRules,
-          dynamoDb,
-          mongoDb,
-          rulesEngineService
-        )
-      }
+    }
+    if (businessRuleInstances.length > 0) {
+      // running for business user
+      const businessRules = await ruleRepository.getRulesByIds(
+        businessRuleInstances
+          .map((ruleInstance) => ruleInstance.ruleId)
+          .filter((ruleId): ruleId is string => ruleId !== undefined)
+      )
+      await runRulesForUser(
+        tenantId,
+        'BUSINESS',
+        businessRuleInstances,
+        businessRules,
+        dynamoDb,
+        mongoDb,
+        rulesEngineService
+      )
     }
   }
 }
