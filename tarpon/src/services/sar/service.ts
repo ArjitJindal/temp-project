@@ -40,6 +40,8 @@ import {
   AuditLogReturnData,
   getReportAuditLogMetadata,
 } from '@/utils/audit-log'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
 // Custom AuditLogReturnData types
 type SarCreationAuditLogReturnData = AuditLogReturnData<
@@ -459,6 +461,23 @@ export class ReportService {
       await this.riskScoringService.handleReRunTriggers('SAR', {
         userIds: [report.caseUserId],
       }) // To rerun risk scores for user
+
+      // audit log for report which are not submitted from being in draft
+      const db = this.mongoDb.db()
+      const auditLogCollection = db.collection<AuditLog>(
+        AUDITLOG_COLLECTION(this.tenantId)
+      )
+      const auditLogs = await auditLogCollection
+        .find({
+          type: 'SAR',
+          subtype: 'CREATION',
+          action: 'CREATE',
+          entityId: savedReport.id,
+        })
+        .toArray()
+
+      const auditLogExists = auditLogs.length > 0
+
       return {
         result: withSchema(savedReport),
         entities: [
@@ -466,6 +485,11 @@ export class ReportService {
             entityId: savedReport.id ?? '',
             newImage: savedReport,
             logMetadata: getReportAuditLogMetadata(savedReport),
+            ...(auditLogExists && {
+              entityAction: 'UPDATE',
+              entitySubtype: 'SAR_UPDATE',
+              oldImage: report,
+            }),
           },
         ],
       }
@@ -493,7 +517,8 @@ export class ReportService {
     return await this.reportRepository.reportsFiledForUser(userId, project)
   }
 
-  async draftReport(report: Report): Promise<Report> {
+  @auditLog('SAR', 'CREATION', 'CREATE')
+  async draftReport(report: Report): Promise<SarCreationAuditLogReturnData> {
     report.status = 'DRAFT' as ReportStatus
     report.updatedAt = Date.now()
     report.parameters =
@@ -504,7 +529,16 @@ export class ReportService {
     await this.riskScoringService.handleReRunTriggers('SAR', {
       userIds: [report.caseUserId],
     }) // To rerun risk scores for user
-    return withSchema(savedReport)
+    return {
+      result: withSchema(savedReport),
+      entities: [
+        {
+          entityId: savedReport.id ?? '',
+          newImage: savedReport,
+          logMetadata: getReportAuditLogMetadata(savedReport),
+        },
+      ],
+    }
   }
 
   @auditLog('SAR', 'SAR_UPDATE', 'UPDATE')

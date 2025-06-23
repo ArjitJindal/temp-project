@@ -78,7 +78,8 @@ export const sarHandler = lambdaApi()(
     })
 
     handlers.registerPostReportsReportIdDraft(
-      async (ctx, request) => await reportService.draftReport(request.Report)
+      async (_ctx, request) =>
+        (await reportService.draftReport(request.Report)).result
     )
 
     return await handlers.handle(event)

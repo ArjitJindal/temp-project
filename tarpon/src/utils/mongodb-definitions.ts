@@ -820,7 +820,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [
           { auditlogId: 1 },
           { timestamp: -1 },
-          { type: 1, action: 1 },
+          { type: 1, action: 1, subtype: 1 },
           { entityId: 1, timestamp: -1 },
           { entityId: 1 },
         ].map((index) => ({ index })),
