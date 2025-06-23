@@ -13125,6 +13125,8 @@ components:
                     $ref: '#/components/schemas/RiskLevel'
               caseType:
                 $ref: '#/components/schemas/CaseType'
+              age:
+                type: number
             required:
               - alert
               - caseCreatedTimestamp
