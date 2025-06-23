@@ -69,6 +69,11 @@ import {
   DAY_DATE_FORMAT_JS,
 } from '@/core/constants'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import {
+  batchInsertToClickhouse,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 
@@ -91,7 +96,11 @@ export class ApiUsageMetricsService {
     timeRange: TimeRange
   ): Promise<DailyMetricStats[]> {
     const transactionsCounts = await getDailyUsage(
-      TRANSACTIONS_COLLECTION(tenantInfo.id),
+      tenantInfo.id,
+      {
+        mongo: TRANSACTIONS_COLLECTION(tenantInfo.id),
+        clickHouse: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      },
       'createdAt',
       timeRange
     )
@@ -101,7 +110,11 @@ export class ApiUsageMetricsService {
       transactionsCounts
     )
     const usersCounts = await getDailyUsage(
-      USERS_COLLECTION(tenantInfo.id),
+      tenantInfo.id,
+      {
+        mongo: USERS_COLLECTION(tenantInfo.id),
+        clickHouse: CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      },
       'createdAt',
       timeRange
     )
@@ -375,7 +388,11 @@ export class ApiUsageMetricsService {
     dailyTransactionsCountsStats: DailyStats
   ): Promise<DailyStats> {
     const transactionEventsCounts = await getDailyUsage(
-      TRANSACTION_EVENTS_COLLECTION(tenantInfo.id),
+      tenantInfo.id,
+      {
+        mongo: TRANSACTION_EVENTS_COLLECTION(tenantInfo.id),
+        clickHouse: CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
+      },
       'createdAt',
       timeRange
     )
@@ -390,7 +407,11 @@ export class ApiUsageMetricsService {
     dailyUsersCountsStats: DailyStats
   ): Promise<DailyStats> {
     const userEventsCounts = await getDailyUsage(
-      USER_EVENTS_COLLECTION(tenantInfo.id),
+      tenantInfo.id,
+      {
+        mongo: USER_EVENTS_COLLECTION(tenantInfo.id),
+        clickHouse: CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
+      },
       'createdAt',
       timeRange
     )
@@ -526,9 +547,6 @@ export class ApiUsageMetricsService {
     tenantInfo: TenantBasic,
     metrics: DailyMetricStats[]
   ): Promise<void> {
-    const mongoDb = this.connections.mongoDb.db()
-    const metricsCollectionName = METRICS_COLLECTION(tenantInfo.id)
-    const metricsCollection = mongoDb.collection(metricsCollectionName)
     const mongoMetrics: ApiUsageMetrics[] = metrics.flatMap((metric) => {
       return metric.values.map((value) => {
         return {
@@ -539,6 +557,13 @@ export class ApiUsageMetricsService {
         }
       })
     })
+    if (isClickhouseMigrationEnabled()) {
+      await this.linkMetricsToClickhouse(tenantInfo.id, mongoMetrics)
+    }
+
+    const mongoDb = this.connections.mongoDb.db()
+    const metricsCollectionName = METRICS_COLLECTION(tenantInfo.id)
+    const metricsCollection = mongoDb.collection(metricsCollectionName)
 
     await Promise.all(
       mongoMetrics.map(
@@ -647,5 +672,15 @@ export class ApiUsageMetricsService {
 
     await postHogClient.flush()
     await postHogClient.shutdown()
+  }
+  public async linkMetricsToClickhouse(
+    tenantId: string,
+    metrics: ApiUsageMetrics[]
+  ) {
+    await batchInsertToClickhouse(
+      tenantId,
+      CLICKHOUSE_DEFINITIONS.METRICS.tableName,
+      metrics
+    )
   }
 }

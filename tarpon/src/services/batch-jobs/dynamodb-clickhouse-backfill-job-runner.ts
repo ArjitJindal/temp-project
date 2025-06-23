@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { ApiUsageMetrics } from '../metrics/utils'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -44,6 +45,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
         break
       case 'AUDIT_LOG':
         await handleAuditLogBatchJob(job, {
+          mongoDb,
+          dynamoDb,
+        })
+        break
+      case 'METRICS':
+        await handleMetricsBatchJob(job, {
           mongoDb,
           dynamoDb,
         })
@@ -195,4 +202,36 @@ export const handleAuditLogBatchJob = async (
       await auditLogRepository.saveAuditLog(auditLog)
     }
   })
+}
+
+export const handleMetricsBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { ApiUsageMetricsService } = await import(
+    '@/services/metrics/api-usage-metrics-service'
+  )
+  const { METRICS_COLLECTION } = await import('@/utils/mongodb-definitions')
+
+  const metricsService = new ApiUsageMetricsService({
+    mongoDb,
+    dynamoDb,
+  })
+  const db = mongoDb.db()
+  const metricsCollection = db.collection<ApiUsageMetrics>(
+    METRICS_COLLECTION(job.tenantId)
+  )
+  await processCursorInBatch(
+    metricsCollection.find({}),
+    async (metrics) => {
+      await metricsService.linkMetricsToClickhouse(job.tenantId, metrics)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
 }

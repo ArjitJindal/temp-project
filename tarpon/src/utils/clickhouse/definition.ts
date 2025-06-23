@@ -156,6 +156,7 @@ export enum ClickhouseTableNames {
   ApiRequestLogs = 'api_request_logs',
   Notifications = 'notifications',
   GptRequests = 'gpt_request_logs',
+  Metrics = 'metrics',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -333,6 +334,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   GPT_REQUESTS: {
     tableName: ClickhouseTableNames.GptRequests,
+  },
+  METRICS: {
+    tableName: ClickhouseTableNames.Metrics,
   },
 } as const
 
@@ -1103,6 +1107,21 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     mongoIdColumn: true,
     materializedColumns: [],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
+    idColumn: '_id',
+    timestampColumn: 'collectedTimestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(date, name)',
+    orderBy: '(date, name)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "name LowCardinality(String) MATERIALIZED JSONExtractString(data, 'name')",
+      "date Date MATERIALIZED JSONExtractString(data, 'date')",
+      "value Float64 MATERIALIZED JSONExtractFloat(data, 'value')",
+      "collectedTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'collectedTimestamp')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -1134,6 +1153,7 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
     CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.NOTIFICATIONS]:
     CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.METRICS]: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

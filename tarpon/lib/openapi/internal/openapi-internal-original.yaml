@@ -7801,7 +7801,7 @@ components:
         - GPT_REQUEST_LOGS
         - API_REQUEST_LOGS
         - AUDIT_LOG
-
+        - METRICS
     FlatFileSchema:
       title: FlatFileSchema
       type: string
