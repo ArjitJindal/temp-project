@@ -13,7 +13,10 @@ import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  const logGroups = groupBy(logs, (log) => log.tenantId)
+  const filteredLogs = logs.filter(
+    (log) => log.tenantId != null || log.tenantId != 'undefined'
+  )
+  const logGroups = groupBy(filteredLogs, (log) => log.tenantId)
   for (const tenantId in logGroups) {
     const tenantLogs = logGroups[tenantId]
     if (isClickhouseEnabledInRegion()) {

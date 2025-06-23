@@ -241,15 +241,26 @@ const clickhouseInsert = async (
     timeMultiple: 2,
   }
 
-  await backOff(async () => {
-    await client.insert({
-      table,
-      values,
-      columns: columns,
-      format: 'JSON',
-      clickhouse_settings: CLICKHOUSE_SETTINGS,
-    })
-  }, options)
+  await backOff(
+    async () => {
+      await client.insert({
+        table,
+        values,
+        columns: columns,
+        format: 'JSON',
+        clickhouse_settings: CLICKHOUSE_SETTINGS,
+      })
+    },
+    {
+      ...options,
+      retry: (error, attemptNumber) => {
+        logger.warn(
+          `ClickHouse insert failed, retrying... Attempt ${attemptNumber}: ${error.message}`
+        )
+        return true
+      },
+    }
+  )
 }
 
 const testCache = new Set()

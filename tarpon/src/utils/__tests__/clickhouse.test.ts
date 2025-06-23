@@ -1,5 +1,11 @@
-import { getClickhouseClient, getClickhouseDbName } from '../clickhouse/utils'
+import {
+  getClickhouseClient,
+  getClickhouseDbName,
+  batchInsertToClickhouse,
+} from '../clickhouse/utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { logger } from '@/core/logger'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 describe('Clickhouse', () => {
   it('should be able to connect to Clickhouse', async () => {
@@ -232,5 +238,91 @@ describe('Clickhouse', () => {
         is_deleted: 0,
       },
     ])
+  })
+  describe('Testing batch insert', () => {
+    withFeatureHook(['CLICKHOUSE_ENABLED'])
+    let tenantId: string
+    let client: any
+
+    beforeEach(async () => {
+      tenantId = getTestTenantId()
+      client = await getClickhouseClient(tenantId)
+
+      // Create test table for batch insert tests
+      await client.query({
+        query: `
+          CREATE TABLE IF NOT EXISTS users
+          (
+              id String,
+              data String,
+              timestamp UInt64,
+              is_deleted UInt8 DEFAULT 0
+          )
+          ENGINE = MergeTree()
+          ORDER BY id
+        `,
+        format: 'JSONEachRow',
+      })
+    })
+
+    afterEach(async () => {
+      // Clean up test table
+      await client.query({
+        query: 'DROP TABLE IF EXISTS users',
+        format: 'JSONEachRow',
+      })
+    })
+
+    test('Should succeed on first attempt without retries', async () => {
+      const loggerWarnSpy = jest.spyOn(logger, 'warn').mockImplementation()
+
+      const originalInsert = client.insert.bind(client)
+      const mockInsert = jest.fn().mockImplementation(originalInsert)
+      client.insert = mockInsert
+
+      const testObjects = [
+        { id: 'success1', name: 'Success Test', timestamp: Date.now() },
+      ]
+
+      await batchInsertToClickhouse(tenantId, 'users', testObjects)
+
+      expect(mockInsert).toHaveBeenCalledTimes(1)
+      expect(loggerWarnSpy).not.toHaveBeenCalled()
+
+      loggerWarnSpy.mockRestore()
+    })
+
+    test('Should succeed after some failed retry attempts', async () => {
+      const loggerWarnSpy = jest.spyOn(logger, 'warn').mockImplementation()
+
+      let attemptCount = 0
+      const maxFailures = 3
+
+      const originalInsert = client.insert.bind(client)
+      const mockInsert = jest.fn().mockImplementation(async (params) => {
+        attemptCount++
+
+        if (attemptCount <= maxFailures) {
+          throw new Error(
+            `Temporary ClickHouse failure (attempt ${attemptCount})`
+          )
+        }
+
+        return originalInsert(params)
+      })
+
+      client.insert = mockInsert
+
+      const testObjects = [
+        { id: 'retry1', name: 'Retry Test', timestamp: Date.now() },
+      ]
+
+      await batchInsertToClickhouse(tenantId, 'users', testObjects)
+
+      expect(mockInsert).toHaveBeenCalledTimes(maxFailures + 1)
+      expect(loggerWarnSpy).toHaveBeenCalledTimes(maxFailures)
+
+      loggerWarnSpy.mockRestore()
+    })
   })
 })
