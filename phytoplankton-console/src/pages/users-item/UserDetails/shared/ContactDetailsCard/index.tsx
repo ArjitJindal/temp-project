@@ -9,6 +9,7 @@ import {
   FAX,
   PHONE,
 } from '@/components/library/Table/standardDataTypes';
+import { formatConsumerName } from '@/utils/api/users';
 
 interface Props {
   contactDetails?: ApiContactDetails;
@@ -21,6 +22,10 @@ export default function ContactDetails(props: Props) {
     <EntityPropertiesCard
       title={'Contact details'}
       items={[
+        {
+          label: 'Name',
+          value: formatConsumerName(contactDetails?.name),
+        },
         {
           label: 'Email',
           value: contactDetails?.emailIds?.length && (
