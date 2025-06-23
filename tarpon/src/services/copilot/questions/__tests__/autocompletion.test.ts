@@ -4,7 +4,7 @@ import {
 } from '@/services/copilot/questions/autocompletion-service'
 
 describe('Autocompletion', () => {
-  const ac = new AutocompleteService()
+  const ac = new AutocompleteService('test-tenant')
   test('3 suggestions returned', async () => {
     const suggestions = ac.autocomplete('Aerts')
     expect(suggestions).toEqual([

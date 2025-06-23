@@ -3,8 +3,9 @@ import { sortBy } from 'lodash'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import dayjs from '@/utils/dayjs'
+
 describe('Autocompletion interpretQuestion', () => {
-  const ac = new AutocompleteService()
+  const ac = new AutocompleteService('test-tenant')
   const testCases: {
     prompt: string
     expectError?: boolean

@@ -50,7 +50,8 @@ export class QuestionService {
     return new QuestionService(
       new InvestigationRepository(mongoClient, tenantId),
       AccountsService.getInstance(dynamoDb),
-      dynamoDb
+      dynamoDb,
+      tenantId
     )
   }
 
@@ -63,12 +64,13 @@ export class QuestionService {
   constructor(
     investigationRepository: InvestigationRepository,
     accountService: AccountsService,
-    dynamoClient: DynamoDBDocumentClient
+    dynamoClient: DynamoDBDocumentClient,
+    tenantId: string
   ) {
     this.investigationRepository = investigationRepository
     this.accountsService = accountService
     this.dynamoClient = dynamoClient
-    this.autocompleteService = new AutocompleteService()
+    this.autocompleteService = new AutocompleteService(tenantId)
   }
 
   async addQuestion(

@@ -63,7 +63,7 @@ export const sarHandler = lambdaApi()(
     handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
       const status = request.ReportStatusUpdateRequest.status
       let statusInfo = request.ReportStatusUpdateRequest.statusInfo
-      const result = await parseReportXMLResponse(statusInfo)
+      const result = await parseReportXMLResponse(ctx.tenantId, statusInfo)
       statusInfo = result.statusInfo
       await reportService.updateReportStatus(
         request.reportId,

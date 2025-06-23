@@ -623,10 +623,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private async transliterateName(name: string): Promise<string> {
     try {
       const transliteratedName = await ask(
+        this.tenantId,
         `convert the given name to latin script and only return the name in latin script. The name to convert is ${name}`,
-        {
-          tier: ModelTier.ECONOMY,
-        }
+        { tier: ModelTier.ECONOMY }
       )
       return transliteratedName
     } catch (e) {

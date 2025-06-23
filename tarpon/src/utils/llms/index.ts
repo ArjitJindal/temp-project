@@ -13,7 +13,6 @@ import { OpenAIService } from './openai'
 import { AnthropicService } from './anthropic'
 import { LLMOptions, Message } from './base-service'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
-import { getContext } from '@/core/utils/context-storage'
 import { tenantSettings } from '@/core/utils/context'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
@@ -33,23 +32,27 @@ const getLLMService = (provider: LLMProvider) => {
   }
 }
 
-const getLLMServiceForTenant = async () => {
-  const tenantId = getContext()?.tenantId
-  if (!tenantId) {
-    throw new Error('Tenant ID is required')
-  }
+const getLLMServiceForTenant = async (tenantId: string) => {
   const settings = await tenantSettings(tenantId)
   const provider = settings.llmProvider ?? 'ANTHROPIC'
   return getLLMService(provider)
 }
 
-export const ask = async (promptString: string, options?: LLMOptions) => {
-  const service = await getLLMServiceForTenant()
+export const ask = async (
+  tenantId: string,
+  promptString: string,
+  options?: LLMOptions
+) => {
+  const service = await getLLMServiceForTenant(tenantId)
   return service.ask(promptString, options)
 }
 
-export const prompt = async (messages: Message[], options?: LLMOptions) => {
-  const service = await getLLMServiceForTenant()
+export const prompt = async (
+  tenantId: string,
+  messages: Message[],
+  options?: LLMOptions
+) => {
+  const service = await getLLMServiceForTenant(tenantId)
   return service.prompt(messages, options)
 }
 

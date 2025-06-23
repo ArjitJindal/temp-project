@@ -40,8 +40,12 @@ export function fincenStatusMapper(
   }
 }
 
-export async function parseReportXMLResponse(xmlAcknowlegment: string) {
+export async function parseReportXMLResponse(
+  tenantId: string,
+  xmlAcknowlegment: string
+) {
   const result = await ask(
+    tenantId,
     `Please transform the following error messages in XML format into a human-readable format. Please only return the transformed output. And the output includes two sections - 1. Batch Status 2. Error Messages.\n---\n${xmlAcknowlegment}`
   )
   return {
@@ -111,6 +115,7 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
                   }
                   if (status && report.id) {
                     const { result, statusInfo } = await parseReportXMLResponse(
+                      job.tenantId,
                       status
                     )
                     if (!statusInfo) {

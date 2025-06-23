@@ -19,6 +19,12 @@ const PROMPT = `Please provide the same text but use placeholders or data from t
 
 @traceable
 export class AutoNarrativeService {
+  tenantId: string
+
+  constructor(tenantId: string) {
+    this.tenantId = tenantId
+  }
+
   async getNarrative(
     type: NarrativeType,
     attributes: AttributeSet,
@@ -187,7 +193,7 @@ export class AutoNarrativeService {
 
     for (let i = 0; i < 3; i++) {
       try {
-        response = await prompt(promptWithContext, {
+        response = await prompt(this.tenantId, promptWithContext, {
           tier: ModelTier.PROFESSIONAL,
         })
         break

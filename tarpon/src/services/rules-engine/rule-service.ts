@@ -517,7 +517,9 @@ You have to answer in below format as string. If you don't know any field, just 
   }
   `
 
-    const response = await ask(prompt, { tier: ModelTier.ECONOMY }) // Above prompt is optimized for GPT-3.5-turbo model
+    const response = await ask(this.ruleRepository.tenantId, prompt, {
+      tier: ModelTier.ECONOMY,
+    }) // Above prompt is optimized for GPT-3.5-turbo model
     let json: AIFilters = {}
 
     try {

@@ -36,6 +36,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   job?: FilesAISummary
   s3?: S3
   repo?: CaseRepository | AlertsRepository | UserRepository
+  tenantId?: string
 
   public async run(job: FilesAISummary): Promise<void> {
     this.job = job
@@ -47,6 +48,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
       parameters: { commentId, entityId, type: entityType },
     } = job
 
+    this.tenantId = tenantId
     this.s3 = getS3Client(this.job.awsCredentials)
     this.repo = await this.getRepository(tenantId, entityType)
 
@@ -275,7 +277,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   }
 
   private async getAIResponse(prompt: string) {
-    return await ask(prompt, {
+    return await ask(this.tenantId as string, prompt, {
       temperature: 0.7,
       tier: ModelTier.PROFESSIONAL,
     })

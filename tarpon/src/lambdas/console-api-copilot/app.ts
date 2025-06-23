@@ -27,7 +27,6 @@ export const copilotHandler = lambdaApi({})(
 
     const handlers = new Handlers()
 
-    const copilotService = new AutoNarrativeService()
     const retrievalService = await RetrievalService.new(event)
 
     handlers.registerGenerateNarrative(async (ctx, request) => {
@@ -47,6 +46,8 @@ export const copilotHandler = lambdaApi({})(
         additionalCopilotInfo
       )
 
+      const copilotService = new AutoNarrativeService(ctx.tenantId)
+
       return copilotService.getNarrative(
         entityType,
         attributes,
@@ -56,9 +57,11 @@ export const copilotHandler = lambdaApi({})(
       )
     })
 
-    handlers.registerFormatNarrative(async (_ctx, request) => {
+    handlers.registerFormatNarrative(async (ctx, request) => {
       const { entityId, entityType, narrative, reasons } =
         request.NarrativeRequest
+
+      const copilotService = new AutoNarrativeService(ctx.tenantId)
 
       return copilotService.formatNarrative(
         narrative,
@@ -101,7 +104,7 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestionVariableAutocomplete(async (ctx, request) => {
-      const autocomplete = new AutocompleteService()
+      const autocomplete = new AutocompleteService(ctx.tenantId)
       return {
         suggestions: await autocomplete.autocompleteVariable(
           request.questionId,
@@ -112,7 +115,7 @@ export const copilotHandler = lambdaApi({})(
     })
 
     handlers.registerGetQuestionAutocomplete(async (ctx, request) => {
-      const autocomplete = new AutocompleteService()
+      const autocomplete = new AutocompleteService(ctx.tenantId)
       const c = await caseService.getCaseByAlertId(request.alertId)
       const alert = c?.alerts?.find((a) => a.alertId === request.alertId)
       const suggestions = autocomplete.autocomplete(request.question || '', c)

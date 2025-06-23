@@ -22,6 +22,12 @@ const LIMIT = 30
 
 @traceable
 export class AutocompleteService {
+  tenantId: string
+
+  constructor(tenantId: string) {
+    this.tenantId = tenantId
+  }
+
   private phrases: string[] = getQuestions().map((q) =>
     q.questionId.toLowerCase()
   )
@@ -228,6 +234,7 @@ export class AutocompleteService {
     ]
 
     const response = await prompt(
+      this.tenantId,
       [
         {
           role: 'user',
