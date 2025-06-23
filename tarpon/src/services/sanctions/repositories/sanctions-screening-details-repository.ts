@@ -90,7 +90,7 @@ export class SanctionsScreeningDetailsRepository {
     try {
       await sendMessageToMongoUpdateConsumer(messageBody)
     } catch (e) {
-      logger.error(
+      logger.warn(
         `Failed to send message to mongo update consumer for sanctions screening details: ${e}`
       )
 

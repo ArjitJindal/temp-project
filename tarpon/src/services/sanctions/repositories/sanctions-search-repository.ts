@@ -108,7 +108,7 @@ export class SanctionsSearchRepository {
         sendToClickhouse: false,
       })
     } catch (e) {
-      logger.error(
+      logger.warn(
         `Failed to send message to mongo update consumer for sanctions search: ${e}`
       )
 
