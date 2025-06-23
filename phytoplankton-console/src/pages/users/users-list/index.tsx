@@ -12,6 +12,7 @@ import {
   RiskLevel,
   UserRegistrationStatus,
   UserState,
+  UserType,
   KYCStatus,
 } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -41,6 +42,7 @@ export interface UserSearchParams extends CommonParams {
   countryOfResidence?: CountryCode[];
   countryOfNationality?: CountryCode[];
   userState?: UserState[];
+  userType?: UserType;
   kycStatus?: KYCStatus[];
 }
 

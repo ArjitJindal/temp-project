@@ -8,15 +8,18 @@ import { getErrorMessage } from '@/utils/lang';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupContent';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { UserType } from '@/apis';
+
 interface Props {
   userId: string | null;
   title?: string;
   onConfirm: (userId: string | null) => void;
   onUpdateFilterClose?: (status: boolean) => void;
+  userType?: UserType;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { userId, title, onConfirm, onUpdateFilterClose } = props;
+  const { userId, title, onConfirm, onUpdateFilterClose, userType } = props;
   const settings = useSettings();
   const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
@@ -94,6 +97,7 @@ export default function UserSearchButton(props: Props) {
             onConfirm(userId);
             setOpen(false);
           }}
+          userType={userType}
         />
       )}
     </QuickFilterBase>

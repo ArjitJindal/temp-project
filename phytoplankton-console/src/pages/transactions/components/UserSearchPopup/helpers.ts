@@ -3,7 +3,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_FIND } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
-import { AllUsersTableItem } from '@/apis';
+import { AllUsersTableItem, UserType } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type UsersResponse = {
@@ -32,7 +32,7 @@ export function useLastSearches(): {
   };
 }
 
-export function useUsers(search: string): QueryResult<UsersResponse> {
+export function useUsers(search: string, userType?: UserType): QueryResult<UsersResponse> {
   const api = useApi();
 
   return useQuery(USERS_FIND(search), async (): Promise<UsersResponse> => {
@@ -49,6 +49,7 @@ export function useUsers(search: string): QueryResult<UsersResponse> {
       filterName: search,
       filterOperator: 'OR',
       includeCasesCount: true,
+      ...(userType && { filterUserType: userType }),
     });
 
     return {

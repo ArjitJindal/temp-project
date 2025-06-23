@@ -2341,6 +2341,10 @@ paths:
           in: query
           name: includeCasesCount
         - schema:
+            $ref: '#/components/schemas/UserType'
+          in: query
+          name: filterUserType
+        - schema:
             type: string
           in: query
           name: sortField

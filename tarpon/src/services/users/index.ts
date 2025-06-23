@@ -1101,7 +1101,7 @@ export class UserService {
     const data = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapAllUserToTableItem,
-      undefined,
+      params.filterUserType,
       {
         projection: {
           _id: 1,
@@ -1172,7 +1172,8 @@ export class UserService {
         params.filterOperator ?? 'AND',
         params.includeCasesCount ?? false,
         columns,
-        callback
+        callback,
+        params.filterUserType
       )
 
     // count field is returned as string - converting it to number to match the expected response

@@ -7,7 +7,7 @@ import UserList from './UserList';
 import LastSearchList from './LastSearchList';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
-import { AllUsersTableItem } from '@/apis';
+import { AllUsersTableItem, UserType } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   initialSearch: string;
@@ -15,16 +15,17 @@ interface Props {
   onConfirm: (user: AllUsersTableItem) => void;
   onCancel: () => void;
   onEnterInput: (userId: string) => void;
+  userType?: UserType;
 }
 
 export default function PopupContent(props: Props) {
-  const { isVisible, initialSearch, onConfirm, onEnterInput } = props;
+  const { isVisible, initialSearch, onConfirm, onEnterInput, userType } = props;
   const settings = useSettings();
 
   const [search, setSearch] = useState(initialSearch);
 
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const usersRes = useUsers(debouncedSearch);
+  const usersRes = useUsers(debouncedSearch, userType);
   const { onAdd } = useLastSearches();
 
   const usersCount = isSuccess(usersRes.data) ? usersRes.data.value.total : null;

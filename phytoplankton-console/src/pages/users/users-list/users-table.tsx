@@ -55,6 +55,7 @@ const extraFilters = (
               userId: userId ?? undefined,
             }));
           }}
+          userType={list === 'business' ? 'BUSINESS' : list === 'consumer' ? 'CONSUMER' : undefined}
         />
       ),
     },
