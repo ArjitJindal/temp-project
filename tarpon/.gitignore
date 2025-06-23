@@ -140,3 +140,6 @@ torpedo/dist/
 
 #merged openapi spec
 lib/openapi/internal/temp-merged-spec.yaml
+
+#cdk-outputs-for-load-test
+load-testing/cdk-outputs/testing.json

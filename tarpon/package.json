@@ -83,7 +83,10 @@
     "validate:lithuania:ctr": "SAR_TYPE=CTR ts-node --transpileOnly src/services/sar/generators/LT/scripts/validate.ts",
     "semgrep": "semgrep scan --config ../rule.yaml --error",
     "json-schema-generator": "ts-node scripts/json-schema-generator.ts",
-    "sync:nango:models": "ts-node scripts/sync-nango-models.ts"
+    "sync:nango:models": "ts-node scripts/sync-nango-models.ts",
+    "deploy:load-test": "cdk deploy --app='./node_modules/.bin/ts-node infra/bin/cdk-load-testing.ts' --outputs-file load-testing/cdk-outputs/testing.json",
+    "destroy:load-test": "cdk destroy --app='./node_modules/.bin/ts-node infra/bin/cdk-load-testing.ts'",
+    "load-test": "ts-node scripts/run-load-test.ts"
   },
   "repository": {
     "type": "git",
@@ -185,6 +188,7 @@
     "@aws-sdk/client-cloudwatch": "^3.687.0",
     "@aws-sdk/client-cloudwatch-logs": "^3.808.0",
     "@aws-sdk/client-dynamodb": "^3.687.0",
+    "@aws-sdk/client-ecs": "^3.830.0",
     "@aws-sdk/client-lambda": "^3.699.0",
     "@aws-sdk/client-s3": "^3.687.0",
     "@aws-sdk/client-secrets-manager": "^3.687.0",

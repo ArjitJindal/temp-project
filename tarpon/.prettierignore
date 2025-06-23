@@ -19,3 +19,4 @@ Dockerfile
 Makefile
 *.toml
 torpedo/*
+*.jmx
