@@ -138,13 +138,18 @@ export class DynamoCaseRepository {
 
       const comments = caseToSave.comments || []
       const alerts = caseToSave.alerts || []
+      const caseTransactionIds = caseToSave.caseTransactionsIds || []
       const alertsToSave = alerts.map((alert) => ({
         ...alert,
         caseCreatedTimestamp: caseItem.createdTimestamp,
         caseSubjectIdentifiers: identifiers,
       }))
 
-      caseToSave = omit(caseToSave, ['comments', 'alerts'])
+      caseToSave = omit(caseToSave, [
+        'comments',
+        'alerts',
+        'caseTransactionsIds',
+      ])
 
       const caseToSaveWithId = sanitizeMongoObject(caseToSave)
       // Add primary case record with table name
@@ -176,6 +181,12 @@ export class DynamoCaseRepository {
       writeRequests = concat(
         writeRequests,
         await this.saveComments(caseId, comments, false)
+      )
+
+      // Add case transaction ids if they exist
+      writeRequests = concat(
+        writeRequests,
+        await this.saveCaseTransactionIds(caseId, caseTransactionIds)
       )
 
       // Add case alerts if they exist
@@ -420,6 +431,33 @@ export class DynamoCaseRepository {
     )
   }
 
+  /**
+   * Saves case transaction IDs to DynamoDB
+   *
+   * @param caseId - The ID of the case to save the transaction IDs for
+   * @param caseTransactionIds - Array of transaction IDs to save
+   * @returns Promise resolving to write operations
+   */
+  public async saveCaseTransactionIds(
+    caseId: string,
+    caseTransactionIds: string[]
+  ): Promise<TransactWriteOperation[]> {
+    if (!caseTransactionIds || caseTransactionIds.length === 0) {
+      return []
+    }
+    const writeRequests: TransactWriteOperation[] = []
+    const key = DynamoDbKeys.CASE_TRANSACTION_IDS(this.tenantId, caseId)
+    writeRequests.push({
+      Put: {
+        TableName: this.tableName,
+        Item: {
+          ...key,
+          caseTransactionIds,
+        },
+      },
+    })
+    return writeRequests
+  }
   /**
    * Get a case by its ID from DynamoDB
    *

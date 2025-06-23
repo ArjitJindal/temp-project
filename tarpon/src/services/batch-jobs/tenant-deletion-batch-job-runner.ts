@@ -116,6 +116,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'BATCH_CONSUMER_USER_EVENT'
   | 'BATCH_BUSINESS_USER'
   | 'BATCH_BUSINESS_USER_EVENT'
+  | 'CASE_TRANSACTION_IDS'
   | 'NOTIFICATIONS'
   | 'GPT_REQUESTS'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
