@@ -8,7 +8,6 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { hasFeature } from '@/core/utils/context'
@@ -19,6 +18,8 @@ import { mergeUserTags } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
 import { addNewSubsegment } from '@/core/xray'
 import { CaseRepository } from '@/services/cases/repository'
+import { DYNAMO_KEYS } from '@/utils/dynamodb'
+
 export async function arsScoreEventHandler(
   tenantId: string,
   arsScore: ArsScore | undefined,

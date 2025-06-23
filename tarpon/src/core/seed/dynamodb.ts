@@ -46,7 +46,6 @@ import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { getCounterCollectionData } from '@/core/seed/data/counter'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
 import { DynamoNotificationRepository } from '@/services/notifications/dynamo-repository'
-export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,

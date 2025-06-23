@@ -48,6 +48,8 @@ import { publishMetric } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
 
+export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
+
 export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
 
 export type PutRequestInternal = Omit<PutRequest, 'Item'> & {

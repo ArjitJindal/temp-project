@@ -24,7 +24,6 @@ import {
 import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { isDemoTenant } from '@/utils/tenant'
-import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -63,6 +62,7 @@ import { AlertsRepository } from '@/services/alerts/repository'
 import { NotificationRepository } from '@/services/notifications/notifications-repository'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { GPTLogObject, linkGPTRequestClickhouse } from '@/utils/openai'
+import { DYNAMO_KEYS } from '@/utils/dynamodb'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]

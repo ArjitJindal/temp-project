@@ -59,6 +59,7 @@ import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
 import { hasFeature } from '@/core/utils/context'
+
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
