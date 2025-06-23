@@ -36,7 +36,7 @@ import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
-import { GPTLogObject } from '@/utils/openai'
+import { LLMLogObject } from '@/utils/llms'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -136,9 +136,9 @@ type NotificationsHandler = (
   newNotifications: Notification | undefined,
   dbClients: DbClients
 ) => Promise<void>
-type GptRequestsHandler = (
+type LLMRequestsHandler = (
   tenantId: string,
-  newGptRequests: GPTLogObject | undefined,
+  newGptRequests: LLMLogObject | undefined,
   dbClients: DbClients
 ) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
@@ -166,7 +166,7 @@ export class StreamConsumerBuilder {
   crmUserRecordLinkHandler?: CrmUserRecordLinkHandler
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
   notificationsHandler?: NotificationsHandler
-  gptRequestsHandler?: GptRequestsHandler
+  llmRequestsHandler?: LLMRequestsHandler
   constructor(
     name: string,
     fanOutSqsQueue: string,
@@ -275,10 +275,10 @@ export class StreamConsumerBuilder {
     return this
   }
 
-  public setGptRequestsHandler(
-    gptRequestsHandler: GptRequestsHandler
+  public setLLMRequestsHandler(
+    llmRequestsHandler: LLMRequestsHandler
   ): StreamConsumerBuilder {
-    this.gptRequestsHandler = gptRequestsHandler
+    this.llmRequestsHandler = llmRequestsHandler
     return this
   }
 
@@ -475,10 +475,10 @@ export class StreamConsumerBuilder {
         update.NewImage as Notification,
         dbClients
       )
-    } else if (update.type === 'GPT_REQUESTS' && this.gptRequestsHandler) {
-      await this.gptRequestsHandler(
+    } else if (update.type === 'GPT_REQUESTS' && this.llmRequestsHandler) {
+      await this.llmRequestsHandler(
         update.tenantId,
-        update.NewImage as GPTLogObject,
+        update.NewImage as LLMLogObject,
         dbClients
       )
     }

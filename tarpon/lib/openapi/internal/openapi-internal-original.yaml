@@ -10821,6 +10821,13 @@ components:
           type: array
           items:
             type: string
+        llmProvider:
+          $ref: '#/components/schemas/LLMProvider'
+    LLMProvider:
+      type: string
+      enum:
+        - ANTHROPIC
+        - OPEN_AI
     NangoPostConnect:
       title: NangoPostConnect
       type: object

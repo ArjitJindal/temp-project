@@ -17,6 +17,7 @@ import {
 import { envIs } from './env'
 import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
 import { getSecret } from './secrets-manager'
+import { LLMLogObject } from './llms'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -105,7 +106,7 @@ export async function logGPTResponses(
 
 export async function linkGPTRequestClickhouse(
   tenantId: string,
-  gptResponse: GPTLogObject
+  gptResponse: LLMLogObject
 ) {
   await batchInsertToClickhouse(
     tenantId,

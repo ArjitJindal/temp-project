@@ -9,9 +9,9 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
 import { FincenReportStatus } from '@/@types/openapi-internal/FincenReportStatus'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
-import { ask } from '@/utils/openai'
 import { connectToSFTP } from '@/utils/sar'
 import { getSecretByName } from '@/utils/secrets-manager'
+import { ask } from '@/utils/llms'
 
 export function fincenStatusMapper(
   fincenReportStatus: FincenReportStatus

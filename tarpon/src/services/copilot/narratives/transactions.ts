@@ -52,23 +52,22 @@ export class TransactionNarrativeService extends BaseNarrativeService<Additional
   }
 
   public introductoryNarrative(): string {
-    return `The following transaction was detected suspicious and was "Suspended". An analyst has reviewed the transaction and now ${
+    const reasons = this.attributes.getAttribute('reasons')?.join(', ')
+    return `Write a professional transaction narrative explaining why this transaction is being ${
       ruleActionToAlias[this.additionalInfo.action]
-    } it.`
+    }. The narrative should justify the decision based on the following reasons: ${reasons}.`
   }
 
   public placeholderNarrative(): string {
-    const overview = `OVERVIEW \n\n Transaction ID: [transactionIds] \n\n Time of Transaction: [timeOfTransaction] \n\n Origin transaction amount: [originTransactionCurrency][originTransactionAmount] \n\n Destination transaction amount: [destinationTransactionCurrency][destinationTransactionAmount] \n\n Origin transaction country: [originTransactionCountry] \n\n Destination transaction country: [destinationTransactionCountry] \n\n`
+    const sections = {
+      overview: `OVERVIEW \n\n Transaction ID: [transactionIds] \n\n Time of Transaction: [timeOfTransaction] \n\n Origin transaction amount: [originTransactionCurrency][originTransactionAmount] \n\n Destination transaction amount: [destinationTransactionCurrency][destinationTransactionAmount] \n\n Origin transaction country: [originTransactionCountry] \n\n Destination transaction country: [destinationTransactionCountry] \n\n`,
+      background: `BACKGROUND \n\n[This section should contain general details about the transaction in question.]`,
+      investigation: `INVESTIGATION \n\n[This section should detail the method of the investigation and the transaction's activities that took place during the investigation.]`,
+      findings: `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the transaction's activities.]`,
+      conclusion: `CONCLUSION \n\n[This section should contain a summary of the transaction's activities and the analyst's assessment of the transaction.]`,
+    }
 
-    const background = `BACKGROUND \n\n[This section should contain general details about the transaction in question.]`
-
-    const investigation = `INVESTIGATION \n\n[This section should detail the method of the investigation and the transaction's activities that took place during the investigation.]`
-
-    const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the transaction's activities.]`
-
-    const conclusion = `CONCLUSION \n\n[This section should contain a summary of the transaction's activities and the analyst's assessment of the transaction.]`
-
-    return overview + background + investigation + findings + conclusion
+    return Object.values(sections).join('')
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
@@ -82,11 +81,9 @@ export class TransactionNarrativeService extends BaseNarrativeService<Additional
 
   public closingNarrative(): string {
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return `The transaction has been ${
+    return `This transaction has been ${
       ruleActionToAlias[this.additionalInfo.action]
-    }. Based on the following reasons: ${reasons}. You need be like a bank analyst and write a narrative that is easy to understand and contains all the possible information about why the transaction was ${
-      ruleActionToAlias[this.additionalInfo.action]
-    }.`
+    } due to: ${reasons}. Maintain markdown formatting (Do not add any unneccesary heading on top) which is given to you and use bold for key information. Only fill in placeholders when data is available.`
   }
 
   public disabledAttributes(): AIAttribute[] {

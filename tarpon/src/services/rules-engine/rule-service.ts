@@ -50,7 +50,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { removePunctuation } from '@/utils/regex'
-import { ask, ModelVersion } from '@/utils/openai'
+import { ask } from '@/utils/llms'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
@@ -68,6 +68,7 @@ import {
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { ModelTier } from '@/utils/llms/base-service'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -516,7 +517,7 @@ You have to answer in below format as string. If you don't know any field, just 
   }
   `
 
-    const response = await ask(prompt, { model: ModelVersion.GPT3 }) // Above prompt is optimized for GPT-3.5-turbo model
+    const response = await ask(prompt, { tier: ModelTier.ECONOMY }) // Above prompt is optimized for GPT-3.5-turbo model
     let json: AIFilters = {}
 
     try {

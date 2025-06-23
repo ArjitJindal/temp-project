@@ -24,8 +24,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
   public introductoryNarrative(): string {
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    const string = `The following is a template for a document written by bank staff to justify why they have or have not reported a suspicious and why the case is being ${statusPrefix} for the following reasons: ${reasons}.`
-    return string
+    return `Write a professional case narrative explaining why this suspicious activity case is being ${statusPrefix}. The narrative should justify the decision based on the following reasons: ${reasons}.`
   }
 
   public closingNarrative(): string {
@@ -35,7 +34,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
         ? 'business'
         : 'customer'
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return `This is a ${customerType} and this ${this.type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${reasons}. Do not replace placeholders if you don't have information about them.`
+    return `This ${customerType} case is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting (Do not add any unneccesary heading on top) which is given to you and use bold for key information. Only fill in placeholders when data is available.`
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
@@ -54,29 +53,21 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
   public placeholderNarrative(): string {
     const screening = isScreening(this.attributes)
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
-    const overview = `OVERVIEW \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [caseActionDate] \n\n${statusPrefix} Date: [caseActionDate] \n\n`
-    const background = `BACKGROUND \n\n[This section should contain general details about the case in question.]`
-    const investigation = `INVESTIGATION \n\n[This section should detail the method of the investigation and the case's activities that took place during the investigation.]`
 
-    const type = screening ? 'screening details' : 'transactions'
-    const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the case's ${type} and behaviors.]`
-
-    const screeningDetails = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision\n\n Sanctions Sources: [sanctionsSources]. (Be more focused on screening details and information dense)`
-
-    const conclusion = `CONCLUSION`
-
-    if (screening) {
-      return (
-        overview +
-        background +
-        investigation +
-        findings +
-        screeningDetails +
-        conclusion
-      )
+    const sections = {
+      overview: `**OVERVIEW** \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [caseActionDate] \n\n${statusPrefix} Date: [caseActionDate] \n\n`,
+      background: `**BACKGROUND** \n\n[Provide relevant details about the case]\n\n`,
+      investigation: `**INVESTIGATION** \n\n[Describe investigation methodology and key findings]\n\n`,
+      findings: `**FINDINGS AND ASSESSMENT** \n\n[Analyze ${
+        screening ? 'screening details' : 'transactions'
+      } and behaviors]\n\n`,
+      screeningDetails: screening
+        ? `**SCREENING DETAILS** \n\n[Include sanctions, PEP, or adverse media findings]\n\nSanctions Sources: [sanctionsSources]\n\n`
+        : '',
+      conclusion: `**CONCLUSION** \n\n`,
     }
 
-    return overview + background + investigation + findings + conclusion
+    return Object.values(sections).join('')
   }
 
   public disabledAttributes(): AIAttribute[] {

@@ -1,5 +1,4 @@
 import { uniq } from 'lodash'
-import { OpenAI } from 'openai'
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { QuestionCategory } from './types'
 import {
@@ -10,12 +9,13 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { prompt } from '@/utils/openai'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { addSentryExtras } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
+import { prompt } from '@/utils/llms'
+import { Message, ModelTier } from '@/utils/llms/base-service'
 
 const MAX_DISTANCE = 2
 const LIMIT = 30
@@ -230,7 +230,7 @@ export class AutocompleteService {
     const response = await prompt(
       [
         {
-          role: 'system',
+          role: 'user',
           content: `You are a machine with the following available "questions" with their corresponding "variables": ${JSON.stringify(
             getQueries().map((q) => {
               const preparedVariables = Object.entries(
@@ -249,24 +249,24 @@ export class AutocompleteService {
           )}`,
         },
         {
-          role: 'system',
+          role: 'user',
           content: `You will be asked a to provide a JSON array of questionId's and their corresponding "variables" based on user input. You must always return a question.`,
         },
         {
-          role: 'system',
+          role: 'user',
           content: `Today's date is ${dayjs().format('YYYY-MM-DD')}.`,
         },
         {
-          role: 'system',
+          role: 'user',
           content: `If no time range is specified, don't include "from" and "to" variables.`,
         },
         {
-          role: 'system',
+          role: 'user',
           content: `Unless specified, any questions for transactions will be for the question with ID "Transactions".`,
         },
         ...examples.map(
-          (example): OpenAI.ChatCompletionMessageParam => ({
-            role: 'system',
+          (example): Message => ({
+            role: 'user',
             content: `For the input "${
               example.prompt
             }", the following JSON response is expected:\n ${JSON.stringify({
@@ -275,14 +275,12 @@ export class AutocompleteService {
           })
         ),
         {
-          role: 'system',
-          content: `Please parse "${questionPrompt}" to give the best matching questionIds and variables in an array.`,
+          role: 'user',
+          content: `Please parse "${questionPrompt}" to give the best matching questionIds and variables in an array. Return the response in JSON format with a "response" key containing an array of objects with "questionId" and "variables" fields.`,
         },
       ],
       {
-        response_format: {
-          type: 'json_object',
-        },
+        tier: ModelTier.PROFESSIONAL,
       }
     )
     const results: {

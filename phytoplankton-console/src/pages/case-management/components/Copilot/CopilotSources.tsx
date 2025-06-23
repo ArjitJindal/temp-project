@@ -64,7 +64,7 @@ export default function CopilotSources(props: Props) {
                 }
               >
                 {item.secret ? (
-                  <Tooltip title={'This value was obfuscated before data was sent to OpenAI'}>
+                  <Tooltip title={'This value was obfuscated before data was sent to Anthropic'}>
                     {item.value}
                   </Tooltip>
                 ) : (

@@ -61,7 +61,7 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertsRepository } from '@/services/alerts/repository'
 import { NotificationRepository } from '@/services/notifications/notifications-repository'
 import { Notification } from '@/@types/openapi-internal/Notification'
-import { GPTLogObject, linkGPTRequestClickhouse } from '@/utils/openai'
+import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
 
 type RuleStats = {
@@ -176,8 +176,8 @@ export class TarponChangeMongoDbConsumer {
           (tenantId, oldNotifications, newNotifications, dbClients) =>
             this.handleNotifications(tenantId, newNotifications, dbClients)
         )
-        .setGptRequestsHandler((tenantId, newGptRequests) =>
-          this.handleGptRequests(tenantId, newGptRequests)
+        .setLLMRequestsHandler((tenantId, newLLMRequests) =>
+          this.handleLLMRequests(tenantId, newLLMRequests)
         )
     )
   }
@@ -771,18 +771,18 @@ export class TarponChangeMongoDbConsumer {
     subSegment?.close()
   }
 
-  async handleGptRequests(
+  async handleLLMRequests(
     tenantId: string,
-    newGptRequests: GPTLogObject | undefined
+    newLLMRequests: LLMLogObject | undefined
   ): Promise<void> {
-    if (!newGptRequests) {
+    if (!newLLMRequests) {
       return
     }
     const subSegment = await addNewSubsegment(
       'StreamConsumer',
       'handleGptRequests'
     )
-    await linkGPTRequestClickhouse(tenantId, newGptRequests)
+    await linkLLMRequestClickhouse(tenantId, newLLMRequests)
     subSegment?.close()
   }
 }

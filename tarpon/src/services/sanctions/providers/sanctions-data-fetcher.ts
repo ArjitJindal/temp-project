@@ -49,7 +49,8 @@ import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 import { hasFeature } from '@/core/utils/context'
-import { ask } from '@/utils/openai'
+import { ask } from '@/utils/llms'
+import { ModelTier } from '@/utils/llms/base-service'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -622,7 +623,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private async transliterateName(name: string): Promise<string> {
     try {
       const transliteratedName = await ask(
-        `convert the given name to latin script and only return the name in latin script. The name to convert is ${name}`
+        `convert the given name to latin script and only return the name in latin script. The name to convert is ${name}`,
+        {
+          tier: ModelTier.ECONOMY,
+        }
       )
       return transliteratedName
     } catch (e) {

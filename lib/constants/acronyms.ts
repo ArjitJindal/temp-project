@@ -21,6 +21,7 @@ export const ACRONYMS: ReadonlyArray<string> = [
   'L2',
   'YOB',
   'API',
+  'AI',
 ]
 
 export function isValidAcronyms(input: string): input is string {

@@ -16,11 +16,12 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
 import { addSentryExtras, updateLogMetadata } from '@/core/utils/context'
-import { ask, ModelVersion } from '@/utils/openai'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { ask } from '@/utils/llms'
+import { ModelTier } from '@/utils/llms/base-service'
 
 export const AI_EXTENSIONS = ['pdf'] as const
 
@@ -276,7 +277,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   private async getAIResponse(prompt: string) {
     return await ask(prompt, {
       temperature: 0.7,
-      model: ModelVersion.GPT4O,
+      tier: ModelTier.PROFESSIONAL,
     })
   }
 

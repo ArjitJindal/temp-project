@@ -1,4 +1,3 @@
-import { OpenAI } from 'openai'
 import { compact } from 'lodash'
 import { AttributeSet } from './attributes/attribute-set'
 import { BaseNarrativeService } from './narratives'
@@ -8,11 +7,12 @@ import { SarNarrativeService } from './narratives/sar'
 import { TransactionNarrativeService } from './narratives/transactions'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
-import { ModelVersion, prompt } from '@/utils/openai'
+import { prompt } from '@/utils/llms'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 import { NarrativeMode } from '@/@types/openapi-internal/NarrativeMode'
 import { logger } from '@/core/logger'
+import { Message, ModelTier } from '@/utils/llms/base-service'
 
 const SEPARATOR = '---'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
@@ -37,7 +37,9 @@ export class AutoNarrativeService {
     string += `\n\n${SEPARATOR}\n\n`
 
     if (narrativeMode === 'STANDARD') {
+      string += `\n\nFORMAT START ${SEPARATOR}\n\n`
       string += service.placeholderNarrative()
+      string += `\n\nFORMAT END ${SEPARATOR}\n\n`
       string += `\n\n${SEPARATOR}\n\n`
     }
 
@@ -70,9 +72,9 @@ export class AutoNarrativeService {
       string += `"You should only output plaintext, no markdown. Please do not include any other text than plaintext."`
     }
 
-    const completionMessages: OpenAI.ChatCompletionMessageParam[] = []
+    const completionMessages: Message[] = []
 
-    completionMessages.push({ role: 'system', content: string })
+    completionMessages.push({ role: 'user', content: string })
 
     return this.generate(completionMessages, attributes, service)
   }
@@ -158,7 +160,7 @@ export class AutoNarrativeService {
   }
 
   private async generate(
-    promptMessages: OpenAI.ChatCompletionMessageParam[],
+    promptMessages: Message[],
     attributes: AttributeSet,
     service?: BaseNarrativeService<any>
   ): Promise<NarrativeResponse> {
@@ -176,7 +178,7 @@ export class AutoNarrativeService {
 
     const promptWithContext = promptMessages.concat([
       {
-        role: 'system',
+        role: 'user',
         content: `Here is some data that you can use to write the narrative: ${serialisedAttributes}`,
       },
     ])
@@ -186,7 +188,7 @@ export class AutoNarrativeService {
     for (let i = 0; i < 3; i++) {
       try {
         response = await prompt(promptWithContext, {
-          model: ModelVersion.GPT4O_MINI,
+          tier: ModelTier.PROFESSIONAL,
         })
         break
       } catch (e) {
@@ -221,7 +223,7 @@ export class AutoNarrativeService {
     const response = await this.generate(
       [
         {
-          role: 'system',
+          role: 'user',
           content: `Please correct any spelling or grammatical errors in the following text and make it sound professional and if input is in markdown format, please keep it in markdown format and do not use \`\`\`markdown\`\`\` also keep narrative format intact don't use any html tags: "${formattedNarrative}"`,
         },
       ],

@@ -12,8 +12,7 @@ import {
   GPT_REQUESTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
-
-import { linkGPTRequestDynamoDB, GPTLogObject } from '@/utils/openai'
+import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
 
@@ -127,13 +126,13 @@ export const handleGPTRequestLogsBatchJob = async (
   }
 ) => {
   const db = mongoDb.db()
-  const collection = db.collection<GPTLogObject>(
+  const collection = db.collection<LLMLogObject>(
     GPT_REQUESTS_COLLECTION(job.tenantId)
   )
   await processCursorInBatch(
     collection.find({}),
-    async (gptRequests) => {
-      await linkGPTRequestDynamoDB(job.tenantId, gptRequests)
+    async (llmRequests) => {
+      await linkLLMRequestDynamoDB(job.tenantId, llmRequests)
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )
