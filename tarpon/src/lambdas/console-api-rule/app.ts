@@ -2,20 +2,13 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { GetObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import {
-  RULE_LOGIC_CONFIG_S3_KEY,
-  RuleService,
-} from '@/services/rules-engine/rule-service'
+import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
-import { getS3ClientByEvent } from '@/utils/s3'
-import { envIs } from '@/utils/env'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RuleThresholdOptimizer } from '@/services/rule-threshold'
 
@@ -33,20 +26,58 @@ export const ruleHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetLogicConfig(async () => {
-      // NOTE: logic config is over 10MB which is the max size for API Gateway response,
-      // so we need to get it from S3 instead
-      const s3 = getS3ClientByEvent(event)
+    handlers.registerGetLogicConfig(async (_ctx, request) => {
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-      const getObjectCommand = new GetObjectCommand({
-        Bucket: process.env.SHARED_ASSETS_BUCKET,
-        Key: RULE_LOGIC_CONFIG_S3_KEY,
-      })
+      let logicConfig = logicEvaluator.getLogicConfig()
+
+      const { LogicConfigRequest } = request
+      const { filterVarNames, excludeSelectOptions } = LogicConfigRequest ?? {}
+
+      if (filterVarNames != null) {
+        logicConfig = {
+          ...logicConfig,
+          variables: logicConfig.variables.filter((v) =>
+            filterVarNames.includes(v.key)
+          ),
+        }
+      }
+      if (excludeSelectOptions) {
+        const clearListValues = (obj: any): any => {
+          if (Array.isArray(obj)) {
+            return obj.map(clearListValues)
+          }
+          if (!obj || typeof obj !== 'object') {
+            return obj
+          }
+
+          if (obj.fieldSettings?.listValues) {
+            return {
+              ...obj,
+              fieldSettings: {
+                ...obj.fieldSettings,
+                listValues: [],
+              },
+            }
+          }
+
+          return Object.entries(obj).reduce(
+            (acc, [key, value]) => ({
+              ...acc,
+              [key]:
+                value && typeof value === 'object'
+                  ? clearListValues(value)
+                  : value,
+            }),
+            {}
+          )
+        }
+        logicConfig = {
+          ...logicConfig,
+          variables: logicConfig.variables.map(clearListValues),
+        }
+      }
       return {
-        s3Url: envIs('local') ? '' : await getSignedUrl(s3, getObjectCommand),
-        logicConfig: envIs('local')
-          ? logicEvaluator.getLogicConfig()
-          : undefined,
+        logicConfig: logicConfig,
       }
     })
 

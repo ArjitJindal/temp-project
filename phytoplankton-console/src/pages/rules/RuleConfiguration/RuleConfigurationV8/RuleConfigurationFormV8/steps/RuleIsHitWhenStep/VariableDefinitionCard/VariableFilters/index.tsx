@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { isEqual } from 'lodash';
 import { Settings } from '@react-awesome-query-builder/ui';
-import { RuleLogicBuilder } from '../../RuleLogicBuilder';
 import { FormRuleAggregationVariable } from '../helpers';
+import FiltersLogicBuilder from './FiltersLogicBuilder';
 import { LogicEntityVariableEntityEnum, RuleType } from '@/apis';
 
 // TODO: Move PropertyColumns to library
@@ -39,15 +39,13 @@ export default function VariableFilters<
   }
 
   return (
-    <RuleLogicBuilder
+    <FiltersLogicBuilder
       ruleType={ruleType}
       entityVariableTypes={entityVariableTypes}
       configParams={{
         mode: readOnly ? 'VIEW' : 'EDIT',
       }}
       jsonLogic={formValues.filtersLogic}
-      // NOTE: Only entity variables are allowed for aggregation variable filters
-      aggregationVariables={[]}
       onChange={(jsonLogic) => {
         if (!isEqual(jsonLogic, formValues.filtersLogic)) {
           handleUpdateForm({ filtersLogic: jsonLogic });

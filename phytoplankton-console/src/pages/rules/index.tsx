@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
-import { useRuleLogicConfig } from './RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { Authorized } from '@/components/utils/Authorized';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
@@ -100,8 +99,6 @@ function Content(props: { tab: string }) {
     ],
     [isSimulationEnabled, navigate, v8Enabled],
   );
-  // NOTE: Rule logic config data size is big, so we prefetch it here
-  useRuleLogicConfig('TRANSACTION');
   return <PageTabs activeKey={props.tab} onChange={handleChange} items={items} />;
 }
 

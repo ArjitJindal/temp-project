@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Fields } from '@react-awesome-query-builder/core';
 import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import fixture from './story-fixture.json';

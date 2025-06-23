@@ -89,7 +89,7 @@ export function makeConfig(
       removeEmptyRulesOnLoad: false,
       canLeaveEmptyGroup: false,
       maxNesting: enableNesting ? undefined : 1,
-      forceShowConj: false,
+      forceShowConj: isViewMode,
       addRuleLabel: addRuleLabel,
       addGroupLabel: addGroupLabel,
       addSubRuleLabel: 'Add sub condition',
@@ -136,6 +136,14 @@ export function makeConfig(
           value: x.key,
         }));
         const disabled = props.disabled || props.readonly;
+        const children = (
+          <div className={cn(s.selectedConjunction, disabled && s.isDisabled)}>
+            {props.selectedConjunction ?? options[0]?.label ?? '-'}
+          </div>
+        );
+        if (disabled) {
+          return children;
+        }
         return (
           <Dropdown
             disabled={disabled}
@@ -144,10 +152,7 @@ export function makeConfig(
               props.setConjunction(option.value);
             }}
           >
-            <div className={cn(s.selectedConjunction, disabled && s.isDisabled)}>
-              {props.selectedConjunction ?? options[0]?.label ?? '-'}
-              {!props.readonly && <ArrowDownSLineIcon className={s.arrowIcon} />}
-            </div>
+            {children}
           </Dropdown>
         );
       },

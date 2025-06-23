@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { shortId } from '@flagright/lib/utils';
-import { useRuleLogicConfig } from '../helpers';
+import { useLogicEntityVariablesList } from '../helpers';
 import s from './style.module.less';
 import { AggregationVariableForm } from './AggregationVariableForm';
 import { EntityVariableForm, getNewEntityVariableKey } from './EntityVariableForm';
@@ -278,11 +278,11 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
       ) === undefined,
     [aggregationVariables, editingVariable?.variable?.key, entityVariables, mlVariables],
   );
-  const ruleLogicConfig = useRuleLogicConfig(ruleType);
+  const variablesRes = useLogicEntityVariablesList(ruleType);
   const user = useAuth0User();
   const entityVariableDefinitions = useMemo(() => {
-    if (isSuccess(ruleLogicConfig.data)) {
-      return (ruleLogicConfig.data.value.variables ?? []).filter(
+    if (isSuccess(variablesRes)) {
+      return (variablesRes.value ?? []).filter(
         (v) =>
           (!v?.requiredFeatures?.length ||
             v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
@@ -290,7 +290,7 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
       );
     }
     return [];
-  }, [ruleLogicConfig.data, settings.features, user.tenantId]);
+  }, [variablesRes, settings.features, user.tenantId]);
 
   const handleDelete = useCallback(
     (varKey: string) => {
@@ -461,7 +461,7 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
             placement="bottomLeft"
           >
             {/* TODO: Update e2e test */}
-            <Button testName="add-variable-v8" isLoading={isLoading(ruleLogicConfig.data)}>
+            <Button testName="add-variable-v8" isLoading={isLoading(variablesRes)}>
               Add variable
             </Button>
           </Dropdown>

@@ -2335,747 +2335,137 @@
     }
   ],
   "fields": {
-    "entity:00000001": {
-      "label": "Transaction / tags",
-      "type": "!group",
-      "mode": "array",
-      "conjunctions": ["AND", "OR"],
-      "subfields": {
-        "key": {
-          "label": "key",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "value": {
-          "label": "value",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        }
-      }
-    },
-    "entity:158de687": {
-      "label": "Business User / share holders (sender or receiver)",
-      "type": "!group",
-      "mode": "array",
-      "conjunctions": ["AND", "OR"],
-      "subfields": {
-        "userId": {
-          "label": "user id",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.name.firstName": {
-          "label": "general details > name > first name",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.name.middleName": {
-          "label": "general details > name > middle name",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.name.lastName": {
-          "label": "general details > name > last name",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.dateOfBirth": {
-          "label": "general details > date of birth",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.userCategory": {
-          "label": "general details > user category",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.countryOfResidence": {
-          "label": "general details > country of residence",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "Afghanistan (AF)",
-                "value": "AF"
-              },
-              {
-                "title": "Albania (AL)",
-                "value": "AL"
-              },
-              {
-                "title": "Algeria (DZ)",
-                "value": "DZ"
-              },
-              {
-                "title": "American Samoa (AS)",
-                "value": "AS"
-              },
-              {
-                "title": "Andorra (AD)",
-                "value": "AD"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.countryOfTaxResidence": {
-          "label": "general details > country of tax residence",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "Afghanistan (AF)",
-                "value": "AF"
-              },
-              {
-                "title": "Albania (AL)",
-                "value": "AL"
-              },
-              {
-                "title": "Algeria (DZ)",
-                "value": "DZ"
-              },
-              {
-                "title": "American Samoa (AS)",
-                "value": "AS"
-              },
-              {
-                "title": "Andorra (AD)",
-                "value": "AD"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.countryOfNationality": {
-          "label": "general details > country of nationality",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "Afghanistan (AF)",
-                "value": "AF"
-              },
-              {
-                "title": "Albania (AL)",
-                "value": "AL"
-              },
-              {
-                "title": "Algeria (DZ)",
-                "value": "DZ"
-              },
-              {
-                "title": "American Samoa (AS)",
-                "value": "AS"
-              },
-              {
-                "title": "Andorra (AD)",
-                "value": "AD"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.gender": {
-          "label": "general details > gender",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "M",
-                "value": "M"
-              },
-              {
-                "title": "F",
-                "value": "F"
-              },
-              {
-                "title": "Nb",
-                "value": "NB"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.maritalStatus": {
-          "label": "general details > marital status",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "Divorced",
-                "value": "DIVORCED"
-              },
-              {
-                "title": "Married",
-                "value": "MARRIED"
-              },
-              {
-                "title": "Single",
-                "value": "SINGLE"
-              },
-              {
-                "title": "Widowed",
-                "value": "WIDOWED"
-              },
-              {
-                "title": "Na",
-                "value": "NA"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.placeOfBirth.city": {
-          "label": "general details > place of birth > city",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.placeOfBirth.state": {
-          "label": "general details > place of birth > state",
-          "type": "text",
-          "valueSources": ["value", "field", "func"]
-        },
-        "generalDetails.placeOfBirth.country": {
-          "label": "general details > place of birth > country",
-          "type": "text",
-          "valueSources": ["value", "field", "func"],
-          "fieldSettings": {
-            "listValues": [
-              {
-                "title": "Afghanistan (AF)",
-                "value": "AF"
-              },
-              {
-                "title": "Albania (AL)",
-                "value": "AL"
-              },
-              {
-                "title": "Algeria (DZ)",
-                "value": "DZ"
-              },
-              {
-                "title": "American Samoa (AS)",
-                "value": "AS"
-              },
-              {
-                "title": "Andorra (AD)",
-                "value": "AD"
-              }
-            ],
-            "allowCustomValues": true
-          }
-        },
-        "generalDetails.alias": {
-          "path": ["generalDetails", "alias"],
-          "pathKey": "shareHolders.$i.generalDetails.alias.$i",
-          "type": "multiselect",
-          "arrayGroupLevels": [["generalDetails", "alias"], [""]],
-          "label": "general details > alias",
-          "preferWidgets": ["multiselect"],
-          "valueSources": ["value", "field", "func"],
-          "allowCustomValues": true
-        },
-        "legalDocuments": {
-          "label": "legal documents",
-          "type": "!group",
-          "mode": "array",
-          "conjunctions": ["AND", "OR"],
-          "subfields": {
-            "documentType": {
-              "label": "document type",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "documentNumber": {
-              "label": "document number",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "documentIssuedDate": {
-              "label": "document issued date",
-              "type": "number",
-              "valueSources": ["value", "field", "func"]
-            },
-            "documentExpirationDate": {
-              "label": "document expiration date",
-              "type": "number",
-              "valueSources": ["value", "field", "func"]
-            },
-            "documentIssuedCountry": {
-              "label": "document issued country",
-              "type": "text",
-              "valueSources": ["value", "field", "func"],
-              "fieldSettings": {
-                "listValues": [
-                  {
-                    "title": "Afghanistan (AF)",
-                    "value": "AF"
-                  },
-                  {
-                    "title": "Albania (AL)",
-                    "value": "AL"
-                  },
-                  {
-                    "title": "Algeria (DZ)",
-                    "value": "DZ"
-                  },
-                  {
-                    "title": "American Samoa (AS)",
-                    "value": "AS"
-                  },
-                  {
-                    "title": "Andorra (AD)",
-                    "value": "AD"
-                  }
-                ],
-                "allowCustomValues": true
-              }
-            },
-            "tags": {
-              "label": "tags",
-              "type": "!group",
-              "mode": "array",
-              "conjunctions": ["AND", "OR"],
-              "subfields": {
-                "key": {
-                  "label": "key",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "value": {
-                  "label": "value",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                }
-              }
-            },
-            "nameOnDocument.firstName": {
-              "label": "name on document > first name",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "nameOnDocument.middleName": {
-              "label": "name on document > middle name",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "nameOnDocument.lastName": {
-              "label": "name on document > last name",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            }
-          }
-        },
-        "contactDetails.emailIds": {
-          "path": ["contactDetails", "emailIds"],
-          "pathKey": "shareHolders.$i.contactDetails.emailIds.$i",
-          "type": "multiselect",
-          "arrayGroupLevels": [["contactDetails", "emailIds"], [""]],
-          "label": "contact details > email ids",
-          "preferWidgets": ["multiselect"],
-          "valueSources": ["value", "field", "func"],
-          "allowCustomValues": true
-        },
-        "contactDetails.contactNumbers": {
-          "path": ["contactDetails", "contactNumbers"],
-          "pathKey": "shareHolders.$i.contactDetails.contactNumbers.$i",
-          "type": "multiselect",
-          "arrayGroupLevels": [["contactDetails", "contactNumbers"], [""]],
-          "label": "contact details > contact numbers",
-          "preferWidgets": ["multiselect"],
-          "valueSources": ["value", "field", "func"],
-          "allowCustomValues": true
-        },
-        "contactDetails.faxNumbers": {
-          "path": ["contactDetails", "faxNumbers"],
-          "pathKey": "shareHolders.$i.contactDetails.faxNumbers.$i",
-          "type": "multiselect",
-          "arrayGroupLevels": [["contactDetails", "faxNumbers"], [""]],
-          "label": "contact details > fax numbers",
-          "preferWidgets": ["multiselect"],
-          "valueSources": ["value", "field", "func"],
-          "allowCustomValues": true
-        },
-        "contactDetails.websites": {
-          "path": ["contactDetails", "websites"],
-          "pathKey": "shareHolders.$i.contactDetails.websites.$i",
-          "type": "multiselect",
-          "arrayGroupLevels": [["contactDetails", "websites"], [""]],
-          "label": "contact details > websites",
-          "preferWidgets": ["multiselect"],
-          "valueSources": ["value", "field", "func"],
-          "allowCustomValues": true
-        },
-        "contactDetails.addresses": {
-          "label": "contact details > addresses",
-          "type": "!group",
-          "mode": "array",
-          "conjunctions": ["AND", "OR"],
-          "subfields": {
-            "addressLines": {
-              "path": ["addressLines"],
-              "pathKey": "shareHolders.$i.contactDetails.addresses.$i.addressLines.$i",
-              "type": "multiselect",
-              "arrayGroupLevels": [["addressLines"], [""]],
-              "label": "address lines",
-              "preferWidgets": ["multiselect"],
-              "valueSources": ["value", "field", "func"],
-              "allowCustomValues": true
-            },
-            "postcode": {
-              "label": "postcode",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "city": {
-              "label": "city",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "state": {
-              "label": "state",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "country": {
-              "label": "country",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "addressType": {
-              "label": "address type",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "tags": {
-              "label": "tags",
-              "type": "!group",
-              "mode": "array",
-              "conjunctions": ["AND", "OR"],
-              "subfields": {
-                "key": {
-                  "label": "key",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "value": {
-                  "label": "value",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                }
-              }
-            }
-          }
-        },
-        "pepStatus": {
-          "label": "pep status",
-          "type": "!group",
-          "mode": "array",
-          "conjunctions": ["AND", "OR"],
-          "subfields": {
-            "isPepHit": {
-              "label": "is pep hit",
-              "type": "boolean",
-              "valueSources": ["value", "field", "func"]
-            },
-            "pepCountry": {
-              "label": "pep country",
-              "type": "text",
-              "valueSources": ["value", "field", "func"],
-              "fieldSettings": {
-                "listValues": [
-                  {
-                    "title": "Afghanistan (AF)",
-                    "value": "AF"
-                  },
-                  {
-                    "title": "Albania (AL)",
-                    "value": "AL"
-                  },
-                  {
-                    "title": "Algeria (DZ)",
-                    "value": "DZ"
-                  },
-                  {
-                    "title": "American Samoa (AS)",
-                    "value": "AS"
-                  },
-                  {
-                    "title": "Andorra (AD)",
-                    "value": "AD"
-                  }
-                ],
-                "allowCustomValues": true
-              }
-            },
-            "pepRank": {
-              "label": "pep rank",
-              "type": "text",
-              "valueSources": ["value", "field", "func"],
-              "fieldSettings": {
-                "listValues": [
-                  {
-                    "title": "Level 1",
-                    "value": "LEVEL_1"
-                  },
-                  {
-                    "title": "Level 2",
-                    "value": "LEVEL_2"
-                  },
-                  {
-                    "title": "Level 3",
-                    "value": "LEVEL_3"
-                  }
-                ],
-                "allowCustomValues": true
-              }
-            }
-          }
-        },
-        "tags": {
-          "label": "tags",
-          "type": "!group",
-          "mode": "array",
-          "conjunctions": ["AND", "OR"],
-          "subfields": {
-            "key": {
-              "label": "key",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "value": {
-              "label": "value",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            }
-          }
-        },
-        "attachments": {
-          "label": "attachments",
-          "type": "!group",
-          "mode": "array",
-          "conjunctions": ["AND", "OR"],
-          "subfields": {
-            "id": {
-              "label": "id",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "comment": {
-              "label": "comment",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "files": {
-              "label": "files",
-              "type": "!group",
-              "mode": "array",
-              "conjunctions": ["AND", "OR"],
-              "subfields": {
-                "s3Key": {
-                  "label": "s 3 key",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "bucket": {
-                  "label": "bucket",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "filename": {
-                  "label": "filename",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "size": {
-                  "label": "size",
-                  "type": "number",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "downloadLink": {
-                  "label": "download link",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                },
-                "aiSummary": {
-                  "label": "ai summary",
-                  "type": "text",
-                  "valueSources": ["value", "field", "func"]
-                }
-              }
-            },
-            "userId": {
-              "label": "user id",
-              "type": "text",
-              "valueSources": ["value", "field", "func"]
-            },
-            "createdAt": {
-              "label": "created at",
-              "type": "number",
-              "valueSources": ["value", "field", "func"]
-            },
-            "deletedAt": {
-              "label": "deleted at",
-              "type": "number",
-              "valueSources": ["value", "field", "func"]
-            }
-          }
-        }
-      }
-    },
-    "entity:b0ffbee3": {
-      "label": "Transaction / type",
+    "TRANSACTION:originPaymentDetails-method": {
+      "label": "Transaction / origin payment details > method",
       "type": "text",
       "valueSources": ["value", "field", "func"],
       "fieldSettings": {
         "listValues": [
           {
-            "title": "Deposit",
-            "value": "DEPOSIT"
+            "title": "Card",
+            "value": "CARD"
           },
           {
-            "title": "Transfer",
-            "value": "TRANSFER"
+            "title": "Generic Bank Account",
+            "value": "GENERIC_BANK_ACCOUNT"
           },
           {
-            "title": "External Payment",
-            "value": "EXTERNAL_PAYMENT"
+            "title": "IBAN",
+            "value": "IBAN"
           },
           {
-            "title": "Withdrawal",
-            "value": "WITHDRAWAL"
+            "title": "ACH",
+            "value": "ACH"
           },
           {
-            "title": "Refund",
-            "value": "REFUND"
-          }
-        ]
-      }
-    },
-    "entity:d38e6d30": {
-      "label": "Transaction / amount details > country (origin or destination)",
-      "type": "text",
-      "valueSources": ["value", "field", "func"],
-      "fieldSettings": {
-        "listValues": [
-          {
-            "title": "Afghanistan (AF)",
-            "value": "AF"
+            "title": "SWIFT",
+            "value": "SWIFT"
           },
           {
-            "title": "Albania (AL)",
-            "value": "AL"
+            "title": "Mpesa",
+            "value": "MPESA"
           },
           {
-            "title": "Algeria (DZ)",
-            "value": "DZ"
+            "title": "UPI",
+            "value": "UPI"
           },
           {
-            "title": "American Samoa (AS)",
-            "value": "AS"
+            "title": "Wallet",
+            "value": "WALLET"
           },
           {
-            "title": "Andorra (AD)",
-            "value": "AD"
-          }
-        ]
-      }
-    },
-    "entity:e893de09": {
-      "label": "Consumer User / user details > place of birth > country (sender)",
-      "type": "text",
-      "valueSources": ["value", "field", "func"],
-      "fieldSettings": {
-        "listValues": [
-          {
-            "title": "Afghanistan (AF)",
-            "value": "AF"
+            "title": "Check",
+            "value": "CHECK"
           },
           {
-            "title": "Albania (AL)",
-            "value": "AL"
+            "title": "Cash",
+            "value": "CASH"
           },
           {
-            "title": "Algeria (DZ)",
-            "value": "DZ"
-          },
-          {
-            "title": "American Samoa (AS)",
-            "value": "AS"
-          },
-          {
-            "title": "Andorra (AD)",
-            "value": "AD"
-          }
-        ]
-      }
-    },
-    "agg:b4b8bc21": {
-      "label": "Max of Transaction / timestamp (1 day ago to now)",
-      "type": "number",
-      "valueSources": ["value", "field", "func"]
-    },
-    "agg:a3ecb74e$1": {
-      "label": "Unique values of Transaction / origin amount details > transaction currency (1 day ago to now)",
-      "type": "multiselect",
-      "valueSources": ["value", "field", "func"],
-      "fieldSettings": {
-        "listValues": [
-          {
-            "title": "ADA (Cardano)",
-            "value": "ADA"
-          },
-          {
-            "title": "AED (United Arab Emirates Dirham)",
-            "value": "AED"
-          },
-          {
-            "title": "AFN (Afghan afghani)",
-            "value": "AFN"
-          },
-          {
-            "title": "ALGO (Algorand)",
-            "value": "ALGO"
-          },
-          {
-            "title": "ALL (Albanian lek)",
-            "value": "ALL"
+            "title": "NPP",
+            "value": "NPP"
           }
         ],
         "allowCustomValues": true
-      }
+      },
+      "fieldName": "TRANSACTION:originPaymentDetails-method"
     },
-    "agg:a3ecb74e$2": {
-      "label": "Unique values of Transaction / origin amount details > transaction currency (1 day ago to now)",
+    "TRANSACTION:destinationPaymentDetails-method": {
+      "label": "Transaction / destination payment details > method",
       "type": "text",
-      "valueSources": ["value", "field", "func"]
+      "valueSources": ["value", "field", "func"],
+      "fieldSettings": {
+        "listValues": [
+          {
+            "title": "Card",
+            "value": "CARD"
+          },
+          {
+            "title": "Generic Bank Account",
+            "value": "GENERIC_BANK_ACCOUNT"
+          },
+          {
+            "title": "IBAN",
+            "value": "IBAN"
+          },
+          {
+            "title": "ACH",
+            "value": "ACH"
+          },
+          {
+            "title": "UPI",
+            "value": "UPI"
+          },
+          {
+            "title": "Wallet",
+            "value": "WALLET"
+          },
+          {
+            "title": "SWIFT",
+            "value": "SWIFT"
+          },
+          {
+            "title": "Mpesa",
+            "value": "MPESA"
+          },
+          {
+            "title": "Check",
+            "value": "CHECK"
+          },
+          {
+            "title": "Cash",
+            "value": "CASH"
+          },
+          {
+            "title": "NPP",
+            "value": "NPP"
+          }
+        ],
+        "allowCustomValues": true
+      },
+      "fieldName": "TRANSACTION:destinationPaymentDetails-method"
     },
-    "agg:ad53fdeb": {
-      "label": "Max of Transaction / origin amount details > transaction amount (1 day ago to now)",
-      "type": "number",
-      "valueSources": ["value", "field", "func"]
+    "TRANSACTION:destinationPaymentDetails-name": {
+      "label": "Transaction / destination payment details > name",
+      "type": "text",
+      "valueSources": ["value", "field", "func"],
+      "fieldName": "TRANSACTION:destinationPaymentDetails-name"
     }
   },
   "logic": {
     "and": [
       {
-        "or": [
+        "and": [
           {
-            "and": [
+            "or": [
               {
-                "or": [
+                "and": [
                   {
                     "==": [
                       {
-                        "var": "entity:b0ffbee3"
+                        "var": "TRANSACTION:originPaymentDetails-method"
                       },
-                      "DEPOSIT"
+                      "WALLET"
                     ]
                   }
                 ]
@@ -3085,67 +2475,29 @@
         ]
       },
       {
-        "<=": [
-          42,
-          {
-            "+": [
-              {
-                "var": "agg:b4b8bc21"
-              },
-              89987
-            ]
-          },
-          42
-        ]
-      },
-      {
         "and": [
           {
             "==": [
               {
-                "var": "entity:d38e6d30"
+                "var": "TRANSACTION:destinationPaymentDetails-method"
+              },
+              "WALLET"
+            ]
+          },
+          {
+            "!=": [
+              {
+                "var": "TRANSACTION:destinationPaymentDetails-name"
               },
               null
             ]
           },
           {
-            "!": {
-              "all": [
-                {
-                  "var": "agg:a3ecb74e$1"
-                },
-                {
-                  "in": [
-                    {
-                      "var": ""
-                    },
-                    ["ALGO", "AOA", "ALL", "AMD", "AFN", "ADA", "AED"]
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "==": [
+            "op:contains": [
               {
-                "var": "entity:b0ffbee3"
+                "var": "TRANSACTION:destinationPaymentDetails-name"
               },
-              "TRANSFER"
-            ]
-          }
-        ]
-      },
-      {
-        "some": [
-          {
-            "var": "entity:158de687"
-          },
-          {
-            "==": [
-              {
-                "var": "userId"
-              },
-              "test"
+              ["abc"]
             ]
           }
         ]

@@ -2,7 +2,6 @@ import { Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import cn from 'clsx';
 import s from './style.module.less';
 import { AuditLog, RiskEntityType, RiskFactor } from '@/apis';
@@ -10,19 +9,14 @@ import Modal from '@/components/library/Modal';
 import { VariableTags } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
 import { EntityVariableForm } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/EntityVariableForm';
 import { AggregationVariableForm } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/AggregationVariableForm';
-import LogicBuilder from '@/components/ui/LogicBuilder';
-import {
-  useLogicBuilderConfig,
-  useRuleLogicConfig,
-} from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import { useLogicEntityVariablesList } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { isSuccess } from '@/utils/asyncResource';
 import { useRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User } from '@/utils/user-utils';
 import TableTemplate, { summariseChanges } from '@/pages/auditlog/components/TableTemplate';
 import { RiskLevel } from '@/utils/risk-levels';
 import Tag from '@/components/library/Tag';
+import LogicDisplay from '@/components/ui/LogicDisplay';
 
 interface Props {
   data: AuditLog;
@@ -63,37 +57,19 @@ const RiskFactorAuditLogModal = (props: Props) => {
     newImage: newImageRest,
   });
 
-  const newLogicBuildConfigRes = useLogicBuilderConfig(
-    data.newImage?.type,
-    undefined,
-    newEntityVariables,
-    newAggregationVariables,
-    {
-      mode: 'VIEW',
-    },
-    [],
-  );
-
-  const oldLogicBuildConfigRes = useLogicBuilderConfig(
-    data.oldImage?.type,
-    undefined,
-    oldEntityVariables,
-    oldAggregationVariables,
-    {
-      mode: 'VIEW',
-    },
-    [],
-  );
-
   const settings = useSettings();
 
-  const oldRuleLogicConfig = useRuleLogicConfig(getRuleType(oldImage?.type ?? 'TRANSACTION'));
-  const newRuleLogicConfig = useRuleLogicConfig(getRuleType(newImage?.type ?? 'TRANSACTION'));
+  const oldRuleLogicVars = useLogicEntityVariablesList(
+    getRuleType(oldImage?.type ?? 'TRANSACTION'),
+  );
+  const newRuleLogicVars = useLogicEntityVariablesList(
+    getRuleType(newImage?.type ?? 'TRANSACTION'),
+  );
   const user = useAuth0User();
 
   const oldVariableDefinitions = useMemo(() => {
-    if (isSuccess(oldRuleLogicConfig.data)) {
-      return (oldRuleLogicConfig.data.value.variables ?? []).filter(
+    if (isSuccess(oldRuleLogicVars)) {
+      return (oldRuleLogicVars.value ?? []).filter(
         (v) =>
           (!v?.requiredFeatures?.length ||
             v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
@@ -101,11 +77,11 @@ const RiskFactorAuditLogModal = (props: Props) => {
       );
     }
     return [];
-  }, [oldRuleLogicConfig.data, settings.features, user.tenantId]);
+  }, [oldRuleLogicVars, settings.features, user.tenantId]);
 
   const newVariableDefinitions = useMemo(() => {
-    if (isSuccess(newRuleLogicConfig.data)) {
-      return (newRuleLogicConfig.data.value.variables ?? []).filter(
+    if (isSuccess(newRuleLogicVars)) {
+      return (newRuleLogicVars.value ?? []).filter(
         (v) =>
           (!v?.requiredFeatures?.length ||
             v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
@@ -113,7 +89,7 @@ const RiskFactorAuditLogModal = (props: Props) => {
       );
     }
     return [];
-  }, [newRuleLogicConfig.data, settings.features, user.tenantId]);
+  }, [newRuleLogicVars, settings.features, user.tenantId]);
   const riskLevelLabel = useRiskLevelLabel;
   const handleViewVariable = (key: string, isOld = false) => {
     const variables = isOld
@@ -201,49 +177,37 @@ const RiskFactorAuditLogModal = (props: Props) => {
             {/* OLD LOGIC */}
             <div className={cn(s.childContainer)}>
               <Typography.Title level={4}>Old logic</Typography.Title>
-              {oldRiskLevelLogic.map((info, index) => {
-                return (
-                  <div key={index}>
-                    <Tag color="action">
-                      Configuration ({riskLevelLabel(info.riskLevel as RiskLevel)} {info.weight})
-                    </Tag>
-                    <AsyncResourceRenderer resource={oldLogicBuildConfigRes}>
-                      {(logicBuildConfig: QueryBuilderConfig) => {
-                        let propsTree = QbUtils.loadFromJsonLogic(info.logic, logicBuildConfig);
-                        propsTree = propsTree
-                          ? QbUtils.checkTree(propsTree, logicBuildConfig)
-                          : undefined;
-
-                        return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                      }}
-                    </AsyncResourceRenderer>
-                  </div>
-                );
-              })}
+              {oldRiskLevelLogic.map((info, index) => (
+                <div key={index} className={cn(s.riskLevelLogicItem)}>
+                  <Tag color="action">
+                    Configuration ({riskLevelLabel(info.riskLevel as RiskLevel)} {info.weight})
+                  </Tag>
+                  <LogicDisplay
+                    logic={info.logic}
+                    entityVariables={oldEntityVariables}
+                    aggregationVariables={oldAggregationVariables}
+                    ruleType={getRuleType(oldImage?.type ?? 'TRANSACTION')}
+                  />
+                </div>
+              ))}
             </div>
 
             {/* NEW LOGIC */}
             <div className={cn(s.childContainer)}>
               <Typography.Title level={4}>New logic</Typography.Title>
-              {newRiskLevelLogic.map((info, index) => {
-                return (
-                  <div key={index}>
-                    <Tag color="action">
-                      Configuration ({riskLevelLabel(info.riskLevel as RiskLevel)} {info.weight})
-                    </Tag>
-                    <AsyncResourceRenderer resource={newLogicBuildConfigRes}>
-                      {(logicBuildConfig: QueryBuilderConfig) => {
-                        let propsTree = QbUtils.loadFromJsonLogic(info.logic, logicBuildConfig);
-                        propsTree = propsTree
-                          ? QbUtils.checkTree(propsTree, logicBuildConfig)
-                          : undefined;
-
-                        return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                      }}
-                    </AsyncResourceRenderer>
-                  </div>
-                );
-              })}
+              {newRiskLevelLogic.map((info, index) => (
+                <div key={index} className={cn(s.riskLevelLogicItem)}>
+                  <Tag color="action">
+                    Configuration ({riskLevelLabel(info.riskLevel as RiskLevel)} {info.weight})
+                  </Tag>
+                  <LogicDisplay
+                    logic={info.logic}
+                    entityVariables={newEntityVariables}
+                    aggregationVariables={newAggregationVariables}
+                    ruleType={getRuleType(newImage?.type ?? 'TRANSACTION')}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

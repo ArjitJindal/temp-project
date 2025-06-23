@@ -11,6 +11,21 @@ export default function (): JSX.Element {
           options={[
             { value: 'option1', label: 'First option' },
             { value: 'option2', label: 'Second option' },
+            { value: 'option3', label: 'Third option', isDisabled: true },
+          ]}
+          onSelect={(option) => {
+            alert(option.label);
+          }}
+        >
+          <div>Test</div>
+        </Component>
+      </UseCase>
+      <UseCase title={'Disabled'}>
+        <Component
+          disabled
+          options={[
+            { value: 'option1', label: 'First option' },
+            { value: 'option2', label: 'Second option' },
           ]}
           onSelect={(option) => {
             alert(option.label);

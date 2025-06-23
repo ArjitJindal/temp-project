@@ -182,7 +182,7 @@ export const SANCTIONS_SCREENING_DETAILS = (params: AnyParameters): QueryKey => 
   params,
 ];
 
-export const RULE_LOGIC_CONFIG = (): QueryKey => ['rule-logic-config'];
+export const RULE_LOGIC_CONFIG = (params: AnyParameters): QueryKey => ['rule-logic-config', params];
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (mode?: 'LIVE' | 'SHADOW' | 'ALL'): QueryKey =>
   ['rule-instances', mode].filter(Boolean);

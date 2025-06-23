@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Utils as QbUtils, Settings } from '@react-awesome-query-builder/ui';
+import { Settings } from '@react-awesome-query-builder/ui';
 import { isEqual } from 'lodash';
-import { useRuleLogicBuilderConfig } from '../helpers';
+import { useRuleLogicBuilderConfig } from '../../../helpers';
+import { collectVarNamesFromTree } from './helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
 import {
   LogicBuilderConfig,
   LogicBuilderValue,
   QueryBuilderConfig,
 } from '@/components/ui/LogicBuilder/types';
-import { isSuccess } from '@/utils/asyncResource';
-import { useIsChanged, usePrevious } from '@/utils/hooks';
+import { isSuccess, useFinishedSuccessfully } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
-  LogicAggregationVariable,
   LogicEntityVariableEntityEnum,
   LogicEntityVariableInUse,
   RuleMachineLearningVariable,
@@ -27,7 +26,6 @@ interface Props {
   jsonLogic: RuleLogic | undefined;
   entityVariableTypes?: LogicEntityVariableEntityEnum[];
   entityVariablesInUse?: LogicEntityVariableInUse[];
-  aggregationVariables: LogicAggregationVariable[] | undefined;
   mlVariables?: RuleMachineLearningVariable[];
   onChange?: (jsonLogic: RuleLogic | undefined) => void;
   configParams?: Partial<LogicBuilderConfig>;
@@ -36,23 +34,45 @@ interface Props {
 }
 type State = { tree: LogicBuilderValue; config: QueryBuilderConfig } | null;
 
-export function RuleLogicBuilder(props: Props) {
+export default function FiltersLogicBuilder(props: Props) {
   const { jsonLogic, logicBuilderProps, configParams, ruleType, onChange, settings } = props;
   const [state, setState] = useState<State>(null);
+
+  const [mentionedVariables, setMentionedVariables] = useState<string[]>([]);
 
   // Initialize state when config is loaded or changed
   const configRes = useRuleLogicBuilderConfig(
     ruleType,
     props.entityVariableTypes,
     props.entityVariablesInUse,
-    props.entityVariablesInUse?.map((v) => v.entityKey) ?? [],
-    props.aggregationVariables ?? [],
+    mentionedVariables,
+    [],
     configParams ?? {},
     props.mlVariables ?? [],
     settings,
   );
 
-  const isConfigChanged = useIsChanged(configRes);
+  const isFinishedSuccessfully = useFinishedSuccessfully(configRes);
+  useEffect(() => {
+    if ((isFinishedSuccessfully || state == null) && isSuccess(configRes)) {
+      setState((prevState) =>
+        prevState
+          ? {
+              ...prevState,
+              config: {
+                ...configRes.value,
+              },
+            }
+          : {
+              tree: jsonLogicParse(jsonLogic, configRes.value),
+              config: {
+                ...configRes.value,
+              },
+            },
+      );
+    }
+  }, [state, isFinishedSuccessfully, jsonLogic, configRes]);
+
   const handleChangeLogic = useCallback(
     (newState: State) => {
       if (newState == null || newState.tree == null) {
@@ -70,47 +90,14 @@ export function RuleLogicBuilder(props: Props) {
     },
     [jsonLogic, onChange],
   );
-  useEffect(() => {
-    if (isSuccess(configRes) && props.aggregationVariables) {
-      let isJsonLogicChanged = false;
-      const config = configRes.value;
-
-      let propsTree = jsonLogicParse(jsonLogic, config);
-
-      propsTree = propsTree ? QbUtils.checkTree(propsTree, config) : undefined;
-
-      if (state && !state.tree && jsonLogic) {
-        isJsonLogicChanged = true;
-      }
-      if (state && state.tree && jsonLogic) {
-        const jsonLogic = jsonLogicFormat(state.tree, config);
-        const propsJsonLogic = propsTree ? jsonLogicFormat(propsTree, config) : undefined;
-        isJsonLogicChanged = !isEqual(jsonLogic, propsJsonLogic);
-      }
-
-      if (state === null || isConfigChanged || isJsonLogicChanged) {
-        setState((prevState) => {
-          const newState: State = {
-            ...prevState,
-            tree: propsTree,
-            config,
-          };
-          handleChangeLogic(newState);
-          return newState;
-        });
-      }
-    }
-  }, [configRes, props.aggregationVariables, jsonLogic, state, isConfigChanged, handleChangeLogic]);
-
-  const prevAggregationVariables = usePrevious(props.aggregationVariables);
-  useEffect(() => {
-    if (!isEqual(prevAggregationVariables, props.aggregationVariables)) {
-      setState(null);
-    }
-  }, [prevAggregationVariables, props.aggregationVariables]);
 
   const handleChange = useCallback(
     (immutableTree: LogicBuilderValue, config: QueryBuilderConfig) => {
+      if (immutableTree) {
+        const usedVariables = collectVarNamesFromTree(immutableTree);
+        setMentionedVariables(usedVariables);
+      }
+
       setState((prevState) => {
         const newState = {
           ...prevState,

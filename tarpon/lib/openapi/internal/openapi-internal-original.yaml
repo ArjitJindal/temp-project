@@ -27,7 +27,7 @@ paths:
           description: AWS Gateway usage plan ID
       description: Generate a new Tarpon API key for a tenant
   /logic-config:
-    get:
+    post:
       summary: logic config - Get
       tags: []
       responses:
@@ -38,8 +38,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/LogicConfigResponse'
       operationId: get-logic-config
-      description: ''
-    parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: LogicConfigRequest
+              properties:
+                excludeSelectOptions:
+                  type: boolean
+                  description: Do not include select options into response to reduce payload size
+                filterVarNames:
+                  type: array
+                  description: Only include variables with these names
+                  items:
+                    type: string
+        required: true
   /rule-ml-models:
     get:
       summary: Rule ML Models - List
@@ -8185,12 +8199,8 @@ components:
       title: LogicConfigResponse
       type: object
       properties:
-        s3Url:
-          type: string
         logicConfig:
           $ref: '#/components/schemas/LogicConfig'
-      required:
-        - s3Url
     RuleMLModel:
       title: RuleMLModel
       type: object

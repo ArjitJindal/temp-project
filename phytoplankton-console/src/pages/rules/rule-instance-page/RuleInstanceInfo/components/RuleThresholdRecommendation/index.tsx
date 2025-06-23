@@ -16,7 +16,7 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useRuleLogicConfig } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
+import { useLogicEntityVariablesList } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { getOr, isLoading, map } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { THRESHOLD_RECOMMENDATIONS } from '@/utils/queries/keys';
@@ -40,7 +40,7 @@ interface Props {
 
 export default function RuleThresholdRecommendation(props: Props) {
   const { ruleInstance, entityVariables, aggregationVariables, type } = props;
-  const ruleLogicConfig = useRuleLogicConfig(type);
+  const ruleLogicConfig = useLogicEntityVariablesList(type);
   const [showRecommendations, setShowRecommendations] = useState<boolean>(false);
   const [isSimulationModeEnabled, setIsSimulationModeEnabled] = useSafeLocalStorageState(
     'SIMULATION_RULES',
@@ -69,8 +69,8 @@ export default function RuleThresholdRecommendation(props: Props) {
     navigate(makeUrl(`/rules/my-rules`));
   });
   return (
-    <AsyncResourceRenderer resource={ruleLogicConfig.data}>
-      {(logicData) => (
+    <AsyncResourceRenderer resource={ruleLogicConfig}>
+      {(variables) => (
         <>
           <Button
             isLoading={isLoading(recommendationResult.data)}
@@ -111,15 +111,15 @@ export default function RuleThresholdRecommendation(props: Props) {
                       const aggVar = aggregationVariables?.find((val) => val.key === item.varKey);
                       name = aggVar
                         ? aggVar.name ??
-                          getAggVarDefinition(aggVar, logicData.variables).uiDefinition.label ??
+                          getAggVarDefinition(aggVar, variables).uiDefinition.label ??
                           ''
                         : '';
                     } else {
                       const variable = entityVariables?.find((val) => val.key === item.varKey); // Todo
                       name =
                         variable?.name ??
-                        logicData.variables.find((val) => val.key === variable?.entityKey)
-                          ?.uiDefinition.label ??
+                        variables.find((val) => val.key === variable?.entityKey)?.uiDefinition
+                          .label ??
                         '';
                     }
                     return (

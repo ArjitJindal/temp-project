@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';

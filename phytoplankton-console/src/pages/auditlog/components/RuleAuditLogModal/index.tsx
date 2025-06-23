@@ -2,7 +2,6 @@ import { Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import COLORS from '@/components/ui/colors';
 import { AuditLog, RuleAction, RuleInstance } from '@/apis';
 import Modal from '@/components/library/Modal';
@@ -10,13 +9,7 @@ import { VariableTags } from '@/pages/rules/RuleConfiguration/RuleConfigurationV
 import { EntityVariableForm } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/EntityVariableForm';
 import { AggregationVariableForm } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/AggregationVariableForm';
 import { MlVariableForm } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/MlVariableForm';
-import LogicBuilder from '@/components/ui/LogicBuilder';
-import {
-  useLogicBuilderConfig,
-  useRuleLogicConfig,
-} from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import { useLogicEntityVariablesList } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { isSuccess } from '@/utils/asyncResource';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User } from '@/utils/user-utils';
@@ -27,6 +20,7 @@ import TableTemplate, {
 } from '@/pages/auditlog/components/TableTemplate';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { RiskLevel } from '@/utils/risk-levels';
+import LogicDisplay from '@/components/ui/LogicDisplay';
 
 interface Props {
   data: AuditLog;
@@ -80,59 +74,15 @@ const RuleAuditLogModal = (props: Props) => {
     newImage: newImageRest,
   });
 
-  const advancedOptions = summarizeAdvancedOptions({
-    ...data,
-    oldImage: oldTriggersOnHit,
-    newImage: newTriggersOnHit,
-  });
-
-  const riskLevelAdvancedOptions = Object.keys(newRiskLevelsTriggersOnHit || {})
-    .map((riskLevel) => {
-      return {
-        riskLevel,
-        item: summarizeAdvancedOptions({
-          ...data,
-          oldImage: oldRiskLevelsTriggersOnHit?.[riskLevel] || {},
-          newImage: newRiskLevelsTriggersOnHit?.[riskLevel] || {},
-        }),
-      };
-    })
-    .reduce((acc, curr) => {
-      acc[curr.riskLevel] = curr.item;
-      return acc;
-    }, {});
-
-  const newLogicBuildConfigRes = useLogicBuilderConfig(
-    data.newImage?.type,
-    undefined,
-    newEntityVariables,
-    newAggregationVariables,
-    {
-      mode: 'VIEW',
-    },
-    newMlVariables,
-  );
-
-  const oldLogicBuildConfigRes = useLogicBuilderConfig(
-    data.oldImage?.type,
-    undefined,
-    oldEntityVariables,
-    oldAggregationVariables,
-    {
-      mode: 'VIEW',
-    },
-    oldMlVariables,
-  );
-
   const settings = useSettings();
 
-  const oldRuleLogicConfig = useRuleLogicConfig(oldImage?.type ?? 'TRANSACTION');
-  const newRuleLogicConfig = useRuleLogicConfig(newImage.type);
+  const oldRuleLogicVars = useLogicEntityVariablesList(oldImage?.type ?? 'TRANSACTION');
+  const newRuleLogicVars = useLogicEntityVariablesList(newImage.type);
   const user = useAuth0User();
 
   const oldVariableDefinitions = useMemo(() => {
-    if (isSuccess(oldRuleLogicConfig.data)) {
-      return (oldRuleLogicConfig.data.value.variables ?? []).filter(
+    if (isSuccess(oldRuleLogicVars)) {
+      return (oldRuleLogicVars.value ?? []).filter(
         (v) =>
           (!v?.requiredFeatures?.length ||
             v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
@@ -140,11 +90,11 @@ const RuleAuditLogModal = (props: Props) => {
       );
     }
     return [];
-  }, [oldRuleLogicConfig.data, settings.features, user.tenantId]);
+  }, [oldRuleLogicVars, settings.features, user.tenantId]);
 
   const newVariableDefinitions = useMemo(() => {
-    if (isSuccess(newRuleLogicConfig.data)) {
-      return (newRuleLogicConfig.data.value.variables ?? []).filter(
+    if (isSuccess(newRuleLogicVars)) {
+      return (newRuleLogicVars.value ?? []).filter(
         (v) =>
           (!v?.requiredFeatures?.length ||
             v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
@@ -152,7 +102,7 @@ const RuleAuditLogModal = (props: Props) => {
       );
     }
     return [];
-  }, [newRuleLogicConfig.data, settings.features, user.tenantId]);
+  }, [newRuleLogicVars, settings.features, user.tenantId]);
 
   const handleViewVariable = (key: string, isOld = false) => {
     // Find the variable in either old or new variables
@@ -182,6 +132,70 @@ const RuleAuditLogModal = (props: Props) => {
   const showRiskLevels =
     settings.features?.includes('RISK_LEVELS') &&
     ((newRiskLevelLogic && newRiskLevelActions) || (oldRiskLevelLogic && oldRiskLevelActions));
+
+  const oldLogicToDisplay = useMemo(() => {
+    if (showRiskLevels && oldRiskLevelLogic) {
+      return oldRiskLevelLogic[selectedRiskLevel];
+    }
+    return oldLogic;
+  }, [showRiskLevels, oldRiskLevelLogic, selectedRiskLevel, oldLogic]);
+
+  const newLogicToDisplay = useMemo(() => {
+    if (showRiskLevels && newRiskLevelLogic) {
+      return newRiskLevelLogic[selectedRiskLevel];
+    }
+    return newLogic;
+  }, [showRiskLevels, newRiskLevelLogic, selectedRiskLevel, newLogic]);
+
+  const oldActionToDisplay = useMemo(() => {
+    if (showRiskLevels && oldRiskLevelActions) {
+      return oldRiskLevelActions[selectedRiskLevel];
+    }
+    return oldAction;
+  }, [showRiskLevels, oldRiskLevelActions, selectedRiskLevel, oldAction]);
+
+  const newActionToDisplay = useMemo(() => {
+    if (showRiskLevels && newRiskLevelActions) {
+      return newRiskLevelActions[selectedRiskLevel];
+    }
+    return newAction;
+  }, [showRiskLevels, newRiskLevelActions, selectedRiskLevel, newAction]);
+
+  const advancedOptionsToDisplay = useMemo(() => {
+    const advancedOptions = summarizeAdvancedOptions({
+      ...data,
+      oldImage: oldTriggersOnHit,
+      newImage: newTriggersOnHit,
+    });
+
+    const riskLevelAdvancedOptions = Object.keys(newRiskLevelsTriggersOnHit || {})
+      .map((riskLevel) => {
+        return {
+          riskLevel,
+          item: summarizeAdvancedOptions({
+            ...data,
+            oldImage: oldRiskLevelsTriggersOnHit?.[riskLevel] || {},
+            newImage: newRiskLevelsTriggersOnHit?.[riskLevel] || {},
+          }),
+        };
+      })
+      .reduce((acc, curr) => {
+        acc[curr.riskLevel] = curr.item;
+        return acc;
+      }, {});
+    if (showRiskLevels) {
+      return riskLevelAdvancedOptions[selectedRiskLevel] ?? [];
+    }
+    return advancedOptions;
+  }, [
+    data,
+    oldTriggersOnHit,
+    newTriggersOnHit,
+    newRiskLevelsTriggersOnHit,
+    oldRiskLevelsTriggersOnHit,
+    selectedRiskLevel,
+    showRiskLevels,
+  ]);
 
   return (
     <>
@@ -250,155 +264,55 @@ const RuleAuditLogModal = (props: Props) => {
             )}
           </>
 
-          {showRiskLevels && (
-            <>
+          <>
+            <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+              <Typography.Title level={4}>Risk level</Typography.Title>
+              <RiskLevelSwitch
+                value={selectedRiskLevel}
+                onChange={(newValue) => setSelectedRiskLevel(newValue as RiskLevel)}
+              />
+            </div>
+
+            {/* OLD LOGIC WITH RISK LEVELS */}
+            {oldLogicToDisplay && oldImage && (
               <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>Risk level</Typography.Title>
-                <RiskLevelSwitch
-                  value={selectedRiskLevel}
-                  onChange={(newValue) => setSelectedRiskLevel(newValue as RiskLevel)}
-                />
+                <Typography.Title level={4}>Old logic</Typography.Title>
+                <LogicDisplayWrapper image={oldImage} logic={oldLogicToDisplay} />
               </div>
+            )}
 
-              {/* OLD LOGIC WITH RISK LEVELS */}
-              {oldRiskLevelLogic && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>Old logic</Typography.Title>
-                  <AsyncResourceRenderer resource={oldLogicBuildConfigRes}>
-                    {(logicBuildConfig: QueryBuilderConfig) => {
-                      const propsTree = QbUtils.loadFromJsonLogic(
-                        oldRiskLevelLogic[selectedRiskLevel],
-                        logicBuildConfig,
-                      );
-                      return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                    }}
-                  </AsyncResourceRenderer>
-                </div>
-              )}
+            {/* NEW LOGIC WITH RISK LEVELS */}
+            {newLogicToDisplay && (
+              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+                <Typography.Title level={4}>New logic</Typography.Title>
+                <LogicDisplayWrapper image={newImage} logic={newLogicToDisplay} />
+              </div>
+            )}
 
-              {/* NEW LOGIC WITH RISK LEVELS */}
-              {newRiskLevelLogic && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>New logic</Typography.Title>
-                  <AsyncResourceRenderer resource={newLogicBuildConfigRes}>
-                    {(logicBuildConfig: QueryBuilderConfig) => {
-                      const propsTree = QbUtils.loadFromJsonLogic(
-                        newRiskLevelLogic[selectedRiskLevel],
-                        logicBuildConfig,
-                      );
-                      return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                    }}
-                  </AsyncResourceRenderer>
-                </div>
-              )}
+            {/* OLD ACTION WITH RISK LEVELS */}
+            {oldActionToDisplay && (
+              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+                <Typography.Title level={4}>Old action</Typography.Title>
+                <RuleActionStatus ruleAction={oldActionToDisplay as RuleAction} />
+              </div>
+            )}
 
-              {/* OLD ACTION WITH RISK LEVELS */}
-              {showRiskLevels && oldRiskLevelActions && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>Old action</Typography.Title>
-                  <RuleActionStatus
-                    ruleAction={oldRiskLevelActions[selectedRiskLevel] as RuleAction}
-                  />
-                </div>
-              )}
+            {/* NEW ACTION WITH RISK LEVELS */}
+            {newActionToDisplay && (
+              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+                <Typography.Title level={4}>New action</Typography.Title>
+                <RuleActionStatus ruleAction={newActionToDisplay as RuleAction} />
+              </div>
+            )}
 
-              {/* NEW ACTION WITH RISK LEVELS */}
-              {showRiskLevels && newRiskLevelActions && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>New action</Typography.Title>
-                  <RuleActionStatus
-                    ruleAction={newRiskLevelActions[selectedRiskLevel] as RuleAction}
-                  />
-                </div>
-              )}
-
-              {/* NEW AND OLD ADVANCED OPTIONS (TRIGGERS ON HIT) WITH RISK LEVELS */}
-              {showRiskLevels && newRiskLevelsTriggersOnHit && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>Advanced options</Typography.Title>
-                  <TableTemplate
-                    details={riskLevelAdvancedOptions[selectedRiskLevel]}
-                    showOldImage={showOldImage}
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {!showRiskLevels && (
-            <>
-              {/* OLD LOGIC */}
-              {oldLogic && !showRiskLevels && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>Old logic</Typography.Title>
-                  <AsyncResourceRenderer resource={oldLogicBuildConfigRes}>
-                    {(logicBuildConfig: QueryBuilderConfig) => {
-                      let propsTree;
-                      propsTree = QbUtils.loadFromJsonLogic(oldLogic, logicBuildConfig);
-                      propsTree = propsTree
-                        ? QbUtils.checkTree(propsTree, logicBuildConfig)
-                        : undefined;
-
-                      return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                    }}
-                  </AsyncResourceRenderer>
-                </div>
-              )}
-
-              {/* NEW LOGIC */}
-              {newLogic && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>New logic</Typography.Title>
-                  <AsyncResourceRenderer resource={newLogicBuildConfigRes}>
-                    {(logicBuildConfig: QueryBuilderConfig) => {
-                      let propsTree;
-                      if (showRiskLevels && newRiskLevelLogic) {
-                        propsTree = QbUtils.loadFromJsonLogic(
-                          newRiskLevelLogic[selectedRiskLevel],
-                          logicBuildConfig,
-                        );
-                      } else {
-                        propsTree = QbUtils.loadFromJsonLogic(newLogic, logicBuildConfig);
-                      }
-                      propsTree = propsTree
-                        ? QbUtils.checkTree(propsTree, logicBuildConfig)
-                        : undefined;
-
-                      return <LogicBuilder value={propsTree} config={logicBuildConfig} />;
-                    }}
-                  </AsyncResourceRenderer>
-                </div>
-              )}
-
-              {/* OLD ACTION */}
-              {oldAction && !showRiskLevels && (
-                <>
-                  <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                    <Typography.Title level={4}>Old action</Typography.Title>
-                    <RuleActionStatus ruleAction={oldAction as RuleAction} />
-                  </div>
-                </>
-              )}
-
-              {/* NEW ACTION */}
-              {!showRiskLevels && newAction && (
-                <>
-                  <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                    <Typography.Title level={4}>New action</Typography.Title>
-                    <RuleActionStatus ruleAction={newAction as RuleAction} />
-                  </div>
-                </>
-              )}
-
-              {/* NEW AND OLD ADVANCED OPTIONS (TRIGGERS ON HIT) */}
-              {advancedOptions.length > 0 && (
-                <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                  <Typography.Title level={4}>Advanced options</Typography.Title>
-                  <TableTemplate details={advancedOptions} showOldImage={showOldImage} />
-                </div>
-              )}
-            </>
-          )}
+            {/* NEW AND OLD ADVANCED OPTIONS (TRIGGERS ON HIT) WITH RISK LEVELS */}
+            {advancedOptionsToDisplay.length > 0 && (
+              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+                <Typography.Title level={4}>Advanced options</Typography.Title>
+                <TableTemplate details={advancedOptionsToDisplay} showOldImage={showOldImage} />
+              </div>
+            )}
+          </>
 
           {/* Add variable form modals */}
           {viewingVariable?.type === 'entity' && (
@@ -467,3 +381,26 @@ const RuleAuditLogModal = (props: Props) => {
 };
 
 export default RuleAuditLogModal;
+
+/*
+  Helpers
+*/
+function LogicDisplayWrapper(props: { logic: object | undefined; image: RuleInstance }) {
+  const { logic, image } = props;
+  const {
+    type,
+    logicEntityVariables = [],
+    logicAggregationVariables = [],
+    logicMachineLearningVariables = [],
+  } = image ?? {};
+
+  return (
+    <LogicDisplay
+      logic={logic}
+      entityVariables={logicEntityVariables}
+      aggregationVariables={logicAggregationVariables}
+      machineLearningVariables={logicMachineLearningVariables}
+      ruleType={type}
+    />
+  );
+}

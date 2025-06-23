@@ -8,10 +8,9 @@ import { singular } from 'pluralize'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AsyncLogicEngine } from 'json-logic-engine'
 import { MongoClient } from 'mongodb'
-import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { MachineLearningRepository } from '../machine-learning/machine-learning-repository'
 import { getLogicVariableByKey } from '../logic-evaluator/variables'
-import { getJsonLogicEngine, LogicEvaluator } from '../logic-evaluator/engine'
+import { getJsonLogicEngine } from '../logic-evaluator/engine'
 import {
   canAggregate,
   getVariableKeysFromLogic,
@@ -57,8 +56,6 @@ import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { notNullish } from '@/utils/array'
-import { getS3Client } from '@/utils/s3'
-import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import {
   DefaultApiGetRuleMlModelsRequest,
@@ -69,8 +66,6 @@ import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityV
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ModelTier } from '@/utils/llms/base-service'
-
-export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -137,19 +132,6 @@ export class RuleService {
       await ruleRepository.createOrUpdateRule(rule)
     }
     console.info(`Synced ${RULES_LIBRARY.length} rules`)
-
-    if (!envIs('local')) {
-      const s3Client = getS3Client()
-      const logicEvaluator = new LogicEvaluator(FLAGRIGHT_TENANT_ID, dynamoDb)
-      // Upload v8Config in JSON format to S3 using s3Client
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.SHARED_ASSETS_BUCKET,
-          Key: RULE_LOGIC_CONFIG_S3_KEY,
-          Body: JSON.stringify(logicEvaluator.getLogicConfig()),
-        })
-      )
-    }
   }
 
   async getAllRuleFilters(): Promise<RuleFilters> {

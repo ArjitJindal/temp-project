@@ -6,7 +6,7 @@ import {
   RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
-import { useLogicBuilderConfig } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
+import { useRuleLogicBuilderConfig } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import LogicBuilder from '@/components/ui/LogicBuilder';
@@ -33,10 +33,11 @@ export default function RuleLogicDisplay(props: Props) {
     logicMachineLearningVariables,
   } = props;
 
-  const newLogicBuildConfigRes = useLogicBuilderConfig(
+  const newLogicBuildConfigRes = useRuleLogicBuilderConfig(
     ruleType,
     undefined,
     logicEntityVariables,
+    logicEntityVariables?.map((v) => v.entityKey) ?? [],
     logicAggregationVariables ?? [],
     CONFIG_PARAMS,
     logicMachineLearningVariables ?? [],
