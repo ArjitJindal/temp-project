@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { SanctionsHitService } from '@/services/sanctionsHit'
 import { SanctionsService } from '@/services/sanctions'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import {
@@ -33,6 +34,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const sanctionsHitService = await SanctionsHitService.fromEvent(event)
     const sanctionsService = await SanctionsService.fromEvent(event)
     const handlers = new Handlers()
 
@@ -83,7 +85,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerSearchSanctionsHits(
       async (_ctx, request: DefaultApiSearchSanctionsHitsRequest) => {
-        return await sanctionsService.searchHits({
+        return await sanctionsHitService.searchHits({
           ...request,
           pageSize: request.pageSize,
           fromCursorKey: request.start,
@@ -121,7 +123,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         const { alertId, sanctionHitIds, updates } =
           SanctionHitsStatusUpdateRequest
 
-        return await sanctionsService.changeSanctionsHitsStatus(
+        return await sanctionsHitService.changeSanctionsHitsStatus(
           alertId,
           sanctionHitIds,
           updates

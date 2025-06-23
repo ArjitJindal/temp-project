@@ -216,6 +216,7 @@ export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
 export class RulesEngineService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
+  mongoDb: MongoClient
   transactionRepository: DynamoDbTransactionRepository
   transactionEventRepository: TransactionEventRepository
   ruleRepository: RuleRepository
@@ -232,9 +233,11 @@ export class RulesEngineService {
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb?: MongoClient
+    mongoDb: MongoClient
   ) {
+    // this need to be changed
     this.dynamoDb = dynamoDb
+    this.mongoDb = mongoDb
     this.tenantId = tenantId
     this.ruleLogicEvaluator = logicEvaluator
     this.transactionRepository = new DynamoDbTransactionRepository(
@@ -276,8 +279,8 @@ export class RulesEngineService {
       }
     )
     this.sanctionsService = new SanctionsService(this.tenantId, {
-      mongoDb: mongoDb as MongoClient,
-      dynamoDb: dynamoDb as DynamoDBDocumentClient,
+      mongoDb,
+      dynamoDb,
     })
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
@@ -290,7 +293,8 @@ export class RulesEngineService {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator)
+    const mongoDb = await getMongoDbClient()
+    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator, mongoDb)
   }
 
   public async verifyAllUsersRules(): Promise<
@@ -562,7 +566,11 @@ export class RulesEngineService {
 
     try {
       await Promise.all([
-        sendTransactionAggregationTasks(aggregationMessages),
+        sendTransactionAggregationTasks(
+          aggregationMessages,
+          this.dynamoDb,
+          this.mongoDb
+        ),
         this.updateGlobalAggregation(savedTransaction, []),
         isAnyAsyncRules &&
           sendAsyncRuleTasks([
@@ -695,7 +703,11 @@ export class RulesEngineService {
     }
 
     await Promise.all([
-      sendTransactionAggregationTasks(aggregationMessages),
+      sendTransactionAggregationTasks(
+        aggregationMessages,
+        this.dynamoDb,
+        this.mongoDb
+      ),
       updateGlobalAggregationPromise,
       isAnyAsyncRules &&
         sendAsyncRuleTasks([
@@ -936,7 +948,11 @@ export class RulesEngineService {
           status: finalStatus,
         }
       ),
-      sendTransactionAggregationTasks(aggregationMessages),
+      sendTransactionAggregationTasks(
+        aggregationMessages,
+        this.dynamoDb,
+        this.mongoDb
+      ),
     ])
     if (finalStatus !== oldStatus) {
       await sendStatusChangeWebhook(
@@ -1028,7 +1044,11 @@ export class RulesEngineService {
         last(transactionEventsSorted) as TransactionEvent,
         { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
       ),
-      sendTransactionAggregationTasks(aggregationMessages),
+      sendTransactionAggregationTasks(
+        aggregationMessages,
+        this.dynamoDb,
+        this.mongoDb
+      ),
       isAnyAsyncRules &&
         sendAsyncRuleTasks([
           {

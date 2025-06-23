@@ -1,9 +1,9 @@
 import { AttributeSet } from './attribute-set'
 import {
+  InputData,
   AttributeBuilder,
   BuilderKey,
-  InputData,
-} from '@/services/copilot/attributes/builder'
+} from '@/@types/copilot/attributeBuilder'
 import { traceable } from '@/core/xray'
 
 @traceable

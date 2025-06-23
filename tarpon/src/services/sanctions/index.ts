@@ -2,29 +2,20 @@ import { v4 as uuidv4 } from 'uuid'
 import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
-import pluralize from 'pluralize'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { MongoClient } from 'mongodb'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { AlertsRepository } from '../alerts/repository'
-import { AlertsService } from '../alerts'
-import { CaseService } from '../cases'
-import { UserService } from '../users'
+import { MongoClient } from 'mongodb'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
-import {
-  SanctionsWhitelistEntityRepository,
-  WhitelistSubject,
-} from './repositories/sanctions-whitelist-entity-repository'
+import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { AcurisProvider } from './providers/acuris-provider'
 import { MongoSanctionSourcesRepository } from './repositories/sanction-source-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
-import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -37,25 +28,21 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { traceable } from '@/core/xray'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
-import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
-import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-  iterateCursorItems,
 } from '@/utils/pagination'
 import {
   GenericSanctionsSearchType,
   RuleStage,
   SanctionsDataProviderName,
-  SanctionsEntity,
   SanctionsHit,
   SanctionsSearchResponse,
   SanctionsSourceListResponse,
@@ -72,7 +59,7 @@ import {
   getDefaultProviders,
 } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
@@ -88,25 +75,40 @@ export type ProviderConfig = {
 @traceable
 export class SanctionsService {
   complyAdvantageSearchProfileId: string | undefined
-  sanctionsSearchRepository!: SanctionsSearchRepository
-  sanctionsHitsRepository!: SanctionsHitsRepository
-  sanctionsSourcesRepository!: MongoSanctionSourcesRepository
-  sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
-  sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
-  counterRepository!: CounterRepository
+  sanctionsSearchRepository: SanctionsSearchRepository
+  sanctionsHitsRepository: SanctionsHitsRepository
+  sanctionsSourcesRepository: MongoSanctionSourcesRepository
+  sanctionsWhitelistEntityRepository: SanctionsWhitelistEntityRepository
+  sanctionsScreeningDetailsRepository: SanctionsScreeningDetailsRepository
+  counterRepository: CounterRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
-  caseService!: CaseService
-  userService!: UserService
-  alertsService!: AlertsService
-  connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBClient
 
   constructor(
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
   ) {
     this.tenantId = tenantId
-    this.connections = connections
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
+    this.sanctionsSearchRepository = new SanctionsSearchRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+    this.sanctionsWhitelistEntityRepository =
+      new SanctionsWhitelistEntityRepository(this.tenantId, this.mongoDb)
+    this.sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(this.tenantId, this.mongoDb)
+    this.counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+    this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
+      this.mongoDb
+    )
   }
 
   public static async fromEvent(
@@ -115,41 +117,13 @@ export class SanctionsService {
     >
   ) {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const [caseService, userService, alertsService] = await Promise.all([
-      CaseService.fromEvent(event),
-      UserService.fromEvent(event),
-      AlertsService.fromEvent(event),
-    ])
-    const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const sanctionsService = new SanctionsService(tenantId, {
       mongoDb,
       dynamoDb,
     })
-    sanctionsService.caseService = caseService
-    sanctionsService.userService = userService
-    sanctionsService.alertsService = alertsService
     return sanctionsService
-  }
-
-  private async initializeInternal() {
-    const mongoDb = await getMongoDbClient()
-    this.sanctionsSearchRepository = new SanctionsSearchRepository(
-      this.tenantId,
-      mongoDb
-    )
-    this.sanctionsWhitelistEntityRepository =
-      new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
-    this.sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(this.tenantId, mongoDb)
-    this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
-    this.sanctionsHitsRepository = new SanctionsHitsRepository(
-      this.tenantId,
-      mongoDb
-    )
-    this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
-      mongoDb
-    )
   }
 
   private async getProvider(
@@ -178,20 +152,12 @@ export class SanctionsService {
           providerConfig.listId
         )
     }
-    throw new Error(`Unknown provider ${provider}`)
-  }
-
-  private async initialize() {
-    this.initializationPromise =
-      this.initializationPromise ?? this.initializeInternal()
-    await this.initializationPromise
   }
 
   public async refreshSearch(
     providerSearchId: string,
     providerName: SanctionsDataProviderName
   ): Promise<boolean> {
-    await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByProviderSearchId(
         providerName,
@@ -200,7 +166,10 @@ export class SanctionsService {
     if (!result) {
       return false
     }
-    const provider = await this.getProvider(providerName, this.connections)
+    const provider = await this.getProvider(providerName, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const response = await provider.getSearch(providerSearchId)
 
     await this.sanctionsHitsRepository.addNewHits(
@@ -301,7 +270,6 @@ export class SanctionsService {
       }
     }
 
-    await this.initialize()
     const providers = getDefaultProviders()
     const providerName = providerOverrides?.providerName || providers[0]
 
@@ -351,7 +319,7 @@ export class SanctionsService {
     if (shouldSearch) {
       const provider = await this.getProvider(
         providerName,
-        this.connections,
+        { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
         providerOverrides
       )
 
@@ -483,7 +451,7 @@ export class SanctionsService {
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
     // TODO: also based on params, filter return results based on dates
-    await this.initialize()
+
     return this.sanctionsSearchRepository.getSearchHistory(params)
   }
 
@@ -492,7 +460,6 @@ export class SanctionsService {
     page?: number,
     pageSize?: number
   ): Promise<SanctionsSearchHistory | null> {
-    await this.initialize()
     return await this.sanctionsSearchRepository.getSearchResultPaginated(
       searchId,
       page ?? 1,
@@ -504,7 +471,6 @@ export class SanctionsService {
     from: number
     to: number
   }): Promise<SanctionsScreeningStats> {
-    await this.initialize()
     return await this.sanctionsScreeningDetailsRepository.getSanctionsScreeningStats(
       timeRange
     )
@@ -513,7 +479,6 @@ export class SanctionsService {
   public async getSanctionsScreeningDetails(
     params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
   ): Promise<SanctionsScreeningDetailsResponse> {
-    await this.initialize()
     return this.sanctionsScreeningDetailsRepository.getSanctionsScreeningDetails(
       params
     )
@@ -524,7 +489,6 @@ export class SanctionsService {
     update: SanctionsSearchMonitoring,
     providerOverrides?: ProviderConfig
   ): Promise<void> {
-    await this.initialize()
     const search = await this.getSearchHistory(searchId)
     if (!search) {
       logger.error(`Cannot find search ${searchId}. Skip updating search.`)
@@ -537,32 +501,13 @@ export class SanctionsService {
 
     const provider = await this.getProvider(
       search.provider,
-      this.connections,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
       providerOverrides
     )
     await provider.setMonitoring(providerSearchId, update.enabled)
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,
       update
-    )
-  }
-
-  public async addWhitelistEntities(
-    provider: SanctionsDataProviderName,
-    entities: SanctionsEntity[],
-    subject: WhitelistSubject,
-    options?: {
-      reason?: string[]
-      comment?: string
-      createdAt?: number
-    }
-  ) {
-    await this.initialize()
-    return await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
-      provider,
-      entities,
-      subject,
-      options
     )
   }
 
@@ -573,7 +518,6 @@ export class SanctionsService {
       filterEntityType?: SanctionsDetailsEntityType[]
     } & CursorPaginationParams
   ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
-    await this.initialize()
     return this.sanctionsWhitelistEntityRepository.searchWhitelistEntities(
       params
     )
@@ -582,120 +526,15 @@ export class SanctionsService {
   public async deleteWhitelistRecord(
     sanctionsWhitelistIds: string[]
   ): Promise<void> {
-    await this.initialize()
     await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
       sanctionsWhitelistIds
     )
-  }
-
-  public async deleteWhitelistRecordsByHits(
-    sanctionsHitIds: string[]
-  ): Promise<void> {
-    await this.initialize()
-    const hitsIterator = iterateCursorItems(async ({ from }) =>
-      this.sanctionsHitsRepository.searchHits({
-        fromCursorKey: from,
-        filterHitIds: sanctionsHitIds,
-      })
-    )
-    const ids: string[] = []
-    for await (const hit of hitsIterator) {
-      const whitelistEntriesIterator = iterateCursorItems(async ({ from }) =>
-        this.sanctionsWhitelistEntityRepository.searchWhitelistEntities({
-          fromCursorKey: from,
-          filterUserId: hit.hitContext?.userId
-            ? [hit.hitContext?.userId]
-            : undefined,
-          filterEntity: hit.hitContext?.entity
-            ? [hit.hitContext?.entity]
-            : undefined,
-          filterEntityType: hit.hitContext?.entityType
-            ? [hit.hitContext?.entityType]
-            : undefined,
-        })
-      )
-      for await (const entry of whitelistEntriesIterator) {
-        ids.push(entry.sanctionsWhitelistId)
-      }
-    }
-    await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(ids)
-  }
-
-  /*
-    Methods to work with hits
-   */
-  public async searchHits(
-    params: {
-      filterHitIds?: string[]
-      filterSearchId?: string[]
-      filterPaymentMethodId?: string[]
-      filterStatus?: SanctionsHitStatus[]
-      alertId?: string
-      ruleId?: string
-      filterUserId?: string
-      filterScreeningHitEntityType?: SanctionsDetailsEntityType
-    } & CursorPaginationParams
-  ): Promise<SanctionsHitListResponse> {
-    if (params.alertId) {
-      const alertsRepository = new AlertsRepository(this.tenantId, {
-        mongoDb: await getMongoDbClient(),
-        dynamoDb: getDynamoDbClient(),
-      })
-      const alert = await alertsRepository.getAlertById(params.alertId)
-      if (alert) {
-        if (params.filterPaymentMethodId) {
-          params.filterSearchId = undefined
-        }
-        params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails
-          ?.filter((data) => {
-            const paymentMethodId = data.hitContext?.paymentMethodId
-            const matchesEntityType =
-              !params.filterScreeningHitEntityType ||
-              data.entityType === params.filterScreeningHitEntityType
-
-            if (params.filterPaymentMethodId) {
-              return (
-                matchesEntityType &&
-                params.filterPaymentMethodId.includes(paymentMethodId ?? '')
-              )
-            }
-
-            const matchesSearchId = params.filterSearchId?.includes(
-              data.searchId
-            )
-            return matchesSearchId && matchesEntityType && !paymentMethodId
-          })
-          .flatMap(({ sanctionHitIds }) => sanctionHitIds ?? [])
-        params.ruleId = alert.ruleId
-        params.filterUserId =
-          alert.ruleHitMeta?.sanctionsDetails?.[0]?.hitContext?.userId ??
-          undefined
-      }
-    }
-    await this.initialize()
-    return await this.sanctionsHitsRepository.searchHits(params)
-  }
-
-  public async updateHits(
-    sanctionsHitIds: string[],
-    updates: SanctionHitStatusUpdateRequest
-  ): Promise<{ modifiedCount: number }> {
-    await this.initialize()
-    const { modifiedCount } =
-      await this.sanctionsHitsRepository.updateHitsByIds(sanctionsHitIds, {
-        status: updates.status,
-        clearingReason: updates.reasons,
-        comment: updates.comment,
-      })
-    // todo: add audit log record
-    return { modifiedCount }
   }
 
   public async getSanctionsSources(
     filterSourceType?: SanctionsSourceType,
     searchTerm?: string
   ): Promise<SanctionsSourceListResponse> {
-    await this.initialize()
     const sources = await this.sanctionsSourcesRepository.getSanctionsSources(
       filterSourceType,
       [],
@@ -716,128 +555,5 @@ export class SanctionsService {
           return picked
         }) ?? [],
     }
-  }
-
-  public async changeSanctionsHitsStatus(
-    alertId: string,
-    sanctionHitIds: string[],
-    updates: SanctionHitStatusUpdateRequest
-  ): Promise<{ modifiedCount: number }> {
-    await this.initialize()
-    const result = await this.updateHits(sanctionHitIds, updates)
-    const whitelistUpdateComment = await this.handleWhitelistUpdates(
-      alertId,
-      sanctionHitIds,
-      updates
-    )
-    await this.addComments(
-      alertId,
-      sanctionHitIds,
-      updates,
-      whitelistUpdateComment
-    )
-    return result
-  }
-
-  private async handleWhitelistUpdates(
-    alertId: string,
-    sanctionHitIds: string[],
-    updates: SanctionHitStatusUpdateRequest
-  ): Promise<string | null> {
-    const { whitelistHits, removeHitsFromWhitelist } = updates
-    let whitelistUpdateComment: string | null = null
-
-    if (updates.status === 'OPEN' && removeHitsFromWhitelist) {
-      await this.deleteWhitelistRecordsByHits(sanctionHitIds)
-    }
-
-    if (updates.status === 'CLEARED' && whitelistHits) {
-      for await (const hit of this.sanctionsHitsRepository.iterateHits({
-        filterHitIds: sanctionHitIds,
-      })) {
-        if (hit.hitContext && hit.hitContext.userId != null && hit.entity) {
-          const { newRecords } = await this.addWhitelistEntities(
-            hit.provider,
-            [hit.entity],
-            {
-              userId: hit.hitContext.userId,
-              entity: hit.hitContext.entity,
-              entityType: hit.hitContext.entityType,
-              searchTerm: hit.hitContext.searchTerm,
-              paymentMethodId: hit.hitContext.paymentMethodId,
-              alertId: alertId,
-            },
-            {
-              reason: updates.reasons,
-              comment: updates.comment,
-            }
-          )
-
-          if (newRecords.length > 0) {
-            whitelistUpdateComment = `${pluralize(
-              'record',
-              newRecords.length,
-              true
-            )} added to whitelist for '${hit.hitContext.userId}' user`
-          }
-        }
-      }
-    }
-
-    return whitelistUpdateComment
-  }
-
-  private async addComments(
-    alertId: string,
-    sanctionHitIds: string[],
-    updates: SanctionHitStatusUpdateRequest,
-    whitelistUpdateComment: string | null
-  ): Promise<void> {
-    const isSingleHit = sanctionHitIds.length === 1
-    const reasonsComment = AlertsService.formatReasonsComment(updates)
-
-    // Add user comment
-    const caseItem = await this.caseService.getCaseByAlertId(alertId)
-    const userId =
-      caseItem?.caseUsers?.origin?.userId ??
-      caseItem?.caseUsers?.destination?.userId ??
-      null
-
-    if (userId != null) {
-      let userCommentBody = `${sanctionHitIds.join(', ')} ${
-        isSingleHit ? 'hit is' : 'hits are'
-      } are moved to "${updates.status}" status from alert '${alertId}'`
-      if (reasonsComment !== '') {
-        userCommentBody += `. Reasons: ` + reasonsComment
-      }
-      if (whitelistUpdateComment !== '') {
-        userCommentBody += `. ${whitelistUpdateComment}`
-      }
-      if (updates?.comment) {
-        userCommentBody += `\n\nComment: ${updates.comment}`
-      }
-      await this.userService.saveUserComment(userId, {
-        body: userCommentBody,
-        files: updates.files,
-      })
-    }
-
-    // Add alert comment
-    let alertCommentBody = `${sanctionHitIds.join(', ')} ${
-      isSingleHit ? 'hit is' : 'hits are'
-    } moved to "${updates.status}" status`
-    if (reasonsComment !== '') {
-      alertCommentBody += `. Reasons: ` + reasonsComment
-    }
-    if (whitelistUpdateComment) {
-      alertCommentBody += `. ${whitelistUpdateComment}`
-    }
-    if (updates?.comment) {
-      alertCommentBody += `\n\nComment: ${updates.comment}`
-    }
-    await this.alertsService.saveComment(alertId, {
-      body: alertCommentBody,
-      files: updates.files,
-    })
   }
 }

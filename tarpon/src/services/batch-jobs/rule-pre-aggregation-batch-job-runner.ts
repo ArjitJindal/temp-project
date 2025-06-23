@@ -1,4 +1,5 @@
 import { chunk, compact, isEmpty, memoize, uniq, uniqBy } from 'lodash'
+import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
@@ -68,8 +69,10 @@ type PreAggregationTask =
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private setDeduplicationIds = new Set<string>()
   private dynamoDb!: DynamoDBDocumentClient
+  private mongoDb!: MongoClient
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
+    this.mongoDb = await getMongoDbClient()
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -257,7 +260,11 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
     if (envIs('local')) {
       for (const message of dedupMessages) {
-        await handleV8PreAggregationTask(JSON.parse(message.MessageBody))
+        await handleV8PreAggregationTask(
+          JSON.parse(message.MessageBody),
+          this.dynamoDb,
+          this.mongoDb
+        )
       }
     } else {
       const transientRepository = new TransientRepository(

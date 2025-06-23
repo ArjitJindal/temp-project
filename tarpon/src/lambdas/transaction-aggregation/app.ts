@@ -1,6 +1,8 @@
 import { SQSEvent } from 'aws-lambda'
 import { InternalServerError } from 'http-errors'
 import { uniqBy } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   TransactionAggregationTask,
@@ -39,7 +41,8 @@ import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-rep
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 export async function handleV8TransactionAggregationTask(
-  task: V8TransactionAggregationTask
+  task: V8TransactionAggregationTask,
+  dynamoDb: DynamoDBDocumentClient
 ) {
   updateLogMetadata({
     tenantId: task.tenantId,
@@ -47,7 +50,6 @@ export async function handleV8TransactionAggregationTask(
     transactionId: task.transaction.transactionId,
     type: task.type,
   })
-  const dynamoDb = getDynamoDbClient()
   const ruleEvaluator = new LogicEvaluator(task.tenantId, dynamoDb)
   if (task.aggregationVariable) {
     if (!task.direction) {
@@ -105,7 +107,9 @@ export async function handleV8TransactionAggregationTask(
 }
 
 export async function handleV8PreAggregationTask(
-  task: V8LogicAggregationRebuildTask
+  task: V8LogicAggregationRebuildTask,
+  dynamoDb: DynamoDBDocumentClient,
+  mongoDb: MongoClient
 ) {
   updateLogMetadata({
     aggregationVariableKey: task.aggregationVariable.key,
@@ -115,8 +119,6 @@ export async function handleV8PreAggregationTask(
     entity: task.entity,
     jobId: task.jobId,
   })
-  const dynamoDb = getDynamoDbClient()
-  const mongoDb = await getMongoDbClient()
   const jobRepository = new BatchJobRepository(task.tenantId, mongoDb)
 
   const ruleInstanceRepository = new RuleInstanceRepository(task.tenantId, {
@@ -242,10 +244,10 @@ export async function handleV8PreAggregationTask(
 }
 
 export async function handleTransactionAggregationTask(
-  task: TransactionAggregationTask
+  task: TransactionAggregationTask,
+  dynamoDb: DynamoDBDocumentClient,
+  mongoDb: MongoClient
 ) {
-  const dynamoDb = getDynamoDbClient()
-  const mongoDb = await getMongoDbClient()
   const ruleInstanceRepository = new RuleInstanceRepository(task.tenantId, {
     dynamoDb,
   })
@@ -380,6 +382,8 @@ export async function handleTransactionAggregationTask(
 
 export const transactionAggregationHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
     await Promise.all(
       event.Records.map(async (record) => {
         const task = JSON.parse(record.body) as
@@ -394,9 +398,9 @@ export const transactionAggregationHandler = lambdaConsumer()(
                 | V8TransactionAggregationTask
                 | V8LogicAggregationRebuildTask
               if (v8Task.type === 'TRANSACTION_AGGREGATION') {
-                await handleV8TransactionAggregationTask(v8Task)
+                await handleV8TransactionAggregationTask(v8Task, dynamoDb)
               } else if (v8Task.type === 'PRE_AGGREGATION') {
-                await handleV8PreAggregationTask(v8Task)
+                await handleV8PreAggregationTask(v8Task, dynamoDb, mongoDb)
               }
             } else {
               updateLogMetadata(task)
@@ -408,7 +412,11 @@ export const transactionAggregationHandler = lambdaConsumer()(
                   ruleInstanceId: legacyTask.ruleInstanceId,
                 }
               }
-              await handleTransactionAggregationTask(legacyTask)
+              await handleTransactionAggregationTask(
+                legacyTask,
+                dynamoDb,
+                mongoDb
+              )
             }
           },
           {

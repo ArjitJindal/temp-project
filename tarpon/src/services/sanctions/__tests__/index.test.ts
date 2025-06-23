@@ -1,4 +1,5 @@
 import { omit } from 'lodash'
+import { MongoClient } from 'mongodb'
 import { SanctionsService } from '..'
 import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
 import { MOCK_SEARCH_1794517025_DATA } from '@/test-utils/resources/mock-ca-search-response'
@@ -18,6 +19,8 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { SanctionsHitService } from '@/services/sanctionsHit'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const mockFetch = mockComplyAdvantageSearch()
@@ -32,6 +35,21 @@ const getTestSanctionsService = async () => {
   })
 }
 
+const getTestSanctionsHitService = async () => {
+  return new SanctionsHitService(
+    TEST_TENANT_ID,
+    {
+      mongoDb: await getMongoDbClient(),
+      dynamoDb: getDynamoDbClient(),
+    },
+    getS3ClientByEvent(null as any),
+    {
+      documentBucketName: 'test-bucket',
+      tmpBucketName: 'test-bucket',
+    }
+  )
+}
+
 const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
   (acc, x) => acc + x.content.length,
   0
@@ -39,8 +57,10 @@ const totalMockHitsCount = MOCK_SEARCH_1794517025_DATA.entities.reduce(
 
 describe('Sanctions Service', () => {
   let testSearchId = ''
+  let mongoDb: MongoClient
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
     mockFetch.mockClear()
   })
 
@@ -220,6 +240,7 @@ describe('Sanctions Service', () => {
 
     test('Filter out whitelist entities (global level)', async () => {
       const service = await getTestSanctionsService()
+      const sanctionsHitService = await getTestSanctionsHitService()
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -238,7 +259,7 @@ describe('Sanctions Service', () => {
         expect(hits).toHaveLength(totalMockHitsCount)
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
-        await service.addWhitelistEntities(
+        await sanctionsHitService.addWhitelistEntities(
           'comply-advantage',
           entityList.content.map((ca) =>
             complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
@@ -287,8 +308,9 @@ describe('Sanctions Service', () => {
         )
         expect(hits).toHaveLength(totalMockHitsCount)
       }
+      const sanctionsHitService = await getTestSanctionsHitService()
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
-        await service.addWhitelistEntities(
+        await sanctionsHitService.addWhitelistEntities(
           'comply-advantage',
           entityList.content.map((ca) =>
             complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
@@ -343,7 +365,7 @@ describe('Sanctions Service', () => {
       ])
       const sanctionsSearchRepository = new SanctionsSearchRepository(
         TEST_TENANT_ID,
-        await getMongoDbClient()
+        mongoDb
       )
       const searchHistory = await sanctionsSearchRepository.getSearchResult(
         testSearchId
@@ -352,10 +374,7 @@ describe('Sanctions Service', () => {
     })
 
     test('Old hits should not be added as new', async () => {
-      const repository = new SanctionsHitsRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
+      const repository = new SanctionsHitsRepository(TEST_TENANT_ID, mongoDb)
       const rawHits = [...new Array(10)].map(() => ({
         ...SAMPLE_HIT_1,
         id: `${Date.now()}`,

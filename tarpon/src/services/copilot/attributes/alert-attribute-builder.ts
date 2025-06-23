@@ -1,7 +1,11 @@
 import { compact, isEmpty, isNil, omitBy, uniqBy } from 'lodash'
 import { ruleNarratives } from '../rule-narratives'
-import { AttributeBuilder, BuilderKey, InputData } from './builder'
 import { AttributeSet, RuleAttribute } from './attribute-set'
+import {
+  InputData,
+  AttributeBuilder,
+  BuilderKey,
+} from '@/@types/copilot/attributeBuilder'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { getUserName } from '@/utils/helpers'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'

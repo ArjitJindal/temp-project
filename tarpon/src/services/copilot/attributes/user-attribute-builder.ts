@@ -1,9 +1,9 @@
-import { AttributeSet } from './attribute-set'
+import { AttributeSet } from '@/services/copilot/attributes/attribute-set'
 import {
   AttributeBuilder,
   BuilderKey,
   InputData,
-} from '@/services/copilot/attributes/builder'
+} from '@/@types/copilot/attributeBuilder'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { consumerName } from '@/utils/helpers'

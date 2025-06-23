@@ -1,4 +1,3 @@
-import { ApiUsageMetrics } from './api-usage-metrics-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT, MONTH_DATE_FORMAT_JS } from '@/core/constants'
 import { Metric } from '@/core/cloudwatch/metrics'
@@ -19,6 +18,13 @@ export type MonthlyMetricStats = {
     metric: Metric
     value: number
   }>
+}
+
+export type ApiUsageMetrics = {
+  name: string
+  value: string | number | undefined
+  date: string
+  collectedTimestamp: number
 }
 
 export async function getDailyUsage(

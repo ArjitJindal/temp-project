@@ -28,6 +28,7 @@ import {
   MonthlyMetricStats,
   getDailyUsage,
   getMetricValues,
+  ApiUsageMetrics,
 } from './utils'
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
@@ -70,13 +71,6 @@ import {
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
-
-export type ApiUsageMetrics = {
-  name: string
-  value: string | number | undefined
-  date: string
-  collectedTimestamp: number
-}
 
 @traceable
 export class ApiUsageMetricsService {

@@ -17,6 +17,7 @@ import {
   getSecondaryMatches,
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
+  getFuzzinessEvaluationResult,
 } from './utils'
 import {
   FuzzinessOptions,
@@ -30,7 +31,6 @@ import {
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getSearchIndexName } from '@/utils/mongodb-definitions'
-import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
@@ -1357,7 +1357,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             partialMatch: !!request.partialMatch || !!request.manualSearch,
             partialMatchLength: searchTermTokensLength,
           })
-          const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+          const fuzzyMatch = getFuzzinessEvaluationResult(
             request,
             percentageSimilarity
           )
@@ -1404,8 +1404,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsSearchRequest,
     isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
-    const db = await getMongoDbClientDb()
-    const mongoDb = await getMongoDbClient()
     let result: SanctionsProviderResponse
     const sanctionSourceNames: string[] = []
     const pepSourceNames: string[] = []
@@ -1427,7 +1425,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
       // Only fetch sources if we have sourceIds
       if (sourceIds?.length) {
-        const repo = new MongoSanctionSourcesRepository(mongoDb)
+        const repo = new MongoSanctionSourcesRepository(this.mongoDb)
         const sources = await repo.getSanctionsSources(
           undefined,
           sourceIds,
@@ -1468,6 +1466,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         }
       }
     }
+    const db = this.mongoDb.db()
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||

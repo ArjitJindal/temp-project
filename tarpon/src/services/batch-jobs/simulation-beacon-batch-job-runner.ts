@@ -55,7 +55,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })

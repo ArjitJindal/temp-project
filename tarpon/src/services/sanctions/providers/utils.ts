@@ -2,7 +2,6 @@ import { compact, intersection, uniq } from 'lodash'
 import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { SanctionsDataProviders } from '../types'
-import { SanctionsDataFetcher } from './sanctions-data-fetcher'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -38,10 +37,7 @@ export function checkYearMatch(
     const MAX_YEAR_DIFFERENCE = 20
     const yearDif = Math.min(MAX_YEAR_DIFFERENCE, Math.abs(year1 - year2))
     const similarity = 100 - (yearDif / MAX_YEAR_DIFFERENCE) * 100
-    const matches = SanctionsDataFetcher.getFuzzinessEvaluationResult(
-      searchRequest,
-      similarity
-    )
+    const matches = getFuzzinessEvaluationResult(searchRequest, similarity)
 
     if (matches) {
       return 'FUZZY'
@@ -61,7 +57,7 @@ function checkTermMatch(
       term2,
       term1
     )
-    const matches = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+    const matches = getFuzzinessEvaluationResult(
       searchRequest,
       percentageSimilarity
     )
@@ -365,4 +361,25 @@ export function sanitizeOpenSanctionsEntities(
     }
   }
   return processedEntities
+}
+
+export function getFuzzinessEvaluationResult(
+  request: SanctionsSearchRequest,
+  percentageSimilarity: number
+): boolean {
+  const percentageDissimilarity = 100 - percentageSimilarity
+
+  if (
+    request.fuzzinessRange?.lowerBound != null &&
+    request.fuzzinessRange?.upperBound != null
+  ) {
+    const { lowerBound, upperBound } = request.fuzzinessRange
+    return (
+      percentageDissimilarity >= lowerBound &&
+      percentageDissimilarity <= upperBound
+    )
+  }
+  return request.fuzziness != null
+    ? percentageDissimilarity <= request.fuzziness * 100
+    : false
 }

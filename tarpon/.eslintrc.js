@@ -54,7 +54,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['src/utils/**/*.{js,ts,tsx}', 'src/core/**/*.{js,ts,tsx}'],
+      files: ['src/utils/**/*.{js,ts,tsx}', 'src/core/**/*.{js,ts,tsx}', 'src/services/copilot/**/*.{js,ts,tsx}', 'src/services/metrics/**/*.{js,ts,tsx}', 'src/services/sanctions/**/*.{js,ts,tsx}'],
       rules: {
         'import/no-cycle': 'error',
       },

@@ -2,6 +2,7 @@ import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { omit } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
+import { MongoClient } from 'mongodb'
 import { RulesEngineService } from '..'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
@@ -71,12 +72,19 @@ jest
 
 describe('Verify Transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
+
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
     const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const transaction = getTestTransaction({ transactionId: 'dummy' })
     const result = await rulesEngine.verifyTransaction(transaction)
@@ -103,7 +111,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
@@ -172,7 +181,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       await rulesEngine.verifyTransaction(transaction)
@@ -229,7 +239,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy-2' })
       await rulesEngine.verifyTransaction(transaction)
@@ -327,7 +338,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
@@ -391,7 +403,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
@@ -442,7 +455,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
@@ -483,7 +497,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result1 = await rulesEngine.verifyTransaction(transaction)
@@ -508,7 +523,8 @@ describe('Verify Transaction', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
@@ -557,6 +573,12 @@ describe('Verify Transaction', () => {
 })
 
 describe('Verify Transaction Event', () => {
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
+
   describe('Verify Transaction Event: executed rules', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -586,7 +608,8 @@ describe('Verify Transaction Event', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
@@ -794,7 +817,8 @@ describe('Verify Transaction Event', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({
         transactionId: 'dummy-2',
@@ -865,7 +889,8 @@ describe('Verify Transaction Event', () => {
           const rulesEngine = new RulesEngineService(
             TEST_TENANT_ID,
             dynamoDb,
-            logicEvaluator
+            logicEvaluator,
+            mongoDb
           )
           const transaction = getTestTransaction({
             transactionId: '1',
@@ -919,7 +944,8 @@ describe('Verify Transaction Event', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({ transactionId: '2' })
       const result = await rulesEngine.verifyTransaction(transaction)
@@ -966,6 +992,11 @@ describe('Verify Transaction Event', () => {
 
 describe('Verify Transaction for Simulation', () => {
   dynamoDbSetupHook()
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
@@ -980,7 +1011,8 @@ describe('Verify Transaction for Simulation', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const testTransactionId = 'dummy'
     const testRuleInstanceId = 'abc'
@@ -1049,11 +1081,11 @@ describe('Verify Transaction for Simulation', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const transaction = getTestTransaction({ status: 'SUSPEND' })
     const t = await rulesEngine.verifyTransaction(transaction)
-    const mongoDb = await getMongoDbClient()
     const transactionRepository = new MongoDbTransactionRepository(
       TEST_TENANT_ID,
       mongoDb,
@@ -1095,6 +1127,11 @@ describe('Verify Transaction for Simulation', () => {
 
 describe('Verify Transaction: V8 engine', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   describe('Simple case', () => {
     const TEST_TENANT_ID = getTestTenantId()
@@ -1126,7 +1163,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1265,7 +1303,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1384,7 +1423,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1494,7 +1534,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1632,7 +1673,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1755,7 +1797,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1876,7 +1919,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -1984,7 +2028,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -2172,7 +2217,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
@@ -2463,7 +2509,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -2523,7 +2570,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -2572,7 +2620,8 @@ describe('Verify Transaction: V8 engine', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const transaction = getTestTransaction({
         originUserId: 'U-1',
@@ -2591,6 +2640,11 @@ describe('Verify Transaction: V8 engine', () => {
 
 describe('Verify Transaction V8 engine with Update Aggregation', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const mock = jest.spyOn(LogicEvaluator.prototype, 'updateAggregationVariable')
 
@@ -2629,7 +2683,8 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
 
     await rulesEngine.verifyTransaction(
@@ -2648,6 +2703,11 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
 
 describe('Verify Transaction: V8 engine course grained aggregation', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
@@ -2678,7 +2738,8 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const result1 = await rulesEngine.verifyTransaction(
       getTestTransaction({
@@ -2844,6 +2905,11 @@ describe('Verify Transaction: V8 engine with second/minute granularity', () => {
 
 describe('Verify Transaction: V8 engine with rolling basis', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
@@ -2877,7 +2943,8 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const result1 = await rulesEngine.verifyTransaction(
       getTestTransaction({
@@ -3035,7 +3102,8 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -3160,7 +3228,8 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -3207,6 +3276,11 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
 
 describe('Run v2 rules on v8 engine', () => {
   withFeatureHook(['RULES_ENGINE_V8', 'RULES_ENGINE_V8_FOR_V2_RULES'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
 
@@ -3235,7 +3309,8 @@ describe('Run v2 rules on v8 engine', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
 
     const v8Mock = jest.spyOn(LogicEvaluator.prototype, 'evaluate')
@@ -3256,6 +3331,11 @@ describe('Run v2 rules on v8 engine', () => {
 
 describe('Verify Transaction: V8 engine with Deploying status', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
 
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
@@ -3288,7 +3368,8 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,
@@ -3745,6 +3826,12 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
 
 describe('transaction event for last N entities', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
+
   const TEST_TENANT_ID = getTestTenantId()
   setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({
@@ -3786,7 +3873,8 @@ describe('transaction event for last N entities', () => {
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const timestamp = Date.now()
     const x1 = await rulesEngine.verifyTransaction({

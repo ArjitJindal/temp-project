@@ -67,12 +67,13 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
     const { tenantId, parameters } = job
 
     const dynamoDb = getDynamoDbClient()
-    const mongoDb = (await getMongoDbClient()).db()
+    const mongoDb = await getMongoDbClient()
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const rulesEngine = new RulesEngineService(
       tenantId,
       dynamoDb,
-      logicEvaluator
+      logicEvaluator,
+      mongoDb
     )
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
@@ -105,9 +106,9 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
     )
 
     // Get the target transactions from MongoDB
-    const txCollection = mongoDb.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(tenantId)
-    )
+    const txCollection = mongoDb
+      .db()
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
     const filter = {
       createdAt: {
         $gte: progress?.timestamp ?? parameters.afterTimestamp,

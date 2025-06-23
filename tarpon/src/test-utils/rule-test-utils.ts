@@ -148,6 +148,7 @@ export async function bulkVerifyTransactions(
   }
 ): Promise<TransactionMonitoringResult[] | DuplicateTransactionReturnType[]> {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   let cleanUps: Array<() => Promise<void>> = []
 
   if (options?.autoCreateUser) {
@@ -156,7 +157,12 @@ export async function bulkVerifyTransactions(
 
   const results: any[] = []
   const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-  const rulesEngine = new RulesEngineService(tenantId, dynamoDb, logicEvaluator)
+  const rulesEngine = new RulesEngineService(
+    tenantId,
+    dynamoDb,
+    logicEvaluator,
+    mongoDb
+  )
   for (const transaction of transactions) {
     results.push(await rulesEngine.verifyTransaction(transaction))
   }

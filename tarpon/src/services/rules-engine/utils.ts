@@ -1,5 +1,7 @@
 import createHttpError from 'http-errors'
 import { compact, groupBy, uniqBy } from 'lodash'
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { filterOutInternalRules } from './pnb-custom-logic'
@@ -355,7 +357,9 @@ export function isSyncRule(ruleInstance: RuleInstance): boolean {
 const sqs = getSQSClient()
 
 export async function sendTransactionAggregationTasks(
-  messages: FifoSqsMessage[]
+  messages: FifoSqsMessage[],
+  dynamoDb: DynamoDBClient,
+  mongoDb: MongoClient
 ) {
   if (envIs('local', 'test')) {
     const {
@@ -365,9 +369,9 @@ export async function sendTransactionAggregationTasks(
     for (const message of messages) {
       const payload = JSON.parse(message.MessageBody)
       if (payload.type === 'TRANSACTION_AGGREGATION') {
-        await handleV8TransactionAggregationTask(payload)
+        await handleV8TransactionAggregationTask(payload, dynamoDb)
       } else {
-        await handleTransactionAggregationTask(payload)
+        await handleTransactionAggregationTask(payload, dynamoDb, mongoDb)
       }
     }
   } else {

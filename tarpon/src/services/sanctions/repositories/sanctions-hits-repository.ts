@@ -181,7 +181,6 @@ export class SanctionsHitsRepository {
         entity: hit,
       })
     )
-
     if (docs.length > 0) {
       await collection.insertMany(docs)
     }

@@ -8,3 +8,4 @@ dist
 mock
 src/apis
 jest
+analyze-bundle.js

@@ -11,7 +11,7 @@ async function migrateTenant(tenant: Tenant) {
   if (isDemoTenant(tenant.id) || !hasFeature('ACURIS')) {
     return
   }
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const ruleInstanceService = new RuleInstanceService(tenant.id, {
     dynamoDb,

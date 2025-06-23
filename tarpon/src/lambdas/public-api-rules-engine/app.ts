@@ -74,6 +74,7 @@ export const transactionHandler = lambdaApi()(
 
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
 
     const verifyTransaction = async (
       request: DefaultApiPostConsumerTransactionRequest
@@ -113,7 +114,7 @@ export const transactionHandler = lambdaApi()(
           tenantId,
           logicEvaluator,
           {
-            mongoDb: await getMongoDbClient(),
+            mongoDb,
             dynamoDb,
           }
         )
@@ -143,7 +144,8 @@ export const transactionHandler = lambdaApi()(
       const rulesEngine = new RulesEngineService(
         tenantId,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result = await rulesEngine.verifyTransaction(transaction, {
         validateOriginUserId:
@@ -191,7 +193,7 @@ export const transactionHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const { response, validatedTransactions } =
         await batchImportService.importTransactions(
@@ -220,7 +222,7 @@ export const transactionHandler = lambdaApi()(
       const { batchId, page, pageSize } = request
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       return await batchImportService.getBatchTransactions(batchId, {
         page,
@@ -245,6 +247,7 @@ export const transactionEventHandler = lambdaApi()(
     const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
 
     const createTransactionEvent = async (
       transactionEvent: TransactionEvent
@@ -264,7 +267,8 @@ export const transactionEventHandler = lambdaApi()(
       const rulesEngine = new RulesEngineService(
         tenantId,
         dynamoDb,
-        logicEvaluator
+        logicEvaluator,
+        mongoDb
       )
       const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
 
@@ -289,7 +293,7 @@ export const transactionEventHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const { response, validatedTransactionEvents, validatedTransactions } =
         await batchImportService.importTransactionEvents(
@@ -322,7 +326,7 @@ export const transactionEventHandler = lambdaApi()(
     handlers.registerGetTransactionEvent(async (_ctx, { eventId }) => {
       const transactionEventRepository = new TransactionEventRepository(
         tenantId,
-        { mongoDb: await getMongoDbClient() }
+        { mongoDb }
       )
       const result = await transactionEventRepository.getMongoTransactionEvent(
         eventId
@@ -337,7 +341,7 @@ export const transactionEventHandler = lambdaApi()(
       const { batchId, page, pageSize } = request
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb: dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const result = await batchImportService.getBatchTransactionEvents(
         batchId,
@@ -359,6 +363,7 @@ export const userEventsHandler = lambdaApi()(
     const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
 
     const createUserEvent = async (
       userEvent: ConsumerUserEvent,
@@ -381,7 +386,7 @@ export const userEventsHandler = lambdaApi()(
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
-        await getMongoDbClient(),
+        mongoDb,
         logicEvaluator
       )
 
@@ -439,7 +444,7 @@ export const userEventsHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const { response, validatedUserEvents } =
         await batchImportService.importConsumerUserEvents(
@@ -468,7 +473,7 @@ export const userEventsHandler = lambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const { response, validatedUserEvents } =
         await batchImportService.importBusinessUserEvents(
@@ -511,7 +516,7 @@ export const userEventsHandler = lambdaApi()(
         const userManagementService = new UserManagementService(
           tenantId,
           dynamoDb,
-          await getMongoDbClient(),
+          mongoDb,
           logicEvaluator
         )
         const { updatedBusinessUserAttributes } = userEvent
@@ -543,7 +548,7 @@ export const userEventsHandler = lambdaApi()(
 
     const getUserEventHandler = async (_ctx, { eventId }) => {
       const userEventRepository = new UserEventRepository(tenantId, {
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       const result = await userEventRepository.getMongoUserEvent(eventId)
       if (!result) {
@@ -556,7 +561,7 @@ export const userEventsHandler = lambdaApi()(
       const { batchId, page, pageSize } = request
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       return await batchImportService.getBatchBusinessUserEvents(batchId, {
         page,
@@ -567,7 +572,7 @@ export const userEventsHandler = lambdaApi()(
       const { batchId, page, pageSize } = request
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb: await getMongoDbClient(),
+        mongoDb,
       })
       return await batchImportService.getBatchConsumerUserEvents(batchId, {
         page,
