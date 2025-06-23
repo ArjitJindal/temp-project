@@ -133,7 +133,14 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
     await deleteOldWebhookRetryEvents(tenantIds)
 
     if (envIs('dev')) {
-      await notifyTriageIssues()
+      try {
+        await notifyTriageIssues()
+      } catch (e) {
+        logger.error(
+          `Failed to notify triage issues: ${(e as Error)?.message}`,
+          e
+        )
+      }
     }
   } catch (error) {
     logger.error('Error in 10 minute cron job handler', error)
