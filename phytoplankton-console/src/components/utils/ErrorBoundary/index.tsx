@@ -1,8 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+// import React, { useMemo, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Alert } from 'antd';
 import { FallbackRender } from '@sentry/react/types/errorboundary';
-import { useLocation } from 'react-router';
+// import { useLocation } from 'react-router';
 import { NotFoundError } from '@/utils/errors';
 import NoFoundPage from '@/pages/404';
 
@@ -74,20 +74,18 @@ function ErrorBoundaryWithLocationReset(props: Props) {
 }
 
 export default function ErrorBoundary(props: Props) {
-  const location = useLocation();
-  const previousLocationRef = useRef<string>();
+  // const location = useLocation();
+  // const previousLocationRef = useRef<string>();
 
-  // Generate a new key whenever the pathname changes
-  const resetKey = useMemo(() => {
-    const currentLocation = location.pathname;
-    if (previousLocationRef.current !== currentLocation) {
-      previousLocationRef.current = currentLocation;
-      return Date.now();
-    }
-    return previousLocationRef.current || currentLocation;
-  }, [location.pathname]);
+  // // Generate a new key whenever the pathname changes
+  // const resetKey = useMemo(() => {
+  //   const currentLocation = location.pathname;
+  //   if (previousLocationRef.current !== currentLocation) {
+  //     previousLocationRef.current = currentLocation;
+  //     return Date.now();
+  //   }
+  //   return previousLocationRef.current || currentLocation;
+  // }, [location.pathname]);
 
-  return (
-    <ErrorBoundaryWithLocationReset key={resetKey}>{props.children}</ErrorBoundaryWithLocationReset>
-  );
+  return <ErrorBoundaryWithLocationReset>{props.children}</ErrorBoundaryWithLocationReset>;
 }
