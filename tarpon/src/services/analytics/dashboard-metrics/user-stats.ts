@@ -87,7 +87,7 @@ async function createInexes(tenantId) {
 @traceable
 export class UserStats {
   public static async refresh(
-    tenantId,
+    tenantId: string,
     userCreatedTimeRange?: TimeRange
   ): Promise<void> {
     await createInexes(tenantId)

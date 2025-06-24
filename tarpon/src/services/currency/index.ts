@@ -10,6 +10,7 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
+import { traceable } from '@/core/xray'
 
 const cachedData: Partial<CurrencyExchangeUSDType> = {}
 
@@ -70,6 +71,8 @@ export type NonExchangeRateCurrency = Exclude<
   CurrencyCode,
   CurrencyToTakeExchangeRateFromOtherCurrency
 >
+
+@traceable
 export class CurrencyService {
   repository: CurrencyRepository
 

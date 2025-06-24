@@ -14,11 +14,13 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { SanctionsSourceType } from '@/@types/openapi-internal/SanctionsSourceType'
 import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { traceable } from '@/core/xray'
 
 interface SourceDocumentWithEntityIds extends Document {
   entityIds?: string[]
 }
 
+@traceable
 export class MongoSanctionSourcesRepository
   implements SanctionsSourceRepository
 {
