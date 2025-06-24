@@ -16,7 +16,7 @@ describe('Create scenario', () => {
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
 
-    cy.intercept('GET', '**/logic-config').as('ruleLogicConfig');
+    cy.intercept('POST', '**/logic-config').as('ruleLogicConfig');
     //Basic details
     cy.contains('Create scenario').click();
     cy.get('input[placeholder="Enter rule name"]').type('Scenario 1');
@@ -37,41 +37,44 @@ describe('Create scenario', () => {
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    createAggregationVariable('Variable 1', 'type');
-    if (type === 'USER') {
-      createEntityVariable('user id', type);
-    } else {
-      createEntityVariable('type', type);
-    }
-    cy.get('button[data-cy="add-logic-v8"]').click();
-    cy.waitNothingLoading();
-    if (type === 'USER') {
-      addCondition('User / id', '123');
-    } else {
-      addCondition('Transaction / type', 'Deposit{enter}');
-    }
-    addCondition('Variable 1', 5);
-    cy.get('[data-cy="apply-to-risk-levels"]')
-      .click()
-      .type(
-        'Low{downarrow}{enter}Medium{downarrow}{enter}High{downarrow}{enter}Very high{downarrow}{enter}',
-      );
-    cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
-    checkConditionsCount(2, 'LOW');
-    checkConditionsCount(2, 'HIGH');
-    cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
+    cy.wait('@ruleLogicConfig').then((interception) => {
+      expect(interception.response?.statusCode).to.oneOf([200, 304]);
+      createAggregationVariable('Variable 1', 'type');
+      if (type === 'USER') {
+        createEntityVariable('user id', type);
+      } else {
+        createEntityVariable('type', type);
+      }
+      cy.get('button[data-cy="add-logic-v8"]').click();
+      cy.waitNothingLoading();
+      if (type === 'USER') {
+        addCondition('User / id', '123');
+      } else {
+        addCondition('Transaction / type', 'Deposit{enter}');
+      }
+      addCondition('Variable 1', 5);
+      cy.get('[data-cy="apply-to-risk-levels"]')
+        .click()
+        .type(
+          'Low{downarrow}{enter}Medium{downarrow}{enter}High{downarrow}{enter}Very high{downarrow}{enter}',
+        );
+      cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
+      checkConditionsCount(2, 'LOW');
+      checkConditionsCount(2, 'HIGH');
+      cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
 
-    cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
-    cy.get('button[data-cy="modal-ok"]').eq(0).click();
+      cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
+      cy.get('button[data-cy="modal-ok"]').eq(0).click();
 
-    cy.wait('@createdRule').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
-      const ruleInstanceId = interception.response?.body?.id;
-      cy.message('A new rule has been created successfully').should('exist');
-      cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
-      editRule(ruleInstanceId);
-      cy.visit(`/rules/my-rules/${ruleInstanceId}`);
-      cy.deleteRuleInstance(ruleInstanceId);
+      cy.wait('@createdRule').then((interception) => {
+        expect(interception.response?.statusCode).to.eq(200);
+        const ruleInstanceId = interception.response?.body?.id;
+        cy.message('A new rule has been created successfully').should('exist');
+        cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
+        editRule(ruleInstanceId);
+        cy.visit(`/rules/my-rules/${ruleInstanceId}`);
+        cy.deleteRuleInstance(ruleInstanceId);
+      });
     });
   }
 
@@ -82,25 +85,28 @@ describe('Create scenario', () => {
       if (ruleId.includes(ruleInstanceId)) {
         cy.get('button[data-cy="rule-edit-button"]').eq(index).click();
         cy.get('button[data-cy="drawer-next-button-v8"]').click();
-        checkConditionsCount(2, 'LOW');
-        checkConditionsCount(2, 'MEDIUM');
-        checkConditionsCount(2, 'HIGH');
-        checkConditionsCount(2, 'VERY_HIGH');
-        checkConditionsCount(2, 'VERY_LOW');
-        createAggregationVariable('Variable 2', 'transaction id');
-        addCondition('Variable 2', 10);
-        cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
-        cy.get('[data-cy="apply-to-risk-levels"]')
-          .click()
-          .type('Medium{downarrow}{enter}Very high{downarrow}{enter}');
-        cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
-        checkConditionsCount(2, 'LOW');
-        checkConditionsCount(2, 'HIGH');
-        checkConditionsCount(3, 'MEDIUM');
-        checkConditionsCount(3, 'VERY_HIGH');
-        cy.get('button[data-cy="drawer-next-button-v8"]').click();
-        cy.get('button[data-cy="drawer-create-save-button"]').click();
-        cy.message(`Rule updated - ${ruleInstanceId}`).should('exist');
+        cy.wait('@ruleLogicConfig').then((interception) => {
+          expect(interception.response?.statusCode).to.oneOf([200, 304]);
+          checkConditionsCount(2, 'LOW');
+          checkConditionsCount(2, 'MEDIUM');
+          checkConditionsCount(2, 'HIGH');
+          checkConditionsCount(2, 'VERY_HIGH');
+          checkConditionsCount(2, 'VERY_LOW');
+          createAggregationVariable('Variable 2', 'transaction id');
+          addCondition('Variable 2', 10);
+          cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
+          cy.get('[data-cy="apply-to-risk-levels"]')
+            .click()
+            .type('Medium{downarrow}{enter}Very high{downarrow}{enter}');
+          cy.get('button[data-cy="apply-to-risk-levels-button"]').click();
+          checkConditionsCount(2, 'LOW');
+          checkConditionsCount(2, 'HIGH');
+          checkConditionsCount(3, 'MEDIUM');
+          checkConditionsCount(3, 'VERY_HIGH');
+          cy.get('button[data-cy="drawer-next-button-v8"]').click();
+          cy.get('button[data-cy="drawer-create-save-button"]').click();
+          cy.message(`Rule updated - ${ruleInstanceId}`).should('exist');
+        });
       }
     });
   }
@@ -139,15 +145,12 @@ describe('Create scenario', () => {
     cy.get('[role="menuitem"]').contains('Aggregate variable').click();
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
     cy.get('input[data-cy="variable-tx-direction-v8"]').eq(0).click();
-    cy.wait('@ruleLogicConfig').then((interception) => {
-      expect(interception.response?.statusCode).to.oneOf([200, 304]);
-      cy.get('[data-cy="variable-aggregate-field-v8"]')
-        .click()
-        .type(`${variableAggregateField}`)
-        .type(`{enter}`);
-      cy.get('[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
-      cy.get('button[data-cy="modal-ok"]').first().click();
-    });
+    cy.get('[data-cy="variable-aggregate-field-v8"]')
+      .click()
+      .type(`${variableAggregateField}`)
+      .type(`{enter}`);
+    cy.get('[data-cy="variable-aggregate-function-v8"]').click().type('Count{enter}');
+    cy.get('button[data-cy="modal-ok"]').first().click();
   }
 
   function checkConditionsCount(count, riskLevel) {
