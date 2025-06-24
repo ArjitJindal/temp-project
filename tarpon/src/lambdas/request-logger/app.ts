@@ -14,7 +14,7 @@ export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
   const filteredLogs = logs.filter(
-    (log) => log.tenantId != null || log.tenantId != 'undefined'
+    (log) => log.tenantId && log.tenantId !== 'undefined'
   )
   const logGroups = groupBy(filteredLogs, (log) => log.tenantId)
   for (const tenantId in logGroups) {
