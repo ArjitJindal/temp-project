@@ -1,12 +1,13 @@
 import cn from 'clsx';
-import React from 'react';
 import { Roles, useFeatureEnabled } from '../../Providers/SettingsProvider';
-import SuperAdminPanel from './SuperAdminPanel';
 import s from './index.module.less';
 import UserPanel from './UserPanel';
 import DemoModeSwitch from './DemoModeSwitch';
 import SuperAdminModeSwitch from './SuperAdminModeSwitch';
 import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
+import { makeAsyncComponent } from '@/utils/imports';
+
+const SuperAdminPanel = makeAsyncComponent(() => import('./SuperAdminPanel'));
 
 interface Props {
   isCollapsed: boolean;
