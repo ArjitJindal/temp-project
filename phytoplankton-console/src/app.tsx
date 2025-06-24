@@ -39,7 +39,7 @@ Sentry.init({
   ],
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
-  tracesSampleRate: 0.05,
+  tracesSampleRate: 0.2,
   environment: process.env.ENV_NAME,
   enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {

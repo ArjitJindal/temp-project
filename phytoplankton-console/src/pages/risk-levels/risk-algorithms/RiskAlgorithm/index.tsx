@@ -4,16 +4,22 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
 import { Link } from 'react-router-dom';
-import { InlineMath } from 'react-katex';
 import styles from './style.module.less';
 import { getBranding } from '@/utils/branding';
 import { H4, P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { makeAsyncComponent } from '@/utils/imports';
 
 const branding = getBranding();
 
 const { Divider } = ProCard;
-const RiskAlgorithmTable: React.FC = () => {
+
+const InlineMath = makeAsyncComponent(async () => {
+  const mod = await import('react-katex');
+  return { default: mod.default.InlineMath };
+});
+
+const RiskAlgorithmTable = () => {
   const [responsive, setResponsive] = useState(false);
   const settings = useSettings();
 
@@ -94,7 +100,7 @@ const RiskAlgorithmTable: React.FC = () => {
             <>
               <span className={styles.KRSheader}>KYC Risk Score (KRS)</span>
               <div className={styles.KRSsubheader}>
-                Risk score of your customer’s profile. KRS changes slowly over time.
+                Risk score of your customer's profile. KRS changes slowly over time.
               </div>
             </>
           }
@@ -251,7 +257,7 @@ const RiskAlgorithmTable: React.FC = () => {
             <>
               <span className={styles.KRSheader}>Transaction Risk Score (TRS)</span>
               <div className={styles.KRSsubheader}>
-                Risk score of your customer’s transaction activity. TRS changes corresponding to
+                Risk score of your customer's transaction activity. TRS changes corresponding to
                 {settings.userAlias} activity.
               </div>
             </>

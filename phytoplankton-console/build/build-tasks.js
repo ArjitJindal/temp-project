@@ -9,6 +9,7 @@ const svgrPlugin = require('./esbuild-plugin-svgr.js');
 const cssModulesPlugin = require('./esbuild-plugin-css-modules.js');
 const fontsPlugin = require('./esbuild-plugin-fonts');
 const resolveVirtuals = require('./esbuild-plugin-resolve-virtuals.js');
+const aliasPlugin = require('./esbuild-plugin-alias.js');
 const { log, error, notify } = require('./helpers.js');
 const parse = require('json-templates');
 
@@ -151,6 +152,7 @@ async function buildCode(env, options) {
       svgrPlugin({
         ref: true,
       }),
+      aliasPlugin(),
       resolveVirtuals(),
     ],
     outdir: path.join(PROJECT_DIR, OUTPUT_FOLDER),
