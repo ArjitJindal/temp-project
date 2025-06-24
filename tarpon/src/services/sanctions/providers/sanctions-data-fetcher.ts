@@ -105,7 +105,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       const searchTermLength = request.searchTerm?.length ?? 0
 
       // For names shorter than or equal to the floor, allow at least 1 character mismatch
-      if (searchTermLength <= fuzzinessFloor) {
+      if (fuzziness != 0 && searchTermLength <= fuzzinessFloor) {
         // Calculate the effective number of character differences from the percentage.
         const effectiveCharDifferences =
           (percentageDissimilarity / 100) * searchTermLength
