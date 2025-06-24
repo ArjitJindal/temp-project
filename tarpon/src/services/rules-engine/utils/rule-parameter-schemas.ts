@@ -867,7 +867,7 @@ export const FUZZINESS_SCHEMA = (options: PercentSchemaOptions = {}) =>
     title: 'Fuzziness',
     description:
       'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
-    multipleOf: 10,
+    multipleOf: 1,
     ...options,
   })
 export const SCREENING_PROFILE_ID_SCHEMA = (options?: SchemaOptions) =>
