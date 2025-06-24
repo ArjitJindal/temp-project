@@ -122,6 +122,7 @@ function PageBasedPagination(props: PageBasedProps) {
             onClick={() => {
               onChange(current - 1, pageSize);
             }}
+            testId="pagination-prev-button"
           >
             <ArrowLeftSLineIcon />
           </IconButton>
@@ -173,6 +174,7 @@ function PageBasedPagination(props: PageBasedProps) {
             onClick={() => {
               onChange(current + 1, pageSize);
             }}
+            testId="pagination-next-button"
           >
             <ArrowRightSLineIcon />
           </IconButton>
