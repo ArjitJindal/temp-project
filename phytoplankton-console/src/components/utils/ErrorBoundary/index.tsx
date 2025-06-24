@@ -1,14 +1,15 @@
-// import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Alert } from 'antd';
 import { FallbackRender } from '@sentry/react/types/errorboundary';
-// import { useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import { NotFoundError } from '@/utils/errors';
 import NoFoundPage from '@/pages/404';
 
 interface Props {
   children: React.ReactNode;
 }
+
 const Fallback: FallbackRender = (errorData) => {
   if (errorData.error instanceof NotFoundError) {
     return <NoFoundPage />;
@@ -57,12 +58,34 @@ const Fallback: FallbackRender = (errorData) => {
   );
 };
 
-function ErrorBoundaryWithLocationReset(props: Props) {
+export default function ErrorBoundary(props: Props) {
+  const location = useLocation();
+  const errorStateRef = useRef<{ hasError: boolean; errorLocation: string | null }>({
+    hasError: false,
+    errorLocation: null,
+  });
+
+  const resetKey = useMemo(() => {
+    if (
+      errorStateRef.current.hasError &&
+      errorStateRef.current.errorLocation !== location.pathname
+    ) {
+      errorStateRef.current.hasError = false;
+      errorStateRef.current.errorLocation = null;
+      return `reset-${Date.now()}`;
+    }
+    return 'stable';
+  }, [location.pathname]);
+
   return (
     <Sentry.ErrorBoundary
-      fallback={Fallback}
-      beforeCapture={(scope, error) => {
-        // Don't send 404 errors to Sentry as they're user behavior, not bugs
+      key={resetKey}
+      fallback={(errorData) => {
+        errorStateRef.current.hasError = true;
+        errorStateRef.current.errorLocation = location.pathname;
+        return Fallback(errorData);
+      }}
+      beforeCapture={(_, error) => {
         if (error instanceof NotFoundError) {
           return false;
         }
@@ -71,21 +94,4 @@ function ErrorBoundaryWithLocationReset(props: Props) {
       {props.children}
     </Sentry.ErrorBoundary>
   );
-}
-
-export default function ErrorBoundary(props: Props) {
-  // const location = useLocation();
-  // const previousLocationRef = useRef<string>();
-
-  // // Generate a new key whenever the pathname changes
-  // const resetKey = useMemo(() => {
-  //   const currentLocation = location.pathname;
-  //   if (previousLocationRef.current !== currentLocation) {
-  //     previousLocationRef.current = currentLocation;
-  //     return Date.now();
-  //   }
-  //   return previousLocationRef.current || currentLocation;
-  // }, [location.pathname]);
-
-  return <ErrorBoundaryWithLocationReset>{props.children}</ErrorBoundaryWithLocationReset>;
 }
