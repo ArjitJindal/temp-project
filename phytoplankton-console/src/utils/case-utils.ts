@@ -1,5 +1,6 @@
 import { every, some, uniq, map, intersection } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { areArraysOfObjectsEqual } from '@flagright/lib/utils';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
 import { FLAGRIGHT_SYSTEM_USER, getDisplayedUserInfo } from './user-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
@@ -9,13 +10,20 @@ import {
   Account,
   Alert,
   AlertStatus,
+  AlertStatusUpdateRequest,
   Assignment,
   Case,
   CaseStatus,
   CaseStatusChange,
+  CaseStatusUpdate,
   Comment,
   DerivedStatus,
 } from '@/apis';
+import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
+import { expandPEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
+import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+import { OTHER_REASON } from '@/components/Narrative';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 export const statusInReview = (
   status: CaseStatus | undefined | DerivedStatus,
@@ -451,4 +459,56 @@ export function createAssignments(
       false,
     ];
   }
+}
+
+export function getStatusChangeUpdatesFromFormValues<
+  T extends AlertStatusUpdateRequest | CaseStatusUpdate,
+>(updates: T, isNewFeaturesEnabled: boolean, userDetails: TableUser, formValues: FormValues): T {
+  if (formValues) {
+    const expandedPepStatus = expandPEPStatus(
+      (formValues?.screeningDetails?.pepStatus?.slice(1) as PepFormValues[]) ?? [],
+    );
+    updates.otherReason =
+      formValues.reasons.indexOf(OTHER_REASON) !== -1 ? formValues.reasonOther ?? '' : undefined;
+    updates.files = formValues.files;
+    updates.comment = formValues.comment ?? undefined;
+    if (isNewFeaturesEnabled) {
+      updates.kycStatusDetails =
+        formValues?.kycStatusDetails && formValues?.actionReason
+          ? {
+              status: formValues?.kycStatusDetails,
+              reason: formValues?.actionReason,
+            }
+          : undefined;
+      updates.userStateDetails =
+        formValues?.userStateDetails && formValues?.actionReason
+          ? {
+              state: formValues?.userStateDetails,
+              reason: formValues?.actionReason,
+            }
+          : undefined;
+      updates.eoddDate = formValues?.eoddDate;
+      updates.tags = areArraysOfObjectsEqual(formValues?.tags ?? [], userDetails?.tags ?? [])
+        ? undefined
+        : formValues?.tags;
+      if (userDetails.type === 'CONSUMER') {
+        updates.screeningDetails = {
+          sanctionsStatus:
+            formValues?.screeningDetails?.sanctionsStatus === userDetails.sanctionsStatus
+              ? undefined
+              : formValues?.screeningDetails?.sanctionsStatus,
+          adverseMediaStatus:
+            formValues?.screeningDetails?.adverseMediaStatus === userDetails.adverseMediaStatus
+              ? undefined
+              : formValues?.screeningDetails?.adverseMediaStatus,
+          pepStatus: areArraysOfObjectsEqual(expandedPepStatus, userDetails.pepStatus ?? [])
+            ? undefined
+            : expandedPepStatus,
+        };
+      }
+
+      updates.listId = formValues?.listId;
+    }
+  }
+  return updates;
 }

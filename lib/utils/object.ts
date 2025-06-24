@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash'
+
 export const replaceMagicKeyword = <T>(
   input: any,
   keyword: string,
@@ -37,4 +39,20 @@ export function getAllValuesByKey<V>(key: string, obj: object): V[] {
     }
   })
   return values
+}
+
+export function areArraysOfObjectsEqual(
+  a: object[] | undefined,
+  b: object[] | undefined
+): boolean {
+  if (a === b) {
+    return true
+  }
+  if (!a || !b) {
+    return false
+  }
+  return (
+    a.every((item) => b.some((i) => isEqual(item, i))) &&
+    b.every((item) => a.some((i) => isEqual(item, i)))
+  )
 }

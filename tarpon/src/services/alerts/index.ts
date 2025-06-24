@@ -111,6 +111,8 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
+import { getUserUpdateRequest } from '@/utils/case'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 
 type AlertViewAuditLogReturnData = AuditLogReturnData<Alert>
@@ -1279,9 +1281,6 @@ export class AlertsService extends CaseAlertsCommonService {
   ) {
     const usersData: { caseId: string; user: User | Business }[] = []
     const listId = updates.listId
-    const tags = updates.tags
-    const screeningDetails = updates.screeningDetails
-    const eoddDate = updates.eoddDate
     cases.forEach((c) => {
       const user = c?.caseUsers?.origin ?? c?.caseUsers?.destination
       if (user && user.userId) {
@@ -1302,41 +1301,15 @@ export class AlertsService extends CaseAlertsCommonService {
       dynamoDb: this.caseRepository.dynamoDb,
     })
 
-    const updateObject: UserUpdateRequest = {
-      ...(updates.kycStatusDetails?.status && {
-        kycStatusDetails: {
-          status: updates.kycStatusDetails.status,
-          reason: updates.kycStatusDetails.reason,
-          description: updates.kycStatusDetails.description,
-        },
-      }),
-      ...(updates.userStateDetails?.state && {
-        userStateDetails: {
-          state: updates.userStateDetails.state,
-          reason: updates.userStateDetails.reason,
-          description: updates.userStateDetails.description,
-        },
-      }),
-      ...(eoddDate && {
-        eoddDate,
-      }),
-      ...(tags && {
-        tags: tags,
-      }),
-      ...(screeningDetails?.pepStatus && {
-        pepStatus: screeningDetails.pepStatus,
-      }),
-      ...(screeningDetails &&
-        !!screeningDetails.sanctionsStatus ===
-          screeningDetails.sanctionsStatus && {
-          sanctionsStatus: screeningDetails.sanctionsStatus,
-        }),
-      ...(screeningDetails &&
-        !!screeningDetails.adverseMediaStatus ===
-          screeningDetails.adverseMediaStatus && {
-          adverseMediaStatus: screeningDetails.adverseMediaStatus,
-        }),
+    let userInDb: InternalUser | undefined = undefined
+    if (usersData.length > 0) {
+      userInDb = await userService.getUser(usersData[0].user.userId)
     }
+
+    const updateObject: UserUpdateRequest = getUserUpdateRequest(
+      updates,
+      userInDb
+    )
 
     if (isEmpty(updateObject)) {
       return

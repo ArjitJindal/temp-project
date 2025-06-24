@@ -7,20 +7,21 @@ import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
+import { TableUser } from '../../CaseTable/types';
 import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useAuth0User, useCurrentUser, useUsers } from '@/utils/user-utils';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
-import { OTHER_REASON } from '@/components/Narrative';
-import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
-import { CaseEscalateTriggerAdvancedOptionsForm } from '@/components/CaseEscalateTriggerAdvancedOptionsForm';
 import {
-  consolidatePEPStatus,
-  expandPEPStatus,
-} from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
-import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+  getAssigneeName,
+  getStatusChangeUpdatesFromFormValues,
+  statusEscalated,
+  statusEscalatedL2,
+} from '@/utils/case-utils';
+import { CaseEscalateTriggerAdvancedOptionsForm } from '@/components/CaseEscalateTriggerAdvancedOptionsForm';
+import { consolidatePEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeUrl } from '@/utils/routing';
 
@@ -192,42 +193,17 @@ export default function AlertsStatusChangeModal(props: Props) {
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);
 
-      const updates: AlertStatusUpdateRequest = {
+      let updates: AlertStatusUpdateRequest = {
         alertStatus: props.newStatus,
         reason: formValues?.reasons ?? [],
       };
 
-      if (formValues) {
-        updates.otherReason =
-          formValues.reasons.indexOf(OTHER_REASON) !== -1
-            ? formValues.reasonOther ?? ''
-            : undefined;
-        updates.files = formValues.files;
-        updates.comment = formValues.comment ?? undefined;
-        updates.kycStatusDetails =
-          formValues?.kycStatusDetails && formValues?.actionReason
-            ? {
-                status: formValues?.kycStatusDetails,
-                reason: formValues?.actionReason,
-              }
-            : undefined;
-        updates.userStateDetails =
-          formValues?.userStateDetails && formValues?.actionReason
-            ? {
-                state: formValues?.userStateDetails,
-                reason: formValues?.actionReason,
-              }
-            : undefined;
-        updates.eoddDate = formValues?.eoddDate;
-        updates.tags = formValues?.tags;
-        updates.screeningDetails = {
-          ...formValues?.screeningDetails,
-          pepStatus: expandPEPStatus(
-            (formValues?.screeningDetails?.pepStatus?.slice(1) as PepFormValues[]) ?? [],
-          ),
-        };
-        updates.listId = formValues?.listId;
-      }
+      updates = getStatusChangeUpdatesFromFormValues<AlertStatusUpdateRequest>(
+        updates,
+        isNewFeaturesEnabled,
+        props.user as TableUser,
+        formValues,
+      );
 
       try {
         if (statusEscalated(updates.alertStatus) && props.caseId) {
