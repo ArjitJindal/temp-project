@@ -9,9 +9,9 @@ import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningPro
 import { traceable } from '@/core/xray'
 import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
-import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
-import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
+import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/AdverseMediaSourceRelevance'
+import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 
 @traceable
 export class ScreeningProfileService {
@@ -232,10 +232,7 @@ export class ScreeningProfileService {
         {
           rel: {
             sourceIds: relSourceIds,
-            relevance: [
-              'FINANCIAL_REGULATOR',
-              'LAW_ENFORCEMENT',
-            ] as RELSourceRelevance[],
+            relevance: REL_SOURCE_RELEVANCES,
           },
         }
       ),
@@ -245,14 +242,7 @@ export class ScreeningProfileService {
         'ADVERSE_MEDIA' as AcurisSanctionsSearchType,
         {
           adverseMedia: {
-            relevance: [
-              'TERRORISM',
-              'ORGANISED_CRIME',
-              'MODERN_SLAVERY',
-              'FINANCIAL_CRIME_AND_FRAUD',
-              'BRIBERY_AND_CORRUPTION',
-              'CYBERCRIMES',
-            ] as AdverseMediaSourceRelevance[],
+            relevance: ADVERSE_MEDIA_SOURCE_RELEVANCES,
           },
         }
       ),

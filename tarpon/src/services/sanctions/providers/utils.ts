@@ -288,7 +288,7 @@ export function sanitizeAcurisEntities(
               (!relSourceNames?.length ||
                 (source.value?.some(
                   (value) =>
-                    value.sourceName &&
+                    !value.sourceName ||
                     relSourceNames
                       .map((s) => s.toLowerCase())
                       .includes(humanizeAuto(value.sourceName).toLowerCase())
