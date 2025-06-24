@@ -1,9 +1,9 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, isEqual, pick, uniq } from 'lodash'
+import { pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { hasFeature } from '../utils/context'
-import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
+import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
 import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { riskFactors } from './data/risk-factors'
@@ -26,9 +26,6 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { isDemoTenant } from '@/utils/tenant'
-import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import {
   getArsScores,
   getDrsScores,
@@ -39,7 +36,6 @@ import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { NangoRepository } from '@/services/nango/repository'
 import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
-import { Feature } from '@/@types/openapi-internal/Feature'
 import { TarponChangeMongoDbConsumer } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
@@ -60,41 +56,10 @@ export async function seedDynamo(
     dynamoDb: dynamoDb,
   })
   const listRepo = new ListRepository(tenantId, dynamoDb)
-  const tenantRepo = new TenantRepository(tenantId, { dynamoDb })
   const txnRepo = new DynamoDbTransactionRepository(tenantId, dynamoDb)
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
   const nangoRepo = new NangoRepository(tenantId, dynamoDb)
 
-  if (isDemoTenant(tenantId)) {
-    const nonDemoTenantId = tenantId.replace(/-test$/, '')
-    const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
-      dynamoDb,
-    })
-    const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings()
-    const demoSettings = await tenantRepo.getTenantSettings()
-    const mergedFeatureFlags = uniq([
-      ...(demoSettings.features ?? []),
-      ...(nonDemoSettings.features ?? []),
-      'AI_FORENSICS' as Feature,
-      'MACHINE_LEARNING' as Feature,
-    ])
-    const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
-      const keys = TenantSettings.attributeTypeMap
-        .map((key) => key.name)
-        .filter((key) => key !== 'features')
-      return keys as TenantSettingName[]
-    }
-    if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
-      logger.info('Setting tenant settings...')
-      await tenantRepo.deleteTenantSettings(getTenantSettingsKeysToDelete())
-      await tenantRepo.createOrUpdateTenantSettings({
-        ...nonDemoSettings,
-        isAiEnabled: true,
-        isMlEnabled: true,
-        features: mergedFeatureFlags,
-      })
-    }
-  }
   logger.info(`Feature Chainalysis enabled ${hasFeature('CHAINALYSIS')}`)
   logger.info('Clear rule instances')
   await dangerouslyDeletePartition(

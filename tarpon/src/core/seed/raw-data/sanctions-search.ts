@@ -18,6 +18,7 @@ import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/Sanctio
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { SanctionsEntityDelta } from '@/@types/openapi-internal/SanctionsEntityDelta'
+import { hasFeature } from '@/core/utils/context'
 
 const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
   RU: 'Russian Federation',
@@ -193,6 +194,10 @@ const getDelta = (
 
   const pickAKeyToChange = rng.r(10).pickRandom(keys)
 
+  const ALL_SANCTIONS_SOURCES = hasFeature('ACURIS')
+    ? ACURIS_SANCTIONS_SOURCES
+    : SANCTIONS_SOURCES
+
   switch (pickAKeyToChange) {
     case 'gender': {
       // reverse the gender
@@ -241,7 +246,7 @@ const getDelta = (
     case 'sanctionsSources': {
       const relevantSanctionsSources = rng
         .r(10)
-        .randomSubsetOfSize(SANCTIONS_SOURCES, 1)
+        .randomSubsetOfSize(ALL_SANCTIONS_SOURCES, 1)
 
       return {
         sanctionsSources: relevantSanctionsSources,
@@ -293,7 +298,11 @@ export const sanctionsSearchHit = (
     (code) => COUNTRY_MAP[code]
   )
 
-  const relevantSanctionsSources = SANCTIONS_SOURCES.filter((source) =>
+  const ALL_SANCTIONS_SOURCES = hasFeature('ACURIS')
+    ? ACURIS_SANCTIONS_SOURCES
+    : SANCTIONS_SOURCES
+
+  const relevantSanctionsSources = ALL_SANCTIONS_SOURCES.filter((source) =>
     source.countryCodes?.some((code) => selectedCountryCodes.includes(code))
   )
   const relevantPepSources = PEP_SOURCES.filter((source) =>
@@ -374,7 +383,7 @@ export const sanctionsSearchHit = (
   }
 
   const hit: SanctionsHit = {
-    provider: 'comply-advantage',
+    provider: 'acuris',
     searchId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -473,7 +482,7 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
 
     const historyItem: SanctionsSearchHistory = {
       _id: searchId,
-      provider: 'comply-advantage',
+      provider: 'acuris',
       request: {
         searchTerm: name,
         fuzziness: Number(
@@ -550,7 +559,7 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
 
     const historyItem: SanctionsSearchHistory = {
       _id: searchId,
-      provider: 'comply-advantage',
+      provider: 'acuris',
       request: {
         searchTerm: userName,
         fuzziness: Number(
@@ -579,6 +588,174 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
 
 const sanctionsSourcesRng = new RandomNumberGenerator(SANCTION_SEARCH_SEED + 1)
 const pepSourcesRng = new RandomNumberGenerator(SANCTION_SEARCH_SEED + 2)
+
+const ACURIS_SANCTIONS_SOURCES: SanctionsSource[] = [
+  {
+    url: 'https://www.legifrance.gouv.fr/download/pdf?id=YMizwrv-8cJZZCOYEDxtSCBTeN2gKVrvqLBncL23CaI=',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['RU'],
+    name: 'Russia - Ministry of Economy and Finance Sanctions',
+    description: 'Russian Ministry of Economy and Finance',
+    category: 'FORMER',
+    sourceName: 'russia - ministry of economy and finance sanctions',
+    fields: [
+      { name: 'Publication date', values: ['2022-07-11'] },
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202230/VJkUqxoA8aYm8TGh1Sd-a.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://gels-avoirs.dgtresor.gouv.fr/Gels/RegistreDetail?idRegistre=1777',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['US'],
+    name: 'US - Treasury Department Sanctions',
+    description: 'US Treasury Department',
+    category: 'FORMER',
+    sourceName: 'us - treasury department sanctions',
+    fields: [
+      { name: 'Publication date', values: ['2021-07-16'] },
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202129/RnwJn1nOL.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://geldefonds.gouv.mc/directdownload/Liste_nationale_complete_des_gels_en_date_du_25_04_2025_a_10h41m06s.pdf',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['RU', 'US'],
+    name: 'Monaco - Minister of State - National Asset Freezing List',
+    description: 'Monaco Minister of State',
+    category: 'CURRENT',
+    sourceName: 'monaco - minister of state - national asset freezing list',
+    fields: [
+      {
+        name: 'Summary',
+        values: ['Listed in the Monaco National Asset Freezing List'],
+      },
+      { name: 'Credibility score', values: ['High'] },
+    ],
+  },
+  {
+    url: 'https://gels-avoirs.dgtresor.gouv.fr/Gels/RegistreDetail?idRegistre=2238',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['DE', 'FR'],
+    name: 'France - Ministry of Economy and Finance Sanctions',
+    description: 'French Ministry of Economy and Finance, DG Treasury',
+    category: 'CURRENT',
+    sourceName: 'france - ministry of economy and finance sanctions',
+    fields: [
+      { name: 'Publication date', values: ['2022-09-09'] },
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202245/6FeYBZofKEUDtVbYp3S8g.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://www.un.org/securitycouncil/sites/www.un.org.securitycouncil/files/1718_designated_vessels_list_final.pdf',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['CN', 'HK'],
+    name: "UN Security Council Committee established pursuant to resolution 1718 (2006) concerning Democratic People's Republic of China",
+    description: 'United Nations Security Council (UNSC)',
+    category: 'CURRENT',
+    sourceName:
+      "un security council committee established pursuant to resolution 1718 (2006) concerning democratic people's republic of China",
+    fields: [
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202238/ujWJ9vnHSQydiLfVZkE5f.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://ofac.treasury.gov/recent-actions/20240703',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['US', 'RU', 'CN', 'FR'],
+    name: 'OFAC - Russian Harmful Foreign Activities Sanctions',
+    description: 'Office of Foreign Assets Control (OFAC)',
+    category: 'CURRENT',
+    sourceName: 'ofac - russian harmful foreign activities sanctions',
+    fields: [
+      { name: 'Publication date', values: ['2024-07-03'] },
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202428/ZCnDGNrQOxVHQ_Tk0AqoF.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://home.treasury.gov/news/press-releases/jy1978',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['US', 'RU', 'CN', 'FR'],
+    name: 'OFAC - Russian Harmful Foreign Activities Sanctions',
+    description: 'Office of Foreign Assets Control (OFAC)',
+    category: 'CURRENT',
+    sourceName: 'ofac - russian harmful foreign activities sanctions',
+    fields: [
+      { name: 'Publication date', values: ['2023-12-12'] },
+      { name: 'Credibility score', values: ['High'] },
+      {
+        name: 'Asset url',
+        values: [
+          'https://www.acurisriskintelligence.com/cdn/content/ari0202350/xY9aMf9LNfm7eslhBW8U9.pdf',
+        ],
+      },
+    ],
+  },
+  {
+    url: 'https://www.rnbo.gov.ua/files/2022/Ukazy_Dodatky/ukaz_726_dodatok_1.docx',
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
+    countryCodes: ['UA', 'RU'],
+    name: 'Ukraine - National Security and Defense Council Sanctions ',
+    description: 'Ukraine National Security and Defence Council',
+    category: 'CURRENT',
+    sourceName: 'ukraine - national security and defense council sanctions',
+    fields: [
+      {
+        name: 'Summary',
+        values: [
+          'Sanctioned by Ukraine. The source provides personal identification details of the subject. Please refer to the Details section of the profile.',
+        ],
+      },
+      { name: 'Publication date', values: ['2022-10-19'] },
+      { name: 'Credibility score', values: ['High'] },
+    ],
+  },
+]
 
 const SANCTIONS_SOURCES: SanctionsSource[] = [
   {
@@ -696,10 +873,6 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
         values: ['Japan'],
       },
     ],
-  },
-  {
-    countryCodes: ['RU'],
-    name: 'ComplyAdvantage PEP Data',
   },
 ]
 
