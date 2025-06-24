@@ -25,6 +25,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
 import { COUNTERPARTY_RULES } from '@flagright/lib/constants'
+import { backOff } from 'exponential-backoff'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
@@ -113,6 +114,8 @@ import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+import { envIsNot } from '@/utils/env'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
 
@@ -888,10 +891,32 @@ export class CaseCreationService {
     const updatedSanctionsDetailsList = await Promise.all(
       sanctionsDetailsList.map(
         async (sanctionsDetail): Promise<SanctionsDetails | undefined> => {
-          const searchResult =
+          let searchResult =
             await this.sanctionsSearchRepository.getSearchResult(
               sanctionsDetail.searchId
             )
+          if (!searchResult && envIsNot('test')) {
+            // When the sanctions search is not updated in mongo via queue, we need to retry to fetch the search result
+            searchResult = await backOff<SanctionsSearchHistory>(
+              async () => {
+                const result =
+                  await this.sanctionsSearchRepository.getSearchResult(
+                    sanctionsDetail.searchId
+                  )
+                if (!result) {
+                  throw new Error('Search result not found')
+                }
+                return result
+              },
+              {
+                startingDelay: 1000,
+                timeMultiple: 1,
+                maxDelay: 1000,
+                numOfAttempts: 4,
+                delayFirstAttempt: true,
+              }
+            )
+          }
           const rawHits = searchResult?.response?.data ?? []
           if (update) {
             const { updatedIds, newIds } =
