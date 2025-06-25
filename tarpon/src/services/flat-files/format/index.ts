@@ -99,7 +99,11 @@ export abstract class FlatFileFormat {
     metadata?: object
   ): AsyncGenerator<FlatFileValidationResult> {
     const schema = this.generateJSONSchema()
-    const ajv = new Ajv({ allErrors: true })
+    const ajv = new Ajv({
+      coerceTypes: true,
+      allErrors: true,
+      removeAdditional: 'all',
+    })
     const validate = ajv.compile(schema)
 
     yield* asyncIterableBatchProcess(this.readAndParse(this.s3Key), {

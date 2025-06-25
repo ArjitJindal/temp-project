@@ -107,7 +107,9 @@ export class CsvFormat extends FlatFileFormat {
         const nested: Record<string, any> = {}
 
         for (const [key, value] of Object.entries(flatRow)) {
-          set(nested, key, value) // expand dotted keys
+          if (value) {
+            set(nested, key, value) // expand dotted keys
+          }
         }
 
         yield { index: index++, record: nested }
