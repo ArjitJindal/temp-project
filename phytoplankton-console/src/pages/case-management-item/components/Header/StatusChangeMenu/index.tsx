@@ -20,6 +20,7 @@ import {
   DECLINE_STATUS_TRANSITIONS,
 } from '@/pages/case-management/components/ApproveSendBackButton';
 import { useAuth0User, useUser } from '@/utils/user-utils';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
   caseItem: Case;
@@ -103,6 +104,11 @@ const useOptions = (props: Props) => {
     );
   }, [isMultiLevelEscalationEnabled, caseId, caseItem, currentUser, currentUserAccount]);
 
+  const tableUser: TableUser | undefined =
+    (caseItem.caseUsers?.origin as TableUser) ??
+    (caseItem.caseUsers?.destination as TableUser) ??
+    undefined;
+
   return [
     ...(escalationEnabled &&
     !isReview &&
@@ -127,6 +133,7 @@ const useOptions = (props: Props) => {
                   OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
                 }}
+                user={tableUser}
                 haveModal={true}
               />
             ),
@@ -164,6 +171,7 @@ const useOptions = (props: Props) => {
                     actionLabel: 'Send back',
                   },
                 }}
+                user={tableUser}
                 haveModal={true}
               />
             ),
@@ -185,6 +193,7 @@ const useOptions = (props: Props) => {
                       statusTransitions={{
                         ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
                       }}
+                      user={tableUser}
                       haveModal={true}
                     />
                   ),
@@ -210,6 +219,7 @@ const useOptions = (props: Props) => {
                   ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
                   ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
                 }}
+                user={tableUser}
                 haveModal={true}
               />
             ),
