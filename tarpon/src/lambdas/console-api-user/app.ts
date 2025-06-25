@@ -120,7 +120,7 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUsersItem(
-      async (ctx, request) => await userService.getUser(request.userId)
+      async (ctx, request) => await userService.getUser(request.userId, true)
     )
 
     handlers.registerPostUserComments(async (ctx, request) => {

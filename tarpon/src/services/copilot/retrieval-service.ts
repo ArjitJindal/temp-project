@@ -182,11 +182,15 @@ export class RetrievalService {
     let originUser: InternalUser | undefined
     let destinationUser: InternalUser | undefined
     if (transaction.originUserId) {
-      originUser = await this.userService.getUser(transaction.originUserId)
+      originUser = await this.userService.getUser(
+        transaction.originUserId,
+        true
+      )
     }
     if (transaction.destinationUserId) {
       destinationUser = await this.userService.getUser(
-        transaction.destinationUserId
+        transaction.destinationUserId,
+        true
       )
     }
     const exchangeRates = await this.currencyService.getExchangeData()
@@ -224,7 +228,8 @@ export class RetrievalService {
     const user = await this.userService.getUser(
       _case?.caseUsers?.origin?.userId ||
         _case?.caseUsers?.destination?.userId ||
-        ''
+        '',
+      true
     )
 
     const [transactions, ruleInstances] = await Promise.all([
@@ -287,7 +292,8 @@ export class RetrievalService {
     const user = await this.userService.getUser(
       _case?.caseUsers?.origin?.userId ||
         _case?.caseUsers?.destination?.userId ||
-        ''
+        '',
+      true
     )
 
     const [transactions, ruleInstances] = await Promise.all([

@@ -1303,7 +1303,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     let userInDb: InternalUser | undefined = undefined
     if (usersData.length > 0) {
-      userInDb = await userService.getUser(usersData[0].user.userId)
+      userInDb = await userService.getUser(usersData[0].user.userId, false)
     }
 
     const updateObject: UserUpdateRequest = getUserUpdateRequest(

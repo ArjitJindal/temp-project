@@ -1306,7 +1306,7 @@ export class UserService {
 
   public async getUser(
     userId: string,
-    getAttachments: boolean = true
+    getAttachments: boolean
   ): Promise<InternalUser> {
     const user = await this.userRepository.getUserById(userId)
 
@@ -1314,7 +1314,7 @@ export class UserService {
       throw new createError.NotFound(`User ${userId} not found`)
     }
 
-    if (!getAttachments) {
+    if (!getAttachments || !this.s3 || !this.tmpBucketName) {
       return user
     }
 
@@ -1411,7 +1411,7 @@ export class UserService {
   public async getBusinessUser(
     userId: string
   ): Promise<InternalBusinessUser | null> {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
 
     return user && (await this.getAugmentedUser<InternalBusinessUser>(user))
   }
@@ -1419,7 +1419,7 @@ export class UserService {
   public async getConsumerUser(
     userId: string
   ): Promise<InternalConsumerUser | null> {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
     return user && (await this.getAugmentedUser<InternalConsumerUser>(user))
   }
 
@@ -2007,7 +2007,7 @@ export class UserService {
   }
 
   public async getUserCommentsExternal(userId: string) {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
@@ -2019,7 +2019,7 @@ export class UserService {
   }
 
   public async getUserComment(userId: string, commentId: string) {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
@@ -2042,7 +2042,7 @@ export class UserService {
     commentId: string,
     reply: Comment
   ) {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
@@ -2074,7 +2074,7 @@ export class UserService {
     userId: string,
     commentId: string
   ): Promise<AuditLogReturnData<void, Comment>> {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, true)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
