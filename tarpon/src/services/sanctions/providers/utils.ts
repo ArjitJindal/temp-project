@@ -237,11 +237,10 @@ export function sanitizeAcurisEntities(
         ? entity.sanctionsSources?.filter(
             (source) =>
               (!sanctionSourceNames?.length ||
+                !source.sourceName ||
                 sanctionSourceNames
                   .map((s) => s.toLowerCase())
-                  .includes(
-                    humanizeAuto(source.sourceName ?? '').toLowerCase()
-                  )) &&
+                  .includes(humanizeAuto(source.sourceName).toLowerCase())) &&
               (!sanctionsCategory ||
                 (source.category &&
                   sanctionsCategory
@@ -255,11 +254,10 @@ export function sanitizeAcurisEntities(
         ? entity.pepSources?.filter(
             (source) =>
               (!pepSourceNames?.length ||
+                !source.sourceName ||
                 pepSourceNames
                   .map((s) => s.toLowerCase())
-                  .includes(
-                    humanizeAuto(source.sourceName ?? '').toLowerCase()
-                  )) &&
+                  .includes(humanizeAuto(source.sourceName).toLowerCase())) &&
               (!pepCategory ||
                 (source.category &&
                   pepCategory
