@@ -1,20 +1,11 @@
-import React, { Component, createRef } from 'react';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '../shared-styles.less';
+import { Editor } from '@toast-ui/react-editor';
+import React from 'react';
 import { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
 import { mentionRegex } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import { getNode } from './mention-utlis';
-import { makeAsyncComponent } from '@/utils/imports';
-
-const Editor = makeAsyncComponent(async () => {
-  const mod = await import('@toast-ui/react-editor');
-  const ToastEditor = mod.Editor;
-
-  return {
-    default: React.forwardRef<any, any>((props, ref) => <ToastEditor {...props} ref={ref} />),
-  };
-});
 
 export interface MentionItem {
   id: string;
@@ -31,9 +22,9 @@ interface Props {
   onDropFiles?: (files: File[]) => void;
 }
 
-export default class MarkdownEditor extends Component<Props> {
-  editorRef = createRef<any>();
-  rootRef = createRef<HTMLDivElement>();
+export default class MarkdownEditor extends React.Component<Props> {
+  editorRef = React.createRef<Editor>();
+  rootRef = React.createRef<HTMLDivElement>();
 
   private toolbarItems: (string | ToolbarItemOptions)[][] = [];
 
@@ -110,10 +101,11 @@ export default class MarkdownEditor extends Component<Props> {
     }
   }
 
-  handleMention(key: string) {
+  handleMention(_a, event) {
     if (!this.props.mentionsEnabled) {
       return;
     }
+    const { key } = event;
     const text = this.editorRef.current?.getInstance()?.getMarkdown() ?? '';
     const cursorPos: number = this.editorRef.current?.getInstance()?.getSelection()[1] as number;
     let cursorIndex = cursorPos - 1;
@@ -199,6 +191,7 @@ export default class MarkdownEditor extends Component<Props> {
                       const match = mentionRegex.exec(text);
                       const span = document.createElement('span');
                       span.classList.add(s.mention);
+
                       span.innerText = match?.[1] ?? '';
                       return span;
                     },
@@ -206,11 +199,12 @@ export default class MarkdownEditor extends Component<Props> {
                 ]
               : []
           }
+          onKeyup={this.handleMention.bind(this)}
+          usageStatistics={false}
+          placeholder={this.props.placeholder}
           hooks={{
             addImageBlobHook: this.handleImageBlobHook,
           }}
-          placeholder={this.props.placeholder}
-          onKeyup={this.handleMention.bind(this)}
         />
       </div>
     );

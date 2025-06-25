@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Empty } from 'antd';
 import { Props } from '../CRMRecords/index';
 import ScopeSelector from '../ScopeSelector';
@@ -9,12 +9,11 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CRM_ACCOUNT } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CrmAccountResponse } from '@/apis';
-import { makeAsyncComponent } from '@/utils/imports';
 
-const Summary = makeAsyncComponent(() => import('../Summary'));
-const Emails = makeAsyncComponent(() => import('../Emails'));
-const Tasks = makeAsyncComponent(() => import('../Tasks'));
-const Notes = makeAsyncComponent(() => import('../Notes'));
+const Summary = lazy(() => import('../Summary'));
+const Emails = lazy(() => import('../Emails'));
+const Tasks = lazy(() => import('../Tasks'));
+const Notes = lazy(() => import('../Notes'));
 
 const ComponentLoader = ({ section, data }) => {
   let Component;
@@ -36,7 +35,11 @@ const ComponentLoader = ({ section, data }) => {
       return null; // Handle unknown sections gracefully
   }
 
-  return <Component {...data} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Component {...data} />
+    </Suspense>
+  );
 };
 
 const CRMData = (props: Props) => {

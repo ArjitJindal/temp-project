@@ -1,38 +1,26 @@
-import React from 'react';
 import '@toast-ui/editor/dist/toastui-editor.css';
+import { Viewer } from '@toast-ui/react-editor';
+import React from 'react';
 import '../shared-styles.less';
 import s from './index.module.less';
-import { makeAsyncComponent } from '@/utils/imports';
 
 interface Props {
   value: string;
 }
 
-interface ViewerProps {
-  initialValue: string;
-  usageStatistics: boolean;
-  customHTMLSanitizer: (htmlString: string) => string;
-}
+export default class MarkdownViewer extends React.Component<Props> {
+  editorRef = React.createRef<Viewer>();
 
-const Viewer = makeAsyncComponent(async () => {
-  const mod = await import('@toast-ui/react-editor');
-  const ToastViewer = mod.Viewer;
-
-  return {
-    default: React.forwardRef<any, ViewerProps>((props, ref) => (
-      <ToastViewer {...props} ref={ref} />
-    )),
-  };
-});
-
-export default function MarkdownViewer({ value }: Props) {
-  return (
-    <Viewer
-      initialValue={value}
-      usageStatistics={false}
-      customHTMLSanitizer={customHTMLSanitizer}
-    />
-  );
+  render() {
+    return (
+      <Viewer
+        initialValue={this.props.value}
+        ref={this.editorRef}
+        usageStatistics={false}
+        customHTMLSanitizer={customHTMLSanitizer}
+      />
+    );
+  }
 }
 
 function customHTMLSanitizer(htmlString: string): string {

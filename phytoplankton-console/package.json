@@ -51,7 +51,7 @@
     "test": "npm run tsc && npm run test:unit && npm run format:check",
     "test:coverage": "jest src --silent --coverage && node ../scripts/generate-coverage-stats.js",
     "test:coverage:compare": "OUTPUT_FILE=coverage/coverage-stats.new.json npm run test:coverage && node ../scripts/compare-coverage-stats.js",
-    "analyze": "npm run build:prod && node ../scripts/analyze-bundle.js",
+    "analyze": "npm run build:prod && node analyze-bundle.js",
     "analyze:visual": "npm run build:prod && npx esbuild-visualizer --metadata esbuild.json && open stats.html"
   },
   "lint-staged": {
@@ -112,7 +112,6 @@
     "jszip": "^3.10.1",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.11",
-    "lodash-es": "^4.17.21",
     "mime": "^4.0.4",
     "nanoid": "^4.0.0",
     "pluralize": "^8.0.0",
