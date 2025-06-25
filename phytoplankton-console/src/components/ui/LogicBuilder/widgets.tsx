@@ -271,7 +271,6 @@ const customTextWidget: CoreWidgets['text'] = {
   factory: (props) => {
     const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
     const operator = props.operator as LogicOperatorType;
-
     // All text-type operators should support multi-values
     const isArrayType =
       (MULTI_SELECT_BUILTIN_OPERATORS.includes(operator) || isCustomOperator(operator)) &&
@@ -366,6 +365,20 @@ const customTextWidget: CoreWidgets['text'] = {
       }
 
       if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator as LogicOperatorType)) {
+        return (
+          <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+            <MultiListSelectDynamic
+              uniqueTypeProps={uniqueTypeProps}
+              value={props.value as any}
+              onChange={(newValue) => {
+                const formattedValue = newValue?.map((v) => v.trim());
+                props.setValue(formattedValue as any);
+              }}
+            />
+          </WidgetWrapper>
+        );
+      }
+      if (isArrayType) {
         return (
           <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
             <MultiListSelectDynamic
@@ -545,7 +558,6 @@ const customSelectWidget: CoreWidgets['select'] = {
         }
         return { label: x.title, value: x.value };
       }) ?? [];
-
     if (isViewMode(props.config)) {
       const option = options.find((x) => x.value === props.value);
       return <ViewModeTags>{[option?.label ?? props.value]}</ViewModeTags>;
