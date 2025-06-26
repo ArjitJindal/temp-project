@@ -346,7 +346,7 @@ const getClickhouseTransactionsCount = async (
   const transactions = await executeClickhouseQuery<{ count: number }>(
     tenantId,
     `SELECT count() as count FROM transactions
-    WHERE timestamp >= ${timestamps.start} AND timestamp >= ${timestamps.end}
+    WHERE timestamp >= ${timestamps.start} AND timestamp <= ${timestamps.end}
   `
   )
   return transactions[0].count
