@@ -245,7 +245,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               ),
             },
             'sanctionsSources.category': {
-              $in: [...sanctionsCategory, null],
+              $in: sanctionsCategory,
             },
           },
         ],
@@ -302,7 +302,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
           {
             'otherSources.value.sourceName': {
-              $in: [...relProviderNames, ''].map((name) =>
+              $in: relProviderNames.map((name) =>
                 humanizeAuto(name).toLowerCase()
               ),
             },
