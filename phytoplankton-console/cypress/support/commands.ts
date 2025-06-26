@@ -410,6 +410,11 @@ Cypress.Commands.add('assertSkeletonLoader', () => {
   cy.get("[data-cy='skeleton']").should('not.exist');
 });
 
+Cypress.Commands.add('assertLoading', () => {
+  cy.get("[data-cy='cy-loading']").should('exist');
+  cy.get("[data-cy='cy-loading']").should('not.exist');
+});
+
 function replaceStraightQuotes(text) {
   let toggle = true;
   return text.replace(/'/g, () => {

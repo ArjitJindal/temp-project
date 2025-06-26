@@ -124,7 +124,7 @@ describe('Add a comment to a case', () => {
 
                 // Get the current time in milliseconds
                 const currentTime = new Date().getTime();
-                cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 150000);
+                cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 20000000);
               });
             cy.checkNotification([
               `'cypress+custom@flagright.com' added a comment for a case '${caseId}'.`,

@@ -23,6 +23,7 @@ describe('Escalating and Sending back the cases', () => {
         cy.intercept('POST', `**/cases/${caseId}/escalate`).as('escalate');
         cy.get('.ant-modal-content:visible').within(() => {
           cy.get('[data-cy="modal-title"]').should('contain', 'Escalate');
+          cy.assertLoading();
           cy.selectOptionsByLabel('Reason', ['Fraud']);
           cy.get('.ant-modal-title', { timeout: 8000 }).click();
           cy.get('.toastui-editor-ww-container').type('This is a test');

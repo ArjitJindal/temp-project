@@ -1,11 +1,34 @@
+import React, { Component, createRef, useState, useEffect } from 'react';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '../shared-styles.less';
-import { Editor } from '@toast-ui/react-editor';
-import React from 'react';
 import { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
 import { mentionRegex } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import { getNode } from './mention-utlis';
+import Spinner from '@/components/library/Spinner';
+
+// Custom async component that properly forwards refs
+const AsyncEditor = React.forwardRef<any, any>((props, ref) => {
+  const [EditorComponent, setEditorComponent] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    import('@toast-ui/react-editor').then((mod) => {
+      setEditorComponent(() => mod.Editor);
+      setTimeout(() => setIsReady(true), 100);
+    });
+  }, []);
+
+  if (!EditorComponent || !isReady) {
+    return (
+      <div className={s.loadingContainer}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <EditorComponent {...props} ref={ref} />;
+});
 
 export interface MentionItem {
   id: string;
@@ -22,9 +45,9 @@ interface Props {
   onDropFiles?: (files: File[]) => void;
 }
 
-export default class MarkdownEditor extends React.Component<Props> {
-  editorRef = React.createRef<Editor>();
-  rootRef = React.createRef<HTMLDivElement>();
+export default class MarkdownEditor extends Component<Props> {
+  editorRef = createRef<any>();
+  rootRef = createRef<HTMLDivElement>();
 
   private toolbarItems: (string | ToolbarItemOptions)[][] = [];
 
@@ -101,11 +124,10 @@ export default class MarkdownEditor extends React.Component<Props> {
     }
   }
 
-  handleMention(_a, event) {
+  handleMention(key: string) {
     if (!this.props.mentionsEnabled) {
       return;
     }
-    const { key } = event;
     const text = this.editorRef.current?.getInstance()?.getMarkdown() ?? '';
     const cursorPos: number = this.editorRef.current?.getInstance()?.getSelection()[1] as number;
     let cursorIndex = cursorPos - 1;
@@ -168,7 +190,7 @@ export default class MarkdownEditor extends React.Component<Props> {
         }}
         data-cy={'comment-textbox'}
       >
-        <Editor
+        <AsyncEditor
           height={'100%'}
           hideModeSwitch={true}
           previewStyle="vertical"
@@ -176,6 +198,7 @@ export default class MarkdownEditor extends React.Component<Props> {
           initialValue={this.props.initialValue}
           ref={this.editorRef}
           toolbarItems={this.toolbarItems}
+          autofocus={false}
           onChange={() => {
             const editor = this.editorRef.current?.getInstance();
             if (editor) {
@@ -191,7 +214,6 @@ export default class MarkdownEditor extends React.Component<Props> {
                       const match = mentionRegex.exec(text);
                       const span = document.createElement('span');
                       span.classList.add(s.mention);
-
                       span.innerText = match?.[1] ?? '';
                       return span;
                     },
@@ -199,12 +221,11 @@ export default class MarkdownEditor extends React.Component<Props> {
                 ]
               : []
           }
-          onKeyup={this.handleMention.bind(this)}
-          usageStatistics={false}
-          placeholder={this.props.placeholder}
           hooks={{
             addImageBlobHook: this.handleImageBlobHook,
           }}
+          placeholder={this.props.placeholder}
+          onKeyup={this.handleMention.bind(this)}
         />
       </div>
     );

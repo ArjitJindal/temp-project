@@ -67,6 +67,7 @@ declare global {
       deleteRuleInstance(ruleInstanceId: string): Chainable<Element>;
       selectAntDropdownByLabel(label: string): Chainable<Element>;
       verifyModalOpen(title?: string): Chainable<Element>;
+      assertLoading(): Chai.Assertion;
     }
   }
 }
