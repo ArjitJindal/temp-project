@@ -377,7 +377,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       adverseMediaCategory
     )
     if (Object.keys(sourceCategoryFilters).length > 0) {
-      orConditions.push(sourceCategoryFilters)
+      andConditions.push(sourceCategoryFilters)
     }
 
     if (request.types && request.types.length > 0) {
