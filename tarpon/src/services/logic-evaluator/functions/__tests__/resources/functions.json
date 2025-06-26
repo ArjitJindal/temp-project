@@ -7,5 +7,6 @@
   "lowercase",
   "uppercase",
   "timestamp_diff_seconds",
-  "date_to_timestamp"
+  "date_to_timestamp",
+  "concat_string"
 ]

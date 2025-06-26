@@ -24,6 +24,7 @@ import { PaymentDetailChangeRuleParameters } from '../transaction-rules/payment-
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from '../transaction-rules/same-user-using-too-many-payment-identifiers'
 import { TransactionsPatternPercentageRuleParameters } from '../transaction-rules/transactions-pattern-percentage-base'
 import { SamePaymentDetailsParameters } from '../transaction-rules/same-payment-details'
+import { BlacklistPaymentdetailsRuleParameters } from '../transaction-rules/blacklist-payment-details'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -2161,6 +2162,144 @@ const V8_CONVERSION: Readonly<
           : conditionsToEvaluate.length === 1
           ? conditionsToEvaluate[0]
           : { and: [false] },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-129': (params: BlacklistPaymentdetailsRuleParameters) => {
+    const {
+      blacklistedIBANPaymentDetails,
+      blacklistedCardPaymentDetails,
+      blacklistedGenericBankAccountPaymentDetails,
+    } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+    const conditions: any[] = []
+    // IBAN conditions
+    if (blacklistedIBANPaymentDetails) {
+      conditions.push({
+        and: [
+          {
+            '==': [{ var: 'TRANSACTION:paymentDetails-method__BOTH' }, 'IBAN'],
+          },
+          {
+            in: [
+              { var: 'TRANSACTION:paymentDetails-IBAN__BOTH' },
+              blacklistedIBANPaymentDetails,
+            ],
+          },
+        ],
+      })
+    }
+
+    // Generic Bank Account conditions
+    if (blacklistedGenericBankAccountPaymentDetails) {
+      conditions.push({
+        and: [
+          {
+            '==': [
+              { var: 'TRANSACTION:paymentDetails-method__BOTH' },
+              'GENERIC_BANK_ACCOUNT',
+            ],
+          },
+          {
+            in: [
+              { var: 'TRANSACTION:paymentDetails-accountNumber__BOTH' },
+              blacklistedGenericBankAccountPaymentDetails,
+            ],
+          },
+        ],
+      })
+    }
+
+    // // Card conditions
+    if (
+      blacklistedCardPaymentDetails &&
+      blacklistedCardPaymentDetails.length > 0
+    ) {
+      blacklistedCardPaymentDetails.map((cardPaymentDetails) => {
+        const cardInternalConditions: any[] = []
+
+        // Card fingerprint condition
+        if (cardPaymentDetails.cardFingerprint) {
+          cardInternalConditions.push({
+            '==': [
+              { var: 'TRANSACTION:paymentDetails-cardFingerprint__BOTH' },
+              cardPaymentDetails.cardFingerprint,
+            ],
+          })
+        }
+        // Card last 4 digits, expiry and name on card condition
+        if (
+          cardPaymentDetails.cardLast4Digits &&
+          cardPaymentDetails.cardExpiry &&
+          cardPaymentDetails.nameOnCard
+        ) {
+          cardInternalConditions.push({
+            and: [
+              {
+                '==': [
+                  { var: 'TRANSACTION:paymentDetails-cardLast4Digits__BOTH' },
+                  cardPaymentDetails.cardLast4Digits,
+                ],
+              },
+              {
+                '==': [
+                  {
+                    var: 'TRANSACTION:paymentDetails-cardExpiry-month__BOTH',
+                  },
+                  cardPaymentDetails.cardExpiry.month,
+                ],
+              },
+              {
+                '==': [
+                  { var: 'TRANSACTION:paymentDetails-cardExpiry-year__BOTH' },
+                  cardPaymentDetails.cardExpiry.year,
+                ],
+              },
+              {
+                'op:similarTo': [
+                  {
+                    concat_string: [
+                      {
+                        var: 'TRANSACTION:paymentDetails-nameOnCard-firstName__BOTH',
+                      },
+                      {
+                        concat_string: [
+                          {
+                            var: 'TRANSACTION:paymentDetails-nameOnCard-middleName__BOTH',
+                          },
+                          {
+                            var: 'TRANSACTION:paymentDetails-nameOnCard-lastName__BOTH',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  cardPaymentDetails.nameOnCard,
+                  [0],
+                ],
+              },
+            ],
+          })
+        }
+
+        conditions.push({
+          and: [
+            {
+              '==': [
+                { var: 'TRANSACTION:paymentDetails-method__BOTH' },
+                'CARD',
+              ],
+            },
+            {
+              or: cardInternalConditions,
+            },
+          ],
+        })
+      })
+    }
+    return {
+      logic: { or: conditions },
       logicAggregationVariables,
       alertCreationDirection: 'AUTO',
     }

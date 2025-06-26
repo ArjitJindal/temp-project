@@ -6,6 +6,7 @@ import { TRUNCATE_DECIMAL } from './truncate-decimals'
 import { NUMBER_TO_STRING, STRING_TO_NUMBER } from './type-convertion'
 import { LogicFunction } from './types'
 import { DATE_TO_TIMESTAMP } from './date-to-timestamp'
+import { CONCAT_STRING } from './concat-string'
 
 const _LOGIC_FUNCTIONS: LogicFunction[] = [
   NUMBER_OF_ITEMS,
@@ -17,6 +18,7 @@ const _LOGIC_FUNCTIONS: LogicFunction[] = [
   UPPERCASE,
   TIMESTAMP_DIFF_SECONDS,
   DATE_TO_TIMESTAMP,
+  CONCAT_STRING,
 ]
 
 export const INTERNAL_LOGIC_FUNCTIONS: LogicFunction[] = [LOCAL_TIME_IN_HOUR]
