@@ -887,8 +887,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
                   event.evidenceIds.includes(evidence.evidenceId)
                 )
               )?.subcategory
-              const normalisedEvidenceName = normalizeSource(evidenceName ?? '')
-              const displayName = evidenceName ?? ''
+              const normalisedEvidenceName = normalizeSource(
+                evidenceName ?? 'Other'
+              )
+              const displayName = evidenceName ?? 'Other'
               if (displayName) {
                 const existingIds =
                   this.RELSourceToEntityIdMapPerson.get(displayName) || []
