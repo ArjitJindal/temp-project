@@ -19,7 +19,9 @@ async function updateLinearTickets() {
   const linearTicketIds = compact(headRefs.map(getLinearTicketIDByGitRef))
 
   for (const ticketId of linearTicketIds) {
-    await updateTicketStatusByID(ticketId, TicketStatus.ReadyToTest)
+    await updateTicketStatusByID(ticketId, TicketStatus.ReadyToTest, [
+      TicketStatus.QaFail,
+    ])
   }
 }
 
