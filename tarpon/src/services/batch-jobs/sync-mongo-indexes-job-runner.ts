@@ -7,6 +7,7 @@ import {
 } from '@/utils/mongodb-utils'
 import {
   createTenantDatabase,
+  getClickhouseCredentials,
   getClickhouseDefaultCredentials,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
@@ -24,8 +25,8 @@ export class SyncDatabases extends BatchJobRunner {
     }
 
     const defaultConfig = await getClickhouseDefaultCredentials()
-
-    const jsonMigrationService = new JsonMigrationService(defaultConfig)
+    const clickhouseCredentials = await getClickhouseCredentials(teanantId)
+    const jsonMigrationService = new JsonMigrationService(clickhouseCredentials)
     const migrationTracker = new MigrationTrackerTable({
       credentials: defaultConfig,
     }).objects
