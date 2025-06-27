@@ -15,7 +15,9 @@ import { FlatFilesRecords } from '@/models/flat-files-records'
 import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 import { asyncIterableBatchProcess } from '@/utils/batch-processor'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
+@traceable
 export abstract class FlatFileFormat {
   model: typeof EntityModel
   s3Key: string
@@ -103,6 +105,7 @@ export abstract class FlatFileFormat {
       coerceTypes: true,
       allErrors: true,
       removeAdditional: 'all',
+      strict: true,
     })
     const validate = ajv.compile(schema)
 
@@ -167,7 +170,6 @@ export abstract class FlatFileFormat {
     error: unknown,
     stage: FlatFilesErrorStage = 'RUNNER'
   ): Promise<void> {
-    console.log('error', error)
     try {
       flatFilesRecords.create({
         createdAt: Date.now(),
