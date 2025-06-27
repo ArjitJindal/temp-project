@@ -87,7 +87,6 @@ export const up = async () => {
       logger.error(`Failed to cleanup tenant ${tenantId}:`, error)
     }
   }
-  throw new Error('Not implemented')
   logger.info('Deleted tenant cleanup migration completed')
 }
 
