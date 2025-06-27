@@ -333,7 +333,7 @@ const customTextWidget: CoreWidgets['text'] = {
                   setTimeout(() => props.setValue(undefined), 0);
                 }
 
-                if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator as LogicOperatorType)) {
+                if (isArrayType) {
                   return (
                     <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
                       <MultiListSelectDynamic
