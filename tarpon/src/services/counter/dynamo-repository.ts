@@ -32,6 +32,7 @@ export class DynamoCounterRepository {
       const commandInput: GetCommandInput = {
         TableName: this.tableName,
         Key: key,
+        ConsistentRead: true,
       }
       const command = new GetCommand(commandInput)
       const commandResult = await this.dynamoDb.send(command)
@@ -71,6 +72,7 @@ export class DynamoCounterRepository {
     const commandInput: GetCommandInput = {
       TableName: this.tableName,
       Key: key,
+      ConsistentRead: true,
     }
     const command = new GetCommand(commandInput)
     const commandResult = await this.dynamoDb.send(command)
