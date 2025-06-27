@@ -804,7 +804,7 @@ export class TenantService {
 
   public static async getAllTenantIds() {
     const mongoDb = (await getMongoDbClient()).db()
-    const allTenantIds = (await mongoDb.listCollections().toArray())
+    let allTenantIds = (await mongoDb.listCollections().toArray())
       .filter(
         ({ name }) =>
           !name.startsWith('migration') && name.endsWith('-transactions')
@@ -812,6 +812,16 @@ export class TenantService {
       .map((collection) =>
         collection.name.slice(0, collection.name.lastIndexOf('-'))
       )
+    const deletedTenantIds = await mongoDb
+      .collection(TENANT_DELETION_COLLECTION)
+      .find({})
+      .toArray()
+    const deletedTenantIdsSet = new Set(
+      deletedTenantIds.map((tenant) => tenant.tenantId)
+    )
+    allTenantIds = allTenantIds.filter(
+      (tenantId) => !deletedTenantIdsSet.has(tenantId)
+    )
     return uniq(compact(allTenantIds))
   }
 
