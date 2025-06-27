@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
-import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
@@ -104,7 +103,6 @@ import {
   useChangeSanctionsHitsStatusMutation,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
-import dayjs from '@/utils/dayjs';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -536,30 +534,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             title: 'Alert age',
             key: 'age',
             sorting: true,
-            type: {
-              render: (value) => {
-                if (value == null) {
-                  return <>-</>;
-                }
-                const duration = dayjs.duration(value);
-                return (
-                  <>
-                    {duration.asDays() < 1
-                      ? pluralize('hour', Math.floor(duration.asHours()), true)
-                      : pluralize('day', Math.floor(duration.asDays()), true)}
-                  </>
-                );
-              },
-              stringify: (value) => {
-                if (value == null) {
-                  return '-';
-                }
-                const duration = dayjs.duration(value);
-                return duration.asDays() < 1
-                  ? pluralize('hour', Math.floor(duration.asHours()), true)
-                  : pluralize('day', Math.floor(duration.asDays()), true);
-              },
-            },
           }),
           helper.simple<'numberOfTransactionsHit'>({
             title: '#TX',
