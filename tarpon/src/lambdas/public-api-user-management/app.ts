@@ -11,10 +11,9 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { hasFeature, updateLogMetadata } from '@/core/utils/context'
+import { updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
-import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import {
   filterLiveRules,
   sendAsyncRuleTasks,
@@ -22,12 +21,10 @@ import {
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
-import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import {
   DefaultApiPostBusinessUserRequest,
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
-import { getUserRiskScoreDetailsForPNB } from '@/services/rules-engine/pnb-custom-logic'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -90,75 +87,19 @@ export const userHandler = lambdaApi()(
           }
         }
       }
+
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-
-      const isDrsUpdatable = options?.lockCraRiskLevel !== true
-      const riskScoringService = new RiskScoringV8Service(
-        tenantId,
-        logicEvaluator,
-        {
-          dynamoDb,
-          mongoDb,
-        }
-      )
-
-      const riskScoreResult = await riskScoringService.handleUserUpdate({
-        user: userPayload,
-        manualRiskLevel: userPayload.riskLevel,
-        isDrsUpdatable,
-        manualKrsRiskLevel: userPayload.kycRiskLevel,
-        lockKrs: options?.lockKycRiskLevel,
-      })
-
-      const { craRiskScore, craRiskLevel, kycRiskScore, kycRiskLevel } =
-        riskScoreResult
-      if (options?.krsOnly) {
-        return {
-          userId: userPayload.userId,
-          riskScoreDetails: {
-            kycRiskScore,
-            kycRiskLevel,
-          },
-          executedRules: [],
-          hitRules: [],
-        }
-      }
-      let craRiskLevelToReturn = craRiskLevel
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
         mongoDb,
         logicEvaluator
       )
-
-      const user = await userManagementService.verifyUser(
+      return await userManagementService.createAndVerifyUser(
         userPayload,
-        isConsumerUser ? 'CONSUMER' : 'BUSINESS',
-        riskScoreResult,
-        options?.lockKycRiskLevel
+        isConsumerUser,
+        options
       )
-      if (hasFeature('PNB') && riskScoreResult) {
-        craRiskLevelToReturn = getUserRiskScoreDetailsForPNB(
-          user.hitRules ?? [],
-          riskScoreResult
-        )?.craRiskLevel
-      }
-      return {
-        userId: user.userId,
-        ...((kycRiskLevel || craRiskLevel) && {
-          riskScoreDetails: {
-            ...(kycRiskLevel && { kycRiskLevel, kycRiskScore }),
-            ...(craRiskLevelToReturn && {
-              craRiskLevel: craRiskLevelToReturn,
-              craRiskScore,
-            }),
-          },
-        }),
-        ...filterLiveRules({
-          executedRules: user.executedRules ?? [],
-          hitRules: user.hitRules ?? [],
-        }),
-      } as ConsumerUserMonitoringResult
     }
     handlers.registerGetConsumerUser(async (_ctx, request) => {
       const user = await userRepository.getConsumerUserWithRiskScores(

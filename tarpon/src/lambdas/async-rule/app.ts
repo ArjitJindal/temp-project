@@ -138,7 +138,10 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
     await rulesEngineService.verifyTransactionEvent(record.transactionEvent)
   } else if (type === 'USER_BATCH') {
     updateLogMetadata({ userId: record.user.userId })
-    await userRulesEngineService.verifyUser(record.user, record.userType)
+    await userRulesEngineService.createAndVerifyUser(
+      record.user,
+      record.userType === 'CONSUMER'
+    )
   } else if (type === 'USER_EVENT_BATCH') {
     if (record.userType === 'CONSUMER') {
       updateLogMetadata({ userId: record.userEvent.userId })

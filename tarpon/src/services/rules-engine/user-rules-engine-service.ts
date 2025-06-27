@@ -9,7 +9,7 @@ import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
 import { getUserRiskScoreDetailsForPNB } from './pnb-custom-logic'
-import { mergeUserTags, sendAsyncRuleTasks } from './utils'
+import { filterLiveRules, mergeUserTags, sendAsyncRuleTasks } from './utils'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
@@ -29,6 +29,7 @@ import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
 import { CaseRepository } from '@/services/cases/repository'
 import { ListService } from '@/services/list'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 
 type ConsumerUser = User & { type: 'CONSUMER' }
 type BusinessUser = Business & { type: 'BUSINESS' }
@@ -92,6 +93,70 @@ export class UserManagementService {
       mongoDb: mongoDb,
       dynamoDb: dynamoDb,
     })
+  }
+  public async createAndVerifyUser<T extends User | Business>(
+    userPayload: T,
+    isConsumerUser: boolean,
+    options?: {
+      lockCraRiskLevel?: boolean
+      lockKycRiskLevel?: boolean
+      validateUserId?: boolean
+      krsOnly?: boolean
+    }
+  ) {
+    const isDrsUpdatable = options?.lockCraRiskLevel !== true
+
+    const riskScoreResult = await this.riskScoringV8Service.handleUserUpdate({
+      user: userPayload,
+      manualRiskLevel: userPayload.riskLevel,
+      isDrsUpdatable,
+      manualKrsRiskLevel: userPayload.kycRiskLevel,
+      lockKrs: options?.lockKycRiskLevel,
+    })
+
+    const { craRiskScore, craRiskLevel, kycRiskScore, kycRiskLevel } =
+      riskScoreResult
+    if (options?.krsOnly) {
+      return {
+        userId: userPayload.userId,
+        riskScoreDetails: {
+          kycRiskScore,
+          kycRiskLevel,
+        },
+        executedRules: [],
+        hitRules: [],
+      }
+    }
+    let craRiskLevelToReturn = craRiskLevel
+
+    const user = await this.verifyUser(
+      userPayload,
+      isConsumerUser ? 'CONSUMER' : 'BUSINESS',
+      riskScoreResult,
+      options?.lockKycRiskLevel
+    )
+    if (hasFeature('PNB') && riskScoreResult) {
+      craRiskLevelToReturn = getUserRiskScoreDetailsForPNB(
+        user.hitRules ?? [],
+        riskScoreResult
+      )?.craRiskLevel
+    }
+    return {
+      userId: user.userId,
+      ...((kycRiskLevel || craRiskLevel) && {
+        riskScoreDetails: {
+          ...(kycRiskLevel && { kycRiskLevel, kycRiskScore }),
+          ...(craRiskLevelToReturn && {
+            craRiskLevel: craRiskLevelToReturn,
+            craRiskScore,
+          }),
+        },
+      }),
+      ...filterLiveRules({
+        executedRules: user.executedRules ?? [],
+        hitRules: user.hitRules ?? [],
+      }),
+    } as ConsumerUserMonitoringResult
   }
 
   public async verifyUser(
