@@ -228,6 +228,10 @@ export const allUsersViewHandler = lambdaApi()(
       )
     })
 
+    handlers.registerPostUsersFlatFileUpload(async (ctx, request) => {
+      return await userService.importFlatFile(request.UserFlatFileUploadRequest)
+    })
+
     return await handlers.handle(event)
   }
 )

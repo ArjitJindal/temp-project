@@ -4,9 +4,10 @@ import { ConnectionCredentials } from 'thunder-schema'
 import { ClickHouseClient } from '@clickhouse/client'
 import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
-import { FlatFileRunner } from './runner'
 import { BulkCaseClosureRunner } from './runner/bulk-case-clousre'
 import { CustomListUploadRunner } from './runner/custom-list-upload'
+import { UserUploadRunner } from './batchRunner/user-upload'
+import { FlatFileBaseRunner } from './baseRunner'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
@@ -17,6 +18,8 @@ import {
   getClickhouseCredentials,
 } from '@/utils/clickhouse/utils'
 import { EntityModel } from '@/@types/model'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 type Connections = {
   dynamoDb: DynamoDBDocumentClient
@@ -27,12 +30,16 @@ type Connections = {
 
 const FlatFileSchemaToModel: Record<
   FlatFileSchema,
-  (tenantId: string, connections: Connections) => FlatFileRunner<any>
+  (tenantId: string, connections: Connections) => FlatFileBaseRunner<any>
 > = {
   BULK_CASE_CLOSURE: (tenantId, connections) =>
     new BulkCaseClosureRunner(tenantId, connections),
   CUSTOM_LIST_UPLOAD: (tenantId, connections) =>
     new CustomListUploadRunner(tenantId, connections),
+  CONSUMER_USERS_UPLOAD: (tenantId, connections) =>
+    new UserUploadRunner<User>(tenantId, 'CONSUMER', connections),
+  BUSINESS_USERS_UPLOAD: (tenantId, connections) =>
+    new UserUploadRunner<Business>(tenantId, 'BUSINESS', connections),
 }
 
 const FlatFileFormatToModel: Record<

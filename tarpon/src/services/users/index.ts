@@ -99,6 +99,7 @@ import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrati
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
+import { UserFlatFileUploadRequest } from '@/@types/openapi-internal/UserFlatFileUploadRequest'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -145,6 +146,7 @@ type UserUpdateRuleInstances = Partial<
 
 @traceable
 export class UserService {
+  tenantId: string
   userRepository: UserRepository
   caseRepository: CaseRepository
   userEventRepository: UserEventRepository
@@ -173,6 +175,7 @@ export class UserService {
     documentBucketName?: string,
     awsCredentials?: LambdaCredentials
   ) {
+    this.tenantId = tenantId
     this.userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
@@ -2248,5 +2251,23 @@ export class UserService {
       items: userEvents,
       total: count,
     }
+  }
+
+  public async importFlatFile(request: UserFlatFileUploadRequest) {
+    const { file, type } = request
+
+    const files = await this.s3Service.copyFilesToPermanentBucket([file])
+    await sendBatchJobCommand({
+      tenantId: this.tenantId,
+      type: 'FLAT_FILES_VALIDATION',
+      parameters: {
+        format: 'CSV',
+        s3Key: files[0].s3Key,
+        schema:
+          type === 'CONSUMER'
+            ? 'CONSUMER_USERS_UPLOAD'
+            : 'BUSINESS_USERS_UPLOAD',
+      },
+    })
   }
 }

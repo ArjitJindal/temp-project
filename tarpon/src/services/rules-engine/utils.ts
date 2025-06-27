@@ -494,7 +494,8 @@ function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
 }
 
 export async function sendAsyncRuleTasks(
-  tasks: AsyncRuleRecord[]
+  tasks: AsyncRuleRecord[],
+  saveBatchEntities: boolean = true
 ): Promise<void> {
   if (envIs('test', 'local')) {
     const { asyncRuleRunnerHandler } = await import('@/lambdas/async-rule/app')
@@ -503,6 +504,7 @@ export async function sendAsyncRuleTasks(
         Records: tasks.map((task) => ({
           body: JSON.stringify(task),
         })),
+        saveBatchEntities,
       })
     }
     return

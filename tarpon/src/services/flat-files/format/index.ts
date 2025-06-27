@@ -1,6 +1,6 @@
 import Ajv, { ValidateFunction, ErrorObject } from 'ajv'
 import { JSONSchema } from 'json-schema-to-typescript'
-import { FlatFileRunner } from '../runner'
+import { FlatFileBaseRunner } from '../baseRunner'
 import { EntityModel } from '@/@types/model'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'
@@ -41,7 +41,7 @@ export abstract class FlatFileFormat {
   protected async validateRecord(
     data: FlatFileRecord,
     validate: ValidateFunction,
-    runner: FlatFileRunner<any>,
+    runner: FlatFileBaseRunner<any>,
     metadata?: object
   ): Promise<FlatFileValidationResult> {
     try {
@@ -97,7 +97,7 @@ export abstract class FlatFileFormat {
   }
 
   public async *validateRecords(
-    runner: FlatFileRunner<any>,
+    runner: FlatFileBaseRunner<any>,
     metadata?: object
   ): AsyncGenerator<FlatFileValidationResult> {
     const schema = this.generateJSONSchema()
@@ -204,7 +204,7 @@ export abstract class FlatFileFormat {
   }
 
   public async validateAndStoreRecords(
-    runner: FlatFileRunner<any>,
+    runner: FlatFileBaseRunner<any>,
     metadata?: object
   ): Promise<boolean> {
     const clickhouseConfig = await getClickhouseCredentials(this.tenantId)
@@ -223,7 +223,12 @@ export abstract class FlatFileFormat {
               data.record,
               {
                 name: 'VALIDATION_ERROR',
-                message: data?.errors?.map((e) => e.message).join(', '),
+                message: data?.errors
+                  ?.map(
+                    (e) =>
+                      (e.instancePath ? e.instancePath + ' ' : '') + e.message
+                  )
+                  .join(', '),
               },
               'VALIDATE'
             )

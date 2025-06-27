@@ -83,7 +83,7 @@ const getLocalConfig = (
 export const getClickhouseClientConfig = async (
   database: string
 ): Promise<NodeClickHouseClientConfigOptions> => {
-  if (envIs('local')) {
+  if (envIs('local') || envIs('test')) {
     return getLocalConfig(database)
   }
 

@@ -2084,6 +2084,22 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+    post:
+      summary: Users - Flat File Upload
+      operationId: post-users-flat-file-upload
+      tags: []
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserFlatFileUploadRequest'
+        required: true
     parameters: []
   /users/{userId}/comments:
     parameters:
@@ -7822,6 +7838,8 @@ components:
       enum:
         - BULK_CASE_CLOSURE
         - CUSTOM_LIST_UPLOAD
+        - CONSUMER_USERS_UPLOAD
+        - BUSINESS_USERS_UPLOAD
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
@@ -15029,6 +15047,20 @@ components:
       required:
         - subtype
         - data
+    UserFlatFileUploadRequest:
+      title: UserFlatFileUploadRequest
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileInfo'
+        type:
+          type: string
+          enum:
+            - BUSINESS
+            - CONSUMER
+      required:
+        - file
+        - type
     ListExistedInternal:
       title: ListExistedInternal
       description: List with ID and header

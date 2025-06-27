@@ -151,9 +151,8 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
 }
 
 export const asyncRuleRunnerHandler = lambdaConsumer()(
-  async (event: SQSEvent) => {
-    const { Records } = event
-
+  async (event: SQSEvent & { saveBatchEntities?: boolean }) => {
+    const { Records, saveBatchEntities = true } = event
     const records = Records.map((record) => ({
       messageId: record.messageId,
       body: JSON.parse(record.body) as AsyncRuleRecord,
@@ -168,15 +167,18 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
           const isConcurrentAsyncRulesEnabled = hasFeature(
             'CONCURRENT_ASYNC_RULES'
           )
-          const batchImportService = new BatchImportService(tenantId, {
-            dynamoDb,
-            mongoDb,
-          })
-          const batchSavingPromise = batchImportService.saveBatchEntities(
-            records
-              .map((record) => record.body as AsyncBatchRecord)
-              .filter((data) => !!data.batchId)
-          )
+          let batchSavingPromise: Promise<void> | undefined
+          if (saveBatchEntities) {
+            const batchImportService = new BatchImportService(tenantId, {
+              dynamoDb,
+              mongoDb,
+            })
+            batchSavingPromise = batchImportService.saveBatchEntities(
+              records
+                .map((record) => record.body as AsyncBatchRecord)
+                .filter((data) => !!data.batchId)
+            )
+          }
           for await (const record of records) {
             const lockKeys =
               isConcurrentAsyncRulesEnabled && envIsNot('test', 'local')
@@ -205,7 +207,9 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
               )
             }
           }
-          await batchSavingPromise
+          if (batchSavingPromise) {
+            await batchSavingPromise
+          }
         })
       })
     )

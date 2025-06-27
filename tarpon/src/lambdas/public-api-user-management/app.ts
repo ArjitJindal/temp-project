@@ -29,7 +29,7 @@ import {
 } from '@/@types/openapi-public/RequestParameters'
 import { getUserRiskScoreDetailsForPNB } from '@/services/rules-engine/pnb-custom-logic'
 
-const MAX_BATCH_IMPORT_COUNT = 200
+export const MAX_BATCH_IMPORT_COUNT = 200
 
 export const userHandler = lambdaApi()(
   async (
