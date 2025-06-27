@@ -337,4 +337,12 @@ export class SanctionsHitsRepository {
 
     return await collection.find({ sanctionsHitId: { $in: ids } }).toArray()
   }
+
+  public async getHitById(id: string): Promise<SanctionsHit | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsHit>(
+      SANCTIONS_HITS_COLLECTION(this.tenantId)
+    )
+    return await collection.findOne({ sanctionsHitId: id })
+  }
 }

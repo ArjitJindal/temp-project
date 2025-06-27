@@ -7840,6 +7840,8 @@ components:
         - CUSTOM_LIST_UPLOAD
         - CONSUMER_USERS_UPLOAD
         - BUSINESS_USERS_UPLOAD
+        - BULK_ALERT_CLOSURE
+        - BULK_SANCTIONS_HITS_UPDATE
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
@@ -7888,6 +7890,48 @@ components:
         - caseId
         - reason
         - comment
+    AlertClosure:
+      title: AlertClosure
+      type: object
+      properties:
+        alertId:
+          type: string
+        reason:
+          type: string
+        otherReason:
+          type: string
+        comment:
+          type: string
+      required:
+        - alertId
+        - reason
+        - comment
+    SanctionsHitUpdate:
+      title: SanctionsHitUpdate
+      type: object
+      properties:
+        sanctionsHitId:
+          type: string
+        reason:
+          $ref: '#/components/schemas/SanctionsHitReasons'
+        otherReason:
+          type: string
+        comment:
+          type: string
+        whitelistHits:
+          type: boolean
+        alertId:
+          type: string
+        sanctionsHitStatus:
+          $ref: '#/components/schemas/SanctionsHitStatus'
+        removeHitsFromWhitelist:
+          type: boolean
+      required:
+        - sanctionsHitId
+        - reason
+        - comment
+        - alertId
+        - sanctionsHitStatus
     QuestionAutocompleteResponse:
       title: QuestionAutocompleteResponse
       type: object

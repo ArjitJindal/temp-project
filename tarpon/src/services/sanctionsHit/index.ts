@@ -33,6 +33,7 @@ import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { traceable } from '@/core/xray'
+import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 
 @traceable
 export class SanctionsHitService {
@@ -161,6 +162,12 @@ export class SanctionsHitService {
       whitelistUpdateComment
     )
     return result
+  }
+
+  public async getSanctionsHit(
+    sanctionsHitId: string
+  ): Promise<SanctionsHit | null> {
+    return await this.sanctionsHitsRepository.getHitById(sanctionsHitId)
   }
 
   public async deleteWhitelistRecordsByHits(

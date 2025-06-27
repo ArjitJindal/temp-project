@@ -8,6 +8,8 @@ import { BulkCaseClosureRunner } from './runner/bulk-case-clousre'
 import { CustomListUploadRunner } from './runner/custom-list-upload'
 import { UserUploadRunner } from './batchRunner/user-upload'
 import { FlatFileBaseRunner } from './baseRunner'
+import { BulkAlertClosureRunner } from './runner/bulk-alert-closure'
+import { BulkSanctionsHitsUpdateRunner } from './runner/bulk-sanctions-hits-update'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
@@ -40,6 +42,10 @@ const FlatFileSchemaToModel: Record<
     new UserUploadRunner<User>(tenantId, 'CONSUMER', connections),
   BUSINESS_USERS_UPLOAD: (tenantId, connections) =>
     new UserUploadRunner<Business>(tenantId, 'BUSINESS', connections),
+  BULK_ALERT_CLOSURE: (tenantId, connections) =>
+    new BulkAlertClosureRunner(tenantId, connections),
+  BULK_SANCTIONS_HITS_UPDATE: (tenantId, connections) =>
+    new BulkSanctionsHitsUpdateRunner(tenantId, connections),
 }
 
 const FlatFileFormatToModel: Record<
