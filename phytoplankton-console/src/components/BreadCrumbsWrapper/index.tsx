@@ -6,12 +6,12 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
-import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
+import { ImportExportType, TopRightSection } from '@/components/TopRightSection';
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import { LocalStorageKey } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 
-export type SimulationPageWrapperRef = {
+export type TopRightSectionRef = {
   refetchSimulationCount: () => void;
   onChange?: () => void;
 };
@@ -22,13 +22,14 @@ export type PageWrapperProps = {
   simulationHistoryUrl: string;
   simulationDefaultUrl: string;
   nonSimulationDefaultUrl: string;
-  storageKey: 'SIMULATION_RULES' | 'SIMULATION_CUSTOM_RISK_FACTORS' | 'SIMULATION_RISK_LEVELS';
+  simulationStorageKey:
+    | 'SIMULATION_RULES'
+    | 'SIMULATION_CUSTOM_RISK_FACTORS'
+    | 'SIMULATION_RISK_LEVELS';
+  importExport?: ImportExportType;
 };
 
-export const BreadcrumbsSimulationPageWrapper = forwardRef<
-  SimulationPageWrapperRef,
-  PageWrapperProps
->((props, ref) => {
+export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProps>((props, ref) => {
   const api = useApi();
   const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
   const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
@@ -44,7 +45,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
   }));
 
   const [isSimulationEnabled, setIsSimulationEnabled] = useSafeLocalStorageState<boolean>(
-    props.storageKey,
+    props.simulationStorageKey,
     false,
   );
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
     (value: boolean | undefined) => {
       setIsSimulationEnabled(value);
       if (!value) {
-        if (props.storageKey === 'SIMULATION_CUSTOM_RISK_FACTORS') {
+        if (props.simulationStorageKey === 'SIMULATION_CUSTOM_RISK_FACTORS') {
           // Remove all simulation data from local storage
           const keysToRemove: string[] = [];
 
@@ -84,23 +85,24 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
       setIsSimulationEnabled,
       props.nonSimulationDefaultUrl,
       props.simulationDefaultUrl,
-      props.storageKey,
+      props.simulationStorageKey,
     ],
   );
 
   const location = useLocation();
 
   return (
-    <SimulationPageWrapper
+    <TopRightSection
       key={`${isSimulationEnabled}`}
-      isSimulationModeEnabled={localStorage.getItem(props.storageKey) === 'true'}
+      isSimulationModeEnabled={localStorage.getItem(props.simulationStorageKey) === 'true'}
       onSimulationModeChange={handleSimulationModeChange}
+      importExport={props.importExport}
       header={(actionButton) => (
         <div className={s.header}>
           <Breadcrumbs items={props.breadcrumbs} />
           <div className={s.right}>
             {!location.pathname.endsWith('/simulation-history') &&
-              localStorage.getItem(props.storageKey) === 'true' && (
+              localStorage.getItem(props.simulationStorageKey) === 'true' && (
                 <Link
                   to={props.simulationHistoryUrl}
                   className={s.history}
@@ -115,6 +117,6 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
       )}
     >
       {props.children}
-    </SimulationPageWrapper>
+    </TopRightSection>
   );
 });

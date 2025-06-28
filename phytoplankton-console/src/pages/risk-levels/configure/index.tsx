@@ -4,7 +4,7 @@ import RiskClassification from './RiskClassification';
 import { SimulateRiskClassification } from './SimulateRiskClassification';
 import { parseApiState, State } from './RiskClassificationTable';
 import { Authorized } from '@/components/utils/Authorized';
-import { SimulationPageWrapperRef } from '@/components/SimulationPageWrapper';
+import { TopRightSectionRef } from '@/components/TopRightSection';
 import { useApi } from '@/api';
 import { getOr, isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
@@ -13,7 +13,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
@@ -52,8 +52,8 @@ export default function () {
   ].filter(notEmpty);
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <BreadcrumbsSimulationPageWrapper
-        storageKey="SIMULATION_RISK_LEVELS"
+      <BreadCrumbsWrapper
+        simulationStorageKey="SIMULATION_RISK_LEVELS"
         nonSimulationDefaultUrl="/risk-levels/configure"
         simulationDefaultUrl="/risk-levels/configure/simulation"
         simulationHistoryUrl="/risk-levels/configure/simulation-history"
@@ -81,13 +81,13 @@ export default function () {
           items={tabItems}
           onChange={handleTabChange}
         />
-      </BreadcrumbsSimulationPageWrapper>
+      </BreadCrumbsWrapper>
     </Feature>
   );
 }
 
 function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boolean }) {
-  const pageWrapperRef = useRef<SimulationPageWrapperRef>(null);
+  const pageWrapperRef = useRef<TopRightSectionRef>(null);
 
   const refetchSimulationCount = useCallback(() => {
     pageWrapperRef.current?.refetchSimulationCount();

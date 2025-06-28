@@ -20,7 +20,7 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
 import { message } from '@/components/library/Message';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { useAuth0User } from '@/utils/user-utils';
 
@@ -41,8 +41,8 @@ export default function () {
 
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <BreadcrumbsSimulationPageWrapper
-        storageKey={'SIMULATION_CUSTOM_RISK_FACTORS'}
+      <BreadCrumbsWrapper
+        simulationStorageKey={'SIMULATION_CUSTOM_RISK_FACTORS'}
         nonSimulationDefaultUrl="/risk-levels/risk-factors/"
         simulationDefaultUrl="/risk-levels/risk-factors/simulation"
         simulationHistoryUrl="/risk-levels/risk-factors/simulation-history"
@@ -106,7 +106,7 @@ export default function () {
           dataKey={key}
           isSimulationMode={isSimulationMode}
         />
-      </BreadcrumbsSimulationPageWrapper>
+      </BreadCrumbsWrapper>
     </Feature>
   );
 }

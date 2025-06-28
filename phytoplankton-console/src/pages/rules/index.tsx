@@ -2,25 +2,38 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
+import { useRulesResults } from './utils';
 import { Authorized } from '@/components/utils/Authorized';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { getOr } from '@/utils/asyncResource';
+import { exportJsonlFile } from '@/utils/json';
+import { dayjs } from '@/utils/dayjs';
+import { useApi } from '@/api';
 
 const TableList = () => {
   const { tab = 'tab' } = useParams<'tab'>();
   const [, setLocalStorageActiveTab] = useSafeLocalStorageState('rule-active-tab', tab);
+
   useEffect(() => {
     setLocalStorageActiveTab(tab);
   }, [setLocalStorageActiveTab, tab]);
 
+  const rulesResult = useRulesResults({
+    params: DEFAULT_PARAMS_STATE,
+  });
+
+  const api = useApi();
+
   return (
-    <BreadcrumbsSimulationPageWrapper
-      storageKey={'SIMULATION_RULES'}
+    <BreadCrumbsWrapper
+      simulationStorageKey={'SIMULATION_RULES'}
       breadcrumbs={[
         {
           title: 'Rules',
@@ -38,9 +51,27 @@ const TableList = () => {
       simulationHistoryUrl={`/rules/${tab}/simulation-history`}
       nonSimulationDefaultUrl={`/rules/${tab}`}
       simulationDefaultUrl={`/rules/${tab}`}
+      importExport={{
+        import: async (file) => {
+          await api.postRulesImport({
+            ImportConsoleDataRequest: {
+              file,
+            },
+          });
+        },
+        export: () => {
+          const rules = getOr(rulesResult.data, {
+            items: [],
+            total: 0,
+          });
+
+          exportJsonlFile(rules.items, `rules-${dayjs().format('YYYY-MM-DD')}`);
+        },
+        type: 'RULES',
+      }}
     >
       <Content tab={tab} />
-    </BreadcrumbsSimulationPageWrapper>
+    </BreadCrumbsWrapper>
   );
 };
 

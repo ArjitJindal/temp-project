@@ -1,11 +1,16 @@
 import { useNavigate, useParams } from 'react-router';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import CustomRiskFactors from './RiskFactor';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { useRiskFactors } from './utils';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tabs, { TabItem } from '@/components/library/Tabs';
+import { getOr } from '@/utils/asyncResource';
+import { dayjs } from '@/utils/dayjs';
+import { exportJsonlFile } from '@/utils/json';
+import { useApi } from '@/api';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
 
@@ -14,6 +19,7 @@ export default function () {
   const isSimulationMode = localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
   const { type } = useParams();
   const navigate = useNavigate();
+  const api = useApi();
   const tabItems: TabItem[] = [
     {
       title: 'Risk factors',
@@ -39,13 +45,29 @@ export default function () {
     }
   };
 
+  const riskFactorsResult = useRiskFactors();
+
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <BreadcrumbsSimulationPageWrapper
-        storageKey="SIMULATION_CUSTOM_RISK_FACTORS"
+      <BreadCrumbsWrapper
+        simulationStorageKey="SIMULATION_CUSTOM_RISK_FACTORS"
         nonSimulationDefaultUrl="/risk-levels/risk-factors/consumer"
         simulationDefaultUrl="/risk-levels/risk-factors/simulation"
         simulationHistoryUrl="/risk-levels/risk-factors/simulation-history"
+        importExport={{
+          import: async (file) => {
+            await api.postRiskFactorsImport({
+              ImportConsoleDataRequest: {
+                file,
+              },
+            });
+          },
+          export: () => {
+            const riskFactors = getOr(riskFactorsResult.data, []);
+            exportJsonlFile(riskFactors, `risk-factors-${dayjs().format('YYYY-MM-DD')}`);
+          },
+          type: 'RISK_FACTORS',
+        }}
         breadcrumbs={[
           {
             title: 'Risk scoring',
@@ -77,7 +99,7 @@ export default function () {
           items={tabItems}
           onChange={handleTabChange}
         />
-      </BreadcrumbsSimulationPageWrapper>
+      </BreadCrumbsWrapper>
     </Feature>
   );
 }

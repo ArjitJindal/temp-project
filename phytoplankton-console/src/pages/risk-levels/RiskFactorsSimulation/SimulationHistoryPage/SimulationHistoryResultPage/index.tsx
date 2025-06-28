@@ -1,7 +1,7 @@
 import { useLocation, useParams } from 'react-router';
 import { SimulationResult } from '../../SimulationResult';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 
@@ -43,15 +43,15 @@ export const SimulationHistoryResultPage = () => {
 
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <BreadcrumbsSimulationPageWrapper
-        storageKey="SIMULATION_CUSTOM_RISK_FACTORS"
+      <BreadCrumbsWrapper
+        simulationStorageKey="SIMULATION_CUSTOM_RISK_FACTORS"
         nonSimulationDefaultUrl={makeUrl('/risk-levels/risk-factors/consumer')}
         simulationDefaultUrl={makeUrl('/risk-levels/risk-factors/simulation')}
         breadcrumbs={breadcrumbs}
         simulationHistoryUrl={makeUrl('/risk-levels/risk-factors/simulation-history')}
       >
         <SimulationResult jobId={jobId ?? ''} />
-      </BreadcrumbsSimulationPageWrapper>
+      </BreadCrumbsWrapper>
     </Feature>
   );
 };

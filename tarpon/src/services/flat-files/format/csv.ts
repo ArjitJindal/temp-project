@@ -9,7 +9,9 @@ import * as Models from '@/@types/openapi-public/all'
 import { FlatFileRecord } from '@/@types/flat-files'
 import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class CsvFormat extends FlatFileFormat {
   static readonly format = 'CSV'
 

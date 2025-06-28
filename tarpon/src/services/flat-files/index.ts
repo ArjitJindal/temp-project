@@ -6,6 +6,9 @@ import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
 import { BulkCaseClosureRunner } from './runner/bulk-case-clousre'
 import { CustomListUploadRunner } from './runner/custom-list-upload'
+import { RulesImportRunner } from './runner/rule-instances-import'
+import { RiskFactorsImportRunner } from './runner/risk-factors-import'
+import { JsonlFormat } from './format/jsonl'
 import { UserUploadRunner } from './batchRunner/user-upload'
 import { FlatFileBaseRunner } from './baseRunner'
 import { BulkAlertClosureRunner } from './runner/bulk-alert-closure'
@@ -38,6 +41,10 @@ const FlatFileSchemaToModel: Record<
     new BulkCaseClosureRunner(tenantId, connections),
   CUSTOM_LIST_UPLOAD: (tenantId, connections) =>
     new CustomListUploadRunner(tenantId, connections),
+  RULE_INSTANCES_IMPORT: (tenantId, connections) =>
+    new RulesImportRunner(tenantId, connections),
+  RISK_FACTORS_IMPORT: (tenantId, connections) =>
+    new RiskFactorsImportRunner(tenantId, connections),
   CONSUMER_USERS_UPLOAD: (tenantId, connections) =>
     new UserUploadRunner<User>(tenantId, 'CONSUMER', connections),
   BUSINESS_USERS_UPLOAD: (tenantId, connections) =>
@@ -53,6 +60,7 @@ const FlatFileFormatToModel: Record<
   (tenantId: string, model: typeof EntityModel, s3Key: string) => FlatFileFormat
 > = {
   CSV: (tenantId, model, s3Key) => new CsvFormat(tenantId, model, s3Key),
+  JSONL: (tenantId, model, s3Key) => new JsonlFormat(tenantId, model, s3Key),
 }
 
 @traceable

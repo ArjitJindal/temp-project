@@ -68,3 +68,13 @@ export function getFixedSchemaJsonForm(schema: object) {
     }
   });
 }
+
+export function exportJsonlFile(data: object[], fileName: string) {
+  const json = data.map((item) => JSON.stringify(item)).join('\n');
+  const blob = new Blob([json], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName + '.txt';
+  a.click();
+}

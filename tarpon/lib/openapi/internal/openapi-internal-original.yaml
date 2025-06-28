@@ -554,6 +554,32 @@ paths:
                 type: array
                 items:
                   type: string
+  /rule-instances/import:
+    post:
+      summary: Import rules
+      operationId: post-rules-import
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportConsoleDataRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+  /risk-factors/import:
+    post:
+      summary: Import risk factors
+      operationId: post-risk-factors-import
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportConsoleDataRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
   /files/getPresignedDownloadUrl/{bucket}/{key}:
     parameters: []
     get:
@@ -7838,6 +7864,8 @@ components:
       enum:
         - BULK_CASE_CLOSURE
         - CUSTOM_LIST_UPLOAD
+        - RULE_INSTANCES_IMPORT
+        - RISK_FACTORS_IMPORT
         - CONSUMER_USERS_UPLOAD
         - BUSINESS_USERS_UPLOAD
         - BULK_ALERT_CLOSURE
@@ -7847,6 +7875,7 @@ components:
       type: string
       enum:
         - CSV
+        - JSONL
     FlatFileTemplateRequest:
       title: FlatFileTemplateRequest
       type: object
@@ -8661,6 +8690,14 @@ components:
         - types
         - typologies
         - sampleUseCases
+    ImportConsoleDataRequest:
+      title: ImportRulesRequest
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileInfo'
+      required:
+        - file
     RuleFilters:
       title: RuleFilter
       type: object

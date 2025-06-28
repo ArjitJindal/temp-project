@@ -1,6 +1,6 @@
 import { SimulationHistory } from './SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { makeUrl } from '@/utils/routing';
 
 const ROOT_PATH = '/risk-levels';
@@ -27,15 +27,15 @@ export const SimulationHistoryPage = () => {
 
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <BreadcrumbsSimulationPageWrapper
-        storageKey="SIMULATION_CUSTOM_RISK_FACTORS"
+      <BreadCrumbsWrapper
+        simulationStorageKey="SIMULATION_CUSTOM_RISK_FACTORS"
         breadcrumbs={breadcrumbs}
         simulationHistoryUrl={buildUrl('/simulation-history')}
         nonSimulationDefaultUrl={buildUrl('')}
         simulationDefaultUrl={buildUrl('/simulation')}
       >
         <SimulationHistory />
-      </BreadcrumbsSimulationPageWrapper>
+      </BreadCrumbsWrapper>
     </Feature>
   );
 };

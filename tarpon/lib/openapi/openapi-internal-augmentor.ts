@@ -74,6 +74,8 @@ export const ConsoleApiPathToLambda: any = {
   '/rule-ml-model/{modelId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules-search': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
+  '/rule-instances/import':
+    StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-filters': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules/{ruleId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule_instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
@@ -204,6 +206,8 @@ export const ConsoleApiPathToLambda: any = {
   '/pulse/risk-classification':
     StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
   '/risk-factors':
+    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/risk-factors/import':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/risk-factors/{riskFactorId}':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,

@@ -1,4 +1,3 @@
-import { GetObjectCommand } from '@aws-sdk/client-s3'
 import pMap from 'p-map'
 import { chunk, last, uniqBy } from 'lodash'
 import { MongoClient, ObjectId } from 'mongodb'
@@ -18,7 +17,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { PnbBackfillEntities } from '@/@types/batch-job'
-import { getS3Client } from '@/utils/s3'
+import { jsonlStreamReader } from '@/utils/jsonl'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -85,42 +84,13 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       .db()
       .collection(USERS_COLLECTION(tenantId))
       .createIndex({ userId: 1 }, { unique: true })
+    const importBucket = process.env.IMPORT_BUCKET
 
-    const s3 = getS3Client()
-    const { Body } = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.IMPORT_BUCKET,
-        Key: importFileS3Key,
-      })
-    )
-    const stream = Body?.transformToWebStream()
-    if (!stream) {
-      throw new Error('Stream is undefined')
+    if (!importBucket) {
+      throw new Error('IMPORT_BUCKET is not set')
     }
-    const reader = stream.getReader()
-    const decoder = new TextDecoder()
-    const rl = {
-      async *[Symbol.asyncIterator]() {
-        let leftover = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            if (leftover) {
-              yield leftover
-            }
-            break
-          }
-          const chunk = decoder.decode(value, { stream: true })
-          const lines = (leftover + chunk).split('\n')
-          leftover = lines.pop() || ''
-          for (const line of lines) {
-            if (line) {
-              yield line
-            }
-          }
-        }
-      },
-    }
+
+    const rl = await jsonlStreamReader(importFileS3Key, importBucket)
     const lastCompletedTimestamp = await getMigrationLastCompletedTimestamp(
       this.jobId
     )

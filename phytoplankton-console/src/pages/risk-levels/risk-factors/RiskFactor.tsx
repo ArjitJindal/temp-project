@@ -4,8 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import RiskFactorsTable from '../shared/RiskFactorsTable';
 import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
+import { useRiskFactors } from './utils';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { useHasResources } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
@@ -25,21 +25,7 @@ export default function ({ isSimulationMode }: { isSimulationMode: boolean }) {
 export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
   const api = useApi();
-  const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
-    const entityType =
-      type === 'consumer'
-        ? 'CONSUMER_USER'
-        : type === 'business'
-        ? 'BUSINESS'
-        : type === 'transaction'
-        ? 'TRANSACTION'
-        : undefined;
-    return await api.getAllRiskFactors({
-      entityType: entityType,
-      includeV2: true,
-    });
-  });
-
+  const queryResult = useRiskFactors(type as 'consumer' | 'business' | 'transaction');
   const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
   const queryClient = useQueryClient();
 

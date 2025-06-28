@@ -11,6 +11,9 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { userStatements } from '@/core/utils/context'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { S3Service } from '@/services/aws/s3-service'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -97,6 +100,29 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       return await riskService.bulkCreateandReplaceRiskFactors(
         request.RiskFactorsPostRequest
       )
+    })
+
+    handlers.registerPostRiskFactorsImport(async (ctx, request) => {
+      const { file } = request.ImportConsoleDataRequest
+      const s3 = getS3ClientByEvent(event)
+      const { TMP_BUCKET, DOCUMENT_BUCKET } = process.env as {
+        TMP_BUCKET: string
+        DOCUMENT_BUCKET: string
+      }
+      const s3Service = new S3Service(s3, {
+        tmpBucketName: TMP_BUCKET,
+        documentBucketName: DOCUMENT_BUCKET,
+      })
+      const fileInfo = await s3Service.copyFilesToPermanentBucket([file])
+      await sendBatchJobCommand({
+        tenantId,
+        type: 'FLAT_FILES_VALIDATION',
+        parameters: {
+          s3Key: fileInfo[0].s3Key,
+          schema: 'RISK_FACTORS_IMPORT',
+          format: 'JSONL',
+        },
+      })
     })
 
     return await handlers.handle(event)

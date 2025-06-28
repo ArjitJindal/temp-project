@@ -11,6 +11,9 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RuleThresholdOptimizer } from '@/services/rule-threshold'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { S3Service } from '@/services/aws/s3-service'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -209,6 +212,30 @@ export const ruleInstanceHandler = lambdaApi()(
         )
       }
     )
+
+    handlers.registerPostRulesImport(async (ctx, request) => {
+      const { file } = request.ImportConsoleDataRequest
+      const s3 = getS3ClientByEvent(event)
+      const { TMP_BUCKET, DOCUMENT_BUCKET } = process.env as {
+        TMP_BUCKET: string
+        DOCUMENT_BUCKET: string
+      }
+      const s3Service = new S3Service(s3, {
+        tmpBucketName: TMP_BUCKET,
+        documentBucketName: DOCUMENT_BUCKET,
+      })
+      const fileInfo = await s3Service.copyFilesToPermanentBucket([file])
+
+      await sendBatchJobCommand({
+        tenantId,
+        type: 'FLAT_FILES_VALIDATION',
+        parameters: {
+          s3Key: fileInfo[0].s3Key,
+          format: 'JSONL',
+          schema: 'RULE_INSTANCES_IMPORT',
+        },
+      })
+    })
 
     return await handlers.handle(event)
   }

@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRules } from '@/utils/rules';
-import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 
 export default function SimulationHistoryItemPage() {
   const { id: jobId } = useParams<'id'>();
@@ -35,8 +35,8 @@ export default function SimulationHistoryItemPage() {
     },
   );
   return (
-    <BreadcrumbsSimulationPageWrapper
-      storageKey="SIMULATION_RULES"
+    <BreadCrumbsWrapper
+      simulationStorageKey="SIMULATION_RULES"
       breadcrumbs={[
         {
           title: 'Rules',
@@ -64,7 +64,7 @@ export default function SimulationHistoryItemPage() {
           {(job) => <Content job={job} />}
         </AsyncResourceRenderer>
       </Authorized>
-    </BreadcrumbsSimulationPageWrapper>
+    </BreadCrumbsWrapper>
   );
 }
 
