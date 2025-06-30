@@ -20999,7 +20999,7 @@ __metadata:
     ssh2-sftp-client: "npm:^10.0.3"
     stopword: "npm:^3.0.1"
     swagger-routes-express: "npm:^3.3.2"
-    thunder-schema: "npm:1.0.22"
+    thunder-schema: "npm:1.0.24"
     timeout-signal: "npm:^1.1.0"
     ts-jest: "npm:^28.0.8"
     ts-loader: "npm:^9.2.6"
@@ -21082,15 +21082,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"thunder-schema@npm:1.0.22":
-  version: 1.0.22
-  resolution: "thunder-schema@npm:1.0.22"
+"thunder-schema@npm:1.0.24":
+  version: 1.0.24
+  resolution: "thunder-schema@npm:1.0.24"
   dependencies:
     "@clickhouse/client": "npm:^1.11.1"
     path: "npm:^0.12.7"
   bin:
     thunder-schema: dist/cli/index.js
-  checksum: 760da9d17ad812d0730ae2beaa40cc816670a546672c0179e6af9eb3ab1f2500dabf9232f0c7bcf3f918fde6143fa09e6a5a4b6fc1905f83e04c62e12f5e56c5
+  checksum: da66260af11eb11eb02601e68c161ac7928f8832cbdb26081775ca5f4a7bf85139b76dc98ca20873cd0c02e9c9dbef8083922cc84be6604d23e7ae2de7b323ae
   languageName: node
   linkType: hard
 

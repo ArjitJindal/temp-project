@@ -48,6 +48,11 @@ export abstract class FlatFileFormat {
       // First validate against JSON schema
       const ajvResult = validate(data.record)
       if (!ajvResult) {
+        logger.warn('Validation errors', {
+          errors: validate.errors,
+          ajvResult,
+          record: data.record,
+        })
         const errors = this.formatValidationErrors(validate.errors)
         return { valid: false, errors, record: data }
       }
@@ -218,18 +223,24 @@ export abstract class FlatFileFormat {
       for await (const data of this.validateRecords(runner, metadata)) {
         try {
           if (!data.valid) {
+            logger.warn('Validation errors', {
+              errors: data.errors,
+              record: data.record,
+            })
             await this.saveError(
               flatFilesRecords,
               data.record,
-              {
-                name: 'VALIDATION_ERROR',
-                message: data?.errors
-                  ?.map(
-                    (e) =>
-                      (e.instancePath ? e.instancePath + ' ' : '') + e.message
-                  )
-                  .join(', '),
-              },
+              [
+                {
+                  name: 'VALIDATION_ERROR',
+                  message: data?.errors
+                    ?.map(
+                      (e) =>
+                        (e.instancePath ? e.instancePath + ' ' : '') + e.message
+                    )
+                    .join(', '),
+                },
+              ],
               'VALIDATE'
             )
             isAllValid = false

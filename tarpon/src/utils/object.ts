@@ -114,7 +114,7 @@ export function isJsonString(str: string) {
   return true
 }
 
-export function withTimeout<T>(
+export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number
 ): Promise<T> {

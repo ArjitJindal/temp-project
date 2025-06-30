@@ -330,7 +330,7 @@ export class AlertsService extends CaseAlertsCommonService {
       this.dynamoDb
     )
     const accountsService = AccountsService.getInstance(this.dynamoDb, true)
-    const accounts = await accountsService.getAllActiveAccounts()
+    const accounts = await accountsService.getAllActiveAccounts(this.tenantId)
     const currentUserId = getContext()?.user?.id
     const currentUserAccount = accounts.find((a) => a.id === currentUserId)
     const isPNB = hasFeature('PNB')
@@ -1407,7 +1407,7 @@ export class AlertsService extends CaseAlertsCommonService {
       },
     }
 
-    const accountsService = await AccountsService.getInstance(this.dynamoDb)
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
     let userAccount: Account | undefined = undefined
     if (!externalRequest && userId) {
       userAccount =
@@ -1480,7 +1480,7 @@ export class AlertsService extends CaseAlertsCommonService {
     // get the first alert
     const firstAlert = alerts[0]
     // get all the users accounts
-    const accounts = await accountsService.getAllActiveAccounts()
+    const accounts = await accountsService.getAllActiveAccounts(this.tenantId)
 
     await withTransaction(async () => {
       const [response] = await Promise.all([

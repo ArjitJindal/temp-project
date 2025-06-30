@@ -11,13 +11,12 @@ import {
   FlatFilesRecordsSchema,
 } from '@/@types/flat-files'
 import { UserService } from '@/services/users'
-import { MAX_BATCH_IMPORT_COUNT } from '@/lambdas/public-api-user-management/app'
 import { Business } from '@/@types/openapi-public/Business'
 
 export class UserUploadRunner<
   T extends User | Business
 > extends FlatFileBatchRunner<T> {
-  public concurrency = MAX_BATCH_IMPORT_COUNT / this.batchMultiplier // matches with batch size for public api
+  public concurrency = 20
   public model: typeof User | typeof Business
   private type: 'CONSUMER' | 'BUSINESS'
   private userService: UserService

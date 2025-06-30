@@ -72,19 +72,31 @@ const getUrl = (config: NodeClickHouseClientConfigOptions) => {
 }
 
 const getLocalConfig = (
-  database: string
+  database: string,
+  options?: {
+    keepAlive?: boolean
+    idleSocketTtl?: number
+  }
 ): NodeClickHouseClientConfigOptions => ({
   url: 'http://localhost:8123',
   username: 'default',
   password: '',
   database,
+  keep_alive: {
+    enabled: options?.keepAlive ?? true,
+    idle_socket_ttl: options?.idleSocketTtl ?? 2_500,
+  },
 })
 
 export const getClickhouseClientConfig = async (
-  database: string
+  database: string,
+  options?: {
+    keepAlive?: boolean
+    idleSocketTtl?: number
+  }
 ): Promise<NodeClickHouseClientConfigOptions> => {
   if (envIs('local') || envIs('test')) {
-    return getLocalConfig(database)
+    return getLocalConfig(database, options)
   }
 
   const config = await getSecret<NodeClickHouseClientConfigOptions>(
@@ -99,6 +111,10 @@ export const getClickhouseClientConfig = async (
       ...config.clickhouse_settings,
       alter_sync: '2',
       mutations_sync: '2',
+    },
+    keep_alive: {
+      enabled: options?.keepAlive ?? true,
+      idle_socket_ttl: options?.idleSocketTtl ?? 2_500,
     },
   }
 }

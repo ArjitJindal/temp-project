@@ -150,8 +150,8 @@ export class FlatFilesService {
     return isAllValid
   }
 
-  async run(schema: FlatFileSchema, metadata: object) {
+  async run(schema: FlatFileSchema, s3Key: string, metadata: object) {
     const runnerInstance = await this.getRunnerInstance(schema)
-    await runnerInstance.run(metadata)
+    await runnerInstance.run(s3Key, metadata)
   }
 }

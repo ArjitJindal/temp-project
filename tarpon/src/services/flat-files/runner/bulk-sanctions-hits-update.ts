@@ -67,21 +67,6 @@ export class BulkSanctionsHitsUpdateRunner extends FlatFileRunner<SanctionsHitUp
       }
     }
 
-    const reasons = await this.getReasons()
-    const reason = reasons.find((r) => r.reason === data.reason)
-    if (!reason) {
-      return {
-        valid: false,
-        errors: [
-          {
-            message: `Reason ${data.reason} not found`,
-            keyword: 'REASON_NOT_FOUND',
-            stage: 'VALIDATE',
-          },
-        ],
-      }
-    }
-
     if (data.reason === 'OTHER' && !data.otherReason) {
       return {
         valid: false,
@@ -108,19 +93,6 @@ export class BulkSanctionsHitsUpdateRunner extends FlatFileRunner<SanctionsHitUp
           {
             message: `Sanctions hit ${data.sanctionsHitId} not found`,
             keyword: 'SANCTIONS_HIT_NOT_FOUND',
-            stage: 'VALIDATE',
-          },
-        ],
-      }
-    }
-
-    if (sanctionsHit[0].status === data.sanctionsHitStatus) {
-      return {
-        valid: false,
-        errors: [
-          {
-            message: `Sanctions hit ${data.sanctionsHitId} already has status ${data.sanctionsHitStatus}`,
-            keyword: 'SANCTIONS_HIT_ALREADY_HAS_STATUS',
             stage: 'VALIDATE',
           },
         ],

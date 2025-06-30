@@ -1167,7 +1167,7 @@ export class CaseService extends CaseAlertsCommonService {
     const accountsService = AccountsService.getInstance(
       this.caseRepository.dynamoDb
     )
-    const accounts = await accountsService.getAllActiveAccounts()
+    const accounts = await accountsService.getAllActiveAccounts(this.tenantId)
 
     const case_ = (await this.getCase(caseId)).result
 

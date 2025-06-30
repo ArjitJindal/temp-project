@@ -378,7 +378,7 @@ export const SQSQueues: {
   MONGO_UPDATE_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoUpdateConsumerQueue') + '.fifo',
   },
-  ACTION_PROCESSING_QUEUE: {
+  ACTION_PROCESSING_QUEUE_NAME: {
     name: getResourceName('ActionPostProcessingQueue'),
   },
   DYNAMO_DB_CONSUMER_QUEUE_NAME: {

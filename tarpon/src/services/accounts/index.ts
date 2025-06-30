@@ -101,9 +101,11 @@ export class AccountsService {
     return accounts
   }
 
-  public async getAllActiveAccounts(): Promise<Account[]> {
-    const userId = (getContext()?.user as Account).id
-    const tenant = await this.getAccountTenant(userId)
+  public async getAllActiveAccounts(tenantId: string): Promise<Account[]> {
+    const tenant = await this.getTenantById(tenantId)
+    if (!tenant) {
+      throw new NotFound('Tenant not found')
+    }
     const accounts = await this.getTenantAccounts(tenant)
     return accounts.filter((account) => !account.blocked)
   }

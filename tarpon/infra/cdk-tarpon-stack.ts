@@ -188,7 +188,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     const actionProcessingQueue = this.createQueue(
-      SQSQueues.ACTION_PROCESSING_QUEUE.name,
+      SQSQueues.ACTION_PROCESSING_QUEUE_NAME.name,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         retentionPeriod: Duration.days(7),

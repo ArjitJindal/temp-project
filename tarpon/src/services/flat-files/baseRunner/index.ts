@@ -19,6 +19,7 @@ export abstract class FlatFileBaseRunner<
   protected readonly mongoDb: MongoClient
   protected readonly clickhouseClient: ClickHouseClient
   protected readonly clickhouseConnectionConfig: ConnectionCredentials
+  protected readonly flatFilesRecords: FlatFilesRecords
 
   constructor(
     tenantId: string,
@@ -35,10 +36,17 @@ export abstract class FlatFileBaseRunner<
     this.clickhouseClient = connections?.clickhouseClient as ClickHouseClient
     this.clickhouseConnectionConfig =
       connections?.clickhouseConnectionConfig as ConnectionCredentials
+    this.flatFilesRecords = new FlatFilesRecords({
+      credentials: this.clickhouseConnectionConfig,
+      options: {
+        keepAlive: true,
+        keepAliveTimeout: 60_000,
+        maxRetries: 10, // 10 retries
+      },
+    })
   }
 
   public abstract concurrency: number
-  public batchMultiplier = 10
   public abstract model: EntityModel | ((metadata: object) => EntityModel)
 
   abstract validate(
@@ -72,12 +80,11 @@ export abstract class FlatFileBaseRunner<
   }
 
   protected async updateRecordStatus(
-    updateRecordInstance: FlatFilesRecords,
     schema: FlatFilesRecordsSchema,
     isProcessed: boolean,
     errors?: FlatFilesRecordsError[]
   ): Promise<void> {
-    await updateRecordInstance
+    await this.flatFilesRecords
       .create({
         ...schema,
         isProcessed,
@@ -88,14 +95,15 @@ export abstract class FlatFileBaseRunner<
   }
 
   protected async sanitizeRecord(
-    schema: FlatFilesRecordsSchema,
-    updateRecordInstance: FlatFilesRecords
+    schema: FlatFilesRecordsSchema
   ): Promise<{ data: T; schema: FlatFilesRecordsSchema } | undefined> {
     const recordId = `${schema.fileId}:${schema.row}`
     if (schema.error?.length > 0) {
-      logger.info(`Skipping record ${recordId} due to existing errors`)
-      console.log(schema.error)
-      await this.updateRecordStatus(updateRecordInstance, schema, true)
+      logger.info(`Skipping record ${recordId} due to existing errors`, {
+        recordId,
+        error: schema.error,
+      })
+      await this.updateRecordStatus(schema, true)
       return undefined
     }
     try {
@@ -111,33 +119,42 @@ export abstract class FlatFileBaseRunner<
       })
 
       // Update failed record
-      await this.updateRecordStatus(updateRecordInstance, schema, true, [
-        errorDetails,
-      ])
+      await this.updateRecordStatus(schema, true, [errorDetails])
       return undefined
     }
   }
 
-  public async run(metadata: object): Promise<void> {
-    const flatFilesRecords = new FlatFilesRecords({
-      credentials: this.clickhouseConnectionConfig,
-    })
-    const stream = flatFilesRecords.objects
-    const batchSize = this.concurrency * this.batchMultiplier
-    let currentBatch: Array<FlatFilesRecordsSchema> = []
+  public async run(s3Key: string, metadata: object): Promise<void> {
+    try {
+      const records = this.flatFilesRecords.objects.filter({
+        fileId: s3Key,
+        isProcessed: false,
+        isError: false,
+      })
 
-    for await (const record of stream) {
-      currentBatch.push(record)
+      const batchSize = this.concurrency
+      let currentBatch: Array<FlatFilesRecordsSchema> = []
 
-      if (currentBatch.length >= batchSize) {
-        await this.processBatch(currentBatch, metadata)
-        currentBatch = []
+      for await (const record of records) {
+        currentBatch.push(record)
+
+        if (currentBatch.length >= batchSize) {
+          await this.processBatch(currentBatch, metadata)
+          currentBatch = []
+        }
       }
-    }
 
-    // Process remaining records
-    if (currentBatch.length > 0) {
-      await this.processBatch(currentBatch, metadata)
+      // Process remaining records
+      if (currentBatch.length > 0) {
+        await this.processBatch(currentBatch, metadata)
+      }
+    } catch (error) {
+      logger.error('Error in FlatFileBaseRunner.run', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        s3Key,
+        tenantId: this.tenantId,
+      })
+      throw error
     }
   }
 }

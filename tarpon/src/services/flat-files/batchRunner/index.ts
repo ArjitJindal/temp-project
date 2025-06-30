@@ -2,7 +2,6 @@ import { v4 as uuid4 } from 'uuid'
 import pMap from 'p-map'
 import { FlatFileBaseRunner } from '../baseRunner'
 import { FlatFilesRecordsSchema } from '@/@types/flat-files'
-import { FlatFilesRecords } from '@/models/flat-files-records'
 import { logger } from '@/core/logger'
 import { EntityModel } from '@/@types/model'
 
@@ -23,20 +22,13 @@ export abstract class FlatFileBatchRunner<
     metadata: object
   ): Promise<void> {
     logger.info(`Starting processing of new batch`)
-    const updateRecordInstance = new FlatFilesRecords({
-      credentials: this.clickhouseConnectionConfig,
-    })
     const sanitizedBatch: {
       data: T
       schema: FlatFilesRecordsSchema
     }[] = (
-      await pMap(
-        batch,
-        (record) => this.sanitizeRecord(record, updateRecordInstance),
-        {
-          concurrency: this.concurrency,
-        }
-      )
+      await pMap(batch, (record) => this.sanitizeRecord(record), {
+        concurrency: this.concurrency,
+      })
     ).filter(
       (r): r is { data: T; schema: FlatFilesRecordsSchema } => r !== undefined
     )
