@@ -504,6 +504,7 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
   const onEdit = props.table.options.meta.onEdit;
   const value: Value = props.getValue();
   const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
+  const externalState = useContext(ExternalStateContext);
 
   const columnDataType = {
     ...UNKNOWN,
@@ -526,6 +527,7 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
     value: value,
     item: props.row.original.content,
     edit: editContext,
+    external: externalState?.value ?? null,
   };
 
   return (
