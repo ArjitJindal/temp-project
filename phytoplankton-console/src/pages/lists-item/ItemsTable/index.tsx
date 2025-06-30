@@ -739,7 +739,7 @@ function useColumns(options: {
                   <Button
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid || !editUserData}
+                    isDisabled={!isNewUserValid}
                     onClick={onAdd}
                     requiredResources={requiredWriteResources}
                   >
