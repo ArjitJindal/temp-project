@@ -115,7 +115,7 @@ import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { envIsNot } from '@/utils/env'
+import { envIs } from '@/utils/env'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
 
@@ -895,26 +895,38 @@ export class CaseCreationService {
             await this.sanctionsSearchRepository.getSearchResult(
               sanctionsDetail.searchId
             )
-          if (!searchResult && envIsNot('test')) {
-            // When the sanctions search is not updated in mongo via queue, we need to retry to fetch the search result
-            searchResult = await backOff<SanctionsSearchHistory>(
-              async () => {
-                const result =
-                  await this.sanctionsSearchRepository.getSearchResult(
-                    sanctionsDetail.searchId
-                  )
-                if (!result) {
-                  throw new Error('Search result not found')
+          try {
+            if (
+              !searchResult &&
+              envIs('sandbox', 'prod') &&
+              !isDemoTenant(this.tenantId)
+            ) {
+              // When the sanctions search is not updated in mongo via queue, we need to retry to fetch the search result
+              searchResult = await backOff<SanctionsSearchHistory>(
+                async () => {
+                  const result =
+                    await this.sanctionsSearchRepository.getSearchResult(
+                      sanctionsDetail.searchId
+                    )
+                  if (!result) {
+                    throw new Error(
+                      `Search result not found for searchId: ${sanctionsDetail.searchId}`
+                    )
+                  }
+                  return result
+                },
+                {
+                  startingDelay: 1000,
+                  timeMultiple: 1,
+                  maxDelay: 1000,
+                  numOfAttempts: 4,
+                  delayFirstAttempt: true,
                 }
-                return result
-              },
-              {
-                startingDelay: 1000,
-                timeMultiple: 1,
-                maxDelay: 1000,
-                numOfAttempts: 4,
-                delayFirstAttempt: true,
-              }
+              )
+            }
+          } catch (_e) {
+            logger.warn(
+              `Search Not found for searchId: ${sanctionsDetail.searchId}`
             )
           }
           const rawHits = searchResult?.response?.data ?? []
