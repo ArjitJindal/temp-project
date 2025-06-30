@@ -88,7 +88,6 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
               setUploadingFile(value[0]);
               return;
             }
-            setUploadingFile(null);
           }}
           setUploading={setUploading}
         />
