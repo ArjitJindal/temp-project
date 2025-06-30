@@ -398,6 +398,20 @@ export default function SuperAdminPanel() {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setFeatures(settings.features?.sort());
+    setLimits(settings.limits || {});
+    setTenantIdToDelete(undefined);
+    setInstantDelete(false);
+    setContainerCollapssed({
+      deletionContainer: true,
+      markedForDeletionContainer: true,
+      failedToDeleteContainer: true,
+    });
+    setDownloadFeatureState(false);
+    setSanctionsSettings(settings.sanctions);
+    setCrmIntegrationName(settings.crmIntegrationName ?? undefined);
+    setSarJurisdictions(settings.sarJurisdictions ?? []);
+    setBatchJobName('DEMO_MODE_DATA_LOAD');
   };
 
   let batchJobMessage;
@@ -414,6 +428,7 @@ export default function SuperAdminPanel() {
         okText={role === 'root' ? 'Save' : undefined}
         onCancel={handleCancel}
         onOk={role === 'root' ? handleSave : undefined}
+        destroyOnClose
       >
         <Label label="Tenant" testId="tenant-name">
           <Select

@@ -312,6 +312,7 @@ export const CreateTenantModal = (props: Props) => {
       okText="Create"
       onOk={handleCreateTenant}
       okProps={{ type: 'DANGER' }}
+      destroyOnClose
     >
       <JsonSchemaForm
         schema={getFixedSchemaJsonForm(schema)}
