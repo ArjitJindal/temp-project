@@ -63,7 +63,7 @@ export default function SanctionsWhitelistTable(props: Props) {
   return (
     <>
       <QueryResultsTable<SanctionsWhitelistEntity, SanctionsWhitelistTableParams>
-        rowKey="createdAt"
+        rowKey="sanctionsWhitelistId"
         extraFilters={filters}
         queryResults={queryResult}
         params={params}
