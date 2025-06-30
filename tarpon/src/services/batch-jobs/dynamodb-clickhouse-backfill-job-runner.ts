@@ -55,6 +55,11 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
           dynamoDb,
         })
         break
+      case 'API_REQUEST_LOGS':
+        await handleApiRequestLogsBatchJob(job, {
+          mongoDb,
+        })
+        break
       default:
         throw new Error(`Unknown entity: ${entity}`)
     }
@@ -170,7 +175,7 @@ export const handleApiRequestLogsBatchJob = async (
     async (apiRequestLogs) => {
       await handleRequestLoggerTaskClickhouse(job.tenantId, apiRequestLogs)
     },
-    { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )
 }
 

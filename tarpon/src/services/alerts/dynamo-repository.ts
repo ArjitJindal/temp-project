@@ -49,6 +49,7 @@ import {
 } from '@/@types/alert/AlertsInternal'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { envIs } from '@/utils/env'
 type caseUpdateOptions = {
   updateCase: boolean
   caseUpdateFields: Record<string, any>
@@ -1776,7 +1777,7 @@ export class DynamoAlertRepository {
       keyLists.push({ key })
     }
     await transactWrite(this.dynamoDb, operations)
-    if (process.env.NODE_ENV === 'development') {
+    if (envIs('local') || envIs('test')) {
       for (const key of keyLists) {
         await handleLocalChangeCapture(this.tenantId, key.key)
       }
@@ -1806,7 +1807,7 @@ export class DynamoAlertRepository {
     })
 
     await transactWrite(this.dynamoDb, writeRequests)
-    if (process.env.NODE_ENV === 'development') {
+    if (envIs('local') || envIs('test')) {
       await handleLocalChangeCapture(this.tenantId, key)
     }
   }
