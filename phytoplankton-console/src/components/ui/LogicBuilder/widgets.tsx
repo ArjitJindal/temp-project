@@ -258,9 +258,7 @@ const customNumberWidget: CoreWidgets['number'] = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <div className={s.numberInputWrapper}>
-          <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
-        </div>
+        <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
       </WidgetWrapper>
     );
   },

@@ -114,7 +114,12 @@ function TooltipRoot(props: Props) {
       {typeof children === 'function' ? (
         children({ ref: refs.setReference, ...getReferenceProps(), 'aria-describedby': tooltipId })
       ) : (
-        <div ref={refs.setReference} {...getReferenceProps()} aria-describedby={tooltipId}>
+        <div
+          ref={refs.setReference}
+          className={s.iconContainer}
+          aria-describedby={tooltipId}
+          {...getReferenceProps()}
+        >
           {children}
         </div>
       )}
