@@ -126,7 +126,11 @@ export default function Modal(props: Props) {
                     </button>
                   )}
                 </Feature>
-                <button className={s.close} onClick={onCancel} data-cy="modal-close">
+                <button
+                  className={s.close}
+                  onClick={maskClosable ? onCancel : undefined}
+                  data-cy="modal-close"
+                >
                   <CloseCircleLineIcon />
                 </button>
               </div>
@@ -179,6 +183,7 @@ export default function Modal(props: Props) {
       width={WIDTH[derivedSize]}
       centered
       maskClosable={maskClosable}
+      keyboard={maskClosable}
     >
       {tabs.find(({ key }) => key === activeTab)?.children}
       {children}

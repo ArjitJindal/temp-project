@@ -127,7 +127,14 @@ export default function PaymentApprovalModal(props: Props) {
           mutation.mutate(narrativeValues.values);
         }
       }}
+      okProps={{
+        isLoading: mutation.isLoading,
+      }}
+      cancelProps={{
+        isLoading: mutation.isLoading,
+      }}
       onCancel={hide}
+      maskClosable={!mutation.isLoading}
     >
       <Narrative
         values={narrativeValues}
