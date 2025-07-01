@@ -11070,6 +11070,31 @@ components:
         - tenantId
         - tenantName
         - usagePlanId
+    RiskClassificationHistory:
+      type: object
+      title: RiskClassificationHistory
+      properties:
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
+        comment:
+          type: string
+        id:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        createdBy:
+          type: string
+      required:
+        - scores
+        - comment
+        - id
+        - createdAt
+        - updatedAt
+        - createdBy
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
