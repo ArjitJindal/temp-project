@@ -9,7 +9,7 @@ import {
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from './sanctions'
-import { PAYMENT_METHODS_SEED, TRANSACTIONS_SEED } from './seeds'
+import { PAYMENT_METHODS_SEED, TIME_BACK_TO, TRANSACTIONS_SEED } from './seeds'
 import {
   CardDetailsSampler,
   CryptoTransactionSampler,
@@ -285,7 +285,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     })
     const ruleHitIds = randomHitRules.map((ri) => ri.ruleInstanceId)
 
-    const timestamp = this.sampleTimestamp()
+    const timestamp = this.sampleTimestamp(TIME_BACK_TO)
 
     const transactionAmount = this.rng.randomInt(1_00_000)
 

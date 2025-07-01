@@ -1,7 +1,11 @@
 import { compact, memoize, uniqBy } from 'lodash'
 import { RandomNumberGenerator } from '../samplers/prng'
 import { users } from './users'
-import { AUDIT_LOGS_STATUS_CHANGE_SEED, CASES_SEED } from './seeds'
+import {
+  AUDIT_LOGS_STATUS_CHANGE_SEED,
+  CASES_SEED,
+  TIME_BACK_TO,
+} from './seeds'
 import { getTransactions } from '@/core/seed/data/transactions'
 import {
   AuditLogForStatusChangeSampler,
@@ -39,7 +43,7 @@ export const getCases: () => Case[] = memoize(() => {
       })
       .map((c) => ({
         ...c,
-        createdTimestamp: rng.randomTimestamp(3600 * 1000 * i),
+        createdTimestamp: rng.randomTimestamp(TIME_BACK_TO),
       }))
     const originCases: Case[] = originalCasesSampler
       .getSample(undefined, {
@@ -49,7 +53,7 @@ export const getCases: () => Case[] = memoize(() => {
       })
       .map((c) => ({
         ...c,
-        createdTimestamp: rng.r(1).randomTimestamp(3600 * 1000 * i),
+        createdTimestamp: rng.r(1).randomTimestamp(TIME_BACK_TO),
       }))
 
     data.push(...destinationCases)

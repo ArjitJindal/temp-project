@@ -29,3 +29,5 @@ export const SANCTION_SEARCH_SEED = 16000
 export const TRANSACTION_EVENTS_SEED = 17000
 
 export const CRM_RECORDS_SEED = 18000
+
+export const TIME_BACK_TO = 12 * 30 * 24 * 60 * 60 * 1000 // 12 months

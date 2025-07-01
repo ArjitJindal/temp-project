@@ -199,6 +199,7 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
     }
   }
 }
+
 export class CryptoTransactionSampler extends BaseSampler<InternalTransaction> {
   protected generateSample({
     originUserId,

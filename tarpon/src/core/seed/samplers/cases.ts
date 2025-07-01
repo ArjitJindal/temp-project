@@ -4,6 +4,7 @@ import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
+import { TIME_BACK_TO } from '../data/seeds'
 import { BaseSampler } from './base'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -233,14 +234,16 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
           })
         })
         .filter((alert): alert is Alert => alert !== null)
-      const caseCreatedTimestamp = this.sampleTimestamp()
+      const caseCreatedTimestamp = this.sampleTimestamp(TIME_BACK_TO)
       return {
         caseId,
         caseType: 'SYSTEM',
         caseStatus,
         priority: this.rng.r(3).pickRandom(PRIORITYS),
         createdTimestamp: caseCreatedTimestamp,
-        latestTransactionArrivalTimestamp: this.sampleTimestamp(),
+        latestTransactionArrivalTimestamp: caseTransactions.reduce((acc, t) => {
+          return Math.max(acc, t.timestamp)
+        }, 0),
         comments: [],
         caseTransactionsCount: caseTransactions.length,
         statusChanges: this.statusChangeSampler.getSample(

@@ -18,6 +18,7 @@ import { envIs, envIsNot } from '@/utils/env'
 
 // stores mocked user for once
 export let users: (InternalBusinessUser | InternalConsumerUser)[] = []
+const CONSUMER_USER_COUNT = envIs('sandbox') ? 500 : 200
 
 const businessUsers: (
   tenantId: string
@@ -51,7 +52,7 @@ const consumerUsers: (
     uploadAttachments = false
   }
   const consumerUser: InternalConsumerUser[] = []
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < CONSUMER_USER_COUNT; i++) {
     consumerUser.push(
       await sampler.getSample(undefined, tenantId, uploadAttachments)
     )
