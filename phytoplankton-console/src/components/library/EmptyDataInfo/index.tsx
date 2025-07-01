@@ -1,5 +1,5 @@
-import { Card } from 'antd';
 import Button from '../Button';
+import style from './index.module.less';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import { H4, P } from '@/components/ui/Typography';
 import EmptyBoxIcon from '@/components/ui/icons/empty-illustration.react.svg';
@@ -17,16 +17,7 @@ interface Props {
 export function EmptyEntitiesInfo(props: Props) {
   const { title, description, action, onActionButtonClick, showButtonIcon = true } = props;
   return (
-    <Card
-      bordered={false}
-      bodyStyle={{
-        height: 287,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <div className={style.emptyContainer}>
       <div style={{ marginBottom: 16 }}>{props.showIcon && <EmptyBoxIcon />}</div>
       <H4 style={{ fontSize: 18 }}> {title ?? 'No data'}</H4>
       {description && (
@@ -44,6 +35,6 @@ export function EmptyEntitiesInfo(props: Props) {
           {action}
         </Button>
       )}
-    </Card>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
-import { Space } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { JSONSchemaType } from 'ajv';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import s from './style.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
@@ -92,7 +92,7 @@ export const WebhookConfigurations: React.FC = () => {
       type: {
         render: (webhook) => {
           return (
-            <Space style={{ alignItems: 'baseline' }}>
+            <div className={s.toggleContainer}>
               <Toggle
                 isDisabled={!isDevelopersWriteEnabled}
                 value={webhook?.enabled ?? false}
@@ -107,7 +107,7 @@ export const WebhookConfigurations: React.FC = () => {
                   <i>{webhook?.autoDisableMessage}</i>
                 </span>
               )}
-            </Space>
+            </div>
           );
         },
         stringify: (row) => (row?.enabled ? 'Yes' : 'No'),

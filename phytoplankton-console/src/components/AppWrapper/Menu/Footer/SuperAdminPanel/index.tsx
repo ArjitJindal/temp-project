@@ -1,9 +1,9 @@
-import { Divider, Input, Space } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { validate } from 'uuid';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import NumberInput from '../../../../library/NumberInput';
 import Label from '../../../../library/Label';
+import TextInput from '../../../../library/TextInput';
 import { H4 } from '../../../../ui/Typography';
 import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
@@ -273,9 +273,9 @@ export default function SuperAdminPanel() {
         const option: Option<string> = {
           value: tenant.id,
           label: (
-            <Space>
+            <div className={s.horizontalSpace}>
               {tenant.name} {tags} {tenant.isProductionAccessDisabled ? '🔒' : ''}
-            </Space>
+            </div>
           ),
           isDisabled:
             user.allowedRegions?.length && !user.allowedRegions.includes(tenant.region || '')
@@ -485,7 +485,7 @@ export default function SuperAdminPanel() {
             ) : (
               <></>
             )}
-            <Divider />
+            <div className={s.divider} />
             <Label
               label="Features"
               description="Enabled features of the tenant"
@@ -584,13 +584,13 @@ export default function SuperAdminPanel() {
                   label="Custom search profile ID"
                   description="If being set, we'll only use this search profile ID for ComplyAdvantage searches, and users won't be able to select different search types"
                 >
-                  <Input
+                  <TextInput
                     value={sanctionsSettings?.customSearchProfileId}
-                    onChange={(event) => {
+                    onChange={(value) => {
                       setSanctionsSettings({
                         ...sanctionsSettings,
                         marketType: sanctionsSettings?.marketType ?? 'EMERGING',
-                        customSearchProfileId: event.target.value.trim(),
+                        customSearchProfileId: value?.trim() || '',
                       });
                     }}
                   />
@@ -600,13 +600,13 @@ export default function SuperAdminPanel() {
                   label="Custom initial search profile ID"
                   description="If being set, we'll use this search profile for all initial screenings"
                 >
-                  <Input
+                  <TextInput
                     value={sanctionsSettings?.customInitialSearchProfileId}
-                    onChange={(event) => {
+                    onChange={(value) => {
                       setSanctionsSettings({
                         ...sanctionsSettings,
                         marketType: sanctionsSettings?.marketType ?? 'EMERGING',
-                        customInitialSearchProfileId: event.target.value.trim(),
+                        customInitialSearchProfileId: value?.trim() || '',
                       });
                     }}
                   />
@@ -615,28 +615,28 @@ export default function SuperAdminPanel() {
             ) : isDowJonesToBeEnabled ? (
               <Label label="Dow Jones settings">
                 <Label level={2} label="Username" required={{ value: true, showHint: true }}>
-                  <Input
+                  <TextInput
                     value={sanctionsSettings?.dowjonesCreds?.username}
-                    onChange={(event) => {
+                    onChange={(value) => {
                       setSanctionsSettings({
                         ...sanctionsSettings,
                         dowjonesCreds: {
                           ...sanctionsSettings?.dowjonesCreds,
-                          username: event.target.value,
+                          username: value || '',
                         },
                       });
                     }}
                   />
                 </Label>
                 <Label level={2} label="Password" required={{ value: true, showHint: true }}>
-                  <Input
+                  <TextInput
                     value={sanctionsSettings?.dowjonesCreds?.password}
-                    onChange={(event) => {
+                    onChange={(value) => {
                       setSanctionsSettings({
                         ...sanctionsSettings,
                         dowjonesCreds: {
                           ...sanctionsSettings?.dowjonesCreds,
-                          password: event.target.value,
+                          password: value || '',
                         },
                       });
                     }}
@@ -646,7 +646,7 @@ export default function SuperAdminPanel() {
             ) : (
               <></>
             )}
-            <Divider />
+            <div className={s.divider} />
             <Label label="Run batch job">
               <Select
                 options={BATCH_JOB_NAMESS.map((name) => ({
@@ -687,7 +687,7 @@ export default function SuperAdminPanel() {
               )}
             </Confirm>
 
-            <Divider />
+            <div className={s.divider} />
             <Label
               label="Simulation limit"
               description="The maximum number of simulations that can be run by a tenant"
@@ -720,7 +720,7 @@ export default function SuperAdminPanel() {
               Reset current API key view count
             </Button>
 
-            <Divider />
+            <div className={s.divider} />
             {user.allowTenantDeletion && (
               <>
                 <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>
@@ -881,13 +881,13 @@ const ListTenants = ({
       }
     >
       <ExpandContainer isCollapsed={containerCollapsed}>
-        <Space direction={'horizontal'} wrap={true}>
+        <div className={s.horizontalSpaceWrap}>
           {tenants.map((tenant, index) => (
             <Tag color={'warning'} key={index}>
               {tenant.tenantName ? tenant.tenantName : tenant.tenantId} ({tenant.tenantId})
             </Tag>
           ))}
-        </Space>
+        </div>
       </ExpandContainer>
     </Label>
   );

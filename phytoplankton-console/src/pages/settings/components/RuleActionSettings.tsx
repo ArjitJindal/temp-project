@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Input } from 'antd';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import {
@@ -10,6 +9,7 @@ import { RuleAction, RuleActionAlias } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
 import { useHasResources } from '@/utils/user-utils';
+import TextInput from '@/components/library/TextInput';
 
 interface TableItem {
   action: RuleAction;
@@ -52,10 +52,10 @@ export const RuleActionSettings: React.FC = () => {
             const externalState = context.external as ExternalState;
             const { newActionToAlias, onUpdateAlias } = externalState;
             return (
-              <Input
+              <TextInput
                 value={newActionToAlias.get(item.action) ?? item.actionAlias}
-                onChange={(event) => onUpdateAlias(item.action, event.target.value)}
-                disabled={!permissions}
+                onChange={(newValue) => onUpdateAlias(item.action, newValue || '')}
+                isDisabled={!permissions}
               />
             );
           },

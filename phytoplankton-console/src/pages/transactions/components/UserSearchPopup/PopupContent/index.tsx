@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Input } from 'antd';
 import { useDebounce } from 'ahooks';
 import { useLastSearches, useUsers } from '../helpers';
 import s from './style.module.less';
@@ -9,6 +8,7 @@ import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react
 import { isSuccess } from '@/utils/asyncResource';
 import { AllUsersTableItem, UserType } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import TextInput from '@/components/library/TextInput';
 interface Props {
   initialSearch: string;
   isVisible: boolean;
@@ -52,19 +52,17 @@ export default function PopupContent(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.header}>
-        <Input
-          suffix={search === '' && <SearchLineIcon className={s.searchIcon} />}
+        <TextInput
+          iconRight={search === '' ? <SearchLineIcon className={s.searchIcon} /> : undefined}
           placeholder={`Search ${settings.userAlias} name or ID`}
           value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              if (isSuccess(usersRes.data)) {
-                const uniqueMatch = usersRes.data.value.total === 1;
-                if (uniqueMatch) {
-                  const foundUserId = usersRes.data.value.users[0].userId;
-                  onEnterInput(foundUserId);
-                }
+          onChange={(newValue) => setSearch(newValue || '')}
+          onEnterKey={() => {
+            if (isSuccess(usersRes.data)) {
+              const uniqueMatch = usersRes.data.value.total === 1;
+              if (uniqueMatch) {
+                const foundUserId = usersRes.data.value.users[0].userId;
+                onEnterInput(foundUserId);
               }
             }
           }}

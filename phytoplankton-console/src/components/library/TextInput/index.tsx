@@ -25,6 +25,7 @@ export interface Props extends InputProps<string> {
   disableBorders?: boolean;
   className?: string;
   inputClassName?: string;
+  autoFocus?: boolean;
 }
 
 export default function TextInput(props: Props) {
@@ -53,6 +54,7 @@ export default function TextInput(props: Props) {
     disableBorders = false,
     className,
     inputClassName,
+    autoFocus,
   } = props;
   const defaultRef = useRef<HTMLInputElement>(null);
   const ref = innerRef === undefined ? defaultRef : innerRef;
@@ -100,6 +102,7 @@ export default function TextInput(props: Props) {
             }
             onChange?.(e.target.value || undefined);
           }}
+          autoFocus={autoFocus}
           onFocus={handleFocus}
           onBlur={handleBlur}
           data-cy={testName}

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Radio } from 'antd';
 import {
   DerivedColumn,
   FieldAccessor,
@@ -31,6 +30,7 @@ import Alert from '@/components/library/Alert';
 import { message } from '@/components/library/Message';
 import { generateTableExportData } from '@/components/library/Table/Header/Tools/DownloadButton/helpers';
 import { ExportData, MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
+import RadioGroup from '@/components/ui/RadioGroup';
 
 type Props<Item extends object, Params extends object> = {
   onPaginateData: (params: PaginationParams) => Promise<TableData<Item>>;
@@ -134,17 +134,17 @@ export default function DownloadButton<T extends object, Params extends object>(
           <div className={s.form}>
             {(totalPages !== 1 || props.cursorPagination) && (
               <Form.Layout.Label title="Download data">
-                <Radio.Group
-                  onChange={(e) => {
-                    setPagesMode(e.target.value);
+                <RadioGroup
+                  onChange={(value) => {
+                    setPagesMode(value as 'ALL' | 'CURRENT');
                   }}
                   value={pagesMode}
-                >
-                  <Radio value="CURRENT" defaultChecked>
-                    Current page
-                  </Radio>
-                  <Radio value="ALL">All pages</Radio>
-                </Radio.Group>
+                  orientation="HORIZONTAL"
+                  options={[
+                    { value: 'CURRENT', label: 'Current page' },
+                    { value: 'ALL', label: 'All pages' },
+                  ]}
+                />
               </Form.Layout.Label>
             )}
             {pagesMode === 'ALL' && (
@@ -160,17 +160,17 @@ export default function DownloadButton<T extends object, Params extends object>(
               </Alert>
             )}
             <Form.Layout.Label title="Format">
-              <Radio.Group
-                onChange={(e) => {
-                  setFormat(e.target.value);
+              <RadioGroup
+                orientation="HORIZONTAL"
+                onChange={(value) => {
+                  setFormat(value as 'csv' | 'xlsx');
                 }}
                 value={format}
-              >
-                <Radio value="csv" defaultChecked>
-                  CSV
-                </Radio>
-                <Radio value="xlsx">XLSX</Radio>
-              </Radio.Group>
+                options={[
+                  { value: 'csv', label: 'CSV' },
+                  { value: 'xlsx', label: 'XLSX' },
+                ]}
+              />
             </Form.Layout.Label>
             <Button
               isDisabled={progress != null}

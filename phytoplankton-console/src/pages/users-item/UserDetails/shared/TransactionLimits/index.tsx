@@ -1,4 +1,3 @@
-import { Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { merge } from 'lodash';
@@ -30,6 +29,8 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PAYMENT_METHOD } from '@/components/library/Table/standardDataTypes';
 import NumberInput from '@/components/library/NumberInput';
 import Drawer from '@/components/library/Drawer';
+import Select from '@/components/library/Select';
+import { H4 } from '@/components/ui/Typography';
 
 const timeFrames = ['day', 'week', 'month', 'year'];
 
@@ -181,26 +182,27 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
             <Select<PaymentMethod>
               style={{ width: '100%' }}
               value={paymentMethod}
-              disabled={editMode === 'EDIT'}
+              isDisabled={editMode === 'EDIT'}
               onChange={(value) => setUpdatedPaymentMethod(value)}
-              showSearch={true}
-            >
-              {PAYMENT_METHODS.filter((option) => !existingPaymentMethods?.includes(option)).map(
-                (option, index) => (
-                  <Select.Option key={index} value={option}>
-                    <PaymentMethodTag paymentMethod={option} />
-                  </Select.Option>
-                ),
-              )}
-            </Select>
+              isSearchable
+              options={PAYMENT_METHODS.filter(
+                (option) => !existingPaymentMethods?.includes(option),
+              ).map((option) => ({
+                value: option,
+                label: <PaymentMethodTag paymentMethod={option} />,
+              }))}
+            />
           </Label>
           <Label label="Currency">
             <Select<CurrencyCode>
               style={{ width: '100%' }}
               value={currency}
               onChange={(value) => setUpdatedCurrency(value)}
-              options={CURRENCIES_SELECT_OPTIONS}
-              showSearch
+              options={CURRENCIES_SELECT_OPTIONS.map((option) => ({
+                value: option.value as CurrencyCode,
+                label: option.label,
+              }))}
+              isSearchable
             />
           </Label>
           {timeFrames.map((timeFrame, index) => (
@@ -368,11 +370,11 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
             type: {
               render: (transactionLimit) => {
                 return (
-                  <Space direction="vertical">
+                  <div className={s.verticalContainer}>
                     {Object.entries(transactionLimit?.transactionCountLimit || {})
                       .filter((entry) => entry[1])
                       .map((entry) => `${entry[1]} / ${entry[0]}`)}
-                  </Space>
+                  </div>
                 );
               },
             },
@@ -384,15 +386,15 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
             type: {
               render: (transactionLimit) => {
                 return (
-                  <Space direction="vertical">
+                  <div className={s.verticalContainer}>
                     {Object.entries(transactionLimit?.transactionAmountLimit || {})
                       .filter((entry) => entry[1])
                       .map((entry, index) => (
-                        <Space key={index}>
+                        <div key={index} className={s.horizontalContainer}>
                           <Money amount={entry[1]} /> / {entry[0]}
-                        </Space>
+                        </div>
                       ))}
-                  </Space>
+                  </div>
                 );
               },
             },
@@ -404,15 +406,15 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
             type: {
               render: (transactionLimit) => {
                 return (
-                  <Space direction="vertical">
+                  <div className={s.verticalContainer}>
                     {Object.entries(transactionLimit?.averageTransactionAmountLimit || {})
                       .filter((entry) => entry[1])
                       .map((entry, index) => (
-                        <Space key={index}>
+                        <div key={index} className={s.horizontalContainer}>
                           <Money amount={entry[1]} /> / {entry[0]}
-                        </Space>
+                        </div>
                       ))}
-                  </Space>
+                  </div>
                 );
               },
             },
@@ -421,7 +423,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
             title: 'Actions',
             render: (row) => {
               return (
-                <Space>
+                <div className={s.horizontalContainer}>
                   <EditOutlined
                     onClick={() => {
                       onEditModeChange('EDIT');
@@ -435,7 +437,7 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                     }}
                     disabled={!hasUserOveviewWritePermissions}
                   />
-                </Space>
+                </div>
               );
             },
           }),
@@ -467,7 +469,7 @@ export default function ExpectedTransactionLimits(props: Props) {
   return (
     <>
       <Card.Section>
-        <Typography.Title level={4}>On all transactions</Typography.Title>
+        <H4>On all transactions</H4>
         <Card.Row border={false}>
           <Card.Column>
             <Label label={'Daily'}>
@@ -503,21 +505,19 @@ export default function ExpectedTransactionLimits(props: Props) {
         {/* </Card.Row> */}
       </Card.Section>
       <Card.Section>
-        <Typography.Title level={4}>
-          <Row align="middle">
-            On payment method
-            <Button
-              type="TEXT"
-              icon={<PlusOutlined />}
-              style={{
-                color: COLORS.brandBlue.base,
-              }}
-              onClick={() => setEditMode('ADD')}
-            >
-              Add
-            </Button>
-          </Row>
-        </Typography.Title>
+        <div className={s.headerContainer}>
+          <H4>On payment method</H4>
+          <Button
+            type="TEXT"
+            icon={<PlusOutlined />}
+            style={{
+              color: COLORS.brandBlue.base,
+            }}
+            onClick={() => setEditMode('ADD')}
+          >
+            Add
+          </Button>
+        </div>
         <PaymentMethodLimitsTable user={user} editMode={editMode} onEditModeChange={setEditMode} />
       </Card.Section>
     </>

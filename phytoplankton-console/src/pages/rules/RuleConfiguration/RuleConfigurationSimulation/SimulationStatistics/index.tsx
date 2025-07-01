@@ -1,7 +1,7 @@
-import { Col, Row } from 'antd';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { DeltaCard } from './DeltaCard';
 import { DeltaChart } from './DeltaChart';
+import styles from './index.module.less';
 import COLORS from '@/components/ui/colors';
 import { SimulationBeaconIteration } from '@/apis';
 import * as Card from '@/components/ui/Card';
@@ -41,8 +41,8 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
       )}
       <Card.Root>
         <Card.Section>
-          <Row gutter={20}>
-            <Col span={8}>
+          <div className={styles.rowContainer}>
+            <div className={styles.colContainer}>
               <DeltaCard
                 icon={<StackLineIcon />}
                 title="Delta of cases created"
@@ -77,8 +77,8 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterFalsePositiveColor={COLORS.brandBlue.shade}
                 pdfMode={pdfMode}
               />
-            </Col>
-            <Col span={8}>
+            </div>
+            <div className={styles.colContainer}>
               <DeltaCard
                 icon={<TransactionIcon />}
                 title="Delta of transactions hit"
@@ -93,8 +93,8 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterColor={COLORS.lightOrange.base}
                 pdfMode={pdfMode}
               />
-            </Col>
-            <Col span={8}>
+            </div>
+            <div className={styles.colContainer}>
               <DeltaCard
                 icon={<User3LineIcon />}
                 title={`Delta of ${settings.userAlias}s hit`}
@@ -109,8 +109,8 @@ export function SimulationStatistics(props: SimulationStatisticsProps) {
                 afterColor={COLORS.lightGreen.base}
                 pdfMode={pdfMode}
               />
-            </Col>
-          </Row>
+            </div>
+          </div>
         </Card.Section>
       </Card.Root>
     </>

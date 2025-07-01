@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk';
-import { Typography } from 'antd';
+import styles from './index.module.less';
 import { InternalTransactionEvent, RiskLevel } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -102,7 +102,7 @@ export default function TransactionEventsTable(props: Props) {
             if (!(item?.updatedTransactionAttributes || item?.metaData)) {
               return (
                 <Tooltip title="No changes were made to the transaction details.">
-                  <Typography.Text type={'secondary'}>View Changes</Typography.Text>
+                  <span className={styles.secondaryText}>View changes</span>
                 </Tooltip>
               );
             }

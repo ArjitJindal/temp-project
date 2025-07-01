@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Radio } from 'antd';
+import { useState } from 'react';
 import s from './styles.module.less';
 import {
   useSettings,
@@ -15,6 +14,8 @@ import Alert from '@/components/library/Alert';
 import { useHasResources } from '@/utils/user-utils';
 import { ConsoleTag, ConsoleTagTypeEnum } from '@/apis';
 import Select from '@/components/library/Select';
+import RadioGroup from '@/components/ui/RadioGroup';
+
 interface CommonItem {
   rowKey: string;
   key: string;
@@ -75,21 +76,23 @@ const columns = helper.list([
       const [newState, setNewState] = externalState.newStateDetails;
 
       return (
-        <Radio.Group
+        <RadioGroup
           value={newState?.tagType ?? item.tagType}
-          disabled={item.type !== 'NEW'}
-          onChange={(e) => {
+          isDisabled={item.type !== 'NEW'}
+          orientation="HORIZONTAL"
+          onChange={(value) => {
             setNewState({
               type: 'NEW',
               rowKey: 'new',
               key: newState?.key ?? '',
-              tagType: e.target.value,
+              tagType: value as ConsoleTagTypeEnum,
             });
           }}
-        >
-          <Radio value="STRING">String</Radio>
-          <Radio value="ENUM">Enum</Radio>
-        </Radio.Group>
+          options={[
+            { value: 'STRING', label: 'String' },
+            { value: 'ENUM', label: 'Enum' },
+          ]}
+        />
       );
     },
   }),

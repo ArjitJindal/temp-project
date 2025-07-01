@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Select as AntSelect } from 'antd';
 import { useDebounce } from 'ahooks';
 import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
+import Select, { Option } from '@/components/library/Select';
 import { AllUsersTableItem, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
@@ -17,7 +17,6 @@ import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
 import Spinner from '@/components/library/Spinner';
-import Select, { Option } from '@/components/library/Select';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
@@ -85,8 +84,6 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
   );
 }
 
-const SEPARATOR = ',';
-
 function SearchInput(
   props: Omit<Props, 'listSubtype'> & {
     listSubtype: Exclude<ListSubtypeInternal, 'USER_ID'>;
@@ -146,19 +143,20 @@ function SearchInput(
     },
   );
   return (
-    <AntSelect<string[]>
+    <Select
       className={s.select}
-      showSearch
-      filterOption={false}
+      isSearchable
       onSearch={setSearch}
       notFoundContent={isLoading(queryResult.data) ? <Spinner size="SMALL" /> : null}
-      options={getOr(queryResult.data, [])}
-      loading={isLoading(queryResult.data)}
-      tokenSeparators={[SEPARATOR]}
-      mode="tags"
+      options={getOr(queryResult.data, []).map((option) => ({
+        value: String(option.value || ''),
+        label: option.label,
+      }))}
+      isLoading={isLoading(queryResult.data)}
+      mode="TAGS"
       value={value}
-      onChange={(value) => {
-        onChange?.(value);
+      onChange={(newValue) => {
+        onChange?.(newValue ?? []);
       }}
     />
   );

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Select as AntSelect } from 'antd';
 import { useDebounce } from 'ahooks';
 import { ItemType } from '../types';
 import s from './style.module.less';
@@ -9,6 +8,7 @@ import { useLastSearches } from './helpers';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import { PaginatedData } from '@/utils/queries/hooks';
+import Select from '@/components/library/Select';
 
 interface Props<T> {
   localStorageKey: string;
@@ -69,24 +69,22 @@ export default function PopupContent<T extends ItemType>(props: Props<T>) {
 
   const items = getOr(searchResult.data, { items: [] }).items ?? [];
   const itemsSelected = items.filter((item) => value && value.find((x) => x.value === item.value));
-
   return (
     <div className={s.root}>
       <div className={s.header}>
-        <AntSelect
-          options={itemsSelected}
-          mode="tags"
+        <Select
+          options={itemsSelected.map((item) => ({ value: item.value, label: item.label }))}
+          mode="TAGS"
           value={value.map((x) => x.value)}
-          searchValue={search}
-          onSearch={setSearch}
-          onChange={(newValue: string[] | undefined) => {
-            onChange(items.filter((item) => newValue && newValue.includes(item.value)));
+          onSearch={(searchValue) => setSearch(searchValue)}
+          onChange={(newValue) => {
+            if (newValue) {
+              onChange(items.filter((item) => newValue.includes(item.value)));
+            }
           }}
-          dropdownStyle={{
-            display: 'none',
-          }}
-          dropdownRender={() => <></>}
           placeholder={searchPlaceholder}
+          className={s.hiddenDropdown}
+          dropdownMatchWidth={false}
         />
       </div>
       {search !== '' ? (

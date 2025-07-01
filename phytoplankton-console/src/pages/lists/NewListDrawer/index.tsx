@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
-import { Select } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import cn from 'clsx';
 import { humanizeConstant, capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
@@ -29,6 +28,7 @@ import { COLUMN_TYPES } from '@/apis/models-custom/ColumnType';
 import { download } from '@/utils/browser';
 import { makeUrl } from '@/utils/routing';
 import { useAuth0User } from '@/utils/user-utils';
+import Select from '@/components/library/Select';
 
 interface FormValues {
   subtype: ListSubtypeInternal | null;
@@ -332,11 +332,11 @@ export default function NewListDrawer(props: Props) {
                           />
                           <Select<FormValues['ttl']['unit']>
                             {...inputProps}
-                            value={inputProps.value?.unit}
+                            value={inputProps.value?.unit || 'HOUR'}
                             onChange={(unit) => {
                               inputProps.onChange?.({
                                 value: inputProps.value?.value,
-                                unit,
+                                unit: unit ?? 'HOUR',
                               });
                             }}
                             options={[
@@ -417,7 +417,10 @@ export default function NewListDrawer(props: Props) {
                                     value={newColumn.type ?? undefined}
                                     style={{ width: '100%' }}
                                     onChange={(value) =>
-                                      setNewColumn((prev) => ({ ...prev, type: value }))
+                                      setNewColumn((prev) => ({
+                                        ...prev,
+                                        type: value ?? 'STRING',
+                                      }))
                                     }
                                     placeholder="Select column type"
                                     options={COLUMN_TYPES.map((type) => ({

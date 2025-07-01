@@ -82,9 +82,7 @@ function renderMessage(
   }
   if (total > length) {
     return (
-      <div className={s.subtitle}>
-        More than {length} {pluralize(userAlias ?? '', length, true)} found
-      </div>
+      <div className={s.subtitle}>More than {pluralize(userAlias ?? '', length, true)} found</div>
     );
   }
   return <div className={s.subtitle}>{pluralize(userAlias ?? '', length, true)} found</div>;

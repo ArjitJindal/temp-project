@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { message } from 'antd';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { FormValues } from '../utils/utils';
 import PolicyConfigurationTable from './components/PolicyConfigurationTable';
@@ -20,6 +19,7 @@ import FormValidationErrors from '@/components/library/Form/utils/validation/For
 import Select from '@/components/library/Select';
 import { SLA_POLICY_TYPES } from '@/apis/models-custom/SLAPolicyType';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { message } from '@/components/library/Message';
 
 interface Props {
   handleEdit: (values: FormValues) => void;

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk';
-import { Typography } from 'antd';
 import s from './index.module.less';
 import { useApi } from '@/api';
 import { InternalUserEvent, RiskLevel, SortOrder } from '@/apis';
@@ -115,7 +114,7 @@ export const UserEvents = (props: Props) => {
           ) {
             return (
               <Tooltip title={`No changes were made to the ${settings.userAlias} details.`}>
-                <Typography.Text type={'secondary'}>View Changes</Typography.Text>
+                <span className={s.secondaryText}>View Changes</span>
               </Tooltip>
             );
           }

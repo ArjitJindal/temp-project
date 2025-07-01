@@ -28,7 +28,7 @@ export default function PopupContent(props: Props) {
         dataSource={['all', 'user', 'payment-identifier'] as EntitiesEnum[]}
         loading={false}
         rowKey={(item) => item}
-        renderItem={(item: EntitiesEnum) => (
+        renderItem={(item) => (
           <List.Item
             className={cn(s.item, value.includes(item) && s.isActive)}
             onClick={(e) => {

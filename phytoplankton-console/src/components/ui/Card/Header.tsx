@@ -61,7 +61,7 @@ export default function Header(props: Props) {
             {title}
           </h3>
         ) : (
-          <div className={s.isInvalid}> {title} </div>
+          <div className={s.complexTitle}>{title}</div>
         )}
 
         {link}

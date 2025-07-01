@@ -1,5 +1,4 @@
 import { useRef, useState, useContext, useMemo, useCallback } from 'react';
-import { Typography } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
 import { HighlightOutlined } from '@ant-design/icons';
@@ -9,6 +8,7 @@ import AuditLogModal from '../AuditLogModal';
 import RiskFactorAuditLogModal from '../RiskFactorAuditLogModal';
 import { TableItem, TableSearchParams } from './types';
 import { auditLogQueryAdapter, useTableData } from './helpers';
+import s from './index.module.less';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
@@ -28,6 +28,7 @@ import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAd
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import TagList from '@/components/library/Tag/TagList';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { P } from '@/components/ui/Typography';
 
 export default function AuditLogTable() {
   const api = useApi({ debounce: 500 });
@@ -132,10 +133,10 @@ export default function AuditLogTable() {
         render: (value) => {
           return (
             <TagList>
-              <Typography.Text data-cy="auditlog-primary">{value?.entityType}</Typography.Text>
-              <Typography.Text data-cy="auditlog-secondary" type={'secondary'}>
+              <span data-cy="auditlog-primary">{value?.entityType}</span>
+              <P variant="m" grey data-cy="auditlog-secondary">
                 {value?.entityId}
-              </Typography.Text>
+              </P>
             </TagList>
           );
         },
@@ -155,11 +156,19 @@ export default function AuditLogTable() {
       type: {
         render: (item) => {
           if (!item || isEqual(item.oldImage, item.newImage)) {
-            return <Typography.Text type={'secondary'}>-</Typography.Text>;
+            return (
+              <P variant="m" grey>
+                -
+              </P>
+            );
           }
           if (item.type === 'RULE') {
             if (item.action === 'DOWNLOAD') {
-              return <Typography.Text type={'secondary'}>-</Typography.Text>;
+              return (
+                <P variant="m" grey>
+                  -
+                </P>
+              );
             }
             return <RuleAuditLogModal data={item} />;
           }
@@ -236,7 +245,7 @@ export default function AuditLogTable() {
       type: {
         render: (userId) => {
           return (
-            <div style={{ overflowWrap: 'anywhere' }}>
+            <div className={s.overflowWrapAnywhere}>
               <AccountTag accountId={userId} />
             </div>
           );

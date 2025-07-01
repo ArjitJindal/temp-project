@@ -1,6 +1,4 @@
-import React from 'react';
 import cn from 'clsx';
-import { Select } from 'antd';
 import { RangeValue } from 'rc-picker/lib/interface';
 import { CURRENCIES_SELECT_OPTIONS, Currency } from '@flagright/lib/constants';
 import TransactionCountChart from './Chart';
@@ -23,12 +21,12 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
-import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
 import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Select from '@/components/library/Select';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -133,12 +131,15 @@ export default function TransactionsSelector(props: Props) {
             />
           </Feature>
           <Select<string>
+            mode="SINGLE"
             value={`${params.aggregateBy}`}
             onChange={(value) => {
-              onChangeParams({
-                ...params,
-                aggregateBy: value as AggregateByField,
-              });
+              if (value) {
+                onChangeParams({
+                  ...params,
+                  aggregateBy: value as AggregateByField,
+                });
+              }
             }}
             options={[
               { value: 'status', label: 'Transaction status' },
@@ -146,12 +147,15 @@ export default function TransactionsSelector(props: Props) {
             ]}
           />
           <Select<string>
+            mode="SINGLE"
             value={`${params.transactionsCount}`}
             onChange={(value) => {
-              onChangeParams({
-                ...params,
-                transactionsCount: parseInt(value) || DEFAULT_PAGE_SIZE,
-              });
+              if (value) {
+                onChangeParams({
+                  ...params,
+                  transactionsCount: parseInt(value) || 10,
+                });
+              }
             }}
             options={[
               { value: '10', label: 'Last 10 transactions' },
@@ -161,12 +165,15 @@ export default function TransactionsSelector(props: Props) {
           />
           <Form.Layout.Label title="Display by" orientation="horizontal">
             <Select<DisplayByType>
+              mode="SINGLE"
               value={params.displayBy}
               onChange={(value) => {
-                onChangeParams({
-                  ...params,
-                  displayBy: value,
-                });
+                if (value) {
+                  onChangeParams({
+                    ...params,
+                    displayBy: value,
+                  });
+                }
               }}
               options={[
                 { value: 'COUNT', label: 'Transaction count' },
@@ -177,15 +184,18 @@ export default function TransactionsSelector(props: Props) {
           </Form.Layout.Label>
           <Form.Layout.Label title="Currency" orientation="horizontal">
             <Select<Currency>
+              mode="SINGLE"
               value={params.currency}
               onChange={(value) => {
-                onChangeParams({
-                  ...params,
-                  currency: value,
-                });
+                if (value) {
+                  onChangeParams({
+                    ...params,
+                    currency: value,
+                  });
+                }
               }}
               options={CURRENCIES_SELECT_OPTIONS}
-              showSearch
+              onSearch={() => {}}
               style={{ width: '200px' }}
             />
           </Form.Layout.Label>

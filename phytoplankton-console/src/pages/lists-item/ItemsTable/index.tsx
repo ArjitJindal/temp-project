@@ -1,7 +1,6 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
-import { Input } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Resource } from '@flagright/lib/utils';
@@ -39,6 +38,7 @@ import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
+import TextInput from '@/components/library/TextInput';
 import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import DatePicker from '@/components/ui/DatePicker';
@@ -901,16 +901,14 @@ function FocusRetainingInput({
   }, [value, inputValue]);
 
   return (
-    <Input
+    <TextInput
       key={uniqueKey}
-      disabled={isDisabled}
+      isDisabled={isDisabled}
       value={inputValue}
       autoFocus={autoFocus}
-      onClick={(e) => e.stopPropagation()}
       onChange={(e) => {
-        e.stopPropagation();
         isTypingRef.current = true;
-        setInputValue(e.target.value);
+        setInputValue(e || '');
       }}
       onBlur={() => {
         setTimeout(() => {

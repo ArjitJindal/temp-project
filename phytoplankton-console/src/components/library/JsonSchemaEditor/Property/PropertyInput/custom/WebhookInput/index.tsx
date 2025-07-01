@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Divider } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
+import style from './index.module.less';
 import { WebhookConfiguration, WebhookSecrets } from '@/apis';
 import { InputProps } from '@/components/library/Form';
 import { UiSchemaWebhook } from '@/components/library/JsonSchemaEditor/types';
@@ -8,6 +8,7 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { WebhookDeliveryAttemptsTable } from '@/pages/settings/components/WebhookDeliveryAttemptsTable';
 import Label from '@/components/library/Label';
+import { H4 } from '@/components/ui/Typography';
 
 export interface Props extends InputProps<WebhookConfiguration['_id']> {
   uiSchema?: UiSchemaWebhook;
@@ -51,9 +52,9 @@ export const WebhookInput = (props: Props) => {
       )}
       {value && (
         <>
-          <Divider orientation="left" orientationMargin="0">
-            Webhook attempts
-          </Divider>
+          <div className={style.webhookSection}>
+            <H4>Webhook attempts</H4>
+          </div>
           <WebhookDeliveryAttemptsTable webhookId={value} />
         </>
       )}

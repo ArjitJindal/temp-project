@@ -1,13 +1,12 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { Alert, Col, Row } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { uniqBy } from 'lodash';
 import Button from '../library/Button';
 import Select from '../library/Select';
 import Label from '../library/Label';
+import Alert from '@/components/library/Alert';
 import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
-import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
 import { Report, ReportTypesResponse } from '@/apis';
@@ -230,21 +229,10 @@ const SARProperties = (props: SARPropertiesProps) => {
           />
         </Label>
       )}
-      <Alert
-        style={{ marginTop: 10 }}
-        description={
-          <Row style={{ flexFlow: 'row' }}>
-            <Col>
-              <ErrorWarningFillIcon width={14} style={{ color: 'orange' }} />
-            </Col>
-            <Col style={{ paddingLeft: 5 }}>
-              A maximum of 20 transactions can be selected to file an STR/SAR. Please contact
-              Flagright if the limit needs to be increased.
-            </Col>
-          </Row>
-        }
-        type="warning"
-      />
+      <Alert type="WARNING">
+        A maximum of 20 transactions can be selected to file an STR/SAR. Please contact Flagright if
+        the limit needs to be increased.
+      </Alert>
     </PropertyListLayout>
   );
 };

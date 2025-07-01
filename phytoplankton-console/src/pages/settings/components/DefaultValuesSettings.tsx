@@ -1,7 +1,7 @@
-import { Select, SelectProps } from 'antd';
 import { useState, useEffect, useMemo } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { Resource, hasResources } from '@flagright/lib/utils';
+import Select, { Option } from '@/components/library/Select';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
@@ -16,7 +16,7 @@ import { useResources } from '@/components/AppWrapper/Providers/StatementsProvid
 
 type TableItem = {
   valueType: string;
-  options: SelectProps['options'];
+  options: Option<string>[];
   label: string;
   requiredResources: { read: Resource[]; write: Resource[] };
 };
@@ -56,16 +56,15 @@ export const DefaultValuesSettings = () => {
               <Select
                 value={value[record.valueType]}
                 onChange={(selectedValue) => {
-                  setValue((value) => ({
-                    ...value,
-                    [record.valueType]: selectedValue,
+                  setValue((prev) => ({
+                    ...prev,
+                    [record.valueType]: selectedValue ?? '',
                   }));
                 }}
                 options={record.options}
-                defaultValue={DEFAULT_VALUES[record.valueType]}
-                showSearch
+                isSearchable
                 style={{ width: '100%' }}
-                disabled={!hasResources(statements, record.requiredResources.write)}
+                isDisabled={!hasResources(statements, record.requiredResources.write)}
               />
             );
           },

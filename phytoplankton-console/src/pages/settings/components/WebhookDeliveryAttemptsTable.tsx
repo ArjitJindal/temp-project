@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
-import { message } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import s from './style.module.less';
 import WebhookActionMenu from './WebhookActionMenu';
@@ -21,7 +20,7 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Ta
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
-import { CloseMessage } from '@/components/library/Message';
+import { CloseMessage, message } from '@/components/library/Message';
 import Table from '@/components/library/Table';
 import RestartLineIcon from '@/components/ui/icons/Remix/system/restart-line.react.svg';
 import { ExtraFilterProps } from '@/components/library/Filter/types';

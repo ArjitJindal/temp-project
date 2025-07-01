@@ -1,10 +1,10 @@
-import { Alert } from 'antd';
 import React from 'react';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { LISTS } from '@/utils/queries/keys';
 import { isFailed, getOr, isSuccess } from '@/utils/asyncResource';
 import Select, { TagsProps as SelectProps } from '@/components/library/Select';
+import Alert from '@/components/library/Alert';
 
 interface Props extends Pick<SelectProps<string>, 'value' | 'onChange'> {
   listType?: string;
@@ -24,7 +24,7 @@ export default function ListSelect(props: Props) {
   });
   const res = queryResults.data;
   if (isFailed(res)) {
-    return <Alert message={res.message} type="error" />;
+    return <Alert type="ERROR">{res.message}</Alert>;
   }
   return (
     <Select<string>

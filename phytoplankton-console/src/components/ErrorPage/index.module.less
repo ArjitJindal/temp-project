@@ -1,0 +1,35 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alertContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.alertContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alertTitle {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.alertDescription {
+  font-size: 14px;
+}

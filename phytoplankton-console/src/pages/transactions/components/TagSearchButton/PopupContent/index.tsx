@@ -1,4 +1,3 @@
-import { Select } from 'antd';
 import React, { useCallback } from 'react';
 import s from './style.module.less';
 import { useApi } from '@/api';
@@ -8,6 +7,7 @@ import { getOr, isLoading } from '@/utils/asyncResource';
 import { Value } from '@/pages/transactions/components/TagSearchButton/types';
 import Form from '@/components/library/Form';
 import Button from '@/components/library/Button';
+import Select from '@/components/library/Select';
 import InputField from '@/components/library/Form/InputField';
 
 interface Props {
@@ -62,12 +62,12 @@ export default function PopupContent(props: Props) {
           <div className={s.root}>
             <InputField<Value, 'key'> name={'key'} label={'Tag key'} labelProps={{ level: 2 }}>
               {(inputProps) => (
-                <Select<string>
+                <Select
                   style={{ width: '100%' }}
-                  showSearch={true}
+                  isSearchable={true}
                   allowClear={true}
                   className={s.select}
-                  loading={isLoading(result.data)}
+                  isLoading={isLoading(result.data)}
                   options={(getOr(result.data, []) as unknown as Array<string>)
                     .filter((key) => key?.length > 0)
                     .map((key) => ({ label: key, value: key }))}
@@ -87,13 +87,13 @@ export default function PopupContent(props: Props) {
               labelProps={{ level: 2 }}
             >
               {(inputProps) => (
-                <Select<string>
+                <Select
                   style={{ width: '100%' }}
-                  showSearch={true}
+                  isSearchable={true}
                   allowClear={true}
                   className={s.select}
-                  loading={isLoading(tagsValueResult.data)}
-                  disabled={!selectedKey}
+                  isLoading={isLoading(tagsValueResult.data)}
+                  isDisabled={!selectedKey}
                   options={(getOr(tagsValueResult.data, []) as unknown as Array<string>)
                     .filter((value) => value?.length > 0)
                     .map((value) => ({ label: value, value: value }))}

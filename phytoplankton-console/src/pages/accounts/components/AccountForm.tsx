@@ -457,38 +457,37 @@ export default function AccountForm(props: Props) {
                   name={'reviewPermissions'}
                 >
                   {(inputProps) => (
-                    <div className={s.permissionsGroup}>
-                      <RadioGroup<ReviewPermission | undefined>
-                        options={(
-                          [undefined, 'MAKER', 'CHECKER', 'ESCALATION_L1', 'ESCALATION_L2'] as const
-                        )
-                          .filter((x) => {
-                            if (x === 'ESCALATION_L2') {
-                              return isMultiEscalationsEnabled;
-                            }
-                            return true;
-                          })
-                          .map((x) => {
-                            let label: string;
-                            if (x == null) {
-                              label = 'None';
-                            } else if (x === 'ESCALATION_L1') {
-                              label = isMultiEscalationsEnabled
-                                ? 'Escalation L1'
-                                : 'Escalation reviewer';
-                            } else if (x === 'ESCALATION_L2') {
-                              label = 'Escalation L2';
-                            } else {
-                              label = humanizeAuto(x);
-                            }
-                            return {
-                              value: x,
-                              label: label,
-                            };
-                          })}
-                        {...inputProps}
-                      />
-                    </div>
+                    <RadioGroup<ReviewPermission | undefined>
+                      orientation="HORIZONTAL"
+                      options={(
+                        [undefined, 'MAKER', 'CHECKER', 'ESCALATION_L1', 'ESCALATION_L2'] as const
+                      )
+                        .filter((x) => {
+                          if (x === 'ESCALATION_L2') {
+                            return isMultiEscalationsEnabled;
+                          }
+                          return true;
+                        })
+                        .map((x) => {
+                          let label: string;
+                          if (x == null) {
+                            label = 'None';
+                          } else if (x === 'ESCALATION_L1') {
+                            label = isMultiEscalationsEnabled
+                              ? 'Escalation L1'
+                              : 'Escalation reviewer';
+                          } else if (x === 'ESCALATION_L2') {
+                            label = 'Escalation L2';
+                          } else {
+                            label = humanizeAuto(x);
+                          }
+                          return {
+                            value: x,
+                            label: label,
+                          };
+                        })}
+                      {...inputProps}
+                    />
                   )}
                 </InputField>
                 {values.reviewPermissions === 'MAKER' && (

@@ -1,8 +1,7 @@
-import { Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import COLORS from '@/components/ui/colors';
+import s from './index.module.less';
 import { AuditLog, RuleAction, RuleInstance } from '@/apis';
 import Modal from '@/components/library/Modal';
 import { VariableTags } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
@@ -20,6 +19,7 @@ import TableTemplate, {
 } from '@/pages/auditlog/components/TableTemplate';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { RiskLevel } from '@/utils/risk-levels';
+import { H4 } from '@/components/ui/Typography';
 import LogicDisplay from '@/components/ui/LogicDisplay';
 
 interface Props {
@@ -199,14 +199,14 @@ const RuleAuditLogModal = (props: Props) => {
 
   return (
     <>
-      <Typography.Text
-        style={{ color: COLORS.brandBlue.base, cursor: 'pointer' }}
+      <span
+        className={s.viewChangesLink}
         onClick={() => {
           setIsModalVisible(true);
         }}
       >
         View changes
-      </Typography.Text>
+      </span>
       <Modal
         isOpen={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
@@ -214,29 +214,25 @@ const RuleAuditLogModal = (props: Props) => {
         hideFooter
         title={`Changes for ${humanizeAuto(data.type)}`}
       >
-        <div style={{ padding: '1rem', width: '100%' }}>
+        <div className={s.modalContent}>
           {changedDetails.length && (
             <>
-              <Typography.Title level={4}>
-                {startCase(toLower(data.type))} details changed
-              </Typography.Title>
+              <H4>{startCase(toLower(data.type))} details changed</H4>
               <TableTemplate details={changedDetails} showOldImage={showOldImage} />
             </>
           )}
           <>
             {notChangedDetails.length > 0 && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>
-                  {startCase(toLower(data.type))} details not changed
-                </Typography.Title>
+              <div className={s.section}>
+                <H4>{startCase(toLower(data.type))} details not changed</H4>
                 <TableTemplate details={notChangedDetails} showOldImage={showOldImage} />
               </div>
             )}
           </>
           <>
             {(newEntityVariables.length > 0 || newAggregationVariables.length > 0) && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>New variables</Typography.Title>
+              <div className={s.section}>
+                <H4>New variables</H4>
                 <VariableTags
                   readOnly={true}
                   entityVariables={newEntityVariables}
@@ -250,8 +246,8 @@ const RuleAuditLogModal = (props: Props) => {
           </>
           <>
             {(oldEntityVariables.length > 0 || oldAggregationVariables.length > 0) && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>Old variables</Typography.Title>
+              <div className={s.section}>
+                <H4>Old variables</H4>
                 <VariableTags
                   readOnly={true}
                   entityVariables={oldEntityVariables}
@@ -265,8 +261,8 @@ const RuleAuditLogModal = (props: Props) => {
           </>
 
           <>
-            <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-              <Typography.Title level={4}>Risk level</Typography.Title>
+            <div className={s.section}>
+              <H4>Risk level</H4>
               <RiskLevelSwitch
                 value={selectedRiskLevel}
                 onChange={(newValue) => setSelectedRiskLevel(newValue as RiskLevel)}
@@ -275,40 +271,40 @@ const RuleAuditLogModal = (props: Props) => {
 
             {/* OLD LOGIC WITH RISK LEVELS */}
             {oldLogicToDisplay && oldImage && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>Old logic</Typography.Title>
+              <div className={s.section}>
+                <H4>Old logic</H4>
                 <LogicDisplayWrapper image={oldImage} logic={oldLogicToDisplay} />
               </div>
             )}
 
             {/* NEW LOGIC WITH RISK LEVELS */}
             {newLogicToDisplay && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>New logic</Typography.Title>
+              <div className={s.section}>
+                <H4>New logic</H4>
                 <LogicDisplayWrapper image={newImage} logic={newLogicToDisplay} />
               </div>
             )}
 
             {/* OLD ACTION WITH RISK LEVELS */}
             {oldActionToDisplay && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>Old action</Typography.Title>
+              <div className={s.section}>
+                <H4>Old action</H4>
                 <RuleActionStatus ruleAction={oldActionToDisplay as RuleAction} />
               </div>
             )}
 
             {/* NEW ACTION WITH RISK LEVELS */}
             {newActionToDisplay && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>New action</Typography.Title>
+              <div className={s.section}>
+                <H4>New action</H4>
                 <RuleActionStatus ruleAction={newActionToDisplay as RuleAction} />
               </div>
             )}
 
             {/* NEW AND OLD ADVANCED OPTIONS (TRIGGERS ON HIT) WITH RISK LEVELS */}
             {advancedOptionsToDisplay.length > 0 && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>Advanced options</Typography.Title>
+              <div className={s.section}>
+                <H4>Advanced options</H4>
                 <TableTemplate details={advancedOptionsToDisplay} showOldImage={showOldImage} />
               </div>
             )}

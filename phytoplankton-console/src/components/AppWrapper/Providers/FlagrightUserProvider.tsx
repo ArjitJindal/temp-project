@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from 'antd';
 import jwtDecode from 'jwt-decode';
 import { useAuth0 } from '@auth0/auth0-react';
 import ErrorPage from '@/components/ErrorPage';
@@ -10,6 +9,7 @@ import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
 import { PageLoading } from '@/components/PageLoading';
+import Button from '@/components/library/Button';
 
 const branding = getBranding();
 

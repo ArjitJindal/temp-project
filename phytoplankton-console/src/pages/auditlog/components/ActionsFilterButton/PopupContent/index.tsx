@@ -1,9 +1,9 @@
-import { Checkbox } from 'antd';
 import React, { useEffect, useState } from 'react';
 import s from './style.module.less';
 import { AuditLogActionEnum } from '@/apis';
 import Button from '@/components/library/Button';
 import { AUDIT_LOG_ACTION_ENUMS } from '@/apis/models-custom/AuditLogActionEnum';
+import Checkbox from '@/components/library/Checkbox';
 
 interface Props {
   initialState: AuditLogActionEnum[] | [];
@@ -29,22 +29,20 @@ export default function PopupContent(props: Props) {
     >
       <div className={s.root}>
         {AUDIT_LOG_ACTION_ENUMS.map((key) => (
-          <Checkbox
-            key={key}
-            onChange={(e) => {
-              setState((prev) => {
-                if (e.target.checked) {
-                  return [...prev, key];
-                }
-                return prev.filter((item) => item !== key);
-              });
-            }}
-            value={key}
-            checked={state.includes(key)}
-            style={{ margin: '0' }}
-          >
-            {key}
-          </Checkbox>
+          <div key={key} className={s.checkboxItem}>
+            <Checkbox
+              onChange={(checked) => {
+                setState((prev) => {
+                  if (checked) {
+                    return [...prev, key];
+                  }
+                  return prev.filter((item) => item !== key);
+                });
+              }}
+              value={state.includes(key)}
+            />
+            <span>{key}</span>
+          </div>
         ))}
         <div className={s.buttons}>
           <Button htmlType="submit" type="PRIMARY">

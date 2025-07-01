@@ -1,22 +1,20 @@
-import { Alert, Layout } from 'antd';
 import React from 'react';
+import s from './index.module.less';
+import Alert from '@/components/library/Alert';
 
 export default function ErrorPage(props: { title: string; children: React.ReactNode }) {
   return (
-    <Layout>
-      <Layout.Content>
-        <Alert
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-          message={props.title}
-          description={props.children}
-          type="error"
-        />
-      </Layout.Content>
-    </Layout>
+    <div className={s.layout}>
+      <div className={s.content}>
+        <div className={s.alertContainer}>
+          <Alert type="ERROR">
+            <div className={s.alertContent}>
+              <div className={s.alertTitle}>{props.title}</div>
+              <div className={s.alertDescription}>{props.children}</div>
+            </div>
+          </Alert>
+        </div>
+      </div>
+    </div>
   );
 }

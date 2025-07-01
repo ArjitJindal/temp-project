@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
@@ -16,6 +15,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import TableTemplate, { summariseChanges } from '@/pages/auditlog/components/TableTemplate';
 import { RiskLevel } from '@/utils/risk-levels';
 import Tag from '@/components/library/Tag';
+import { H4 } from '@/components/ui/Typography';
 import LogicDisplay from '@/components/ui/LogicDisplay';
 
 interface Props {
@@ -112,14 +112,14 @@ const RiskFactorAuditLogModal = (props: Props) => {
   const showOldImage = oldImage && Object.keys(oldImage).length > 0;
   return (
     <>
-      <Typography.Text
+      <span
         className={cn(s.text)}
         onClick={() => {
           setIsModalVisible(true);
         }}
       >
         View changes
-      </Typography.Text>
+      </span>
       <Modal
         isOpen={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
@@ -130,25 +130,21 @@ const RiskFactorAuditLogModal = (props: Props) => {
         <div className={cn(s.container)}>
           {changedDetails.length && (
             <>
-              <Typography.Title level={4}>
-                {startCase(toLower(data.type))} details changed
-              </Typography.Title>
+              <H4>{startCase(toLower(data.type))} details changed</H4>
               <TableTemplate details={changedDetails} showOldImage={showOldImage} />
             </>
           )}
           <>
             {notChangedDetails.length > 0 && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>
-                  {startCase(toLower(data.type))} details not changed
-                </Typography.Title>
+              <div className={cn(s.section)}>
+                <H4>{startCase(toLower(data.type))} details not changed</H4>
                 <TableTemplate details={notChangedDetails} showOldImage={showOldImage} />
               </div>
             )}
           </>
           <div className={cn(s.flexDisplay)}>
             <div className={cn(s.childContainer)}>
-              <Typography.Title level={4}>Old variables</Typography.Title>
+              <H4>Old variables</H4>
               {(oldEntityVariables.length > 0 || oldAggregationVariables.length > 0) && (
                 <VariableTags
                   readOnly={true}
@@ -160,7 +156,7 @@ const RiskFactorAuditLogModal = (props: Props) => {
               )}
             </div>
             <div className={cn(s.childContainer)}>
-              <Typography.Title level={4}>New variables</Typography.Title>
+              <H4>New variables</H4>
               {(newEntityVariables.length > 0 || newAggregationVariables.length > 0) && (
                 <VariableTags
                   readOnly={true}
@@ -176,7 +172,7 @@ const RiskFactorAuditLogModal = (props: Props) => {
           <div className={cn(s.flexDisplay)}>
             {/* OLD LOGIC */}
             <div className={cn(s.childContainer)}>
-              <Typography.Title level={4}>Old logic</Typography.Title>
+              <H4>Old logic</H4>
               {oldRiskLevelLogic.map((info, index) => (
                 <div key={index} className={cn(s.riskLevelLogicItem)}>
                   <Tag color="action">
@@ -194,7 +190,7 @@ const RiskFactorAuditLogModal = (props: Props) => {
 
             {/* NEW LOGIC */}
             <div className={cn(s.childContainer)}>
-              <Typography.Title level={4}>New logic</Typography.Title>
+              <H4>New logic</H4>
               {newRiskLevelLogic.map((info, index) => (
                 <div key={index} className={cn(s.riskLevelLogicItem)}>
                   <Tag color="action">

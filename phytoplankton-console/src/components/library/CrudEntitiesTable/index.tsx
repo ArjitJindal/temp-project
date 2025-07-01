@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { useMutation } from '@tanstack/react-query';
-import { Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { pick } from 'lodash';
 import { Resource } from '@flagright/lib/utils';
@@ -13,6 +12,7 @@ import { Step } from '../Stepper';
 import { message } from '../Message';
 import { ColumnHelper } from '../Table/columnHelper';
 import Button from '../Button';
+import style from './index.module.less';
 import { Authorized } from '@/components/utils/Authorized';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Confirm from '@/components/utils/Confirm';
@@ -185,14 +185,8 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
           isReadOnly ||
           (entity?.status === undefined ? false : entity.status === 'DRAFT' ? false : true);
         return (
-          <Space>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
-                gap: '8px',
-              }}
-            >
+          <div className={style.actionContainer}>
+            <div className={style.buttonGrid}>
               <Button
                 testName="edit-button"
                 size="MEDIUM"
@@ -246,7 +240,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
                 )}
               </Confirm>
             )}
-          </Space>
+          </div>
         );
       },
       defaultSticky: 'RIGHT',

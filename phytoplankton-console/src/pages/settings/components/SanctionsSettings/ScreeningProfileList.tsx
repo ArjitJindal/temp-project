@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Switch } from 'antd';
 import s from './styles.module.less';
 import CreateScreeningProfileModal from './CreateScreeningProfileModal';
 import Tooltip from '@/components/library/Tooltip';
+import Toggle from '@/components/library/Toggle';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { ScreeningProfileResponse } from '@/apis';
@@ -173,9 +173,9 @@ export const ScreeningProfileList = ({ hasFeature }) => {
         type: {
           render: (value, { item }) => (
             <div className={s.statusContainer}>
-              <Switch
-                checked={value === 'ENABLED'}
-                disabled={isReadOnly || updateStatusMutation.isLoading}
+              <Toggle
+                value={value === 'ENABLED'}
+                isDisabled={isReadOnly || updateStatusMutation.isLoading}
                 onChange={(checked) => {
                   updateStatusMutation.mutate({
                     screeningProfileId: item.screeningProfileId || '',

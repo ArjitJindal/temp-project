@@ -1,10 +1,9 @@
 import { EllipsisOutlined } from '@ant-design/icons';
-import { Dropdown, Menu } from 'antd';
-import cn from 'clsx';
 import React from 'react';
 import s from './style.module.less';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { RiskFactor } from '@/apis';
+import Dropdown from '@/components/library/Dropdown';
 
 interface RuleActionsMenuProps {
   onDuplicate: (entity: RiskFactor) => void;
@@ -17,36 +16,28 @@ const RuleActionsMenu: React.FC<RuleActionsMenuProps> = ({
   canWriteRiskFactors,
   entity,
 }) => {
-  const menuItems = [
+  const menuOptions = [
     {
-      key: 'duplicate',
-      icon: <FileCopyLineIcon className={s.actionsMenuIcon} />,
-      content: 'Duplicate',
-      onClick: () => onDuplicate(entity),
-      disabled: !canWriteRiskFactors,
-      testName: 'rule-duplicate-button',
+      value: 'duplicate',
+      label: (
+        <div className={s.actionsMenuItem}>
+          <FileCopyLineIcon className={s.actionsMenuIcon} />
+          Duplicate
+        </div>
+      ),
+      isDisabled: !canWriteRiskFactors,
     },
   ];
 
-  const menu = (
-    <Menu className={s.actionsMenu}>
-      {menuItems.map((item, index) => (
-        <Menu.Item
-          key={item.key}
-          icon={item.icon}
-          onClick={item.disabled ? undefined : (item.onClick as any)}
-          disabled={item.disabled}
-          className={cn(s.actionsMenuItem, index % 2 === 1 ? s.isOdd : '')}
-          data-cy={item.testName}
-        >
-          {item.content}
-        </Menu.Item>
-      ))}
-    </Menu>
-  );
-
   return (
-    <Dropdown overlay={menu} trigger={['click']}>
+    <Dropdown
+      options={menuOptions}
+      onSelect={(option) => {
+        if (option.value === 'duplicate') {
+          onDuplicate(entity);
+        }
+      }}
+    >
       <EllipsisOutlined data-cy="risk-actions-menu" className={s.actionIcons} />
     </Dropdown>
   );

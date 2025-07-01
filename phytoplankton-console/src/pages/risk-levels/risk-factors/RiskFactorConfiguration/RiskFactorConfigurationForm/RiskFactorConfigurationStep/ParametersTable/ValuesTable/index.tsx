@@ -1,5 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { Button } from 'antd';
+import { useCallback, useState, useEffect } from 'react';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
@@ -40,6 +39,7 @@ import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import Dropdown from '@/components/library/Dropdown';
+import Button from '@/components/library/Button';
 
 interface Props {
   entity: RiskFactor;
@@ -329,7 +329,7 @@ function ValuesTable(props: Props) {
               arrow={'LINE'}
               onSelect={(option) => handleSetDefaultValues(option.value)}
             >
-              <Button type="primary" size="small" block>
+              <Button type="PRIMARY" size="SMALL" style={{ width: 'max-content' }}>
                 Load default lists
               </Button>
             </Dropdown>
@@ -414,8 +414,8 @@ function ValuesTable(props: Props) {
               />
               <Button
                 className={style.deleteButton}
-                type="text"
-                disabled={(onlyDeleteLast && index !== values.length - 1) || !hasWritePermissions}
+                type="TEXT"
+                isDisabled={(onlyDeleteLast && index !== values.length - 1) || !hasWritePermissions}
                 onClick={handleDeleteKey}
               >
                 <DeleteFilled />
@@ -471,7 +471,7 @@ function ValuesTable(props: Props) {
                 step={0.01}
               />
               <Button
-                disabled={
+                isDisabled={
                   !newValue ||
                   newRiskValue == null ||
                   newValueValidationMessage != null ||
@@ -498,18 +498,26 @@ function ValuesTable(props: Props) {
         children="Please note the risk level will automatically convert to risk score. You can also manually update the risk score and it will be considered in risk algorithm calculation."
       />
       <div className={style.footer}>
-        <Button disabled={isEqual || !hasWritePermissions} onClick={handleCancel}>
+        <Button
+          type="SECONDARY"
+          isDisabled={isEqual || !hasWritePermissions}
+          onClick={handleCancel}
+        >
           Cancel
         </Button>
         <Button
-          disabled={isEqual || !hasWritePermissions || newValueValidationMessage != null}
+          isDisabled={isEqual || !hasWritePermissions || newValueValidationMessage != null}
           onClick={handleSave}
-          type="primary"
-          data-cy="save-risk-factor"
+          type="PRIMARY"
+          testName="save-risk-factor"
         >
           Save
         </Button>
-        <Button disabled={values.length === 0 || !hasWritePermissions} onClick={handleClearValues}>
+        <Button
+          type="SECONDARY"
+          isDisabled={values.length === 0 || !hasWritePermissions}
+          onClick={handleClearValues}
+        >
           Clear all
         </Button>
       </div>

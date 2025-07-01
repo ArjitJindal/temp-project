@@ -1,4 +1,3 @@
-import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';

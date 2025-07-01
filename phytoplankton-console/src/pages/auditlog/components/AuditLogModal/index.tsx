@@ -1,10 +1,10 @@
-import { Typography } from 'antd';
 import { useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import COLORS from '@/components/ui/colors';
+import s from './index.module.less';
 import TableTemplate, { summariseChanges } from '@/pages/auditlog/components/TableTemplate';
 import Modal from '@/components/library/Modal';
+import { H4 } from '@/components/ui/Typography';
 
 interface Props {
   data: {
@@ -29,14 +29,14 @@ const AuditLogModal = (props: Props) => {
   });
   return (
     <>
-      <Typography.Text
-        style={{ color: COLORS.brandBlue.base, cursor: 'pointer' }}
+      <span
+        className={s.viewChangesLink}
         onClick={() => {
           setIsModalVisible(true);
         }}
       >
         View changes
-      </Typography.Text>
+      </span>
       <Modal
         isOpen={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
@@ -44,31 +44,25 @@ const AuditLogModal = (props: Props) => {
         hideFooter
         title={`Changes for ${humanizeAuto(data.type)}`}
       >
-        <div style={{ padding: '1rem', width: '100%' }}>
+        <div className={s.modalContent}>
           {changedDetails.length > 0 && (
             <>
-              <Typography.Title level={4}>
-                {startCase(toLower(data.type))} details changed
-              </Typography.Title>
+              <H4>{startCase(toLower(data.type))} details changed</H4>
               <TableTemplate details={changedDetails} showOldImage={data.showOldImage} />
             </>
           )}
           <>
             {notChangedDetails.length > 0 && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>
-                  {startCase(toLower(data.type))} details not changed
-                </Typography.Title>
+              <div className={s.section}>
+                <H4>{startCase(toLower(data.type))} details not changed</H4>
                 <TableTemplate details={notChangedDetails} showOldImage={data.showOldImage} />
               </div>
             )}
           </>
           <>
             {metaDataDetails.length > 0 && (
-              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
-                <Typography.Title level={4}>
-                  {startCase(toLower(data.type))} event meta data
-                </Typography.Title>
+              <div className={s.section}>
+                <H4>{startCase(toLower(data.type))} event meta data</H4>
                 <TableTemplate
                   details={metaDataDetails}
                   showOldImage={data.showOldImage}

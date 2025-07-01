@@ -1,6 +1,6 @@
-import { Typography } from 'antd';
 import React from 'react';
 import { dayjs, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '@/utils/dayjs';
+import { P } from '@/components/ui/Typography';
 
 interface Props {
   timestamp?: number;
@@ -14,11 +14,10 @@ export default function TimestampDisplay(props: Props): JSX.Element {
   }
   return (
     <div>
-      <Typography.Text>{dayjs(timestamp).format(timeFormat)}</Typography.Text>
-      <br />
-      <Typography.Text type={'secondary'}>
+      <P variant="m">{dayjs(timestamp).format(timeFormat)}</P>
+      <P variant="m" grey>
         {dayjs(timestamp).format(DEFAULT_DATE_FORMAT)}
-      </Typography.Text>
+      </P>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { Select } from 'antd';
 import React, { useCallback, useState } from 'react';
 import s from './style.module.less';
+import Select from '@/components/library/Select';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_UNIQUES } from '@/utils/queries/keys';
@@ -61,10 +61,10 @@ export default function PopupContent(props: Props) {
               {(inputProps) => (
                 <Select<string>
                   style={{ width: '100%' }}
-                  showSearch={true}
-                  allowClear={true}
+                  isSearchable
+                  allowClear
                   className={s.select}
-                  loading={isLoading(result.data)}
+                  isLoading={isLoading(result.data)}
                   options={(getOr(result.data, []) as unknown as Array<string>)
                     .filter((key) => key?.length > 0)
                     .map((key) => ({ label: key, value: key }))}
@@ -82,11 +82,11 @@ export default function PopupContent(props: Props) {
               {(inputProps) => (
                 <Select<string>
                   style={{ width: '100%' }}
-                  showSearch={true}
-                  allowClear={true}
+                  isSearchable
+                  allowClear
                   className={s.select}
-                  loading={isLoading(tagsValueResult.data)}
-                  disabled={!selectedKey}
+                  isLoading={isLoading(tagsValueResult.data)}
+                  isDisabled={!selectedKey}
                   options={(getOr(tagsValueResult.data, []) as unknown as Array<string>)
                     .filter((value) => value?.length > 0)
                     .map((value) => ({ label: value, value: value }))}

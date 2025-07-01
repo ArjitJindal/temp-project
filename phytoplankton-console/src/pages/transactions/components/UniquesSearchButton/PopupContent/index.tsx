@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Select } from 'antd';
+import { useState } from 'react';
 import { uniq } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Value } from '../types';
@@ -9,6 +8,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import Button from '@/components/library/Button';
+import Select from '@/components/library/Select';
 import { TransactionsUniquesField } from '@/apis';
 
 interface Props {
@@ -33,16 +33,16 @@ export default function PopupContent(props: Props) {
 
   return (
     <div className={s.root}>
-      <Select<string[]>
+      <Select
         style={{ width: '100%' }}
-        showSearch={true}
+        isSearchable={true}
         allowClear={true}
         className={s.select}
-        loading={isLoading(result.data)}
+        isLoading={isLoading(result.data)}
         options={uniq(getOr(result.data, []).concat(defaults))
           .filter((key) => key?.length > 0)
           .map((key) => ({ label: humanizeAuto(key), value: key }))}
-        mode="multiple"
+        mode="MULTIPLE"
         value={value}
         onChange={(value) => {
           setValue(value);

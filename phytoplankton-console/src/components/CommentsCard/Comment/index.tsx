@@ -1,5 +1,4 @@
-import * as Ant from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
 import { Reply } from '../Reply';
@@ -14,6 +13,7 @@ import Spinner from '@/components/library/Spinner';
 import { Comment as ApiComment } from '@/apis';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
   currentUserId: string | undefined;
@@ -128,19 +128,15 @@ export default function Comment(props: Props) {
           )}
 
           {currentUserId === comment.userId && (
-            <Ant.Tooltip
-              key="delete"
-              title="Delete"
-              className={cn(styles.footerText, styles.delete)}
-            >
+            <Tooltip key="delete" title="Delete">
               <span
                 onClick={handleClickDelete}
-                style={{ cursor: 'pointer' }}
                 data-cy="comment-delete-button"
+                className={cn(styles.footerText, styles.delete)}
               >
                 Delete
               </span>
-            </Ant.Tooltip>
+            </Tooltip>
           )}
         </div>
         {level === 1 && areRepliesEnabled && (replies !== 0 || showReplyEditor) && (

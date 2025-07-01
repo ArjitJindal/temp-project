@@ -1,10 +1,10 @@
-import { Alert } from 'antd';
 import React, { useEffect, useRef } from 'react';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import { isFailed, getOr, isSuccess } from '@/utils/asyncResource';
 import Select, { SingleProps } from '@/components/library/Select';
+import Alert from '@/components/library/Alert';
 
 interface Props extends Pick<SingleProps<string>, 'value' | 'onChange'> {
   listType?: string;
@@ -30,7 +30,7 @@ export default function ScreeningProfileSelect({ value, onChange, ...props }: Pr
 
   const res = queryResults.data;
   if (isFailed(res)) {
-    return <Alert message={res.message} type="error" />;
+    return <Alert type="ERROR">{res.message}</Alert>;
   }
 
   const options = getOr(res, { items: [] }).items.map((list) => ({

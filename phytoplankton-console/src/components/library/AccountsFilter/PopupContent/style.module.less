@@ -13,12 +13,6 @@
   }
 }
 
-&.isActive {
-  .itemTitle {
-    color: @fr-colors-brandBlue;
-  }
-}
-
 .item {
   padding: 8px 12px !important;
   border: none !important;
@@ -27,6 +21,12 @@
   &:hover,
   &.isActive {
     background: @fr-colors-brandBlueTint;
+  }
+
+  &.isActive {
+    .itemTitle {
+      color: @fr-colors-brandBlue;
+    }
   }
 
   :global {
@@ -39,11 +39,12 @@
 .user {
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 .list {
   max-height: 300px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .avatar {

@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Avatar, List, Typography } from 'antd';
+import { useCallback } from 'react';
+import { List, Avatar } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
@@ -85,7 +85,7 @@ export default function PopupContent(props: Props) {
                     {user.slice(0, 2).toUpperCase()}
                   </Avatar>
                 )}
-                <Typography.Text>{user}</Typography.Text>
+                <span>{user}</span>
               </div>
             </List.Item>
           );

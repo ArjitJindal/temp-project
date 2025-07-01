@@ -1,4 +1,3 @@
-import React from 'react';
 import { List } from 'antd';
 import { useLastSearches } from '../../helpers';
 import s from './style.module.less';
@@ -19,13 +18,7 @@ export default function LastSearchList(props: Props) {
       <div className={s.subtitle}>Recent searches</div>
       <List>
         {items.map((text, i) => (
-          <List.Item
-            key={i}
-            className={s.item}
-            onClick={() => {
-              onSelect(text);
-            }}
-          >
+          <List.Item key={i} className={s.item} onClick={() => onSelect(text)}>
             {text}
           </List.Item>
         ))}

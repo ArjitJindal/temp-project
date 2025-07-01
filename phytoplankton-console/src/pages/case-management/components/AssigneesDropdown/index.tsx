@@ -1,6 +1,5 @@
-import { Avatar, Select } from 'antd';
+import { Avatar } from 'antd';
 import cn from 'clsx';
-import { LoadingOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
@@ -8,8 +7,8 @@ import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
 import { useHasResources, useSortedUsers } from '@/utils/user-utils';
 import { Account, Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';
-import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
+import Select from '@/components/library/Select';
 
 interface Props {
   editing: boolean;
@@ -26,7 +25,6 @@ const AssigneesDropdownContent: React.FC<Props> = ({
   assignments,
   editing,
   onChange,
-  maxAssignees,
   placeholder,
   customFilter,
   fixSelectorHeight = false,
@@ -42,41 +40,44 @@ const AssigneesDropdownContent: React.FC<Props> = ({
 
     return users.filter((user) => customFilter(user));
   }, [users, customFilter]);
+
+  const options = filteredUsers.map((user, index) => ({
+    value: user.id,
+    label: (
+      <div className={s.item}>
+        <Avatar
+          size="small"
+          className={s.avatar}
+          style={{
+            color: colorSchema[index % 4].text,
+            backgroundColor: colorSchema[index % 4].background,
+          }}
+        >
+          {user.email.toUpperCase().charAt(0)}
+        </Avatar>
+        <span>{user.name}</span>
+      </div>
+    ),
+    searchText: `${user.name} ${user.email}`,
+  }));
+
   return editing && canEditAssignees ? (
-    <Select<string[]>
-      open={maxAssignees && assignments.length >= maxAssignees ? false : undefined}
+    <Select<string>
       className={
         cn(s.select, fixSelectorHeight ? s.fixSelectorHeight : '') +
         (assignments.length === 0 ? ' unassigned ' : '')
       }
-      mode={'multiple'}
+      mode="MULTIPLE"
       allowClear
-      filterOption={(input, option) => {
-        if (!input || !option) {
-          return false;
-        }
-
-        const accountId = option.value;
-        const selectedUser = users.find((user) => user.id === accountId);
-
-        if (!selectedUser) {
-          return false;
-        }
-
-        return selectedUser.name.includes(input) || selectedUser.email.includes(input);
-      }}
+      onSearch={() => {}}
       style={{ width: '100%' }}
-      disabled={loadingUsers}
-      placeholder={
-        loadingUsers ? (
-          <>
-            <LoadingOutlined /> Loading...
-          </>
-        ) : (
-          placeholder ?? 'Unassigned'
-        )
-      }
-      onChange={onChange}
+      isDisabled={loadingUsers}
+      placeholder={loadingUsers ? 'Loading...' : placeholder ?? 'Unassigned'}
+      onChange={(values) => {
+        if (onChange && values) {
+          onChange(values);
+        }
+      }}
       value={
         loadingUsers
           ? []
@@ -84,27 +85,9 @@ const AssigneesDropdownContent: React.FC<Props> = ({
               .filter((assignment) => assignment.assigneeUserId !== undefined)
               .map((assignment) => assignment.assigneeUserId)
       }
-      suffixIcon={<ArrowDropDownFill />}
-    >
-      {filteredUsers.map((user, index) => (
-        <Select.Option key={user.id}>
-          <div className={s.item}>
-            <Avatar
-              size="small"
-              className={s.avatar}
-              style={{
-                color: colorSchema[index % 4].text,
-                backgroundColor: colorSchema[index % 4].background,
-              }}
-            >
-              {' '}
-              {user.email.toUpperCase().charAt(0)}
-            </Avatar>
-            <span>{user.name}</span>
-          </div>
-        </Select.Option>
-      ))}
-    </Select>
+      options={options}
+      isLoading={loadingUsers}
+    />
   ) : (
     <div className={s.assigneesList}>
       {assignments?.map((assignment) => (

@@ -173,30 +173,28 @@ export default function AdvancedExportModal<T extends object, Params extends obj
             <div className={s.settingsRow}>
               <InputField<FormValues, 'exportType'> name="exportType" label="Export data from">
                 {({ value, onChange }) => (
-                  <div className={s.radioGroup}>
-                    <RadioGroup
-                      value={value}
-                      onChange={onChange}
-                      options={[
-                        { label: 'Current page', value: 'CURRENT', name: 'exportType' },
-                        { label: 'All pages', value: 'ALL', name: 'exportType' },
-                      ]}
-                    />
-                  </div>
+                  <RadioGroup
+                    value={value}
+                    orientation="HORIZONTAL"
+                    onChange={onChange}
+                    options={[
+                      { label: 'Current page', value: 'CURRENT', name: 'exportType' },
+                      { label: 'All pages', value: 'ALL', name: 'exportType' },
+                    ]}
+                  />
                 )}
               </InputField>
               <InputField<FormValues, 'exportFormat'> name="exportFormat" label="Export format">
                 {({ value, onChange }) => (
-                  <div className={s.radioGroup}>
-                    <RadioGroup
-                      value={value}
-                      onChange={onChange}
-                      options={[
-                        { label: 'CSV', value: 'CSV', name: 'exportFormat' },
-                        { label: 'XSLX', value: 'XSLX', name: 'exportFormat' },
-                      ]}
-                    />
-                  </div>
+                  <RadioGroup
+                    value={value}
+                    orientation="HORIZONTAL"
+                    onChange={onChange}
+                    options={[
+                      { label: 'CSV', value: 'CSV', name: 'exportFormat' },
+                      { label: 'XSLX', value: 'XSLX', name: 'exportFormat' },
+                    ]}
+                  />
                 )}
               </InputField>
             </div>

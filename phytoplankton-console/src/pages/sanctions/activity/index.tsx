@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { Row, Space } from 'antd';
 import s from './index.module.less';
 import { KpiCard } from './KpiCard';
 import { useApi } from '@/api';
@@ -124,16 +123,16 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
         defaultWidth: 350,
         type: {
           render: (name, { item: entity }) => (
-            <Row align="middle">
-              <Space>
+            <div className={s.nameContainer}>
+              <div className={s.nameContent}>
                 {!hasFeatureDowJones || entity.isHit ? (
                   <Id to={`/screening/manual-screening/${entity.searchId}`}>{name}</Id>
                 ) : (
                   <div>{name}</div>
                 )}
                 {entity.isNew ? <b>NEW</b> : null}
-              </Space>
-            </Row>
+              </div>
+            </div>
           ),
         },
       }),

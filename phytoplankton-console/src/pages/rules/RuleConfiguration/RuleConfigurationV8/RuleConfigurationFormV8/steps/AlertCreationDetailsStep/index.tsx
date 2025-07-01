@@ -1,4 +1,3 @@
-import { Divider } from 'antd';
 import s from './style.module.less';
 import { AlertAssignedToInput } from './AlertAssignedToInput/input';
 import { RuleQueueInputField } from './RuleQueueInput';
@@ -154,17 +153,17 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               </InputField>
               <DefaultAlertStatusInput />
             </div>
-            <Divider className={s.divider} />
+            <div className={s.divider} />
             <AlertAssignedToInput />
             {isSlaEnabled && (
               <>
-                <Divider className={s.divider} />
+                <div className={s.divider} />
                 <SlaPolicyInput<FormValues> />
-                <Divider className={s.divider} />
+                <div className={s.divider} />
               </>
             )}
             <FrozenStatusesInput />
-            <Divider className={s.divider} />
+            <div className={s.divider} />
             <RuleQueueInputField<FormValues> label="Alert queue" />
             <AlertInvestigationChecklist<FormValues> label="Alert investigation checklist" />
           </PropertyListLayout>

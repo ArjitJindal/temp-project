@@ -1,7 +1,7 @@
-import { Space } from 'antd';
 import { useState } from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
+import s from './index.module.less';
 import ReportStatusTag from './ReportStatusTag';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
@@ -75,7 +75,7 @@ export default function ReportStatusChangeModal(props: {
       hideFooter={!canEdit}
     >
       {statusInfoEditing ? (
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <div className={s.verticalContainer}>
           <Select
             mode="SINGLE"
             style={{ width: 200 }}
@@ -106,7 +106,7 @@ export default function ReportStatusChangeModal(props: {
               )
             }
           />
-        </Space>
+        </div>
       ) : (
         <MarkdownViewer
           key={report?.statusInfo}

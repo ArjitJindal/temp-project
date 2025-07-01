@@ -1,10 +1,10 @@
 import React from 'react';
-import { Alert } from 'antd';
 import { QuestionResponseSkeleton } from '../../types';
 import HistoryItemLayout from '../HistoryItem/HistoryItemLayout';
 import s from './index.module.less';
 import Skeleton from '@/components/library/Skeleton';
 import { makeRandomNumberGenerator } from '@/utils/prng';
+import Alert from '@/components/library/Alert';
 
 interface Props {
   item: QuestionResponseSkeleton;
@@ -20,7 +20,7 @@ function HistoryItemSkeleton(props: Props, ref?: React.ForwardedRef<HTMLDivEleme
   return (
     <HistoryItemLayout dataKey={item.requestId} ref={ref} title={item.requestString}>
       {item.error ? (
-        <Alert message={item.error} type="error" />
+        <Alert type="ERROR">{item.error}</Alert>
       ) : (
         <div className={s.skeleton}>
           <p>

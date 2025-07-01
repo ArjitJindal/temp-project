@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { Divider } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import { ChecklistTemplate } from '@/apis';
@@ -267,9 +266,7 @@ export const CheckListCategoryListsInput = (props: Props) => {
                 </Button>
               )}
             </div>
-            {categoryIndex !== value.length - 1 && (
-              <Divider type="horizontal" className={s.divider} />
-            )}
+            {categoryIndex !== value.length - 1 && <div className={s.divider} />}
           </div>
         );
       })}

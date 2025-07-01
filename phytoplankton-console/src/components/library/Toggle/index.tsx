@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import cn from 'clsx';
 import { InputProps } from '../Form';
 import s from './style.module.less';

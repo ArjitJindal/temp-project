@@ -1,5 +1,4 @@
 import React from 'react';
-import { Col, Row } from 'antd';
 import cn from 'clsx';
 import { isFinite } from 'lodash';
 import s from './index.module.less';
@@ -27,19 +26,19 @@ export function DeltaCard(props: Props) {
         {title}
       </div>
       {delta && deltaRatio ? (
-        <Row justify="center" align="middle" gutter={20}>
-          <Col>
+        <div className={s.rowContainer}>
+          <div className={s.colContainer}>
             <H1 variant="displayLg">{Math.abs(delta).toLocaleString()}</H1>
-          </Col>
-          <Col>
+          </div>
+          <div className={s.colContainer}>
             {isFinite(deltaRatio) && (
               <Tag
                 color={delta > 0 ? 'red' : 'green'}
                 icon={delta > 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
               >{`${Math.abs(deltaRatio * 100).toFixed(2)} %`}</Tag>
             )}
-          </Col>
-        </Row>
+          </div>
+        </div>
       ) : (
         '-'
       )}

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Switch } from 'antd';
 import s from './styles.module.less';
 import CreateSearchProfileModal from './CreateSearchProfileModal';
 import Tooltip from '@/components/library/Tooltip';
+import Toggle from '@/components/library/Toggle';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { SearchProfileResponse } from '@/apis';
@@ -175,9 +175,9 @@ export const SearchProfileList = ({ hasFeature }) => {
         type: {
           render: (value, { item }) => (
             <div className={s.statusContainer}>
-              <Switch
-                checked={value === 'ENABLED'}
-                disabled={isReadOnly || updateStatusMutation.isLoading}
+              <Toggle
+                value={value === 'ENABLED'}
+                isDisabled={isReadOnly || updateStatusMutation.isLoading}
                 onChange={(checked) => {
                   updateStatusMutation.mutate({
                     searchProfileId: item.searchProfileId || '',

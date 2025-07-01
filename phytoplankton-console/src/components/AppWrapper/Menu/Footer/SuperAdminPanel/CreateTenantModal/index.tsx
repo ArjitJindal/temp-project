@@ -1,9 +1,9 @@
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Typography } from 'antd';
 import { isValidEmail } from '@flagright/lib/utils';
 import { featureDescriptions } from '../../../Footer/SuperAdminPanel/index';
 import { tenantAuth0Domain } from '../../../../../../utils/auth0Domain';
+import s from './index.module.less';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
 import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
@@ -11,13 +11,14 @@ import { getFixedSchemaJsonForm } from '@/utils/json';
 import { useApi } from '@/api';
 import { SanctionsSettingsMarketType, TenantCreationResponse } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
-import COLORS from '@/components/ui/colors';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { useSARReportCountries } from '@/components/Sar/utils';
+import { H3, P } from '@/components/ui/Typography';
+
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -327,36 +328,31 @@ export const CreateTenantModal = (props: Props) => {
 
       {response && (
         <>
-          <Typography.Title
-            level={3}
-            style={{ marginBottom: '0.5rem', color: COLORS.brandBlue.base }}
-          >
-            Tenant Details
-          </Typography.Title>
-          <Typography.Paragraph>
-            <Typography.Text strong>Tenant Name: </Typography.Text>
+          <H3 className={s.tenantDetailsTitle}>Tenant Details</H3>
+          <P>
+            <span className={s.boldText}>Tenant Name: </span>
             {formDetails.tenantName}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <Typography.Text strong>Tenant Website: </Typography.Text>
+          </P>
+          <P>
+            <span className={s.boldText}>Tenant Website: </span>
             {formDetails.tenantWebsite}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <Typography.Text strong>Tenant ID: </Typography.Text>
+          </P>
+          <P>
+            <span className={s.boldText}>Tenant ID: </span>
             {response.tenantId}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <Typography.Text strong>Auth0 Org ID: </Typography.Text>
+          </P>
+          <P>
+            <span className={s.boldText}>Auth0 Org ID: </span>
             {response.auth0OrganizationId}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <Typography.Text strong>Auth0 Org Name: </Typography.Text>
+          </P>
+          <P>
+            <span className={s.boldText}>Auth0 Org Name: </span>
             {formDetails.auth0DisplayName}
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <Typography.Text strong>Usage Plan ID: </Typography.Text>
+          </P>
+          <P>
+            <span className={s.boldText}>Usage Plan ID: </span>
             {response.usagePlanId}
-          </Typography.Paragraph>
+          </P>
         </>
       )}
     </Modal>

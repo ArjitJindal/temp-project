@@ -1,6 +1,5 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
-import { Alert } from 'antd';
 import s from './styles.module.less';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
@@ -28,6 +27,7 @@ import {
   isLoading,
   loading,
 } from '@/utils/asyncResource';
+import Alert from '@/components/library/Alert';
 
 interface Params {
   dateRange: RangeValue<Dayjs>;
@@ -192,7 +192,7 @@ export const ChecklistChart = (props: ParamsProps) => {
         {isSuccess(donutDataRes) && donutDataRes.value.length === 0 ? (
           <NoData />
         ) : isFailed(donutDataRes) ? (
-          <Alert message={donutDataRes.message} type="error" />
+          <Alert type="ERROR">{donutDataRes.message}</Alert>
         ) : (
           <BarChart
             data={isSuccess(donutDataRes) ? donutDataRes : loading<BarChartData>()}
