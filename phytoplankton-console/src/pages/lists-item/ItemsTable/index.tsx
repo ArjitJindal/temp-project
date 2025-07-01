@@ -181,10 +181,6 @@ export default function ItemsTable(props: Props) {
       return false;
     }
 
-    if (listSubtype !== 'CUSTOM' && !editUserData.reason) {
-      return false;
-    }
-
     if (listSubtype === 'CUSTOM') {
       return validateMetaFields(editUserData.meta);
     }
@@ -194,10 +190,6 @@ export default function ItemsTable(props: Props) {
 
   const isNewUserValid = useMemo(() => {
     if (!newUserData) {
-      return false;
-    }
-
-    if (listSubtype !== 'CUSTOM' && !newUserData.reason) {
       return false;
     }
 
