@@ -6,7 +6,7 @@ export interface TableAlertItem extends Omit<Alert, 'ruleChecklist'> {
   caseId?: string;
   caseCreatedTimestamp?: number;
   caseUserName?: string;
-  age?: string;
+  age?: number;
   caseUserId: string;
   caseType: CaseType;
   proposedAction?: AlertStatus;

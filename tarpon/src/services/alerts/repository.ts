@@ -282,6 +282,7 @@ export class AlertsRepository {
         countOnly: false,
         enablePerformanceWorkaround: true,
       })
+
       /**
        * We're being "creative" here to get around the query performance issue
        * if sorting is applied, as index cannot be used after $unwind.
@@ -507,10 +508,11 @@ export class AlertsRepository {
         ? 'createdTimestamp'
         : `alerts.${params.sortField}`
       : undefined
+    const sortOrder = params?.sortOrder
     const sortStage = sortField
       ? {
           $sort: {
-            [sortField]: params?.sortOrder === 'ascend' ? 1 : -1,
+            [sortField]: sortOrder === 'ascend' ? 1 : -1,
           },
         }
       : undefined
@@ -869,6 +871,42 @@ export class AlertsRepository {
       alertConditions.push(...options.extraAlertsFilterConditions)
     }
 
+    // compute the age of the alert dynamically
+    pipeline.push({
+      $addFields: {
+        alerts: {
+          $map: {
+            input: '$alerts',
+            as: 'alert',
+            in: {
+              $mergeObjects: [
+                '$$alert',
+                {
+                  age: {
+                    $cond: {
+                      if: { $eq: ['$$alert.alertStatus', 'CLOSED'] },
+                      then: {
+                        $subtract: [
+                          '$$alert.lastStatusChange.timestamp',
+                          '$$alert.createdTimestamp',
+                        ],
+                      },
+                      else: {
+                        $subtract: [
+                          { $toLong: '$$NOW' },
+                          '$$alert.createdTimestamp',
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    })
+
     pipeline.push({
       $unwind: {
         path: '$alerts',
@@ -889,15 +927,18 @@ export class AlertsRepository {
       }
       pipeline.push({
         $set: {
+          age: '$alerts.age',
           alert: '$alerts',
           caseCreatedTimestamp: '$createdTimestamp',
         },
       })
+      pipeline.push({ $unset: 'alert.age' })
 
       if (!options?.excludeProject) {
         pipeline.push({
           $project: {
             alert: 1,
+            age: 1,
             caseCreatedTimestamp: 1,
             'caseUsers.origin.userId': 1,
             'caseUsers.origin.type': 1,

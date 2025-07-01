@@ -103,6 +103,8 @@ import {
   useChangeSanctionsHitsStatusMutation,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
+import dayjs from '@/utils/dayjs';
+import { formatDuration, getDuration } from '@/utils/time-utils';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -534,6 +536,22 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             title: 'Alert age',
             key: 'age',
             sorting: true,
+            type: {
+              render: (value) => {
+                if (value == null) {
+                  return <>-</>;
+                }
+                const duration = dayjs.duration(value);
+                return <>{formatDuration(getDuration(duration.asMilliseconds()), 2)}</>;
+              },
+              stringify: (value) => {
+                if (value == null) {
+                  return '-';
+                }
+                const duration = dayjs.duration(value);
+                return formatDuration(getDuration(duration.asMilliseconds()), 2);
+              },
+            },
           }),
           helper.simple<'numberOfTransactionsHit'>({
             title: '#TX',

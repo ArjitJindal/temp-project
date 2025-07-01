@@ -1,4 +1,3 @@
-import pluralize from 'pluralize';
 import { TableUser } from './CaseTable/types';
 import { QueryResult } from '@/utils/queries/types';
 import { AllParams, TableData } from '@/components/library/Table/types';
@@ -76,7 +75,7 @@ export const getAlertsQueryParams = (
     filterDestinationPaymentMethods: destinationMethodFilter,
     filterRulesHit: rulesHitFilter,
     filterRuleQueueIds: ruleQueueIds,
-    sortField: sortField === 'age' ? 'createdTimestamp' : sortField,
+    sortField: sortField,
     sortOrder: sortOrder ?? undefined,
     filterAlertsByLastUpdatedStartTimestamp:
       updatedAt && updatedAt[0] ? dayjs.dayjs(updatedAt[0]).valueOf() : undefined,
@@ -148,18 +147,11 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
       : caseUser?.destination?.userId
       ? caseUser?.destination
       : undefined;
-    const duration =
-      alert.alertStatus === 'CLOSED' && alert.lastStatusChange?.timestamp
-        ? dayjs.duration(alert.lastStatusChange.timestamp - alert.createdTimestamp)
-        : dayjs.duration(Date.now() - alert.createdTimestamp);
     return {
       ...alert,
+      age: rest.age,
       caseCreatedTimestamp: rest.caseCreatedTimestamp,
       caseUserName: getUserName(user as TableUser | undefined),
-      age:
-        duration.asDays() < 1
-          ? pluralize('hour', Math.floor(duration.asHours()), true)
-          : pluralize('day', Math.floor(duration.asDays()), true),
       caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
       caseType: rest.caseType,
       user: user as TableUser | undefined,
