@@ -87,6 +87,60 @@ async function buildCode(env, options) {
     define['API_BASE_PATH'] = null;
   }
 
+  // Simple livereload server for watch mode
+  let livereloadServer = null;
+  let httpServer = null;
+  if (watch) {
+    const WebSocket = require('ws');
+    const http = require('http');
+    try {
+      // Create HTTP server to serve livereload.js
+      httpServer = http.createServer((req, res) => {
+        if (req.url === '/livereload.js') {
+          res.writeHead(200, { 'Content-Type': 'application/javascript' });
+          res.end(`
+            (function() {
+              var ws = new WebSocket('ws://localhost:35729');
+              ws.onmessage = function(event) {
+                var data = JSON.parse(event.data);
+                if (data.type === 'reload') {
+                  window.location.reload();
+                }
+              };
+              ws.onerror = function() {
+                console.log('Livereload WebSocket error');
+              };
+            })();
+          `);
+        } else {
+          res.writeHead(404);
+          res.end('Not found');
+        }
+      });
+
+      // Create WebSocket server attached to the HTTP server
+      livereloadServer = new WebSocket.Server({ server: httpServer });
+
+      httpServer.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
+          log('Livereload server already running on port 35729');
+          livereloadServer = null;
+          httpServer = null;
+        } else {
+          log(`Livereload server error: ${error.message}`);
+        }
+      });
+
+      httpServer.listen(35729, () => {
+        log('Livereload server started on port 35729');
+      });
+    } catch (e) {
+      log('Livereload server already running or failed to start');
+      livereloadServer = null;
+      httpServer = null;
+    }
+  }
+
   async function writeFiles(buildResult) {
     await Promise.all(
       buildResult.outputFiles.map(async (file) => {
@@ -97,6 +151,15 @@ async function buildCode(env, options) {
         await fs.outputFile(file.path, file.contents);
       }),
     );
+
+    // Trigger livereload after files are written
+    if (watch && livereloadServer && buildResult.errors.length === 0) {
+      livereloadServer.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ type: 'reload' }));
+        }
+      });
+    }
   }
 
   const result = await esbuild.build({

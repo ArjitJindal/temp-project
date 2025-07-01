@@ -96,13 +96,17 @@ async function main() {
   const randomHash = crypto.randomBytes(16).toString('hex');
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' 'strict-dynamic' https://eu-assets.i.posthog.com blob: 'nonce-${randomHash}'`,
+    `script-src 'self' 'strict-dynamic' https://eu-assets.i.posthog.com blob: 'nonce-${randomHash}'${
+      env.WATCH ? ' http://localhost:35729' : ''
+    }`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `connect-src 'self'${
       env.ENV === 'local' ? ' http://localhost:3002 ' : ' '
-    }*.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
+    }*.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}${
+      env.WATCH ? ' ws://localhost:35729' : ''
+    }`,
     `font-src 'self' https://fonts.gstatic.com`,
     `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS} https://connect.nango.dev/`,
     `img-src 'self' data: https://cdn.auth0.com https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://www.acurisriskintelligence.com/`,
@@ -124,6 +128,9 @@ async function main() {
       )
         .map((x) => `<link rel="modulepreload" href="/${x}" as="script" />`)
         .join('\n'),
+      livereloadScript: env.WATCH
+        ? `<script src="http://localhost:35729/livereload.js" nonce="${randomHash}"></script>`
+        : '',
       ...config.define,
     },
   });

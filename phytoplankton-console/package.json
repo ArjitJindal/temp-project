@@ -163,6 +163,7 @@
     "@types/react-resizable": "^3.0.2",
     "@types/react-test-renderer": "^17.0.0",
     "@types/uuid": "^9.0.1",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "aws-cdk": "~2.177.0",
@@ -208,7 +209,8 @@
     "stylelint-declaration-block-no-ignored-properties": "^2.8.0",
     "tmp": "^0.2.1",
     "ts-node": "^10.8.2",
-    "typescript": "^5.1.0"
+    "typescript": "^5.1.0",
+    "ws": "^8.14.2"
   },
   "engines": {
     "node": "20.x",
