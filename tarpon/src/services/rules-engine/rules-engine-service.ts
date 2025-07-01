@@ -1716,7 +1716,7 @@ export class RulesEngineService {
           ruleInstance: options.ruleInstance,
           senderUser: options.user,
           senderUserRiskLevel: options.userRiskLevel,
-          database: 'MONGODB',
+          database: 'DYNAMODB',
           stage: options.stage,
         })
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
