@@ -29,7 +29,7 @@ export default function PopupContent(props: Props) {
     >
       <div className={s.root}>
         {AUDIT_LOG_TYPES.map((key) => (
-          <div key={key} className={s.checkboxItem}>
+          <div key={key} className={s.checkboxItem} data-cy={`auditlog-checkbox`}>
             <Checkbox
               onChange={(checked) => {
                 setState((prev) => {

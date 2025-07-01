@@ -15,7 +15,7 @@ describe('Audit log filter - entity type', () => {
 
       cy.waitNothingLoading();
       cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
-      cy.get('.ant-checkbox-wrapper:contains("CASE")').first().click();
+      cy.get('[data-cy="auditlog-checkbox"]:contains("CASE")').first().click();
       cy.get('[data-cy="auditlog-entity-confirm"]').click();
       cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
 

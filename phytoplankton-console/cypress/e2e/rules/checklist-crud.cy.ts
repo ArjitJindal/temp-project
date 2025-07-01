@@ -35,7 +35,7 @@ describe('Checklkist Crud', () => {
     //update checklist template
     cy.contains('td', checklistText)
       .parent()
-      .find('.ant-space-item button')
+      .find('[data-cy="edit-button"]')
       .contains('Edit')
       .click({ force: true });
     cy.get('input[placeholder="Enter text"]').eq(1).type(` Updated`);
