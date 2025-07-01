@@ -24,8 +24,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
   public introductoryNarrative(): string {
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    const string = `Write a professional alert narrative explaining why this suspicious activity alert is being ${statusPrefix}. The narrative should justify the decision based on the following reasons: ${reasons}.`
-    return string
+    return `Write a professional alert narrative explaining why this suspicious activity alert is being ${statusPrefix}. Justify the decision based on these reasons: ${reasons}.`
   }
 
   public closingNarrative(): string {
@@ -35,7 +34,7 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
         ? 'business'
         : 'customer'
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return `This ${customerType} alert is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting (Do not add any unneccesary heading on top) which is given to you and use bold for key information. Only fill in placeholders when data is available.`
+    return `This ${customerType} alert is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting and use bold for key information. Do not add any unneccesary heading on top. Only fill placeholders when data is available. Please do not add information that is not available. Be very precise to the information provided.`
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
@@ -56,11 +55,13 @@ export class AlertNarrativeService extends BaseNarrativeService<AdditionalInfoAl
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
     const sections = {
       overview: `**OVERVIEW** \n\nName: [name] \n\nDate of Alert Generation: [alertGenerationDate] \n\nReason for Alert Generation: [ruleHitNames] \n\nInvestigation Period: [alertGenerationDate] - [alertActionDate] \n\n${statusPrefix} Date: [alertActionDate] \n\n`,
-      background: `**BACKGROUND** \n\n[This section should contain general details about the alert in question.]`,
-      investigation: `**INVESTIGATION** \n\n[This section should detail the method of the investigation and the alert's activities that took place during the investigation.]`,
-      findings: `**FINDINGS AND ASSESSMENT** \n\n[This section should contain an analysis of the alert's transactions and behaviors.]`,
+      background: `**BACKGROUND** \n\n[Provide general details about the alert in question.]`,
+      investigation: `**INVESTIGATION** \n\n[Detail the investigation method and alert activities during the investigation period.]`,
+      findings: `**FINDINGS AND ASSESSMENT** \n\n[Analyze the alert's ${
+        screening ? 'screening details' : 'transactions'
+      } and behaviors.]`,
       screeningDetails: screening
-        ? `**SCREENING DETAILS** \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] Use as much information as possible to justify the ${statusPrefix} decision. You should be more foucesed on screening details and information dense\n\n Sanctions Sources: [Write summary about sanctions sources]`
+        ? `**SCREENING DETAILS** \n\n[Include sanctions, PEP, or adverse media screening results if available. Focus on screening details to justify the ${statusPrefix} decision.]\n\nSanctions Sources: [Summarize sanctions sources]`
         : '',
       conclusion: `**CONCLUSION**`,
     }

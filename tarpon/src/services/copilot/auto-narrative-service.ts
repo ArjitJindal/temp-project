@@ -194,7 +194,7 @@ export class AutoNarrativeService {
     for (let i = 0; i < 3; i++) {
       try {
         response = await prompt(this.tenantId, promptWithContext, {
-          tier: ModelTier.PROFESSIONAL,
+          tier: ModelTier.ENTERPRISE,
         })
         break
       } catch (e) {

@@ -16,7 +16,7 @@ export class OpenAIService extends BaseLLMService<OpenAI> {
   protected provider: LLMProvider = 'OPEN_AI'
 
   protected modelClassification: Record<ModelTier, string> = {
-    [ModelTier.ENTERPRISE]: 'gpt-4-turbo-preview',
+    [ModelTier.ENTERPRISE]: 'gpt-4.1',
     [ModelTier.PROFESSIONAL]: 'gpt-4o',
     [ModelTier.STANDARD]: 'gpt-4o-mini',
     [ModelTier.ECONOMY]: 'gpt-3.5-turbo',

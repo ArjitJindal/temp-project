@@ -24,7 +24,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
   public introductoryNarrative(): string {
     const statusPrefix = getStatusToPrefix(this.additionalInfo.status)
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return `Write a professional case narrative explaining why this suspicious activity case is being ${statusPrefix}. The narrative should justify the decision based on the following reasons: ${reasons}.`
+    return `Write a professional case narrative explaining why this suspicious activity case is being ${statusPrefix}. Justify the decision based on these reasons: ${reasons}.`
   }
 
   public closingNarrative(): string {
@@ -34,7 +34,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
         ? 'business'
         : 'customer'
     const reasons = this.attributes.getAttribute('reasons')?.join(', ')
-    return `This ${customerType} case is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting (Do not add any unneccesary heading on top) which is given to you and use bold for key information. Only fill in placeholders when data is available.`
+    return `This ${customerType} case is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting and use bold for key information. Do not add any unneccesary heading on top. Only fill placeholders when data is available. Do not add information that is not available. Be very precise to the information provided.`
   }
 
   public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
@@ -56,13 +56,13 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
 
     const sections = {
       overview: `**OVERVIEW** \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [caseActionDate] \n\n${statusPrefix} Date: [caseActionDate] \n\n`,
-      background: `**BACKGROUND** \n\n[Provide relevant details about the case]\n\n`,
-      investigation: `**INVESTIGATION** \n\n[Describe investigation methodology and key findings]\n\n`,
+      background: `**BACKGROUND** \n\n[Provide general details about the case in question.]\n\n`,
+      investigation: `**INVESTIGATION** \n\n[Detail the investigation method and case activities during the investigation period.]\n\n`,
       findings: `**FINDINGS AND ASSESSMENT** \n\n[Analyze ${
         screening ? 'screening details' : 'transactions'
       } and behaviors]\n\n`,
       screeningDetails: screening
-        ? `**SCREENING DETAILS** \n\n[Include sanctions, PEP, or adverse media findings]\n\nSanctions Sources: [sanctionsSources]\n\n`
+        ? `**SCREENING DETAILS** \n\n[Include sanctions, PEP, or adverse media screening results if available. Focus on screening details to justify the ${statusPrefix} decision.]\n\nSanctions Sources: [Summarize sanctions sources]`
         : '',
       conclusion: `**CONCLUSION** \n\n`,
     }

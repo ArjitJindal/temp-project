@@ -32,7 +32,7 @@ export const FlagrightAISettings = () => {
   };
 
   const statement =
-    'We partner with Anthropic / OpenAI as a subcontractor to provide you with certain features and operational capabilities including Claude / GPT. Anthropic / OpenAI does not store any data. Using AI Features is compliant with data privacy and protection laws.';
+    'We partner with Anthropic and OpenAI as subcontractors to provide certain features and operational capabilities. Neither Anthropic nor OpenAI stores any data. The use of AI features is fully compliant with data privacy and protection laws.';
 
   const displayText = <p>{statement}</p>;
   return (
