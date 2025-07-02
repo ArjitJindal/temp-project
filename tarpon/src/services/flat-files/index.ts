@@ -11,6 +11,7 @@ import { RiskFactorsImportRunner } from './runner/risk-factors-import'
 import { JsonlFormat } from './format/jsonl'
 import { UserUploadRunner } from './batchRunner/user-upload'
 import { FlatFileBaseRunner } from './baseRunner'
+import { TransactionUploadRunner } from './batchRunner/transaction-upload'
 import { BulkAlertClosureRunner } from './runner/bulk-alert-closure'
 import { BulkSanctionsHitsUpdateRunner } from './runner/bulk-sanctions-hits-update'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
@@ -49,6 +50,8 @@ const FlatFileSchemaToModel: Record<
     new UserUploadRunner<User>(tenantId, 'CONSUMER', connections),
   BUSINESS_USERS_UPLOAD: (tenantId, connections) =>
     new UserUploadRunner<Business>(tenantId, 'BUSINESS', connections),
+  TRANSACTIONS_UPLOAD: (tenantId, connections) =>
+    new TransactionUploadRunner(tenantId, connections),
   BULK_ALERT_CLOSURE: (tenantId, connections) =>
     new BulkAlertClosureRunner(tenantId, connections),
   BULK_SANCTIONS_HITS_UPDATE: (tenantId, connections) =>

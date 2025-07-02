@@ -17,6 +17,14 @@ export abstract class FlatFileBatchRunner<
     metadata?: object
   ): Promise<void>
 
+  private async postBatchProcessing(recordPayload: {
+    data: T
+    schema: FlatFilesRecordsSchema
+  }): Promise<void> {
+    const { schema } = recordPayload
+    await this.updateRecordStatus(schema, true)
+  }
+
   protected async processBatch(
     batch: Array<FlatFilesRecordsSchema>,
     metadata: object
@@ -32,8 +40,12 @@ export abstract class FlatFileBatchRunner<
     ).filter(
       (r): r is { data: T; schema: FlatFilesRecordsSchema } => r !== undefined
     )
+
     const batchId = uuid4()
     await this.batchRun(batchId, sanitizedBatch, metadata)
     logger.info(`Processed ${batch.length} records`)
+    for (const record of sanitizedBatch) {
+      await this.postBatchProcessing(record)
+    }
   }
 }

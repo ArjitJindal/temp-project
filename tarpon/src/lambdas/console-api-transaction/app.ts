@@ -219,6 +219,12 @@ export const transactionsViewHandler = lambdaApi()(
       )
     })
 
+    handlers.registerPostTransactionFlatFileUpload(async (ctx, request) => {
+      return await transactionService.importFlatFile(
+        request.TransactionFlatFileUploadRequest
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

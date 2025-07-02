@@ -1,4 +1,4 @@
-import * as createError from 'http-errors'
+import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
@@ -41,8 +41,7 @@ export class UserUploadRunner<
   }
 
   async validate(
-    data: T,
-    _metadata?: object
+    data: T
   ): Promise<Pick<FlatFileValidationResult, 'valid' | 'errors'>> {
     const userId = data.userId
     try {
@@ -61,7 +60,7 @@ export class UserUploadRunner<
       }
       return { valid: true, errors: [] }
     } catch (error) {
-      if (error instanceof createError.NotFound) {
+      if (error instanceof NotFound) {
         return { valid: true, errors: [] }
       }
       throw { valid: false, errors: error, stage: 'VALIDATE_STORE' }

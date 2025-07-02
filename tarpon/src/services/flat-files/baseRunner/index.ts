@@ -126,11 +126,13 @@ export abstract class FlatFileBaseRunner<
 
   public async run(s3Key: string, metadata: object): Promise<void> {
     try {
-      const records = this.flatFilesRecords.objects.filter({
-        fileId: s3Key,
-        isProcessed: false,
-        isError: false,
-      })
+      const records = this.flatFilesRecords.objects
+        .filter({
+          fileId: s3Key,
+          isProcessed: false,
+          isError: false,
+        })
+        .final()
 
       const batchSize = this.concurrency
       let currentBatch: Array<FlatFilesRecordsSchema> = []

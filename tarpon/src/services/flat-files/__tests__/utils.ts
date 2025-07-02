@@ -133,3 +133,58 @@ export const mockBusinessUser = () => ({
     },
   },
 })
+
+export const mockTransaction = (
+  originUserId: string,
+  destinationUserId: string
+) => ({
+  transactionId: shortId(),
+  timestamp: Date.now(),
+  type: 'DEPOSIT',
+  originUserId,
+  destinationUserId,
+  originAmountDetails: {
+    transactionAmount: 800,
+    transactionCurrency: 'EUR',
+    country: 'DE',
+  },
+  destinationAmountDetails: {
+    transactionAmount: 68351.34,
+    transactionCurrency: 'INR',
+    country: 'IN',
+  },
+  promotionCodeUsed: true,
+  reference: 'loan repayment',
+  originDeviceData: {
+    batteryLevel: 95,
+    deviceLatitude: 13.0033,
+    deviceLongitude: 76.1004,
+    ipAddress: '10.23.191.2',
+    deviceIdentifier: '3c49f915d04485e34caba',
+    vpnUsed: false,
+    operatingSystem: 'Android 11.2',
+    deviceMaker: 'ASUS',
+    deviceModel: 'Zenphone M2 Pro Max',
+    deviceYear: '2018',
+    appVersion: '1.1.0',
+  },
+  destinationDeviceData: {
+    batteryLevel: 95,
+    deviceLatitude: 13.0033,
+    deviceLongitude: 76.1004,
+    ipAddress: '10.23.191.2',
+    deviceIdentifier: '3c49f915d04485e34caba',
+    vpnUsed: false,
+    operatingSystem: 'Android 11.2',
+    deviceMaker: 'ASUS',
+    deviceModel: 'Zenphone M2 Pro Max',
+    deviceYear: '2018',
+    appVersion: '1.1.0',
+  },
+  tags: [
+    {
+      key: 'customKey',
+      value: 'customValue',
+    },
+  ],
+})

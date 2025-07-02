@@ -1406,6 +1406,22 @@ paths:
             type: boolean
           in: query
           name: isPaymentApprovals
+    post:
+      summary: Flat file upload transaction
+      operationId: post-transaction-flat-file-upload
+      tags: []
+      x-flagright:
+        resources:
+          - write:::transactions/overview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionFlatFileUploadRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
   /transactions/{transactionId}/events:
     parameters:
       - schema:
@@ -7868,6 +7884,7 @@ components:
         - RISK_FACTORS_IMPORT
         - CONSUMER_USERS_UPLOAD
         - BUSINESS_USERS_UPLOAD
+        - TRANSACTIONS_UPLOAD
         - BULK_ALERT_CLOSURE
         - BULK_SANCTIONS_HITS_UPDATE
     FlatFileTemplateFormat:
@@ -15181,6 +15198,14 @@ components:
         - listId
         - header
         - items
+    TransactionFlatFileUploadRequest:
+      title: TransactionFlatFileUploadRequest
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileInfo'
+      required:
+        - file
     ListHeaderInternal:
       title: ListHeaderInternal
       type: object

@@ -48,6 +48,9 @@ import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanct
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { LinkerService } from '@/services/linker'
+import { TransactionFlatFileUploadRequest } from '@/@types/openapi-internal/TransactionFlatFileUploadRequest'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { S3Service } from '@/services/aws/s3-service'
 
 @traceable
 export class TransactionService {
@@ -61,6 +64,7 @@ export class TransactionService {
   transactionRepository: MongoDbTransactionRepository
   transactionEventsRepository: TransactionEventRepository
   userRepository: UserRepository
+  private s3Service: S3Service
 
   constructor(
     tenantId: string,
@@ -86,6 +90,10 @@ export class TransactionService {
       connections
     )
     this.userRepository = new UserRepository(tenantId, connections)
+    this.s3Service = new S3Service(s3 as S3, {
+      documentBucketName: this.documentBucketName,
+      tmpBucketName: this.tmpBucketName,
+    })
   }
 
   public static async fromEvent(
@@ -488,5 +496,20 @@ export class TransactionService {
     filter?: string
   }): Promise<string[]> {
     return await this.transactionRepository.getUniques(params)
+  }
+
+  public async importFlatFile(request: TransactionFlatFileUploadRequest) {
+    const { file } = request
+
+    const files = await this.s3Service.copyFilesToPermanentBucket([file])
+    await sendBatchJobCommand({
+      tenantId: this.tenantId,
+      type: 'FLAT_FILES_VALIDATION',
+      parameters: {
+        format: 'CSV',
+        s3Key: files[0].s3Key,
+        schema: 'TRANSACTIONS_UPLOAD',
+      },
+    })
   }
 }

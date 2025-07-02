@@ -34,7 +34,7 @@ import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
-const MAX_BATCH_IMPORT_COUNT = 200
+export const MAX_BATCH_IMPORT_COUNT = 200
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
