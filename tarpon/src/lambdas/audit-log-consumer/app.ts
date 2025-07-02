@@ -3,8 +3,13 @@ import { AuditLogRecord } from '@/@types/audit-log'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AuditLogService } from '@/services/audit-log'
-import { withContext, initializeTenantContext } from '@/core/utils/context'
+import {
+  withContext,
+  initializeTenantContext,
+  addSentryExtras,
+} from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { logger } from '@/core/logger'
 
 export const auditLogConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
@@ -15,6 +20,13 @@ export const auditLogConsumerHandler = lambdaConsumer()(
       const { tenantId, payload } = JSON.parse(
         snsMessage.Message as string
       ) as AuditLogRecord
+
+      if (!tenantId) {
+        addSentryExtras({ payload })
+        logger.error('Tenant id is missing', { payload })
+        return
+      }
+
       await withContext(async () => {
         await initializeTenantContext(tenantId)
         const auditLogService = new AuditLogService(tenantId, {

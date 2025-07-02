@@ -18,7 +18,7 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
-import { withContext } from '@/core/utils/context'
+import { initializeTenantContext, withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { isWhitelabeledTenantFromSettings } from '@/utils/tenant'
@@ -365,6 +365,7 @@ export const webhookDeliveryHandler = lambdaConsumer()(
             const webhookDeliveryTask = JSON.parse(
               record.body
             ) as WebhookDeliveryTask
+            await initializeTenantContext(webhookDeliveryTask.tenantId)
             await handleWebhookDeliveryTask(webhookDeliveryTask)
           })
         } catch (e) {
