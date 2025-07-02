@@ -254,6 +254,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       advancedOptions={
         isNewFeaturesEnabled &&
         (statusEscalated(props.newStatus) || props.newStatus === 'CLOSED') &&
+        props.user &&
         props.entityIds.length === 1 && <CaseEscalateTriggerAdvancedOptionsForm user={props.user} />
       }
       initialValues={{

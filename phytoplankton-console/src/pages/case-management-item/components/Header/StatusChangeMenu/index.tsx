@@ -239,6 +239,7 @@ const useOptions = (props: Props) => {
                 skipReasonsModal
                 className={s.statusButton}
                 haveModal={true}
+                user={tableUser}
               />
             ),
           },
@@ -257,6 +258,7 @@ const useOptions = (props: Props) => {
                 skipReasonsModal
                 className={s.statusButton}
                 haveModal={true}
+                user={tableUser}
               />
             ),
           },
