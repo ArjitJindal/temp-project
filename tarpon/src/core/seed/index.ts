@@ -15,7 +15,6 @@ import { envIsNot } from '@/utils/env'
 import { getUsers } from '@/core/seed/data/users'
 import { isDemoTenant } from '@/utils/tenant'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { Feature } from '@/@types/openapi-internal/Feature'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export async function seedDemoData(tenantId: string) {
@@ -38,10 +37,6 @@ export async function seedDemoData(tenantId: string) {
     const mergedFeatureFlags = uniq([
       ...(demoSettings.features ?? []),
       ...(nonDemoSettings.features ?? []),
-      'AI_FORENSICS' as Feature,
-      'MACHINE_LEARNING' as Feature,
-      'SCREENING' as Feature,
-      'ACURIS' as Feature,
     ])
     const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
       const keys = TenantSettings.attributeTypeMap
