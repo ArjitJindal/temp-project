@@ -213,10 +213,10 @@ export class CaseCreationService {
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
     this.tenantRepository = new TenantRepository(tenantID, connections)
-    this.sanctionsSearchRepository = new SanctionsSearchRepository(
-      tenantID,
-      connections.mongoDb
-    )
+    this.sanctionsSearchRepository = new SanctionsSearchRepository(tenantID, {
+      mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
     this.sanctionsHitsRepository = new SanctionsHitsRepository(
       tenantID,
       connections.mongoDb

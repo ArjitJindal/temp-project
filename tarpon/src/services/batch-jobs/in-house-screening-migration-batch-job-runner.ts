@@ -75,7 +75,10 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
             mongoDb,
             dynamoDb,
           })
-    this.searchRepository = new SanctionsSearchRepository(tenantId, mongoDb)
+    this.searchRepository = new SanctionsSearchRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     this.counterRepository = new CounterRepository(tenantId, mongoDb)
     this.tenantRepository = new TenantRepository(tenantId, {
       mongoDb,

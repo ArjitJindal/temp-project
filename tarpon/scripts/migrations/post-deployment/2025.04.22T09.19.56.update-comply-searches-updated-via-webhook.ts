@@ -9,6 +9,7 @@ import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { isDemoTenant } from '@/utils/tenant'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   if (isDemoTenant(tenant.id)) {
@@ -20,6 +21,7 @@ async function migrateTenant(tenant: Tenant) {
   if (!providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
     return
   }
+  const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
   const sanctionsSearchesCollection = db.collection<SanctionsSearchHistory>(
@@ -31,10 +33,10 @@ async function migrateTenant(tenant: Tenant) {
     'response.hitsCount': { $gt: 0 },
   })
   const provider = await ComplyAdvantageDataProvider.build(tenantId)
-  const sanctionsSearchRepository = new SanctionsSearchRepository(
-    tenantId,
-    mongoDb
-  )
+  const sanctionsSearchRepository = new SanctionsSearchRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
   await processCursorInBatch(sanctionsSearches, async (searches) => {
     await pMap(
       searches,

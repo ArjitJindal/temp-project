@@ -879,6 +879,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'response.providerSearchId': 1 },
           { requestHash: 1 },
           { searchedBy: 1 },
+          { 'request.monitoring.enabled': 1, expiresAt: 1, requestHash: 1 },
+          { 'request.monitoring.enabled': 1, requestHash: 1 },
+          { 'request.fuzzinessRange': 1 },
         ].map((index) => ({ index })),
     },
     [SANCTIONS_HITS_COLLECTION(tenantId)]: {

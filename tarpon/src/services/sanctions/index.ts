@@ -95,7 +95,7 @@ export class SanctionsService {
     this.dynamoDb = connections.dynamoDb
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
-      this.mongoDb
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
     )
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, this.mongoDb)

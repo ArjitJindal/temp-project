@@ -365,7 +365,7 @@ describe('Sanctions Service', () => {
       ])
       const sanctionsSearchRepository = new SanctionsSearchRepository(
         TEST_TENANT_ID,
-        mongoDb
+        { mongoDb, dynamoDb: getDynamoDbClient() }
       )
       const searchHistory = await sanctionsSearchRepository.getSearchResult(
         testSearchId
