@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -12,10 +13,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import {
-  OngoingScreeningUserRuleBatchJob,
-  PeriodicScreeningUserRuleBatchJob,
-} from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { SanctionsService } from '@/services/sanctions'
@@ -126,9 +124,10 @@ describe('Batch Job Sanctions Screening Rule', () => {
       dynamoDb,
     })
 
-    const testJob: OngoingScreeningUserRuleBatchJob = {
+    const testJob: BatchJobWithId = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
+      jobId: uuidv4(),
     }
 
     const spy = jest.spyOn(CaseCreationService.prototype, 'handleUser')
@@ -286,9 +285,10 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
       dynamoDb,
     })
 
-    const testJob: OngoingScreeningUserRuleBatchJob = {
+    const testJob: BatchJobWithId = {
       tenantId: TEST_TENANT_ID,
       type: 'ONGOING_SCREENING_USER_RULE',
+      jobId: uuidv4(),
     }
 
     await jobRunnerHandler(testJob)
@@ -374,9 +374,10 @@ describe('V8 ongoing screening', () => {
   setUpUsersHooks(TEST_TENANT_ID, [user])
 
   it('should run on the same say when the rule is ', async () => {
-    const testJob: PeriodicScreeningUserRuleBatchJob = {
+    const testJob: BatchJobWithId = {
       tenantId: TEST_TENANT_ID,
       type: 'PERIODIC_SCREENING_USER_RULE',
+      jobId: uuidv4(),
     }
     await jobRunnerHandler(testJob)
     expect(spy).toBeCalledTimes(1)
@@ -393,9 +394,10 @@ describe('V8 ongoing screening', () => {
       ...ruleInstance,
       createdAt: dayjs().add(1, 'month').valueOf(),
     })
-    const testJob: PeriodicScreeningUserRuleBatchJob = {
+    const testJob: BatchJobWithId = {
       tenantId: TEST_TENANT_ID,
       type: 'PERIODIC_SCREENING_USER_RULE',
+      jobId: uuidv4(),
     }
     await jobRunnerHandler(testJob)
     expect(spy).toBeCalledTimes(1)
@@ -420,9 +422,10 @@ describe('V8 ongoing screening', () => {
           ...ruleInstance,
           createdAt: dayjs().add(1, 'month').add(1, 'day').valueOf(),
         })
-        const testJob: PeriodicScreeningUserRuleBatchJob = {
+        const testJob: BatchJobWithId = {
           tenantId: TEST_TENANT_ID,
           type: 'PERIODIC_SCREENING_USER_RULE',
+          jobId: uuidv4(),
         }
         await jobRunnerHandler(testJob)
         expect(spy).toBeCalledTimes(0)
@@ -443,9 +446,10 @@ describe('V8 ongoing screening', () => {
       ...ruleInstance,
       createdAt: dayjs().add(1, 'month').add(1, 'day').valueOf(),
     })
-    const testJob: PeriodicScreeningUserRuleBatchJob = {
+    const testJob: BatchJobWithId = {
       tenantId: TEST_TENANT_ID,
       type: 'PERIODIC_SCREENING_USER_RULE',
+      jobId: uuidv4(),
     }
     await jobRunnerHandler(testJob)
     expect(spy).toBeCalledTimes(1)

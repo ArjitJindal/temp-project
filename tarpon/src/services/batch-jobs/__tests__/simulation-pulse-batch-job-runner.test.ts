@@ -1,5 +1,5 @@
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
-import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -95,7 +95,7 @@ describe('Simulation (Pulse) batch job runner', () => {
     const { taskIds, jobId } =
       await simulationTaskRepository.createSimulationJob(parameters)
 
-    const testJob: SimulationRiskLevelsBatchJob = {
+    const testJob: BatchJobWithId = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
@@ -103,6 +103,7 @@ describe('Simulation (Pulse) batch job runner', () => {
         jobId,
         ...parameters.parameters[0],
       },
+      jobId,
     }
 
     await jobRunnerHandler(testJob)

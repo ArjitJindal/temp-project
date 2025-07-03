@@ -34,7 +34,6 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { SanctionsService } from '@/services/sanctions'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { RulePreAggregationBatchJob } from '@/@types/batch-job'
 import { GeoIPService } from '@/services/geo-ip'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
@@ -174,9 +173,7 @@ export async function handleV8PreAggregationTask(
       )
     }
 
-    const newJob = (await jobRepository.updateJob(task.jobId, {
-      $inc: { 'metadata.completeTasksCount': 1 },
-    })) as RulePreAggregationBatchJob
+    const newJob = await jobRepository.incrementCompleteTasksCount(task.jobId)
 
     if (
       newJob.metadata &&
@@ -217,9 +214,7 @@ export async function handleV8PreAggregationTask(
       )
     }
 
-    const newJob = (await jobRepository.updateJob(task.jobId, {
-      $inc: { 'metadata.completeTasksCount': 1 },
-    })) as RulePreAggregationBatchJob
+    const newJob = await jobRepository.incrementCompleteTasksCount(task.jobId)
     if (
       newJob.metadata &&
       newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
@@ -237,9 +232,7 @@ export async function handleV8PreAggregationTask(
       task.userId,
       task.paymentDetails
     )
-    await jobRepository.updateJob(task.jobId, {
-      $inc: { 'metadata.completeTasksCount': 1 },
-    })
+    await jobRepository.incrementCompleteTasksCount(task.jobId)
   }
 }
 

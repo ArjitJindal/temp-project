@@ -14,7 +14,7 @@ import {
 } from '@/test-utils/rule-test-utils'
 import { CaseRepository } from '@/services/cases/repository'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
-import { SimulationBeaconBatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
@@ -198,7 +198,7 @@ describe('Simulation Beacon Batch Job Runner', () => {
         parameters,
       })
 
-    const testJob: SimulationBeaconBatchJob = {
+    const testJob: BatchJobWithId = {
       type: 'SIMULATION_BEACON',
       tenantId,
       parameters: {
@@ -207,6 +207,7 @@ describe('Simulation Beacon Batch Job Runner', () => {
         ...parameters[0],
         defaultRuleInstance: ruleInstance,
       },
+      jobId,
     }
 
     await jobRunnerHandler(testJob)

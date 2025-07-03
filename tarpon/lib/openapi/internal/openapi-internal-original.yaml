@@ -7874,6 +7874,7 @@ components:
         - API_REQUEST_LOGS
         - AUDIT_LOG
         - METRICS
+        - BATCH_JOBS
     FlatFileSchema:
       title: FlatFileSchema
       type: string

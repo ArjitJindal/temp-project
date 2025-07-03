@@ -5,13 +5,17 @@ import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
-import { DynamodbClickhouseBackfillBatchJob } from '@/@types/batch-job'
+import {
+  BatchJobInDb,
+  DynamodbClickhouseBackfillBatchJob,
+} from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import {
   API_REQUEST_LOGS_COLLECTION,
   GPT_REQUESTS_COLLECTION,
   AUDITLOG_COLLECTION,
+  JOBS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
@@ -58,6 +62,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
       case 'API_REQUEST_LOGS':
         await handleApiRequestLogsBatchJob(job, {
           mongoDb,
+        })
+        break
+      case 'BATCH_JOBS':
+        await handleJobBatchJob(job, {
+          mongoDb,
+          dynamoDb,
         })
         break
       default:
@@ -236,6 +246,35 @@ export const handleMetricsBatchJob = async (
     metricsCollection.find({}),
     async (metrics) => {
       await metricsService.linkMetricsToClickhouse(job.tenantId, metrics)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+export const handleJobBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoBatchJobRepository } = await import(
+    '@/services/batch-jobs/repositories/dynamo-repository'
+  )
+  const db = mongoDb.db()
+
+  const jobCollection = db.collection<BatchJobInDb>(
+    JOBS_COLLECTION(job.tenantId)
+  )
+  const dynamoRepository = new DynamoBatchJobRepository(job.tenantId, dynamoDb)
+
+  await processCursorInBatch(
+    jobCollection.find({}),
+    async (jobs) => {
+      await dynamoRepository.saveJobs(jobs)
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )

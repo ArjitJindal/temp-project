@@ -1,7 +1,8 @@
+import { v4 as uuidv4 } from 'uuid'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { DashboardRefreshBatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -159,12 +160,13 @@ describe('Dashboard refresh runner', () => {
       startTimestamp: latest.subtract(10, 'minute').valueOf(),
       endTimestamp: latest.add(10, 'minute').valueOf(),
     }
-    const testJob: DashboardRefreshBatchJob = {
+    const testJob: BatchJobWithId = {
       type: 'DASHBOARD_REFRESH',
       tenantId,
       parameters: {
         checkTimeRange,
       },
+      jobId: uuidv4(),
     }
     await jobRunnerHandler(testJob)
 

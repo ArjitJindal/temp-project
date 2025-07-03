@@ -5,7 +5,10 @@ import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeacon
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
 import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVariable'
-import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
+import {
+  TaskStatusChange,
+  TaskStatusChangeStatusEnum,
+} from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
 import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
@@ -532,8 +535,37 @@ export type BatchJobWithId = BatchJob & {
 }
 
 export type BatchJobInDb = BatchJobWithId & {
+  type: BatchJob['type']
+  tenantId: string
   latestStatus: TaskStatusChange
   statuses: TaskStatusChange[]
+  metadata?: RulePreAggregationMetadata
+  parameters?: BatchJobParameters
+}
+
+export type BatchJobParameters = {
+  sampling?: SimulationRiskFactorsSampling
+  ruleInstancesIds?: string[]
+  userIds?: string[]
+  clearedListIds?: string
+}
+
+export type BatchJobParams = {
+  type?: BatchJob['type']
+  providers?: SanctionsDataProviderName[]
+  latestStatus?: {
+    status?: TaskStatusChangeStatusEnum
+    latestStatusAfterTimestamp?: number
+    latestStatusBeforeTimestamp?: number
+  }
+  parameters?: {
+    entityType?: SanctionsEntityType
+  }
+  tenantId?: string
+  jobId?: {
+    equalTo?: string
+    notEqualTo?: string
+  }
 }
 
 export type BatchJobType = BatchJob['type']

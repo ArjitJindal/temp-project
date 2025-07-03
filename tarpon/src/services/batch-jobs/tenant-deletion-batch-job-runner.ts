@@ -368,6 +368,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteAuditLogs.bind(this),
         order: 21,
       },
+      JOBS: {
+        method: this.deleteBatchJobs.bind(this),
+        order: 22,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -1003,6 +1007,18 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Audit Logs'
+    )
+  }
+
+  private async deleteBatchJobs(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.JOBS(tenantId, '').PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Jobs'
     )
   }
 }

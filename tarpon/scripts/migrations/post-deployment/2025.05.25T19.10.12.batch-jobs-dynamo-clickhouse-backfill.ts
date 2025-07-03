@@ -1,0 +1,30 @@
+import { migrateAllTenants } from '../utils/tenant'
+import { Tenant } from '@/services/accounts/repository'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { isDemoTenant } from '@/utils/tenant'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+
+async function migrateTenant(tenant: Tenant) {
+  if (isDemoTenant(tenant.id)) {
+    return
+  }
+
+  if (!isClickhouseEnabledInRegion()) {
+    return
+  }
+  await sendBatchJobCommand({
+    type: 'DYNAMODB_CLICKHOUSE_BACKFILL',
+    tenantId: tenant.id,
+    parameters: {
+      entity: 'BATCH_JOBS',
+      saveToClickhouse: true,
+    },
+  })
+}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+export const down = async () => {
+  // skip
+}

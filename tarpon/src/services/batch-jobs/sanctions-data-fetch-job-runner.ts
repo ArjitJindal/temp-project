@@ -25,15 +25,17 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       {
         type: job.type,
         tenantId: job.tenantId,
-        'latestStatus.status': 'IN_PROGRESS',
-        'latestStatus.timestamp': {
-          $gt: dayjs().subtract(1, 'day').valueOf(),
+        latestStatus: {
+          status: 'IN_PROGRESS',
+          latestStatusAfterTimestamp: dayjs().subtract(1, 'day').valueOf(),
         },
         providers: job.providers,
         parameters: {
           entityType: job.parameters.entityType,
         },
-        jobId: { $ne: job['jobId'] },
+        jobId: {
+          notEqualTo: job['jobId'],
+        },
       },
       1
     )

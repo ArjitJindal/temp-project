@@ -61,7 +61,7 @@ function getDefaultRiskValue(
 
   return riskScore
 }
-
+const ADD_SCHEDULE_AT = 15 * 60 * 1000
 @traceable
 export class RiskScoringV8Service {
   private riskRepository: RiskRepository
@@ -969,7 +969,7 @@ export class RiskScoringV8Service {
       const updateData: any = {
         $set: {
           'latestStatus.scheduledAt': {
-            $add: ['$latestStatus.scheduledAt', 15 * 60 * 1000],
+            $add: ['$latestStatus.scheduledAt', ADD_SCHEDULE_AT],
           },
         },
       }
@@ -990,7 +990,14 @@ export class RiskScoringV8Service {
         }
       }
 
-      await this.batchJobRepository.updateJob(targetJob.jobId, updateData)
+      await this.batchJobRepository.updateJobScheduleAndParameters(
+        targetJob.jobId,
+        ADD_SCHEDULE_AT,
+        {
+          userIds,
+          clearedListIds: clearedListId,
+        }
+      )
     } else {
       await this.batchJobRepository.insertJob(
         {

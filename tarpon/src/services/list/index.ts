@@ -402,15 +402,13 @@ export class ListService {
           ...targetJob.parameters.ruleInstanceIds,
           ...ruleInstanceIds,
         ])
-        const updateData: any = {
-          $set: {
-            'latestStatus.scheduledAt': {
-              $add: ['$latestStatus.scheduledAt', 30 * 60 * 1000],
-            },
-            'parameters.ruleInstanceIds': updatedRuleInstanceIds,
-          },
-        }
-        await this.batchJobRepository.updateJob(targetJob.jobId, updateData)
+        await this.batchJobRepository.updateJobScheduleAndParameters(
+          targetJob.jobId,
+          30 * 60 * 1000,
+          {
+            ruleInstancesIds: updatedRuleInstanceIds,
+          }
+        )
       } else {
         await this.batchJobRepository.insertJob(
           {
