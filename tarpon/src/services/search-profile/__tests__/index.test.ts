@@ -174,7 +174,11 @@ describe('Search Profile Service', () => {
 
   beforeEach(async () => {
     const mongoClient = await getMongoDbClient()
-    counterRepository = new CounterRepository(TEST_TENANT_ID, mongoClient)
+    dynamoDb = getDynamoDbClient()
+    counterRepository = new CounterRepository(TEST_TENANT_ID, {
+      mongoDb: mongoClient,
+      dynamoDb,
+    })
     service = new SearchProfileService(TEST_TENANT_ID, counterRepository)
     dynamoDb = getDynamoDbClient()
     mockProfiles = []

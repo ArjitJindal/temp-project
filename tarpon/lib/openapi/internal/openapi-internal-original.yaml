@@ -431,7 +431,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NewRuleInstanceIdResponse'
+                $ref: '#/components/schemas/NewIdResponse'
       parameters:
         - schema:
             type: string
@@ -3722,6 +3722,89 @@ paths:
       x-flagright:
         resources:
           - write:::accounts/overview
+  /risk-levels/new-risk-level-id:
+    get:
+      summary: Risk Level - New Risk Level ID
+      operationId: get-new-risk-level-id
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-levels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewIdResponse'
+  /risk-levels/version-history:
+    get:
+      summary: Risk Level - Version History
+      operationId: get-risk-level-version-history
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-levels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRiskClassificationHistory'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: filterVersionId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCreatedBy
+        - schema:
+            type: number
+          in: query
+          name: filterBeforeTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterAfterTimestamp
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+  /risk-levels/version-history/{versionId}:
+    parameters:
+      - schema:
+          type: string
+        name: versionId
+        in: path
+        required: true
+    get:
+      summary: Risk Level - Version History
+      operationId: get-risk-level-version-history-by-version-id
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-levels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskClassificationHistory'
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
@@ -3735,9 +3818,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
+                $ref: '#/components/schemas/RiskClassificationConfig'
       operationId: get-pulse-risk-classification
       description: ''
     post:
@@ -3752,18 +3833,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
+                $ref: '#/components/schemas/RiskClassificationHistory'
         '400':
           description: Bad Request
       requestBody:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RiskClassificationScore'
+              $ref: '#/components/schemas/RiskClassificationRequest'
         required: true
     parameters: []
   /pulse/risk-assignment:
@@ -9044,11 +9121,11 @@ components:
       enum:
         - SYNC
         - ASYNC
-    NewRuleInstanceIdResponse:
-      title: NewRuleInstanceIdResponse
+    NewIdResponse:
+      title: NewIdResponse
       type: object
       properties:
-        ruleInstanceId:
+        id:
           type: string
     AlertCreationDirection:
       type: string
@@ -11136,6 +11213,32 @@ components:
         - riskLevel
         - lowerBoundRiskScore
         - upperBoundRiskScore
+    RiskClassificationRequest:
+      type: object
+      title: RiskClassificationRequest
+      properties:
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
+        comment:
+          type: string
+      required:
+        - scores
+        - comment
+    PaginatedRiskClassificationHistory:
+      type: object
+      title: PaginatedRiskClassificationHistory
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationHistory'
+        total:
+          type: number
+      required:
+        - items
+        - total
     RiskLevelRuleLogic:
       title: RiskLevelRuleLogic
       type: object
@@ -11211,17 +11314,13 @@ components:
     RiskClassificationConfig:
       type: object
       title: RiskClassificationConfig
-      enum:
-        - VERY_HIGH
-        - HIGH
-        - MEDIUM
-        - LOW
-        - VERY_LOW
       properties:
         createdAt:
           type: number
         updatedAt:
           type: number
+        id:
+          type: string
         classificationValues:
           type: array
           items:
@@ -11229,6 +11328,8 @@ components:
       required:
         - updatedAt
         - classificationValues
+        - id
+        - createdAt
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       type: object

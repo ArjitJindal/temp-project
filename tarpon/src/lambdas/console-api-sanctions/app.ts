@@ -24,7 +24,7 @@ import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { CounterRepository } from '@/services/counter/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DefaultFiltersService } from '@/services/default-filters'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
@@ -134,12 +134,15 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerPostSearchProfiles(
       async (_ctx, request: DefaultApiPostSearchProfilesRequest) => {
         const mongoDb = await getMongoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const dynamoDb = getDynamoDbClientByEvent(event)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const searchProfileService = new SearchProfileService(
           tenantId,
           counterRepository
         )
-        const dynamoDb = getDynamoDbClient()
         return await searchProfileService.createSearchProfile(
           dynamoDb,
           request.SearchProfileRequest
@@ -150,12 +153,15 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerGetSearchProfiles(
       async (_ctx, request: DefaultApiGetSearchProfilesRequest) => {
         const mongoDb = await getMongoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const dynamoDb = getDynamoDbClientByEvent(event)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const searchProfileService = new SearchProfileService(
           tenantId,
           counterRepository
         )
-        const dynamoDb = getDynamoDbClient()
         return await searchProfileService.getSearchProfiles(
           dynamoDb,
           request.filterSearchProfileId,
@@ -168,12 +174,15 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerUpdateSearchProfile(
       async (_ctx, request: DefaultApiUpdateSearchProfileRequest) => {
         const mongoDb = await getMongoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const dynamoDb = getDynamoDbClientByEvent(event)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const searchProfileService = new SearchProfileService(
           tenantId,
           counterRepository
         )
-        const dynamoDb = getDynamoDbClient()
         return await searchProfileService.updateSearchProfile(
           dynamoDb,
           request.searchProfileId,
@@ -185,12 +194,15 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerDeleteSearchProfile(
       async (_ctx, request: DefaultApiDeleteSearchProfileRequest) => {
         const mongoDb = await getMongoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const dynamoDb = getDynamoDbClientByEvent(event)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const searchProfileService = new SearchProfileService(
           tenantId,
           counterRepository
         )
-        const dynamoDb = getDynamoDbClient()
         return await searchProfileService.deleteSearchProfile(
           dynamoDb,
           request.searchProfileId
@@ -201,8 +213,11 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerPostScreeningProfiles(
       async (_ctx, request: DefaultApiPostScreeningProfilesRequest) => {
         const mongoDb = await getMongoDbClient()
-        const dynamoDb = getDynamoDbClient()
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const dynamoDb = getDynamoDbClientByEvent(event)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const screeningProfileService = new ScreeningProfileService(tenantId, {
           mongoDb,
           dynamoDb,

@@ -199,7 +199,10 @@ async function migrateTenant(tenant: Tenant) {
           }
         }
 
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const now = Date.now()
         const sanctionsWhitelistBulkOperations: AnyBulkWriteOperation<any>[] =
           []

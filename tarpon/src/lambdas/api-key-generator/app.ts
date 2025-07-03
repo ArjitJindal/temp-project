@@ -33,7 +33,8 @@ export const apiKeyGeneratorHandler = lambdaApi()(
     const mongoClient = await getMongoDbClient()
     const isDemo = demoTenant === 'true' && envIs('sandbox')
     const fullTenantId = getFullTenantId(tenantId, isDemo)
-    await createMongoDBCollections(mongoClient, fullTenantId)
+    const dynamoDb = getDynamoDbClient()
+    await createMongoDBCollections(mongoClient, dynamoDb, fullTenantId)
     if (isDemo) {
       const dynamoDb = await getDynamoDbClient()
       const tenantRepository = new TenantRepository(fullTenantId, { dynamoDb })

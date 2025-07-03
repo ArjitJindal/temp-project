@@ -4,21 +4,26 @@ import { FlatFileValidationResult } from '@/@types/flat-files'
 import { RiskService } from '@/services/risk'
 import { memoizePromise } from '@/utils/memoize'
 import { isDefaultRiskFactor } from '@/services/risk-scoring/utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export class RiskFactorsImportRunner extends FlatFileRunner<RiskFactor> {
   model = RiskFactor
   public concurrency = 10
 
   private getAllRiskFactors = memoizePromise(async () => {
+    const mongoDb = await getMongoDbClient()
     const riskService = new RiskService(this.tenantId, {
       dynamoDb: this.dynamoDb,
+      mongoDb,
     })
     return riskService.getAllRiskFactors()
   })
 
   protected async _run(data: RiskFactor): Promise<void> {
+    const mongoDb = await getMongoDbClient()
     const riskService = new RiskService(this.tenantId, {
       dynamoDb: this.dynamoDb,
+      mongoDb,
     })
 
     const allRiskFactors = await this.getAllRiskFactors()

@@ -49,18 +49,22 @@ describe('Simulation (Pulse) batch job runner', () => {
       }),
     ])
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    await riskRepository.createOrUpdateRiskClassificationConfig([
-      {
-        riskLevel: 'LOW',
-        lowerBoundRiskScore: 0,
-        upperBoundRiskScore: 50,
-      },
-      {
-        riskLevel: 'MEDIUM',
-        lowerBoundRiskScore: 50,
-        upperBoundRiskScore: 100,
-      },
-    ])
+    await riskRepository.createOrUpdateRiskClassificationConfig(
+      'test-simulation',
+      'test-simulation',
+      [
+        {
+          riskLevel: 'LOW',
+          lowerBoundRiskScore: 0,
+          upperBoundRiskScore: 50,
+        },
+        {
+          riskLevel: 'MEDIUM',
+          lowerBoundRiskScore: 50,
+          upperBoundRiskScore: 100,
+        },
+      ]
+    )
     const parameters: SimulationRiskLevelsParametersRequest = {
       parameters: [
         {

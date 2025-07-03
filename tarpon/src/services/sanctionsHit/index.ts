@@ -59,12 +59,15 @@ export class SanctionsHitService {
     this.tenantId = tenantId
     this.mongoDb = connection.mongoDb
     this.dynamoDb = connection.dynamoDb
-    this.sanctionsHitsRepository = new SanctionsHitsRepository(
-      tenantId,
-      this.mongoDb
-    )
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     this.sanctionsWhitelistEntityRepository =
-      new SanctionsWhitelistEntityRepository(tenantId, this.mongoDb)
+      new SanctionsWhitelistEntityRepository(tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,

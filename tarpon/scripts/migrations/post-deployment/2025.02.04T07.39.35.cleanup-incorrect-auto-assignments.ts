@@ -83,7 +83,10 @@ async function fixAssignmentsForInstance(
     return
   }
   const alertsCollection = mongoDb.db().collection(CASES_COLLECTION(tenant.id))
-  const alertsRepository = new AlertsRepository(tenant.id, { mongoDb })
+  const alertsRepository = new AlertsRepository(tenant.id, {
+    mongoDb,
+    dynamoDb: getDynamoDbClient(),
+  })
   const condition = {
     $and: [{ 'alerts.ruleInstanceId': ruleInstance.id }],
   }

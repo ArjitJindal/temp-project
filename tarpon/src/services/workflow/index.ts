@@ -47,7 +47,10 @@ export class WorkflowService {
   ) {
     this.docClient = DynamoDBDocumentClient.from(deps.dynamoDb)
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
-    this.counterRepo = new CounterRepository(tenantId, deps.mongoDb)
+    this.counterRepo = new CounterRepository(tenantId, {
+      mongoDb: deps.mongoDb,
+      dynamoDb: deps.dynamoDb,
+    })
   }
 
   private async getNextWorkflowId(workflowType: WorkflowType): Promise<string> {

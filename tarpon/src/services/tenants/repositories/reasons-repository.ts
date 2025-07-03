@@ -8,8 +8,9 @@ import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReas
 @traceable
 export class ReasonsRepository {
   private collection: Collection<ConsoleActionReason>
-  constructor(tenantId: string, mongoDb: MongoClient) {
-    const db = mongoDb.db()
+
+  constructor(tenantId: string, connections: { mongoDb: MongoClient }) {
+    const db = connections.mongoDb.db()
     this.collection = db.collection<ConsoleActionReason>(
       REASONS_COLLECTION(tenantId)
     )

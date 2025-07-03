@@ -1,19 +1,28 @@
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { SLAPolicyRepository } from '@/services/tenants/repositories/sla-policy-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export function setUpSLAHooks(tenantId: string, slaPolicies: SLAPolicy[]) {
   beforeAll(async () => {
     const mongoDb = await getMongoDbClient()
-    const slaPolicyRepository = new SLAPolicyRepository(tenantId, mongoDb)
+    const dynamoDb = getDynamoDbClient()
+    const slaPolicyRepository = new SLAPolicyRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     for (const slaPolicy of slaPolicies) {
       await slaPolicyRepository.createSLAPolicy(slaPolicy)
     }
   })
   afterAll(async () => {
     const mongoDb = await getMongoDbClient()
-    const slaPolicyRepository = new SLAPolicyRepository(tenantId, mongoDb)
+    const dynamoDb = getDynamoDbClient()
+    const slaPolicyRepository = new SLAPolicyRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     for (const slaPolicy of slaPolicies) {
       await slaPolicyRepository.deleteSLAPolicy(slaPolicy.id)
     }

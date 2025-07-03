@@ -271,7 +271,10 @@ export class TenantService {
   async createDefaultScreeningProfile(tenantId: string) {
     const mongoDb = this.mongoDb
     const dynamoDb = this.dynamoDb
-    const counterRepository = new CounterRepository(tenantId, mongoDb)
+    const counterRepository = new CounterRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const screeningProfileService = new ScreeningProfileService(tenantId, {
       mongoDb,
       dynamoDb,
@@ -431,7 +434,10 @@ export class TenantService {
       )
     }
 
-    const reasonsService = new ReasonsService(tenantId, this.mongoDb)
+    const reasonsService = new ReasonsService(tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     // initialising default reasons for new tenant
     await reasonsService.initialiseDefaultReasons()
 
@@ -439,7 +445,10 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,
     })
-    const counterRepository = new CounterRepository(tenantId, this.mongoDb)
+    const counterRepository = new CounterRepository(tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     // initalising v2 risk factors in v8 for new tenant
     await Promise.all([
       ...RISK_FACTORS.map(async (riskFactor, index) => {

@@ -2874,7 +2874,10 @@ describe('Test alert should reopen if qa status is failed', () => {
     }
 
     const mongoDb = await getMongoDbClient()
-    const caseRepository = new CaseRepository(testTenantId, { mongoDb })
+    const caseRepository = new CaseRepository(testTenantId, {
+      mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
     await caseRepository.addCaseMongo(case_)
     getContextMocker.mockReturnValue({
       user: { id: REVIEWEE.id, role: 'REVIEWEE' },

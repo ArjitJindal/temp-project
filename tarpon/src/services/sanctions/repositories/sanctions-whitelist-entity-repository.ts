@@ -1,5 +1,6 @@
 import { Filter, MongoClient, ReplaceOneModel } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
@@ -51,10 +52,16 @@ export class SanctionsWhitelistEntityRepository {
   mongoDb: MongoClient
   counterRepository: CounterRepository
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
-    this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    this.mongoDb = connections.mongoDb
+    this.counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
   }
 
   public async addWhitelistEntities(

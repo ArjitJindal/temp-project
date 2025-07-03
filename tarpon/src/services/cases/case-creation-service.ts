@@ -219,9 +219,9 @@ export class CaseCreationService {
     })
     this.sanctionsHitsRepository = new SanctionsHitsRepository(
       tenantID,
-      connections.mongoDb
+      connections
     )
-    this.slaPolicyService = new SLAPolicyService(tenantID, connections.mongoDb)
+    this.slaPolicyService = new SLAPolicyService(tenantID, connections)
   }
 
   private tenantSettings = memoize(async () => {
@@ -645,8 +645,10 @@ export class CaseCreationService {
     transaction?: InternalTransaction,
     checkListTemplates?: ChecklistTemplate[]
   ): Promise<Alert[]> {
-    const mongoDb = this.mongoDb
-    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
     const alerts: (Alert | null)[] = await Promise.all(
       hitRules.map(async (hitRule: HitRulesDetails): Promise<Alert | null> => {
         const ruleInstanceMatch: RuleInstance | null =

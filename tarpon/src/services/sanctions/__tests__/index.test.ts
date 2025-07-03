@@ -374,7 +374,10 @@ describe('Sanctions Service', () => {
     })
 
     test('Old hits should not be added as new', async () => {
-      const repository = new SanctionsHitsRepository(TEST_TENANT_ID, mongoDb)
+      const repository = new SanctionsHitsRepository(TEST_TENANT_ID, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       const rawHits = [...new Array(10)].map(() => ({
         ...SAMPLE_HIT_1,
         id: `${Date.now()}`,
@@ -399,10 +402,11 @@ describe('Sanctions Service', () => {
 
     test('Old hits entities should be updated properly', async () => {
       const tenantId = getTestTenantId()
-      const repository = new SanctionsHitsRepository(
-        tenantId,
-        await getMongoDbClient()
-      )
+      const mongoDb = await getMongoDbClient()
+      const repository = new SanctionsHitsRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
 
       const hits = await repository.addHits(
         'comply-advantage',

@@ -4,6 +4,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
@@ -27,7 +28,11 @@ describe('Whitelist repository', () => {
     let repo: SanctionsWhitelistEntityRepository
     beforeAll(async () => {
       const mongoDb = await getMongoDbClient()
-      repo = new SanctionsWhitelistEntityRepository(TEST_TENANT_ID, mongoDb)
+      const dynamoDb = getDynamoDbClient()
+      repo = new SanctionsWhitelistEntityRepository(TEST_TENANT_ID, {
+        mongoDb,
+        dynamoDb,
+      })
     })
     beforeEach(async () => {
       await repo.clear()

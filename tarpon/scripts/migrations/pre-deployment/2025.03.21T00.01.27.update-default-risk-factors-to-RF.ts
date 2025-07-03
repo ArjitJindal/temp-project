@@ -23,7 +23,10 @@ async function migrateTenant(tenant: Tenant) {
       await riskRepository.deleteRiskFactor(val.id)
     })
   )
-  const counterRepository = new CounterRepository(tenant.id, mongoDb)
+  const counterRepository = new CounterRepository(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
   let counter = await counterRepository.getNextCounter('RC')
   for (const factor of v2Factors) {
     const id = factor.id

@@ -80,7 +80,7 @@ export class AlertsRepository {
   clickhouseAlertRepository?: ClickhouseAlertRepository
   constructor(
     tenantId: string,
-    connections: { mongoDb?: MongoClient; dynamoDb?: DynamoDBDocumentClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
@@ -1830,10 +1830,10 @@ export class AlertsRepository {
   }
 
   public async getSampleIdForQA(): Promise<number> {
-    return new CounterRepository(
-      this.tenantId,
-      this.mongoDb
-    ).getNextCounterAndUpdate('AlertQASample')
+    return new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    }).getNextCounterAndUpdate('AlertQASample')
   }
 
   public async saveQASampleData(data: AlertsQaSampling) {

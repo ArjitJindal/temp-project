@@ -1,10 +1,12 @@
 import { Db, MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 
 const BATCH_SIZE = 1000
 export async function copyCollections(
   client: MongoClient,
+  inputDynamoDb: DynamoDBClient,
   inputTenantId: string,
   inputDB: Db,
   outputTenantId: string,
@@ -13,7 +15,7 @@ export async function copyCollections(
 ) {
   logger.info(`Copy collection from ${inputTenantId} to ${outputTenantId}`)
   const allMongoDbCollections = allCollections(inputTenantId, inputDB)
-  await createMongoDBCollections(client, outputTenantId)
+  await createMongoDBCollections(client, inputDynamoDb, outputTenantId)
   for (const collection in allMongoDbCollections) {
     const inputCollectionName = collection
     const outputCollectionName = collection.replace(
@@ -21,7 +23,7 @@ export async function copyCollections(
       outputTenantId
     )
     logger.info(`Copying ${inputCollectionName} to ${outputCollectionName}`)
-    const collectionData = await inputDB.collection(inputCollectionName).find()
+    const collectionData = inputDB.collection(inputCollectionName).find()
 
     const count = await inputDB.collection(inputCollectionName).countDocuments()
 

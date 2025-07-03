@@ -126,7 +126,10 @@ export class RuleInstanceRepository {
   ): Promise<string> {
     const mongoDb = await getMongoDbClient()
 
-    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
 
     const nextCount = await counterRepository[
       update ? 'getNextCounterAndUpdate' : 'getNextCounter'
@@ -143,7 +146,10 @@ export class RuleInstanceRepository {
 
   public async getNewCustomRuleId(update = false): Promise<string> {
     const mongoDb = await getMongoDbClient()
-    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const count = await counterRepository[
       update ? 'getNextCounterAndUpdate' : 'getNextCounter'
     ]('RC')

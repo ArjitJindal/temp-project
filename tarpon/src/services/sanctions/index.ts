@@ -98,14 +98,20 @@ export class SanctionsService {
       { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
     )
     this.sanctionsWhitelistEntityRepository =
-      new SanctionsWhitelistEntityRepository(this.tenantId, this.mongoDb)
+      new SanctionsWhitelistEntityRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
     this.sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(this.tenantId, this.mongoDb)
-    this.counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
-    this.sanctionsHitsRepository = new SanctionsHitsRepository(
-      this.tenantId,
-      this.mongoDb
-    )
+    this.counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
       this.mongoDb
     )

@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SLAAuditLogService } from '../sla/sla-audit-log-service'
 import { SLAPolicyRepository } from './repositories/sla-policy-repository'
 import { traceable } from '@/core/xray'
@@ -11,8 +12,11 @@ import { SLAPolicyIdResponse } from '@/@types/openapi-internal/SLAPolicyIdRespon
 export class SLAPolicyService {
   private slaPolicyRepository: SLAPolicyRepository
   private slaAuditLogService: SLAAuditLogService
-  constructor(tenantId: string, mongoClient: MongoClient) {
-    this.slaPolicyRepository = new SLAPolicyRepository(tenantId, mongoClient)
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
+    this.slaPolicyRepository = new SLAPolicyRepository(tenantId, connections)
     this.slaAuditLogService = new SLAAuditLogService(tenantId)
   }
   public async getSLAPolicies(

@@ -1,6 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts/repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   createMongoDBCollections,
   getMongoDbClient,
@@ -9,7 +10,8 @@ import {
 
 async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient()
-  await createMongoDBCollections(mongodb, tenant.id)
+  const dynamoDb = getDynamoDbClient()
+  await createMongoDBCollections(mongodb, dynamoDb, tenant.id)
   console.info(`MongoDB indexes synced for tenant: ${tenant.id}`)
 }
 

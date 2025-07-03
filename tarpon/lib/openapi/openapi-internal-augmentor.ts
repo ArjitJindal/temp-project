@@ -87,6 +87,12 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/new-rule-id':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+  '/risk-levels/new-risk-level-id':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+  '/risk-levels/version-history':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+  '/risk-levels/version-history/{versionId}':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
   '/rule-instances/{ruleInstanceId}/transaction-users-hit':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/rule-instances/rules-with-alerts':

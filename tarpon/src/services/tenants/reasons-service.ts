@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { CounterRepository } from '../counter/repository'
 import { ReasonsRepository } from './repositories/reasons-repository'
 import { traceable } from '@/core/xray'
@@ -62,9 +63,12 @@ export const getDefaultReasonsData = () => {
 export class ReasonsService {
   private reasonsRepository: ReasonsRepository
   private counterRepository: CounterRepository
-  constructor(tenantId: string, mongoDb: MongoClient) {
-    this.reasonsRepository = new ReasonsRepository(tenantId, mongoDb)
-    this.counterRepository = new CounterRepository(tenantId, mongoDb)
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
+    this.reasonsRepository = new ReasonsRepository(tenantId, connections)
+    this.counterRepository = new CounterRepository(tenantId, connections)
   }
 
   private async getNewReasonId(type: ReasonType) {

@@ -48,7 +48,10 @@ export class ReportRepository {
   }
 
   public async getId(): Promise<string> {
-    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const count = await counterRepository.getNextCounterAndUpdate('Report')
 
     return `RP-${count}`

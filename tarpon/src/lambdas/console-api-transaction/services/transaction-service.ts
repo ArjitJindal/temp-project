@@ -227,7 +227,7 @@ export class TransactionService {
     if (!params.filterPaymentDetailName && params.filterSanctionsHitId) {
       const sanctionsHitsRepository = new SanctionsHitsRepository(
         this.tenantId,
-        this.mongoDb
+        { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
       )
       const hit = await sanctionsHitsRepository.searchHits({
         filterHitIds: [params.filterSanctionsHitId],

@@ -58,7 +58,7 @@ export async function runDeltaSanctionsDataFetchJob(
     }
   })
   await Promise.all([
-    createMongoDBCollections(client, tenantId),
+    createMongoDBCollections(client, dynamoDb, tenantId),
     createGlobalMongoDBCollections(client),
   ])
   await Promise.all(

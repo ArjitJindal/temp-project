@@ -214,9 +214,11 @@ async function migrateTenant(tenant: Tenant) {
             }
           }
         }
-
         const sanctionsHitsBulkOperations: AnyBulkWriteOperation<any>[] = []
-        const counterRepository = new CounterRepository(tenantId, mongoDb)
+        const counterRepository = new CounterRepository(tenantId, {
+          mongoDb,
+          dynamoDb,
+        })
         const hashSanctionHitIdsMap = new Map<string, string[]>()
         const now = Date.now()
         const paymentMethodIdSearchIdSet = new Set<string | null>()

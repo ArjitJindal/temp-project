@@ -204,7 +204,10 @@ export class AlertsService extends CaseAlertsCommonService {
     })
     this.hasFeatureSla = hasFeature('ALERT_SLA')
     this.auth0Domain = getContext()?.auth0Domain ?? ''
-    this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
+    this.slaPolicyService = new SLAPolicyService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
   }
 
   @auditLog('ALERT', 'ALERT_LIST', 'DOWNLOAD')

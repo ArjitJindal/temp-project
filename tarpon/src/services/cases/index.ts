@@ -216,7 +216,10 @@ export class CaseService extends CaseAlertsCommonService {
     )
     this.linkerService = new LinkerService(this.tenantId)
     this.hasFeatureSla = hasFeature('ALERT_SLA') && hasFeature('PNB')
-    this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
+    this.slaPolicyService = new SLAPolicyService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
     this.auth0Domain = getContext()?.auth0Domain ?? ''
     this.listService = new ListService(this.tenantId, {
       mongoDb: this.mongoDb,

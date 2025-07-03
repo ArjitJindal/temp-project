@@ -13,6 +13,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -65,7 +66,10 @@ describe('Dashboard refresh runner', () => {
     // Prepare testing data
     const latest = dayjs('2023-09-21')
     const mongoDb = await getMongoDbClient()
-    const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
     await Promise.all([
       caseRepository.addCaseMongo({
         caseId: 'C-1',

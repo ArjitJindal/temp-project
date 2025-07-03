@@ -10,6 +10,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -28,6 +29,7 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -46,12 +48,21 @@ export class SanctionsHitsRepository {
   counterRepository: CounterRepository
   sanctionsWhitelistEntityRepository: SanctionsWhitelistEntityRepository
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
-    this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    this.mongoDb = connections.mongoDb
+    this.counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
     this.sanctionsWhitelistEntityRepository =
-      new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
+      new SanctionsWhitelistEntityRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: connections.dynamoDb,
+      })
   }
 
   public static async fromEvent(
@@ -60,7 +71,12 @@ export class SanctionsHitsRepository {
     >
   ): Promise<SanctionsHitsRepository> {
     const tenantId = event.requestContext.authorizer.principalId
-    return new SanctionsHitsRepository(tenantId, await getMongoDbClient())
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    return new SanctionsHitsRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
   }
 
   private getSearchHitsFilters(params: HitsFilters): Document {

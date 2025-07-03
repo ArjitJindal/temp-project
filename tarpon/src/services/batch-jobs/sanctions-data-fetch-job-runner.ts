@@ -76,7 +76,7 @@ export async function runSanctionsDataFetchJob(
       'full'
     )
     await Promise.all([
-      createMongoDBCollections(client, tenantId),
+      createMongoDBCollections(client, dynamoDb, tenantId),
       createGlobalMongoDBCollections(client),
     ])
 
