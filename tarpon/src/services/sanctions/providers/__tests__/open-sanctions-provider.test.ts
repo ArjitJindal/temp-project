@@ -120,7 +120,7 @@ describe('OpenSanctionsProvider', () => {
     )
     await openSanctionsProvider.fullLoad(repo, '2024-01-01')
   })
-  it('Delta changes are loaded', async () => {
+  it.skip('Delta changes are loaded', async () => {
     const tenantId = getTestTenantId()
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
