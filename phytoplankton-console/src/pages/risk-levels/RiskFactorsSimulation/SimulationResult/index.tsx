@@ -281,7 +281,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           filterSimulationKrsLevel: params['simulated.krs.riskLevel'],
           filterCurrentDrsLevel: params['current.drs.riskLevel'],
           filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
-          filterId: params.userId,
+          filterUserId: params.userId,
         });
 
         return {
