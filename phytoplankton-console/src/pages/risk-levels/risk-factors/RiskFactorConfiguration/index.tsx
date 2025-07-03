@@ -81,17 +81,13 @@ export const RiskFactorConfiguration = (props: Props) => {
     : undefined;
 
   const navigateToRiskFactors = () => {
-    dataKey
-      ? navigate(
-          makeUrl(`/risk-levels/risk-factors/simulation-mode/:key/:type`, {
-            type: riskItemType,
-            key: dataKey,
-          }),
-          { replace: true },
-        )
-      : navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: riskItemType }), {
-          replace: true,
-        });
+    if (dataKey) {
+      navigate(makeUrl(`/risk-levels/risk-factors/simulation`), { replace: true });
+    } else {
+      navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: riskItemType }), {
+        replace: true,
+      });
+    }
   };
   const api = useApi();
   const queryResult = useQuery<string | undefined>(NEW_RISK_FACTOR_ID(id), async () => {
