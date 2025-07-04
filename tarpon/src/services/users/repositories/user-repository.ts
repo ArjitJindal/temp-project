@@ -754,7 +754,6 @@ export class UserRepository {
   private async getRiskScoringResult(
     userId: string
   ): Promise<UserRiskScoreDetails> {
-    // TODO: After switch to V8 remove these calls as right now they return the same values as V8
     const riskRepository = new RiskRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
@@ -1509,11 +1508,27 @@ export class UserRepository {
     }
   }
 
-  public async updateKrsScoreOfUserMongo(
+  public async updateKrsScoreOfUser(
     userId: string,
     krsScore: KrsScore
   ): Promise<void> {
     await this.updateUser(userId, { krsScore })
+
+    const user = await this.getUser<
+      UserWithRulesResult | BusinessWithRulesResult
+    >(userId)
+
+    const riskScoringResult = await this.getRiskScoringResult(userId)
+    if (
+      user &&
+      user.kycRiskLevel &&
+      user.kycRiskLevel !== riskScoringResult.kycRiskLevel
+    ) {
+      await this.saveUser(
+        { ...user, kycRiskLevel: riskScoringResult.kycRiskLevel },
+        isBusinessUser(user) ? 'BUSINESS' : 'CONSUMER'
+      )
+    }
   }
 
   public getUsersWithoutKrsScoreCursor(

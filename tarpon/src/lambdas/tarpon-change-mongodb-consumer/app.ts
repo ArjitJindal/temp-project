@@ -303,12 +303,12 @@ export class TarponChangeMongoDbConsumer {
       (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
     )
     // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
-    // user.riskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel
+    // user.riskLevel and user.kycRiskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel or user.kycRiskLevel
     // alone will trigger a new case which is unexpected. We only want to create a new case if the user details
     // have changes (when there're changes, we'll run user rules again).
     const userDetailsChanged = !isEqual(
-      omit(oldUser, 'riskLevel'),
-      omit(newUser, 'riskLevel')
+      omit(oldUser, ['riskLevel', 'kycRiskLevel']),
+      omit(newUser, ['riskLevel', 'kycRiskLevel'])
     )
     if (userDetailsChanged && newHitRules?.length) {
       const timestampBeforeCasesCreation = Date.now()

@@ -168,7 +168,7 @@ export async function krsScoreEventHandler(
   await Promise.all([
     riskRepository.addKrsValueToMongo(krsScore),
     krsScore.userId
-      ? userRepository.updateKrsScoreOfUserMongo(krsScore.userId, krsScore)
+      ? userRepository.updateKrsScoreOfUser(krsScore.userId, krsScore)
       : undefined,
   ])
   subSegment?.close()
