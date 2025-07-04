@@ -681,7 +681,7 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <Button isDisabled={!batchJobName} type={'DANGER'} onClick={props.onClick}>
+                <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
                   Run
                 </Button>
               )}
@@ -710,7 +710,7 @@ export default function SuperAdminPanel() {
               />
             </Label>
             <Button
-              type="DANGER"
+              type="PRIMARY"
               onClick={() =>
                 mutateTenantSettings.mutate({
                   apiKeyViewData: [],
