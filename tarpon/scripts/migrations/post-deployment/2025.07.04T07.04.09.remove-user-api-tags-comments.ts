@@ -5,11 +5,15 @@ import { hasFeature } from '@/core/utils/context'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { envIs } from '@/utils/env'
 
 const commentTagBody = 'User API tags updated over the console'
 const commentPepBody = 'PEP status updated manually by'
 async function migrateTenant(tenant: Tenant) {
-  if (!hasFeature('NEW_FEATURES')) {
+  if (
+    !hasFeature('NEW_FEATURES') ||
+    (envIs('prod') && tenant.id === '0789ad73b8')
+  ) {
     const mongodDb = await getMongoDbClient()
     const db = mongodDb.db()
     const usersCollection = db.collection<InternalUser>(
