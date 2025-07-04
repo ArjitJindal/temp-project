@@ -159,10 +159,10 @@ export async function krsScoreEventHandler(
     'StreamConsumer',
     'krsScoreEventHandler'
   )
-  const { mongoDb } = dbClients
+  const { mongoDb, dynamoDb } = dbClients
 
-  const riskRepository = new RiskRepository(tenantId, { mongoDb })
-  const userRepository = new UserRepository(tenantId, { mongoDb })
+  const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
+  const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
   krsScore = omit(krsScore, DYNAMO_KEYS) as KrsScore
 
   await Promise.all([
