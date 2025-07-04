@@ -76,8 +76,7 @@ export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const riskScores = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskScores, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,

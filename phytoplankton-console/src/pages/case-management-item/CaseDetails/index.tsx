@@ -205,8 +205,7 @@ function useTabs(
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const queryClient = useQueryClient();
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();

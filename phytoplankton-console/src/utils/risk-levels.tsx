@@ -1,6 +1,7 @@
 import {
-  RiskClassificationScore as ApiRiskClassificationScore,
   RiskLevel as ApiRiskLevel,
+  RiskClassificationConfig,
+  RiskClassificationScore,
   RiskLevelAlias,
 } from '@/apis';
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/colors';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { AsyncResource, getOr } from '@/utils/asyncResource';
+import { getOr } from '@/utils/asyncResource';
 import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 
 export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
@@ -67,12 +68,20 @@ export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = Object
   },
 });
 
-export function useRiskClassificationScores(): AsyncResource<ApiRiskClassificationScore[]> {
+export const DEFAULT_RISK_CLASSIFICATION_VALUES: RiskClassificationConfig = {
+  classificationValues: [],
+  createdAt: 0,
+  updatedAt: 0,
+  id: '',
+};
+
+export function useRiskClassificationScores(): RiskClassificationScore[] {
   const api = useApi();
   const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
     api.getPulseRiskClassification(),
   );
-  return riskValuesQueryResults.data;
+  return getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES)
+    .classificationValues;
 }
 
 export function useRiskLevel(score?: number): RiskLevel | null {
@@ -81,10 +90,7 @@ export function useRiskLevel(score?: number): RiskLevel | null {
     return null;
   }
 
-  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of getOr(
-    classificationScores,
-    [],
-  )) {
+  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of classificationScores) {
     if (score >= lowerBoundRiskScore && score < upperBoundRiskScore) {
       return riskLevel;
     }
@@ -94,10 +100,11 @@ export function useRiskLevel(score?: number): RiskLevel | null {
 
 export function useRiskScore(riskLevel: RiskLevel): number {
   const classificationScores = useRiskClassificationScores();
-  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel: level } of getOr(
-    classificationScores,
-    [],
-  )) {
+  for (const {
+    lowerBoundRiskScore,
+    upperBoundRiskScore,
+    riskLevel: level,
+  } of classificationScores) {
     if (level === riskLevel) {
       return (lowerBoundRiskScore + upperBoundRiskScore) / 2;
     }

@@ -25,7 +25,6 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
 import { QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 
@@ -240,7 +239,6 @@ export const UsersTable = (props: Props) => {
 
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
-  const riskClassificationValuesMap = getOr(riskClassificationValues, []);
 
   function getLastUpdatedColumn(): TableColumn<AllUsersTableItem> {
     const helper = new ColumnHelper<AllUsersTableItem>();
@@ -260,7 +258,7 @@ export const UsersTable = (props: Props) => {
       : (getAllUserColumns(settings.userAlias) as TableColumn<AllUsersTableItem>[]);
 
   if (isRiskScoringEnabled) {
-    columns.push(...getRiskScoringColumns(riskClassificationValuesMap));
+    columns.push(...getRiskScoringColumns(riskClassificationValues));
   }
 
   columns.push(getLastUpdatedColumn());

@@ -17,7 +17,6 @@ import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
 
@@ -37,8 +36,7 @@ export default function TransactionEventsTable(props: Props) {
 
   const api = useApi();
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const queryResults = usePaginatedQuery(
     TRANSACTIONS_EVENTS_FIND(transactionId, params),

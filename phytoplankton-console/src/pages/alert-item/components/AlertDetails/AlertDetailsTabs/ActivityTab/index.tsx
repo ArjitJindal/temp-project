@@ -9,7 +9,7 @@ import {
 } from '@/components/CommentEditor';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
-import { getOr, success } from '@/utils/asyncResource';
+import { success } from '@/utils/asyncResource';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -107,8 +107,7 @@ export default function ActivityTab(props: Props) {
 
   const [users, _] = useUsers();
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   return (
     <ActivityCard

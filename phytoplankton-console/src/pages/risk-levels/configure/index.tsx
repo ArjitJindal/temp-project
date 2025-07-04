@@ -15,6 +15,7 @@ import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { DEFAULT_RISK_CLASSIFICATION_VALUES } from '@/utils/risk-levels';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
 
@@ -102,9 +103,12 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
 
   useEffect(() => {
     if (state == null) {
-      if (getOr(riskValuesQueryResults.data, []) && isSuccess(riskValuesQueryResults.data)) {
-        setState(parseApiState(riskValuesQueryResults.data.value));
-        setNewState(parseApiState(riskValuesQueryResults.data.value));
+      if (
+        getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES) &&
+        isSuccess(riskValuesQueryResults.data)
+      ) {
+        setState(parseApiState(riskValuesQueryResults.data.value.classificationValues));
+        setNewState(parseApiState(riskValuesQueryResults.data.value.classificationValues));
       }
     } else {
       setNewState(state);
@@ -123,7 +127,10 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
             state={newState}
             setState={setState}
             riskValuesRefetch={riskValuesQueryResults.refetch}
-            riskValues={getOr(riskValuesQueryResults.data, [])}
+            riskValues={
+              getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES)
+                .classificationValues
+            }
           />
         ) : (
           <SimulateRiskClassification

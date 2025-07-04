@@ -26,7 +26,6 @@ import {
   RiskFactor,
 } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { getOr } from '@/utils/asyncResource';
 import {
   DEFAULT_COUNTRY_RISK_VALUES,
   DEFAULT_CPI_COUNTRY_RISK_VALUES,
@@ -51,8 +50,7 @@ interface Props {
 function ValuesTable(props: Props) {
   const { entity, onSave, onCancel, canEditParameters = true } = props;
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const configSetting = useSettings();
   const defaultCurrency = configSetting?.defaultValues?.currency ?? 'USD';

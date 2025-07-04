@@ -20,7 +20,6 @@ import { useRiskLevelLabel, useSettings } from '@/components/AppWrapper/Provider
 import NumberInput from '@/components/library/NumberInput';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import Slider from '@/components/library/Slider';
 import Tooltip from '@/components/library/Tooltip';
 import Tag from '@/components/library/Tag';
@@ -135,8 +134,7 @@ export const LogicDefinitionCard = (props: Props) => {
     riskLevelLogic,
   ]);
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const resetModalState = () => {
     setIsOpen(false);

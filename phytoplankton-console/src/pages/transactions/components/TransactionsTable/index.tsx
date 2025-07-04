@@ -57,7 +57,6 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 import { DEFAULT_PAGINATION_VIEW } from '@/components/library/Table/consts';
 export interface TransactionsTableParams extends CommonParams {
@@ -312,8 +311,7 @@ export default function TransactionsTable(props: Props) {
   const settings = useSettings();
 
   const ruleOptions = useRuleOptions();
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const columns: TableColumn<TransactionTableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TransactionTableItem>();

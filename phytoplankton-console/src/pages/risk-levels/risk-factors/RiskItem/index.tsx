@@ -17,7 +17,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CUSTOM_RISK_FACTORS_ITEM, RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
 import { message } from '@/components/library/Message';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
@@ -146,8 +145,7 @@ const RiskItem = (props: Props) => {
       navigate(makeUrl(`/risk-levels/risk-factors/${type}`), { replace: true });
     }
   };
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
   if (isSimulationMode) {
     return (
       <SimulationRiskItemForm

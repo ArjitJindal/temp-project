@@ -88,7 +88,7 @@ export default function TransactionsItem() {
           transaction,
           ruleAlertMap,
           tenantSettings,
-          getOr(riskClassificationValues, []),
+          riskClassificationValues,
         ),
         reportTitle: 'Transaction report',
       });
