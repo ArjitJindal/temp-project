@@ -10,6 +10,8 @@ import {
   PHONE,
 } from '@/components/library/Table/standardDataTypes';
 import { formatConsumerName } from '@/utils/api/users';
+import TagList from '@/components/library/Tag/TagList';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 
 interface Props {
   contactDetails?: ApiContactDetails;
@@ -74,6 +76,16 @@ export default function ContactDetails(props: Props) {
                 <div key={`address-${index}`}>{callRender(ADDRESS, x)}</div>
               ))}
             </div>
+          ),
+        },
+        {
+          label: 'Tags',
+          value: contactDetails?.tags?.length && (
+            <TagList>
+              {contactDetails?.tags?.map((x) => (
+                <KeyValueTag key={x.key} tag={x} />
+              ))}
+            </TagList>
           ),
         },
       ]}
