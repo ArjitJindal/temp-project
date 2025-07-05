@@ -1,7 +1,11 @@
 import { MongoClient, Document, UpdateFilter, Filter } from 'mongodb'
 import { isNil, omitBy, sum } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
-import { SANCTIONS_SCREENING_DETAILS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SendMessageBatchRequestEntry, SQSClient } from '@aws-sdk/client-sqs'
+import {
+  SANCTIONS_SCREENING_DETAILS_COLLECTION,
+  SANCTIONS_SCREENING_DETAILS_V2_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
 import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -16,6 +20,7 @@ import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
 import {
+  executeClickhouseQuery,
   getClickhouseClient,
   sendMessageToMongoConsumer,
 } from '@/utils/clickhouse/utils'
@@ -25,15 +30,21 @@ import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/Sanctio
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
+import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/SanctionsScreeningDetailsV2'
+import { CounterRepository } from '@/services/counter/repository'
+import { bulkSendMessages } from '@/utils/sns-sqs-client'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
-  tenantId: string
-  mongoDb: MongoClient
+  private readonly tenantId: string
+  private readonly mongoDb: MongoClient
+  private readonly sqsClient: SQSClient
 
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.sqsClient = new SQSClient({})
   }
 
   public async addSanctionsScreeningDetails(
@@ -98,6 +109,84 @@ export class SanctionsScreeningDetailsRepository {
     }
   }
 
+  public async addSanctionsScreeningDetailsV2(
+    details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'>,
+    screenedAt = Date.now()
+  ): Promise<void> {
+    const sanctionsScreeningCollectionNameV2 =
+      SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(this.tenantId)
+
+    const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
+    const currentTimestamp = Date.now()
+
+    const { ruleInstanceIds = [], userIds = [], transactionIds = [] } = details
+
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
+
+    const commonUpdatePart: Partial<SanctionsScreeningDetailsV2> = {
+      name: details.name,
+      entity: details.entity,
+      isOngoingScreening: details.isOngoingScreening,
+      isHit: details.isHit,
+      searchId: details.searchId,
+      latestTimeStamp: currentTimestamp,
+    }
+
+    const userItems = userIds.map((id) => ({ type: 'userId', id }))
+    const transactionItems = transactionIds.map((id) => ({
+      type: 'transactionId',
+      id,
+    }))
+    const allItems = [...userItems, ...transactionItems]
+    const messagesV2: Array<Omit<SendMessageBatchRequestEntry, 'Id'>> = []
+
+    for (const item of allItems) {
+      const screeningId = `S-${await counterRepository.getNextCounterAndUpdate(
+        'ScreeningDetails'
+      )}`
+
+      const updateMessageV2: UpdateFilter<SanctionsScreeningDetailsV2> = {
+        $set: {
+          ...commonUpdatePart,
+          [item.type]: item.id,
+          lastScreenedAt: roundedScreenedAt,
+        },
+        $setOnInsert: {
+          screeningId,
+          isNew: true,
+        },
+        $addToSet: {
+          ruleInstanceIds: { $each: ruleInstanceIds },
+        },
+      }
+
+      messagesV2.push({
+        MessageBody: JSON.stringify({
+          filter: { lastScreenedAt: roundedScreenedAt, [item.type]: item.id },
+          operationType: 'updateOne',
+          updateMessage: updateMessageV2,
+          sendToClickhouse: true,
+          collectionName: sanctionsScreeningCollectionNameV2,
+          upsert: true,
+        }),
+        MessageDeduplicationId: `${item.id}-${roundedScreenedAt}`,
+      })
+    }
+
+    if (messagesV2.length > 0) {
+      const queueUrl = process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL
+      if (!queueUrl) {
+        throw new Error(
+          'MONGO_UPDATE_CONSUMER_QUEUE_URL environment variable is not set'
+        )
+      }
+      await bulkSendMessages(this.sqsClient, queueUrl, messagesV2)
+    }
+  }
+
   private async callMongoDatabase(
     filter: Filter<SanctionsScreeningDetails>,
     update: UpdateFilter<SanctionsScreeningDetails>
@@ -139,9 +228,10 @@ export class SanctionsScreeningDetailsRepository {
       sum(isNew = true) as newCount
     FROM
       sanctions_screening_details FINAL
-    WHERE
-      timestamp BETWEEN ${timestampRange?.from ?? 0} AND ${
-      timestampRange?.to ?? Number.MAX_SAFE_INTEGER
+    ${
+      timestampRange
+        ? `WHERE timestamp BETWEEN ${timestampRange.from} AND ${timestampRange.to}`
+        : ''
     }
     GROUP BY
       entity,
@@ -248,6 +338,120 @@ export class SanctionsScreeningDetailsRepository {
           screenedCount,
           hitCount,
           newCount,
+        }
+      }),
+    }
+  }
+
+  private async getSanctionsScreeningStatsV2Clickhouse(timestampRange?: {
+    from: number
+    to: number
+  }): Promise<SanctionsScreeningStats> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+
+    const query = `
+    WITH entity_type AS (
+  SELECT
+    entity,
+    CASE 
+      WHEN entity = 'USER' THEN userId 
+      WHEN entity = 'TRANSACTION' THEN transactionId 
+    END as entity_id,
+    isHit,
+    isNew
+  FROM
+        ${CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName} FINAL
+      ${
+        timestampRange
+          ? `WHERE timestamp BETWEEN ${timestampRange.from} AND ${timestampRange.to}`
+          : ''
+      }
+)
+SELECT
+  entity,
+  countDistinct(entity_id) as screenedCount,
+  sum(isHit = true) as hitCount,
+  sum(isNew = true) as newCount
+FROM entity_type
+GROUP BY
+  entity
+SETTINGS output_format_json_quote_64bit_integers = 0
+    `
+
+    const result = await executeClickhouseQuery<
+      SanctionsScreeningEntityStats[]
+    >(clickhouseClient, query)
+
+    return {
+      data: SANCTIONS_SCREENING_ENTITYS.map((entity) => {
+        const stats = result.find((r) => r.entity === entity)
+        return {
+          entity,
+          screenedCount: stats?.screenedCount ?? 0,
+          hitCount: stats?.hitCount ?? 0,
+          newCount: stats?.newCount ?? 0,
+        }
+      }),
+    }
+  }
+
+  public async getSanctionsScreeningStatsV2(timestampRange?: {
+    from: number
+    to: number
+  }): Promise<SanctionsScreeningStats> {
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      return this.getSanctionsScreeningStatsV2Clickhouse(timestampRange)
+    }
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsScreeningDetailsV2>(
+      SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(this.tenantId)
+    )
+    const pipeline = [
+      {
+        $match: {
+          lastScreenedAt: {
+            $gte: timestampRange?.from ?? 0,
+            $lte: timestampRange?.to ?? Number.MAX_SAFE_INTEGER,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            entity: '$entity',
+            id: {
+              $cond: {
+                if: { $eq: ['$entity', 'USER'] },
+                then: '$userId',
+                else: '$transactionId',
+              },
+            },
+          },
+          isHit: { $max: '$isHit' },
+          isNew: { $max: '$isNew' },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.entity',
+          screenedCount: { $sum: 1 },
+          hitCount: { $sum: { $cond: [{ $eq: ['$isHit', true] }, 1, 0] } },
+          newCount: { $sum: { $cond: [{ $eq: ['$isNew', true] }, 1, 0] } },
+        },
+      },
+    ]
+    const result = await collection
+      .aggregate(pipeline, { allowDiskUse: true })
+      .toArray()
+    return {
+      data: SANCTIONS_SCREENING_ENTITYS.map((entity) => {
+        const stats = result.find((r) => r._id === entity)
+        return {
+          entity,
+          screenedCount: stats?.screenedCount ?? 0,
+          hitCount: stats?.hitCount ?? 0,
+          newCount: stats?.newCount ?? 0,
         }
       }),
     }

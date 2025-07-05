@@ -158,6 +158,7 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   DRS_SCORE: 'dynamic-risk-values',
   ARS_SCORE: 'action-risk-values',
   SANCTIONS_SCREENING_DETAILS: 'sanctions-screening-details',
+  SANCTIONS_SCREENING_DETAILS_V2: 'sanctions-screening-details-v2',
   REPORTS: 'report',
   NOTIFICATIONS: 'notifications',
   JOBS: 'jobs',
@@ -375,6 +376,9 @@ export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
 
 export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS}`
+}
+export const SANCTIONS_SCREENING_DETAILS_V2_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2}`
 }
 
 export const AUDITLOG_COLLECTION = (tenantId: string) => {
@@ -913,6 +917,20 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { ruleInstanceIds: 1, transactionId: 1 },
         ].map((index) => ({ index })),
         ...[{ index: { name: 1, entity: 1, lastScreenedAt: 1 }, unique: true }],
+      ],
+    },
+    [SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        { index: { screeningId: 1 }, unique: true },
+        { index: { referenceCounter: 1 }, unique: true },
+        {
+          index: { userId: 1, lastScreenedAt: 1 },
+          partialFilterExpression: { userId: { $exists: true } },
+        },
+        {
+          index: { transactionId: 1, lastScreenedAt: 1 },
+          partialFilterExpression: { transactionId: { $exists: true } },
+        },
       ],
     },
     [DELTA_SANCTIONS_COLLECTION(tenantId)]: {

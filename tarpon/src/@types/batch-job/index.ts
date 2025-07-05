@@ -477,6 +477,11 @@ export type FlatFilesRunnerBatchJob = {
   }
 }
 
+export type SanctionsScreeningDetailsMigrationBatchJob = {
+  type: 'SANCTIONS_SCREENING_DETAILS_MIGRATION'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -529,7 +534,7 @@ export type BatchJob =
   | UserRuleReRunBatchJob
   | FlatFilesValidationBatchJob
   | FlatFilesRunnerBatchJob
-
+  | SanctionsScreeningDetailsMigrationBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

@@ -147,6 +147,7 @@ export enum ClickhouseTableNames {
   DrsScore = 'drs_score',
   ArsScore = 'ars_score',
   SanctionsScreeningDetails = 'sanctions_screening_details',
+  SanctionsScreeningDetailsV2 = 'sanctions_screening_details_v2',
   Alerts = 'alerts',
   CrmRecords = 'crm_records',
   CrmUserRecordLink = 'crm_user_record_link',
@@ -302,6 +303,15 @@ export const CLICKHOUSE_DEFINITIONS = {
       BY_ID: {
         viewName: 'sanctions_screening_details_by_id_mv',
         table: 'sanctions_screening_details_by_id',
+      },
+    },
+  },
+  SANCTIONS_SCREENING_DETAILS_V2: {
+    tableName: ClickhouseTableNames.SanctionsScreeningDetailsV2,
+    materializedViews: {
+      BY_ID: {
+        viewName: 'sanctions_screening_details_v2_by_id_mv',
+        table: 'sanctions_screening_details_v2_by_id',
       },
     },
   },
@@ -933,6 +943,43 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     ],
   },
   {
+    table: CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
+    idColumn: 'screeningId',
+    timestampColumn: 'lastScreenedAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, userId, transactionId, screeningId)',
+    orderBy: '(timestamp, userId, transactionId, screeningId)',
+    mongoIdColumn: false,
+    materializedColumns: [
+      "screeningId String MATERIALIZED JSON_VALUE(data, '$.screeningId')",
+      "lastScreenedAt UInt64 MATERIALIZED JSON_VALUE(data, '$.lastScreenedAt')",
+      "latestTimeStamp UInt64 MATERIALIZED JSON_VALUE(data, '$.latestTimeStamp')",
+      "name String MATERIALIZED JSON_VALUE(data, '$.name')",
+      enumFields(SANCTIONS_SCREENING_ENTITYS, 'entity', 'entity'),
+      "isNew Bool MATERIALIZED JSONExtractBool(data, 'isNew')",
+      "ruleInstanceIds Array(String) MATERIALIZED JSONExtract(data, 'ruleInstanceIds', 'Array(String)')",
+      "userId String MATERIALIZED JSON_VALUE(data, '$.userId')",
+      "transactionId String MATERIALIZED JSON_VALUE(data, '$.transactionId')",
+      "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
+      "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
+    ],
+    materializedViews: [
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2
+            .materializedViews.BY_ID.viewName,
+        columns: ['id String', 'data String'],
+        table:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2
+            .materializedViews.BY_ID.table,
+        engine: 'ReplacingMergeTree',
+        primaryKey: 'id',
+        orderBy: 'id',
+      },
+    ],
+  },
+
+  {
     table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
     idColumn: '_id',
     timestampColumn: 'createdAt',
@@ -1146,6 +1193,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
     CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2]:
+    CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
   [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
     CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,

@@ -14033,6 +14033,41 @@ components:
         - lastScreenedAt
         - name
         - entity
+    SanctionsScreeningDetailsV2:
+      type: object
+      title: SanctionsScreeningDetailsV2
+      properties:
+        name:
+          type: string
+        entity:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
+        ruleInstanceIds:
+          type: array
+          items:
+            type: string
+        userId:
+          type: string
+        transactionId:
+          type: string
+        isOngoingScreening:
+          type: boolean
+        isHit:
+          type: boolean
+        isNew:
+          type: boolean
+        searchId:
+          type: string
+        lastScreenedAt:
+          type: number
+        latestTimeStamp:
+          type: number
+        screeningId:
+          type: string
+      required:
+        - searchId
+        - lastScreenedAt
+        - name
+        - entity
     SanctionsScreeningDetailsResponse:
       type: object
       title: SanctionsScreeningDetailsResponse
