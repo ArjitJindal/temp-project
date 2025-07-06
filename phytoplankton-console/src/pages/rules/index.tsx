@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { MlModelsPage } from '../ml-models';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
 import { useRulesResults } from './utils';
@@ -20,6 +21,7 @@ import { useApi } from '@/api';
 const TableList = () => {
   const { tab = 'tab' } = useParams<'tab'>();
   const [, setLocalStorageActiveTab] = useSafeLocalStorageState('rule-active-tab', tab);
+  const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
   useEffect(() => {
     setLocalStorageActiveTab(tab);
@@ -70,12 +72,12 @@ const TableList = () => {
         type: 'RULES',
       }}
     >
-      <Content tab={tab} />
+      <Content tab={tab} hasMachineLearningFeature={hasMachineLearningFeature} />
     </BreadCrumbsWrapper>
   );
 };
 
-function Content(props: { tab: string }) {
+function Content(props: { tab: string; hasMachineLearningFeature: boolean }) {
   const navigate = useNavigate();
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const [isSimulationEnabled] = useSafeLocalStorageState<boolean>('SIMULATION_RULES', false);
@@ -127,8 +129,22 @@ function Content(props: { tab: string }) {
           </PageWrapperContentContainer>
         ),
       },
+      ...(props.hasMachineLearningFeature
+        ? [
+            {
+              title: 'AI detection',
+              key: 'ai-detection',
+
+              children: (
+                <PageWrapperContentContainer>
+                  <MlModelsPage />
+                </PageWrapperContentContainer>
+              ),
+            },
+          ]
+        : []),
     ],
-    [isSimulationEnabled, navigate, v8Enabled],
+    [isSimulationEnabled, navigate, v8Enabled, props.hasMachineLearningFeature],
   );
   return <PageTabs activeKey={props.tab} onChange={handleChange} items={items} />;
 }

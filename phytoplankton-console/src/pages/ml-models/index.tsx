@@ -2,9 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
-import { useI18n } from '@/locales';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
-import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -27,7 +25,6 @@ interface TableSearchParams extends CommonParams {
 }
 
 export const MlModelsPage = () => {
-  const i18n = useI18n();
   const api = useApi();
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -157,59 +154,55 @@ export const MlModelsPage = () => {
 
   const actionRef = useRef<TableRefType>(null);
   return (
-    <PageWrapper title={i18n('menu.ml-models')} description={i18n('menu.ml-models.description')}>
-      <PageWrapperContentContainer>
-        <QueryResultsTable<RuleMLModel, TableSearchParams>
-          tableId="ml-models-table"
-          innerRef={actionRef}
-          columns={columns}
-          queryResults={queryResult}
-          pagination={false}
-          rowKey="id"
-          params={params}
-          onChangeParams={(params) => {
-            setParams(params);
-          }}
-          extraFilters={[
-            {
-              title: 'Model ID',
-              key: 'modelId',
-              renderer: {
-                kind: 'string',
+    <QueryResultsTable<RuleMLModel, TableSearchParams>
+      tableId="ml-models-table"
+      innerRef={actionRef}
+      columns={columns}
+      queryResults={queryResult}
+      pagination={false}
+      rowKey="id"
+      params={params}
+      onChangeParams={(params) => {
+        setParams(params);
+      }}
+      extraFilters={[
+        {
+          title: 'Model ID',
+          key: 'modelId',
+          renderer: {
+            kind: 'string',
+          },
+          showFilterByDefault: true,
+        },
+        {
+          title: 'Model name',
+          key: 'modelName',
+          renderer: {
+            kind: 'string',
+          },
+          showFilterByDefault: true,
+        },
+        {
+          title: 'Model type',
+          key: 'modelType',
+          renderer: {
+            kind: 'select',
+            options: [
+              {
+                value: 'EXPLAINABLE',
+                label: 'Explainable',
               },
-              showFilterByDefault: true,
-            },
-            {
-              title: 'Model name',
-              key: 'modelName',
-              renderer: {
-                kind: 'string',
+              {
+                value: 'NON_EXPLAINABLE',
+                label: 'Non-explainable',
               },
-              showFilterByDefault: true,
-            },
-            {
-              title: 'Model type',
-              key: 'modelType',
-              renderer: {
-                kind: 'select',
-                options: [
-                  {
-                    value: 'EXPLAINABLE',
-                    label: 'Explainable',
-                  },
-                  {
-                    value: 'NON_EXPLAINABLE',
-                    label: 'Non-explainable',
-                  },
-                ],
-                mode: 'SINGLE',
-                displayMode: 'select',
-              },
-              showFilterByDefault: true,
-            },
-          ]}
-        />
-      </PageWrapperContentContainer>
-    </PageWrapper>
+            ],
+            mode: 'SINGLE',
+            displayMode: 'select',
+          },
+          showFilterByDefault: true,
+        },
+      ]}
+    />
   );
 };
