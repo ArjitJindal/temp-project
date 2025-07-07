@@ -1,8 +1,12 @@
 import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
+import * as Sentry from '@sentry/serverless'
 
 import { omit } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+
+import { stageAndRegion } from '@flagright/lib/utils'
+import { logger } from '@/core/logger'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import {
   paginatePipeline,
@@ -21,6 +25,7 @@ import {
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { ClickhouseAuditLogRepository } from '@/services/audit-log/repositories/clickhouse-repository'
 import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
+import { getAllTenantIds } from '@/utils/tenant'
 
 @traceable
 export class AuditLogRepository {
@@ -64,10 +69,42 @@ export class AuditLogRepository {
       timestamp: Date.now(),
       ...auditLog,
     }
+    const allTenantIds = await getAllTenantIds()
+    const db = this.mongoDb.db()
+    const [stage] = stageAndRegion()
+    if (
+      !allTenantIds.has(this.tenantId) &&
+      stage !== 'test' &&
+      stage !== 'local'
+    ) {
+      logger.warn('Not saving audit log for unknown tenant:', {
+        tenantId: this.tenantId,
+        auditlogId: newAuditLog.auditlogId,
+        type: newAuditLog.type,
+        subtype: newAuditLog.subtype,
+        action: newAuditLog.action,
+        entityId: newAuditLog.entityId,
+        timestamp: newAuditLog.timestamp,
+      })
+      Sentry.captureException(
+        new Error(`Unknown tenantId found in audit log: ${this.tenantId}`),
+        {
+          extra: {
+            tenantId: this.tenantId,
+            auditlogId: newAuditLog.auditlogId,
+            type: newAuditLog.type,
+            subtype: newAuditLog.subtype,
+            action: newAuditLog.action,
+            entityId: newAuditLog.entityId,
+            timestamp: newAuditLog.timestamp,
+          },
+        }
+      )
+      return newAuditLog
+    }
     if (isClickhouseEnabledInRegion()) {
       await this.dynamoAuditLogRepository.saveAuditLog(newAuditLog)
     }
-    const db = this.mongoDb.db()
     const collection = db.collection<AuditLog>(
       AUDITLOG_COLLECTION(this.tenantId)
     )

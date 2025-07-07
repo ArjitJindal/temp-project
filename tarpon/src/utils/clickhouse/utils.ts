@@ -271,7 +271,8 @@ const clickhouseInsert = async (
       ...options,
       retry: (error, attemptNumber) => {
         logger.warn(
-          `ClickHouse insert failed, retrying... Attempt ${attemptNumber}: ${error.message}`
+          `ClickHouse insert failed, retrying... Attempt ${attemptNumber}: ${error.message}`,
+          { error, attemptNumber, table, tenantId }
         )
         return true
       },

@@ -1,5 +1,28 @@
-import { isWhitelabelAuth0Domain } from './auth0-utils'
+import { Db } from 'mongodb'
+import { stageAndRegion } from '@flagright/lib/utils'
+import { Stage, FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
+import { QueryCommand } from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
+import { getAuth0Domain, isWhitelabelAuth0Domain } from './auth0-utils'
+import { TENANT_DELETION_COLLECTION } from './mongodb-definitions'
+import { getDynamoDbClient } from './dynamodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { TenantInfo } from '@/services/tenants'
+
+export type Tenant = {
+  id: string
+  name: string
+  orgId: string
+  apiAudience: string
+  region: string
+  isProductionAccessDisabled: boolean
+  tenantCreatedAt: string
+  consoleApiUrl: string
+  auth0Domain: string
+}
 
 export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
   if (tenantId.endsWith('-test')) {
@@ -20,4 +43,67 @@ export const isWhitelabeledTenantFromSettings = (
   settings: Pick<TenantSettings, 'auth0Domain'>
 ): boolean => {
   return !!settings.auth0Domain && isWhitelabelAuth0Domain(settings.auth0Domain)
+}
+
+export const getDeletedTenantIdsSet = async (db: Db): Promise<Set<string>> => {
+  const deletedTenantIds = await db
+    .collection(TENANT_DELETION_COLLECTION)
+    .find({})
+    .toArray()
+  const deletedTenantIdsSet = new Set<string>()
+  deletedTenantIds.forEach((tenant) => {
+    const tenantId = tenant.tenantId
+    deletedTenantIdsSet.add(tenantId)
+    deletedTenantIdsSet.add(`${tenantId}-test`)
+  })
+  return deletedTenantIdsSet
+}
+
+export const getAllTenantIds = async (): Promise<Set<string>> => {
+  const [stage, region] = stageAndRegion()
+  const dynamoDb = getDynamoDbClient()
+  const auth0TenantConfigs = getAuth0TenantConfigs(
+    stage as Stage,
+    region as FlagrightRegion
+  )
+  const tenantInfos: TenantInfo[] = []
+
+  for (const auth0TenantConfig of auth0TenantConfigs) {
+    const auth0Domain = getAuth0Domain(
+      auth0TenantConfig.tenantName,
+      auth0TenantConfig.region
+    )
+    const query = new QueryCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.ORGANIZATION(auth0Domain, FLAGRIGHT_TENANT_ID)
+          .PartitionKeyID,
+      },
+    })
+
+    const result = await dynamoDb.send(query)
+
+    const tenants = ((result.Items ?? []) as Tenant[]).filter(
+      (item) => item.auth0Domain === auth0Domain
+    )
+
+    tenantInfos.push(
+      ...tenants.map((tenant) => ({
+        tenant,
+        auth0Domain,
+        auth0TenantConfig,
+      }))
+    )
+  }
+
+  // Apply region filtering similar to TenantService.getAllTenants
+  const filteredTenantInfos = region
+    ? tenantInfos.filter(
+        (tenantInfo) =>
+          !tenantInfo.tenant.region || tenantInfo.tenant.region === region
+      )
+    : tenantInfos
+
+  return new Set(filteredTenantInfos.map((tenantInfo) => tenantInfo.tenant.id))
 }

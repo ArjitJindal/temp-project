@@ -1,8 +1,13 @@
 import { SQSEvent } from 'aws-lambda'
 import { groupBy } from 'lodash'
+import * as Sentry from '@sentry/serverless'
+
+import { stageAndRegion } from '@flagright/lib/utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
+import { logger } from '@/core/logger'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getAllTenantIds } from '@/utils/tenant'
 import { ApiRequestLog } from '@/@types/request-logger'
 import {
   batchInsertToClickhouse,
@@ -13,10 +18,42 @@ import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  const filteredLogs = logs.filter(
-    (log) => log.tenantId && log.tenantId !== 'undefined'
-  )
+  const [stage] = stageAndRegion()
+  const allTenantIds = await getAllTenantIds()
+  const filteredLogs = logs.filter((log) => {
+    if (
+      !allTenantIds.has(log.tenantId) &&
+      stage !== 'test' &&
+      stage !== 'local'
+    ) {
+      logger.warn('Unknown tenantId found:', {
+        tenantId: log.tenantId,
+        requestId: log.requestId || 'no-request-id',
+        traceId: log.traceId,
+        path: log.path,
+        method: log.method,
+        timestamp: log.timestamp,
+      })
+      Sentry.captureException(
+        new Error(`Unknown tenantId found: ${log.tenantId}`),
+        {
+          extra: {
+            tenantId: log.tenantId,
+            requestId: log.requestId || 'no-request-id',
+            traceId: log.traceId,
+            path: log.path,
+            method: log.method,
+            timestamp: log.timestamp,
+          },
+        }
+      )
+      return false
+    }
+    return true
+  })
+
   const logGroups = groupBy(filteredLogs, (log) => log.tenantId)
+
   for (const tenantId in logGroups) {
     const tenantLogs = logGroups[tenantId]
     if (isClickhouseEnabledInRegion()) {

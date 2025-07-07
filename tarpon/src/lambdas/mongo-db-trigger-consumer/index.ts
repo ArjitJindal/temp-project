@@ -9,6 +9,9 @@ import {
 import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import * as Sentry from '@sentry/serverless'
+
+import { stageAndRegion } from '@flagright/lib/utils'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -27,6 +30,7 @@ import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { logger } from '@/core/logger'
+import { getAllTenantIds } from '@/utils/tenant'
 
 type TableDetails = {
   tenantId: string
@@ -69,9 +73,51 @@ export class MongoDbConsumer {
     }
   )
 
+  private async filterEventsByTenantId(
+    events: MongoConsumerMessage[]
+  ): Promise<MongoConsumerMessage[]> {
+    const allTenantIds = await getAllTenantIds()
+    const [stage] = stageAndRegion()
+    const filteredEvents = events.filter((event) => {
+      const { collectionName } = event
+      const tableDetails = this.fetchTableDetails(collectionName)
+      if (!tableDetails) {
+        return false
+      }
+      const { tenantId } = tableDetails
+      if (
+        !allTenantIds.has(tenantId) &&
+        stage !== 'test' &&
+        stage !== 'local'
+      ) {
+        logger.warn(
+          `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
+        )
+        Sentry.captureException(
+          new Error(
+            `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
+          ),
+          {
+            extra: {
+              tenantId: tenantId,
+              collectionName: event.collectionName,
+              operationType: event.operationType,
+              clusterTime: event.clusterTime,
+            },
+          }
+        )
+        return false
+      }
+      return true
+    })
+    return filteredEvents
+  }
+
   public async handleMongoConsumerMessage(events: MongoConsumerMessage[]) {
+    const filteredEvents = await this.filterEventsByTenantId(events)
+
     const { messagesToReplace, messagesToDelete } =
-      this.segregateMessages(events)
+      this.segregateMessages(filteredEvents)
 
     await this.handleMessagesReplace(messagesToReplace)
     await this.handleMessagesDelete(messagesToDelete)
