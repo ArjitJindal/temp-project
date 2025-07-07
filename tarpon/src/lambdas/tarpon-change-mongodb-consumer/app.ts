@@ -64,6 +64,14 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
 import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import {
+  SimulationAllJobs,
+  SimulationTaskRepository,
+} from '@/services/simulation/repositories/simulation-task-repository'
+import {
+  SimulationResult,
+  SimulationResultRepository,
+} from '@/services/simulation/repositories/simulation-result-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -185,6 +193,30 @@ export class TarponChangeMongoDbConsumer {
             this.handleRiskClassificationHistory(
               tenantId,
               newRiskClassificationHistory,
+              dbClients
+            )
+        )
+        .setSimulationTaskHandler(
+          (tenantId, oldSimulationTask, newSimulationTask, dbClients) =>
+            this.handleSimulationTask(tenantId, newSimulationTask, dbClients)
+        )
+        .setSimulationResultHandler(
+          (tenantId, oldSimulationResult, newSimulationResult, dbClients) =>
+            this.handleSimulationResult(
+              tenantId,
+              newSimulationResult,
+              dbClients
+            )
+        )
+        .setSimulationTaskHandler(
+          (tenantId, oldSimulationTask, newSimulationTask, dbClients) =>
+            this.handleSimulationTask(tenantId, newSimulationTask, dbClients)
+        )
+        .setSimulationResultHandler(
+          (tenantId, oldSimulationResult, newSimulationResult, dbClients) =>
+            this.handleSimulationResult(
+              tenantId,
+              newSimulationResult,
               dbClients
             )
         )
@@ -816,6 +848,48 @@ export class TarponChangeMongoDbConsumer {
     await riskClassificationHistoryRepository.createRiskClassificationHistoryInClickhouse(
       newRiskClassificationHistory
     )
+  }
+  async handleSimulationTask(
+    tenantId: string,
+    newSimulationTask: SimulationAllJobs | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newSimulationTask) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleSimulationTask'
+    )
+    const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      dbClients.mongoDb
+    )
+    await simulationTaskRepository.linkSimulationTaskClickHouse(
+      newSimulationTask
+    )
+    subSegment?.close()
+  }
+  async handleSimulationResult(
+    tenantId: string,
+    newSimulationResult: SimulationResult | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newSimulationResult) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleSimulationResult'
+    )
+    const simulationResultRepository = new SimulationResultRepository(
+      tenantId,
+      dbClients.mongoDb
+    )
+    await simulationResultRepository.linkSimulationResultClickHouse(
+      newSimulationResult
+    )
+    subSegment?.close()
   }
 }
 

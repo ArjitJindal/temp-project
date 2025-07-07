@@ -7952,6 +7952,8 @@ components:
         - AUDIT_LOG
         - METRICS
         - BATCH_JOBS
+        - SIMULATION_TASK
+        - SIMULATION_RESULT
     FlatFileSchema:
       title: FlatFileSchema
       type: string

@@ -78,6 +78,11 @@ export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
 export const JOBS_KEY_IDENTIFIER = '#jobs'
 export const REASONS_KEY_IDENTIFIER = '#reasons'
+export const SIMULATION_TASK_KEY_IDENTIFIER = '#simulation-task'
+export const SIMULATION_TASK_ITERATION_KEY_IDENTIFIER =
+  '#simulation-task-iteration'
+export const SIMULATION_RESULT_KEY_IDENTIFIER = '#simulation-result'
+
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
   transactionId: string
@@ -627,6 +632,18 @@ export const DynamoDbKeys = {
   REASONS: (tenantId: string, id: string, reasonType?: ReasonType) => ({
     PartitionKeyID: `${tenantId}${REASONS_KEY_IDENTIFIER}`,
     SortKeyID: `${reasonType}#${id}`,
+  }),
+  SIMULATION_TASK: (tenantId: string, jobId: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_TASK_KEY_IDENTIFIER}`,
+    SortKeyID: jobId,
+  }),
+  SIMULATION_TASK_ITERATION: (tenantId: string, taskId: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_TASK_ITERATION_KEY_IDENTIFIER}`,
+    SortKeyID: `${taskId}`,
+  }),
+  SIMULATION_RESULT: (tenantId: string, id: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_RESULT_KEY_IDENTIFIER}`,
+    SortKeyID: id,
   }),
 }
 

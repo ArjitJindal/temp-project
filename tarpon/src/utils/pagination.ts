@@ -1,4 +1,4 @@
-import { get, isEmpty } from 'lodash'
+import { get, isEmpty, isNumber } from 'lodash'
 import { validate as uuidValidate } from 'uuid'
 import {
   Collection,
@@ -297,7 +297,7 @@ export async function offsetPaginateClickhouse<T>(
     items: callbackMap
       ? items.map((item) => callbackMap(item))
       : (items as unknown as T[]),
-    count: count[0].count,
+    count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
   }
 }
 
@@ -305,7 +305,9 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   client: ClickHouseClient,
   queryTableName: string,
   query: ClickhousePaginationParams,
-  where = '1'
+  where = '1',
+  idColumn = 'id',
+  includeTimestampFilter = true
 ): Promise<{ items: string[]; count: number }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
@@ -314,12 +316,16 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   const offset = (page - 1) * pageSize
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  const findSql = `SELECT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  const findSql = `SELECT ${idColumn} as id FROM ${queryTableName} FINAL ${
+    where
+      ? `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'} AND ${where}`
+      : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
 
-  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
-    where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
+  const countQuery = `SELECT COUNT(${idColumn}) as count FROM ${queryTableName} FINAL ${
+    where
+      ? `WHERE ${where} AND ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
+      : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   }`
   const [items, count] = await Promise.all([
     executeClickhouseQuery<{ id: string }[]>(client, {
@@ -335,7 +341,7 @@ export async function offsetPaginateClickhouseWithoutDataTable(
 
   return {
     items: items.map((item) => item.id),
-    count: count[0].count,
+    count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
   }
 }
 

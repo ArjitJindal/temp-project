@@ -163,6 +163,8 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   NOTIFICATIONS: 'notifications',
   JOBS: 'jobs',
   REASONS: 'reasons',
+  SIMULATION_TASK: 'simulation-task',
+  SIMULATION_RESULT: 'simulation-result',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {

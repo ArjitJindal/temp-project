@@ -1,5 +1,14 @@
-import { AggregationCursor, Filter, MongoClient, Document } from 'mongodb'
+import {
+  AggregationCursor,
+  Filter,
+  MongoClient,
+  Document,
+  ObjectId,
+} from 'mongodb'
 import pMap from 'p-map'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ClickhouseSimulationResultRepository } from './clickhouse-simulation-result-repository'
+import { DynamoSimulationResultRepository } from './dynamo-simulation-result-repository'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
@@ -10,12 +19,22 @@ import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
 import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
 import { isDemoTenant } from '@/utils/tenant'
+import {
+  batchInsertToClickhouse,
+  getClickhouseClient,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
-type SimulationResult =
+export type WithId<T> = T & { id?: string; _id?: ObjectId }
+
+export type SimulationResult = WithId<
   | SimulationRiskLevelsResult
   | SimulationV8RiskFactorsResult
   | SimulationBeaconResultUser
   | SimulationBeaconTransactionResult
+>
 
 type SimulationResultReturnType = {
   total: number
@@ -26,10 +45,30 @@ type SimulationResultReturnType = {
 export class SimulationResultRepository {
   tenantId: string
   mongoDb: MongoClient
-
+  dynamoDb: DynamoDBDocumentClient
+  clickhouseSimulationResultRepository?: ClickhouseSimulationResultRepository
+  dynamoSimulationResultRepository: DynamoSimulationResultRepository
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.dynamoDb = getDynamoDbClient()
+    this.dynamoSimulationResultRepository =
+      new DynamoSimulationResultRepository(tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+  }
+
+  private async getClickhouseSimulationResultRepository(): Promise<ClickhouseSimulationResultRepository> {
+    if (this.clickhouseSimulationResultRepository) {
+      return this.clickhouseSimulationResultRepository
+    }
+    const clickhouse = await getClickhouseClient(this.tenantId)
+    this.clickhouseSimulationResultRepository =
+      new ClickhouseSimulationResultRepository(this.tenantId, {
+        clickhouseClient: clickhouse,
+        dynamoDb: this.dynamoDb,
+      })
+    return this.clickhouseSimulationResultRepository
   }
 
   public async saveSimulationResults(
@@ -38,7 +77,9 @@ export class SimulationResultRepository {
     if (results.length === 0) {
       return
     }
-
+    if (isClickhouseMigrationEnabled()) {
+      await this.dynamoSimulationResultRepository.saveSimulationResult(results)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection(
       SIMULATION_RESULT_COLLECTION(this.tenantId)
@@ -171,6 +212,11 @@ export class SimulationResultRepository {
   private async getSimulationCount(
     params: DefaultApiGetSimulationTaskIdResultRequest
   ): Promise<number> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseRepository =
+        await this.getClickhouseSimulationResultRepository()
+      return clickhouseRepository.getSimulationCount(params)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationResult>(
       SIMULATION_RESULT_COLLECTION(this.tenantId)
@@ -240,9 +286,34 @@ export class SimulationResultRepository {
   public async getSimulationResults(
     params: DefaultApiGetSimulationTaskIdResultRequest
   ): Promise<SimulationResultReturnType> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseRepository =
+        await this.getClickhouseSimulationResultRepository()
+      const { items, count } = await clickhouseRepository.getSimulationResults(
+        params
+      )
+      const results =
+        await this.dynamoSimulationResultRepository.getSimulationResultsFromIds(
+          items
+        )
+      return {
+        total: count,
+        items: results,
+      }
+    }
     return {
       total: await this.getSimulationCount(params),
       items: await (await this.getSimulationCursor(params)).toArray(),
     }
+  }
+
+  public async linkSimulationResultClickHouse(
+    simulationResult: SimulationResult
+  ) {
+    await batchInsertToClickhouse(
+      this.tenantId,
+      CLICKHOUSE_DEFINITIONS.SIMULATION_RESULT.tableName,
+      [simulationResult]
+    )
   }
 }

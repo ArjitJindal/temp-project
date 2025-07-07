@@ -38,6 +38,8 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject } from '@/utils/llms'
 import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import { SimulationAllJobs } from '@/services/simulation/repositories/simulation-task-repository'
+import { SimulationResult } from '@/services/simulation/repositories/simulation-result-repository'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -142,6 +144,18 @@ type LLMRequestsHandler = (
   newGptRequests: LLMLogObject | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type SimulationTaskHandler = (
+  tenantId: string,
+  oldSimulationTask: SimulationAllJobs | undefined,
+  newSimulationTask: SimulationAllJobs | undefined,
+  dbClients: DbClients
+) => Promise<void>
+type SimulationResultHandler = (
+  tenantId: string,
+  oldSimulationResult: SimulationResult | undefined,
+  newSimulationResult: SimulationResult | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 type RiskClassificationHistoryHandler = (
   tenantId: string,
@@ -175,6 +189,8 @@ export class StreamConsumerBuilder {
   llmRequestsHandler?: LLMRequestsHandler
   riskClassificationHistoryHandler?: RiskClassificationHistoryHandler
 
+  simulationTaskHandler?: SimulationTaskHandler
+  simulationResultHandler?: SimulationResultHandler
   constructor(
     name: string,
     fanOutSqsQueue: string,
@@ -287,6 +303,20 @@ export class StreamConsumerBuilder {
     llmRequestsHandler: LLMRequestsHandler
   ): StreamConsumerBuilder {
     this.llmRequestsHandler = llmRequestsHandler
+    return this
+  }
+
+  public setSimulationTaskHandler(
+    simulationTaskHandler: SimulationTaskHandler
+  ): StreamConsumerBuilder {
+    this.simulationTaskHandler = simulationTaskHandler
+    return this
+  }
+
+  public setSimulationResultHandler(
+    simulationResultHandler: SimulationResultHandler
+  ): StreamConsumerBuilder {
+    this.simulationResultHandler = simulationResultHandler
     return this
   }
 
@@ -493,6 +523,26 @@ export class StreamConsumerBuilder {
       await this.llmRequestsHandler(
         update.tenantId,
         update.NewImage as LLMLogObject,
+        dbClients
+      )
+    } else if (
+      update.type === 'SIMULATION_TASK' &&
+      this.simulationTaskHandler
+    ) {
+      await this.simulationTaskHandler(
+        update.tenantId,
+        update.OldImage as SimulationAllJobs,
+        update.NewImage as SimulationAllJobs,
+        dbClients
+      )
+    } else if (
+      update.type === 'SIMULATION_RESULT' &&
+      this.simulationResultHandler
+    ) {
+      await this.simulationResultHandler(
+        update.tenantId,
+        update.OldImage as SimulationResult,
+        update.NewImage as SimulationResult,
         dbClients
       )
     }

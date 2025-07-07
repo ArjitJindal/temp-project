@@ -1,10 +1,13 @@
-import { Filter, MongoClient } from 'mongodb'
+import { Filter, MongoClient, ObjectId } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { memoize, omit, random } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
 import { demoRiskFactorsV8Simulation } from '../utils/demo-risk-factors-v8-simulation'
 import { SimulationResultRepository } from './simulation-result-repository'
+import { ClickhouseSimulationTaskRepository } from './clickhouse-simulation-task-repository'
+import { DynamoSimulationTaskRepository } from './dynamo-simulation-task-repository'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
@@ -44,23 +47,32 @@ import { SimulationBeaconResultUser } from '@/@types/openapi-internal/Simulation
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
+import {
+  batchInsertToClickhouse,
+  getClickhouseClient,
+  isClickhouseEnabledInRegion,
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
-type SimulationRequest =
+type WithId<T> = T & { _id?: ObjectId | string }
+
+type SimulationRequest = WithId<
   | SimulationRiskLevelsParametersRequest
   | SimulationBeaconParametersRequest
   | SimulationV8RiskFactorsParametersRequest
+>
 
 type SimulationIteration =
   | SimulationRiskLevelsIteration
   | SimulationBeaconIteration
   | SimulationV8RiskFactorsIteration
 
-type SimulationAllJobs =
-  | SimulationRiskLevelsJob
-  | SimulationBeaconJob
-  | V8RiskSimulationJob
+export type SimulationAllJobs = WithId<
+  SimulationRiskLevelsJob | SimulationBeaconJob | V8RiskSimulationJob
+>
 
-type SimulationStatisticsResult =
+export type SimulationStatisticsResult =
   | SimulationRiskLevelsStatisticsResult
   | SimulationBeaconStatisticsResult
   | SimulationV8RiskFactorsStatisticsResult
@@ -69,10 +81,29 @@ type SimulationStatisticsResult =
 export class SimulationTaskRepository {
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb: DynamoDBClient
+  dynamoDbRepository: DynamoSimulationTaskRepository
+  clickhouseSimulationTaskRepository?: ClickhouseSimulationTaskRepository
 
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.dynamoDb = getDynamoDbClient()
+    this.dynamoDbRepository = new DynamoSimulationTaskRepository(
+      tenantId,
+      this.dynamoDb
+    )
+  }
+  private async getClickhouseSimulationTaskRepository() {
+    if (this.clickhouseSimulationTaskRepository) {
+      return this.clickhouseSimulationTaskRepository
+    }
+    const clickhouse = await getClickhouseClient(this.tenantId)
+    this.clickhouseSimulationTaskRepository =
+      new ClickhouseSimulationTaskRepository(this.tenantId, {
+        clickhouseClient: clickhouse,
+      })
+    return this.clickhouseSimulationTaskRepository
   }
 
   private generateIterationsObject(
@@ -145,6 +176,7 @@ export class SimulationTaskRepository {
     const jobId = simulationRequest.jobId ?? uuidv4()
 
     if (simulationRequest.jobId) {
+      // Todo: To use this.dynamoDbRepository.getSimulationTask(simulationRequest.jobId) when moving away from mongodb
       const existsingJob = await collection.findOne({
         _id: simulationRequest.jobId as any,
       })
@@ -161,6 +193,12 @@ export class SimulationTaskRepository {
           },
         }
       )
+      if (isClickhouseEnabledInRegion()) {
+        await this.dynamoDbRepository.setIterationsForSimulationTask(
+          jobId,
+          newIterations
+        )
+      }
     } else {
       const createdByUser = getContext()?.user as Account
       const baseJob: SimulationJob = {
@@ -214,6 +252,12 @@ export class SimulationTaskRepository {
         _id: job.jobId as any,
         ...job,
       })
+
+      if (isClickhouseEnabledInRegion()) {
+        await this.dynamoDbRepository.saveSimulationTask([
+          { ...job, _id: job.jobId },
+        ])
+      }
     }
 
     return { jobId, taskIds }
@@ -402,6 +446,12 @@ export class SimulationTaskRepository {
       ...demoJob,
     })
 
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoDbRepository.saveSimulationTask([
+        { ...demoJob, _id: demoJob.jobId },
+      ])
+    }
+
     await simulationResultRepository.saveSimulationResults(usersResult)
 
     return { jobId: demoJob.jobId, taskIds }
@@ -481,7 +531,11 @@ export class SimulationTaskRepository {
       _id: demoJob.jobId as any,
       ...demoJob,
     })
-
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoDbRepository.saveSimulationTask([
+        { ...demoJob, _id: demoJob.jobId },
+      ])
+    }
     const dynamoDb = getDynamoDbClient()
     const mongoTransactionsRepository = new MongoDbTransactionRepository(
       this.tenantId,
@@ -626,10 +680,16 @@ export class SimulationTaskRepository {
     taskId: string,
     statistics: T
   ) {
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoDbRepository.updateStatistics(taskId, statistics)
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoDbRepository.updateStatistics(taskId, statistics)
+    }
     await collection.updateOne(
       { 'iterations.taskId': taskId },
       {
@@ -662,7 +722,14 @@ export class SimulationTaskRepository {
       : status === 'SUCCESS'
       ? 1
       : undefined
-
+    if (isClickhouseEnabledInRegion()) {
+      await this.dynamoDbRepository.updateTaskStatus(
+        taskId,
+        newStatus,
+        progressToSave,
+        totalEntities
+      )
+    }
     await collection.updateOne(
       { 'iterations.taskId': taskId },
       {
@@ -683,6 +750,12 @@ export class SimulationTaskRepository {
   public async getSimulationJob<T extends SimulationAllJobs>(
     jobId: string
   ): Promise<T | null> {
+    if (isClickhouseMigrationEnabled()) {
+      const result = await this.dynamoDbRepository.getSimulationTasksFromIds([
+        jobId,
+      ])
+      return (result[0] as T) ?? null
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<T>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
@@ -697,6 +770,20 @@ export class SimulationTaskRepository {
   public async getSimulationJobs(
     params: DefaultApiGetSimulationsRequest
   ): Promise<SimulationGetResponse> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseRepository =
+        await this.getClickhouseSimulationTaskRepository()
+      const { items, count } = await clickhouseRepository.getSimulationJobs(
+        params
+      )
+      const result = await this.dynamoDbRepository.getSimulationTasksFromIds(
+        items
+      )
+      return {
+        total: count,
+        data: result,
+      }
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
@@ -752,10 +839,22 @@ export class SimulationTaskRepository {
   }
 
   public async getSimulationJobsCount(): Promise<number> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseRepository =
+        await this.getClickhouseSimulationTaskRepository()
+      return clickhouseRepository.getSimulationJobsCount()
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     return collection.countDocuments({ internal: { $ne: true } })
+  }
+  public async linkSimulationTaskClickHouse(simulationTask: SimulationAllJobs) {
+    await batchInsertToClickhouse(
+      this.tenantId,
+      CLICKHOUSE_DEFINITIONS.SIMULATION_TASK.tableName,
+      [simulationTask]
+    )
   }
 }

@@ -158,6 +158,8 @@ export enum ClickhouseTableNames {
   Notifications = 'notifications',
   GptRequests = 'gpt_request_logs',
   Metrics = 'metrics',
+  SimulationTask = 'simulation_task',
+  SimulationResult = 'simulation_result',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -347,6 +349,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   METRICS: {
     tableName: ClickhouseTableNames.Metrics,
+  },
+  SIMULATION_TASK: {
+    tableName: ClickhouseTableNames.SimulationTask,
+  },
+  SIMULATION_RESULT: {
+    tableName: ClickhouseTableNames.SimulationResult,
   },
 } as const
 
@@ -1167,6 +1175,50 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "date Date MATERIALIZED JSONExtractString(data, 'date')",
       "value Float64 MATERIALIZED JSONExtractFloat(data, 'value')",
       "collectedTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'collectedTimestamp')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SIMULATION_TASK.tableName,
+    idColumn: 'jobId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: 'jobId',
+    orderBy: 'jobId',
+    materializedColumns: [
+      "jobId String MATERIALIZED JSONExtractString(data, 'jobId')",
+      "createdBy String MATERIALIZED JSONExtractString(data, 'createdBy')",
+      "type LowCardinality(String) MATERIALIZED JSONExtractString(data, 'type')",
+      "internal Bool MATERIALIZED JSONExtractBool(data, 'internal')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "iterations_count UInt32 MATERIALIZED length(JSONExtract(data, 'iterations', 'Array(String)'))",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SIMULATION_RESULT.tableName,
+    idColumn: 'id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "taskId String MATERIALIZED JSONExtractString(data, 'taskId')",
+      "userId String MATERIALIZED JSONExtractString(data, 'userId')",
+      "transactionId String MATERIALIZED JSONExtractString(data, 'transactionId')",
+      "originUserId String MATERIALIZED JSONExtractString(data, 'originUser', 'userId')",
+      "destinationUserId String MATERIALIZED JSONExtractString(data, 'destinationUser', 'userId')",
+      "originPaymentMethod String MATERIALIZED JSONExtractString(data, 'originPaymentDetails', 'paymentMethod')",
+      "destinationPaymentMethod String MATERIALIZED JSONExtractString(data, 'destinationPaymentDetails', 'paymentMethod')",
+      "hitStatus String MATERIALIZED JSONExtractString(data, 'hit')",
+      "action String MATERIALIZED JSONExtractString(data, 'action')",
+      "currentKrsRiskLevel String MATERIALIZED JSONExtractString(data, 'current', 'krs', 'riskLevel')",
+      "simulatedKrsRiskLevel String MATERIALIZED JSONExtractString(data, 'simulated', 'krs', 'riskLevel')",
+      "currentDrsRiskLevel String MATERIALIZED JSONExtractString(data, 'current', 'drs', 'riskLevel')",
+      "simulatedDrsRiskLevel String MATERIALIZED JSONExtractString(data, 'simulated', 'drs', 'riskLevel')",
+      "type String MATERIALIZED JSONExtractString(data, 'type')",
+      "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
     ],
   },
 ] as const

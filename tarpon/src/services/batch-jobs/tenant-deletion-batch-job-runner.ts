@@ -374,7 +374,19 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
       REASONS: {
         method: this.deleteReasons.bind(this),
-        order: 22,
+        order: 23,
+      },
+      SIMULATION_TASK: {
+        method: this.deleteSimulationTasks.bind(this),
+        order: 24,
+      },
+      SIMULATION_TASK_ITERATION: {
+        method: this.deleteSimulationTaskIterations.bind(this),
+        order: 25,
+      },
+      SIMULATION_RESULT: {
+        method: this.deleteSimulationResults.bind(this),
+        order: 26,
       },
     }
 
@@ -1039,6 +1051,51 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Reasons'
+    )
+  }
+
+  private async deleteSimulationTasks(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SIMULATION_TASK(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Simulation Task'
+    )
+  }
+
+  private async deleteSimulationTaskIterations(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SIMULATION_TASK_ITERATION(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Simulation Task Iteration'
+    )
+  }
+
+  private async deleteSimulationResults(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SIMULATION_RESULT(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Simulation Result'
     )
   }
 }
