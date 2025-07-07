@@ -42,6 +42,7 @@ import {
 } from '@/services/cases/repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -367,7 +368,13 @@ export class CaseCreationService {
         destinationPaymentMethods: compact(
           uniq(transactions.map((t) => t.destinationPaymentDetails?.method))
         ),
-        tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
+        tags: compact(
+          uniqObjects(
+            transactions
+              .flatMap((t) => t.tags ?? [])
+              .concat(caseUser.tags ?? [])
+          )
+        ),
       },
     }
 
@@ -1006,8 +1013,9 @@ export class CaseCreationService {
     return caseEntity
   }
 
-  private getCaseAggregatesFromTransactions(
-    transactions: InternalTransaction[]
+  private getCaseAggregates(
+    transactions: InternalTransaction[],
+    caseUsers?: CaseCaseUsers
   ): CaseAggregates {
     const originPaymentMethods = uniq(
       compact(
@@ -1024,9 +1032,31 @@ export class CaseCreationService {
         )
       )
     )
-    const tags = uniqObjects(
-      compact(transactions.flatMap(({ tags }) => tags ?? []))
-    ).sort()
+
+    // Collect transaction tags
+    const transactionTags = compact(
+      transactions.flatMap(({ tags }) => tags ?? [])
+    )
+
+    // Collect user tags from case users
+    const userTags: Array<{ key: string; value: string }> = []
+    if (
+      caseUsers?.origin &&
+      'tags' in caseUsers.origin &&
+      caseUsers.origin.tags
+    ) {
+      userTags.push(...caseUsers.origin.tags)
+    }
+    if (
+      caseUsers?.destination &&
+      'tags' in caseUsers.destination &&
+      caseUsers.destination.tags
+    ) {
+      userTags.push(...caseUsers.destination.tags)
+    }
+
+    // Combine transaction tags and user tags
+    const tags = uniqObjects(transactionTags.concat(userTags)).sort()
 
     return {
       originPaymentMethods,
@@ -1093,8 +1123,9 @@ export class CaseCreationService {
       caseTransactionsIds,
       caseTransactionsCount: caseTransactionsIds.length,
       updatedAt: now,
-      caseAggregates: this.getCaseAggregatesFromTransactions(
-        newCaseAlertsTransactions ?? []
+      caseAggregates: this.getCaseAggregates(
+        newCaseAlertsTransactions ?? [],
+        sourceCase.caseUsers
       ),
     })
 
@@ -1109,8 +1140,9 @@ export class CaseCreationService {
       caseTransactionsCount: oldCaseTransactionsIds.length,
       priority: minBy(oldCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
       updatedAt: now,
-      caseAggregates: this.getCaseAggregatesFromTransactions(
-        oldCaseAlertsTransactions ?? []
+      caseAggregates: this.getCaseAggregates(
+        oldCaseAlertsTransactions ?? [],
+        sourceCase.caseUsers
       ),
     })
 
@@ -1422,7 +1454,8 @@ export class CaseCreationService {
                 caseTransactionsIds.includes(filteredTransaction.transactionId)
                   ? generateCaseAggreates(
                       [filteredTransaction as InternalTransaction],
-                      existedCase.caseAggregates
+                      existedCase.caseAggregates,
+                      existedCase.caseUsers
                     )
                   : existedCase.caseAggregates,
               caseTransactionsCount: caseTransactionsIds.length,
@@ -1471,7 +1504,13 @@ export class CaseCreationService {
                   ?.destinationPaymentDetails?.method
                   ? [filteredTransaction?.destinationPaymentDetails?.method]
                   : [],
-                tags: uniqObjects(compact(filteredTransaction?.tags ?? [])),
+                tags: uniqObjects(
+                  compact(filteredTransaction?.tags ?? []).concat(
+                    subject.type === 'USER' && subject.user.tags
+                      ? subject.user.tags
+                      : []
+                  )
+                ),
               },
               caseTransactionsIds: filteredTransaction
                 ? [filteredTransaction.transactionId as string]

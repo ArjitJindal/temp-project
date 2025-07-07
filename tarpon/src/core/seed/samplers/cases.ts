@@ -298,7 +298,12 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
                   (t) => t.destinationPaymentDetails?.method
                 ) as PaymentMethod[]
             ) ?? [],
-          tags: uniqObjects(caseTransactions.flatMap((t) => t.tags ?? [])),
+          tags: uniqObjects(
+            caseTransactions
+              .flatMap((t) => t.tags ?? [])
+              .concat(origin?.tags ?? [])
+              .concat(destination?.tags ?? [])
+          ),
         },
 
         caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
