@@ -115,6 +115,37 @@ export const workflowHandler = lambdaApi()(
       return { workflows }
     })
 
+    handlers.registerGetWorkflowVersionsBulk(async (_ctx, request) => {
+      const requestedWorkflows =
+        request.GetWorkflowVersionsBulkRequest.workflows
+      const workflowPromises = requestedWorkflows.map(async (item) => {
+        try {
+          return await workflowService.getWorkflowVersion(
+            item.type,
+            item.id,
+            item.version
+          )
+        } catch (error) {
+          return null
+        }
+      })
+
+      const workflows = (await Promise.all(workflowPromises)).filter(
+        (workflow): workflow is NonNullable<typeof workflow> =>
+          workflow !== null
+      )
+
+      return workflows
+    })
+
+    handlers.registerPatchWorkflowEnabled(async (_ctx, request) => {
+      return await workflowService.patchWorkflowEnabled(
+        request.workflowType as WorkflowType,
+        request.workflowId,
+        request.UpdateWorkflowEnabledRequest.enabled
+      )
+    })
+
     return await handlers.handle(event)
   }
 )
