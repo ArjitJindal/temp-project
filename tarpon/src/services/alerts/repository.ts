@@ -159,13 +159,17 @@ export class AlertsRepository {
       const { items, total } = await clickhouseRepository.getAlerts(params)
 
       const alerts = await this.dynamoAlertRepository.getAlertsFromAlertIds(
-        items,
+        items.map((item) => item.id),
         { getComments: true }
       )
 
       const alertMap = new Map<string, Alert>()
-
       alerts.forEach((a) => alertMap.set(a.alertId as string, a))
+      // Create map for alert metadata from ClickHouse (includes age calculation)
+      const alertMetadataMap = new Map<string, { id: string; age: number }>()
+      items.forEach((item) =>
+        alertMetadataMap.set(item.id, { id: item.id, age: item.age })
+      )
 
       const caseIds: string[] = alerts.map((alert) => alert.caseId as string)
 
@@ -184,6 +188,7 @@ export class AlertsRepository {
             ?.createdTimestamp as number,
           caseUsers: caseMap.get(alert.caseId as string)
             ?.caseUsers as CaseCaseUsers,
+          age: alertMetadataMap.get(alert.alertId as string)?.age,
         })),
       }
     } else if (!hasFeature('PNB')) {

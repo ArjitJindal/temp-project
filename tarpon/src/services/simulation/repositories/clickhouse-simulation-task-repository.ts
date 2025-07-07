@@ -60,9 +60,10 @@ export class ClickhouseSimulationTaskRepository {
         sortOrder,
       },
       conditions,
+      {},
       'id',
       false
     )
-    return { items, count }
+    return { items: items.map((item) => item.id), count }
   }
 }

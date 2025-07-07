@@ -108,7 +108,7 @@ export class CaseClickhouseRepository {
     )
 
     return {
-      items,
+      items: items.map((item) => item.id),
       total: count,
       page,
       pageSize,

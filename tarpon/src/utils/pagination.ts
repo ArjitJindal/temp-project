@@ -306,9 +306,10 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   queryTableName: string,
   query: ClickhousePaginationParams,
   where = '1',
+  extraColumns?: Record<string, string>,
   idColumn = 'id',
   includeTimestampFilter = true
-): Promise<{ items: string[]; count: number }> {
+): Promise<{ items: Record<string, any>[]; count: number }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
   const sortOrder = query.sortOrder || 'ascend'
@@ -316,7 +317,17 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   const offset = (page - 1) * pageSize
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  const findSql = `SELECT ${idColumn} as id FROM ${queryTableName} FINAL ${
+
+  // Build SELECT clause with extra columns
+  let selectClause = 'id'
+  if (extraColumns && Object.keys(extraColumns).length > 0) {
+    const extraColumnsString = Object.entries(extraColumns)
+      .map(([key, value]) => `${value} AS ${key}`)
+      .join(', ')
+    selectClause = `id, ${extraColumnsString}`
+  }
+
+  const findSql = `SELECT ${selectClause} FROM ${queryTableName} FINAL ${
     where
       ? `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'} AND ${where}`
       : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
@@ -327,8 +338,9 @@ export async function offsetPaginateClickhouseWithoutDataTable(
       ? `WHERE ${where} AND ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
       : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   }`
+
   const [items, count] = await Promise.all([
-    executeClickhouseQuery<{ id: string }[]>(client, {
+    executeClickhouseQuery<Record<string, any>[]>(client, {
       query: findSql,
       format: 'JSONEachRow',
     }),
@@ -340,7 +352,7 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   ])
 
   return {
-    items: items.map((item) => item.id),
+    items: items,
     count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
   }
 }

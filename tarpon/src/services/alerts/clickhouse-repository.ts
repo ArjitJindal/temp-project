@@ -130,7 +130,15 @@ export class ClickhouseAlertRepository {
         sortField,
         sortOrder: params.sortOrder ?? 'ascend',
       },
-      query
+      query,
+      {
+        age: `CASE 
+          WHEN alertStatus = 'CLOSED' THEN 
+            statusChanges[-1].1 - timestamp
+          ELSE 
+            toUnixTimestamp(now()) * 1000 - timestamp
+        END`,
+      }
     )
 
     return {
@@ -774,7 +782,7 @@ export class ClickhouseAlertRepository {
     )
 
     return {
-      items,
+      items: items.map((item) => item.id),
       total: count,
       page,
       pageSize,
