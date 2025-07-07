@@ -20,29 +20,33 @@ export const CONTAINS_IN_LISTS_OPERATOR: TextLogicOperator = {
     if (!value) {
       return false
     }
-
     const listIds = (isArray(rhs) ? rhs : [rhs]).filter(Boolean) as string[]
     const listRepo = new ListRepository(context.tenantId, context.dynamoDb)
-    for (const listId of listIds) {
-      const listHeader = await listRepo.getListHeader(listId)
-      if (!listHeader?.metadata?.status) {
-        continue
-      }
-      if (isArray(value)) {
-        for (const val of value) {
-          const result = await listRepo.match(listHeader, val, 'CONTAINS')
-          if (result) {
-            return true
+    const items = await Promise.all(
+      listIds.map(async (listId) => {
+        let key: string | undefined
+        const doesContainValue = false
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const allListItems = await listRepo.getListItems(listId, {
+            fromCursorKey: key,
+            pageSize: 5000, //Fetching in pagination is very slow as compared to fetching all items at once
+          })
+          key = allListItems.next
+
+          for (const item of allListItems.items) {
+            if (value.includes(item.key)) {
+              return true
+            }
+          }
+          if (!allListItems.hasNext) {
+            break
           }
         }
-      } else {
-        const result = await listRepo.match(listHeader, value, 'CONTAINS')
-        if (result) {
-          return true
-        }
-      }
-    }
-    return false
+        return doesContainValue
+      })
+    )
+    return items.some(Boolean)
   },
 }
 
