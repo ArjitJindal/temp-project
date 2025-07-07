@@ -3,7 +3,7 @@ import { WorkflowItem, WorkflowType } from '@/utils/api/workflows';
 export type Template = {
   id: string;
   description: string;
-  item: Omit<WorkflowItem, 'id' | 'version'>;
+  item: Omit<WorkflowItem, 'id' | 'version' | 'enabled'>;
 };
 
 export const TEMPLATE_GROUPS: {

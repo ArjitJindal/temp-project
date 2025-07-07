@@ -48,7 +48,11 @@ export default function WorkflowsCreatePage() {
 
   // Keep state wrapped in an AsyncResource
   const [state, dispatch] = useReducerWrapper(
-    success(template ? deserialize(template.item) : { transitions: [] }),
+    success(
+      template
+        ? deserialize({ ...template.item, enabled: true })
+        : { transitions: [], enabled: true },
+    ),
   );
 
   const saveWorkflowMutation = useMutation<

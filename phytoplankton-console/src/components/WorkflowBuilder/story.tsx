@@ -6,6 +6,7 @@ import { FINAL_STATE, START_STATE } from '@/components/WorkflowBuilder/consts';
 
 export default function (): JSX.Element {
   const statePair = useReducer(WORKFLOW_BUILDER_STATE_REDUCER, {
+    enabled: true,
     transitions: [
       {
         id: '1',
