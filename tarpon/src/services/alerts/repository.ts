@@ -2222,13 +2222,20 @@ export class AlertsRepository {
         }[]
       }>([
         {
+          $match: {
+            'alerts.alertId': {
+              $in: alertIds,
+            },
+          },
+        },
+        {
           $project: {
             alerts: {
               $filter: {
                 input: '$alerts',
                 as: 'item',
                 cond: {
-                  $and: [{ $eq: ['$$item.alertId', { $in: alertIds }] }],
+                  $and: [{ $in: ['$$item.alertId', alertIds] }],
                 },
               },
             },
