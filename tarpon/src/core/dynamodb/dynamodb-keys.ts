@@ -26,6 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
+import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -76,7 +77,7 @@ export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
 export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
 export const JOBS_KEY_IDENTIFIER = '#jobs'
-
+export const REASONS_KEY_IDENTIFIER = '#reasons'
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
   transactionId: string
@@ -622,6 +623,10 @@ export const DynamoDbKeys = {
   JOBS: (tenantId: string, jobId: string) => ({
     PartitionKeyID: `${tenantId}${JOBS_KEY_IDENTIFIER}`,
     SortKeyID: jobId,
+  }),
+  REASONS: (tenantId: string, id: string, reasonType?: ReasonType) => ({
+    PartitionKeyID: `${tenantId}${REASONS_KEY_IDENTIFIER}`,
+    SortKeyID: `${reasonType}#${id}`,
   }),
 }
 

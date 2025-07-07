@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { CounterRepository } from '../counter/repository'
-import { ReasonsRepository } from './repositories/reasons-repository'
+import { ReasonsRepository } from './repositories/reasons/reasons-repository'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
@@ -65,7 +65,10 @@ export class ReasonsService {
   private counterRepository: CounterRepository
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: {
+      mongoDb: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+    }
   ) {
     this.reasonsRepository = new ReasonsRepository(tenantId, connections)
     this.counterRepository = new CounterRepository(tenantId, connections)

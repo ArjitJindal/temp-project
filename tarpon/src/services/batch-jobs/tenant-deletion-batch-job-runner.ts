@@ -372,6 +372,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteBatchJobs.bind(this),
         order: 22,
       },
+      REASONS: {
+        method: this.deleteReasons.bind(this),
+        order: 22,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -1019,6 +1023,22 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Jobs'
+    )
+  }
+
+  private async deleteReasons(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.REASONS(
+      tenantId,
+      '',
+      'ESCALATION' // Passing ReasonType to get PartitionKeyID
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Reasons'
     )
   }
 }

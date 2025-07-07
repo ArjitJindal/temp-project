@@ -162,6 +162,7 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   REPORTS: 'report',
   NOTIFICATIONS: 'notifications',
   JOBS: 'jobs',
+  REASONS: 'reasons',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
