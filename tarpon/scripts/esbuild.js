@@ -15,7 +15,6 @@ const IGNORED = [
   'bson-ext',
   'snappy',
   'snappy/package.json',
-  'aws4',
   'aws-crt',
   'google-gax',
   'mongodb-client-encryption',

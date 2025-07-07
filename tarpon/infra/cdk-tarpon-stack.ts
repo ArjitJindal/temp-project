@@ -105,6 +105,11 @@ import {
 } from 'aws-cdk-lib/aws-ecs'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants'
+import {
+  CfnAccessPolicy,
+  CfnCollection,
+  CfnSecurityPolicy,
+} from 'aws-cdk-lib/aws-opensearchserverless'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -690,8 +695,23 @@ export class CdkTarponStack extends cdk.Stack {
           actions: ['lambda:InvokeFunction'],
           resources: ['*'],
         }),
+
+        //OpenSearch
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            'aoss:CreateCollection',
+            'aoss:DeleteCollection',
+            'aoss:UpdateCollection',
+            'aoss:APIAccessAll',
+            'aoss:ListCollections',
+          ],
+          resources: ['*'],
+        }),
       ],
     })
+
+    this.createOpensearch(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     // Give role access to all secrets
     lambdaExecutionRole.attachInlinePolicy(policy)
@@ -1896,6 +1916,151 @@ export class CdkTarponStack extends cdk.Stack {
         },
       },
       role: guardDutyRole.roleArn,
+    })
+  }
+
+  private createOpensearch(
+    vpc,
+    lambdaExecutionRole: cdk.aws_iam.Role,
+    ecsTaskExecutionRole: cdk.aws_iam.Role
+  ) {
+    if (isQaEnv()) {
+      return
+    }
+    const opensearchCollectionName = `${this.config.stage}-${
+      this.config.env.region ?? ''
+    }-opensearch`
+
+    const opensearchEncryptionPolicy = new CfnSecurityPolicy(
+      this,
+      'TarponOpenSearchEncryptionPolicy',
+      {
+        name: `${this.config.stage}-${
+          this.config.env.region ?? ''
+        }-osencpolicy`,
+        type: 'encryption',
+        policy: JSON.stringify({
+          Rules: [
+            {
+              ResourceType: 'collection',
+              Resource: [`collection/${opensearchCollectionName}`],
+            },
+          ],
+          AWSOwnedKey: true,
+        }),
+      }
+    )
+
+    let endpoint: InterfaceVpcEndpoint | undefined
+    if (vpc) {
+      const endpointSecurityGroup = new SecurityGroup(this, 'AossEndpointSG', {
+        vpc,
+        description: 'Security group for OpenSearch Serverless VPC endpoint',
+      })
+
+      endpointSecurityGroup.addIngressRule(
+        Peer.ipv4('10.0.0.0/21'),
+        Port.tcp(443)
+      )
+
+      endpoint = new InterfaceVpcEndpoint(this, 'AossEndpoint', {
+        vpc,
+        service: new InterfaceVpcEndpointService(
+          `com.amazonaws.${this.config.env.region}.aoss-serverless`
+        ),
+        securityGroups: [endpointSecurityGroup],
+      })
+    }
+
+    const opensearchNetworkPolicy = new CfnSecurityPolicy(
+      this,
+      'TarponOpenSearchNetworkPolicy',
+      {
+        name: `${this.config.stage}-${
+          this.config.env.region ?? ''
+        }-osnetpolicy`,
+        type: 'network',
+        policy: JSON.stringify([
+          {
+            Rules: [
+              {
+                ResourceType: 'collection',
+                Resource: [`collection/${opensearchCollectionName}`],
+              },
+              {
+                Resource: [`collection/${opensearchCollectionName}`],
+                ResourceType: 'dashboard',
+              },
+            ],
+            ...(!endpoint || envIsNot('prod', 'sandbox')
+              ? { AllowFromPublic: true }
+              : { SourceVPCEs: [endpoint.vpcEndpointId] }),
+          },
+        ]),
+      }
+    )
+
+    const opensearchAccessPolicy = new CfnAccessPolicy(
+      this,
+      'TarponOpenSearchAccessPolicy',
+      {
+        name: `${this.config.stage}-${
+          this.config.env.region ?? ''
+        }-osaccesspolicy`,
+        type: 'data',
+        policy: JSON.stringify([
+          {
+            Rules: [
+              {
+                Resource: [`collection/${opensearchCollectionName}`],
+                Permission: [
+                  'aoss:CreateCollectionItems',
+                  'aoss:DeleteCollectionItems',
+                  'aoss:UpdateCollectionItems',
+                  'aoss:DescribeCollectionItems',
+                ],
+                ResourceType: 'collection',
+              },
+              {
+                Resource: [`index/${opensearchCollectionName}/*`],
+                Permission: [
+                  'aoss:CreateIndex',
+                  'aoss:DeleteIndex',
+                  'aoss:UpdateIndex',
+                  'aoss:DescribeIndex',
+                  'aoss:ReadDocument',
+                  'aoss:WriteDocument',
+                ],
+                ResourceType: 'index',
+              },
+            ],
+            Principal: [
+              lambdaExecutionRole.roleArn,
+              `arn:aws:iam::${this.config.env.account}:role/CodePipelineDeployRole`,
+              ecsTaskExecutionRole.roleArn,
+            ],
+          },
+        ]),
+      }
+    )
+
+    // --- OpenSearch Serverless Collection ---
+    const opensearchCollection = new CfnCollection(
+      this,
+      'TarponOpenSearchCollection',
+      {
+        name: opensearchCollectionName,
+        type: 'SEARCH',
+        description: 'Tarpon OpenSearch Serverless Collection',
+      }
+    )
+
+    opensearchCollection.node.addDependency(opensearchEncryptionPolicy)
+    opensearchCollection.node.addDependency(opensearchNetworkPolicy)
+    opensearchCollection.node.addDependency(opensearchAccessPolicy)
+
+    new CfnOutput(this, 'OpenSearchCollectionArn', {
+      value: opensearchCollection.attrArn,
     })
   }
 }

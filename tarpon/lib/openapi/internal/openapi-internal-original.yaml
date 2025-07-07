@@ -11855,6 +11855,7 @@ components:
         - CHAINALYSIS
         - WORKFLOWS_BUILDER
         - TRANSLITERATION
+        - OPEN_SEARCH
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

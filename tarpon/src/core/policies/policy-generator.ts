@@ -1,5 +1,6 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
 import { StackConstants } from '@lib/constants'
+import { stageAndRegion } from '@flagright/lib/utils'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 import {
   SHARED_AUTH0_PARTITION_KEY_PREFIX,
@@ -74,6 +75,21 @@ export default class PolicyBuilder {
       Action: ['secretsmanager:*'],
       Effect: 'Allow',
       Resource: [`arn:aws:secretsmanager:*:*:secret:${this.tenantId}*`],
+    })
+    return this
+  }
+
+  opensearch() {
+    const [stage, region] = stageAndRegion()
+    this.statements.push({
+      Action: ['aoss:APIAccessAll'],
+      Effect: 'Allow',
+      Resource: `arn:aws:aoss:*:*:collection/${stage}-${region}-opensearch`,
+    })
+    this.statements.push({
+      Action: ['aoss:DashboardAccessAll', 'aoss:ListCollections'],
+      Effect: 'Allow',
+      Resource: `arn:aws:aoss:*:*:collection/${stage}-${region}-opensearch`,
     })
     return this
   }

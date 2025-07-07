@@ -190,6 +190,11 @@ export const featureDescriptions: Record<
     description: 'Enables transliteration for screening',
     tag: FeatureTag.ENG,
   },
+  OPEN_SEARCH: {
+    title: 'Opensearch',
+    description: 'Enables opensearch for screening searches',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
