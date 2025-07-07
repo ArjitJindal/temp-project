@@ -173,7 +173,6 @@ export const featureDescriptions: Record<
   '314A': {
     title: '314A',
     description: 'Enables 314A',
-    tag: FeatureTag.ENG,
   },
   CHAINALYSIS: {
     title: 'Chainalysis',
