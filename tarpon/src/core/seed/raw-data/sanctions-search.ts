@@ -541,9 +541,14 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
       isNew: false,
     }
 
-    const sanctionsEntityArray: SanctionsEntity[] = []
     const hits: SanctionsHit[] = []
-    for (let i = 0; i < this.rng.r(2).randomIntInclusive(1, 20); i++) {
+    const sanctionsEntityArray: SanctionsEntity[] = []
+    const hitCount = this.rng.r(2).randomIntInclusive(1, 20)
+    // 0% - 30% of total hits are open and 70% - 100% are cleared
+    const openHitCount = Math.floor(hitCount * this.rng.r(2).randomFloat(0.3))
+    const clearedHitCount = hitCount - openHitCount
+
+    const getHits = (status: SanctionsHitStatus) => {
       const { hit, sanctionsEntity } = sanctionsSearchHit(
         this.sanctionsRng,
         searchId,
@@ -553,6 +558,17 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
         transactionId,
         entity
       )
+      return { hit: { ...hit, status }, sanctionsEntity }
+    }
+
+    for (let i = 0; i < clearedHitCount; i++) {
+      const { hit, sanctionsEntity } = getHits('CLEARED')
+      hits.push(hit)
+      sanctionsEntityArray.push(sanctionsEntity)
+    }
+
+    for (let i = 0; i < openHitCount; i++) {
+      const { hit, sanctionsEntity } = getHits('OPEN')
       hits.push(hit)
       sanctionsEntityArray.push(sanctionsEntity)
     }
