@@ -66,6 +66,7 @@ export function prepareTableData(
         'destinationPaymentMethodId',
         'originPaymentDetails',
         'destinationPaymentDetails',
+        'type',
       ],
       rows: (item.hitRules ?? []).map((rule, i): DataItem => {
         const isFirstRow = i == 0;
