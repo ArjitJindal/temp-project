@@ -304,7 +304,7 @@ export class ReportService {
     )
 
     const transactions = await txpRepo.getTransactions({
-      filterIdList: transactionIds ?? [],
+      filterTransactionIds: transactionIds ?? [],
       includeUsers: true,
       pageSize: 20,
     })

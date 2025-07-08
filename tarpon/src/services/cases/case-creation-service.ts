@@ -1077,7 +1077,7 @@ export class CaseCreationService {
       .filter((id: string | undefined): id is string => id != null)
     const { data: allAlertsTransactions } =
       await this.transactionRepository.getTransactions({
-        filterIdList: allAlertsTransactionIds,
+        filterTransactionIds: allAlertsTransactionIds,
         afterTimestamp: 0,
         beforeTimestamp: Number.MAX_SAFE_INTEGER,
         pageSize: 'DISABLED',

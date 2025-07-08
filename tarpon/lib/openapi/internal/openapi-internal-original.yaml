@@ -1221,6 +1221,12 @@ paths:
           in: query
           name: filterIdList
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTransactionIds
+        - schema:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
