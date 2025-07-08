@@ -15,6 +15,7 @@ const AGG_FUNC_TO_TYPE: Record<LogicAggregationFunc, string> = {
   MIN: 'number',
   MAX: 'number',
   STDEV: 'number',
+  CHANGE_COUNT: 'number',
 };
 
 export function getAggVarDefinition(

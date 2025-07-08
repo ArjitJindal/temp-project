@@ -301,6 +301,7 @@ export const AggregationVariableFormContent: React.FC<
     const uniqueAggregationOptions: Array<{ value: LogicAggregationFunc; label: string }> = [
       { value: 'UNIQUE_COUNT', label: 'Unique count' },
       { value: 'UNIQUE_VALUES', label: 'Unique values' },
+      { value: 'CHANGE_COUNT', label: 'Count of changes' },
     ];
     const timestampEntityRegex = /timestamp/gi;
     const tagsVariableRegex = /tags$/;

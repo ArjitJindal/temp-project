@@ -7,6 +7,7 @@ import { UNIQUE_VALUES, UNIQUE_COUNT } from './unique'
 import { MIN } from './min'
 import { MAX } from './max'
 import { STDEV } from './stdev'
+import { CHANGE_COUNT } from './change-count'
 import { LogicAggregationFunc } from '@/@types/openapi-internal/LogicAggregationFunc'
 
 export function getLogicVariableAggregator(
@@ -29,6 +30,8 @@ export function getLogicVariableAggregator(
       return MAX
     case 'STDEV':
       return STDEV
+    case 'CHANGE_COUNT':
+      return CHANGE_COUNT
   }
 }
 

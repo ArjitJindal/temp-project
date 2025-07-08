@@ -8581,6 +8581,7 @@ components:
         - MIN
         - MAX
         - STDEV
+        - CHANGE_COUNT
     LogicAggregationVariable:
       title: AggregationVariable
       type: object
