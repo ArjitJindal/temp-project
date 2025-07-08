@@ -69,6 +69,14 @@ export class AuditLogRepository {
       ...auditLog,
     }
     const allTenantIds = await getAllTenantIds()
+
+    if (!this.tenantId) {
+      logger.warn('No tenantId found in audit log:', {
+        auditLog,
+      })
+      return newAuditLog
+    }
+
     const db = this.mongoDb.db()
     if (
       !allTenantIds.has(getNonDemoTenantId(this.tenantId)) &&

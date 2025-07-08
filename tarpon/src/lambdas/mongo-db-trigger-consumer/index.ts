@@ -83,6 +83,12 @@ export class MongoDbConsumer {
         return false
       }
       const { tenantId } = tableDetails
+
+      if (!tenantId) {
+        logger.warn('No tenantId found in MongoConsumerMessage:', event)
+        return false
+      }
+
       if (
         !allTenantIds.has(getNonDemoTenantId(tenantId)) &&
         !envIs('local', 'test')
@@ -93,6 +99,7 @@ export class MongoDbConsumer {
           operationType: event.operationType,
           clusterTime: event.clusterTime,
         }
+
         const message = `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
         logger.warn(message, logObject)
         logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)

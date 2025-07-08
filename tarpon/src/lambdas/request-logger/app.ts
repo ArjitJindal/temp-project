@@ -47,12 +47,18 @@ export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
   )
   const allTenantIds = await getAllTenantIds()
   const filteredLogs = nonWebhookLogs.filter((log) => {
+    if (!log.tenantId) {
+      logger.warn('No tenantId found in request log:', {
+        log,
+      })
+      captureException(log)
+      return false
+    }
+
     if (
       !allTenantIds.has(getNonDemoTenantId(log.tenantId)) &&
       !envIs('local', 'test')
     ) {
-      logger.info(`log tenantId: ${log.tenantId}`)
-      logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
       captureException(log)
       return false
     }
