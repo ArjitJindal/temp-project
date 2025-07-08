@@ -1928,16 +1928,14 @@ export class CdkTarponStack extends cdk.Stack {
       return
     }
     const opensearchCollectionName = `${this.config.stage}-${
-      this.config.env.region ?? ''
+      this.config.region ?? ''
     }-opensearch`
 
     const opensearchEncryptionPolicy = new CfnSecurityPolicy(
       this,
       'TarponOpenSearchEncryptionPolicy',
       {
-        name: `${this.config.stage}-${
-          this.config.env.region ?? ''
-        }-osencpolicy`,
+        name: `${this.config.stage}-${this.config.region ?? ''}-osencpolicy`,
         type: 'encryption',
         policy: JSON.stringify({
           Rules: [
@@ -1976,9 +1974,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       'TarponOpenSearchNetworkPolicy',
       {
-        name: `${this.config.stage}-${
-          this.config.env.region ?? ''
-        }-osnetpolicy`,
+        name: `${this.config.stage}-${this.config.region ?? ''}-osnetpolicy`,
         type: 'network',
         policy: JSON.stringify([
           {
@@ -2004,9 +2000,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       'TarponOpenSearchAccessPolicy',
       {
-        name: `${this.config.stage}-${
-          this.config.env.region ?? ''
-        }-osaccesspolicy`,
+        name: `${this.config.stage}-${this.config.region ?? ''}-osaccesspolicy`,
         type: 'data',
         policy: JSON.stringify([
           {
