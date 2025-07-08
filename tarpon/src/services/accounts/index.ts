@@ -500,7 +500,7 @@ export class AccountsService {
     const connections = { mongoDb: mongodb, dynamoDb: this.dynamoDb }
     const caseRepository = new CaseRepository(tenant.id, connections)
     const alertRepository = new AlertsRepository(tenant.id, connections)
-    const slaPolicyRepository = new SLAPolicyRepository(tenant.id, mongodb)
+    const slaPolicyRepository = new SLAPolicyRepository(tenant.id, connections)
 
     promises.push(
       ...[

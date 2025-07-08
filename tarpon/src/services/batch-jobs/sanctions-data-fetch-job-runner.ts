@@ -14,6 +14,11 @@ import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
+import {
+  createIndexIfNotExists,
+  getOpensearchClient,
+} from '@/utils/opensearch-utils'
+import { envIsNot } from '@/utils/env'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
@@ -25,15 +30,17 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       {
         type: job.type,
         tenantId: job.tenantId,
-        'latestStatus.status': 'IN_PROGRESS',
-        'latestStatus.timestamp': {
-          $gt: dayjs().subtract(1, 'day').valueOf(),
+        latestStatus: {
+          status: 'IN_PROGRESS',
+          latestStatusAfterTimestamp: dayjs().subtract(1, 'day').valueOf(),
         },
         providers: job.providers,
         parameters: {
           entityType: job.parameters.entityType,
         },
-        jobId: { $ne: job['jobId'] },
+        jobId: {
+          notEqualTo: job['jobId'],
+        },
       },
       1
     )
@@ -53,6 +60,9 @@ export async function runSanctionsDataFetchJob(
   dynamoDb: DynamoDBClient
 ) {
   const { tenantId, providers, settings } = job
+  const opensearchClient = envIsNot('prod')
+    ? await getOpensearchClient()
+    : undefined
   const runFullLoad = job.parameters?.from
     ? new Date(job.parameters.from).getDay() === 0
     : true
@@ -74,17 +84,26 @@ export async function runSanctionsDataFetchJob(
       'full'
     )
     await Promise.all([
-      createMongoDBCollections(client, tenantId),
+      createMongoDBCollections(client, dynamoDb, tenantId),
       createGlobalMongoDBCollections(client),
+      opensearchClient
+        ? createIndexIfNotExists(opensearchClient, sanctionsCollectionName)
+        : Promise.resolve(),
     ])
 
     logger.info(`Running ${fetcher.constructor.name}`)
     if (runFullLoad) {
-      const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+      const repo = new MongoSanctionsRepository(
+        sanctionsCollectionName,
+        opensearchClient
+      )
       await fetcher.fullLoad(repo, version, job.parameters.entityType)
     }
 
-    const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+    const repo = new MongoSanctionsRepository(
+      sanctionsCollectionName,
+      opensearchClient
+    )
     if (provider !== SanctionsDataProviders.ACURIS || runFullLoad) {
       // To avoid fetching delta for Acuris daily separately, instead it's fetched in delta load
       await fetcher.delta(

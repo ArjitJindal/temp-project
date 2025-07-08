@@ -147,6 +147,7 @@ export enum ClickhouseTableNames {
   DrsScore = 'drs_score',
   ArsScore = 'ars_score',
   SanctionsScreeningDetails = 'sanctions_screening_details',
+  SanctionsScreeningDetailsV2 = 'sanctions_screening_details_v2',
   Alerts = 'alerts',
   CrmRecords = 'crm_records',
   CrmUserRecordLink = 'crm_user_record_link',
@@ -157,6 +158,8 @@ export enum ClickhouseTableNames {
   Notifications = 'notifications',
   GptRequests = 'gpt_request_logs',
   Metrics = 'metrics',
+  SimulationTask = 'simulation_task',
+  SimulationResult = 'simulation_result',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -305,6 +308,15 @@ export const CLICKHOUSE_DEFINITIONS = {
       },
     },
   },
+  SANCTIONS_SCREENING_DETAILS_V2: {
+    tableName: ClickhouseTableNames.SanctionsScreeningDetailsV2,
+    materializedViews: {
+      BY_ID: {
+        viewName: 'sanctions_screening_details_v2_by_id_mv',
+        table: 'sanctions_screening_details_v2_by_id',
+      },
+    },
+  },
   ALERTS: {
     tableName: ClickhouseTableNames.Alerts,
   },
@@ -337,6 +349,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   METRICS: {
     tableName: ClickhouseTableNames.Metrics,
+  },
+  SIMULATION_TASK: {
+    tableName: ClickhouseTableNames.SimulationTask,
+  },
+  SIMULATION_RESULT: {
+    tableName: ClickhouseTableNames.SimulationResult,
   },
 } as const
 
@@ -933,6 +951,43 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     ],
   },
   {
+    table: CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
+    idColumn: 'screeningId',
+    timestampColumn: 'lastScreenedAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, userId, transactionId, screeningId)',
+    orderBy: '(timestamp, userId, transactionId, screeningId)',
+    mongoIdColumn: false,
+    materializedColumns: [
+      "screeningId String MATERIALIZED JSON_VALUE(data, '$.screeningId')",
+      "lastScreenedAt UInt64 MATERIALIZED JSON_VALUE(data, '$.lastScreenedAt')",
+      "latestTimeStamp UInt64 MATERIALIZED JSON_VALUE(data, '$.latestTimeStamp')",
+      "name String MATERIALIZED JSON_VALUE(data, '$.name')",
+      enumFields(SANCTIONS_SCREENING_ENTITYS, 'entity', 'entity'),
+      "isNew Bool MATERIALIZED JSONExtractBool(data, 'isNew')",
+      "ruleInstanceIds Array(String) MATERIALIZED JSONExtract(data, 'ruleInstanceIds', 'Array(String)')",
+      "userId String MATERIALIZED JSON_VALUE(data, '$.userId')",
+      "transactionId String MATERIALIZED JSON_VALUE(data, '$.transactionId')",
+      "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
+      "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
+    ],
+    materializedViews: [
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2
+            .materializedViews.BY_ID.viewName,
+        columns: ['id String', 'data String'],
+        table:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2
+            .materializedViews.BY_ID.table,
+        engine: 'ReplacingMergeTree',
+        primaryKey: 'id',
+        orderBy: 'id',
+      },
+    ],
+  },
+
+  {
     table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
     idColumn: '_id',
     timestampColumn: 'createdAt',
@@ -1122,6 +1177,50 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "collectedTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'collectedTimestamp')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SIMULATION_TASK.tableName,
+    idColumn: 'jobId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: 'jobId',
+    orderBy: 'jobId',
+    materializedColumns: [
+      "jobId String MATERIALIZED JSONExtractString(data, 'jobId')",
+      "createdBy String MATERIALIZED JSONExtractString(data, 'createdBy')",
+      "type LowCardinality(String) MATERIALIZED JSONExtractString(data, 'type')",
+      "internal Bool MATERIALIZED JSONExtractBool(data, 'internal')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "iterations_count UInt32 MATERIALIZED length(JSONExtract(data, 'iterations', 'Array(String)'))",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SIMULATION_RESULT.tableName,
+    idColumn: 'id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "taskId String MATERIALIZED JSONExtractString(data, 'taskId')",
+      "userId String MATERIALIZED JSONExtractString(data, 'userId')",
+      "transactionId String MATERIALIZED JSONExtractString(data, 'transactionId')",
+      "originUserId String MATERIALIZED JSONExtractString(data, 'originUser', 'userId')",
+      "destinationUserId String MATERIALIZED JSONExtractString(data, 'destinationUser', 'userId')",
+      "originPaymentMethod String MATERIALIZED JSONExtractString(data, 'originPaymentDetails', 'paymentMethod')",
+      "destinationPaymentMethod String MATERIALIZED JSONExtractString(data, 'destinationPaymentDetails', 'paymentMethod')",
+      "hitStatus String MATERIALIZED JSONExtractString(data, 'hit')",
+      "action String MATERIALIZED JSONExtractString(data, 'action')",
+      "currentKrsRiskLevel String MATERIALIZED JSONExtractString(data, 'current', 'krs', 'riskLevel')",
+      "simulatedKrsRiskLevel String MATERIALIZED JSONExtractString(data, 'simulated', 'krs', 'riskLevel')",
+      "currentDrsRiskLevel String MATERIALIZED JSONExtractString(data, 'current', 'drs', 'riskLevel')",
+      "simulatedDrsRiskLevel String MATERIALIZED JSONExtractString(data, 'simulated', 'drs', 'riskLevel')",
+      "type String MATERIALIZED JSONExtractString(data, 'type')",
+      "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -1146,6 +1245,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
     CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2]:
+    CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
   [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
     CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,

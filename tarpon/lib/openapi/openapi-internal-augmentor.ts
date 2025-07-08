@@ -87,6 +87,12 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/new-rule-id':
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+  '/risk-levels/new-risk-level-id':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+  '/risk-levels/version-history':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+  '/risk-levels/version-history/{versionId}':
+    StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
   '/rule-instances/{ruleInstanceId}/transaction-users-hit':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/rule-instances/rules-with-alerts':
@@ -323,6 +329,8 @@ export const ConsoleApiPathToLambda: any = {
   '/workflows/history/{workflowType}/{workflowId}':
     StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
   '/workflows/{workflowType}/{workflowId}/{version}':
+    StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+  '/workflows/versions':
     StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
   '/flat-files/generate-template':
     StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,

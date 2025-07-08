@@ -26,12 +26,17 @@ components:
         author:
           type: string
           description: The account that created or last modified the workflow
+        enabled:
+          type: boolean
+          description: Whether the workflow is enabled
+          default: true
       required:
         - id
         - workflowType
         - version
         - name
         - author
+        - enabled
 
     BaseCaseAlertWorkflow:
       allOf:

@@ -87,7 +87,7 @@ export class ClickhouseNotificationRepository {
     const hasPrev = page > 1
 
     return {
-      items,
+      items: items.map((item) => item.id),
       next: hasNext ? (page + 1).toString() : '',
       prev: hasPrev ? (page - 1).toString() : '',
       hasPrev,

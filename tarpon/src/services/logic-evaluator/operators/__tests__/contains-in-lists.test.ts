@@ -27,7 +27,7 @@ describe('contains in lists operator', () => {
 
   test('should return true if partial match in the lists', async () => {
     const result = await CONTAINS_IN_LISTS_OPERATOR.run(
-      'string',
+      '1_string_1_2_3',
       [testListId1],
       undefined,
       { tenantId: TEST_TENANT_ID, dynamoDb }
@@ -37,7 +37,7 @@ describe('contains in lists operator', () => {
 
   test('should return true if partial match in the lists', async () => {
     const result = await CONTAINS_IN_LISTS_OPERATOR.run(
-      '_1',
+      'string_1string',
       [testListId1],
       undefined,
       { tenantId: TEST_TENANT_ID, dynamoDb }

@@ -14,7 +14,7 @@ export type InternalCustomOperatorKeys =
   | CustomBuiltInLogicOperatorKey
   | 'op:hasItems'
   | 'op:equalArray'
-
+  | 'op:internalLevenshteinDistance'
 export type CustomOperator<LHS = any, RHS = any, Result = any> = {
   key: LogicOperatorType | InternalCustomOperatorKeys
   traverse?: boolean

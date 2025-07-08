@@ -47,7 +47,12 @@ async function getTenantScopeCredentials(
     RoleArn: process.env.AUTHORIZER_BASE_ROLE_ARN as string,
     RoleSessionName: requestId,
     Policy: JSON.stringify(
-      new PolicyBuilder(tenantId).s3().secretsManager().dynamoDb().build()
+      new PolicyBuilder(tenantId)
+        .s3()
+        .secretsManager()
+        .dynamoDb()
+        .opensearch()
+        .build()
     ),
     DurationSeconds: StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
   })

@@ -73,6 +73,7 @@ export function mergeInternalSpecs(): OpenAPIV3.Document {
       ...internalSpec.components,
       schemas: {
         ...internalSpec.components?.schemas,
+        ...workflowRoutes.components?.schemas,
         ...workflowModels.components?.schemas,
       },
     },

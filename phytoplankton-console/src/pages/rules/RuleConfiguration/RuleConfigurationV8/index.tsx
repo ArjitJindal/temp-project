@@ -108,7 +108,7 @@ export default function RuleConfigurationV8(props: Props) {
           </Spinner>
         )}
       >
-        {({ ruleInstanceId }) => (
+        {({ id }) => (
           <>
             <RuleConfigurationFormV8
               ref={formRef}
@@ -120,13 +120,13 @@ export default function RuleConfigurationV8(props: Props) {
               onSubmit={handleSubmit}
               onActiveStepKeyChange={setActiveStepKey}
               setIsValuesSame={setIsValuesSame}
-              newRuleId={type === 'EDIT' || type === 'READ' ? ruleInstance?.id : ruleInstanceId}
+              newRuleId={type === 'EDIT' || type === 'READ' ? ruleInstance?.id : id}
             />
             <RuleModeModal
               submitRes={getMutationAsyncResource(
                 type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation,
               )}
-              ruleId={rule?.id ?? ruleInstance?.ruleId ?? ruleInstanceId ?? ''}
+              ruleId={rule?.id ?? ruleInstance?.ruleId ?? id ?? ''}
               isOpen={isRuleModeModalOpen}
               onOk={() => {
                 formRef?.current?.submit();

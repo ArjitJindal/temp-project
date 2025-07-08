@@ -127,6 +127,7 @@ export const jobDecisionHandler = async (
     FLAT_FILES_VALIDATION: 'FARGATE',
     FLAT_FILES_RUNNER: 'FARGATE',
     USER_RULE_RE_RUN: 'FARGATE',
+    SANCTIONS_SCREENING_DETAILS_MIGRATION: 'FARGATE',
   }
 
   return {

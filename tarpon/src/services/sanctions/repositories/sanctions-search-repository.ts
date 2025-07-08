@@ -1,5 +1,6 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
 import { intersection, isNil, omit, omitBy } from 'lodash'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -22,9 +23,8 @@ import { generateChecksum, getSortedObject } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
+import { getContext } from '@/core/utils/context-storage'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -45,10 +45,15 @@ function toComplyAdvantageType(type: SanctionsSearchType) {
 export class SanctionsSearchRepository {
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb: DynamoDBClient
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
 
   public async saveSearchResult(props: {
@@ -136,11 +141,7 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: getDynamoDbClient(),
-    })
-    const { sanctions } = await tenantRepository.getTenantSettings()
+    const sanctions = getContext()?.settings?.sanctions
     const hasInitialScreeningProfile = !!sanctions?.customInitialSearchProfileId
     const {
       monitoring: _monitoring,

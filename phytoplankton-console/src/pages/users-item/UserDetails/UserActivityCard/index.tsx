@@ -22,7 +22,7 @@ import {
   Comment,
   RiskClassificationScore,
 } from '@/apis';
-import { getOr, success } from '@/utils/asyncResource';
+import { success } from '@/utils/asyncResource';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { USERS_ITEM } from '@/utils/queries/keys';
@@ -52,8 +52,7 @@ export default function UserActivityCard(props: Props) {
   const api = useApi({ debounce: 500 });
   const [users, _] = useUsers();
   const queryClient = useQueryClient();
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const settings = useSettings();
   const configRiskLevelAliasArray = settings?.riskLevelAlias || [];

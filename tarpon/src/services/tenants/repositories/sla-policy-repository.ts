@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { traceable } from '@/core/xray'
 import { SLA_POLICIES_COLLECTION } from '@/utils/mongodb-definitions'
@@ -9,10 +10,17 @@ import { DefaultApiGetSlaPoliciesRequest } from '@/@types/openapi-internal/Reque
 export class SLAPolicyRepository {
   private tenantId: string
   private mongoDb: MongoClient
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  private dynamoDb: DynamoDBDocumentClient
+
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
+
   public async getSLAPolicies(
     params: DefaultApiGetSlaPoliciesRequest
   ): Promise<Array<SLAPolicy>> {
@@ -92,7 +100,10 @@ export class SLAPolicyRepository {
   }
 
   public async getNewId(update?: boolean): Promise<string> {
-    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const count = await counterRepository[
       update ? 'getNextCounterAndUpdate' : 'getNextCounter'
     ]('SLAPolicy')

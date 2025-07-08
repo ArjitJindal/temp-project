@@ -1,7 +1,8 @@
+import { v4 as uuidv4 } from 'uuid'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { DashboardRefreshBatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -12,6 +13,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -64,7 +66,10 @@ describe('Dashboard refresh runner', () => {
     // Prepare testing data
     const latest = dayjs('2023-09-21')
     const mongoDb = await getMongoDbClient()
-    const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
     await Promise.all([
       caseRepository.addCaseMongo({
         caseId: 'C-1',
@@ -159,12 +164,13 @@ describe('Dashboard refresh runner', () => {
       startTimestamp: latest.subtract(10, 'minute').valueOf(),
       endTimestamp: latest.add(10, 'minute').valueOf(),
     }
-    const testJob: DashboardRefreshBatchJob = {
+    const testJob: BatchJobWithId = {
       type: 'DASHBOARD_REFRESH',
       tenantId,
       parameters: {
         checkTimeRange,
       },
+      jobId: uuidv4(),
     }
     await jobRunnerHandler(testJob)
 

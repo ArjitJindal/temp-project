@@ -32,7 +32,10 @@ export class BulkAlertClosureRunner extends FlatFileRunner<AlertClosure> {
   })
 
   private getReasons = memoizePromise(async () => {
-    const reasonsService = new ReasonsService(this.tenantId, this.mongoDb)
+    const reasonsService = new ReasonsService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     const reasons = await reasonsService.getReasons()
     return reasons
   })

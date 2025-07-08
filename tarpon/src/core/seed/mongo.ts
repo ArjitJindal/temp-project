@@ -153,7 +153,7 @@ export async function seedMongo(
     logger.info("Couldn't empty collections")
   }
 
-  await createMongoDBCollections(client, tenantId)
+  await createMongoDBCollections(client, dynamoDb, tenantId)
   await createGlobalMongoDBCollections(client)
 
   logger.info('Setting counters')

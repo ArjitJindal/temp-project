@@ -24,7 +24,7 @@ export class UserUploadRunner<
   constructor(
     tenantId: string,
     type: 'CONSUMER' | 'BUSINESS',
-    connections?: {
+    connections: {
       dynamoDb: DynamoDBDocumentClient
       mongoDb: MongoClient
       clickhouseClient: ClickHouseClient
@@ -33,7 +33,7 @@ export class UserUploadRunner<
   ) {
     super(tenantId, connections)
     this.userService = new UserService(this.tenantId, {
-      dynamoDb: connections?.dynamoDb,
+      dynamoDb: connections.dynamoDb,
       mongoDb: connections?.mongoDb,
     })
     this.type = type

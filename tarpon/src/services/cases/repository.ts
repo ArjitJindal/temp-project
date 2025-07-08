@@ -101,7 +101,7 @@ export class CaseRepository {
 
   constructor(
     tenantId: string,
-    connections: { mongoDb?: MongoClient; dynamoDb?: DynamoDBDocumentClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
@@ -239,7 +239,10 @@ export class CaseRepository {
   }
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {
-    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
 
     await withTransaction(async () => {
       const casesCollectionName = CASES_COLLECTION(this.tenantId)

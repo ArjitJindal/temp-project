@@ -13,6 +13,7 @@ type WorkflowItemSerialized = Omit<
 export function deserialize(workflowItem: WorkflowItemSerialized): WorkflowBuilderState {
   return {
     transitions: workflowItem.transitions ?? [],
+    enabled: workflowItem.enabled,
   };
 }
 
@@ -25,6 +26,7 @@ export function serialize(workflowBuilderState: WorkflowBuilderState): WorkflowI
   return {
     author: '', // TODO: add author
     statuses: statuses,
+    enabled: workflowBuilderState.enabled,
     transitions: workflowBuilderState.transitions,
     statusAssignments: statuses.reduce((acc, status) => {
       if (status === FINAL_STATE) {

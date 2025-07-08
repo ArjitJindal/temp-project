@@ -369,7 +369,10 @@ describe('test sla service', () => {
     setUpSLAHooks(tenantId, [TEST_POLICY1, TEST_POLICY2])
     test('should calculate SLA policy status for non closed alerts', async () => {
       const mongoDb = await getMongoDbClient()
-      const caseRepository = new CaseRepository(tenantId, { mongoDb })
+      const caseRepository = new CaseRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       const service = await getSlaService(tenantId)
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       /* Creating alerts in two cases to verify the SLA status calculation */
@@ -563,7 +566,10 @@ describe('test sla service', () => {
     setUpSLAHooks(tenantId, [TEST_POLICY1])
     test('should calculate SLA policy status for non closed manual cases', async () => {
       const mongoDb = await getMongoDbClient()
-      const caseRepository = new CaseRepository(tenantId, { mongoDb })
+      const caseRepository = new CaseRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       const service = await getSlaService(tenantId)
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       await caseRepository.addCaseMongo({

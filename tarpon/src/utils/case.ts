@@ -11,6 +11,7 @@ import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 
 export const DEFAULT_CASE_AGGREGATES: CaseAggregates = {
   destinationPaymentMethods: [],
@@ -20,7 +21,8 @@ export const DEFAULT_CASE_AGGREGATES: CaseAggregates = {
 
 export const generateCaseAggreates = (
   transactions: InternalTransaction[],
-  existingCaseAggregates: CaseAggregates
+  existingCaseAggregates: CaseAggregates,
+  caseUsers?: CaseCaseUsers
 ): CaseAggregates => {
   const originPaymentMethods = uniq(
     compact(
@@ -38,10 +40,31 @@ export const generateCaseAggreates = (
     ).concat(existingCaseAggregates?.destinationPaymentMethods ?? [])
   )
 
+  // Collect transaction tags
+  const transactionTags = transactions.flatMap(
+    (transaction) => transaction?.tags ?? []
+  )
+
+  // Collect user tags from case users
+  const userTags: Array<{ key: string; value: string }> = []
+  if (
+    caseUsers?.origin &&
+    'tags' in caseUsers.origin &&
+    caseUsers.origin.tags
+  ) {
+    userTags.push(...caseUsers.origin.tags)
+  }
+  if (
+    caseUsers?.destination &&
+    'tags' in caseUsers.destination &&
+    caseUsers.destination.tags
+  ) {
+    userTags.push(...caseUsers.destination.tags)
+  }
+
+  // Combine transaction tags, user tags, and existing tags
   const tags = uniqObjects(
-    transactions
-      .flatMap((transaction) => transaction?.tags ?? [])
-      .concat(existingCaseAggregates?.tags ?? [])
+    transactionTags.concat(userTags).concat(existingCaseAggregates?.tags ?? [])
   )
 
   return {

@@ -12,13 +12,15 @@ import {
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { MigrationTrackerTable } from '@/models/migration-tracker'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class SyncDatabases extends BatchJobRunner {
   protected async run(job: SyncDatabasesBatchJob): Promise<void> {
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const teanantId = job.tenantId
 
-    await createMongoDBCollections(mongoDb, teanantId)
+    await createMongoDBCollections(mongoDb, dynamoDb, teanantId)
 
     if (isClickhouseEnabledInRegion()) {
       await createTenantDatabase(teanantId)

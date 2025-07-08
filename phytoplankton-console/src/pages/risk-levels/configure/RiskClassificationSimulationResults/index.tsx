@@ -327,7 +327,10 @@ export default function RiskClassificationSimulationResults(props: Props) {
           const classificationValues = iteration.parameters.classificationValues;
           if (classificationValues) {
             await api.postPulseRiskClassification({
-              RiskClassificationScore: classificationValues,
+              RiskClassificationRequest: {
+                scores: classificationValues,
+                comment: '',
+              },
             });
             queryClient.invalidateQueries(RISK_CLASSIFICATION_VALUES());
             message.success('Risk levels updated successfully');

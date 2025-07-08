@@ -26,19 +26,40 @@ export const riskClassificationHandler = lambdaApi({
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const riskService = new RiskService(tenantId, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
 
     const handlers = new Handlers()
 
     handlers.registerGetPulseRiskClassification(
-      async () => await riskService.getRiskClassificationValues()
+      async () => await riskService.getRiskClassificationItem()
     )
+
+    handlers.registerGetNewRiskLevelId(async () => {
+      const counter = await riskService.getCounterValue()
+      return {
+        id: RiskService.getRiskLevelId(counter),
+      }
+    })
 
     handlers.registerPostPulseRiskClassification(async (ctx, request) => {
       const response = await riskService.createOrUpdateRiskClassificationConfig(
-        request.RiskClassificationScore
+        request.RiskClassificationRequest.scores,
+        request.RiskClassificationRequest.comment
       )
       return response.result
+    })
+
+    handlers.registerGetRiskLevelVersionHistoryByVersionId(
+      async (ctx, request) => {
+        return await riskService.getRiskLevelVersionHistoryById(
+          request.versionId
+        )
+      }
+    )
+
+    handlers.registerGetRiskLevelVersionHistory(async (ctx, request) => {
+      return await riskService.getRiskLevelVersionHistory(request)
     })
 
     return await handlers.handle(event)

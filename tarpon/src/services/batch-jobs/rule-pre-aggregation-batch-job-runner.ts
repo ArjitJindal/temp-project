@@ -121,9 +121,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         tasksCount: 0,
         completeTasksCount: 0,
       }
-      await this.jobRepository.updateJob(this.jobId, {
-        $set: { metadata },
-      })
+      await this.jobRepository.setMetadata(this.jobId, metadata)
     }
 
     for (const aggregationVariable of aggregationVariables) {
@@ -254,9 +252,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       (m) => m.MessageDeduplicationId
     )
 
-    await this.jobRepository.updateJob(this.jobId, {
-      $inc: { 'metadata.tasksCount': dedupMessages.length },
-    })
+    await this.jobRepository.incrementMetadataTasksCount(
+      this.jobId,
+      dedupMessages.length
+    )
 
     if (envIs('local')) {
       for (const message of dedupMessages) {

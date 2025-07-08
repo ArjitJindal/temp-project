@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import RiskClassificationTable, {
-  ApiState,
   State,
   parseApiState,
   prepareApiState,
@@ -9,7 +8,7 @@ import s from './index.module.less';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { useHasResources } from '@/utils/user-utils';
-import { RiskClassificationScore } from '@/apis';
+import { RiskClassificationRequest, RiskClassificationScore } from '@/apis';
 import { message } from '@/components/library/Message';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 
@@ -25,8 +24,14 @@ export default function RiskQualification(props: Props) {
   const hasRiskLevelPermission = useHasResources(['write:::risk-scoring/risk-levels/*']);
   const { riskValues, state, setState, riskValuesRefetch } = props;
 
-  const saveRiskValuesMutation = useMutation<ApiState, Error, State>(
-    (state) => api.postPulseRiskClassification({ RiskClassificationScore: prepareApiState(state) }),
+  const saveRiskValuesMutation = useMutation<RiskClassificationRequest, Error, State>(
+    (state) =>
+      api.postPulseRiskClassification({
+        RiskClassificationRequest: {
+          scores: prepareApiState(state),
+          comment: '',
+        },
+      }),
     {
       onSuccess: () => {
         message.success('Risk values saved successfully');

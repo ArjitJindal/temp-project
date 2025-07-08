@@ -19,7 +19,6 @@ const https = require('node:https');
 const { Metafile } = require('esbuild');
 const brandingJson = require('@flagright/lib/config/config-branding-json.json');
 const { execSync } = require('child_process');
-
 const SCRIPT_DIR = __dirname;
 
 const env = {
@@ -70,9 +69,9 @@ function serve() {
   log(`Serving files on https://flagright.local:${port}...`);
   server.listen(port);
 }
-
 async function main() {
   const latestCommit = execSync('git rev-parse --short HEAD').toString().trim();
+  const hotReload = process.argv[2] === '--hotReload' ? true : false;
   const bundleBaseName = `bundle-${latestCommit}`;
   const bundleJs = `${bundleBaseName}.js`;
   const bundleCss = `${bundleBaseName}.css`;
@@ -91,13 +90,14 @@ async function main() {
     outFile: bundleBaseName,
     config,
     watch: env.WATCH,
+    hotReload: hotReload,
   });
   await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
   const randomHash = crypto.randomBytes(16).toString('hex');
   const csp = [
     `default-src 'self'`,
     `script-src 'self' 'strict-dynamic' https://eu-assets.i.posthog.com blob: 'nonce-${randomHash}'${
-      env.WATCH ? ' http://localhost:35729' : ''
+      hotReload ? ' http://localhost:35729' : ''
     }`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `object-src 'none'`,
@@ -105,7 +105,7 @@ async function main() {
     `connect-src 'self'${
       env.ENV === 'local' ? ' http://localhost:3002 ' : ' '
     }*.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}${
-      env.WATCH ? ' ws://localhost:35729' : ''
+      hotReload ? ' ws://localhost:35729' : ''
     }`,
     `font-src 'self' https://fonts.gstatic.com`,
     `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS} https://connect.nango.dev/`,
@@ -128,7 +128,7 @@ async function main() {
       )
         .map((x) => `<link rel="modulepreload" href="/${x}" as="script" />`)
         .join('\n'),
-      livereloadScript: env.WATCH
+      livereloadScript: hotReload
         ? `<script src="http://localhost:35729/livereload.js" nonce="${randomHash}"></script>`
         : '',
       ...config.define,

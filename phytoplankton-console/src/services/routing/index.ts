@@ -232,7 +232,12 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/rules',
-            redirect: lastActiveRuleTab === 'my-rules' ? '/rules/my-rules' : '/rules/rules-library',
+            redirect:
+              lastActiveRuleTab === 'my-rules'
+                ? '/rules/my-rules'
+                : lastActiveRuleTab === 'rules-library' || !hasMachineLearningFeature
+                ? '/rules/rules-library'
+                : '/rules/ml-models',
           },
           {
             path: '/rules/my-rules/simulation-history',
@@ -274,6 +279,15 @@ export function useRoutes(): RouteItem[] {
             name: 'my-rules',
             component: RulesPage,
           },
+          ...(hasMachineLearningFeature
+            ? [
+                {
+                  path: '/rules/ml-models',
+                  name: 'ml-models',
+                  component: MlModelsPage,
+                },
+              ]
+            : []),
         ],
       },
       isSarEnabled && {
@@ -562,18 +576,6 @@ export function useRoutes(): RouteItem[] {
         minRequiredResources: ['read:::audit-log/export/*'],
         component: AuditLogPage,
       },
-      ...(hasMachineLearningFeature
-        ? [
-            {
-              path: '/ml-models',
-              icon: 'ml-models',
-              name: 'ml-models',
-              position: 'top',
-              hideChildrenInMenu: true,
-              component: MlModelsPage,
-            } as RouteItem,
-          ]
-        : []),
       {
         path: '/settings',
         icon: 'settings',

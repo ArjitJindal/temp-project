@@ -12,6 +12,7 @@ export type Transition = {
 
 export type WorkflowBuilderState = {
   transitions: Transition[];
+  enabled: boolean;
 };
 
 export type LoadStateAction = {

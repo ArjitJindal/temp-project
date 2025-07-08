@@ -95,17 +95,23 @@ export class SanctionsService {
     this.dynamoDb = connections.dynamoDb
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
-      this.mongoDb
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
     )
     this.sanctionsWhitelistEntityRepository =
-      new SanctionsWhitelistEntityRepository(this.tenantId, this.mongoDb)
+      new SanctionsWhitelistEntityRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
     this.sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(this.tenantId, this.mongoDb)
-    this.counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
-    this.sanctionsHitsRepository = new SanctionsHitsRepository(
-      this.tenantId,
-      this.mongoDb
-    )
+    this.counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
       this.mongoDb
     )
@@ -412,10 +418,43 @@ export class SanctionsService {
         isHit: response.hitsCount > 0,
         searchId: response.searchId,
       }
-      await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
-        details,
-        Date.now()
-      )
+      const [firstResult, secondResult] = await Promise.allSettled([
+        this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
+          details,
+          Date.now()
+        ),
+        this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetailsV2(
+          details,
+          Date.now()
+        ),
+      ])
+
+      // Log any rejected promises
+      if (firstResult.status === 'rejected') {
+        logger.error(
+          'Failed to save screening details - addSanctionsScreeningDetails:',
+          {
+            error: firstResult.reason,
+            searchId: response.searchId,
+            entity: context.entity,
+            ruleInstanceId: context.ruleInstanceId,
+            operation: 'addSanctionsScreeningDetails',
+          }
+        )
+      }
+
+      if (secondResult.status === 'rejected') {
+        logger.error(
+          'Failed to save screening details - addSanctionsScreeningDetailsV2:',
+          {
+            error: secondResult.reason,
+            searchId: response.searchId,
+            entity: context.entity,
+            ruleInstanceId: context.ruleInstanceId,
+            operation: 'addSanctionsScreeningDetailsV2',
+          }
+        )
+      }
     }
     return response
   }

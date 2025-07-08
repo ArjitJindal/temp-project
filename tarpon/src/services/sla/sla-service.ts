@@ -54,7 +54,10 @@ export class SLAService {
     this.mongoDb = connections.mongoDb
     this.tenantId = tenantId
     this.alertsRepository = new AlertsRepository(tenantId, connections)
-    this.slaPolicyService = new SLAPolicyService(tenantId, connections.mongoDb)
+    this.slaPolicyService = new SLAPolicyService(tenantId, {
+      mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
     this.accountsService = new AccountsService({ auth0Domain }, connections)
     this.caseRepository = new CaseRepository(tenantId, connections)
     this.slaAuditLogService = new SLAAuditLogService(tenantId)

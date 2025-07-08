@@ -64,8 +64,5 @@ export default {
   'menu.risk-levels.risk-algorithms.description': 'Algorithms used to calculate risk scores',
   'menu.sanctions': 'Screening',
   'menu.risk-levels.custom-risk-factors': 'Custom risk factors',
-  'menu.ml-models': 'AI detection',
-  'menu.ml-models.description':
-    "Enable Flagright's machine learning detection models and access the model library. Models can be deployed from the Scenario Builder on Rules module. Contact support@flagright.com to learn more.",
   'menu.workflows': 'Workflows',
 };

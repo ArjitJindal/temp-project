@@ -392,15 +392,20 @@ export class ListRepository {
     ignoreCount: boolean = false
   ): Promise<CursorPaginationResponse<ListItem>> {
     let requestedVersion = version
+    let totalListItems = Math.max()
     if (!requestedVersion) {
       const header = await this.getListHeader(listId)
       if (header == null) {
         throw new createHttpError.NotFound(`List ${listId} not found`)
       }
       requestedVersion = header.version
+      totalListItems = header.size ?? totalListItems
     }
     const currentTimestamp = Math.floor(Date.now() / 1000)
-    const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE
+    const pageSize = Math.min(
+      params?.pageSize ?? DEFAULT_PAGE_SIZE,
+      totalListItems
+    )
 
     const queryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),

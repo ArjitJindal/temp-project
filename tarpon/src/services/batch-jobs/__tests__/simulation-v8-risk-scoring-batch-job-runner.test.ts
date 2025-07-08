@@ -1,4 +1,4 @@
-import { SimulationRiskFactorsV8BatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
@@ -207,7 +207,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       }
       const { taskIds, jobId } =
         await simulationTaskRepository.createSimulationJob(parameters)
-      const testJob: SimulationRiskFactorsV8BatchJob = {
+      const testJob: BatchJobWithId = {
         type: 'SIMULATION_RISK_FACTORS_V8',
         tenantId,
         parameters: {
@@ -217,6 +217,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
             sample: { type: 'ALL' },
           },
         },
+        jobId,
       }
       await jobRunnerHandler(testJob)
 
@@ -524,7 +525,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       }
       const { taskIds, jobId } =
         await simulationTaskRepository.createSimulationJob(parameters)
-      const testJob: SimulationRiskFactorsV8BatchJob = {
+      const testJob: BatchJobWithId = {
         type: 'SIMULATION_RISK_FACTORS_V8',
         tenantId,
         parameters: {
@@ -534,6 +535,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
             sample: { usersCount: 'RANDOM' },
           },
         },
+        jobId,
       }
       await jobRunnerHandler(testJob)
 
@@ -1029,7 +1031,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       }
       const { taskIds, jobId } =
         await simulationTaskRepository.createSimulationJob(parameters)
-      const testJob: SimulationRiskFactorsV8BatchJob = {
+      const testJob: BatchJobWithId = {
         type: 'SIMULATION_RISK_FACTORS_V8',
         tenantId,
         parameters: {
@@ -1039,6 +1041,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
             sample: { usersCount: 'RANDOM' },
           },
         },
+        jobId,
       }
       await jobRunnerHandler(testJob)
 
@@ -1100,7 +1103,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       }
       const { taskIds, jobId } =
         await simulationTaskRepository.createSimulationJob(parameters)
-      const testJob: SimulationRiskFactorsV8BatchJob = {
+      const testJob: BatchJobWithId = {
         type: 'SIMULATION_RISK_FACTORS_V8',
         tenantId,
         parameters: {
@@ -1110,6 +1113,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
             sample: { usersCount: 'RANDOM' },
           },
         },
+        jobId,
       }
       await jobRunnerHandler(testJob)
 
@@ -1173,7 +1177,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
       }
       const { taskIds, jobId } =
         await simulationTaskRepository.createSimulationJob(parameters)
-      const testJob: SimulationRiskFactorsV8BatchJob = {
+      const testJob: BatchJobWithId = {
         type: 'SIMULATION_RISK_FACTORS_V8',
         tenantId,
         parameters: {
@@ -1183,6 +1187,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
             sample: { usersCount: 'RANDOM' },
           },
         },
+        jobId,
       }
       await jobRunnerHandler(testJob)
 

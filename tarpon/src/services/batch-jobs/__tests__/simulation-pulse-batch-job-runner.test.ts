@@ -1,5 +1,5 @@
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
-import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -14,14 +14,18 @@ import { SimulationResultRepository } from '@/services/simulation/repositories/s
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
+import { thunderSchemaSetupHook } from '@/test-utils/clickhouse-test-utils'
+import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
 
 dynamoDbSetupHook()
-
 withFeatureHook(['SIMULATOR'])
 
 describe('Simulation (Pulse) batch job runner', () => {
+  const tenantId = getTestTenantId()
+  thunderSchemaSetupHook(tenantId, [
+    RiskClassificationHistoryTable.tableDefinition.tableName,
+  ])
   test('new risk level classifications', async () => {
-    const tenantId = getTestTenantId()
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     await createConsumerUsers(tenantId, [
@@ -45,18 +49,22 @@ describe('Simulation (Pulse) batch job runner', () => {
       }),
     ])
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    await riskRepository.createOrUpdateRiskClassificationConfig([
-      {
-        riskLevel: 'LOW',
-        lowerBoundRiskScore: 0,
-        upperBoundRiskScore: 50,
-      },
-      {
-        riskLevel: 'MEDIUM',
-        lowerBoundRiskScore: 50,
-        upperBoundRiskScore: 100,
-      },
-    ])
+    await riskRepository.createOrUpdateRiskClassificationConfig(
+      'test-simulation',
+      'test-simulation',
+      [
+        {
+          riskLevel: 'LOW',
+          lowerBoundRiskScore: 0,
+          upperBoundRiskScore: 50,
+        },
+        {
+          riskLevel: 'MEDIUM',
+          lowerBoundRiskScore: 50,
+          upperBoundRiskScore: 100,
+        },
+      ]
+    )
     const parameters: SimulationRiskLevelsParametersRequest = {
       parameters: [
         {
@@ -95,7 +103,7 @@ describe('Simulation (Pulse) batch job runner', () => {
     const { taskIds, jobId } =
       await simulationTaskRepository.createSimulationJob(parameters)
 
-    const testJob: SimulationRiskLevelsBatchJob = {
+    const testJob: BatchJobWithId = {
       type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
@@ -103,6 +111,7 @@ describe('Simulation (Pulse) batch job runner', () => {
         jobId,
         ...parameters.parameters[0],
       },
+      jobId,
     }
 
     await jobRunnerHandler(testJob)

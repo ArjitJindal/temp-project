@@ -3,6 +3,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -11,7 +12,10 @@ withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
     it('should initialize counters', async () => {
       const tenantId = getTestTenantId()
       const mongoDb = await getMongoDbClient()
-      const counterRepository = new CounterRepository(tenantId, mongoDb)
+      const counterRepository = new CounterRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await counterRepository.initialize()
 
       for (const entity of COUNTER_ENTITIES) {
@@ -23,7 +27,10 @@ withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
     it('should set counter value', async () => {
       const tenantId = getTestTenantId()
       const mongoDb = await getMongoDbClient()
-      const counterRepository = new CounterRepository(tenantId, mongoDb)
+      const counterRepository = new CounterRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await counterRepository.initialize()
 
       await counterRepository.setCounterValue('Alert', 1)
@@ -33,7 +40,10 @@ withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
     it('should get next counter and update', async () => {
       const tenantId = getTestTenantId()
       const mongoDb = await getMongoDbClient()
-      const counterRepository = new CounterRepository(tenantId, mongoDb)
+      const counterRepository = new CounterRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await counterRepository.initialize()
       const counter = await counterRepository.getNextCounterAndUpdate('Alert')
       expect(counter).toBeDefined()
@@ -42,7 +52,10 @@ withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
     it('should get next counters and update', async () => {
       const tenantId = getTestTenantId()
       const mongoDb = await getMongoDbClient()
-      const counterRepository = new CounterRepository(tenantId, mongoDb)
+      const counterRepository = new CounterRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await counterRepository.initialize()
       const counters = await counterRepository.getNextCountersAndUpdate(
         'Alert',

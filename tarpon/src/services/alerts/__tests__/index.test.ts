@@ -176,6 +176,7 @@ describe('test closeAlertIfAllTransactionsApproved', () => {
     const s3 = getS3ClientByEvent(null as any)
     const alertsRepository = new AlertsRepository(tenantId, {
       mongoDb,
+      dynamoDb,
     })
 
     const alertsService = new AlertsService(alertsRepository, s3, {

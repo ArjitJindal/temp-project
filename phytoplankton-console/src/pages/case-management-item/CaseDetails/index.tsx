@@ -17,21 +17,13 @@ import {
   Comment,
   InternalBusinessUser,
   InternalConsumerUser,
+  CommentsResponseItem,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
-import { useQueries } from '@/utils/queries/hooks';
-import { ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
-import {
-  all,
-  AsyncResource,
-  getOr,
-  isSuccess,
-  map,
-  success,
-  useFinishedSuccessfully,
-} from '@/utils/asyncResource';
-import { QueryResult } from '@/utils/queries/types';
+import { useQuery } from '@/utils/queries/hooks';
+import { ALERT_COMMENTS, ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
+import { all, AsyncResource, getOr, success, useFinishedSuccessfully } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
@@ -145,39 +137,43 @@ function useAlertsComments(
   alertIds: string[],
 ): AsyncResource<CommentGroup[]> {
   const queryClient = useQueryClient();
-  const caseItem = getOr(caseRes, undefined);
+  const api = useApi();
   const isJustLoaded = useFinishedSuccessfully(caseRes);
+  const alertsCommentsRes = useQuery<CommentsResponseItem[]>(
+    ALERT_COMMENTS(alertIds),
+    async (): Promise<CommentsResponseItem[]> => {
+      const result = await api.getComments({
+        filterEntityIds: alertIds,
+        filterEntityTypes: ['ALERT'],
+      });
+      return result.items;
+    },
+    {
+      enabled: alertIds.length > 0,
+    },
+  );
+  const commentsData = getOr(alertsCommentsRes.data, undefined);
+
   useEffect(() => {
-    if (isJustLoaded && isSuccess(caseRes)) {
-      const caseItem = caseRes.value;
-      for (const alert of caseItem.alerts ?? []) {
-        if (alert.alertId) {
+    if (isJustLoaded && commentsData) {
+      for (const item of commentsData) {
+        if (item.entityId) {
           queryClient.setQueryData<ApiComment[]>(
-            ALERT_ITEM_COMMENTS(alert.alertId),
-            alert.comments ?? [],
+            ALERT_ITEM_COMMENTS(item.entityId),
+            item.comments ?? [],
           );
         }
       }
     }
-  }, [queryClient, isJustLoaded, caseRes]);
+  }, [queryClient, isJustLoaded, commentsData]);
 
-  const results = useQueries<ApiComment[]>({
-    queries: alertIds.map((alertId) => ({
-      queryKey: ALERT_ITEM_COMMENTS(alertId),
-      queryFn: async (): Promise<ApiComment[]> => {
-        return caseItem?.alerts?.find((alert) => alert.alertId === alertId)?.comments ?? [];
-      },
-    })),
-  });
-
-  const commentsResources: AsyncResource<CommentGroup>[] = results.map(
-    (x: QueryResult<ApiComment[]>, i): AsyncResource<CommentGroup> => {
-      const alertId = alertIds[i];
-      return map(x.data, (comments: ApiComment[]) => ({
-        title: `Alert: ${alertId}`,
-        id: `alert-${alertId ?? ''}`,
-        comments,
-      }));
+  const commentsResources: AsyncResource<CommentGroup>[] = alertIds.map(
+    (alertId: string): AsyncResource<CommentGroup> => {
+      return success({
+        title: 'Alert comments',
+        id: alertId,
+        comments: commentsData?.find((item) => item.entityId === alertId)?.comments ?? [],
+      });
     },
   );
 
@@ -205,8 +201,7 @@ function useTabs(
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const queryClient = useQueryClient();
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();

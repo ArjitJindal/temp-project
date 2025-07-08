@@ -9,6 +9,7 @@ import {
 import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import * as Sentry from '@sentry/serverless'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -27,6 +28,8 @@ import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { logger } from '@/core/logger'
+import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
+import { envIs } from '@/utils/env'
 
 type TableDetails = {
   tenantId: string
@@ -69,9 +72,51 @@ export class MongoDbConsumer {
     }
   )
 
+  private async filterEventsByTenantId(
+    events: MongoConsumerMessage[]
+  ): Promise<MongoConsumerMessage[]> {
+    const allTenantIds = await getAllTenantIds()
+    const filteredEvents = events.filter((event) => {
+      const { collectionName } = event
+      const tableDetails = this.fetchTableDetails(collectionName)
+      if (!tableDetails) {
+        return false
+      }
+      const { tenantId } = tableDetails
+
+      if (!tenantId) {
+        logger.warn('No tenantId found in MongoConsumerMessage:', event)
+        return false
+      }
+
+      if (
+        !allTenantIds.has(getNonDemoTenantId(tenantId)) &&
+        !envIs('local', 'test')
+      ) {
+        const logObject = {
+          tenantId: tenantId,
+          collectionName: event.collectionName,
+          operationType: event.operationType,
+          clusterTime: event.clusterTime,
+        }
+
+        const message = `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
+        logger.warn(message, logObject)
+        logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
+        logger.info(`tenantId: ${tenantId}`)
+        Sentry.captureException(new Error(message), { extra: logObject })
+        return false
+      }
+      return true
+    })
+    return filteredEvents
+  }
+
   public async handleMongoConsumerMessage(events: MongoConsumerMessage[]) {
+    const filteredEvents = await this.filterEventsByTenantId(events)
+
     const { messagesToReplace, messagesToDelete } =
-      this.segregateMessages(events)
+      this.segregateMessages(filteredEvents)
 
     await this.handleMessagesReplace(messagesToReplace)
     await this.handleMessagesDelete(messagesToDelete)

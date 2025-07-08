@@ -63,6 +63,15 @@ import { NotificationRepository } from '@/services/notifications/notifications-r
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
+import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import {
+  SimulationAllJobs,
+  SimulationTaskRepository,
+} from '@/services/simulation/repositories/simulation-task-repository'
+import {
+  SimulationResult,
+  SimulationResultRepository,
+} from '@/services/simulation/repositories/simulation-result-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -179,6 +188,38 @@ export class TarponChangeMongoDbConsumer {
         .setLLMRequestsHandler((tenantId, newLLMRequests) =>
           this.handleLLMRequests(tenantId, newLLMRequests)
         )
+        .setRiskClassificationHistoryHandler(
+          (tenantId, newRiskClassificationHistory, dbClients) =>
+            this.handleRiskClassificationHistory(
+              tenantId,
+              newRiskClassificationHistory,
+              dbClients
+            )
+        )
+        .setSimulationTaskHandler(
+          (tenantId, oldSimulationTask, newSimulationTask, dbClients) =>
+            this.handleSimulationTask(tenantId, newSimulationTask, dbClients)
+        )
+        .setSimulationResultHandler(
+          (tenantId, oldSimulationResult, newSimulationResult, dbClients) =>
+            this.handleSimulationResult(
+              tenantId,
+              newSimulationResult,
+              dbClients
+            )
+        )
+        .setSimulationTaskHandler(
+          (tenantId, oldSimulationTask, newSimulationTask, dbClients) =>
+            this.handleSimulationTask(tenantId, newSimulationTask, dbClients)
+        )
+        .setSimulationResultHandler(
+          (tenantId, oldSimulationResult, newSimulationResult, dbClients) =>
+            this.handleSimulationResult(
+              tenantId,
+              newSimulationResult,
+              dbClients
+            )
+        )
     )
   }
 
@@ -294,12 +335,12 @@ export class TarponChangeMongoDbConsumer {
       (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
     )
     // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
-    // user.riskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel
+    // user.riskLevel and user.kycRiskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel or user.kycRiskLevel
     // alone will trigger a new case which is unexpected. We only want to create a new case if the user details
     // have changes (when there're changes, we'll run user rules again).
     const userDetailsChanged = !isEqual(
-      omit(oldUser, 'riskLevel'),
-      omit(newUser, 'riskLevel')
+      omit(oldUser, ['riskLevel', 'kycRiskLevel']),
+      omit(newUser, ['riskLevel', 'kycRiskLevel'])
     )
     if (userDetailsChanged && newHitRules?.length) {
       const timestampBeforeCasesCreation = Date.now()
@@ -783,6 +824,71 @@ export class TarponChangeMongoDbConsumer {
       'handleGptRequests'
     )
     await linkLLMRequestClickhouse(tenantId, newLLMRequests)
+    subSegment?.close()
+  }
+
+  async handleRiskClassificationHistory(
+    tenantId: string,
+    newRiskClassificationHistory: RiskClassificationHistory | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newRiskClassificationHistory) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleRiskClassificationHistory'
+    )
+    subSegment?.close()
+
+    const riskClassificationHistoryRepository = new RiskRepository(
+      tenantId,
+      dbClients
+    )
+    await riskClassificationHistoryRepository.createRiskClassificationHistoryInClickhouse(
+      newRiskClassificationHistory
+    )
+  }
+  async handleSimulationTask(
+    tenantId: string,
+    newSimulationTask: SimulationAllJobs | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newSimulationTask) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleSimulationTask'
+    )
+    const simulationTaskRepository = new SimulationTaskRepository(
+      tenantId,
+      dbClients.mongoDb
+    )
+    await simulationTaskRepository.linkSimulationTaskClickHouse(
+      newSimulationTask
+    )
+    subSegment?.close()
+  }
+  async handleSimulationResult(
+    tenantId: string,
+    newSimulationResult: SimulationResult | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newSimulationResult) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleSimulationResult'
+    )
+    const simulationResultRepository = new SimulationResultRepository(
+      tenantId,
+      dbClients.mongoDb
+    )
+    await simulationResultRepository.linkSimulationResultClickHouse(
+      newSimulationResult
+    )
     subSegment?.close()
   }
 }

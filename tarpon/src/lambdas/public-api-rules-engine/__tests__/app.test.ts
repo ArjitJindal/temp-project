@@ -1042,7 +1042,7 @@ describe('Public API - Create a Business User Event', () => {
     expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
     const userService = new UserService(
       TEST_TENANT_ID,
-      { mongoDb },
+      { mongoDb, dynamoDb: getDynamoDbClient() },
       getS3Client({
         accessKeyId: 'accessKeyId',
         secretAccessKey: 'secretAccessKey',

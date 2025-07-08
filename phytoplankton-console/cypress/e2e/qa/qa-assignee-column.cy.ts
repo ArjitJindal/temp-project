@@ -42,7 +42,7 @@ describe('QA Assignee Column', () => {
         //check if the qa Assigned to is same in QA table and Alert table corresponding to the alert id
         cy.contains('td', alertId)
           .parent()
-          .find('.ant-select-selection-item')
+          .find('[data-cy="_assignmentName"]')
           .first()
           .invoke('text')
           .then((qaAssignedToText) => {
@@ -50,7 +50,7 @@ describe('QA Assignee Column', () => {
             cy.visit('/case-management/cases');
             cy.contains('td', alertId)
               .parent()
-              .find('.ant-select-selection-item')
+              .find('[data-cy="_assignmentName"]')
               .contains(qaAssignedTo);
           });
       });

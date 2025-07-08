@@ -5,7 +5,6 @@ import { FlatFileValidationResult } from '@/@types/flat-files'
 import { getS3Client } from '@/utils/s3'
 import { AlertsService } from '@/services/alerts'
 import { AlertsRepository } from '@/services/alerts/repository'
-import { ReasonsService } from '@/services/tenants/reasons-service'
 import { SanctionsHitService } from '@/services/sanctionsHit'
 import { traceable } from '@/core/xray'
 
@@ -31,12 +30,6 @@ export class BulkSanctionsHitsUpdateRunner extends FlatFileRunner<SanctionsHitUp
         tmpBucketName: process.env.TMP_BUCKET as string,
       }
     )
-  })
-
-  private getReasons = memoize(async () => {
-    const reasonsService = new ReasonsService(this.tenantId, this.mongoDb)
-    const reasons = await reasonsService.getReasons()
-    return reasons
   })
 
   private getAlertService = memoize(() => {

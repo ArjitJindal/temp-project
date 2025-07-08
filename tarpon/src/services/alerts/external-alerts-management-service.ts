@@ -250,7 +250,8 @@ export class ExternalAlertManagementService {
 
     const newCaseAggregates = generateCaseAggreates(
       transactions,
-      caseAggregates
+      caseAggregates,
+      case_.caseUsers
     )
 
     const alert: AlertInternal = {
@@ -393,7 +394,8 @@ export class ExternalAlertManagementService {
 
     const caseAggregates = generateCaseAggreates(
       transactions,
-      DEFAULT_CASE_AGGREGATES
+      DEFAULT_CASE_AGGREGATES,
+      case_.caseUsers
     )
 
     return { caseAggregates, caseTransactionIds }

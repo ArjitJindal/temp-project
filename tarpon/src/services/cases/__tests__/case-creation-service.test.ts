@@ -108,6 +108,7 @@ async function getServices(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
+    dynamoDb,
   })
 
   const caseCreationService = new CaseCreationService(tenantId, {

@@ -1,11 +1,11 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
 
 export type CounterEntity =
@@ -25,6 +25,8 @@ export type CounterEntity =
   | 'ScreeningProfile'
   | 'WorkflowCase'
   | 'WorkflowAlert'
+  | 'RiskLevel'
+  | 'ScreeningDetails'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
@@ -40,6 +42,8 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'ScreeningProfile',
   'WorkflowCase',
   'WorkflowAlert',
+  'RiskLevel',
+  'ScreeningDetails',
 ]
 
 export type EntityCounter = {
@@ -52,12 +56,16 @@ export class CounterRepository {
   private tenantId: string
   private mongoDb: MongoClient
   private dynamoCounterRepository: DynamoCounterRepository
-  constructor(tenantId: string, mongoDb: MongoClient) {
+
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
+    this.mongoDb = connections.mongoDb
     this.dynamoCounterRepository = new DynamoCounterRepository(
       tenantId,
-      getDynamoDbClient()
+      connections.dynamoDb
     )
   }
 

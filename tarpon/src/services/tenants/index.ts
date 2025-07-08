@@ -60,6 +60,10 @@ import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
+import {
+  createNonConsoleApiInMemoryCache,
+  getInMemoryCacheKey,
+} from '@/utils/memory-cache'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -70,6 +74,11 @@ export type TenantInfo = {
 const region = envIs('local')
   ? 'eu-central-1'
   : process.env.AWS_REGION || 'eu-central-1'
+
+const tenantCache = createNonConsoleApiInMemoryCache<TenantInfo[]>({
+  max: 100,
+  ttlMinutes: 10,
+})
 
 @traceable
 export class TenantService {
@@ -172,6 +181,13 @@ export class TenantService {
     region?: FlagrightRegion,
     useCache: boolean = false
   ): Promise<TenantInfo[]> => {
+    const cacheKey = getInMemoryCacheKey(stage, region, 'tenants-cache')
+    const cachedTenants = tenantCache?.get(cacheKey)
+
+    if (cachedTenants) {
+      return cachedTenants
+    }
+
     const stageOrDefault = stage ?? (process.env.ENV?.split(':')[0] as Stage)
     const regionOrDefault = region ?? (process.env.REGION as FlagrightRegion)
     const dynamoDb = getDynamoDbClient()
@@ -197,13 +213,17 @@ export class TenantService {
       )
     }
 
-    return region
+    const result = region
       ? tenantInfos.filter(
           (tenantInfo) =>
             !tenantInfo.tenant.region ||
             tenantInfo.tenant.region === regionOrDefault
         )
       : tenantInfos
+
+    tenantCache?.set(cacheKey, result)
+
+    return result
   }
 
   static async pullAllTenantsFeatures(): Promise<
@@ -251,7 +271,10 @@ export class TenantService {
   async createDefaultScreeningProfile(tenantId: string) {
     const mongoDb = this.mongoDb
     const dynamoDb = this.dynamoDb
-    const counterRepository = new CounterRepository(tenantId, mongoDb)
+    const counterRepository = new CounterRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const screeningProfileService = new ScreeningProfileService(tenantId, {
       mongoDb,
       dynamoDb,
@@ -411,7 +434,10 @@ export class TenantService {
       )
     }
 
-    const reasonsService = new ReasonsService(tenantId, this.mongoDb)
+    const reasonsService = new ReasonsService(tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     // initialising default reasons for new tenant
     await reasonsService.initialiseDefaultReasons()
 
@@ -419,7 +445,10 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,
     })
-    const counterRepository = new CounterRepository(tenantId, this.mongoDb)
+    const counterRepository = new CounterRepository(tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
     // initalising v2 risk factors in v8 for new tenant
     await Promise.all([
       ...RISK_FACTORS.map(async (riskFactor, index) => {

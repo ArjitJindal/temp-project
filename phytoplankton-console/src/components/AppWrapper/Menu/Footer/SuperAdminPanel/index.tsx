@@ -189,6 +189,11 @@ export const featureDescriptions: Record<
     description: 'Enables transliteration for screening',
     tag: FeatureTag.ENG,
   },
+  OPEN_SEARCH: {
+    title: 'Opensearch',
+    description: 'Enables opensearch for screening searches',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
@@ -680,7 +685,7 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <Button isDisabled={!batchJobName} type={'DANGER'} onClick={props.onClick}>
+                <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
                   Run
                 </Button>
               )}
@@ -709,7 +714,7 @@ export default function SuperAdminPanel() {
               />
             </Label>
             <Button
-              type="DANGER"
+              type="PRIMARY"
               onClick={() =>
                 mutateTenantSettings.mutate({
                   apiKeyViewData: [],

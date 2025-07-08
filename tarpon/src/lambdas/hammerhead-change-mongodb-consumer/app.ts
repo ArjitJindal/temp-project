@@ -159,16 +159,16 @@ export async function krsScoreEventHandler(
     'StreamConsumer',
     'krsScoreEventHandler'
   )
-  const { mongoDb } = dbClients
+  const { mongoDb, dynamoDb } = dbClients
 
-  const riskRepository = new RiskRepository(tenantId, { mongoDb })
-  const userRepository = new UserRepository(tenantId, { mongoDb })
+  const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
+  const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
   krsScore = omit(krsScore, DYNAMO_KEYS) as KrsScore
 
   await Promise.all([
     riskRepository.addKrsValueToMongo(krsScore),
     krsScore.userId
-      ? userRepository.updateKrsScoreOfUserMongo(krsScore.userId, krsScore)
+      ? userRepository.updateKrsScoreOfUser(krsScore.userId, krsScore)
       : undefined,
   ])
   subSegment?.close()

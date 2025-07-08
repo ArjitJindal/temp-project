@@ -26,6 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
+import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -75,6 +76,12 @@ export const AUDIT_LOGS_KEY_IDENTIFIER = '#audit-logs'
 export const ALERTS_QA_SAMPLING_KEY_IDENTIFIER = '#alerts-qa-sampling'
 export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
+export const JOBS_KEY_IDENTIFIER = '#jobs'
+export const REASONS_KEY_IDENTIFIER = '#reasons'
+export const SIMULATION_TASK_KEY_IDENTIFIER = '#simulation-task'
+export const SIMULATION_TASK_ITERATION_KEY_IDENTIFIER =
+  '#simulation-task-iteration'
+export const SIMULATION_RESULT_KEY_IDENTIFIER = '#simulation-result'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -528,7 +535,7 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-email#${auth0Domain}`,
     SortKeyID: email,
   }),
-  ORGANIZATION: (auth0Domain: string, tenantId: string) => ({
+  ORGANIZATION: (auth0Domain: string, tenantId?: string) => ({
     PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-data#${auth0Domain}`,
     SortKeyID: tenantId,
   }),
@@ -616,6 +623,26 @@ export const DynamoDbKeys = {
   }),
   GPT_REQUESTS: (tenantId: string, id: string) => ({
     PartitionKeyID: `${tenantId}${GPT_REQUESTS_KEY_IDENTIFIER}`,
+    SortKeyID: id,
+  }),
+  JOBS: (tenantId: string, jobId: string) => ({
+    PartitionKeyID: `${tenantId}${JOBS_KEY_IDENTIFIER}`,
+    SortKeyID: jobId,
+  }),
+  REASONS: (tenantId: string, id: string, reasonType?: ReasonType) => ({
+    PartitionKeyID: `${tenantId}${REASONS_KEY_IDENTIFIER}`,
+    SortKeyID: `${reasonType}#${id}`,
+  }),
+  SIMULATION_TASK: (tenantId: string, jobId: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_TASK_KEY_IDENTIFIER}`,
+    SortKeyID: jobId,
+  }),
+  SIMULATION_TASK_ITERATION: (tenantId: string, taskId: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_TASK_ITERATION_KEY_IDENTIFIER}`,
+    SortKeyID: `${taskId}`,
+  }),
+  SIMULATION_RESULT: (tenantId: string, id: string) => ({
+    PartitionKeyID: `${tenantId}${SIMULATION_RESULT_KEY_IDENTIFIER}`,
     SortKeyID: id,
   }),
 }

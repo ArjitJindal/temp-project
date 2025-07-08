@@ -7,9 +7,10 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
-import { intersection, pick } from 'lodash'
+import { intersection, padStart, pick } from 'lodash'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
+import { CounterRepository } from '../counter/repository'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -23,7 +24,14 @@ import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPos
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetDrsValuesRequest,
+  DefaultApiGetRiskLevelVersionHistoryRequest,
+} from '@/@types/openapi-internal/RequestParameters'
+import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
+import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+
+export const RISK_LEVEL_CONSTANT = 'RLV'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -41,9 +49,9 @@ const validateClassificationRequest = (
 }
 
 type RiskClassificationAuditLogReturnData = AuditLogReturnData<
-  RiskClassificationScore[],
-  RiskClassificationScore[],
-  RiskClassificationScore[]
+  RiskClassificationHistory,
+  RiskClassificationConfig,
+  RiskClassificationHistory
 >
 
 type DrsRiskItemAuditLogReturnData = AuditLogReturnData<
@@ -57,11 +65,11 @@ export class RiskService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
   riskRepository: RiskRepository
-  mongoDb?: MongoClient
+  mongoDb: MongoClient
 
   constructor(
     tenantId: string,
-    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb?: MongoClient }
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
   ) {
     this.tenantId = tenantId
     this.dynamoDb = connections.dynamoDb
@@ -72,34 +80,74 @@ export class RiskService {
     this.mongoDb = connections.mongoDb
   }
 
-  async getRiskClassificationValues() {
-    return await this.riskRepository.getRiskClassificationValues()
+  async getRiskClassificationItem() {
+    return await this.riskRepository.getRiskClassificationItem()
+  }
+
+  async getCounterValue() {
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    return await counterRepository.getNextCounter('RiskLevel')
+  }
+
+  public static getRiskLevelId(counter: number) {
+    return `${RISK_LEVEL_CONSTANT}-${padStart(counter.toString(), 3, '0')}`
   }
 
   @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION', 'UPDATE')
   async createOrUpdateRiskClassificationConfig(
-    riskClassificationScore: RiskClassificationScore[]
+    riskClassificationValues: RiskClassificationScore[],
+    comment: string
   ): Promise<RiskClassificationAuditLogReturnData> {
-    validateClassificationRequest(riskClassificationScore)
+    validateClassificationRequest(riskClassificationValues)
+
     const oldClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
+      await this.riskRepository.getRiskClassificationItem()
+
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const counter = await counterRepository.getNextCounterAndUpdate('RiskLevel')
+    const id = RiskService.getRiskLevelId(counter)
+
     const result =
       await this.riskRepository.createOrUpdateRiskClassificationConfig(
-        riskClassificationScore
+        id,
+        comment,
+        riskClassificationValues
       )
-    const newClassificationValues = result.classificationValues
-    const oldClassificationValuesAsRiskClassificationScore =
-      oldClassificationValues
+
     return {
       entities: [
         {
-          oldImage: oldClassificationValuesAsRiskClassificationScore,
-          newImage: newClassificationValues,
+          oldImage: oldClassificationValues,
+          newImage: result,
           entityId: 'RISK_CLASSIFICATION_VALUES',
         },
       ],
-      result: newClassificationValues,
+      result: result,
     }
+  }
+
+  async getRiskLevelVersionHistory(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Promise<{ items: RiskClassificationHistory[]; total: number }> {
+    const [result, count] = await Promise.all([
+      this.riskRepository.getRiskClassificationHistory(params),
+      this.riskRepository.getRiskClassificationHistoryCount(params),
+    ])
+    return {
+      items: result,
+      total: count,
+    }
+  }
+
+  async getRiskLevelVersionHistoryById(id: string) {
+    return await this.riskRepository.getRiskClassificationHistoryById(id)
   }
 
   async getV2RiskFactorID(riskEntityType: string, parameter: string) {

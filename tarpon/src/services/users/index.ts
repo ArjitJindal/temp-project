@@ -166,8 +166,8 @@ export class UserService {
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: DynamoDBDocumentClient
-      mongoDb?: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+      mongoDb: MongoClient
       clickhouseClient?: ClickHouseClient
     },
     s3?: S3,

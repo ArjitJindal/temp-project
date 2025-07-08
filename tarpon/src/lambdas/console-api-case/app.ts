@@ -136,9 +136,8 @@ export const casesHandler = lambdaApi()(
       const response = await caseService.getCase(request.caseId, {
         logAuditLogView: true,
       })
-      return caseResponse(response.result)
+      return caseResponse(response.result, true)
     })
-
     handlers.registerDeleteCasesCaseIdCommentsCommentId(
       async (ctx, request) => {
         const response = await caseService.deleteCaseComment(
@@ -221,11 +220,11 @@ export const casesHandler = lambdaApi()(
 
       const promises: Promise<CommentsResponseItem[]>[] = []
 
-      if (request.filterEntityTypes?.includes('CASE') && caseIds) {
+      if (request.filterEntityTypes?.includes('CASE') && caseIds?.length) {
         promises.push(caseService.getComments(caseIds))
       }
 
-      if (request.filterEntityTypes?.includes('ALERT') && alertIds) {
+      if (request.filterEntityTypes?.includes('ALERT') && alertIds?.length) {
         promises.push(alertsService.getComments(alertIds))
       }
       const responses = await Promise.all(promises)
@@ -396,11 +395,27 @@ export const casesHandler = lambdaApi()(
   }
 )
 
-function caseResponse(c: Case): Case {
+function caseResponse(
+  c: Case,
+  pickOnlyAlertsMandatoryFields: boolean = false
+): Case {
   c.caseTransactionsIds = undefined
   c.alerts?.map((a) => {
     a.transactionIds = []
     return a
   })
+  if (pickOnlyAlertsMandatoryFields) {
+    c.alerts = c.alerts?.map((a) => ({
+      alertId: a.alertId,
+      createdTimestamp: a.createdTimestamp,
+      ruleInstanceId: a.ruleInstanceId,
+      ruleName: a.ruleName,
+      ruleDescription: a.ruleDescription,
+      ruleId: a.ruleId,
+      ruleAction: a.ruleAction,
+      numberOfTransactionsHit: a.numberOfTransactionsHit,
+      priority: a.priority,
+    }))
+  }
   return c
 }

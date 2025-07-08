@@ -1,0 +1,58 @@
+{
+  "name": "Simple Maker Case Workflow",
+  "statuses": ["OPEN", "CLOSED", "IN_PROGRESS", "ON_HOLD"],
+  "statusAssignments": {
+    "OPEN": "maker"
+  },
+  "transitions": {
+    "OPEN": {
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        },
+        {
+          "action": "SET_ON_HOLD",
+          "to": "ON_HOLD"
+        },
+        {
+          "action": "SET_IN_PROGRESS",
+          "to": "IN_PROGRESS"
+        }
+      ]
+    },
+    "IN_PROGRESS": {
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        },
+        {
+          "action": "SET_ON_HOLD",
+          "to": "ON_HOLD"
+        },
+        {
+          "action": "SET_OPEN",
+          "to": "OPEN"
+        }
+      ]
+    },
+    "ON_HOLD": {
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        },
+        {
+          "action": "SET_IN_PROGRESS",
+          "to": "IN_PROGRESS"
+        },
+        {
+          "action": "SET_OPEN",
+          "to": "OPEN"
+        }
+      ]
+    }
+  },
+  "autoClose": true
+}

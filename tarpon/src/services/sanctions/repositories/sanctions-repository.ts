@@ -1,4 +1,5 @@
 import { uniq } from 'lodash'
+import { Client } from '@opensearch-project/opensearch'
 import { RELATIONSHIP_CODE_TO_NAME } from '../providers/dow-jones-provider'
 import {
   Action,
@@ -11,11 +12,15 @@ import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupati
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
-
+import { hasFeature } from '@/core/utils/context'
+import { bulkUpdate } from '@/utils/opensearch-utils'
+import { envIsNot } from '@/utils/env'
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
-  constructor(collectionName: string) {
+  opensearchClient?: Client
+  constructor(collectionName: string, opensearchClient?: Client) {
     this.collectionName = collectionName
+    this.opensearchClient = opensearchClient
   }
   async save(
     provider: SanctionsDataProviderName,
@@ -79,7 +84,20 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       }
     })
     if (operations.length > 0) {
-      await coll.bulkWrite(operations)
+      if (envIsNot('prod') && this.opensearchClient) {
+        await Promise.all([
+          coll.bulkWrite(operations),
+          bulkUpdate(
+            provider,
+            entities,
+            version,
+            this.collectionName,
+            this.opensearchClient
+          ),
+        ])
+      } else {
+        await coll.bulkWrite(operations)
+      }
     }
   }
 
@@ -160,7 +178,36 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       }
     })
     if (bulkWriteOperations.length > 0) {
-      await coll.bulkWrite(bulkWriteOperations)
+      if (hasFeature('OPEN_SEARCH') && this.opensearchClient) {
+        const entities = associations.map(
+          ([entityId, associateIds]) =>
+            [
+              'chg',
+              {
+                id: entityId,
+                provider,
+                associates: associateIds.map(({ id, association }) => ({
+                  ...associateNameMap[id],
+                  association: association
+                    ? RELATIONSHIP_CODE_TO_NAME[association]
+                    : undefined,
+                })),
+              },
+            ] as [Action, Partial<SanctionsEntity>]
+        )
+        await Promise.all([
+          coll.bulkWrite(bulkWriteOperations),
+          bulkUpdate(
+            provider,
+            entities,
+            version,
+            this.collectionName,
+            this.opensearchClient
+          ),
+        ])
+      } else {
+        await coll.bulkWrite(bulkWriteOperations)
+      }
     }
   }
 }

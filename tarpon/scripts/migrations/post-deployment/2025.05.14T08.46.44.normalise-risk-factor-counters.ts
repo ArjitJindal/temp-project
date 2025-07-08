@@ -8,7 +8,10 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
-  const counterRepository = new CounterRepository(tenant.id, mongoDb)
+  const counterRepository = new CounterRepository(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
   const riskRepository = new RiskRepository(tenant.id, {
     dynamoDb,
     mongoDb,

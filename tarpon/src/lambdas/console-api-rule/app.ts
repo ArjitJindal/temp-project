@@ -182,7 +182,7 @@ export const ruleInstanceHandler = lambdaApi()(
     handlers.registerGetRuleInstancesNewRuleId(async (ctx, request) => {
       const { ruleId } = request
       return {
-        ruleInstanceId: await ruleInstanceService.getNewRuleInstanceId(ruleId),
+        id: await ruleInstanceService.getNewRuleInstanceId(ruleId),
       }
     })
 

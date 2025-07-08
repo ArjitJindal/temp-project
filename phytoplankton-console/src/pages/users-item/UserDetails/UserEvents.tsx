@@ -13,7 +13,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USER_EVENTS_LIST } from '@/utils/queries/keys';
 import * as Card from '@/components/ui/Card';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -32,8 +31,7 @@ export const UserEvents = (props: Props) => {
     sort: [['timestamp', 'descend']],
   });
 
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const queryResults = useQuery(
     USER_EVENTS_LIST({

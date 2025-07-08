@@ -70,7 +70,7 @@ function getGitHeadHash() {
 
 async function buildCode(env, options) {
   const { PROJECT_DIR, SRC_FOLDER, OUTPUT_FOLDER } = env;
-  const { entry, outFile, watch, config } = options;
+  const { entry, outFile, watch, config, hotReload } = options;
   const lessPlugins = [
     new LessImportResolvePlugin({
       nodeModules: PROJECT_DIR + '/node_modules/',
@@ -90,7 +90,7 @@ async function buildCode(env, options) {
   // Simple livereload server for watch mode
   let livereloadServer = null;
   let httpServer = null;
-  if (watch) {
+  if (hotReload) {
     const WebSocket = require('ws');
     const http = require('http');
     try {

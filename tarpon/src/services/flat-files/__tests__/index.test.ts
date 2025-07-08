@@ -2,7 +2,6 @@ import { Readable } from 'stream'
 import { v4 as uuidv4 } from 'uuid'
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { mockClient } from 'aws-sdk-client-mock'
-import { JsonMigrationService } from 'thunder-schema'
 import { StackConstants } from '@lib/constants'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
@@ -20,12 +19,6 @@ import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { BatchJob, FlatFilesValidationBatchJob } from '@/@types/batch-job'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import {
-  createTenantDatabase,
-  getClickhouseCredentials,
-} from '@/utils/clickhouse/utils'
-import { diff as createDiff } from '@/models/migrations/1747929216549-migration'
-import { diff as updateDiff } from '@/models/migrations/1747986678506-migration'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { User } from '@/@types/openapi-internal/User'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -36,22 +29,14 @@ import {
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { thunderSchemaSetupHook } from '@/test-utils/clickhouse-test-utils'
+import { FlatFilesRecords } from '@/models/flat-files-records'
 
 dynamoDbSetupHook()
 
 jest.mock('@/services/batch-jobs/batch-job', () => ({
   sendBatchJobCommand: jest.fn(),
 }))
-
-const createFlatFilesTables = async (tenantId: string) => {
-  await createTenantDatabase(tenantId)
-  const defaultConfig = await getClickhouseCredentials(tenantId)
-  const jsonMigrationService = new JsonMigrationService(defaultConfig)
-  // @ts-expect-error: need a library update
-  await jsonMigrationService.migrate(`${uuidv4()}.ts`, createDiff)
-  // @ts-expect-error: need a library update
-  await jsonMigrationService.migrate(`${uuidv4()}.ts`, updateDiff)
-}
 
 const createS3MockResponse = (stream: Readable) =>
   ({
@@ -64,6 +49,9 @@ const createS3MockResponse = (stream: Readable) =>
 
 describe('FlatFilesService', () => {
   const TEST_TENANT_ID = getTestTenantId()
+  thunderSchemaSetupHook(TEST_TENANT_ID, [
+    FlatFilesRecords.tableDefinition.tableName,
+  ])
   let service: FlatFilesService
   beforeEach(async () => {
     service = new FlatFilesService(TEST_TENANT_ID)
@@ -156,7 +144,7 @@ describe('FlatFilesService', () => {
     const s3Mock = mockClient(S3Client)
     beforeAll(async () => {
       enableAsyncRulesInTest()
-      await createFlatFilesTables(TEST_TENANT_ID)
+
       if (!globalThis.__didCreateTables__) {
         globalThis.__didCreateTables__ = true
       }

@@ -9,7 +9,6 @@ import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { RiskLevel } from '@/apis';
 import NumberInput from '@/components/library/NumberInput';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 
 export interface BasicDetailsFormValues {
   name: string;
@@ -24,8 +23,7 @@ interface Props {
 }
 export const BasicDetailsStep = (props: Props) => {
   const { newRiskId } = props;
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const riskClassificationValues = useRiskClassificationScores();
   return (
     <div className={s.root}>
       <Card.Root>

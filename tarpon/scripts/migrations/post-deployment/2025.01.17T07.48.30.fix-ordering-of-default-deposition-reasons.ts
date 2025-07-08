@@ -5,15 +5,20 @@ import { REASONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { CASE_REASONSS } from '@/@types/openapi-internal-custom/CaseReasons'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const db = mongoDb.db()
   const collection = db.collection<ConsoleActionReason>(
     REASONS_COLLECTION(tenant.id)
   )
   await collection.deleteMany({ reason: { $in: CASE_REASONSS } })
-  const reasonsService = new ReasonsService(tenant.id, mongoDb)
+  const reasonsService = new ReasonsService(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
   await reasonsService.initialiseDefaultReasons()
 }
 

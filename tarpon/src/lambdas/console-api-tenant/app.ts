@@ -540,12 +540,20 @@ export const tenantsHandler = lambdaApi()(
     })
     /* SLA Policies */
     handlers.registerGetSlaPolicies(async (ctx, request) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       return await slaPolicyService.getSLAPolicies(request)
     })
 
     handlers.registerGetSlaPolicy(async (ctx, request) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       const policyId = request.slaId
       const policy = await slaPolicyService.getSLAPolicyById(policyId)
 
@@ -557,22 +565,38 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerPostSlaPolicy(async (ctx, request) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       return await slaPolicyService.createSLAPolicy(request.SLAPolicy)
     })
 
     handlers.registerPutSlaPolicy(async (ctx, request) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       return await slaPolicyService.updateSLAPolicy(request.SLAPolicy)
     })
 
     handlers.registerDeleteSlaPolicy(async (ctx, request) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       return await slaPolicyService.deleteSLAPolicy(request.slaId)
     })
 
     handlers.registerGetNewSlaId(async (ctx) => {
-      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       return await slaPolicyService.getSLAPolicyId()
     })
 
@@ -640,19 +664,31 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerGetActionReasons(async (ctx, request) => {
-      const reasonsService = new ReasonsService(tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const reasonsService = new ReasonsService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       const type = request.type
       return await reasonsService.getReasons(type)
     })
 
     handlers.registerCreateActionReasons(async (ctx, request) => {
-      const reasonsService = new ReasonsService(tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const reasonsService = new ReasonsService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       const reason = request.ConsoleActionReasonCreationRequest
       return await reasonsService.addReasons(reason)
     })
 
     handlers.registerToggleActionReason(async (ctx, request) => {
-      const reasonsService = new ReasonsService(tenantId, mongoDb)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const reasonsService = new ReasonsService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
 
       return await reasonsService.enableOrDisableReason(
         request.reasonId,

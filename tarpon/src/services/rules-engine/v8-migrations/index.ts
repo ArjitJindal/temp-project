@@ -25,6 +25,7 @@ import { SameUserUsingTooManyPaymentIdentifiersParameters } from '../transaction
 import { TransactionsPatternPercentageRuleParameters } from '../transaction-rules/transactions-pattern-percentage-base'
 import { SamePaymentDetailsParameters } from '../transaction-rules/same-payment-details'
 import { BlacklistPaymentdetailsRuleParameters } from '../transaction-rules/blacklist-payment-details'
+import { PaymentMethodNameRuleParameter } from '../transaction-rules/payment-method-name-levensthein-distance'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -2511,6 +2512,459 @@ const V8_CONVERSION: Readonly<
     return {
       logic: finalLogic,
       logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-118': (parameters: PaymentMethodNameRuleParameter) => {
+    const { allowedDistancePercentage, ignoreEmptyName } = parameters
+    const orBlocks: any[] = []
+
+    if (!ignoreEmptyName) {
+      const senderUserNamePresent = {
+        or: [
+          { '!!': { var: 'CONSUMER_USER:userDetails-name-firstName__SENDER' } },
+          {
+            '!!': {
+              var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER',
+            },
+          },
+        ],
+      }
+      const receiverUserNamePresent = {
+        or: [
+          {
+            '!!': { var: 'CONSUMER_USER:userDetails-name-firstName__RECEIVER' },
+          },
+          {
+            '!!': {
+              var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__RECEIVER',
+            },
+          },
+        ],
+      }
+      const originPaymentMethodCardNamePresent = {
+        or: [
+          {
+            '!=': [
+              { var: 'TRANSACTION:originPaymentDetails-nameOnCard-firstName' },
+              '',
+            ],
+          },
+          {
+            '!=': [
+              { var: 'TRANSACTION:originPaymentDetails-nameOnCard-lastName' },
+              '',
+            ],
+          },
+        ],
+      }
+      const originPaymentMethodNonCardNamePresent = {
+        '!=': [{ var: 'TRANSACTION:originPaymentDetails-name' }, ''],
+      }
+      const destinationPaymentMethodCardNamePresent = {
+        or: [
+          {
+            '!=': [
+              {
+                var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-firstName',
+              },
+              '',
+            ],
+          },
+          {
+            '!=': [
+              {
+                var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-lastName',
+              },
+              '',
+            ],
+          },
+        ],
+      }
+      const destinationPaymentMethodNonCardNamePresent = {
+        '!=': [{ var: 'TRANSACTION:destinationPaymentDetails-name' }, ''],
+      }
+
+      // Constants for Levenshtein distance checks
+      const senderConsumerName = {
+        concat_string: [
+          { var: 'CONSUMER_USER:userDetails-name-firstName__SENDER' },
+          { var: 'CONSUMER_USER:userDetails-name-lastName__SENDER' },
+        ],
+      }
+      const senderBusinessName = {
+        var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER',
+      }
+      const receiverConsumerName = {
+        concat_string: [
+          { var: 'CONSUMER_USER:userDetails-name-firstName__RECEIVER' },
+          { var: 'CONSUMER_USER:userDetails-name-lastName__RECEIVER' },
+        ],
+      }
+      const receiverBusinessName = {
+        var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__RECEIVER',
+      }
+      const originCardName = {
+        concat_string: [
+          { var: 'TRANSACTION:originPaymentDetails-nameOnCard-firstName' },
+          { var: 'TRANSACTION:originPaymentDetails-nameOnCard-lastName' },
+        ],
+      }
+      const originNonCardName = { var: 'TRANSACTION:originPaymentDetails-name' }
+      const destinationCardName = {
+        concat_string: [
+          {
+            var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-firstName',
+          },
+          {
+            var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-lastName',
+          },
+        ],
+      }
+      const destinationNonCardName = {
+        var: 'TRANSACTION:destinationPaymentDetails-name',
+      }
+
+      const createLevenshteinCondition = (
+        userExistsVar: object,
+        userNameVar: object,
+        paymentMethodIsCard: boolean,
+        paymentNameIsPresent: object,
+        paymentNameVar: object,
+        direction: 'origin' | 'destination'
+      ) => ({
+        and: [
+          userExistsVar,
+          {
+            [paymentMethodIsCard ? '==' : '!=']: [
+              { var: `TRANSACTION:${direction}PaymentDetails-method` },
+              'CARD',
+            ],
+          },
+          paymentNameIsPresent,
+          {
+            'op:internalLevenshteinDistance': [
+              userNameVar,
+              paymentNameVar,
+              [allowedDistancePercentage],
+            ],
+          },
+        ],
+      })
+
+      orBlocks.push(
+        // XOR conditions: User name present, payment name absent (CARD)
+        {
+          and: [
+            {
+              '==': [
+                { var: 'TRANSACTION:originPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            senderUserNamePresent,
+            { '!': originPaymentMethodCardNamePresent },
+          ],
+        },
+        // XOR conditions: User name present, payment name absent (non-CARD)
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:originPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            senderUserNamePresent,
+            { '!': originPaymentMethodNonCardNamePresent },
+          ],
+        },
+        // XOR conditions: User name absent, payment name present (CARD)
+        {
+          and: [
+            {
+              '==': [
+                { var: 'TRANSACTION:originPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            { '!': senderUserNamePresent },
+            originPaymentMethodCardNamePresent,
+          ],
+        },
+        // XOR conditions: User name absent, payment name present (non-CARD)
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:originPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            { '!': senderUserNamePresent },
+            originPaymentMethodNonCardNamePresent,
+          ],
+        },
+        // XOR conditions: Receiver - User name present, payment name absent (CARD)
+        {
+          and: [
+            {
+              '==': [
+                { var: 'TRANSACTION:destinationPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            receiverUserNamePresent,
+            { '!': destinationPaymentMethodCardNamePresent },
+          ],
+        },
+        // XOR conditions: Receiver - User name present, payment name absent (non-CARD)
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:destinationPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            receiverUserNamePresent,
+            { '!': destinationPaymentMethodNonCardNamePresent },
+          ],
+        },
+        // XOR conditions: Receiver - User name absent, payment name present (CARD)
+        {
+          and: [
+            {
+              '==': [
+                { var: 'TRANSACTION:destinationPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            { '!': receiverUserNamePresent },
+            destinationPaymentMethodCardNamePresent,
+          ],
+        },
+        // XOR conditions: Receiver - User name absent, payment name present (non-CARD)
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:destinationPaymentDetails-method' },
+                'CARD',
+              ],
+            },
+            { '!': receiverUserNamePresent },
+            destinationPaymentMethodNonCardNamePresent,
+          ],
+        },
+        // Levenshtein conditions: SENDER
+        createLevenshteinCondition(
+          { '!!': senderConsumerName.concat_string[0] },
+          senderConsumerName,
+          true,
+          { '!=': [originCardName, ''] },
+          originCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderConsumerName.concat_string[0] },
+          senderConsumerName,
+          false,
+          { '!=': [originNonCardName, ''] },
+          originNonCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderBusinessName },
+          senderBusinessName,
+          true,
+          { '!=': [originCardName, ''] },
+          originCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderBusinessName },
+          senderBusinessName,
+          false,
+          { '!=': [originNonCardName, ''] },
+          originNonCardName,
+          'origin'
+        ),
+        // Levenshtein conditions: RECEIVER
+        createLevenshteinCondition(
+          { '!!': receiverConsumerName.concat_string[0] },
+          receiverConsumerName,
+          true,
+          { '!=': [destinationCardName, ''] },
+          destinationCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverConsumerName.concat_string[0] },
+          receiverConsumerName,
+          false,
+          { '!=': [destinationNonCardName, ''] },
+          destinationNonCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverBusinessName },
+          receiverBusinessName,
+          true,
+          { '!=': [destinationCardName, ''] },
+          destinationCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverBusinessName },
+          receiverBusinessName,
+          false,
+          { '!=': [destinationNonCardName, ''] },
+          destinationNonCardName,
+          'destination'
+        )
+      )
+    } else {
+      const senderConsumerName = {
+        concat_string: [
+          { var: 'CONSUMER_USER:userDetails-name-firstName__SENDER' },
+          { var: 'CONSUMER_USER:userDetails-name-lastName__SENDER' },
+        ],
+      }
+      const senderBusinessName = {
+        var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER',
+      }
+      const receiverConsumerName = {
+        concat_string: [
+          { var: 'CONSUMER_USER:userDetails-name-firstName__RECEIVER' },
+          { var: 'CONSUMER_USER:userDetails-name-lastName__RECEIVER' },
+        ],
+      }
+      const receiverBusinessName = {
+        var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__RECEIVER',
+      }
+
+      const originCardName = {
+        concat_string: [
+          { var: 'TRANSACTION:originPaymentDetails-nameOnCard-firstName' },
+          { var: 'TRANSACTION:originPaymentDetails-nameOnCard-lastName' },
+        ],
+      }
+      const originNonCardName = { var: 'TRANSACTION:originPaymentDetails-name' }
+      const destinationCardName = {
+        concat_string: [
+          {
+            var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-firstName',
+          },
+          {
+            var: 'TRANSACTION:destinationPaymentDetails-nameOnCard-lastName',
+          },
+        ],
+      }
+      const destinationNonCardName = {
+        var: 'TRANSACTION:destinationPaymentDetails-name',
+      }
+
+      const createLevenshteinCondition = (
+        userExistsVar: object,
+        userNameVar: object,
+        paymentMethodIsCard: boolean,
+        paymentNameIsPresent: object,
+        paymentNameVar: object,
+        direction: 'origin' | 'destination'
+      ) => ({
+        and: [
+          userExistsVar,
+          {
+            [paymentMethodIsCard ? '==' : '!=']: [
+              { var: `TRANSACTION:${direction}PaymentDetails-method` },
+              'CARD',
+            ],
+          },
+          paymentNameIsPresent,
+          {
+            'op:internalLevenshteinDistance': [
+              userNameVar,
+              paymentNameVar,
+              [allowedDistancePercentage],
+            ],
+          },
+        ],
+      })
+
+      orBlocks.push(
+        // SENDER
+        createLevenshteinCondition(
+          { '!!': senderConsumerName.concat_string[0] },
+          senderConsumerName,
+          true,
+          { '!=': [originCardName, ''] },
+          originCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderConsumerName.concat_string[0] },
+          senderConsumerName,
+          false,
+          { '!=': [originNonCardName, ''] },
+          originNonCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderBusinessName },
+          senderBusinessName,
+          true,
+          { '!=': [originCardName, ''] },
+          originCardName,
+          'origin'
+        ),
+        createLevenshteinCondition(
+          { '!!': senderBusinessName },
+          senderBusinessName,
+          false,
+          { '!=': [originNonCardName, ''] },
+          originNonCardName,
+          'origin'
+        ),
+        // RECEIVER
+        createLevenshteinCondition(
+          { '!!': receiverConsumerName.concat_string[0] },
+          receiverConsumerName,
+          true,
+          { '!=': [destinationCardName, ''] },
+          destinationCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverConsumerName.concat_string[0] },
+          receiverConsumerName,
+          false,
+          { '!=': [destinationNonCardName, ''] },
+          destinationNonCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverBusinessName },
+          receiverBusinessName,
+          true,
+          { '!=': [destinationCardName, ''] },
+          destinationCardName,
+          'destination'
+        ),
+        createLevenshteinCondition(
+          { '!!': receiverBusinessName },
+          receiverBusinessName,
+          false,
+          { '!=': [destinationNonCardName, ''] },
+          destinationNonCardName,
+          'destination'
+        )
+      )
+    }
+
+    return {
+      logic: { or: orBlocks },
+      logicAggregationVariables: [],
       alertCreationDirection: 'AUTO',
     }
   },

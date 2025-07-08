@@ -351,7 +351,19 @@ export class MongoDbTransactionRepository
       })
     }
 
-    if (params.filterIdList != null) {
+    if (
+      params.filterTransactionIds != null &&
+      params.filterTransactionIds?.length > 0
+    ) {
+      conditions.push({
+        transactionId: { $in: params.filterTransactionIds },
+      })
+    }
+    if (
+      !params.filterTransactionIds?.length &&
+      params.filterIdList != null &&
+      params.filterIdList?.length > 0
+    ) {
       conditions.push({
         transactionId: regexMatchFilterForArray(params.filterIdList),
       })

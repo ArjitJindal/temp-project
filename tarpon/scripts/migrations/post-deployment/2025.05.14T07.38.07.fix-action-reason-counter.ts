@@ -3,10 +3,15 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Tenant } from '@/services/accounts/repository'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
-  const reasonsService = new ReasonsService(tenant.id, mongoDb)
+  const dynamoDb = getDynamoDbClient()
+  const reasonsService = new ReasonsService(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
   const reasons = await reasonsService.getReasons()
   const { closureReasonCount, escalationReasonCount } = reasons.reduce(
     (prev, curr) => {

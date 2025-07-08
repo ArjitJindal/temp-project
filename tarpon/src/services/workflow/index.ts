@@ -4,6 +4,7 @@ import {
   QueryCommand,
   GetCommand,
   PutCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
@@ -47,7 +48,10 @@ export class WorkflowService {
   ) {
     this.docClient = DynamoDBDocumentClient.from(deps.dynamoDb)
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
-    this.counterRepo = new CounterRepository(tenantId, deps.mongoDb)
+    this.counterRepo = new CounterRepository(tenantId, {
+      mongoDb: deps.mongoDb,
+      dynamoDb: deps.dynamoDb,
+    })
   }
 
   private async getNextWorkflowId(workflowType: WorkflowType): Promise<string> {
@@ -209,5 +213,35 @@ export class WorkflowService {
     )
 
     return this.cleanWorkflow(item as InternalWorkflow)
+  }
+
+  async patchWorkflowEnabled(
+    workflowType: WorkflowType,
+    workflowId: string,
+    enabled: boolean
+  ): Promise<void> {
+    // Get the latest workflow version to get the current version number
+    const workflow = await this.getWorkflow(workflowType, workflowId)
+    if (!workflow) {
+      throw new NotFound('Workflow not found')
+    }
+
+    // Perform partial update to only modify the enabled field
+    const updateInput = {
+      TableName: this.tableName,
+      Key: DynamoDbKeys.WORKFLOWS(
+        this.tenantId,
+        workflowType,
+        workflowId,
+        workflow.version.toString()
+      ),
+      UpdateExpression: 'SET enabled = :enabled',
+      ExpressionAttributeValues: {
+        ':enabled': enabled,
+      },
+      ReturnValues: 'ALL_NEW' as const,
+    }
+
+    await this.docClient.send(new UpdateCommand(updateInput))
   }
 }

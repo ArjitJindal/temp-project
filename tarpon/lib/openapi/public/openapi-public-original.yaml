@@ -3743,6 +3743,11 @@ components:
             $ref: '#/components/schemas/Address'
         name:
           $ref: '#/components/schemas/ConsumerName'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     CompanyFinancialDetails:
       title: CompanyFinancialDetails
       type: object

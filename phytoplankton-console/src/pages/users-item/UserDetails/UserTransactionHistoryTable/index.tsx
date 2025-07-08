@@ -49,6 +49,7 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { TableDataItem } from '@/components/library/Table/types';
 
 export type DataItem = {
   index: number;
@@ -76,8 +77,7 @@ export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
-  const riskScores = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskScores, []);
+  const riskClassificationValues = useRiskClassificationScores();
 
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -96,13 +96,13 @@ export function Content(props: { userId: string }) {
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
-  const responseRes = useTransactionsQuery<DataItem>(
+  const responseRes = useTransactionsQuery<TableDataItem<DataItem>>(
     { ...params, userId, includeRuleHitDetails: true, showDetailedView: showDetailsView },
     {
       isReadyToFetch: true,
       mapper: (data) => {
         const tableData = prepareTableData(userId, data, riskClassificationValues);
-        return tableData.flatMap((item) => ('rows' in item ? item.rows : [item]));
+        return tableData;
       },
     },
   );
@@ -381,7 +381,7 @@ export function Content(props: { userId: string }) {
   return (
     <QueryResultsTable<DataItem>
       tableId={'user-transaction-history'}
-      rowKey="transactionId"
+      rowKey="rowKey"
       params={params}
       onChangeParams={setParams}
       queryResults={responseRes.queryResult}

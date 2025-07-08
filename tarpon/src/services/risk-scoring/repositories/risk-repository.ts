@@ -20,6 +20,7 @@ import {
   getRiskScoreFromLevel,
   isNotArsChangeTxId,
 } from '@flagright/lib/utils/risk'
+import { WithOperators } from 'thunder-schema'
 import {
   hasFeature,
   updateTenantRiskClassificationValues,
@@ -59,7 +60,10 @@ import {
   internalMongoReplace,
   paginateCursor,
 } from '@/utils/mongodb-utils'
-import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseCredentials,
+  sendMessageToMongoConsumer,
+} from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -69,7 +73,14 @@ import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
 import { handleSmallNumber } from '@/utils/helpers'
 import { CounterRepository } from '@/services/counter/repository'
 import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
-import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetDrsValuesRequest,
+  DefaultApiGetRiskLevelVersionHistoryRequest,
+} from '@/@types/openapi-internal/RequestParameters'
+import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -393,14 +404,28 @@ export class RiskRepository {
     }
   }
 
+  async getRiskClassificationItem(): Promise<RiskClassificationConfig> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+
+    return result.Item as RiskClassificationConfig
+  }
+
   async createOrUpdateRiskClassificationConfig(
+    id: string,
+    comment: string,
     riskClassificationValues: RiskClassificationScore[]
-  ): Promise<RiskClassificationConfig> {
+  ): Promise<RiskClassificationHistory> {
     logger.debug(`Updating risk classification config.`)
     const now = Date.now()
     const newRiskClassificationValues: RiskClassificationConfig = {
       classificationValues: riskClassificationValues,
       updatedAt: now,
+      createdAt: now,
+      id,
     }
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -409,12 +434,26 @@ export class RiskRepository {
         ...newRiskClassificationValues,
       },
     }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+
+    const historyItem: RiskClassificationHistory = {
+      comment,
+      createdAt: now,
+      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+      id,
+      scores: newRiskClassificationValues.classificationValues,
+      updatedAt: now,
+    }
+
+    await Promise.all([
+      this.dynamoDb.send(new PutCommand(putItemInput)),
+      this.createRiskClassificationHistoryInClickhouse(historyItem),
+    ])
+
     logger.debug(`Updated risk classification config.`)
 
     updateTenantRiskClassificationValues(riskClassificationValues)
 
-    return newRiskClassificationValues
+    return historyItem
   }
 
   async getDRSRiskItem(userId: string): Promise<DrsScore | null> {
@@ -961,7 +1000,10 @@ export class RiskRepository {
     update = false
   ): Promise<string> {
     const mongoDb = await getMongoDbClient()
-    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
 
     if (riskFactorId) {
       const id = riskFactorId.split('.')[0]
@@ -975,6 +1017,97 @@ export class RiskRepository {
       ]('RiskFactor' as any)
       return `RF-${count.toString().padStart(3, '0')}`
     }
+  }
+
+  async createRiskClassificationHistoryInClickhouse(
+    riskClassificationHistory: RiskClassificationHistory
+  ) {
+    const credentials = await getClickhouseCredentials(this.tenantId)
+    const clickhouseRepository = new RiskClassificationHistoryTable({
+      credentials,
+    })
+    await clickhouseRepository.create(riskClassificationHistory).save()
+  }
+
+  private getFilters(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Partial<WithOperators<RiskClassificationHistory>> {
+    const filters: Partial<WithOperators<RiskClassificationHistory>> = {}
+
+    if (params.filterVersionId != null) {
+      filters.id = params.filterVersionId
+    }
+    if (params.filterCreatedBy != null) {
+      filters.createdBy__in = params.filterCreatedBy
+    }
+
+    if (
+      params.filterBeforeTimestamp != null &&
+      params.filterAfterTimestamp != null
+    ) {
+      filters.createdAt__lt = params.filterBeforeTimestamp
+      filters.createdAt__gt = params.filterAfterTimestamp
+    }
+    return filters
+  }
+
+  async getRiskClassificationHistory(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Promise<RiskClassificationHistory[]> {
+    const credentials = await getClickhouseCredentials(this.tenantId)
+    const clickhouseRepository = new RiskClassificationHistoryTable({
+      credentials,
+    })
+
+    const filters = this.getFilters(params)
+
+    const result = await clickhouseRepository.objects
+      .filter(filters)
+      .final()
+      .limit(params.pageSize ?? DEFAULT_PAGE_SIZE)
+      .offset(((params.page ?? 1) - 1) * (params.pageSize ?? DEFAULT_PAGE_SIZE))
+      .sort({
+        [params.sortField ?? 'createdAt']:
+          params.sortOrder === 'descend' ? -1 : 1,
+      })
+      .all()
+
+    return result
+  }
+
+  async getRiskClassificationHistoryCount(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Promise<number> {
+    const credentials = await getClickhouseCredentials(this.tenantId)
+    const clickhouseRepository = new RiskClassificationHistoryTable({
+      credentials,
+    })
+
+    const filters = this.getFilters(params)
+
+    const count = await clickhouseRepository.objects
+      .filter(filters)
+      .final()
+      .count()
+
+    return count
+  }
+
+  async getRiskClassificationHistoryById(
+    id: string
+  ): Promise<RiskClassificationHistory | null> {
+    const credentials = await getClickhouseCredentials(this.tenantId)
+    const table = new RiskClassificationHistoryTable({
+      credentials,
+    })
+
+    const data = await table.objects.filter({ id }).final().first()
+
+    if (!data) {
+      return null
+    }
+
+    return data
   }
 }
 

@@ -14,7 +14,10 @@ async function migrateTenant(tenant: Tenant) {
   }
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
-  const counterRepository = new CounterRepository(tenant.id, mongoDb)
+  const counterRepository = new CounterRepository(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
   const screeningProfileService = new ScreeningProfileService(tenant.id, {
     mongoDb,
     dynamoDb,

@@ -293,6 +293,11 @@ export const ALERT_QA_SAMPLING = (params: AnyParameters): QueryKey => [
 ];
 export const ALERT_QA_SAMPLE = (sampleId: string): QueryKey => ['alerts', 'qa-sample', sampleId];
 export const SIMULATION_COUNT = (): QueryKey => ['simulation', 'count'];
+export const ALERT_COMMENTS = (alertIds: string[]): QueryKey => [
+  'alerts',
+  'comments',
+  alertIds.join(','),
+];
 export const ALERT_ITEM_COMMENTS = (alertId: string): QueryKey => [
   'alerts',
   'item',
