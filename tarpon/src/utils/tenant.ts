@@ -10,7 +10,6 @@ import { getDynamoDbClient } from './dynamodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { TenantInfo } from '@/services/tenants'
 
 export type Tenant = {
   id: string
@@ -66,7 +65,7 @@ export const getAllTenantIds = async (): Promise<Set<string>> => {
     stage as Stage,
     region as FlagrightRegion
   )
-  const tenantInfos: TenantInfo[] = []
+  const tenantInfos: Pick<Tenant, 'id' | 'region'>[] = []
 
   for (const auth0TenantConfig of auth0TenantConfigs) {
     const auth0Domain = getAuth0Domain(
@@ -80,30 +79,20 @@ export const getAllTenantIds = async (): Promise<Set<string>> => {
         ':pk': DynamoDbKeys.ORGANIZATION(auth0Domain, FLAGRIGHT_TENANT_ID)
           .PartitionKeyID,
       },
+      ExpressionAttributeNames: {
+        '#region': 'region',
+      },
+      ProjectionExpression: 'id,#region',
     })
 
     const result = await dynamoDb.send(query)
-
-    const tenants = ((result.Items ?? []) as Tenant[]).filter(
-      (item) => item.auth0Domain === auth0Domain
-    )
-
-    tenantInfos.push(
-      ...tenants.map((tenant) => ({
-        tenant,
-        auth0Domain,
-        auth0TenantConfig,
-      }))
-    )
+    const tenants = (result.Items ?? []) as Pick<Tenant, 'id' | 'region'>[]
+    tenantInfos.push(...tenants)
   }
 
-  // Apply region filtering similar to TenantService.getAllTenants
   const filteredTenantInfos = region
-    ? tenantInfos.filter(
-        (tenantInfo) =>
-          !tenantInfo.tenant.region || tenantInfo.tenant.region === region
-      )
+    ? tenantInfos.filter((tenant) => !tenant.region || tenant.region === region)
     : tenantInfos
 
-  return new Set(filteredTenantInfos.map((tenantInfo) => tenantInfo.tenant.id))
+  return new Set(filteredTenantInfos.map((tenant) => tenant.id))
 }

@@ -1,52 +1,59 @@
 import { SQSEvent } from 'aws-lambda'
 import { groupBy } from 'lodash'
 import * as Sentry from '@sentry/serverless'
-
-import { stageAndRegion } from '@flagright/lib/utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getAllTenantIds } from '@/utils/tenant'
+import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
 import { ApiRequestLog } from '@/@types/request-logger'
 import {
   batchInsertToClickhouse,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { envIs } from '@/utils/env'
 
-export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
-  const mongoDb = await getMongoDbClient()
-  const db = mongoDb.db()
-  const [stage] = stageAndRegion()
-  const allTenantIds = await getAllTenantIds()
-  const filteredLogs = logs.filter((log) => {
-    if (
-      !allTenantIds.has(log.tenantId) &&
-      stage !== 'test' &&
-      stage !== 'local'
-    ) {
-      logger.warn('Unknown tenantId found:', {
+const captureException = (log: ApiRequestLog) => {
+  logger.warn('Unknown tenantId found:', {
+    tenantId: log.tenantId,
+    requestId: log.requestId || 'no-request-id',
+    traceId: log.traceId,
+    path: log.path,
+    method: log.method,
+    timestamp: log.timestamp,
+  })
+  Sentry.captureException(
+    new Error(`Unknown tenantId found: ${log.tenantId}`),
+    {
+      extra: {
         tenantId: log.tenantId,
         requestId: log.requestId || 'no-request-id',
         traceId: log.traceId,
         path: log.path,
         method: log.method,
         timestamp: log.timestamp,
-      })
-      Sentry.captureException(
-        new Error(`Unknown tenantId found: ${log.tenantId}`),
-        {
-          extra: {
-            tenantId: log.tenantId,
-            requestId: log.requestId || 'no-request-id',
-            traceId: log.traceId,
-            path: log.path,
-            method: log.method,
-            timestamp: log.timestamp,
-          },
-        }
-      )
+      },
+    }
+  )
+}
+
+export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
+  const mongoDb = await getMongoDbClient()
+  const db = mongoDb.db()
+  const webhookStartPath = '/console/webhook'
+  const nonWebhookLogs = logs.filter(
+    (log) => !log.path.startsWith(webhookStartPath)
+  )
+  const allTenantIds = await getAllTenantIds()
+  const filteredLogs = nonWebhookLogs.filter((log) => {
+    if (
+      !allTenantIds.has(getNonDemoTenantId(log.tenantId)) &&
+      !envIs('local', 'test')
+    ) {
+      logger.info(`log tenantId: ${log.tenantId}`)
+      logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
+      captureException(log)
       return false
     }
     return true
@@ -65,6 +72,7 @@ export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
       .insertMany(tenantLogs, { ordered: false })
   }
 }
+
 export const handleRequestLoggerTaskClickhouse = async (
   tenantId: string,
   logs: ApiRequestLog[]
@@ -75,6 +83,7 @@ export const handleRequestLoggerTaskClickhouse = async (
     logs
   )
 }
+
 export const requestLoggerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const logs = event.Records.map(

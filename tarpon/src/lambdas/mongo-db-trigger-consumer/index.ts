@@ -10,8 +10,6 @@ import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import * as Sentry from '@sentry/serverless'
-
-import { stageAndRegion } from '@flagright/lib/utils'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -30,7 +28,8 @@ import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { logger } from '@/core/logger'
-import { getAllTenantIds } from '@/utils/tenant'
+import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
+import { envIs } from '@/utils/env'
 
 type TableDetails = {
   tenantId: string
@@ -77,7 +76,6 @@ export class MongoDbConsumer {
     events: MongoConsumerMessage[]
   ): Promise<MongoConsumerMessage[]> {
     const allTenantIds = await getAllTenantIds()
-    const [stage] = stageAndRegion()
     const filteredEvents = events.filter((event) => {
       const { collectionName } = event
       const tableDetails = this.fetchTableDetails(collectionName)
@@ -86,26 +84,20 @@ export class MongoDbConsumer {
       }
       const { tenantId } = tableDetails
       if (
-        !allTenantIds.has(tenantId) &&
-        stage !== 'test' &&
-        stage !== 'local'
+        !allTenantIds.has(getNonDemoTenantId(tenantId)) &&
+        !envIs('local', 'test')
       ) {
-        logger.warn(
-          `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
-        )
-        Sentry.captureException(
-          new Error(
-            `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
-          ),
-          {
-            extra: {
-              tenantId: tenantId,
-              collectionName: event.collectionName,
-              operationType: event.operationType,
-              clusterTime: event.clusterTime,
-            },
-          }
-        )
+        const logObject = {
+          tenantId: tenantId,
+          collectionName: event.collectionName,
+          operationType: event.operationType,
+          clusterTime: event.clusterTime,
+        }
+        const message = `Unknown tenantId found in MongoConsumerMessage: ${tenantId}`
+        logger.warn(message, logObject)
+        logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
+        logger.info(`tenantId: ${tenantId}`)
+        Sentry.captureException(new Error(message), { extra: logObject })
         return false
       }
       return true
