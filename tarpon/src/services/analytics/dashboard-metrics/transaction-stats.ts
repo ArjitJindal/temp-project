@@ -1,4 +1,5 @@
 import { keyBy } from 'lodash'
+import { Filter } from 'mongodb'
 import { getTimeLabels } from '../../dashboard/utils'
 import {
   GranularityValuesType,
@@ -188,25 +189,62 @@ export class TransactionStatsDashboardMetric {
           {
             attributeFieldMapper: {
               $switch: {
-                branches: riskClassifications.map((classification) => ({
-                  case: {
-                    $and: [
-                      {
-                        $gte: [
+                branches: riskClassifications
+                  .sort((a, b) => b.upperBoundRiskScore - a.upperBoundRiskScore)
+                  .map((classification) => {
+                    let caseCondition: Filter<InternalTransaction>
+
+                    if (
+                      classification.lowerBoundRiskScore ===
+                      classification.upperBoundRiskScore
+                    ) {
+                      caseCondition = {
+                        $eq: [
                           '$arsScore.arsScore',
                           classification.lowerBoundRiskScore,
                         ],
-                      },
-                      {
-                        $lt: [
-                          '$arsScore.arsScore',
-                          classification.upperBoundRiskScore,
+                      }
+                    } else if (classification.upperBoundRiskScore === 100) {
+                      caseCondition = {
+                        $and: [
+                          {
+                            $gte: [
+                              '$arsScore.arsScore',
+                              classification.lowerBoundRiskScore,
+                            ],
+                          },
+                          {
+                            $lte: [
+                              '$arsScore.arsScore',
+                              classification.upperBoundRiskScore,
+                            ],
+                          },
                         ],
-                      },
-                    ],
-                  },
-                  then: classification.riskLevel,
-                })),
+                      }
+                    } else {
+                      caseCondition = {
+                        $and: [
+                          {
+                            $gte: [
+                              '$arsScore.arsScore',
+                              classification.lowerBoundRiskScore,
+                            ],
+                          },
+                          {
+                            $lt: [
+                              '$arsScore.arsScore',
+                              classification.upperBoundRiskScore,
+                            ],
+                          },
+                        ],
+                      }
+                    }
+
+                    return {
+                      case: caseCondition,
+                      then: classification.riskLevel,
+                    }
+                  }),
                 default: DEFAULT_RISK_LEVEL,
               },
             },
@@ -328,8 +366,17 @@ export class TransactionStatsDashboardMetric {
       'derived_status'
     )
     const arsRiskLevels = riskClassificationValues
+      .sort((a, b) => b.upperBoundRiskScore - a.upperBoundRiskScore)
       .map(({ riskLevel, lowerBoundRiskScore, upperBoundRiskScore }) => {
-        const condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore <= ${upperBoundRiskScore}`
+        let condition: string
+        if (lowerBoundRiskScore === upperBoundRiskScore) {
+          condition = `arsScore_arsScore = ${lowerBoundRiskScore}`
+        } else if (upperBoundRiskScore === 100) {
+          condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore <= ${upperBoundRiskScore}`
+        } else {
+          condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore < ${upperBoundRiskScore}`
+        }
+
         return `COUNTIf(${condition}) AS arsRiskLevel_${riskLevel}`
       })
       .join(', ')
