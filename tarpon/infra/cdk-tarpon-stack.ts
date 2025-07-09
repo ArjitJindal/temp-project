@@ -565,6 +565,7 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     let lambdaRoleName = `flagrightLambdaExecutionRole${getSuffix()}`
+    let lambdaRoleWithLogsListingName = `flagrightLambdaExecutionRoleWithLogsListing${getSuffix()}`
     let ecsRoleName = `flagrightEcsTaskExecutionRole${getSuffix()}`
 
     // On production the role name was set without a suffix, it's dangerous for us
@@ -575,22 +576,36 @@ export class CdkTarponStack extends cdk.Stack {
     ) {
       lambdaRoleName += `-${config.region}`
       ecsRoleName += `-${config.region}`
+      lambdaRoleWithLogsListingName += `-${config.region}`
     }
+
+    const managedPolicies = [
+      ManagedPolicy.fromAwsManagedPolicyName(
+        'service-role/AWSLambdaVPCAccessExecutionRole'
+      ),
+      ManagedPolicy.fromAwsManagedPolicyName(
+        'service-role/AWSLambdaBasicExecutionRole'
+      ),
+      ManagedPolicy.fromAwsManagedPolicyName(
+        'CloudWatchLambdaInsightsExecutionRolePolicy'
+      ),
+    ]
+
     const lambdaExecutionRole = new Role(this, `lambda-role`, {
       roleName: lambdaRoleName,
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AWSLambdaVPCAccessExecutionRole'
-        ),
-        ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AWSLambdaBasicExecutionRole'
-        ),
-        ManagedPolicy.fromAwsManagedPolicyName(
-          'CloudWatchLambdaInsightsExecutionRolePolicy'
-        ),
-      ],
+      managedPolicies,
     })
+
+    const lambdaExecutionRoleWithLogsListing = new Role(
+      this,
+      `lambda-role-with-logs-listing`,
+      {
+        roleName: lambdaRoleWithLogsListingName,
+        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+        managedPolicies,
+      }
+    )
 
     const ecsTaskExecutionRole = new Role(this, `ecs-role`, {
       roleName: ecsRoleName,
@@ -711,11 +726,23 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    this.createOpensearch(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
+    const logListingPolicy = new Policy(this, id, {
+      policyName: `${lambdaExecutionRoleWithLogsListing.roleName}-LogListingPolicy`,
+      statements: [
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['logs:DescribeLogGroups', 'logs:DeleteLogGroup'],
+          resources: ['*'],
+        }),
+      ],
+    })
 
     // Give role access to all secrets
     lambdaExecutionRole.attachInlinePolicy(policy)
+    lambdaExecutionRoleWithLogsListing.attachInlinePolicy(policy)
+    lambdaExecutionRoleWithLogsListing.attachInlinePolicy(logListingPolicy)
     ecsTaskExecutionRole.attachInlinePolicy(policy)
+    this.createOpensearch(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(ecsTaskExecutionRole)
@@ -973,8 +1000,9 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
       }
     )
+    // batch job runner lambda has permission to describe and delete log groups - qa cleanup job required this
     const { alias: jobRunnerAlias, func: batchJobRunnerHandler } =
-      createFunction(this, lambdaExecutionRole, {
+      createFunction(this, lambdaExecutionRoleWithLogsListing, {
         name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
         memorySize:
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
