@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction, useImperativeHandle, useRef } from 'react';
-import { uniqBy } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { uniqBy } from 'lodash';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
 import {
@@ -22,7 +22,6 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
-import Label from '@/components/library/Label';
 import { useUsers } from '@/utils/user-utils';
 
 export const OTHER_REASON: CaseReasons = 'Other';
@@ -254,36 +253,21 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
           )}
         </GenericFormField>
       )}
-      <Label label={'Upload attachments'}>
-        <FilesDraggerInput
-          onChange={(value) => {
-            if (value) {
-              onChange((state) => {
-                const fileAdded = value.filter(
-                  (v) => !state.values.files.find((existingFile) => v.s3Key === existingFile.s3Key),
-                );
-                if (fileAdded.length > 0) {
-                  return {
-                    ...state,
-                    values: {
-                      ...state.values,
-                      files: uniqBy([...state.values.files, ...value], 's3Key'),
-                    },
-                  };
-                }
-                return {
-                  ...state,
-                  values: {
-                    ...state.values,
-                    files: value,
-                  },
-                };
-              });
-            }
-          }}
-          value={values.values.files}
-        />
-      </Label>
+      <InputField<FormValues<R>, 'files'>
+        name="files"
+        label="Upload attachments"
+        labelProps={{ required: { value: false, showHint: false } }}
+      >
+        {(inputProps) => (
+          <FilesDraggerInput
+            onChange={(value) => {
+              inputProps.onChange?.(uniqBy(value, 's3Key'));
+            }}
+            value={inputProps.value}
+          />
+        )}
+      </InputField>
+
       {extraFields}
       {alertMessage && <Alert type="INFO">{alertMessage}</Alert>}
     </Form>

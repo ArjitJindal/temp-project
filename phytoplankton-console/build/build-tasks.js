@@ -90,6 +90,7 @@ async function buildCode(env, options) {
   // Simple livereload server for watch mode
   let livereloadServer = null;
   let httpServer = null;
+  let WebSocket = null;
   if (hotReload) {
     const WebSocket = require('ws');
     const http = require('http');
@@ -153,7 +154,7 @@ async function buildCode(env, options) {
     );
 
     // Trigger livereload after files are written
-    if (watch && livereloadServer && buildResult.errors.length === 0) {
+    if (watch && livereloadServer && WebSocket && buildResult.errors.length === 0) {
       livereloadServer.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({ type: 'reload' }));
@@ -234,17 +235,22 @@ async function buildCode(env, options) {
     write: false,
     watch: watch
       ? {
-          onRebuild: (e, result) => {
-            (e ? Promise.reject(e) : writeFiles(result)).then(
-              () => {
+          onRebuild: (buildError, result) => {
+            if (buildError) {
+              notify(`ERROR: ${buildError.message || 'Unknown error'}`);
+              error(`Watch build failed:`, buildError);
+              return;
+            }
+
+            writeFiles(result)
+              .then(() => {
                 notify('Re-built successfully');
                 log('Re-built successfully');
-              },
-              () => {
-                notify(`ERROR: ${e.message || 'Unknown error'}`);
-                error(`Watch build failed:`, e);
-              },
-            );
+              })
+              .catch((writeError) => {
+                notify(`ERROR: ${writeError.message || 'Unknown error'}`);
+                error(`Watch build failed:`, writeError);
+              });
           },
         }
       : null,
