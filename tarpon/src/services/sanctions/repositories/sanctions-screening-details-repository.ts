@@ -176,6 +176,18 @@ export class SanctionsScreeningDetailsRepository {
       })
     }
 
+    if (envIs('local') || envIs('test')) {
+      // For local and test environments, directly call the database
+      for (const message of messagesV2) {
+        const messageBody = JSON.parse(message.MessageBody || '{}')
+        await this.callMongoDatabaseV2(
+          messageBody.filter,
+          messageBody.updateMessage
+        )
+      }
+      return
+    }
+
     if (messagesV2.length > 0) {
       const queueUrl = process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL
       if (!queueUrl) {
@@ -212,6 +224,24 @@ export class SanctionsScreeningDetailsRepository {
         clusterTime: Date.now(),
       })
     }
+  }
+
+  private async callMongoDatabaseV2(
+    filter: Filter<SanctionsScreeningDetailsV2>,
+    update: UpdateFilter<SanctionsScreeningDetailsV2>
+  ) {
+    const db = this.mongoDb.db()
+    const sanctionsScreeningCollectionNameV2 =
+      SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(this.tenantId)
+
+    await db
+      .collection<SanctionsScreeningDetailsV2>(
+        sanctionsScreeningCollectionNameV2
+      )
+      .findOneAndUpdate(filter, update, {
+        upsert: true,
+        returnDocument: 'after',
+      })
   }
 
   private async getSanctionsScreeningStatsClickhouse(timestampRange?: {
