@@ -490,85 +490,84 @@ export class RuleHitsStatsDashboardMetric {
         ? (page - 1) * (pageSize ?? DEFAULT_PAGE_SIZE)
         : 0
 
-    // compiling the data as we do in the refreshstats above for mongo. Doing it once for clickhouse without storing the
-    // data in a new table
-
-    const transactionsQuery = `
-
-    SELECT
-      arrayJoin(nonShadowHitRuleIdPairs).1 AS ruleInstanceId,
-      arrayJoin(nonShadowHitRuleIdPairs).2 AS ruleId,
-      count() as hitCount
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
-    GROUP BY ruleInstanceId, ruleId
-  `
-
-    const transactionExecutedRulesQuery = `
-    SELECT
-      tupleElement(ruleTuple, 1) AS ruleInstanceId,
-      tupleElement(ruleTuple, 2) AS ruleId,
-      count() as executedCount
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-    ARRAY JOIN nonShadowExecutedRuleIdPairs AS ruleTuple
-    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
-    GROUP BY ruleInstanceId, ruleId
-
-    `
-    const userExecutedRulesQuery = `
-    SELECT
-      tupleElement(ruleTuple, 1) AS ruleInstanceId,
-      tupleElement(ruleTuple, 2) AS ruleId,
-      count() as executedCount
-    FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
-    ARRAY JOIN nonShadowExecutedRuleIdPairs AS ruleTuple
-    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
-    GROUP BY ruleInstanceId, ruleId
-    `
-
-    const alertsQuery = `
-    WITH
-      arrayJoin(alerts) as alert
-    SELECT
-      alert.ruleInstanceId as ruleInstanceId,
-      alert.ruleId as ruleId,
-      countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
-      countIf(alert.numberOfTransactionsHit = 0) as hitCount
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
-    WHERE alert.createdTimestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
-    GROUP BY ruleInstanceId, ruleId
-  `
-
     const finalQuery = `
-      WITH
-        txn AS (${transactionsQuery}),
-        alerts_ct AS (${alertsQuery}),
-        transactionExecutedRules AS (${transactionExecutedRulesQuery}),
-        userExecutedRules AS (${userExecutedRulesQuery}),
-        combined AS (
-          SELECT
-            coalesce(NULLIF(t.ruleId, ''), NULLIF(a.ruleId, '')) as ruleId,
-            coalesce(NULLIF(t.ruleInstanceId, ''), NULLIF(a.ruleInstanceId, '')) as ruleInstanceId,
-            coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
-            coalesce(a.openAlertsCount, 0) as openAlertsCount,
-            coalesce(tra.executedCount, 0) + coalesce(user.executedCount, 0) as runCount
-          FROM txn t
-          FULL OUTER JOIN alerts_ct a ON t.ruleInstanceId = a.ruleInstanceId AND t.ruleId = a.ruleId
-          FULL OUTER JOIN transactionExecutedRules tra ON t.ruleInstanceId = tra.ruleInstanceId AND t.ruleId = tra.ruleId
-          FULL OUTER JOIN userExecutedRules user ON a.ruleInstanceId = user.ruleInstanceId AND a.ruleId = user.ruleId
-
-        ),
-        total_count AS (
-          SELECT count(*) as total FROM combined
-        )
       SELECT
         ruleId,
         ruleInstanceId,
         hitCount,
         openAlertsCount,
         runCount,
-        (SELECT total FROM total_count) as totalCount
-      FROM combined
+        count() OVER() as totalCount
+      FROM (
+        SELECT
+          ruleId,
+          ruleInstanceId,
+          sum(hitCount) as hitCount,
+          sum(openAlertsCount) as openAlertsCount,
+          sum(runCount) as runCount
+        FROM (
+          -- Transaction rule hits
+          SELECT 
+            rule.1 AS ruleInstanceId,
+            rule.2 AS ruleId,
+            count() as hitCount,
+            0 as openAlertsCount,
+            0 as runCount
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+          ARRAY JOIN nonShadowHitRuleIdPairs AS rule
+          WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+            AND rule.1 != '' AND rule.2 != ''
+          GROUP BY rule.1, rule.2
+          
+          UNION ALL
+          
+          -- Transaction rule executions
+          SELECT 
+            rule.1 AS ruleInstanceId,
+            rule.2 AS ruleId,
+            0 as hitCount,
+            0 as openAlertsCount,
+            count() as runCount
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+          ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
+          WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+            AND rule.1 != '' AND rule.2 != ''
+          GROUP BY rule.1, rule.2
+          
+          UNION ALL
+          
+          -- User rule executions
+          SELECT 
+            rule.1 AS ruleInstanceId,
+            rule.2 AS ruleId,
+            0 as hitCount,
+            0 as openAlertsCount,
+            count() as runCount
+          FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+          ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
+          WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+            AND rule.1 != '' AND rule.2 != ''
+          GROUP BY rule.1, rule.2
+          
+          UNION ALL
+          
+          -- Alert data
+          SELECT
+            alert.ruleInstanceId,
+            alert.ruleId,
+            countIf(alert.numberOfTransactionsHit = 0) as hitCount,
+            countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
+            0 as runCount
+          FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
+          ARRAY JOIN alerts AS alert
+          WHERE alert.createdTimestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+            AND alert.ruleInstanceId != ''
+            AND alert.ruleId != ''
+          GROUP BY alert.ruleInstanceId, alert.ruleId
+        )
+        WHERE ruleInstanceId != '' AND ruleId != ''
+        GROUP BY ruleId, ruleInstanceId
+      )
       ORDER BY hitCount DESC
       LIMIT ${limit} OFFSET ${offset}
     `
