@@ -291,7 +291,7 @@
     "slackify-markdown": "^4.4.0",
     "ssh2-sftp-client": "^10.0.3",
     "stopword": "^3.0.1",
-    "thunder-schema": "1.0.25",
+    "thunder-schema": "1.0.27",
     "timeout-signal": "^1.1.0",
     "umzug": "^3.8.0",
     "unidecode": "^0.1.8",

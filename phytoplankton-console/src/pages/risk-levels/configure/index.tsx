@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import RiskClassification from './RiskClassification';
 import { SimulateRiskClassification } from './SimulateRiskClassification';
 import { parseApiState, State } from './RiskClassificationTable';
+import styles from './index.module.less';
 import { Authorized } from '@/components/utils/Authorized';
 import { TopRightSectionRef } from '@/components/TopRightSection';
 import { useApi } from '@/api';
@@ -15,7 +16,8 @@ import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { DEFAULT_RISK_CLASSIFICATION_VALUES } from '@/utils/risk-levels';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { DEFAULT_RISK_CLASSIFICATION_CONFIG } from '@/utils/risk-levels';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
 
@@ -51,13 +53,18 @@ export default function () {
       key: 'risk-level',
     },
   ].filter(notEmpty);
+
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadCrumbsWrapper
+        className={styles.breadcrumbsWrapper}
         simulationStorageKey="SIMULATION_RISK_LEVELS"
         nonSimulationDefaultUrl="/risk-levels/configure"
         simulationDefaultUrl="/risk-levels/configure/simulation"
         simulationHistoryUrl="/risk-levels/configure/simulation-history"
+        versionHistory={{
+          url: makeUrl('/risk-levels/version-history'),
+        }}
         breadcrumbs={[
           {
             title: 'Risk scoring',
@@ -104,7 +111,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
   useEffect(() => {
     if (state == null) {
       if (
-        getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES) &&
+        getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_CONFIG) &&
         isSuccess(riskValuesQueryResults.data)
       ) {
         setState(parseApiState(riskValuesQueryResults.data.value.classificationValues));
@@ -121,17 +128,18 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
 
   return (
     <Authorized minRequiredResources={['read:::risk-scoring/risk-levels/*']} showForbiddenPage>
-      <div style={{ maxWidth: isSimulationMode ? '100%' : 800 }}>
+      <div>
         {!isSimulationMode ? (
-          <RiskClassification
-            state={newState}
-            setState={setState}
-            riskValuesRefetch={riskValuesQueryResults.refetch}
-            riskValues={
-              getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES)
-                .classificationValues
-            }
-          />
+          <AsyncResourceRenderer resource={riskValuesQueryResults.data}>
+            {(data) => (
+              <RiskClassification
+                state={newState}
+                setState={setState}
+                riskValuesRefetch={riskValuesQueryResults.refetch}
+                riskValues={data}
+              />
+            )}
+          </AsyncResourceRenderer>
         ) : (
           <SimulateRiskClassification
             refetchSimulationCount={refetchSimulationCount}

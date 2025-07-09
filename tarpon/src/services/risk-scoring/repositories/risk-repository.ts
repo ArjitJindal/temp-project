@@ -1,4 +1,4 @@
-import { FindCursor, MongoClient, WithId } from 'mongodb'
+import { Filter, FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { InternalServerError } from 'http-errors'
 import {
@@ -42,6 +42,7 @@ import {
   ARS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
+  RISK_CLASSIFICATION_HISTORY_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
@@ -62,6 +63,7 @@ import {
 } from '@/utils/mongodb-utils'
 import {
   getClickhouseCredentials,
+  isClickhouseEnabledInRegion,
   sendMessageToMongoConsumer,
 } from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
@@ -1019,9 +1021,26 @@ export class RiskRepository {
     }
   }
 
+  async createRiskClassificationHistoryInMongo(
+    riskClassificationHistory: RiskClassificationHistory
+  ) {
+    await this.mongoDb
+      .db()
+      .collection<RiskClassificationHistory>(
+        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
+      )
+      .insertOne(riskClassificationHistory)
+  }
+
   async createRiskClassificationHistoryInClickhouse(
     riskClassificationHistory: RiskClassificationHistory
   ) {
+    if (!isClickhouseEnabledInRegion()) {
+      return this.createRiskClassificationHistoryInMongo(
+        riskClassificationHistory
+      )
+    }
+
     const credentials = await getClickhouseCredentials(this.tenantId)
     const clickhouseRepository = new RiskClassificationHistoryTable({
       credentials,
@@ -1051,9 +1070,52 @@ export class RiskRepository {
     return filters
   }
 
+  private getMongoFilters(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Filter<RiskClassificationHistory> {
+    const filters: Filter<RiskClassificationHistory> = {}
+
+    if (params.filterVersionId != null) {
+      filters.id = params.filterVersionId
+    }
+    if (params.filterCreatedBy != null) {
+      filters.createdBy = { $in: params.filterCreatedBy }
+    }
+
+    if (
+      params.filterBeforeTimestamp != null &&
+      params.filterAfterTimestamp != null
+    ) {
+      filters.createdAt = {
+        $gte: params.filterAfterTimestamp,
+        $lte: params.filterBeforeTimestamp,
+      }
+    }
+
+    return filters
+  }
+
+  async getRiskClassificationHistoryMongo(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Promise<RiskClassificationHistory[]> {
+    const result = await this.mongoDb
+      .db()
+      .collection<RiskClassificationHistory>(
+        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
+      )
+      .find(this.getMongoFilters(params))
+      .toArray()
+
+    return result
+  }
+
   async getRiskClassificationHistory(
     params: DefaultApiGetRiskLevelVersionHistoryRequest
   ): Promise<RiskClassificationHistory[]> {
+    if (!isClickhouseEnabledInRegion()) {
+      return this.getRiskClassificationHistoryMongo(params)
+    }
+
     const credentials = await getClickhouseCredentials(this.tenantId)
     const clickhouseRepository = new RiskClassificationHistoryTable({
       credentials,
@@ -1075,9 +1137,25 @@ export class RiskRepository {
     return result
   }
 
+  async getRiskClassificationHistoryCountMongo(
+    params: DefaultApiGetRiskLevelVersionHistoryRequest
+  ): Promise<number> {
+    const result = await this.mongoDb
+      .db()
+      .collection<RiskClassificationHistory>(
+        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
+      )
+      .countDocuments(this.getMongoFilters(params))
+    return result
+  }
+
   async getRiskClassificationHistoryCount(
     params: DefaultApiGetRiskLevelVersionHistoryRequest
   ): Promise<number> {
+    if (!isClickhouseEnabledInRegion()) {
+      return this.getRiskClassificationHistoryCountMongo(params)
+    }
+
     const credentials = await getClickhouseCredentials(this.tenantId)
     const clickhouseRepository = new RiskClassificationHistoryTable({
       credentials,
@@ -1093,9 +1171,25 @@ export class RiskRepository {
     return count
   }
 
+  async getRiskClassificationHistoryByIdMongo(
+    id: string
+  ): Promise<RiskClassificationHistory | null> {
+    const result = await this.mongoDb
+      .db()
+      .collection<RiskClassificationHistory>(
+        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
+      )
+      .findOne({ id })
+    return result
+  }
+
   async getRiskClassificationHistoryById(
     id: string
   ): Promise<RiskClassificationHistory | null> {
+    if (!isClickhouseEnabledInRegion()) {
+      return this.getRiskClassificationHistoryByIdMongo(id)
+    }
+
     const credentials = await getClickhouseCredentials(this.tenantId)
     const table = new RiskClassificationHistoryTable({
       credentials,

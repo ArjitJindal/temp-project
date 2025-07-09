@@ -36,6 +36,7 @@ import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Progress } from '@/components/Simulation/Progress';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+
 type Props = {
   onClose: (toClose: boolean) => void;
   isVisible: boolean;
@@ -329,7 +330,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
             await api.postPulseRiskClassification({
               RiskClassificationRequest: {
                 scores: classificationValues,
-                comment: '',
+                comment: `Updated by simulation ${iteration.name}`,
               },
             });
             queryClient.invalidateQueries(RISK_CLASSIFICATION_VALUES());

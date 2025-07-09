@@ -20,11 +20,13 @@ export interface PageWrapperProps {
   actionButton?: React.ReactNode;
   loading?: boolean;
   children?: React.ReactNode;
+  footer?: React.ReactNode;
+  className?: string;
 }
 
 export default function PageWrapper(props: PageWrapperProps) {
   return (
-    <div className={s.root} id="page-wrapper-root">
+    <div className={cn(s.root, props.className)} id="page-wrapper-root">
       <Header {...props} />
       <div
         className={cn(s.body, 'print-container')}
@@ -32,6 +34,7 @@ export default function PageWrapper(props: PageWrapperProps) {
       >
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
+      {props.footer && <Footer>{props.footer}</Footer>}
     </div>
   );
 }
@@ -78,6 +81,19 @@ function Header(props: PageWrapperProps) {
     </>
   );
 }
-export function PageWrapperContentContainer(props: { children: React.ReactNode }) {
-  return <div className={s.contentContainer}>{props.children}</div>;
+
+function Footer(props: { children: React.ReactNode }) {
+  return <div className={s.footer}>{props.children}</div>;
+}
+
+export function PageWrapperContentContainer(props: {
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className={s.contentContainer}>
+      {props.children}
+      {props.footer && <Footer>{props.footer}</Footer>}
+    </div>
+  );
 }

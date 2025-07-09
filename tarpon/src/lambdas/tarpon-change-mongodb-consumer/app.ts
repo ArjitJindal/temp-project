@@ -63,7 +63,6 @@ import { NotificationRepository } from '@/services/notifications/notifications-r
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
-import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
 import {
   SimulationAllJobs,
   SimulationTaskRepository,
@@ -187,14 +186,6 @@ export class TarponChangeMongoDbConsumer {
         )
         .setLLMRequestsHandler((tenantId, newLLMRequests) =>
           this.handleLLMRequests(tenantId, newLLMRequests)
-        )
-        .setRiskClassificationHistoryHandler(
-          (tenantId, newRiskClassificationHistory, dbClients) =>
-            this.handleRiskClassificationHistory(
-              tenantId,
-              newRiskClassificationHistory,
-              dbClients
-            )
         )
         .setSimulationTaskHandler(
           (tenantId, oldSimulationTask, newSimulationTask, dbClients) =>
@@ -827,28 +818,6 @@ export class TarponChangeMongoDbConsumer {
     subSegment?.close()
   }
 
-  async handleRiskClassificationHistory(
-    tenantId: string,
-    newRiskClassificationHistory: RiskClassificationHistory | undefined,
-    dbClients: DbClients
-  ): Promise<void> {
-    if (!newRiskClassificationHistory) {
-      return
-    }
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleRiskClassificationHistory'
-    )
-    subSegment?.close()
-
-    const riskClassificationHistoryRepository = new RiskRepository(
-      tenantId,
-      dbClients
-    )
-    await riskClassificationHistoryRepository.createRiskClassificationHistoryInClickhouse(
-      newRiskClassificationHistory
-    )
-  }
   async handleSimulationTask(
     tenantId: string,
     newSimulationTask: SimulationAllJobs | undefined,
@@ -870,6 +839,7 @@ export class TarponChangeMongoDbConsumer {
     )
     subSegment?.close()
   }
+
   async handleSimulationResult(
     tenantId: string,
     newSimulationResult: SimulationResult | undefined,

@@ -196,6 +196,17 @@ export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];
+export const RISK_LEVELS_VERSION_HISTORY = (params: AnyParameters): QueryKey => [
+  'risk-levels',
+  'version-history',
+  params,
+];
+export const RISK_LEVELS_VERSION_HISTORY_ITEM = (versionId: string): QueryKey => [
+  'risk-levels',
+  'version-history',
+  'item',
+  versionId,
+];
 
 export const RULES_HIT_STATS = (
   dateRange: RangeValue<Dayjs>,
@@ -497,3 +508,5 @@ export const PERMISSIONS_STATEMENTS = (): QueryKey => ['permissions-statements']
 
 export const WORKFLOWS_LIST = (params?: AnyParameters): QueryKey => ['workflows', 'list', params];
 export const WORKFLOWS_ITEM = (id: string): QueryKey => ['workflows', 'item', id];
+
+export const RISK_LEVEL_VERSION = (): QueryKey => ['risk-level', 'version'];

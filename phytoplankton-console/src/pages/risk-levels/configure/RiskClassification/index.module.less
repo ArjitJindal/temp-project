@@ -1,5 +1,44 @@
 .header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+
+  .headerLeft {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .headerRight {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  justify-content: space-between;
+  bottom: 0;
+  padding: 16px;
+  width: 100%;
+  background-color: white;
+  left: 0;
+}
+
+.footerButtons {
+  display: flex;
+  gap: 16px;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }

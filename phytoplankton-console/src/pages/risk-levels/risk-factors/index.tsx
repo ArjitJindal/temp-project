@@ -20,6 +20,7 @@ export default function () {
   const { type } = useParams();
   const navigate = useNavigate();
   const api = useApi();
+
   const tabItems: TabItem[] = [
     {
       title: 'Risk factors',

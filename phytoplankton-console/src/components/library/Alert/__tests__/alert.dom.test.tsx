@@ -8,7 +8,7 @@ import {
   FIGMA_VARS_TOKENS_COLOR_STROKE_WARNING,
 } from '@/components/ui/figma-vars';
 
-const ALERT_TYPES: AlertType[] = ['ERROR', 'WARNING', 'INFO', 'SUCCESS'];
+const ALERT_TYPES: AlertType[] = ['ERROR', 'WARNING', 'INFO', 'SUCCESS', 'TRANSPARENT'];
 
 const ALERT_BORDER_COLORS: {
   [key in AlertType]: string;
@@ -17,6 +17,7 @@ const ALERT_BORDER_COLORS: {
   WARNING: FIGMA_VARS_TOKENS_COLOR_STROKE_WARNING,
   INFO: FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
   SUCCESS: FIGMA_VARS_TOKENS_COLOR_STROKE_SUCCESS,
+  TRANSPARENT: 'transparent',
 };
 
 describe('Alert Component', () => {

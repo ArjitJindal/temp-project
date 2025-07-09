@@ -7,7 +7,10 @@ export default function (): JSX.Element {
   return (
     <>
       <UseCase title="Statuses and sizes">
-        <PropertyMatrix xLabel="type" x={['ERROR', 'WARNING', 'INFO', 'SUCCESS'] as const}>
+        <PropertyMatrix
+          xLabel="type"
+          x={['ERROR', 'WARNING', 'INFO', 'SUCCESS', 'TRANSPARENT'] as const}
+        >
           {(type) => <Alert type={type}>Short text</Alert>}
         </PropertyMatrix>
       </UseCase>

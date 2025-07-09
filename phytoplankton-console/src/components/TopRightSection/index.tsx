@@ -7,6 +7,7 @@ import Dropdown from '../library/Dropdown';
 import Modal from '../library/Modal';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
 import { CloseMessage, message } from '../library/Message';
+import Link from '../ui/Link';
 import s from './styles.module.less';
 import Toggle from '@/components/library/Toggle';
 import { useApi } from '@/api';
@@ -16,6 +17,7 @@ import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import Tooltip from '@/components/library/Tooltip';
 import Label from '@/components/library/Label';
 import { FileInfo } from '@/apis';
+import FileListIcon from '@/components/ui/icons/Remix/document/file-list-3-line.react.svg';
 
 export type TopRightSectionRef = {
   refetchSimulationCount: () => void;
@@ -27,11 +29,17 @@ export type ImportExportType = {
   type: 'RULES' | 'RISK_FACTORS';
 };
 
+export type VersionHistoryType = {
+  url: string;
+};
+
 export type TopRightSectionProps = PageWrapperProps & {
   header?: (actionButtons: React.ReactNode) => JSX.Element;
   onSimulationModeChange: (value: boolean | undefined) => void;
   isSimulationModeEnabled: boolean;
   importExport?: ImportExportType;
+  versionHistory?: VersionHistoryType;
+  className?: string;
 };
 
 export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionProps>(
@@ -115,9 +123,17 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
                     props.importExport.export();
                   }
                 }}
+                optionClassName={s.jsonButtonOption}
               >
-                <Button type="TETRIARY">JSON</Button>
+                <Button size="SMALL" type="TETRIARY" className={s.jsonButton}>
+                  JSON
+                </Button>
               </Dropdown>
+            )}
+            {props.versionHistory && !props.isSimulationModeEnabled && (
+              <Link to={props.versionHistory.url} className={s.history}>
+                <FileListIcon className={s.icon} /> Version history
+              </Link>
             )}
             {uploadModal}
             <Label label="Simulator" position="RIGHT">
@@ -142,11 +158,13 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
         </Authorized>
       </div>
     );
+
     return (
       <PageWrapper
         {...props}
         header={props.header && props.header(actionButton)}
         actionButton={actionButton}
+        className={props.className}
       >
         {props.children}
       </PageWrapper>

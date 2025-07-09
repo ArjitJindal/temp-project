@@ -26,6 +26,13 @@ export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH',
 
 export type RiskLevel = ApiRiskLevel;
 
+export const DEFAULT_RISK_CLASSIFICATION_CONFIG: RiskClassificationConfig = {
+  classificationValues: [],
+  createdAt: 0,
+  updatedAt: 0,
+  id: '',
+};
+
 export const RISK_LEVEL_LABELS: { [key in RiskLevel]: string } = Object.freeze({
   VERY_LOW: 'Very low risk',
   LOW: 'Low risk',
@@ -68,29 +75,33 @@ export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = Object
   },
 });
 
-export const DEFAULT_RISK_CLASSIFICATION_VALUES: RiskClassificationConfig = {
-  classificationValues: [],
-  createdAt: 0,
-  updatedAt: 0,
-  id: '',
-};
-
-export function useRiskClassificationScores(): RiskClassificationScore[] {
+export function useRiskClassificationConfig(): {
+  refetch: () => void;
+  data: RiskClassificationConfig;
+} {
   const api = useApi();
   const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
     api.getPulseRiskClassification(),
   );
-  return getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_VALUES)
-    .classificationValues;
+  return {
+    refetch: riskValuesQueryResults.refetch,
+    data: getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_CONFIG),
+  };
+}
+
+export function useRiskClassificationScores(): Array<RiskClassificationScore> {
+  const config = useRiskClassificationConfig();
+  return config.data.classificationValues;
 }
 
 export function useRiskLevel(score?: number): RiskLevel | null {
-  const classificationScores = useRiskClassificationScores();
+  const config = useRiskClassificationConfig();
   if (score == null) {
     return null;
   }
 
-  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of classificationScores) {
+  const values = config.data.classificationValues;
+  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of values) {
     if (score >= lowerBoundRiskScore && score < upperBoundRiskScore) {
       return riskLevel;
     }
@@ -99,12 +110,9 @@ export function useRiskLevel(score?: number): RiskLevel | null {
 }
 
 export function useRiskScore(riskLevel: RiskLevel): number {
-  const classificationScores = useRiskClassificationScores();
-  for (const {
-    lowerBoundRiskScore,
-    upperBoundRiskScore,
-    riskLevel: level,
-  } of classificationScores) {
+  const config = useRiskClassificationConfig();
+  const values = config.data.classificationValues;
+  for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel: level } of values) {
     if (level === riskLevel) {
       return (lowerBoundRiskScore + upperBoundRiskScore) / 2;
     }

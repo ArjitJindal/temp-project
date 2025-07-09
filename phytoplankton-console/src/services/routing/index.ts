@@ -48,6 +48,8 @@ import {
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
 import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
+import RiskLevelsVersionHistoryPage from '@/pages/risk-levels/configure/RiskLevelsVersionHistory';
+import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -330,6 +332,20 @@ export function useRoutes(): RouteItem[] {
                   name: 'risk-levels-configure',
                   path: '/risk-levels/configure/:type',
                   component: RiskLevelsConfigurePage,
+                  hideInMenu: true,
+                  minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
+                },
+                {
+                  name: 'risk-levels-version-history',
+                  path: '/risk-levels/version-history',
+                  component: RiskLevelsVersionHistoryPage,
+                  hideInMenu: true,
+                  minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
+                },
+                {
+                  name: 'risk-levels-version-history-item',
+                  path: '/risk-levels/version-history/:versionId',
+                  component: RiskVersionHistoryItem,
                   hideInMenu: true,
                   minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
                 },

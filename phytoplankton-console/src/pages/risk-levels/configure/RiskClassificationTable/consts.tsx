@@ -27,7 +27,10 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       const { state } = externalState;
       const start = state?.[item.index - 1] ?? 0;
       const end = state?.[item.index] ?? 100;
-      return `${start} - ${end}`;
+
+      const startOperator = start === 0 && start !== end ? '>=' : start !== end ? '>=' : '';
+      const endOperator = end === 100 && start !== end ? '<=' : start !== end ? '<' : '';
+      return `${startOperator} ${start} to ${endOperator} ${end}`;
     },
   }),
   helper.display({

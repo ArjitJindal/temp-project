@@ -6,7 +6,7 @@ import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.s
 import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 
-export type AlertType = 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS';
+export type AlertType = 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS' | 'TRANSPARENT';
 
 interface Props {
   type: AlertType;
@@ -27,7 +27,9 @@ export default function Alert(props: Props) {
           {type === 'WARNING' && (
             <ExclamationCircleIcon className={s.icon} data-cy={`icon-${type}`} />
           )}
-          {type === 'INFO' && <InformationFillIcon className={s.icon} data-cy={`icon-${type}`} />}
+          {['INFO', 'TRANSPARENT'].includes(type) && (
+            <InformationFillIcon className={s.icon} data-cy={`icon-${type}`} />
+          )}
           {type === 'SUCCESS' && (
             <CheckboxCircleFillIcon className={s.icon} data-cy={`icon-${type}`} />
           )}

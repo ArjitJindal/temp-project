@@ -19,6 +19,7 @@ import {
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
 
 type TableName = keyof typeof CLICKHOUSE_DEFINITIONS
 
@@ -37,6 +38,12 @@ export const seedClickhouse = async (tenantId: string) => {
 
   if (isClickhouseEnabledInRegion()) {
     const clickhouseClient = await getClickhouseClient(tenantId)
+    const riskClassificationHistoryTableName =
+      RiskClassificationHistoryTable.tableDefinition.tableName
+
+    await clickhouseClient.exec({
+      query: `DELETE FROM ${riskClassificationHistoryTableName} WHERE 1=1`,
+    })
 
     const promises = ClickHouseTables.map(async (table) => {
       try {

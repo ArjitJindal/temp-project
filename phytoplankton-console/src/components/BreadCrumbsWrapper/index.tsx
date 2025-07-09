@@ -6,7 +6,11 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
-import { ImportExportType, TopRightSection } from '@/components/TopRightSection';
+import {
+  ImportExportType,
+  TopRightSection,
+  VersionHistoryType,
+} from '@/components/TopRightSection';
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import { LocalStorageKey } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 import { useSafeLocalStorageState } from '@/utils/hooks';
@@ -27,6 +31,8 @@ export type PageWrapperProps = {
     | 'SIMULATION_CUSTOM_RISK_FACTORS'
     | 'SIMULATION_RISK_LEVELS';
   importExport?: ImportExportType;
+  className?: string;
+  versionHistory?: VersionHistoryType;
 };
 
 export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProps>((props, ref) => {
@@ -93,9 +99,11 @@ export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProp
 
   return (
     <TopRightSection
+      className={props.className}
       key={`${isSimulationEnabled}`}
       isSimulationModeEnabled={localStorage.getItem(props.simulationStorageKey) === 'true'}
       onSimulationModeChange={handleSimulationModeChange}
+      versionHistory={props.versionHistory}
       importExport={props.importExport}
       header={(actionButton) => (
         <div className={s.header}>
