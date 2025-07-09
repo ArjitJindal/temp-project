@@ -141,6 +141,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   ETH2: { label: 'Ethereum 2.0', symbol: null },
   EUR: { label: 'Euro', symbol: '€' },
   EUROC: { label: 'Euro Coin', symbol: null },
+  ETHFI: { label: 'Ether.fi', symbol: null },
   FARM: { label: 'Harvest Finance', symbol: null },
   FET: { label: 'Fetch.ai', symbol: null },
   FIDA: { label: 'Bonfida', symbol: null },
@@ -154,6 +155,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   FORTH: { label: 'Ampleforth Governance Token', symbol: null },
   FOX: { label: 'ShapeShift FOX Token', symbol: null },
   FX: { label: 'Function X', symbol: null },
+  FTM: { label: 'Fantom', symbol: null },
   GAL: { label: 'Galxe', symbol: null },
   GALA: { label: 'Gala', symbol: null },
   GBP: { label: 'British pound', symbol: '£' },
@@ -306,6 +308,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   PAB: { label: 'Panamanian balboa', symbol: 'B/.' },
   PAX: { label: 'Paxos Standard', symbol: null },
   PEN: { label: 'Sol', symbol: 'S/.' },
+  PENGU: { label: 'Pudgy Penguins', symbol: null },
   PERP: { label: 'Perpetual Protocol', symbol: null },
   PGK: { label: 'Papua New Guinean kina', symbol: 'K' },
   PHP: { label: 'Philippine peso', symbol: '₱' },
@@ -314,6 +317,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   PLN: { label: 'Poland złoty', symbol: 'zł' },
   PLU: { label: 'Pluton', symbol: null },
   PNG: { label: 'Pangolin', symbol: null },
+  POL: { label: 'Polygon Ecosystem Token', symbol: null },
   POLS: { label: 'Polkastarter', symbol: null },
   POLY: { label: 'Polymath', symbol: null },
   POND: { label: 'Marlin', symbol: null },
@@ -479,6 +483,8 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   TYUGA: { label: 'Tyuga', symbol: null },
   VIC: { label: 'Viction', symbol: null },
   XAI: { label: 'Xai', symbol: null },
+  RUNE: { label: 'THORChain', symbol: null },
+  THETA: { label: 'Theta Network', symbol: null },
 }
 
 export const CRYPTO_CURRENCIES_KEYS = [
@@ -609,6 +615,12 @@ export const CRYPTO_CURRENCIES_KEYS = [
   'INV',
   'IOTX',
   'JASMY',
+  'ETHFI',
+  'FTM',
+  'PENGU',
+  'POL',
+  'RUNE',
+  'THETA',
 ]
 
 export type Currency = string
