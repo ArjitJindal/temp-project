@@ -155,6 +155,11 @@ const SARProperties = (props: SARPropertiesProps) => {
   const settings = useSettings();
 
   const reportTypes = useMemo(() => {
+    if (!settings.sarJurisdictions || settings.sarJurisdictions.length === 0) {
+      return (result.data ?? []).filter((x) => {
+        return x.subjectType?.includes(reportSubjectType);
+      });
+    }
     return (result.data ?? []).filter((x) => {
       if (settings.sarJurisdictions && !settings.sarJurisdictions.includes(x.countryCode)) {
         return false;

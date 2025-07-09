@@ -225,7 +225,6 @@ export default function SuperAdminPanel() {
   const isCrmToBeEnabled = features?.includes('CRM');
   const isSARToBeEnabled = features?.includes('SAR');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
-
   const SARCountries = useSARReportCountries(true);
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const [crmIntegrationName, setCrmIntegrationName] = useState<CrmIntegrationNames | undefined>(
