@@ -4,46 +4,55 @@ export const getMlModelsSample = (): RuleMLModel[] => {
   return [
     {
       id: 'ML-001',
-      name: 'Fraud (Generic)',
+      name: 'Unusual Transaction Frequency',
       description:
-        'Detects fraud with a generic model across all payment methods and jurisdictions with an umbrella approach.',
-      modelType: 'EXPLAINABLE',
-      checksFor: ['Fraud'],
+        'Detects abnormal frequency patterns indicative of suspicious behavior.',
+      modelType: 'NON_EXPLAINABLE',
+      checksFor: ['Behavioral Change'],
       enabled: true,
     },
     {
       id: 'ML-002',
-      name: 'Fraud credit card',
-      description: 'Focuses on credit card fraud risks specifically.',
+      name: 'Anonymous High-Risk Transfers',
+      description:
+        'Evaluates anonymous transaction profiles for high-risk behavior.',
       modelType: 'EXPLAINABLE',
-      checksFor: ['Credit card fraud'],
+      checksFor: ['Anonymity Risk'],
       enabled: true,
     },
     {
       id: 'ML-003',
-      name: 'Money laundering',
+      name: 'Account Takeover Detection',
       description:
-        'Checks for money laundering-related risks, specifically structuring and money mules.',
+        'Identifies unusual account and transaction activities signaling takeover.',
       modelType: 'EXPLAINABLE',
-      checksFor: ['Money laundering'],
+      checksFor: ['Account Takeover'],
       enabled: true,
     },
     {
       id: 'ML-004',
-      name: 'Bank transfer',
-      description:
-        'Detects fraud on bank transfers specifically focusing on potential social engineering, account takeover, or authorized push payment fraud.',
+      name: 'High-Value Structuring Activity',
+      description: 'Flags structuring transactions below reporting thresholds.',
       modelType: 'NON_EXPLAINABLE',
-      checksFor: ['Fraud', 'Bank Fraud'],
+      checksFor: ['Structuring'],
       enabled: true,
     },
     {
       id: 'ML-005',
-      name: 'Unexpected transactional behavior',
+      name: 'Merchant Profile Change',
       description:
-        'Detects behavior change of a user based on transaction attributes such as IP address, amount, time of transaction, location of the transaction, a new beneficiary account and so forth.',
+        'Monitors sudden merchant profile changes indicating increased risk.',
       modelType: 'EXPLAINABLE',
-      checksFor: ['Fraud', 'Behavioral Change'],
+      checksFor: ['Behavioral Change'],
+      enabled: true,
+    },
+    {
+      id: 'ML-006',
+      name: 'Cross-border Risk Transactions',
+      description:
+        'Monitors cross-border activities involving high-risk jurisdictions.',
+      modelType: 'EXPLAINABLE',
+      checksFor: ['Cross-border Risk'],
       enabled: true,
     },
   ]
