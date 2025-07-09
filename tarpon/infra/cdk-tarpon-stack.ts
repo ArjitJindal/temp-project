@@ -109,6 +109,7 @@ import {
   CfnAccessPolicy,
   CfnCollection,
   CfnSecurityPolicy,
+  CfnVpcEndpoint,
 } from 'aws-cdk-lib/aws-opensearchserverless'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
@@ -1952,7 +1953,7 @@ export class CdkTarponStack extends cdk.Stack {
     lambdaExecutionRole: cdk.aws_iam.Role,
     ecsTaskExecutionRole: cdk.aws_iam.Role
   ) {
-    if (isQaEnv()) {
+    if (isQaEnv() || envIs('prod')) {
       return
     }
     const opensearchCollectionName = `${this.config.stage}-${
@@ -1977,7 +1978,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    let endpoint: InterfaceVpcEndpoint | undefined
+    let endpoint: CfnVpcEndpoint | undefined
     if (vpc) {
       const endpointSecurityGroup = new SecurityGroup(this, 'AossEndpointSG', {
         vpc,
@@ -1988,13 +1989,18 @@ export class CdkTarponStack extends cdk.Stack {
         Peer.ipv4('10.0.0.0/21'),
         Port.tcp(443)
       )
-
-      endpoint = new InterfaceVpcEndpoint(this, 'AossEndpoint', {
-        vpc,
-        service: new InterfaceVpcEndpointService(
-          `com.amazonaws.${this.config.env.region}.aoss-serverless`
-        ),
-        securityGroups: [endpointSecurityGroup],
+      const uniqueAzSubnets: { [az: string]: string } = {}
+      for (const subnet of vpc.privateSubnets) {
+        if (!uniqueAzSubnets[subnet.availabilityZone]) {
+          uniqueAzSubnets[subnet.availabilityZone] = subnet.subnetId
+        }
+      }
+      const subnetIds = Object.values(uniqueAzSubnets)
+      endpoint = new CfnVpcEndpoint(this, 'AossEndpoint', {
+        name: 'aoss-endpoint',
+        vpcId: vpc.vpcId,
+        subnetIds: subnetIds,
+        securityGroupIds: [endpointSecurityGroup.securityGroupId],
       })
     }
 
@@ -2018,7 +2024,7 @@ export class CdkTarponStack extends cdk.Stack {
             ],
             ...(!endpoint || envIsNot('prod', 'sandbox')
               ? { AllowFromPublic: true }
-              : { SourceVPCEs: [endpoint.vpcEndpointId] }),
+              : { SourceVPCEs: [endpoint.attrId] }),
           },
         ]),
       }
