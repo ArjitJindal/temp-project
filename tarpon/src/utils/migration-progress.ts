@@ -125,6 +125,9 @@ export async function saveMigrationTmpProgressToDynamo(migrationTmp: any[]) {
   const dynamoDb = getDynamoDbClient()
   const writeRequests: TransactWriteOperation[] = []
   for (const migration of migrationTmp) {
+    if (!migration._id) {
+      continue
+    }
     const key = DynamoDbKeys.MIGRATION_TMP(migration._id)
     writeRequests.push({
       Put: {
@@ -153,6 +156,9 @@ export async function saveMigrationProgressToDynamo(
     let key: {
       PartitionKeyID: string
       SortKeyID: string
+    }
+    if (!migration.migrationName) {
+      continue
     }
     if (migrationType === 'PRE_DEPLOYMENT') {
       key = DynamoDbKeys.MIGRATION_PRE_DEPLOYMENT(migration.migrationName)

@@ -1,15 +1,8 @@
-import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { MIGRATION_TMP_COLLECTION } from '@/utils/mongodb-definitions'
 import { saveMigrationTmpProgressToDynamo } from '@/utils/migration-progress'
-import { isDemoTenant } from '@/utils/tenant'
 
-async function migrateTenant(tenant: Tenant) {
-  if (isDemoTenant(tenant.id)) {
-    return
-  }
-
+export const up = async () => {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
   const collection = db.collection(MIGRATION_TMP_COLLECTION)
@@ -20,10 +13,6 @@ async function migrateTenant(tenant: Tenant) {
     },
     { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
   )
-}
-
-export const up = async () => {
-  await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {
   // skip
