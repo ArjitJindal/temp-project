@@ -146,6 +146,15 @@ export const workflowHandler = lambdaApi()(
       )
     })
 
+    handlers.registerGetUniqueStatusesByType(async (_ctx, request) => {
+      if (request.workflowType !== 'case' && request.workflowType !== 'alert') {
+        throw new BadRequest('Invalid workflow type. Must be "case" or "alert"')
+      }
+      const type = request.workflowType as 'case' | 'alert'
+      const statuses = await workflowService.getUniqueStatuses(type)
+      return { statuses }
+    })
+
     return await handlers.handle(event)
   }
 )

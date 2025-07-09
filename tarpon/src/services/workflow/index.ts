@@ -244,4 +244,29 @@ export class WorkflowService {
 
     await this.docClient.send(new UpdateCommand(updateInput))
   }
+
+  async getUniqueStatuses(workflowType: WorkflowType): Promise<string[]> {
+    // Get all versions of all workflows of the given type
+    const queryInput = {
+      TableName: this.tableName,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.WORKFLOWS(this.tenantId, workflowType)
+          .PartitionKeyID,
+      },
+      ScanIndexForward: false,
+    }
+
+    const result = await this.docClient.send(new QueryCommand(queryInput))
+    const allItems = result.Items || []
+
+    const statusesSet = new Set<string>()
+    for (const item of allItems) {
+      if (item.statuses && Array.isArray(item.statuses)) {
+        item.statuses.forEach((status: string) => statusesSet.add(status))
+      }
+    }
+
+    return Array.from(statusesSet)
+  }
 }

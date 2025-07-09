@@ -158,6 +158,25 @@ paths:
                   oneOf:
                     - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
                     - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
+
+  /workflows/{workflowType}/statuses:
+    get:
+      summary: Get the set of unique statuses for all workflows of a given type
+      operationId: get-unique-statuses-by-type
+      parameters:
+        - name: workflowType
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Set of unique statuses for the workflow type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowStatusesResponse'
+
   /workflows/history/{workflowType}/{workflowId}:
     get:
       summary: Get the history of a workflow
@@ -280,3 +299,14 @@ components:
               - version
       required:
         - workflows
+
+    WorkflowStatusesResponse:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            type: string
+          description: Array of unique statuses for the workflow type
+      required:
+        - statuses
