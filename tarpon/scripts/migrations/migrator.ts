@@ -22,6 +22,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
 import { isDemoTenant } from '@/utils/tenant'
 import { syncOpensearchIndexes } from '@/utils/opensearch-utils'
+import { saveMigrationProgressToDynamo } from '@/utils/migration-progress'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
@@ -131,6 +132,14 @@ async function main() {
       template: (filePath) => [[filePath, MIGRATION_TEMPLATE]],
       folder: path.join(__dirname, directory),
     },
+  })
+
+  umzug.on('migrated', async (params) => {
+    const name = params.name
+    await saveMigrationProgressToDynamo(
+      [{ migrationName: name }],
+      migrationType
+    )
   })
 
   const success = await umzug.runAsCLI()

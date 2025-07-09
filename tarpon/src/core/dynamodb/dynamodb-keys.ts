@@ -82,7 +82,11 @@ export const SIMULATION_TASK_KEY_IDENTIFIER = '#simulation-task'
 export const SIMULATION_TASK_ITERATION_KEY_IDENTIFIER =
   '#simulation-task-iteration'
 export const SIMULATION_RESULT_KEY_IDENTIFIER = '#simulation-result'
-
+export const MIGRATION_TMP_KEY_IDENTIFIER = 'migration-tmp'
+export const MIGRATION_PRE_DEPLOYMENT_KEY_IDENTIFIER =
+  'migrations-pre-deployment'
+export const MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER =
+  'migrations-post-deployment'
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
   transactionId: string
@@ -644,6 +648,18 @@ export const DynamoDbKeys = {
   SIMULATION_RESULT: (tenantId: string, id: string) => ({
     PartitionKeyID: `${tenantId}${SIMULATION_RESULT_KEY_IDENTIFIER}`,
     SortKeyID: id,
+  }),
+  MIGRATION_TMP: (id: string) => ({
+    PartitionKeyID: `${MIGRATION_TMP_KEY_IDENTIFIER}`,
+    SortKeyID: id,
+  }),
+  MIGRATION_PRE_DEPLOYMENT: (migrationName: string) => ({
+    PartitionKeyID: `${MIGRATION_PRE_DEPLOYMENT_KEY_IDENTIFIER}`,
+    SortKeyID: migrationName,
+  }),
+  MIGRATION_POST_DEPLOYMENT: (migrationName: string) => ({
+    PartitionKeyID: `${MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER}`,
+    SortKeyID: migrationName,
   }),
 }
 

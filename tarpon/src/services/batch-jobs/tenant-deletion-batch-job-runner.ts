@@ -118,6 +118,9 @@ type ExcludedDynamoDbKey = Exclude<
   | 'BATCH_BUSINESS_USER_EVENT'
   | 'CASE_TRANSACTION_IDS'
   | 'GPT_REQUESTS'
+  | 'MIGRATION_TMP'
+  | 'MIGRATION_PRE_DEPLOYMENT'
+  | 'MIGRATION_POST_DEPLOYMENT'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
