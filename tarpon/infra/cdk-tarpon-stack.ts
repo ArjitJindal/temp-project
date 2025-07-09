@@ -727,7 +727,7 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    const logListingPolicy = new Policy(this, id, {
+    const logListingPolicy = new Policy(this, `${id}-${this.config.stage}`, {
       policyName: `${lambdaExecutionRoleWithLogsListing.roleName}-LogListingPolicy`,
       statements: [
         new PolicyStatement({
