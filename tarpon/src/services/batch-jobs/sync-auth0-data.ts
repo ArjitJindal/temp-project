@@ -4,7 +4,6 @@ import { TenantService } from '../tenants'
 import { RoleService } from '../roles'
 import { getNamespacedRoleName } from '../roles/utils'
 import { DEFAULT_NAMESPACE } from '../roles/repository'
-import { convertV1PermissionToV2 } from '../rbac/utils/permissions'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SyncAuth0DataBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -12,6 +11,7 @@ import { Tenant } from '@/services/accounts/repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { traceable } from '@/core/xray'
 import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
+import { logger } from '@/core/logger'
 
 @traceable
 export class SyncAuth0DataRunner extends BatchJobRunner {
@@ -157,12 +157,12 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     }
 
     for (const role of auth0Roles) {
-      let statements = role.statements ?? []
+      const updatedStatements =
+        cacheRoles.find((r) => r.id === role.id)?.statements ?? []
 
-      if (statements.length === 0) {
-        statements = convertV1PermissionToV2(
-          getNonDemoTenantId(tenant.id),
-          role.permissions
+      if (updatedStatements.length === 0) {
+        logger.error(
+          `No statements found for role ${role.name} for tenant ${tenant.id}`
         )
       }
 
@@ -171,7 +171,7 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
         params: {
           ...role,
           name: getNamespacedRoleName(tenant.id, role.name),
-          statements,
+          statements: updatedStatements,
         },
       })
     }
