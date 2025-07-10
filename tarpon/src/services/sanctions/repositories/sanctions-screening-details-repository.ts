@@ -172,6 +172,9 @@ export class SanctionsScreeningDetailsRepository {
           collectionName: sanctionsScreeningCollectionNameV2,
           upsert: true,
         }),
+        MessageGroupId: SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(
+          this.tenantId
+        ),
         MessageDeduplicationId: `${item.id}-${roundedScreenedAt}`,
       })
     }
