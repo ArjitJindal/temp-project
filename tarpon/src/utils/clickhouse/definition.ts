@@ -119,16 +119,21 @@ const generatePaymentDetailColumns = (prefix: string) =>
       )
   )
 
-const userNameMaterilizedColumn = `username String MATERIALIZED 
+export const userNameMaterilizedColumn = `username String MATERIALIZED 
         IF(
         JSON_VALUE(data, '$.type') = 'CONSUMER', 
         COALESCE(
-            CONCAT(
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.firstName'), ''),
-                ' ',
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.middleName'), ''),
-                ' ',
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.lastName'), '')
+            trim(BOTH ' ' FROM 
+                replaceRegexpAll(
+                    CONCAT(
+                        COALESCE(JSON_VALUE(data, '$.userDetails.name.firstName'), ''),
+                        ' ',
+                        COALESCE(JSON_VALUE(data, '$.userDetails.name.middleName'), ''),
+                        ' ',
+                        COALESCE(JSON_VALUE(data, '$.userDetails.name.lastName'), '')
+                    ),
+                    '\\\\s+', ' '
+                )
             ),
             ''
         ),
@@ -161,23 +166,33 @@ export enum ClickhouseTableNames {
   SimulationTask = 'simulation_task',
   SimulationResult = 'simulation_result',
 }
-const userNameCasesV2MaterializedColumn = `
+export const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
-    nullIf(trim(BOTH ' ' FROM concat(
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'firstName'),
-      ' ',
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'middleName'),
-      ' ',
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'lastName')
-    )), ''),
+    nullIf(trim(BOTH ' ' FROM 
+      replaceRegexpAll(
+        concat(
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'firstName'), ''),
+          ' ',
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'middleName'), ''),
+          ' ',
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'userDetails', 'name'), 'lastName'), '')
+        ),
+        '\\\\s+', ' '
+      )
+    ), ''),
     
-    nullIf(trim(BOTH ' ' FROM concat(
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'firstName'),
-      ' ',
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'middleName'),
-      ' ',
-      JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'lastName')
-    )), ''),
+    nullIf(trim(BOTH ' ' FROM 
+      replaceRegexpAll(
+        concat(
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'firstName'), ''),
+          ' ',
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'middleName'), ''),
+          ' ',
+          COALESCE(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'userDetails', 'name'), 'lastName'), '')
+        ),
+        '\\\\s+', ' '
+      )
+    ), ''),
     
     nullIf(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'destination', 'legalEntity', 'companyGeneralDetails'), 'legalName'), ''),
     nullIf(JSONExtractString(JSONExtractRaw(JSONExtractRaw(data, 'caseUsers'), 'origin', 'legalEntity', 'companyGeneralDetails'), 'legalName'), ''),
