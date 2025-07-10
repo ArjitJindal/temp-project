@@ -78,7 +78,10 @@ async function migrateTenant(tenant: Tenant) {
                 $cond: {
                   if: { $ne: ['$caseAggregates', null] },
                   then: {
-                    $mergeObjects: ['$caseAggregates', { tags: combinedTags }],
+                    $mergeObjects: [
+                      { $ifNull: ['$caseAggregates', {}] },
+                      { tags: combinedTags },
+                    ],
                   },
                   else: { tags: combinedTags },
                 },
