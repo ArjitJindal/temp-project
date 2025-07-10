@@ -71,11 +71,11 @@ describe('Drawer Component', () => {
       ),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('No'));
+    fireEvent.click(screen.getByText('Cancel'));
     expect(onChangeVisibility).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('drawer-close-button'));
-    fireEvent.click(screen.getByText('Yes'));
+    fireEvent.click(screen.getByText('Confirm'));
     expect(onChangeVisibility).toHaveBeenCalledWith(false);
   });
 

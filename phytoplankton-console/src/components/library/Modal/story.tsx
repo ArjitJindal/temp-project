@@ -277,6 +277,35 @@ export default function (): JSX.Element {
       <Case2 />
       <Case3 />
       <Case4 />
+      <UseCase title="Disable internal borders">
+        {([state, setState]) => (
+          <>
+            <Button
+              onClick={() => {
+                setState((prevState) => ({ ...prevState, isVisible: true }));
+              }}
+            >
+              Show modal
+            </Button>
+            <Modal
+              title={'Disable internal borders'}
+              isOpen={state.isVisible}
+              onCancel={() => {
+                setState((prevState) => ({ ...prevState, isVisible: false }));
+              }}
+              disableInternalBorders
+            >
+              <div>
+                ReactJS is a great choice for building modal components. It is a powerful and
+                flexible JavaScript library that allows developers to create user interfaces with
+                ease. ReactJS is a great choice for building modal components. It is a powerful and
+                flexible JavaScript library that allows developers to create user interfaces with
+                ease.
+              </div>
+            </Modal>
+          </>
+        )}
+      </UseCase>
       <UseCase
         title="Confirm modal"
         initialState={{

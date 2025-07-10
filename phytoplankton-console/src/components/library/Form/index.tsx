@@ -20,6 +20,7 @@ export interface FormRef<FormValues> {
 interface ChildrenProps<FormValues> {
   valuesState: StatePair<FormValues>;
   validationResult: FormValidationResult<FormValues> | null;
+  isFormValid: boolean;
 }
 
 interface Props<FormValues> {
@@ -152,7 +153,11 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
   const result = (
     <FormContext.Provider value={formContext as FormContextValue<unknown>}>
       {typeof children === 'function'
-        ? children({ validationResult, valuesState: [formValues, setFormValues] })
+        ? children({
+            validationResult,
+            valuesState: [formValues, setFormValues],
+            isFormValid,
+          })
         : children}
     </FormContext.Provider>
   );

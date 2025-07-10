@@ -41,6 +41,7 @@ import EmptyDataInfo from '@/components/library/EmptyDataInfo/story';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag/story';
 import SearchBar from '@/components/library/SearchBar/story';
 import ExpandContainer from '@/components/utils/ExpandContainer/story';
+import Confirm from '@/components/utils/Confirm/story';
 import { Category, Config } from '@/pages/storybook/types';
 import {
   CATEGORY_ROUTE,
@@ -339,6 +340,10 @@ const config: Config = [
       {
         key: 'ExpandContainer',
         story: ExpandContainer,
+      },
+      {
+        key: 'Confirm',
+        story: Confirm,
       },
     ],
   },

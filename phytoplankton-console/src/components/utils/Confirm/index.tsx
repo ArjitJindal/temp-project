@@ -11,6 +11,7 @@ interface ChildrenProps {
 export interface Props {
   title?: string;
   text: string | React.ReactNode;
+  commentRequired?: boolean;
   res?: AsyncResource;
   isDanger?: boolean;
   onConfirm: () => void;
@@ -19,7 +20,7 @@ export interface Props {
 }
 
 export default function Confirm(props: Props) {
-  const { res, onConfirm, onSuccess, children, ...rest } = props;
+  const { res, onConfirm, onSuccess, children, commentRequired, ...rest } = props;
   const [isVisible, setIsVisible] = useState(false);
   const isSuccessfull = useFinishedSuccessfully(res ?? init());
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function Confirm(props: Props) {
     <>
       <ConfirmModal
         {...rest}
+        commentRequired={commentRequired}
         res={res}
         isVisible={isVisible}
         onConfirm={handleOk}

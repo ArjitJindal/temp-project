@@ -35,6 +35,7 @@ interface Props {
   tabs?: TabItem[];
   children?: React.ReactNode;
   disablePadding?: boolean;
+  disableInternalBorders?: boolean;
   writeResources?: Resource[];
   hideOk?: boolean;
   maskClosable?: boolean;
@@ -77,6 +78,7 @@ export default function Modal(props: Props) {
     height = 'AUTO',
     tabs = [],
     disablePadding = false,
+    disableInternalBorders = false,
     writeResources = [],
     hideOk = false,
     maskClosable = true,
@@ -103,6 +105,7 @@ export default function Modal(props: Props) {
         withTabs && s.withTabs,
         disablePadding && s.disablePadding,
         s[`height-${derivedHeight}`],
+        disableInternalBorders && s.disableInternalBorders,
       )}
       title={
         !hideHeader ? (

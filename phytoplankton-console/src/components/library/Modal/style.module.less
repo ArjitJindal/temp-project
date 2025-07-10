@@ -11,6 +11,19 @@
 }
 
 .root {
+  &.disableInternalBorders {
+    :global {
+      .ant-modal-header {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .ant-modal-footer {
+        padding-top: 0;
+        border-top: none;
+      }
+    }
+  }
+
   &.withTabs {
     :global {
       .ant-modal-header {
