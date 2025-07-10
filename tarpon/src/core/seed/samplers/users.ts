@@ -10,7 +10,7 @@ import {
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from '../data/sanctions'
-import { ID_PREFIXES } from '../data/seeds'
+import { ID_PREFIXES, SHAREHOLDER_SEED, DIRECTOR_SEED } from '../data/seeds'
 import { TagSampler } from './tag'
 import {
   BusinessUserRiskScoreSampler,
@@ -216,9 +216,12 @@ export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
 }
 
 abstract class UserSampler<T> extends BaseSampler<T> {
-  s3Client = new S3Client({
-    region: process.env.AWS_REGION,
-  })
+  s3Client: S3Client
+
+  constructor(seed: number, s3Client: S3Client, counter?: number) {
+    super(seed, counter)
+    this.s3Client = s3Client
+  }
 
   getEmail(seed: number, name: ConsumerName) {
     if (seed % 7 === 0) {
@@ -509,9 +512,10 @@ class ShareHolderSampler extends UserSampler<Promise<Person[]>> {
   companies: CompanySeedData[] = []
   constructor(
     seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
-    companies: CompanySeedData[]
+    companies: CompanySeedData[],
+    s3Client: S3Client
   ) {
-    super(seed)
+    super(seed, s3Client)
     this.companies = companies
   }
 
@@ -623,6 +627,9 @@ class ShareHolderSampler extends UserSampler<Promise<Person[]>> {
   }
 }
 class DirectorSampler extends UserSampler<Promise<Person[]>> {
+  constructor(seed: number, s3Client: S3Client) {
+    super(seed, s3Client)
+  }
   protected getDirector = async (
     timestamp: number,
     domain: string,
@@ -706,8 +713,8 @@ export class BusinessUserSampler extends UserSampler<
   Promise<InternalBusinessUser>
 > {
   private ruleSampler: RuleSampler = new BussinessUserRuleSampler()
-  constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
-    super(seed)
+  constructor(seed: number, s3Client: S3Client) {
+    super(seed, s3Client)
   }
 
   protected async generateSample(
@@ -734,8 +741,12 @@ export class BusinessUserSampler extends UserSampler<
       paymentMethod.push(paymentMethodSampler.getSample())
     }
 
-    const shareHolderSampler = new ShareHolderSampler(undefined, companies)
-    const directorSampler = new DirectorSampler()
+    const shareHolderSampler = new ShareHolderSampler(
+      SHAREHOLDER_SEED,
+      companies,
+      this.s3Client
+    )
+    const directorSampler = new DirectorSampler(DIRECTOR_SEED, this.s3Client)
 
     const userShareHolders: Person[] = await shareHolderSampler.getSample(
       undefined,
@@ -863,9 +874,10 @@ export class ConsumerUserSampler extends UserSampler<
   private ruleSampler: RuleSampler = new ConsumerUserRuleSampler()
   constructor(
     seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    s3Client: S3Client,
     counter: number
   ) {
-    super(seed, counter)
+    super(seed, s3Client, counter)
   }
   protected async generateSample(
     tenantId: string,

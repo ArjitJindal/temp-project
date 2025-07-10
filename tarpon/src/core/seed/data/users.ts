@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { memoize } from 'lodash'
 import { getDemoDataS3Prefix } from '@lib/constants'
+import { BUSINESS_USER_SEED, CONSUMER_USER_SEED } from './seeds'
 import {
   BusinessUserSampler,
   ConsumerUserSampler,
@@ -21,13 +22,17 @@ export let users: (InternalBusinessUser | InternalConsumerUser)[] = []
 const CONSUMER_USER_COUNT = envIs('sandbox') ? 500 : 200
 
 const businessUsers: (
-  tenantId: string
-) => Promise<InternalBusinessUser[]> = async (tenantId: string) => {
-  const sampler = new BusinessUserSampler()
+  tenantId: string,
+  s3Client: S3Client
+) => Promise<InternalBusinessUser[]> = async (
+  tenantId: string,
+  s3Client: S3Client
+) => {
+  const sampler = new BusinessUserSampler(BUSINESS_USER_SEED, s3Client)
   const businessUser: InternalBusinessUser[] = []
   for (let i = 0; i < companies.length; i++) {
     let uploadAttachments = true
-    if (envIs('local')) {
+    if (envIs('local') || envIs('test')) {
       uploadAttachments = false
     }
     businessUser.push(
@@ -43,12 +48,20 @@ const businessUsers: (
 }
 
 const consumerUsers: (
-  tenantId: string
-) => Promise<InternalConsumerUser[]> = async (tenantId: string) => {
+  tenantId: string,
+  s3Client: S3Client
+) => Promise<InternalConsumerUser[]> = async (
+  tenantId: string,
+  s3Client: S3Client
+) => {
   const startCounter = companies.length
-  const sampler = new ConsumerUserSampler(undefined, startCounter + 1)
+  const sampler = new ConsumerUserSampler(
+    CONSUMER_USER_SEED,
+    s3Client,
+    startCounter + 1
+  )
   let uploadAttachments = true
-  if (envIs('local')) {
+  if (envIs('local') || envIs('test')) {
     uploadAttachments = false
   }
   const consumerUser: InternalConsumerUser[] = []
@@ -61,10 +74,7 @@ const consumerUsers: (
   return consumerUser
 }
 
-const deleteOldAttachment = async (tenantId: string) => {
-  const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
-  })
+const deleteOldAttachment = async (tenantId: string, s3Client: S3Client) => {
   const bucket = process.env.DOCUMENT_BUCKET
   const prefix = getDemoDataS3Prefix(tenantId)
 
@@ -117,19 +127,24 @@ export const getUsers: (
 ) => Promise<(InternalBusinessUser | InternalConsumerUser)[]> = async (
   tenantId: string
 ) => {
+  const s3Client = new S3Client({
+    region: process.env.AWS_REGION,
+  })
   // clearing old uploaded attachment file
   try {
     if (envIsNot('local')) {
-      await deleteOldAttachment(tenantId)
+      await deleteOldAttachment(tenantId, s3Client)
     }
   } catch (error) {
     logger.error('Failed to delete old attachment', error)
   }
   const mockedBusinessUsers: InternalBusinessUser[] = await businessUsers(
-    tenantId
+    tenantId,
+    s3Client
   )
   const mockedConsumerUsers: InternalConsumerUser[] = await consumerUsers(
-    tenantId
+    tenantId,
+    s3Client
   )
   users = [...mockedBusinessUsers, ...mockedConsumerUsers]
   return users

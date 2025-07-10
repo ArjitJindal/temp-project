@@ -30,6 +30,11 @@ export const TRANSACTION_EVENTS_SEED = 17000
 
 export const CRM_RECORDS_SEED = 18000
 
+export const BUSINESS_USER_SEED = 19000
+export const CONSUMER_USER_SEED = 20000
+export const SHAREHOLDER_SEED = 21000
+export const DIRECTOR_SEED = 22000
+
 export const TIME_BACK_TO = 12 * 30 * 24 * 60 * 60 * 1000 // 12 months
 
 export const ID_PREFIXES = {

@@ -8,6 +8,7 @@ import { CurrencyService } from '@/services/currency'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 describe('Attribute generator', () => {
   test('Attributes are built correctly', async () => {
@@ -15,7 +16,8 @@ describe('Attribute generator', () => {
       DefaultAttributeBuilders,
       []
     )
-    const userSampler = new BusinessUserSampler(0)
+    const s3 = getS3ClientByEvent(null as any)
+    const userSampler = new BusinessUserSampler(0, s3)
     const transactionSamper = new TransactionSampler(0)
 
     // first need to populate the accounts with mock data
