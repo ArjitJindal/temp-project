@@ -24,7 +24,6 @@ import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import dayjs from '@/utils/dayjs'
 import { getChecklistTemplate } from '@/core/seed/data/checklists'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
-import { RULE_NATURES } from '@/@types/openapi-internal-custom/RuleNature'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/ChecklistDoneStatus'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
@@ -119,9 +118,10 @@ export const mapAccountToAssignment = (account: Account): Assignment[] => {
   ]
 }
 
-export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
+export class TransactionUserCasesSampler extends BaseSampler<Case> {
   private statusChangeSampler: StatusChangeSampler
   private alertSampler: AlertSampler
+  private procssedTxnIds: Set<string> = new Set()
   constructor(seed: number, counter?: number) {
     super(seed, counter)
     const childSamplerSeed = this.rng.randomInt()
@@ -129,190 +129,180 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
     this.alertSampler = new AlertSampler(childSamplerSeed)
   }
 
+  protected handleCaseTransaction(
+    t: InternalTransaction,
+    userId: string,
+    direction: 'origin' | 'destination',
+    ruleInstanceTransactionMap: Map<string, InternalTransaction[]>
+  ) {
+    const hitDirection = direction === 'origin' ? 'ORIGIN' : 'DESTINATION'
+    if (
+      t[direction + 'UserId'] === userId &&
+      !this.procssedTxnIds.has(t.transactionId)
+    ) {
+      const shouldInclude = t.hitRules.some((rh) => {
+        const hit = rh.ruleHitMeta?.hitDirections?.includes(hitDirection)
+        if (hit) {
+          ruleInstanceTransactionMap.set(rh.ruleInstanceId, [
+            ...(ruleInstanceTransactionMap.get(rh.ruleInstanceId) ?? []),
+            t,
+          ])
+          return true
+        }
+        return false
+      })
+      return shouldInclude
+    }
+    return false
+  }
+
   protected generateSample(params: {
-    transactions: InternalTransaction[]
     userId: string
-    origin?: InternalBusinessUser | InternalConsumerUser
-    destination?: InternalBusinessUser | InternalConsumerUser
-  }) {
+    user: InternalBusinessUser | InternalConsumerUser
+    transactions: InternalTransaction[]
+  }): Case {
+    const caseId = `${ID_PREFIXES.CASE}${counter++}`
     // seed for the child samplers - no need to pass it as param in getSample()
     const childSamplerSeed = this.rng.randomInt()
     this.statusChangeSampler.setRandomSeed(childSamplerSeed)
     this.alertSampler.setRandomSeed(childSamplerSeed)
 
-    const { transactions, origin, destination } = params
-    if (transactions.length === 0) {
-      return []
-    }
+    const { user } = params
 
-    let user = destination
-    let userType = 'DESTINATION'
-    let userId = destination?.userId
-    if (origin) {
-      user = origin
-      userType = 'ORIGIN'
-      userId = origin?.userId
-    }
+    const ruleInstanceTransactionMap = new Map<string, InternalTransaction[]>()
 
-    const caseTransactions = transactions.filter(
-      (transaction) => transaction[`${userType.toLowerCase()}UserId`] === userId
+    const transactions = params.transactions.filter((t) => {
+      const isOriginTxn = this.handleCaseTransaction(
+        t,
+        params.userId,
+        'origin',
+        ruleInstanceTransactionMap
+      )
+
+      const isDestinationTxn = this.handleCaseTransaction(
+        t,
+        params.userId,
+        'destination',
+        ruleInstanceTransactionMap
+      )
+
+      return isOriginTxn || isDestinationTxn
+    })
+
+    transactions.forEach((t) => {
+      this.procssedTxnIds.add(t.transactionId)
+    })
+
+    const alerts: Alert[] = []
+
+    ruleInstanceTransactionMap.forEach((transactions, ruleInstanceId) => {
+      const ruleHit = getRuleInstance(ruleInstanceId)
+      if (ruleHit.ruleRunMode !== 'SHADOW') {
+        const alert = this.alertSampler.getSample(undefined, {
+          caseId,
+          ruleInstanceId,
+          ruleHit,
+          transactions,
+        })
+        alerts.push(alert)
+      }
+    })
+
+    const caseStatus = this.rng.pickRandom(
+      CASE_STATUSS.filter((s) => !isStatusInReview(s))
     )
+    const reasons = this.rng
+      .r(1)
+      .randomSubset<CaseReasons>([
+        'Anti-money laundering',
+        'Documents collected',
+        'Fraud',
+        'Terrorist financing',
+        'Suspicious activity reported (SAR)',
+      ])
+
+    const userRiskLevel = getRiskLevelFromScore(
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      user?.drsScore?.drsScore ?? user?.krsScore?.krsScore ?? 75
+    )
+    let reviewAssignments: Assignment[] | undefined = []
+
+    if (isStatusInReview(caseStatus) || statusEscalated(caseStatus)) {
+      reviewAssignments = mapAccountToAssignment(
+        this.rng.r(2).pickRandom(getAccounts())
+      )
+    }
+    const caseCreatedTimestamp = this.sampleTimestamp(TIME_BACK_TO)
 
     let ruleHits = uniqBy(
-      caseTransactions.flatMap((t) => t.hitRules),
+      transactions.flatMap((t) => t.hitRules),
       'ruleInstanceId'
-    ).filter((rh) => {
-      if (rh.ruleHitMeta?.hitDirections?.includes('ORIGIN') && origin) {
-        return true
-      } else if (
-        rh.ruleHitMeta?.hitDirections?.includes('DESTINATION') &&
-        destination
-      ) {
-        return true
-      }
-      return false
-    })
+    )
 
     ruleHits = ruleHits.concat(user?.hitRules ?? [])
 
-    return RULE_NATURES.map((nature): Case => {
-      const caseStatus = this.rng.pickRandom(
-        CASE_STATUSS.filter((s) => !isStatusInReview(s))
-      )
-
-      const reasons = this.rng
-        .r(1)
-        .randomSubset<CaseReasons>([
-          'Anti-money laundering',
-          'Documents collected',
-          'Fraud',
-          'Terrorist financing',
-          'Suspicious activity reported (SAR)',
-        ])
-
-      let reviewAssignments: Assignment[] | undefined = []
-
-      if (isStatusInReview(caseStatus) || statusEscalated(caseStatus)) {
-        reviewAssignments = mapAccountToAssignment(
-          this.rng.r(2).pickRandom(getAccounts())
-        )
-      }
-
-      const caseId = `${ID_PREFIXES.CASE}${counter++}`
-      const originUserRiskLevel = getRiskLevelFromScore(
-        DEFAULT_CLASSIFICATION_SETTINGS,
-        origin?.drsScore?.drsScore ?? origin?.krsScore?.krsScore ?? 75
-      )
-      const destinationUserRiskLevel = getRiskLevelFromScore(
-        DEFAULT_CLASSIFICATION_SETTINGS,
-        destination?.drsScore?.drsScore ?? destination?.krsScore?.krsScore ?? 75
-      )
-
-      const alerts: Alert[] = ruleHits
-        .filter((rh) => rh.nature === nature)
-        .map((ruleHit) => {
-          const ruleInstance = getRuleInstance(ruleHit.ruleInstanceId)
-
-          if (ruleInstance.ruleRunMode === 'SHADOW') {
-            return null
-          }
-
-          const alertTransactions =
-            ruleInstance.type === 'USER'
-              ? []
-              : caseTransactions.filter(
-                  (t) =>
-                    !!t.hitRules.find(
-                      (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-                    )
-                )
-
-          return this.alertSampler.getSample(undefined, {
-            caseId,
-            ruleHit,
-            transactions: alertTransactions,
-          })
-        })
-        .filter((alert): alert is Alert => alert !== null)
-      const caseCreatedTimestamp = this.sampleTimestamp(TIME_BACK_TO)
-      return {
-        caseId,
-        caseType: 'SYSTEM',
-        caseStatus,
-        priority: this.rng.r(3).pickRandom(PRIORITYS),
-        createdTimestamp: caseCreatedTimestamp,
-        latestTransactionArrivalTimestamp: caseTransactions.reduce((acc, t) => {
-          return Math.max(acc, t.timestamp)
-        }, 0),
-        comments: [],
-        caseTransactionsCount: caseTransactions.length,
-        statusChanges: this.statusChangeSampler.getSample(
-          undefined,
-          caseStatus ?? 'OPEN',
-          this.rng.r(3).pickRandom(getAccounts()).id
-        ),
-        assignments: mapAccountToAssignment(
-          this.rng.r(4).pickRandom(getAccounts())
-        ),
-        reviewAssignments,
-        updatedAt: this.sampleTimestamp(),
-        lastStatusChange:
-          caseStatus === 'CLOSED' && user
-            ? {
-                reason: reasons,
-                userId: params.userId,
-                timestamp: this.sampleTimestamp(), // TODO: should be different from updatedAt?
-                comment: generateNarrative(
-                  ruleHits.map((r) => r.ruleDescription),
-                  reasons,
-                  user
-                ),
-              }
-            : undefined,
-        caseUsers: {
-          origin,
-          destination,
-          originUserRiskLevel:
-            origin?.drsScore?.manualRiskLevel ??
-            origin?.drsScore?.derivedRiskLevel ??
-            originUserRiskLevel,
-          destinationUserRiskLevel:
-            destination?.drsScore?.manualRiskLevel ??
-            destination?.drsScore?.derivedRiskLevel ??
-            destinationUserRiskLevel,
-          originUserDrsScore: origin?.drsScore?.drsScore,
-          destinationUserDrsScore: destination?.drsScore?.drsScore,
-        },
-        caseAggregates: {
-          originPaymentMethods:
-            uniq(
-              caseTransactions
-                .filter((t) => t.originPaymentDetails?.method)
-                .map((t) => t.originPaymentDetails?.method) as PaymentMethod[]
-            ) ?? [],
-          destinationPaymentMethods:
-            uniq(
-              caseTransactions
-                .filter((t) => t.destinationPaymentDetails?.method)
-                .map(
-                  (t) => t.destinationPaymentDetails?.method
-                ) as PaymentMethod[]
-            ) ?? [],
-          tags: uniqObjects(
-            caseTransactions
-              .flatMap((t) => t.tags ?? [])
-              .concat(origin?.tags ?? [])
-              .concat(destination?.tags ?? [])
-          ),
-        },
-
-        caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
-        alerts: alerts.map((a) => ({
-          ...a,
-          createdTimestamp: caseCreatedTimestamp,
-        })),
-      }
-    }).filter((c) => c.alerts && c.alerts.length)
+    return {
+      caseId,
+      caseType: 'SYSTEM',
+      caseStatus,
+      priority: this.rng.r(3).pickRandom(PRIORITYS),
+      createdTimestamp: caseCreatedTimestamp,
+      latestTransactionArrivalTimestamp: transactions.reduce((acc, t) => {
+        return Math.max(acc, t.timestamp)
+      }, 0),
+      comments: [],
+      caseTransactionsCount: transactions.length,
+      statusChanges: this.statusChangeSampler.getSample(
+        undefined,
+        caseStatus ?? 'OPEN',
+        this.rng.r(3).pickRandom(getAccounts()).id
+      ),
+      assignments: mapAccountToAssignment(
+        this.rng.r(4).pickRandom(getAccounts())
+      ),
+      reviewAssignments,
+      updatedAt: this.sampleTimestamp(),
+      lastStatusChange:
+        caseStatus === 'CLOSED' && user
+          ? {
+              reason: reasons,
+              userId: params.userId,
+              timestamp: this.sampleTimestamp(), // TODO: should be different from updatedAt?
+              comment: generateNarrative(
+                ruleHits.map((r) => r.ruleDescription),
+                reasons,
+                user
+              ),
+            }
+          : undefined,
+      caseUsers: {
+        origin: user,
+        originUserRiskLevel:
+          user?.drsScore?.manualRiskLevel ??
+          user?.drsScore?.derivedRiskLevel ??
+          userRiskLevel,
+        originUserDrsScore: user?.drsScore?.drsScore,
+      },
+      caseAggregates: {
+        originPaymentMethods:
+          uniq(
+            transactions
+              .filter((t) => t.originPaymentDetails?.method)
+              .map((t) => t.originPaymentDetails?.method) as PaymentMethod[]
+          ) ?? [],
+        destinationPaymentMethods:
+          uniq(
+            transactions
+              .filter((t) => t.destinationPaymentDetails?.method)
+              .map(
+                (t) => t.destinationPaymentDetails?.method
+              ) as PaymentMethod[]
+          ) ?? [],
+        tags: uniqObjects(transactions.flatMap((t) => t.tags ?? [])),
+      },
+      caseTransactionsIds: transactions.map((t) => t.transactionId),
+      alerts: alerts,
+    } as Case
   }
 }
 
@@ -326,12 +316,15 @@ export class AlertSampler extends BaseSampler<Alert> {
 
   protected generateSample(params: {
     caseId: string
+    ruleInstanceId: string
     ruleHit: HitRulesDetails
     transactions: InternalTransaction[]
   }): Alert {
+    const { ruleHit, ruleInstanceId } = params
+    const createdTimestamp = this.rng.r(1).randomTimestamp(TIME_BACK_TO)
+    const ruleInstance = getRuleInstance(ruleInstanceId)
     this.statusChangeSampler.setRandomSeed(this.rng.randomInt())
 
-    const createdTimestamp = this.sampleTimestamp(TIME_BACK_TO)
     const alertStatus = this.rng.pickRandom([
       'OPEN',
       'OPEN',
@@ -348,11 +341,9 @@ export class AlertSampler extends BaseSampler<Alert> {
       this.rng.r(1).pickRandom(getAccounts()).id,
       true
     )
-    const checklistTemplateId = getRuleInstance(
-      params.ruleHit.ruleInstanceId
-    ).checklistTemplateId
+    const checklistTemplateId = ruleInstance.checklistTemplateId
     const slaPolicyDetails: SLAPolicyDetails[] | undefined = uniq(
-      getRuleInstance(params.ruleHit.ruleInstanceId).alertConfig?.slaPolicies
+      ruleInstance.alertConfig?.slaPolicies
     )?.map((sla) => {
       const slaPolicy = getSLAPolicyById(sla)
       let elapsedTime = 0
@@ -396,7 +387,7 @@ export class AlertSampler extends BaseSampler<Alert> {
       latestTransactionArrivalTimestamp: createdTimestamp - 3600 * 1000,
       caseId: params.caseId,
       alertStatus,
-      ruleInstanceId: params.ruleHit.ruleInstanceId,
+      ruleInstanceId: ruleInstanceId,
       numberOfTransactionsHit: params.transactions.length,
       priority: this.rng.r(3).pickRandom(PRIORITYS),
       transactionIds,
@@ -432,12 +423,10 @@ export class AlertSampler extends BaseSampler<Alert> {
       ruleNature: userRules()
         .concat(transactionRules(false)) // return normal transaction rules
         .concat(transactionRules(true)) // return crypto transaction rules
-        .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)
-        ?.nature,
+        .find((p) => p.ruleInstanceId === ruleInstanceId)?.nature,
       slaPolicyDetails: slaPolicyDetails,
-      ruleHitMeta: params.ruleHit.ruleHitMeta,
-      ruleQueueId:
-        getRuleInstance(params.ruleHit.ruleInstanceId)?.queueId ?? undefined,
+      ruleHitMeta: ruleHit.ruleHitMeta,
+      ruleQueueId: ruleInstance.queueId ?? undefined,
     }
   }
 }

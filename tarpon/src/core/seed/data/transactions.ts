@@ -45,6 +45,7 @@ import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { getPaymentDetailsName } from '@/utils/helpers'
 import { hasFeature } from '@/core/utils/context'
+import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
@@ -247,6 +248,21 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       ...hitRules.filter((r) => !r.isShadow),
       ...shadowRulesHit,
     ].map((hitRule) => {
+      // correction of hit direction for counterparty transactions
+      if (hitRule.ruleHitMeta && hitRule.ruleId === 'R-169') {
+        let hitDirections = hitRule.ruleHitMeta.hitDirections
+        if (counterPartyDirection === 'origin') {
+          hitDirections = ['DESTINATION']
+        } else if (counterPartyDirection === 'destination') {
+          hitDirections = ['ORIGIN']
+        }
+
+        hitRule.ruleHitMeta = {
+          ...hitRule.ruleHitMeta,
+          hitDirections: hitDirections as RuleHitDirection[],
+        }
+      }
+
       if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
         const sanctionsDetails: SanctionsDetails[] = [
           ...getSanctionsSearch(

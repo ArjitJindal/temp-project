@@ -1,11 +1,7 @@
-import { compact, memoize, uniqBy } from 'lodash'
+import { compact, memoize } from 'lodash'
 import { RandomNumberGenerator } from '../samplers/prng'
 import { users } from './users'
-import {
-  AUDIT_LOGS_STATUS_CHANGE_SEED,
-  CASES_SEED,
-  TIME_BACK_TO,
-} from './seeds'
+import { AUDIT_LOGS_STATUS_CHANGE_SEED, CASES_SEED } from './seeds'
 import { getTransactions } from '@/core/seed/data/transactions'
 import {
   AuditLogForStatusChangeSampler,
@@ -15,56 +11,36 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 
+// 1. a user should have atmost 1 case
+// 2. alert should have one to one mapping with rule for a user
+
 export const getCases: () => Case[] = memoize(() => {
   const rng = new RandomNumberGenerator(CASES_SEED)
   const childSamplerSeed = rng.randomInt()
-  const originalCasesSampler = new TransactionUserCasesSampler(childSamplerSeed)
-  const destinationCasesSampler = new TransactionUserCasesSampler(
-    childSamplerSeed
-  )
+  const casesSampler = new TransactionUserCasesSampler(childSamplerSeed)
 
   const data: Case[] = []
 
   for (let i = 0; i < users.length; i += 1) {
     const user = users[i]
-    const transactionsForUserAsOrigin: InternalTransaction[] =
-      getTransactions().filter((t) => {
-        return t.originUserId === user.userId
-      })
-    const transactionsForUserADestination: InternalTransaction[] =
-      getTransactions().filter((t) => {
-        return t.destinationUserId === user.userId
-      })
-    const destinationCases: Case[] = destinationCasesSampler
-      .getSample(undefined, {
-        transactions: transactionsForUserADestination,
-        userId: user.userId,
-        destination: user,
-      })
-      .map((c) => ({
-        ...c,
-        createdTimestamp: rng.randomTimestamp(TIME_BACK_TO),
-      }))
-    const originCases: Case[] = originalCasesSampler
-      .getSample(undefined, {
-        transactions: transactionsForUserAsOrigin,
-        userId: user.userId,
-        origin: user,
-      })
-      .map((c) => ({
-        ...c,
-        createdTimestamp: rng.r(1).randomTimestamp(TIME_BACK_TO),
-      }))
+    const caseTransactions: InternalTransaction[] = getTransactions().filter(
+      (t) => {
+        return (
+          t.originUserId === user.userId || t.destinationUserId === user.userId
+        )
+      }
+    )
 
-    data.push(...destinationCases)
-    data.push(...originCases)
+    const userCase: Case = casesSampler.getSample(undefined, {
+      userId: user.userId,
+      user,
+      transactions: caseTransactions,
+    })
+    if (userCase.alerts?.length) {
+      data.push(userCase)
+    }
   }
-
-  const uniqueCases = uniqBy(data, 'caseId')
-  const uniqueData = uniqBy(uniqueCases, (c) => {
-    return c.caseUsers?.origin?.userId || c.caseUsers?.destination?.userId
-  })
-  return uniqueData
+  return data
 })
 
 export const auditLogForCaseStatusChange: () => AuditLog[] = memoize(() => {
