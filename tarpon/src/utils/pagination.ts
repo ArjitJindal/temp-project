@@ -297,7 +297,7 @@ export async function offsetPaginateClickhouse<T>(
     items: callbackMap
       ? items.map((item) => callbackMap(item))
       : (items as unknown as T[]),
-    count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
+    count: count[0].count,
   }
 }
 
@@ -307,7 +307,6 @@ export async function offsetPaginateClickhouseWithoutDataTable(
   query: ClickhousePaginationParams,
   where = '1',
   extraColumns?: Record<string, string>,
-  idColumn = 'id',
   includeTimestampFilter = true
 ): Promise<{ items: Record<string, any>[]; count: number }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
@@ -333,10 +332,8 @@ export async function offsetPaginateClickhouseWithoutDataTable(
       : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
 
-  const countQuery = `SELECT COUNT(${idColumn}) as count FROM ${queryTableName} FINAL ${
-    where
-      ? `WHERE ${where} AND ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
-      : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
+  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
+    where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 
   const [items, count] = await Promise.all([

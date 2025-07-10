@@ -288,7 +288,7 @@ async function getLastEvaluatedKey(
   dynamoDb: DynamoDBDocumentClient,
   query: QueryCommandInput,
   count = 0
-): Promise<DynamoDbKey | undefined> {
+): Promise<{ PartitionKeyID: string; SortKeyID: string } | undefined> {
   const newQuery = {
     ...query,
     ProjectionExpression: 'PartitionKeyID,SortKeyID',
@@ -525,17 +525,6 @@ export async function batchGet<T>(
   return finalResult.filter(Boolean)
 }
 
-export async function getFromDynamoDb<T>(
-  dynamoDb: DynamoDBDocumentClient,
-  table: string,
-  key: DynamoDbKey
-): Promise<T | null> {
-  const result = await dynamoDb.send(
-    new GetCommand({ TableName: table, Key: key })
-  )
-  return result.Item as T
-}
-
 export function getUpdateAttributesUpdateItemInput(attributes: {
   [key: string]: any
 }): {
@@ -643,7 +632,7 @@ export async function cleanUpDynamoDbResources() {
   }
 }
 
-export type DynamoDbKey = {
+type DynamoDbKey = {
   PartitionKeyID: string
   SortKeyID: string
 }

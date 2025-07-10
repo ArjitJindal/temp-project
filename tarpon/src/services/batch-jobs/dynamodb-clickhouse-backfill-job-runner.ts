@@ -1,7 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { ApiUsageMetrics } from '../metrics/utils'
-import { SimulationResult } from '../simulation/repositories/simulation-result-repository'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -23,7 +22,6 @@ import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { SimulationAllJobs } from '@/services/simulation/repositories/simulation-task-repository'
 
 @traceable
 export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
@@ -68,18 +66,6 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
         break
       case 'BATCH_JOBS':
         await handleJobBatchJob(job, {
-          mongoDb,
-          dynamoDb,
-        })
-        break
-      case 'SIMULATION_TASK':
-        await handleSimulationTaskBatchJob(job, {
-          mongoDb,
-          dynamoDb,
-        })
-        break
-      case 'SIMULATION_RESULT':
-        await handleSimulationResultBatchJob(job, {
           mongoDb,
           dynamoDb,
         })
@@ -292,77 +278,4 @@ export const handleJobBatchJob = async (
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )
-}
-
-export const handleSimulationTaskBatchJob = async (
-  job: DynamodbClickhouseBackfillBatchJob,
-  {
-    mongoDb,
-    dynamoDb,
-  }: {
-    mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
-  }
-) => {
-  const { DynamoSimulationTaskRepository } = await import(
-    '@/services/simulation/repositories/dynamo-simulation-task-repository'
-  )
-  const { SIMULATION_TASK_COLLECTION } = await import(
-    '@/utils/mongodb-definitions'
-  )
-
-  const dynamoSimulationTaskRepository = new DynamoSimulationTaskRepository(
-    job.tenantId,
-    dynamoDb
-  )
-  const db = mongoDb.db()
-  const simulationTaskCollection = db.collection<SimulationAllJobs>(
-    SIMULATION_TASK_COLLECTION(job.tenantId)
-  )
-
-  await processCursorInBatch(
-    simulationTaskCollection.find({}),
-    async (simulationTasks) => {
-      await dynamoSimulationTaskRepository.saveSimulationTask(simulationTasks)
-    },
-    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
-  )
-  logger.info(`Completed dynamoDB backfill for simulation_task`)
-}
-
-export const handleSimulationResultBatchJob = async (
-  job: DynamodbClickhouseBackfillBatchJob,
-  {
-    mongoDb,
-    dynamoDb,
-  }: {
-    mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
-  }
-) => {
-  const { DynamoSimulationResultRepository } = await import(
-    '@/services/simulation/repositories/dynamo-simulation-result-repository'
-  )
-  const { SIMULATION_RESULT_COLLECTION } = await import(
-    '@/utils/mongodb-definitions'
-  )
-  const dynamoSimulationResultRepository = new DynamoSimulationResultRepository(
-    job.tenantId,
-    { dynamoDb }
-  )
-  const db = mongoDb.db()
-  const simulationResultCollection = db.collection<SimulationResult>(
-    SIMULATION_RESULT_COLLECTION(job.tenantId)
-  )
-
-  await processCursorInBatch(
-    simulationResultCollection.find({}),
-    async (simulationResults) => {
-      await dynamoSimulationResultRepository.batchSaveSimulationResults(
-        simulationResults
-      )
-    },
-    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
-  )
-  logger.info(`Completed dynamoDB backfill for simulation_result`)
 }
