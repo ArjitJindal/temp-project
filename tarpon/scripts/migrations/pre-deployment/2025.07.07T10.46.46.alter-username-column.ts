@@ -68,7 +68,6 @@ async function migrateTenant(tenant: Tenant) {
       throw error
     }
   }
-  throw new Error('test')
 }
 
 export const up = async () => {
