@@ -208,6 +208,17 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
       }
     })
 
+    // alerts for users rules
+    user?.hitRules?.map((hitRule) => {
+      const alert = this.alertSampler.getSample(undefined, {
+        caseId,
+        ruleInstanceId: hitRule.ruleInstanceId,
+        ruleHit: hitRule,
+        transactions: [],
+      })
+      alerts.push(alert)
+    })
+
     const caseStatus = this.rng.pickRandom(
       CASE_STATUSS.filter((s) => !isStatusInReview(s))
     )
