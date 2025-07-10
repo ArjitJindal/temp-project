@@ -148,7 +148,7 @@ export class AccountsService {
       const data = await this.auth0.getAccountTenant(userId)
 
       if (data) {
-        await this.cache.createOrganization(userId, {
+        await this.cache.createOrganization(data.id, {
           type: 'DATABASE',
           params: data,
         })
