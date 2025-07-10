@@ -119,6 +119,13 @@ export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   },
 ]
 
+const defaultRiskClassificationItem: RiskClassificationConfig = {
+  classificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+  updatedAt: Date.now(),
+  createdAt: Date.now(),
+  id: '',
+}
+
 @traceable
 export class RiskRepository {
   tenantId: string
@@ -413,7 +420,8 @@ export class RiskRepository {
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 
-    return result.Item as RiskClassificationConfig
+    return (result.Item ??
+      defaultRiskClassificationItem) as RiskClassificationConfig
   }
 
   async createOrUpdateRiskClassificationConfig(
