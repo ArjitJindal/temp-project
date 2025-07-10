@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import { join } from 'path'
 import { load as yamlLoad } from 'js-yaml'
 import type { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types'
+import { v4 as uuid } from 'uuid'
 
 function exec(command: string) {
   execSync(command, { env: process.env })
@@ -91,26 +92,27 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     // Write to a temporary merged spec file
     const tempMergedSpecPath = join(
       __dirname,
-      '../../lib/openapi/internal/temp-merged-spec.yaml'
+      `../../lib/openapi/internal/temp-merged-spec-${uuid()}.yaml`
     )
     fs.writeFileSync(tempMergedSpecPath, JSON.stringify(mergedSpec))
 
-    // Use the temporary file for generation
-    exec(
-      `
+    try {
+      // Use the temporary file for generation
+      exec(
+        `
       ./node_modules/.bin/openapi-generator-cli generate -i ${tempMergedSpecPath} -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original --reserved-words-mappings 3dsDone=3dsDone
       `
-    )
+      )
 
-    // Custom code generation
-    exec(
-      `
+      // Custom code generation
+      exec(
+        `
       ./node_modules/.bin/openapi-generator-cli generate -t lib/openapi/templates -i ${tempMergedSpecPath} -g typescript -o /tmp/flagright/${type}_openapi_custom --additional-properties=modelPropertyNaming=original,api=${type}
       `
-    )
-
-    // Clean up temporary file
-    // fs.unlinkSync(tempMergedSpecPath)
+      )
+    } finally {
+      fs.rmSync(tempMergedSpecPath, { force: true })
+    }
   } else {
     exec(
       `

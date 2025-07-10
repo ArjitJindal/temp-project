@@ -51,7 +51,7 @@ const DisplayCheckedTransactions = (props: Props) => {
       width="XL"
       hideFooter
     >
-      <div>
+      <div className={s.root}>
         <div className={s.container}>
           <div className={s.header} style={{ width: 'calc(25% - 20px)' }}>
             <div className={s.headerContent}>Rule ID</div>

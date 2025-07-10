@@ -9,19 +9,17 @@ export function useCheckedTransactionsQuery(
   params: TransactionsTableParams = DEFAULT_PARAMS_STATE,
 ) {
   const hitDirections = alert.ruleHitMeta?.hitDirections;
-  return useTransactionsQuery(
-    {
-      ...params,
-      ...(hitDirections?.length === 1
-        ? {
-            filterDestinationUserId: hitDirections?.includes('DESTINATION')
-              ? caseUserId
-              : undefined,
-            filterOriginUserId: hitDirections?.includes('ORIGIN') ? caseUserId : undefined,
-          }
-        : { filterUserId: caseUserId }),
-      filterRuleInstancesExecuted: [alert.ruleInstanceId],
-    },
-    { isReadyToFetch: true },
-  );
+  const newParams: TransactionsTableParams = {
+    ...params,
+    filterRuleInstancesExecuted: [alert.ruleInstanceId],
+  };
+
+  if (hitDirections?.length === 1) {
+    newParams.direction = hitDirections?.includes('DESTINATION') ? 'incoming' : 'outgoing';
+  } else {
+    newParams.direction = 'all';
+  }
+  newParams.userId = caseUserId;
+
+  return useTransactionsQuery(newParams, { isReadyToFetch: true });
 }
