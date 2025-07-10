@@ -48,7 +48,7 @@ const EditTagsModal: React.FC<Props> = ({
         onNewComment(comment, CommentType.COMMENT);
       },
       onError: (error) => {
-        message.error(error);
+        message.fatal(error);
       },
     },
   );

@@ -672,7 +672,7 @@ export default function SuperAdminPanel() {
                   });
                   message.success(process.env.ENV_NAME === 'local' ? 'Done' : 'Submitted');
                 } catch (e) {
-                  message.error(e);
+                  message.fatal(e);
                 } finally {
                   batchJobMessage();
                 }

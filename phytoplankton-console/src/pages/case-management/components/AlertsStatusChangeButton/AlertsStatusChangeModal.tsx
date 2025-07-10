@@ -229,7 +229,7 @@ export default function AlertsStatusChangeModal(props: Props) {
     },
     {
       onError: (e) => {
-        message.error(`Failed to update the alert! ${getErrorMessage(e)}`);
+        message.fatal(`Failed to update the alert! ${getErrorMessage(e)}`);
       },
       onSuccess: async () => {
         await Promise.all(

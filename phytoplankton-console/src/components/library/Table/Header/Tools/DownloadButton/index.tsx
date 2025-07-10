@@ -110,7 +110,7 @@ export default function DownloadButton<T extends object, Params extends object>(
         await downloadAsXLSX(exportData);
       }
     } catch (e) {
-      message.error(`Unable to export data. ${getErrorMessage(e)}`);
+      message.fatal(`Unable to export data. ${getErrorMessage(e)}`);
       console.error(e);
     } finally {
       setProgress(null);

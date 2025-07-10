@@ -95,7 +95,7 @@ export function SlaPolicySettings() {
         slaPoliciesResult.refetch();
       },
       onError: (error: Error) => {
-        message.error(`Error: ${error.message}`);
+        message.fatal(`Error: ${error.message}`);
       },
     },
   );
@@ -121,7 +121,7 @@ export function SlaPolicySettings() {
         slaPoliciesResult.refetch();
       },
       onError: (error: Error) => {
-        message.error(`Error: ${error.message}`);
+        message.fatal(`Error: ${error.message}`);
       },
     },
   );
@@ -139,7 +139,7 @@ export function SlaPolicySettings() {
         slaPoliciesResult.refetch();
       },
       onError: (error: Error) => {
-        message.error(`Error: ${error.message}`);
+        message.fatal(`Error: ${error.message}`);
       },
     },
   );

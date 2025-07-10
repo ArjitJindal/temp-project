@@ -75,7 +75,7 @@ export default function EODDChangeModal(props: Props) {
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
       onError: (error: Error) => {
-        message.error(`Error updating EODD: ${error.message}`);
+        message.fatal(`Error updating EODD: ${error.message}`);
       },
     },
   );

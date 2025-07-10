@@ -112,7 +112,7 @@ export default function UserActivityCard(props: Props) {
       },
       onError: (e) => {
         console.error(e);
-        message.error('Unable to delete comment');
+        message.fatal('Unable to delete comment');
       },
     },
   );

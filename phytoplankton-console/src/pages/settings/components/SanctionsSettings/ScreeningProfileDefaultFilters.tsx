@@ -94,7 +94,7 @@ const ScreeningProfileDefaultFilters = () => {
         message.success('Default filters updated successfully');
       })
       .catch((error) => {
-        message.error(`Failed to update default filters: ${getErrorMessage(error)}`);
+        message.fatal(`Failed to update default filters: ${getErrorMessage(error)}`);
       })
       .finally(() => {
         setIsSaving(false);

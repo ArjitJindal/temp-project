@@ -334,7 +334,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
     },
     onError: (error) => {
       const action = initialValues ? 'update' : 'create';
-      message.error(getErrorMessage(error) || `Failed to ${action} screening profile`);
+      message.fatal(getErrorMessage(error) || `Failed to ${action} screening profile`);
     },
   });
 

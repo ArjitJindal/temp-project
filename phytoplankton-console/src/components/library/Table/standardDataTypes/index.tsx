@@ -608,7 +608,7 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
         reload();
       },
       onError: (error: Error) => {
-        message.error(`Error updating status: ${error.message}`);
+        message.fatal(`Error updating status: ${error.message}`);
         messageState?.();
         reload();
       },

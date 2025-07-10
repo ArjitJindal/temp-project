@@ -72,7 +72,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       queryResult.refetch();
     },
     onError: (error) => {
-      message.error(getErrorMessage(error) || `Failed to update screening profile status`);
+      message.fatal(getErrorMessage(error) || `Failed to update screening profile status`);
     },
   });
 
@@ -86,7 +86,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       setDeleting(false);
     },
     onError: (error) => {
-      message.error(getErrorMessage(error) || `Failed to delete screening profile`);
+      message.fatal(getErrorMessage(error) || `Failed to delete screening profile`);
       setDeleting(false);
     },
   });
@@ -111,7 +111,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
       queryResult.refetch();
     },
     onError: (error) => {
-      message.error(getErrorMessage(error) || `Failed to duplicate screening profile`);
+      message.fatal(getErrorMessage(error) || `Failed to duplicate screening profile`);
     },
   });
 

@@ -58,7 +58,7 @@ export default function CRMRecords({ userId }: Props) {
     {
       onError: () => {
         messageData?.();
-        messageData = message.error('Failed to link CRM record');
+        messageData = message.fatal('Failed to link CRM record');
       },
       onSuccess: () => {
         messageData?.();

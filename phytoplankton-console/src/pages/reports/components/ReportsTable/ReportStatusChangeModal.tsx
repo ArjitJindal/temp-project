@@ -67,7 +67,7 @@ export default function ReportStatusChangeModal(props: {
             onClose();
             message.success('Report status updated successfully');
           } catch (e) {
-            message.error(`Failed to save: ${e}`);
+            message.fatal(`Failed to save: ${e}`);
           }
         }
       }}

@@ -239,7 +239,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
           await copyTextToClipboard(valueToCopy);
           message.success('Copied');
         } catch (error) {
-          message.error(`Failed to copy: ${getErrorMessage(error)}`);
+          message.fatal(`Failed to copy: ${getErrorMessage(error)}`);
         }
       }
     }
