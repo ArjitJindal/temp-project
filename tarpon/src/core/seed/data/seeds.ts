@@ -31,3 +31,14 @@ export const TRANSACTION_EVENTS_SEED = 17000
 export const CRM_RECORDS_SEED = 18000
 
 export const TIME_BACK_TO = 12 * 30 * 24 * 60 * 60 * 1000 // 12 months
+
+export const ID_PREFIXES = {
+  CASE: 'C-',
+  ALERT: 'A-',
+  REPORT: 'RP-',
+  CONSUMER_USER: 'U-',
+  BUSINESS_USER: 'U-',
+  TRANSACTION: 'T-',
+  RISK_FACTOR: 'RF-',
+  SLA: 'SLA-',
+}

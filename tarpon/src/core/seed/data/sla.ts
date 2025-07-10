@@ -1,8 +1,10 @@
 import { memoize } from 'lodash'
+import { ID_PREFIXES } from './seeds'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
-const generatePolicyId = (index: number): string => `SLA-${index.toString()}`
+const generatePolicyId = (index: number): string =>
+  `${ID_PREFIXES.SLA}-${index}`
 
 const SLA_POLICY_NAMES = {
   STANDARD_10_DAY: 'Standard 10-Day Response',

@@ -14,6 +14,7 @@ import { getRandomRuleQueues } from './data/rule-queue'
 import { riskFactors } from './data/risk-factors'
 import { getUserEvents } from './data/user_events'
 import { ruleInstances } from './data/rules'
+import { ID_PREFIXES } from './data/seeds'
 import {
   allCollections,
   createGlobalMongoDBCollections,
@@ -85,7 +86,6 @@ import {
 } from '@/services/tenants/reasons-service'
 import { getNarrativeTemplates } from '@/core/seed/data/narrative'
 import { isV2RuleInstance } from '@/services/rules-engine/utils'
-import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -161,11 +161,45 @@ export async function seedMongo(
     COUNTER_COLLECTION(tenantId)
   )
   const counters: [CounterEntity, number][] = [
-    ['Report', reports.length],
-    ['Case', getCases().length],
-    ['Alert', getCases().flatMap((c) => c.alerts).length],
+    [
+      'Report',
+      getCounterValue(
+        reports,
+        'id',
+        ID_PREFIXES.REPORT,
+        REPORT_COLLECTION(tenantId)
+      ),
+    ],
+    [
+      'Case',
+      getCounterValue(
+        getCases(),
+        'caseId',
+        ID_PREFIXES.CASE,
+        CASES_COLLECTION(tenantId)
+      ),
+    ],
+    [
+      'Alert',
+      getCounterValue(
+        getCases()
+          .flatMap((c) => c.alerts)
+          .filter(Boolean) as Alert[],
+        'alertId',
+        ID_PREFIXES.ALERT,
+        CASES_COLLECTION(tenantId) + 'Alerts'
+      ),
+    ],
     ['SLAPolicy', getSLAPolicies().length],
-    ['RiskFactor', riskFactors().length + RISK_FACTORS.length],
+    [
+      'RiskFactor',
+      getCounterValue(
+        riskFactors(),
+        'id',
+        ID_PREFIXES.RISK_FACTOR,
+        'RiskFactor'
+      ),
+    ],
     ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
     ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
     [
@@ -254,4 +288,39 @@ export async function seedMongo(
   await alertsSLAService.calculateAndUpdateSLAStatusesForAlerts()
 
   logger.info('Alerts SLA statuses updated')
+}
+
+const getCounterValue = (
+  data: object[],
+  idField: string,
+  idPrefix: string,
+  collectionName: string
+) => {
+  let maxId = 0
+  let erroredRow = 0
+
+  console.info(idField)
+  for (const row of data) {
+    const id = row[idField]
+    if (id.startsWith(idPrefix)) {
+      const idValue = id.slice(idPrefix.length)
+      const idNumber = parseInt(idValue)
+      if (isNaN(idNumber)) {
+        erroredRow++
+      }
+      maxId = Math.max(maxId, idNumber)
+    } else {
+      erroredRow++
+    }
+  }
+
+  if (erroredRow > 0) {
+    logger.warn(
+      `Found ${erroredRow} errored rows in ${collectionName} with id field ${idField} and id prefix ${idPrefix}`
+    )
+  }
+
+  logger.info(`Counter for ${collectionName} is ${maxId + erroredRow}`)
+
+  return maxId + erroredRow
 }

@@ -1,6 +1,7 @@
 import { memoize } from 'lodash'
 import { ReportSampler } from '../samplers/report'
 import { getCases } from './cases'
+import { ID_PREFIXES } from './seeds'
 import { Report } from '@/@types/openapi-internal/Report'
 
 export const reports: Report[] = []
@@ -11,7 +12,7 @@ export const getReports: (tenantId: string) => Promise<Report[]> = memoize(
       reports.push(
         ...(await Promise.all(
           getCases().map(async (c, i) => {
-            const reportId = `RP-${i + 3}`
+            const reportId = `${ID_PREFIXES.REPORT}${i + 3}`
             return await reportSampler.getSample(
               undefined,
               reportId,

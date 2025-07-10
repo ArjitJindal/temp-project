@@ -10,6 +10,7 @@ import {
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from '../data/sanctions'
+import { ID_PREFIXES } from '../data/seeds'
 import { TagSampler } from './tag'
 import {
   BusinessUserRiskScoreSampler,
@@ -717,7 +718,7 @@ export class BusinessUserSampler extends UserSampler<
   ): Promise<InternalBusinessUser> {
     const name = company?.name || this.randomName()
     const domain = name.toLowerCase().replace(' ', '').replace('&', '')
-    const userId = `U-${this.counter}`
+    const userId = `${ID_PREFIXES.BUSINESS_USER}${this.counter}`
     const timestamp = this.rng.randomTimestamp(
       3600 * 24 * 365 * 1000,
       dayjs().subtract(30, 'day').toDate()
@@ -870,7 +871,7 @@ export class ConsumerUserSampler extends UserSampler<
     tenantId: string,
     uploadAttachment: boolean = true
   ): Promise<InternalConsumerUser> {
-    const userId = `U-${this.counter}`
+    const userId = `${ID_PREFIXES.CONSUMER_USER}${this.counter}`
     const name = this.randomConsumerName()
     const riskLevel = this.rng.pickRandom(RISK_LEVELS)
     const countryOfResidence = this.rng.pickRandom(

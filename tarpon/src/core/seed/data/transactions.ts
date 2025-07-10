@@ -9,7 +9,12 @@ import {
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from './sanctions'
-import { PAYMENT_METHODS_SEED, TIME_BACK_TO, TRANSACTIONS_SEED } from './seeds'
+import {
+  ID_PREFIXES,
+  PAYMENT_METHODS_SEED,
+  TIME_BACK_TO,
+  TRANSACTIONS_SEED,
+} from './seeds'
 import {
   CardDetailsSampler,
   CryptoTransactionSampler,
@@ -237,7 +242,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       return sanctionsDetails
     }
 
-    const transactionId = `T-${this.counter + 1}`
+    const transactionId = `${ID_PREFIXES.TRANSACTION}${this.counter + 1}`
     const randomHitRules = [
       ...hitRules.filter((r) => !r.isShadow),
       ...shadowRulesHit,

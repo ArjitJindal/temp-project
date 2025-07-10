@@ -1,12 +1,13 @@
 import { memoize } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { ID_PREFIXES } from './seeds'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
 export const riskFactors: () => RiskFactor[] = memoize(() => {
   const data: RiskFactor[] = [
     {
-      id: 'RF-001',
+      id: `${ID_PREFIXES.RISK_FACTOR}001`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [
@@ -62,7 +63,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'CONSUMER_USER',
     } as RiskFactor,
     {
-      id: 'RF-002',
+      id: `${ID_PREFIXES.RISK_FACTOR}002`,
       status: 'ACTIVE',
       logicAggregationVariables: [
         {
@@ -194,7 +195,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'CONSUMER_USER',
     } as RiskFactor,
     {
-      id: 'RF-003',
+      id: `${ID_PREFIXES.RISK_FACTOR}003`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [
@@ -308,7 +309,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'CONSUMER_USER',
     } as RiskFactor,
     {
-      id: 'RF-004',
+      id: `${ID_PREFIXES.RISK_FACTOR}004`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [
@@ -365,7 +366,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'BUSINESS',
     } as RiskFactor,
     {
-      id: 'RF-005',
+      id: `${ID_PREFIXES.RISK_FACTOR}005`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [
@@ -440,7 +441,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'BUSINESS',
     } as RiskFactor,
     {
-      id: 'RF-006',
+      id: `${ID_PREFIXES.RISK_FACTOR}006`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [
@@ -519,7 +520,7 @@ export const riskFactors: () => RiskFactor[] = memoize(() => {
       type: 'TRANSACTION',
     } as RiskFactor,
     {
-      id: 'RF-007',
+      id: `${ID_PREFIXES.RISK_FACTOR}007`,
       status: 'ACTIVE',
       logicAggregationVariables: [],
       logicEntityVariables: [

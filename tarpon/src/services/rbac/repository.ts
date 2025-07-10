@@ -10,7 +10,7 @@ import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DYNAMIC_PERMISSIONS_ITEMS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   internalMongoDeleteOne,
-  internalMongoInsert,
+  internalMongoUpdateOne,
 } from '@/utils/mongodb-utils'
 
 type DynamicPermissionItem = DynamicResourcesData & {
@@ -68,7 +68,13 @@ export class PermissionsRepository {
 
   async insertPermissionMongo(permission: InsertPermissionItem) {
     const collection = DYNAMIC_PERMISSIONS_ITEMS_COLLECTION(this.tenantId)
-    await internalMongoInsert(this.mongoDbClient, collection, permission)
+    await internalMongoUpdateOne(
+      this.mongoDbClient,
+      collection,
+      { id: permission.id },
+      { $set: permission },
+      { upsert: true }
+    )
   }
 
   async deletePermission(subType: DynamicPermissionsNodeSubType, id: string) {

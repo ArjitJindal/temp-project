@@ -4,7 +4,7 @@ import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
-import { TIME_BACK_TO } from '../data/seeds'
+import { ID_PREFIXES, TIME_BACK_TO } from '../data/seeds'
 import { BaseSampler } from './base'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -198,7 +198,7 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
         )
       }
 
-      const caseId = `C-${counter++}`
+      const caseId = `${ID_PREFIXES.CASE}${counter++}`
       const originUserRiskLevel = getRiskLevelFromScore(
         DEFAULT_CLASSIFICATION_SETTINGS,
         origin?.drsScore?.drsScore ?? origin?.krsScore?.krsScore ?? 75
@@ -331,7 +331,7 @@ export class AlertSampler extends BaseSampler<Alert> {
   }): Alert {
     this.statusChangeSampler.setRandomSeed(this.rng.randomInt())
 
-    const createdTimestamp = this.sampleTimestamp(3600 * 24 * 1000 * 30)
+    const createdTimestamp = this.sampleTimestamp(TIME_BACK_TO)
     const alertStatus = this.rng.pickRandom([
       'OPEN',
       'OPEN',
@@ -391,7 +391,7 @@ export class AlertSampler extends BaseSampler<Alert> {
 
     return {
       ...params.ruleHit,
-      alertId: `A-${alertCounter++}`,
+      alertId: `${ID_PREFIXES.ALERT}${alertCounter++}`,
       createdTimestamp: createdTimestamp,
       latestTransactionArrivalTimestamp: createdTimestamp - 3600 * 1000,
       caseId: params.caseId,

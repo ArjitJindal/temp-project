@@ -17,7 +17,6 @@ import { DynamoCaseRepository } from './dynamo-repository'
 import { LinkerService } from '@/services/linker'
 import { CaseClickhouseRepository } from '@/services/cases/clickhouse-repository'
 import {
-  internalMongoInsert,
   internalMongoReplace,
   paginatePipeline,
   prefixRegexMatchFilter,
@@ -1663,10 +1662,12 @@ export class CaseRepository {
     if (isClickhouseMigrationEnabled()) {
       await this.dynamoCaseRepository.addCase(caseEntity)
     }
-    await internalMongoInsert(
+    await internalMongoUpdateOne(
       this.mongoDb,
       CASES_COLLECTION(this.tenantId),
-      caseEntity
+      { caseId: caseEntity.caseId },
+      { $set: caseEntity },
+      { upsert: true }
     )
     return caseEntity
   }
