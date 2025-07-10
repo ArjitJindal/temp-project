@@ -7,7 +7,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
       name: 'Unusual Transaction Frequency',
       description:
         'Detects abnormal frequency patterns indicative of suspicious behavior.',
-      modelType: 'NON_EXPLAINABLE',
+      modelType: 'EXPLAINABLE',
       checksFor: ['Behavioral Change'],
       enabled: true,
     },
@@ -24,7 +24,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
       id: 'ML-003',
       name: 'Account Takeover Detection',
       description:
-        'Identifies unusual account and transaction activities signaling takeover.',
+        'Identifies unusual login and transaction activities signaling takeover.',
       modelType: 'EXPLAINABLE',
       checksFor: ['Account Takeover'],
       enabled: true,
@@ -52,7 +52,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
       description:
         'Monitors cross-border activities involving high-risk jurisdictions.',
       modelType: 'EXPLAINABLE',
-      checksFor: ['Cross-border Risk'],
+      checksFor: ['Cross-border Transaction'],
       enabled: true,
     },
   ]
