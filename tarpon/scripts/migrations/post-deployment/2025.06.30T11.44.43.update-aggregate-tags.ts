@@ -71,14 +71,21 @@ async function migrateTenant(tenant: Tenant) {
         }
 
         // Update the case with the new combined tags
-        await casesCollection.updateOne(
-          { caseId: case_.caseId },
+        await casesCollection.updateOne({ caseId: case_.caseId }, [
           {
             $set: {
-              'caseAggregates.tags': combinedTags,
+              caseAggregates: {
+                $cond: {
+                  if: { $ne: ['$caseAggregates', null] },
+                  then: {
+                    $mergeObjects: ['$caseAggregates', { tags: combinedTags }],
+                  },
+                  else: { tags: combinedTags },
+                },
+              },
             },
-          }
-        )
+          },
+        ])
 
         updatedCount++
 
