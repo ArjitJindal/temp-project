@@ -142,10 +142,12 @@ export const getUsers: (
     tenantId,
     s3Client
   )
+  logger.info(`Mocked ${mockedBusinessUsers.length} business users`)
   const mockedConsumerUsers: InternalConsumerUser[] = await consumerUsers(
     tenantId,
     s3Client
   )
+  logger.info(`Mocked ${mockedConsumerUsers.length} consumer users`)
   users = [...mockedBusinessUsers, ...mockedConsumerUsers]
   return users
 }

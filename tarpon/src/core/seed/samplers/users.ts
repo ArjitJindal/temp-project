@@ -2,7 +2,7 @@ import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { cloneDeep, compact, uniq } from 'lodash'
+import { cloneDeep, compact, uniq, memoize } from 'lodash'
 import { getDemoDataS3Prefix } from '@lib/constants'
 import { ONLY_COUNTRIES } from '@flagright/lib/constants/countries'
 import {
@@ -254,46 +254,30 @@ abstract class UserSampler<T> extends BaseSampler<T> {
     }
   }
 
-  createPdf = (userInfo: {
-    userId: string
-    userName: string
-    attachmentType: string
-  }) => {
-    const fileName = `${userInfo.userId}-${userInfo.attachmentType}.pdf`
+  createPdf = memoize(() => {
     const pdfHeader = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 5 0 R >>\nstream\n`
 
     const pdfContent = `BT
 /F1 12 Tf
 100 700 Td
-(User Name: ${userInfo.userName}) Tj
+(User Name: Demo name)
 0 -25 Td
-(Attachment Type: ${userInfo.attachmentType}) Tj
-0 -25 Td
-(This is demo document that is uploaded for ${userInfo.userName} for ${userInfo.attachmentType}) Tj
+(This is demo document that is uploaded for Demo name) Tj
 ET\n`
 
     const pdfFooter = `endstream\nendobj\n5 0 obj\n20\nendobj\nxref\n0 6\n0000000000 65535 f\n0000000010 00000 n\n0000000075 00000 n\n0000000179 00000 n\n0000000223 00000 n\n0000000261 00000 n\ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n312\n%%EOF`
-    return { fileName, fileContent: pdfHeader + pdfContent + pdfFooter }
-  }
+    return { fileContent: pdfHeader + pdfContent + pdfFooter }
+  })
 
-  createAndUploadAttachment = async (
-    userId: string,
-    userName: string,
-    attachmentType: string,
-    tenantId: string
-  ) => {
-    const { fileName, fileContent } = this.createPdf({
-      userId,
-      userName,
-      attachmentType,
-    })
+  createAndUploadAttachment = memoize(async (tenantId: string) => {
+    const { fileContent } = this.createPdf()
     const { s3Key, size } = await this.uploadUserAttachment(
-      fileName,
+      `attachment.pdf`,
       fileContent,
       tenantId
     )
     return { s3Key, size }
-  }
+  })
 
   protected randomConsumerName(): {
     firstName: string
@@ -537,9 +521,6 @@ class ShareHolderSampler extends UserSampler<Promise<Person[]>> {
         legalDocuments.push(data)
         const attachmentName = `${name.firstName}'s ${data.documentType} ${shareHolderId}`
         const uploadedAttachment = await this.createAndUploadAttachment(
-          shareHolderId,
-          name.firstName,
-          data.documentType,
           tenantId
         )
         const attachment: PersonAttachment = {
@@ -647,9 +628,6 @@ class DirectorSampler extends UserSampler<Promise<Person[]>> {
         legalDocuments.push(data)
         const attachmentName = `${name.firstName}'s ${data.documentType} ${directorId}`
         const uploadedAttachment = await this.createAndUploadAttachment(
-          directorId,
-          name.firstName,
-          data.documentType,
           tenantId
         )
         const attachment: PersonAttachment = {
@@ -913,9 +891,6 @@ export class ConsumerUserSampler extends UserSampler<
         legalDocuments.push(data)
         const attachmentName = `${name.firstName}'s ${data.documentType} ${userId}`
         const uploadedAttachment = await this.createAndUploadAttachment(
-          userId,
-          name.firstName,
-          data.documentType,
           tenantId
         )
         const attachment: PersonAttachment = {
