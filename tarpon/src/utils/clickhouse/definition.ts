@@ -952,7 +952,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     mongoIdColumn: false,
     materializedColumns: [
       "screeningId String MATERIALIZED JSON_VALUE(data, '$.screeningId')",
-      "referenceCounter String MATERIALIZED JSON_VALUE(data,, '$.referenceCounter')",
+      "referenceCounter String MATERIALIZED JSON_VALUE(data, '$.referenceCounter')",
       "lastScreenedAt UInt64 MATERIALIZED JSON_VALUE(data, '$.lastScreenedAt')",
       "latestTimeStamp UInt64 MATERIALIZED JSON_VALUE(data, '$.latestTimeStamp')",
       "name String MATERIALIZED JSON_VALUE(data, '$.name')",
