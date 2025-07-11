@@ -32,10 +32,9 @@ import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
-import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
-import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { generateHashFromString } from '@/utils/object'
 import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getOpensearchClient } from '@/utils/opensearch-utils'
 
@@ -113,6 +112,33 @@ type PepEntry = {
   evidenceIds: string[]
 }
 
+type RreEntry = {
+  category: string
+  subcategory: string
+  events: {
+    type: string
+    dateIso: string
+    evidenceIds: string[]
+  }[]
+}
+
+type RelEntry = {
+  category: string
+  subcategory: string
+  events: {
+    type: string
+    currencyCode: string
+    amount: number
+    dateIso: string
+    evidenceIds: string[]
+    period: {
+      days: number
+      years: number
+      months: number
+    }
+  }[]
+}
+
 type AcurisEvidence = {
   datasets: string[]
   evidenceId: string
@@ -155,31 +181,8 @@ interface AcurisEntity {
     current: SanctionEntry[]
     former: SanctionEntry[]
   }
-  relEntries: {
-    category: string
-    subcategory: string
-    events: {
-      type: string
-      currencyCode: string
-      amount: number
-      dateIso: string
-      evidenceIds: string[]
-      period: {
-        days: number
-        years: number
-        months: number
-      }
-    }[]
-  }[]
-  rreEntries: {
-    category: string
-    subcategory: string
-    events: {
-      type: string
-      dateIso: string
-      evidenceIds: string[]
-    }[]
-  }[]
+  relEntries: RelEntry[]
+  rreEntries: RreEntry[]
   poiEntries: {
     category: string
     evidenceIds: string[]
@@ -779,158 +782,27 @@ export class AcurisProvider extends SanctionsDataFetcher {
         entity.datasets.some((d) => d.startsWith('PEP'))
           ? Boolean(entity.pepEntries.current.length)
           : undefined,
-      sanctionsSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'SANCTIONS'
-            ) && sanctionSearchTypes.includes('SANCTIONS')
-        )
-        .map((evidence) => {
-          const matchingSanEntry =
-            entity.sanEntries.current.find((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidence.evidenceId)
-              )
-            ) ??
-            entity.sanEntries.former.find((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidence.evidenceId)
-              )
-            )
-          const evidenceName = matchingSanEntry?.regime.name
-          const description = matchingSanEntry?.regime.body
-          const normalisedSourceName = normalizeSource(evidenceName || 'Other')
-          const displayName = evidenceName || 'Other'
-          if (displayName) {
-            const existingIds =
-              this.SanctionsSourceToEntityIdMapPerson.get(displayName) || []
-            this.SanctionsSourceToEntityIdMapPerson.set(displayName, [
-              ...existingIds,
-              entity.qrCode,
-            ])
-          }
-          const category = matchingSanEntry
-            ? entity.sanEntries.current.some((sanEntry) =>
-                sanEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )
-              ? SANCTIONS_SOURCE_RELEVANCES[0]
-              : SANCTIONS_SOURCE_RELEVANCES[1]
-            : undefined
-          return this.getOtherSources(
-            evidence,
-            evidenceName,
-            description,
-            category,
-            normalisedSourceName
-          )
-        }),
-      pepSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
-            ) && sanctionSearchTypes.includes('PEP')
-        )
-        .map((evidence) => {
-          const pepTier = entity.pepEntries.pepTier
-          const evidenceName =
-            entity.pepEntries.current.find((pepEntry) =>
-              pepEntry.evidenceIds.includes(evidence.evidenceId)
-            )?.segment ??
-            entity.pepEntries.former.find((pepEntry) =>
-              pepEntry.evidenceIds.includes(evidence.evidenceId)
-            )?.segment
-          const normalisedPepTier = normalizeSource(pepTier)
-          const displayName = pepTier
-          if (displayName) {
-            const existingIds =
-              this.PEPTierToEntityIdMapPerson.get(displayName) || []
-            this.PEPTierToEntityIdMapPerson.set(displayName, [
-              ...existingIds,
-              entity.qrCode,
-            ])
-          }
-          const category = entity.datasets.some((dataset) => dataset === 'POI')
-            ? 'POI'
-            : 'PEP'
-          return this.getOtherSources(
-            evidence,
-            evidenceName,
-            undefined,
-            category,
-            normalisedPepTier
-          )
-        }),
-      associates: this.getAssociates(entity),
-      mediaSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) =>
-                EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
-            ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
-        )
-        .map((evidence) => {
-          const category = entity.rreEntries
-            .find((rreEntry) =>
-              rreEntry.events.some((event) =>
-                event.evidenceIds.includes(evidence.evidenceId)
-              )
-            )
-            ?.category.toLowerCase()
-          return this.getMedia(evidence, category)
-        }),
+      sanctionsSources: this.getSanctionsSources(
+        entity.qrCode,
+        entity.sanEntries,
+        entity.evidences
+      ),
+      pepSources: this.getPepSources(
+        entity.qrCode,
+        entity.pepEntries,
+        entity.evidences,
+        entity.datasets
+      ),
+      mediaSources: this.getMediaSources(entity.evidences, entity.rreEntries),
       rawResponse: entity,
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
-          value: entity.evidences
-            .filter(
-              ({ datasets }) =>
-                datasets.some(
-                  (dataset) =>
-                    EXTERNAL_TO_INTERNAL_TYPES[dataset] ===
-                    'REGULATORY_ENFORCEMENT_LIST'
-                ) && sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
-            )
-            .map((evidence) => {
-              const evidenceName = entity.relEntries.find((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )?.subcategory
-              const normalisedEvidenceName = normalizeSource(
-                evidenceName || 'Other'
-              )
-              const displayName = evidenceName || 'Other'
-              if (displayName) {
-                const existingIds =
-                  this.RELSourceToEntityIdMapPerson.get(displayName) || []
-                this.RELSourceToEntityIdMapPerson.set(displayName, [
-                  ...existingIds,
-                  entity.qrCode,
-                ])
-              }
-              const category = entity.relEntries.find((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )?.category
-              return this.getOtherSources(
-                evidence,
-                evidenceName,
-                undefined,
-                category === 'Financial Regulator'
-                  ? REL_SOURCE_RELEVANCES[0]
-                  : category === 'Law Enforcement'
-                  ? REL_SOURCE_RELEVANCES[1]
-                  : undefined,
-                normalisedEvidenceName
-              )
-            }),
+          value: this.getRelSources(
+            entity.qrCode,
+            entity.relEntries,
+            entity.evidences
+          ),
         },
       ].filter((e) => e.value.length),
       profileImagesUrls: entity.profileImages,
@@ -938,7 +810,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       documents: entity.identifiers.map((identifier) => ({
         name: identifier.category,
         id: identifier.value,
-        formattedId: identifier.value?.split(' ')[0]?.replace('-', ''),
+        formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
     }
@@ -972,118 +844,21 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       // pick evidence name from current.regime.name
       sanctionSearchTypes,
-      sanctionsSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'SANCTIONS'
-            ) && sanctionSearchTypes.includes('SANCTIONS')
-        )
-        .map((evidence) => {
-          const matchingSanEntry =
-            entity.sanEntries.current.find((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidence.evidenceId)
-              )
-            ) ??
-            entity.sanEntries.former.find((sanEntry) =>
-              sanEntry.events.some((event) =>
-                event.evidenceIds.includes(evidence.evidenceId)
-              )
-            )
-          const evidenceName = matchingSanEntry?.regime.name
-          const description = matchingSanEntry?.regime.body
-          const category = matchingSanEntry
-            ? entity.sanEntries.current.some((sanEntry) =>
-                sanEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )
-              ? SANCTIONS_SOURCE_RELEVANCES[0]
-              : SANCTIONS_SOURCE_RELEVANCES[1]
-            : undefined
-          const normalisedEvidenceName = normalizeSource(
-            evidenceName || 'Other'
-          )
-          const displayName = evidenceName || 'Other'
-          if (displayName) {
-            const existingIds =
-              this.SanctionsSourceToEntityIdMapBusiness.get(displayName) || []
-            this.SanctionsSourceToEntityIdMapBusiness.set(displayName, [
-              ...existingIds,
-              entity.qrCode,
-            ])
-          }
-          return this.getOtherSources(
-            evidence,
-            evidenceName,
-            description,
-            category,
-            normalisedEvidenceName
-          )
-        }),
+      sanctionsSources: this.getSanctionsSources(
+        entity.qrCode,
+        entity.sanEntries,
+        entity.evidences
+      ),
       associates: this.getAssociates(entity),
-      mediaSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) =>
-                EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
-            ) && sanctionSearchTypes.includes('ADVERSE_MEDIA')
-        )
-        .map((evidence) => {
-          const category = entity.rreEntries.find((rreEntry) =>
-            rreEntry.events.some((event) =>
-              event.evidenceIds.includes(evidence.evidenceId)
-            )
-          )?.category
-          return this.getMedia(evidence, category)
-        }),
+      mediaSources: this.getMediaSources(entity.evidences, entity.rreEntries),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
-          value: entity.evidences
-            .filter(
-              ({ datasets }) =>
-                datasets.some(
-                  (dataset) =>
-                    EXTERNAL_TO_INTERNAL_TYPES[dataset] ===
-                    'REGULATORY_ENFORCEMENT_LIST'
-                ) && sanctionSearchTypes.includes('REGULATORY_ENFORCEMENT_LIST')
-            )
-            .map((evidence) => {
-              const evidenceName = entity.relEntries.find((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )?.subcategory
-              const displayName = evidenceName ?? ''
-              const normalisedEvidenceName = normalizeSource(displayName)
-              if (displayName) {
-                const existingIds =
-                  this.RELSourceToEntityIdMapBusiness.get(displayName) || []
-                this.RELSourceToEntityIdMapBusiness.set(displayName, [
-                  ...existingIds,
-                  entity.qrCode,
-                ])
-              }
-              const category = entity.relEntries.find((relEntry) =>
-                relEntry.events.some((event) =>
-                  event.evidenceIds.includes(evidence.evidenceId)
-                )
-              )?.category
-              return this.getOtherSources(
-                evidence,
-                evidenceName,
-                undefined,
-                category === 'Financial Regulator'
-                  ? REL_SOURCE_RELEVANCES[0]
-                  : category === 'Law Enforcement'
-                  ? REL_SOURCE_RELEVANCES[1]
-                  : undefined,
-                normalisedEvidenceName
-              )
-            }),
+          value: this.getRelSources(
+            entity.qrCode,
+            entity.relEntries,
+            entity.evidences
+          ),
         },
       ].filter((e) => e.value.length),
       pepSources: entity.evidences
@@ -1113,7 +888,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       documents: entity.identifiers.map((identifier) => ({
         name: identifier.category,
         id: identifier.value,
-        formattedId: identifier.value?.split(' ')[0]?.replace('-', ''),
+        formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
       isActiveSanctioned: sanctionSearchTypes.includes('SANCTIONS')
@@ -1163,54 +938,70 @@ export class AcurisProvider extends SanctionsDataFetcher {
     return ''
   }
 
-  private getMedia(
-    evidence: AcurisEvidence,
-    category?: string
-  ): SanctionsSource {
-    const url = evidence.originalUrl || evidence.assetUrl
-    const name = evidence.title || url
-    return {
-      url,
-      createdAt: evidence.captureDateIso
-        ? new Date(evidence.captureDateIso).valueOf()
-        : undefined,
-      name,
-      category,
-      fields: [
-        {
-          name: 'Keywords',
-          values: [
-            evidence.keywords
-              ?.split(',')
-              .map((keyword) => capitalize(keyword.trim()))
-              .join(', '),
-          ],
-        },
-        {
-          name: 'Publication date',
-          values: [evidence.publicationDateIso],
-        },
-        {
-          name: 'Credibility score',
-          values: [evidence.credibility],
-        },
-        ...(evidence.assetUrl && url !== evidence.assetUrl
-          ? [
-              {
-                name: 'Asset url',
-                values: [evidence.assetUrl],
-              },
-            ]
-          : []),
-      ].filter((e) => compact(e.values).length),
-      media: [
-        {
+  private getMediaSources(
+    evidences: AcurisEvidence[],
+    rreEntries: RreEntry[]
+  ): SanctionsSource[] {
+    return compact(
+      evidences.map((evidence) => {
+        const category = rreEntries.find((rreEntry) =>
+          rreEntry.events.some((event) =>
+            event.evidenceIds.includes(evidence.evidenceId)
+          )
+        )?.category
+        const isMediaSource = evidence.datasets.some(
+          (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'ADVERSE_MEDIA'
+        )
+        if (!isMediaSource) {
+          return undefined
+        }
+        const url = evidence.originalUrl || evidence.assetUrl
+        const name = evidence.title || url
+        return {
           url,
-          title: name,
-          snippet: evidence.summary,
-        },
-      ],
-    }
+          createdAt: evidence.captureDateIso
+            ? new Date(evidence.captureDateIso).valueOf()
+            : undefined,
+          name,
+          internalId: generateHashFromString(category ?? ''),
+          category,
+          fields: [
+            {
+              name: 'Keywords',
+              values: [
+                evidence.keywords
+                  ?.split(',')
+                  .map((keyword) => capitalize(keyword.trim()))
+                  .join(', '),
+              ],
+            },
+            {
+              name: 'Publication date',
+              values: [evidence.publicationDateIso],
+            },
+            {
+              name: 'Credibility score',
+              values: [evidence.credibility],
+            },
+            ...(evidence.assetUrl && url !== evidence.assetUrl
+              ? [
+                  {
+                    name: 'Asset url',
+                    values: [evidence.assetUrl],
+                  },
+                ]
+              : []),
+          ].filter((e) => compact(e.values).length),
+          media: [
+            {
+              url,
+              title: name,
+              snippet: evidence.summary,
+            },
+          ],
+        }
+      })
+    )
   }
 
   private getOtherSources(
@@ -1231,6 +1022,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       description,
       category,
       sourceName,
+      internalId: generateHashFromString(sourceName || ''),
       fields: [
         {
           name: 'Title',
@@ -1267,6 +1059,224 @@ export class AcurisProvider extends SanctionsDataFetcher {
           : []),
       ].filter((e) => compact(e.values).length),
     }
+  }
+
+  private getSanctionsSources(
+    entityId: string,
+    sanEntries: {
+      current: SanctionEntry[]
+      former: SanctionEntry[]
+    },
+    evidences: AcurisEvidence[]
+  ) {
+    const allSanEntries = [...sanEntries.current, ...sanEntries.former]
+    return [
+      ...compact(
+        evidences.map((evidence) => {
+          const matchingSanEntry = allSanEntries.find((sanEntry) =>
+            sanEntry.events.some((event) =>
+              event.evidenceIds.includes(evidence.evidenceId)
+            )
+          )
+          const isSanctionSource = evidence.datasets.some(
+            (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'SANCTIONS'
+          )
+          if (!isSanctionSource) {
+            return undefined
+          }
+          const evidenceName = matchingSanEntry?.regime.name
+          const description = matchingSanEntry?.regime.body
+          const normalisedSourceName = evidenceName
+            ? normalizeSource(evidenceName)
+            : undefined
+          if (normalisedSourceName && evidenceName) {
+            const existingIds =
+              this.SanctionsSourceToEntityIdMapPerson.get(evidenceName) || []
+            this.SanctionsSourceToEntityIdMapPerson.set(evidenceName, [
+              ...existingIds,
+              entityId,
+            ])
+          }
+          const category = matchingSanEntry
+            ? sanEntries.current.some((sanEntry) =>
+                sanEntry.events.some((event) =>
+                  event.evidenceIds.includes(evidence.evidenceId)
+                )
+              )
+              ? 'CURRENT'
+              : 'FORMER'
+            : undefined
+          return this.getOtherSources(
+            evidence,
+            evidenceName,
+            description,
+            category,
+            normalisedSourceName
+          )
+        })
+      ),
+      ...compact(
+        sanEntries.current.map((sanEntry) => {
+          const isEvidenceIdsEmpty =
+            !sanEntry.events?.length ||
+            sanEntry.events.every((event) => event.evidenceIds?.length === 0)
+          if (!isEvidenceIdsEmpty) {
+            return undefined
+          }
+          const evidenceName = sanEntry.regime.body + ' list'
+          const description = sanEntry.regime.body
+          const normalisedSourceName = evidenceName
+            ? normalizeSource(evidenceName)
+            : ''
+          if (evidenceName && normalisedSourceName) {
+            const existingIds =
+              this.SanctionsSourceToEntityIdMapPerson.get(evidenceName) || []
+            this.SanctionsSourceToEntityIdMapPerson.set(evidenceName, [
+              ...existingIds,
+              entityId,
+            ])
+          }
+          return {
+            url: '',
+            name: evidenceName,
+            description,
+            category: 'CURRENT',
+            sourceName: normalisedSourceName,
+            internalId: generateHashFromString(normalisedSourceName),
+          }
+        })
+      ),
+      ...compact(
+        sanEntries.former.map((sanEntry) => {
+          const isEvidenceIdsEmpty =
+            !sanEntry.events?.length ||
+            sanEntry.events.every((event) => event.evidenceIds?.length === 0)
+          if (!isEvidenceIdsEmpty) {
+            return undefined
+          }
+          const evidenceName = sanEntry.regime.body + ' list'
+          const description = sanEntry.regime.body
+          const normalisedSourceName = evidenceName
+            ? normalizeSource(evidenceName)
+            : ''
+          if (evidenceName && normalisedSourceName) {
+            const existingIds =
+              this.SanctionsSourceToEntityIdMapPerson.get(evidenceName) || []
+            this.SanctionsSourceToEntityIdMapPerson.set(evidenceName, [
+              ...existingIds,
+              entityId,
+            ])
+          }
+          return {
+            url: '',
+            name: evidenceName,
+            description,
+            category: 'FORMER',
+            sourceName: normalisedSourceName,
+            internalId: generateHashFromString(normalisedSourceName),
+          }
+        })
+      ),
+    ]
+  }
+
+  private getPepSources(
+    entityId: string,
+    pepEntries: {
+      pepTier: string
+      current: PepEntry[]
+      former: PepEntry[]
+    },
+    evidences: AcurisEvidence[],
+    datasets: string[]
+  ) {
+    return compact(
+      evidences.map((evidence) => {
+        const isPepSource = evidence.datasets.some(
+          (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
+        )
+        if (!isPepSource) {
+          return undefined
+        }
+        const pepTier = pepEntries.pepTier
+        const evidenceName =
+          pepEntries.current.find((pepEntry) =>
+            pepEntry.evidenceIds.includes(evidence.evidenceId)
+          )?.segment ??
+          pepEntries.former.find((pepEntry) =>
+            pepEntry.evidenceIds.includes(evidence.evidenceId)
+          )?.segment
+
+        const normalisedPepTier = pepTier ? normalizeSource(pepTier) : ''
+        if (pepTier && normalisedPepTier) {
+          const existingIds = this.PEPTierToEntityIdMapPerson.get(pepTier) || []
+          this.PEPTierToEntityIdMapPerson.set(pepTier, [
+            ...existingIds,
+            entityId,
+          ])
+        }
+        const category = datasets.some((dataset) => dataset === 'POI')
+          ? 'POI'
+          : 'PEP'
+        return this.getOtherSources(
+          evidence,
+          evidenceName,
+          undefined,
+          category,
+          normalisedPepTier
+        )
+      })
+    )
+  }
+
+  private getRelSources(
+    entityId: string,
+    relEntries: RelEntry[],
+    evidences: AcurisEvidence[]
+  ) {
+    return compact(
+      evidences.map((evidence) => {
+        const evidenceName = relEntries.find((relEntry) =>
+          relEntry.events.some((event) =>
+            event.evidenceIds.includes(evidence.evidenceId)
+          )
+        )?.subcategory
+        const isRelSource = evidence.datasets.some(
+          (dataset) =>
+            EXTERNAL_TO_INTERNAL_TYPES[dataset] ===
+            'REGULATORY_ENFORCEMENT_LIST'
+        )
+        if (!isRelSource) {
+          return undefined
+        }
+        const normalisedEvidenceName = normalizeSource(evidenceName || '')
+        if (evidenceName) {
+          const existingIds =
+            this.RELSourceToEntityIdMapBusiness.get(evidenceName) || []
+          this.RELSourceToEntityIdMapBusiness.set(evidenceName, [
+            ...existingIds,
+            entityId,
+          ])
+        }
+        const category = relEntries.find((relEntry) =>
+          relEntry.events.some((event) =>
+            event.evidenceIds.includes(evidence.evidenceId)
+          )
+        )?.category
+
+        return this.getOtherSources(
+          evidence,
+          evidenceName,
+          undefined,
+          category === 'Financial Regulator'
+            ? 'FINANCIAL_REGULATOR'
+            : category === 'Law Enforcement'
+            ? 'LAW_ENFORCEMENT'
+            : undefined,
+          normalisedEvidenceName
+        )
+      })
+    )
   }
 
   private getAddresses(

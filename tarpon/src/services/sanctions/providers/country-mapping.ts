@@ -256,4 +256,12 @@ export const countryMapping: Record<string, string> = {
     'united nations',
   'turks and caicos islands': 'turks and caicos islands',
   other: 'other',
+  'office of foreign assets control (ofac) list': 'united states of america',
+  'united nations security council (unsc) list': 'united nations',
+  'european union council (eu) list': 'european union',
+  "her majesty's treasury/office of financial sanction implementation (hmt/ofsi) list":
+    'united kingdom',
+  'russian federal financial monitoring service list': 'russia',
+  'monaco council of ministers list': 'monaco',
+  'ukraine state financial monitoring service list': 'ukraine',
 }

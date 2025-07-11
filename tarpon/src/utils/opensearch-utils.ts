@@ -21,7 +21,7 @@ import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 
 export async function getCollectionEndpoint(config: Config): Promise<string> {
-  const collectionName = `${config.stage}-${config.env.region ?? ''}-opensearch`
+  const collectionName = `${config.stage}-${config.region ?? ''}-opensearch`
   const client = new OpenSearchServerlessClient({ region: config.env.region })
   const command = new ListCollectionsCommand({
     collectionFilters: { name: collectionName },

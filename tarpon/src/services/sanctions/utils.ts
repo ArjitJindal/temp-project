@@ -197,6 +197,9 @@ export function extractCountryFromSource(
     name = parts[parts.length - 1]
   }
   if (sourceType === 'SANCTIONS') {
+    if (countryMapping[sourceName]) {
+      return countryMapping[sourceName]
+    }
     const normalizedSource = sourceName.replace(/[–—]/g, '-')
     const parts = normalizedSource.split('-')
     name = parts[0]

@@ -14322,6 +14322,8 @@ components:
           type: string
         description:
           type: string
+        internalId:
+          type: string
         fields:
           type: array
           items:

@@ -18,6 +18,12 @@ export function generateChecksum(obj: any, length = 64) {
   return hash.digest('hex').slice(0, length)
 }
 
+export function generateHashFromString(str: string, length = 64) {
+  const hash = crypto.createHash('sha256')
+  hash.update(str)
+  return hash.digest('hex').slice(0, length)
+}
+
 type NotPromiseType<T> = T extends Promise<any> ? never : T
 
 export function mergeObjects<T>(
