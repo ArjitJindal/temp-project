@@ -161,7 +161,7 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
         cacheRoles.find((r) => r.id === role.id)?.statements ?? []
 
       if (updatedStatements.length === 0) {
-        logger.error(
+        logger.warn(
           `No statements found for role ${role.name} for tenant ${tenant.id}`
         )
       }
