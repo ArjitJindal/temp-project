@@ -60,7 +60,7 @@ export type Context = LogMetaData & {
     tenantId: string
     permissions: Map<Permission, boolean>
   }
-  lastError?: Error
+  lastErrorHash?: string
   promises?: Promise<any>[]
   sentryExtras?: { [key: string]: unknown }
   auth0Domain?: string

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import * as createError from 'http-errors'
-import { isEqual } from 'lodash'
+import { generateChecksum } from './object'
 import { getContext } from '@/core/utils/context-storage'
 import { SENTRY_DSN } from '@/core/constants'
 
@@ -15,14 +15,15 @@ export const SENTRY_INIT_CONFIG: Sentry.NodeOptions = {
     if (error instanceof createError.HttpError && error.statusCode < 500) {
       return null
     }
+    const currentErrorHash = generateChecksum(error, 32)
     const context = getContext()
-    const lastError = context?.lastError
-    if (lastError && isEqual(error, lastError)) {
+    const lastErrorHash = context?.lastErrorHash
+    if (lastErrorHash && lastErrorHash === currentErrorHash) {
       console.warn('Found duplicated error. Skip sending to Sentry.')
       return null
     }
     if (error instanceof Error && context) {
-      context.lastError = error
+      context.lastErrorHash = currentErrorHash
     }
     return event
   },
