@@ -927,7 +927,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(tenantId)]: {
       getIndexes: () => [
         { index: { screeningId: 1 }, unique: true },
-        { index: { referenceCounter: 1 }, unique: true },
+        { index: { referenceCounter: 1 } },
         {
           index: { userId: 1, lastScreenedAt: 1 },
           partialFilterExpression: { userId: { $exists: true } },

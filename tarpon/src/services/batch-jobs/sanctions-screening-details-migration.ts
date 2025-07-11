@@ -138,7 +138,10 @@ export class SanctionsScreeningDetailsMigrationBatchJobRunner extends BatchJobRu
           )
           const lastIdInBatch = batch[batch.length - 1]._id
           if (lastIdInBatch) {
-            await updateMigrationLastCompletedId(migrationKey, lastIdInBatch)
+            await updateMigrationLastCompletedId(
+              migrationKey,
+              lastIdInBatch.toString()
+            )
           }
         }
       },
