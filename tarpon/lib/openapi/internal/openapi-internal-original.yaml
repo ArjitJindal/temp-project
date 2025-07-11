@@ -11172,6 +11172,43 @@ components:
         - tenantId
         - tenantName
         - usagePlanId
+    VersionHistoryType:
+      type: string
+      enum:
+        - RiskClassification
+        - RiskFactors
+    VersionHistory:
+      type: object
+      title: VersionHistory
+      properties:
+        data:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
+            - type: array
+              items:
+                $ref: '#/components/schemas/RiskFactor'
+        comment:
+          type: string
+        id:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        createdBy:
+          type: string
+        type:
+          $ref: '#/components/schemas/VersionHistoryType'
+      required:
+        - data
+        - comment
+        - id
+        - createdAt
+        - updatedAt
+        - createdBy
+        - type
     RiskClassificationHistory:
       type: object
       title: RiskClassificationHistory
