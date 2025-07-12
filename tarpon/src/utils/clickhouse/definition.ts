@@ -183,34 +183,34 @@ const userNameCasesV2MaterializedColumn = `
   )
 `
 
-export const gerneratePaymentDetailsName = (prefix: string) => {
+export const generatePaymentDetailsName = (prefix: string) => {
   return [
     `${prefix}PaymentDetails_name String MATERIALIZED 
     CASE
-      WHEN JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'CARD' THEN
+      WHEN JSONExtractString(data, '${prefix}PaymentDetails', 'method') = 'CARD' THEN
         trimBoth(
           replaceRegexpAll(
-            concat(
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.firstName'), ''), ' ',
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.middleName'), ''), ' ',
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.nameOnCard.lastName'), '')
+            concat_ws(' ',
+              JSONExtractString(data, '${prefix}PaymentDetails', 'nameOnCard', 'firstName'),
+              JSONExtractString(data, '${prefix}PaymentDetails', 'nameOnCard', 'middleName'),
+              JSONExtractString(data, '${prefix}PaymentDetails', 'nameOnCard', 'lastName')
             ),
             '\\s+', ' '
           )
         )
-      WHEN JSON_VALUE(data, '$.${prefix}PaymentDetails.method') = 'NPP' THEN
+      WHEN JSONExtractString(data, '${prefix}PaymentDetails', 'method') = 'NPP' THEN
         trimBoth(
           replaceRegexpAll(
-            concat(
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.firstName'), ''), ' ',
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.middleName'), ''), ' ',
-              COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name.lastName'), '')
+            concat_ws(' ',
+              JSONExtractString(data, '${prefix}PaymentDetails', 'name', 'firstName'),
+              JSONExtractString(data, '${prefix}PaymentDetails', 'name', 'middleName'),
+              JSONExtractString(data, '${prefix}PaymentDetails', 'name', 'lastName')
             ),
             '\\s+', ' '
           )
         )
       ELSE
-        COALESCE(JSON_VALUE(data, '$.${prefix}PaymentDetails.name'), '')
+        COALESCE(JSONExtractString(data, '${prefix}PaymentDetails', 'name'), '')
     END`,
   ]
 }
@@ -465,8 +465,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "destinationPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.destinationPaymentMethodId')",
       ...generatePaymentDetailColumns('origin'),
       ...generatePaymentDetailColumns('destination'),
-      ...gerneratePaymentDetailsName('origin'),
-      ...gerneratePaymentDetailsName('destination'),
+      ...generatePaymentDetailsName('origin'),
+      ...generatePaymentDetailsName('destination'),
       "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
       "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
       "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",

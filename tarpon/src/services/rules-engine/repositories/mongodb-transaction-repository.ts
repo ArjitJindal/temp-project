@@ -241,28 +241,34 @@ export class MongoDbTransactionRepository
                   { [`${prefix}.method`]: 'CARD' },
                   {
                     $expr: {
-                      $reduce: {
+                      $regexMatch: {
                         input: {
-                          $filter: {
-                            input: [
-                              `$${prefix}.nameOnCard.firstName`,
+                          $reduce: {
+                            input: {
+                              $filter: {
+                                input: [
+                                  `$${prefix}.nameOnCard.firstName`,
 
-                              `$${prefix}.nameOnCard.middleName`,
+                                  `$${prefix}.nameOnCard.middleName`,
 
-                              `$${prefix}.nameOnCard.lastName`,
-                            ],
-                            as: 'part',
-                            cond: { $ne: ['$$part', null] },
+                                  `$${prefix}.nameOnCard.lastName`,
+                                ],
+                                as: 'part',
+                                cond: { $ne: ['$$part', null] },
+                              },
+                            },
+                            initialValue: '',
+                            in: {
+                              $cond: [
+                                { $eq: ['$$value', ''] },
+                                '$$this',
+                                { $concat: ['$$value', ' ', '$$this'] },
+                              ],
+                            },
                           },
                         },
-                        initialValue: '',
-                        in: {
-                          $cond: [
-                            { $eq: ['$$value', ''] },
-                            '$$this',
-                            { $concat: ['$$value', ' ', '$$this'] },
-                          ],
-                        },
+                        regex: params.filterPaymentDetailName,
+                        options: 'i',
                       },
                     },
                   },
@@ -273,28 +279,34 @@ export class MongoDbTransactionRepository
                   { [`${prefix}.method`]: 'NPP' },
                   {
                     $expr: {
-                      $reduce: {
+                      $regexMatch: {
                         input: {
-                          $filter: {
-                            input: [
-                              `$${prefix}.name.firstName`,
+                          $reduce: {
+                            input: {
+                              $filter: {
+                                input: [
+                                  `$${prefix}.name.firstName`,
 
-                              `$${prefix}.name.middleName`,
+                                  `$${prefix}.name.middleName`,
 
-                              `$${prefix}.name.lastName`,
-                            ],
-                            as: 'part',
-                            cond: { $ne: ['$$part', null] },
+                                  `$${prefix}.name.lastName`,
+                                ],
+                                as: 'part',
+                                cond: { $ne: ['$$part', null] },
+                              },
+                            },
+                            initialValue: '',
+                            in: {
+                              $cond: [
+                                { $eq: ['$$value', ''] },
+                                '$$this',
+                                { $concat: ['$$value', ' ', '$$this'] },
+                              ],
+                            },
                           },
                         },
-                        initialValue: '',
-                        in: {
-                          $cond: [
-                            { $eq: ['$$value', ''] },
-                            '$$this',
-                            { $concat: ['$$value', ' ', '$$this'] },
-                          ],
-                        },
+                        regex: params.filterPaymentDetailName,
+                        options: 'i',
                       },
                     },
                   },
@@ -302,10 +314,16 @@ export class MongoDbTransactionRepository
               },
               {
                 [`${prefix}.method`]: { $nin: ['CARD', 'NPP'] },
-                [`${prefix}.name`]: params.filterPaymentDetailName,
+                [`${prefix}.name`]: {
+                  $regex: params.filterPaymentDetailName,
+                  $options: 'i',
+                },
               },
               {
-                [`${prefix}.bankName`]: params.filterPaymentDetailName,
+                [`${prefix}.bankName`]: {
+                  $regex: params.filterPaymentDetailName,
+                  $options: 'i',
+                },
               },
             ],
           },

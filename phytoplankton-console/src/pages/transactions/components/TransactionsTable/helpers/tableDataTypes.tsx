@@ -12,6 +12,7 @@ import {
   GenericBankAccountDetails,
   IBANDetails,
   MpesaDetails,
+  NPPDetails,
   POSDetails,
   SWIFTDetails,
   UPIDetails,
@@ -107,6 +108,7 @@ export const PAYMENT_DETAILS_OR_METHOD = (
         turnModelIntoField('WALLET', WalletDetails),
         turnModelIntoField('CHECK', CheckDetails),
         turnModelIntoField('CASH', CashDetails),
+        turnModelIntoField('NPP', NPPDetails),
       ],
     },
     execute: (keys, value) => {

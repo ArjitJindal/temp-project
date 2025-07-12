@@ -131,6 +131,10 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
     const name = value as ConsumerName;
     return formatConsumerName(name);
   }
+  if (key === 'name') {
+    const name = value as ConsumerName;
+    return formatConsumerName(name);
+  }
   if (key === 'merchantDetails') {
     const merchandDetails = value as CardMerchantDetails;
     return Object.entries(merchandDetails)
