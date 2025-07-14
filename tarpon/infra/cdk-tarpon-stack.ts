@@ -746,6 +746,7 @@ export class CdkTarponStack extends cdk.Stack {
     this.createOpensearch(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     Metric.grantPutMetricData(lambdaExecutionRole)
+    Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
     Metric.grantPutMetricData(ecsTaskExecutionRole)
 
     /* API Key Authorizer */
