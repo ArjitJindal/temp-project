@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import s from './style.module.less';
 import Modal from '@/components/library/Modal';
 import InputField from '@/components/library/Form/InputField';
@@ -30,57 +30,60 @@ export default function ConfirmModal(props: Props) {
 
   const formRef = useRef<FormRef<FormValues>>(null);
 
+  const [isFormValid, setIsFormValid] = useState(false);
+
   return (
-    <Form
-      ref={formRef}
-      fieldValidators={{
-        comment: commentRequired ? notEmpty : undefined,
+    <Modal
+      width="S"
+      title={title ?? 'Confirm action'}
+      subTitle={commentRequired ? text : undefined}
+      isOpen={isVisible}
+      disableInternalBorders={true}
+      onCancel={onCancel}
+      onOk={() => {
+        formRef.current?.submit();
       }}
-      initialValues={{ comment: '' }}
-      onSubmit={(values, { isValid }) => {
-        if (isValid) {
-          onConfirm(values);
-        } else {
-          message.error('Please fix all form errors');
-        }
+      okProps={{
+        htmlType: 'submit',
+        isDisabled: !isFormValid,
+        isLoading: res != null && isLoading(res),
+        type: isDanger ? 'DANGER' : undefined,
+      }}
+      okText="Confirm"
+      cancelText="Cancel"
+      cancelProps={{
+        htmlType: 'button',
       }}
     >
-      {({ isFormValid }) => (
-        <Modal
-          width="S"
-          title={title ?? 'Confirm action'}
-          subTitle={commentRequired ? text : undefined}
-          isOpen={isVisible}
-          disableInternalBorders={true}
-          onCancel={onCancel}
-          onOk={() => {
-            formRef.current?.submit();
-          }}
-          okProps={{
-            htmlType: 'submit',
-            isDisabled: !isFormValid,
-            isLoading: res != null && isLoading(res),
-            type: isDanger ? 'DANGER' : undefined,
-          }}
-          okText="Confirm"
-          cancelText="Cancel"
-          cancelProps={{
-            htmlType: 'button',
-          }}
-        >
-          {commentRequired ? (
-            <InputField<FormValues, 'comment'>
-              name="comment"
-              label="Comment"
-              labelProps={{ required: true }}
-            >
-              {(inputProps) => <TextArea {...inputProps} />}
-            </InputField>
-          ) : (
-            <div className={s.text}>{text}</div>
-          )}
-        </Modal>
-      )}
-    </Form>
+      <Form
+        ref={formRef}
+        fieldValidators={{
+          comment: commentRequired ? notEmpty : undefined,
+        }}
+        initialValues={{ comment: '' }}
+        onChange={(values) => {
+          setIsFormValid(values.isValid);
+        }}
+        onSubmit={(values, { isValid }) => {
+          if (isValid) {
+            onConfirm(values);
+          } else {
+            message.error('Please fix all form errors');
+          }
+        }}
+      >
+        {commentRequired ? (
+          <InputField<FormValues, 'comment'>
+            name="comment"
+            label="Comment"
+            labelProps={{ required: true }}
+          >
+            {(inputProps) => <TextArea {...inputProps} />}
+          </InputField>
+        ) : (
+          <div className={s.text}>{text}</div>
+        )}
+      </Form>
+    </Modal>
   );
 }
