@@ -32,6 +32,9 @@ import {
   skippedTenantsClickhouseCheckForDashboardRefresh,
   handleBatchJobTrigger,
 } from '@/utils/cron'
+import { runSanctionsDataCountJob } from '@/services/sanctions/sanctions-data-count'
+import { isDemoTenant } from '@/utils/tenant'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -116,6 +119,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   try {
     const now = getTimeFromRegion()
     const dynamoDb = getDynamoDbClient()
+    const mongoDbClient = await getMongoDbClient()
     const currencyService = new CurrencyService(dynamoDb)
     // Hack to ensure we query the currency data for viper.
     await currencyService.getCurrencyExchangeRate('USD', 'EUR')
@@ -126,6 +130,42 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       await handleSlaStatusCalculationBatchJob(tenantIds)
     }
 
+    let hasAcurisFeature = false
+    let hasOpenSanctionsFeature = false
+
+    for (const tenantId of tenantIds) {
+      if (isDemoTenant(tenantId)) {
+        continue
+      }
+
+      if (!hasAcurisFeature) {
+        hasAcurisFeature = await tenantHasFeature(tenantId, 'ACURIS')
+      }
+
+      if (!hasOpenSanctionsFeature) {
+        hasOpenSanctionsFeature = await tenantHasFeature(
+          tenantId,
+          'OPEN_SANCTIONS'
+        )
+      }
+
+      // Break early if both features are found
+      if (hasAcurisFeature && hasOpenSanctionsFeature) {
+        break
+      }
+    }
+    if (hasAcurisFeature) {
+      await runSanctionsDataCountJob(
+        SanctionsDataProviders.ACURIS,
+        mongoDbClient
+      )
+    }
+    if (hasOpenSanctionsFeature) {
+      await runSanctionsDataCountJob(
+        SanctionsDataProviders.OPEN_SANCTIONS,
+        mongoDbClient
+      )
+    }
     await handleBatchJobTrigger(tenantIds, [
       'RISK_SCORING_RECALCULATION',
       'USER_RULE_RE_RUN',
