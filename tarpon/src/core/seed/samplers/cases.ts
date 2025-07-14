@@ -196,8 +196,10 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
     const alerts: Alert[] = []
 
     ruleInstanceTransactionMap.forEach((transactions, ruleInstanceId) => {
-      const ruleHit = getRuleInstance(ruleInstanceId)
-      if (ruleHit.ruleRunMode !== 'SHADOW') {
+      const ruleHit = transactions[0].hitRules.find(
+        (rh) => rh.ruleInstanceId === ruleInstanceId
+      )
+      if (!ruleHit?.isShadow) {
         const alert = this.alertSampler.getSample(undefined, {
           caseId,
           ruleInstanceId,
