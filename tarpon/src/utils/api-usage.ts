@@ -13,6 +13,7 @@ import { envIs } from './env'
 import { TenantInfo } from '@/services/tenants'
 import { logger } from '@/core/logger'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export async function toggleApiKeys(tenantId: string, newState: boolean) {
   const allUsagePlans = await getAllUsagePlans(
@@ -93,7 +94,7 @@ export async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
 
       await sendBatchJobCommand({
         type: 'API_USAGE_METRICS',
-        tenantId: '',
+        tenantId: FLAGRIGHT_TENANT_ID,
         parameters: {
           tenantInfos: tenants,
           targetMonth: dayjs().subtract(2, 'day').format('YYYY-MM'),
