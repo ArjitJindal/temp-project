@@ -327,10 +327,6 @@ const customTextWidget: CoreWidgets['text'] = {
               {(dynamicKeyFilter, forceUpdateTrigger) => {
                 const currentValue = forceUpdateTrigger > 0 ? undefined : props.value;
 
-                if (forceUpdateTrigger > 0 && props.value !== undefined) {
-                  setTimeout(() => props.setValue(undefined), 0);
-                }
-
                 if (isArrayType) {
                   return (
                     <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
@@ -369,6 +365,15 @@ const customTextWidget: CoreWidgets['text'] = {
               uniqueTypeProps={uniqueTypeProps}
               value={props.value as any}
               onChange={(newValue) => {
+                if (isKeyField) {
+                  const entityId = getEntityIdFromField(String(props.field));
+                  if (entityId) {
+                    const keyValue =
+                      typeof props.value === 'string' ? props.value : String(props.value || '');
+
+                    setTagKeyValue(entityId, keyValue);
+                  }
+                }
                 const formattedValue = newValue?.map((v) => v.trim());
                 props.setValue(formattedValue as any);
               }}
@@ -395,7 +400,18 @@ const customTextWidget: CoreWidgets['text'] = {
           <SingleListSelectDynamic
             uniqueTypeProps={uniqueTypeProps}
             value={props.value as string}
-            onChange={(val) => props.setValue(val)}
+            onChange={(val) => {
+              if (isKeyField) {
+                const entityId = getEntityIdFromField(String(props.field));
+                if (entityId) {
+                  const keyValue =
+                    typeof props.value === 'string' ? props.value : String(props.value || '');
+
+                  setTagKeyValue(entityId, keyValue);
+                }
+              }
+              return props.setValue(val);
+            }}
           />
         </WidgetWrapper>
       );
