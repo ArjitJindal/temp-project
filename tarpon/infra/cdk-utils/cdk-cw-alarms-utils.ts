@@ -582,3 +582,60 @@ export const createFinCENSTFPConnectionAlarm = (
     }),
   }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
 }
+
+export const createLambdaCPUUtilizationAlarm = (
+  context: Construct,
+  zendutyCloudWatchTopic: Topic,
+  lambdaName: string,
+  lambdaMemory: number
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  // https://www.youtube.com/watch?v=aW5EtKHTMuQ&t=339s
+  // https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html for every 1769 mb of memory, lambda gets 1vcpu
+  const cpuCap = (lambdaMemory / 1769) * 100
+  return new Alarm(context, `${lambdaName}CPUUtilization`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: 80,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 2,
+    alarmName: `Lambda-${lambdaName}CPUUsageThreshold`,
+    alarmDescription: `Covers CPU usage time in ${lambdaName} in the AWS account. 
+    Alarm triggers when CPU usage time exceedes 80% for 2 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    metric: new MathExpression({
+      expression: `(m3/${cpuCap})*100`,
+      usingMetrics: {
+        m3: new MathExpression({
+          expression: '((m1 / m2) * 100)',
+          usingMetrics: {
+            m1: new Metric({
+              label: 'Lambda CPU utilization time',
+              namespace: 'LambdaInsights',
+              metricName: 'cpu_total_time',
+              dimensionsMap: {
+                function_name: lambdaName,
+              },
+            }).with({
+              period: Duration.seconds(300),
+              statistic: 'Average',
+            }),
+            m2: new Metric({
+              label: 'Lambda Duration',
+              namespace: 'AWS/Lambda',
+              metricName: 'Duration',
+              dimensionsMap: {
+                FunctionName: lambdaName,
+              },
+            }).with({
+              period: Duration.seconds(300),
+              statistic: 'Average',
+            }),
+          },
+          period: Duration.seconds(300),
+          label: 'Ratio of lambda CPU utilization to duration',
+        }),
+      },
+    }),
+  }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
+}

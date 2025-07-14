@@ -32,7 +32,60 @@ import {
   createCanarySuccessPercentageAlarm,
   createRuleHitRateAlarm,
   createStateMachineAlarm,
+  createLambdaCPUUtilizationAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
+
+const mapLambdaNameToResourceName = (lambdaName: string) => {
+  switch (lambdaName) {
+    case StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME:
+    case StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME:
+      return 'TRANSACTION_LAMBDA'
+    case StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME:
+    case StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
+      return 'TARPON_CHANGE_CAPTURE_LAMBDA'
+    case StackConstants.PUBLIC_API_USER_FUNCTION_NAME:
+    case StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME:
+      return 'USER_LAMBDA'
+    case StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME:
+      return 'TRANSACTIONS_VIEW_LAMBDA'
+    case StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME:
+      return 'USERS_VIEW_LAMBDA'
+    case StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME:
+      return 'USERS_VIEW_LAMBDA'
+    case StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME:
+      return 'USERS_VIEW_LAMBDA'
+    case StackConstants.CONSOLE_API_CASE_FUNCTION_NAME:
+      return 'CASE_LAMBDA'
+    case StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME:
+      return 'BATCH_JOB_LAMBDA'
+    case StackConstants.CRON_JOB_DAILY:
+      return 'CRON_JOB_LAMBDA'
+    case StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME:
+      return 'INCOMING_WEBHOOK_LAMBDA'
+    case StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME:
+      return 'SANCTIONS_LAMBDA'
+    case StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME:
+      return 'ASYNC_RULES_LAMBDA'
+    case StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME:
+      return 'API_KEY_GENERATOR_LAMBDA'
+    case StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME:
+      return 'TRANSACTION_AGGREGATION_LAMBDA'
+    case StackConstants.REQUEST_LOGGER_FUNCTION_NAME:
+      return 'REQUEST_LOGGER_LAMBDA'
+    case StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME:
+      return 'TENANT_LAMBDA'
+    case StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME:
+      return 'DASHBOARD_LAMBDA'
+    case StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME:
+      return 'COPILOT_LAMBDA'
+    case StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME:
+      return 'MONGO_DB_TRIGGER_LAMBDA'
+    case StackConstants.DYNAMO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME:
+      return 'DYNAMO_DB_TRIGGER_LAMBDA'
+    default:
+      return 'LAMBDA_DEFAULT'
+  }
+}
 
 const allLambdas = Object.keys(LAMBDAS)
 
@@ -114,6 +167,13 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         this,
         this.zendutyCloudWatchTopic,
         lambdaName
+      )
+      createLambdaCPUUtilizationAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        lambdaName,
+        this.config.resource[mapLambdaNameToResourceName(lambdaName)]
+          ?.MEMORY_SIZE ?? this.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE
       )
     }
 
