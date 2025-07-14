@@ -21,7 +21,7 @@ describe('Case service utils', () => {
 
     describe('DAILY mode', () => {
       test('Day after today', () => {
-        const now = '2023-06-01T12:00:00Z'
+        const now = '2023-06-01T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           { type: 'DAILY', time: '1' },
@@ -34,7 +34,7 @@ describe('Case service utils', () => {
       })
 
       test('Same day', () => {
-        const now = '2023-06-01T12:00:00Z'
+        const now = '2023-06-01T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           { type: 'DAILY', time: '13' },
@@ -47,7 +47,7 @@ describe('Case service utils', () => {
       })
 
       test('Different timezone', () => {
-        const now = '2023-06-01T12:00:00Z'
+        const now = '2023-06-01T12:11:45Z'
         const timezone = 'Europe/Berlin'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
@@ -62,7 +62,7 @@ describe('Case service utils', () => {
     })
 
     test('Under 24 hours', () => {
-      const now = '2023-06-01T12:00:00Z'
+      const now = '2023-06-01T12:10:11Z'
       const timezone = 'Europe/Berlin'
       const result = calculateCaseAvailableDate(
         dayjs(now).valueOf(),
@@ -76,7 +76,7 @@ describe('Case service utils', () => {
 
     describe('WEEKLY mode', () => {
       test('Day after today', () => {
-        const now = '2023-06-01T12:00:00Z'
+        const now = '2023-06-01T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -90,7 +90,7 @@ describe('Case service utils', () => {
         )
       })
       test('The same day should move to the next week', () => {
-        const now = '2023-06-01T12:00:00Z'
+        const now = '2023-06-01T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -120,7 +120,7 @@ describe('Case service utils', () => {
     })
     describe('MONTHLY mode', () => {
       test('Basic case', () => {
-        const now = new Date('2023-02-02T12:00:00Z')
+        const now = new Date('2023-02-02T12:10:11Z')
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -134,7 +134,7 @@ describe('Case service utils', () => {
         )
       })
       test('Day after today', () => {
-        const now = '2023-06-15T12:00:00Z'
+        const now = '2023-06-15T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -162,7 +162,7 @@ describe('Case service utils', () => {
         )
       })
       test('Previous day should move to the next month', () => {
-        const now = '2023-06-15T12:00:00Z'
+        const now = '2023-06-15T12:10:11Z'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -176,7 +176,7 @@ describe('Case service utils', () => {
         )
       })
       test('Stay within a month', () => {
-        const now = new Date('2023-02-01T12:00:00Z')
+        const now = new Date('2023-02-01T12:10:11Z')
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -190,7 +190,7 @@ describe('Case service utils', () => {
         )
       })
       test('Switch to next month and stay within a month', () => {
-        const now = new Date('2023-01-31T12:00:00Z')
+        const now = new Date('2023-01-31T12:10:11Z')
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),
           {
@@ -204,7 +204,7 @@ describe('Case service utils', () => {
         )
       })
       test('Another timezone', () => {
-        const now = '2023-06-15T12:00:00Z'
+        const now = '2023-06-15T12:10:11Z'
         const timezone = 'Europe/Berlin'
         const result = calculateCaseAvailableDate(
           dayjs(now).valueOf(),

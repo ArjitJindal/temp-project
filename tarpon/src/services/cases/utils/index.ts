@@ -52,9 +52,9 @@ export function calculateCaseAvailableDate(
     const currentHour = d.tz(timezone).hour()
 
     if (currentHour < hour) {
-      d = d.hour(hour)
+      d = d.hour(hour).minute(0).second(0).millisecond(0)
     } else {
-      d = d.add(1, 'day').hour(hour)
+      d = d.add(1, 'day').hour(hour).minute(0).second(0).millisecond(0)
     }
   }
 
