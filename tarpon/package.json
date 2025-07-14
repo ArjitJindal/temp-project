@@ -78,7 +78,7 @@
     "cross-tenant-query:sandbox": "ts-node scripts/cross-tenant-query.ts --env sandbox",
     "cross-tenant-query:prod": "ts-node scripts/cross-tenant-query.ts --env prod",
     "dangerous-nuke-tenant-data": "ts-node scripts/dangerous-nuke-tenant-data.ts",
-    "playground": "touch scripts/playground.ts && ENV=local AWS_REGION=eu-central-1 ts-node --transpileOnly scripts/playground.ts",
+    "playground": "touch scripts/playground.ts && ENV=sandbox AWS_REGION=eu-central-1 ts-node --transpileOnly scripts/playground.ts",
     "validate:lithuania:str": "SAR_TYPE=STR ts-node --transpileOnly src/services/sar/generators/LT/scripts/validate.ts",
     "validate:lithuania:ctr": "SAR_TYPE=CTR ts-node --transpileOnly src/services/sar/generators/LT/scripts/validate.ts",
     "semgrep": "semgrep scan --config ../rule.yaml --error",
