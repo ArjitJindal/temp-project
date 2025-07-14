@@ -453,7 +453,7 @@ export class ClickhouseTransactionsRepository {
     const whereClause = await this.getTransactionsWhereConditions(params)
 
     const minMaxQuery = `
-      WITH transactions AS (
+      WITH txn AS (
         SELECT timestamp
         FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
         WHERE ${whereClause} ORDER BY ${sortField} ${
@@ -461,7 +461,7 @@ export class ClickhouseTransactionsRepository {
     } LIMIT ${pageSize}
       )
       SELECT min(timestamp) as min, max(timestamp) as max
-      FROM transactions
+      FROM txn
     `
 
     const minMaxResult = await executeClickhouseQuery<MinMax[]>(
