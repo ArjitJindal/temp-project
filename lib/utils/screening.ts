@@ -14,4 +14,15 @@ export const relevanceOptionsMap = {
   REPUTATIONAL_RISK_EXPOSURE: 'Reputational risk exposure',
   FINANCIAL_REGULATOR: 'Financial regulator',
   LAW_ENFORCEMENT: 'Law enforcement',
-};
+}
+
+export const adverseMediaCategoryMap: Record<string, string> = {
+  REPUTATIONAL_RISK_EXPOSURE: 'Reputational Risk Exposure',
+  CYBERCRIMES: 'Cybercrime',
+  FINANCIAL_CRIME_AND_FRAUD: 'Financial Crime and Fraud',
+  BRIBERY_AND_CORRUPTION: 'Bribery and Corruption',
+  TERRORISM: 'Terrorism',
+  ORGANISED_CRIME: 'Organised Crime',
+  MODERN_SLAVERY: 'Modern Slavery',
+  OTHER_ALLEGED_OFFENCES: 'Other alleged offences',
+}

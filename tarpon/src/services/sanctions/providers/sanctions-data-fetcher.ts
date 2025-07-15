@@ -2,6 +2,7 @@ import { cloneDeep, uniq, uniqBy } from 'lodash'
 import {
   isLatinScript,
   normalize,
+  adverseMediaCategoryMap,
   replaceRequiredCharactersWithSpace,
   sanitizeString,
 } from '@flagright/lib/utils'
@@ -317,9 +318,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (adverseMediaCategory) {
       conditions.push({
         'mediaSources.category': {
-          $in: adverseMediaCategory.map((cat) =>
-            humanizeAuto(cat).toLowerCase()
-          ),
+          $in: adverseMediaCategory.map((r) => adverseMediaCategoryMap[r]),
         },
       })
     }
