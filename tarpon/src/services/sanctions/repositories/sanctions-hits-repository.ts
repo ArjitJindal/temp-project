@@ -12,6 +12,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import * as Sentry from '@sentry/serverless'
+import { hasFeature } from '../../../core/utils/context'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -168,7 +169,7 @@ export class SanctionsHitsRepository {
   }
 
   private logMissingSources(hits: SanctionsEntity[]) {
-    if (envIs('prod') && !isDemoTenant(this.tenantId)) {
+    if (envIs('prod') && !isDemoTenant(this.tenantId) && hasFeature('ACURIS')) {
       let message = ''
       const missingSanctionsSources = hits.filter(
         (x) =>
