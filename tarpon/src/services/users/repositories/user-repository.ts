@@ -1497,7 +1497,8 @@ export class UserRepository {
           },
         ],
       },
-      { $set: { avgArsScore } }
+      { $set: { avgArsScore } },
+      { upsert: false }
     )
   }
 
