@@ -385,6 +385,7 @@ describe('Public API - Retrieve a Transaction', () => {
         trsRiskLevel: 'VERY_HIGH',
         trsScore: 90,
       },
+      updateCount: expect.any(Number),
     })
   })
 })
@@ -645,7 +646,7 @@ describe('Public API - Retrieve a Transaction Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual(transactionEvent)
+    expect(JSON.parse(response?.body as string)).toMatchObject(transactionEvent)
   })
 })
 
@@ -705,7 +706,7 @@ describe('Public API - Create a Consumer User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual({
+    expect(JSON.parse(response?.body as string)).toMatchObject({
       ...pickKnownEntityFields(consumerUser, User),
       riskLevel: 'VERY_HIGH',
       tags: [
@@ -729,6 +730,8 @@ describe('Public API - Create a Consumer User Event', () => {
       krsScore: expect.any(Object),
       riskLevel: 'VERY_HIGH',
       updatedAt: expect.any(Number),
+      updateCount: expect.any(Number),
+      createdAt: expect.any(Number),
       tags: [
         { key: 'customKey', value: 'customValue' },
         { key: 'key', value: 'value' },
@@ -965,7 +968,7 @@ describe('Public API - Retrieve a Consumer User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual(userEvent)
+    expect(JSON.parse(response?.body as string)).toMatchObject(userEvent)
   })
 })
 
@@ -1039,7 +1042,7 @@ describe('Public API - Create a Business User Event', () => {
         kycRiskScore: 90,
       },
     }
-    expect(JSON.parse(response?.body as string)).toEqual(toMatchObject)
+    expect(JSON.parse(response?.body as string)).toMatchObject(toMatchObject)
     const userService = new UserService(
       TEST_TENANT_ID,
       { mongoDb, dynamoDb: getDynamoDbClient() },
@@ -1281,7 +1284,7 @@ describe('Public API - Retrieve a Business User Event', () => {
       null as any
     )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toEqual(userEvent)
+    expect(JSON.parse(response?.body as string)).toMatchObject(userEvent)
   })
 })
 
@@ -1449,6 +1452,7 @@ describe('Public API - Verify Transction and Transaction Event with V2 Risk scor
         trsRiskLevel: 'VERY_HIGH',
         trsScore: 90,
       },
+      updateCount: expect.any(Number),
     })
 
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(

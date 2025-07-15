@@ -22,14 +22,11 @@ import {
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
-import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { isDemoTenant } from '@/utils/tenant'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
-import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
-import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -43,15 +40,11 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskService } from '@/services/risk'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { envIsNot } from '@/utils/env'
-import { Alert } from '@/@types/openapi-internal/Alert'
-import { Comment } from '@/@types/openapi-internal/Comment'
-import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
@@ -64,6 +57,10 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
 import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import {
+  applyNewVersion,
+  updateInMongoWithVersionCheck,
+} from '@/utils/downstream-version'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -221,6 +218,11 @@ export class TarponChangeMongoDbConsumer {
 
     const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
+    const existingUser = usersRepo.getUserById(newUser.userId)
+    /*  version check before processing user*/
+    if (!applyNewVersion(newUser, existingUser)) {
+      return
+    }
     const settings = await tenantSettings(tenantId)
 
     const caseCreationService = new CaseCreationService(tenantId, {
@@ -228,6 +230,10 @@ export class TarponChangeMongoDbConsumer {
       dynamoDb,
     })
 
+    const userService = new UserService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     const isRiskScoringEnabled = settings?.features?.includes('RISK_SCORING')
 
@@ -247,10 +253,6 @@ export class TarponChangeMongoDbConsumer {
         `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
       )
     }
-    const userService = new UserService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
     const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
@@ -289,12 +291,9 @@ export class TarponChangeMongoDbConsumer {
       ...(drsScore && { drsScore }),
     }
 
-    const [_, existingUser] = await Promise.all([
-      drsScore
-        ? usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
-        : null,
-      usersRepo.getUserById(internalUser.userId),
-    ])
+    if (drsScore) {
+      await usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
+    }
     const savedUser = await usersRepo.saveUserMongo({
       ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
       ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
@@ -362,21 +361,6 @@ export class TarponChangeMongoDbConsumer {
     const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
 
     const settings = await tenantSettings(tenantId)
-    const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
-    const arsScoreSubSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleTransaction arsScore'
-    )
-    const arsScore = isRiskScoringEnabled
-      ? await riskRepository.getArsScore(transaction.transactionId)
-      : undefined
-
-    arsScoreSubSegment?.close()
-
-    if (isRiskScoringEnabled && !arsScore) {
-      logger.error(`ARS score not found for transaction. Recalculating async`)
-    }
-
     const existingTransactionSubSegment = await addNewSubsegment(
       'StreamConsumer',
       'handleTransaction existingTransaction'
@@ -386,29 +370,10 @@ export class TarponChangeMongoDbConsumer {
     )
     existingTransactionSubSegment?.close()
 
-    const transactionInMongoSubSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleTransaction transactionInMongo'
-    )
-    const [transactionInMongo, ruleInstances, deployingRuleInstances] =
-      await Promise.all([
-        transactionsRepo.addTransactionToMongo(
-          {
-            ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
-            ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
-          },
-          arsScore || undefined
-        ),
-        ruleInstancesRepo.getRuleInstancesByIds(
-          filterLiveRules(
-            { hitRules: transaction.hitRules },
-            true
-          ).hitRules.map((rule) => rule.ruleInstanceId)
-        ),
-        ruleInstancesRepo.getDeployingRuleInstances(),
-      ])
-    transactionInMongoSubSegment?.close()
+    const deployingRuleInstances =
+      await ruleInstancesRepo.getDeployingRuleInstances()
 
+    const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
     const riskService = new RiskService(tenantId, {
       dynamoDb,
       mongoDb,
@@ -470,6 +435,39 @@ export class TarponChangeMongoDbConsumer {
       ])
       v8AggregationSubSegment?.close()
     }
+    /* version check before saving txn to mongo and we should still update in txn aggregation regardless */
+    if (!applyNewVersion(transaction, existingTransaction)) {
+      return
+    }
+    const arsScoreSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction arsScore'
+    )
+    const arsScore = isRiskScoringEnabled
+      ? await riskRepository.getArsScore(transaction.transactionId)
+      : undefined
+
+    arsScoreSubSegment?.close()
+
+    const transactionInMongoSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleTransaction transactionInMongo'
+    )
+    const [transactionInMongo, ruleInstances] = await Promise.all([
+      transactionsRepo.addTransactionToMongo(
+        {
+          ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
+          ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
+        },
+        arsScore
+      ),
+      ruleInstancesRepo.getRuleInstancesByIds(
+        filterLiveRules({ hitRules: transaction.hitRules }, true).hitRules.map(
+          (rule) => rule.ruleInstanceId
+        )
+      ),
+    ])
+    transactionInMongoSubSegment?.close()
 
     const caseCreationService = new CaseCreationService(tenantId, {
       mongoDb,
@@ -554,17 +552,14 @@ export class TarponChangeMongoDbConsumer {
       userId: userEvent.userId,
       userEventId: userEvent.eventId,
     })
+    const requiredEvent = omit(userEvent, DYNAMO_KEYS)
 
-    await internalMongoReplace(
+    await updateInMongoWithVersionCheck(
       dbClients.mongoDb,
       USER_EVENTS_COLLECTION(tenantId),
       { eventId: userEvent.eventId },
-      {
-        ...(omit(userEvent, DYNAMO_KEYS) as
-          | InternalConsumerUserEvent
-          | InternalBusinessUserEvent),
-        createdAt: Date.now(),
-      }
+      requiredEvent,
+      true
     )
     subSegment?.close()
   }
@@ -627,53 +622,6 @@ export class TarponChangeMongoDbConsumer {
     await nangoRepository.linkCrmRecordClickhouse(newCrmUserRecordLinks)
   }
 
-  async handleAlert(
-    tenantId: string,
-    alert: Alert | undefined,
-    dbClients: DbClients
-  ): Promise<void> {
-    if (!alert || !alert.alertId || dbClients) {
-      return
-    }
-    const subSegment = await addNewSubsegment('StreamConsumer', 'handleAlert')
-    subSegment?.close()
-  }
-
-  async handleAlertComment(
-    tenantId: string,
-    alertId: string,
-    alertComment: Comment | undefined
-  ): Promise<void> {
-    if (!alertComment || !alertComment.id) {
-      return
-    }
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleAlertComment'
-    )
-    subSegment?.close()
-
-    // TODO: Implement if required
-  }
-
-  async handleAlertFile(
-    tenantId: string,
-    alertId: string,
-    commentId: string,
-    alertFile: FileInfo | undefined
-  ): Promise<void> {
-    if (!alertFile || !alertFile.s3Key) {
-      return
-    }
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleAlertFile'
-    )
-    subSegment?.close()
-
-    // TODO: Implement if required
-  }
-
   async handleTransactionEvent(
     tenantId: string,
     transactionEvent: TransactionEvent | undefined,
@@ -692,15 +640,13 @@ export class TarponChangeMongoDbConsumer {
       eventId: transactionEvent.eventId,
     })
     logger.info(`Processing Transaction Event`)
-
-    await internalMongoReplace(
+    const requiredEvent = omit(transactionEvent, DYNAMO_KEYS)
+    await updateInMongoWithVersionCheck(
       dbClients.mongoDb,
       TRANSACTION_EVENTS_COLLECTION(tenantId),
       { eventId: transactionEvent.eventId },
-      {
-        ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
-        createdAt: Date.now(),
-      }
+      requiredEvent,
+      true
     )
     subSegment?.close()
   }

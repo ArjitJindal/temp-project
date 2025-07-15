@@ -16,8 +16,6 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
-  PutCommand,
-  PutCommandInput,
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
@@ -97,7 +95,7 @@ import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
-import { batchGet } from '@/utils/dynamodb'
+import { batchGet, upsertSaveDynamo } from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
@@ -1021,14 +1019,17 @@ export class UserRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
-      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules, #updateCount = if_not_exists(#updateCount, :zero) + :one`,
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
+        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': rulesResults.executedRules,
         ':hitRules': rulesResults.hitRules,
+        ':one': 1,
+        ':zero': 0,
       },
     }
 
@@ -1080,15 +1081,16 @@ export class UserRepository {
     }
 
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newUser,
-      },
-    }
 
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newUser },
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        key: primaryKey,
+      },
+      { versioned: true }
+    )
 
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
@@ -1478,7 +1480,23 @@ export class UserRepository {
     await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
-      { userId },
+      {
+        $and: [
+          { userId },
+          {
+            $or: [
+              { avgArsScore: { $exists: false } },
+              { 'avgArsScore.updateCount': { $exists: false } },
+              { 'avgArsScore.updateCount': null },
+              {
+                'avgArsScore.updateCount': {
+                  $lt: avgArsScore.updateCount ?? 1,
+                },
+              },
+            ],
+          },
+        ],
+      },
       { $set: { avgArsScore } }
     )
   }

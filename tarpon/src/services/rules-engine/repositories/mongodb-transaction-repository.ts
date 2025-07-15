@@ -125,7 +125,7 @@ export class MongoDbTransactionRepository
 
   async addTransactionToMongo(
     transaction: InternalTransaction,
-    arsScore?: ArsScore,
+    arsScore?: ArsScore | null,
     options?: { session?: ClientSession }
   ): Promise<InternalTransaction> {
     const internalTransaction: InternalTransaction = {

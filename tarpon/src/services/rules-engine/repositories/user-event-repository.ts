@@ -4,12 +4,11 @@ import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
   GetCommand,
-  PutCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { paginateQuery } from '@/utils/dynamodb'
+import { paginateQuery, upsertSaveDynamo } from '@/utils/dynamodb'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
@@ -80,17 +79,17 @@ export class UserEventRepository {
         userEvent.timestamp
       )
     }
-    await this.dynamoDb.send(
-      new PutCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Item: {
-          ...primaryKey,
-          eventId,
-          ...userEvent,
-          ...rulesResult,
-        },
-      })
+
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { eventId, ...userEvent, ...rulesResult },
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        key: primaryKey,
+      },
+      { versioned: true }
     )
+
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
@@ -115,14 +114,17 @@ export class UserEventRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
       UpdateExpression:
-        'SET #executedRules = :executedRules, #hitRules = :hitRules',
+        'SET #executedRules = :executedRules, #hitRules = :hitRules, #updateCount = if_not_exists(#updateCount, :zero) + :one',
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
+        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': rulesResult.executedRules,
         ':hitRules': rulesResult.hitRules,
+        ':zero': 0,
+        ':one': 1,
       },
     })
 

@@ -44,10 +44,10 @@ export async function arsScoreEventHandler(
 
   arsScore = omit(arsScore, DYNAMO_KEYS) as ArsScore
 
-  await Promise.all([
-    riskRepository.addArsValueToMongo(arsScore),
-    transactionRepository.updateArsScore(transactionId, arsScore), // If transaction id does not exist, it will not result in an error
-  ])
+  const arsScoreinDb = await riskRepository.addArsValueToMongo(arsScore)
+  if ((arsScoreinDb.updateCount ?? 0) === (arsScore.updateCount ?? 0)) {
+    await transactionRepository.updateArsScore(transactionId, arsScore) // If transaction id does not exist, it will not result in an error
+  }
   subSegment?.close()
 }
 
@@ -135,15 +135,17 @@ export async function drsScoreEventHandler(
     .map((c) => c.caseId)
     .filter((id): id is string => id !== undefined)
 
-  await Promise.all([
-    riskRepository.addDrsValueToMongo(newDrsScore),
-    newDrsScore.userId
-      ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
-      : undefined,
-    caseIdStrings.length > 0 && newDrsScore.userId
-      ? casesRepo.updateCasesDrsScores(caseIdStrings, newDrsScore.drsScore)
-      : undefined,
-  ])
+  const drsScoreinDb = await riskRepository.addDrsValueToMongo(newDrsScore)
+  if ((drsScoreinDb.updateCount ?? 0) === (newDrsScore.updateCount ?? 0)) {
+    await Promise.all([
+      newDrsScore.userId
+        ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
+        : undefined,
+      caseIdStrings.length > 0 && newDrsScore.userId
+        ? casesRepo.updateCasesDrsScores(caseIdStrings, newDrsScore.drsScore)
+        : undefined,
+    ])
+  }
   subSegment?.close()
 }
 
@@ -165,12 +167,13 @@ export async function krsScoreEventHandler(
   const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
   krsScore = omit(krsScore, DYNAMO_KEYS) as KrsScore
 
-  await Promise.all([
-    riskRepository.addKrsValueToMongo(krsScore),
+  const krsScoreInDb = await riskRepository.addKrsValueToMongo(krsScore)
+  if (
+    (krsScoreInDb.updateCount ?? 0) === (krsScore.updateCount ?? 0) &&
     krsScore.userId
-      ? userRepository.updateKrsScoreOfUser(krsScore.userId, krsScore)
-      : undefined,
-  ])
+  ) {
+    await userRepository.updateKrsScoreOfUser(krsScore.userId, krsScore)
+  }
   subSegment?.close()
 }
 
@@ -192,9 +195,6 @@ export async function avgArsScoreEventHandler(
 
   newAvgArs = omit(newAvgArs, DYNAMO_KEYS) as AverageArsScore
 
-  await userRepository.updateAvgTrsScoreOfUser(
-    newAvgArs.userId,
-    omit(newAvgArs)
-  )
+  await userRepository.updateAvgTrsScoreOfUser(newAvgArs.userId, newAvgArs)
   subSegment?.close()
 }

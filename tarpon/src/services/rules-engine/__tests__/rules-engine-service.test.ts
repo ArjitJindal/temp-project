@@ -230,6 +230,7 @@ describe('Verify Transaction', () => {
             },
           },
         ],
+        updateCount: expect.any(Number),
       } as TransactionMonitoringResult)
     })
 
@@ -317,6 +318,7 @@ describe('Verify Transaction', () => {
             },
           },
         ],
+        updateCount: expect.any(Number),
       } as TransactionMonitoringResult)
     })
   })
@@ -645,7 +647,10 @@ describe('Verify Transaction Event', () => {
       )
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
-        transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
+        transaction: omit(
+          { ...latestTransaction, updateCount: expect.any(Number) },
+          ['executedRules', 'hitRules']
+        ),
         executedRules: result1.executedRules.map((rule) => ({
           ...rule,
           executedAt: expect.any(Number),
@@ -737,6 +742,7 @@ describe('Verify Transaction Event', () => {
             },
           },
         ],
+        updateCount: expect.any(Number),
       })
 
       const transactionEventRepository = new TransactionEventRepository(
@@ -837,7 +843,10 @@ describe('Verify Transaction Event', () => {
       )
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
-        transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
+        transaction: omit(
+          { ...latestTransaction, updateCount: expect.any(Number) },
+          ['executedRules', 'hitRules']
+        ),
         executedRules: result1.executedRules.map((rule) => ({
           ...rule,
           executedAt: expect.any(Number),
@@ -3642,6 +3651,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
         trsRiskLevel: 'VERY_HIGH',
         trsScore: 90,
       },
+      updateCount: expect.any(Number),
     })
 
     const mongoDbTransactionRepository = new MongoDbTransactionRepository(

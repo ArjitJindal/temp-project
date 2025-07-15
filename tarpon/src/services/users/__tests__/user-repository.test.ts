@@ -73,7 +73,7 @@ describe('Test Dynamo Db User Update', () => {
       hitRules
     )
 
-    expect(updatedUser).toEqual({
+    expect(updatedUser).toMatchObject({
       ...user,
       type: 'CONSUMER',
       executedRules,
@@ -113,7 +113,7 @@ describe('Test User Management Service', () => {
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'CONSUMER' })
-    expect(userResult).toEqual({
+    expect(userResult).toMatchObject({
       ...user,
       type: 'CONSUMER',
     })
@@ -169,7 +169,7 @@ describe('Test User Management Service', () => {
       status: 'ALLOW',
     }
 
-    expect(userUpdated).toEqual(toBeCheckedData)
+    expect(userUpdated).toMatchObject(toBeCheckedData)
 
     const mongoUserUpdated = await userRepository.getMongoConsumerUser(
       user.userId
@@ -204,7 +204,7 @@ describe('Test Business User Management Service', () => {
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'BUSINESS' })
-    expect(userResult).toEqual({
+    expect(userResult).toMatchObject({
       ...user,
       type: 'BUSINESS',
     })
@@ -268,7 +268,7 @@ describe('Test Business User Management Service', () => {
       hitRules: [],
     }
 
-    expect(userUpdated).toEqual(toBeCheckedData)
+    expect(userUpdated).toMatchObject(toBeCheckedData)
 
     const mongoUserUpdated = await userRepository.getMongoBusinessUser(
       user.userId

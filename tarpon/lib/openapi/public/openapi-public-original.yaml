@@ -2374,6 +2374,9 @@ components:
           description: Uploaded user's attachment
           items:
             $ref: '#/components/schemas/PersonAttachment'
+        updateCount:
+          x-fern-ignore: true
+          type: number
     ConsumerUserSegment:
       title: ConsumerUserSegment
       type: string
@@ -2871,6 +2874,9 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        updateCount:
+          x-fern-ignore: true
+          type: number
     TransactionBase:
       title: TransactionBase
       type: object
@@ -4462,6 +4468,9 @@ components:
           description: User's attachments uploaded by business user
           items:
             $ref: '#/components/schemas/PersonAttachment'
+        updateCount:
+          x-fern-ignore: true
+          type: number
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object
@@ -5263,6 +5272,9 @@ components:
           $ref: '#/components/schemas/TransactionUpdatable'
         metaData:
           $ref: '#/components/schemas/DeviceData'
+        updateCount:
+          x-fern-ignore: true
+          type: number
       required:
         - transactionState
         - timestamp
@@ -5448,6 +5460,9 @@ components:
           description: Event description
         updatedConsumerUserAttributes:
           $ref: '#/components/schemas/UserOptional'
+        updateCount:
+          x-fern-ignore: true
+          type: number
       required:
         - timestamp
         - userId
@@ -5527,6 +5542,9 @@ components:
           description: Event description
         updatedBusinessUserAttributes:
           $ref: '#/components/schemas/BusinessOptional'
+        updateCount:
+          x-fern-ignore: true
+          type: number
       required:
         - timestamp
         - userId

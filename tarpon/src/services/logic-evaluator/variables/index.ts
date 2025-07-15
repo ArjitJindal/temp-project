@@ -83,6 +83,7 @@ const DESTINATION_TRANSACTION_AMOUNT_KEY =
 const TRANSACTION_TYPE_KEY = 'type'
 const TRANSACTION_TAGS_KEY = 'tags'
 const USER_TAGS_KEY = 'tags'
+const OMITTED_ENTITY_FIELDS: string[] = ['updateCount']
 
 function withNamespace(variable: LogicVariable) {
   return {
@@ -533,9 +534,12 @@ function getAutoLogicEntityVariables(
   ignoreFields: string[] = []
 ): LogicVariable[] {
   let leafValueInfos = getPublicModelLeafAttrs(entityClass)
-  if (ignoreFields.length) {
+  const allIgnoredFields: string[] = [...OMITTED_ENTITY_FIELDS, ...ignoreFields]
+  if (allIgnoredFields.length) {
     leafValueInfos = leafValueInfos.filter((info) =>
-      ignoreFields.every((ignoreField) => !info.pathKey.startsWith(ignoreField))
+      allIgnoredFields.every(
+        (ignoreField) => !info.pathKey.startsWith(ignoreField)
+      )
     )
   }
   const nonArrayVariables: LogicVariable[] = leafValueInfos

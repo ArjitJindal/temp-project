@@ -23,7 +23,7 @@ import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTran
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
-import { batchWrite } from '@/utils/dynamodb'
+import { getUpsertSaveDynamoCommand, transactWrite } from '@/utils/dynamodb'
 
 @traceable
 export class TransactionEventRepository {
@@ -68,7 +68,7 @@ export class TransactionEventRepository {
     }[] = []
 
     // Process each event and prepare write requests
-    const writeRequests = await Promise.all(
+    const operations = await Promise.all(
       transactionEvents.map(async (e) => {
         const eventId = e.transactionEvent.eventId || uuidv4()
 
@@ -86,22 +86,25 @@ export class TransactionEventRepository {
           }
         )
         primaryKeys.push(primaryKey)
-
         return {
-          PutRequest: {
-            Item: {
-              ...primaryKey,
-              eventId,
-              ...e.transactionEvent,
-              ...e.rulesResult,
+          Update: getUpsertSaveDynamoCommand(
+            {
+              entity: { eventId, ...e.transactionEvent, ...e.rulesResult },
+              tableName: tableName,
+              key: primaryKey,
             },
-          },
+            { versioned: true }
+          ),
+          eventId: eventId,
         }
       })
     )
 
     // Batch write all items in a single db operation
-    await batchWrite(this.dynamoDb, writeRequests, tableName)
+    await transactWrite(
+      this.dynamoDb,
+      operations.map((operation) => ({ Update: operation.Update }))
+    )
 
     // Handle local changes if needed
     if (runLocalChangeHandler()) {
@@ -116,8 +119,7 @@ export class TransactionEventRepository {
           )
       )
     }
-
-    return writeRequests.map((request) => request.PutRequest.Item.eventId)
+    return operations.map((request) => request.eventId)
   }
 
   public async updateTransactionEventRulesResult(
@@ -131,11 +133,13 @@ export class TransactionEventRepository {
       eventId: event.eventId as string,
     })
     const updateExpression =
-      'SET executedRules = :executedRules, hitRules = :hitRules, #status = :status'
+      'SET executedRules = :executedRules, hitRules = :hitRules, #status = :status, #updateCount = if_not_exists(#updateCount, :zero) + :one'
     const updateValues = {
       ':executedRules': rulesResult.executedRules,
       ':hitRules': rulesResult.hitRules,
       ':status': rulesResult.status,
+      ':one': 1,
+      ':zero': 0,
     }
     const updateParams: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -144,6 +148,7 @@ export class TransactionEventRepository {
       ExpressionAttributeValues: updateValues,
       ExpressionAttributeNames: {
         '#status': 'status',
+        '#updateCount': 'updateCount',
       },
     }
     await this.dynamoDb.send(new UpdateCommand(updateParams))

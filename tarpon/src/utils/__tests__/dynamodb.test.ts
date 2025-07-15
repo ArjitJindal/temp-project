@@ -1,11 +1,13 @@
 import { StackConstants } from '@lib/constants'
 import { range } from 'lodash'
+import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import {
   batchGet,
   batchWrite,
   getDynamoDbClient,
   paginateQuery,
   transactWrite,
+  upsertSaveDynamo,
 } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 const MOCK_RECORDS_COUNT = 250
@@ -350,5 +352,93 @@ describe('transactWrite', () => {
     ]
 
     await expect(transactWrite(dynamoDb, invalidOperations)).rejects.toThrow()
+  })
+})
+describe('upsertSaveDynamo (integration)', () => {
+  const baseKey = { PartitionKeyID: 'user#test123', SortKeyID: '1' }
+  it('inserts all the keys of an object (non versioned)', async () => {
+    const dynamoSpy = jest.spyOn(dynamoDb, 'send')
+    dynamoSpy.mockImplementationOnce(async (_args) => {})
+    await upsertSaveDynamo(dynamoDb, {
+      entity: { name: 'Kavish', age: 30 },
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      key: baseKey,
+    })
+
+    expect(dynamoSpy).toHaveBeenCalledWith(expect.any(UpdateCommand))
+    const commandArg = dynamoSpy.mock.calls[0][0].input
+
+    expect(commandArg).toEqual({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      Key: baseKey,
+      UpdateExpression: 'SET #name = :name, #age = :age',
+      ExpressionAttributeNames: {
+        '#name': 'name',
+        '#age': 'age',
+      },
+      ExpressionAttributeValues: {
+        ':name': 'Kavish',
+        ':age': 30,
+      },
+      ReturnValues: 'ALL_NEW',
+    })
+  })
+  it('inserts an item and sets updateCount = 1', async () => {
+    const entity = {
+      name: 'JACK',
+      age: 30,
+    }
+
+    await upsertSaveDynamo(
+      dynamoDb,
+      {
+        entity,
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        key: baseKey,
+      },
+      {
+        versioned: true,
+      }
+    )
+
+    const result = await dynamoDb.send(
+      new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        Key: baseKey,
+      })
+    )
+
+    expect(result.Item).toBeDefined()
+    expect(result.Item?.name).toBe('JACK')
+    expect(result.Item?.age).toBe(30)
+    expect(result.Item?.updateCount).toBe(1)
+  })
+
+  it('updates the item and increments updateCount', async () => {
+    const entity = {
+      age: 31,
+    }
+
+    await upsertSaveDynamo(
+      dynamoDb,
+      {
+        entity,
+        tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        key: baseKey,
+      },
+      {
+        versioned: true,
+      }
+    )
+
+    const result = await dynamoDb.send(
+      new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        Key: baseKey,
+      })
+    )
+
+    expect(result.Item?.age).toBe(31)
+    expect(result.Item?.updateCount).toBe(2)
   })
 })

@@ -44,6 +44,7 @@ import {
   dynamoDbQueryHelper,
   paginateQuery,
   paginateQueryGenerator,
+  upsertSaveDynamo,
 } from '@/utils/dynamodb'
 import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -118,22 +119,21 @@ export class DynamoDbTransactionRepository
         const auxiliaryIndexes =
           this.getTransactionAuxiliaryIndexes(transaction)
 
-        const requests = [
+        await upsertSaveDynamo(
+          this.dynamoDb,
           {
-            PutRequest: {
-              Item: {
-                ...primaryKey,
-                ...transaction,
-                ...rulesResult,
-              },
-            },
+            entity: { ...transaction, ...rulesResult },
+            key: primaryKey,
+            tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
           },
-          ...auxiliaryIndexes.map((item) => ({
-            PutRequest: {
-              Item: item,
-            },
-          })),
-        ]
+          { versioned: true }
+        )
+
+        const requests = auxiliaryIndexes.map((item) => ({
+          PutRequest: {
+            Item: item,
+          },
+        }))
 
         return requests
       })
@@ -173,14 +173,17 @@ export class DynamoDbTransactionRepository
       new UpdateCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: primaryKey,
-        UpdateExpression: `SET executedRules = :executedRules, hitRules = :hitRules, #status = :status`,
+        UpdateExpression: `SET executedRules = :executedRules, hitRules = :hitRules, #status = :status,  #updateCount = if_not_exists(#updateCount, :zero) + :one`,
         ExpressionAttributeValues: {
           ':executedRules': executedRules,
           ':hitRules': hitRules,
           ':status': rulesResult.status,
+          ':zero': 0,
+          ':one': 1,
         },
         ExpressionAttributeNames: {
           '#status': 'status',
+          '#updateCount': 'updateCount',
         },
       })
     )

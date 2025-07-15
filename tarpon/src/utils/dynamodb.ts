@@ -18,6 +18,7 @@ import {
   QueryCommandOutput,
   UpdateCommand,
   TransactWriteCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import {
   ConsumedCapacity,
@@ -28,10 +29,10 @@ import {
   DeleteRequest,
   KeysAndAttributes,
   TransactWriteItem,
-  Update,
-  Delete,
-  Put,
   ConditionCheck,
+  Put,
+  Delete,
+  Update,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
@@ -787,4 +788,72 @@ export async function transactWrite(
       }
     }
   }
+}
+
+export function getUpsertSaveDynamoCommand(
+  data: {
+    entity: object
+    tableName?: string
+    key: Record<string, NativeAttributeValue>
+  },
+  options?: {
+    versioned?: boolean
+  }
+): UpdateCommandInput & {
+  UpdateExpression: string
+} {
+  /* Todo: Ideally should reuse function  getUpdateAttributesUpdateItemInput 
+   but it doesn't handle reserved keywords yet */
+
+  const { entity, tableName, key: dynamoKey } = data
+  // Build UpdateExpression
+  const expressionParts: string[] = []
+  const expressionValues = {}
+  const expressionNames = {}
+  for (const key of Object.keys(entity)) {
+    if (
+      entity[key] === undefined ||
+      (key === 'updateCount' && options?.versioned)
+    ) {
+      continue
+    }
+    expressionParts.push(`#${key} = :${key}`)
+    expressionValues[`:${key}`] = entity[key]
+    expressionNames[`#${key}`] = key
+  }
+
+  if (options?.versioned) {
+    // Add updateCount increment
+    expressionParts.push(
+      `#updateCount = if_not_exists(#updateCount, :zero) + :one`
+    )
+    expressionNames['#updateCount'] = 'updateCount'
+    expressionValues[':zero'] = 0
+    expressionValues[':one'] = 1
+  }
+  const updateExpression = 'SET ' + expressionParts.join(', ')
+  const command: UpdateCommandInput & { UpdateExpression: string } = {
+    TableName: tableName,
+    Key: dynamoKey,
+    ExpressionAttributeValues: expressionValues,
+    ExpressionAttributeNames: expressionNames,
+    UpdateExpression: updateExpression,
+    ReturnValues: 'ALL_NEW',
+  }
+  return command
+}
+
+export async function upsertSaveDynamo(
+  client: DynamoDBDocumentClient,
+  data: {
+    entity: object
+    tableName?: string
+    key: Record<string, NativeAttributeValue>
+  },
+  options?: {
+    versioned?: boolean
+  }
+) {
+  const command = getUpsertSaveDynamoCommand(data, options)
+  await client.send(new UpdateCommand(command))
 }

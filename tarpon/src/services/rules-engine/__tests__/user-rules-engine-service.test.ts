@@ -237,6 +237,7 @@ describe('Verify User', () => {
           },
         ],
         status: 'FLAG',
+        updateCount: expect.any(Number),
       })
     })
 
@@ -320,6 +321,7 @@ describe('Verify User', () => {
             ruleName: 'test rule name',
           },
         ],
+        updateCount: expect.any(Number),
       })
     })
   })
@@ -514,6 +516,7 @@ describe('Verify User', () => {
         ],
         riskScoreDetails: undefined,
         status: 'FLAG',
+        updateCount: expect.any(Number),
       })
 
       await rulesEngineService.verifyAsyncRulesUserEvent(
@@ -617,6 +620,7 @@ describe('Verify User', () => {
           },
         ],
         status: 'FLAG',
+        updateCount: expect.any(Number),
       })
     })
   })
@@ -777,6 +781,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           ruleName: 'test rule name',
         },
       ],
+      updateCount: expect.any(Number),
     })
   })
 
@@ -896,6 +901,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           ruleName: 'test rule name',
         },
       ],
+      updateCount: expect.any(Number),
     })
   })
 })
@@ -1004,6 +1010,7 @@ describe('Create a consumer user event with risk scoring V8', () => {
         kycRiskLevel: 'VERY_HIGH',
         kycRiskScore: 90,
       },
+      updateCount: expect.any(Number),
     })
   })
 })
@@ -1110,6 +1117,7 @@ describe('Create a business user event with risk scoring V8', () => {
         kycRiskLevel: 'VERY_HIGH',
         kycRiskScore: 90,
       },
+      updateCount: expect.any(Number),
     })
   })
 })

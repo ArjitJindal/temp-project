@@ -401,6 +401,7 @@ describe('V8 Risk scoring ', () => {
           value: 67.5,
           transactionCount: 1,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const result2 = await riskScoringService.handleTransaction(
           getTestTransaction({
@@ -424,6 +425,7 @@ describe('V8 Risk scoring ', () => {
           value: 71.25,
           transactionCount: 2,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
       })
       test('should update averageARScores only one user with transaction events', async () => {
@@ -454,6 +456,7 @@ describe('V8 Risk scoring ', () => {
           value: 67.5,
           transactionCount: 1,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const result2 = await riskScoringService.handleTransaction(
           getTestTransaction({
@@ -478,6 +481,7 @@ describe('V8 Risk scoring ', () => {
           value: 71.25,
           transactionCount: 2,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const result3 = await riskScoringService.handleTransaction(
           {
@@ -513,6 +517,7 @@ describe('V8 Risk scoring ', () => {
           userId: 'USER4',
           value: 75,
           transactionCount: 2,
+          updateCount: expect.any(Number),
           createdAt: expect.any(Number),
         })
       })
@@ -545,6 +550,7 @@ describe('V8 Risk scoring ', () => {
           value: 67.5,
           transactionCount: 1,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const user3AverageArsScore1 =
           await riskRepository.getAverageArsScoreDynamo('USER3')
@@ -553,6 +559,7 @@ describe('V8 Risk scoring ', () => {
           value: 67.5,
           transactionCount: 1,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const result2 = await riskScoringService.handleTransaction(
           getTestTransaction({
@@ -580,6 +587,7 @@ describe('V8 Risk scoring ', () => {
           value: 71.25,
           transactionCount: 2,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
         const user3AverageArsScore2 =
           await riskRepository.getAverageArsScoreDynamo('USER3')
@@ -588,6 +596,7 @@ describe('V8 Risk scoring ', () => {
           value: 71.25,
           transactionCount: 2,
           createdAt: expect.any(Number),
+          updateCount: expect.any(Number),
         })
       })
     })

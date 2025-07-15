@@ -8317,6 +8317,8 @@ components:
           $ref: '#/components/schemas/RiskLevel'
         isLocked:
           type: boolean
+        updateCount:
+          type: number
       required:
         - createdAt
         - krsScore
@@ -8345,6 +8347,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskFactorScoreDetails'
+        updateCount:
+          type: number
       required:
         - createdAt
         - arsScore
@@ -8382,6 +8386,8 @@ components:
             - BATCH
             - PUBLIC_API
         prevDrsScore:
+          type: number
+        updateCount:
           type: number
       required:
         - createdAt
@@ -12651,6 +12657,8 @@ components:
         transactionCount:
           type: number
         createdAt:
+          type: number
+        updateCount:
           type: number
       required:
         - value

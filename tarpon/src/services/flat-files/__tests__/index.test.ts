@@ -255,8 +255,8 @@ describe('FlatFilesService', () => {
             const dynamoUser1 = await saveUserToDynamo(user1.userId)
             const dynamoUser2 = await saveUserToDynamo(user2.userId)
 
-            expect(dynamoUser1).toEqual(user1)
-            expect(dynamoUser2).toEqual(user2)
+            expect(dynamoUser1).toMatchObject(user1)
+            expect(dynamoUser2).toMatchObject(user2)
           })
         }
       )
@@ -312,8 +312,8 @@ describe('FlatFilesService', () => {
           transaction2.transactionId
         )
 
-        expect(dynamoTransaction1).toEqual(transaction1)
-        expect(dynamoTransaction2).toEqual(transaction2)
+        expect(dynamoTransaction1).toMatchObject(transaction1)
+        expect(dynamoTransaction2).toMatchObject(transaction2)
       })
     })
   })

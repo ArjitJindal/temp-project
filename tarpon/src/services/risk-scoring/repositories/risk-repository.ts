@@ -33,6 +33,7 @@ import {
   BatchWriteRequestInternal,
   DeleteRequestInternal,
   paginateQuery,
+  upsertSaveDynamo,
 } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -56,11 +57,7 @@ import { AggregationRepository } from '@/services/logic-evaluator/engine/aggrega
 import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
-import {
-  getMongoDbClient,
-  internalMongoReplace,
-  paginateCursor,
-} from '@/utils/mongodb-utils'
+import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
 import {
   getClickhouseCredentials,
   isClickhouseEnabledInRegion,
@@ -83,6 +80,7 @@ import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassif
 import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { updateInMongoWithVersionCheck } from '@/utils/downstream-version'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -206,15 +204,16 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newKrsScoreItem,
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newKrsScoreItem },
+        key: primaryKey,
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       },
-    }
+      { versioned: true }
+    )
 
-    await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
@@ -250,15 +249,12 @@ export class RiskRepository {
       '1'
     )
 
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newArsScoreItem,
-      },
-    }
+    await upsertSaveDynamo(this.dynamoDb, {
+      entity: { ...newArsScoreItem },
+      key: primaryKey,
+      tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+    })
 
-    await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
@@ -342,15 +338,11 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newDrsScoreItem,
-      },
-    }
-
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+    await upsertSaveDynamo(this.dynamoDb, {
+      entity: { ...newDrsScoreItem },
+      key: primaryKey,
+      tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+    })
 
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
@@ -498,14 +490,15 @@ export class RiskRepository {
       isLocked: isLocked ?? false,
       manualRiskLevel: riskLevel,
     }
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newKrsScoreItem,
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newKrsScoreItem },
+        key: primaryKey,
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       },
-    }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+      { versioned: true }
+    )
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
@@ -538,15 +531,16 @@ export class RiskRepository {
       prevDrsScore: previousDrsScore?.drsScore,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...newDrsRiskValue,
-      },
-    }
 
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newDrsRiskValue },
+        key: primaryKey,
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      },
+      { versioned: true }
+    )
 
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
@@ -631,14 +625,15 @@ export class RiskRepository {
       userId,
       '1'
     )
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...primaryKey,
-        ...averageArsScore,
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...averageArsScore },
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        key: primaryKey,
       },
-    }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+      { versioned: true }
+    )
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
@@ -669,14 +664,15 @@ export class RiskRepository {
   /* MongoDB operations */
 
   async addKrsValueToMongo(krsScore: KrsScore): Promise<KrsScore> {
-    await internalMongoReplace(
+    const result = await updateInMongoWithVersionCheck<KrsScore>(
       this.mongoDb,
       KRS_SCORES_COLLECTION(this.tenantId),
       { userId: krsScore.userId },
-      krsScore
+      krsScore,
+      true
     )
-
-    return krsScore
+    const updatedScore = omit(result.value, '_id')
+    return updatedScore
   }
 
   async getKrsValueFromMongo(userId: string): Promise<KrsScore | null> {
@@ -700,13 +696,15 @@ export class RiskRepository {
   }
 
   async addArsValueToMongo(arsScore: ArsScore): Promise<ArsScore> {
-    await internalMongoReplace(
+    const result = await updateInMongoWithVersionCheck<ArsScore>(
       this.mongoDb,
       ARS_SCORES_COLLECTION(this.tenantId),
       { transactionId: arsScore.transactionId },
-      arsScore
+      arsScore,
+      true
     )
-    return arsScore
+    const updatedScore = omit(result.value, '_id')
+    return updatedScore
   }
 
   async getArsValueFromMongo(transactionId: string): Promise<ArsScore | null> {
