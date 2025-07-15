@@ -1687,8 +1687,7 @@ export class CdkTarponStack extends cdk.Stack {
   private createKinesisStream(
     streamId: string,
     streamName: string,
-    retentionPeriod: Duration,
-    shardCount = 1
+    retentionPeriod: Duration
   ): IStream {
     if (isQaEnv()) {
       const streamArn = `arn:aws:kinesis:${this.config.env.region}:${this.config.env.account}:stream/${streamName}`
@@ -1698,8 +1697,7 @@ export class CdkTarponStack extends cdk.Stack {
     const stream = new Stream(this, streamId, {
       streamName,
       retentionPeriod: retentionPeriod,
-      streamMode: StreamMode.PROVISIONED,
-      shardCount: shardCount,
+      streamMode: StreamMode.ON_DEMAND,
     })
     if (this.config.stage === 'dev') {
       stream.applyRemovalPolicy(RemovalPolicy.DESTROY)
