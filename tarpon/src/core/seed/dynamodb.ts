@@ -44,6 +44,8 @@ import { getCounterCollectionData } from '@/core/seed/data/counter'
 import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
 import { DynamoNotificationRepository } from '@/services/notifications/dynamo-repository'
+import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
+import { DynamoReasonsRepository } from '@/services/tenants/repositories/reasons/dynamo-repository'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -249,6 +251,10 @@ export async function seedDynamo(
       ...riskFactor,
     })
   }
+
+  logger.info('Create default reasons')
+  const reasonRepo = new DynamoReasonsRepository(tenantId, dynamoDb)
+  await reasonRepo.saveReasons(getDefaultReasonsData())
 
   const auditLogRepository = new DynamoAuditLogRepository(tenantId, dynamoDb)
   for (const auditLog of auditlogs()) {
