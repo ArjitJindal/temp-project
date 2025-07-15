@@ -185,7 +185,7 @@ const userNameCasesV2MaterializedColumn = `
 
 export const generatePaymentDetailsName = (prefix: string) => {
   return [
-    `${prefix}PaymentDetails_name String MATERIALIZED 
+    `${prefix}PaymentDetailsName String MATERIALIZED 
     CASE
       WHEN JSONExtractString(data, '${prefix}PaymentDetails', 'method') = 'CARD' THEN
         trimBoth(

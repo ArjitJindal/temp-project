@@ -236,9 +236,9 @@ export class ClickhouseTransactionsRepository {
     // Payment details name search (on both origin and destination)
     if ((params as any).filterPaymentDetailName) {
       whereConditions.push(
-        `(originPaymentDetails_name ILIKE '%${
+        `(originPaymentDetailsName ILIKE '%${
           (params as any).filterPaymentDetailName
-        }%' OR destinationPaymentDetails_name ILIKE '%${
+        }%' OR destinationPaymentDetailsName ILIKE '%${
           (params as any).filterPaymentDetailName
         }%')`
       )
