@@ -6685,6 +6685,7 @@ components:
         - ETH2
         - EUR
         - EUROC
+        - ETHFI
         - FARM
         - FET
         - FIDA
@@ -6698,6 +6699,7 @@ components:
         - FORTH
         - FOX
         - FX
+        - FTM
         - GAL
         - GALA
         - GBP
@@ -6850,6 +6852,7 @@ components:
         - PAB
         - PAX
         - PEN
+        - PENGU
         - PERP
         - PGK
         - PHP
@@ -6858,6 +6861,7 @@ components:
         - PLN
         - PLU
         - PNG
+        - POL
         - POLS
         - POLY
         - POND
@@ -6893,6 +6897,7 @@ components:
         - RPL
         - RSD
         - RUB
+        - RUNE
         - RWF
         - SAND
         - SAR
@@ -6934,6 +6939,7 @@ components:
         - SZL
         - T
         - THB
+        - THETA
         - TIA
         - TIME
         - TJS
