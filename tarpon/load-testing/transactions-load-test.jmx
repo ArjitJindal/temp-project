@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
-    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Transactions Load Test - Concurrency ${__P(CONCURRENCY,50)} - Duration ${__P(DURATION,60)} seconds ">
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Transactions Load Test ">
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
         <collectionProp name="Arguments.arguments"/>
       </elementProp>
@@ -15,24 +15,26 @@
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-         <intProp name="LoopController.loops">-1</intProp>
+          <intProp name="LoopController.loops">-1</intProp>
           <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
       </ThreadGroup>
       <hashTree>
- <OnceOnlyController guiclass="OnceOnlyControllerGui" testclass="OnceOnlyController" testname="Once Only - Config Label">
-        </OnceOnlyController>
+        <OnceOnlyController guiclass="OnceOnlyControllerGui" testclass="OnceOnlyController" testname="Once Only - Config Label"/>
         <hashTree>
           <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Inject Config Label" enabled="true">
             <stringProp name="scriptLanguage">groovy</stringProp>
             <stringProp name="script">
-              def concurrency = props.get("CONCURRENCY") ?: "50"
-              def duration = props.get("DURATION") ?: "60"
-              SampleResult.setSampleLabel("CONFIG: CONCURRENCY=${concurrency} DURATION=${duration}")
+              def concurrency = props.get(&quot;CONCURRENCY&quot;) ?: &quot;50&quot;
+              def duration = props.get(&quot;DURATION&quot;) ?: &quot;60&quot;
+              SampleResult.setSampleLabel(&quot;CONFIG: CONCURRENCY=${concurrency} DURATION=${duration}&quot;)
               SampleResult.setResponseCodeOK()
               SampleResult.setSuccessful(true)
-              SampleResult.setResponseMessage("Config marker")
+              SampleResult.setResponseMessage(&quot;Config marker&quot;)
             </stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
           </JSR223Sampler>
           <hashTree/>
         </hashTree>
@@ -78,7 +80,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 // Read comma-separated user IDs from -JuserIds
-def userIdsParam = props.get(&quot;USER_IDS&quot;) ?: &quot;CU-1,CU-2&quot;
+def userIdsParam = props.get(&quot;USER_IDS&quot;) ?: &quot;U-52,U-163&quot;
 def userIds = userIdsParam.split(&quot;,&quot;)
 
 // Pick random userId
@@ -118,10 +120,89 @@ def payload = [
 
 // Store to JMeter variable
 vars.put(&quot;payload&quot;, JsonOutput.toJson(payload))
+vars.put(&quot;transactionId&quot;, payload.transactionId)
 </stringProp>
             <stringProp name="scriptLanguage">groovy</stringProp>
           </JSR223PreProcessor>
           <hashTree/>
+        </hashTree>
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop 5 times">
+          <stringProp name="LoopController.loops">5</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </LoopController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Transaction events">
+            <stringProp name="HTTPSampler.domain">${__P(API_URL)}</stringProp>
+            <stringProp name="HTTPSampler.protocol">https</stringProp>
+            <stringProp name="HTTPSampler.path">/events/transaction</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">${eventPayload}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Track Headers">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">x-api-key</stringProp>
+                  <stringProp name="Header.value">${__P(X_API_KEY)}</stringProp>
+                </elementProp>
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import groovy.json.JsonOutput
+
+// Get transactionId from previous sampler (must be set with vars.put)
+def transactionId = vars.get(&quot;transactionId&quot;)
+// If transactionId is missing, fail safely
+if (!transactionId) {
+    log.warn(&quot;Missing transactionId in vars — did the previous sampler run?&quot;)
+    transactionId = &quot;fallback-id-&quot; + UUID.randomUUID().toString()
+}
+
+// Generate timestamp within the last 15 minutes
+def now = System.currentTimeMillis()
+def fifteenMinutes = 15 * 60 * 1000
+def randomOffset = new Random().nextInt(fifteenMinutes + 1)
+def timestamp = now - randomOffset
+
+// Generate a random reference string
+def reference = UUID.randomUUID().toString()
+
+// Construct the payload
+def eventPayload = [
+  transactionId: transactionId,
+  timestamp: timestamp,
+  updatedTransactionAttributes: [
+    reference: reference
+  ],
+  transactionState: &quot;PROCESSING&quot;
+]
+
+// Store as JSON string in JMeter variable
+vars.put(&quot;eventPayload&quot;, JsonOutput.toJson(eventPayload))
+</stringProp>
+            </JSR223PreProcessor>
+            <hashTree/>
+          </hashTree>
         </hashTree>
         <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
           <boolProp name="ResultCollector.error_logging">false</boolProp>

@@ -53,6 +53,7 @@ async function runTask() {
   const command = new RunTaskCommand({
     cluster: clusterArn,
     taskDefinition: taskDefinitionArn,
+    launchType: 'FARGATE',
     networkConfiguration: {
       awsvpcConfiguration: {
         subnets: [subnetId],

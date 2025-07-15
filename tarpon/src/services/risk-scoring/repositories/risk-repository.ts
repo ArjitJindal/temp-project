@@ -249,11 +249,15 @@ export class RiskRepository {
       '1'
     )
 
-    await upsertSaveDynamo(this.dynamoDb, {
-      entity: { ...newArsScoreItem },
-      key: primaryKey,
-      tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-    })
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newArsScoreItem },
+        key: primaryKey,
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      },
+      { versioned: true }
+    )
 
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
@@ -338,11 +342,15 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    await upsertSaveDynamo(this.dynamoDb, {
-      entity: { ...newDrsScoreItem },
-      key: primaryKey,
-      tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-    })
+    await upsertSaveDynamo(
+      this.dynamoDb,
+      {
+        entity: { ...newDrsScoreItem },
+        key: primaryKey,
+        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      },
+      { versioned: true }
+    )
 
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
