@@ -1,9 +1,15 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 async function migrateTenant(tenant: Tenant) {
+  if (!isClickhouseEnabled()) {
+    return
+  }
   const client = await getClickhouseClient(tenant.id)
   const transactionsTable = CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
   await client.query({
