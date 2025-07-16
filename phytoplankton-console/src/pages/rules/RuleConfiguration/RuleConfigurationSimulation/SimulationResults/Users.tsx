@@ -82,9 +82,16 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
       : []),
     ...(isRiskScoringEnabled
       ? [
-          helper.simple<'riskScore'>({
-            key: 'riskScore',
+          helper.derived<string>({
+            value: (item) => {
+              return item.riskScore?.toFixed(2) ?? '-';
+            },
             title: 'Risk score',
+            type: {
+              render: (value) => {
+                return <>{value ?? '-'}</>;
+              },
+            },
           }),
         ]
       : []),
