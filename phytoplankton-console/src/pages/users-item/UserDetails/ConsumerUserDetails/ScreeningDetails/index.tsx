@@ -180,13 +180,16 @@ export default function ScreeningDetails(props: Props) {
           }}
           title="Screening details"
           width="L"
-          maskClosable={false}
+          maskClosable={!isLoading(userUpdateMutation.dataResource)}
           okText="Save"
           okProps={{
             isDisabled:
               pepValidationResult !== null ||
               !formState.isValid ||
               isLoading(userUpdateMutation.dataResource),
+          }}
+          cancelProps={{
+            isDisabled: isLoading(userUpdateMutation.dataResource),
           }}
         >
           <div className={s.formContainer}>
