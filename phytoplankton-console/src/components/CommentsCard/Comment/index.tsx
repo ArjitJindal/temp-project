@@ -14,6 +14,7 @@ import { Comment as ApiComment } from '@/apis';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';
+import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';
 
 interface Props {
   currentUserId: string | undefined;
@@ -48,6 +49,7 @@ export default function Comment(props: Props) {
     }
     return [user, currentUser];
   }, [users, comment.userId, currentUserId]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isDeleting, setDeleting] = useState(false);
 
   const handleClickDelete = async () => {
@@ -128,15 +130,26 @@ export default function Comment(props: Props) {
           )}
 
           {currentUserId === comment.userId && (
-            <Tooltip key="delete" title="Delete">
-              <span
-                onClick={handleClickDelete}
-                data-cy="comment-delete-button"
-                className={cn(styles.footerText, styles.delete)}
-              >
-                Delete
-              </span>
-            </Tooltip>
+            <>
+              <Tooltip key="delete" title="Delete">
+                <span
+                  onClick={() => setShowConfirmation(true)}
+                  data-cy="comment-delete-button"
+                  className={cn(styles.footerText, styles.delete)}
+                >
+                  Delete
+                </span>
+              </Tooltip>
+              <ConfirmModal
+                title="Delete comment"
+                text="Are you sure you want to delete this comment?"
+                isVisible={showConfirmation}
+                onCancel={() => setShowConfirmation(false)}
+                onConfirm={handleClickDelete}
+                isDanger
+                res={deleteCommentMutation.dataResource}
+              />
+            </>
           )}
         </div>
         {level === 1 && areRepliesEnabled && (replies !== 0 || showReplyEditor) && (

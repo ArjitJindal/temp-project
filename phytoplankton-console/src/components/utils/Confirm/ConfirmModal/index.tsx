@@ -43,6 +43,7 @@ export default function ConfirmModal(props: Props) {
       onOk={() => {
         formRef.current?.submit();
       }}
+      maskClosable={res && !isLoading(res)}
       okProps={{
         htmlType: 'submit',
         isDisabled: !isFormValid,
@@ -53,6 +54,7 @@ export default function ConfirmModal(props: Props) {
       cancelText="Cancel"
       cancelProps={{
         htmlType: 'button',
+        isDisabled: res != null && isLoading(res),
       }}
     >
       <Form
