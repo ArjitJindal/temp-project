@@ -277,7 +277,7 @@ export async function offsetPaginateClickhouse<T>(
     where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
-  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT COUNT(DISTINCT id) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 
@@ -298,6 +298,61 @@ export async function offsetPaginateClickhouse<T>(
       ? items.map((item) => callbackMap(item))
       : (items as unknown as T[]),
     count: count[0].count,
+  }
+}
+
+export async function offsetPaginateClickhousePreview<T>(
+  client: ClickHouseClient,
+  tableName: string,
+  query: ClickhousePaginationParams,
+  where = '1',
+  columns: Record<string, string>,
+  callbackMap?: (item: Record<string, string | number>) => T
+): Promise<{ items: T[]; count: number }> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  const sortField = (query.sortField || 'timestamp').replace(/\./g, '_')
+  const sortOrder = query.sortOrder || 'ascend'
+  const page = query.page || 1
+  const offset = (page - 1) * pageSize
+
+  const columnsString = Object.entries(columns)
+    .map(([key, value]) => `${value} AS ${key}`)
+    .join(', ')
+
+  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+
+  const findSql = `
+    SELECT DISTINCT ${columnsString}
+    FROM ${tableName} FINAL
+    WHERE ${where}
+    ORDER BY ${sortField} ${direction}
+    OFFSET ${offset} ROWS
+    FETCH FIRST ${pageSize} ROWS ONLY
+  `
+
+  const countQuery = `
+    SELECT COUNT(DISTINCT id) as count 
+    FROM ${tableName} FINAL 
+    WHERE ${where}
+  `
+
+  const [items, count] = await Promise.all([
+    executeClickhouseQuery<Record<string, string | number>[]>(client, {
+      query: findSql,
+      format: 'JSONEachRow',
+    }),
+
+    executeClickhouseQuery<Array<{ count: number }>>(client, {
+      query: countQuery,
+      format: 'JSONEachRow',
+    }),
+  ])
+
+  return {
+    items: callbackMap
+      ? items.map((item) => callbackMap(item))
+      : (items as unknown as T[]),
+    count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
   }
 }
 

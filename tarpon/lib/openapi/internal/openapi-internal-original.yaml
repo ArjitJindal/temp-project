@@ -2132,6 +2132,58 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+  /users-preview:
+    get:
+      summary: All Users - List (Lite)
+      tags: []
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsersPreviewOffsetPaginateListResponse'
+      operationId: get-all-users-preview-list
+      description: Lighter version of the users list that only returns essential fields
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          in: query
+          name: order
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            $ref: '#/components/schemas/UserType'
+          in: query
+          name: filterUserType
+        - schema:
+            $ref: '#/components/schemas/FilterOperator'
+          in: query
+          name: filterOperator
+        - schema:
+            type: boolean
+          in: query
+          name: includeCasesCount
     post:
       summary: Users - Flat File Upload
       operationId: post-users-flat-file-upload
@@ -9665,6 +9717,20 @@ components:
           type: number
         riskLevel:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+    AllUsersTableItemPreview:
+      title: AllUsersTableItemPreview
+      type: object
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        casesCount:
+          type: number
+        riskLevel:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+      required:
+        - userId
     UserCommonTableItem:
       title: UserRiskScoreTableItem
       type: object
@@ -9857,6 +9923,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AllUsersTableItem'
+      required:
+        - count
+        - items
+    AllUsersPreviewOffsetPaginateListResponse:
+      title: AllUsersPreviewOffsetPaginateListResponse
+      type: object
+      properties:
+        count:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllUsersTableItemPreview'
       required:
         - count
         - items

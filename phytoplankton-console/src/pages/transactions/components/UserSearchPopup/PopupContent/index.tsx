@@ -1,31 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'ahooks';
-import { useLastSearches, useUsers } from '../helpers';
+import { useLastSearches, useUsersSearch } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
 import LastSearchList from './LastSearchList';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
-import { AllUsersTableItem, UserType } from '@/apis';
+import { AllUsersTableItemPreview, UserType } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import TextInput from '@/components/library/TextInput';
+import { UserSearchParams } from '@/pages/users/users-list';
 interface Props {
   initialSearch: string;
   isVisible: boolean;
-  onConfirm: (user: AllUsersTableItem) => void;
+  onConfirm: (user: AllUsersTableItemPreview) => void;
   onCancel: () => void;
   onEnterInput: (userId: string) => void;
   userType?: UserType;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  params?: UserSearchParams;
+  onClose?: () => void;
 }
 
 export default function PopupContent(props: Props) {
-  const { isVisible, initialSearch, onConfirm, onEnterInput, userType } = props;
+  const {
+    isVisible,
+    initialSearch,
+    onConfirm,
+    onEnterInput,
+    userType,
+    handleChangeParams,
+    params,
+    onClose,
+  } = props;
   const settings = useSettings();
 
   const [search, setSearch] = useState(initialSearch);
 
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const usersRes = useUsers(debouncedSearch, userType);
+  const usersRes = useUsersSearch(debouncedSearch, userType);
   const { onAdd } = useLastSearches();
 
   const usersCount = isSuccess(usersRes.data) ? usersRes.data.value.total : null;
@@ -43,7 +56,7 @@ export default function PopupContent(props: Props) {
     }
   }, [isVisible, initialSearch]);
 
-  function handleSelectUser(user: AllUsersTableItem) {
+  function handleSelectUser(user: AllUsersTableItemPreview) {
     onConfirm(user);
     onAdd(debouncedSearch);
     setSearch('');
@@ -72,10 +85,13 @@ export default function PopupContent(props: Props) {
       {search !== '' ? (
         <div className={s.content}>
           <UserList
+            handleChangeParams={handleChangeParams}
             usersRes={usersRes.data}
             selectedUser={null}
             search={debouncedSearch}
             onSelectUser={handleSelectUser}
+            params={params}
+            onClose={onClose}
           />
         </div>
       ) : (

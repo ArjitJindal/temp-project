@@ -9,6 +9,7 @@ import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupContent';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { UserType } from '@/apis';
+import { UserSearchParams } from '@/pages/users/users-list';
 
 interface Props {
   userId: string | null;
@@ -16,10 +17,13 @@ interface Props {
   onConfirm: (userId: string | null) => void;
   onUpdateFilterClose?: (status: boolean) => void;
   userType?: UserType;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  params?: UserSearchParams;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { userId, title, onConfirm, onUpdateFilterClose, userType } = props;
+  const { userId, title, onConfirm, onUpdateFilterClose, userType, handleChangeParams, params } =
+    props;
   const settings = useSettings();
   const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
@@ -64,24 +68,33 @@ export default function UserSearchButton(props: Props) {
     };
   }, [api, userId, currentUserId, settings.userAlias]);
 
-  const isEmpty = userId === null;
+  const isEmpty = !userId && !params?.userName;
 
   return (
     <QuickFilterBase
       title={title ?? `${firstLetterUpper(settings.userAlias)} ID/Name`}
       icon={<UserProfileIcon />}
-      buttonText={user?.name ?? userId}
+      buttonText={user?.name ?? userId ?? params?.userName}
       onClear={
         isEmpty
           ? undefined
           : () => {
               onConfirm(null);
+              if (params) {
+                handleChangeParams?.({
+                  ...params,
+                  userId: undefined,
+                  userName: undefined,
+                });
+              }
             }
       }
       onUpdateFilterClose={onUpdateFilterClose}
     >
       {({ isOpen, setOpen }) => (
         <PopupContent
+          params={params}
+          handleChangeParams={handleChangeParams}
           initialSearch={userId ?? ''}
           isVisible={isOpen}
           onConfirm={(user) => {
@@ -98,6 +111,7 @@ export default function UserSearchButton(props: Props) {
             setOpen(false);
           }}
           userType={userType}
+          onClose={() => setOpen(false)}
         />
       )}
     </QuickFilterBase>

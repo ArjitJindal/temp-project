@@ -3,12 +3,12 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_FIND } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
-import { AllUsersTableItem, UserType } from '@/apis';
+import { AllUsersTableItemPreview, UserType } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 
 type UsersResponse = {
   total: number;
-  users: AllUsersTableItem[];
+  users: AllUsersTableItemPreview[];
 };
 
 const LOCAL_STORAGE_KEY = 'FIND_USER_LAST_SEARCHES';
@@ -32,7 +32,7 @@ export function useLastSearches(): {
   };
 }
 
-export function useUsers(search: string, userType?: UserType): QueryResult<UsersResponse> {
+export function useUsersSearch(search: string, userType?: UserType): QueryResult<UsersResponse> {
   const api = useApi();
 
   return useQuery(USERS_FIND(search), async (): Promise<UsersResponse> => {
@@ -43,10 +43,9 @@ export function useUsers(search: string, userType?: UserType): QueryResult<Users
       };
     }
 
-    const users = await api.getAllUsersList({
-      beforeTimestamp: Date.now(),
-      filterId: search,
+    const users = await api.getAllUsersPreviewList({
       filterName: search,
+      filterId: search,
       filterOperator: 'OR',
       includeCasesCount: true,
       ...(userType && { filterUserType: userType }),

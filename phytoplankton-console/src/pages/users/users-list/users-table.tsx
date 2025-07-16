@@ -39,6 +39,7 @@ type Props = {
 const extraFilters = (
   list: 'business' | 'consumer' | 'all',
   params: UserSearchParams,
+  handleChangeParams: (params: UserSearchParams) => void,
   userAlias: string,
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
@@ -55,6 +56,8 @@ const extraFilters = (
             }));
           }}
           userType={list === 'business' ? 'BUSINESS' : list === 'consumer' ? 'CONSUMER' : undefined}
+          handleChangeParams={handleChangeParams}
+          params={params}
         />
       ),
     },
@@ -267,7 +270,7 @@ export const UsersTable = (props: Props) => {
     <QueryResultsTable<AllUsersTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type, params, settings.userAlias || '')}
+      extraFilters={extraFilters(type, params, handleChangeParams, settings.userAlias || '')}
       columns={columns}
       queryResults={queryResults}
       params={params}

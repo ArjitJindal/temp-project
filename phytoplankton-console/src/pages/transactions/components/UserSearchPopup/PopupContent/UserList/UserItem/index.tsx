@@ -3,11 +3,11 @@ import cn from 'clsx';
 import pluralize from 'pluralize';
 import s from './style.module.less';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
-import { AllUsersTableItem } from '@/apis';
+import { AllUsersTableItemPreview } from '@/apis';
 
 interface Props {
   isActive: boolean;
-  user: AllUsersTableItem;
+  user: AllUsersTableItemPreview;
   onClick: () => void;
 }
 

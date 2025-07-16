@@ -3,18 +3,31 @@ import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
 import Popover from '@/components/ui/Popover';
-import { AllUsersTableItem } from '@/apis';
+import { AllUsersTableItemPreview } from '@/apis';
+import { UserSearchParams } from '@/pages/users/users-list';
 
 interface Props {
   children: React.ReactNode;
   placement?: TooltipPlacement;
   initialSearch: string | null;
-  onConfirm: (user: AllUsersTableItem) => void;
+  onConfirm: (user: AllUsersTableItemPreview) => void;
   onEnterInput: (userId: string) => void;
+  params?: UserSearchParams;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  onClose?: () => void;
 }
 
 export default function UserSearchPopup(props: Props) {
-  const { children, initialSearch, placement = 'bottomLeft', onConfirm, onEnterInput } = props;
+  const {
+    children,
+    initialSearch,
+    placement = 'bottomLeft',
+    onConfirm,
+    onEnterInput,
+    params,
+    handleChangeParams,
+    onClose,
+  } = props;
   const [visible, setVisible] = useState(false);
 
   return (
@@ -35,6 +48,9 @@ export default function UserSearchPopup(props: Props) {
             onEnterInput={(userId) => {
               onEnterInput(userId);
             }}
+            params={params}
+            handleChangeParams={handleChangeParams}
+            onClose={onClose}
           />
         </div>
       }

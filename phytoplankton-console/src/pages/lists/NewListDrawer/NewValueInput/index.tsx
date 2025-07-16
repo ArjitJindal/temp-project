@@ -5,7 +5,7 @@ import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
 import Select, { Option } from '@/components/library/Select';
-import { AllUsersTableItem, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
+import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
@@ -17,11 +17,14 @@ import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
 import Spinner from '@/components/library/Spinner';
+import { UserSearchParams } from '@/pages/users/users-list';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
   listSubtype: ListSubtypeInternal;
   excludeCountries?: Set<string>;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  params?: UserSearchParams;
 }
 
 export default function NewValueInput(props: Props) {
@@ -48,7 +51,7 @@ export default function NewValueInput(props: Props) {
 }
 
 function UserIdInput(props: Omit<Props, 'listSubtype'>) {
-  const { onChange, onChangeMeta } = props;
+  const { onChange, onChangeMeta, params, handleChangeParams } = props;
   const [newUserData, setNewUserData] = useState<{
     userId: string | null;
     userFullName: string;
@@ -58,7 +61,7 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
   });
 
   const handleChooseUser = useCallback(
-    (user: AllUsersTableItem) => {
+    (user: AllUsersTableItemPreview) => {
       setNewUserData((state) => ({
         ...state,
         userId: user.userId,
@@ -78,6 +81,8 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
       onEnterInput={(userId: string) => {
         onChange?.([userId]);
       }}
+      params={params}
+      handleChangeParams={handleChangeParams}
     >
       <Button style={{ width: '100%' }}>{newUserData.userFullName || 'Choose user'}</Button>
     </UserSearchPopup>

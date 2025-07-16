@@ -18,6 +18,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       riskLevels: params.riskLevels?.join(',') ?? '',
       createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       userId: params.userId,
+      userName: params.userName,
       parentUserId: params.parentUserId,
       tagKey: params.tagKey,
       tagValue: params.tagValue,
@@ -40,6 +41,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       userId: raw.userId,
+      userName: raw.userName,
       parentUserId: raw.parentUserId,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,

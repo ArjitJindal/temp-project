@@ -89,6 +89,7 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ListService } from '@/services/list'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+import { AllUsersPreviewOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersPreviewOffsetPaginateListResponse'
 import { UserType } from '@/@types/openapi-internal/UserType'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { ConsumerUserTableItem } from '@/@types/openapi-internal/ConsumerUserTableItem'
@@ -100,6 +101,7 @@ import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
 import { UserFlatFileUploadRequest } from '@/@types/openapi-internal/UserFlatFileUploadRequest'
+import { AllUsersTableItemPreview } from '@/@types/openapi-internal/AllUsersTableItemPreview'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -1168,6 +1170,35 @@ export class UserService {
         params.filterOperator ?? 'AND',
         params.includeCasesCount ?? false,
         columns,
+        callback,
+        params.filterUserType
+      )
+
+    // count field is returned as string - converting it to number to match the expected response
+    // TODO: see if we can fix this in the clickhouse repository for all queries
+    return {
+      ...result,
+      count: Number(result.count),
+    }
+  }
+
+  public async getClickhouseUsersPreview(
+    params: DefaultApiGetAllUsersListRequest
+  ): Promise<AllUsersPreviewOffsetPaginateListResponse> {
+    const callback = (
+      data: Record<string, string | number>
+    ): AllUsersTableItemPreview => {
+      return {
+        userId: data.userId as string,
+        name: data.userName as string,
+        riskLevel: data.riskLevel as RiskLevel,
+      }
+    }
+
+    const result =
+      await this.userClickhouseRepository.getClickhouseUsersPreviewPaginate<AllUsersTableItemPreview>(
+        params,
+        params.filterOperator ?? 'AND',
         callback,
         params.filterUserType
       )

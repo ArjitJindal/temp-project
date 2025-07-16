@@ -13,6 +13,7 @@ import {
   COUNT_QUERY_LIMIT,
   DEFAULT_PAGE_SIZE,
   offsetPaginateClickhouse,
+  offsetPaginateClickhousePreview,
 } from '@/utils/pagination'
 import {
   getSortedData,
@@ -24,6 +25,8 @@ import {
   AllUsersTableItem,
   RiskClassificationScore,
   AllUsersOffsetPaginateListResponse,
+  AllUsersPreviewOffsetPaginateListResponse,
+  AllUsersTableItemPreview,
 } from '@/@types/openapi-internal/all'
 import { LinkerService } from '@/services/linker'
 
@@ -146,6 +149,98 @@ export class UserClickhouseRepository {
 
     return {
       items: result.items as AllUsersTableItem[],
+      count: result.count,
+    }
+  }
+
+  public async getClickhouseUsersPreviewPaginate<
+    T extends AllUsersTableItemPreview
+  >(
+    params: DefaultApiGetAllUsersListRequest,
+    filterOperator: 'AND' | 'OR',
+    callback: (data: Record<string, string | number>) => T,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<AllUsersPreviewOffsetPaginateListResponse> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return { items: [], count: 0 }
+    }
+
+    const whereClause = await this.buildWhereClause(params, userType, {
+      filterOperator,
+    })
+    const sortField =
+      (params.sortField === 'createdTimestamp'
+        ? 'timestamp'
+        : params.sortField) ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    // Define the columns for the lite query
+    const columns = {
+      userId: 'id',
+      userName: 'username',
+      riskLevel: "JSONExtractString(data, 'riskLevel')",
+    }
+
+    // Use the lite pagination utility
+    let result = await offsetPaginateClickhousePreview<T>(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
+      columns,
+      callback
+    )
+
+    const userIds = result.items.map((user) => user['userId'])
+    const casesCountQuery = `
+        SELECT 
+          userId,
+          count() as casesCount
+        FROM (
+          SELECT originUserId as userId FROM ${
+            CLICKHOUSE_DEFINITIONS.CASES.tableName
+          } FINAL
+          WHERE caseStatus != 'CLOSED' AND originUserId IN ('${userIds.join(
+            "','"
+          )}')
+          UNION ALL
+          SELECT destinationUserId as userId FROM ${
+            CLICKHOUSE_DEFINITIONS.CASES.tableName
+          } FINAL
+          WHERE caseStatus != 'CLOSED' AND destinationUserId IN ('${userIds.join(
+            "','"
+          )}')
+        )
+        GROUP BY userId
+        LIMIT ${COUNT_QUERY_LIMIT}
+      `
+
+    const casesCount = await executeClickhouseQuery<UserCasesCount[]>(
+      this.tenantId,
+      casesCountQuery
+    )
+
+    // Create a Map for O(1) lookup instead of using find() in a loop
+    const casesCountMap = new Map<string, number>()
+    casesCount.forEach((item) => {
+      casesCountMap.set(item.userId, item.casesCount)
+    })
+
+    result = {
+      ...result,
+      items: result.items.map((user) => ({
+        ...user,
+        casesCount: casesCountMap.get(user.userId) || 0,
+      })),
+    }
+
+    return {
+      items: result.items,
       count: result.count,
     }
   }

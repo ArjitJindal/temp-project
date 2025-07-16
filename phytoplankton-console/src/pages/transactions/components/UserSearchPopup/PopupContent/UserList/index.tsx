@@ -1,25 +1,42 @@
 import React from 'react';
 import pluralize from 'pluralize';
 import { List } from 'antd';
+import cn from 'clsx';
 import s from './style.module.less';
 import UserItem from './UserItem';
 import { AsyncResource } from '@/utils/asyncResource';
-import { AllUsersTableItem } from '@/apis';
+import { AllUsersTableItemPreview } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Spinner from '@/components/library/Spinner';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { UserSearchParams } from '@/pages/users/users-list';
+
 interface Props {
-  selectedUser: AllUsersTableItem | null;
-  onSelectUser: (user: AllUsersTableItem) => void;
+  selectedUser: AllUsersTableItemPreview | null;
+  onSelectUser: (user: AllUsersTableItemPreview) => void;
   search: string;
   usersRes: AsyncResource<{
     total: number;
-    users: AllUsersTableItem[];
+    users: AllUsersTableItemPreview[];
   }>;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  params?: UserSearchParams;
+  onClose?: () => void;
+}
+
+interface RenderMessageParams {
+  users: AllUsersTableItemPreview[];
+  total: number;
+  search: string;
+  userAlias?: string;
+  handleChangeParams?: (params: UserSearchParams) => void;
+  params?: UserSearchParams;
+  onClose?: () => void;
 }
 
 export default function UserList(props: Props) {
-  const { usersRes, selectedUser, search, onSelectUser } = props;
+  const { usersRes, selectedUser, search, onSelectUser, handleChangeParams, params, onClose } =
+    props;
   const settings = useSettings();
 
   // todo: i18n
@@ -42,9 +59,17 @@ export default function UserList(props: Props) {
         >
           {({ users, total }) => (
             <>
-              {renderMessage(users, total, search, settings.userAlias)}
+              {renderMessage({
+                users,
+                total,
+                search,
+                userAlias: settings.userAlias,
+                handleChangeParams,
+                params,
+                onClose,
+              })}
               {users.length > 0 && (
-                <List<AllUsersTableItem>
+                <List<AllUsersTableItemPreview>
                   dataSource={users}
                   renderItem={(nextUser) => (
                     <UserItem
@@ -53,6 +78,7 @@ export default function UserList(props: Props) {
                       isActive={nextUser.userId === selectedUser?.userId}
                       onClick={() => {
                         onSelectUser(nextUser);
+                        onClose?.();
                       }}
                     />
                   )}
@@ -66,12 +92,15 @@ export default function UserList(props: Props) {
   );
 }
 
-function renderMessage(
-  users: AllUsersTableItem[],
-  total: number,
-  search: string,
-  userAlias?: string,
-) {
+function renderMessage({
+  users,
+  total,
+  search,
+  userAlias,
+  handleChangeParams,
+  params,
+  onClose,
+}: RenderMessageParams) {
   const length = users.length;
   if (length === 0) {
     return (
@@ -82,7 +111,20 @@ function renderMessage(
   }
   if (total > length) {
     return (
-      <div className={s.subtitle}>More than {pluralize(userAlias ?? '', length, true)} found</div>
+      <div
+        className={cn(s.subtitle, s.clickable)}
+        onClick={() => {
+          if (handleChangeParams && params) {
+            handleChangeParams?.({
+              ...params,
+              userName: search,
+            });
+            onClose?.();
+          }
+        }}
+      >
+        More than {pluralize(userAlias ?? '', length, true)} found
+      </div>
     );
   }
   return <div className={s.subtitle}>{pluralize(userAlias ?? '', length, true)} found</div>;

@@ -42,6 +42,7 @@ export interface UserSearchParams extends CommonParams {
   pepRank?: PepRank;
   riskLevels?: RiskLevel[];
   userId?: string;
+  userName?: string;
   parentUserId?: string;
   tagKey?: string;
   tagValue?: string;
@@ -106,6 +107,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterCountryOfNationality: params.countryOfNationality,
         filterUserState: params.userState,
         filterKycStatus: params.kycStatus,
+        filterName: params.userName,
       };
 
       const response =
