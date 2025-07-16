@@ -29,7 +29,10 @@ export default function GeneralDetails(props: Props) {
         {
           label: 'DOB',
           value: user.userDetails?.dateOfBirth
-            ? dayjs(user.userDetails?.dateOfBirth).format(DEFAULT_DATE_FORMAT)
+            ? `${dayjs(user.userDetails.dateOfBirth).format(DEFAULT_DATE_FORMAT)} (${dayjs().diff(
+                dayjs(user.userDetails.dateOfBirth),
+                'year',
+              )} years)`
             : '-',
         },
         {
