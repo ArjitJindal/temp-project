@@ -504,7 +504,9 @@ const customBooleanWidget: CoreWidgets['boolean'] = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <Toggle size="S" value={props.value ?? false} onChange={props.setValue} />
+        <div style={{ marginTop: 5 }}>
+          <Toggle size="S" value={props.value ?? false} onChange={props.setValue} />
+        </div>
       </WidgetWrapper>
     );
   },
