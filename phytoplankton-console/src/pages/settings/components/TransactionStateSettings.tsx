@@ -173,6 +173,11 @@ export const TransactionStateSettings: React.FC = () => {
         description: 'When a transaction is completed successfully.',
         stateAlias: stateToAlias.get('SUCCESSFUL'),
       },
+      {
+        state: 'REVERSED',
+        description: 'When a transaction is reversed.',
+        stateAlias: stateToAlias.get('REVERSED'),
+      },
     ],
     [stateToAlias],
   );
