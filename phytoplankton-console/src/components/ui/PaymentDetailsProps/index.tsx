@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { humanizeCamelCase, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, humanizeCamelCase, humanizeConstant } from '@flagright/lib/utils/humanize';
 import Money from '../Money';
 import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
@@ -60,7 +60,7 @@ export default function PaymentDetailsProps(props: Props) {
               title={humanizeCamelCase(key)}
               className={s.property}
             >
-              {renderValue(key, value)}
+              {renderValue(key, value, paymentDetails.method)}
             </Form.Layout.Label>
           ))
         : '-'}
@@ -68,7 +68,11 @@ export default function PaymentDetailsProps(props: Props) {
   );
 }
 
-function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
+function renderValue(
+  key: PaymentDetailsKey,
+  value: unknown,
+  method: PaymentMethod,
+): React.ReactNode {
   if (value == null) {
     return '-';
   }
@@ -132,8 +136,11 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
     return formatConsumerName(name);
   }
   if (key === 'name') {
-    const name = value as ConsumerName;
-    return formatConsumerName(name);
+    if (method === 'NPP') {
+      const name = value as ConsumerName;
+      return formatConsumerName(name);
+    }
+    return humanizeAuto(value as string);
   }
   if (key === 'merchantDetails') {
     const merchandDetails = value as CardMerchantDetails;

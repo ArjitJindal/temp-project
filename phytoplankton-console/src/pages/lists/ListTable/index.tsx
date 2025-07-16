@@ -212,6 +212,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         columns={columns}
         pagination={false}
         fitHeight
+        sizingMode="FULL_WIDTH"
       />
       <DeleteListModal
         listType={listType}
