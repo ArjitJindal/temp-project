@@ -482,6 +482,16 @@ export type SanctionsScreeningDetailsMigrationBatchJob = {
   tenantId: string
 }
 
+export type GoCardlessBackfillBatchJob = {
+  type: 'GO_CARDLESS_BACKFILL'
+  tenantId: string
+  parameters: {
+    apiKey: string
+    publicApiEndpoint: string
+    concurrency: number
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -535,6 +545,8 @@ export type BatchJob =
   | FlatFilesValidationBatchJob
   | FlatFilesRunnerBatchJob
   | SanctionsScreeningDetailsMigrationBatchJob
+  | GoCardlessBackfillBatchJob
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }
