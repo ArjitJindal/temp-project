@@ -85,9 +85,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     USERS(type, params),
     async (paginationParams) => {
       const queryObj: DefaultParams = {
-        ...paginationParams,
         pageSize: params.pageSize,
-        page: paginationParams.page || params.page,
+        page: params.page,
         sortField: params.sort[0]?.[0],
         sortOrder: params.sort[0]?.[1] ?? 'ascend',
         afterTimestamp: params.createdTimestamp ? dayjs(params.createdTimestamp[0]).valueOf() : 0,
@@ -108,6 +107,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterUserState: params.userState,
         filterKycStatus: params.kycStatus,
         filterName: params.userName,
+        ...paginationParams,
       };
 
       const response =
