@@ -36,6 +36,8 @@ import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/
 import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 import { DashboardStatsTransactionTypeDistribution } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistribution'
 import { TransactionsTypeDistributionDashboardMetric } from '@/services/analytics/dashboard-metrics/transaction-type-stats'
+import { DashboardStatsPaymentApprovals } from '@/@types/openapi-internal/DashboardStatsPaymentApprovals'
+import { PaymentApprovalsDashboardMetric } from '@/services/analytics/dashboard-metrics/payment-approvals'
 
 @traceable
 export class DashboardStatsRepository {
@@ -413,6 +415,17 @@ export class DashboardStatsRepository {
     await TransactionsTypeDistributionDashboardMetric.refresh(
       this.tenantId,
       timeRange
+    )
+  }
+
+  public async getPaymentApprovalsStatistics(
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsPaymentApprovals[]> {
+    return PaymentApprovalsDashboardMetric.get(
+      this.tenantId,
+      startTimestamp,
+      endTimestamp
     )
   }
 }

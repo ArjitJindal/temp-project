@@ -384,6 +384,13 @@ export const dashboardStatsHandler = lambdaApi()(
         )
       }
     )
+    handlers.registerGetDashboardStatsPaymentApprovals(async (ctx, request) => {
+      const { startTimestamp, endTimestamp } = request
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
+      const items =
+        await dashboardStatsRepository.getPaymentApprovalsStatistics(start, end)
+      return { items }
+    })
     return await handlers.handle(event)
   }
 )

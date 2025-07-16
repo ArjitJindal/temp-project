@@ -1,5 +1,6 @@
 import { memoize } from 'lodash'
 import { TRANSACTION_EVENTS_SEED } from '../data/seeds'
+import { getAccounts } from '../samplers/accounts'
 import { getTransactions } from './transactions'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
@@ -25,6 +26,7 @@ const data: () => InternalTransactionEvent[] = memoize(() => {
           trsScore: rng.r(2).randomFloat(20),
           trsRiskLevel: 'LOW',
         },
+        createdBy: rng.r(1).pickRandom(getAccounts()).id,
       },
       {
         transactionState: 'SUSPENDED',
@@ -49,6 +51,7 @@ const data: () => InternalTransactionEvent[] = memoize(() => {
           trsScore: rng.r(2).randomFloat(70),
           trsRiskLevel: 'VERY_HIGH',
         },
+        createdBy: rng.r(1).pickRandom(getAccounts()).id,
       },
       {
         transactionState: t.transactionState || 'REFUNDED',
@@ -63,6 +66,7 @@ const data: () => InternalTransactionEvent[] = memoize(() => {
           trsScore: rng.r(2).randomFloat(100),
           trsRiskLevel: 'HIGH',
         },
+        createdBy: rng.r(1).pickRandom(getAccounts()).id,
       },
     ]
   })

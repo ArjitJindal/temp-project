@@ -347,6 +347,13 @@ export const DASHBOARD_TEAM_SLA_STATS = (params: AnyParameters): QueryKey => [
   params,
 ];
 
+export const DASHBOARD_TEAM_PAYMENT_APPROVALS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  'payment-approvals',
+  params,
+];
+
 export const COPILOT = (entityId: string): QueryKey => ['copilot', entityId];
 
 export const COPILOT_AI_RESOURCES = (): QueryKey => ['copilot', 'aiSources'];
