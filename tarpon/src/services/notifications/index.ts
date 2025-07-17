@@ -51,7 +51,7 @@ export class NotificationsService {
   }
 
   private allUsers = memoize(async () => {
-    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const accountsService = AccountsService.getInstance(this.dynamoDb, true)
     const tenant = await accountsService.getTenantById(this.tenantId)
     if (!tenant) {
       throw new Error(`Tenant not found: ${this.tenantId}`)
