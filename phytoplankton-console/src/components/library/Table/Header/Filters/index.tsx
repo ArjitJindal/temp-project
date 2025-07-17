@@ -89,8 +89,8 @@ export default function Filters<Params extends object>(props: Props<Params>) {
 
   return (
     <div className={style.root}>
-      <div className={style.content} style={{ width: size?.width }}>
-        <div className={style.gradientMaskWrapper}>
+      <div className={style.content}>
+        <div className={style.itemsWrapper} style={{ maxWidth: size?.width }}>
           <div className={style.items} ref={setItemsEl}>
             {sortedFilters
               .filter(({ key }) => filtersOrder.includes(key))
