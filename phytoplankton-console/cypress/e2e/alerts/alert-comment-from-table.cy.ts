@@ -48,6 +48,7 @@ describe('Comment Alerts from Table', () => {
     cy.wait(1000);
     cy.get('span[data-cy="comment-delete-button"]', { timeout: 8000 }).last().click();
 
+    cy.get("[data-cy='modal-ok']").contains('Confirm').click();
     // Make sure that there now again "length" of comments
     cy.wait(1000);
     cy.get('[data-cy="comments-section"]').then(($el) => {

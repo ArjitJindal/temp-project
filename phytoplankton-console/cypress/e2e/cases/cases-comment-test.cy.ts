@@ -79,6 +79,7 @@ describe('Add a comment to a case', () => {
             cy.get('[data-cy="comment-delete-button"]').click();
           });
 
+        cy.get("[data-cy='modal-ok']").contains('Confirm').click();
         cy.message('Comment deleted').should('exist');
 
         cy.intercept('GET', `**/cases/${caseId}**`).as('caseId');

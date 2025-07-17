@@ -72,6 +72,7 @@ describe('Add a comment to a user', () => {
           });
       })
       .then(() => {
+        cy.get("[data-cy='modal-ok']").contains('Confirm').click();
         cy.message('Comment deleted').should('exist');
       });
   });
