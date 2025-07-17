@@ -1133,12 +1133,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const sanctionSearchTypes: SanctionsSearchType[] =
           this.getEntitySanctionsSearchType(entity)
         const entityType = this.getEntityType(this.getDescriptions(entity))
-        if (
-          !name ||
-          !entityType ||
-          !sanctionSearchTypes?.length ||
-          this.entityTypes.includes(entityType)
-        ) {
+        if (!name || !entityType || !this.entityTypes.includes(entityType)) {
           return
         }
 
