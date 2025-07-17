@@ -79,6 +79,7 @@ export type Config = {
     }
     TARPON_CHANGE_CAPTURE_LAMBDA?: {
       MEMORY_SIZE?: number
+      PROVISIONED_CONCURRENCY?: number
     }
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
@@ -108,6 +109,7 @@ export type Config = {
     ATLAS_SEARCH_ENABLED?: boolean
     MONGO_DB_TRIGGER_LAMBDA?: {
       MEMORY_SIZE?: number
+      PROVISIONED_CONCURRENCY?: number
     }
     DYNAMO_DB_TRIGGER_LAMBDA?: {
       MEMORY_SIZE?: number

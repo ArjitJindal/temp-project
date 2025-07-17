@@ -1345,12 +1345,15 @@ export class CdkTarponStack extends cdk.Stack {
         {
           name: StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME,
           memorySize:
-            config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ?? 1024,
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
+            1024,
         }
       )
       tarponQueueConsumerAlias.addEventSource(
         new SqsEventSource(tarponEventQueue, {
-          maxConcurrency: 100,
+          maxConcurrency:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+              ?.PROVISIONED_CONCURRENCY ?? 100,
           batchSize: 10,
         })
       )
@@ -1573,7 +1576,7 @@ export class CdkTarponStack extends cdk.Stack {
       func: mongoDbTriggerQueueConsumerFunc,
     } = createFunction(this, lambdaExecutionRole, {
       name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
-      memorySize: config.resource.MONGO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
+      memorySize: this.config.resource.MONGO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
     })
 
     this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
@@ -1588,7 +1591,9 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(mongoDbConsumerQueue, {
         batchSize: 10,
         maxBatchingWindow: Duration.seconds(10),
-        maxConcurrency: 100,
+        maxConcurrency:
+          this.config.resource.MONGO_DB_TRIGGER_LAMBDA
+            ?.PROVISIONED_CONCURRENCY ?? 100,
       })
     )
 

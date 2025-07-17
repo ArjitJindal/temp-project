@@ -78,7 +78,8 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     TARPON_CHANGE_CAPTURE_LAMBDA: {
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 2048, // TEMPORARY 1024 -> 2048
+      PROVISIONED_CONCURRENCY: 1000, // TEMPORARY 100 -> 1000
     },
     TENANT_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
@@ -97,6 +98,10 @@ export const config: Config = {
     },
     INCOMING_WEBHOOK_LAMBDA: {
       MEMORY_SIZE: 1024,
+    },
+    MONGO_DB_TRIGGER_LAMBDA: {
+      MEMORY_SIZE: 2048,
+      PROVISIONED_CONCURRENCY: 1000, // TEMPORARY 100 -> 1000
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
