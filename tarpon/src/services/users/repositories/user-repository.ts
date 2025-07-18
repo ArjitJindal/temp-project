@@ -1069,7 +1069,7 @@ export class UserRepository {
 
     const updateWithoutId = omit(userToSave, ['_id'])
 
-    await Promise.all([
+    const promises: Promise<any>[] = [
       internalMongoUpdateOne(
         this.mongoDb,
         USERS_COLLECTION(this.tenantId),
@@ -1077,8 +1077,14 @@ export class UserRepository {
         { $set: updateWithoutId },
         { session: options?.session }
       ),
-      this.updateUniqueTags(userToSave?.tags),
-    ])
+    ]
+
+    // Skip updateUniqueTags for gocardless tenant
+    if (this.tenantId !== '4c9cdf0251') {
+      promises.push(this.updateUniqueTags(userToSave?.tags))
+    }
+
+    await Promise.all(promises)
 
     return user as InternalUser
   }
