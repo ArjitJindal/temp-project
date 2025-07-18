@@ -84,6 +84,7 @@ export class TarponChangeMongoDbConsumer {
       new StreamConsumerBuilder(
         path.basename(__dirname) + '-tarpon',
         process.env.TARPON_QUEUE_URL ?? '',
+        process.env.SECONDARY_TARPON_QUEUE_URL ?? '',
         StackConstants.TARPON_DYNAMODB_TABLE_NAME
       )
         .setConcurrentGroupBy((update) => {

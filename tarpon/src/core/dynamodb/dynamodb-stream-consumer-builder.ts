@@ -157,6 +157,7 @@ const sqsClient = getSQSClient()
 export class StreamConsumerBuilder {
   name: string
   fanOutSqsQueue: string
+  secondaryFanOutSqsQueue: string
   getTableName: (tenantId: string) => string
   transactionHandler?: TransactionHandler
   transactionsHandler?: TransactionsHandler
@@ -180,10 +181,12 @@ export class StreamConsumerBuilder {
   constructor(
     name: string,
     fanOutSqsQueue: string,
+    secondaryFanOutSqsQueue: string,
     getTableName: (tenantId: string) => string
   ) {
     this.name = name
     this.fanOutSqsQueue = fanOutSqsQueue
+    this.secondaryFanOutSqsQueue = secondaryFanOutSqsQueue
     this.handleDynamoDbUpdate = this.handleDynamoDbUpdate.bind(this)
     this.getTableName = getTableName
   }
@@ -618,8 +621,21 @@ export class StreamConsumerBuilder {
             update.entityId,
             10
           )}-${generateChecksum(update.sequenceNumber, 10)}`,
+          tenantId,
         }))
-      await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
+
+      const nonGcEntries = entries.filter(
+        (entry) => entry.tenantId !== '4c9cdf0251'
+      )
+
+      const gcEntries = entries.filter(
+        (entry) => entry.tenantId === '4c9cdf0251'
+      )
+
+      await Promise.all([
+        bulkSendMessages(sqsClient, this.fanOutSqsQueue, nonGcEntries),
+        bulkSendMessages(sqsClient, this.secondaryFanOutSqsQueue, gcEntries),
+      ])
     })
   }
 }
