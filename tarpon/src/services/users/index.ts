@@ -1224,22 +1224,6 @@ export class UserService {
     return result
   }
 
-  public async updateMointoringStatus(userId: string, isEnabled: boolean) {
-    const user = await this.getUser(userId, false)
-
-    if (!isBusinessUser(user as Business | User)) {
-      throw new createError.BadRequest(
-        `Cannot enable monitoring for non-business user ${userId}`
-      )
-    }
-
-    await this.userRepository.updateMonitoringStatus(userId, isEnabled)
-  }
-
-  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
-    return await this.userRepository.getTotalEnabledOngoingMonitoringUsers()
-  }
-
   private mergeList(
     comments: Comment[] = [],
     shareHoldersAttachment: PersonAttachment[] = [],

@@ -1,5 +1,4 @@
 import {
-  AggregationCursor,
   ClientSession,
   Document,
   Filter,
@@ -605,22 +604,6 @@ export class UserRepository {
     return result
   }
 
-  public async updateMonitoringStatus(
-    userId: string,
-    isMonitoringEnabled: boolean
-  ) {
-    await this.updateUser(userId, { isMonitoringEnabled })
-  }
-
-  public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalBusinessUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    return await collection.countDocuments({ isMonitoringEnabled: true })
-  }
-
   private async getMongoUsers(
     params: Params,
     userType?: UserType
@@ -850,20 +833,6 @@ export class UserRepository {
     return collection.find(match, { sort: { userId: 1 } })
   }
 
-  public async getMongoBusinessUser(
-    userId: string
-  ): Promise<InternalBusinessUser | null> {
-    const mongoUser = this.getMongoUser(userId, 'BUSINESS')
-    return mongoUser as unknown as InternalBusinessUser | null
-  }
-
-  public async getMongoConsumerUser(
-    userId: string
-  ): Promise<InternalConsumerUser | null> {
-    const mongoUser = this.getMongoUser(userId, 'CONSUMER')
-    return mongoUser as unknown as InternalConsumerUser | null
-  }
-
   public async getMongoUser(
     userId: string,
     userType?: 'BUSINESS' | 'CONSUMER',
@@ -902,17 +871,6 @@ export class UserRepository {
     }
 
     return cursor.toArray()
-  }
-
-  public getOngoingScreeningUsersCursor(): FindCursor<InternalBusinessUser> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalBusinessUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    return collection.find({
-      isMonitoringEnabled: true,
-    })
   }
 
   public async getUser<T>(userId: string): Promise<T | undefined> {
@@ -1023,13 +981,10 @@ export class UserRepository {
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
-        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': rulesResults.executedRules,
         ':hitRules': rulesResults.hitRules,
-        ':one': 1,
-        ':zero': 0,
       },
     }
 
@@ -1081,7 +1036,6 @@ export class UserRepository {
     }
 
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
-
     await upsertSaveDynamo(
       this.dynamoDb,
       {
@@ -1550,25 +1504,6 @@ export class UserRepository {
     }
   }
 
-  public getUsersWithoutKrsScoreCursor(
-    userIds: string[] = []
-  ): FindCursor<InternalUser> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    const users = collection
-      .find({
-        ...(userIds.length > 0
-          ? { userId: { $in: userIds } }
-          : { krsScore: { $exists: false } }),
-      })
-      .batchSize(100)
-
-    return users
-  }
-
   public async getEstimatedUsersCount(): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
@@ -1576,19 +1511,6 @@ export class UserRepository {
     )
     const count = await collection.estimatedDocumentCount()
     return count
-  }
-
-  public sampleUsersCursor(count: number): AggregationCursor<InternalUser> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    const users = collection.aggregate<InternalUser>([
-      { $sample: { size: count } },
-    ])
-
-    return users
   }
 
   public async getUserIdsByEmails(emails: string[]) {

@@ -80,7 +80,7 @@ describe('Test Dynamo Db User Update', () => {
       hitRules,
     })
 
-    const getUser = await userRepository.getMongoConsumerUser(userId)
+    const getUser = await userRepository.getMongoUser(userId, 'CONSUMER')
 
     expect(getUser).toMatchObject({
       ...user,
@@ -108,8 +108,9 @@ describe('Test User Management Service', () => {
     await userRepository.saveUser(user, 'CONSUMER')
 
     const userResult = await userRepository.getUser(user.userId)
-    const mongoUserResult = await userRepository.getMongoConsumerUser(
-      user.userId
+    const mongoUserResult = await userRepository.getMongoUser(
+      user.userId,
+      'CONSUMER'
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'CONSUMER' })
@@ -122,8 +123,10 @@ describe('Test User Management Service', () => {
       body: 'Test Comment',
     })
 
-    const mongoUserResultWithComment =
-      await userRepository.getMongoConsumerUser(user.userId)
+    const mongoUserResultWithComment = await userRepository.getMongoUser(
+      user.userId,
+      'CONSUMER'
+    )
 
     expect(mongoUserResultWithComment).toMatchObject({
       ...user,
@@ -171,8 +174,9 @@ describe('Test User Management Service', () => {
 
     expect(userUpdated).toMatchObject(toBeCheckedData)
 
-    const mongoUserUpdated = await userRepository.getMongoConsumerUser(
-      user.userId
+    const mongoUserUpdated = await userRepository.getMongoUser(
+      user.userId,
+      'CONSUMER'
     )
 
     expect(mongoUserUpdated).toMatchObject({
@@ -199,8 +203,9 @@ describe('Test Business User Management Service', () => {
     await userRepository.saveUser(user, 'BUSINESS')
 
     const userResult = await userRepository.getUser(user.userId)
-    const mongoUserResult = await userRepository.getMongoBusinessUser(
-      user.userId
+    const mongoUserResult = await userRepository.getMongoUser(
+      user.userId,
+      'BUSINESS'
     )
 
     expect(mongoUserResult).toMatchObject({ ...user, type: 'BUSINESS' })
@@ -213,8 +218,10 @@ describe('Test Business User Management Service', () => {
       body: 'Test Comment',
     })
 
-    const mongoUserResultWithComment =
-      await userRepository.getMongoBusinessUser(user.userId)
+    const mongoUserResultWithComment = await userRepository.getMongoUser(
+      user.userId,
+      'BUSINESS'
+    )
 
     expect(mongoUserResultWithComment).toMatchObject({
       ...user,
@@ -270,8 +277,9 @@ describe('Test Business User Management Service', () => {
 
     expect(userUpdated).toMatchObject(toBeCheckedData)
 
-    const mongoUserUpdated = await userRepository.getMongoBusinessUser(
-      user.userId
+    const mongoUserUpdated = await userRepository.getMongoUser(
+      user.userId,
+      'BUSINESS'
     )
 
     expect(mongoUserUpdated).toMatchObject({
