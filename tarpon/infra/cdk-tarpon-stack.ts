@@ -1618,7 +1618,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     mongoDbTriggerQueueConsumerAlias.addEventSource(
       new SqsEventSource(mongoDbConsumerQueue, {
-        batchSize: 10,
+        batchSize: 500,
         maxBatchingWindow: Duration.seconds(10),
         maxConcurrency:
           this.config.resource.MONGO_DB_TRIGGER_LAMBDA
