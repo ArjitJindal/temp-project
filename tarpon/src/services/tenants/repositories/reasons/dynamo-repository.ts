@@ -8,6 +8,7 @@ import {
   QueryCommandInput,
   NativeAttributeValue,
 } from '@aws-sdk/lib-dynamodb'
+import { uniqBy } from 'lodash'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -93,8 +94,12 @@ export class DynamoReasonsRepository {
   }
 
   public async saveReasons(reasons: ConsoleActionReason[]) {
+    const uniqueReasons = uniqBy(
+      reasons,
+      (item) => `${item.id}-${item.reasonType}`
+    )
     const writeRequests: TransactWriteOperation[] = []
-    for (const reason of reasons) {
+    for (const reason of uniqueReasons) {
       if (!reason.id) {
         continue
       }
