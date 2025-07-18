@@ -246,7 +246,7 @@ const clickhouseInsert = async (
   const client = await getClickhouseClient(tenantId)
 
   const CLICKHOUSE_SETTINGS: ClickHouseSettings = {
-    wait_for_async_insert: envIs('test', 'local') ? 1 : 0,
+    wait_for_async_insert: 1,
     async_insert: envIs('test', 'local') ? 0 : 1,
   }
 

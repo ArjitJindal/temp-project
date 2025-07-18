@@ -27,7 +27,7 @@ export class OptimizeClickhouseBatchJobRunner extends BatchJobRunner {
         try {
           await clickhouseClient.exec({
             query: `DELETE from ${table.table} where timestamp = 0`,
-            clickhouse_settings: { async_insert: 1, wait_for_async_insert: 0 },
+            clickhouse_settings: { async_insert: 1, wait_for_async_insert: 1 },
           })
         } catch (e) {
           logger.warn(
