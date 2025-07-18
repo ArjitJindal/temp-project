@@ -8,13 +8,16 @@ import { exit } from 'process'
 import { execSync } from 'child_process'
 import { program } from 'commander'
 import { render } from 'prettyjson'
-import { Db } from 'mongodb'
+import { Db, Filter, Document } from 'mongodb'
 import {
   intersection,
   isEmpty,
+  keyBy,
   memoize,
+  merge,
   mergeWith,
   sortBy,
+  values,
   startCase,
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -30,6 +33,7 @@ import {
   deleteRuleInstancesLocally,
   verifyTransactionLocally,
 } from './debug-rule/verify-remote-entities'
+import { metricsConfig } from './metrics-util'
 import { TenantService } from '@/services/tenants'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { getDynamoDbClient, getLocalDynamoDbClient } from '@/utils/dynamodb'
@@ -62,6 +66,11 @@ import {
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CurrencyService } from '@/services/currency'
+import {
+  executeClickhouseQuery,
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 /**
  * Custom query
  */
@@ -356,6 +365,91 @@ async function tenantFeatures(
   return settings.features ?? []
 }
 
+async function mongoClickhouseCount(
+  mongoDb: Db,
+  tenantId: string,
+  region: string
+) {
+  let clickhouseCounts: { metric: string; clickhouse_count?: number }[] = []
+  if (!isClickhouseEnabled()) {
+    return
+  }
+
+  const clickhouseClient = await getClickhouseClient(tenantId)
+
+  const clickhouseQuery = metricsConfig(tenantId)
+    .map((cfg) => {
+      if (cfg.unwind && 'unwindField' in cfg) {
+        return `
+          SELECT '${cfg.metric}' AS metric, count() AS clickhouse_count
+          FROM ${cfg.table} FINAL
+          ARRAY JOIN ${cfg.unwindField}
+          WHERE timestamp != 0
+        `
+      } else {
+        return `
+          SELECT '${cfg.metric}' AS metric, count() AS clickhouse_count
+          FROM ${cfg.table} FINAL
+          WHERE timestamp != 0
+        `
+      }
+    })
+    .join(' UNION ALL ')
+
+  clickhouseCounts = await executeClickhouseQuery(
+    clickhouseClient,
+    clickhouseQuery
+  )
+  const pipelines = metricsConfig(tenantId).map((cfg) => {
+    const matchStage: Filter<Document> = { timestamp: { $ne: 0 } }
+    if (cfg.unwind && 'unwindField' in cfg) {
+      matchStage[cfg.unwindField as keyof typeof matchStage] = {
+        $exists: true,
+        $ne: [],
+      }
+    }
+
+    return {
+      collection: cfg.collection,
+      matchStage,
+      metric: cfg.metric,
+      unwind: cfg.unwind,
+      unwindField: 'unwindField' in cfg ? cfg.unwindField : undefined,
+    }
+  })
+
+  const mongoCountsPromises = pipelines.map(
+    async ({ collection, matchStage, metric, unwind, unwindField }) => {
+      let count: number
+
+      if (unwind) {
+        const pipeline = [
+          { $match: matchStage },
+          { $unwind: `$${unwindField}` },
+          { $count: 'mongo_count' },
+        ]
+        const result = await mongoDb
+          .collection(collection)
+          .aggregate(pipeline)
+          .toArray()
+        count = result[0]?.mongo_count || 0
+      } else {
+        count = await mongoDb.collection(collection).estimatedDocumentCount()
+      }
+      return { metric, mongo_count: count }
+    }
+  )
+  const mongoCounts = await Promise.all(mongoCountsPromises)
+
+  const merged = values(
+    merge(keyBy(mongoCounts, 'metric'), keyBy(clickhouseCounts, 'metric'))
+  )
+
+  console.table(merged, ['metric', 'mongo_count', 'clickhouse_count'])
+
+  console.log('\n\t\t' + `Tenant ID: ${tenantId} (region: ${region})\n`)
+}
+
 program
   .requiredOption('--env <string>', 'dev | sandbox | prod')
   .option(
@@ -567,6 +661,12 @@ async function runReadOnlyQueryForEnv(env: Env) {
               startDate,
               Number(limit),
               ruleInstanceIds?.split(',')
+            )
+          } else if (query === 'mongo-clickhouse-count') {
+            return mongoClickhouseCount(
+              mongoDb,
+              tenant.tenant.id,
+              tenant.tenant.region
             )
           }
           return runReadOnlyQueryForTenant(mongoDb, dynamoDb, tenant.tenant.id)
