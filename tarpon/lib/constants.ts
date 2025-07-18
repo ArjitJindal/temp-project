@@ -311,6 +311,9 @@ export const StackConstants = {
   TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'TarponQueueConsumerFunction'
   ),
+  SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'SecondaryTarponQueueConsumerFunction'
+  ),
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
   ),
@@ -353,6 +356,10 @@ export const SQSQueues: {
   TARPON_QUEUE_NAME: {
     name: getResourceName('TarponQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
+  },
+  SECONDARY_TARPON_QUEUE_NAME: {
+    name: getResourceName('SecondaryTarponQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 120, // Lets do 2 hours it should not be more then that ideally
   },
   REQUEST_LOGGER_QUEUE_NAME: {
     name: getResourceName('RequestLoggerQueue'),

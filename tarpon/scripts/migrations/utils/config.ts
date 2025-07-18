@@ -31,6 +31,8 @@ export function initializeEnvVars() {
   const asyncRuleQueueName: string = SQSQueues.ASYNC_RULE_QUEUE_NAME.name
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
   const tarponQueueName: string = SQSQueues.TARPON_QUEUE_NAME.name
+  const secondaryTarponQueueName: string =
+    SQSQueues.SECONDARY_TARPON_QUEUE_NAME.name
   const auditLogQueueName: string = SQSQueues.AUDIT_LOG_QUEUE_NAME.name
   const notificationsQueueName: string = SQSQueues.NOTIFICATIONS_QUEUE_NAME.name
   const webhookDeliveryQueueName: string =
@@ -79,4 +81,5 @@ export function initializeEnvVars() {
   process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
   process.env.ACTION_PROCESSING_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${actionProcessingQueueName}`
   process.env.AUDIT_LOG_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${auditLogQueueName}`
+  process.env.SECONDARY_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${secondaryTarponQueueName}`
 }

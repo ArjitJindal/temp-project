@@ -2,6 +2,8 @@ import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { compact, groupBy } from 'lodash'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { StackConstants } from '@lib/constants'
 import {
   hasFeature,
   initializeTenantContext,
@@ -508,6 +510,31 @@ export class StreamConsumerBuilder {
         Object.entries(groups).map(async (entry) => {
           const tenantId = entry[0]
           const tenantUpdates = entry[1]
+
+          if (
+            tenantId === '4c9cdf0251' &&
+            process.env.AWS_LAMBDA_FUNCTION_NAME !==
+              StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME
+          ) {
+            await Promise.all(
+              tenantUpdates.map(async (update) => {
+                await sqsClient.send(
+                  new SendMessageCommand({
+                    QueueUrl: process.env.SECONDARY_TARPON_QUEUE_URL,
+                    MessageBody: JSON.stringify(update),
+                    MessageGroupId: generateChecksum(update.entityId, 10),
+                    MessageDeduplicationId: `${generateChecksum(
+                      update.entityId,
+                      10
+                    )}-${generateChecksum(update.sequenceNumber, 10)}`,
+                  })
+                )
+              })
+            )
+
+            return
+          }
+
           await this.handleSqsDynamoUpdates(tenantId, tenantUpdates)
         })
       )

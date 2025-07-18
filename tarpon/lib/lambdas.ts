@@ -371,6 +371,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'tarpon-change-mongodb-consumer',
+    handlerName: 'tarponQueueHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME]: {
     codePath: 'mongo-db-trigger-consumer',
     handlerName: 'mongoDbTriggerQueueConsumerHandler',

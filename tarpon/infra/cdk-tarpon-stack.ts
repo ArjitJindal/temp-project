@@ -329,6 +329,15 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const secondaryTarponEventQueue = this.createQueue(
+      SQSQueues.SECONDARY_TARPON_QUEUE_NAME.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     /*
      * Kinesis Data Streams
      */
@@ -556,6 +565,7 @@ export class CdkTarponStack extends cdk.Stack {
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
+        SECONDARY_TARPON_QUEUE_URL: secondaryTarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
@@ -653,6 +663,7 @@ export class CdkTarponStack extends cdk.Stack {
             requestLoggerQueue.queueArn,
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
+            secondaryTarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
             batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
@@ -1349,8 +1360,26 @@ export class CdkTarponStack extends cdk.Stack {
             1024,
         }
       )
+
       tarponQueueConsumerAlias.addEventSource(
         new SqsEventSource(tarponEventQueue, {
+          maxConcurrency:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+              ?.PROVISIONED_CONCURRENCY ?? 100,
+          batchSize: 10,
+        })
+      )
+
+      const { alias: secondaryTarponQueueConsumerAlias } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME,
+        }
+      )
+
+      secondaryTarponQueueConsumerAlias.addEventSource(
+        new SqsEventSource(secondaryTarponEventQueue, {
           maxConcurrency:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
               ?.PROVISIONED_CONCURRENCY ?? 100,

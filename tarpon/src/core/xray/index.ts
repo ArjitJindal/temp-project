@@ -12,7 +12,9 @@ const xrayDisabled =
   envIsNot('dev', 'sandbox', 'prod') ||
   (!process.env.AWS_LAMBDA_FUNCTION_NAME?.includes('Api') &&
     process.env.AWS_LAMBDA_FUNCTION_NAME !==
-      StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME)
+      StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME &&
+    process.env.AWS_LAMBDA_FUNCTION_NAME !==
+      StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME)
 
 let xrayInitialized = false
 
