@@ -418,6 +418,7 @@ export function createMockBatchJob<T extends BatchJob>(
         ...baseJob,
         parameters: {
           s3Key: 'test-key',
+          entityId: 'test-entity-id',
           schema: {} as FlatFileSchema,
           format: 'CSV' as FlatFileTemplateFormat,
           metadata: undefined,

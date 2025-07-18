@@ -26,6 +26,13 @@ export const flatFilesHandler = lambdaApi()(
       return template
     })
 
+    handlers.registerGetFlatFilesProgress(async (ctx, request) => {
+      const { schema, entityId } = request
+      const flatFilesService = new FlatFilesService(ctx.tenantId)
+      const progress = await flatFilesService.getProgress(schema, entityId)
+      return progress
+    })
+
     return handlers.handle(event)
   }
 )

@@ -339,6 +339,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
   '/flat-files/generate-template':
     StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
+  '/flat-files/progress': StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
   // TODO: rename CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME to make it generic
 }
 

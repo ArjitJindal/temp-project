@@ -7991,6 +7991,28 @@ paths:
           in: query
           name: crmName
           required: true
+  /flat-files/progress:
+    get:
+      summary: Get flat file progress
+      operationId: get-flat-files-progress
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlatFileProgressResponse'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/FlatFileSchema'
+          in: query
+          name: schema
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: entityId
+          required: true
   /flat-files/generate-template:
     post:
       summary: Generate a flat file template
@@ -8048,6 +8070,14 @@ components:
         - TRANSACTIONS_UPLOAD
         - BULK_ALERT_CLOSURE
         - BULK_SANCTIONS_HITS_UPDATE
+    FlatFileProgressResponse:
+      title: FlatFileProgressResponse
+      type: object
+      properties:
+        processed:
+          type: number
+        total:
+          type: number
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string

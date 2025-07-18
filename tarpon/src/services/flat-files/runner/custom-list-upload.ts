@@ -36,18 +36,18 @@ export class CustomListUploadRunner extends FlatFileRunner<{
   public concurrency = 10
 
   public async _run(
-    _data: { [key: string]: string },
+    data: { [key: string]: string },
     _record: FlatFilesRecordsSchema,
-    _metadata: CustomListMetadataList
+    metadata: CustomListMetadataList
   ) {
-    const { listId } = _metadata
+    const { listId } = metadata
     const listRepository = new ListRepository(this.tenantId, this.dynamoDb)
 
     await listRepository.setListItems(listId, [
       {
         key: uuidv4(),
         metadata: {
-          ..._data,
+          ...data,
         },
       },
     ])

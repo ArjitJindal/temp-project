@@ -1,7 +1,9 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
+import { NotFound } from 'http-errors'
 import { ClickHouseClient } from '@clickhouse/client'
+import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
 import { BulkCaseClosureRunner } from './runner/bulk-case-clousre'
@@ -26,6 +28,8 @@ import {
 import { EntityModel } from '@/@types/model'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { FlatFilesRecords } from '@/models/flat-files-records'
+import { BatchJobParams } from '@/@types/batch-job'
 
 type Connections = {
   dynamoDb: DynamoDBDocumentClient
@@ -156,5 +160,69 @@ export class FlatFilesService {
   async run(schema: FlatFileSchema, s3Key: string, metadata: object) {
     const runnerInstance = await this.getRunnerInstance(schema)
     await runnerInstance.run(s3Key, metadata)
+  }
+
+  async getProgress(schema: FlatFileSchema, entityId: string) {
+    const mongoDb = await getMongoDbClient()
+    let s3Keys: string[] = []
+    // get s3Key from Batchjob collection
+    const batchJobRepository = new BatchJobRepository(this.tenantId, mongoDb)
+    const filterParams: BatchJobParams = {
+      parameters: {
+        entityId: entityId,
+        schema,
+      },
+      latestStatus: {
+        status: 'IN_PROGRESS',
+      },
+    }
+    const fileValidationJobs = await batchJobRepository.getJobs({
+      type: 'FLAT_FILES_VALIDATION',
+      ...filterParams,
+    })
+    const fileRunnerJobs = await batchJobRepository.getJobs({
+      type: 'FLAT_FILES_RUNNER',
+      ...filterParams,
+    })
+
+    s3Keys = [
+      ...fileValidationJobs.map((job) => job.parameters?.s3Key ?? ''),
+      ...fileRunnerJobs.map((job) => job.parameters?.s3Key ?? ''),
+    ]
+    s3Keys = s3Keys.filter((s3Key) => s3Key !== '')
+
+    if (s3Keys.length === 0) {
+      throw new NotFound('No running jobs found')
+    }
+
+    const clickhouseConnectionConfig = await getClickhouseCredentials(
+      this.tenantId
+    )
+    const flatFilesRecords = new FlatFilesRecords({
+      credentials: clickhouseConnectionConfig,
+      options: {
+        keepAlive: true,
+        keepAliveTimeout: 60_000,
+        maxRetries: 10, // 10 retries
+      },
+    })
+    const totalFileRecords = await flatFilesRecords.objects
+      .filter({
+        fileId__in: s3Keys,
+      })
+      .final()
+      .count()
+    const processedFileRecords = await flatFilesRecords.objects
+      .filter({
+        fileId__in: s3Keys,
+        isProcessed: true,
+      })
+      .final()
+      .count()
+
+    return {
+      total: totalFileRecords,
+      processed: processedFileRecords,
+    }
   }
 }

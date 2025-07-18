@@ -247,6 +247,8 @@ describe('FlatFilesService', () => {
                 format: 'CSV',
                 s3Key,
                 schema,
+                entityId:
+                  type === 'CONSUMER' ? 'CONSUMER_USERS' : 'BUSINESS_USERS',
               },
             }
 
@@ -300,6 +302,7 @@ describe('FlatFilesService', () => {
             format: 'CSV',
             s3Key,
             schema: 'TRANSACTIONS_UPLOAD',
+            entityId: 'TRANSACTIONS',
           },
         }
 

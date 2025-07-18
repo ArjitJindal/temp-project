@@ -140,6 +140,7 @@ export class ListService {
         tenantId: this.tenantId,
         type: 'FLAT_FILES_VALIDATION',
         parameters: {
+          entityId: list.listId,
           format: 'CSV',
           s3Key: files[0].s3Key,
           schema: 'CUSTOM_LIST_UPLOAD',
@@ -630,6 +631,7 @@ export class ListService {
       type: 'FLAT_FILES_VALIDATION',
       parameters: {
         format: 'CSV',
+        entityId: listHeader.listId,
         s3Key: files[0].s3Key,
         schema: 'CUSTOM_LIST_UPLOAD',
         metadata: {

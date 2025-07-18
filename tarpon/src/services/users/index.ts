@@ -2277,6 +2277,7 @@ export class UserService {
       type: 'FLAT_FILES_VALIDATION',
       parameters: {
         format: 'CSV',
+        entityId: type === 'CONSUMER' ? 'CONSUMER_USERS' : 'BUSINESS_USERS',
         s3Key: files[0].s3Key,
         schema:
           type === 'CONSUMER'

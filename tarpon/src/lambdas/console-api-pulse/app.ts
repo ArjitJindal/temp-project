@@ -140,6 +140,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         type: 'FLAT_FILES_VALIDATION',
         parameters: {
           s3Key: fileInfo[0].s3Key,
+          entityId: 'RISK_FACTORS',
           schema: 'RISK_FACTORS_IMPORT',
           format: 'JSONL',
         },

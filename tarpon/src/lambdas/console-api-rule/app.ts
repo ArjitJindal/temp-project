@@ -231,6 +231,7 @@ export const ruleInstanceHandler = lambdaApi()(
         type: 'FLAT_FILES_VALIDATION',
         parameters: {
           s3Key: fileInfo[0].s3Key,
+          entityId: 'RULE_INSTANCES',
           format: 'JSONL',
           schema: 'RULE_INSTANCES_IMPORT',
         },

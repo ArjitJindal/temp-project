@@ -506,6 +506,7 @@ export class TransactionService {
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',
       parameters: {
+        entityId: 'TRANSACTIONS',
         format: 'CSV',
         s3Key: files[0].s3Key,
         schema: 'TRANSACTIONS_UPLOAD',

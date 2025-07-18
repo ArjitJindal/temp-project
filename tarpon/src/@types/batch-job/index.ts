@@ -462,6 +462,7 @@ export type FlatFilesValidationBatchJob = {
     s3Key: string
     schema: FlatFileSchema
     format: FlatFileTemplateFormat
+    entityId: string
     metadata?: object
   }
 }
@@ -471,6 +472,7 @@ export type FlatFilesRunnerBatchJob = {
   tenantId: string
   parameters: {
     s3Key: string
+    entityId: string
     schema: FlatFileSchema
     format: FlatFileTemplateFormat
     metadata?: object
@@ -565,6 +567,7 @@ export type BatchJobParameters = {
   ruleInstancesIds?: string[]
   userIds?: string[]
   clearedListIds?: string
+  s3Key?: string
 }
 
 export type BatchJobParams = {
@@ -577,6 +580,8 @@ export type BatchJobParams = {
   }
   parameters?: {
     entityType?: SanctionsEntityType
+    entityId?: string
+    schema?: FlatFileSchema
   }
   tenantId?: string
   jobId?: {

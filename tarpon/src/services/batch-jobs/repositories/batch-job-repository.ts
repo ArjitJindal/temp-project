@@ -129,6 +129,9 @@ export class BatchJobRepository {
   }
 
   public async isAnyJobRunning(type: BatchJobType): Promise<boolean> {
+    if (isClickhouseEnabledInRegion()) {
+      return await this.dynamoBatchJobRepository.isAnyJobRunning(type)
+    }
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const result = await db.collection<BatchJobInDb>(collection).findOne({
