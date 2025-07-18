@@ -27,7 +27,11 @@ function buildSafeSetFields(entity: any, base: any = '$$ROOT'): any {
     } else if (value && typeof value === 'object') {
       safeValue = buildSafeSetFields(value, {}) // fresh object for nested fields
     } else {
-      safeValue = value
+      if (typeof value === 'string' && value.startsWith('$')) {
+        safeValue = { $literal: value }
+      } else {
+        safeValue = value
+      }
     }
 
     current = {
