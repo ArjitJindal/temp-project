@@ -9,6 +9,9 @@ import {
 } from '@/utils/mongodb-utils'
 
 async function migrateTenant(tenant: Tenant) {
+  if (tenant.id === '4c9cdf0251') {
+    return
+  }
   const mongodb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   await createMongoDBCollections(mongodb, dynamoDb, tenant.id)
