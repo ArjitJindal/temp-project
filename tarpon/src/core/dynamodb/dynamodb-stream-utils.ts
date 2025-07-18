@@ -54,6 +54,12 @@ export const LOCK_FREE_ENTITIES: DynamoDbEntityType[] = [
   'ALERTS_QA_SAMPLING',
   'NOTIFICATION',
   'CRM_RECORD',
+  'ARS_VALUE',
+  'DRS_VALUE',
+  'KRS_VALUE',
+  'TRANSACTION_EVENT',
+  'BUSINESS_USER_EVENT',
+  'CONSUMER_USER_EVENT',
 ]
 export type DynamoDbEntityUpdate = {
   tenantId: string
