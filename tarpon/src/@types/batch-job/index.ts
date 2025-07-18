@@ -488,8 +488,6 @@ export type GoCardlessBackfillBatchJob = {
   type: 'GO_CARDLESS_BACKFILL'
   tenantId: string
   parameters: {
-    apiKey: string
-    publicApiEndpoint: string
     concurrency: number
   }
 }

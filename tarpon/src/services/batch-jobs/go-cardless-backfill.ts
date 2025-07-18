@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { GoCardlessBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -24,6 +24,21 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import {
+  DynamoDbEntityType,
+  DynamoDbEntityUpdate,
+} from '@/core/dynamodb/dynamodb-stream-utils'
+import { generateChecksum } from '@/utils/object'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+
+interface SendEntityToSQSParams {
+  tenantId: string
+  entityId: string
+  type: DynamoDbEntityType
+  keys: { PartitionKeyID: string; SortKeyID?: string }
+  data: any
+  sqsClient: SQSClient
+}
 
 const DEFAULT_CONCURRENCY = 1000
 
@@ -160,41 +175,26 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
    * Reruns transactions with improved error handling and retry logic
    */
   private async rerunTransactions(
-    publicApiEndpoint: string,
-    apiKey: string,
-    transactions: Transaction[]
+    tenantId: string,
+    transactions: Transaction[],
+    sqsClient: SQSClient
   ): Promise<void> {
     if (transactions.length === 0) {
       return
     }
 
-    const baseUrl = `https://${publicApiEndpoint}/transactions?validateTransactionId=false`
-    const headers = {
-      'x-api-key': apiKey,
-      'Content-Type': 'application/json',
-    }
-
     // Process transactions with concurrency control and error handling
     await pMap(
       transactions,
-      async (transaction, index) => {
-        try {
-          await fetch(baseUrl, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(transaction),
-          })
-        } catch (error) {
-          console.error(
-            `Failed to rerun transaction ${transaction.transactionId} (index ${index}):`,
-            {
-              error: error instanceof Error ? error.message : 'Unknown error',
-              transactionId: transaction.transactionId,
-            }
-          )
-          // Re-throw to stop processing if needed, or handle gracefully
-          throw error
-        }
+      async (transaction) => {
+        await this.sendEntityToSQS({
+          tenantId,
+          entityId: transaction.transactionId,
+          type: 'TRANSACTION',
+          keys: DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
+          data: transaction,
+          sqsClient: sqsClient,
+        })
       },
       { concurrency: 100 }
     )
@@ -206,8 +206,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   private async processBatchTransactions(
     tenantId: string,
     batch: Transaction[],
-    job: GoCardlessBackfillBatchJob,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    sqsClient: SQSClient
   ): Promise<void> {
     if (batch.length === 0) {
       return
@@ -222,27 +222,50 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
 
     if (validationResult.length > 0) {
       console.log(
-        `Processing batch: ${batch.length} transactions, ${validationResult.length} need rerun`,
-        { transactionIdsToRerun: validationResult }
+        `Processing batch: ${batch.length} transactions, ${
+          validationResult.length
+        } need rerun: ${validationResult.join(', ')}`
       )
 
       const transactionsToRerun = batch.filter((t) =>
         validationResult.includes(t.transactionId)
       )
 
-      await this.rerunTransactions(
-        job.parameters.publicApiEndpoint,
-        job.parameters.apiKey,
-        transactionsToRerun
-      )
+      await this.rerunTransactions(tenantId, transactionsToRerun, sqsClient)
     }
+  }
+
+  private async sendEntityToSQS({
+    tenantId,
+    entityId,
+    type,
+    keys,
+    data,
+    sqsClient,
+  }: SendEntityToSQSParams) {
+    const entityData: DynamoDbEntityUpdate = {
+      tenantId,
+      partitionKeyId: keys.PartitionKeyID,
+      sortKeyId: keys.SortKeyID,
+      entityId: entityId,
+      NewImage: data,
+      type,
+    }
+
+    await sqsClient.send(
+      new SendMessageCommand({
+        MessageBody: JSON.stringify(entityData),
+        QueueUrl: process.env.TARPON_QUEUE_URL,
+        MessageGroupId: generateChecksum(tenantId, 10),
+      })
+    )
   }
 
   private async processBatchUsers(
     tenantId: string,
     batch: (User | Business)[],
-    job: GoCardlessBackfillBatchJob,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    sqsClient: SQSClient
   ): Promise<void> {
     if (batch.length === 0) {
       return
@@ -257,26 +280,23 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
 
     if (validationResult.length > 0) {
       console.log(
-        `Processing batch: ${batch.length} users, ${validationResult.length} need rerun`,
-        { userIdsToRerun: validationResult }
+        `Processing batch: ${batch.length} users, ${
+          validationResult.length
+        } need rerun: ${validationResult.join(', ')}`
       )
 
       const usersToRerun = batch.filter((u) =>
         validationResult.includes(u.userId)
       )
 
-      await this.rerunUsers(
-        job.parameters.publicApiEndpoint,
-        job.parameters.apiKey,
-        usersToRerun
-      )
+      await this.rerunUsers(tenantId, usersToRerun, sqsClient)
     }
   }
 
   private async rerunUsers(
-    publicApiEndpoint: string,
-    apiKey: string,
-    users: (User | Business)[]
+    tenantId: string,
+    users: (User | Business)[],
+    sqsClient: SQSClient
   ): Promise<void> {
     if (users.length === 0) {
       return
@@ -285,17 +305,13 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     await pMap(
       users,
       async (user) => {
-        const userType = isConsumerUser(user) ? 'consumer' : 'business'
-        const baseUrl = `https://${publicApiEndpoint}/${userType}/users?validateUserId=false`
-        const headers = {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-        }
-
-        await fetch(baseUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(user),
+        await this.sendEntityToSQS({
+          tenantId,
+          entityId: user.userId,
+          type: 'USER',
+          keys: DynamoDbKeys.USER(tenantId, user.userId),
+          data: user,
+          sqsClient,
         })
       },
       { concurrency: 100 }
@@ -305,7 +321,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   protected async run(job: GoCardlessBackfillBatchJob): Promise<void> {
     const { tenantId } = job
     const mongoDb = await getMongoDbClient()
-
+    const sqsClient = new SQSClient({})
     console.log(`Starting GoCardless backfill for tenant: ${tenantId}`)
 
     const batchSize = job.parameters.concurrency || DEFAULT_CONCURRENCY
@@ -334,20 +350,25 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
       usersToProcess.push(user)
 
       if (usersToProcess.length >= batchSize) {
-        await this.processBatchUsers(tenantId, usersToProcess, job, mongoDb)
+        await this.processBatchUsers(
+          tenantId,
+          usersToProcess,
+          mongoDb,
+          sqsClient
+        )
         usersProcessedCount += usersToProcess.length
         console.log(
-          `Processed ${usersProcessedCount} / ${totalUsersToProcess} requests`
+          `Processed ${usersProcessedCount} / ${totalUsersToProcess} users`
         )
         usersToProcess.length = 0
       }
     }
 
     if (usersToProcess.length > 0) {
-      await this.processBatchUsers(tenantId, usersToProcess, job, mongoDb)
+      await this.processBatchUsers(tenantId, usersToProcess, mongoDb, sqsClient)
       usersProcessedCount += usersToProcess.length
       console.log(
-        `Processed ${usersProcessedCount} / ${totalUsersToProcess} requests`
+        `Processed ${usersProcessedCount} / ${totalUsersToProcess} users`
       )
     }
 
@@ -379,8 +400,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
         await this.processBatchTransactions(
           tenantId,
           transactionsToProcess,
-          job,
-          mongoDb
+          mongoDb,
+          sqsClient
         )
         processedCount += transactionsToProcess.length
         console.log(
@@ -394,8 +415,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
       await this.processBatchTransactions(
         tenantId,
         transactionsToProcess,
-        job,
-        mongoDb
+        mongoDb,
+        sqsClient
       )
       console.log(
         `Processed ${processedCount} / ${totalRequestsToProcess} requests`
