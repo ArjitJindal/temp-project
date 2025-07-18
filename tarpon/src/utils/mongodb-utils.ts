@@ -78,7 +78,7 @@ const getMongoDbClientInternal = memoize(async (useCache = true) => {
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
   const DB_HOST = credentials['host']
   const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${StackConstants.MONGO_DB_DATABASE_NAME}`
-  return await MongoClient.connect(DB_URL as string)
+  return await MongoClient.connect(DB_URL as string, { writeConcern: { w: 1 } })
 })
 
 export async function getMongoDbClient(useCache = true) {
