@@ -548,34 +548,38 @@ export class StreamConsumerBuilder {
   ) {
     const tableName = this.getTableName(tenantId)
     await withContext(async () => {
-      const dbClients: DbClients = {
-        dynamoDb: getDynamoDbClient(),
-        mongoDb: await getMongoDbClient(),
-      }
       await initializeTenantContext(tenantId)
       const filteredUpdates = updates.filter(Boolean)
-      await Promise.all(
-        filteredUpdates.map(async (update) => {
-          /**   Store DynamoDB Keys in MongoDB * */
-          if (
-            update.NewImage &&
-            !update.NewImage.ttl &&
-            !tableName.includes(tenantId) // Stands for Silo Tables
-          ) {
-            await savePartitionKey(
-              update.tenantId,
-              update.partitionKeyId,
-              tableName
-            )
-          }
-        })
-      )
+      if (tenantId !== '4c9cdf0251') {
+        // Temporary fix to ease the number of mongo connections
+        const dbClients = {
+          dynamoDb: getDynamoDbClient(),
+          mongoDb: await getMongoDbClient(),
+        }
 
-      if (envIs('local', 'test')) {
-        await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
-        return
+        await Promise.all(
+          filteredUpdates.map(async (update) => {
+            /**   Store DynamoDB Keys in MongoDB * */
+            if (
+              update.NewImage &&
+              !update.NewImage.ttl &&
+              !tableName.includes(tenantId) // Stands for Silo Tables
+            ) {
+              await savePartitionKey(
+                update.tenantId,
+                update.partitionKeyId,
+                tableName,
+                dbClients.mongoDb
+              )
+            }
+          })
+        )
+
+        if (envIs('local', 'test')) {
+          await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
+          return
+        }
       }
-
       const entries = filteredUpdates
         .filter((update) => update.type && !update.NewImage?.ttl)
         .map((update) => ({

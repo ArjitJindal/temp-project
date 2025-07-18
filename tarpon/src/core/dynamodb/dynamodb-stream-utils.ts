@@ -4,6 +4,7 @@ import {
   StreamRecord,
 } from 'aws-lambda'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
+import { MongoClient } from 'mongodb'
 import { logger } from '../logger'
 import {
   TRANSACTION_EVENT_KEY_IDENTIFIER,
@@ -28,7 +29,6 @@ import { User } from '@/@types/openapi-public/User'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
 import { Business } from '@/@types/openapi-internal/Business'
 
@@ -303,9 +303,9 @@ function getDynamoDbEntity(
 export async function savePartitionKey(
   tenantId: string,
   partitionKey: string,
-  tableName: string
+  tableName: string,
+  mongoDb: MongoClient
 ) {
-  const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
   const collection = db.collection(DYNAMODB_PARTITIONKEYS_COLLECTION(tenantId))
   await collection.replaceOne(
