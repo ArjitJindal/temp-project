@@ -1032,23 +1032,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           },
         ].map((index) => ({ index })),
     },
-    [SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()]: {
-      getIndexes: () => [
-        { index: { sourceCountry: 1 } },
-        { index: { sourceName: 1 } },
-        { index: { id: 1 } },
-        {
-          index: {
-            sourceName: 1,
-            sourceCountry: 1,
-            provider: 1,
-            entityType: 1,
-            sourceType: 1,
-          },
-          unique: true,
-        },
-      ],
-    },
     [JOBS_COLLECTION(tenantId)]: {
       getIndexes: () => [
         { index: { jobId: 1 }, unique: true },
@@ -1076,6 +1059,24 @@ export const getGlobalCollectionIndexes = async (
     await getAllGlobalSanctionsCollectionDefinition(mongoClient)
   return {
     ...globalSanctionsCollectionDeinitions,
+    [SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()]: {
+      getIndexes: () => [
+        { index: { sourceCountry: 1 } },
+        { index: { sourceName: 1 } },
+        { index: { id: 1 } },
+        {
+          index: {
+            sourceName: 1,
+            sourceCountry: 1,
+            provider: 1,
+            entityType: 1,
+            sourceType: 1,
+          },
+          unique: true,
+        },
+        { index: { refId: 1 } },
+      ],
+    },
   }
 }
 

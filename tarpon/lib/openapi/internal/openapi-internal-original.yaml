@@ -6424,7 +6424,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SanctionsSearchResponse'
+                type: object
+                properties:
+                  searchId:
+                    type: string
+                  hitsCount:
+                    type: number
+                required:
+                  - searchId
       requestBody:
         content:
           application/json:
@@ -14661,6 +14668,8 @@ components:
         sourceType:
           $ref: '#/components/schemas/SanctionsSourceType'
         entityType:
+          type: string
+        refId:
           type: string
     SanctionsEntity:
       title: SanctionsEntity

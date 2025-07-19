@@ -38,10 +38,14 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     const sanctionsService = await SanctionsService.fromEvent(event)
     const handlers = new Handlers()
 
-    handlers.registerPostSanctions(
-      async (ctx, request) =>
-        await sanctionsService.search(request.SanctionsSearchRequest)
-    )
+    handlers.registerPostSanctions(async (ctx, request) => {
+      const result = await sanctionsService.search(
+        request.SanctionsSearchRequest
+      )
+      return {
+        searchId: result.searchId,
+      }
+    })
 
     handlers.registerGetSanctionsSources(async (ctx, request) => {
       const sources = await sanctionsService.getSanctionsSources(

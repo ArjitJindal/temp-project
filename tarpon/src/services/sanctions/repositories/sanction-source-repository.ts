@@ -134,7 +134,10 @@ export class MongoSanctionSourcesRepository
       matchStage.sourceType = filterSourceType
     }
     if (filterSourceIds && filterSourceIds.length > 0) {
-      matchStage.id = { $in: filterSourceIds }
+      matchStage['$or'] = [
+        { id: { $in: filterSourceIds } },
+        { refId: { $in: filterSourceIds } },
+      ]
     }
     if (searchTerm) {
       const sanitizedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '')
