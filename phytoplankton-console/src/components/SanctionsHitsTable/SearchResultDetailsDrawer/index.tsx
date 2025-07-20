@@ -676,6 +676,9 @@ function useTabs(
                     isExpandedByDefault={pdfMode}
                     /* Just for demo mode we are showing updates for the first source of each tab */
                     hasUpdates={TMP_TABS_HAS_UPDATES || (!isEmpty(tab.delta) && i === 0)}
+                    resourceId={entity.resourceId}
+                    evidenceId={source.evidenceId}
+                    entityType={entity.entityType}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
@@ -741,6 +744,8 @@ function useTabs(
     delta?.mediaSources,
     delta?.pepSources,
     delta?.sanctionsSources,
+    entity.resourceId,
+    entity.entityType,
   ]);
 }
 

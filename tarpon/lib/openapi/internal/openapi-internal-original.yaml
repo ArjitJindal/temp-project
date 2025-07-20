@@ -6730,6 +6730,38 @@ paths:
               items:
                 type: string
       operationId: delete-sanctions-whitelist-records
+  /sanctions/acuris-copywrited-source/download:
+    get:
+      operationId: get-acuris-copywrited-source-download-url
+      parameters:
+        - schema:
+            type: string
+          name: evidenceId
+          in: query
+          required: true
+        - schema:
+            type: string
+          name: resourceId
+          in: query
+          required: true
+        - schema:
+            $ref: '#/components/schemas/SanctionsEntityType'
+          name: entityType
+          in: query
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                required:
+                  - url
+      description: Get a presigned URL for downloading a file
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -14511,6 +14543,8 @@ components:
       title: SanctionsSource
       type: object
       properties:
+        evidenceId:
+          type: string
         countryCodes:
           type: array
           items:
@@ -14812,6 +14846,8 @@ components:
           type: array
           items:
             type: string
+        resourceId:
+          type: string
       required:
         - id
         - name

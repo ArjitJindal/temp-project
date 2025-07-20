@@ -1,7 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
 import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
-import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
+import {
+  getSourceUrl,
+  isLatinScript,
+  normalize,
+  sanitizeString,
+} from '@flagright/lib/utils'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -9,6 +14,13 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { MongoClient } from 'mongodb'
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { Upload } from '@aws-sdk/lib-storage'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
@@ -20,6 +32,7 @@ import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScr
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
+  DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
   DefaultApiGetSanctionsScreeningActivityDetailsRequest,
   DefaultApiGetSanctionsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
@@ -63,6 +76,8 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { getSecretByName } from '@/utils/secrets-manager'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -593,6 +608,90 @@ export class SanctionsService {
           ])
           return picked
         }) ?? [],
+    }
+  }
+
+  public async getSanctionsAcurisCopywritedSourceDownload(
+    params: DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
+    s3: S3Client
+  ): Promise<{
+    url: string
+  }> {
+    const { resourceId, evidenceId, entityType } = params
+    const entityTypeKey =
+      entityType === 'BUSINESS' || entityType === 'BANK'
+        ? 'businesses'
+        : 'individuals'
+    const fileKey = `acuris-evidence/${entityTypeKey}/${resourceId}/${evidenceId}`
+    const { TMP_BUCKET } = process.env as CaseConfig
+    try {
+      const headCommand = new HeadObjectCommand({
+        Bucket: TMP_BUCKET,
+        Key: fileKey,
+      })
+
+      await s3.send(headCommand)
+
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: TMP_BUCKET,
+        Key: fileKey,
+      })
+
+      const url = await getSignedUrl(s3, getObjectCommand, {
+        expiresIn: 3600,
+      })
+
+      return { url: url }
+    } catch (error) {
+      try {
+        const apiKey = (await getSecretByName('acuris')).apiKey
+        const acurisUrl = getSourceUrl(entityTypeKey, resourceId, evidenceId)
+        const response = await fetch(acurisUrl, {
+          headers: {
+            accept: 'application/pdf',
+            'x-api-key': apiKey,
+          },
+        })
+
+        if (!response.ok || !response.body) {
+          throw new Error(
+            `Acuris API error: ${response.status} ${response.statusText}`
+          )
+        }
+
+        const upload = new Upload({
+          client: s3,
+          params: {
+            Bucket: TMP_BUCKET,
+            Key: fileKey,
+            Body: response.body,
+            ContentType: 'application/pdf',
+            Metadata: {
+              resourceId,
+              evidenceId,
+              downloadedAt: new Date().toISOString(),
+              source: 'acuris-api',
+            },
+            Expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        })
+
+        await upload.done()
+
+        const getObjectCommand = new GetObjectCommand({
+          Bucket: TMP_BUCKET,
+          Key: fileKey,
+        })
+
+        const url = await getSignedUrl(s3, getObjectCommand, {
+          expiresIn: 3600,
+        })
+
+        return { url }
+      } catch (error) {
+        logger.error('Failed to download file from Acuris API', { error })
+        throw error
+      }
     }
   }
 }

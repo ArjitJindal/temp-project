@@ -6,8 +6,13 @@ import { Small } from '@/components/ui/Typography';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
-import { CountryCode } from '@/apis';
+import { CountryCode, SanctionsEntityType } from '@/apis';
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
+import DownloadIcon from '@/components/ui/icons/Remix/system/download-2-line.react.svg';
+import { downloadLink } from '@/utils/download-link';
+import { useApi } from '@/api';
+import { message } from '@/components/library/Message';
+import LoadingIcon from '@/components/ui/icons/Remix/system/loader-2-line.react.svg';
 
 interface Props {
   title: string | JSX.Element;
@@ -20,7 +25,13 @@ interface Props {
   description?: string;
 }
 
-export default function ListingCard(props: Props) {
+interface DownloadSourceProps {
+  resourceId?: string;
+  evidenceId?: string;
+  entityType?: SanctionsEntityType;
+}
+
+export default function ListingCard(props: Props & DownloadSourceProps) {
   const {
     listedTime,
     title,
@@ -30,6 +41,9 @@ export default function ListingCard(props: Props) {
     hasUpdates,
     pdfMode,
     description,
+    resourceId,
+    evidenceId,
+    entityType,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = compact(listedTime);
@@ -52,7 +66,18 @@ export default function ListingCard(props: Props) {
               ))}
             </div>
           )}
-          {title}
+          <div className={s.titleText}>
+            {title}
+            {!pdfMode ? (
+              <DownloadButton
+                resourceId={resourceId}
+                evidenceId={evidenceId}
+                entityType={entityType}
+              />
+            ) : (
+              <></>
+            )}
+          </div>
           {hasUpdates && <UpdatedTag />}
         </div>
         {description && <div>{description}</div>}
@@ -68,3 +93,49 @@ export default function ListingCard(props: Props) {
     </div>
   );
 }
+
+const DownloadButton = (props: DownloadSourceProps) => {
+  const { resourceId, evidenceId, entityType } = props;
+  const [loading, setLoading] = useState(false);
+  const api = useApi();
+  const handleDownload = async (
+    evidenceId?: string,
+    resourceId?: string,
+    entityType?: SanctionsEntityType,
+  ) => {
+    if (!resourceId || !evidenceId || !entityType) {
+      return;
+    }
+    setLoading(true);
+    message.info('Downloading file...');
+    try {
+      const response = await api.getAcurisCopywritedSourceDownloadUrl({
+        evidenceId,
+        resourceId,
+        entityType,
+      });
+      message.success('File downloaded successfully');
+      downloadLink(response.url, `${evidenceId}.pdf`, true);
+    } catch (error) {
+      if (error instanceof Error && error.message?.includes('404')) {
+        message.error('Source is not copyrighted and can be directly accessed from console.');
+      } else {
+        message.error('Failed to download file');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <>
+      {!loading ? (
+        <DownloadIcon
+          className={s.icon}
+          onClick={() => handleDownload(evidenceId, resourceId, entityType)}
+        />
+      ) : (
+        <LoadingIcon className={s.icon} />
+      )}
+    </>
+  );
+};

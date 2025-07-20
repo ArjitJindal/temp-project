@@ -341,6 +341,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
   '/flat-files/progress': StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
   // TODO: rename CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME to make it generic
+  '/sanctions/acuris-copywrited-source/download':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

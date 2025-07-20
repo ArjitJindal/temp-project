@@ -813,6 +813,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
+      resourceId: entity.resourceId,
     }
   }
 
@@ -896,6 +897,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : undefined,
       nationality: countryCodes,
       countries: compact(countryCodes.map((c) => COUNTRIES[c])),
+      resourceId: entity.resourceId,
     }
   }
 
@@ -965,6 +967,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           name,
           internalId: generateHashFromString(category ?? ''),
           category,
+          evidenceId: evidence.evidenceId,
           fields: [
             {
               name: 'Keywords',
@@ -1023,6 +1026,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       category,
       sourceName,
       internalId: generateHashFromString(sourceName || ''),
+      evidenceId: evidence.evidenceId,
       fields: [
         {
           name: 'Title',

@@ -19,6 +19,7 @@ import {
   DefaultApiUpdateScreeningProfileRequest,
   DefaultApiDeleteScreeningProfileRequest,
   DefaultApiPostDefaultManualScreeningFiltersRequest,
+  DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -26,6 +27,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DefaultFiltersService } from '@/services/default-filters'
+import { getS3ClientByEvent } from '@/utils/s3'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
@@ -37,6 +39,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     const sanctionsHitService = await SanctionsHitService.fromEvent(event)
     const sanctionsService = await SanctionsService.fromEvent(event)
     const handlers = new Handlers()
+    const s3 = getS3ClientByEvent(event)
 
     handlers.registerPostSanctions(async (ctx, request) => {
       const result = await sanctionsService.search(
@@ -297,6 +300,19 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         )
       }
     )
+
+    handlers.registerGetAcurisCopywritedSourceDownloadUrl(
+      async (
+        _ctx,
+        request: DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest
+      ) => {
+        return await sanctionsService.getSanctionsAcurisCopywritedSourceDownload(
+          request,
+          s3
+        )
+      }
+    )
+
     return await handlers.handle(event)
   }
 )
