@@ -352,6 +352,20 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       },
       exporting: true,
     }),
+    helper.simple<'current.krs.riskScore'>({
+      title: 'KRS risk score before',
+      key: 'current.krs.riskScore',
+      type: {
+        render: (riskScore) => {
+          if (riskScore) {
+            return <>{riskScore.toFixed(2)}</>;
+          } else {
+            return <>{'-'}</>;
+          }
+        },
+      },
+      exporting: true,
+    }),
     helper.simple<'current.krs.riskLevel'>({
       title: 'KRS risk level before',
       key: 'current.krs.riskLevel',
@@ -359,6 +373,20 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         render: (riskLevel) => {
           if (riskLevel) {
             return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+          } else {
+            return <>{'-'}</>;
+          }
+        },
+      },
+      exporting: true,
+    }),
+    helper.simple<'simulated.krs.riskScore'>({
+      title: 'KRS risk score after',
+      key: 'simulated.krs.riskScore',
+      type: {
+        render: (riskScore) => {
+          if (riskScore) {
+            return <>{riskScore.toFixed(2)}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -380,6 +408,20 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       },
       exporting: true,
     }),
+    helper.simple<'current.drs.riskScore'>({
+      title: 'CRA risk score before',
+      key: 'current.drs.riskScore',
+      type: {
+        render: (riskScore) => {
+          if (riskScore) {
+            return <>{riskScore.toFixed(2)}</>;
+          } else {
+            return <>{'-'}</>;
+          }
+        },
+      },
+      exporting: true,
+    }),
     helper.simple<'current.drs.riskLevel'>({
       title: 'CRA risk level before',
       key: 'current.drs.riskLevel',
@@ -392,6 +434,21 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           }
         },
       },
+      exporting: true,
+    }),
+    helper.simple<'simulated.drs.riskScore'>({
+      title: 'CRA risk score after',
+      key: 'simulated.drs.riskScore',
+      type: {
+        render: (riskScore) => {
+          if (riskScore) {
+            return <>{riskScore.toFixed(2)}</>;
+          } else {
+            return <>{'-'}</>;
+          }
+        },
+      },
+      exporting: true,
     }),
     helper.simple<'simulated.drs.riskLevel'>({
       title: 'CRA risk level after',
@@ -405,6 +462,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           }
         },
       },
+      exporting: true,
     }),
   ]);
   const getCount = useCallback(
