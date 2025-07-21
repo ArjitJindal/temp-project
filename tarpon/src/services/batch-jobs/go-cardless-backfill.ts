@@ -1,35 +1,30 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
+import { SQSClient } from '@aws-sdk/client-sqs'
+import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
+import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { GoCardlessBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   API_REQUEST_LOGS_COLLECTION,
   ARS_SCORES_COLLECTION,
-  DRS_SCORES_COLLECTION,
-  KRS_SCORES_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
-  USER_EVENTS_COLLECTION,
-  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-public/Business'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import {
   DynamoDbEntityType,
   DynamoDbEntityUpdate,
 } from '@/core/dynamodb/dynamodb-stream-utils'
 import { generateChecksum } from '@/utils/object'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { bulkSendMessages } from '@/utils/sns-sqs-client'
 
 interface SendEntityToSQSParams {
   tenantId: string
@@ -43,6 +38,10 @@ interface SendEntityToSQSParams {
 const DEFAULT_CONCURRENCY = 1000
 
 export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
+  private dynamoDbTransactionRepository!: DynamoDbTransactionRepository // eslint-disable-line @typescript-eslint/no-unused-vars
+  private riskRepository!: RiskRepository // eslint-disable-line @typescript-eslint/no-unused-vars
+  private eventsRepository!: TransactionEventRepository // eslint-disable-line @typescript-eslint/no-unused-vars
+
   /**
    * Validates transactions and returns IDs that need to be rerun
    */
@@ -50,9 +49,17 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     tenantId: string,
     transactionIds: string[],
     mongoDb: MongoClient
-  ): Promise<string[]> {
+  ): Promise<{
+    arsIds: string[]
+    eventIds: string[]
+    transactionIds: string[]
+  }> {
     if (transactionIds.length === 0) {
-      return []
+      return {
+        arsIds: [],
+        eventIds: [],
+        transactionIds: [],
+      }
     }
 
     const db = mongoDb.db()
@@ -82,121 +89,165 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     ])
 
     // Create sets for O(1) lookup performance
-    const transactionIdSet = new Set(transactions.map((t) => t.transactionId))
-    const eventsIdSet = new Set(transactionEvents.map((e) => e.transactionId))
-    const arsScoresIdSet = new Set(arsScores.map((s) => s.transactionId))
-
-    const transactionIdsToRerun = new Set<string>()
+    const transactionIdSet = new Set(
+      transactionIds.filter(
+        (id) => !transactions.some((t) => t.transactionId === id)
+      )
+    ) // Transactions that are not in the database
+    const eventsIdSet = new Set(
+      transactionIds.filter(
+        (id) => !transactionEvents.some((e) => e.transactionId === id)
+      )
+    )
+    // Events that are not in the database
+    const arsScoresIdSet = new Set(
+      transactionIds.filter(
+        (id) => !arsScores.some((s) => s.transactionId === id)
+      )
+    ) // ARS scores that are not in the database
 
     // Single pass through transactionIds to find all issues
-    for (const id of transactionIds) {
-      if (
-        !transactionIdSet.has(id) ||
-        !eventsIdSet.has(id) ||
-        !arsScoresIdSet.has(id)
-      ) {
-        transactionIdsToRerun.add(id)
-      }
-    }
 
     // Check for transactions without timestamp
     for (const transaction of transactions) {
       if (transaction.timestamp == null) {
-        transactionIdsToRerun.add(transaction.transactionId)
+        transactionIdSet.add(transaction.transactionId)
       }
     }
 
-    return Array.from(transactionIdsToRerun)
-  }
-
-  private async validateUsers(
-    tenantId: string,
-    userIds: string[],
-    mongoDb: MongoClient
-  ): Promise<string[]> {
-    if (userIds.length === 0) {
-      return []
+    return {
+      transactionIds: Array.from(transactionIdSet),
+      eventIds: Array.from(eventsIdSet),
+      arsIds: Array.from(arsScoresIdSet),
     }
-
-    const db = mongoDb.db()
-
-    const [users, userEvents, drs, krs] = await Promise.all([
-      db
-        .collection<User | Business>(USERS_COLLECTION(tenantId))
-        .find(
-          { userId: { $in: userIds } },
-          { projection: { userId: 1, createdTimestamp: 1 } }
-        )
-        .toArray(),
-      db
-        .collection<ConsumerUserEvent | BusinessUserEvent>(
-          USER_EVENTS_COLLECTION(tenantId)
-        )
-        .find({ userId: { $in: userIds } }, { projection: { userId: 1 } })
-        .toArray(),
-      db
-        .collection<DrsScore>(DRS_SCORES_COLLECTION(tenantId))
-        .find({ userId: { $in: userIds } }, { projection: { userId: 1 } })
-        .toArray(),
-      db
-        .collection<KrsScore>(KRS_SCORES_COLLECTION(tenantId))
-        .find({ userId: { $in: userIds } }, { projection: { userId: 1 } })
-        .toArray(),
-    ])
-
-    const usersSet = new Set(users.map((u) => u.userId))
-    const userEventsSet = new Set(userEvents.map((e) => e.userId))
-    const drsSet = new Set(drs.map((d) => d.userId))
-    const krsSet = new Set(krs.map((k) => k.userId))
-
-    const userIdsToRerun = new Set<string>()
-
-    for (const userId of userIds) {
-      if (
-        !usersSet.has(userId) ||
-        !userEventsSet.has(userId) ||
-        !drsSet.has(userId) ||
-        !krsSet.has(userId)
-      ) {
-        userIdsToRerun.add(userId)
-      }
-    }
-
-    for (const user of users) {
-      if (user.createdTimestamp == null) {
-        userIdsToRerun.add(user.userId)
-      }
-    }
-
-    return Array.from(userIdsToRerun)
   }
 
   /**
    * Reruns transactions with improved error handling and retry logic
    */
-  private async rerunTransactions(
+  private async rerunEntities<T>(
     tenantId: string,
-    transactions: Transaction[],
-    sqsClient: SQSClient
+    entityIds: string[],
+    sqsClient: SQSClient,
+    {
+      type,
+      getData,
+      getKeys,
+    }: {
+      type: DynamoDbEntityType
+      getData: (id: string) => Promise<T | null | undefined>
+      getKeys: (
+        tenantId: string,
+        entity: T
+      ) => { PartitionKeyID: string; SortKeyID?: string }
+    }
   ): Promise<void> {
-    if (transactions.length === 0) {
+    if (entityIds.length === 0) {
       return
     }
 
-    // Process transactions with concurrency control and error handling
+    console.log(
+      `Rerunning ${type}s: ${entityIds.length}, ${JSON.stringify(
+        entityIds,
+        null,
+        2
+      )}`
+    )
+
+    const messages: SendEntityToSQSParams[] = []
+
     await pMap(
-      transactions,
-      async (transaction) => {
-        await this.sendEntityToSQS({
+      entityIds,
+      async (entityId) => {
+        const data = await getData(entityId)
+        if (data == null) {
+          console.warn(`${type} not found`, { entityId })
+          return
+        }
+        messages.push({
           tenantId,
-          entityId: transaction.transactionId,
-          type: 'TRANSACTION',
-          keys: DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
-          data: transaction,
-          sqsClient: sqsClient,
+          entityId,
+          type,
+          keys: getKeys(tenantId, data),
+          data,
+          sqsClient,
         })
       },
       { concurrency: 100 }
+    )
+
+    await this.sendEntityToSQS(sqsClient, messages)
+
+    console.log(`Sent ${messages.length} messages to SQS`)
+  }
+
+  private async rerunTransactions(
+    tenantId: string,
+    transactionIds: string[],
+    sqsClient: SQSClient
+  ): Promise<void> {
+    await this.rerunEntities<Transaction>(tenantId, transactionIds, sqsClient, {
+      type: 'TRANSACTION',
+      getData: (transactionId: string) =>
+        this.dynamoDbTransactionRepository.getTransactionById(transactionId),
+      getKeys: (tenantId: string, transaction: Transaction) =>
+        DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
+    })
+  }
+
+  private async rerunArsScores(
+    tenantId: string,
+    transactionIds: string[],
+    sqsClient: SQSClient
+  ): Promise<void> {
+    if (transactionIds.length === 0) {
+      return
+    }
+
+    const arsScores = await this.riskRepository.getArsScores(transactionIds)
+    await this.rerunEntities<ArsScore>(
+      tenantId,
+      arsScores.map((arsScore) => arsScore.transactionId as string),
+      sqsClient,
+      {
+        type: 'ARS_VALUE',
+        getData: async (transactionId: string) =>
+          arsScores.find(
+            (arsScore) => arsScore.transactionId === transactionId
+          ),
+        getKeys: (tenantId: string, arsScore: ArsScore) =>
+          DynamoDbKeys.ARS_VALUE_ITEM(
+            tenantId,
+            arsScore.transactionId as string,
+            '1'
+          ),
+      }
+    )
+  }
+
+  private async rerunTransactionEvents(
+    tenantId: string,
+    transactionIds: string[],
+    sqsClient: SQSClient
+  ): Promise<void> {
+    await this.rerunEntities<TransactionEvent>(
+      tenantId,
+      transactionIds,
+      sqsClient,
+      {
+        type: 'TRANSACTION_EVENT',
+        getData: (transactionId: string) =>
+          this.eventsRepository.getLastTransactionEvent(transactionId),
+        getKeys: (tenantId: string, transactionEvent: TransactionEvent) =>
+          DynamoDbKeys.TRANSACTION_EVENT(
+            tenantId,
+            transactionEvent.transactionId,
+            {
+              timestamp: transactionEvent.timestamp,
+              eventId: transactionEvent.eventId as string,
+            }
+          ),
+      }
     )
   }
 
@@ -213,108 +264,43 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
       return
     }
 
-    const transactionIds = batch.map((t) => t.transactionId)
-    const validationResult = await this.validateTransactions(
-      tenantId,
-      transactionIds,
-      mongoDb
-    )
-
-    if (validationResult.length > 0) {
-      console.log(
-        `Processing batch: ${batch.length} transactions, ${
-          validationResult.length
-        } need rerun: ${validationResult.join(', ')}`
+    const transactionIdsToValidate = batch.map((t) => t.transactionId)
+    const { arsIds, eventIds, transactionIds } =
+      await this.validateTransactions(
+        tenantId,
+        transactionIdsToValidate,
+        mongoDb
       )
 
-      const transactionsToRerun = batch.filter((t) =>
-        validationResult.includes(t.transactionId)
-      )
-
-      await this.rerunTransactions(tenantId, transactionsToRerun, sqsClient)
-    }
+    await this.rerunTransactions(tenantId, transactionIds, sqsClient)
+    await this.rerunArsScores(tenantId, arsIds, sqsClient)
+    await this.rerunTransactionEvents(tenantId, eventIds, sqsClient)
   }
 
-  private async sendEntityToSQS({
-    tenantId,
-    entityId,
-    type,
-    keys,
-    data,
-    sqsClient,
-  }: SendEntityToSQSParams) {
-    const entityData: DynamoDbEntityUpdate = {
-      tenantId,
-      partitionKeyId: keys.PartitionKeyID,
-      sortKeyId: keys.SortKeyID,
-      entityId: entityId,
-      NewImage: data,
-      type,
-    }
+  private async sendEntityToSQS(
+    sqsClient: SQSClient,
+    messages: SendEntityToSQSParams[]
+  ) {
+    const dynamoDbMessages: DynamoDbEntityUpdate[] = messages.map((m) => ({
+      tenantId: m.tenantId,
+      partitionKeyId: m.keys.PartitionKeyID,
+      sortKeyId: m.keys.SortKeyID,
+      entityId: m.entityId,
+      NewImage: m.data,
+      type: m.type,
+    }))
 
-    await sqsClient.send(
-      new SendMessageCommand({
-        MessageBody: JSON.stringify(entityData),
-        QueueUrl: process.env.TARPON_QUEUE_URL,
-        MessageGroupId: generateChecksum(tenantId, 10),
-      })
-    )
-  }
-
-  private async processBatchUsers(
-    tenantId: string,
-    batch: (User | Business)[],
-    mongoDb: MongoClient,
-    sqsClient: SQSClient
-  ): Promise<void> {
-    if (batch.length === 0) {
-      return
-    }
-
-    const userIds = batch.map((u) => u.userId)
-    const validationResult = await this.validateUsers(
-      tenantId,
-      userIds,
-      mongoDb
-    )
-
-    if (validationResult.length > 0) {
-      console.log(
-        `Processing batch: ${batch.length} users, ${
-          validationResult.length
-        } need rerun: ${validationResult.join(', ')}`
-      )
-
-      const usersToRerun = batch.filter((u) =>
-        validationResult.includes(u.userId)
-      )
-
-      await this.rerunUsers(tenantId, usersToRerun, sqsClient)
-    }
-  }
-
-  private async rerunUsers(
-    tenantId: string,
-    users: (User | Business)[],
-    sqsClient: SQSClient
-  ): Promise<void> {
-    if (users.length === 0) {
-      return
-    }
-
-    await pMap(
-      users,
-      async (user) => {
-        await this.sendEntityToSQS({
-          tenantId,
-          entityId: user.userId,
-          type: 'USER',
-          keys: DynamoDbKeys.USER(tenantId, user.userId),
-          data: user,
-          sqsClient,
-        })
-      },
-      { concurrency: 100 }
+    await bulkSendMessages(
+      sqsClient,
+      process.env.SECONDARY_TARPON_QUEUE_URL as string,
+      dynamoDbMessages.map((m) => ({
+        MessageBody: JSON.stringify(m),
+        MessageGroupId: generateChecksum(m.tenantId, 10),
+        MessageDeduplicationId: generateChecksum(
+          JSON.stringify(m.NewImage),
+          10
+        ),
+      }))
     )
   }
 
@@ -322,6 +308,18 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     const { tenantId } = job
     const mongoDb = await getMongoDbClient()
     const sqsClient = new SQSClient({})
+    const dynamoDb = getDynamoDbClient()
+
+    this.dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
+      tenantId,
+      dynamoDb
+    )
+    this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    this.eventsRepository = new TransactionEventRepository(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+
     console.log(`Starting GoCardless backfill for tenant: ${tenantId}`)
 
     const batchSize = job.parameters.concurrency || DEFAULT_CONCURRENCY
@@ -330,47 +328,6 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     const requestLogsCollection = mongoDb
       .db()
       .collection<ApiRequestLog>(API_REQUEST_LOGS_COLLECTION(tenantId))
-
-    const usersRequestLogsCursor = requestLogsCollection
-      .find({ path: '/users' })
-      .sort({ timestamp: 1 })
-      .addCursorFlag('noCursorTimeout', true)
-
-    const totalUsersToProcess = await requestLogsCollection.countDocuments({
-      path: {
-        $in: ['/consumer/users', '/business/users'],
-      },
-    })
-
-    const usersToProcess: (User | Business)[] = []
-    let usersProcessedCount = 0
-
-    for await (const log of usersRequestLogsCursor) {
-      const user = log.payload as User | Business
-      usersToProcess.push(user)
-
-      if (usersToProcess.length >= batchSize) {
-        await this.processBatchUsers(
-          tenantId,
-          usersToProcess,
-          mongoDb,
-          sqsClient
-        )
-        usersProcessedCount += usersToProcess.length
-        console.log(
-          `Processed ${usersProcessedCount} / ${totalUsersToProcess} users`
-        )
-        usersToProcess.length = 0
-      }
-    }
-
-    if (usersToProcess.length > 0) {
-      await this.processBatchUsers(tenantId, usersToProcess, mongoDb, sqsClient)
-      usersProcessedCount += usersToProcess.length
-      console.log(
-        `Processed ${usersProcessedCount} / ${totalUsersToProcess} users`
-      )
-    }
 
     const requestLogsCursor = requestLogsCollection
       .find({ path: '/transactions' })
