@@ -43,8 +43,8 @@ export class PaymentApprovalsDashboardMetric {
       {
         $match: {
           $and: [
-            startTimestamp ? { createdAt: { $gte: startTimestamp } } : {},
-            endTimestamp ? { createdAt: { $lte: endTimestamp } } : {},
+            startTimestamp ? { timestamp: { $gte: startTimestamp } } : {},
+            endTimestamp ? { timestamp: { $lte: endTimestamp } } : {},
             {
               $or: [
                 {
@@ -65,7 +65,7 @@ export class PaymentApprovalsDashboardMetric {
             {
               $group: {
                 _id: '$transactionId',
-                createdAt: { $min: '$createdAt' },
+                timestamp: { $min: '$timestamp' },
               },
             },
           ],
@@ -80,7 +80,7 @@ export class PaymentApprovalsDashboardMetric {
               $project: {
                 transactionId: 1,
                 createdBy: 1,
-                createdAt: 1,
+                timestamp: 1,
                 status: 1,
               },
             },
@@ -98,7 +98,7 @@ export class PaymentApprovalsDashboardMetric {
                   in: {
                     transactionId: '$$created._id',
                     type: 'created',
-                    createdAt: '$$created.createdAt',
+                    timestamp: '$$created.timestamp',
                   },
                 },
               },
@@ -110,7 +110,7 @@ export class PaymentApprovalsDashboardMetric {
                     transactionId: '$$decision.transactionId',
                     type: 'decision',
                     createdBy: '$$decision.createdBy',
-                    createdAt: '$$decision.createdAt',
+                    timestamp: '$$decision.timestamp',
                     status: '$$decision.status',
                   },
                 },
@@ -132,7 +132,7 @@ export class PaymentApprovalsDashboardMetric {
             $first: {
               $cond: [
                 { $eq: ['$type', 'created'] },
-                { createdAt: '$createdAt' },
+                { timestamp: '$timestamp' },
                 null,
               ],
             },
@@ -143,7 +143,7 @@ export class PaymentApprovalsDashboardMetric {
                 { $eq: ['$type', 'decision'] },
                 {
                   createdBy: '$createdBy',
-                  createdAt: '$createdAt',
+                  timestamp: '$timestamp',
                   status: '$status',
                 },
                 null,
@@ -177,7 +177,7 @@ export class PaymentApprovalsDashboardMetric {
         $project: {
           decidedBy: '$decisionEvents.createdBy',
           duration: {
-            $subtract: ['$decisionEvents.createdAt', '$createdEvent.createdAt'],
+            $subtract: ['$decisionEvents.timestamp', '$createdEvent.timestamp'],
           },
           status: '$decisionEvents.status',
         },
@@ -227,21 +227,21 @@ export class PaymentApprovalsDashboardMetric {
       CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName
     const dateConditions: string[] = []
     if (startTimestamp) {
-      dateConditions.push(`createdAt >= ${startTimestamp}`)
+      dateConditions.push(`timestamp >= ${startTimestamp}`)
     }
     if (endTimestamp) {
-      dateConditions.push(`createdAt <= ${endTimestamp}`)
+      dateConditions.push(`timestamp <= ${endTimestamp}`)
     }
     const query = `
     WITH created_events AS (
     SELECT
         transactionId,
-        MIN(createdAt) AS created_at
+        MIN(timestamp) AS created_at
     FROM ${transaction_events}
     WHERE transactionState IN (${transactionStates
       .map((s) => `'${s}'`)
       .join(',')})
-        AND toUInt64OrNull(JSON_VALUE(data, '$.createdAt')) IS NOT NULL
+        AND timestamp IS NOT NULL
         ${dateConditions.length ? `AND ${dateConditions.join(' AND ')}` : ''}
     GROUP BY transactionId
     ),
@@ -249,10 +249,10 @@ export class PaymentApprovalsDashboardMetric {
     SELECT
         transactionId,
         createdBy AS decided_by,
-        MAX(createdAt) AS decided_at
+        MAX(timestamp) AS decided_at
     FROM ${transaction_events}
     WHERE status IN ('ALLOW', 'BLOCK')
-        AND toUInt64OrNull(JSON_VALUE(data, '$.createdAt')) IS NOT NULL
+        AND timestamp IS NOT NULL
         ${dateConditions.length ? `AND ${dateConditions.join(' AND ')}` : ''}
     GROUP BY transactionId, createdBy
     ),
