@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { SQSClient } from '@aws-sdk/client-sqs'
+import { ClickHouseClient } from '@clickhouse/client'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
@@ -25,6 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { bulkSendMessages } from '@/utils/sns-sqs-client'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 interface SendEntityToSQSParams {
   tenantId: string
@@ -36,6 +38,8 @@ interface SendEntityToSQSParams {
 }
 
 const DEFAULT_CONCURRENCY = 1000
+
+const RERUN_TRANSACTIONS = new Set<string>()
 
 export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   private dynamoDbTransactionRepository!: DynamoDbTransactionRepository // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -128,6 +132,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   private async rerunEntities<T>(
     tenantId: string,
     entityIds: string[],
+    clients: { mongoClient: MongoClient; clickhouseClient: ClickHouseClient },
     sqsClient: SQSClient,
     {
       type,
@@ -161,7 +166,34 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
       async (entityId) => {
         const data = await getData(entityId)
         if (data == null) {
-          console.warn(`${type} not found`, { entityId })
+          if (RERUN_TRANSACTIONS.has(entityId)) {
+            return
+          }
+
+          await Promise.all([
+            clients.mongoClient
+              .db()
+              .collection<Transaction>(TRANSACTIONS_COLLECTION(tenantId))
+              .deleteOne({ transactionId: entityId }),
+            clients.clickhouseClient.exec({
+              query: `
+              DELETE FROM transactions
+              WHERE transactionId = '${entityId}'
+                `,
+            }),
+            clients.clickhouseClient.exec({
+              query: `
+              DELETE FROM transactions_by_id
+              WHERE transactionId = '${entityId}'
+                `,
+            }),
+          ])
+
+          RERUN_TRANSACTIONS.add(entityId)
+
+          console.warn(`${type} not found and deleted from mongo`, {
+            entityId,
+          })
           return
         }
         messages.push({
@@ -183,22 +215,31 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
 
   private async rerunTransactions(
     tenantId: string,
+    batch: Transaction[],
     transactionIds: string[],
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
+    clients: { mongoClient: MongoClient; clickhouseClient: ClickHouseClient }
   ): Promise<void> {
-    await this.rerunEntities<Transaction>(tenantId, transactionIds, sqsClient, {
-      type: 'TRANSACTION',
-      getData: (transactionId: string) =>
-        this.dynamoDbTransactionRepository.getTransactionById(transactionId),
-      getKeys: (tenantId: string, transaction: Transaction) =>
-        DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
-    })
+    await this.rerunEntities<Transaction>(
+      tenantId,
+      transactionIds,
+      clients,
+      sqsClient,
+      {
+        type: 'TRANSACTION',
+        getData: (transactionId: string) =>
+          this.dynamoDbTransactionRepository.getTransactionById(transactionId),
+        getKeys: (tenantId: string, transaction: Transaction) =>
+          DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
+      }
+    )
   }
 
   private async rerunArsScores(
     tenantId: string,
     transactionIds: string[],
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
+    clients: { mongoClient: MongoClient; clickhouseClient: ClickHouseClient }
   ): Promise<void> {
     if (transactionIds.length === 0) {
       return
@@ -208,6 +249,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     await this.rerunEntities<ArsScore>(
       tenantId,
       arsScores.map((arsScore) => arsScore.transactionId as string),
+      clients,
       sqsClient,
       {
         type: 'ARS_VALUE',
@@ -228,11 +270,13 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   private async rerunTransactionEvents(
     tenantId: string,
     transactionIds: string[],
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
+    clients: { mongoClient: MongoClient; clickhouseClient: ClickHouseClient }
   ): Promise<void> {
     await this.rerunEntities<TransactionEvent>(
       tenantId,
       transactionIds,
+      clients,
       sqsClient,
       {
         type: 'TRANSACTION_EVENT',
@@ -258,7 +302,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     tenantId: string,
     batch: Transaction[],
     mongoDb: MongoClient,
-    sqsClient: SQSClient
+    sqsClient: SQSClient,
+    clients: { mongoClient: MongoClient; clickhouseClient: ClickHouseClient }
   ): Promise<void> {
     if (batch.length === 0) {
       return
@@ -272,9 +317,15 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
         mongoDb
       )
 
-    await this.rerunTransactions(tenantId, transactionIds, sqsClient)
-    await this.rerunArsScores(tenantId, arsIds, sqsClient)
-    await this.rerunTransactionEvents(tenantId, eventIds, sqsClient)
+    await this.rerunTransactions(
+      tenantId,
+      batch,
+      transactionIds,
+      sqsClient,
+      clients
+    )
+    await this.rerunArsScores(tenantId, arsIds, sqsClient, clients)
+    await this.rerunTransactionEvents(tenantId, eventIds, sqsClient, clients)
   }
 
   private async sendEntityToSQS(
@@ -309,6 +360,11 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     const mongoDb = await getMongoDbClient()
     const sqsClient = new SQSClient({})
     const dynamoDb = getDynamoDbClient()
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const clients = {
+      mongoClient: mongoDb,
+      clickhouseClient,
+    }
 
     this.dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
       tenantId,
@@ -358,7 +414,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
           tenantId,
           transactionsToProcess,
           mongoDb,
-          sqsClient
+          sqsClient,
+          clients
         )
         processedCount += transactionsToProcess.length
         console.log(
@@ -373,7 +430,8 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
         tenantId,
         transactionsToProcess,
         mongoDb,
-        sqsClient
+        sqsClient,
+        clients
       )
       console.log(
         `Processed ${processedCount} / ${totalRequestsToProcess} requests`
