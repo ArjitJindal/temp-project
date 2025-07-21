@@ -43,7 +43,7 @@ export class MongoSanctionSourcesRepository
 
     const operations = documents.map(([action, document]) => {
       // Create a deterministic ID based on the source properties
-      const id = uuidv4()
+      const id = document.id || uuidv4()
 
       switch (action) {
         case 'add': {

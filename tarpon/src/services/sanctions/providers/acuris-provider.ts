@@ -370,6 +370,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           sourceType: 'SANCTIONS',
           sourceCountry: extractCountryFromSource(sourceName, 'SANCTIONS'),
           displayName: displayName,
+          id: generateHashFromString(sourceName),
         },
       ])
     }
@@ -389,6 +390,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           sourceType: 'SANCTIONS',
           sourceCountry: extractCountryFromSource(sourceName, 'SANCTIONS'),
           displayName: displayName,
+          id: generateHashFromString(sourceName),
         },
       ])
     }
@@ -407,6 +409,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
           entityType: 'PERSON',
           sourceType: 'PEP',
           displayName: displayName,
+          id: generateHashFromString(sourceName),
         },
       ])
     }
@@ -429,6 +432,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             'REGULATORY_ENFORCEMENT_LIST'
           ),
           displayName: displayName,
+          id: generateHashFromString(sourceName),
         },
       ])
     }
@@ -451,6 +455,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             'REGULATORY_ENFORCEMENT_LIST'
           ),
           displayName: displayName,
+          id: generateHashFromString(sourceName),
         },
       ])
     }
