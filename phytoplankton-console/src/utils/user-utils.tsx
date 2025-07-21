@@ -365,7 +365,7 @@ export function isSystemUser(id: string): boolean {
 export function getDisplayedUserInfo(account?: Account | null): { name: string; avatar?: string } {
   const branding = getBranding();
   if (account && isSystemUser(account.id)) {
-    return { name: account.id, avatar: branding.systemAvatarUrl };
+    return { name: account.name ?? account.email ?? account.id, avatar: branding.systemAvatarUrl };
   }
   if (!account || isSuperAdmin(account) || account.role === UserRole.WHITELABEL_ROOT) {
     return { name: `${branding.companyName} System`, avatar: branding.systemAvatarUrl };
