@@ -523,9 +523,9 @@ export class StreamConsumerBuilder {
               MessageBody: JSON.stringify(update),
               MessageGroupId: generateChecksum(update.entityId, 10),
               MessageDeduplicationId: `${generateChecksum(
-                update.entityId,
+                JSON.stringify(update.NewImage),
                 10
-              )}-${generateChecksum(update.sequenceNumber, 10)}`,
+              )}`,
             }))
 
             await backOff(
@@ -621,9 +621,9 @@ export class StreamConsumerBuilder {
             ? generateChecksum(update.entityId, 10)
             : generateChecksum(update.tenantId, 10),
           MessageDeduplicationId: `${generateChecksum(
-            update.entityId,
+            JSON.stringify(update.NewImage),
             10
-          )}-${generateChecksum(update.sequenceNumber, 10)}`,
+          )}`,
           tenantId,
         }))
 
