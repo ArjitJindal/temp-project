@@ -1,5 +1,4 @@
 import React from 'react';
-import '@toast-ui/editor/dist/toastui-editor.css';
 import '../shared-styles.less';
 import s from './index.module.less';
 import { makeAsyncComponent } from '@/utils/imports';
@@ -15,7 +14,10 @@ interface ViewerProps {
 }
 
 const Viewer = makeAsyncComponent(async () => {
-  const mod = await import('@toast-ui/react-editor');
+  const [mod] = await Promise.all([
+    import('@toast-ui/react-editor'),
+    import('@toast-ui/editor/dist/toastui-editor.css'),
+  ]);
   const ToastViewer = mod.Viewer;
 
   return {

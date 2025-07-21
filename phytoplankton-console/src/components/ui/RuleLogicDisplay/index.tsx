@@ -1,4 +1,3 @@
-import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import React from 'react';
 import {
   LogicAggregationVariable,
@@ -16,12 +15,18 @@ const CONFIG_PARAMS = {
   mode: 'VIEW',
 } as const;
 
+type JsonLogic = Record<string, unknown> | null | undefined;
+
 interface Props {
-  ruleLogic: any;
+  ruleLogic: JsonLogic;
   ruleType: RuleType;
   logicEntityVariables?: Array<LogicEntityVariableInUse>;
   logicAggregationVariables?: Array<LogicAggregationVariable>;
   logicMachineLearningVariables?: Array<RuleMachineLearningVariable>;
+}
+
+function isValidJsonLogic(value: JsonLogic): value is Record<string, unknown> {
+  return value != null && typeof value === 'object';
 }
 
 export default function RuleLogicDisplay(props: Props) {
@@ -46,14 +51,11 @@ export default function RuleLogicDisplay(props: Props) {
   return (
     <AsyncResourceRenderer resource={newLogicBuildConfigRes}>
       {(logicBuildConfig: QueryBuilderConfig) => {
-        const [propsTree, errors] = QbUtils._loadFromJsonLogic(ruleLogic, logicBuildConfig);
-        if (errors.length > 0) {
-          return <Alert type={'ERROR'}>Unable to display rule logic. {errors.join('; ')}</Alert>;
+        if (!isValidJsonLogic(ruleLogic)) {
+          return <Alert type={'ERROR'}>Invalid rule logic format</Alert>;
         }
-        const checkedPropsTree = propsTree
-          ? QbUtils.checkTree(propsTree, logicBuildConfig)
-          : undefined;
-        return <LogicBuilder value={checkedPropsTree} config={logicBuildConfig} />;
+
+        return <LogicBuilder jsonLogic={ruleLogic} config={logicBuildConfig} />;
       }}
     </AsyncResourceRenderer>
   );

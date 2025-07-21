@@ -1,7 +1,6 @@
 import React, { Component, createRef, useState, useEffect } from 'react';
-import '@toast-ui/editor/dist/toastui-editor.css';
 import '../shared-styles.less';
-import { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
+import type { ToolbarItemOptions } from '@toast-ui/editor/types/ui';
 import { mentionRegex } from '@flagright/lib/constants';
 import s from './styles.module.less';
 import { getNode } from './mention-utlis';
@@ -13,7 +12,10 @@ const AsyncEditor = React.forwardRef<any, any>((props, ref) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    import('@toast-ui/react-editor').then((mod) => {
+    Promise.all([
+      import('@toast-ui/react-editor'),
+      import('@toast-ui/editor/dist/toastui-editor.css'),
+    ]).then(([mod]) => {
       setEditorComponent(() => mod.Editor);
       setTimeout(() => setIsReady(true), 100);
     });
