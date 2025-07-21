@@ -16,7 +16,6 @@ import CaseManagementItemPage from '@/pages/case-management-item';
 import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
-import { MlModelsPage } from '@/pages/ml-models';
 import { QASamplePage } from '@/pages/qa-sample-item';
 import { QASamplesTable } from '@/pages/qa-samples';
 import ReportsList from '@/pages/reports';
@@ -59,9 +58,9 @@ export function useRoutes(): RouteItem[] {
   const isWorkflowsEnabled = useFeatureEnabled('WORKFLOWS_BUILDER');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const [lastActiveTab] = useSafeLocalStorageState('user-active-tab', 'consumer');
-  const [lastActiveRuleTab] = useSafeLocalStorageState('rule-active-tab', 'rules-library');
+  const [lastActiveRuleTab] = useSafeLocalStorageState('rule-active-tab', 'rules-library', true);
   const [lastActiveList] = useSafeLocalStorageState('user-active-list', 'whitelist');
-  const [lastActiveSanctionsTab] = useSafeLocalStorageState('sanctions-active-tab', 'search');
+  const [lastActiveSanctionsTab] = useSafeLocalStorageState('sanctions-active-tab', 'search', true);
   const { statements } = useResources();
 
   const hasAuditLogPermission = useHasResources(['read:::audit-log/export/*']);
@@ -239,7 +238,7 @@ export function useRoutes(): RouteItem[] {
                 ? '/rules/my-rules'
                 : lastActiveRuleTab === 'rules-library' || !hasMachineLearningFeature
                 ? '/rules/rules-library'
-                : '/rules/ml-models',
+                : '/rules/ai-detection',
           },
           {
             path: '/rules/my-rules/simulation-history',
@@ -261,6 +260,20 @@ export function useRoutes(): RouteItem[] {
             name: 'simulation-history',
             component: SimulationHistoryItemPage,
           },
+          ...(hasMachineLearningFeature
+            ? [
+                {
+                  path: '/rules/ai-detection/simulation-history',
+                  name: 'simulation-history',
+                  component: SimulationHistoryPage,
+                },
+                {
+                  path: '/rules/ai-detection/simulation-history/:id',
+                  name: 'simulation-history',
+                  component: SimulationHistoryItemPage,
+                },
+              ]
+            : []),
           {
             path: '/rules/my-rules/:id',
             name: 'rule-instance',
@@ -284,9 +297,9 @@ export function useRoutes(): RouteItem[] {
           ...(hasMachineLearningFeature
             ? [
                 {
-                  path: '/rules/ml-models',
-                  name: 'ml-models',
-                  component: MlModelsPage,
+                  path: '/rules/:tab',
+                  name: 'ai-detection',
+                  component: RulesPage,
                 },
               ]
             : []),

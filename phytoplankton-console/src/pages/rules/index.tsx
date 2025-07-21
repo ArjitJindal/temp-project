@@ -19,8 +19,8 @@ import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 
 const TableList = () => {
-  const { tab = 'tab' } = useParams<'tab'>();
-  const [, setLocalStorageActiveTab] = useSafeLocalStorageState('rule-active-tab', tab);
+  const { tab = 'my-rules' } = useParams<'tab'>();
+  const [_, setLocalStorageActiveTab] = useSafeLocalStorageState('rule-active-tab', tab);
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
   useEffect(() => {
@@ -48,6 +48,10 @@ const TableList = () => {
         tab === 'rules-library' && {
           title: 'Templates',
           to: '/rules/rules-library',
+        },
+        tab === 'ai-detection' && {
+          title: 'AI detection',
+          to: '/rules/ai-detection',
         },
       ].filter(notEmpty)}
       simulationHistoryUrl={`/rules/${tab}/simulation-history`}
@@ -134,7 +138,6 @@ function Content(props: { tab: string; hasMachineLearningFeature: boolean }) {
             {
               title: 'AI detection',
               key: 'ai-detection',
-
               children: (
                 <PageWrapperContentContainer>
                   <MlModelsPage />

@@ -1,13 +1,19 @@
-import React from 'react';
 import { SimulationHistoryTable } from 'src/pages/rules/simulation-history/SimulationHistoryTable';
-import { useLocation } from 'react-router';
 import { Authorized } from '@/components/utils/Authorized';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export default function SimulationHistoryPage() {
-  const location = useLocation();
+  const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
-  const rulesTab = location.pathname.includes('rules-library') ? 'rules-library' : 'my-rules';
+  const [rulesTab] = useSafeLocalStorageState('rule-active-tab', 'rules-library', true);
+  const title =
+    rulesTab === 'my-rules'
+      ? 'My rules'
+      : rulesTab === 'rules-library' || !hasMachineLearningFeature
+      ? 'Templates'
+      : 'AI detection';
   return (
     <BreadCrumbsWrapper
       simulationStorageKey="SIMULATION_RULES"
@@ -17,7 +23,7 @@ export default function SimulationHistoryPage() {
           to: '/rules',
         },
         {
-          title: rulesTab === 'my-rules' ? 'My rules' : 'Templates',
+          title,
           to: `/rules/${rulesTab}`,
         },
         {

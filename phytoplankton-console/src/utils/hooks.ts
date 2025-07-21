@@ -73,9 +73,11 @@ export function useIsChanged<T>(value: T): boolean {
 export function useSafeLocalStorageState<T>(
   key: string,
   defaultValue: T,
+  listenStorageChange: boolean = false,
 ): [T, (value?: SetState<T> | undefined) => void] {
   const [value, setRawValue] = useLocalStorageState<T>(key, {
     defaultValue,
+    listenStorageChange,
   });
 
   return [value ?? defaultValue, setRawValue];
