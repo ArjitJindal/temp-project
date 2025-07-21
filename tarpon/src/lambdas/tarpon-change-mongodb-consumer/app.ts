@@ -120,10 +120,10 @@ export class TarponChangeMongoDbConsumer {
               tenantId,
               {
                 oldExecutedRules: oldTransactions.flatMap(
-                  (t) => t.executedRules
+                  (t) => t?.executedRules ?? []
                 ),
                 newExecutedRules: newTransactions.flatMap(
-                  (t) => t.executedRules
+                  (t) => t?.executedRules ?? []
                 ),
               },
               dbClients
@@ -133,8 +133,8 @@ export class TarponChangeMongoDbConsumer {
           this.handleRuleStats(
             tenantId,
             {
-              oldExecutedRules: oldUsers.flatMap((u) => u.executedRules ?? []),
-              newExecutedRules: newUsers.flatMap((u) => u.executedRules ?? []),
+              oldExecutedRules: oldUsers.flatMap((u) => u?.executedRules ?? []),
+              newExecutedRules: newUsers.flatMap((u) => u?.executedRules ?? []),
             },
             dbClients
           )
@@ -463,9 +463,10 @@ export class TarponChangeMongoDbConsumer {
         arsScore
       ),
       ruleInstancesRepo.getRuleInstancesByIds(
-        filterLiveRules({ hitRules: transaction.hitRules }, true).hitRules.map(
-          (rule) => rule.ruleInstanceId
-        )
+        filterLiveRules(
+          { hitRules: transaction?.hitRules ?? [] },
+          true
+        )?.hitRules?.map((rule) => rule.ruleInstanceId) ?? []
       ),
     ])
     transactionInMongoSubSegment?.close()
@@ -514,7 +515,7 @@ export class TarponChangeMongoDbConsumer {
         'handleTransaction handleUserStatusUpdateTrigger'
       )
       await userService.handleUserStatusUpdateTrigger(
-        transaction.hitRules,
+        transaction?.hitRules ?? [],
         ruleInstances as RuleInstance[],
         ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
         DESTINATION?.type === 'USER' ? DESTINATION?.user : null
@@ -668,17 +669,17 @@ export class TarponChangeMongoDbConsumer {
     )
 
     const executedRulesInstanceIds = getAddedItems(
-      data.oldExecutedRules.map((r) => r.ruleInstanceId),
-      data.newExecutedRules.map((r) => r.ruleInstanceId)
+      data?.oldExecutedRules?.map((r) => r.ruleInstanceId) ?? [],
+      data?.newExecutedRules?.map((r) => r.ruleInstanceId) ?? []
     )
 
     const hitRulesInstanceIds = getAddedItems(
-      data.oldExecutedRules
+      data?.oldExecutedRules
+        ?.filter((r) => r.ruleHit)
+        .map((r) => r.ruleInstanceId) ?? [],
+      data?.newExecutedRules
         .filter((r) => r.ruleHit)
-        .map((r) => r.ruleInstanceId),
-      data.newExecutedRules
-        .filter((r) => r.ruleHit)
-        .map((r) => r.ruleInstanceId)
+        .map((r) => r.ruleInstanceId) ?? []
     )
 
     await ruleInstanceRepository.updateRuleInstancesStats([

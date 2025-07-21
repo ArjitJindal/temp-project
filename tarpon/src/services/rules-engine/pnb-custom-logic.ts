@@ -1426,11 +1426,13 @@ export const getInternalRules = (): RuleInstance[] => {
 }
 
 export function filterOutInternalRules<T>(rules: T[]) {
-  return rules.filter(
-    (rule) =>
-      !PNB_INTERNAL_RULES.find(
-        (internalRule) => internalRule.id === rule['ruleInstanceId']
-      )
+  return (
+    rules?.filter(
+      (rule) =>
+        !PNB_INTERNAL_RULES.find(
+          (internalRule) => internalRule.id === rule['ruleInstanceId']
+        )
+    ) ?? []
   )
 }
 

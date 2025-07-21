@@ -137,8 +137,8 @@ export class MongoDbTransactionRepository
         transaction.destinationPaymentDetails
       ),
       ...(arsScore ? { arsScore } : {}),
-      hitRules: filterOutInternalRules(transaction.hitRules),
-      executedRules: filterOutInternalRules(transaction.executedRules),
+      hitRules: filterOutInternalRules(transaction?.hitRules ?? []),
+      executedRules: filterOutInternalRules(transaction?.executedRules ?? []),
     }
 
     const existingTransaction = await this.getTransactionById(
@@ -153,7 +153,7 @@ export class MongoDbTransactionRepository
     // process transactions without a status set.
     if (internalTransaction && !internalTransaction.status) {
       internalTransaction.status = getAggregatedRuleStatus(
-        internalTransaction.hitRules.map((hr) => hr)
+        internalTransaction?.hitRules?.map((hr) => hr) ?? []
       )
     }
 

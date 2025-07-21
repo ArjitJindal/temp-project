@@ -486,7 +486,7 @@ export class CaseCreationService {
     } = transaction
 
     // If the origin user and the destination user are the same, we can pass undefined for the destination user
-    const isAnyRuleHasOriginHit = transaction.hitRules.some(
+    const isAnyRuleHasOriginHit = transaction?.hitRules?.some(
       (hitRule) =>
         hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
     )
@@ -1572,7 +1572,7 @@ export class CaseCreationService {
 
     // Collect all hit directions from rule hits
     const hitDirections: Set<RuleHitDirection> = new Set()
-    for (const hitRule of transaction.hitRules) {
+    for (const hitRule of transaction?.hitRules ?? []) {
       const ruleInstance = ruleInstances.find(
         (x) => x.id === hitRule.ruleInstanceId
       )
@@ -1596,7 +1596,7 @@ export class CaseCreationService {
 
     const checkListTemplates = await this.getCheckListTemplates(
       ruleInstances,
-      transaction.hitRules
+      transaction?.hitRules ?? []
     )
 
     const cases = await this.getOrCreateCases(
@@ -1606,7 +1606,7 @@ export class CaseCreationService {
         latestTransactionArrivalTimestamp: now,
         priority: casePriority,
         transaction,
-        hitRules: transaction.hitRules,
+        hitRules: transaction?.hitRules ?? [],
         checkListTemplates,
       },
       ruleInstances
