@@ -178,7 +178,17 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
   const validateSourcesAndRelevance = useCallback(() => {
     const errors: Record<string, string> = {};
 
-    Object.entries(sourceConfigurations).forEach(([type, config]) => {
+    // Get visible tabs based on provider screening types filter
+    const visibleTabs = SANCTIONS_SOURCE_TYPES.filter((type) => {
+      const acurisProvider = settings.sanctions?.providerScreeningTypes?.find(
+        (p) => p.provider === 'acuris',
+      );
+      return !acurisProvider || acurisProvider.screeningTypes?.includes(type);
+    });
+
+    // Only validate visible tabs
+    visibleTabs.forEach((type) => {
+      const config = sourceConfigurations[type];
       if (type === 'ADVERSE_MEDIA') {
         return;
       }
@@ -195,7 +205,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [sourceConfigurations]);
+  }, [sourceConfigurations, settings.sanctions?.providerScreeningTypes]);
 
   const updateSourceConfiguration = useCallback(
     (type: SanctionsSourceType, update: Partial<SourceConfiguration>) => {
