@@ -684,11 +684,13 @@ function useTabs(
                       <div className={s.adverseMediaList}>
                         {source.media?.map((media) => (
                           <div key={media.title}>
-                            <P>
-                              <a href={media.url} target="_blank" className={s.link}>
-                                <span>{media.title}</span> <LinkIcon height={16} />
-                              </a>
-                            </P>
+                            {source.name !== media.title && (
+                              <P>
+                                <a href={media.url} target="_blank" className={s.link}>
+                                  <span>{media.title}</span> <LinkIcon height={16} />
+                                </a>
+                              </P>
+                            )}
                             <P grey={true} variant="xs">
                               {media.snippet}
                             </P>
