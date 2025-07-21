@@ -948,7 +948,6 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.REQUEST_LOGGER_FUNCTION_NAME,
-
         memorySize:
           this.config.resource.REQUEST_LOGGER_LAMBDA?.MEMORY_SIZE ?? 512,
       }
@@ -956,8 +955,10 @@ export class CdkTarponStack extends cdk.Stack {
 
     requestLoggerAlias.addEventSource(
       new SqsEventSource(requestLoggerQueue, {
-        batchSize: 50,
-        maxConcurrency: 5,
+        batchSize: this.config.resource.REQUEST_LOGGER_LAMBDA?.BATCH_SIZE ?? 50,
+        maxConcurrency:
+          this.config.resource.REQUEST_LOGGER_LAMBDA?.PROVISIONED_CONCURRENCY ??
+          5,
         maxBatchingWindow: Duration.minutes(5),
       })
     )

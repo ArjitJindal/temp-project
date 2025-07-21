@@ -72,6 +72,8 @@ export type Config = {
     TRANSACTION_AGGREGATION_MAX_CONCURRENCY: number
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE?: number
+      PROVISIONED_CONCURRENCY?: number
+      BATCH_SIZE?: number
     }
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
