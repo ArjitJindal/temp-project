@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { compact, groupBy } from 'lodash'
 import { StackConstants } from '@lib/constants'
+import { backOff } from 'exponential-backoff'
 import {
   hasFeature,
   initializeTenantContext,
@@ -527,10 +528,14 @@ export class StreamConsumerBuilder {
               )}-${generateChecksum(update.sequenceNumber, 10)}`,
             }))
 
-            await bulkSendMessages(
-              sqsClient,
-              this.secondaryFanOutSqsQueue,
-              entries
+            await backOff(
+              () =>
+                bulkSendMessages(
+                  sqsClient,
+                  this.secondaryFanOutSqsQueue,
+                  entries
+                ),
+              { numOfAttempts: 10, startingDelay: 1000, maxDelay: 30000 }
             )
 
             return
@@ -632,7 +637,16 @@ export class StreamConsumerBuilder {
 
       await Promise.all([
         bulkSendMessages(sqsClient, this.fanOutSqsQueue, nonGcEntries),
-        bulkSendMessages(sqsClient, this.secondaryFanOutSqsQueue, gcEntries),
+
+        await backOff(
+          () =>
+            bulkSendMessages(
+              sqsClient,
+              this.secondaryFanOutSqsQueue,
+              gcEntries
+            ),
+          { numOfAttempts: 10, startingDelay: 1000, maxDelay: 30000 }
+        ),
       ])
     })
   }
