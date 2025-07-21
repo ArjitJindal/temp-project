@@ -500,11 +500,12 @@ paths:
             examples:
               example-2:
                 value:
-                  timestamp: 1431231244001
+                  timestamp: 1752526580000
                   transactionId: 443dea26147a406b957d9ee3a1247b11
                   transactionState: SUCCESSFUL
                   eventId: aaeeb166147a406b957dd9147a406b957
                   eventDescription: Transaction created
+                  status: ALLOW
                   metaData:
                     batteryLevel: 76.3
                     deviceLatitude: 13.009711
@@ -538,7 +539,7 @@ paths:
                         transactionAmount: 68351.34
                         transactionCurrency: INR
                       promotionCodeUsed: true
-                      timestamp: 1641654664000
+                      timestamp: 1752526580000
                       originPaymentDetails:
                         method: CARD
                         cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -3256,6 +3257,8 @@ components:
               type: string
             transaction:
               $ref: '#/components/schemas/Transaction'
+            status:
+              $ref: '#/components/schemas/RuleAction'
             riskScoreDetails:
               $ref: '#/components/schemas/TransactionRiskScoringResult'
           required:
@@ -3279,7 +3282,7 @@ components:
               transactionAmount: 68351.34
               transactionCurrency: INR
             promotionCodeUsed: true
-            timestamp: 1641654664
+            timestamp: 1752526580000
             originPaymentDetails:
               method: CARD
               cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
