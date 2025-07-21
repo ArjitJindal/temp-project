@@ -14,7 +14,7 @@ export function formatConsumerName(name: ConsumerName | undefined): string {
   const result = [name?.firstName, name?.middleName, name?.lastName].filter(Boolean).join(' ');
   // todo: i18n
   if (result === '') {
-    return '(No name)';
+    return '-';
   }
   return result;
 }
