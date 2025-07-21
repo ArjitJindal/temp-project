@@ -153,17 +153,13 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               </InputField>
               <DefaultAlertStatusInput />
             </div>
-            <div className={s.divider} />
             <AlertAssignedToInput />
             {isSlaEnabled && (
               <>
-                <div className={s.divider} />
                 <SlaPolicyInput<FormValues> />
-                <div className={s.divider} />
               </>
             )}
             <FrozenStatusesInput />
-            <div className={s.divider} />
             <RuleQueueInputField<FormValues> label="Alert queue" />
             <AlertInvestigationChecklist<FormValues> label="Alert investigation checklist" />
           </PropertyListLayout>
