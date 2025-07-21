@@ -180,11 +180,9 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
         <div className={s.drawerBody}>
           <Label label="Payment method">
             <Select<PaymentMethod>
-              style={{ width: '100%' }}
               value={paymentMethod}
               isDisabled={editMode === 'EDIT'}
               onChange={(value) => setUpdatedPaymentMethod(value)}
-              isSearchable
               options={PAYMENT_METHODS.filter(
                 (option) => !existingPaymentMethods?.includes(option),
               ).map((option) => ({
@@ -195,14 +193,12 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
           </Label>
           <Label label="Currency">
             <Select<CurrencyCode>
-              style={{ width: '100%' }}
               value={currency}
               onChange={(value) => setUpdatedCurrency(value)}
               options={CURRENCIES_SELECT_OPTIONS.map((option) => ({
                 value: option.value as CurrencyCode,
                 label: option.label,
               }))}
-              isSearchable
             />
           </Label>
           {timeFrames.map((timeFrame, index) => (

@@ -4,6 +4,7 @@ import React from 'react';
 import NestedSelects, { Props } from '..';
 import { notEmpty } from '@/utils/array';
 import LabelStyles from '@/components/library/Label/style.module.less';
+import SelectStyles from '@/components/library/Select/style.module.less';
 
 const options = [
   { value: 'o1', label: 'Option 1' },
@@ -115,7 +116,7 @@ describe('NestedSelects Component', () => {
     const select3 = await findSelect('Option 3-2');
     await selectOption(select3, 'Option 3-2-2');
 
-    expect(handleChange).toBeCalledWith('o3-2-2');
+    expect(handleChange).toHaveBeenNthCalledWith(1, 'o3-2-2');
     expect(handleChange).toBeCalledTimes(1);
   });
   test('proper init render with initial value', async () => {
@@ -156,11 +157,19 @@ function RenderComponent(
 }
 
 async function selectOption(select, option: string) {
-  await userEvent.click(within(select).getByClassName('ant-select-selector'));
-  expectDropdownOpen(true);
-  await clickOptionByText(option);
-  expectDropdownOpen(false);
-  expectValues(select, [option]);
+  await userEvent.click(select);
+  expectDropdownOpen(select, true);
+
+  const dropdownEl = getDropdownBySelect(select);
+  const options = within(dropdownEl).getAllByText(option);
+  if (options.length === 0) {
+    throw new Error(`Option with text "${option}" not found`);
+  }
+  // If there are multiple options with the same text, select the first one
+  const optionEl = options[0];
+  await userEvent.click(optionEl);
+
+  expectDropdownOpen(select, false);
 }
 
 async function expectSelectNumber(number) {
@@ -170,54 +179,49 @@ async function expectSelectNumber(number) {
 
 async function findSelect(selectLabel: string) {
   const allLabelContainers = await screen.findAllByClassName(LabelStyles.root);
-  const selects = allLabelContainers.filter((x) => {
+  const matchingLabels = allLabelContainers.filter((x) => {
     const labelEl = within(x).getByClassName(LabelStyles.label);
     const text = labelEl != null ? labelEl.textContent?.trim() : undefined;
     return text === selectLabel || text === `${selectLabel} *`;
   });
-  expect(selects).toHaveLength(1);
-  return selects[0];
-}
-
-async function clickOptionByText(text: string) {
-  const dropdownEl = getOpenDropdown();
-  const virtualList = within(dropdownEl).getByClassName('rc-virtual-list');
-  const optionEl = within(virtualList).getByText(text);
-  await userEvent.click(optionEl);
+  expect(matchingLabels).toHaveLength(1);
+  const label = matchingLabels[0];
+  const select = within(label).getByClassName(SelectStyles.root);
+  return select;
 }
 
 async function clickClear(select) {
-  const clearButtonEl = within(select).getByClassName('ant-select-clear');
+  const clearButtonEl = within(select).getByClassName(SelectStyles.clearIcon);
   expect(clearButtonEl).toBeInTheDocument();
   expect(clearButtonEl).toBeVisible();
   await userEvent.click(clearButtonEl);
 }
 
 function expectValues(select, values: string[]) {
-  const selectorEl = within(select).getByClassName('ant-select-selector');
-  const items = within(selectorEl).queryAllByClassName('ant-select-selection-item');
+  const items = within(select).queryAllByClassName(SelectStyles.selectedOptionLabel);
   const itemsText = items.map((item) => item.textContent).filter(notEmpty);
   expect(itemsText).toEqual(values);
 }
 
-function getOpenDropdown(): HTMLElement {
-  const allDropdowns = screen.queryAllByClassName(`ant-select-dropdown`);
-  const result = allDropdowns.find((x) => !x.classList.contains('ant-select-dropdown-hidden'));
-  expect(result).not.toBeNull();
-  if (result == null) {
-    throw new Error(`Open dropdown not found`);
+function expectDropdownOpen(select: HTMLElement, shouldBeOpen: boolean = true) {
+  const dropdownEl = getDropdownBySelect(select);
+  expect(dropdownEl).toBeInTheDocument();
+  if (shouldBeOpen) {
+    expect(dropdownEl).toHaveClass(SelectStyles.isOpen);
+  } else {
+    expect(dropdownEl).not.toHaveClass(SelectStyles.isOpen);
   }
-  return result;
 }
 
-function expectDropdownOpen(shouldBeOpen: boolean = true) {
-  const allDropdowns = screen.queryAllByClassName(`ant-select-dropdown`);
-  const openDropdowns = allDropdowns.filter(
-    (x) => !x.classList.contains('ant-select-dropdown-hidden'),
-  );
-  if (shouldBeOpen) {
-    expect(openDropdowns).toHaveLength(1);
-  } else {
-    expect(openDropdowns).toHaveLength(0);
+function getDropdownBySelect(select: HTMLElement) {
+  const portalId = select.getAttribute('data-portal-id');
+  if (!portalId) {
+    throw new Error('Portal ID not found');
   }
+  const portalEl = document.getElementById(portalId);
+  if (!portalEl) {
+    throw new Error('Portal element not found');
+  }
+  const dropdownEl = within(portalEl).getByClassName(SelectStyles.menuWrapper);
+  return dropdownEl;
 }

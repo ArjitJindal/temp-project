@@ -21,7 +21,6 @@ export default function CountriesInput(props: Props) {
     <Select<CountryCode>
       mode={mode}
       options={OPTIONS}
-      portaled
       placeholder={`Select ${mode === 'MULTIPLE' ? 'countries' : 'country'}`}
       {...props}
     />

@@ -135,20 +135,20 @@ export const ChecklistChart = (props: ParamsProps) => {
       ref={pdfRef}
       resizing="AUTO"
       extraControls={[
-        <Select
-          className={s.select}
-          options={options}
-          value={templateOptions.find((item) => item.id === params.checklistTemplateId)?.name}
-          onChange={(value) => {
-            setParams((prev: Params) => ({
-              ...prev,
-              checklistTemplateId: value,
-              checklistCategory: templateOptions.find((item) => item.id === value)?.categories[0]
-                ?.name,
-            }));
-          }}
-          key="widget-select"
-        />,
+        <div className={s.select} key="widget-select">
+          <Select
+            options={options}
+            value={templateOptions.find((item) => item.id === params.checklistTemplateId)?.name}
+            onChange={(value) => {
+              setParams((prev: Params) => ({
+                ...prev,
+                checklistTemplateId: value,
+                checklistCategory: templateOptions.find((item) => item.id === value)?.categories[0]
+                  ?.name,
+              }));
+            }}
+          />
+        </div>,
         <DatePicker.RangePicker
           value={params.dateRange}
           onChange={setDateRange}

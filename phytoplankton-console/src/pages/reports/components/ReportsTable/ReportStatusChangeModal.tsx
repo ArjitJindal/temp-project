@@ -78,7 +78,6 @@ export default function ReportStatusChangeModal(props: {
         <div className={s.verticalContainer}>
           <Select
             mode="SINGLE"
-            style={{ width: 200 }}
             value={statusUpdate?.status}
             options={reportStatuses.map((v) => ({ label: humanizeConstant(v), value: v }))}
             onChange={(v) => {

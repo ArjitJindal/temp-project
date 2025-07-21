@@ -62,8 +62,6 @@ export const DefaultValuesSettings = () => {
                   }));
                 }}
                 options={record.options}
-                isSearchable
-                style={{ width: '100%' }}
                 isDisabled={!hasResources(statements, record.requiredResources.write)}
               />
             );

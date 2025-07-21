@@ -28,7 +28,6 @@ export default function ListSelect(props: Props) {
   }
   return (
     <Select<string>
-      portaled={true}
       mode={'MULTIPLE'}
       allowClear={true}
       options={getOr(res, []).map((list) => ({

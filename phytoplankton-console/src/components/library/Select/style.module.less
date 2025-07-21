@@ -1,124 +1,361 @@
 @import 'src/components/ui/colors';
 @import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
+@border-width: 1px;
+
+.rootWrapper {
+  flex: 1;
+}
 
 .root {
-  display: inline-flex;
-  color: @fr-colors-v2-gray-10;
-
-  :global {
-    .ant-select {
-      flex: 1;
-      .ant-select-selector {
-        .ant-select-selection-item {
-          height: inherit;
-        }
-      }
-    }
-
-    .ant-select-selector {
-      min-height: 32px !important;
-      align-items: center;
-      border-radius: 4px;
-      border-color: @fr-colors-v2-gray-2 !important;
-      transition-duration: @default-animation-speed !important;
-    }
-
-    .ant-select-selection-overflow-item {
-      max-width: 300px !important;
-    }
-
-    .ant-select-selection-placeholder {
-      color: @fr-colors-v2-gray-6;
-    }
-
-    .ant-select-focused {
-      .ant-select-selector {
-        border-color: @fr-colors-v2-primary-flagrightBlue !important;
-        box-shadow: none !important;
-      }
-    }
-
-    .ant-select-disabled {
-      pointer-events: none;
-
-      .ant-select-selector {
-        border-color: @fr-colors-v2-state-disabled !important;
-        color: @fr-colors-v2-state-disabled !important;
-        background: @fr-colors-v2-gray-1 !important;
-      }
-    }
-  }
-
-  &.autoTrim {
-    &.mode-SINGLE {
-      width: 100%;
-
-      :global {
-        .ant-select-selector {
-          position: absolute !important;
-          width: 100%;
-          height: 100%;
-          top: 0;
-          left: 0;
-        }
-      }
-    }
-    &.mode-MULTIPLE,
-    &.mode-TAGS {
-      :global {
-        .ant-select-selection-overflow-item {
-          max-width: 200px !important;
-        }
-      }
-    }
-  }
-
-  &.isError {
-    :global {
-      .ant-select-selector {
-        border-color: @fr-colors-v2-alert-critical !important;
-      }
-    }
-  }
+  min-width: 80px;
 
   &.size-DEFAULT {
-    :global {
-      .ant-select,
-      .ant-select-selector {
-        min-height: 32px !important;
-      }
-    }
+    .sizeProps(
+        @figma-vars--primitives-sizeXs * 3,
+      @figma-vars--primitives-spacing4xs,
+      @figma-vars--primitives-spacing2xs,
+      @figma-vars--tokens-sizeIconIconsizeS,
+    );
   }
+
   &.size-LARGE {
-    :global {
-      .ant-select,
-      .ant-select-selector {
-        min-height: 40px !important;
+    .sizeProps(
+        @figma-vars--primitives-sizeM * 2,
+      @figma-vars--primitives-spacing3xs,
+      @figma-vars--primitives-spacingXs,
+      @figma-vars--tokens-sizeIconIconsizeS,
+    );
+  }
+
+  border: @border-width solid @figma-vars--tokens-colorStrokeTertiary;
+  border-radius: @figma-vars--tokens-borderRadiusBorderradiusS;
+  background: white;
+  position: relative;
+  flex-wrap: wrap;
+
+  &.type-SINGLE,
+  &.type-DYNAMIC {
+    display: grid;
+    grid-template-columns: auto min-content;
+    align-items: center;
+
+    .input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .selectedOption {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &.isFocused:not(.isSearchEmpty),
+    &.isEmpty {
+      &.isFocused,
+      &.isEmpty {
+        .input {
+          opacity: 1;
+        }
+
+        .selectedOption {
+          opacity: 0;
+        }
       }
     }
   }
-  &.extraPadding {
-    :global {
-      .ant-select-selector {
-        padding-right: 3rem !important;
+
+  &.type-MULTIPLE,
+  &.type-TAGS {
+    &.isSearchEmpty:not(.isFocused):not(.isEmpty) {
+      .input {
+        width: 0;
       }
     }
+
+    &.isEmpty {
+      .input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+
+  &.type-MULTIPLE {
+    .placeholder {
+      line-height: 2;
+    }
+
+    .selectedOption {
+      line-height: 2;
+    }
+  }
+
+  &.type-TAGS {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: @figma-vars--primitives-spacing3xs;
+  }
+
+  &.isOpen {
+    .rightIcon.arrowDownIcon {
+      transform: rotate(180deg);
+    }
+  }
+
+  &.isDisabled {
+    pointer-events: none;
+    border-color: @figma-vars--tokens-colorBackgroundDisabled;
+    background: @figma-vars--tokens-colorBackgroundDisabled;
+
+    .input,
+    .selectedOption {
+      color: @figma-vars--tokens-colorTextSecondary;
+    }
+
+    .rightIcon {
+      color: @figma-vars--tokens-colorIconDisabled;
+    }
+
+    .tagWrapper {
+      opacity: 0.2;
+    }
+  }
+
+  &:not(.isDisabled) {
+    &:not(.isError):not(.isSuccess) {
+      &.isFocused {
+        border-color: @figma-vars--tokens-colorStrokeAction;
+      }
+    }
+
+    &.isError {
+      border-color: @figma-vars--tokens-colorStrokeError;
+    }
+
+    &.isSuccess {
+      border-color: @figma-vars--tokens-colorStrokeSuccess;
+    }
+
+    .rightIcon {
+      color: @figma-vars--tokens-colorIconSecondary;
+    }
+  }
+
+  &:not(.isFocused) {
+    .input {
+      width: 0;
+      position: absolute;
+    }
+  }
+
+  &.isFocused {
+    .placeholder {
+      opacity: 0;
+    }
+  }
+
+  &:not(.isEmpty) {
+    .placeholder {
+      display: none;
+    }
+  }
+
+  &.hideBorders {
+    border: none;
   }
 }
 
-.copyIcon {
-  height: 0.8rem;
-  margin-right: 20px;
-  transition-property: opacity;
-  transition-duration: @default-animation-speed !important;
-  pointer-events: all;
-  opacity: 0;
+.input {
+  border: none;
+  background: none;
+  outline: none;
+  // border: 1px dashed rgba(0, 0, 0, 0.174);
+  flex: 1;
+  height: 20px;
+}
 
-  &:hover {
+.menuWrapper {
+  display: flex;
+  opacity: 0;
+  transition: opacity @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  box-shadow: 0 8px 30px 0 fade(#00003d, 30%);
+  border-radius: @figma-vars--tokens-spacingSpacing3xs;
+  z-index: @select-z-index;
+
+  &.isOpen {
+    opacity: 1;
+  }
+
+  &:not(.isOpen) {
+    pointer-events: none;
+  }
+}
+
+.rightIcons {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.rightIcon {
+  color: @figma-vars--tokens-colorIconSecondary;
+
+  &.clearIcon {
     cursor: pointer;
   }
 
-  &.isVisible {
-    opacity: 1;
+  &.arrowDownIcon {
+    pointer-events: none;
+    transition-property: transform;
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+  }
+
+  &.loadingIcon {
+    animation: Select__loadingIcon 1s linear infinite;
+  }
+
+  &.copyIcon {
+    cursor: pointer;
+  }
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  color: @figma-vars--tokens-colorTextSecondary;
+  gap: @figma-vars--primitives-spacing3xs;
+  overflow: hidden;
+  white-space: nowrap;
+
+  .placeholderIcon {
+    width: @figma-vars--tokens-sizeIconIconsizeXs;
+    height: @figma-vars--tokens-sizeIconIconsizeXs;
+    display: inline-flex;
+  }
+}
+
+.noOptions {
+  color: @figma-vars--tokens-colorTextSecondary;
+  padding: @figma-vars--primitives-spacingXs;
+  background: white;
+  text-align: center;
+  flex: 1;
+  border-radius: @figma-vars--tokens-spacingSpacing3xs;
+}
+
+/*
+  Helpers
+ */
+.sizeProps(
+  @height,
+  @v-padding,
+  @h-padding,
+  @icon-size,
+ ) {
+  min-height: @height;
+  padding: @v-padding @h-padding;
+
+  &.fixedHeight {
+    height: @height;
+    overflow-y: auto;
+  }
+
+  &.type-SINGLE,
+  &.type-DYNAMIC {
+    .input {
+      padding: 0 @h-padding;
+    }
+
+    &.rightIconsCount-1 {
+      .input {
+        padding-right: @h-padding + @icon-size + @h-padding;
+      }
+    }
+
+    &.rightIconsCount-2 {
+      .input {
+        padding-right: @h-padding + (@icon-size + @h-padding) * 2;
+      }
+    }
+
+    &.rightIconsCount-3 {
+      .input {
+        padding-right: @h-padding + (@icon-size + @h-padding) * 3;
+      }
+    }
+
+    &.rightIconsCount-4 {
+      .input {
+        padding-right: @h-padding + (@icon-size + @h-padding) * 4;
+      }
+    }
+  }
+
+  &.type-MULTIPLE,
+  &.type-TAGS {
+    &.isEmpty {
+      .input {
+        padding: 0 @h-padding;
+      }
+    }
+  }
+
+  &.rightIconsCount-1 {
+    padding-right: @h-padding + @icon-size + @h-padding;
+  }
+
+  &.rightIconsCount-2 {
+    padding-right: @h-padding + (@icon-size + @h-padding) * 2;
+  }
+
+  &.rightIconsCount-3 {
+    padding-right: @h-padding + (@icon-size + @h-padding) * 3;
+  }
+
+  &.rightIconsCount-4 {
+    padding-right: @h-padding + (@icon-size + @h-padding) * 4;
+  }
+
+  .rightIcon {
+    height: @icon-size;
+    width: @icon-size;
+  }
+
+  .rightIcons {
+    right: @h-padding;
+    gap: @h-padding;
+  }
+}
+
+.tagWrapper {
+  display: inline-flex;
+  overflow: hidden;
+}
+
+@keyframes Select__loadingIcon {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
   }
 }

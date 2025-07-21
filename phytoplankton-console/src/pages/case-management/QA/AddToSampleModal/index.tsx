@@ -80,7 +80,6 @@ export const AddToSampleModal = (props: Props) => {
                 value={selectedSampleId}
                 onChange={setSelectedSampleId}
                 placeholder="Select a sample ID"
-                optionLabelProp="labelText"
                 options={data.map((option) => ({
                   value: option.samplingId,
                   label: (

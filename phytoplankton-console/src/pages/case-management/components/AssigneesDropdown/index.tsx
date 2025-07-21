@@ -1,5 +1,4 @@
 import { Avatar } from 'antd';
-import cn from 'clsx';
 import { useMemo } from 'react';
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
@@ -63,14 +62,11 @@ const AssigneesDropdownContent: React.FC<Props> = ({
 
   return editing && canEditAssignees ? (
     <Select<string>
-      className={
-        cn(s.select, fixSelectorHeight ? s.fixSelectorHeight : '') +
-        (assignments.length === 0 ? ' unassigned ' : '')
-      }
+      fixedHeight={fixSelectorHeight}
       mode="MULTIPLE"
-      allowClear
+      separator={''}
+      allowClear={false}
       onSearch={() => {}}
-      style={{ width: '100%' }}
       isDisabled={loadingUsers}
       placeholder={loadingUsers ? 'Loading...' : placeholder ?? 'Unassigned'}
       onChange={(values) => {

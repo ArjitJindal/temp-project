@@ -385,7 +385,6 @@ export default function NewListDrawer(props: Props) {
                                   <div className={s.columnType}>
                                     <Select
                                       value={col.type}
-                                      style={{ width: '100%' }}
                                       onChange={(newValue) =>
                                         updateColumnField(col.key, 'type', newValue)
                                       }
@@ -415,7 +414,6 @@ export default function NewListDrawer(props: Props) {
                                 <div className={s.columnType}>
                                   <Select
                                     value={newColumn.type ?? undefined}
-                                    style={{ width: '100%' }}
                                     onChange={(value) =>
                                       setNewColumn((prev) => ({
                                         ...prev,

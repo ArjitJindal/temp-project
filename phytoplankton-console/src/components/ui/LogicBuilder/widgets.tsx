@@ -455,7 +455,6 @@ const customTextWidget: CoreWidgets['text'] = {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
           <Select<string>
-            portaled={true}
             mode={'TAGS'}
             allowClear={true}
             options={[]}
@@ -603,14 +602,7 @@ function SelectWidget(props: any) {
 
   return (
     <WidgetWrapper widgetFactoryProps={props}>
-      <Select
-        dropdownMatchWidth={false}
-        portaled={true}
-        allowClear={true}
-        options={options}
-        value={props.value}
-        onChange={props.setValue}
-      />
+      <Select allowClear={true} options={options} value={props.value} onChange={props.setValue} />
     </WidgetWrapper>
   );
 }
@@ -682,7 +674,6 @@ function MultiSelectWidget(props: any) {
   return (
     <WidgetWrapper widgetFactoryProps={props}>
       <Select<string | number>
-        portaled={true}
         mode={props.allowCustomValues ? 'TAGS' : 'MULTIPLE'}
         allowClear={true}
         options={options}

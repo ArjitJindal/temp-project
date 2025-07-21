@@ -34,10 +34,7 @@ export default function PopupContent(props: Props) {
   return (
     <div className={s.root}>
       <Select
-        style={{ width: '100%' }}
-        isSearchable={true}
         allowClear={true}
-        className={s.select}
         isLoading={isLoading(result.data)}
         options={uniq(getOr(result.data, []).concat(defaults))
           .filter((key) => key?.length > 0)
