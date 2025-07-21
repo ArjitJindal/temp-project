@@ -99,7 +99,6 @@ export class CsvFormat extends FlatFileFormat {
         skip_empty_lines: true,
         relax_quotes: true,
         relax_column_count: true,
-        cast: true,
       })
     )
 
