@@ -32,7 +32,7 @@ import { VarThresholdData } from '@/@types/openapi-internal/VarThresholdData'
 import { isDemoMode } from '@/utils/demo'
 import {
   getClickhouseClient,
-  isClickhouseMigrationEnabled,
+  isConsoleMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { ClickhouseAlertRepository } from '@/services/alerts/clickhouse-repository'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
@@ -129,7 +129,7 @@ export class RuleThresholdOptimizer {
       }
     }
     let disposedAlertsCount: number
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       disposedAlertsCount = await clickhouseAlertRepository.getAlertsCount({

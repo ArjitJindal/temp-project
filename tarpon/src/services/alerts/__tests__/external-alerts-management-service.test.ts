@@ -57,6 +57,7 @@ describe('End to End External Alerts Management Service', () => {
       caseAggregates: DEFAULT_CASE_AGGREGATES,
       caseType: 'SYSTEM',
       caseId,
+      caseSubjectIdentifiers: ['S-1'],
     })
     const alertTransactionIds = transactionIds.slice(0, 5)
 

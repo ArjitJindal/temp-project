@@ -53,7 +53,8 @@ import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import {
   getClickhouseClient,
-  isClickhouseMigrationEnabled,
+  isClickhouseEnabledInRegion,
+  isConsoleMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
@@ -144,7 +145,7 @@ export class CaseRepository {
   }
 
   public async getCasesByAssigneeId(assigneeId: string): Promise<Case[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       const caseIds = await clickhouseCaseRepository.getCaseIdsByAssigneeId(
         assigneeId
@@ -169,7 +170,7 @@ export class CaseRepository {
       caseType?: CaseType
     }
   ): Promise<{ caseId?: string }[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCaseIdsByUserId(userId, params)
     }
     const db = this.mongoDb.db()
@@ -206,7 +207,7 @@ export class CaseRepository {
     comment: Comment,
     transactionsCount: number
   ): Promise<Case | null> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateManualCase(
         caseId,
         transactions,
@@ -290,7 +291,7 @@ export class CaseRepository {
         caseToSave
       )
     })
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.addCase(caseEntity)
     }
 
@@ -908,7 +909,7 @@ export class CaseRepository {
   public async getFalsePositiveUserIdsByRuleInstance(
     ruleInstanceId: string
   ): Promise<string[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       return clickhouseCaseRepository.getFalsePositiveUserIdsByRuleInstance(
         ruleInstanceId
@@ -945,7 +946,7 @@ export class CaseRepository {
   public async getAllUsersCountByRuleInstance(
     ruleInstanceId: string
   ): Promise<number> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       return clickhouseCaseRepository.getAllUsersCountByRuleInstance(
         ruleInstanceId
@@ -975,7 +976,7 @@ export class CaseRepository {
   }
 
   public async getCasesTransactions(caseId: string): Promise<string[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCasesTransactions(caseId)
     }
     const db = this.mongoDb.db()
@@ -995,7 +996,7 @@ export class CaseRepository {
   }
 
   public async getUserTransaction(userId: string) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getUserTransaction(userId)
     }
     const db = this.mongoDb.db()
@@ -1039,7 +1040,7 @@ export class CaseRepository {
       )
       params.filterUserIds = userIds
     }
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       const data = await clickhouseCaseRepository.getCases(params)
       const cases = await this.dynamoCaseRepository.getCasesFromCaseIds(
@@ -1128,13 +1129,15 @@ export class CaseRepository {
   public async updateStatusOfCases(
     caseIds: string[],
     statusChange: CaseStatusChange,
-    isLastInReview?: boolean
+    isLastInReview?: boolean,
+    lastStatusChangeUserIdCaseIdMap?: Map<string, string>
   ) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateStatus(
         caseIds,
         statusChange,
-        isLastInReview
+        isLastInReview,
+        lastStatusChangeUserIdCaseIdMap
       )
     }
     await this.updateManyCases(
@@ -1147,7 +1150,7 @@ export class CaseRepository {
     caseIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateAssignmentsReviewAssignments(
         caseIds,
         assignments
@@ -1163,7 +1166,7 @@ export class CaseRepository {
     caseIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateAssignmentsReviewAssignments(
         caseIds,
         undefined,
@@ -1181,7 +1184,7 @@ export class CaseRepository {
     assignments: Assignment[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateAssignmentsReviewAssignments(
         caseIds,
         assignments,
@@ -1198,7 +1201,7 @@ export class CaseRepository {
     assignmentId: string,
     reassignmentId: string
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       const clickhouseCaseRepository = await this.getClickhouseCaseRepository()
       const caseIds = await clickhouseCaseRepository.getCaseIdsForReassignment(
         assignmentId
@@ -1246,7 +1249,7 @@ export class CaseRepository {
   public async updateReviewAssignmentsToAssignments(
     caseIds: string[]
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateReviewAssignmentsToAssignments(
         caseIds
       )
@@ -1268,7 +1271,7 @@ export class CaseRepository {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.saveComments(caseId, [commentToSave])
     }
     await this.updateOneCase({ caseId }, [
@@ -1291,7 +1294,7 @@ export class CaseRepository {
     caseIds: string[],
     comment: Comment
   ): Promise<Comment> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.saveCasesComment(caseIds, comment)
     }
     const commentToSave: Comment = {
@@ -1324,7 +1327,7 @@ export class CaseRepository {
   }
 
   public async deleteCaseComment(caseId: string, commentId: string) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.deleteCaseComment(caseId, commentId)
     }
     await this.updateOneCase(
@@ -1352,7 +1355,7 @@ export class CaseRepository {
     caseId: string,
     getCaseAggregates = false
   ): Promise<CaseWithoutCaseTransactions | null> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const caseFromDynamo =
         await this.dynamoCaseRepository.getCasesFromCaseIds([caseId], true, {
           joinAlerts: true,
@@ -1375,7 +1378,7 @@ export class CaseRepository {
     fileS3Key: string,
     summary: string
   ) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateAISummary(
         caseId,
         commentId,
@@ -1403,7 +1406,7 @@ export class CaseRepository {
   public async getCaseByAlertId(
     alertId: string
   ): Promise<CaseWithoutCaseTransactions | null> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       const cases = await this.dynamoCaseRepository.getCasesByAlertIds([
         alertId,
       ])
@@ -1417,7 +1420,7 @@ export class CaseRepository {
   public async getCasesByAlertIds(
     alertIds: string[]
   ): Promise<CaseWithoutCaseTransactions[]> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCasesByAlertIds(alertIds)
     }
     const db = this.mongoDb.db()
@@ -1569,7 +1572,7 @@ export class CaseRepository {
   public async getCasesByIds(
     caseIds: string[]
   ): Promise<Array<CaseWithoutCaseTransactions>> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCasesFromCaseIds(caseIds, true, {
         joinAlerts: true,
         joinComments: true,
@@ -1583,7 +1586,7 @@ export class CaseRepository {
 
   // todo this needs to be implemented in the alerts side.
   public async markAllChecklistItemsAsDone(caseIds: string[]) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.markAllChecklistItemsAsDone(caseIds)
     }
     await this.updateManyCases(
@@ -1612,7 +1615,7 @@ export class CaseRepository {
     if (!transaction.hitRules?.length) {
       return
     }
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await Promise.all(
         [
           transaction.originUserId &&
@@ -1659,7 +1662,7 @@ export class CaseRepository {
   public async addExternalCaseMongo(
     caseEntity: Case
   ): Promise<CaseWithoutCaseTransactions> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.addCase(caseEntity)
     }
     await internalMongoUpdateOne(
@@ -1673,7 +1676,7 @@ export class CaseRepository {
   }
 
   public async updateCase(caseEntity: Partial<Case>): Promise<Case | null> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       if (!caseEntity.caseId) {
         throw new Error('Case ID is required')
       }
@@ -1699,7 +1702,7 @@ export class CaseRepository {
   public async updateCaseSlaPolicyDetails(
     updates: SlaUpdates[]
   ): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.updateCaseSlaPolicyDetails(updates)
     }
     const operations = updates.map((update) => ({
@@ -1733,7 +1736,7 @@ export class CaseRepository {
   }
 
   public async syncCaseUsers(newUser: InternalUser): Promise<void> {
-    if (isClickhouseMigrationEnabled()) {
+    if (isClickhouseEnabledInRegion()) {
       await this.dynamoCaseRepository.syncCaseUsers(newUser)
     }
     await Promise.all([

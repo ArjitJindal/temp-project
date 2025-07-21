@@ -8095,6 +8095,7 @@ components:
         - API_REQUEST_LOGS
         - AUDIT_LOG
         - METRICS
+        - CASES
         - BATCH_JOBS
     FlatFileSchema:
       title: FlatFileSchema
@@ -12097,6 +12098,7 @@ components:
         - CHAINALYSIS
         - WORKFLOWS_BUILDER
         - TRANSLITERATION
+        - CONSOLE_MIGRATION
         - OPEN_SEARCH
       description: ''
     NewRiskFactorIdResponse:

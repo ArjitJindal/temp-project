@@ -631,10 +631,11 @@ export class ClickhouseAlertRepository {
           query: `
               SELECT 
                 id as alertId,
-                arrayLength(assignments) > 1 as hasMultipleAssignments
+                count(*) > 1 as hasMultipleAssignments
               FROM ${ALERTS_TABLE_NAME_CH} FINAL
               ARRAY JOIN assignments
               WHERE assignments.assigneeUserId = '${assigneeId}'
+              GROUP BY id
             `,
           format: 'JSONEachRow',
         }),
@@ -644,10 +645,11 @@ export class ClickhouseAlertRepository {
           query: `
               SELECT 
                 id as alertId,
-                arrayLength(reviewAssignments) > 1 as hasMultipleAssignments
+                count(*) > 1 as hasMultipleAssignments
               FROM ${ALERTS_TABLE_NAME_CH} FINAL
               ARRAY JOIN reviewAssignments
               WHERE reviewAssignments.assigneeUserId = '${assigneeId}'
+              GROUP BY id
             `,
           format: 'JSONEachRow',
         }),
@@ -657,10 +659,11 @@ export class ClickhouseAlertRepository {
           query: `
               SELECT 
                 id as alertId,
-                arrayLength(qaAssignment) > 1 as hasMultipleAssignments
+                count(*) > 1 as hasMultipleAssignments
               FROM ${ALERTS_TABLE_NAME_CH} FINAL
               ARRAY JOIN qaAssignment
               WHERE qaAssignment.assigneeUserId = '${assigneeId}'
+              GROUP BY id
             `,
           format: 'JSONEachRow',
         }),

@@ -30,6 +30,8 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { UserService } from '@/services/users'
 import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { Account } from '@/@types/openapi-internal/Account'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -117,7 +119,7 @@ const TEST_ALERT_3: Alert = {
 
 dynamoDbSetupHook()
 enableLocalChangeHandler()
-withFeatureHook(['ADVANCED_WORKFLOWS'])
+withFeatureHook(['ADVANCED_WORKFLOWS', 'CLICKHOUSE_ENABLED'])
 
 jest.mock('@/core/utils/context-storage', () => {
   const originalModule = jest.requireActual<
@@ -139,6 +141,11 @@ async function getCaseService(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const s3 = getS3ClientByEvent(null as any)
+
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.CASES_V2.tableName,
+    tenantId
+  )
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
@@ -155,6 +162,11 @@ async function getAlertsService(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const s3 = getS3ClientByEvent(null as any)
+
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+    tenantId
+  )
   const alertsRepository = new AlertsRepository(tenantId, {
     mongoDb,
     dynamoDb,
@@ -2874,6 +2886,7 @@ describe('Test alert should reopen if qa status is failed', () => {
     }
 
     const mongoDb = await getMongoDbClient()
+
     const caseRepository = new CaseRepository(testTenantId, {
       mongoDb,
       dynamoDb: getDynamoDbClient(),

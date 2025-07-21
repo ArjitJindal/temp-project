@@ -13,8 +13,9 @@ import { logger } from '@/core/logger'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import {
   API_REQUEST_LOGS_COLLECTION,
-  GPT_REQUESTS_COLLECTION,
   AUDITLOG_COLLECTION,
+  CASES_COLLECTION,
+  GPT_REQUESTS_COLLECTION,
   JOBS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
@@ -22,6 +23,7 @@ import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { Case } from '@/@types/openapi-internal/Case'
 
 @traceable
 export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
@@ -62,6 +64,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
       case 'API_REQUEST_LOGS':
         await handleApiRequestLogsBatchJob(job, {
           mongoDb,
+        })
+        break
+      case 'CASES':
+        await handleCasesBatchJob(job, {
+          mongoDb,
+          dynamoDb,
         })
         break
       case 'BATCH_JOBS':
@@ -246,6 +254,31 @@ export const handleMetricsBatchJob = async (
     metricsCollection.find({}),
     async (metrics) => {
       await metricsService.linkMetricsToClickhouse(job.tenantId, metrics)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+export const handleCasesBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoCaseRepository } = await import(
+    '@/services/cases/dynamo-repository'
+  )
+  const db = mongoDb.db()
+  const casesCollection = db.collection<Case>(CASES_COLLECTION(job.tenantId))
+  const caseRepository = new DynamoCaseRepository(job.tenantId, dynamoDb)
+  await processCursorInBatch(
+    casesCollection.find({}),
+    async (cases) => {
+      await caseRepository.saveCases(cases, true)
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )

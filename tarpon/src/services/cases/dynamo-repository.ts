@@ -2,6 +2,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import {
   GetCommand,
   GetCommandInput,
+  NativeAttributeValue,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
@@ -153,6 +154,8 @@ export class DynamoCaseRepository {
 
       const caseToSaveWithId = sanitizeMongoObject(caseToSave)
       // Add primary case record with table name
+      caseToSaveWithId.caseSubjectIdentifiers = identifiers
+
       writeRequests.push({
         Put: {
           TableName: this.tableName,
@@ -163,7 +166,6 @@ export class DynamoCaseRepository {
         },
       })
 
-      caseToSaveWithId.caseSubjectIdentifiers = identifiers
       writeRequests = concat(
         writeRequests,
         auxiliaryIndexes.map((item) => ({
@@ -379,24 +381,10 @@ export class DynamoCaseRepository {
   public async updateStatus(
     caseIds: string[],
     statusChange: CaseStatusChange,
-    isLastInReview?: boolean
+    isLastInReview?: boolean,
+    lastStatusChangeUserIdCaseIdMap?: Map<string, string>
   ) {
     const now = Date.now()
-
-    const updateExpression = `SET lastStatusChange = :statusChange, updatedAt = :updatedAt, ${
-      isLastInReview
-        ? 'userId = lastStatusChange.userId, reviewerId = :reviewerId'
-        : 'userId = :userId'
-    }, statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange), caseStatus = :caseStatus`
-
-    const expressionAttributeValues = {
-      ':statusChange': [statusChange],
-      ...(!isLastInReview && { ':userId': statusChange.userId }),
-      ...(isLastInReview && { ':reviewerId': statusChange.userId }),
-      ':updatedAt': now,
-      ':caseStatus': statusChange.caseStatus,
-      ':empty_list': [],
-    }
 
     const operationsAndKeyLists = await Promise.all(
       caseIds.map(async (caseId) => {
@@ -404,6 +392,37 @@ export class DynamoCaseRepository {
         if (!caseItem) {
           return { operations: [], keyLists: [] }
         }
+
+        const lastStatusChangeUserId =
+          lastStatusChangeUserIdCaseIdMap?.get(caseId)
+
+        const updateExpressionParts = [
+          'lastStatusChange = :statusChange',
+          'updatedAt = :updatedAt',
+          'caseStatus = :caseStatus',
+          'statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange)',
+        ]
+
+        const expressionAttributeValues: Record<string, NativeAttributeValue> =
+          {
+            ':statusChange': [statusChange],
+            ':updatedAt': now,
+            ':caseStatus': statusChange.caseStatus,
+            ':empty_list': [],
+          }
+
+        if (isLastInReview) {
+          const reviewerId = lastStatusChangeUserId
+
+          updateExpressionParts.push('reviewerId = :reviewerId')
+          expressionAttributeValues[':reviewerId'] = reviewerId
+        } else {
+          updateExpressionParts.push('userId = :userId')
+          expressionAttributeValues[':userId'] = statusChange.userId
+        }
+
+        const updateExpression = 'SET ' + updateExpressionParts.join(', ')
+
         return await createUpdateCaseQueries(this.tenantId, this.tableName, {
           caseId,
           UpdateExpression: updateExpression,

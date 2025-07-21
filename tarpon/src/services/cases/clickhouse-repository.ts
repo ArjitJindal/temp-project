@@ -862,20 +862,22 @@ export class CaseClickhouseRepository {
   }> {
     const assignmentsQuery = `
       SELECT 
-        id as caseId,
-        arrayLength(assignments) > 1 as hasMultipleAssignments
+        id AS caseId,
+        count(*) > 1 AS hasMultipleAssignments
       FROM ${CASES_TABLE_NAME_CH} FINAL
       ARRAY JOIN assignments
       WHERE assignments.assigneeUserId = '${assigneeId}'
+      GROUP BY id
     `
 
     const reviewAssignmentsQuery = `
       SELECT 
-        id as caseId,
-        arrayLength(reviewAssignments) > 1 as hasMultipleAssignments
+        id AS caseId,
+        count(*) > 1 AS hasMultipleAssignments
       FROM ${CASES_TABLE_NAME_CH} FINAL
       ARRAY JOIN reviewAssignments
       WHERE reviewAssignments.assigneeUserId = '${assigneeId}'
+      GROUP BY id
     `
 
     const [assignmentResults, reviewAssignmentResults] = await Promise.all([
