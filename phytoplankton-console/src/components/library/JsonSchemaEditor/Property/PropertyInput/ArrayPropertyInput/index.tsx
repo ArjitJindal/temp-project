@@ -20,7 +20,7 @@ import {
   isResultValid,
 } from '@/components/library/Form/utils/validation/types';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
-
+import { useGetAlias } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props extends InputProps<string[]> {
   schema: ExtendedSchema;
 }
@@ -28,6 +28,7 @@ interface Props extends InputProps<string[]> {
 export default function ArrayPropertyInput(props: Props) {
   const { schema } = props;
   const uiSchema = getUiSchema(schema);
+  const getAlias = useGetAlias();
   if (schema.type !== 'array') {
     throw new Error(
       `This component should only be called for array property (passed property type is '${schema.type}')`,
@@ -50,7 +51,7 @@ export default function ArrayPropertyInput(props: Props) {
         <SelectionGroup
           mode="MULTIPLE"
           options={enumItems.filter(isString).map((item, i) => ({
-            label: String(displayNames[i] ?? item),
+            label: getAlias(String(displayNames[i] ?? item)),
             value: item,
           }))}
           {...props}
@@ -63,7 +64,7 @@ export default function ArrayPropertyInput(props: Props) {
         mode={enumItems.length === 0 ? 'TAGS' : 'MULTIPLE'}
         options={enumItems
           .filter(isString)
-          .map((item, i) => ({ label: displayNames[i] ?? item, value: item }))}
+          .map((item, i) => ({ label: getAlias(String(displayNames[i] ?? item)), value: item }))}
         placeholder={`Select multiple ${pluralize(uiSchema['ui:entityName'] ?? 'option')}`}
         {...props}
       />

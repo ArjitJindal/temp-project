@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -251,5 +251,19 @@ export function useUpdateTenantSettings(successMessage?: string) {
         message.fatal('Failed to save settings', e);
       },
     },
+  );
+}
+
+export function useGetAlias() {
+  const { transactionStateAlias, riskLevelAlias } = useSettings();
+  return useCallback(
+    (x: string) => {
+      return (
+        transactionStateAlias?.find((item) => item.state === x)?.alias ??
+        riskLevelAlias?.find((item) => item.level === x)?.alias ??
+        x
+      );
+    },
+    [transactionStateAlias, riskLevelAlias],
   );
 }

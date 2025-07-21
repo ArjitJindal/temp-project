@@ -4,6 +4,10 @@ import { RuleAction } from '@/apis';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import Radio from '@/components/library/Radio';
 import { InputProps } from '@/components/library/Form';
+import {
+  getRuleActionLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const DESCRIPTIONS: { [key in RuleAction]: string } = {
   ALLOW: '',
@@ -16,7 +20,7 @@ interface Props extends InputProps<RuleAction> {}
 
 export default function RuleActionSelector(props: Props) {
   const { value, onChange, ...rest } = props;
-
+  const settings = useSettings();
   return (
     <div className={s.root}>
       {RULE_ACTION_OPTIONS.map((option) => (
@@ -34,7 +38,9 @@ export default function RuleActionSelector(props: Props) {
             />
           </div>
           <div className={s.text}>
-            <div className={cn(s.label, s[`color-${option.value}`])}>{option.value}</div>
+            <div className={cn(s.label, s[`color-${option.value}`])}>
+              {getRuleActionLabel(option.value, settings)}
+            </div>
             <div className={s.description}>{DESCRIPTIONS[option.value]}</div>
           </div>
         </label>

@@ -7,6 +7,7 @@ import { UNIQUES } from '@/utils/queries/keys';
 import { TransactionsUniquesField, UsersUniquesField } from '@/apis';
 import { getOr } from '@/utils/asyncResource';
 import Select from '@/components/library/Select';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const STATIC_VALUES: Partial<Record<TransactionsUniquesField, string[]>> = {
   TRANSACTION_TYPES: TRANSACTION_TYPES as string[],
@@ -43,15 +44,16 @@ const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string) =>
 };
 
 const useOptions = (data: string[], uniqueType: TransactionsUniquesField | UsersUniquesField) => {
+  const { transactionStateAlias } = useSettings();
   return useMemo(
     () =>
       uniq([...(data ?? []), ...(STATIC_VALUES[uniqueType as TransactionsUniquesField] ?? [])]).map(
         (x) => ({
-          label: x,
+          label: transactionStateAlias?.find((item) => item.state === x)?.alias ?? x,
           value: x,
         }),
       ),
-    [data, uniqueType],
+    [data, uniqueType, transactionStateAlias],
   );
 };
 

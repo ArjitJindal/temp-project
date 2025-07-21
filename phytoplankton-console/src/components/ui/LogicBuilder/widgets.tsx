@@ -54,6 +54,7 @@ import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import ViewModeTags from '@/components/ui/LogicBuilder/ViewModeTags';
 import VariableInfoPopover from '@/components/ui/LogicBuilder/VariableInfoPopover';
 import { message } from '@/components/library/Message';
+import { useGetAlias } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type FieldSettingsWithUniqueType = FieldSettings & {
   uniqueType?: TransactionsUniquesField;
@@ -543,12 +544,18 @@ const customDateAndTimeWidget: CoreWidgets['datetime'] = {
 
 function getSelectOptions(
   props: SelectFieldSettings | MultiSelectFieldSettings,
+  getAlias: ReturnType<typeof useGetAlias>,
 ): Array<ListItem | string | number> {
   let listValues: Array<ListItem | string | number> = [];
   if (props.listValues == null) {
     listValues = [];
   } else if (Array.isArray(props.listValues)) {
-    listValues = props.listValues;
+    listValues = props.listValues.map((x) => {
+      return {
+        title: getAlias(x.value),
+        value: x.value,
+      };
+    });
   } else if (typeof props.listValues === 'object') {
     listValues = Object.entries(props.listValues).map(
       ([key, value]): ListItem => ({
@@ -560,136 +567,138 @@ function getSelectOptions(
   return listValues;
 }
 
-const customSelectWidget: CoreWidgets['select'] = {
-  type: `select`,
-  factory: (props) => {
-    let listValues = getSelectOptions(props);
-    if (props.field.includes('country')) {
-      listValues = omitCountryGroups(listValues);
-    }
-    const options =
-      listValues.map((x) => {
-        if (typeof x === 'string' || typeof x === 'number') {
-          return { label: x, value: x };
-        }
-        return { label: x.title, value: x.value };
-      }) ?? [];
-    if (isViewMode(props.config)) {
-      const option = options.find((x) => x.value === props.value);
-      return <ViewModeTags>{[option?.label ?? props.value]}</ViewModeTags>;
-    }
+function SelectWidget(props: any) {
+  const getAlias = useGetAlias();
+  let listValues = getSelectOptions(props, getAlias);
+  if (props.field.includes('country')) {
+    listValues = omitCountryGroups(listValues);
+  }
+  const options =
+    listValues.map((x) => {
+      if (typeof x === 'string' || typeof x === 'number') {
+        return { label: x, value: x };
+      }
+      return { label: x.title, value: x.value };
+    }) ?? [];
+  if (isViewMode(props.config)) {
+    const option = options.find((x) => x.value === props.value);
+    return <ViewModeTags>{[option?.label ?? props.value]}</ViewModeTags>;
+  }
 
-    const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
+  const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
 
-    if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
-      const uniqueTypeProps = getUniqueTypeProps(
-        props.field,
-        props.config,
-        fieldSettings.uniqueType,
-      );
-
-      return (
-        <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
-          <SingleListSelectDynamic
-            uniqueTypeProps={uniqueTypeProps}
-            value={props.value as string}
-            onChange={(val) => props.setValue(val)}
-          />
-        </WidgetWrapper>
-      );
-    }
+  if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+    const uniqueTypeProps = getUniqueTypeProps(props.field, props.config, fieldSettings.uniqueType);
 
     return (
-      <WidgetWrapper widgetFactoryProps={props}>
-        <Select
-          dropdownMatchWidth={false}
-          portaled={true}
-          allowClear={true}
-          options={options}
-          value={props.value}
-          onChange={props.setValue}
+      <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+        <SingleListSelectDynamic
+          uniqueTypeProps={uniqueTypeProps}
+          value={props.value as string}
+          onChange={(val) => props.setValue(val)}
         />
       </WidgetWrapper>
     );
+  }
+
+  return (
+    <WidgetWrapper widgetFactoryProps={props}>
+      <Select
+        dropdownMatchWidth={false}
+        portaled={true}
+        allowClear={true}
+        options={options}
+        value={props.value}
+        onChange={props.setValue}
+      />
+    </WidgetWrapper>
+  );
+}
+
+const customSelectWidget: CoreWidgets['select'] = {
+  type: `select`,
+  factory: (props) => {
+    return <SelectWidget {...props} />;
   },
 };
 
-const customMultiselectWidget: CoreWidgets['multiselect'] = {
-  type: `select`,
-  factory: (props) => {
-    const listValues = getSelectOptions(props);
-    const isCountryField = props.field?.includes('country');
+function MultiSelectWidget(props: any) {
+  const getAlias = useGetAlias();
+  const listValues = getSelectOptions(props, getAlias);
+  const isCountryField = props.field?.includes('country');
 
-    const options =
-      listValues.map((x) => {
-        if (typeof x === 'string' || typeof x === 'number') {
-          return { label: x, value: x };
-        }
-        return { label: x.title, value: x.value };
-      }) ?? [];
+  const options =
+    listValues.map((x) => {
+      if (typeof x === 'string' || typeof x === 'number') {
+        return { label: x, value: x };
+      }
+      return { label: x.title, value: x.value };
+    }) ?? [];
 
-    const value: (string | number)[] | undefined =
-      isCountryField && isArray(props.value)
-        ? deserializeCountries(props.value as string[])
-        : props.value ?? undefined;
+  const value: (string | number)[] | undefined =
+    isCountryField && isArray(props.value)
+      ? deserializeCountries(props.value as string[])
+      : props.value ?? undefined;
 
-    if (MULTI_SELECT_LIST_OPERATORS.includes(props.operator as LogicOperatorType)) {
-      return (
-        <WidgetWrapper widgetFactoryProps={props}>
-          <ListSelect
-            value={(props.value as any) ?? undefined}
-            onChange={(newValue) => {
-              props.setValue(newValue as any);
-            }}
-          />
-        </WidgetWrapper>
-      );
-    }
-
-    const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
-
-    if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
-      const uniqueTypeProps = getUniqueTypeProps(
-        props.field,
-        props.config,
-        fieldSettings.uniqueType,
-      );
-
-      return (
-        <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
-          <MultiListSelectDynamic
-            uniqueTypeProps={uniqueTypeProps}
-            value={props.value as string[]}
-            onChange={(val) => props.setValue(val)}
-          />
-        </WidgetWrapper>
-      );
-    }
-
-    if (isViewMode(props.config)) {
-      return (
-        <ViewModeTags>
-          {value
-            ? options.filter((x) => value?.includes(x.value) ?? false).map(({ label }) => label)
-            : null}
-        </ViewModeTags>
-      );
-    }
-
+  if (MULTI_SELECT_LIST_OPERATORS.includes(props.operator as LogicOperatorType)) {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <Select<string | number>
-          portaled={true}
-          mode={props.allowCustomValues ? 'TAGS' : 'MULTIPLE'}
-          allowClear={true}
-          options={options}
-          value={value}
+        <ListSelect
+          value={(props.value as any) ?? undefined}
           onChange={(newValue) => {
-            props.setValue(isCountryField ? serializeCountries(newValue) : newValue);
+            props.setValue(newValue as any);
           }}
         />
       </WidgetWrapper>
     );
+  }
+
+  const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
+
+  if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
+    const uniqueTypeProps = getUniqueTypeProps(props.field, props.config, fieldSettings.uniqueType);
+
+    return (
+      <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
+        <MultiListSelectDynamic
+          uniqueTypeProps={uniqueTypeProps}
+          value={props.value as string[]}
+          onChange={(val) => props.setValue(val)}
+        />
+      </WidgetWrapper>
+    );
+  }
+
+  if (isViewMode(props.config)) {
+    return (
+      <ViewModeTags>
+        {value
+          ? options.filter((x) => value?.includes(x.value) ?? false).map(({ label }) => label)
+          : null}
+      </ViewModeTags>
+    );
+  }
+
+  return (
+    <WidgetWrapper widgetFactoryProps={props}>
+      <Select<string | number>
+        portaled={true}
+        mode={props.allowCustomValues ? 'TAGS' : 'MULTIPLE'}
+        allowClear={true}
+        options={options}
+        value={value}
+        onChange={(newValue) => {
+          props.setValue(isCountryField ? serializeCountries(newValue) : newValue);
+        }}
+      />
+    </WidgetWrapper>
+  );
+}
+
+const customMultiselectWidget: CoreWidgets['multiselect'] = {
+  type: `select`,
+  factory: (props) => {
+    return <MultiSelectWidget {...props} />;
   },
 };
 
