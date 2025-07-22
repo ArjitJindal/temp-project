@@ -1,11 +1,17 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts/repository'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabledInRegion,
+} from '@/utils/clickhouse/utils'
 
 async function migrateTenant(tenant: Tenant) {
+  if (!isClickhouseEnabledInRegion()) {
+    return
+  }
   const client = await getClickhouseClient(tenant.id)
-  const dropMatColumn = `ALTER TABLE ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} DROP COLUMN createdAt`
+  const dropMatColumn = `ALTER TABLE ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} DROP COLUMN IF EXISTS createdAt`
   await client.exec({ query: dropMatColumn })
 }
 
