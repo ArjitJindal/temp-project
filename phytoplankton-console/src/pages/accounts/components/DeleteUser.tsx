@@ -159,21 +159,20 @@ export function DeleteUser(props: DeleteUserProps) {
               deleted user.
             </b>
           </P>
-          <div style={{ width: 300, marginBottom: 16 }}>
-            <Select
-              options={accounts
-                .filter((account) => account.id !== item.id)
-                .map((account) => ({
-                  label: account.email,
-                  value: account.id,
-                }))}
-              placeholder="Select an account Email ID"
-              mode="SINGLE"
-              onChange={(value) => setReassignTo(value ?? null)}
-              value={reassignTo}
-              testId="delete-user-reassign-to"
-            />
-          </div>
+          <Select
+            options={accounts
+              .filter((account) => account.id !== item.id)
+              .map((account) => ({
+                label: account.email,
+                value: account.id,
+              }))}
+            placeholder="Select an account Email ID"
+            style={{ width: 300, marginBottom: 16 }}
+            mode="SINGLE"
+            onChange={(value) => setReassignTo(value ?? null)}
+            value={reassignTo}
+            testId="delete-user-reassign-to"
+          />
           <Button
             testName="delete-account"
             type="PRIMARY"

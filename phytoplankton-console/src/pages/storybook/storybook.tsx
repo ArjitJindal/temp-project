@@ -135,8 +135,9 @@ const config: Config = [
       {
         key: 'Select',
         story: Select,
+        alternativeNames: ['Input field'],
         designLink:
-          'https://www.figma.com/design/8f2OFrSxBjNuo4dtV0twxb/Aegis-Design-System?node-id=918-1028',
+          'https://www.figma.com/file/8pFXj0S40ULQbCSmhMJEJ4/Design-system?type=design&node-id=264%3A11291&mode=dev',
       },
       {
         key: 'Number input',

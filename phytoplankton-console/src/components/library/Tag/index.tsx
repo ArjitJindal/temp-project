@@ -73,7 +73,6 @@ export default function Tag(props: Props) {
                     key={key}
                     onClick={(e) => {
                       e.preventDefault();
-                      e.stopPropagation();
                       action();
                     }}
                   >

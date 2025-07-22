@@ -64,39 +64,37 @@ export default function CreationIntervalInput(props: Props) {
 
   return (
     <div className={s.root}>
-      <div style={{ width: 150 }}>
-        <Select<CreationIntervalType>
-          options={[
-            { value: 'INSTANTLY', label: 'Instantly' },
-            { value: 'DAILY', label: 'Daily' },
-            { value: 'WEEKLY', label: 'Weekly' },
-            { value: 'MONTHLY', label: 'Monthly' },
-          ]}
-          mode="SINGLE"
-          size="LARGE"
-          value={intervalType}
-          onChange={handleChangeType}
-        />
-      </div>
+      <Select<CreationIntervalType>
+        options={[
+          { value: 'INSTANTLY', label: 'Instantly' },
+          { value: 'DAILY', label: 'Daily' },
+          { value: 'WEEKLY', label: 'Weekly' },
+          { value: 'MONTHLY', label: 'Monthly' },
+        ]}
+        mode="SINGLE"
+        size="LARGE"
+        value={intervalType}
+        onChange={handleChangeType}
+        style={{ width: 150 }}
+      />
       {value?.type === 'DAILY' && (
         <>
           <div>At</div>
-          <div style={{ width: 80 }}>
-            <Select<DailyTime>
-              options={DAILY_TIMES.map((time) => ({
-                value: time,
-                label: `${time.padStart(2, '0')}:00`,
-              }))}
-              mode="SINGLE"
-              size="LARGE"
-              value={value.time}
-              onChange={(time) => {
-                if (time != null) {
-                  onChange?.({ ...value, time });
-                }
-              }}
-            />
-          </div>
+          <Select<DailyTime>
+            options={DAILY_TIMES.map((time) => ({
+              value: time,
+              label: `${time.padStart(2, '0')}:00`,
+            }))}
+            mode="SINGLE"
+            size="LARGE"
+            value={value.time}
+            onChange={(time) => {
+              if (time != null) {
+                onChange?.({ ...value, time });
+              }
+            }}
+            style={{ width: 80 }}
+          />
         </>
       )}
       {value?.type === 'MONTHLY' && (
@@ -121,27 +119,26 @@ export default function CreationIntervalInput(props: Props) {
       {value?.type === 'WEEKLY' && (
         <>
           <div>On</div>
-          <div style={{ width: 150 }}>
-            <Select<AlertCreationIntervalWeeklyDayEnum>
-              options={[
-                { value: 'MONDAY', label: 'Monday' },
-                { value: 'TUESDAY', label: 'Tuesday' },
-                { value: 'WEDNESDAY', label: 'Wednesday' },
-                { value: 'THURSDAY', label: 'Thursday' },
-                { value: 'FRIDAY', label: 'Friday' },
-                { value: 'SATURDAY', label: 'Saturday' },
-                { value: 'SUNDAY', label: 'Sunday' },
-              ]}
-              mode="SINGLE"
-              size="LARGE"
-              value={value.day}
-              onChange={(day) => {
-                if (day != null) {
-                  onChange?.({ ...value, day });
-                }
-              }}
-            />
-          </div>
+          <Select<AlertCreationIntervalWeeklyDayEnum>
+            options={[
+              { value: 'MONDAY', label: 'Monday' },
+              { value: 'TUESDAY', label: 'Tuesday' },
+              { value: 'WEDNESDAY', label: 'Wednesday' },
+              { value: 'THURSDAY', label: 'Thursday' },
+              { value: 'FRIDAY', label: 'Friday' },
+              { value: 'SATURDAY', label: 'Saturday' },
+              { value: 'SUNDAY', label: 'Sunday' },
+            ]}
+            mode="SINGLE"
+            size="LARGE"
+            value={value.day}
+            onChange={(day) => {
+              if (day != null) {
+                onChange?.({ ...value, day });
+              }
+            }}
+            style={{ width: 150 }}
+          />
         </>
       )}
     </div>

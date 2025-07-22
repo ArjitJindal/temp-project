@@ -68,6 +68,7 @@ export default function AgeRangeInput(props: Props) {
               <Select
                 options={DAY_RANGE_GRANULARITY}
                 value={minAge?.granularity}
+                style={{ width: 150 }}
                 onChange={(val: Granularity | undefined) => {
                   handleChange({
                     ...value,
@@ -118,6 +119,7 @@ export default function AgeRangeInput(props: Props) {
                 }}
                 options={DAY_RANGE_GRANULARITY_EXTENDED}
                 value={maxAge?.granularity ?? 'and above'}
+                style={{ width: 150 }}
                 mode="SINGLE"
                 testId="max-age-select"
               />

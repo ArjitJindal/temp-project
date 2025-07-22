@@ -365,8 +365,13 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 );
               }
             }}
-            placeholder="Search for entity variable here or configure below"
-            placeholderIcon={<SearchIcon />}
+            placeholder={
+              <span>
+                <SearchIcon style={{ width: 12, height: 12 }} />
+                Search for entity variable here or configure below
+              </span>
+            }
+            portaled={true}
             mode="SINGLE"
             options={allVariableOptions}
             testId="variable-search-v8"

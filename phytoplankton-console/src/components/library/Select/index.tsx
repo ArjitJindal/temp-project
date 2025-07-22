@@ -1,32 +1,17 @@
+import { Select as AntSelect } from 'antd';
 import cn from 'clsx';
-import React, { useState, useMemo, useCallback, ReactSVGElement } from 'react';
-import {
-  useFloating,
-  FloatingPortal,
-  size as floatingUiSize,
-  useDismiss,
-  useInteractions,
-  offset,
-  autoUpdate,
-  flip,
-  useFocus,
-} from '@floating-ui/react';
-import { uniq } from 'lodash';
-import Tag from '../Tag';
+import { uniq, uniqBy } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import Tooltip from '../Tooltip';
 import s from './style.module.less';
-import SelectMenu from './SelectMenu';
-import { filterOption, parseSearchString, SEPARATOR } from './helpers';
-import { useId } from '@/utils/hooks';
+import { parseSearchString, filterOption, SEPARATOR } from './helpers';
 import { InputProps } from '@/components/library/Form';
-import { Comparable, compare, key } from '@/utils/comparable';
-import { getErrorMessage } from '@/utils/lang';
-import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
-import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
-import ArrowDownIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
-import LoaderIcon from '@/components/ui/icons/Remix/system/loader-4-line.react.svg';
+import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
-import { message } from '@/components/library/Message';
+import { Comparable, key } from '@/utils/comparable';
+import { getErrorMessage, neverReturn } from '@/utils/lang';
+
 export interface Option<Value extends Comparable> {
   value: Value;
   label?: React.ReactNode;
@@ -36,429 +21,406 @@ export interface Option<Value extends Comparable> {
   isDisabled?: boolean;
   isDefault?: boolean;
   isVirtual?: boolean;
-  icon?: React.ReactNode;
 }
 
-interface CommonProps {
+interface CommonProps<Value extends Comparable> {
+  placeholder?: string | React.ReactNode;
   size?: 'DEFAULT' | 'LARGE';
+  options: Option<Value>[];
+  style?: React.CSSProperties;
+  dropdownPlacement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
   allowClear?: boolean;
-  isCopyable?: boolean;
   notFoundContent?: React.ReactNode;
-  isLoading?: boolean;
+  className?: string;
+  innerRef?: React.RefObject<any>;
+  isCopyable?: boolean;
+  isSearchable?: boolean;
+  portaled?: boolean;
+  dropdownMatchWidth?: boolean;
+  autoTrim?: boolean;
   testId?: string;
-  hiddenDropdown?: boolean;
-  fixedHeight?: boolean;
-  placeholder?: string;
-  placeholderIcon?: React.ReactNode;
-  hideBorders?: boolean;
-  width?: string | number;
+  optionLabelProp?: string;
+  tooltip?: boolean;
 }
 
-export interface SingleProps<Value extends Comparable> extends CommonProps, InputProps<Value> {
+export interface SingleProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value> {
   mode?: 'SINGLE';
-  options: Option<Value>[];
 }
 
-export interface MultipleProps<Value extends Comparable> extends CommonProps, InputProps<Value[]> {
+export interface MultipleProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value[]> {
   mode: 'MULTIPLE';
-  options: Option<Value>[];
-  separator?: string;
 }
 
-export interface TagsProps<Value extends Comparable> extends CommonProps, InputProps<Value[]> {
+export interface TagsProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value[]> {
   mode: 'TAGS';
-  options: Option<Value>[];
 }
 
 /**
- * Dynamic mode inteded for use-cases when we want to allow users to input values that are not in the initial options.
+ * DYNAMIC mode is used to add new options to the dropdown when the user is typing.
+ * In this mode:
+ * - Users can type and select values that don't exist in the initial options
+ * - New options are automatically added to the dropdown list
+ * - The component maintains its own internal state of options
+ * - New options persist in the dropdown until the component is unmounted
  */
-export interface DynamicProps extends CommonProps, InputProps<string> {
+
+export interface DynamicProps<Value extends Comparable>
+  extends CommonProps<Value>,
+    InputProps<Value> {
   mode: 'DYNAMIC';
-  options: Option<string>[];
 }
 
 export type Props<Value extends Comparable> =
   | SingleProps<Value>
   | MultipleProps<Value>
   | TagsProps<Value>
-  | DynamicProps;
-
-const VIEWPORT_PADDING = 8;
-const MIN_HEIGHT = 100;
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 800;
+  | DynamicProps<Value>;
 
 export default function Select<Value extends Comparable = string>(props: Props<Value>) {
   const {
+    mode = 'SINGLE',
+    isDisabled,
     options,
-    mode,
-    value,
-    onChange,
-    isCopyable = false,
-    isLoading = false,
-    isDisabled = false,
-    isError = false,
-    allowClear = true,
-    placeholderIcon,
     placeholder,
     size = 'DEFAULT',
-    hiddenDropdown = false,
-    fixedHeight = false,
-    hideBorders = false,
-    width,
+    isError,
+    isLoading,
+    className,
+    innerRef,
+    isCopyable,
+    value,
+    allowClear = true,
+    portaled = false,
+    dropdownMatchWidth = true,
+    autoTrim = false,
+    testId = `input select`,
+    optionLabelProp,
+    tooltip,
+    onSearch,
+    isSearchable = true,
   } = props;
 
-  const id = useId(`select-`);
+  const selectInput = useRef<HTMLDivElement | null>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [internalOptions, setInternalOptions] = useState<Option<Value>[]>(options);
 
-  const [searchText, setSearchText] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    setInternalOptions((prevOptions) => {
+      const existingVirtualOptions = prevOptions.filter((opt) => opt.isVirtual);
+      const newOptions = [...options, ...existingVirtualOptions];
+      return uniqBy(newOptions, 'value');
+    });
+  }, [options]);
 
-  const [virtualOptions, setVirtualOptions] = useState<Option<Value>[]>([]);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
-  const availableOptions = useMemo(() => {
-    const result: Option<Value>[] = [...virtualOptions, ...(options as Option<Value>[])];
-    if (mode === 'DYNAMIC') {
-      const isOptionExists = value != null && result.some((x) => compare(x.value, value));
-      if (!isOptionExists && value != null) {
-        result.unshift({ label: value, value: value as Value, isVirtual: true });
-      }
-    } else if (mode === 'TAGS') {
-      for (const valueItem of value ?? []) {
-        const isOptionExists = result.some((x) => compare(x.value, valueItem));
-        if (!isOptionExists) {
-          result.unshift({ label: valueItem, value: valueItem, isVirtual: true });
+  const handleChange = useCallback(
+    (newValue: Value | Value[] | undefined) => {
+      if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+        if (Array.isArray(newValue)) {
+          props.onChange?.(newValue.length === 0 ? [] : newValue);
         }
-      }
-    }
-    return result;
-  }, [virtualOptions, options, mode, value]);
-
-  const applySearchStringValue = useCallback(
-    (searchString: string, value: Value | Value[] | undefined | string) => {
-      let newValue;
-      if (mode === 'MULTIPLE' || mode === 'TAGS') {
-        const parsedValues = parseSearchString<Value>(
-          availableOptions,
-          searchString,
-          mode === 'MULTIPLE',
-        );
-        newValue = uniq([...((value as Value[]) ?? []), ...parsedValues] as Value[]);
-      } else if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == null) {
-        const parsedValues = parseSearchString<Value>(availableOptions, searchString, true);
-        newValue = parsedValues[0] ?? value;
+      } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+        if (!Array.isArray(newValue)) {
+          props.onChange?.(newValue);
+        }
       } else {
-        newValue = value;
+        neverReturn(props.mode, null);
       }
-      setSearchText('');
-      onChange?.(newValue);
+      setSearchValue('');
     },
-    [mode, availableOptions, onChange],
+    [props],
   );
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setIsOpen(isOpen);
-      if (!isOpen) {
-        applySearchStringValue(searchText ?? '', props.value);
-      }
-    },
-    [applySearchStringValue, props.value, searchText],
-  );
-
-  const { refs, floatingStyles, context } = useFloating({
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(2),
-      flip(),
-      floatingUiSize({
-        apply: (state) => {
-          state.elements.floating.style.minWidth = `${Math.max(
-            state.rects.reference.width,
-            MIN_WIDTH,
-          )}px`;
-          state.elements.floating.style.maxWidth = `${Math.min(
-            state.availableWidth - VIEWPORT_PADDING,
-            MAX_WIDTH,
-          )}px`;
-          state.elements.floating.style.maxHeight = `${Math.max(
-            state.availableHeight - VIEWPORT_PADDING,
-            MIN_HEIGHT,
-          )}px`;
-        },
-      }),
-    ],
-    open: isOpen,
-    onOpenChange: handleOpenChange,
-    placement: 'bottom-start',
-    strategy: 'fixed',
-  });
-
-  const focus = useFocus(context);
-
-  const dismiss = useDismiss(context, {
-    ancestorScroll: true,
-  });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([focus, dismiss]);
-
-  const selectedOptions: Option<Value>[] = useMemo(() => {
-    return availableOptions.filter((option): option is Option<Value> => {
-      if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == undefined) {
-        return option.value === value;
-      } else if (mode === 'MULTIPLE' || mode === 'TAGS') {
-        return value?.includes(option.value as Value) ?? false;
-      } else {
+  const addNewOption = useCallback(
+    (newValue: string) => {
+      if (!newValue?.trim()) {
         return false;
       }
-    });
-  }, [value, mode, availableOptions]);
 
-  const [isFocused, setIsFocused] = useState(false);
-  const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
+      const trimmedValue = newValue.trim();
+      const valueStr = trimmedValue.toLowerCase();
 
-  const isEmpty = selectedOptions.length === 0;
-  const showClearIcon = allowClear && !isEmpty;
-  const showCopyIcon = isCopyable && props.value != null;
+      const optionExists = internalOptions.some((option) => {
+        const optionValue = option.value?.toString().trim()?.toLowerCase();
+        return optionValue === valueStr && (!option.isVirtual || option.label === trimmedValue);
+      });
 
-  const rightIconsCount = useMemo(() => {
-    return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
-  }, [showClearIcon, isLoading, showCopyIcon]);
+      if (optionExists) {
+        return false;
+      }
 
-  const handleChangeSearchText = (value: string) => {
-    setSearchText(value);
-    if (value.includes(SEPARATOR)) {
-      applySearchStringValue(value, props.value);
+      const newOption: Option<Value> = {
+        value: trimmedValue.toString() as Value,
+        label: trimmedValue,
+        labelText: trimmedValue,
+        isVirtual: true,
+      };
+
+      setInternalOptions((prev) => uniqBy([...prev, newOption], 'value'));
+
+      if (props.mode === 'DYNAMIC') {
+        handleChange(trimmedValue as Value);
+      }
+
+      return true;
+    },
+    [internalOptions, handleChange, props],
+  );
+
+  const applySearchStringValue = useCallback(
+    (searchString: string, skipUnknown: boolean) => {
+      const parsedValues = parseSearchString(internalOptions, searchString, skipUnknown);
+      let newValue;
+      if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+        newValue = uniq([...(props.value ?? []), ...parsedValues] as Value[]);
+      } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+        newValue = parsedValues[0] ?? props.value;
+      } else {
+        newValue = neverReturn(props.mode, props.value);
+      }
+      handleChange?.(newValue as (Value & Value[]) | undefined);
+      setSearchValue('');
+    },
+    [props.value, props.mode, internalOptions, handleChange],
+  );
+
+  const filteredOptions = useMemo(() => {
+    let options = searchValue
+      ? internalOptions
+          .filter((option) => filterOption(searchValue, option))
+          .sort((option1, option2) => {
+            // Shorter options are more relevant
+            return (
+              (option1.value?.toString() ?? '').length - (option2.value?.toString() ?? '').length
+            );
+          })
+      : internalOptions;
+
+    // For DYNAMIC mode, add the search term as an option if it doesn't exist already
+    if (props.mode === 'DYNAMIC' && searchValue && searchValue.trim() !== '') {
+      const searchValueLower = searchValue.toLowerCase();
+      const exactMatchExists = options.some(
+        (option) => option.value?.toString().toLowerCase() === searchValueLower,
+      );
+
+      if (!exactMatchExists) {
+        // Add search term as a "virtual" option in the dropdown
+        options = [
+          ...options,
+          {
+            value: searchValue as unknown as Value,
+            label: searchValue,
+            labelText: searchValue,
+            // We'll use this flag to identify dynamically added options that aren't saved yet
+            isVirtual: true,
+          },
+        ];
+      }
     }
+
+    return options;
+  }, [searchValue, internalOptions, props.mode]);
+
+  const handleCopyText = useCallback(async () => {
+    if (props.value) {
+      const valueToCopy = Array.isArray(props.value)
+        ? props.value.join(SEPARATOR)
+        : props.value.toString();
+      if (valueToCopy && valueToCopy.length > 0) {
+        try {
+          await copyTextToClipboard(valueToCopy);
+          message.success('Copied');
+        } catch (error) {
+          message.fatal(`Failed to copy: ${getErrorMessage(error)}`);
+        }
+      }
+    }
+  }, [props.value]);
+
+  useEffect(() => {
+    if (isFocused) {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+          handleCopyText();
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isFocused, handleCopyText]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
-  const handleCopy = useCallback(
-    async (e: React.MouseEvent<ReactSVGElement>) => {
-      e.stopPropagation();
-      if (props.value) {
-        const valueToCopy = Array.isArray(props.value)
-          ? props.value.join(SEPARATOR)
-          : props.value.toString();
-        if (valueToCopy && valueToCopy.length > 0) {
-          try {
-            await copyTextToClipboard(valueToCopy);
-            message.success('Copied');
-          } catch (error) {
-            message.fatal(`Failed to copy: ${getErrorMessage(error)}`);
-          }
-        }
-      }
-    },
-    [props.value],
-  );
+  let dropdownMatchSelectWidth;
+  if (!dropdownMatchWidth) {
+    dropdownMatchSelectWidth = false;
+  } else {
+    dropdownMatchSelectWidth = selectInput.current
+      ? selectInput.current?.getBoundingClientRect().width
+      : true;
+  }
 
-  const optionsToShow: Option<Value>[] = useMemo(() => {
-    let result = [...availableOptions];
+  const toolTipText = useMemo(() => {
+    let text = '';
 
-    if (searchText) {
-      result = result.filter((x) => filterOption(searchText ?? '', x));
+    if (!tooltip) {
+      return text;
     }
-    if (props.mode === 'DYNAMIC' || props.mode === 'TAGS') {
-      const values = props.mode === 'DYNAMIC' ? [props.value] : props.value ?? [];
-      if (searchText) {
-        const isOptionExists = values.some((value) =>
-          result.some((x) => compare(x.value, value) || compare(x.value, searchText)),
-        );
-        if (!isOptionExists) {
-          result = [
-            {
-              label: `Use "${searchText.trim()}"`,
-              value: searchText.trim() as Value,
-              isVirtual: true,
-            },
-            ...result,
-          ];
-        }
-      }
+
+    if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+      const filteredOptions = internalOptions.filter((option) =>
+        props.value?.includes(option.value),
+      );
+      text = filteredOptions
+        .map(
+          (option) =>
+            option.labelText ??
+            (['string', 'number', 'boolean'].includes(typeof option.label)
+              ? option.label?.toString()
+              : option.value?.toString()) ??
+            '',
+        )
+        .join(', ');
+    } else if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+      const option = internalOptions.find((option) => option.value === props.value);
+      text =
+        option?.labelText ??
+        (['string', 'number', 'boolean'].includes(typeof option?.label)
+          ? option?.label?.toString()
+          : props.value?.toString()) ??
+        '';
     }
-    return result;
-  }, [props.value, searchText, availableOptions, props.mode]);
 
-  const portalId = useMemo(() => {
-    return `select-portal-${props.testId ?? id}`;
-  }, [props.testId, id]);
+    return text;
+  }, [internalOptions, props.mode, props.value, tooltip]);
 
-  return (
-    <>
-      {!hiddenDropdown && (
-        <FloatingPortal id={portalId}>
-          <div
-            style={floatingStyles}
-            ref={refs.setFloating}
-            {...getFloatingProps()}
-            className={cn(s.menuWrapper, { [s.isOpen]: isOpen })}
-          >
-            {optionsToShow.length > 0 ? (
-              <SelectMenu<Value>
-                options={optionsToShow}
-                selectedValues={
-                  Array.isArray(props.value)
-                    ? props.value
-                    : props.value
-                    ? [props.value as Value]
-                    : []
-                }
-                onSelectOption={(selectedValue, option) => {
-                  if (props.mode === 'SINGLE' || props.mode === undefined) {
-                    props.onChange?.(selectedValue);
-                    setIsOpen(false);
-                    setSearchText('');
-                  } else if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
-                    const newValue = props.value?.includes(selectedValue)
-                      ? props.value?.filter((v) => v !== selectedValue)
-                      : [...(props.value ?? []), selectedValue];
-                    props.onChange?.(newValue);
-                    setSearchText('');
-                  } else if (props.mode === 'DYNAMIC') {
-                    if (option.isVirtual) {
-                      setVirtualOptions((prev) => {
-                        if (prev.some((x) => compare(x.value, selectedValue))) {
-                          return prev;
-                        }
-                        return [
-                          ...prev,
-                          { label: selectedValue, value: selectedValue, isVirtual: true },
-                        ];
-                      });
-                    }
-                    const newValue = selectedValue?.toString() ?? '';
-                    setIsOpen(false);
-                    setSearchText('');
-                    props.onChange?.(newValue);
-                  }
-                }}
-                showCheckboxes={props.mode === 'MULTIPLE' || props.mode === 'TAGS'}
-              />
-            ) : (
-              <div className={s.noOptions}>{props.notFoundContent ?? 'No options available'}</div>
-            )}
-          </div>
-        </FloatingPortal>
+  // For DYNAMIC mode, we don't need custom not found content
+  // because we'll show the search term as an option directly in the dropdown
+
+  const antSelect: JSX.Element = (
+    <div
+      className={cn(
+        s.root,
+        isError && s.isError,
+        autoTrim && s.autoTrim,
+        s[`size-${size}`],
+        s[`mode-${mode ?? 'SINGLE'}`],
+        (mode === 'MULTIPLE' || mode === 'TAGS') && s.extraPadding,
+        className,
       )}
-      <div
-        ref={refs.setReference}
-        style={width != null ? { width } : undefined}
-        {...getReferenceProps()}
-        className={s.rootWrapper}
-        role="combobox"
+      style={props.style}
+      ref={selectInput}
+      data-cy={testId}
+    >
+      <AntSelect
+        getPopupContainer={
+          portaled
+            ? () => {
+                return document.body;
+              }
+            : undefined
+        }
+        ref={innerRef}
+        placeholder={placeholder}
+        allowClear={allowClear}
+        optionLabelProp={optionLabelProp}
+        onFocus={() => {
+          setIsFocused(true);
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          if (searchValue != '') {
+            if (props.mode === 'DYNAMIC') {
+              // Add new option on blur for DYNAMIC mode if it doesn't exist yet
+              addNewOption(searchValue.trim());
+            } else {
+              applySearchStringValue(searchValue.trim(), mode !== 'TAGS');
+            }
+            setSearchValue('');
+          }
+        }}
+        filterOption={() => true}
+        showSearch={isSearchable}
+        notFoundContent={props.notFoundContent}
+        placement={props.dropdownPlacement ?? 'bottomLeft'}
+        mode={mode === 'MULTIPLE' ? 'multiple' : mode === 'TAGS' ? 'tags' : undefined}
+        value={value}
+        onChange={(newValue) => {
+          // For DYNAMIC mode, check if the selected option is a virtual one
+          if (props.mode === 'DYNAMIC' && newValue) {
+            const selectedOption = filteredOptions.find((option) => option.value === newValue);
+            if (selectedOption?.isVirtual) {
+              // Add the option permanently to our internal options
+              addNewOption(newValue.toString());
+              return; // addNewOption already calls handleChange
+            }
+          }
+          handleChange(newValue);
+        }}
+        onSearch={(searchString) => {
+          onSearch?.(searchString);
+          setSearchValue(searchString);
+          if (searchString.includes(SEPARATOR)) {
+            applySearchStringValue(searchString, mode !== 'TAGS');
+          }
+        }}
+        defaultValue={filteredOptions
+          .filter((option) => option.isDefault)
+          .map((option) => option.value)}
+        loading={isLoading}
+        disabled={isDisabled || isLoading}
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
+        suffixIcon={
+          isCopyable &&
+          Array.isArray(props.value) &&
+          props.value.length > 0 && (
+            <FileCopyLineIcon
+              onClick={handleCopyText}
+              className={cn(s.copyIcon, isHovered && s.isVisible)}
+            />
+          )
+        }
+        showArrow={true}
+        searchValue={searchValue}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onDropdownVisibleChange={props?.onDropdownVisibleChange}
       >
-        <div
-          data-cy={props.testId}
-          data-portal-id={portalId}
-          className={cn(
-            s.root,
-            s[`size-${size}`],
-            s[`type-${props.mode ?? 'SINGLE'}`],
-            s[`rightIconsCount-${rightIconsCount}`],
-            {
-              [s.isError]: isError,
-              [s.isSearchEmpty]: searchText == null || searchText === '',
-              [s.isEmpty]: isEmpty,
-              [s.isFocused]: isFocused,
-              [s.isOpen]: isOpen,
-              [s.isDisabled]: isDisabled,
-              [s.allowClear]: allowClear,
-              [s.fixedHeight]: fixedHeight,
-              [s.hideBorders]: hideBorders,
-            },
-          )}
-          onClick={() => {
-            inputRef?.focus();
-          }}
-        >
-          <div className={s.placeholder}>
-            {placeholderIcon && <div className={s.placeholderIcon}>{placeholderIcon}</div>}
-            {placeholder}
-          </div>
-          {selectedOptions.length > 0 && (
-            <>
-              {props.mode === 'TAGS' ? (
-                <RenderTags
-                  options={selectedOptions}
-                  onRemove={(value) => {
-                    props.onChange?.(props.value?.filter((v) => v !== value));
-                  }}
-                />
-              ) : (
-                <>
-                  {selectedOptions.map((option, i) => {
-                    const separator =
-                      props.mode === 'MULTIPLE' && props.separator != null ? props.separator : ', ';
-                    return (
-                      <span className={s.selectedOption} key={key(option.value)}>
-                        <span className={s.selectedOptionLabel}>{option.label}</span>
-                        {i !== selectedOptions.length - 1 && separator}
-                      </span>
-                    );
-                  })}
-                </>
-              )}
-            </>
-          )}
-          <input
-            type="text"
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => {
-              setIsFocused(false);
-            }}
-            className={s.input}
-            ref={setInputRef}
-            disabled={isDisabled}
-            value={searchText ?? ''}
-            onChange={(e) => handleChangeSearchText(e.target.value)}
-          />
-          <div className={s.rightIcons}>
-            {showCopyIcon && (
-              <FileCopyLineIcon onClick={handleCopy} className={cn(s.rightIcon, s.copyIcon)} />
-            )}
-            {showClearIcon && (
-              <CloseCircleFillIcon
-                className={cn(s.rightIcon, s.clearIcon)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  props.onChange?.(undefined);
-                }}
-              />
-            )}
-            {isLoading && <LoaderIcon className={cn(s.rightIcon, s.loadingIcon)} />}
-            <ArrowDownIcon className={cn(s.rightIcon, s.arrowDownIcon)} />
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function RenderTags<Value extends Comparable>(props: {
-  options: Option<Value>[];
-  onRemove: (value: Value) => void;
-}) {
-  return (
-    <>
-      {props.options.map((option) => (
-        <div className={s.tagWrapper} key={key(option.value)}>
-          <Tag
+        {filteredOptions?.map((option) => (
+          <AntSelect.Option
             key={key(option.value)}
-            actions={[
-              {
-                icon: <CloseLineIcon className={s.tagRemoveIcon} />,
-                key: 'remove',
-                action: () => {
-                  props.onRemove(option.value);
-                },
-              },
-            ]}
+            value={option.value}
+            disabled={option.isDisabled}
+            {...(option.labelText && { [optionLabelProp ?? 'labelText']: option.labelText })}
+            {...(tooltip && { title: '' })}
           >
             {option.label}
-          </Tag>
-        </div>
-      ))}
-    </>
+          </AntSelect.Option>
+        ))}
+      </AntSelect>
+    </div>
+  );
+
+  return tooltip ? (
+    <Tooltip title={toolTipText} placement="top">
+      {antSelect}
+    </Tooltip>
+  ) : (
+    antSelect
   );
 }

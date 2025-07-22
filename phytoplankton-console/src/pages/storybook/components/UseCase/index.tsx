@@ -7,14 +7,13 @@ interface Props {
   title: string;
   description?: string;
   initialState?: Record<string, any>;
-  initialBgColor?: string;
   children: React.ReactNode | ((state: StatePair<Record<string, any>>) => React.ReactNode);
 }
 
 export default function UseCase(props: Props) {
-  const { children, title, description, initialState, initialBgColor } = props;
+  const { children, title, description, initialState } = props;
   const state = useState<Record<string, any>>(initialState ?? {});
-  const [bgColor, setBgColor] = useState(initialBgColor ?? 'transparent');
+  const [bgColor, setBgColor] = useState('transparent');
   const [fullWidth, setFullWidth] = useState(false);
   const [stretchMode, setStretchMode] = useState(true);
   const [showState, setShowState] = useState(false);

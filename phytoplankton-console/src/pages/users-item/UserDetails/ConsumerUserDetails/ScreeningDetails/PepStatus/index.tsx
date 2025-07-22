@@ -102,6 +102,7 @@ export const PepStatusForm = (props: PepFormProps) => {
             value: key as CountryCode,
           }))}
           mode="MULTIPLE"
+          autoTrim
           isDisabled={isDisabled}
         />
       </Label>

@@ -236,6 +236,7 @@ export default function CreateSearchProfileModal({
           <Select
             mode="MULTIPLE"
             placeholder="Select an option"
+            className={s.filterSelect}
             options={filterConfig.options || []}
             value={currentValue}
             onChange={handleChange}
@@ -363,6 +364,7 @@ export default function CreateSearchProfileModal({
                     <label className={s.filterSelectLabel}>Set default filter</label>
                     <Select
                       value={selectedFilter}
+                      className={s.filterSelect}
                       onChange={(value: string | undefined) => {
                         if (value) {
                           setSelectedFilter(value);
@@ -370,6 +372,7 @@ export default function CreateSearchProfileModal({
                         }
                       }}
                       placeholder="Set default filter"
+                      dropdownMatchWidth={true}
                       options={availableFilters
                         .filter((filter) => !filters.some((f) => f.filter === filter.value))
                         .map((filter) => ({
@@ -412,6 +415,8 @@ export default function CreateSearchProfileModal({
                         <label className={s.filterSelectLabel}>Set default filter</label>
                         <Select
                           value={filterRow.filter}
+                          className={s.filterSelect}
+                          dropdownMatchWidth={true}
                           isDisabled
                           options={[filterConfig].map((filter) => ({
                             label: filter?.label,
