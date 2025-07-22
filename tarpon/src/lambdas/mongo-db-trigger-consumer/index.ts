@@ -381,6 +381,7 @@ export class MongoDbConsumer {
   }
 
   private async isTenantDeleted(tenantId: string) {
+    tenantId = getNonDemoTenantId(tenantId)
     const deletedTenants = await this.deletedTenants()
     return deletedTenants.some((tenant) => tenant.tenantId === tenantId)
   }
