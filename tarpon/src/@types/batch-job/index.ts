@@ -489,6 +489,7 @@ export type GoCardlessBackfillBatchJob = {
   tenantId: string
   parameters: {
     concurrency: number
+    skipTill?: number
   }
 }
 

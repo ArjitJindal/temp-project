@@ -178,13 +178,13 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
             clients.clickhouseClient.exec({
               query: `
               DELETE FROM transactions
-              WHERE transactionId = '${entityId}'
+              WHERE id = '${entityId}'
                 `,
             }),
             clients.clickhouseClient.exec({
               query: `
               DELETE FROM transactions_by_id
-              WHERE transactionId = '${entityId}'
+              WHERE id = '${entityId}'
                 `,
             }),
           ])
@@ -346,7 +346,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
       process.env.SECONDARY_TARPON_QUEUE_URL as string,
       dynamoDbMessages.map((m) => ({
         MessageBody: JSON.stringify(m),
-        MessageGroupId: generateChecksum(m.tenantId, 10),
+        MessageGroupId: generateChecksum(m.entityId, 10),
         MessageDeduplicationId: generateChecksum(
           JSON.stringify(m.NewImage),
           10
@@ -388,6 +388,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
     const requestLogsCursor = requestLogsCollection
       .find({ path: '/transactions' })
       .sort({ timestamp: 1 })
+      .skip(job.parameters.skipTill ?? 0)
       .addCursorFlag('noCursorTimeout', true)
 
     const totalRequestsToProcess = await requestLogsCollection.countDocuments({
