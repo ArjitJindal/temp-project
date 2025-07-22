@@ -11,8 +11,6 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as Sentry from '@sentry/serverless'
-import { hasFeature } from '../../../core/utils/context'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -32,8 +30,6 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { envIs } from '@/utils/env'
-import { isDemoTenant } from '@/utils/tenant'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -168,59 +164,6 @@ export class SanctionsHitsRepository {
     } while (nextCursor != null)
   }
 
-  private logMissingSources(hits: SanctionsEntity[]) {
-    if (envIs('prod') && !isDemoTenant(this.tenantId) && hasFeature('ACURIS')) {
-      let message = ''
-      const missingSanctionsSources = hits.filter(
-        (x) =>
-          !x.sanctionsSources?.length &&
-          x.sanctionSearchTypes?.includes('SANCTIONS')
-      )
-      if (missingSanctionsSources.length > 0) {
-        message += `Missing sanctions sources for ${missingSanctionsSources
-          .map((x) => x.id)
-          .join(', ')}, `
-      }
-      const missingRelSources = hits.filter(
-        (x) =>
-          !x.otherSources?.find((y) => y.type === 'REGULATORY_ENFORCEMENT_LIST')
-            ?.value?.length &&
-          x.sanctionSearchTypes?.includes('REGULATORY_ENFORCEMENT_LIST')
-      )
-      if (missingRelSources.length > 0) {
-        message += `Missing rel sources for ${missingRelSources
-          .map((x) => x.id)
-          .join(', ')}, `
-      }
-      const missingMediaSources = hits.filter(
-        (x) =>
-          !x.mediaSources?.length &&
-          x.sanctionSearchTypes?.includes('ADVERSE_MEDIA')
-      )
-      if (missingMediaSources.length > 0) {
-        message += `Missing media sources for ${missingMediaSources
-          .map((x) => x.id)
-          .join(', ')}, `
-      }
-      const missingPepSources = hits.filter(
-        (x) => !x.pepSources?.length && x.sanctionSearchTypes?.includes('PEP')
-      )
-      if (missingPepSources.length > 0) {
-        message += `Missing pep sources for ${missingPepSources
-          .map((x) => x.id)
-          .join(', ')}, `
-      }
-      if (message.length > 0) {
-        Sentry.withScope((scope) => {
-          scope.setFingerprint([this.tenantId])
-          Sentry.captureMessage(message, {
-            level: 'warning',
-          })
-        })
-      }
-    }
-  }
-
   async addHits(
     provider: SanctionsDataProviderName,
     searchId: string,
@@ -254,7 +197,6 @@ export class SanctionsHitsRepository {
         entity: hit,
       })
     )
-    this.logMissingSources(docs.map((x) => x.entity))
     if (docs.length > 0) {
       await collection.insertMany(docs)
     }
@@ -299,7 +241,7 @@ export class SanctionsHitsRepository {
     const newHits = rawHits.filter((x) => {
       return x?.id != null && !entityIds.includes(x?.id)
     })
-    this.logMissingSources(newHits)
+
     return await this.addHits(provider, searchId, newHits, hitContext)
   }
 
