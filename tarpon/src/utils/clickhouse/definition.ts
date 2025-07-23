@@ -1035,6 +1035,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "lastStatusChangeReasons Array(String) MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'reason')",
       "lastStatusChangeUserId String MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'userId')",
       "statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
     ],
   },
   {
