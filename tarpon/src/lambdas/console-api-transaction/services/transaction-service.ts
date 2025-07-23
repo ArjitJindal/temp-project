@@ -128,7 +128,11 @@ export class TransactionService {
   ): Promise<AuditLogReturnData<TransactionsResponseOffsetPaginated>> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)
     const clickhouseTransactionsRepository =
-      new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
+      new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        this.tenantId
+      )
 
     if (params.filterParentUserId) {
       const linker = new LinkerService(this.tenantId)
@@ -430,7 +434,11 @@ export class TransactionService {
     if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(this.tenantId)
       const clickhouseTransactionsRepository =
-        new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
+        new ClickhouseTransactionsRepository(
+          clickhouseClient,
+          this.dynamoDb,
+          this.tenantId
+        )
 
       const data = await clickhouseTransactionsRepository.getStatsByType(params)
       const currencyService = new CurrencyService(this.dynamoDb)
@@ -466,7 +474,11 @@ export class TransactionService {
     if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(this.tenantId)
       const clickhouseTransactionsRepository =
-        new ClickhouseTransactionsRepository(clickhouseClient, this.dynamoDb)
+        new ClickhouseTransactionsRepository(
+          clickhouseClient,
+          this.dynamoDb,
+          this.tenantId
+        )
 
       return await clickhouseTransactionsRepository.getStatsByTime(
         params,

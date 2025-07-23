@@ -55,12 +55,15 @@ type StatsByTime = {
 export class ClickhouseTransactionsRepository {
   private clickhouseClient: ClickHouseClient
   private dynamoDb: DynamoDBDocumentClient
+  private tenantId: string
   constructor(
     clickhouseClient: ClickHouseClient,
-    dynamoDb: DynamoDBDocumentClient
+    dynamoDb: DynamoDBDocumentClient,
+    tenantId: string
   ) {
     this.clickhouseClient = clickhouseClient
     this.dynamoDb = dynamoDb
+    this.tenantId = tenantId
   }
 
   private async getTransactionsWhereConditions(
@@ -107,13 +110,15 @@ export class ClickhouseTransactionsRepository {
         )
       }
     }
-
+    let timestampFilterCount = 0
     if (params.afterTimestamp != null) {
       whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
+      timestampFilterCount++
     }
 
     if (params.beforeTimestamp != null) {
       whereConditions.push(`timestamp <= ${params.beforeTimestamp}`)
+      timestampFilterCount++
     }
 
     if (params.filterOriginCountries?.length) {
@@ -243,8 +248,31 @@ export class ClickhouseTransactionsRepository {
         }%')`
       )
     }
+    const page = params.page ?? 1
+    if (
+      whereConditions.length === timestampFilterCount &&
+      params.sortOrder === 'descend' &&
+      (this.tenantId === 'pnb' || this.tenantId === '4c9cdf0251')
+    ) {
+      const beforeTimestamp = params.beforeTimestamp ?? Date.now()
 
-    whereConditions.push('timestamp != 0')
+      const threeDaysInMs = 3 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+      const calculatedAfterTimestamp = beforeTimestamp - threeDaysInMs * page
+      const givenAfterTimestamp = params.afterTimestamp ?? 0
+      const afterTimestamp = Math.max(
+        calculatedAfterTimestamp,
+        givenAfterTimestamp
+      )
+
+      whereConditions.length = 0 // Clear the array
+      if (afterTimestamp > 0) {
+        whereConditions.push(`timestamp >= ${afterTimestamp}`)
+      }
+      whereConditions.push(`timestamp <= ${beforeTimestamp}`)
+    }
+    if (params.afterTimestamp === null) {
+      whereConditions.push('timestamp != 0')
+    }
 
     return whereConditions.length ? `${whereConditions.join(' AND ')}` : ''
   }
