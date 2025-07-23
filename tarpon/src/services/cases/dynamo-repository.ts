@@ -3,9 +3,10 @@ import {
   GetCommand,
   GetCommandInput,
   QueryCommandInput,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { concat, omit } from 'lodash'
+import { omit } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoAlertRepository } from '../alerts/dynamo-repository'
 import {
@@ -28,6 +29,7 @@ import {
   dangerouslyDeletePartition,
   dangerouslyDeletePartitionKey,
   dangerouslyQueryPaginateDelete,
+  DynamoTransactionBatch,
 } from '@/utils/dynamodb'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -48,7 +50,7 @@ import {
   CaseCommentsInternal,
 } from '@/@types/cases/CasesInternal'
 import { CaseSubject } from '@/services/case-alerts-common/utils'
-
+import { removeUndefinedFields } from '@/utils/object'
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 type SubjectCasesQueryParams = {
@@ -115,12 +117,16 @@ export class DynamoCaseRepository {
     cases: Case[],
     saveToClickhouse: boolean = true
   ): Promise<void> {
-    let writeRequests: TransactWriteOperation[] = []
+    // Create document client from raw client for batch operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb, {
+      marshallOptions: {
+        removeUndefinedValues: true,
+      },
+    })
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+
     const keyLists: dynamoKeyList = []
-    let alertsWriteRequests: {
-      batchWriteRequests: TransactWriteOperation[]
-      message?: DynamoConsumerMessage
-    } = { batchWriteRequests: [] }
+    let alertsMessage: { message?: DynamoConsumerMessage } = {}
 
     for (const caseItem of cases) {
       const caseId = caseItem.caseId as string
@@ -152,52 +158,37 @@ export class DynamoCaseRepository {
       ])
 
       const caseToSaveWithId = sanitizeMongoObject(caseToSave)
-      // Add primary case record with table name
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            ...caseToSaveWithId,
-          },
+      caseToSaveWithId.caseSubjectIdentifiers = identifiers
+
+      // Add primary case record
+      batch.put({
+        Item: {
+          ...key,
+          ...caseToSaveWithId,
         },
       })
 
-      caseToSaveWithId.caseSubjectIdentifiers = identifiers
-      writeRequests = concat(
-        writeRequests,
-        auxiliaryIndexes.map((item) => ({
-          Put: {
-            TableName: this.tableName,
-            Item: {
-              ...item,
-              ...caseToSaveWithId,
-            },
+      // Add auxiliary indexes
+      for (const item of auxiliaryIndexes) {
+        batch.put({
+          Item: {
+            ...item,
+            ...caseToSaveWithId,
           },
-        }))
-      )
+        })
+      }
 
       // Add case comments if they exist
-      writeRequests = concat(
-        writeRequests,
-        await this.saveComments(caseId, comments, false)
-      )
+      await this.saveComments(caseId, comments, batch)
 
       // Add case transaction ids if they exist
-      writeRequests = concat(
-        writeRequests,
-        await this.saveCaseTransactionIds(caseId, caseTransactionIds)
-      )
+      await this.saveCaseTransactionIds(caseId, caseTransactionIds, batch)
 
       // Add case alerts if they exist
-      alertsWriteRequests = await this.dynamoAlertRepository.saveAlertsForCase(
+      alertsMessage = await this.dynamoAlertRepository.saveAlertsForCase(
         alertsToSave,
         caseId,
-        false
-      )
-      writeRequests = concat(
-        writeRequests,
-        alertsWriteRequests.batchWriteRequests
+        batch
       )
     }
     let dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
@@ -205,15 +196,12 @@ export class DynamoCaseRepository {
       dynamoDbConsumerMessage = generateDynamoConsumerMessage(this.tenantId, [
         { keyLists: keyLists, tableName: CASES_TABLE_NAME_CH },
       ])
-      if (alertsWriteRequests.message) {
-        dynamoDbConsumerMessage.push(alertsWriteRequests.message)
+      if (alertsMessage.message) {
+        dynamoDbConsumerMessage.push(alertsMessage.message)
       }
     }
-    await transactWriteWithClickhouse(
-      this.dynamoDb,
-      writeRequests,
-      dynamoDbConsumerMessage
-    )
+
+    await batch.executeWithClickhouse(dynamoDbConsumerMessage)
   }
 
   /**
@@ -221,28 +209,58 @@ export class DynamoCaseRepository {
    *
    * @param caseId - The ID of the case the comments belong to
    * @param comments - Array of comments to save
-   * @param updateHere - Whether to execute the write operations immediately
-   * @returns Promise resolving to write operations (if updateHere is false) or empty array
+   * @param batch - DynamoTransactionBatch to add operations to (if provided)
+   * @returns Promise that resolves when all operations are added to the batch
    */
   public async saveComments(
     caseId: string,
     comments: Comment[],
-    updateHere: boolean = true
-  ): Promise<TransactWriteOperation[]> {
+    batch?: DynamoTransactionBatch
+  ): Promise<void> {
     if (!comments || comments.length === 0) {
-      return []
+      return
     }
 
-    let writeRequests: TransactWriteOperation[] = []
-    let keyLists: dynamoKeyList = []
+    // If no batch provided, create one and execute immediately
+    if (!batch) {
+      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+      batch = new DynamoTransactionBatch(docClient, this.tableName)
 
-    if (updateHere) {
       const { writeRequests: caseWriteRequests, keyLists: caseKeyLists } =
         await this.prepareCaseUpdates(caseId)
-      writeRequests = concat(writeRequests, caseWriteRequests)
-      keyLists = concat(keyLists, caseKeyLists)
-    }
 
+      // Add case update operations to batch
+      for (const request of caseWriteRequests) {
+        if (request.Put) {
+          batch.put({ Item: request.Put.Item })
+        } else if (request.Update) {
+          batch.update({
+            Key: request.Update.Key,
+            UpdateExpression: request.Update.UpdateExpression,
+            ExpressionAttributeValues: request.Update.ExpressionAttributeValues,
+          })
+        }
+      }
+
+      // Add comments
+      await this.addCommentsToBatch(caseId, comments, batch)
+
+      const dynamoDbConsumerMessage = generateDynamoConsumerMessage(
+        this.tenantId,
+        [{ keyLists: caseKeyLists, tableName: CASES_TABLE_NAME_CH }]
+      )
+      await batch.executeWithClickhouse(dynamoDbConsumerMessage)
+    } else {
+      // Just add to existing batch
+      await this.addCommentsToBatch(caseId, comments, batch)
+    }
+  }
+
+  private async addCommentsToBatch(
+    caseId: string,
+    comments: Comment[],
+    batch: DynamoTransactionBatch
+  ): Promise<void> {
     // Add all comments
     for (const comment of comments) {
       const commentKey = DynamoDbKeys.CASE_COMMENT(
@@ -255,35 +273,16 @@ export class DynamoCaseRepository {
       const files = commentToSave.files || []
       commentToSave = omit(commentToSave, ['files'])
 
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...commentKey,
-            ...commentToSave,
-          },
+      batch.put({
+        Item: {
+          ...commentKey,
+          ...commentToSave,
         },
       })
 
       // Add comment files if they exist
-      writeRequests = concat(
-        writeRequests,
-        await this.saveCommentsFiles(caseId, comment.id as string, files, false)
-      )
+      await this.saveCommentsFiles(caseId, comment.id as string, files, batch)
     }
-    if (updateHere) {
-      const dynamoDbConsumerMessage = generateDynamoConsumerMessage(
-        this.tenantId,
-        [{ keyLists: keyLists, tableName: CASES_TABLE_NAME_CH }]
-      )
-      await transactWriteWithClickhouse(
-        this.dynamoDb,
-        writeRequests,
-        dynamoDbConsumerMessage
-      )
-      return []
-    }
-    return writeRequests
   }
 
   /**
@@ -292,28 +291,41 @@ export class DynamoCaseRepository {
    * @param caseId - The ID of the case the files belong to
    * @param commentId - The ID of the comment the files belong to
    * @param files - Array of file info objects to save
-   * @param updateHere - Whether to execute the write operations immediately
-   * @returns Promise resolving to write operations (if updateHere is false) or empty array
+   * @param batch - DynamoTransactionBatch to add operations to (if provided)
+   * @returns Promise that resolves when all operations are added to the batch
    */
   public async saveCommentsFiles(
     caseId: string,
     commentId: string,
     files: FileInfo[],
-    updateHere: boolean = true
-  ): Promise<TransactWriteOperation[]> {
+    batch?: DynamoTransactionBatch
+  ): Promise<void> {
     if (!files || files.length === 0) {
-      return []
+      return
     }
 
-    let writeRequests: TransactWriteOperation[] = []
-    let keyLists: dynamoKeyList = []
     const now = Date.now()
 
-    if (updateHere) {
+    // If no batch provided, create one and execute immediately
+    if (!batch) {
+      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+      batch = new DynamoTransactionBatch(docClient, this.tableName)
+
       const { writeRequests: caseWriteRequests, keyLists: caseKeyLists } =
         await this.prepareCaseUpdates(caseId)
-      writeRequests = concat(writeRequests, caseWriteRequests)
-      keyLists = concat(keyLists, caseKeyLists)
+
+      // Add case update operations to batch
+      for (const request of caseWriteRequests) {
+        if (request.Put) {
+          batch.put({ Item: request.Put.Item })
+        } else if (request.Update) {
+          batch.update({
+            Key: request.Update.Key,
+            UpdateExpression: request.Update.UpdateExpression,
+            ExpressionAttributeValues: request.Update.ExpressionAttributeValues,
+          })
+        }
+      }
 
       // Update the comment updatedAt timestamp
       const commentKey = DynamoDbKeys.CASE_COMMENT(
@@ -321,17 +333,33 @@ export class DynamoCaseRepository {
         caseId,
         commentId
       )
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...commentKey,
-            updatedAt: now,
-          },
+      batch.put({
+        Item: {
+          ...commentKey,
+          updatedAt: now,
         },
       })
-    }
 
+      // Add files
+      this.addFilesToBatch(caseId, commentId, files, batch)
+
+      const dynamoDbConsumerMessage = generateDynamoConsumerMessage(
+        this.tenantId,
+        [{ keyLists: caseKeyLists, tableName: CASES_TABLE_NAME_CH }]
+      )
+      await batch.executeWithClickhouse(dynamoDbConsumerMessage)
+    } else {
+      // Just add to existing batch
+      this.addFilesToBatch(caseId, commentId, files, batch)
+    }
+  }
+
+  private addFilesToBatch(
+    caseId: string,
+    commentId: string,
+    files: FileInfo[],
+    batch: DynamoTransactionBatch
+  ): void {
     // Add all files
     files.forEach((file) => {
       const fileKey = DynamoDbKeys.CASE_COMMENT_FILE(
@@ -340,32 +368,15 @@ export class DynamoCaseRepository {
         commentId,
         file.s3Key
       )
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...fileKey,
-            ...file,
-            caseId,
-            commentId,
-          },
+      batch.put({
+        Item: {
+          ...fileKey,
+          ...file,
+          caseId,
+          commentId,
         },
       })
     })
-
-    if (updateHere) {
-      const dynamoDbConsumerMessage = generateDynamoConsumerMessage(
-        this.tenantId,
-        [{ keyLists: keyLists, tableName: CASES_TABLE_NAME_CH }]
-      )
-      await transactWriteWithClickhouse(
-        this.dynamoDb,
-        writeRequests,
-        dynamoDbConsumerMessage
-      )
-      return []
-    }
-    return writeRequests
   }
 
   /**
@@ -389,14 +400,14 @@ export class DynamoCaseRepository {
         : 'userId = :userId'
     }, statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange), caseStatus = :caseStatus`
 
-    const expressionAttributeValues = {
+    const expressionAttributeValues = removeUndefinedFields({
       ':statusChange': [statusChange],
       ...(!isLastInReview && { ':userId': statusChange.userId }),
       ...(isLastInReview && { ':reviewerId': statusChange.userId }),
       ':updatedAt': now,
       ':caseStatus': statusChange.caseStatus,
       ':empty_list': [],
-    }
+    })
 
     const operationsAndKeyLists = await Promise.all(
       caseIds.map(async (caseId) => {
@@ -436,27 +447,38 @@ export class DynamoCaseRepository {
    *
    * @param caseId - The ID of the case to save the transaction IDs for
    * @param caseTransactionIds - Array of transaction IDs to save
-   * @returns Promise resolving to write operations
+   * @param batch - DynamoTransactionBatch to add operations to (if provided)
+   * @returns Promise that resolves when operations are added to the batch
    */
   public async saveCaseTransactionIds(
     caseId: string,
-    caseTransactionIds: string[]
-  ): Promise<TransactWriteOperation[]> {
+    caseTransactionIds: string[],
+    batch?: DynamoTransactionBatch
+  ): Promise<void> {
     if (!caseTransactionIds || caseTransactionIds.length === 0) {
-      return []
+      return
     }
-    const writeRequests: TransactWriteOperation[] = []
+
     const key = DynamoDbKeys.CASE_TRANSACTION_IDS(this.tenantId, caseId)
-    writeRequests.push({
-      Put: {
-        TableName: this.tableName,
-        Item: {
-          ...key,
-          caseTransactionIds,
-        },
+
+    const shouldExecute = !batch
+    if (!batch) {
+      // If no batch provided, create one and execute immediately
+      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+      batch = new DynamoTransactionBatch(docClient, this.tableName)
+    }
+
+    batch.put({
+      Item: {
+        ...key,
+        caseTransactionIds,
       },
     })
-    return writeRequests
+
+    // If we created the batch ourselves, execute it
+    if (shouldExecute) {
+      await batch.execute()
+    }
   }
   /**
    * Get a case by its ID from DynamoDB
@@ -1213,13 +1235,25 @@ export class DynamoCaseRepository {
         caseItem,
       })
 
-    const commentOperations = await this.saveComments(
-      caseId,
-      [commentToSave],
-      false
-    )
+    // Create document client and batch for operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
 
-    const operations = [...caseOperations, ...commentOperations]
+    // Add case operations to batch
+    for (const operation of caseOperations) {
+      if (operation.Put) {
+        batch.put({ Item: operation.Put.Item })
+      } else if (operation.Update) {
+        batch.update({
+          Key: operation.Update.Key,
+          UpdateExpression: operation.Update.UpdateExpression,
+          ExpressionAttributeValues: operation.Update.ExpressionAttributeValues,
+        })
+      }
+    }
+
+    // Add comment operations to batch
+    await this.saveComments(caseId, [commentToSave], batch)
 
     // Create dynamic consumer message for Clickhouse
     const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
@@ -1227,11 +1261,7 @@ export class DynamoCaseRepository {
         { keyLists: keyLists, tableName: CASES_TABLE_NAME_CH },
       ])
 
-    await transactWriteWithClickhouse(
-      this.dynamoDb,
-      operations,
-      dynamoDbConsumerMessage
-    )
+    await batch.executeWithClickhouse(dynamoDbConsumerMessage)
 
     const updatedCase = await this.getCaseById(caseId)
     if (updatedCase) {
@@ -1769,27 +1799,27 @@ export class DynamoCaseRepository {
       updatedAt: now,
     }
 
-    let allOperations: TransactWriteOperation[] = []
+    // Create document client and batch for all operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+
     let allKeyLists: dynamoKeyList = []
 
-    const caseOperationsPromises = caseIds.map(async (caseId) => {
+    for (const caseId of caseIds) {
       const caseSpecificComment: CaseCommentsInternal = {
         ...commentToSave,
         caseId,
       }
 
-      const commentOperations = await this.saveComments(
-        caseId,
-        [caseSpecificComment],
-        false
-      )
+      // Add comment operations to batch
+      await this.saveComments(caseId, [caseSpecificComment], batch)
 
       const caseItem = await this.getCaseById(caseId)
       if (!caseItem) {
         logger.warn(
           `Case ${caseId} not found when trying to save comment ${commentToSave.id}`
         )
-        return { operations: [], keyLists: [] }
+        continue
       }
 
       const { operations: caseOperations, keyLists } =
@@ -1800,30 +1830,30 @@ export class DynamoCaseRepository {
           caseItem,
         })
 
-      return {
-        operations: [...commentOperations, ...caseOperations],
-        keyLists,
+      // Add case operations to batch
+      for (const operation of caseOperations) {
+        if (operation.Put) {
+          batch.put({ Item: operation.Put.Item })
+        } else if (operation.Update) {
+          batch.update({
+            Key: operation.Update.Key,
+            UpdateExpression: operation.Update.UpdateExpression,
+            ExpressionAttributeValues:
+              operation.Update.ExpressionAttributeValues,
+          })
+        }
       }
-    })
 
-    const results = await Promise.all(caseOperationsPromises)
+      allKeyLists = [...allKeyLists, ...keyLists]
+    }
 
-    results.forEach((result) => {
-      allOperations = [...allOperations, ...result.operations]
-      allKeyLists = [...allKeyLists, ...result.keyLists]
-    })
-
-    if (allOperations.length > 0) {
+    if (batch.getRequestCount() > 0) {
       const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
         generateDynamoConsumerMessage(this.tenantId, [
           { keyLists: allKeyLists, tableName: CASES_TABLE_NAME_CH },
         ])
 
-      await transactWriteWithClickhouse(
-        this.dynamoDb,
-        allOperations,
-        dynamoDbConsumerMessage
-      )
+      await batch.executeWithClickhouse(dynamoDbConsumerMessage)
     }
 
     return commentToSave

@@ -6,11 +6,7 @@ import { ClickhouseAuditLogRepository } from './clickhouse-repository'
 import { traceable } from '@/core/xray'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import {
-  sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
-} from '@/utils/dynamodb'
+import { sanitizeMongoObject, DynamoTransactionBatch } from '@/utils/dynamodb'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 @traceable
@@ -43,18 +39,19 @@ export class DynamoAuditLogRepository {
       await this.getClickhouseAuditLogRepository()
     try {
       const data = omit(sanitizeMongoObject(auditLog), ['_id'])
-      const writeRequests: TransactWriteOperation[] = []
       const key = DynamoDbKeys.AUDIT_LOGS(this.tenantId, auditLog.auditlogId)
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            ...data,
-          },
+
+      // Create batch for operations
+      const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+
+      batch.put({
+        Item: {
+          ...key,
+          ...data,
         },
       })
-      await transactWrite(this.dynamoDb, writeRequests)
+
+      await batch.execute()
     } catch (error) {
       Sentry.captureMessage('Error saving audit log to DynamoDB', {
         level: 'warning',

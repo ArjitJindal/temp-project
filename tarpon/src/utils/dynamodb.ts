@@ -37,6 +37,7 @@ import {
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
+import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { getCredentialsFromEvent } from './credentials'
 import { generateChecksum } from './object'
 import { addNewSubsegment } from '@/core/xray'
@@ -45,9 +46,10 @@ import {
   DYNAMODB_WRITE_CAPACITY_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
-import { publishMetric } from '@/core/utils/context'
+import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
+import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -856,4 +858,183 @@ export async function upsertSaveDynamo(
 ) {
   const command = getUpsertSaveDynamoCommand(data, options)
   await client.send(new UpdateCommand(command))
+}
+
+export class DynamoTransactionBatch {
+  private requests: TransactWriteOperation[] = []
+  private tableName: string
+  private dynamoDb: DynamoDBDocumentClient
+
+  constructor(dynamoDb: DynamoDBDocumentClient, tableName: string) {
+    this.dynamoDb = dynamoDb
+    this.tableName = tableName
+  }
+
+  put(
+    request: Omit<Put, 'Item' | 'TableName' | 'ExpressionAttributeValues'> & {
+      Item: Record<string, NativeAttributeValue> | undefined
+      ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+    }
+  ) {
+    this.requests.push({
+      Put: {
+        ...request,
+        TableName: this.tableName,
+      },
+    })
+  }
+
+  delete(
+    request: Omit<Delete, 'Key' | 'TableName' | 'ExpressionAttributeValues'> & {
+      Key: Record<string, NativeAttributeValue> | undefined
+      ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+    }
+  ) {
+    this.requests.push({
+      Delete: {
+        ...request,
+        TableName: this.tableName,
+      },
+    })
+  }
+
+  update(
+    request: Omit<Update, 'Key' | 'TableName' | 'ExpressionAttributeValues'> & {
+      Key: Record<string, NativeAttributeValue> | undefined
+      ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+    }
+  ) {
+    this.requests.push({
+      Update: {
+        ...request,
+        TableName: this.tableName,
+      },
+    })
+  }
+
+  conditionCheck(
+    request: Omit<
+      ConditionCheck,
+      'Key' | 'TableName' | 'ExpressionAttributeValues'
+    > & {
+      Key: Record<string, NativeAttributeValue> | undefined
+      ExpressionAttributeValues?: Record<string, NativeAttributeValue>
+    }
+  ) {
+    this.requests.push({
+      ConditionCheck: {
+        ...request,
+        TableName: this.tableName,
+      },
+    })
+  }
+
+  async execute(): Promise<void> {
+    if (this.requests.length === 0) {
+      return
+    }
+
+    await transactWrite(this.dynamoDb, this.requests)
+    this.clear()
+  }
+
+  getRequestCount(): number {
+    return this.requests.length
+  }
+
+  clear(): void {
+    this.requests = []
+  }
+
+  async executeWithClickhouse(
+    dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
+  ): Promise<void> {
+    if (this.requests.length === 0) {
+      return
+    }
+
+    await this.execute()
+
+    const truncatedDynamoDbConsumerMessage =
+      await truncateDynamoConsumerMessageItems(dynamoDbConsumerMessage)
+    for (const message of truncatedDynamoDbConsumerMessage) {
+      await sendMessageToDynamoDbConsumer(message)
+    }
+  }
+}
+
+async function truncateDynamoConsumerMessageItems(
+  dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
+) {
+  const MAX_SIZE_KB = 250 // Keeping it 250KB instead of 256KB for some buffer
+  const toReturnDynamoDbConsumerMessage: DynamoConsumerMessage[] = []
+
+  for (const message of dynamoDbConsumerMessage) {
+    const items = message.items
+    const messageSize = Buffer.from(JSON.stringify(message)).length / 1024
+
+    if (messageSize <= MAX_SIZE_KB) {
+      toReturnDynamoDbConsumerMessage.push(message)
+      continue
+    }
+
+    // Calculate how many full messages we need
+    const ratio = messageSize / MAX_SIZE_KB
+    const fullMessagesCount = Math.floor(ratio)
+    const itemsPerMessage = Math.floor(items.length / ratio)
+
+    // Create full messages
+    for (let i = 0; i < fullMessagesCount; i++) {
+      const startIndex = i * itemsPerMessage
+      const endIndex = startIndex + itemsPerMessage
+      toReturnDynamoDbConsumerMessage.push({
+        ...message,
+        items: items.slice(startIndex, endIndex),
+      })
+    }
+
+    // Handle remaining items
+    const remainingItems = items.slice(fullMessagesCount * itemsPerMessage)
+    if (remainingItems.length > 0) {
+      toReturnDynamoDbConsumerMessage.push({
+        ...message,
+        items: remainingItems,
+      })
+    }
+  }
+
+  return toReturnDynamoDbConsumerMessage
+}
+
+export async function sendMessageToDynamoDbConsumer(
+  message: DynamoConsumerMessage
+) {
+  if (envIs('test') && !hasFeature('CLICKHOUSE_MIGRATION')) {
+    return
+  }
+  if (envIs('local') || envIs('test')) {
+    // Direct processing for local/test environments
+    const { dynamoDbTriggerQueueConsumerHandler } = await import(
+      '@/lambdas/dynamo-db-trigger-consumer/app'
+    )
+    await dynamoDbTriggerQueueConsumerHandler({
+      Records: [
+        {
+          body: JSON.stringify(message),
+        },
+      ],
+    })
+    return
+  }
+  logger.debug('Sending message to DynamoDb consumer', {
+    message,
+  })
+  const sqs = new SQS({ region: process.env.AWS_REGION })
+
+  await sqs.send(
+    new SendMessageCommand({
+      QueueUrl: process.env.DYNAMO_DB_CONSUMER_QUEUE_URL,
+      MessageBody: JSON.stringify(message),
+    })
+  )
 }

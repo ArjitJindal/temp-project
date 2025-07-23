@@ -2,8 +2,11 @@ import { difference } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getPaymentDetailsIdentifiersSubject } from '../logic-evaluator/variables/payment-details'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
-import { TransactWriteOperation, transactWrite } from '@/utils/dynamodb'
-import { sendMessageToDynamoDbConsumer } from '@/utils/clickhouse/utils'
+import {
+  TransactWriteOperation,
+  transactWrite,
+  sendMessageToDynamoDbConsumer,
+} from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

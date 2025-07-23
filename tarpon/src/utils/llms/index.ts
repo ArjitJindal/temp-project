@@ -1,10 +1,10 @@
 import { ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
+  DynamoTransactionBatch,
 } from '../dynamodb'
 import { envIs } from '../env'
 import { CLICKHOUSE_DEFINITIONS } from '../clickhouse/definition'
@@ -65,8 +65,12 @@ export async function linkLLMRequestDynamoDB(
 ) {
   const dynamoDb = getDynamoDbClient()
   const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
-  const writeRequests: TransactWriteOperation[] = []
   const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
+
+  // Create document client and batch for operations
+  const docClient = DynamoDBDocumentClient.from(dynamoDb)
+  const batch = new DynamoTransactionBatch(docClient, tableName)
+
   for (const gptResponse of gptResponses) {
     if (!gptResponse._id) {
       continue
@@ -74,17 +78,16 @@ export async function linkLLMRequestDynamoDB(
     const key = DynamoDbKeys.GPT_REQUESTS(tenantId, gptResponse._id.toString())
     keys.push(key)
     const data = sanitizeMongoObject(gptResponse)
-    writeRequests.push({
-      Put: {
-        TableName: tableName,
-        Item: {
-          ...key,
-          ...data,
-        },
+
+    batch.put({
+      Item: {
+        ...key,
+        ...data,
       },
     })
   }
-  await transactWrite(dynamoDb, writeRequests)
+
+  await batch.execute()
   if (envIs('local') || envIs('test')) {
     await handleLocalChangeCapture(tenantId, keys)
   }

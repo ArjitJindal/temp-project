@@ -7,16 +7,13 @@ import {
   QueryCommand,
   QueryCommandInput,
   NativeAttributeValue,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { uniqBy } from 'lodash'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import {
-  sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
-} from '@/utils/dynamodb'
+import { sanitizeMongoObject, DynamoTransactionBatch } from '@/utils/dynamodb'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 
 @traceable
@@ -94,11 +91,13 @@ export class DynamoReasonsRepository {
   }
 
   public async saveReasons(reasons: ConsoleActionReason[]) {
+    // Create document client and batch for operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
     const uniqueReasons = uniqBy(
       reasons,
       (item) => `${item.id}-${item.reasonType}`
     )
-    const writeRequests: TransactWriteOperation[] = []
     for (const reason of uniqueReasons) {
       if (!reason.id) {
         continue
@@ -109,18 +108,17 @@ export class DynamoReasonsRepository {
         reason.reasonType
       )
       const data = sanitizeMongoObject(reason)
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            ...data,
-            isDeleted: false,
-          },
+
+      batch.put({
+        Item: {
+          ...key,
+          ...data,
+          isDeleted: false,
         },
       })
     }
-    await transactWrite(this.dynamoDb, writeRequests)
+
+    await batch.execute()
   }
 
   public async updateReason(

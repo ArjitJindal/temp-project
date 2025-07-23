@@ -14,11 +14,7 @@ import { omit } from 'lodash'
 import { BatchJobFilterUtils } from './filter-utils'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import {
-  sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
-} from '@/utils/dynamodb'
+import { sanitizeMongoObject, DynamoTransactionBatch } from '@/utils/dynamodb'
 import {
   BatchJobInDb,
   BatchJobParams,
@@ -49,22 +45,24 @@ export class DynamoBatchJobRepository {
       PartitionKeyID: string
       SortKeyID: string
     }[] = []
-    const writeRequests: TransactWriteOperation[] = []
+
+    // Create batch for operations
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+
     for (const job of jobs) {
       const key = DynamoDbKeys.JOBS(this.tenantId, job.jobId)
       const data = omit(sanitizeMongoObject(job), ['_id'])
       keys.push(key)
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            ...data,
-          },
+
+      batch.put({
+        Item: {
+          ...key,
+          ...data,
         },
       })
     }
-    await transactWrite(this.dynamoDb, writeRequests)
+
+    await batch.execute()
     if (envIs('local') || envIs('test')) {
       await handleLocalChangeCapture(this.tenantId, keys)
     }

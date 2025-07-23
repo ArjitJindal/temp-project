@@ -8,11 +8,12 @@ import {
   PutCommandInput,
   UpdateCommand,
   UpdateCommandInput,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { COUNTER_ENTITIES, CounterEntity } from './repository'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { TransactWriteOperation, transactWrite } from '@/utils/dynamodb'
+import { DynamoTransactionBatch } from '@/utils/dynamodb'
 
 @traceable
 export class DynamoCounterRepository {
@@ -105,19 +106,21 @@ export class DynamoCounterRepository {
   public async setCounters(
     counters: { entity: CounterEntity; count: number }[]
   ) {
-    const writeRequests: TransactWriteOperation[] = []
+    // Create document client and batch for operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+
     for (const counter of counters) {
       const key = DynamoDbKeys.COUNTER(this.tenantId, counter.entity)
-      writeRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            count: counter.count,
-          },
+
+      batch.put({
+        Item: {
+          ...key,
+          count: counter.count,
         },
       })
     }
-    await transactWrite(this.dynamoDb, writeRequests)
+
+    await batch.execute()
   }
 }

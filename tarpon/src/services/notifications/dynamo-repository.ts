@@ -4,6 +4,7 @@ import {
   UpdateCommand,
   QueryCommand,
   QueryCommandOutput,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
 import { traceable } from '@/core/xray'
@@ -11,8 +12,7 @@ import { Notification } from '@/@types/openapi-internal/Notification'
 import {
   batchGet,
   sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
+  DynamoTransactionBatch,
 } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
@@ -44,24 +44,31 @@ export class DynamoNotificationRepository {
 
   public async saveToDynamoDb(notifications: Notification[]) {
     const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
-    const batchWriteRequests: TransactWriteOperation[] = []
+
+    // Create document client and batch for operations
+    const docClient = DynamoDBDocumentClient.from(this.dynamoDb, {
+      marshallOptions: {
+        removeUndefinedValues: true,
+      },
+    })
+    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+
     for (const notification of notifications) {
       if (!notification.id) {
         continue
       }
       const key = DynamoDbKeys.NOTIFICATIONS(this.tenantId, notification.id)
       keys.push(key)
-      batchWriteRequests.push({
-        Put: {
-          TableName: this.tableName,
-          Item: {
-            ...key,
-            ...sanitizeMongoObject(notification),
-          },
+
+      batch.put({
+        Item: {
+          ...key,
+          ...sanitizeMongoObject(notification),
         },
       })
     }
-    await transactWrite(this.dynamoDb, batchWriteRequests)
+
+    await batch.execute()
     if (envIs('local') || envIs('test')) {
       await handleLocalChangeCapture(this.tenantId, keys)
     }

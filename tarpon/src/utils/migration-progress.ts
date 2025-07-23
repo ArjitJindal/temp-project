@@ -3,6 +3,7 @@ import {
   QueryCommandInput,
   UpdateCommand,
   PutCommand,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
@@ -12,8 +13,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
-  transactWrite,
-  TransactWriteOperation,
+  DynamoTransactionBatch,
 } from '@/utils/dynamodb'
 import { MIGRATION_TMP_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -123,23 +123,26 @@ export async function updateMigrationLastCompletedId(
 
 export async function saveMigrationTmpProgressToDynamo(migrationTmp: any[]) {
   const dynamoDb = getDynamoDbClient()
-  const writeRequests: TransactWriteOperation[] = []
+
+  // Create document client and batch for operations
+  const docClient = DynamoDBDocumentClient.from(dynamoDb)
+  const batch = new DynamoTransactionBatch(docClient, TableName)
+
   for (const migration of migrationTmp) {
     if (!migration._id) {
       continue
     }
     const key = DynamoDbKeys.MIGRATION_TMP(migration._id)
-    writeRequests.push({
-      Put: {
-        TableName,
-        Item: {
-          ...key,
-          ...sanitizeMongoObject(migration),
-        },
+
+    batch.put({
+      Item: {
+        ...key,
+        ...sanitizeMongoObject(migration),
       },
     })
   }
-  await transactWrite(dynamoDb, writeRequests)
+
+  await batch.execute()
 }
 
 export type Migration = {
