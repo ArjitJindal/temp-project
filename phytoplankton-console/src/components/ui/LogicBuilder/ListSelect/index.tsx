@@ -31,11 +31,13 @@ export default function ListSelect(props: Props) {
       portaled={true}
       mode={'MULTIPLE'}
       allowClear={true}
-      options={getOr(res, []).map((list) => ({
-        value: list.listId,
-        label: list.metadata?.name ?? list.listId,
-        alternativeLabels: [list.listId],
-      }))}
+      options={getOr(res, [])
+        .filter((list) => list.subtype !== 'CUSTOM')
+        .map((list) => ({
+          value: list.listId,
+          label: list.metadata?.name ?? list.listId,
+          alternativeLabels: [list.listId],
+        }))}
       {...props}
       isLoading={!isSuccess(res)}
     />
