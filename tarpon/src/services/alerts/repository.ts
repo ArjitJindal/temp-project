@@ -52,8 +52,7 @@ import { AccountsService } from '@/services/accounts'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
-  isClickhouseEnabledInRegion,
-  isConsoleMigrationEnabled,
+  isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
@@ -150,7 +149,7 @@ export class AlertsRepository {
       params.filterUserIds = userIds
     }
 
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouse = await getClickhouseClient(this.tenantId)
       const clickhouseRepository = new ClickhouseAlertRepository(
         this.tenantId,
@@ -412,7 +411,7 @@ export class AlertsRepository {
     fileS3Key: string,
     summary: string
   ) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAISummary(
         alertId,
         commentId,
@@ -442,7 +441,7 @@ export class AlertsRepository {
   }
 
   public async getCasesByAssigneeId(assigneeId: string): Promise<Case[]> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       const caseIds = await clickhouseAlertRepository.getCaseIdsByAssigneeId(
@@ -978,7 +977,7 @@ export class AlertsRepository {
   }
 
   public async getAlertById(alertId: string): Promise<Alert | null> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       return (
         (
           await this.dynamoAlertRepository.getAlertsFromAlertIds([alertId], {
@@ -1083,7 +1082,7 @@ export class AlertsRepository {
 
   // TODO: @sohan this does not require sort I guess, wdyt?
   public async getAlertsByIds(alertIds: string[]): Promise<Alert[]> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       return this.dynamoAlertRepository.getAlertsFromAlertIds(alertIds)
     }
     const db = this.mongoDb.db()
@@ -1102,7 +1101,7 @@ export class AlertsRepository {
   public async validateAlertsQAStatus(
     alertIds: string[]
   ): Promise<Pick<Alert, 'alertId' | 'ruleChecklist'>[]> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseRepository = await this.getClickhouseAlertRepository()
       return await clickhouseRepository.validateAlertsQAStatus(alertIds)
     }
@@ -1134,7 +1133,7 @@ export class AlertsRepository {
       createdAt: comment.createdAt ?? now,
       updatedAt: now,
     }
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.saveCommentsForAlert(alertId, [
         commentToSave,
       ])
@@ -1168,7 +1167,7 @@ export class AlertsRepository {
   }
 
   public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.markAllChecklistItemsAsDone(alertIds)
     }
     await this.updateManyAlerts(
@@ -1212,7 +1211,7 @@ export class AlertsRepository {
   public async updateAlertSlaPolicyDetails(
     updates: SlaUpdates[]
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAlertSlaPolicyDetails(updates)
     }
     const operations: {
@@ -1255,7 +1254,7 @@ export class AlertsRepository {
     alertId: string,
     updatedChecklist: ChecklistItemValue[]
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAlertChecklistStatus(
         alertId,
         updatedChecklist
@@ -1280,7 +1279,7 @@ export class AlertsRepository {
     comment: Comment,
     assignments?: Assignment[]
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAlertQaStatus(
         alertId,
         qaStatus,
@@ -1311,7 +1310,7 @@ export class AlertsRepository {
     alertId: string,
     assignments: Assignment[]
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAlertQaAssignments(
         alertId,
         assignments
@@ -1329,12 +1328,6 @@ export class AlertsRepository {
     alert: Alert,
     qaStatus?: ChecklistStatus // In future if we have to revert the QA PASS/FAIL we will be sending qaStatus as undefined so that we can decrement the count
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
-      await this.dynamoAlertRepository.updateAlertQACountInSampling(
-        alert,
-        qaStatus
-      )
-    }
     const db = this.mongoDb.db()
     const collection = db.collection<AlertsQaSampling>(
       ALERTS_QA_SAMPLING_COLLECTION(this.tenantId)
@@ -1369,7 +1362,7 @@ export class AlertsRepository {
       updatedAt: now,
     }
 
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.saveAlertsComment(
         alertIds,
         commentToSave
@@ -1393,7 +1386,7 @@ export class AlertsRepository {
     alertId: string,
     commentId: string
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.deleteAlertComment(alertId, commentId)
     }
     const now = Date.now()
@@ -1430,7 +1423,7 @@ export class AlertsRepository {
     caseIdsWithAllAlertsSameStatus: string[]
     caseStatusToChange?: CaseStatus
   }> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateStatus(
         alertIds,
         statusChange,
@@ -1528,7 +1521,7 @@ export class AlertsRepository {
   ): Promise<void> {
     const now = Date.now()
 
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAssignmentsReviewAssignments(
         alertIds,
         assignments
@@ -1565,7 +1558,7 @@ export class AlertsRepository {
   ): Promise<void> {
     const now = Date.now()
 
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateReviewAssignmentsToAssignments(
         alertIds
       )
@@ -1615,7 +1608,7 @@ export class AlertsRepository {
     assignments: Assignment[],
     reviewAssignments: Assignment[]
   ) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAssignmentsReviewAssignments(
         alertIds,
         assignments,
@@ -1647,7 +1640,7 @@ export class AlertsRepository {
   ): Promise<void> {
     const now = Date.now()
 
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAssignmentsReviewAssignments(
         alertIds,
         undefined,
@@ -1684,7 +1677,7 @@ export class AlertsRepository {
     assignmentId: string,
     reassignToUserId: string
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       const alertIds =
@@ -1769,7 +1762,7 @@ export class AlertsRepository {
     if (!ruleQueueId) {
       throw new Error('Rule queue ID is required')
     }
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       const alertIds =
@@ -1792,7 +1785,7 @@ export class AlertsRepository {
   }
 
   public async deleteRuleQueue(ruleQueueId: string) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       const alertIds =
@@ -1849,7 +1842,7 @@ export class AlertsRepository {
   }
 
   public async saveQASampleData(data: AlertsQaSampling) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.saveQASampleData(data)
     }
     const db = this.mongoDb.db()
@@ -1863,7 +1856,7 @@ export class AlertsRepository {
   }
 
   public async updateQASampleData(data: AlertsQaSampling) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateQASampleData(data)
     }
     const db = this.mongoDb.db()
@@ -1882,7 +1875,7 @@ export class AlertsRepository {
     data: AlertsQaSampling[]
     total: number
   }> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       const { items, total } = await clickhouseAlertRepository.getSamplingData(
@@ -1981,7 +1974,7 @@ export class AlertsRepository {
   public async getSamplingDataById(
     sampleId: string
   ): Promise<AlertsQaSampling | null> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const data = await this.dynamoAlertRepository.getSamplingDataById(
         sampleId
       )
@@ -2000,7 +1993,7 @@ export class AlertsRepository {
   }
 
   public async getSamplingIds(): Promise<AlertsQASampleIds[]> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const data = await this.dynamoAlertRepository.getSamplingIds()
       return data
     }
@@ -2022,7 +2015,7 @@ export class AlertsRepository {
   }
 
   public async deleteSample(sampleId: string): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.deleteSample(sampleId)
     }
     const db = this.mongoDb.db()
@@ -2038,7 +2031,7 @@ export class AlertsRepository {
     alert: Alert,
     caseData: { caseAggregates: CaseAggregates; caseTransactionsIds: string[] }
   ) {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.addAlertToDynamo(caseId, alert, caseData)
     }
     const { caseAggregates, caseTransactionsIds } = caseData
@@ -2063,7 +2056,7 @@ export class AlertsRepository {
     data: Partial<Alert>,
     caseData: { caseAggregates?: CaseAggregates; caseTransactionIds?: string[] }
   ): Promise<Case> {
-    if (isClickhouseEnabledInRegion()) {
+    if (isClickhouseMigrationEnabled()) {
       await this.dynamoAlertRepository.updateAlertInDynamo(
         caseId,
         alertId,
@@ -2104,7 +2097,7 @@ export class AlertsRepository {
     ruleInstanceId: string,
     timeRange: { afterTimestamp: number; beforeTimestamp: number }
   ): Promise<RuleInstanceAlertsStats[]> {
-    if (isConsoleMigrationEnabled()) {
+    if (isClickhouseMigrationEnabled()) {
       const clickhouseAlertRepository =
         await this.getClickhouseAlertRepository()
       return clickhouseAlertRepository.getRuleInstanceStats(

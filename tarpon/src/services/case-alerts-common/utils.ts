@@ -1,4 +1,4 @@
-import { difference, uniqBy } from 'lodash'
+import { difference } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getPaymentDetailsIdentifiersSubject } from '../logic-evaluator/variables/payment-details'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
@@ -74,37 +74,12 @@ async function truncateDynamoConsumerMessageItems(
   return toReturnDynamoDbConsumerMessage
 }
 
-function deduplicateTransactWriteOperations(
-  operations: TransactWriteOperation[]
-): TransactWriteOperation[] {
-  return uniqBy(operations, (operation) => {
-    if (operation.Put) {
-      const item = operation.Put.Item
-      return item?.PartitionKeyID
-        ? `${item.PartitionKeyID}:${item.SortKeyID || ''}`
-        : null
-    } else if (operation.Delete) {
-      const deleteKey = operation.Delete.Key
-      return deleteKey?.PartitionKeyID
-        ? `${deleteKey.PartitionKeyID}:${deleteKey.SortKeyID || ''}`
-        : null
-    } else if (operation.Update) {
-      const updateKey = operation.Update.Key
-      return updateKey?.PartitionKeyID
-        ? `${updateKey.PartitionKeyID}:${updateKey.SortKeyID || ''}`
-        : null
-    }
-    return null
-  }).filter(Boolean)
-}
-
 export async function transactWriteWithClickhouse(
   dynamoDb: DynamoDBDocumentClient,
   operations: TransactWriteOperation[],
   dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
 ): Promise<void> {
-  const deduplicatedOperations = deduplicateTransactWriteOperations(operations)
-  await transactWrite(dynamoDb, deduplicatedOperations)
+  await transactWrite(dynamoDb, operations)
   const truncatedDynamoDbConsumerMessage =
     await truncateDynamoConsumerMessageItems(dynamoDbConsumerMessage)
   for (const message of truncatedDynamoDbConsumerMessage) {

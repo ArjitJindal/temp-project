@@ -15,7 +15,7 @@ import {
   getClickhouseClient,
   isClickhouseEnabled,
   executeClickhouseQuery,
-  isConsoleMigrationEnabled,
+  isClickhouseMigrationEnabled,
 } from '@/utils/clickhouse/utils'
 import { getInvestigationTimes } from '@/utils/clickhouse/materialised-views-queries'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
@@ -131,9 +131,9 @@ export class OverviewStatsDashboardMetric {
         .toArray()
         .then((result) => result[0]?.count ?? 0),
     ])
-    if (isClickhouseEnabled() || isConsoleMigrationEnabled()) {
+    if (isClickhouseEnabled() || isClickhouseMigrationEnabled()) {
       const clickhouseStats = await this.getClickhouse(tenantId, accountIds)
-      if (isConsoleMigrationEnabled()) {
+      if (isClickhouseMigrationEnabled()) {
         return {
           ...clickhouseStats,
           totalSarReported,

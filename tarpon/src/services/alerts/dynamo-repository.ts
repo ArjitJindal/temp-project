@@ -100,12 +100,11 @@ export class DynamoAlertRepository {
     if (updateHere) {
       const caseKey = DynamoDbKeys.CASE(this.tenantId, caseId)
       writeRequests.push({
-        Update: {
+        Put: {
           TableName: this.tableName,
-          Key: caseKey,
-          UpdateExpression: 'SET updatedAt = :updatedAt',
-          ExpressionAttributeValues: {
-            ':updatedAt': Date.now(),
+          Item: {
+            ...caseKey,
+            updatedAt: Date.now(),
           },
         },
       })
@@ -917,14 +916,12 @@ export class DynamoAlertRepository {
       ':updatedAt': now,
     }
     caseIdsSet.forEach(async (caseSubjectIdentifiers, caseId) => {
-      const caseItem = await this.getCaseById(caseId)
       const { operations: caseOperations, keyLists: caseKeyListTemp } =
         await createUpdateCaseQueries(this.tenantId, this.tableName, {
           caseId,
           UpdateExpression: caseUpdateExpression,
           ExpressionAttributeValues: caseUpdateExpressionAttributeValues,
           identifiers: caseSubjectIdentifiers,
-          caseItem: caseItem,
         })
       operations.push(...caseOperations)
       if (caseKeyListTemp.length > 0) {

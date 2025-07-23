@@ -708,24 +708,13 @@ export class CaseService extends CaseAlertsCommonService {
       ).items
     }
 
-    const lastStatusChangeUserIdCaseIdMap = new Map<string, string>()
-
-    for (const c of cases) {
-      const caseId = c.caseId
-      const lastUserId = c.lastStatusChange?.userId
-      if (caseId && lastUserId) {
-        lastStatusChangeUserIdCaseIdMap.set(caseId, lastUserId)
-      }
-    }
-
     await withTransaction(async () => {
       await Promise.all([
         ...(!externalRequest ? [this.updateUserDetails(cases, updates)] : []),
         this.caseRepository.updateStatusOfCases(
           caseIds,
           statusChange,
-          isLastInReview,
-          lastStatusChangeUserIdCaseIdMap
+          isLastInReview
         ),
         this.saveCasesComment(caseIds, {
           body: commentBody,
