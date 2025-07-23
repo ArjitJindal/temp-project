@@ -44,6 +44,19 @@ const TableList = () => {
     makeUrl: (rawQueryParams) => makeUrl('/transactions/list', {}, rawQueryParams),
     persist: {
       id: 'transactions-navigation-params',
+      // If using parameters from local storage, always add timestamp filter
+      adjustParsed: (params) => {
+        if (params.timestamp != null) {
+          return params;
+        }
+        return {
+          ...params,
+          timestamp: [
+            dayjs(defaultTimestamps().afterTimestamp).format(),
+            dayjs(defaultTimestamps().beforeTimestamp).format(),
+          ],
+        };
+      },
     },
   });
 

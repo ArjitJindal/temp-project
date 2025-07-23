@@ -108,6 +108,7 @@ export function useNavigationParams<Params>(options: {
   replace?: boolean;
   persist?: {
     id: string;
+    adjustParsed?: (params: Params) => Params;
   };
 }): StatePair<Params> {
   const { queryAdapter, makeUrl, replace = true, persist } = options;
@@ -118,11 +119,12 @@ export function useNavigationParams<Params>(options: {
   const navigate = useNavigate();
   const location = useLocation();
   const paramsState = useState<Params>(() => {
-    if (persistId != null && location.search === '') {
+    if (persistId != null) {
       const savedDataItem = window.localStorage.getItem(persistId);
       if (savedDataItem != null) {
         try {
-          return JSON.parse(savedDataItem);
+          const result = JSON.parse(savedDataItem);
+          return persist?.adjustParsed ? persist.adjustParsed(result) : result;
         } catch (e) {
           console.warn(
             `Unable to parse navigation params from local storage, using default params`,
