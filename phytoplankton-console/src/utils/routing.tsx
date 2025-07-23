@@ -119,7 +119,7 @@ export function useNavigationParams<Params>(options: {
   const navigate = useNavigate();
   const location = useLocation();
   const paramsState = useState<Params>(() => {
-    if (persistId != null) {
+    if (persistId != null && location.search === '') {
       const savedDataItem = window.localStorage.getItem(persistId);
       if (savedDataItem != null) {
         try {
