@@ -5813,6 +5813,28 @@ components:
           $ref: '#/components/schemas/UserState'
       required:
         - state
+    WebhookUserStateDetails:
+      title: WebhookUserStateDetails
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/UserStateDetails'
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
+    WebhookKYCStatusDetails:
+      title: WebhookKYCStatusDetails
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/KYCStatusDetails'
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
     CaseClosedDetails:
       title: CaseClosedDetails
       type: object

@@ -69,8 +69,6 @@ import {
   getParsedCommentBody,
   getUserName,
 } from '@/utils/helpers'
-import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
-import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
 import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
 import { ConsumerUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/ConsumerUsersOffsetPaginateListResponse'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
@@ -102,6 +100,8 @@ import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
 import { UserFlatFileUploadRequest } from '@/@types/openapi-internal/UserFlatFileUploadRequest'
 import { AllUsersTableItemPreview } from '@/@types/openapi-internal/AllUsersTableItemPreview'
+import { WebhookUserStateDetails } from '@/@types/openapi-public/WebhookUserStateDetails'
+import { WebhookKYCStatusDetails } from '@/@types/openapi-public/WebhookKYCStatusDetails'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
