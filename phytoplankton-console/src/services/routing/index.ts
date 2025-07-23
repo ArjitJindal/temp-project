@@ -326,7 +326,7 @@ export function useRoutes(): RouteItem[] {
         ],
       },
       (isRiskLevelsEnabled || isRiskScoringEnabled) && {
-        path: '/risk-levels',
+        path: isRiskLevelSimulationMode ? '/risk-levels/risk-factors/simulation' : '/risk-levels',
         icon: 'risk-scoring',
         name: 'risk-levels',
         position: 'top',
