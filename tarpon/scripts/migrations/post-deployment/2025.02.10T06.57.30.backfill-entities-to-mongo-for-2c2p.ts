@@ -20,7 +20,6 @@ import {
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/all'
-import { generateChecksum } from '@/utils/object'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
@@ -62,8 +61,7 @@ async function sendEntityToSQS({
   await sqsClient.send(
     new SendMessageCommand({
       MessageBody: JSON.stringify(entityData),
-      QueueUrl: process.env.TARPON_QUEUE_URL,
-      MessageGroupId: generateChecksum(tenantId, 10),
+      QueueUrl: process.env.DOWNSTREAM_TARPON_QUEUE_URL,
     })
   )
 }

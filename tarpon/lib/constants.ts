@@ -311,9 +311,14 @@ export const StackConstants = {
   TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'TarponQueueConsumerFunction'
   ),
+  DOWNSTREAM_TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'DownstreamTarponQueueConsumerFunction'
+  ),
   SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'SecondaryTarponQueueConsumerFunction'
   ),
+  DOWNSTREAM_SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME:
+    getResourceNameForTarpon('DownstreamSecondaryTarponQueueConsumerFunction'),
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
   ),
@@ -357,8 +362,16 @@ export const SQSQueues: {
     name: getResourceName('TarponQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
   },
+  DOWNSTREAM_TARPON_QUEUE_NAME: {
+    name: getResourceName('DownstreamTarponQueue'),
+    oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
+  },
   SECONDARY_TARPON_QUEUE_NAME: {
     name: getResourceName('SecondaryTarponQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 120, // Lets do 2 hours it should not be more then that ideally
+  },
+  DOWNSTREAM_SECONDARY_TARPON_QUEUE_NAME: {
+    name: getResourceName('DownstreamSecondaryTarponQueue'),
     oldestMsgAgeAlarmThresholdMinutes: 120, // Lets do 2 hours it should not be more then that ideally
   },
   REQUEST_LOGGER_QUEUE_NAME: {

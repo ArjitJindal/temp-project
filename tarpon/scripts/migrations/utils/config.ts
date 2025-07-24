@@ -30,9 +30,10 @@ export function initializeEnvVars() {
   const batchJobQueueName: string = SQSQueues.BATCH_JOB_QUEUE_NAME.name
   const asyncRuleQueueName: string = SQSQueues.ASYNC_RULE_QUEUE_NAME.name
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
-  const tarponQueueName: string = SQSQueues.TARPON_QUEUE_NAME.name
-  const secondaryTarponQueueName: string =
-    SQSQueues.SECONDARY_TARPON_QUEUE_NAME.name
+  const downstreamTarponQueueName: string =
+    SQSQueues.DOWNSTREAM_TARPON_QUEUE_NAME.name
+  const downstreamSecondaryTarponQueueName: string =
+    SQSQueues.DOWNSTREAM_SECONDARY_TARPON_QUEUE_NAME.name
   const auditLogQueueName: string = SQSQueues.AUDIT_LOG_QUEUE_NAME.name
   const notificationsQueueName: string = SQSQueues.NOTIFICATIONS_QUEUE_NAME.name
   const webhookDeliveryQueueName: string =
@@ -66,7 +67,6 @@ export function initializeEnvVars() {
     getConfig()
   )
 
-  process.env.TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${tarponQueueName}`
   process.env.NOTIFICATIONS_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${notificationsQueueName}`
   process.env.WEBHOOK_DELIVERY_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${webhookDeliveryQueueName}`
   process.env.BATCH_ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchAsyncRuleQueueName}`
@@ -81,5 +81,6 @@ export function initializeEnvVars() {
   process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
   process.env.ACTION_PROCESSING_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${actionProcessingQueueName}`
   process.env.AUDIT_LOG_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${auditLogQueueName}`
-  process.env.SECONDARY_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${secondaryTarponQueueName}`
+  process.env.DOWNSTREAM_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamTarponQueueName}`
+  process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamSecondaryTarponQueueName}`
 }

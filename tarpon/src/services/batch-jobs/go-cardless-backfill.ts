@@ -343,7 +343,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
 
     await bulkSendMessages(
       sqsClient,
-      process.env.SECONDARY_TARPON_QUEUE_URL as string,
+      process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL as string,
       dynamoDbMessages.map((m) => ({
         MessageBody: JSON.stringify(m),
         MessageGroupId: generateChecksum(m.entityId, 10),

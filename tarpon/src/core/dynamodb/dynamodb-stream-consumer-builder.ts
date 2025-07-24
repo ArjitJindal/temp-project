@@ -5,7 +5,6 @@ import { compact, groupBy } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { backOff } from 'exponential-backoff'
 import {
-  hasFeature,
   initializeTenantContext,
   updateLogMetadata,
   withContext,
@@ -33,7 +32,6 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { acquireLock, releaseLock } from '@/utils/lock'
-import { generateChecksum } from '@/utils/object'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
@@ -526,11 +524,6 @@ export class StreamConsumerBuilder {
           ) {
             const entries = tenantUpdates.map((update) => ({
               MessageBody: JSON.stringify(update),
-              MessageGroupId: generateChecksum(update.entityId, 10),
-              MessageDeduplicationId: `${generateChecksum(
-                JSON.stringify(update.NewImage),
-                10
-              )}`,
             }))
 
             await backOff(
@@ -628,13 +621,6 @@ export class StreamConsumerBuilder {
         .filter((update) => update.type && !update.NewImage?.ttl)
         .map((update) => ({
           MessageBody: JSON.stringify(update),
-          MessageGroupId: hasFeature('CONCURRENT_DYNAMODB_CONSUMER')
-            ? generateChecksum(update.entityId, 10)
-            : generateChecksum(update.tenantId, 10),
-          MessageDeduplicationId: `${generateChecksum(
-            JSON.stringify(update.NewImage),
-            10
-          )}`,
           tenantId,
         }))
 

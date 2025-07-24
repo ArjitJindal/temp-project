@@ -329,10 +329,26 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const downstreamTarponEventQueue = this.createQueue(
+      SQSQueues.DOWNSTREAM_TARPON_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const secondaryTarponEventQueue = this.createQueue(
       SQSQueues.SECONDARY_TARPON_QUEUE_NAME.name,
       {
         fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const downstreamSecondaryTarponEventQueue = this.createQueue(
+      SQSQueues.DOWNSTREAM_SECONDARY_TARPON_QUEUE_NAME.name,
+      {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
@@ -566,6 +582,9 @@ export class CdkTarponStack extends cdk.Stack {
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
         SECONDARY_TARPON_QUEUE_URL: secondaryTarponEventQueue.queueUrl,
+        DOWNSTREAM_TARPON_QUEUE_URL: downstreamTarponEventQueue.queueUrl,
+        DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL:
+          downstreamSecondaryTarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
@@ -664,6 +683,8 @@ export class CdkTarponStack extends cdk.Stack {
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
             secondaryTarponEventQueue.queueArn,
+            downstreamTarponEventQueue.queueArn,
+            downstreamSecondaryTarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
             batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
@@ -1371,6 +1392,15 @@ export class CdkTarponStack extends cdk.Stack {
         })
       )
 
+      tarponQueueConsumerAlias.addEventSource(
+        new SqsEventSource(downstreamTarponEventQueue, {
+          maxConcurrency:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+              ?.PROVISIONED_CONCURRENCY ?? 100,
+          batchSize: 50,
+        })
+      )
+
       const { alias: secondaryTarponQueueConsumerAlias } = createFunction(
         this,
         lambdaExecutionRole,
@@ -1385,6 +1415,15 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
               ?.PROVISIONED_CONCURRENCY ?? 100,
           batchSize: 10,
+        })
+      )
+
+      secondaryTarponQueueConsumerAlias.addEventSource(
+        new SqsEventSource(downstreamSecondaryTarponEventQueue, {
+          maxConcurrency:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+              ?.PROVISIONED_CONCURRENCY ?? 100,
+          batchSize: 50,
         })
       )
     }
