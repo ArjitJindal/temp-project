@@ -392,7 +392,7 @@ export class ListRepository {
     ignoreCount: boolean = false
   ): Promise<CursorPaginationResponse<ListItem>> {
     let requestedVersion = version
-    let totalListItems = Math.max()
+    let totalListItems = Infinity
     if (!requestedVersion) {
       const header = await this.getListHeader(listId)
       if (header == null) {
