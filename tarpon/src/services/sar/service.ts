@@ -293,6 +293,11 @@ export class ReportService {
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
+    const caseUser =
+      c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? ''
+    if (!caseUser) {
+      throw new BadRequest(`No case user found for case ${caseId}`)
+    }
     if (!transactionIds || transactionIds.length === 0) {
       transactionIds = c.caseTransactionsIds || []
     }
@@ -348,8 +353,7 @@ export class ReportService {
       },
       comments: [],
       revisions: [],
-      caseUserId:
-        c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
+      caseUserId: caseUser,
     }
     const caseTransactions = await this.caseService.getCaseTransactions(caseId)
     report.parameters.transactions = report.parameters.transactions?.filter(

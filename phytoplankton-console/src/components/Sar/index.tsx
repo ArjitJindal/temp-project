@@ -9,9 +9,9 @@ import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { Report, ReportTypesResponse } from '@/apis';
+import { Case, Report, ReportTypesResponse } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
-import { REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { CASES_ITEM, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -38,6 +38,14 @@ export function SarButton(props: UserProps | CaseProps) {
   const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS_ALL(), () => {
     return api.getReportTypes({ allReportType: true });
   });
+
+  const caseQueryResult = useQuery<Case>(
+    CASES_ITEM('caseId' in props ? props.caseId : ''),
+    async () => {
+      return await api.getCase({ caseId: 'caseId' in props ? props.caseId : '' });
+    },
+    { enabled: 'caseId' in props },
+  );
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);
@@ -82,15 +90,25 @@ export function SarButton(props: UserProps | CaseProps) {
 
   return (
     <Feature name="SAR">
-      <Button
-        type="TETRIARY"
-        onClick={() => setIsModalVisible(true)}
-        isDisabled={isDisabled}
-        testName="sar-button"
-        requiredResources={['write:::case-management/case-details/*']}
-      >
-        Generate SAR
-      </Button>
+      <AsyncResourceRenderer resource={caseQueryResult.data}>
+        {(caseItem) => {
+          const noCaseUsers = !caseItem.caseUsers?.origin && !caseItem.caseUsers?.destination;
+
+          return (
+            <>
+              <Button
+                type="TETRIARY"
+                onClick={() => setIsModalVisible(true)}
+                isDisabled={noCaseUsers || isDisabled}
+                testName="sar-button"
+                requiredResources={['write:::case-management/case-details/*']}
+              >
+                Generate SAR
+              </Button>
+            </>
+          );
+        }}
+      </AsyncResourceRenderer>
       <Modal
         title="Generate SAR"
         isOpen={isModalVisible}
