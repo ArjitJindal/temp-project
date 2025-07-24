@@ -122,7 +122,7 @@ export class TenantService {
   ): Promise<string[]> {
     const cacheKey = getInMemoryCacheKey('secondary-queue-tenants')
     if (secondaryQueueTenantsCache?.has(cacheKey)) {
-      return secondaryQueueTenantsCache.get(cacheKey) as string[]
+      return secondaryQueueTenantsCache.get(cacheKey) ?? []
     }
     const tenantRepository = new TenantRepository(FLAGRIGHT_TENANT_ID, {
       dynamoDb,

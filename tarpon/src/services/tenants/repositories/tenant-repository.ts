@@ -60,7 +60,7 @@ export class TenantRepository {
       })
     )
 
-    return result.Item?.secondaryQueueTenants as string[]
+    return result.Item?.secondaryQueueTenants ?? []
   }
 
   public async setSecondaryQueueTenants(tenants: string[]): Promise<void> {

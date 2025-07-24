@@ -44,6 +44,9 @@ export default class PolicyBuilder {
         'dynamodb:Scan',
         'dynamodb:Query',
         'dynamodb:ConditionCheckItem',
+        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
+        'dynamodb:DeleteItem',
       ],
       Resource: ['arn:aws:dynamodb:*:*:table/*'],
       Condition: {
