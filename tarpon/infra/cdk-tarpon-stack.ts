@@ -1398,6 +1398,7 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
               ?.PROVISIONED_CONCURRENCY ?? 100,
           batchSize: 50,
+          maxBatchingWindow: Duration.seconds(30),
         })
       )
 
@@ -1424,6 +1425,7 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
               ?.PROVISIONED_CONCURRENCY ?? 100,
           batchSize: 50,
+          maxBatchingWindow: Duration.seconds(30),
         })
       )
     }
