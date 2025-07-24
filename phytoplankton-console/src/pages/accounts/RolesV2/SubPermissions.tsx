@@ -164,7 +164,14 @@ const SubPermissions = ({
   );
 
   const processedPermissions = useMemo(() => {
-    return traverser.flattenNodes(subPermissions);
+    const filteredPermissions = subPermissions.filter((node) => {
+      if (node.type === 'DYNAMIC') {
+        return node.items && node.items.length > 0;
+      }
+      return true;
+    });
+
+    return traverser.flattenNodes(filteredPermissions);
   }, [subPermissions, traverser]);
 
   const parentPath = useMemo(() => parentSegments.join('/'), [parentSegments]);

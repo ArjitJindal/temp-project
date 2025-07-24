@@ -84,10 +84,8 @@ export default function RoleDetails({
           );
         }
 
-        const optimizedStatements = statementManager.optimizeStatements(
-          newStatements,
-          permissionsQuery.data,
-        );
+        const optimizedStatements =
+          statementManager.optimizeStatementsWithPathSeparation(newStatements);
 
         return optimizedStatements;
       });

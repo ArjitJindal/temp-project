@@ -156,6 +156,8 @@ export class PermissionTreeTraverser {
           actions: node.actions || [],
         }));
         flattened.push(...staticItems);
+      } else if (this.isDynamicNode(node) && (!node.items || node.items.length === 0)) {
+        // Skip dynamic nodes with empty items array
       } else {
         flattened.push(node);
       }
@@ -169,15 +171,18 @@ export class PermissionTreeTraverser {
    * Get all child nodes
    */
   getChildNodes(node: PermissionNode): PermissionNode[] {
-    if (this.isDynamicNode(node) && node.items?.length) {
-      return node.items.map(
-        (item): StaticPermissionsNode => ({
-          id: `${node.id}:${item.id}`,
-          name: item.name,
-          type: 'STATIC' as const,
-          actions: node.actions || [],
-        }),
-      );
+    if (this.isDynamicNode(node)) {
+      if (node.items?.length) {
+        return node.items.map(
+          (item): StaticPermissionsNode => ({
+            id: `${node.id}:${item.id}`,
+            name: item.name,
+            type: 'STATIC' as const,
+            actions: node.actions || [],
+          }),
+        );
+      }
+      return []; // Return empty array for dynamic nodes without items
     }
 
     if (node.children?.length) {
@@ -315,32 +320,57 @@ export class PermissionStatementManager {
     const resourceWildcard = this.pathBuilder.createWildcardPath(resource);
     const newStatements = [...statements];
 
-    const existingStmt = this.findExistingResourceStatement(statements, resource, resourceWildcard);
+    // Find statement containing the target resource
+    let targetStmtIndex = -1;
+    let targetResource = '';
 
-    if (existingStmt) {
-      let handled = false;
+    for (let i = 0; i < newStatements.length; i++) {
+      const stmt = newStatements[i];
 
-      for (let i = 0; i < newStatements.length; i++) {
-        const stmt = newStatements[i];
-        if (stmt.resources.some((res) => res === resource || res === resourceWildcard)) {
-          if (!stmt.actions.includes(action)) {
-            newStatements[i] = {
-              ...stmt,
-              actions: [...stmt.actions, action],
-            };
-          }
-          handled = true;
-          break;
-        }
+      // Check if this statement contains our target resource
+      const matchingResource = stmt.resources.find(
+        (res) => res === resource || res === resourceWildcard,
+      );
+
+      if (matchingResource) {
+        targetStmtIndex = i;
+        targetResource = matchingResource;
+        break;
+      }
+    }
+
+    if (targetStmtIndex >= 0) {
+      const stmt = newStatements[targetStmtIndex];
+
+      if (stmt.actions.includes(action)) {
+        return newStatements;
       }
 
-      if (!handled) {
+      // If statement has multiple resources, we need to split it to avoid affecting other resources
+      if (stmt.resources.length > 1) {
+        // Create a new statement just for our resource with the desired action
+        const otherResources = stmt.resources.filter((res) => res !== targetResource);
+
+        // Update original statement to exclude our resource
+        newStatements[targetStmtIndex] = {
+          ...stmt,
+          resources: otherResources,
+        };
+
+        // Create new statement for our resource with all existing actions plus the new one
         newStatements.push({
-          actions: [action],
-          resources: [resourceWildcard],
+          actions: [...stmt.actions, action],
+          resources: [targetResource],
         });
+      } else {
+        // Statement has only one resource, just add the action
+        newStatements[targetStmtIndex] = {
+          ...stmt,
+          actions: [...stmt.actions, action],
+        };
       }
     } else {
+      // No existing statement with this resource, create a new one
       newStatements.push({
         actions: [action],
         resources: [resourceWildcard],
@@ -378,85 +408,6 @@ export class PermissionStatementManager {
         parentWildcard,
         action,
         permPath,
-        permissionsData,
-      );
-    }
-
-    return newStatements;
-  }
-
-  /**
-   * Check if permission is covered by wildcard
-   */
-  private isPermissionCoveredByWildcard(
-    permPath: string,
-    statements: PermissionStatements[],
-    action: PermissionsAction,
-  ): string | null {
-    const pathSegments = permPath.split('/').filter(Boolean);
-
-    for (let i = pathSegments.length - 1; i > 0; i--) {
-      const parentPathSegments = pathSegments.slice(0, i);
-      const parentPath = this.pathBuilder.buildPath(parentPathSegments);
-      const parentWildcard = this.pathBuilder.pathToWildcardResource(parentPath);
-
-      const matchingStatement = statements.find(
-        (stmt) => stmt.actions.includes(action) && stmt.resources.includes(parentWildcard),
-      );
-
-      if (matchingStatement) {
-        return parentWildcard;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Remove parent wildcard and handle siblings
-   */
-  private removeParentWildcard(
-    statements: PermissionStatements[],
-    parentWildcard: string,
-    action: PermissionsAction,
-    permPath: string,
-    permissionsData?: any,
-  ): PermissionStatements[] {
-    const newStatements = [...statements];
-    const parentWildcardStatementIndex = newStatements.findIndex(
-      (stmt) =>
-        stmt.resources.some((res) => res === parentWildcard) && stmt.actions.includes(action),
-    );
-
-    if (parentWildcardStatementIndex < 0) {
-      return newStatements;
-    }
-
-    const parentStmt = newStatements[parentWildcardStatementIndex];
-
-    if (parentStmt.actions.length === 1) {
-      newStatements[parentWildcardStatementIndex] = {
-        ...parentStmt,
-        resources: parentStmt.resources.filter((res) => res !== parentWildcard),
-      };
-
-      if (newStatements[parentWildcardStatementIndex].resources.length === 0) {
-        newStatements.splice(parentWildcardStatementIndex, 1);
-      }
-    } else {
-      newStatements[parentWildcardStatementIndex] = {
-        ...parentStmt,
-        actions: parentStmt.actions.filter((a) => a !== action),
-      };
-    }
-
-    // Handle sibling permissions if needed
-    if (permissionsData) {
-      return this.handleSiblingPermissions(
-        newStatements,
-        parentWildcard,
-        permPath,
-        action,
         permissionsData,
       );
     }
@@ -510,6 +461,116 @@ export class PermissionStatementManager {
   }
 
   /**
+   * Check if permission is covered by wildcard
+   */
+  private isPermissionCoveredByWildcard(
+    permPath: string,
+    statements: PermissionStatements[],
+    action: PermissionsAction,
+  ): string | null {
+    const pathSegments = permPath.split('/').filter(Boolean);
+
+    for (let i = pathSegments.length - 1; i > 0; i--) {
+      const parentPathSegments = pathSegments.slice(0, i);
+      const parentPath = this.pathBuilder.buildPath(parentPathSegments);
+      const parentWildcard = this.pathBuilder.pathToWildcardResource(parentPath);
+
+      const matchingStatement = statements.find(
+        (stmt) => stmt.actions.includes(action) && stmt.resources.includes(parentWildcard),
+      );
+
+      if (matchingStatement) {
+        return parentWildcard;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Remove parent wildcard and handle siblings
+   */
+  private removeParentWildcard(
+    statements: PermissionStatements[],
+    parentWildcard: string,
+    action: PermissionsAction,
+    permPath: string,
+    permissionsData?: any,
+  ): PermissionStatements[] {
+    const newStatements = [...statements];
+
+    // Get the parent path from the wildcard
+    const parentPathMatch = parentWildcard.match(this.parentWildcardRegex);
+    if (!parentPathMatch || !parentPathMatch[1]) {
+      return newStatements;
+    }
+
+    const parentPath = parentPathMatch[1];
+
+    // Find siblings of the specific child path that need to maintain permissions
+    const siblingPaths = permissionsData
+      ? getAllPathsCoveredByParent(parentPath, permissionsData, permPath)
+      : [];
+
+    // Find the statement containing the parent wildcard
+    const parentStmtIndex = newStatements.findIndex(
+      (stmt) =>
+        stmt.actions.includes(action) && stmt.resources.some((res) => res === parentWildcard),
+    );
+
+    if (parentStmtIndex < 0) {
+      return newStatements;
+    }
+
+    const parentStmt = { ...newStatements[parentStmtIndex] };
+
+    // Add explicit permissions for siblings of the specific child
+    if (siblingPaths.length > 0) {
+      // Create resources for each sibling path
+      const siblingResources = siblingPaths.map((path) => {
+        const resource = this.pathBuilder.createResourcePath(path);
+        return this.pathBuilder.createWildcardPath(resource);
+      });
+
+      // Create a new statement with sibling permissions
+      newStatements.push({
+        actions: [action],
+        resources: siblingResources,
+      });
+    }
+
+    // Now handle the parent wildcard itself
+    if (parentStmt.resources.length === 1) {
+      if (parentStmt.actions.length === 1) {
+        newStatements.splice(parentStmtIndex, 1);
+      } else {
+        newStatements[parentStmtIndex] = {
+          ...parentStmt,
+          actions: parentStmt.actions.filter((a) => a !== action),
+        };
+      }
+    } else {
+      const otherResources = parentStmt.resources.filter((res) => res !== parentWildcard);
+
+      newStatements[parentStmtIndex] = {
+        actions: [...parentStmt.actions],
+        resources: otherResources,
+      };
+
+      // If we need to keep READ for the parent path being modified,
+      // create a new statement with just READ for that resource
+      const actionsForModifiedParent = parentStmt.actions.filter((a) => a !== action);
+      if (actionsForModifiedParent.length > 0) {
+        newStatements.push({
+          actions: actionsForModifiedParent,
+          resources: [parentWildcard],
+        });
+      }
+    }
+    return newStatements;
+  }
+
+  /**
    * Handle sibling permissions when removing wildcards
    */
   private handleSiblingPermissions(
@@ -530,15 +591,15 @@ export class PermissionStatementManager {
 
     const treeSiblingPaths = getAllPathsCoveredByParent(parentPath, permissionsData, permPath);
 
-    // Also check for any existing individual permissions that might be covered
+    // Look for existing permissions that might be covered by this parent
     const existingSiblingPaths: string[] = [];
     statements.forEach((stmt) => {
       if (stmt.actions.includes(action)) {
         stmt.resources.forEach((resource) => {
           const pathMatch = resource.match(/^frn:console:[^:]+:::(.+)$/);
           if (pathMatch) {
-            const resourcePath = pathMatch[1];
-            // Check if this permission is covered by the parent wildcard being removed
+            const resourcePath = pathMatch[1].replace(/\/\*$/, ''); // Remove trailing /*
+            // Check if this permission is covered by the parent being modified
             if (resourcePath.startsWith(parentPath + '/') && resourcePath !== permPath) {
               existingSiblingPaths.push(resourcePath);
             }
@@ -550,15 +611,40 @@ export class PermissionStatementManager {
     const allSiblingPaths = [...new Set([...treeSiblingPaths, ...existingSiblingPaths])];
 
     if (allSiblingPaths.length > 0) {
-      const siblingResources = allSiblingPaths.map((path) => {
-        const resource = this.pathBuilder.createResourcePath(path);
-        return this.pathBuilder.createWildcardPath(resource);
+      // Group siblings by parent path to optimize permissions
+      const groupedPaths: Record<string, string[]> = {};
+
+      allSiblingPaths.forEach((path) => {
+        const segments = path.split('/');
+        if (segments.length > 1) {
+          const parentPath = segments.slice(0, -1).join('/');
+          if (!groupedPaths[parentPath]) {
+            groupedPaths[parentPath] = [];
+          }
+          groupedPaths[parentPath].push(path);
+        } else {
+          if (!groupedPaths[path]) {
+            groupedPaths[path] = [path];
+          }
+        }
       });
 
-      newStatements.push({
-        actions: [action],
-        resources: siblingResources,
+      // Create optimized statements by grouping similar paths
+      Object.entries(groupedPaths).forEach(([, paths]) => {
+        if (paths.length > 0) {
+          const groupResources = paths.map((path) => {
+            const resource = this.pathBuilder.createResourcePath(path);
+            return this.pathBuilder.createWildcardPath(resource);
+          });
+
+          newStatements.push({
+            actions: [action],
+            resources: groupResources,
+          });
+        }
       });
+    } else {
+      // No siblings found
     }
 
     return newStatements;
@@ -654,6 +740,62 @@ export class PermissionStatementManager {
       optimizedStatements.push({
         actions,
         resources: Array.from(new Set(resources)),
+      });
+    });
+
+    return optimizedStatements;
+  }
+
+  optimizeStatementsWithPathSeparation(statements: PermissionStatements[]): PermissionStatements[] {
+    if (!statements || !Array.isArray(statements) || statements.length === 0) {
+      return [];
+    }
+
+    const exactPathGroups: Record<
+      string,
+      Record<string, { resources: string[]; actions: PermissionsAction[] }>
+    > = {};
+
+    statements.forEach((stmt) => {
+      if (!stmt.resources || !Array.isArray(stmt.resources) || stmt.resources.length === 0) {
+        return;
+      }
+
+      stmt.resources.forEach((resource) => {
+        const pathMatch = resource.match(/^frn:console:[^:]+:::(.+?)(?:\/\*)?$/);
+        const exactPath = pathMatch ? pathMatch[1] : '_other';
+
+        if (!exactPathGroups[exactPath]) {
+          exactPathGroups[exactPath] = {};
+        }
+
+        // Create action key
+        const actionKey = [...stmt.actions].sort().join(',');
+
+        // Initialize or update entry for this action set within the exact path
+        if (!exactPathGroups[exactPath][actionKey]) {
+          exactPathGroups[exactPath][actionKey] = {
+            resources: [],
+            actions: [...stmt.actions],
+          };
+        }
+
+        // Add the resource
+        exactPathGroups[exactPath][actionKey].resources.push(resource);
+      });
+    });
+
+    // Create optimized statements
+    const optimizedStatements: PermissionStatements[] = [];
+
+    Object.values(exactPathGroups).forEach((actionGroups) => {
+      Object.values(actionGroups).forEach((group) => {
+        if (group.resources.length > 0 && group.actions.length > 0) {
+          optimizedStatements.push({
+            actions: group.actions,
+            resources: Array.from(new Set(group.resources)),
+          });
+        }
       });
     });
 
