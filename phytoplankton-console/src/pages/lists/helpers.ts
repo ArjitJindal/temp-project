@@ -43,7 +43,7 @@ export function getListSubtypeTitle(subtype: ListSubtypeInternal, tenantSettings
     case 'DEVICE_IDENTIFIER':
       return 'Device identifier';
     case 'STRING':
-      return 'String';
+      return 'Text';
     case 'COUNTRY':
       return 'Country';
     case '314A_INDIVIDUAL':
