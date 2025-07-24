@@ -21,7 +21,7 @@
     "build:local": "ENV=local npm run openapi:build && cross-env ENV=local node build",
     "build:dev": "npm run openapi:build && cross-env ENV=dev node build",
     "build:sandbox": "npm run openapi:build && cross-env ENV=sandbox node build",
-    "build:prod": "npm run openapi:build && cross-env ENV=prod node build && node ../scripts/optimize-css.js",
+    "build:prod": "npm run openapi:build && cross-env ENV=prod node build",
     "dev": "ENV=local npm run start:local",
     "dev:hot-reload": "ENV=local npm run start:local:hot-reload",
     "local:setup": "openssl genrsa -out build/certificates/self_priv.pem 1024 && openssl req -new -key build/certificates/self_priv.pem -out build/certificates/certrequest.csr && openssl x509 -req -in build/certificates/certrequest.csr -signkey build/certificates/self_priv.pem -out build/certificates/self_cert.pem",
