@@ -31,8 +31,9 @@ describe('Comment Alerts from Table', () => {
 
     // Make sure that there are now "length + 1" comments
     cy.wait(1000);
-    cy.get('[data-cy="comment"]', { timeout: 8000 }).then((el) => {
-      expect(el.length).to.eq(length + 1);
+    cy.get('[data-cy="comments-section"]').then(($el) => {
+      const comments = $el.find('[data-cy="comment"]');
+      expect(comments.length).to.eq(length + 1);
     });
 
     // Make sure that last comment has a text of a new comment
