@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { isEqual } from 'lodash'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from './opensearch-definitions'
+import { envIs } from './env'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { Action } from '@/services/sanctions/providers/types'
@@ -354,4 +355,10 @@ export async function keepAlive(client: Client) {
   } catch (error) {
     logger.warn('OpenSearch keep-alive failed:', error)
   }
+}
+
+export function isOpensearchAvailableInRegion() {
+  const [_, region] = stageAndRegion()
+  const opensearchUnavailableRegions = ['me-1']
+  return !opensearchUnavailableRegions.includes(region) || envIs('local')
 }

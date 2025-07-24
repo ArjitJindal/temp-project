@@ -2028,7 +2028,11 @@ export class CdkTarponStack extends cdk.Stack {
     lambdaExecutionRole: cdk.aws_iam.Role,
     ecsTaskExecutionRole: cdk.aws_iam.Role
   ) {
-    if (isQaEnv()) {
+    const opensearchUnavailableRegions = ['me-1']
+    if (
+      isQaEnv() ||
+      opensearchUnavailableRegions.includes(this.config.region ?? '')
+    ) {
       return
     }
     const opensearchCollectionName = `${this.config.stage}-${
