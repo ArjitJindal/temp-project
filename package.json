@@ -24,6 +24,7 @@
     "slackify-markdown": "^4.4.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
+    "purgecss": "^7.0.2",
     "typescript": "^5.2.2"
   },
   "repository": {
