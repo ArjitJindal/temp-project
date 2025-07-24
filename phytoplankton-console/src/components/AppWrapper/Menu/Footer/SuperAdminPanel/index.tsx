@@ -196,6 +196,12 @@ export const featureDescriptions: Record<
     description: 'Enables opensearch for screening searches',
     tag: FeatureTag.ENG,
   },
+  DISABLE_GLOBAL_AGGREGATIONS: {
+    title: 'Disable global aggregations ',
+    description:
+      "Disables global aggregation (Only use for tenants that ideally don't use V2 rules engine) ",
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {

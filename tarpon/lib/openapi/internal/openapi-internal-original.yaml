@@ -12132,6 +12132,7 @@ components:
         - WORKFLOWS_BUILDER
         - TRANSLITERATION
         - OPEN_SEARCH
+        - DISABLE_GLOBAL_AGGREGATIONS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

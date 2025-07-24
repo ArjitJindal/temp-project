@@ -74,7 +74,7 @@ type AIFilters = {
   nature?: string[]
 }
 type FeatureRuleMapping = {
-  feature: string
+  feature: Feature
   rulesToRemove: string[]
 }
 
@@ -222,6 +222,10 @@ export class RuleService {
     { feature: 'ACURIS', rulesToRemove: ['R-16'] },
     { feature: 'DOW_JONES', rulesToRemove: ['R-16'] },
     { feature: 'OPEN_SANCTIONS', rulesToRemove: ['R-16'] },
+    {
+      feature: 'DISABLE_GLOBAL_AGGREGATIONS',
+      rulesToRemove: ['R-3', 'R-4', 'R-131', 'R-4', 'R-88'],
+    },
   ]
 
   @auditLog('RULE', 'RULE_LIBRARY', 'DOWNLOAD')

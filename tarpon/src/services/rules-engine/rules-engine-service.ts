@@ -1938,7 +1938,7 @@ export class RulesEngineService {
     transaction: Transaction,
     previousTransactionEvents: TransactionEvent[]
   ) {
-    if (hasFeature('PNB')) {
+    if (hasFeature('PNB') || hasFeature('DISABLE_GLOBAL_AGGREGATIONS')) {
       return
     }
 
