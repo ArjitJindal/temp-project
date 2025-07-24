@@ -710,6 +710,25 @@ export const tenantsHandler = lambdaApi()(
       return tenantFeatures
     })
 
+    handlers.registerGetTenantsSecondaryQueueTenants(async () => {
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      return { tenants: await TenantService.getSecondaryQueueTenants(dynamoDb) }
+    })
+
+    handlers.registerPostTenantsSecondaryQueueTenants(async (ctx, request) => {
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const tenantService = new TenantService(FLAGRIGHT_TENANT_ID, {
+        mongoDb,
+        dynamoDb,
+      })
+      await tenantService.setSecondaryQueueTenants(
+        request.SecondaryQueueTenants?.tenants ?? []
+      )
+      return {
+        tenants: request.SecondaryQueueTenants?.tenants ?? [],
+      }
+    })
+
     return await handlers.handle(event)
   }
 )

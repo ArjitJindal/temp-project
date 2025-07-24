@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
+  PutCommand,
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
@@ -49,6 +50,29 @@ export class TenantRepository {
     this.mongoDb = connections.mongoDb as MongoClient
 
     this.tenantId = tenantId
+  }
+
+  public async getSecondaryQueueTenants(): Promise<string[]> {
+    const result = await this.dynamoDb.send(
+      new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Key: DynamoDbKeys.SECONDARY_QUEUE_TENANTS(),
+      })
+    )
+
+    return result.Item?.secondaryQueueTenants as string[]
+  }
+
+  public async setSecondaryQueueTenants(tenants: string[]): Promise<void> {
+    await this.dynamoDb.send(
+      new PutCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Item: {
+          ...DynamoDbKeys.SECONDARY_QUEUE_TENANTS(),
+          secondaryQueueTenants: tenants,
+        },
+      })
+    )
   }
 
   public async getTenantSettings(

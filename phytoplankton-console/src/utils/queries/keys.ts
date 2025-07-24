@@ -416,6 +416,7 @@ export const DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE = (dateRange: RangeValue<Dayj
   ['qa-alerts-by-assignee', dateRange].filter(Boolean);
 
 export const SETTINGS = (): QueryKey => ['settings'];
+export const SECONDARY_QUEUE_TENANTS = (): QueryKey => ['secondary-queue-tenants'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];
 

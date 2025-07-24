@@ -40,6 +40,7 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject } from '@/utils/llms'
 import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import { TenantService } from '@/services/tenants'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -509,13 +510,17 @@ export class StreamConsumerBuilder {
         (record) => JSON.parse(record.body) as DynamoDbEntityUpdate
       )
       const groups = groupBy(updates, (update) => update.tenantId)
+      const dynamoDb = getDynamoDbClient()
+      const secondaryQueueTenants =
+        await TenantService.getSecondaryQueueTenants(dynamoDb)
+
       await Promise.all(
         Object.entries(groups).map(async (entry) => {
           const tenantId = entry[0]
           const tenantUpdates = entry[1]
 
           if (
-            tenantId === '4c9cdf0251' &&
+            secondaryQueueTenants.includes(tenantId) &&
             process.env.AWS_LAMBDA_FUNCTION_NAME !==
               StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME
           ) {
@@ -541,7 +546,7 @@ export class StreamConsumerBuilder {
             return
           }
 
-          await this.handleSqsDynamoUpdates(tenantId, tenantUpdates)
+          await this.handleSqsDynamoUpdates(tenantId, tenantUpdates, dynamoDb)
         })
       )
     }
@@ -563,11 +568,12 @@ export class StreamConsumerBuilder {
 
   private async handleSqsDynamoUpdates(
     tenantId: string,
-    updates: DynamoDbEntityUpdate[]
+    updates: DynamoDbEntityUpdate[],
+    dynamoDb: DynamoDBDocumentClient
   ) {
     await withContext(async () => {
       const dbClients: DbClients = {
-        dynamoDb: getDynamoDbClient(),
+        dynamoDb,
         mongoDb: await getMongoDbClient(),
       }
       await initializeTenantContext(tenantId)
@@ -583,10 +589,11 @@ export class StreamConsumerBuilder {
     await withContext(async () => {
       await initializeTenantContext(tenantId)
       const filteredUpdates = updates.filter(Boolean)
+      const dynamoDb = getDynamoDbClient()
       if (tenantId !== '4c9cdf0251') {
         // Temporary fix to ease the number of mongo connections
         const dbClients = {
-          dynamoDb: getDynamoDbClient(),
+          dynamoDb,
           mongoDb: await getMongoDbClient(),
         }
 
@@ -613,6 +620,10 @@ export class StreamConsumerBuilder {
           return
         }
       }
+
+      const secondaryQueueTenants =
+        await TenantService.getSecondaryQueueTenants(dynamoDb)
+
       const entries = filteredUpdates
         .filter((update) => update.type && !update.NewImage?.ttl)
         .map((update) => ({
@@ -627,23 +638,22 @@ export class StreamConsumerBuilder {
           tenantId,
         }))
 
-      const nonGcEntries = entries.filter(
-        (entry) => entry.tenantId !== '4c9cdf0251'
+      const primaryQueueEntries = entries.filter(
+        (entry) => !secondaryQueueTenants.includes(entry.tenantId)
       )
 
-      const gcEntries = entries.filter(
-        (entry) => entry.tenantId === '4c9cdf0251'
+      const secondaryQueueEntries = entries.filter((entry) =>
+        secondaryQueueTenants.includes(entry.tenantId)
       )
 
       await Promise.all([
-        bulkSendMessages(sqsClient, this.fanOutSqsQueue, nonGcEntries),
-
-        await backOff(
+        bulkSendMessages(sqsClient, this.fanOutSqsQueue, primaryQueueEntries),
+        backOff(
           () =>
             bulkSendMessages(
               sqsClient,
               this.secondaryFanOutSqsQueue,
-              gcEntries
+              secondaryQueueEntries
             ),
           { numOfAttempts: 10, startingDelay: 1000, maxDelay: 30000 }
         ),

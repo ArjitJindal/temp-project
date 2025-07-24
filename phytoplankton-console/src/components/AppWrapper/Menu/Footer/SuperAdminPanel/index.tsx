@@ -41,6 +41,8 @@ import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
 import { useSARReportCountries } from '@/components/Sar/utils';
+import { SECONDARY_QUEUE_TENANTS } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -215,7 +217,10 @@ export default function SuperAdminPanel() {
     failedToDeleteContainer: true,
   });
   const [downloadFeatureLoading, setDownloadFeatureState] = useState(false);
-
+  const secondaryQueueTenants = useQuery(SECONDARY_QUEUE_TENANTS(), async () => {
+    const tenants = await api.getTenantsSecondaryQueueTenants();
+    return tenants;
+  });
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
   const hasExternalSanctionsProvider =
     features?.includes('ACURIS') ||
@@ -724,6 +729,29 @@ export default function SuperAdminPanel() {
             </Button>
 
             <div className={s.divider} />
+            <Label label="Secondary queue tenants">
+              <AsyncResourceRenderer resource={secondaryQueueTenants.data}>
+                {(data) => (
+                  <Select
+                    mode="MULTIPLE"
+                    options={tenantOptions}
+                    onChange={async (value) => {
+                      if (value) {
+                        await api.postTenantsSecondaryQueueTenants({
+                          SecondaryQueueTenants: { tenants: value },
+                        });
+                        message.success('Tenants added to secondary queue');
+                        secondaryQueueTenants.refetch();
+                      }
+                    }}
+                    value={data?.tenants?.map((tenant) => tenant)}
+                    placeholder="Select tenant to add to secondary queue"
+                    style={{ width: '100%' }}
+                  />
+                )}
+              </AsyncResourceRenderer>
+            </Label>
+            <br />
             {user.allowTenantDeletion && (
               <>
                 <H4 style={{ color: COLORS_V2_ALERT_CRITICAL }}>Danger Zone</H4>

@@ -3387,6 +3387,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TenantApiKey'
+  /tenants/secondary-queue-tenants:
+    get:
+      summary: Tenant - Get Secondary Queue Tenants
+      operationId: get-tenants-secondary-queue-tenants
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecondaryQueueTenants'
+    post:
+      summary: Tenant - Post Secondary Queue Tenants
+      operationId: post-tenants-secondary-queue-tenants
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecondaryQueueTenants'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecondaryQueueTenants'
   /clueso/token:
     get:
       summary: Clueso auth token
@@ -11072,6 +11098,14 @@ components:
         - id
         - name
         - isProductionAccessDisabled
+    SecondaryQueueTenants:
+      title: SecondaryQueueTenants
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            type: string
     AIAttribute:
       title: CoPilotAttribute
       type: string

@@ -645,6 +645,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER}`,
     SortKeyID: migrationName,
   }),
+  SECONDARY_QUEUE_TENANTS: () => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#secondary-queue-tenants`,
+    SortKeyID: '1',
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

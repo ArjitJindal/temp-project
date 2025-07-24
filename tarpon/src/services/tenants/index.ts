@@ -64,6 +64,7 @@ import {
   createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -76,6 +77,11 @@ const region = envIs('local')
   : process.env.AWS_REGION || 'eu-central-1'
 
 const tenantCache = createNonConsoleApiInMemoryCache<TenantInfo[]>({
+  max: 100,
+  ttlMinutes: 10,
+})
+
+const secondaryQueueTenantsCache = createNonConsoleApiInMemoryCache<string[]>({
   max: 100,
   ttlMinutes: 10,
 })
@@ -109,6 +115,31 @@ export class TenantService {
         tenantId: this.tenantId,
       })
     }
+  }
+
+  public static async getSecondaryQueueTenants(
+    dynamoDb: DynamoDBDocumentClient
+  ): Promise<string[]> {
+    const cacheKey = getInMemoryCacheKey('secondary-queue-tenants')
+    if (secondaryQueueTenantsCache?.has(cacheKey)) {
+      return secondaryQueueTenantsCache.get(cacheKey) as string[]
+    }
+    const tenantRepository = new TenantRepository(FLAGRIGHT_TENANT_ID, {
+      dynamoDb,
+    })
+    const tenants = await tenantRepository.getSecondaryQueueTenants()
+    secondaryQueueTenantsCache?.set(cacheKey, tenants)
+    return tenants
+  }
+
+  public async setSecondaryQueueTenants(tenants: string[]): Promise<void> {
+    const cacheKey = getInMemoryCacheKey('secondary-queue-tenants')
+    secondaryQueueTenantsCache?.set(cacheKey, tenants)
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+
+    await tenantRepository.setSecondaryQueueTenants(tenants)
   }
 
   private async featureFlagChangeCapture(
