@@ -3,7 +3,7 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { isDemoTenant } from '@/utils/tenant'
 
 export async function sendTenantSpecificSanctionsDataFetch(tenantId: string) {
-  if (hasFeature('DOW_JONES') && isDemoTenant(tenantId)) {
+  if (hasFeature('DOW_JONES') && !isDemoTenant(tenantId)) {
     await sendBatchJobCommand({
       type: 'SANCTIONS_DATA_FETCH',
       tenantId: tenantId,

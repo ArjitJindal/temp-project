@@ -104,15 +104,22 @@ export async function bulkUpdate(
     }
   )
   try {
-    const response = await client.bulk({
-      body: operations,
-    })
+    const response = await client.bulk(
+      {
+        body: operations,
+      },
+      {
+        maxRetries: 3,
+      }
+    )
     if (response.body.errors) {
       const errors = response.body.items.filter(
         (item) =>
           Object.values(item)[0]?.status >= 400 && Object.values(item)[0]?.error
       )
-      logger.error(`Error writing to opensearch handle retry: ${errors}`)
+      logger.info(
+        `Error writing to opensearch handle retry: ${JSON.stringify(errors)}`
+      )
       if (retry) {
         await bulkUpdate(provider, entities, version, indexName, client, false)
       }
