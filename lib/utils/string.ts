@@ -20,11 +20,61 @@ export function replaceRequiredCharactersWithSpace(
     : str.replace(toSpacePattern, ' ')
 }
 
+const SPECIAL_CHARACTERS_WHICH_SEPARATES_TOKENS = [
+  '.',
+  ',',
+  ';',
+  ':',
+  '!',
+  '?',
+  '"',
+  "'",
+  '(',
+  ')',
+  '[',
+  ']',
+  '{',
+  '}',
+  '-',
+  '/',
+  '\\',
+  '|',
+  '@',
+  '#',
+  '$',
+  '%',
+  '^',
+  '&',
+  '*',
+  '+',
+  '=',
+  '<',
+  '>',
+  '~',
+  '`',
+]
+
+const SPECIAL_CHARS_SET = new Set(SPECIAL_CHARACTERS_WHICH_SEPARATES_TOKENS)
+
+export function sanitizeStringWithSpecialCharactersForTokenization(
+  str: string
+) {
+  let result = ''
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i]
+    result += SPECIAL_CHARS_SET.has(char) ? '_' : char
+  }
+  // replace all consecutive underscores with a single underscore
+  result = result.replace(/_+/g, '_')
+  return result
+}
+
 // Function to remove special characters
 export function sanitizeString(
   str: string,
   preserveSpaces = true,
-  normalizeString = true
+  normalizeString = true,
+  removeSpecialCharactersWithSpaces = true
 ) {
   if (typeof str !== 'string') {
     throw new TypeError('Input must be a string')
@@ -33,10 +83,9 @@ export function sanitizeString(
   const sanitizePattern = preserveSpaces ? /[^a-zA-Z0-9\s]/g : /[^a-zA-Z0-9]/g // Pattern to remove unwanted characters
 
   let processed = normalizeString ? normalize(str) : str
-  processed = replaceRequiredCharactersWithSpace(processed).replace(
-    sanitizePattern,
-    ''
-  )
+  processed = removeSpecialCharactersWithSpaces
+    ? replaceRequiredCharactersWithSpace(processed).replace(sanitizePattern, '')
+    : processed.replace(sanitizePattern, '')
 
   if (preserveSpaces) {
     return processed.replace(/\s+/g, ' ').trim()

@@ -15,10 +15,11 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import {
-  createIndexIfNotExists,
+  deleteDocumentsByQuery,
+  deleteIndexAfterDataLoad,
   getOpensearchClient,
+  syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
@@ -60,9 +61,7 @@ export async function runSanctionsDataFetchJob(
   dynamoDb: DynamoDBClient
 ) {
   const { tenantId, providers, settings } = job
-  const opensearchClient = envIsNot('prod')
-    ? await getOpensearchClient()
-    : undefined
+  const opensearchClient = await getOpensearchClient()
   const runFullLoad = job.parameters?.from
     ? new Date(job.parameters.from).getDay() === 0
     : true
@@ -83,26 +82,25 @@ export async function runSanctionsDataFetchJob(
       tenantId,
       'full'
     )
-    await Promise.all([
+    const [_a, _b, aliasName] = await Promise.all([
       createMongoDBCollections(client, dynamoDb, tenantId),
       createGlobalMongoDBCollections(client),
-      opensearchClient
-        ? createIndexIfNotExists(opensearchClient, sanctionsCollectionName)
-        : Promise.resolve(),
+      syncOpensearchIndex(opensearchClient, sanctionsCollectionName),
     ])
 
     logger.info(`Running ${fetcher.constructor.name}`)
     if (runFullLoad) {
       const repo = new MongoSanctionsRepository(
         sanctionsCollectionName,
-        opensearchClient
+        opensearchClient,
+        aliasName
       )
       await fetcher.fullLoad(repo, version, job.parameters.entityType)
     }
-
     const repo = new MongoSanctionsRepository(
       sanctionsCollectionName,
-      opensearchClient
+      opensearchClient,
+      aliasName
     )
     if (provider !== SanctionsDataProviders.ACURIS || runFullLoad) {
       // To avoid fetching delta for Acuris daily separately, instead it's fetched in delta load
@@ -114,12 +112,34 @@ export async function runSanctionsDataFetchJob(
         runFullLoad
       )
     }
+    if (aliasName) {
+      await deleteIndexAfterDataLoad(
+        opensearchClient,
+        sanctionsCollectionName,
+        aliasName
+      )
+    }
 
     if (runFullLoad) {
-      await client
-        .db()
-        .collection(sanctionsCollectionName)
-        .deleteMany({ version: { $ne: version } })
+      await Promise.all([
+        client
+          .db()
+          .collection(sanctionsCollectionName)
+          .deleteMany({ version: { $ne: version } }),
+        !aliasName
+          ? deleteDocumentsByQuery(opensearchClient, sanctionsCollectionName, {
+              query: {
+                bool: {
+                  must_not: {
+                    term: {
+                      version: version,
+                    },
+                  },
+                },
+              },
+            })
+          : undefined,
+      ])
     }
   }
 }

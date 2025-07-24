@@ -220,6 +220,8 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
     [],
   );
 
+  const [allSourcesCount, setAllSourcesCount] = useState<number | undefined>(undefined);
+
   useEffect(() => {
     if (!isModalOpen) {
       return;
@@ -227,6 +229,12 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     const loadSources = async (type: SanctionsSourceType) => {
       const response = await api.getSanctionsSources({ filterSourceType: type });
+
+      if (response?.items.length) {
+        setAllSourcesCount((prev) => {
+          return (prev ?? 0) + response.items.length;
+        });
+      }
 
       if (initialValues) {
         if (type === 'SANCTIONS' && initialValues.sanctions?.sourceIds) {
@@ -251,7 +259,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
     loadSources('SANCTIONS');
     loadSources('PEP');
     loadSources('REGULATORY_ENFORCEMENT_LIST');
-  }, [isModalOpen, api, updateSourceConfiguration, initialValues]);
+  }, [isModalOpen, api, updateSourceConfiguration, initialValues, setAllSourcesCount]);
 
   const getInitialValues = (): ScreeningProfileRequest => {
     if (!initialValues) {
@@ -320,6 +328,17 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
           relevance: values.regulatoryEnforcementListRelevance,
         },
       };
+
+      const selectedSourcesCount =
+        (requestPayload.sanctions?.sourceIds?.length ?? 0) +
+        (requestPayload.pep?.sourceIds?.length ?? 0) +
+        (requestPayload.rel?.sourceIds?.length ?? 0);
+      requestPayload.containAllSources =
+        selectedSourcesCount === allSourcesCount &&
+        requestPayload.adverseMedia?.relevance?.length === ADVERSE_MEDIA_SOURCE_RELEVANCES.length &&
+        requestPayload.sanctions?.relevance?.length === SANCTIONS_SOURCE_RELEVANCES.length &&
+        requestPayload.pep?.relevance?.length === PEP_SOURCE_RELEVANCES.length &&
+        requestPayload.rel?.relevance?.length === REL_SOURCE_RELEVANCES.length;
 
       if (initialValues?.screeningProfileId) {
         return api.updateScreeningProfile({

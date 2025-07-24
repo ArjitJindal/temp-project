@@ -5,23 +5,25 @@ import {
   adverseMediaCategoryMap,
   replaceRequiredCharactersWithSpace,
   sanitizeString,
+  sanitizeStringWithSpecialCharactersForTokenization,
 } from '@flagright/lib/utils'
 import { Db, MongoClient } from 'mongodb'
-import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import { Client } from '@opensearch-project/opensearch/.'
 import { Search_Response } from '@opensearch-project/opensearch/api'
 import { CommonOptions, format } from '@fragaria/address-formatter'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
-import { SanctionsDataProviders } from '../types'
-import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
+import {
+  SanctionsDataProviders,
+  SanctionsSearchProps,
+  SanctionsSearchPropsWithRequest,
+  SanctionsSearchPropsWithData,
+} from '../types'
 import {
   getNameMatches,
   getSecondaryMatches,
   sanitizeAcurisEntities,
   sanitizeOpenSanctionsEntities,
-  getFuzzinessEvaluationResult,
 } from './utils'
 import {
   FuzzinessOptions,
@@ -52,13 +54,14 @@ import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMe
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { hasFeature } from '@/core/utils/context'
 import { getOpensearchClient } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 import { ask } from '@/utils/llms'
 import { ModelTier } from '@/utils/llms/base-service'
+import { generateHashFromString } from '@/utils/object'
 
+const OPENSEARCH_NON_PROJECTED_FIELDS = ['rawResponse', 'aggregatedSourceIds']
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -228,25 +231,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     })
   }
 
-  private applySourceCategoryFilters(
-    sanctionProviderNames?: string[],
-    pepProviderNames?: string[],
-    relProviderNames?: string[],
-    sanctionsCategory?: SanctionsSourceRelevance[],
-    pepCategory?: PEPSourceRelevance[],
-    relCategory?: RELSourceRelevance[],
-    adverseMediaCategory?: AdverseMediaSourceRelevance[]
-  ): any {
+  private applySourceCategoryFilters(props: SanctionsSearchProps): any {
+    const {
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    } = props
     const conditions: any[] = []
-
-    if (sanctionsCategory && sanctionProviderNames) {
+    if (sanctionsCategory && sanctionSourceIds) {
       conditions.push({
         $and: [
           {
-            'sanctionsSources.sourceName': {
-              $in: sanctionProviderNames.map((name) =>
-                humanizeAuto(name).toLowerCase()
-              ),
+            'sanctionsSources.internalId': {
+              $in: sanctionSourceIds,
             },
             'sanctionsSources.category': {
               $in: sanctionsCategory,
@@ -256,24 +257,22 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
-    if (pepCategory && pepProviderNames) {
+    if (pepCategory && pepSourceIds) {
       const orConditions: Array<{
-        'pepSources.sourceName'?: { $in: string[] }
+        'pepSources.internalId'?: { $in: string[] }
         types?: string
       }> = [
         {
-          'pepSources.sourceName': {
-            $in: [...pepProviderNames, ''].map((name) =>
-              humanizeAuto(name).toLowerCase()
-            ),
+          'pepSources.internalId': {
+            $in: pepSourceIds,
           },
         },
       ]
 
       // Add PEP by association condition if needed
       if (
-        pepProviderNames.some((name) =>
-          name.toLowerCase().includes('pep by association')
+        pepSourceIds.some(
+          (id) => id === generateHashFromString('pep by association')
         )
       ) {
         orConditions.push({
@@ -295,7 +294,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
-    if (relCategory && relProviderNames) {
+    if (relCategory && relSourceIds) {
       conditions.push({
         $and: [
           {
@@ -305,10 +304,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             },
           },
           {
-            'otherSources.value.sourceName': {
-              $in: relProviderNames.map((name) =>
-                humanizeAuto(name).toLowerCase()
-              ),
+            'otherSources.value.internalId': {
+              $in: relSourceIds,
             },
           },
         ],
@@ -326,19 +323,20 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return conditions.length > 0 ? { $or: conditions } : {}
   }
 
-  private getNonSearchIndexQuery(
-    request: SanctionsSearchRequest,
-    sanctionProviderNames?: string[],
-    pepProviderNames?: string[],
-    relProviderNames?: string[],
-    sanctionsCategory?: SanctionsSourceRelevance[],
-    pepCategory?: PEPSourceRelevance[],
-    relCategory?: RELSourceRelevance[],
-    adverseMediaCategory?: AdverseMediaSourceRelevance[]
-  ): {
+  private getNonSearchIndexQuery(props: SanctionsSearchPropsWithRequest): {
     $and?: any[] | undefined
     $or?: any[] | undefined
   } {
+    const {
+      request,
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    } = props
     const andConditions: any[] = []
     const orConditions: any[] = []
     if (
@@ -369,15 +367,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    const sourceCategoryFilters = this.applySourceCategoryFilters(
-      sanctionProviderNames,
-      pepProviderNames,
-      relProviderNames,
+    const sourceCategoryFilters = this.applySourceCategoryFilters({
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
       sanctionsCategory,
       pepCategory,
       relCategory,
-      adverseMediaCategory
-    )
+      adverseMediaCategory,
+    })
     if (Object.keys(sourceCategoryFilters).length > 0) {
       andConditions.push(sourceCategoryFilters)
     }
@@ -579,7 +577,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsSearchRequest,
     db: Db
   ): Promise<SanctionsProviderResponse> {
-    const match = this.getNonSearchIndexQuery(request)
+    const match = this.getNonSearchIndexQuery({ request })
     const providers = getDefaultProviders()
     const collectionNames = this.getCollectionNames(request, providers)
     const results = await Promise.all(
@@ -617,17 +615,20 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async searchWithMatchingNames(
-    requestOriginal: SanctionsSearchRequest,
-    db: Db,
-    limit: number = 200,
-    sanctionProviderNames?: string[],
-    pepProviderNames?: string[],
-    relProviderNames?: string[],
-    sanctionsCategory?: SanctionsSourceRelevance[],
-    pepCategory?: PEPSourceRelevance[],
-    relCategory?: RELSourceRelevance[],
-    adverseMediaCategory?: AdverseMediaSourceRelevance[]
+    props: SanctionsSearchPropsWithRequest
   ): Promise<SanctionsProviderResponse> {
+    const db = this.mongoDb.db()
+    const {
+      request: requestOriginal,
+      limit = 200,
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    } = props
     const request = cloneDeep(requestOriginal)
     if (
       hasFeature('TRANSLITERATION') &&
@@ -997,22 +998,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
     const collectionNames = this.getCollectionNames(request, providers)
+    const nameWithoutSpecialCharacters =
+      sanitizeStringWithSpecialCharactersForTokenization(
+        normalize(request.searchTerm)
+      )
+    const nameWithSpaces = replaceRequiredCharactersWithSpace(
+      normalize(request.searchTerm),
+      true
+    )
     const results = await Promise.all(
       collectionNames.flatMap((c) => [
         db
           .collection(c)
           .aggregate<SanctionsEntity>([
             {
-              $match: this.getNonSearchIndexQuery(
+              $match: this.getNonSearchIndexQuery({
                 request,
-                sanctionProviderNames,
-                pepProviderNames,
-                relProviderNames,
+                sanctionSourceIds,
+                pepSourceIds,
+                relSourceIds,
                 sanctionsCategory,
                 pepCategory,
                 relCategory,
-                adverseMediaCategory
-              ),
+                adverseMediaCategory,
+              }),
             },
             {
               $limit: providers.includes(SanctionsDataProviders.DOW_JONES)
@@ -1034,13 +1043,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 index: getSearchIndexName(c),
                 concurrent: true,
                 compound: {
-                  must: [
+                  should: [
                     {
                       text: {
-                        query: replaceRequiredCharactersWithSpace(
-                          normalize(request.searchTerm),
-                          true
-                        ),
+                        query: nameWithSpaces,
                         path: 'normalizedAka',
                         fuzzy: {
                           maxEdits: 2,
@@ -1049,7 +1055,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         },
                       },
                     },
+                    ...(nameWithoutSpecialCharacters !== nameWithSpaces
+                      ? [
+                          {
+                            text: {
+                              query: nameWithoutSpecialCharacters,
+                              path: 'normalizedAka',
+                              fuzzy: {
+                                maxEdits: 2,
+                                maxExpansions: 100,
+                                prefixLength: 0,
+                              },
+                            },
+                          },
+                        ]
+                      : []),
                   ],
+                  minimumShouldMatch: 1,
                   ...(orFilters.length > 0
                     ? { should: orFilters, minimumShouldMatch: 1 }
                     : {}),
@@ -1074,15 +1096,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             {
               $match: {
                 ...match,
-                ...this.applySourceCategoryFilters(
-                  sanctionProviderNames,
-                  pepProviderNames,
-                  relProviderNames,
+                ...this.applySourceCategoryFilters({
+                  sanctionSourceIds,
+                  pepSourceIds,
+                  relSourceIds,
                   sanctionsCategory,
                   pepCategory,
                   relCategory,
-                  adverseMediaCategory
-                ),
+                  adverseMediaCategory,
+                }),
               },
             },
             {
@@ -1283,11 +1305,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
       .toLowerCase()
       .trim()
-    const searchTerm = shouldSanitizeString
-      ? sanitizeString(modifiedTerm)
-      : normalize(modifiedTerm)
+    const searchTerms = uniq(
+      shouldSanitizeString
+        ? [
+            sanitizeString(modifiedTerm),
+            sanitizeString(modifiedTerm, true, true, false),
+          ]
+        : [
+            normalize(modifiedTerm),
+            sanitizeStringWithSpecialCharactersForTokenization(
+              normalize(modifiedTerm)
+            ),
+          ]
+    )
 
-    const searchTermTokensLength = searchTerm.split(' ').length
+    const searchTermsTokensLength = searchTerms.map(
+      (searchTerm) => searchTerm.split(' ').length
+    )
     return results.filter((entity) => {
       if (
         !this.isAddressFuzzyMatch(
@@ -1297,37 +1331,48 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ) {
         return false
       }
-      const values = uniq(entity.normalizedAka || []).map((name) =>
-        this.processNameWithStopwords(name, stopwordSet)
-      )
+      const values = uniq(entity.normalizedAka || []).flatMap((name) => {
+        const processedName = this.processNameWithStopwords(name, stopwordSet)
+        return shouldSanitizeString
+          ? [
+              sanitizeString(processedName, true, false, false),
+              sanitizeString(processedName, true, false, true),
+            ]
+          : [
+              processedName,
+              sanitizeStringWithSpecialCharactersForTokenization(processedName),
+            ]
+      })
       if (
         request.fuzzinessRange?.upperBound === 100 ||
         request.fuzziness === 1
       ) {
         return true
       } else {
-        for (let value of values) {
-          value = shouldSanitizeString
-            ? sanitizeString(value, true, false)
-            : value
-          if (value === searchTerm) {
-            return true
-          }
-          const evaluatingFunction = this.getFuzzinessFunction(
-            fuzzinessSettings,
-            request.manualSearch
-          )
-          const percentageSimilarity = evaluatingFunction(searchTerm, value, {
-            omitSpaces: !keepSpaces,
-            partialMatch: !!request.partialMatch || !!request.manualSearch,
-            partialMatchLength: searchTermTokensLength,
-          })
-          const fuzzyMatch = getFuzzinessEvaluationResult(
-            request,
-            percentageSimilarity
-          )
-          if (fuzzyMatch) {
-            return true
+        for (let i = 0; i < searchTerms.length; i++) {
+          const searchTerm = searchTerms[i]
+          const searchTermTokensLength = searchTermsTokensLength[i]
+          for (const name of values) {
+            if (name === searchTerm) {
+              return true
+            }
+            const evaluatingFunction = this.getFuzzinessFunction(
+              fuzzinessSettings,
+              request.manualSearch
+            )
+            const percentageSimilarity = evaluatingFunction(searchTerm, name, {
+              omitSpaces: !keepSpaces,
+              partialMatch: !!request.partialMatch || !!request.manualSearch,
+              partialMatchLength: searchTermTokensLength,
+            })
+            const fuzzyMatch =
+              SanctionsDataFetcher.getFuzzinessEvaluationResult(
+                request,
+                percentageSimilarity
+              )
+            if (fuzzyMatch) {
+              return true
+            }
           }
         }
       }
@@ -1351,26 +1396,88 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const pepCategory = screeningProfile.pep?.relevance
     const relCategory = screeningProfile.rel?.relevance
     const adverseMediaCategory = screeningProfile.adverseMedia?.relevance
-    const sourceIds = [
-      ...(sanctionSourceIds ?? []),
-      ...(pepSourceIds ?? []),
-      ...(relSourceIds ?? []),
-    ]
     return {
-      sourceIds,
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
       sanctionsCategory,
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      containAllSources: screeningProfile.containAllSources,
     }
   }
 
+  private getAggregatedSourceIds(props: SanctionsSearchProps) {
+    const {
+      sanctionSourceIds = [],
+      pepSourceIds = [],
+      relSourceIds = [],
+      sanctionsCategory = [],
+      pepCategory = [],
+      relCategory = [],
+      adverseMediaCategory = [],
+    } = props
+    const allSourceIds: string[] = []
+    if (sanctionSourceIds?.length) {
+      sanctionSourceIds.forEach((sourceId) => {
+        sanctionsCategory.forEach((category) => {
+          allSourceIds.push(`${sourceId}-${category}`)
+        })
+      })
+    }
+    if (pepSourceIds?.length) {
+      if (pepCategory.includes('PEP')) {
+        pepSourceIds.forEach((sourceId) => {
+          allSourceIds.push(`${sourceId}-PEP`)
+        })
+      }
+      if (pepCategory.includes('POI')) {
+        allSourceIds.push('POI')
+      }
+    }
+    if (relSourceIds?.length) {
+      relSourceIds.forEach((sourceId) => {
+        relCategory.forEach((category) => {
+          allSourceIds.push(`${sourceId}-${category}`)
+        })
+      })
+    }
+    if (adverseMediaCategory?.length) {
+      adverseMediaCategory.forEach((category) => {
+        allSourceIds.push(adverseMediaCategoryMap[category])
+      })
+    }
+    return uniq(allSourceIds)
+  }
+
   private getOpensearchQueryConditions(
-    request: SanctionsSearchRequest,
+    props: SanctionsSearchPropsWithRequest,
     providers: SanctionsDataProviderName[]
   ) {
+    const { request, containAllSources } = props
     const shouldConditions: QueryContainer[] = []
     const mustConditions: QueryContainer[] = []
+    const allSourceIds = this.getAggregatedSourceIds(props)
+    if (allSourceIds.length && !containAllSources) {
+      mustConditions.push({
+        terms: {
+          aggregatedSourceIds: allSourceIds,
+        },
+      })
+    }
+    if (request?.types?.length) {
+      const typesCondition = [
+        { terms: { sanctionSearchTypes: request.types } },
+        { terms: { 'associates.sanctionsSearchTypes': request.types } },
+      ]
+      mustConditions.push({
+        bool: {
+          should: typesCondition,
+          minimum_should_match: 1,
+        },
+      })
+    }
     if (request.yearOfBirth) {
       const yearOfBirthCondition = [
         { term: { yearOfBirth: request.yearOfBirth } },
@@ -1390,8 +1497,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.gender) {
       const genderCondition = [
-        { term: { gender: request.gender } },
-        { term: { gender: 'Unknown' } },
+        { terms: { gender: [request.gender, 'Unknown'] } },
         { bool: { must_not: { exists: { field: 'gender' } } } },
       ]
       if (request.orFilters?.includes('gender')) {
@@ -1407,9 +1513,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.nationality) {
       const nationalityCondition = [
-        ...[...request.nationality, 'XX', 'ZZ'].map((nationality) => ({
-          term: { nationality: nationality },
-        })),
+        { terms: { nationality: [...request.nationality, 'XX', 'ZZ'] } },
         { bool: { must_not: { exists: { field: 'nationality' } } } },
       ]
       if (request.orFilters?.includes('nationality')) {
@@ -1422,18 +1526,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         })
       }
-    }
-    if (request.types) {
-      const typesCondition = request.types.flatMap((type) => [
-        { term: { sanctionSearchTypes: type } },
-        { term: { 'associates.sanctionsSearchTypes': type } },
-      ])
-      mustConditions.push({
-        bool: {
-          should: typesCondition,
-          minimum_should_match: 1,
-        },
-      })
     }
     if (
       (request.allowDocumentMatches || request.manualSearch) &&
@@ -1508,66 +1600,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         },
       })
     }
-    if (request.isActivePep) {
-      const isActivePepCondition = [
-        { term: { isActivePep: true } },
-        { bool: { must_not: { exists: { field: 'isActivePep' } } } },
-      ]
-      mustConditions.push({
-        bool: {
-          should: [
-            {
-              bool: {
-                should: isActivePepCondition,
-                minimum_should_match: 1,
-              },
-            },
-            {
-              bool: {
-                must_not: {
-                  term: {
-                    sanctionSearchTypes: 'PEP',
-                  },
-                },
-              },
-            },
-          ],
-          minimum_should_match: 1,
-        },
-      })
-    }
-    if (request.isActiveSanctioned) {
-      const isActiveSanctionedCondition = [
-        { term: { isActiveSanctioned: true } },
-        { bool: { must_not: { exists: { field: 'isActiveSanctioned' } } } },
-      ]
-      mustConditions.push({
-        bool: {
-          should: [
-            {
-              bool: {
-                should: isActiveSanctionedCondition,
-                minimum_should_match: 1,
-              },
-            },
-            {
-              bool: {
-                must_not: {
-                  term: {
-                    sanctionSearchTypes: 'SANCTIONS',
-                  },
-                },
-              },
-            },
-          ],
-          minimum_should_match: 1,
-        },
-      })
-    }
+
     if (request.isOngoingScreening) {
-      const isOngoingScreeningCondition = providers.map((provider) => ({
-        term: { provider: provider },
-      }))
+      const isOngoingScreeningCondition = [{ terms: { provider: providers } }]
       mustConditions.push({
         bool: {
           should: isOngoingScreeningCondition,
@@ -1595,13 +1630,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   private async getOpensearchQueryResults(
-    request: SanctionsSearchRequest,
-    client: Client
+    props: SanctionsSearchPropsWithRequest
   ) {
+    const { request } = props
+    const client = await getOpensearchClient()
     const searchTerm = normalize(request.searchTerm)
     const providers = getDefaultProviders()
     const { shouldConditions, mustConditions } =
-      this.getOpensearchQueryConditions(request, providers)
+      this.getOpensearchQueryConditions(props, providers)
     const collectionNames = this.getCollectionNames(request, providers)
     const queryWithoutStopwords = this.getOpensearchQuery({
       searchTerm,
@@ -1609,6 +1645,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       mustConditions,
       onlyFuzzyQuery: false,
     })
+
     const queryWithStopwords = searchTerm.split(' ').includes('the')
       ? this.getOpensearchQuery({
           searchTerm,
@@ -1623,7 +1660,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           index: c,
           _source: SanctionsEntity.attributeTypeMap
             .map((a) => a.name)
-            .filter((a) => a !== 'rawResponse'),
+            .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
           body: queryWithoutStopwords,
         }),
         ...(queryWithStopwords
@@ -1632,7 +1669,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 index: c,
                 _source: SanctionsEntity.attributeTypeMap
                   .map((a) => a.name)
-                  .filter((a) => a !== 'rawResponse'),
+                  .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
                 body: queryWithStopwords,
               }),
             ]
@@ -1660,13 +1697,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return hits
   }
   async searchWithOpensearch(
-    request: SanctionsSearchRequest,
-    client: Client
+    props: SanctionsSearchPropsWithRequest
   ): Promise<SanctionsProviderResponse> {
+    const { request } = props
     const stopwordSet = request.stopwords?.length
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
-    const hits = await this.getOpensearchQueryResults(request, client)
+    const hits = await this.getOpensearchQueryResults(props)
     const fuzzinessSettings = request?.fuzzinessSettings
     const filteredResults = this.hydrateHitsWithMatchTypes(
       this.filterResults(
@@ -1687,6 +1724,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     mustConditions,
     onlyFuzzyQuery,
   }) {
+    const normalizedSearchTerm = normalize(searchTerm)
+    const sanitizeStringWithSpecialCharactersForTokenizationSearchTerm =
+      sanitizeStringWithSpecialCharactersForTokenization(normalizedSearchTerm)
     return {
       size: 1000,
       query: {
@@ -1711,20 +1751,39 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.fuzzy': {
-                              query: searchTerm,
-                              fuzziness: 'AUTO',
+                              query:
+                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              fuzziness: 2,
                               max_expansions: 100,
                               prefix_length: 0,
                               boost: 1,
                             },
                           },
                         },
+                        ...(sanitizeStringWithSpecialCharactersForTokenizationSearchTerm !==
+                        normalizedSearchTerm
+                          ? [
+                              {
+                                match: {
+                                  'normalizedAka.fuzzy': {
+                                    query:
+                                      sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                                    fuzziness: 2,
+                                    max_expansions: 100,
+                                    prefix_length: 0,
+                                    boost: 1,
+                                  },
+                                },
+                              },
+                            ]
+                          : []),
                       ]
                     : [
                         {
                           match: {
                             'normalizedAka.exact': {
-                              query: searchTerm,
+                              query:
+                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
                               boost: 5,
                             },
                           },
@@ -1732,8 +1791,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.fuzzy_with_stopwords_removal': {
-                              query: searchTerm,
-                              fuzziness: 'AUTO',
+                              query:
+                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              fuzziness: 2,
                               max_expansions: 100,
                               prefix_length: 0,
                               boost: 1,
@@ -1741,6 +1801,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                           },
                         },
                       ]),
+                  ...(sanitizeStringWithSpecialCharactersForTokenizationSearchTerm !==
+                  normalizedSearchTerm
+                    ? [
+                        {
+                          match: {
+                            'normalizedAka.fuzzy': {
+                              query:
+                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              fuzziness: 2,
+                              max_expansions: 100,
+                              prefix_length: 0,
+                              boost: 1,
+                            },
+                          },
+                        },
+                      ]
+                    : []),
                 ],
                 minimum_should_match: 1,
               },
@@ -1795,13 +1872,56 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
     let result: SanctionsProviderResponse
-    if (
-      hasFeature('OPEN_SEARCH') &&
-      !request.screeningProfileId &&
-      envIsNot('prod')
-    ) {
-      const client = await getOpensearchClient()
-      result = await this.searchWithOpensearch(request, client)
+    let sanctionSourceIds: string[] | undefined = undefined
+    let pepSourceIds: string[] | undefined = undefined
+    let relSourceIds: string[] | undefined = undefined
+    let sanctionsCategory: SanctionsSourceRelevance[] | undefined
+    let pepCategory: PEPSourceRelevance[] | undefined
+    let relCategory: RELSourceRelevance[] | undefined
+    let adverseMediaCategory: AdverseMediaSourceRelevance[] | undefined
+    let containAllSources: boolean | undefined = undefined
+    if (request.screeningProfileId) {
+      const details = await this.getSanctionSourceDetails(
+        request.screeningProfileId
+      )
+      sanctionSourceIds = details.sanctionSourceIds
+      pepSourceIds = details.pepSourceIds
+      relSourceIds = details.relSourceIds
+      sanctionsCategory = details.sanctionsCategory
+      pepCategory = details.pepCategory
+      relCategory = details.relCategory
+      adverseMediaCategory = details.adverseMediaCategory
+      containAllSources = details.containAllSources
+      if (request.types) {
+        if (!request.types.includes('PEP')) {
+          pepSourceIds = []
+          pepCategory = []
+        }
+        if (!request.types.includes('SANCTIONS')) {
+          sanctionSourceIds = []
+          sanctionsCategory = []
+        }
+        if (!request.types.includes('REGULATORY_ENFORCEMENT_LIST')) {
+          relSourceIds = []
+          relCategory = []
+        }
+        if (!request.types.includes('ADVERSE_MEDIA')) {
+          adverseMediaCategory = []
+        }
+      }
+    }
+    if (hasFeature('OPEN_SEARCH')) {
+      result = await this.searchWithOpensearch({
+        request,
+        sanctionSourceIds,
+        pepSourceIds,
+        relSourceIds,
+        sanctionsCategory,
+        pepCategory,
+        relCategory,
+        adverseMediaCategory,
+        containAllSources,
+      })
       const data = result.data?.map(
         (entity: SanctionsEntity): SanctionsEntity => ({
           ...entity,
@@ -1812,90 +1932,36 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       )
       return {
         ...result,
-        data: await this.sanitizeEntities(data),
+        data: await this.sanitizeEntities({
+          data,
+          sanctionSourceIds,
+          pepSourceIds,
+          relSourceIds,
+          sanctionsCategory,
+          pepCategory,
+          relCategory,
+          adverseMediaCategory,
+        }),
       }
     }
-    const sanctionSourceNames: string[] = []
-    const pepSourceNames: string[] = []
-    const relSourceNames: string[] = []
-    let sourceIds: string[] = []
-    let sanctionsCategory: SanctionsSourceRelevance[] | undefined
-    let pepCategory: PEPSourceRelevance[] | undefined
-    let relCategory: RELSourceRelevance[] | undefined
-    let adverseMediaCategory: AdverseMediaSourceRelevance[] | undefined
-    if (request.screeningProfileId) {
-      const details = await this.getSanctionSourceDetails(
-        request.screeningProfileId
-      )
-      sourceIds = details.sourceIds
-      sanctionsCategory = details.sanctionsCategory
-      pepCategory = details.pepCategory
-      relCategory = details.relCategory
-      adverseMediaCategory = details.adverseMediaCategory
-
-      // Only fetch sources if we have sourceIds
-      if (sourceIds?.length) {
-        const repo = new MongoSanctionSourcesRepository(this.mongoDb)
-        const sources = await repo.getSanctionsSources(
-          undefined,
-          sourceIds,
-          undefined,
-          undefined,
-          { sourceName: 1, sourceType: 1 }
-        )
-        for (const source of sources) {
-          if (!source.sourceName) {
-            continue
-          }
-
-          if (source.sourceType === 'SANCTIONS') {
-            sanctionSourceNames.push(source.sourceName)
-          } else if (source.sourceType === 'PEP') {
-            pepSourceNames.push(source.sourceName)
-          } else if (source.sourceType === 'REGULATORY_ENFORCEMENT_LIST') {
-            relSourceNames.push(source.sourceName)
-          }
-        }
-      }
-      if (!request.manualSearch && request.types) {
-        const types = new Set(request.types)
-
-        if (!types.has('PEP')) {
-          pepSourceNames.length = 0
-          pepCategory = []
-        }
-        if (!types.has('SANCTIONS')) {
-          sanctionSourceNames.length = 0
-          sanctionsCategory = []
-        }
-        if (!types.has('REGULATORY_ENFORCEMENT_LIST')) {
-          relCategory = []
-        }
-        if (!types.has('ADVERSE_MEDIA')) {
-          adverseMediaCategory = []
-        }
-      }
-    }
-    const db = this.mongoDb.db()
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||
         (request.fuzziness ?? 0) * 100 === 100)
     ) {
-      result = await this.searchWithoutMatchingNames(request, db)
+      result = await this.searchWithoutMatchingNames(request, this.mongoDb.db())
     } else {
-      result = await this.searchWithMatchingNames(
+      result = await this.searchWithMatchingNames({
         request,
-        db,
-        isMigration || request.manualSearch ? 500 : 200,
-        sanctionSourceNames,
-        pepSourceNames,
-        relSourceNames,
+        limit: isMigration || request.manualSearch ? 500 : 200,
+        sanctionSourceIds,
+        pepSourceIds,
+        relSourceIds,
         sanctionsCategory,
         pepCategory,
         relCategory,
-        adverseMediaCategory
-      )
+        adverseMediaCategory,
+      })
     }
     const data = result.data?.map(
       (entity: SanctionsEntity): SanctionsEntity => ({
@@ -1907,29 +1973,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
     return {
       ...result,
-      data: await this.sanitizeEntities(
+      data: await this.sanitizeEntities({
         data,
-        sanctionSourceNames,
-        pepSourceNames,
-        relSourceNames,
+        sanctionSourceIds,
+        pepSourceIds,
+        relSourceIds,
         sanctionsCategory,
         pepCategory,
         relCategory,
-        adverseMediaCategory
-      ),
+        adverseMediaCategory,
+      }),
     }
   }
 
-  private async sanitizeEntities(
-    data: SanctionsEntity[] | undefined,
-    sanctionSourceNames?: string[],
-    pepSourceNames?: string[],
-    relSourceNames?: string[],
-    sanctionsCategory?: SanctionsSourceRelevance[],
-    pepCategory?: PEPSourceRelevance[],
-    relCategory?: RELSourceRelevance[],
-    adverseMediaCategory?: AdverseMediaSourceRelevance[]
-  ) {
+  private async sanitizeEntities(props: SanctionsSearchPropsWithData) {
+    const {
+      data,
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    } = props
     const providers = getDefaultProviders().filter(
       (p) =>
         p === SanctionsDataProviders.OPEN_SANCTIONS ||
@@ -1945,16 +2012,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (e) => e.provider === SanctionsDataProviders.OPEN_SANCTIONS
     )
     return [
-      ...sanitizeAcurisEntities(
-        acurisEntities,
-        sanctionSourceNames,
-        pepSourceNames,
-        relSourceNames,
+      ...sanitizeAcurisEntities({
+        data: acurisEntities,
+        sanctionSourceIds,
+        pepSourceIds,
+        relSourceIds,
         sanctionsCategory,
         pepCategory,
         relCategory,
-        adverseMediaCategory
-      ),
+        adverseMediaCategory,
+      }),
       ...sanitizeOpenSanctionsEntities(openSanctionsEntities),
     ]
   }

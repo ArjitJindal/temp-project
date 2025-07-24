@@ -1,7 +1,7 @@
 import { compact, intersection, uniq } from 'lodash'
 import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import { SanctionsDataProviders } from '../types'
+import { SanctionsDataProviders, SanctionsSearchPropsWithData } from '../types'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -13,10 +13,6 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/
 import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { getContext } from '@/core/utils/context-storage'
-import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
-import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
-import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
-import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { SanctionsMatchTypeDetailsEnum } from '@/@types/openapi-internal/SanctionsMatchTypeDetailsEnum'
 
 export function shouldLoadScreeningData<T>(
@@ -192,15 +188,18 @@ export function getNameAndAka(
 }
 
 export function sanitizeAcurisEntities(
-  entities: SanctionsEntity[],
-  sanctionSourceNames?: string[],
-  pepSourceNames?: string[],
-  relSourceNames?: string[],
-  sanctionsCategory?: SanctionsSourceRelevance[],
-  pepCategory?: PEPSourceRelevance[],
-  relCategory?: RELSourceRelevance[],
-  adverseMediaCategory?: AdverseMediaSourceRelevance[]
+  props: SanctionsSearchPropsWithData
 ): SanctionsEntity[] {
+  const {
+    data: entities,
+    sanctionSourceIds,
+    pepSourceIds,
+    relSourceIds,
+    sanctionsCategory,
+    pepCategory,
+    relCategory,
+    adverseMediaCategory,
+  } = props
   const SCREENING_TYPES_TO_TYPES = {
     PEP: [
       'Current PEP',
@@ -220,7 +219,7 @@ export function sanitizeAcurisEntities(
     (acurisSettings?.screeningTypes as AcurisSanctionsSearchType[]) ??
     ACURIS_SANCTIONS_SEARCH_TYPES
   const processedEntities: SanctionsEntity[] = []
-  for (const entity of entities) {
+  for (const entity of entities ?? []) {
     const sanctionSearchTypes = intersection(
       screeningTypes,
       entity.sanctionSearchTypes
@@ -236,11 +235,9 @@ export function sanitizeAcurisEntities(
       sanctionsSources: sanctionSearchTypes.includes('SANCTIONS')
         ? entity.sanctionsSources?.filter(
             (source) =>
-              (!sanctionSourceNames?.length ||
-                !source.sourceName ||
-                sanctionSourceNames
-                  .map((s) => s.toLowerCase())
-                  .includes(humanizeAuto(source.sourceName).toLowerCase())) &&
+              (!sanctionSourceIds?.length ||
+                !source.internalId ||
+                sanctionSourceIds.includes(source.internalId)) &&
               (!sanctionsCategory ||
                 (source.category &&
                   sanctionsCategory
@@ -253,11 +250,10 @@ export function sanitizeAcurisEntities(
       pepSources: sanctionSearchTypes.includes('PEP')
         ? entity.pepSources?.filter(
             (source) =>
-              (!pepSourceNames?.length ||
-                !source.sourceName ||
-                pepSourceNames
-                  .map((s) => s.toLowerCase())
-                  .includes(humanizeAuto(source.sourceName).toLowerCase())) &&
+              (!pepSourceIds?.length ||
+                source.category === 'POI' ||
+                !source.internalId ||
+                pepSourceIds.includes(source.internalId)) &&
               (!pepCategory ||
                 (source.category &&
                   pepCategory
@@ -283,13 +279,10 @@ export function sanitizeAcurisEntities(
         ? entity.otherSources?.filter(
             (source) =>
               source.type === 'REGULATORY_ENFORCEMENT_LIST' &&
-              (!relSourceNames?.length ||
+              (!relSourceIds?.length ||
                 (source.value?.some(
                   (value) =>
-                    !value.sourceName ||
-                    relSourceNames
-                      .map((s) => s.toLowerCase())
-                      .includes(humanizeAuto(value.sourceName).toLowerCase())
+                    !value.internalId || relSourceIds.includes(value.internalId)
                 ) ??
                   false)) &&
               (!relCategory ||

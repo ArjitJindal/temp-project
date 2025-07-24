@@ -752,6 +752,26 @@ export class AcurisProvider extends SanctionsDataFetcher {
     const yearOfBirth = uniq(
       entity.datesOfBirthIso?.map((date) => dayjs(date).format('YYYY'))
     )
+    const sanctionsSources = this.getSanctionsSources(
+      entity.qrCode,
+      entity.sanEntries,
+      entity.evidences
+    )
+    const pepSources = this.getPepSources(
+      entity.qrCode,
+      entity.pepEntries,
+      entity.evidences,
+      entity.datasets
+    )
+    const mediaSources = this.getMediaSources(
+      entity.evidences,
+      entity.rreEntries
+    )
+    const relSources = this.getRelSources(
+      entity.qrCode,
+      entity.relEntries,
+      entity.evidences
+    )
     return {
       id: entity.qrCode,
       name: normalizedName,
@@ -787,27 +807,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
         entity.datasets.some((d) => d.startsWith('PEP'))
           ? Boolean(entity.pepEntries.current.length)
           : undefined,
-      sanctionsSources: this.getSanctionsSources(
-        entity.qrCode,
-        entity.sanEntries,
-        entity.evidences
-      ),
-      pepSources: this.getPepSources(
-        entity.qrCode,
-        entity.pepEntries,
-        entity.evidences,
-        entity.datasets
-      ),
-      mediaSources: this.getMediaSources(entity.evidences, entity.rreEntries),
+
       rawResponse: entity,
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
-          value: this.getRelSources(
-            entity.qrCode,
-            entity.relEntries,
-            entity.evidences
-          ),
+          value: relSources,
         },
       ].filter((e) => e.value.length),
       profileImagesUrls: entity.profileImages,
@@ -818,6 +823,26 @@ export class AcurisProvider extends SanctionsDataFetcher {
         formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
+      sanctionsSources,
+      pepSources,
+      mediaSources,
+      aggregatedSourceIds: compact(
+        uniq([
+          ...sanctionsSources
+            .filter((s) => s.sourceName && s.category)
+            .map((s) => `${s.internalId}-${s.category}`),
+          ...pepSources
+            .filter((s) => s.sourceName && s.category === 'PEP')
+            .map((s) => `${s.internalId}-PEP`),
+          ...relSources
+            .filter((s) => s.sourceName && s.category)
+            .map((s) => `${s.internalId}-${s.category}`),
+          ...mediaSources.map((s) => s.category),
+          ...pepSources
+            .filter((s) => !s.sourceName && s.category === 'POI')
+            .map((s) => s.category),
+        ])
+      ),
       resourceId: entity.resourceId,
     }
   }
@@ -836,6 +861,41 @@ export class AcurisProvider extends SanctionsDataFetcher {
       entity.name.toLowerCase(),
       entity.aliases.map((alias) => alias.alias.toLowerCase())
     )
+    const sanctionsSources = this.getSanctionsSources(
+      entity.qrCode,
+      entity.sanEntries,
+      entity.evidences
+    )
+    const pepSources = entity.evidences
+      .filter(
+        ({ datasets }) =>
+          datasets.some(
+            (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
+          ) && sanctionSearchTypes.includes('PEP')
+      )
+      .map((evidence) => {
+        const evidenceName = entity.evidences.find(
+          (e) => e.evidenceId === evidence.evidenceId
+        )?.title
+        const displayName = evidenceName ?? ''
+        const normalisedEvidenceName = normalizeSource(displayName)
+        return this.getOtherSources(
+          evidence,
+          evidenceName,
+          undefined,
+          'POI',
+          normalisedEvidenceName
+        )
+      })
+    const mediaSources = this.getMediaSources(
+      entity.evidences,
+      entity.rreEntries
+    )
+    const relSources = this.getRelSources(
+      entity.qrCode,
+      entity.relEntries,
+      entity.evidences
+    )
     return {
       id: entity.qrCode,
       name: name,
@@ -850,44 +910,16 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       // pick evidence name from current.regime.name
       sanctionSearchTypes,
-      sanctionsSources: this.getSanctionsSources(
-        entity.qrCode,
-        entity.sanEntries,
-        entity.evidences
-      ),
       associates: this.getAssociates(entity),
-      mediaSources: this.getMediaSources(entity.evidences, entity.rreEntries),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
-          value: this.getRelSources(
-            entity.qrCode,
-            entity.relEntries,
-            entity.evidences
-          ),
+          value: relSources,
         },
       ].filter((e) => e.value.length),
-      pepSources: entity.evidences
-        .filter(
-          ({ datasets }) =>
-            datasets.some(
-              (dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset] === 'PEP'
-            ) && sanctionSearchTypes.includes('PEP')
-        )
-        .map((evidence) => {
-          const evidenceName = entity.evidences.find(
-            (e) => e.evidenceId === evidence.evidenceId
-          )?.title
-          const displayName = evidenceName ?? ''
-          const normalisedEvidenceName = normalizeSource(displayName)
-          return this.getOtherSources(
-            evidence,
-            evidenceName,
-            undefined,
-            'POI',
-            normalisedEvidenceName
-          )
-        }),
+      sanctionsSources,
+      pepSources,
+      mediaSources,
       rawResponse: entity,
       profileImagesUrls: entity.profileImages,
       freetext: entity.notes.map((note) => note.value).join(' '),
@@ -902,6 +934,23 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : undefined,
       nationality: countryCodes,
       countries: compact(countryCodes.map((c) => COUNTRIES[c])),
+      aggregatedSourceIds: compact(
+        uniq([
+          ...sanctionsSources
+            .filter((s) => s.sourceName && s.category)
+            .map((s) => `${s.internalId}-${s.category}`),
+          ...pepSources
+            .filter((s) => s.sourceName && s.category === 'PEP')
+            .map((s) => `${s.internalId}-PEP`),
+          ...relSources
+            .filter((s) => s.sourceName && s.category)
+            .map((s) => `${s.internalId}-${s.category}`),
+          ...mediaSources.map((s) => s.category),
+          ...pepSources
+            .filter((s) => !s.sourceName && s.category === 'POI')
+            .map((s) => s.category),
+        ])
+      ),
       resourceId: entity.resourceId,
     }
   }

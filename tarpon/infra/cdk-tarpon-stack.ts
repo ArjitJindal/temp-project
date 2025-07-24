@@ -1987,7 +1987,7 @@ export class CdkTarponStack extends cdk.Stack {
     lambdaExecutionRole: cdk.aws_iam.Role,
     ecsTaskExecutionRole: cdk.aws_iam.Role
   ) {
-    if (isQaEnv() || envIs('prod')) {
+    if (isQaEnv()) {
       return
     }
     const opensearchCollectionName = `${this.config.stage}-${

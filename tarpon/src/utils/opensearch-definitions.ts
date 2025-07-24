@@ -1,8 +1,18 @@
 import { Indices_Create_RequestBody } from '@opensearch-project/opensearch/api'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
+
+type SanctionsSearchIndexDefinitionProps = {
+  aliasName: string
+  isDelta: boolean
+  provider: SanctionsDataProviderName
+}
 
 export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
-  aliasName: string
+  props: SanctionsSearchIndexDefinitionProps
 ): Indices_Create_RequestBody => {
+  const { aliasName, isDelta = false, provider } = props
+  const isDowJones = provider === SanctionsDataProviders.DOW_JONES
   return {
     settings: {
       analysis: {
@@ -41,39 +51,17 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
             fuzzy_with_stopwords_removal: {
               type: 'text',
               analyzer: 'name_analyzer_with_stopword_removal',
-              search_analyzer: 'name_analyzer_with_stopword_removal',
             },
             fuzzy: {
               type: 'text',
               analyzer: 'name_analyzer',
-              search_analyzer: 'name_analyzer',
             },
             exact: { type: 'keyword' },
           },
         },
-        entityType: { type: 'keyword' },
         nationality: { type: 'keyword' },
         yearOfBirth: { type: 'keyword' },
-        isActivePep: { type: 'boolean' },
-        sanctionSearchTypes: { type: 'keyword' },
-        countries: { type: 'keyword' },
         gender: { type: 'keyword' },
-        documents: {
-          type: 'nested',
-          properties: {
-            formattedId: { type: 'keyword' },
-            id: { type: 'keyword' },
-          },
-        },
-        occupations: {
-          type: 'nested',
-          properties: {
-            rank: { type: 'keyword' },
-          },
-        },
-        provider: {
-          type: 'keyword',
-        },
         associates: {
           type: 'nested',
           properties: {
@@ -85,7 +73,38 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
             },
           },
         },
-        isActiveSanctioned: { type: 'boolean' },
+        aggregatedSourceIds: {
+          type: 'keyword',
+        },
+        sanctionSearchTypes: {
+          type: 'keyword',
+        },
+        ...(isDelta || isDowJones
+          ? {
+              entityType: { type: 'keyword' },
+              provider: {
+                type: 'keyword',
+              },
+            }
+          : {}),
+        ...(isDowJones
+          ? {
+              documents: {
+                type: 'nested',
+                properties: {
+                  formattedId: { type: 'keyword' },
+                  id: { type: 'keyword' },
+                },
+              },
+              occupations: {
+                type: 'nested',
+                properties: {
+                  rank: { type: 'keyword' },
+                },
+              },
+            }
+          : {}),
+        version: { type: 'keyword' },
       },
     },
     aliases: {

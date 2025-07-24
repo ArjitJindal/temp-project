@@ -35,6 +35,7 @@ import {
 import { runSanctionsDataCountJob } from '@/services/sanctions/sanctions-data-count'
 import { isDemoTenant } from '@/utils/tenant'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { getOpensearchClient, keepAlive } from '@/utils/opensearch-utils'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -182,6 +183,8 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
         )
       }
     }
+    const opensearchClient = await getOpensearchClient()
+    await keepAlive(opensearchClient)
   } catch (error) {
     logger.error('Error in 10 minute cron job handler', error)
     throw error

@@ -17,8 +17,12 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
+import {
+  deleteDocumentsByQuery,
+  deleteIndexAfterDataLoad,
+  getOpensearchClient,
+  syncOpensearchIndex,
+} from '@/utils/opensearch-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
@@ -47,9 +51,7 @@ export async function runDeltaSanctionsDataFetchJob(
   const version = Date.now().toString()
   logger.info(`Running delta`)
 
-  const opensearchClient = envIsNot('prod')
-    ? await getOpensearchClient()
-    : undefined
+  const opensearchClient = await getOpensearchClient()
 
   const deltaSanctionsCollectionNames = providers.map((p) => {
     return {
@@ -67,16 +69,33 @@ export async function runDeltaSanctionsDataFetchJob(
     createMongoDBCollections(client, dynamoDb, tenantId),
     createGlobalMongoDBCollections(client),
   ])
-  await Promise.all(
-    deltaSanctionsCollectionNames.map((c) =>
+  await Promise.all([
+    ...deltaSanctionsCollectionNames.map((c) =>
       client.db().collection(c.name).deleteMany({})
-    )
-  )
+    ),
+    ...deltaSanctionsCollectionNames.map((c) =>
+      deleteDocumentsByQuery(opensearchClient, c.name, {
+        query: {
+          bool: {
+            must_not: {
+              term: {
+                version: version,
+              },
+            },
+          },
+        },
+      })
+    ),
+  ])
 
   for (const {
     name: deltaSanctionsCollectionName,
     provider,
   } of deltaSanctionsCollectionNames) {
+    const aliasName = await syncOpensearchIndex(
+      opensearchClient,
+      deltaSanctionsCollectionName
+    )
     const fetcher = await sanctionsDataFetcher(
       tenantId,
       provider,
@@ -94,10 +113,17 @@ export async function runDeltaSanctionsDataFetchJob(
     logger.info(`Running delta ${fetcher.constructor.name}`)
     const deltaRepo = new MongoSanctionsRepository(
       deltaSanctionsCollectionName,
-      opensearchClient
+      opensearchClient,
+      aliasName
     )
     await fetcher.delta(deltaRepo, version, dayjs(job.parameters.from).toDate())
-
+    if (aliasName) {
+      await deleteIndexAfterDataLoad(
+        opensearchClient,
+        deltaSanctionsCollectionName,
+        aliasName
+      )
+    }
     await checkSearchIndexesReady(deltaSanctionsCollectionName)
   }
 }

@@ -13967,6 +13967,8 @@ components:
           enum:
             - ENABLED
             - DISABLED
+        containAllSources:
+          type: boolean
       required:
         - screeningProfileName
     ScreeningProfileResponse:
@@ -14031,6 +14033,8 @@ components:
           type: string
         screeningProfileStatus:
           $ref: '#/components/schemas/StatusEnum'
+        containAllSources:
+          type: boolean
       required:
         - screeningProfileId
         - screeningProfileName

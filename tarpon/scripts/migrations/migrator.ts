@@ -21,7 +21,6 @@ import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
 import { isDemoTenant } from '@/utils/tenant'
-import { syncOpensearchIndexes } from '@/utils/opensearch-utils'
 import { saveMigrationProgressToDynamo } from '@/utils/migration-progress'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
@@ -166,7 +165,6 @@ async function cleanUpCypressTestAuth0Users() {
 
 async function syncData() {
   await syncMongoDbIndexes()
-  await syncOpensearchIndexes()
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()

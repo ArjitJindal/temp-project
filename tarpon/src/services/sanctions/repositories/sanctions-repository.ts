@@ -14,13 +14,18 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 import { hasFeature } from '@/core/utils/context'
 import { bulkUpdate } from '@/utils/opensearch-utils'
-import { envIsNot } from '@/utils/env'
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
   opensearchClient?: Client
-  constructor(collectionName: string, opensearchClient?: Client) {
+  aliasName?: string
+  constructor(
+    collectionName: string,
+    opensearchClient?: Client,
+    aliasName?: string
+  ) {
     this.collectionName = collectionName
     this.opensearchClient = opensearchClient
+    this.aliasName = aliasName
   }
   async save(
     provider: SanctionsDataProviderName,
@@ -84,14 +89,14 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       }
     })
     if (operations.length > 0) {
-      if (envIsNot('prod') && this.opensearchClient) {
+      if (this.opensearchClient) {
         await Promise.all([
           coll.bulkWrite(operations),
           bulkUpdate(
             provider,
             entities,
             version,
-            this.collectionName,
+            this.aliasName ?? this.collectionName,
             this.opensearchClient
           ),
         ])
@@ -201,7 +206,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
             provider,
             entities,
             version,
-            this.collectionName,
+            this.aliasName ?? this.collectionName,
             this.opensearchClient
           ),
         ])
