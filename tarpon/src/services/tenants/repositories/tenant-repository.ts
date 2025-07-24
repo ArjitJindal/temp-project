@@ -24,6 +24,7 @@ import {
   createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
@@ -55,7 +56,8 @@ export class TenantRepository {
   public async getSecondaryQueueTenants(): Promise<string[]> {
     const result = await this.dynamoDb.send(
       new GetCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: DynamoDbKeys.SECONDARY_QUEUE_TENANTS(),
       })
     )
@@ -66,7 +68,8 @@ export class TenantRepository {
   public async setSecondaryQueueTenants(tenants: string[]): Promise<void> {
     await this.dynamoDb.send(
       new PutCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...DynamoDbKeys.SECONDARY_QUEUE_TENANTS(),
           secondaryQueueTenants: tenants,
