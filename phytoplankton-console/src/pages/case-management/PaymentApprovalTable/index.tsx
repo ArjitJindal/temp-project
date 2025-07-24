@@ -97,6 +97,7 @@ export default function PaymentApprovalsTable(props: Props) {
           />
         ),
       ]}
+      isPaymentApprovals
       canSelectRow={(row) => row.content.status === 'SUSPEND'}
     />
   );

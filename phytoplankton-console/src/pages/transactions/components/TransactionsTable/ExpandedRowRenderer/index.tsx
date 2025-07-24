@@ -8,10 +8,11 @@ import { InternalTransaction } from '@/apis';
 
 interface Props {
   transactionId: string;
+  isPaymentApprovals: boolean;
 }
 
 export default function ExpandedRowRenderer(props: Props) {
-  const { transactionId } = props;
+  const { transactionId, isPaymentApprovals } = props;
   const api = useApi();
   const queryResult = useQuery(TRANSACTIONS_ITEM(transactionId), () =>
     api.getTransaction({ transactionId }),
@@ -20,7 +21,12 @@ export default function ExpandedRowRenderer(props: Props) {
   return (
     <AsyncResourceRenderer<InternalTransaction> resource={queryResult.data}>
       {(transaction) => {
-        return <ApprovalDetails transaction={transaction} action={'SUSPEND'} />;
+        return (
+          <ApprovalDetails
+            transaction={transaction}
+            action={isPaymentApprovals ? 'SUSPEND' : undefined}
+          />
+        );
       }}
     </AsyncResourceRenderer>
   );

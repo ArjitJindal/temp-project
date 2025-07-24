@@ -227,6 +227,7 @@ type Props = {
   selectionInfo?: SelectionInfo;
   isExpandable?: boolean;
   canSelectRow?: (row: TableRow<TransactionTableItem>) => boolean;
+  isPaymentApprovals?: boolean;
 };
 
 export const getStatus = (
@@ -306,6 +307,7 @@ export default function TransactionsTable(props: Props) {
     escalatedTransactions = [],
     isExpandable = false,
     canSelectRow,
+    isPaymentApprovals = false,
   } = props;
 
   const settings = useSettings();
@@ -639,7 +641,12 @@ export default function TransactionsTable(props: Props) {
       isExpandable={
         isExpandable ? (row) => isTransactionHasDetails(row.content, settings) : () => false
       }
-      renderExpanded={(entity) => <ExpandedRowRenderer transactionId={entity.transactionId} />}
+      renderExpanded={(entity) => (
+        <ExpandedRowRenderer
+          transactionId={entity.transactionId}
+          isPaymentApprovals={isPaymentApprovals ?? false}
+        />
+      )}
       extraTools={[
         () => (
           <>
