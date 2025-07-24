@@ -9,7 +9,7 @@ import {
 import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,

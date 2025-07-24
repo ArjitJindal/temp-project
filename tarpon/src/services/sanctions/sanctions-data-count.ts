@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import { MongoClient } from 'mongodb'
 import { getSanctionsCollectionName } from './utils'
 import { SanctionsDataProviders } from './types'

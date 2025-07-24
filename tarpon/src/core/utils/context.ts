@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import { Extras } from '@sentry/types/types/extra'
 import { utils } from 'aws-xray-sdk-core'
 import {

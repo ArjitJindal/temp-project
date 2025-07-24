@@ -1,8 +1,4 @@
-import * as Sentry from '@sentry/serverless'
-import {
-  rewriteFramesIntegration,
-  debugIntegration,
-} from '@sentry/integrations'
+import * as Sentry from '@sentry/aws-serverless'
 import { isQaEnv } from '@flagright/lib/qa'
 import { getContext } from '../utils/context-storage'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
@@ -18,41 +14,42 @@ export const initSentryLambda =
       }
     }
 
-    Sentry.AWSLambda.init({
+    Sentry.init({
       ...SENTRY_INIT_CONFIG,
+      debug: process.env.ENV === 'local', // Enable debug mode in local environment
       integrations: [
-        rewriteFramesIntegration({
+        Sentry.rewriteFramesIntegration({
           prefix: `app:///lambdas/${process.env.LAMBDA_CODE_PATH}/`,
         }),
-        debugIntegration(),
       ],
     })
 
-    return Sentry.AWSLambda.wrapHandler(
-      async (event: any, ...args): Promise<any> => {
-        const scope = Sentry.getCurrentScope()
-        scope.clear()
+    return Sentry.wrapHandler(async (event: any, ...args): Promise<any> => {
+      const scope = Sentry.getCurrentScope()
+      scope.clear()
 
-        if (event.requestContext?.authorizer) {
-          const { userId, verifiedEmail } = event.requestContext
-            .authorizer as unknown as JWTAuthorizerResult
-          Sentry.setUser({
-            id: userId,
-            email: verifiedEmail ?? undefined,
-          })
-        }
-        Sentry.setTags(getContext()?.logMetadata || {})
-        Sentry.setContext(
-          'query',
-          (event?.queryStringParameters as object) || {}
-        )
-        Sentry.setContext('body', (event?.body as object) || {})
-        Sentry.setContext('path', (event?.pathParameters as object) || {})
-        Sentry.setTag('httpMethod', event?.httpMethod || '')
-        Sentry.setTag('resource', event?.resource || '')
-        Sentry.setExtras(getContext()?.sentryExtras || {})
-
-        return handler(event, ...args)
+      if (event.requestContext?.authorizer) {
+        const { userId, verifiedEmail } = event.requestContext
+          .authorizer as unknown as JWTAuthorizerResult
+        Sentry.setUser({
+          id: userId,
+          email: verifiedEmail ?? undefined,
+        })
       }
-    )
+      Sentry.setTags(getContext()?.logMetadata || {})
+      Sentry.setContext(
+        'query',
+        (event?.queryStringParameters as Record<string, unknown>) || {}
+      )
+      Sentry.setContext('body', (event?.body as Record<string, unknown>) || {})
+      Sentry.setContext(
+        'path',
+        (event?.pathParameters as Record<string, unknown>) || {}
+      )
+      Sentry.setTag('httpMethod', event?.httpMethod || '')
+      Sentry.setTag('resource', event?.resource || '')
+      Sentry.setExtras(getContext()?.sentryExtras || {})
+
+      return handler(event, ...args)
+    })
   }

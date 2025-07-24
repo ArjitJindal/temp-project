@@ -1,6 +1,6 @@
 import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 
 import { omit } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

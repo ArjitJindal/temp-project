@@ -1,5 +1,5 @@
 import { isEmpty, mapValues, set } from 'lodash'
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'

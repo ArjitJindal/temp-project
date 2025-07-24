@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import { groupBy } from 'lodash'
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'

@@ -5,7 +5,7 @@ import { execSync } from 'child_process'
 import { XMLBuilder } from 'fast-xml-parser'
 import { cloneDeep, last } from 'lodash'
 import { BadRequest } from 'http-errors'
-import * as Sentry from '@sentry/serverless'
+import * as Sentry from '@sentry/aws-serverless'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
 import {
   ActivityPartyTypeCodesCTR,
