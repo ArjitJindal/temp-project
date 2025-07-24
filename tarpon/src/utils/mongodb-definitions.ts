@@ -847,12 +847,13 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
     },
     [ARS_SCORES_COLLECTION(tenantId)]: {
-      getIndexes: () =>
-        [
-          { transactionId: 1 },
-          { originUserId: 1 },
-          { destinationUserId: 1 },
-        ].map((index) => ({ index })),
+      getIndexes: () => {
+        return [
+          { index: { transactionId: 1 }, unique: true },
+          { index: { originUserId: 1 } },
+          { index: { destinationUserId: 1 } },
+        ]
+      },
     },
     [DRS_SCORES_COLLECTION(tenantId)]: {
       getIndexes: () =>
