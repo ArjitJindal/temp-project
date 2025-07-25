@@ -68,7 +68,7 @@ export class ClickhouseTransactionsRepository {
 
   private async getTransactionsWhereConditions(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
-  ): Promise<string> {
+  ): Promise<{ whereClause: string; countWhereClause: string }> {
     const whereConditions: string[] = []
 
     if (params.filterId) {
@@ -248,12 +248,14 @@ export class ClickhouseTransactionsRepository {
         }%')`
       )
     }
-    const page = params.page ?? 1
+    const queryWhereConditions = [...whereConditions]
     if (
-      whereConditions.length === timestampFilterCount &&
+      queryWhereConditions.length === timestampFilterCount &&
       params.sortOrder === 'descend' &&
       (this.tenantId === 'pnb' || this.tenantId === '4c9cdf0251')
     ) {
+      const page = params.page ?? 1
+
       const beforeTimestamp = params.beforeTimestamp ?? Date.now()
 
       const threeDaysInMs = 3 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
@@ -264,23 +266,32 @@ export class ClickhouseTransactionsRepository {
         givenAfterTimestamp
       )
 
-      whereConditions.length = 0 // Clear the array
+      queryWhereConditions.length = 0 // Clear the array
       if (afterTimestamp > 0) {
-        whereConditions.push(`timestamp >= ${afterTimestamp}`)
+        queryWhereConditions.push(`timestamp >= ${afterTimestamp}`)
       }
-      whereConditions.push(`timestamp <= ${beforeTimestamp}`)
+      queryWhereConditions.push(`timestamp <= ${beforeTimestamp}`)
     }
     if (params.afterTimestamp === null) {
       whereConditions.push('timestamp != 0')
+      queryWhereConditions.push('timestamp != 0')
     }
 
-    return whereConditions.length ? `${whereConditions.join(' AND ')}` : ''
+    return {
+      whereClause: queryWhereConditions.length
+        ? `${queryWhereConditions.join(' AND ')}`
+        : '',
+      countWhereClause: whereConditions.length
+        ? `${whereConditions.join(' AND ')}`
+        : '',
+    }
   }
 
   async getTransactions(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<TransactionsResponseOffsetPaginated> {
-    const whereClause = await this.getTransactionsWhereConditions(params)
+    const { whereClause, countWhereClause } =
+      await this.getTransactionsWhereConditions(params)
 
     let sortField = params.sortField ?? 'timestamp'
     const sortOrder = params.sortOrder ?? 'ascend'
@@ -419,7 +430,8 @@ export class ClickhouseTransactionsRepository {
             ? (JSON.parse(item.alertIds as string) as string[])
             : [],
         }
-      }
+      },
+      countWhereClause
     )
 
     const sortedTransactions = getSortedData<TransactionTableItem>({
@@ -441,7 +453,7 @@ export class ClickhouseTransactionsRepository {
   ): Promise<StatsByType[]> {
     const { pageSize, sortField, sortOrder } = params
 
-    const whereClause = await this.getTransactionsWhereConditions(params)
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
 
     const query = `
       WITH txn AS (
@@ -478,7 +490,7 @@ export class ClickhouseTransactionsRepository {
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     const { pageSize, sortField, sortOrder } = params
 
-    const whereClause = await this.getTransactionsWhereConditions(params)
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
 
     const minMaxQuery = `
       WITH txn AS (

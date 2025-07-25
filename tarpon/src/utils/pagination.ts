@@ -258,7 +258,8 @@ export async function offsetPaginateClickhouse<T>(
   query: ClickhousePaginationParams,
   where = '1',
   columnsProjection: Record<string, string>,
-  callbackMap?: (item: Record<string, string | number>) => T
+  callbackMap?: (item: Record<string, string | number>) => T,
+  countWhereClause?: string
 ): Promise<{ items: T[]; count: number }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
@@ -277,8 +278,11 @@ export async function offsetPaginateClickhouse<T>(
     where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
+  const countWhere = countWhereClause === undefined ? where : countWhereClause
   const countQuery = `SELECT COUNT(DISTINCT id) as count FROM ${queryTableName} FINAL ${
-    where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
+    countWhere
+      ? `WHERE ${countWhere} AND timestamp != 0`
+      : 'WHERE timestamp != 0'
   }`
 
   const [items, count] = await Promise.all([
