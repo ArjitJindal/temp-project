@@ -139,4 +139,8 @@ export const config: Config = {
     maxTotalMemoryGb: 48,
     numReplicas: 3,
   },
+  opensearch: {
+    availability: true,
+    deploy: true,
+  },
 }

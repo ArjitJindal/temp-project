@@ -18,6 +18,7 @@ import {
   deleteDocumentsByQuery,
   deleteIndexAfterDataLoad,
   getOpensearchClient,
+  isOpensearchAvailableInRegion,
   syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -61,7 +62,9 @@ export async function runSanctionsDataFetchJob(
   dynamoDb: DynamoDBClient
 ) {
   const { tenantId, providers, settings } = job
-  const opensearchClient = await getOpensearchClient()
+  const opensearchClient = isOpensearchAvailableInRegion()
+    ? await getOpensearchClient()
+    : undefined
   const runFullLoad = job.parameters?.from
     ? new Date(job.parameters.from).getDay() === 0
     : true
@@ -112,7 +115,7 @@ export async function runSanctionsDataFetchJob(
         runFullLoad
       )
     }
-    if (aliasName) {
+    if (aliasName && opensearchClient) {
       await deleteIndexAfterDataLoad(
         opensearchClient,
         sanctionsCollectionName,

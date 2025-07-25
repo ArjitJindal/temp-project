@@ -170,4 +170,8 @@ export type Config = {
     FINCEN_SFTP_IP?: string
     FINCEN_SFTP_PORT?: string
   }
+  opensearch: {
+    availability: boolean
+    deploy: boolean
+  }
 }

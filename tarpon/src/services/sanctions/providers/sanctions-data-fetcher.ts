@@ -53,7 +53,10 @@ import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { hasFeature } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
+import {
+  getOpensearchClient,
+  isOpensearchAvailableInRegion,
+} from '@/utils/opensearch-utils'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
@@ -1910,7 +1913,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         }
       }
     }
-    if (hasFeature('OPEN_SEARCH')) {
+    if (hasFeature('OPEN_SEARCH') && isOpensearchAvailableInRegion()) {
       result = await this.searchWithOpensearch({
         request,
         sanctionSourceIds,

@@ -129,4 +129,8 @@ export const config: Config = {
     FINCEN_SFTP_IP: '164.95.10.143',
     FINCEN_SFTP_PORT: '2222',
   },
+  opensearch: {
+    availability: true,
+    deploy: true,
+  },
 }

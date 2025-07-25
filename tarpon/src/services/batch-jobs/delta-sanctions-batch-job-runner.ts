@@ -21,6 +21,7 @@ import {
   deleteDocumentsByQuery,
   deleteIndexAfterDataLoad,
   getOpensearchClient,
+  isOpensearchAvailableInRegion,
   syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -51,7 +52,9 @@ export async function runDeltaSanctionsDataFetchJob(
   const version = Date.now().toString()
   logger.info(`Running delta`)
 
-  const opensearchClient = await getOpensearchClient()
+  const opensearchClient = isOpensearchAvailableInRegion()
+    ? await getOpensearchClient()
+    : undefined
 
   const deltaSanctionsCollectionNames = providers.map((p) => {
     return {
@@ -117,7 +120,7 @@ export async function runDeltaSanctionsDataFetchJob(
       aliasName
     )
     await fetcher.delta(deltaRepo, version, dayjs(job.parameters.from).toDate())
-    if (aliasName) {
+    if (aliasName && opensearchClient) {
       await deleteIndexAfterDataLoad(
         opensearchClient,
         deltaSanctionsCollectionName,

@@ -137,4 +137,8 @@ export const config: Config = {
       'com.amazonaws.vpce.ap-southeast-1.vpce-svc-0a2b4df11b06e4872',
     maxTotalMemoryGb: 48,
   },
+  opensearch: {
+    availability: true,
+    deploy: true,
+  },
 }

@@ -128,4 +128,8 @@ export const config: Config = {
       'com.amazonaws.vpce.me-central-1.vpce-svc-0a5c104af59ece6df',
     maxTotalMemoryGb: 24,
   },
+  opensearch: {
+    availability: false,
+    deploy: false,
+  },
 }

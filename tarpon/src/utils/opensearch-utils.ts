@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { isEqual } from 'lodash'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from './opensearch-definitions'
-import { envIs } from './env'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { Action } from '@/services/sanctions/providers/types'
@@ -272,11 +271,11 @@ export async function createIndexIfNotExists(
 }
 
 export async function deleteDocumentsByQuery(
-  client: Client,
+  client: Client | undefined,
   indexName: string,
   body: DeleteByQuery_RequestBody
 ) {
-  if (!(await checkIndexExists(client, indexName))) {
+  if (!client || !(await checkIndexExists(client, indexName))) {
     return
   }
   await client.deleteByQuery({
@@ -288,7 +287,13 @@ export async function deleteDocumentsByQuery(
 }
 
 //Use this function to create index with the latest definition when loading data from a provider
-export async function syncOpensearchIndex(client: Client, indexName: string) {
+export async function syncOpensearchIndex(
+  client: Client | undefined,
+  indexName: string
+) {
+  if (!client) {
+    return
+  }
   logger.info(`Syncing index ${indexName}`)
   await createIndexIfNotExists(client, indexName)
   const hasChanged = await hasIndexChanged(client, indexName)
@@ -331,6 +336,9 @@ export async function deleteIndexAfterDataLoad(
 }
 
 export async function keepAlive(client: Client) {
+  if (!isOpensearchAvailableInRegion()) {
+    return
+  }
   try {
     await client.ping(undefined, {
       maxRetries: 3,
@@ -358,7 +366,7 @@ export async function keepAlive(client: Client) {
 }
 
 export function isOpensearchAvailableInRegion() {
-  const [_, region] = stageAndRegion()
-  const opensearchUnavailableRegions = ['me-1']
-  return !opensearchUnavailableRegions.includes(region) || envIs('local')
+  const [stage, region] = stageAndRegion()
+  const config = getTarponConfig(stage, region)
+  return config.opensearch.availability && config.opensearch.deploy
 }

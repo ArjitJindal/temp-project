@@ -127,4 +127,8 @@ export const config: Config = {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.ap-south-1.vpce-svc-0c230d09f9a784f0f',
   },
+  opensearch: {
+    availability: true,
+    deploy: false,
+  },
 }

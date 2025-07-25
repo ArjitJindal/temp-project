@@ -92,4 +92,8 @@ export const config: Config = {
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     API_USAGE_GOOGLE_SHEET_ID: '14VIlFKYsJq6R-UYAj-JVdAZA9PiBK5T7IgLzcFKRKlU',
   },
+  opensearch: {
+    availability: true,
+    deploy: true,
+  },
 }
