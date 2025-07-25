@@ -1,6 +1,6 @@
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { logger } from '../logger'
 import { hasFeature } from '../utils/context'
 import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
@@ -47,10 +47,7 @@ import { DynamoNotificationRepository } from '@/services/notifications/dynamo-re
 import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
 import { DynamoReasonsRepository } from '@/services/tenants/repositories/reasons/dynamo-repository'
 
-export async function seedDynamo(
-  dynamoDb: DynamoDBDocumentClient,
-  tenantId: string
-) {
+export async function seedDynamo(dynamoDb: DynamoDBClient, tenantId: string) {
   logger.info('Seeding DynamoDB...')
   disableLocalChangeHandler()
 
@@ -256,21 +253,26 @@ export async function seedDynamo(
   const reasonRepo = new DynamoReasonsRepository(tenantId, dynamoDb)
   await reasonRepo.saveReasons(getDefaultReasonsData())
 
+  logger.info('Create audit logs')
   const auditLogRepository = new DynamoAuditLogRepository(tenantId, dynamoDb)
   for (const auditLog of auditlogs()) {
     await auditLogRepository.saveAuditLog(auditLog)
   }
 
+  logger.info('Create counters')
   const counterRepo = new DynamoCounterRepository(tenantId, dynamoDb)
   await counterRepo.initialize()
   for (const item of getCounterCollectionData()) {
     await counterRepo.setCounterValue(item.entity, item.count)
   }
+
+  logger.info('Create alerts Qa sampling')
   const alertsQaSampling = getQASamples()
   for (const alertQaSampling of alertsQaSampling) {
     await dynamoAlertRepository.saveQASampleData(alertQaSampling)
   }
 
+  logger.info('Create notifications')
   const notifications = getNotifications()
   const dynamoNotificationRepository = new DynamoNotificationRepository(
     tenantId,

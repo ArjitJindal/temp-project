@@ -1,6 +1,6 @@
 import { PublishCommand } from '@aws-sdk/client-sns'
 import { MongoClient } from 'mongodb'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { AuditLogRepository } from './repositories/auditlog-repository'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
@@ -95,13 +95,13 @@ export async function publishAuditLog(
 @traceable
 export class AuditLogService {
   mongoDb: MongoClient
-  dynamoDb: DynamoDBDocumentClient
+  dynamoDb: DynamoDBClient
   tenantId: string
   auditLogRepository: AuditLogRepository
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb

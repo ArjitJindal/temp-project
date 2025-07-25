@@ -2,6 +2,7 @@ import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
 import { omit } from 'lodash'
 import * as Sentry from '@sentry/aws-serverless'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { ClickhouseAuditLogRepository } from './clickhouse-repository'
 import { traceable } from '@/core/xray'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
@@ -12,11 +13,11 @@ import { getClickhouseClient } from '@/utils/clickhouse/utils'
 @traceable
 export class DynamoAuditLogRepository {
   private readonly tenantId: string
-  private readonly dynamoDb: DynamoDBDocumentClient
+  private readonly dynamoDb: DynamoDBClient
   private readonly tableName: string
   clickhouseAuditLogRepository?: ClickhouseAuditLogRepository
 
-  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
@@ -39,10 +40,15 @@ export class DynamoAuditLogRepository {
       await this.getClickhouseAuditLogRepository()
     try {
       const data = omit(sanitizeMongoObject(auditLog), ['_id'])
+      const docClient = DynamoDBDocumentClient.from(this.dynamoDb, {
+        marshallOptions: {
+          removeUndefinedValues: true,
+        },
+      })
       const key = DynamoDbKeys.AUDIT_LOGS(this.tenantId, auditLog.auditlogId)
 
       // Create batch for operations
-      const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+      const batch = new DynamoTransactionBatch(docClient, this.tableName)
 
       batch.put({
         Item: {
