@@ -235,6 +235,14 @@ export default function NewListDrawer(props: Props) {
         subtype: notEmpty,
         name: notEmpty,
       }}
+      formValidators={[
+        (values: FormValues) => {
+          if (values.subtype === 'CUSTOM' && (!values.columns || values.columns.length === 0)) {
+            return 'At least one column is required for custom lists';
+          }
+          return null;
+        },
+      ]}
     >
       <Drawer
         title={listType === 'WHITELIST' ? `Add a new whitelist` : `Add a new blacklist`}
@@ -298,7 +306,7 @@ export default function NewListDrawer(props: Props) {
                     >
                       {(inputProps) => <TextInput {...inputProps} />}
                     </InputField>
-                    {!['STRING', 'USER_ID'].includes(subtype) && (
+                    {!['STRING', 'USER_ID', 'CUSTOM'].includes(subtype) && (
                       <InputField<FormValues, 'values'>
                         name="values"
                         label={getListSubtypeTitle(subtype, settings)}
