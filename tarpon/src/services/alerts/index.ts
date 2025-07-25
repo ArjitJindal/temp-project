@@ -229,17 +229,25 @@ export class AlertsService extends CaseAlertsCommonService {
       )
       const data: AlertListResponse = {
         ...alerts,
-        data: alerts.data.map((alertResponse) => ({
-          ...alertResponse,
-          alert: {
-            ...alertResponse.alert,
-            slaPolicyDetails: alertResponse.alert.slaPolicyDetails?.sort(
-              (a, b) => {
-                return (a?.startedAt ?? 0) - (b?.startedAt ?? 0)
-              }
-            ),
-          },
-        })),
+        data: await Promise.all(
+          alerts.data.map(async (alertResponse) => ({
+            ...alertResponse,
+            alert: {
+              ...alertResponse.alert,
+              comments: await Promise.all(
+                (alertResponse.alert.comments ?? []).map(async (comment) => ({
+                  ...comment,
+                  files: await this.getUpdatedFiles(comment.files),
+                }))
+              ),
+              slaPolicyDetails: alertResponse.alert.slaPolicyDetails?.sort(
+                (a, b) => {
+                  return (a?.startedAt ?? 0) - (b?.startedAt ?? 0)
+                }
+              ),
+            },
+          }))
+        ),
       }
       return {
         result: data,
@@ -2301,6 +2309,17 @@ export class AlertsService extends CaseAlertsCommonService {
   public async getComments(
     alertIds: string[]
   ): Promise<CommentsResponseItem[]> {
-    return await this.alertsRepository.getComments(alertIds)
+    const comments = await this.alertsRepository.getComments(alertIds)
+    return await Promise.all(
+      comments.map(async (commentItem) => ({
+        ...commentItem,
+        comments: await Promise.all(
+          commentItem.comments.map(async (comment) => ({
+            ...comment,
+            files: await this.getUpdatedFiles(comment.files),
+          }))
+        ),
+      }))
+    )
   }
 }

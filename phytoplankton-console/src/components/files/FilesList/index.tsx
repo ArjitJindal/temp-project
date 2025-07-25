@@ -53,7 +53,12 @@ export default function FilesList(props: Props) {
           <div className={s.fileAttachmentButton} data-cy="attached-file">
             <div className={s.section}>
               <PaperClipOutlined style={{ color: COLORS.purpleGray.base }} />
-              <a href={file.downloadLink}>{file.filename}</a>
+              <a
+                href={file.downloadLink}
+                className={cn(s.downloadLink, !file.downloadLink && s.isDisabled)}
+              >
+                {file.filename}
+              </a>
               <span className={s.size}>{`(${filesize(file.size)})`}</span>
             </div>
             {onDeleteFile != null && (
