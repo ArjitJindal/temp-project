@@ -336,9 +336,6 @@ export async function deleteIndexAfterDataLoad(
 }
 
 export async function keepAlive(client: Client) {
-  if (!isOpensearchAvailableInRegion()) {
-    return
-  }
   try {
     await client.ping(undefined, {
       maxRetries: 3,
