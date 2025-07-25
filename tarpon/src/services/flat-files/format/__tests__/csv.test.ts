@@ -3,6 +3,7 @@ import Ajv from 'ajv'
 import { CsvFormat } from '../csv'
 import { getS3Client } from '@/utils/s3'
 import { EntityModel } from '@/@types/model'
+import { User } from '@/@types/openapi-internal/User'
 import { generateJsonSchemaFromEntityClass } from '@/utils/json-schema'
 
 // Mock the S3 client
@@ -286,6 +287,55 @@ describe('CsvFormat', () => {
           children: [{ name: 'Jane' }, { name: 'Mike' }],
         },
       })
+    })
+  })
+
+  describe('duplication checks', () => {
+    it('should not throw error if compound primary key is empty', () => {
+      expect(() => {
+        new CsvFormat('tenantId', User, 'test-file.csv', ['userId'])
+      }).not.toThrow()
+    })
+
+    it('should throw error if compound primary key is invalid', () => {
+      expect(() => {
+        new CsvFormat('tenantId', User, 'test-file.csv', ['invalid-key'])
+      }).toThrow('Invalid compound primary key: invalid-key')
+    })
+
+    it('should only remove duplicate records', async () => {
+      class Model extends EntityModel {
+        static readonly attributeTypeMap = [
+          { name: 'name', baseName: 'name', type: 'string', format: '' },
+          { name: 'age', baseName: 'age', type: 'number', format: '' },
+          { name: 'email', baseName: 'email', type: 'string', format: '' },
+          { name: 'phone', baseName: 'phone', type: 'string', format: '' },
+        ]
+      }
+      const testData1 = 'John,30,john@example.com,1234567890'
+      const testData2 = 'Jane,25,jane@example.com,0987654321'
+      const testData3 = 'John,32,john@example.com,0980980980'
+      const testData4 = 'Arun,22,arun@gmail.com,1234567890'
+      const csvData = `name,age,email,phone\n${testData1}\n${testData2}\n${testData3}\n${testData4}`
+      const mockStream = new Readable()
+      mockStream.push(csvData)
+      mockStream.push(null)
+
+      const parser = new CsvFormat('tenantId', Model, 'test-file.csv', [
+        'name',
+        'email',
+      ])
+      const mockS3Client = {
+        send: jest.fn().mockResolvedValue({ Body: mockStream }),
+      }
+      ;(getS3Client as jest.Mock).mockReturnValue(mockS3Client)
+
+      const records: object[] = []
+      for await (const record of parser.readAndParse('test-file.csv')) {
+        records.push(record)
+      }
+
+      expect(records).toHaveLength(3)
     })
   })
 })

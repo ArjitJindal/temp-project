@@ -31,6 +31,11 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { thunderSchemaSetupHook } from '@/test-utils/clickhouse-test-utils'
 import { FlatFilesRecords } from '@/models/flat-files-records'
+import { UserService } from '@/services/users'
+import {
+  disableLocalChangeHandler,
+  enableLocalChangeHandler,
+} from '@/utils/local-dynamodb-change-handler'
 
 dynamoDbSetupHook()
 
@@ -91,7 +96,6 @@ describe('FlatFilesService', () => {
 
           expect(template.fileString).toContain('\n')
 
-          // Verify that the template contains expected headers from CaseClosure model
           const headers = template.fileString.split('\n')[0].split(',')
           expect(headers.length).toBeGreaterThan(0)
         })
@@ -144,6 +148,7 @@ describe('FlatFilesService', () => {
     const s3Mock = mockClient(S3Client)
     beforeAll(async () => {
       enableAsyncRulesInTest()
+      enableLocalChangeHandler()
 
       if (!globalThis.__didCreateTables__) {
         globalThis.__didCreateTables__ = true
@@ -156,13 +161,14 @@ describe('FlatFilesService', () => {
       )
     })
     afterAll(() => {
+      disableLocalChangeHandler()
       disableAsyncRulesInTest()
     })
     beforeEach(() => {
       s3Mock.reset()
     })
 
-    const saveUserToDynamo = async (userId: string) => {
+    const getUserFromDynamo = async (userId: string) => {
       const dynamoDb = getDynamoDbClient()
       const result = await dynamoDb.send(
         new GetCommand({
@@ -180,7 +186,7 @@ describe('FlatFilesService', () => {
       ])
     }
 
-    const saveTransactionToDynamo = async (transactionId: string) => {
+    const getTransactionFromDynamo = async (transactionId: string) => {
       const dynamoDb = getDynamoDbClient()
       const result = await dynamoDb.send(
         new GetCommand({
@@ -254,14 +260,61 @@ describe('FlatFilesService', () => {
 
             await sendBatchJobCommand(testJob)
 
-            const dynamoUser1 = await saveUserToDynamo(user1.userId)
-            const dynamoUser2 = await saveUserToDynamo(user2.userId)
+            const dynamoUser1 = await getUserFromDynamo(user1.userId)
+            const dynamoUser2 = await getUserFromDynamo(user2.userId)
 
             expect(dynamoUser1).toMatchObject(user1)
             expect(dynamoUser2).toMatchObject(user2)
           })
         }
       )
+    })
+
+    describe('Duplicate user import', () => {
+      // reset the tenant id as if running the whole test suite we create users in previous test, which doesn't give the desired result
+      const TEST_TENANT_ID = getTestTenantId()
+      thunderSchemaSetupHook(TEST_TENANT_ID, [
+        FlatFilesRecords.tableDefinition.tableName,
+      ])
+      it('should not save duplicate users', async () => {
+        enableAsyncRulesInTest()
+        enableLocalChangeHandler()
+        const s3Key = `test-${uuidv4()}.csv`
+        const user1 = mockConsumerUser()
+        const user2 = { ...mockConsumerUser(), userId: user1 }
+        const user3 = mockConsumerUser()
+        const mockStream = await createMockCSVStream(
+          [user1, user2, user3],
+          'CONSUMER_USERS_UPLOAD'
+        )
+        s3Mock.on(GetObjectCommand).resolves(createS3MockResponse(mockStream))
+
+        const testJob: FlatFilesValidationBatchJob = {
+          tenantId: TEST_TENANT_ID,
+          type: 'FLAT_FILES_VALIDATION',
+          parameters: {
+            format: 'CSV',
+            s3Key,
+            schema: 'CONSUMER_USERS_UPLOAD',
+            entityId: 'CONSUMER_USERS',
+          },
+        }
+
+        await sendBatchJobCommand(testJob)
+
+        const dynamoDb = getDynamoDbClient()
+        const mongoDb = await getMongoDbClient()
+        const userService = new UserService(TEST_TENANT_ID, {
+          dynamoDb,
+          mongoDb,
+        })
+        const user = await userService.getUsers({
+          pageSize: 100,
+          page: 1,
+        })
+        expect(user).toBeDefined()
+        expect(user.result.items).toHaveLength(2)
+      })
     })
 
     describe('Transaction flat file import', () => {
@@ -308,10 +361,10 @@ describe('FlatFilesService', () => {
 
         await sendBatchJobCommand(testJob)
 
-        const dynamoTransaction1 = await saveTransactionToDynamo(
+        const dynamoTransaction1 = await getTransactionFromDynamo(
           transaction1.transactionId
         )
-        const dynamoTransaction2 = await saveTransactionToDynamo(
+        const dynamoTransaction2 = await getTransactionFromDynamo(
           transaction2.transactionId
         )
 

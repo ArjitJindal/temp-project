@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import Ajv, { ValidateFunction, ErrorObject } from 'ajv'
 import { JSONSchema } from 'json-schema-to-typescript'
 import { FlatFileBaseRunner } from '../baseRunner'
@@ -22,12 +23,29 @@ export abstract class FlatFileFormat {
   model: typeof EntityModel
   s3Key: string
   tenantId: string
+  protected processedRecordsHash: Map<string, boolean> = new Map()
+  protected compoundPrimaryKey: string[]
   protected readonly BATCH_SIZE = 1000
 
-  constructor(tenantId: string, model: typeof EntityModel, s3Key: string) {
+  constructor(
+    tenantId: string,
+    model: typeof EntityModel,
+    s3Key: string,
+    compoundPrimaryKey: string[] = []
+  ) {
     this.model = model
     this.s3Key = s3Key
     this.tenantId = tenantId
+
+    this.compoundPrimaryKey = compoundPrimaryKey
+    // check if valid key are provided
+    if (compoundPrimaryKey.length > 0) {
+      for (const key of compoundPrimaryKey) {
+        if (!this.model.attributeTypeMap.some((attr) => attr.name === key)) {
+          throw new Error(`Invalid compound primary key: ${key}`)
+        }
+      }
+    }
   }
 
   static readonly format: FlatFileTemplateFormat
@@ -272,5 +290,39 @@ export abstract class FlatFileFormat {
     }
 
     return isAllValid
+  }
+
+  protected createHash(value: string, prevHash?: crypto.Hash): crypto.Hash {
+    if (prevHash) {
+      const hash = prevHash.update(value)
+      return hash
+    }
+    const hash = crypto.createHash('md5').update(value)
+    return hash
+  }
+
+  public isDuplicate(record: Record<string, object>): boolean {
+    const compoundPrimaryKey = this.compoundPrimaryKey
+    if (compoundPrimaryKey.length === 0) {
+      return false
+    }
+
+    let hash = crypto.createHash('md5')
+    for (const key of compoundPrimaryKey) {
+      const value = record[key]
+      if (value) {
+        hash = this.createHash(JSON.stringify(value), hash)
+      } else {
+        // if primary key is empty, we consider it as a duplicate to be on safe side
+        return true
+      }
+    }
+
+    const hashValue = hash.digest('hex')
+    if (this.processedRecordsHash.has(hashValue)) {
+      return true
+    }
+    this.processedRecordsHash.set(hashValue, true)
+    return false
   }
 }

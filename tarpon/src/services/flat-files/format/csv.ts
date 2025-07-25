@@ -113,6 +113,16 @@ export class CsvFormat extends FlatFileFormat {
           }
         }
 
+        if (this.isDuplicate(nested)) {
+          await this.saveError(
+            flatRow,
+            { index: index++, record: { record: flatRow } },
+            new Error('Duplicate record'),
+            'DUPLICATE'
+          )
+          continue
+        }
+
         yield { index: index++, record: nested }
       } catch (error) {
         await this.saveError(

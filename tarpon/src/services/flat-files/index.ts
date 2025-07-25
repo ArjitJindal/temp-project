@@ -38,6 +38,18 @@ type Connections = {
   clickhouseConnectionConfig: ConnectionCredentials
 }
 
+const ModelCompoundPrimaryKey: Record<FlatFileSchema, string[]> = {
+  BULK_CASE_CLOSURE: ['caseId'],
+  CUSTOM_LIST_UPLOAD: ['Key'],
+  RULE_INSTANCES_IMPORT: ['id'],
+  RISK_FACTORS_IMPORT: ['id'],
+  CONSUMER_USERS_UPLOAD: ['userId'],
+  BUSINESS_USERS_UPLOAD: ['userId'],
+  TRANSACTIONS_UPLOAD: ['transactionId'],
+  BULK_ALERT_CLOSURE: ['alertId'],
+  BULK_SANCTIONS_HITS_UPDATE: ['sanctionsHitId'],
+}
+
 const FlatFileSchemaToModel: Record<
   FlatFileSchema,
   (tenantId: string, connections: Connections) => FlatFileBaseRunner<any>
@@ -64,10 +76,17 @@ const FlatFileSchemaToModel: Record<
 
 const FlatFileFormatToModel: Record<
   FlatFileTemplateFormat,
-  (tenantId: string, model: typeof EntityModel, s3Key: string) => FlatFileFormat
+  (
+    tenantId: string,
+    model: typeof EntityModel,
+    s3Key: string,
+    compoundPrimaryKey: string[]
+  ) => FlatFileFormat
 > = {
-  CSV: (tenantId, model, s3Key) => new CsvFormat(tenantId, model, s3Key),
-  JSONL: (tenantId, model, s3Key) => new JsonlFormat(tenantId, model, s3Key),
+  CSV: (tenantId, model, s3Key, compoundPrimaryKey) =>
+    new CsvFormat(tenantId, model, s3Key, compoundPrimaryKey),
+  JSONL: (tenantId, model, s3Key, compoundPrimaryKey) =>
+    new JsonlFormat(tenantId, model, s3Key, compoundPrimaryKey),
 }
 
 @traceable
@@ -79,6 +98,7 @@ export class FlatFilesService {
   }
 
   private async getFormatInstance(
+    schema: FlatFileSchema,
     format: FlatFileTemplateFormat,
     model: EntityModel,
     s3Key?: string
@@ -91,10 +111,12 @@ export class FlatFilesService {
     }
 
     try {
+      const compoundPrimaryKey = ModelCompoundPrimaryKey[schema] ?? []
       return FormatConstructor(
         this.tenantId,
         model as typeof EntityModel,
-        s3Key as string
+        s3Key as string,
+        compoundPrimaryKey
       )
     } catch (err) {
       throw new Error(
@@ -136,7 +158,7 @@ export class FlatFilesService {
     metadata?: object
   ) {
     const model = await this.getModel(schema, metadata)
-    const formatInstance = await this.getFormatInstance(format, model)
+    const formatInstance = await this.getFormatInstance(schema, format, model)
     const template = formatInstance.getTemplate()
     return template
   }
@@ -149,7 +171,12 @@ export class FlatFilesService {
   ) {
     const runnerInstance = await this.getRunnerInstance(schema)
     const model = await this.getModel(schema, metadata)
-    const formatInstance = await this.getFormatInstance(format, model, s3Key)
+    const formatInstance = await this.getFormatInstance(
+      schema,
+      format,
+      model,
+      s3Key
+    )
     const isAllValid = await formatInstance.validateAndStoreRecords(
       runnerInstance,
       metadata

@@ -9,6 +9,7 @@ export type FlatFilesErrorStage =
   | 'PARSE_STORE'
   | 'RUNNER'
   | 'VALIDATE_STORE'
+  | 'DUPLICATE'
 
 export type FlatFilesStage = 'PARSE' | 'VALIDATE' | 'RUNNER' | 'DONE'
 
