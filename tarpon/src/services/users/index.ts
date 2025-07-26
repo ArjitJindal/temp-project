@@ -1198,9 +1198,7 @@ export class UserService {
     const result =
       await this.userClickhouseRepository.getClickhouseUsersPreviewPaginate<AllUsersTableItemPreview>(
         params,
-        params.filterOperator ?? 'AND',
-        callback,
-        params.filterUserType
+        callback
       )
 
     // count field is returned as string - converting it to number to match the expected response

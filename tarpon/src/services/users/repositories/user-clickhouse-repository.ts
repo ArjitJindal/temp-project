@@ -13,7 +13,6 @@ import {
   COUNT_QUERY_LIMIT,
   DEFAULT_PAGE_SIZE,
   offsetPaginateClickhouse,
-  offsetPaginateClickhousePreview,
 } from '@/utils/pagination'
 import {
   getSortedData,
@@ -157,9 +156,7 @@ export class UserClickhouseRepository {
     T extends AllUsersTableItemPreview
   >(
     params: DefaultApiGetAllUsersListRequest,
-    filterOperator: 'AND' | 'OR',
-    callback: (data: Record<string, string | number>) => T,
-    userType?: 'BUSINESS' | 'CONSUMER'
+    callback: (data: Record<string, string | number>) => T
   ): Promise<AllUsersPreviewOffsetPaginateListResponse> {
     if (!this.clickhouseClient) {
       if (isClickhouseEnabled()) {
@@ -168,14 +165,8 @@ export class UserClickhouseRepository {
       return { items: [], count: 0 }
     }
 
-    const whereClause = await this.buildWhereClause(params, userType, {
-      filterOperator,
-    })
-    const sortField =
-      (params.sortField === 'createdTimestamp'
-        ? 'timestamp'
-        : params.sortField) ?? 'timestamp'
-    const sortOrder = params.sortOrder ?? 'ascend'
+    const sortField = 'timestamp'
+    const sortOrder = 'ascend'
     const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
@@ -187,11 +178,12 @@ export class UserClickhouseRepository {
     }
 
     // Use the lite pagination utility
-    let result = await offsetPaginateClickhousePreview<T>(
+    let result = await offsetPaginateClickhouse<T>(
       this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.USERS.tableName,
       { page, pageSize, sortField, sortOrder },
-      whereClause,
+      `(id = '${params.filterId}' OR ilike(username, '%${params.filterName}%'))`,
       columns,
       callback
     )
