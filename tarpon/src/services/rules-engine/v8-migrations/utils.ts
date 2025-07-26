@@ -240,9 +240,9 @@ export function getFiltersConditions(filters: LegacyFilters): {
       ],
     })
   }
-  if (filters.transactionStates && filters.transactionStates.length > 0) {
+  if (filters.transactionStates) {
     conditions.push({
-      in: [
+      '==': [
         {
           var: 'TRANSACTION:transactionState',
         },
