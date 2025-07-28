@@ -185,7 +185,9 @@ function WidgetWrapper(props: {
     if (!operator || !operator.parameters) {
       return null;
     }
-    const parameterValues = (widgetFactoryProps.value ?? []).slice(0, operator.parameters.length);
+    const parameterValues = (
+      Array.isArray(widgetFactoryProps.value) ? widgetFactoryProps.value : []
+    ).slice(0, operator.parameters.length);
     return (
       <div className={s.operatorParametersContainer}>
         {operator.parameters.map((schema, i) => {
