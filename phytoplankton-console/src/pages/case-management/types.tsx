@@ -62,6 +62,7 @@ export type CommonCaseParams = {
 export type TableSearchParams = CommonParams & {
   showCases?: ScopeSelectorValue;
   qaMode?: boolean;
+  sampleId?: string;
   filterAlertIds?: string[];
   paymentApprovals?: TransactionsTableParams;
 } & Partial<CommonCaseParams>;

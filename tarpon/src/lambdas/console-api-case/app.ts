@@ -103,10 +103,11 @@ export const casesHandler = lambdaApi()(
       async (ctx, request) => await alertsService.getSamplingData(request)
     )
 
-    handlers.registerGetAlertsQaSample(
-      async (ctx, request) =>
-        await alertsService.getSamplingById(request.sampleId)
-    )
+    handlers.registerGetAlertsQaSample(async (ctx, request) => {
+      const data = await alertsService.getSamplingById(request.sampleId)
+      // TODO FDT-7285: remove alertIds from payload
+      return data
+    })
 
     handlers.registerGetAlertsQaSampleIds(
       async () => await alertsService.getSamplingIds()
@@ -124,13 +125,14 @@ export const casesHandler = lambdaApi()(
         )
     )
 
-    handlers.registerPatchAlertsQaSample(
-      async (ctx, request) =>
-        await alertsService.patchSamplingById(
-          request.sampleId,
-          request.AlertsQaSamplingUpdateRequest
-        )
-    )
+    handlers.registerPatchAlertsQaSample(async (ctx, request) => {
+      const data = await alertsService.patchSamplingById(
+        request.sampleId,
+        request.AlertsQaSamplingUpdateRequest
+      )
+      // TODO FDT-7285: remove alertIds from payload
+      return data
+    })
 
     handlers.registerGetCase(async (ctx, request) => {
       const response = await caseService.getCase(request.caseId, {
@@ -151,6 +153,7 @@ export const casesHandler = lambdaApi()(
     handlers.registerGetAlertList(async (ctx, request) => {
       const data = await alertsService.getAlerts(request, {
         hideTransactionIds: true,
+        sampleId: request.sampleId,
       })
       return data.result
     })

@@ -5038,6 +5038,10 @@ paths:
               $ref: '#/components/schemas/SLAPolicyStatus'
           in: query
           name: filterAlertSlaPolicyStatus
+        - schema:
+            type: string
+          in: query
+          name: sampleId
   /alerts/statusChange:
     patch:
       summary: Alerts - Status Change

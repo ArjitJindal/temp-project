@@ -213,7 +213,7 @@ export class AlertsService extends CaseAlertsCommonService {
   @auditLog('ALERT', 'ALERT_LIST', 'DOWNLOAD')
   public async getAlerts(
     params: DefaultApiGetAlertListRequest,
-    options?: { hideTransactionIds?: boolean }
+    options?: { hideTransactionIds?: boolean; sampleId?: string }
   ): Promise<AuditLogReturnData<AlertListResponse>> {
     const caseGetSegment = await addNewSubsegment(
       'Case Service',
@@ -222,6 +222,18 @@ export class AlertsService extends CaseAlertsCommonService {
     if (params.view === 'DOWNLOAD') {
       options = { ...options, hideTransactionIds: false }
     }
+
+    if (options?.sampleId) {
+      // fetching the alertids from the sample
+      const sample = await this.alertsRepository.getSamplingDataById(
+        options.sampleId
+      )
+      if (!sample) {
+        throw new NotFound(`Sample ${options.sampleId} not found`)
+      }
+      params.filterAlertIds = sample.alertIds ?? []
+    }
+
     try {
       const alerts: AlertListResponse = await this.alertsRepository.getAlerts(
         params,

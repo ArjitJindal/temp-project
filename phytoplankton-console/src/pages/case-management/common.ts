@@ -46,6 +46,7 @@ export const getAlertsQueryParams = (
     ruleQueueIds,
     ruleNature,
     filterAlertIds,
+    sampleId,
     caseTypesFilter,
     riskLevels,
   } = params;
@@ -56,6 +57,7 @@ export const getAlertsQueryParams = (
     ...paginationParams,
     filterQaStatus: filterQaStatus as ChecklistStatus | undefined,
     filterAlertId: alertId,
+    sampleId: sampleId,
     filterAlertIds,
     filterCaseId: caseId,
     filterAlertStatus: getStatuses(alertStatus),

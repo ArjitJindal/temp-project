@@ -36,6 +36,7 @@ export const QASamplePage = () => {
   const [params, onChangeParams] = useState<TableSearchParams>({
     pageSize: 20,
     sort: [['createdAt', 'descend']],
+    sampleId: samplingId,
   });
 
   const sampleQueryResult = useQuery(
@@ -184,7 +185,7 @@ export const QASamplePage = () => {
               </Card.Root>
               <PageWrapperContentContainer>
                 <QaTable
-                  params={{ ...params, filterAlertIds: sample.alertIds }}
+                  params={params}
                   onChangeParams={onChangeParams}
                   isSelectionEnabled={false}
                   manuallyAddedAlerts={sample.manuallyAdded}
