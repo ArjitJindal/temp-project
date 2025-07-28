@@ -26,7 +26,6 @@ import Overview from './components/Overview';
 import QaAlertStatsByChecklistReason from './components/Qa/QaAlertStatsByChecklistReason';
 import QaAlertsByAssignee from './components/Qa/QaAlertsByAssignee';
 import TeamSLAPerformanceCard from './components/TeamSLAPerformanceCard';
-import PaymentApprovals from './components/PaymentApprovals';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -71,8 +70,7 @@ type KeyValues =
   | 'QA_ALERT_STATS_BY_CHECKLIST_REASON'
   | 'QA_ALERTS_BY_RULE_HITS'
   | 'QA_OVERVIEW'
-  | 'QA_ALERTS_BY_ASSIGNEE'
-  | 'TEAM_PAYMENT_APPROVALS';
+  | 'QA_ALERTS_BY_ASSIGNEE';
 
 const DEFAULT_VALUES = {
   OVERVIEW: true,
@@ -103,7 +101,6 @@ const DEFAULT_VALUES = {
   QA_ALERT_STATS_BY_CHECKLIST_REASON: true,
   QA_OVERVIEW: true,
   QA_ALERTS_BY_ASSIGNEE: true,
-  TEAM_PAYMENT_APPROVALS: true,
 };
 
 type WidgetType = {
@@ -318,11 +315,6 @@ const getWidgets = (userAlias?: string) => {
           title: 'SLA performance for closed alerts by',
           component: TeamSLAPerformanceCard,
           requiredFeatures: ['ALERT_SLA'],
-        },
-        {
-          id: 'TEAM_PAYMENT_APPROVALS',
-          title: 'Payment approvals',
-          component: PaymentApprovals,
         },
       ],
     },

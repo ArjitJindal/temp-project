@@ -8,13 +8,6 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AlertsRepository } from '@/services/alerts/repository'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import {
-  transactionEventHandler,
-  transactionHandler,
-} from '@/lambdas/public-api-rules-engine/app'
-import { getApiGatewayPostEvent } from '@/test-utils/apigateway-test-utils'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -85,36 +78,4 @@ export async function getRiskRepo(tenantId: string): Promise<RiskRepository> {
     mongoDb,
     dynamoDb,
   })
-}
-
-export async function createTransactionEvent(
-  tenantId: string,
-  transaction: Transaction,
-  transactionEvent: TransactionEvent,
-  params?: {
-    userId: string
-    email: string
-  }
-) {
-  await transactionHandler(
-    getApiGatewayPostEvent(tenantId, '/transactions', transaction, {
-      queryStringParameters: {
-        validateOriginUserId: 'false',
-        validateDestinationUserId: 'false',
-      },
-    }),
-    null as any,
-    null as any
-  )
-  return transactionEventHandler(
-    getApiGatewayPostEvent(tenantId, '/events/transaction', transactionEvent, {
-      user: {
-        tenantId,
-        userId: params?.userId || 'foo',
-        verifiedEmail: params?.email || 'foo@test.com',
-      },
-    }),
-    null as any,
-    null as any
-  )
 }

@@ -772,8 +772,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedColumns: [
       "transactionId String MATERIALIZED JSON_VALUE(data, '$.transactionId')",
       "status String MATERIALIZED JSON_VALUE(data, '$.status')",
-      "createdBy String MATERIALIZED JSON_VALUE(data, '$.createdBy')",
-      "transactionState String MATERIALIZED JSON_VALUE(data, '$.transactionState')",
       `reasons Array(String) MATERIALIZED if(
         JSON_VALUE(data, '$.status') IN ('ALLOW', 'BLOCK'),
         splitByChar(',', JSON_VALUE(data, '$.reason')),

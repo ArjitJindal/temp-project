@@ -2017,7 +2017,6 @@ export class RulesEngineService {
               eventDescription: `Transaction status was manually changed to ${action} by ${
                 account?.name ?? userId
               }`,
-              createdBy: userId ?? account?.name,
               reason: reason.join(', '),
               riskScoreDetails: transaction.riskScoreDetails,
             },

@@ -2960,31 +2960,6 @@ paths:
                 $ref: '#/components/schemas/DashboardStatsOverview'
       operationId: get-dashboard-stats-overview
       description: ''
-  /dashboard_stats/payment_approvals:
-    get:
-      summary: DashboardStats - Payment Approvals
-      tags: []
-      x-flagright:
-        permissions:
-          - dashboard:download-data:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardStatsPaymentApprovalsResponse'
-      operationId: get-dashboard-stats-payment-approvals
-      description: ''
-      parameters:
-        - schema:
-            type: number
-          in: query
-          name: startTimestamp
-        - schema:
-            type: number
-          in: query
-          name: endTimestamp
   /dashboard_stats/closing_reason_distribution:
     get:
       summary: DashboardStats - ClosingReasonDistributionStats
@@ -9764,8 +9739,6 @@ components:
               type: number
             riskScoreDetails:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionRiskScoringResult
-            createdBy:
-              type: string
     InternalConsumerUserEvent:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/ConsumerUserEventWithRulesResult
@@ -10411,23 +10384,6 @@ components:
         - averageInvestigationTimeCases
         - averageInvestigationTimeAlerts
         - totalSarReported
-    DashboardStatsPaymentApprovals:
-      type: object
-      title: DashboardStatsPaymentApprovals
-      properties:
-        accountId:
-          type: string
-        approved:
-          type: number
-        blocked:
-          type: number
-        averageDecisionTime:
-          type: number
-      required:
-        - accountId
-        - approved
-        - blocked
-        - averageDecisionTime
     DashboardStatsClosingReasonDistributionStats:
       type: object
       title: DashboardStatsClosingReasonDistributionStats
@@ -18028,14 +17984,6 @@ components:
       required:
         - items
         - total
-    DashboardStatsPaymentApprovalsResponse:
-      title: DashboardStatsPaymentApprovalsResponse
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/DashboardStatsPaymentApprovals'
     DashboardStatsTeamSLAItemResponse:
       title: DashboardStatsTeamSLAItemResponse
       type: object
