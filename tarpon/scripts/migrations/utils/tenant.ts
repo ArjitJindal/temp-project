@@ -39,6 +39,21 @@ export async function migrateAllTenants(
           auth0TenantConfig: Auth0DevTenantConfig,
           auth0Domain: 'dev-flagright.eu.auth0.com',
         },
+        {
+          tenant: {
+            id: 'cypress-tenant',
+            name: 'Cypress Flagright',
+            orgId: '',
+            apiAudience: '',
+            region: 'local',
+            isProductionAccessDisabled: false,
+            tenantCreatedAt: new Date().toISOString(),
+            consoleApiUrl: 'https://console.flagright.com',
+            auth0Domain: 'dev-flagright.eu.auth0.com',
+          },
+          auth0TenantConfig: Auth0DevTenantConfig,
+          auth0Domain: 'dev-flagright.eu.auth0.com',
+        },
       ]
     } else {
       tenantInfos = await TenantService.getAllTenants(

@@ -98,7 +98,6 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
                 </Label>
                 <Label label="ML model" required={{ value: true, showHint: true }}>
                   <Select
-                    portaled
                     options={models
                       ?.filter((model) => model.enabled)
                       .map((model) => ({
@@ -136,7 +135,6 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
                       });
                     }}
                     placeholder="Select ML model"
-                    optionLabelProp="labelText"
                   />
                 </Label>
               </Card.Section>

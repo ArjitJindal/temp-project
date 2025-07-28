@@ -1,0 +1,24 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  padding: @figma-vars--tokens-spacingSpacing2xs @figma-vars--tokens-spacingSpacingXs;
+  border-radius: @figma-vars--tokens-spacingSpacing3xs;
+
+  &.isNested {
+    padding-left: @figma-vars--tokens-spacingSpacingL;
+  }
+
+  &.isDisabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &.isInteractive {
+    cursor: pointer;
+
+    &:hover {
+      background-color: @figma-vars--tokens-colorBackgroundInformationHue;
+    }
+  }
+}

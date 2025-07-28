@@ -215,7 +215,6 @@ const MultipleSelect: React.FC<
   }));
   return (
     <Select<string>
-      style={{ width: '100%' }}
       value={value?.values.map(({ content }) => `${content}`) ?? []}
       onChange={(value) => {
         onChange(riskValueMultiple((value ?? []).map((x) => riskValueLiteral(x))));
@@ -239,7 +238,6 @@ const SingleSelect: React.FC<
 
   return (
     <Select<RiskParameterValueLiteral['content']>
-      style={{ width: '100%' }}
       value={value?.content ?? ''}
       onChange={(value) => {
         onChange(riskValueLiteral(value));
@@ -325,7 +323,6 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value, onChang
               isDisabled={onChange == null}
               value={value.startGranularity}
               options={DAY_RANGE_GRANULARITY}
-              style={{ width: 150 }}
               onChange={(newValue) => {
                 if (onChange && newValue) {
                   onChange({
@@ -356,21 +353,22 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value, onChang
                 }
               }}
             />
-            <Select<RiskParameterValueDayRangeEndGranularityEnum>
-              isDisabled={onChange == null}
-              value={value.endGranularity}
-              options={EXTENDED_DAY_RANGE_GRANULARITY}
-              style={{ width: 150 }}
-              onChange={(newValue) => {
-                if (onChange && newValue) {
-                  onChange({
-                    ...value,
-                    kind: 'DAY_RANGE',
-                    endGranularity: newValue,
-                  });
-                }
-              }}
-            />
+            <div style={{ width: 150 }}>
+              <Select<RiskParameterValueDayRangeEndGranularityEnum>
+                isDisabled={onChange == null}
+                value={value.endGranularity}
+                options={EXTENDED_DAY_RANGE_GRANULARITY}
+                onChange={(newValue) => {
+                  if (onChange && newValue) {
+                    onChange({
+                      ...value,
+                      kind: 'DAY_RANGE',
+                      endGranularity: newValue,
+                    });
+                  }
+                }}
+              />
+            </div>
           </div>
         </Label>
       </div>
@@ -539,12 +537,13 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
                 value={previousEnd}
                 htmlAttrs={{ type: 'number', style: { width: 100 } }}
               />
-              <Select
-                isDisabled={true}
-                options={DAY_RANGE_GRANULARITY}
-                value={previousEndGranularity}
-                style={{ width: 150 }}
-              />
+              <div style={{ width: 150 }}>
+                <Select
+                  isDisabled={true}
+                  options={DAY_RANGE_GRANULARITY}
+                  value={previousEndGranularity}
+                />
+              </div>
             </div>
           </Label>
         </div>
@@ -567,23 +566,24 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
                   );
                 }}
               />
-              <Select
-                isDisabled={disabled}
-                onChange={(val) => {
-                  onChange(
-                    riskValueDayRange(
-                      startValue,
-                      previousEndGranularity as RiskParameterValueDayRangeStartGranularityEnum,
-                      value?.end ?? 0,
-                      val as RiskParameterValueDayRangeEndGranularityEnum,
-                    ),
-                  );
-                }}
-                options={EXTENDED_DAY_RANGE_GRANULARITY}
-                value={value?.endGranularity ?? previousEndGranularity}
-                style={{ width: 150 }}
-                mode="SINGLE"
-              />
+              <div style={{ width: 150 }}>
+                <Select
+                  isDisabled={disabled}
+                  onChange={(val) => {
+                    onChange(
+                      riskValueDayRange(
+                        startValue,
+                        previousEndGranularity as RiskParameterValueDayRangeStartGranularityEnum,
+                        value?.end ?? 0,
+                        val as RiskParameterValueDayRangeEndGranularityEnum,
+                      ),
+                    );
+                  }}
+                  options={EXTENDED_DAY_RANGE_GRANULARITY}
+                  value={value?.endGranularity ?? previousEndGranularity}
+                  mode="SINGLE"
+                />
+              </div>
             </div>
           </Label>
         </div>

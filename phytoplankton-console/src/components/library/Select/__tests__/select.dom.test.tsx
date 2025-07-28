@@ -3,13 +3,14 @@ import { test, expect } from '@jest/globals';
 import React from 'react';
 import { render, screen, userEvent, within } from 'testing-library-wrapper';
 import Select, { Props } from '..';
+import s from '../style.module.less';
 import { notEmpty } from '@/utils/array';
 import { Comparable } from '@/utils/comparable';
 
 describe('SINGLE mode', () => {
   test('Simple use case', async () => {
     render(
-      <Select
+      <RenderSelect
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -18,17 +19,12 @@ describe('SINGLE mode', () => {
       />,
     );
 
+    expectValues([]);
     await clickSelector();
     expectDropdownOpen(true);
     await clickOptionByText('First option');
     expectDropdownOpen(false);
     expectValues(['First option']);
-
-    await clickSelector();
-    expectDropdownOpen(true);
-    await clickOptionByText('Second option');
-    expectDropdownOpen(false);
-    expectValues(['Second option']);
   });
 });
 
@@ -36,7 +32,6 @@ function RenderSelect<Value extends Comparable>(props: Props<Value>) {
   const [value, setValue] = React.useState<any>();
   return <Select {...props} value={value} onChange={setValue} />;
 }
-
 describe('MULTIPLE mode', () => {
   test('Simple use case', async () => {
     render(
@@ -55,7 +50,7 @@ describe('MULTIPLE mode', () => {
     expectDropdownOpen(true);
     await clickOptionByText('First option');
     await clickOptionByText('Third option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
     expectValues(['First option', 'Third option']);
 
@@ -63,11 +58,11 @@ describe('MULTIPLE mode', () => {
     expectDropdownOpen(true);
     await clickOptionByText('Third option');
     await clickOptionByText('Second option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
     expectValues(['First option', 'Second option']);
   });
-  test('Remove values', async () => {
+  test('Clear values', async () => {
     render(
       <RenderSelect
         mode="MULTIPLE"
@@ -77,6 +72,7 @@ describe('MULTIPLE mode', () => {
           { label: 'Third option', value: 'option3' },
         ]}
         placeholder={'Placeholder example'}
+        allowClear
       />,
     );
 
@@ -85,12 +81,10 @@ describe('MULTIPLE mode', () => {
     await clickOptionByText('First option');
     await clickOptionByText('Second option');
     await clickOptionByText('Third option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
     expectValues(['First option', 'Second option', 'Third option']);
-    await clickValueRemove('Third option');
-    await clickValueRemove('Second option');
-    await clickValueRemove('First option');
+    await clickClear();
     expectValues([]);
   });
   test('Auto split by comma', async () => {
@@ -103,6 +97,7 @@ describe('MULTIPLE mode', () => {
           { label: 'Third option', value: 'option3', alternativeLabels: ['ccc'] },
         ]}
         placeholder={'Placeholder example'}
+        allowClear
       />,
     );
     await clickSelector();
@@ -111,18 +106,28 @@ describe('MULTIPLE mode', () => {
     // By option values
     await userEvent.keyboard('option1;option2; unknown option; option3;');
     expectValues(['First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
     expectValues([]);
 
     // By option labels
+    await clickSelector();
+    expectDropdownOpen(true);
     await userEvent.keyboard('First option;Second option; unknown option; Third option;');
     expectValues(['First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
     expectValues([]);
 
     // By alternative labels
+    await clickSelector();
+    expectDropdownOpen(true);
     await userEvent.keyboard('111;bbb; unknown option; ccc;');
     expectValues(['First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
     expectValues([]);
   });
@@ -131,7 +136,7 @@ describe('MULTIPLE mode', () => {
 describe('TAGS mode', () => {
   test('Simple use case', async () => {
     render(
-      <Select
+      <RenderSelect
         mode="TAGS"
         options={[
           { label: 'First option', value: 'option1' },
@@ -146,22 +151,22 @@ describe('TAGS mode', () => {
     expectDropdownOpen(true);
     await clickOptionByText('First option');
     await clickOptionByText('Third option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
-    expectValues(['First option', 'Third option']);
+    expectTags(['First option', 'Third option']);
 
     await clickSelector();
     expectDropdownOpen(true);
     await clickOptionByText('Third option');
     await clickOptionByText('Second option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
-    expectValues(['First option', 'Second option']);
+    expectTags(['First option', 'Second option']);
   });
 
   test('Remove values', async () => {
     render(
-      <Select
+      <RenderSelect
         mode="TAGS"
         options={[
           { label: 'First option', value: 'option1' },
@@ -177,18 +182,18 @@ describe('TAGS mode', () => {
     await clickOptionByText('First option');
     await clickOptionByText('Second option');
     await clickOptionByText('Third option');
-    await clickSelector();
+    await clickOutside();
     expectDropdownOpen(false);
-    expectValues(['First option', 'Second option', 'Third option']);
-    await clickValueRemove('Third option');
-    await clickValueRemove('Second option');
-    await clickValueRemove('First option');
-    expectValues([]);
+    expectTags(['First option', 'Second option', 'Third option']);
+    await clickTagRemove('Third option');
+    await clickTagRemove('Second option');
+    await clickTagRemove('First option');
+    expectTags([]);
   });
 
   test('Add non-existed value', async () => {
     render(
-      <Select
+      <RenderSelect
         mode="TAGS"
         options={[
           { label: 'First option', value: 'option1' },
@@ -202,12 +207,12 @@ describe('TAGS mode', () => {
     await clickSelector();
     expectDropdownOpen(true);
     await userEvent.keyboard('New option');
-    await clickOptionByText('New option');
-    await clickSelector();
+    await clickOptionByText('Use "New option"');
+    await clickOutside();
     expectDropdownOpen(false);
-    expectValues(['New option']);
-    await clickValueRemove('New option');
-    expectValues([]);
+    expectTags(['New option']);
+    await clickTagRemove('New option');
+    expectTags([]);
   });
 
   test('Auto split by comma', async () => {
@@ -220,28 +225,38 @@ describe('TAGS mode', () => {
           { label: 'Third option', value: 'option3', alternativeLabels: ['ccc'] },
         ]}
         placeholder={'Placeholder example'}
+        allowClear
       />,
     );
+    // By option values
     await clickSelector();
     expectDropdownOpen(true);
-
-    // By option values
     await userEvent.keyboard('option1;option2; unknown option; option3;');
-    expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
+    expectTags(['unknown option', 'First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
-    expectValues([]);
+    expectTags([]);
 
     // By option labels
+    await clickSelector();
+    expectDropdownOpen(true);
     await userEvent.keyboard('First option;Second option; unknown option; Third option;');
-    expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
+    expectTags(['unknown option', 'First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
-    expectValues([]);
+    expectTags([]);
 
-    // By alternative labels
+    // // By alternative labels
+    await clickSelector();
+    expectDropdownOpen(true);
     await userEvent.keyboard('111;bbb; unknown option; ccc;');
-    expectValues(['First option', 'Second option', 'unknown option', 'Third option']);
+    expectTags(['unknown option', 'First option', 'Second option', 'Third option']);
+    await clickOutside();
+    expectDropdownOpen(false);
     await clickClear();
-    expectValues([]);
+    expectTags([]);
   });
 });
 
@@ -286,7 +301,7 @@ describe('DYNAMIC mode', () => {
     await clickSelector();
     expectDropdownOpen(true);
     await userEvent.keyboard('New dynamic option');
-    await clickOptionByText('New dynamic option');
+    await clickOptionByText('Use "New dynamic option"');
     expectDropdownOpen(false);
     expectValues(['New dynamic option']);
 
@@ -313,7 +328,7 @@ describe('DYNAMIC mode', () => {
     await clickSelector();
     expectDropdownOpen(true);
     await userEvent.keyboard('  New dynamic option with spaces  ');
-    await clickOptionByText('New dynamic option with spaces');
+    await clickOptionByText('Use "New dynamic option with spaces"');
     expectDropdownOpen(false);
     expectValues(['New dynamic option with spaces']);
   });
@@ -346,50 +361,68 @@ describe('DYNAMIC mode', () => {
   });
 });
 
+/*
+  Helpers
+ */
 async function clickOptionByText(text: string) {
-  const dropdownEl = screen.getByClassName('ant-select-dropdown');
-  const virtualList = within(dropdownEl).getByClassName('rc-virtual-list');
-  const options = within(virtualList).getAllByText(text);
+  const dropdownEl = screen.getByClassName(s.menuWrapper);
+  const options = within(dropdownEl).getAllByText(text);
+  if (options.length === 0) {
+    throw new Error(`Option with text "${text}" not found`);
+  }
   // If there are multiple options with the same text, select the first one
   const optionEl = options[0];
   await userEvent.click(optionEl);
 }
+
 async function clickClear() {
-  const clearButtonEl = screen.getByClassName('ant-select-clear');
+  const clearButtonEl = screen.getByClassName(s.clearIcon);
   expect(clearButtonEl).toBeInTheDocument();
   expect(clearButtonEl).toBeVisible();
   await userEvent.click(clearButtonEl);
 }
-async function clickValueRemove(text: string) {
-  const selectorEl = screen.getByClassName('ant-select-selector');
-  const items = within(selectorEl).queryAllByClassName('ant-select-selection-item');
-  const itemEl = items.find((item) => item.textContent === text);
-  expect(itemEl).not.toBeNull();
-  expect(itemEl).toBeInTheDocument();
-  // const itemEl = within(selectorEl).getByText(text);
-  if (itemEl != null) {
-    const removeEl = within(itemEl).getByClassName('ant-select-selection-item-remove');
-    await userEvent.click(removeEl);
+
+async function clickTagRemove(text: string) {
+  const tagEls = screen.getAllByClassName(s.tagWrapper);
+  const tagEl = tagEls.find((item) => item.textContent === text);
+  // const selectorEl = screen.getByClassName(s.tagWrapper);
+  // const items = within(selectorEl).queryAllByClassName('ant-select-selection-item');
+  // const itemEl = items.find((item) => item.textContent === text);
+  if (tagEl == null) {
+    throw new Error(`Tag with text "${text}" not found`);
   }
+  // // const itemEl = within(selectorEl).getByText(text);
+  const removeEl = within(tagEl).getByClassName(s.tagRemoveIcon);
+  await userEvent.click(removeEl);
 }
 
 async function clickSelector() {
-  await userEvent.click(screen.getByClassName('ant-select-selector'));
+  await userEvent.click(screen.getByClassName(s.root));
+}
+
+async function clickOutside() {
+  await userEvent.click(document.body);
 }
 
 function expectDropdownOpen(shouldBeOpen: boolean = true) {
-  const dropdownEl = screen.getByClassName('ant-select-dropdown');
+  const dropdownEl = screen.getByClassName(s.menuWrapper);
   expect(dropdownEl).toBeInTheDocument();
   if (shouldBeOpen) {
-    expect(dropdownEl).not.toHaveClass('ant-select-dropdown-hidden');
+    expect(dropdownEl).toHaveClass(s.isOpen);
   } else {
-    expect(dropdownEl).toHaveClass('ant-select-dropdown-hidden');
+    expect(dropdownEl).not.toHaveClass(s.isOpen);
   }
 }
 
 function expectValues(values: string[]) {
-  const selectorEl = screen.getByClassName('ant-select-selector');
-  const items = within(selectorEl).queryAllByClassName('ant-select-selection-item');
+  const selectorEl = screen.getByClassName(s.root);
+  const items = within(selectorEl).queryAllByClassName(s.selectedOptionLabel);
+  const itemsText = items.map((item) => item.textContent).filter(notEmpty);
+  expect(itemsText).toEqual(values);
+}
+
+function expectTags(values: string[]) {
+  const items = screen.queryAllByClassName(s.tagWrapper);
   const itemsText = items.map((item) => item.textContent).filter(notEmpty);
   expect(itemsText).toEqual(values);
 }

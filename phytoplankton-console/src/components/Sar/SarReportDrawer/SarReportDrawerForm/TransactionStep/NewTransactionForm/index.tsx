@@ -29,14 +29,7 @@ export default function NewTransactionForm(props: Props) {
       {({ validationResult }) => (
         <div className={s.root}>
           <InputField<FormValues, 'transactionId'> name={'transactionId'} label={'Transaction ID'}>
-            {(props) => (
-              <Select<string>
-                {...props}
-                portaled={true}
-                allowClear={true}
-                options={transactionIds}
-              />
-            )}
+            {(props) => <Select<string> {...props} allowClear={true} options={transactionIds} />}
           </InputField>
           <Button
             isDisabled={validationResult != null}

@@ -171,18 +171,19 @@ Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
 });
 
 Cypress.Commands.add('multiSelect', (preSelector, text) => {
-  cy.get(
-    `${preSelector} .ant-select > .ant-select-selector > .ant-select-selection-overflow`,
-  ).click();
-  cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
-    .invoke('attr', 'id')
-    .then((_) => {
-      cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
-        .eq(0)
-        .type(`${text}`, { force: true });
-      cy.get(`div[title="${text}"]`).click();
-    });
-  cy.get(`${preSelector} .ant-select`).first().click();
+  cy.get(`${preSelector} *[data-cy^=select-root]:visible`).click();
+  cy.get(`*[data-cy^=select-menu]`).should('be.visible');
+  cy.get(`*[data-cy^=menu-item-label][title="${text}"]:visible`).click();
+
+  // cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
+  //   .invoke('attr', 'id')
+  //   .then((_) => {
+  //     cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
+  //       .eq(0)
+  //       .type(`${text}`, { force: true });
+  //     cy.get(`div[title="${text}"]`).click();
+  //   });
+  // cy.get(`${preSelector} .ant-select`).first().click();
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {
