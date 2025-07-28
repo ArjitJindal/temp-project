@@ -35,5 +35,9 @@ export const NOTIFICATION_TYPES: {
       label: 'When there is any update in the case/alert you are assigned to.',
       value: ['ALERT_STATUS_UPDATE', 'CASE_STATUS_UPDATE', 'CASE_COMMENT', 'ALERT_COMMENT'],
     },
+    {
+      label: 'When a change to risk levels requires approval.',
+      value: ['RISK_CLASSIFICATION_APPROVAL'],
+    },
   ],
 };

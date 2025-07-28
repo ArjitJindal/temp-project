@@ -3,6 +3,7 @@ import { compact, memoize } from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { hasResources, Resource } from '@flagright/lib/utils'
+import { RiskLevelApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { AccountsService } from '../accounts'
 import { RoleService } from '../roles'
 import { NotificationsChannels } from './notifications-channels'
@@ -24,6 +25,7 @@ import { CaseComment } from './subscriptions/alert-comment'
 import { AlertComment } from './subscriptions/case-comment'
 import { AlertStatusUpdate } from './subscriptions/alert-status-update'
 import { CaseStatusUpdate } from './subscriptions/case-status-update'
+import { RiskClassificationApproval } from './subscriptions/risk-classification-approval'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -34,6 +36,9 @@ import {
   PartialNotification,
 } from '@/@types/notifications'
 import { Account } from '@/@types/openapi-internal/Account'
+import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
+import { WorkflowService } from '@/services/workflow'
+import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
 
 @traceable
 export class NotificationsService {
@@ -103,18 +108,98 @@ export class NotificationsService {
       new AlertComment(),
       new AlertStatusUpdate(),
       new CaseStatusUpdate(),
+      new RiskClassificationApproval(),
     ]
 
     for (const subscription of subscriptions) {
       if (await subscription.toSend(payload)) {
         const notification = await subscription.getNotification(payload)
         if (notification) {
-          notifications.push(notification)
+          // Special handling for risk classification approval notifications
+          if (
+            notification.notificationType === 'RISK_CLASSIFICATION_APPROVAL'
+          ) {
+            const enhancedNotification =
+              await this.enhanceRiskClassificationApprovalNotification(
+                notification,
+                payload as NotificationRawPayload<RiskClassificationConfigApproval>
+              )
+            if (enhancedNotification) {
+              notifications.push(enhancedNotification)
+            }
+          } else {
+            notifications.push(notification)
+          }
         }
       }
     }
 
     return notifications
+  }
+
+  private async enhanceRiskClassificationApprovalNotification(
+    notification: PartialNotification,
+    payload: NotificationRawPayload<RiskClassificationConfigApproval>
+  ): Promise<PartialNotification | undefined> {
+    const approval = payload.newImage
+    if (!approval?.workflowRef) {
+      return
+    }
+
+    // Get the workflow definition to determine the next step role
+    const workflowService = new WorkflowService(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+
+    const workflow = await workflowService.getWorkflowVersion(
+      'risk-levels-approval',
+      approval.workflowRef.id,
+      approval.workflowRef.version.toString()
+    )
+
+    const workflowMachine = new RiskLevelApprovalWorkflowMachine(
+      workflow as RiskLevelApprovalWorkflow
+    )
+
+    // Get the next step in the approval chain
+    const pendingStep = workflowMachine.getApprovalStep(approval.approvalStep)
+
+    // Get users with the required role for the next step
+    const roleService = RoleService.getInstance(this.dynamoDb)
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const tenant = await accountsService.getTenantById(this.tenantId)
+
+    if (!tenant) {
+      return
+    }
+
+    const usersWithRole = await roleService.getUsersByRoleName(
+      pendingStep.role,
+      tenant
+    )
+    const userIds = usersWithRole.map((user) => user.id)
+
+    if (userIds.length === 0) {
+      return
+    }
+
+    return {
+      ...notification,
+      entityType: 'RISK_LEVELS',
+      recievers: userIds,
+      notificationData: {
+        ...notification.notificationData,
+        approval: {
+          ...(notification.notificationData as any).approval,
+          nextStepRole: pendingStep.role,
+          isLastStep: pendingStep.isLastStep,
+        },
+      },
+      metadata: {
+        ...notification.metadata,
+      },
+    }
   }
 
   private isNotificationSubscribed(
@@ -131,6 +216,7 @@ export class NotificationsService {
     const CASE_OVERVIEW_READ: Resource = `read:::case-management/case-overview/*`
     const CASE_DETAILS_READ: Resource = `read:::case-management/case-details/*`
     const USER_DETAILS_READ: Resource = `read:::users/user-details/*`
+    const RISK_LEVELS_READ: Resource = `read:::risk-scoring/risk-levels/*`
     const notificationTypeToPermission: Record<NotificationType, Resource[]> = {
       ALERT_ASSIGNMENT: [CASE_OVERVIEW_READ],
       CASE_ASSIGNMENT: [CASE_OVERVIEW_READ],
@@ -147,6 +233,7 @@ export class NotificationsService {
       CASE_COMMENT: [CASE_DETAILS_READ],
       ALERT_STATUS_UPDATE: [CASE_OVERVIEW_READ],
       CASE_STATUS_UPDATE: [CASE_OVERVIEW_READ],
+      RISK_CLASSIFICATION_APPROVAL: [RISK_LEVELS_READ],
     }
 
     const [allUsers, allRoles] = await Promise.all([

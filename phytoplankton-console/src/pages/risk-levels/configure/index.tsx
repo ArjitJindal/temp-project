@@ -7,7 +7,7 @@ import styles from './index.module.less';
 import { Authorized } from '@/components/utils/Authorized';
 import { TopRightSectionRef } from '@/components/TopRightSection';
 import { useApi } from '@/api';
-import { getOr, isFailed, isSuccess } from '@/utils/asyncResource';
+import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
@@ -17,7 +17,7 @@ import { notEmpty } from '@/utils/array';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { DEFAULT_RISK_CLASSIFICATION_CONFIG } from '@/utils/risk-levels';
+import { isEqual } from '@/utils/lang';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
 
@@ -109,20 +109,17 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
   );
 
   useEffect(() => {
-    if (state == null) {
-      if (
-        getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_CONFIG) &&
-        isSuccess(riskValuesQueryResults.data)
-      ) {
-        setState(parseApiState(riskValuesQueryResults.data.value.classificationValues));
-        setNewState(parseApiState(riskValuesQueryResults.data.value.classificationValues));
-      }
-    } else {
-      setNewState(state);
-    }
-
     if (isFailed(riskValuesQueryResults.data)) {
       message.fatal('Failed to fetch risk values', new Error('Failed to fetch risk values'));
+    }
+    if (!isSuccess(riskValuesQueryResults.data)) {
+      return;
+    }
+    const newValue = riskValuesQueryResults.data.value;
+    const parsedState = parseApiState(newValue.classificationValues);
+    if (!isEqual(parsedState, state)) {
+      setState(parsedState);
+      setNewState(parsedState);
     }
   }, [state, riskValuesQueryResults.data]);
 
@@ -132,12 +129,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
         {!isSimulationMode ? (
           <AsyncResourceRenderer resource={riskValuesQueryResults.data}>
             {(data) => (
-              <RiskClassification
-                state={newState}
-                setState={setState}
-                riskValuesRefetch={riskValuesQueryResults.refetch}
-                riskValues={data}
-              />
+              <RiskClassification state={newState} setState={setNewState} riskValues={data} />
             )}
           </AsyncResourceRenderer>
         ) : (

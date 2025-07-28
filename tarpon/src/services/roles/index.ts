@@ -269,6 +269,8 @@ export class RoleService {
   public getUsersByRole = memoize(async (id: string, tenant: Tenant) => {
     const users = await this.cache.getUsersByRole(id, tenant)
 
+    // TODO: check if this is still needed, I believe it was only necessary
+    //       at release time when the caching was implemented
     if (!users?.length) {
       const data = await this.auth0.getUsersByRole(id, tenant)
 
@@ -284,6 +286,29 @@ export class RoleService {
     }
     return users
   })
+
+  public getUsersByRoleName = memoize(
+    async (roleName: string, tenant: Tenant) => {
+      const users = await this.cache.getUsersByRoleName(roleName, tenant)
+
+      // TODO: check if this is still needed, I believe it was only necessary
+      //       at release time when the caching was implemented (same as above)
+      if (!users?.length) {
+        const data = await this.auth0.getUsersByRoleName(roleName, tenant)
+
+        if (data?.length) {
+          await sendBatchJobCommand({
+            type: 'SYNC_AUTH0_DATA',
+            tenantId: tenant.id,
+            parameters: { tenantIds: [tenant.id], type: 'TENANT_IDS' },
+          })
+        }
+
+        return data
+      }
+      return users
+    }
+  )
 
   async updateRolePermissions(id: string, permissions: Permission[]) {
     await this.auth0.updateRolePermissions(id, permissions)

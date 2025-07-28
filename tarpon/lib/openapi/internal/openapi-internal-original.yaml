@@ -3952,6 +3952,67 @@ paths:
               $ref: '#/components/schemas/RiskClassificationRequest'
         required: true
     parameters: []
+  /pulse/risk-classification/workflowProposal:
+    get:
+      summary: Get pending risk classification approval
+      operationId: get-pulse-risk-classification-workflow-proposal
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-levels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskClassificationConfigApproval'
+        '404':
+          description: No pending approval found
+    post:
+      summary: Propose risk classification changes for approval
+      operationId: post-pulse-risk-classification-workflow-proposal
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-levels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskClassificationRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskClassificationConfigApproval'
+        '400':
+          description: Bad Request
+    parameters: []
+  /pulse/risk-classification/workflowAction:
+    post:
+      summary: Approve or reject risk classification changes
+      operationId: post-pulse-risk-classification-workflow-action
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-levels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskClassificationApprovalRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskClassificationConfigApproval'
+        '400':
+          description: Bad Request
+    parameters: []
   /pulse/risk-assignment:
     parameters: []
     post:
@@ -11616,6 +11677,52 @@ components:
         - classificationValues
         - id
         - createdAt
+    RiskClassificationConfigApproval:
+      type: object
+      title: RiskClassificationConfigApproval
+      properties:
+        riskClassificationConfig:
+          $ref: '#/components/schemas/RiskClassificationConfig'
+        comment:
+          type: string
+        workflowRef:
+          $ref: '#/components/schemas/WorkflowRef'
+        approvalStatus:
+          $ref: '#/components/schemas/RiskClassificationApprovalStatus'
+        approvalStep:
+          type: number
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+      required:
+        - riskClassificationConfig
+        - comment
+        - workflowRef
+        - approvalStatus
+        - approvalStep
+        - createdAt
+        - createdBy
+    RiskClassificationApprovalStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - CANCELLED
+    RiskClassificationApprovalRequest:
+      type: object
+      title: RiskClassificationApprovalRequest
+      properties:
+        action:
+          type: string
+          enum:
+            - accept
+            - reject
+            - cancel
+          description: Whether to accept or reject the proposed changes
+      required:
+        - action
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       type: object
@@ -12142,6 +12249,7 @@ components:
         - WORKFLOWS_BUILDER
         - TRANSLITERATION
         - OPEN_SEARCH
+        - APPROVAL_WORKFLOWS
         - DISABLE_GLOBAL_AGGREGATIONS
       description: ''
     NewRiskFactorIdResponse:
@@ -12604,6 +12712,17 @@ components:
         - MANUAL
         - SYSTEM
         - EXTERNAL
+    WorkflowRef:
+      title: WorkflowRef
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: number
+      required:
+        - id
+        - version
     ManualCaseCreationDataRequest:
       type: object
       title: ManualCaseCreationDataRequest
@@ -15549,6 +15668,7 @@ components:
             - ALERT_LIST
             - DOCUMENT
             - RISK_CLASSIFICATION
+            - RISK_CLASSIFICATION_PROPOSAL
             - DRS_RISK_LEVEL
             - PARAMETER_RISK_ITEM
             - ASSIGNMENT
@@ -17516,6 +17636,7 @@ components:
         - CASE_COMMENT
         - ALERT_STATUS_UPDATE
         - CASE_STATUS_UPDATE
+        - RISK_CLASSIFICATION_APPROVAL
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -17653,6 +17774,7 @@ components:
             - CASE
             - ALERT
             - USER
+            - RISK_LEVELS
         notificationData:
           type: object
         consoleNotificationStatuses:

@@ -1,9 +1,9 @@
-import { WorkflowItem, WorkflowType } from '@/utils/api/workflows';
+import { CaseAlertWorkflowItem, WorkflowType } from '@/utils/api/workflows';
 
 export type Template = {
   id: string;
   description: string;
-  item: Omit<WorkflowItem, 'id' | 'version' | 'enabled'>;
+  item: Omit<CaseAlertWorkflowItem, 'id' | 'version' | 'enabled'>;
 };
 
 export const TEMPLATE_GROUPS: {

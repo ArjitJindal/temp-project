@@ -225,4 +225,11 @@ export class Auth0RolesRepository extends BaseRolesRepository {
     const roleName = getRoleDisplayName(role.name)
     return accounts.filter((account) => account.role === roleName)
   }
+
+  public async getUsersByRoleName(roleName: string, tenant: Tenant) {
+    const accountsService = new Auth0AccountsRepository(this.auth0Domain)
+    const accounts = await accountsService.getTenantAccounts(tenant)
+    const displayRoleName = getRoleDisplayName(roleName)
+    return accounts.filter((account) => account.role === displayRoleName)
+  }
 }

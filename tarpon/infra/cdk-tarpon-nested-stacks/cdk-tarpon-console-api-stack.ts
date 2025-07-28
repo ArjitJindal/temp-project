@@ -339,8 +339,14 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
     })
 
+    /* SAR */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+    })
+
+    /* Workflows */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
     })
 
     /**

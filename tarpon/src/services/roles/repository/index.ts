@@ -32,6 +32,10 @@ export abstract class BaseRolesRepository {
     permissions: Permission[]
   ): Promise<void>
   abstract getUsersByRole(id: string, tenant: Tenant): Promise<Account[]>
+  abstract getUsersByRoleName(
+    roleName: string,
+    tenant: Tenant
+  ): Promise<Account[]>
   protected shouldFetchRootRole(): boolean {
     return !!isFlagrightInternalUser() && getContext()?.user?.role === 'root'
   }

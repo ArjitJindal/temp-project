@@ -90,13 +90,24 @@ export function useAuth0User(): FlagrightAuth0User {
 
 export function useCurrentUser(): Account | null {
   const [users] = useUsers();
+  const userId = useCurrentUserId();
+  return users[userId];
+}
+
+export function useCurrentUserId(): string {
   const user = useAuth0User();
-  return users[user.userId];
+  return user.userId;
 }
 
 export function useAccountRole(): UserRole {
+  const rawRole = useAccountRawRole();
+
+  return parseUserRole(rawRole);
+}
+
+export function useAccountRawRole(): string | null {
   const user = useAuth0User();
-  return parseUserRole(user?.role ?? null);
+  return user?.role ?? null;
 }
 
 export function usePermissions(): Map<Permission, boolean> {

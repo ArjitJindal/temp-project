@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import RiskClassificationTable, { parseApiState } from '../RiskClassificationTable';
 import RiskLevelsDownloadButton from '../components/RiskLevelsDownloadButton';
 import { useRiskClassificationMutation } from '../hooks/useRiskClassificationMutation';
@@ -8,7 +9,10 @@ import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
-import { RISK_LEVELS_VERSION_HISTORY_ITEM } from '@/utils/queries/keys';
+import {
+  RISK_CLASSIFICATION_WORKFLOW_PROPOSAL,
+  RISK_LEVELS_VERSION_HISTORY_ITEM,
+} from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import { H4 } from '@/components/ui/Typography';
@@ -16,10 +20,14 @@ import { useRiskClassificationConfig } from '@/utils/risk-levels';
 import Tag from '@/components/library/Tag';
 import { message } from '@/components/library/Message';
 import { RiskClassificationHistory } from '@/apis/models/RiskClassificationHistory';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { map, match, success } from '@/utils/asyncResource';
+import Tooltip from '@/components/library/Tooltip';
 
 export default function RiskVersionHistoryItem() {
   const { versionId } = useParams();
   const api = useApi();
+
   const queryResult = useQuery<RiskClassificationHistory>(
     RISK_LEVELS_VERSION_HISTORY_ITEM(versionId ?? ''),
     () =>
@@ -44,6 +52,23 @@ export default function RiskVersionHistoryItem() {
       riskClassificationConfig.refetch();
     },
   });
+
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+  const { data: pendingProposalRes } = useQuery(
+    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
+    async () => {
+      return await api.getPulseRiskClassificationWorkflowProposal();
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+  const isPendingApprovalRes = useMemo(() => {
+    if (!isApprovalWorkflowsEnabled) {
+      return success(false);
+    }
+    return map(pendingProposalRes, (value) => value != null);
+  }, [isApprovalWorkflowsEnabled, pendingProposalRes]);
 
   return (
     <BreadCrumbsWrapper
@@ -81,11 +106,33 @@ export default function RiskVersionHistoryItem() {
                           });
                         }}
                       >
-                        {(props) => (
-                          <Button type="PRIMARY" onClick={props.onClick}>
-                            Restore configuration
-                          </Button>
-                        )}
+                        {(props) => {
+                          const pendingApprovalMessage: string | undefined = match(
+                            isPendingApprovalRes,
+                            {
+                              init: () => undefined,
+                              success: (value) =>
+                                value
+                                  ? 'There is already pending risk configuration suggestion, unable to restore configuration'
+                                  : undefined,
+                              loading: () =>
+                                'Checking if there is already pending risk configuration suggestion',
+                              failed: (message) =>
+                                `Unable to check if there is already pending risk configuration suggestion. ${message}`,
+                            },
+                          );
+                          return (
+                            <Tooltip title={pendingApprovalMessage}>
+                              <Button
+                                type="PRIMARY"
+                                onClick={props.onClick}
+                                isDisabled={pendingApprovalMessage != null}
+                              >
+                                Restore configuration
+                              </Button>
+                            </Tooltip>
+                          );
+                        }}
                       </Confirm>
                     )}
                     <RiskLevelsDownloadButton classificationValues={data.scores} />

@@ -1,12 +1,12 @@
 import { uniq } from 'lodash';
 import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
-import { WorkflowItem } from '@/utils/api/workflows';
+import { CaseAlertWorkflowItem } from '@/utils/api/workflows';
 import { notEmpty } from '@/utils/array';
 
 import { FINAL_STATE } from '@/components/WorkflowBuilder/consts';
 
 type WorkflowItemSerialized = Omit<
-  WorkflowItem,
+  CaseAlertWorkflowItem,
   'id' | 'version' | 'name' | 'workflowType' | 'autoClose'
 >;
 

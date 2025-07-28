@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import RiskClassificationTable, { State, parseApiState } from '../RiskClassificationTable';
-import RiskLevelsDownloadButton from '../components/RiskLevelsDownloadButton';
+import { Resource } from '@flagright/lib/utils';
+import RiskClassificationTable, {
+  parseApiState,
+  State as RiskClassificationTableState,
+} from '../RiskClassificationTable';
 import { useRiskClassificationMutation } from '../hooks/useRiskClassificationMutation';
 import s from './index.module.less';
+import Header from './Header';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { useHasResources } from '@/utils/user-utils';
 import { RiskClassificationConfig } from '@/apis';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
-import EditIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 import Alert from '@/components/library/Alert';
 import Modal from '@/components/library/Modal';
 import Label from '@/components/library/Label';
@@ -18,18 +21,19 @@ import { RISK_LEVEL_VERSION } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { message } from '@/components/library/Message';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type Props = {
   riskValues: RiskClassificationConfig;
-  state: State | null;
-  setState: React.Dispatch<React.SetStateAction<State | null>>;
-  riskValuesRefetch: () => void;
+  state: RiskClassificationTableState | null;
+  setState: React.Dispatch<React.SetStateAction<RiskClassificationTableState | null>>;
 };
 
-export default function RiskQualification(props: Props) {
+export default function RiskClassification(props: Props) {
   const api = useApi();
-  const hasRiskLevelPermission = useHasResources(['write:::risk-scoring/risk-levels/*']);
-  const { riskValues, state, setState, riskValuesRefetch } = props;
+  const requiredResources: Resource[] = ['write:::risk-scoring/risk-levels/*' as Resource];
+  const hasRiskLevelPermission = useHasResources(requiredResources);
+  const { riskValues, state, setState } = props;
   const riskLevelQueryResults = useQuery(RISK_LEVEL_VERSION(), async () => {
     const data = await api.getNewRiskLevelId();
     return {
@@ -37,22 +41,30 @@ export default function RiskQualification(props: Props) {
     };
   });
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
+  const [showProposedValues, setShowProposedValues] = useState<RiskClassificationTableState | null>(
+    null,
+  );
+
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
 
   const saveRiskValuesMutation = useRiskClassificationMutation({
-    successAction: riskValuesRefetch,
+    successAction: () => {
+      setState(parseApiState(riskValues.classificationValues));
+      setIsUpdateEnabled(false);
+      setIsModalOpen(false);
+    },
   });
 
   async function handleSave() {
     if (state == null) {
       return;
     }
-
     if (!data.comment) {
       message.error('Comment is required');
       return;
     }
-
     saveRiskValuesMutation.mutate({ state, comment: data.comment });
   }
 
@@ -63,7 +75,6 @@ export default function RiskQualification(props: Props) {
 
   const riskLevelId = getOr(riskLevelQueryResults.data, { id: '' }).id;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [data, setData] = useState<{ riskLevel: string; comment: string }>({
     riskLevel: riskLevelId,
     comment: '',
@@ -97,14 +108,15 @@ export default function RiskQualification(props: Props) {
     </Modal>
   );
 
-  // todo: i18n
   return (
     <PageWrapperContentContainer
       footer={
         isUpdateEnabled && (
           <div className={s.footerButtons}>
             <Alert type="TRANSPARENT">
-              Note that updating risk level would save the configuration as a new version
+              {`Note that updating risk level would save the configuration as a new version. ${
+                isApprovalWorkflowsEnabled && ' Also, updating risk level would require approval.'
+              }`}
             </Alert>
             <div className={s.footerButtons}>
               <Button
@@ -123,24 +135,15 @@ export default function RiskQualification(props: Props) {
       }
     >
       {modal}
-      {!isUpdateEnabled && (
-        <div className={s.header}>
-          <div className={s.headerLeft}>{/*Empty div to align the header right*/}</div>
-          <div className={s.headerRight}>
-            <Button
-              type="SECONDARY"
-              onClick={() => setIsUpdateEnabled(true)}
-              isDisabled={!riskValues.classificationValues.length || isUpdateEnabled}
-              icon={<EditIcon />}
-            >
-              Update risk levels
-            </Button>
-            <RiskLevelsDownloadButton classificationValues={riskValues.classificationValues} />
-          </div>
-        </div>
-      )}
-      <RiskClassificationTable
+      <Header
         state={state}
+        riskValues={riskValues}
+        showProposalState={[showProposedValues, setShowProposedValues]}
+        updateEnabledState={[isUpdateEnabled, setIsUpdateEnabled]}
+        requiredResources={requiredResources}
+      />
+      <RiskClassificationTable
+        state={showProposedValues ?? state}
         setState={setState}
         isDisabled={
           !riskValues.classificationValues.length || !hasRiskLevelPermission || !isUpdateEnabled

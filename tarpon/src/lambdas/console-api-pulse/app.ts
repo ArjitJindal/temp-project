@@ -4,13 +4,14 @@ import {
 } from 'aws-lambda'
 import { omit } from 'lodash'
 import { hasResources } from '@flagright/lib/utils'
+import { BadRequest } from 'http-errors'
 import { RiskService } from '@/services/risk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { userStatements } from '@/core/utils/context'
+import { hasFeature, userStatements } from '@/core/utils/context'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { S3Service } from '@/services/aws/s3-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -43,12 +44,60 @@ export const riskClassificationHandler = lambdaApi({
     })
 
     handlers.registerPostPulseRiskClassification(async (ctx, request) => {
+      // If approval workflows are enabled, use the workflow route instead
+      if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new BadRequest(
+          'Approval workflows are enabled. Please refresh the page.'
+        )
+      }
+
       const response = await riskService.createOrUpdateRiskClassificationConfig(
         request.RiskClassificationRequest.scores,
         request.RiskClassificationRequest.comment
       )
       return response.result
     })
+
+    // Workflow routes for risk classification approval
+    handlers.registerPostPulseRiskClassificationWorkflowProposal(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
+        const response = await riskService.workflowProposeRiskLevelChange(
+          request.RiskClassificationRequest.scores,
+          request.RiskClassificationRequest.comment
+        )
+        return response.result
+      }
+    )
+
+    handlers.registerPostPulseRiskClassificationWorkflowAction(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
+        const response = await riskService.workflowApproveRiskLevelChange(
+          request.RiskClassificationApprovalRequest.action
+        )
+        return response.result
+      }
+    )
+
+    handlers.registerGetPulseRiskClassificationWorkflowProposal(
+      async (_ctx, _request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
+        return await riskService.workflowGetPendingRiskLevelChange()
+      }
+    )
 
     handlers.registerGetRiskLevelVersionHistoryByVersionId(
       async (ctx, request) => {

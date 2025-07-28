@@ -71,21 +71,17 @@ export default function WorkflowsCreatePage() {
             ? {
                 alertWorkflow: {
                   ...serialized,
-                  author: '', // TODO: add author
-                  id: 'not_required_for_creation',
-                  workflowType: 'alert',
-                  version: state.transitions.length, // TODO: add version
                   name: 'not_required_for_creation',
+                  description: 'not_required_for_creation',
+                  enabled: true,
                 },
               }
             : {
                 caseWorkflow: {
                   ...serialized,
-                  author: '', // TODO: add author
-                  id: 'not_required_for_creation',
-                  workflowType: 'case',
-                  version: state.transitions.length, // TODO: add version
                   name: 'not_required_for_creation',
+                  description: 'not_required_for_creation',
+                  enabled: true,
                   autoClose: false, // todo: fill
                 },
               },

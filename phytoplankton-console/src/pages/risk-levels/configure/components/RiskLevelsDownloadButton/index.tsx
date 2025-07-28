@@ -6,8 +6,10 @@ import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.r
 
 export default function RiskLevelsDownloadButton({
   classificationValues,
+  isDisabled,
 }: {
   classificationValues: RiskClassificationScore[];
+  isDisabled?: boolean;
 }) {
   const handleDownload = useCallback(() => {
     downloadAsCSV({
@@ -20,7 +22,12 @@ export default function RiskLevelsDownloadButton({
     });
   }, [classificationValues]);
   return (
-    <Button type="TETRIARY" onClick={handleDownload} icon={<DownloadLineIcon />}>
+    <Button
+      type="TETRIARY"
+      onClick={handleDownload}
+      icon={<DownloadLineIcon />}
+      isDisabled={isDisabled}
+    >
       Download
     </Button>
   );

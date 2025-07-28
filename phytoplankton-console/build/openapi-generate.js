@@ -55,7 +55,7 @@ function replaceWorkflow(paths) {
       .readFileSync(path)
       .toString()
       .replace(
-        "import { CaseWorkflow | AlertWorkflow } from './CaseWorkflow | AlertWorkflow';",
+        "import { CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow | RuleApprovalWorkflow } from './CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow | RuleApprovalWorkflow';",
         '',
       );
 
@@ -73,7 +73,7 @@ function replaceWorkflowDefaultApi(paths) {
       .readFileSync(path)
       .toString()
       .replace(
-        "import { CaseWorkflow | AlertWorkflow } from '../models/CaseWorkflow | AlertWorkflow';",
+        "import { CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow | RuleApprovalWorkflow } from '../models/CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow | RuleApprovalWorkflow';",
         '',
       );
 

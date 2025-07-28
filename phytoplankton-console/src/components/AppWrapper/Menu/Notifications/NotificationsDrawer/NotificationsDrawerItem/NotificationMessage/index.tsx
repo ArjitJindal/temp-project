@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import s from './index.module.less';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import { neverReturn } from '@/utils/lang';
 import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 import { getNextStatus, statusEscalated, statusInReview } from '@/utils/case-utils';
+import Button from '@/components/library/Button';
+import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useQuery } from '@/utils/queries/hooks';
+import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
+import { map, success } from '@/utils/asyncResource';
+import { useApi } from '@/api';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   notification: Notification;
@@ -10,6 +19,26 @@ interface Props {
 
 export default function NotificationMessage(props: Props) {
   const { notification } = props;
+  const sendProposalActionMutation = useSendProposalActionMutation();
+
+  const api = useApi();
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+  const { data: pendingProposalRes } = useQuery(
+    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
+    async () => {
+      return await api.getPulseRiskClassificationWorkflowProposal();
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+  const isPendingApprovalRes = useMemo(() => {
+    if (!isApprovalWorkflowsEnabled) {
+      return success(false);
+    }
+    return map(pendingProposalRes, (value) => value != null);
+  }, [isApprovalWorkflowsEnabled, pendingProposalRes]);
+
   if (
     notification.notificationType === 'ALERT_COMMENT_MENTION' ||
     notification.notificationType === 'CASE_COMMENT_MENTION' ||
@@ -102,6 +131,46 @@ export default function NotificationMessage(props: Props) {
         <Entity {...props} />
       </>
     );
+  } else if (notification.notificationType === 'RISK_CLASSIFICATION_APPROVAL') {
+    return (
+      <>
+        <Author {...props} />
+        {' updated '}
+        <Entity {...props} />
+        {'and waiting for approval'}
+        <AsyncResourceRenderer resource={isPendingApprovalRes}>
+          {(isPendingApproval) =>
+            isPendingApproval ? (
+              <div
+                className={s.buttons}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <Button
+                  type={'PRIMARY'}
+                  onClick={() => {
+                    sendProposalActionMutation.mutate({ action: 'accept' });
+                  }}
+                >
+                  Accept
+                </Button>
+                <Button
+                  type={'DANGER'}
+                  onClick={() => {
+                    sendProposalActionMutation.mutate({ action: 'reject' });
+                  }}
+                >
+                  Reject
+                </Button>
+              </div>
+            ) : (
+              <></>
+            )
+          }
+        </AsyncResourceRenderer>
+      </>
+    );
   } else {
     return neverReturn(
       notification.notificationType,
@@ -122,6 +191,8 @@ function Entity(props: Props) {
     label = 'a case ';
   } else if (notification.entityType === 'USER') {
     label = 'a user ';
+  } else if (notification.entityType === 'RISK_LEVELS') {
+    label = 'a risk levels ';
   } else {
     label = neverReturn(notification.entityType, 'unknown object');
   }

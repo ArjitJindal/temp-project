@@ -12,6 +12,7 @@ import { StackConstants } from '@lib/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
+import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
@@ -22,7 +23,8 @@ interface WorkflowServiceDeps {
   mongoDb: MongoClient
 }
 
-type Workflow = CaseWorkflow | AlertWorkflow
+export type Workflow = CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow
+
 type InternalWorkflow = Workflow & {
   PartitionKeyID: string
   SortKeyID: string

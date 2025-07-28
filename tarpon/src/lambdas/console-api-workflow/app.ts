@@ -3,6 +3,11 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
+import {
+  CaseWorkflowMachine,
+  AlertWorkflowMachine,
+  RiskLevelApprovalWorkflowMachine,
+} from '@flagright/lib/classes/workflow-machine'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -11,14 +16,13 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
-import {
-  CaseWorkflowMachine,
-  AlertWorkflowMachine,
-} from '@/utils/workflow-machine'
+import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 
-function parseWorkflow(request): CaseWorkflow | AlertWorkflow {
-  let workflow: CaseWorkflow | AlertWorkflow
+type GenericWorkflow = CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow
+
+function parseWorkflow(request): GenericWorkflow {
+  let workflow: GenericWorkflow
   // TODO: fix this!
   const inlineObject = request.CreateWorkflowType || request.UpdateWorkflowType
 
@@ -40,6 +44,18 @@ function parseWorkflow(request): CaseWorkflow | AlertWorkflow {
         'Invalid workflow definition: ' + (error as Error).message
       )
     }
+  } else if (request.workflowType === 'risk-levels-approval') {
+    workflow =
+      inlineObject.riskLevelApprovalWorkflow as RiskLevelApprovalWorkflow
+    try {
+      RiskLevelApprovalWorkflowMachine.validate(workflow)
+    } catch (error) {
+      throw new BadRequest(
+        'Invalid workflow definition: ' + (error as Error).message
+      )
+    }
+    // } else if (request.workflowType === 'rule-approval') {
+    //   workflow = inlineObject.ruleApprovalWorkflow as RuleApprovalWorkflow
   } else {
     throw new BadRequest('Invalid workflow type')
   }

@@ -8,9 +8,11 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { intersection, padStart, pick } from 'lodash'
+import { RiskLevelApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { CounterRepository } from '../counter/repository'
+import { WorkflowService } from '../workflow'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -23,6 +25,8 @@ import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsU
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { publishAuditLog } from '@/services/audit-log'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import {
   DefaultApiGetDrsValuesRequest,
@@ -30,6 +34,12 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
+import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
+import { getContext } from '@/core/utils/context-storage'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
+import { WorkflowRef } from '@/@types/openapi-internal/WorkflowRef'
+import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
+import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-internal/RiskClassificationApprovalRequest'
 
 export const RISK_LEVEL_CONSTANT = 'RLV'
 
@@ -54,6 +64,12 @@ type RiskClassificationAuditLogReturnData = AuditLogReturnData<
   RiskClassificationHistory
 >
 
+type RiskClassificationApprovalAuditLogReturnData = AuditLogReturnData<
+  RiskClassificationConfigApproval,
+  RiskClassificationConfigApproval,
+  RiskClassificationConfigApproval
+>
+
 type DrsRiskItemAuditLogReturnData = AuditLogReturnData<
   DrsScore,
   DrsScore,
@@ -66,6 +82,7 @@ export class RiskService {
   dynamoDb: DynamoDBDocumentClient
   riskRepository: RiskRepository
   mongoDb: MongoClient
+  workflowService: WorkflowService
 
   constructor(
     tenantId: string,
@@ -78,6 +95,7 @@ export class RiskService {
       mongoDb: connections.mongoDb,
     })
     this.mongoDb = connections.mongoDb
+    this.workflowService = new WorkflowService(tenantId, connections)
   }
 
   async getRiskClassificationItem() {
@@ -412,6 +430,260 @@ export class RiskService {
         },
       ],
     }
+  }
+
+  /**
+   * Proposes a change to risk levels (creates a pending approval)
+   */
+  // TODO: fix logging
+  @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION_PROPOSAL', 'CREATE')
+  async workflowProposeRiskLevelChange(
+    riskClassificationValues: RiskClassificationScore[],
+    comment: string
+  ): Promise<RiskClassificationApprovalAuditLogReturnData> {
+    validateClassificationRequest(riskClassificationValues)
+
+    // Check if there's already a pending approval that can't be overwritten
+    const existingPending =
+      await this.riskRepository.getPendingRiskClassificationConfig()
+    if (existingPending && existingPending.approvalStatus === 'PENDING') {
+      throw new BadRequest(
+        'There is already a pending risk level change. Please approve or reject the current proposal first.'
+      )
+    }
+
+    // fetch the workflow definition
+    const workflowDefinition = await this.workflowService.getWorkflow(
+      'risk-levels-approval',
+      '_default'
+    )
+    if (!workflowDefinition) {
+      throw new BadRequest('Risk level approval workflow not found')
+    }
+    const workflowRef: WorkflowRef = {
+      id: workflowDefinition.id,
+      version: workflowDefinition.version,
+    }
+
+    // Create the risk classification config
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const counter = await counterRepository.getNextCounterAndUpdate('RiskLevel')
+    const id = RiskService.getRiskLevelId(counter)
+
+    const riskClassificationConfig: RiskClassificationConfig = {
+      id,
+      classificationValues: riskClassificationValues,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    // Create the approval object
+    const approval: RiskClassificationConfigApproval = {
+      riskClassificationConfig,
+      comment,
+      workflowRef,
+      approvalStatus: 'PENDING',
+      approvalStep: 0,
+      createdAt: Date.now(),
+      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+    }
+
+    // Store the pending approval
+    await this.riskRepository.setPendingRiskClassificationConfig(approval)
+
+    return {
+      entities: [
+        {
+          newImage: approval,
+          entityId: 'RISK_CLASSIFICATION_APPROVAL',
+        },
+      ],
+      result: approval,
+    }
+  }
+
+  /**
+   * Approves, rejects, or cancels a change to risk levels
+   * @param action Either 'accept', 'reject', or 'cancel'
+   */
+  @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION_PROPOSAL', 'UPDATE')
+  async workflowApproveRiskLevelChange(
+    action: RiskClassificationApprovalRequestActionEnum
+  ): Promise<RiskClassificationApprovalAuditLogReturnData> {
+    const pendingApproval =
+      await this.riskRepository.getPendingRiskClassificationConfig()
+    // validate action
+    if (action !== 'accept' && action !== 'reject' && action !== 'cancel') {
+      throw new BadRequest('Invalid action')
+    }
+
+    // validate pending approval
+    if (!pendingApproval) {
+      throw new BadRequest('No pending risk classification approval found')
+    }
+
+    if (pendingApproval.approvalStatus === 'APPROVED') {
+      // should not happen, we always delete the approval object after approval
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+      throw new BadRequest('Risk level change has already been approved')
+    }
+
+    if (pendingApproval.approvalStatus === 'REJECTED') {
+      // should not happen, we always delete the approval object after rejection
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+      throw new BadRequest('Risk level change has already been rejected')
+    }
+
+    // Handle cancel action - only the author can cancel at step 0
+    if (action === 'cancel') {
+      const currentUserId = getContext()?.user?.id
+      if (!currentUserId) {
+        throw new BadRequest('User context not available')
+      }
+
+      // Only the author can cancel the proposal
+      if (pendingApproval.createdBy !== currentUserId) {
+        throw new BadRequest('Only the author can cancel the proposal')
+      }
+
+      // Only allow cancellation at step 0 (first step)
+      if (pendingApproval.approvalStep !== 0) {
+        throw new BadRequest('Can only cancel at the first step of approval')
+      }
+
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'CANCELLED' },
+            entityId: 'RISK_CLASSIFICATION_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'CANCELLED' },
+      }
+    }
+
+    // fetch the workflow definition
+    const wRef = pendingApproval.workflowRef
+    if (!wRef) {
+      throw new BadRequest('No workflow reference found')
+    }
+    // TODO: make types uniform and get rid of toString() cast
+    const workflow = await this.workflowService.getWorkflowVersion(
+      'risk-levels-approval',
+      wRef.id,
+      wRef.version.toString()
+    )
+    const workflowMachine = new RiskLevelApprovalWorkflowMachine(
+      workflow as RiskLevelApprovalWorkflow
+    )
+
+    // ensure the user performing the action has the role referenced in the current step of the workflow
+    const currentStep = workflowMachine.getApprovalStep(
+      pendingApproval.approvalStep
+    )
+    if (currentStep.role !== getContext()?.user?.role) {
+      // TODO: keeping this check disabled in backend for now
+      // throw new BadRequest('User does not have the role required to perform this action')
+    }
+
+    if (action === 'reject') {
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'REJECTED' },
+            entityId: 'RISK_CLASSIFICATION_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'REJECTED' },
+      }
+    }
+
+    // Handle accept action - last step
+    if (currentStep.isLastStep) {
+      // Get the old risk classification values before updating
+      const oldClassificationValues =
+        await this.riskRepository.getRiskClassificationItem()
+
+      // Update the risk classification config
+      const result =
+        await this.riskRepository.createOrUpdateRiskClassificationConfig(
+          pendingApproval.riskClassificationConfig.id,
+          pendingApproval.comment,
+          pendingApproval.riskClassificationConfig.classificationValues
+        )
+
+      // Manually publish audit log for risk classification update
+      const auditLog: AuditLog = {
+        type: 'RISK_SCORING',
+        subtype: 'RISK_CLASSIFICATION',
+        action: 'UPDATE',
+        timestamp: Date.now(),
+        oldImage: oldClassificationValues,
+        newImage: result,
+        entityId: 'RISK_CLASSIFICATION_VALUES',
+      }
+      await publishAuditLog(this.tenantId, auditLog)
+
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'APPROVED' },
+            entityId: 'RISK_CLASSIFICATION_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'APPROVED' },
+      }
+    }
+
+    // Handle accept action - not last step
+    // Update the approval object with the next step
+    await this.riskRepository.setPendingRiskClassificationConfig({
+      ...pendingApproval,
+      approvalStep: pendingApproval.approvalStep + 1,
+    })
+
+    // NOTE: Notifications for approval are handled by the audit log consumer
+
+    return {
+      entities: [
+        {
+          oldImage: pendingApproval,
+          newImage: { ...pendingApproval, approvalStatus: 'PENDING' },
+          entityId: 'RISK_CLASSIFICATION_APPROVAL',
+        },
+      ],
+      result: { ...pendingApproval, approvalStatus: 'PENDING' },
+    }
+  }
+
+  /**
+   * Gets the pending risk level change approval if it exists
+   */
+  async workflowGetPendingRiskLevelChange(): Promise<RiskClassificationConfigApproval | null> {
+    const pendingApproval =
+      await this.riskRepository.getPendingRiskClassificationConfig()
+
+    if (!pendingApproval) {
+      return null
+    }
+
+    return pendingApproval
   }
 }
 

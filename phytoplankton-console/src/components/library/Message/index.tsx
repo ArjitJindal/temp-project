@@ -11,6 +11,7 @@ import CloseFillIcon from '@/components/ui/icons/Remix/system/close-fill.react.s
 import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.svg';
 import Link from '@/components/ui/Link';
 import { copyTextToClipboard } from '@/utils/browser';
+import { getErrorMessage } from '@/utils/lang';
 
 const errorsCaptured: string[] = [];
 
@@ -65,6 +66,7 @@ export const fatal: ShowNotificationWithOptionalError = (
   return open(message, 'ERROR', {
     ...options,
     duration: 0,
+    details: options?.details ?? getErrorMessage(error),
   });
 };
 

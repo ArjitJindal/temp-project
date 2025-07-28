@@ -196,6 +196,11 @@ export const featureDescriptions: Record<
     description: 'Enables opensearch for screening searches',
     tag: FeatureTag.ENG,
   },
+  APPROVAL_WORKFLOWS: {
+    title: 'Approval workflows',
+    description: 'Enables approval workflows',
+    tag: FeatureTag.WIP,
+  },
   DISABLE_GLOBAL_AGGREGATIONS: {
     title: 'Disable global aggregations ',
     description:

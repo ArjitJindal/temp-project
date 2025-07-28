@@ -50,7 +50,7 @@ export default function WorkflowsList() {
       helper.simple<'workflowType'>({
         title: 'Category',
         key: 'workflowType',
-        type: TAG as ColumnDataType<'case' | 'alert'>,
+        type: TAG as ColumnDataType<'case' | 'alert' | 'risk-levels-approval' | 'rule-approval'>,
       }),
       helper.simple<'version'>({
         title: 'Last version',

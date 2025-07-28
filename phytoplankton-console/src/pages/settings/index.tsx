@@ -4,6 +4,7 @@ import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookConfigurations } from './components/WebhookConfigurations';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
+import { RiskLevelApprovalSettings } from './components/RiskLevelApprovalSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
@@ -155,6 +156,9 @@ export default function SettingsPage() {
                   <ReRunTriggerSettings />
                 </Feature>
                 <RiskLevelSettings />
+                <Feature name="APPROVAL_WORKFLOWS">
+                  <RiskLevelApprovalSettings />
+                </Feature>
               </>
             ),
           },

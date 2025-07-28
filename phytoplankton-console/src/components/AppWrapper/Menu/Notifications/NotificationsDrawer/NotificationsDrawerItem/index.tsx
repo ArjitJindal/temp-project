@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import cn from 'clsx';
+import { useNavigate } from 'react-router';
 import s from './index.module.less';
 import NotificationMessage from './NotificationMessage';
 import Avatar from '@/components/library/Avatar';
@@ -34,11 +35,14 @@ export default function NotificationsDrawerItem(props: Props) {
   function handleReadNotification(notificationId) {
     markAsReadMutation.mutate({ notificationId });
   }
+
+  const navigate = useNavigate();
+
   return (
     <div
       className={cn(s.root, !isRead && s.isUnread)}
       onClick={() => {
-        window.location.href = getNotificationUrl(notification);
+        navigate(getNotificationUrl(notification));
         if (notification.consoleNotificationStatuses?.some((x) => x.status === 'SENT')) {
           handleReadNotification(notification.id);
         }
@@ -66,7 +70,10 @@ export default function NotificationsDrawerItem(props: Props) {
 }
 
 const getNotificationUrl = (notification: Notification) => {
-  const { entityId, entityType, metadata } = notification;
+  const { entityId, entityType, notificationType, metadata } = notification;
+  if (notificationType === 'RISK_CLASSIFICATION_APPROVAL') {
+    return '/risk-levels/configure';
+  }
   switch (entityType) {
     case 'ALERT': {
       const caseId = metadata?.alert?.caseId;

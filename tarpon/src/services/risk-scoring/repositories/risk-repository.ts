@@ -80,6 +80,7 @@ import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassif
 import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
 import { updateInMongoWithVersionCheck } from '@/utils/downstream-version'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
@@ -667,6 +668,47 @@ export class RiskRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
+  }
+
+  // Fetches the RiskClassificationConfigApproval object from DynamoDB for the given version (or 'LATEST' if not provided).
+  async getPendingRiskClassificationConfig(
+    version: string = 'LATEST'
+  ): Promise<RiskClassificationConfigApproval | null> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_CLASSIFICATION_APPROVAL(this.tenantId, version),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return result.Item
+      ? (result.Item as RiskClassificationConfigApproval)
+      : null
+  }
+
+  // Sets (creates or updates) the RiskClassificationConfigApproval object in DynamoDB for the given version (or 'LATEST' if not provided).
+  async setPendingRiskClassificationConfig(
+    approval: RiskClassificationConfigApproval,
+    version: string = 'LATEST'
+  ): Promise<RiskClassificationConfigApproval> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...DynamoDbKeys.RISK_CLASSIFICATION_APPROVAL(this.tenantId, version),
+        ...approval,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    return approval
+  }
+
+  // Deletes the RiskClassificationConfigApproval object from DynamoDB for the given version (or 'LATEST' if not provided).
+  async deletePendingRiskClassificationConfig(
+    version: string = 'LATEST'
+  ): Promise<void> {
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_CLASSIFICATION_APPROVAL(this.tenantId, version),
+    }
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 
   /* MongoDB operations */

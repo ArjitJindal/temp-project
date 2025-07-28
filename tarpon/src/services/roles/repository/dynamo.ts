@@ -270,4 +270,16 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const roleName = getRoleDisplayName(role.name)
     return accounts.filter((account) => account.role === roleName)
   }
+
+  public async getUsersByRoleName(
+    roleName: string,
+    tenant: Tenant
+  ): Promise<Account[]> {
+    const accountsService = new DynamoAccountsRepository(
+      this.auth0Domain,
+      this.dynamoClient
+    )
+    const accounts = await accountsService.getTenantAccounts(tenant)
+    return accounts.filter((account) => account.role === roleName)
+  }
 }

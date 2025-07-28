@@ -19,6 +19,8 @@ import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { CreateAlertWorkflow } from '@/apis/models/CreateAlertWorkflow';
+import { CreateCaseWorkflow } from '@/apis/models/CreateCaseWorkflow';
 
 export default function WorkflowsItemPage() {
   const { type, id } = useParams<'id' | 'type'>() as {
@@ -31,12 +33,15 @@ export default function WorkflowsItemPage() {
   const navigate = useNavigate();
 
   const api = useApi();
-  const workflowsQueryResult = useQuery(WORKFLOWS_ITEM(id), async (): Promise<WorkflowItem> => {
-    return await api.getWorkflowById({
-      workflowType: workflowType,
-      workflowId: id,
-    });
-  });
+  const workflowsQueryResult = useQuery(
+    WORKFLOWS_ITEM(workflowType, id),
+    async (): Promise<WorkflowItem> => {
+      return await api.getWorkflowById({
+        workflowType: workflowType,
+        workflowId: id,
+      });
+    },
+  );
 
   // Keep state wrapped in an AsyncResource
   const [state, dispatch] = useReducerWrapper();
@@ -45,7 +50,12 @@ export default function WorkflowsItemPage() {
     if (isResourceChangedStatus) {
       dispatch({
         type: 'LOAD_ASYNC_RESOURCE' as const,
-        payload: map(workflowsQueryResult.data, (item) => deserialize(item)),
+        payload: map(workflowsQueryResult.data, (item) => {
+          if (item.workflowType !== 'alert' && item.workflowType !== 'case') {
+            throw new Error(`Workflow type not supported yet: ${item.workflowType}`);
+          }
+          return deserialize(item);
+        }),
       });
     }
   }, [isResourceChangedStatus, workflowsQueryResult.data, dispatch]);
@@ -59,20 +69,23 @@ export default function WorkflowsItemPage() {
     }
   >(
     async ({ item, state }) => {
+      if (item.workflowType !== 'alert' && item.workflowType !== 'case') {
+        throw new Error(`Workflow type not supported yet: ${item.workflowType}`);
+      }
       await api.postWorkflowVersion({
         workflowType: workflowType,
         workflowId: id,
-        UpdateWorkflowType:
+        CreateWorkflowType:
           item.workflowType === 'alert'
             ? {
                 alertWorkflow: {
-                  ...item,
+                  ...(item as CreateAlertWorkflow),
                   ...serialize(state),
                 },
               }
             : {
                 caseWorkflow: {
-                  ...item,
+                  ...(item as CreateCaseWorkflow),
                   ...serialize(state),
                 },
               },

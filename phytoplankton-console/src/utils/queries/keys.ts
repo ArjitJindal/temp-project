@@ -9,10 +9,12 @@ import {
   ListType,
   ReasonType,
   SanctionsSourceType,
+  WorkflowRef,
 } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
+import { WorkflowType } from '@/utils/api/workflows';
 
 type AnyParameters = unknown;
 
@@ -515,8 +517,26 @@ export const SANCTIONS_SOURCES = (type: SanctionsSourceType, searchQuery?: strin
 export const PERMISSIONS_STATEMENTS = (): QueryKey => ['permissions-statements'];
 
 export const WORKFLOWS_LIST = (params?: AnyParameters): QueryKey => ['workflows', 'list', params];
-export const WORKFLOWS_ITEM = (id: string): QueryKey => ['workflows', 'item', id];
+
+export const WORKFLOWS_ITEM = (workflowType: WorkflowType, id: string): QueryKey => [
+  'workflows',
+  workflowType,
+  'item',
+  id,
+];
+
+export const WORKFLOWS_ITEM_BY_REF = (ref?: WorkflowRef): QueryKey => [
+  'workflows',
+  'item',
+  ref?.id ?? 'invalid',
+  'version',
+  ref?.version ?? 'invalid',
+];
 
 export const RISK_LEVEL_VERSION = (): QueryKey => ['risk-level', 'version'];
+
+export const RISK_CLASSIFICATION_WORKFLOW_PROPOSAL = (): QueryKey => [
+  'classification-workflow-proposal',
+];
 
 export const FLAT_FILE_PROGRESS = (entityId: string): QueryKey => ['flat-file-progress', entityId];

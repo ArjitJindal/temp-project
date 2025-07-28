@@ -4,6 +4,7 @@ import { Link, LinkProps } from 'react-router-dom';
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useHasResources } from '@/utils/user-utils';
+import Tooltip from '@/components/library/Tooltip';
 
 export type ButtonRef = {
   click: () => void;
@@ -139,7 +140,17 @@ const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
   const hasUserPermissions = useHasResources(requiredResources);
 
   return (
-    <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />
+    <Tooltip
+      title={
+        !hasUserPermissions ? `You don't have enough permissions to perform this action` : null
+      }
+    >
+      <BaseButton
+        {...baseProps}
+        isDisabled={baseProps.isDisabled || !hasUserPermissions}
+        ref={ref}
+      />
+    </Tooltip>
   );
 });
 

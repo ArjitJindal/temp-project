@@ -86,6 +86,8 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `mkdir -p src/@types/openapi-${type}/ src/@types/openapi-${type}-custom/ 1>/dev/null 2>&1`
   )
 
+  exec(`mkdir -p ../lib/@types/openapi-${type}/ 1>/dev/null 2>&1`)
+
   if (type === 'internal') {
     const mergedSpec = mergeInternalSpecs()
 

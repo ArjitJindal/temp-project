@@ -10,6 +10,7 @@ import Select from '@/components/library/Select';
 import { useUsers } from '@/utils/user-utils';
 import { NotificationType, Account } from '@/apis';
 import { success } from '@/utils/asyncResource';
+import { neverReturn } from '@/utils/lang';
 
 export default function (): JSX.Element {
   const [users] = useUsers();
@@ -172,6 +173,11 @@ function sampleNotification(notificationType: NotificationType, users: Account[]
     case 'USER_COMMENT_MENTION':
       entityType = 'USER';
       break;
+    case 'RISK_CLASSIFICATION_APPROVAL':
+      entityType = 'USER';
+      break;
+    default:
+      entityType = neverReturn(notificationType, null);
   }
   const notification: Notification = {
     id: `${Date.now()}`,
