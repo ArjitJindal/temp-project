@@ -1,5 +1,4 @@
 import { keyBy } from 'lodash'
-import { Filter } from 'mongodb'
 import { getTimeLabels } from '../../dashboard/utils'
 import {
   GranularityValuesType,
@@ -31,7 +30,6 @@ import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/D
 import { traceable } from '@/core/xray'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
 import {
   executeClickhouseQuery,
@@ -188,64 +186,26 @@ export class TransactionStatsDashboardMetric {
           timeRange,
           {
             attributeFieldMapper: {
-              $switch: {
-                branches: riskClassifications
-                  .sort((a, b) => b.upperBoundRiskScore - a.upperBoundRiskScore)
-                  .map((classification) => {
-                    let caseCondition: Filter<InternalTransaction>
-
-                    if (
-                      classification.lowerBoundRiskScore ===
-                      classification.upperBoundRiskScore
-                    ) {
-                      caseCondition = {
-                        $eq: [
-                          '$arsScore.arsScore',
-                          classification.lowerBoundRiskScore,
-                        ],
-                      }
-                    } else if (classification.upperBoundRiskScore === 100) {
-                      caseCondition = {
-                        $and: [
-                          {
-                            $gte: [
-                              '$arsScore.arsScore',
-                              classification.lowerBoundRiskScore,
-                            ],
-                          },
-                          {
-                            $lte: [
-                              '$arsScore.arsScore',
-                              classification.upperBoundRiskScore,
-                            ],
-                          },
-                        ],
-                      }
-                    } else {
-                      caseCondition = {
-                        $and: [
-                          {
-                            $gte: [
-                              '$arsScore.arsScore',
-                              classification.lowerBoundRiskScore,
-                            ],
-                          },
-                          {
-                            $lt: [
-                              '$arsScore.arsScore',
-                              classification.upperBoundRiskScore,
-                            ],
-                          },
-                        ],
-                      }
-                    }
-
-                    return {
-                      case: caseCondition,
-                      then: classification.riskLevel,
-                    }
-                  }),
-                default: DEFAULT_RISK_LEVEL,
+              $let: {
+                vars: {
+                  riskLevel: {
+                    $function: {
+                      body: `function(riskScore, riskClassifications) {
+                        if (riskScore === null) return 'VERY_HIGH';
+                        for (const classification of riskClassifications) {
+                          if (riskScore >= classification.lowerBoundRiskScore && 
+                              riskScore < classification.upperBoundRiskScore) {
+                            return classification.riskLevel;
+                          }
+                        }
+                        return 'VERY_HIGH';
+                      }`,
+                      args: ['$arsScore.arsScore', riskClassifications],
+                      lang: 'js',
+                    },
+                  },
+                },
+                in: '$$riskLevel',
               },
             },
           }
@@ -366,19 +326,22 @@ export class TransactionStatsDashboardMetric {
       'derived_status'
     )
     const arsRiskLevels = riskClassificationValues
-      .sort((a, b) => b.upperBoundRiskScore - a.upperBoundRiskScore)
-      .map(({ riskLevel, lowerBoundRiskScore, upperBoundRiskScore }) => {
-        let condition: string
-        if (lowerBoundRiskScore === upperBoundRiskScore) {
-          condition = `arsScore_arsScore = ${lowerBoundRiskScore}`
-        } else if (upperBoundRiskScore === 100) {
-          condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore <= ${upperBoundRiskScore}`
-        } else {
-          condition = `arsScore_arsScore >= ${lowerBoundRiskScore} AND arsScore_arsScore < ${upperBoundRiskScore}`
+      .map(({ riskLevel }) => {
+        const classification = riskClassificationValues.find(
+          (c) => c.riskLevel === riskLevel
+        )
+        if (!classification) {
+          return ''
         }
+
+        const isHighestRiskLevel = classification.upperBoundRiskScore === 100
+        const condition = isHighestRiskLevel
+          ? `arsScore_arsScore >= ${classification.lowerBoundRiskScore}`
+          : `arsScore_arsScore >= ${classification.lowerBoundRiskScore} AND arsScore_arsScore < ${classification.upperBoundRiskScore}`
 
         return `COUNTIf(${condition}) AS arsRiskLevel_${riskLevel}`
       })
+      .filter(Boolean)
       .join(', ')
     const dateRangeQuery =
       returnDataType === 'DATE_RANGE'
