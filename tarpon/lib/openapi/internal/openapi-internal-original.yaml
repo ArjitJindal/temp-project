@@ -8139,10 +8139,14 @@ components:
       title: FlatFileProgressResponse
       type: object
       properties:
-        processed:
+        saved:
+          type: number
+        errored:
           type: number
         total:
           type: number
+        status:
+          $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
@@ -10933,17 +10937,19 @@ components:
         - s3Key
         - filename
         - statuses
+    TaskStatusChangeStatusEnum:
+      type: string
+      enum:
+        - IN_PROGRESS
+        - PENDING
+        - SUCCESS
+        - FAILED
     TaskStatusChange:
       type: object
       title: TaskStatusChange
       properties:
         status:
-          type: string
-          enum:
-            - IN_PROGRESS
-            - PENDING
-            - SUCCESS
-            - FAILED
+          $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
         timestamp:
           type: number
         scheduledAt:

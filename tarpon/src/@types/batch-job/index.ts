@@ -5,10 +5,7 @@ import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeacon
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
 import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVariable'
-import {
-  TaskStatusChange,
-  TaskStatusChangeStatusEnum,
-} from '../openapi-internal/TaskStatusChange'
+import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
 import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
@@ -17,6 +14,7 @@ import { SanctionsEntityType } from '../openapi-internal/SanctionsEntityType'
 import { FlatFileSchema } from '../openapi-internal/FlatFileSchema'
 import { FlatFileTemplateFormat } from '../openapi-internal/FlatFileTemplateFormat'
 import { DynamoDbClickhouseBackfillBatchJobEntity } from '../openapi-internal/DynamoDbClickhouseBackfillBatchJobEntity'
+import { TaskStatusChangeStatusEnum } from '../openapi-internal/TaskStatusChangeStatusEnum'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'

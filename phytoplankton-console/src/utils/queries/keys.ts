@@ -518,3 +518,5 @@ export const WORKFLOWS_LIST = (params?: AnyParameters): QueryKey => ['workflows'
 export const WORKFLOWS_ITEM = (id: string): QueryKey => ['workflows', 'item', id];
 
 export const RISK_LEVEL_VERSION = (): QueryKey => ['risk-level', 'version'];
+
+export const FLAT_FILE_PROGRESS = (entityId: string): QueryKey => ['flat-file-progress', entityId];

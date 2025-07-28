@@ -22,10 +22,8 @@ import {
   BatchJobType,
   BatchJobParameters,
 } from '@/@types/batch-job'
-import {
-  TaskStatusChange,
-  TaskStatusChangeStatusEnum,
-} from '@/@types/openapi-internal/TaskStatusChange'
+import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
+import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { envIs } from '@/utils/env'
 
 @traceable

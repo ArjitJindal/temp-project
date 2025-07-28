@@ -8,10 +8,7 @@ import { SimulationResultRepository } from './simulation-result-repository'
 import { paginatePipeline } from '@/utils/mongodb-utils'
 import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
 import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
-import {
-  TaskStatusChange,
-  TaskStatusChangeStatusEnum,
-} from '@/@types/openapi-internal/TaskStatusChange'
+import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
 import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SimulationRiskLevelsStatisticsResult } from '@/@types/openapi-internal/SimulationRiskLevelsStatisticsResult'
 import { SimulationBeaconStatisticsResult } from '@/@types/openapi-internal/SimulationBeaconStatisticsResult'
@@ -44,6 +41,7 @@ import { SimulationBeaconResultUser } from '@/@types/openapi-internal/Simulation
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
+import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest

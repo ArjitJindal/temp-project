@@ -13,10 +13,8 @@ import {
 } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
 import { JOBS_COLLECTION } from '@/utils/mongodb-definitions'
-import {
-  TaskStatusChange,
-  TaskStatusChangeStatusEnum,
-} from '@/@types/openapi-internal/TaskStatusChange'
+import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
+import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import {
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
@@ -250,12 +248,12 @@ export class BatchJobRepository {
     const collection = JOBS_COLLECTION(this.tenantId)
     const mongoFilters = this.getMongoFilters(filters)
     const db = this.mongoDb.db()
-
-    return db
+    const result = await db
       .collection<BatchJobInDb>(collection)
       .find(mongoFilters)
       .sort({ 'latestStatus.timestamp': -1 })
       .limit(limit)
       .toArray()
+    return result
   }
 }

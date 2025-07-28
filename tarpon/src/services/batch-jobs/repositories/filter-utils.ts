@@ -51,6 +51,14 @@ export class BatchJobFilterUtils {
       }
     }
 
+    if (filters.parameters?.schema) {
+      mongoFilters['parameters.schema'] = filters.parameters.schema
+    }
+
+    if (filters.parameters?.entityId) {
+      mongoFilters['parameters.entityId'] = filters.parameters.entityId
+    }
+
     return { mongoFilters }
   }
 
@@ -95,6 +103,20 @@ export class BatchJobFilterUtils {
       expressionAttributeValues[':entityType'] = filters.parameters.entityType
       expressionAttributeNames['#parameters'] = 'parameters'
       expressionAttributeNames['#entityType'] = 'entityType'
+    }
+
+    if (filters.parameters?.schema) {
+      filterExpressions.push('#parameters.#schema = :schema')
+      expressionAttributeValues[':schema'] = filters.parameters.schema
+      expressionAttributeNames['#parameters'] = 'parameters'
+      expressionAttributeNames['#schema'] = 'schema'
+    }
+
+    if (filters.parameters?.entityId) {
+      filterExpressions.push('#parameters.#entityId = :entityId')
+      expressionAttributeValues[':entityId'] = filters.parameters.entityId
+      expressionAttributeNames['#parameters'] = 'parameters'
+      expressionAttributeNames['#entityId'] = 'entityId'
     }
 
     return {

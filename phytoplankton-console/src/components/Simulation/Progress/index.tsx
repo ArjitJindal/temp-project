@@ -12,10 +12,21 @@ interface Props {
   totalEntities?: number;
   width: 'FULL' | 'HALF';
   simulationStartedAt?: number;
+  progressMessage?: string;
+  loadingMessage?: string;
 }
 
 export const Progress = (props: Props) => {
-  const { message, progress, status, totalEntities = 0, width, simulationStartedAt } = props;
+  const {
+    message,
+    progress,
+    status,
+    totalEntities = 0,
+    width,
+    simulationStartedAt,
+    progressMessage,
+    loadingMessage,
+  } = props;
   const isFailed = status === 'FAILED';
   const progressValue = Number(progress?.toFixed(2) ?? 0);
   const entitiesProcessed = Math.round(totalEntities * (progressValue / 100));
@@ -54,7 +65,7 @@ export const Progress = (props: Props) => {
               </div>
               {totalEntities > 0 && (
                 <div>
-                  Entities simulated -{' '}
+                  {`${progressMessage ?? 'Entities simulated'} `} -{' '}
                   <b>
                     {entitiesProcessed}/{totalEntities}
                   </b>
@@ -74,7 +85,8 @@ export const Progress = (props: Props) => {
               'Failed to load simulation results'
             ) : (
               <>
-                <Spinner size="SMALL" /> <span>Initializing simulation...</span>
+                <Spinner size="SMALL" />{' '}
+                <span>{`${loadingMessage ?? 'Initializing simulation...'}`}</span>
               </>
             )}
           </div>

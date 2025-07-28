@@ -4,6 +4,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Resource } from '@flagright/lib/utils';
+import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
 import { TableParams } from './types';
@@ -77,7 +78,8 @@ interface Props {
   listType: ListType;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
   clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
-  onImportCsv: () => void;
+  isCustomList: boolean;
+  setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }
 
 type ExternalState = {
@@ -104,8 +106,16 @@ const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
 };
 
 export default function ItemsTable(props: Props) {
-  const { listId, listType, listHeaderRes, clearListMutation, onImportCsv } = props;
+  const {
+    listId,
+    listType,
+    listHeaderRes,
+    clearListMutation,
+    isCustomList,
+    setIsFlatFileProgressLoading,
+  } = props;
   const api = useApi();
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const generateTemplateMutation = useCallback(async () => {
     const columns = getOr<Partial<ListHeaderInternal>>(listHeaderRes, {}).metadata?.columns ?? [];
@@ -389,42 +399,55 @@ export default function ItemsTable(props: Props) {
       {(listHeader) => {
         const listSubtype = listHeader.subtype;
         return (
-          <QueryResultsTable<TableItem, CommonParams>
-            tableId={`list-items-table-${listSubtype}`}
-            rowKey="rowKey"
-            innerRef={tableRef}
-            columns={columns}
-            hideFilters={listSubtype === 'CUSTOM'}
-            sizingMode="FULL_WIDTH"
-            params={params}
-            onChangeParams={setParams}
-            queryResults={listResult}
-            fitHeight
-            externalState={externalState}
-            extraFilters={extraFilters}
-            extraTools={[
-              () => <Button onClick={onImportCsv}>Import CSV</Button>,
-              ...(listSubtype === 'CUSTOM' && listHeader?.metadata?.columns?.length
-                ? [
-                    () => (
-                      <Button type="SECONDARY" onClick={generateTemplateMutation}>
-                        Generate template
-                      </Button>
-                    ),
-                  ]
-                : []),
-              () => (
-                <Button
-                  type="TETRIARY"
-                  onClick={() => clearListMutation.mutate()}
-                  isDisabled={clearListMutation.isLoading}
-                  requiredResources={requiredWriteResources}
-                >
-                  Clear list
-                </Button>
-              ),
-            ]}
-          />
+          <>
+            <QueryResultsTable<TableItem, CommonParams>
+              tableId={`list-items-table-${listSubtype}`}
+              rowKey="rowKey"
+              innerRef={tableRef}
+              columns={columns}
+              hideFilters={listSubtype === 'CUSTOM'}
+              sizingMode="FULL_WIDTH"
+              params={params}
+              onChangeParams={setParams}
+              queryResults={listResult}
+              fitHeight
+              externalState={externalState}
+              extraFilters={extraFilters}
+              extraTools={[
+                () => <Button onClick={() => setIsImportModalOpen(true)}>Import CSV</Button>,
+                ...(listSubtype === 'CUSTOM' && listHeader?.metadata?.columns?.length
+                  ? [
+                      () => (
+                        <Button type="SECONDARY" onClick={generateTemplateMutation}>
+                          Generate template
+                        </Button>
+                      ),
+                    ]
+                  : []),
+                () => (
+                  <Button
+                    type="TETRIARY"
+                    onClick={() => clearListMutation.mutate()}
+                    isDisabled={clearListMutation.isLoading}
+                    requiredResources={requiredWriteResources}
+                  >
+                    Clear list
+                  </Button>
+                ),
+              ]}
+            />
+            <ImportCsvModal
+              listId={listId}
+              isOpen={isImportModalOpen}
+              onClose={() => {
+                setIsImportModalOpen(false);
+                listResult.refetch();
+              }}
+              listType={listType as 'WHITELIST' | 'BLACKLIST'}
+              isCustomList={isCustomList}
+              setIsFlatFileProgressLoading={setIsFlatFileProgressLoading}
+            />
+          </>
         );
       }}
     </AsyncResourceRenderer>

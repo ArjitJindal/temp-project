@@ -22,14 +22,16 @@ import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTempla
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
+  executeClickhouseQuery,
   getClickhouseClient,
   getClickhouseCredentials,
 } from '@/utils/clickhouse/utils'
 import { EntityModel } from '@/@types/model'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { FlatFilesRecords } from '@/models/flat-files-records'
 import { BatchJobParams } from '@/@types/batch-job'
+import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
+import { FlatFilesRecords } from '@/models/flat-files-records'
 
 type Connections = {
   dynamoDb: DynamoDBDocumentClient
@@ -217,7 +219,8 @@ export class FlatFilesService {
 
   async getProgress(schema: FlatFileSchema, entityId: string) {
     const mongoDb = await getMongoDbClient()
-    let s3Keys: string[] = []
+    let s3Key: string | null = null
+    let batchJobStatus: TaskStatusChangeStatusEnum | null = null
     // get s3Key from Batchjob collection
     const batchJobRepository = new BatchJobRepository(this.tenantId, mongoDb)
     const filterParams: BatchJobParams = {
@@ -225,57 +228,58 @@ export class FlatFilesService {
         entityId: entityId,
         schema,
       },
-      latestStatus: {
-        status: 'IN_PROGRESS',
-      },
     }
-    const fileValidationJobs = await batchJobRepository.getJobs({
-      type: 'FLAT_FILES_VALIDATION',
-      ...filterParams,
-    })
-    const fileRunnerJobs = await batchJobRepository.getJobs({
-      type: 'FLAT_FILES_RUNNER',
-      ...filterParams,
-    })
-
-    s3Keys = [
-      ...fileValidationJobs.map((job) => job.parameters?.s3Key ?? ''),
-      ...fileRunnerJobs.map((job) => job.parameters?.s3Key ?? ''),
-    ]
-    s3Keys = s3Keys.filter((s3Key) => s3Key !== '')
-
-    if (s3Keys.length === 0) {
+    const fileValidationJobs = await batchJobRepository.getJobs(
+      {
+        type: 'FLAT_FILES_VALIDATION',
+        ...filterParams,
+      },
+      1
+    )
+    if (fileValidationJobs.length > 0) {
+      s3Key = fileValidationJobs[0].parameters?.s3Key ?? ''
+      batchJobStatus = fileValidationJobs[0].latestStatus.status
+    }
+    const fileRunnerJobs = await batchJobRepository.getJobs(
+      {
+        type: 'FLAT_FILES_RUNNER',
+        ...filterParams,
+      },
+      1
+    )
+    if (fileRunnerJobs.length > 0) {
+      s3Key = fileRunnerJobs[0].parameters?.s3Key ?? ''
+      batchJobStatus = fileRunnerJobs[0].latestStatus.status
+    }
+    if (!s3Key || !batchJobStatus) {
       throw new NotFound('No running jobs found')
     }
 
-    const clickhouseConnectionConfig = await getClickhouseCredentials(
-      this.tenantId
-    )
-    const flatFilesRecords = new FlatFilesRecords({
-      credentials: clickhouseConnectionConfig,
-      options: {
-        keepAlive: true,
-        keepAliveTimeout: 60_000,
-        maxRetries: 10, // 10 retries
-      },
-    })
-    const totalFileRecords = await flatFilesRecords.objects
-      .filter({
-        fileId__in: s3Keys,
-      })
-      .final()
-      .count()
-    const processedFileRecords = await flatFilesRecords.objects
-      .filter({
-        fileId__in: s3Keys,
-        isProcessed: true,
-      })
-      .final()
-      .count()
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+
+    const query = `
+    SELECT COUNT(DISTINCT row) AS totalCount,
+    COUNT(DISTINCT IF(isProcessed = true AND isError = false, row, NULL)) AS savedRows,
+    COUNT(DISTINCT IF(isError = true AND isProcessed = true, row, NULL))  AS erroredRows
+    FROM ${FlatFilesRecords.tableDefinition.tableName}
+    WHERE fileId = '${s3Key}'
+    `
+    const result = await executeClickhouseQuery<{
+      totalCount: number
+      savedRows: number
+      erroredRows: number
+    }>(clickhouseClient, query)
+
+    // Extract count values
+    const totalCount = result[0].totalCount
+    const savedRows = result[0].savedRows
+    const erroredRows = result[0].erroredRows
 
     return {
-      total: totalFileRecords,
-      processed: processedFileRecords,
+      total: totalCount,
+      saved: savedRows,
+      errored: erroredRows,
+      status: batchJobStatus,
     }
   }
 }
