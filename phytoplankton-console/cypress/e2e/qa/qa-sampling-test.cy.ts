@@ -31,6 +31,7 @@ describe('QA Assignee Column', () => {
     const sampleName = 'Sample ' + Math.floor(Math.random() * 1000);
     cy.get('.ant-modal-root input').eq(0).type(sampleName);
     cy.get('.ant-modal-root textarea').type('This is a test sample');
+    cy.get('[data-cy="sampling-quantity"]').should('exist').first().type('1');
     cy.get('.ant-modal-footer [data-cy="modal-ok"]').click();
     cy.get('[data-cy="qa-sampling-dropdown"]').should('exist').click();
     cy.get('.ant-dropdown-menu-item').eq(1).click();
