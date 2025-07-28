@@ -127,17 +127,18 @@ export const RiskLevelApprovalSettings: React.FC = () => {
           <div style={{ marginBottom: '16px' }}>
             <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>Approval Role</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Select
-                value={selectedRole}
-                options={roleOptions}
-                isLoading={isLoading(updateWorkflowMutation.dataResource) || isLoadingRoles}
-                isDisabled={!permissions}
-                onChange={(newRole) => {
-                  setSelectedRole(newRole == null ? currentRole : newRole);
-                }}
-                placeholder="Select a role"
-                style={{ flex: 1 }}
-              />
+              <div style={{ flex: 1 }}>
+                <Select
+                  value={selectedRole}
+                  options={roleOptions}
+                  isLoading={isLoading(updateWorkflowMutation.dataResource) || isLoadingRoles}
+                  isDisabled={!permissions}
+                  onChange={(newRole) => {
+                    setSelectedRole(newRole == null ? currentRole : newRole);
+                  }}
+                  placeholder="Select a role"
+                />
+              </div>
               <Button
                 type="PRIMARY"
                 size="SMALL"

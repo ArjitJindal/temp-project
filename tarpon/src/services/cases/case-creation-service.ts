@@ -1278,12 +1278,10 @@ export class CaseCreationService {
 
     const result: Case[] = []
     for (const { subject, direction } of hitSubjects) {
-      if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {
-        await acquireLock(this.dynamoDb, generateChecksum(subject), {
-          startingDelay: 100,
-          maxDelay: 5000,
-        })
-      }
+      await acquireLock(this.dynamoDb, generateChecksum(subject), {
+        startingDelay: 100,
+        maxDelay: 5000,
+      })
 
       try {
         // keep only user related hits
@@ -1524,9 +1522,7 @@ export class CaseCreationService {
           }
         }
       } finally {
-        if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {
-          await releaseLock(this.dynamoDb, generateChecksum(subject))
-        }
+        await releaseLock(this.dynamoDb, generateChecksum(subject))
       }
     }
     return result

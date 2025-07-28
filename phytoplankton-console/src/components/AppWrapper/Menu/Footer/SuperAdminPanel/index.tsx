@@ -167,11 +167,6 @@ export const featureDescriptions: Record<
     description: 'Enables manual dashboard refresh (dashboard will not auto-refresh)',
     tag: FeatureTag.ENG,
   },
-  CONCURRENT_DYNAMODB_CONSUMER: {
-    title: 'Concurrent DynamoDB consumer',
-    description: 'Enables concurrent DynamoDB consumer',
-    tag: FeatureTag.ENG,
-  },
   '314A': {
     title: '314A',
     description: 'Enables 314A',
@@ -757,7 +752,7 @@ export default function SuperAdminPanel() {
                     }}
                     value={data?.tenants?.map((tenant) => tenant)}
                     placeholder="Select tenant to add to secondary queue"
-                    style={{ width: '100%' }}
+                    width="100%"
                   />
                 )}
               </AsyncResourceRenderer>
