@@ -152,11 +152,8 @@ export class UserClickhouseRepository {
     }
   }
 
-  public async getClickhouseUsersPreviewPaginate<
-    T extends AllUsersTableItemPreview
-  >(
-    params: DefaultApiGetAllUsersListRequest,
-    callback: (data: Record<string, string | number>) => T
+  public async getClickhouseUsersPreviewPaginate(
+    params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersPreviewOffsetPaginateListResponse> {
     if (!this.clickhouseClient) {
       if (isClickhouseEnabled()) {
@@ -164,31 +161,27 @@ export class UserClickhouseRepository {
       }
       return { items: [], count: 0 }
     }
-
-    const sortField = 'timestamp'
-    const sortOrder = 'ascend'
-    const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
-    // Define the columns for the lite query
-    const columns = {
-      userId: 'id',
-      userName: 'username',
-      riskLevel: "JSONExtractString(data, 'riskLevel')",
-    }
-
     // Use the lite pagination utility
-    let result = await offsetPaginateClickhouse<T>(
-      this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
-      CLICKHOUSE_DEFINITIONS.USERS.tableName,
-      { page, pageSize, sortField, sortOrder },
-      `(id = '${params.filterId}' OR ilike(username, '%${params.filterName}%'))`,
-      columns,
-      callback
-    )
+    const selectQuery = `
+      select id as userId, username as name, JSONExtractString(data, 'riskLevel') as riskLevel
+      from ${CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table} FINAL
+      where (id = '${params.filterId}' OR ilike(username, '%${
+      params.filterName
+    }%'))
+      limit ${pageSize + 1}
+    `
 
-    const userIds = result.items.map((user) => user['userId'])
+    let result = await executeClickhouseQuery<
+      {
+        userId: string
+        userName: string
+        riskLevel: string
+      }[]
+    >(this.tenantId, selectQuery)
+
+    const userIds = result.map((user) => user.userId)
     const casesCountQuery = `
         SELECT 
           userId,
@@ -223,17 +216,14 @@ export class UserClickhouseRepository {
       casesCountMap.set(item.userId, item.casesCount)
     })
 
-    result = {
-      ...result,
-      items: result.items.map((user) => ({
-        ...user,
-        casesCount: casesCountMap.get(user.userId) || 0,
-      })),
-    }
+    result = result.map((user) => ({
+      ...user,
+      casesCount: casesCountMap.get(user.userId) || 0,
+    }))
 
     return {
-      items: result.items,
-      count: result.count,
+      items: result as AllUsersTableItemPreview[],
+      count: result.length,
     }
   }
 

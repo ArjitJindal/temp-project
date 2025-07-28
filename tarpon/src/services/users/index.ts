@@ -99,7 +99,6 @@ import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ListItem } from '@/@types/openapi-internal/ListItem'
 import { UserFlatFileUploadRequest } from '@/@types/openapi-internal/UserFlatFileUploadRequest'
-import { AllUsersTableItemPreview } from '@/@types/openapi-internal/AllUsersTableItemPreview'
 import { WebhookUserStateDetails } from '@/@types/openapi-public/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-public/WebhookKYCStatusDetails'
 
@@ -1185,20 +1184,9 @@ export class UserService {
   public async getClickhouseUsersPreview(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersPreviewOffsetPaginateListResponse> {
-    const callback = (
-      data: Record<string, string | number>
-    ): AllUsersTableItemPreview => {
-      return {
-        userId: data.userId as string,
-        name: data.userName as string,
-        riskLevel: data.riskLevel as RiskLevel,
-      }
-    }
-
     const result =
-      await this.userClickhouseRepository.getClickhouseUsersPreviewPaginate<AllUsersTableItemPreview>(
-        params,
-        callback
+      await this.userClickhouseRepository.getClickhouseUsersPreviewPaginate(
+        params
       )
 
     // count field is returned as string - converting it to number to match the expected response
