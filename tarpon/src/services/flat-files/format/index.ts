@@ -301,10 +301,10 @@ export abstract class FlatFileFormat {
     return hash
   }
 
-  public isDuplicate(record: Record<string, object>): boolean {
+  private getHashValue(record: Record<string, object>): string {
     const compoundPrimaryKey = this.compoundPrimaryKey
     if (compoundPrimaryKey.length === 0) {
-      return false
+      return ''
     }
 
     let hash = crypto.createHash('md5')
@@ -312,17 +312,31 @@ export abstract class FlatFileFormat {
       const value = record[key]
       if (value) {
         hash = this.createHash(JSON.stringify(value), hash)
-      } else {
-        // if primary key is empty, we consider it as a duplicate to be on safe side
-        return true
       }
     }
 
     const hashValue = hash.digest('hex')
-    if (this.processedRecordsHash.has(hashValue)) {
-      return true
+    return hashValue
+  }
+
+  public isDuplicate(
+    record: Record<string, object>,
+    cb: (record: Record<string, object>) => void
+  ): boolean {
+    let isDuplicate = false
+    if (this.compoundPrimaryKey.length === 0) {
+      return false
     }
+    const hashValue = this.getHashValue(record)
+    if (hashValue && this.processedRecordsHash.has(hashValue)) {
+      isDuplicate = true
+    }
+    cb(record)
+    return isDuplicate
+  }
+
+  public afterDuplicateCheck(record: Record<string, object>): void {
+    const hashValue = this.getHashValue(record)
     this.processedRecordsHash.set(hashValue, true)
-    return false
   }
 }

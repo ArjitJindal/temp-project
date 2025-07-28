@@ -119,6 +119,7 @@ export default function NewListDrawer(props: Props) {
                 columns: values.columns?.map((col) => ({
                   key: col.key,
                   type: col.type,
+                  primaryKey: col.primaryKey,
                 })),
               },
               items: values.values?.map((key) => ({ key })) ?? [],
@@ -163,7 +164,7 @@ export default function NewListDrawer(props: Props) {
   );
 
   const updateColumnField = useCallback(
-    (key: string, field: keyof CustomColumn, value: string | undefined) => {
+    (key: string, field: keyof CustomColumn, value: string | undefined | boolean) => {
       if (!formRef.current) {
         return;
       }
@@ -377,6 +378,9 @@ export default function NewListDrawer(props: Props) {
                               <div className={s.columnHeaderFlex}>
                                 <div className={cn(s.columnName, s.headerText)}>Column name</div>
                                 <div className={cn(s.columnType, s.headerText)}>Column type</div>
+                                <div className={cn(s.columnPrimaryKey, s.headerText)}>
+                                  Is Unique
+                                </div>
                                 <div className={cn(s.columnActions, s.headerText)}>Actions</div>
                               </div>
                               {columns?.map((col) => (
@@ -401,6 +405,14 @@ export default function NewListDrawer(props: Props) {
                                         value: type,
                                         label: humanizeConstant(type),
                                       }))}
+                                    />
+                                  </div>
+                                  <div className={s.columnPrimaryKey}>
+                                    <Toggle
+                                      value={col.primaryKey ?? false}
+                                      onChange={(value) =>
+                                        updateColumnField(col.key, 'primaryKey', value ?? false)
+                                      }
                                     />
                                   </div>
                                   <div className={s.columnActions}>
@@ -435,6 +447,17 @@ export default function NewListDrawer(props: Props) {
                                       value: type,
                                       label: humanizeConstant(type),
                                     }))}
+                                  />
+                                </div>
+                                <div className={s.columnPrimaryKey}>
+                                  <Toggle
+                                    value={newColumn.primaryKey ?? false}
+                                    onChange={(value) =>
+                                      setNewColumn((prev) => ({
+                                        ...prev,
+                                        primaryKey: value ?? false,
+                                      }))
+                                    }
                                   />
                                 </div>
                                 <div className={s.columnActions}>

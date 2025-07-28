@@ -150,7 +150,6 @@ describe('CsvFormat', () => {
       const records: object[] = []
       for await (const record of csvFormat.readAndParse(mockS3Key)) {
         const result = parseRecordWithAJV(record.record, Model)
-        console.log(result)
         expect(result.valid).toBe(true)
         records.push({ ...record, record: result.data })
       }

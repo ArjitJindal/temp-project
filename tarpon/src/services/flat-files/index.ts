@@ -38,9 +38,23 @@ type Connections = {
   clickhouseConnectionConfig: ConnectionCredentials
 }
 
-const ModelCompoundPrimaryKey: Record<FlatFileSchema, string[]> = {
+const ModelCompoundPrimaryKey: Record<
+  FlatFileSchema,
+  string[] | ((metadata: object) => string[])
+> = {
   BULK_CASE_CLOSURE: ['caseId'],
-  CUSTOM_LIST_UPLOAD: ['Key'],
+  CUSTOM_LIST_UPLOAD: (metadata: object): string[] => {
+    if (
+      'items' in metadata &&
+      metadata.items &&
+      Array.isArray(metadata.items)
+    ) {
+      return metadata.items
+        .filter((item) => item.primaryKey)
+        .map((item) => item.key)
+    }
+    return []
+  },
   RULE_INSTANCES_IMPORT: ['id'],
   RISK_FACTORS_IMPORT: ['id'],
   CONSUMER_USERS_UPLOAD: ['userId'],
@@ -101,6 +115,7 @@ export class FlatFilesService {
     schema: FlatFileSchema,
     format: FlatFileTemplateFormat,
     model: EntityModel,
+    metadata?: object,
     s3Key?: string
   ) {
     const FormatConstructor = FlatFileFormatToModel[format]
@@ -111,7 +126,12 @@ export class FlatFilesService {
     }
 
     try {
-      const compoundPrimaryKey = ModelCompoundPrimaryKey[schema] ?? []
+      const schemaKey = ModelCompoundPrimaryKey[schema]
+      const compoundPrimaryKey =
+        typeof schemaKey === 'function'
+          ? schemaKey(metadata ?? {})
+          : schemaKey ?? []
+
       return FormatConstructor(
         this.tenantId,
         model as typeof EntityModel,
@@ -158,7 +178,12 @@ export class FlatFilesService {
     metadata?: object
   ) {
     const model = await this.getModel(schema, metadata)
-    const formatInstance = await this.getFormatInstance(schema, format, model)
+    const formatInstance = await this.getFormatInstance(
+      schema,
+      format,
+      model,
+      metadata
+    )
     const template = formatInstance.getTemplate()
     return template
   }
@@ -175,6 +200,7 @@ export class FlatFilesService {
       schema,
       format,
       model,
+      metadata,
       s3Key
     )
     const isAllValid = await formatInstance.validateAndStoreRecords(
