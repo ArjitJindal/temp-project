@@ -14,6 +14,7 @@ import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctions
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsMatchTypeDetailsEnum } from '@/@types/openapi-internal/SanctionsMatchTypeDetailsEnum'
+import { generateHashFromString } from '@/utils/object'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -229,6 +230,7 @@ export function sanitizeAcurisEntities(
         sanctionSearchTypes.includes(key as AcurisSanctionsSearchType)
       )
       .flatMap(([_key, value]) => value)
+    const allowedSourceIds = generateHashFromString('')
     const processedEntity = {
       ...entity,
       sanctionSearchTypes,
@@ -253,6 +255,7 @@ export function sanitizeAcurisEntities(
               (!pepSourceIds?.length ||
                 source.category === 'POI' ||
                 !source.internalId ||
+                allowedSourceIds.includes(source.internalId) ||
                 pepSourceIds.includes(source.internalId)) &&
               (!pepCategory ||
                 (source.category &&
