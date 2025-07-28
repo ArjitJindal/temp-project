@@ -145,9 +145,22 @@ export class UserClickhouseRepository {
         })),
       }
     }
+    const sortFieldInItem =
+      sortField === 'timestamp' ? 'createdTimestamp' : sortField
+
+    const sortedUsers = getSortedData<T>({
+      data: result.items.filter((item) => item[sortFieldInItem] != null),
+      sortField: sortFieldInItem,
+      sortOrder,
+      groupByField: 'userId',
+      groupBySortField: sortFieldInItem,
+    })
 
     return {
-      items: result.items as AllUsersTableItem[],
+      items: [
+        ...result.items.filter((item) => item[sortFieldInItem] == null),
+        ...sortedUsers,
+      ],
       count: result.count,
     }
   }
