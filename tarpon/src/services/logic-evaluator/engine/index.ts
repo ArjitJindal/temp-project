@@ -99,6 +99,7 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
+import { TimestampRange } from '@/services/rules-engine'
 
 class RebuildSyncRetryError extends Error {
   constructor() {
@@ -656,7 +657,9 @@ export class LogicEvaluator {
     aggregationVariable: LogicAggregationVariable,
     currentTimestamp: number,
     userId: string | undefined,
-    paymentDetails: PaymentDetails | undefined
+    paymentDetails: PaymentDetails | undefined,
+    timeRange?: TimestampRange,
+    totalTimeSlices?: number
   ): Promise<boolean> {
     const userKeyId =
       aggregationVariable.type === 'USER_TRANSACTIONS'
@@ -682,6 +685,13 @@ export class LogicEvaluator {
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
+    const aggregationTimeRange = timeRange
+      ? {
+          afterTimestamp: timeRange.startTimestamp,
+          beforeTimestamp: timeRange.endTimestamp,
+        }
+      : { afterTimestamp, beforeTimestamp: currentTimestamp }
+
     const {
       result: aggregationResult,
       lastTransactionTimestamp,
@@ -692,11 +702,10 @@ export class LogicEvaluator {
         userId,
         paymentDetails,
       },
-      {
-        afterTimestamp,
-        beforeTimestamp: currentTimestamp,
-      }
+      aggregationTimeRange,
+      currentTimestamp
     )
+
     logger.debug('Prepared rebuild result')
     if (aggregationVariable.aggregationGroupByFieldKey) {
       const groups = uniq(
@@ -749,16 +758,18 @@ export class LogicEvaluator {
     await this.aggregationRepository.setAggregationVariableReady(
       aggregationVariable,
       userKeyId,
-      lastTransactionTimestamp
+      lastTransactionTimestamp,
+      totalTimeSlices
     )
-    logger.debug('Rebuilt aggregation')
+    logger.debug('Rebuilt aggregation for time window', timeRange)
     return true
   }
 
   private async getRebuiltAggregationVariableResult(
     aggregationVariable: LogicAggregationVariable,
     userIdentifier: UserIdentifier,
-    timeRange: { afterTimestamp: number; beforeTimestamp: number }
+    timeRange: { afterTimestamp: number; beforeTimestamp: number },
+    currentTimestamp?: number
   ): Promise<{
     result: { [time: string]: AggregationData }
     lastTransactionTimestamp: number
@@ -806,7 +817,7 @@ export class LogicEvaluator {
     )
 
     const threeDaysBeforeTimestamp = subtractTime(
-      dayjs(timeRange.beforeTimestamp),
+      dayjs(currentTimestamp ?? timeRange.beforeTimestamp),
       {
         granularity: 'day',
         units: 3,
@@ -1054,7 +1065,9 @@ export class LogicEvaluator {
         }
       }
       if (timeoutReached) {
-        logger.error('Timeout reached while rebuilding aggregation (FR-5225)')
+        logger.error(
+          `Timeout reached while rebuilding aggregation, for timeWindow: ${timeRange}`
+        )
         break
       }
     }

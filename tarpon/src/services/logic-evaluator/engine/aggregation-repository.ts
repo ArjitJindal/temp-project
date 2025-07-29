@@ -8,8 +8,9 @@ import {
   PutCommand,
   PutCommandInput,
   QueryCommandInput,
+  UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-
 import { keyBy, mapValues, pick, uniq } from 'lodash'
 import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -40,7 +41,7 @@ export type BulkApplyMarkerTransactionData = {
   transactionId: string
   direction: 'origin' | 'destination'
 }[]
-
+export const TIME_SLICE_COUNT = 5
 // Increment this version when we need to invalidate all existing aggregations.
 const GLOBAL_AGG_VERSION = 'v1'
 const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof LogicAggregationVariable> = [
@@ -311,23 +312,33 @@ export class AggregationRepository {
   public async setAggregationVariableReady(
     aggregationVariable: LogicAggregationVariable,
     userKeyId: string,
-    lastTransactionTimestamp: number
+    lastTransactionTimestamp: number,
+    totalTimeSlices?: number
   ): Promise<void> {
-    const putItemInput: PutCommandInput = {
+    const ttl = this.backfillNamespace
+      ? this.getBackfillTTL()
+      : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds()
+    const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
-          this.tenantId,
-          userKeyId,
-          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
-        ),
-        lastTransactionTimestamp,
-        ttl: this.backfillNamespace
-          ? this.getBackfillTTL()
-          : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
+      UpdateExpression:
+        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, sliceCount = if_not_exists(sliceCount,:zero) +  :one, #ttl = :ttl',
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
       },
+      ExpressionAttributeValues: {
+        ':lastTransactionTimestamp': lastTransactionTimestamp,
+        ':totalTimeSlices': totalTimeSlices ?? 1,
+        ':ttl': ttl,
+        ':zero': 0,
+        ':one': 1,
+      },
+      Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
+        this.tenantId,
+        userKeyId,
+        getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
+      ),
     }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
   public async isAggregationVariableReady(
@@ -344,8 +355,13 @@ export class AggregationRepository {
       ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    const noOfReadySlices = result.Item?.sliceCount ?? 1
+    const totalTimeSlices = result.Item?.totalTimeSlices ?? 1
     const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
-    return { ready: Boolean(result.Item), lastTransactionTimestamp }
+    return {
+      ready: Boolean(result.Item) && noOfReadySlices == totalTimeSlices,
+      lastTransactionTimestamp,
+    }
   }
 
   private getUpdatedTtlAttribute(

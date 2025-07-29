@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash'
+import { groupBy, map, sortBy } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { mockClient } from 'aws-sdk-client-mock'
@@ -26,6 +26,8 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getTestRiskFactor } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import * as snsSqsClient from '@/utils/sns-sqs-client'
+import { TIME_SLICE_COUNT } from '@/services/logic-evaluator/engine/aggregation-repository'
+import { generateChecksum } from '@/utils/object'
 
 dynamoDbSetupHook()
 withFeatureHook(['RULES_ENGINE_V8', 'RISK_SCORING'])
@@ -151,8 +153,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         aggregationFieldKey: 'TRANSACTION:transactionId',
         aggregationFunc: 'COUNT',
         timeWindow: {
-          start: { units: 1, granularity: 'day' },
-          end: { units: 0, granularity: 'day' },
+          start: { units: 1, granularity: 'day', rollingBasis: true },
+          end: { units: 0, granularity: 'day', rollingBasis: true },
         },
         includeCurrentEntity: true,
       },
@@ -161,7 +163,6 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       tenantId,
       aggregationVariables
     )
-
     const jobId = uuidv4()
     const testJob: BatchJobWithId = {
       jobId,
@@ -170,27 +171,37 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       parameters: {
         entity: { type: 'RULE', ruleInstanceId },
         aggregationVariables,
+        currentTimestamp: now.valueOf(),
       },
     }
     await jobRunnerHandler(testJob)
-    expect(
-      bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-        JSON.parse(v.MessageBody as string)
-      )
-    ).toEqual([
-      {
-        type: 'PRE_AGGREGATION',
-        aggregationVariable: aggregationVariables[0],
-        tenantId,
-        userId: 'U-1',
-        currentTimestamp: expect.any(Number),
-        jobId,
-        entity: {
-          type: 'RULE',
-          ruleInstanceId,
-        },
+    const messages = bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+      JSON.parse(v.MessageBody as string)
+    )
+    const timeRanges = messages
+      .map((message) => message.timeWindow)
+      .sort((a, b) => a.startTimestamp - b.startTimestamp)
+    expect(timeRanges[0].startTimestamp).toEqual(
+      dayjs(now.valueOf()).subtract(1, 'day').valueOf()
+    )
+    expect(timeRanges[timeRanges.length - 1].endTimestamp).toEqual(
+      now.valueOf()
+    )
+    expect(messages.length).toEqual(TIME_SLICE_COUNT)
+    expect(messages[0]).toEqual({
+      type: 'PRE_AGGREGATION',
+      totalSliceCount: 5,
+      aggregationVariable: aggregationVariables[0],
+      tenantId,
+      userId: 'U-1',
+      currentTimestamp: expect.any(Number),
+      timeWindow: expect.any(Object),
+      jobId,
+      entity: {
+        type: 'RULE',
+        ruleInstanceId,
       },
-    ])
+    })
   })
 
   test('submits pre-aggregation tasks for the users in the target time range and direction - 2', async () => {
@@ -224,14 +235,19 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    expect(
-      sortBy(
-        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-          JSON.parse(v.MessageBody as string)
+    const messages = sortBy(
+      map(
+        groupBy(
+          bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+            JSON.parse(v.MessageBody as string)
+          ),
+          'userId'
         ),
-        'userId'
-      )
-    ).toEqual([
+        (group) => group[0]
+      ),
+      'userId'
+    )
+    expect(messages).toEqual([
       {
         type: 'PRE_AGGREGATION',
         aggregationVariable: aggregationVariables[0],
@@ -243,6 +259,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           type: 'RULE',
           ruleInstanceId,
         },
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -255,6 +273,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           type: 'RULE',
           ruleInstanceId,
         },
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -267,6 +287,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           type: 'RULE',
           ruleInstanceId,
         },
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -279,6 +301,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           type: 'RULE',
           ruleInstanceId,
         },
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
     ])
   })
@@ -292,8 +316,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         aggregationFieldKey: 'TRANSACTION:transactionId',
         aggregationFunc: 'COUNT',
         timeWindow: {
-          start: { units: 1, granularity: 'day' },
-          end: { units: 0, granularity: 'day' },
+          start: { units: 1, granularity: 'day', rollingBasis: true },
+          end: { units: 0, granularity: 'day', rollingBasis: true },
         },
         includeCurrentEntity: true,
       },
@@ -311,24 +335,37 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       parameters: {
         entity: { type: 'RULE', ruleInstanceId },
         aggregationVariables,
+        currentTimestamp: now.valueOf(),
       },
     }
     await jobRunnerHandler(testJob)
-    expect(
-      bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-        JSON.parse(v.MessageBody as string)
-      )
-    ).toEqual([
-      {
-        type: 'PRE_AGGREGATION',
-        aggregationVariable: aggregationVariables[0],
-        tenantId,
-        paymentDetails: { method: 'CARD', cardFingerprint: 'card-1' },
-        currentTimestamp: expect.any(Number),
-        entity: { type: 'RULE', ruleInstanceId },
-        jobId,
+    const messages = bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+      JSON.parse(v.MessageBody as string)
+    )
+    const timeRanges = messages
+      .map((message) => message.timeWindow)
+      .sort((a, b) => a.startTimestamp - b.startTimestamp)
+    expect(timeRanges[0].startTimestamp).toEqual(
+      dayjs(now.valueOf()).subtract(1, 'day').valueOf()
+    )
+    expect(timeRanges[timeRanges.length - 1].endTimestamp).toEqual(
+      now.valueOf()
+    )
+    expect(messages.length).toEqual(TIME_SLICE_COUNT)
+    expect(messages[0]).toEqual({
+      type: 'PRE_AGGREGATION',
+      aggregationVariable: aggregationVariables[0],
+      tenantId,
+      paymentDetails: { method: 'IBAN', BIC: 'bic-1', IBAN: 'iban-1' },
+      currentTimestamp: expect.any(Number),
+      timeWindow: expect.any(Object),
+      jobId,
+      totalSliceCount: 5,
+      entity: {
+        type: 'RULE',
+        ruleInstanceId,
       },
-    ])
+    })
   })
 
   test('submits pre-aggregation tasks for the payment details in the target time range and direction - 2', async () => {
@@ -362,14 +399,19 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    expect(
-      sortBy(
-        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-          JSON.parse(v.MessageBody as string)
+    const messages = sortBy(
+      map(
+        groupBy(
+          bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+            JSON.parse(v.MessageBody as string)
+          ),
+          (val) => generateChecksum(val.paymentDetails)
         ),
-        'paymentDetails.method'
-      )
-    ).toEqual([
+        (group) => group[0]
+      ),
+      'paymentDetails.method'
+    )
+    expect(messages).toEqual([
       {
         type: 'PRE_AGGREGATION',
         aggregationVariable: aggregationVariables[0],
@@ -381,6 +423,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -393,6 +437,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -405,6 +451,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
         jobId,
       },
       {
@@ -419,6 +467,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -431,6 +481,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -443,6 +495,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
     ])
   })
@@ -478,14 +532,19 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    expect(
-      sortBy(
-        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-          JSON.parse(v.MessageBody as string)
+    const messages = sortBy(
+      map(
+        groupBy(
+          bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+            JSON.parse(v.MessageBody as string)
+          ),
+          (val) => generateChecksum(val.paymentDetails)
         ),
-        'paymentDetails.method'
-      )
-    ).toEqual([
+        (group) => group[0]
+      ),
+      'paymentDetails.method'
+    )
+    expect(messages).toEqual([
       {
         type: 'PRE_AGGREGATION',
         aggregationVariable: aggregationVariables[0],
@@ -497,6 +556,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -509,6 +570,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        totalSliceCount: 2,
+        timeWindow: expect.any(Object),
       },
       {
         type: 'PRE_AGGREGATION',
@@ -522,6 +585,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        totalSliceCount: 2,
+        timeWindow: expect.any(Object),
       },
       {
         type: 'PRE_AGGREGATION',
@@ -535,6 +600,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -547,6 +614,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -559,6 +628,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
         jobId,
+        timeWindow: expect.any(Object),
+        totalSliceCount: 2,
       },
     ])
   })
@@ -660,7 +731,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     expect(
       ((await getJob(tenantId, testJob.jobId)) as RulePreAggregationBatchJob)
         .metadata?.tasksCount
-    ).toBe(2)
+    ).toBe(2 * TIME_SLICE_COUNT)
   })
 
   test("doesn't submit pre-aggregation tasks if already submitted before", async () => {

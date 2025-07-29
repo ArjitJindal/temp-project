@@ -1,4 +1,13 @@
-import { chunk, compact, isEmpty, memoize, uniq, uniqBy } from 'lodash'
+import {
+  chunk,
+  compact,
+  floor,
+  isEmpty,
+  memoize,
+  range,
+  uniq,
+  uniqBy,
+} from 'lodash'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
@@ -7,10 +16,18 @@ import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongo
 import { getPaymentDetailsIdentifiersKey } from '../logic-evaluator/variables/payment-details'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import {
+  TimestampRange,
   TransactionAggregationTaskEntry,
   V8LogicAggregationRebuildTask,
 } from '../rules-engine'
-import { getAggVarHash } from '../logic-evaluator/engine/aggregation-repository'
+import {
+  getAggVarHash,
+  TIME_SLICE_COUNT,
+} from '../logic-evaluator/engine/aggregation-repository'
+import {
+  canAggregate,
+  getAggregationGranularity,
+} from '../logic-evaluator/engine/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import {
@@ -31,7 +48,7 @@ import {
 import { envIs } from '@/utils/env'
 import { handleV8PreAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { TransientRepository } from '@/core/repositories/transient-repository'
-import { duration } from '@/utils/dayjs'
+import dayjs, { duration } from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
@@ -40,15 +57,20 @@ const sqs = getSQSClient()
 const DEFAULT_CHUNK_SIZE = 1_000
 
 function getAggregationTaskMessage(
-  task: TransactionAggregationTaskEntry
+  task: TransactionAggregationTaskEntry,
+  sliceCount?: number
 ): FifoSqsMessage {
   const payload = task.payload as V8LogicAggregationRebuildTask
   const deduplicationId = generateChecksum(
-    `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}`
+    `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
+      payload.aggregationVariable
+    )}`
   )
   return {
     MessageBody: JSON.stringify(payload),
-    MessageGroupId: generateChecksum(task.userKeyId),
+    MessageGroupId: generateChecksum(
+      `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}`
+    ),
     MessageDeduplicationId: deduplicationId,
   }
 }
@@ -73,6 +95,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
+    const tenantId = job.tenantId
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -130,31 +153,77 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         aggregationVariable,
         currentTimestamp
       )
-
+      const timeRanges = this.splitAggregationWindow(
+        aggregationVariable,
+        currentTimestamp ?? Date.now(),
+        tenantId
+      )
       for (const idsChunk of chunk<PaymentDetailsUserInfo | string>(
         ids,
         DEFAULT_CHUNK_SIZE
       )) {
         let messages: FifoSqsMessage[] = []
         if (type === 'USER_TRANSACTIONS') {
-          messages = (idsChunk as string[]).map((userId) =>
-            getAggregationTaskMessage({
+          messages = (idsChunk as string[]).flatMap((userId) => {
+            if (timeRanges !== null) {
+              return timeRanges.map((range, index) =>
+                getAggregationTaskMessage(
+                  {
+                    userKeyId: userId,
+                    payload: {
+                      type: 'PRE_AGGREGATION',
+                      userId,
+                      tenantId: job.tenantId,
+                      currentTimestamp: currentTimestamp ?? Date.now(),
+                      timeWindow: range,
+                      jobId: this.jobId,
+                      entity,
+                      aggregationVariable,
+                      totalSliceCount: timeRanges.length,
+                    },
+                  },
+                  index
+                )
+              )
+            }
+            return getAggregationTaskMessage({
               userKeyId: userId,
               payload: {
                 type: 'PRE_AGGREGATION',
-                aggregationVariable,
-                tenantId: job.tenantId,
                 userId,
+                tenantId: job.tenantId,
                 currentTimestamp: currentTimestamp ?? Date.now(),
                 jobId: this.jobId,
                 entity,
+                aggregationVariable,
               },
             })
-          )
+          })
         } else if (type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-          messages = (idsChunk as PaymentDetailsUserInfo[]).map(
-            ({ userKeyId, paymentDetails }) =>
-              getAggregationTaskMessage({
+          messages = (idsChunk as PaymentDetailsUserInfo[]).flatMap(
+            ({ userKeyId, paymentDetails }) => {
+              if (timeRanges !== null) {
+                return timeRanges.map((range, index) =>
+                  getAggregationTaskMessage(
+                    {
+                      userKeyId,
+                      payload: {
+                        type: 'PRE_AGGREGATION',
+                        paymentDetails,
+                        tenantId: job.tenantId,
+                        currentTimestamp: currentTimestamp ?? Date.now(),
+                        timeWindow: range,
+                        jobId: this.jobId,
+                        entity,
+                        totalSliceCount: timeRanges.length,
+                        aggregationVariable,
+                      },
+                    },
+                    index
+                  )
+                )
+              }
+              return getAggregationTaskMessage({
                 userKeyId,
                 payload: {
                   type: 'PRE_AGGREGATION',
@@ -166,6 +235,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
                   aggregationVariable,
                 },
               })
+            }
           )
         }
 
@@ -298,6 +368,54 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       )
     }
+  }
+
+  private splitAggregationWindow(
+    aggregationVar: LogicAggregationVariable,
+    currentTimestamp: number,
+    tenantId: string
+  ): TimestampRange[] | null {
+    const timeWindow = aggregationVar.timeWindow
+    const canAggregateVar = canAggregate(timeWindow)
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVar.timeWindow,
+      tenantId
+    )
+    if (!canAggregateVar || aggregationVar.lastNEntities) {
+      // As we need continous transaction aggregation for lastN
+      return null
+    }
+    const { afterTimestamp } = getTimeRangeByTimeWindows(
+      currentTimestamp,
+      timeWindow.start,
+      timeWindow.end
+    )
+    const duration = dayjs(currentTimestamp).diff(
+      dayjs(afterTimestamp),
+      aggregationGranularity,
+      false
+    )
+    if (duration <= 1) {
+      return null
+    }
+    const sliceCount = Math.min(duration, TIME_SLICE_COUNT)
+    const timeSlice = floor(duration / sliceCount)
+    return range(sliceCount).map((index) => {
+      const sliceStart = dayjs(afterTimestamp)
+        .add(index * timeSlice, aggregationGranularity)
+        .valueOf()
+      const sliceEnd =
+        index === sliceCount - 1
+          ? currentTimestamp
+          : dayjs(afterTimestamp)
+              .add((index + 1) * timeSlice, aggregationGranularity)
+              .valueOf()
+
+      return {
+        startTimestamp: sliceStart,
+        endTimestamp: sliceEnd,
+      }
+    })
   }
 
   private async preAggregateVariable(

@@ -131,6 +131,7 @@ const ruleAscendingComparator = (
 type RiskScoreDetails = TransactionRiskScoringResult & {
   components?: RiskScoreComponent[]
 }
+export type TimestampRange = { startTimestamp: number; endTimestamp: number }
 
 export type TransactionAggregationTask = {
   transactionId: string
@@ -157,6 +158,8 @@ export type V8LogicAggregationRebuildTask = {
   jobId: string
   aggregationVariable: LogicAggregationVariable
   currentTimestamp: number
+  timeWindow?: TimestampRange
+  totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails
 }
