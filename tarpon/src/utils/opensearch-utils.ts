@@ -8,10 +8,7 @@ import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { Client } from '@opensearch-project/opensearch'
 import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws'
-import {
-  Bulk_RequestBody,
-  DeleteByQuery_RequestBody,
-} from '@opensearch-project/opensearch/api'
+import { Bulk_RequestBody } from '@opensearch-project/opensearch/api'
 import { v4 as uuidv4 } from 'uuid'
 import { isEqual } from 'lodash'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
@@ -275,25 +272,61 @@ export async function createIndexIfNotExists(
   logger.info(`Index ${indexName} already exists`)
 }
 
-export async function deleteDocumentsByQuery(
-  client: Client | undefined,
-  indexName: string,
-  body: DeleteByQuery_RequestBody
+async function deleteDocumentsByVersionInternal(
+  client: Client,
+  index: string,
+  versionValue: string
 ) {
-  if (!client || !(await checkIndexExists(client, indexName))) {
+  let searchAfter: string | undefined = undefined
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const response = await client.search({
+      index,
+      _source: false,
+      size: 1000,
+      body: {
+        query: {
+          bool: {
+            must_not: { term: { version: versionValue } },
+          },
+        },
+        sort: ['_id'],
+        ...(searchAfter ? { search_after: [searchAfter] } : {}),
+      },
+    })
+    const matchingIds: string[] = response.body.hits.hits.map((doc) => doc._id)
+    if (matchingIds.length === 0) {
+      return
+    }
+    await client.bulk({
+      body: matchingIds.map((id) => ({ delete: { _index: index, _id: id } })),
+    })
+    searchAfter = matchingIds[matchingIds.length - 1]
+  }
+}
+
+export async function deleteDocumentsByVersion(
+  client: Client | undefined,
+  aliasName: string,
+  version: string
+) {
+  if (!client || !(await checkIndexExists(client, aliasName))) {
     logger.info(
-      `No client found for index ${indexName} or index does not exist`
+      `No client found for index ${aliasName} or index does not exist`
     )
     return
   }
-  logger.info(`Deleting documents by query ${JSON.stringify(body)}`)
-  await client.deleteByQuery({
-    index: indexName,
-    body: body,
-    conflicts: 'proceed',
-    wait_for_completion: true,
-  })
-  logger.info(`Deleted documents by query ${JSON.stringify(body)}`)
+
+  const indexName = await getIndexWithAliasName(client, aliasName)
+  if (!indexName) {
+    logger.info(`Index ${aliasName} does not exist`)
+    return
+  }
+  logger.info(
+    `Deleting documents by version ${version} for index ${indexName} for alias ${aliasName}`
+  )
+  await deleteDocumentsByVersionInternal(client, indexName, version)
+  logger.info(`Deleted documents by version ${version}`)
 }
 
 //Use this function to create index with the latest definition when loading data from a provider

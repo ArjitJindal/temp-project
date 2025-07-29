@@ -1,4 +1,4 @@
-import { range } from 'lodash'
+import { range, uniq } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { MongoClient } from 'mongodb'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
@@ -18,7 +18,7 @@ import {
 } from '@/utils/mongodb-utils'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import {
-  deleteDocumentsByQuery,
+  deleteDocumentsByVersion,
   deleteIndexAfterDataLoad,
   getOpensearchClient,
   isOpensearchAvailableInRegion,
@@ -56,18 +56,20 @@ export async function runDeltaSanctionsDataFetchJob(
     ? await getOpensearchClient()
     : undefined
 
-  const deltaSanctionsCollectionNames = providers.map((p) => {
-    return {
-      name: getSanctionsCollectionName(
-        {
-          provider: p,
-        },
-        tenantId,
-        'delta'
-      ),
-      provider: p,
-    }
-  })
+  const deltaSanctionsCollectionNames = uniq(
+    providers.map((p) => {
+      return {
+        name: getSanctionsCollectionName(
+          {
+            provider: p,
+          },
+          tenantId,
+          'delta'
+        ),
+        provider: p,
+      }
+    })
+  )
   await Promise.all([
     createMongoDBCollections(client, dynamoDb, tenantId),
     createGlobalMongoDBCollections(client),
@@ -77,17 +79,7 @@ export async function runDeltaSanctionsDataFetchJob(
       client.db().collection(c.name).deleteMany({})
     ),
     ...deltaSanctionsCollectionNames.map((c) =>
-      deleteDocumentsByQuery(opensearchClient, c.name, {
-        query: {
-          bool: {
-            must_not: {
-              term: {
-                version: version,
-              },
-            },
-          },
-        },
-      })
+      deleteDocumentsByVersion(opensearchClient, c.name, version)
     ),
   ])
 

@@ -15,7 +15,7 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import {
-  deleteDocumentsByQuery,
+  deleteDocumentsByVersion,
   deleteIndexAfterDataLoad,
   getOpensearchClient,
   isOpensearchAvailableInRegion,
@@ -130,17 +130,11 @@ export async function runSanctionsDataFetchJob(
           .collection(sanctionsCollectionName)
           .deleteMany({ version: { $ne: version } }),
         !aliasName
-          ? deleteDocumentsByQuery(opensearchClient, sanctionsCollectionName, {
-              query: {
-                bool: {
-                  must_not: {
-                    term: {
-                      version: version,
-                    },
-                  },
-                },
-              },
-            })
+          ? deleteDocumentsByVersion(
+              opensearchClient,
+              sanctionsCollectionName,
+              version
+            )
           : undefined,
       ])
     }
