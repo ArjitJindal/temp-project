@@ -9,7 +9,7 @@ import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
 import { PageLoading } from '@/components/PageLoading';
-import Button from '@/components/library/Button';
+import { BaseButton } from '@/components/library/Button';
 
 const branding = getBranding();
 
@@ -73,7 +73,9 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
           return (
             <ErrorPage title={'User Not Provisioned'}>
               <p>{branding.notProvisionedWarning}</p>
-              <Button onClick={() => logout({ returnTo: window.location.origin })}>Log out</Button>
+              <BaseButton onClick={() => logout({ returnTo: window.location.origin })}>
+                Log out
+              </BaseButton>
             </ErrorPage>
           );
         }

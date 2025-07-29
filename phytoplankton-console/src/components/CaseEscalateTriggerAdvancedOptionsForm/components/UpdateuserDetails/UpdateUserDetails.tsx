@@ -77,7 +77,10 @@ export const UpdateUserDetails = (props: UpdateUserDetailsProps) => {
         )}
       </InputField>
 
-      <InputField<FormValues, 'listId'> name="listId" label="Add user to selected list below">
+      <InputField<FormValues, 'listId'>
+        name="listId"
+        label={`Add ${settings.userAlias} to selected list below`}
+      >
         {(inputProps) => (
           <Select<string>
             options={getOr(queryResults.data, []).map((list) => ({
