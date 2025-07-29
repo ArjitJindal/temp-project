@@ -5025,6 +5025,8 @@ components:
         transitNumber:
           type: string
           description: Transit number of the bank account
+        address:
+          $ref: '#/components/schemas/Address'
       required:
         - method
     UPIDetails:
