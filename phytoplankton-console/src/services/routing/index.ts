@@ -627,6 +627,7 @@ export function useRoutes(): RouteItem[] {
         name: 'accounts',
         position: 'bottom',
         hideChildrenInMenu: true,
+        minRequiredResources: ['write:::accounts/*'],
         routes: [
           {
             path: '/accounts',
