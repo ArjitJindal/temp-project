@@ -1407,6 +1407,9 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.SECONDARY_TARPON_QUEUE_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
+            1024,
         }
       )
 
@@ -1424,7 +1427,7 @@ export class CdkTarponStack extends cdk.Stack {
           maxConcurrency:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
               ?.PROVISIONED_CONCURRENCY ?? 100,
-          batchSize: 50,
+          batchSize: 100,
           maxBatchingWindow: Duration.seconds(30),
         })
       )
