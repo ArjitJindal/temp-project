@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import s from './styles.module.less';
 import {
   useSettings,
   useUpdateTenantSettings,
@@ -106,6 +107,7 @@ const columns = helper.list([
         return (
           <Select
             mode="TAGS"
+            className={s.options}
             isDisabled={item.type !== 'NEW' || !canEdit}
             options={
               item.options?.map((option) => ({

@@ -41,6 +41,7 @@ export default function ScreeningProfileSelect({ value, onChange, ...props }: Pr
 
   return (
     <Select<string>
+      portaled={true}
       mode="SINGLE"
       allowClear={true}
       options={options}

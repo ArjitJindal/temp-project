@@ -63,7 +63,10 @@ export default function PopupContent(props: Props) {
             <InputField<Value, 'key'> name={'key'} label={'Tag key'} labelProps={{ level: 2 }}>
               {(inputProps) => (
                 <Select
+                  style={{ width: '100%' }}
+                  isSearchable={true}
                   allowClear={true}
+                  className={s.select}
                   isLoading={isLoading(result.data)}
                   options={(getOr(result.data, []) as unknown as Array<string>)
                     .filter((key) => key?.length > 0)
@@ -85,7 +88,10 @@ export default function PopupContent(props: Props) {
             >
               {(inputProps) => (
                 <Select
+                  style={{ width: '100%' }}
+                  isSearchable={true}
                   allowClear={true}
+                  className={s.select}
                   isLoading={isLoading(tagsValueResult.data)}
                   isDisabled={!selectedKey}
                   options={(getOr(tagsValueResult.data, []) as unknown as Array<string>)

@@ -137,6 +137,7 @@ export const SecuritySettings = () => {
           options={passwordResetDaysOptions}
           allowClear={false}
           isLoading={mutateTenantSettings.isLoading}
+          style={{ width: '40%' }}
           isDisabled={!isPasswordExpirationEnabled || isLoading('passwordResetDays')}
         />
       </SettingsCard>
@@ -154,6 +155,7 @@ export const SecuritySettings = () => {
           options={accountDormancyAllowedDaysOptions}
           isLoading={mutateTenantSettings.isLoading}
           allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!isAccountDormancyEnabled || isLoading('accountDormancyAllowedDays')}
         />
       </SettingsCard>
@@ -169,6 +171,7 @@ export const SecuritySettings = () => {
           options={sessionTimeoutOptions}
           isLoading={mutateTenantSettings.isLoading}
           allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!isSessionTimeoutEnabled || isLoading('sessionTimeoutMinutes')}
         />
       </SettingsCard>
@@ -188,6 +191,7 @@ export const SecuritySettings = () => {
           options={maxActiveSessionsOptions}
           isLoading={mutateTenantSettings.isLoading}
           allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!isConcurrentSessionsEnabled || isLoading('maxActiveSessions')}
         />
       </SettingsCard>

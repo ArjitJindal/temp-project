@@ -3,6 +3,7 @@ import { useDebounce } from 'ahooks';
 import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
+import s from './index.module.less';
 import Select, { Option } from '@/components/library/Select';
 import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -39,7 +40,7 @@ export default function NewValueInput(props: Props) {
   }
 
   if (listSubtype === 'STRING' || listSubtype === 'CUSTOM') {
-    return <Select<string> mode={'TAGS'} options={[]} {...rest} />;
+    return <Select<string> className={s.select} mode={'TAGS'} options={[]} {...rest} />;
   }
 
   if (is314aEnabled && (listSubtype === '314A_INDIVIDUAL' || listSubtype === '314A_BUSINESS')) {
@@ -148,6 +149,8 @@ function SearchInput(
   );
   return (
     <Select
+      className={s.select}
+      isSearchable
       onSearch={setSearch}
       notFoundContent={isLoading(queryResult.data) ? <Spinner size="SMALL" /> : null}
       options={getOr(queryResult.data, []).map((option) => ({
@@ -187,6 +190,7 @@ function CountriesInput(props: InputProps<string[]> & { excludeCountries?: Set<s
       mode={'MULTIPLE'}
       options={filteredOptions}
       placeholder={`Select countries`}
+      className={s.select}
       {...restProps}
     />
   );

@@ -752,7 +752,7 @@ export default function SuperAdminPanel() {
                     }}
                     value={data?.tenants?.map((tenant) => tenant)}
                     placeholder="Select tenant to add to secondary queue"
-                    width="100%"
+                    style={{ width: '100%' }}
                   />
                 )}
               </AsyncResourceRenderer>
@@ -767,11 +767,11 @@ export default function SuperAdminPanel() {
                     description="Please go to the respective tenant region to delete the tenant (for example if tenant is in `us-1` region, go to `us-1` region you need to be in a different tenant then the tenant you want to delete)"
                   >
                     <Select
-                      width={'20rem'}
                       options={tenantOptions}
                       onChange={(value) => setTenantIdToDelete(value)}
                       value={tenantIdToDelete}
                       placeholder="Select tenant to delete"
+                      style={{ width: '20rem' }}
                     />
                   </Label>
                   <Label label="Instant delete">

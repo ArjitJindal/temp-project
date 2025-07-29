@@ -149,7 +149,6 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         name={'reasons'}
         label={'Reason'}
         labelProps={{
-          testId: 'narrative-reason',
           required: {
             value: true,
             showHint: true,

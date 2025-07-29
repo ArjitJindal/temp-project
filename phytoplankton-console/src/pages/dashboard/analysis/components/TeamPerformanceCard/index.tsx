@@ -140,6 +140,7 @@ export default function TeamPerformanceCard(props: WidgetProps) {
             { value: 'current', label: 'Current' },
             { value: 'daterange', label: 'Date range' },
           ]}
+          style={{ width: 120 }}
         />,
         type === 'daterange' && (
           <DatePicker.RangePicker

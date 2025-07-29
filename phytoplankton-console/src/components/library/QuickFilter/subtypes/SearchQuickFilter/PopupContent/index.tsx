@@ -83,7 +83,8 @@ export default function PopupContent<T extends ItemType>(props: Props<T>) {
             }
           }}
           placeholder={searchPlaceholder}
-          hiddenDropdown
+          className={s.hiddenDropdown}
+          dropdownMatchWidth={false}
         />
       </div>
       {search !== '' ? (

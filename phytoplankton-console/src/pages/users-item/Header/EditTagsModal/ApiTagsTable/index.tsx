@@ -60,6 +60,9 @@ function ApiTagsTable(props: Props) {
         if (item.type === 'NEW') {
           return (
             <Select
+              className={s.select}
+              dropdownMatchWidth={true}
+              portaled={true}
               mode="SINGLE"
               value={newState.key}
               onChange={(e) => setNewState({ ...newState, key: e ?? '' })}
@@ -87,6 +90,7 @@ function ApiTagsTable(props: Props) {
           const tagDetails = consoleTags?.find((tag) => tag.key === newState.key);
           return tagDetails?.type === 'ENUM' ? (
             <Select
+              className={s.options}
               value={newState.value}
               mode="SINGLE"
               options={
@@ -105,6 +109,7 @@ function ApiTagsTable(props: Props) {
           return editState?.key === item.key ? (
             tagDetails?.type === 'ENUM' ? (
               <Select
+                className={s.options}
                 value={editState.value}
                 mode="SINGLE"
                 options={

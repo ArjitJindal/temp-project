@@ -21,7 +21,6 @@ import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-6-line
 import Button from '@/components/library/Button';
 import { TagColor } from '@/components/library/Tag';
 import VariableInfoPopover from '@/components/ui/LogicBuilder/VariableInfoPopover';
-import Tooltip from '@/components/library/Tooltip';
 
 const InitialConfig = BasicConfig;
 
@@ -226,19 +225,21 @@ export function makeConfig(
             showLabel={props.config?.settings.showLabels !== false}
             testId="logic-operator"
           >
-            <Tooltip title={props.selectedLabel}>
-              <Select
-                allowClear={false}
-                options={finalOptions}
-                value={props.selectedKey}
-                onChange={(key) => {
-                  const item = options.find((x) => x.key === key);
-                  if (item && item.path) {
-                    props.setField(item.path);
-                  }
-                }}
-              />
-            </Tooltip>
+            <Select
+              autoTrim={true}
+              dropdownMatchWidth={false}
+              portaled={true}
+              allowClear={false}
+              options={finalOptions}
+              value={props.selectedKey}
+              onChange={(key) => {
+                const item = options.find((x) => x.key === key);
+                if (item && item.path) {
+                  props.setField(item.path);
+                }
+              }}
+              tooltip
+            />
           </OptionalLabel>
         );
       },
@@ -252,19 +253,21 @@ export function makeConfig(
 
         return (
           <Label label={'Function'} testId="logic-function">
-            <Tooltip title={props.selectedLabel}>
-              <Select
-                allowClear={false}
-                options={options}
-                value={value}
-                onChange={(key) => {
-                  const item = props.items.find((x) => x.key === key);
-                  if (item && item.path) {
-                    props.setField(item.path);
-                  }
-                }}
-              />
-            </Tooltip>
+            <Select
+              autoTrim={true}
+              dropdownMatchWidth={true}
+              portaled={true}
+              allowClear={false}
+              options={options}
+              value={value}
+              onChange={(key) => {
+                const item = props.items.find((x) => x.key === key);
+                if (item && item.path) {
+                  props.setField(item.path);
+                }
+              }}
+              tooltip
+            />
           </Label>
         );
       },
@@ -327,14 +330,16 @@ export const FieldInput = (props: FieldInputProps) => {
   return (
     <OptionalLabel label={'Variable'} showLabel={showlabel} testId="logic-variable">
       <div className={s.variableSelects}>
-        <Tooltip title={selectedOption?.label}>
-          <Select
-            allowClear={false}
-            options={options.filter((x) => !isVirtualFieldVarName(x.value))}
-            value={selectedOption?.value}
-            onChange={onChange}
-          />
-        </Tooltip>
+        <Select
+          autoTrim={true}
+          dropdownMatchWidth={false}
+          portaled={true}
+          allowClear={false}
+          options={options.filter((x) => !isVirtualFieldVarName(x.value))}
+          value={selectedOption?.value}
+          onChange={onChange}
+          tooltip
+        />
         {selectedOption && selectedOptionVirtualFieldsOptions.length > 0 && (
           <Select
             options={[
