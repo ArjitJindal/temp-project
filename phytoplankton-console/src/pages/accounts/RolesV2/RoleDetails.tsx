@@ -75,6 +75,11 @@ export default function RoleDetails({
           if (action === 'write') {
             newStatements = statementManager.addPermission(permPath, 'read', newStatements);
           }
+
+          const optimizedStatements =
+            statementManager.optimizeStatementsWithPathSeparation(newStatements);
+
+          return optimizedStatements;
         } else {
           newStatements = statementManager.removePermission(
             permPath,
@@ -82,12 +87,9 @@ export default function RoleDetails({
             newStatements,
             permissionsQuery.data,
           );
+
+          return newStatements;
         }
-
-        const optimizedStatements =
-          statementManager.optimizeStatementsWithPathSeparation(newStatements);
-
-        return optimizedStatements;
       });
     },
     [mode, statementManager, permissionsQuery.data],

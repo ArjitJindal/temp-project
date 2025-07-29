@@ -230,6 +230,7 @@ const SubPermissions = ({
                       }}
                     >
                       <Checkbox
+                        key={`${actionKey}-${(role?.statements || []).length}`}
                         value={isChecked}
                         isDisabled={mode === 'view'}
                         onChange={(newValue) => {
