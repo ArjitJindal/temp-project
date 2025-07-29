@@ -199,6 +199,7 @@ export async function createIndex(
   indexName: string,
   aliasName?: string
 ) {
+  logger.info(`Creating index ${indexName}`)
   const newIndexName = indexName + '-' + uuidv4()
   await client.indices.create({
     index: newIndexName,
@@ -208,8 +209,9 @@ export async function createIndex(
       provider: getProviderNameFromIndexName(indexName),
     }),
   })
-
+  logger.info(`Created index ${indexName}`)
   await putAlias(client, newIndexName, aliasName ?? indexName)
+  logger.info(`Put alias ${aliasName ?? indexName} to index ${indexName}`)
 }
 
 export async function deleteIndex(client: Client, indexName: string) {
@@ -266,8 +268,11 @@ export async function createIndexIfNotExists(
   indexName: string
 ) {
   if (!(await checkIndexExists(client, indexName))) {
+    logger.info(`Creating index ${indexName}`)
     await createIndex(client, indexName)
+    return
   }
+  logger.info(`Index ${indexName} already exists`)
 }
 
 export async function deleteDocumentsByQuery(
@@ -276,14 +281,19 @@ export async function deleteDocumentsByQuery(
   body: DeleteByQuery_RequestBody
 ) {
   if (!client || !(await checkIndexExists(client, indexName))) {
+    logger.info(
+      `No client found for index ${indexName} or index does not exist`
+    )
     return
   }
+  logger.info(`Deleting documents by query ${JSON.stringify(body)}`)
   await client.deleteByQuery({
     index: indexName,
     body: body,
     conflicts: 'proceed',
     wait_for_completion: true,
   })
+  logger.info(`Deleted documents by query ${JSON.stringify(body)}`)
 }
 
 //Use this function to create index with the latest definition when loading data from a provider
@@ -292,11 +302,13 @@ export async function syncOpensearchIndex(
   indexName: string
 ) {
   if (!client) {
+    logger.info(`No client found for index ${indexName}`)
     return
   }
   logger.info(`Syncing index ${indexName}`)
   await createIndexIfNotExists(client, indexName)
   const hasChanged = await hasIndexChanged(client, indexName)
+  logger.info(`Index ${indexName} has changed: ${hasChanged}`)
   if (hasChanged) {
     const aliasName = uuidv4()
     await createIndex(client, indexName, aliasName)
