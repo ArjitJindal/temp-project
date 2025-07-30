@@ -1326,11 +1326,13 @@ export class RulesEngineService {
       database,
       tracing,
     } = options
+    const riskLevelForLogic = this.getRiskLevelForLogic(
+      ruleInstance,
+      senderUserRiskLevel,
+      receiverUserRiskLevel
+    )
     const { parameters, logic, action } = this.getUserSpecificParameters(
-      ruleInstance.type === 'TRANSACTION' &&
-        ruleInstance.ruleRunFor === 'RECEIVER'
-        ? receiverUserRiskLevel
-        : senderUserRiskLevel,
+      riskLevelForLogic,
       ruleInstance
     )
 
@@ -1893,6 +1895,28 @@ export class RulesEngineService {
       action: ((riskEnabled && ruleInstance.riskLevelActions?.[riskLevel]) ||
         ruleInstance.action) as RuleAction,
     }
+  }
+
+  private getRiskLevelForLogic(
+    ruleInstance: RuleInstance,
+    senderUserRiskLevel?: RiskLevel,
+    receiverUserRiskLevel?: RiskLevel
+  ): RiskLevel | undefined {
+    let riskLevelForLogic: RiskLevel | undefined = undefined
+    switch (ruleInstance.ruleRunFor) {
+      case undefined:
+        riskLevelForLogic = senderUserRiskLevel ?? receiverUserRiskLevel
+        break
+      case 'SENDER':
+        riskLevelForLogic = senderUserRiskLevel
+        break
+      case 'RECEIVER':
+        riskLevelForLogic = receiverUserRiskLevel
+        break
+      default:
+        riskLevelForLogic = senderUserRiskLevel
+    }
+    return riskLevelForLogic
   }
 
   private async getTransactionUsers(
