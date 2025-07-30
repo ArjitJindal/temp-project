@@ -129,7 +129,7 @@ export class MongoDbConsumer {
       const tableDetails = this.fetchTableDetails(collectionName)
 
       if (!tableDetails) {
-        return
+        continue
       }
 
       const { tenantId, clickhouseTable, mongoCollectionName } = tableDetails
@@ -137,7 +137,7 @@ export class MongoDbConsumer {
       const isTenantDeleted = await this.isTenantDeleted(tenantId)
 
       if (isTenantDeleted) {
-        return
+        continue
       }
 
       const documentsToReplace = await this.fetchDocuments(
