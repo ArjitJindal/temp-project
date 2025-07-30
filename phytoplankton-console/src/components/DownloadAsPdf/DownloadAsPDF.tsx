@@ -2,6 +2,7 @@ import type { UserOptions } from 'jspdf-autotable';
 import type { jsPDF } from 'jspdf';
 import { getBranding } from '@/utils/branding';
 import { notNullish } from '@/utils/array';
+import { dayjs } from '@/utils/dayjs';
 
 interface Props {
   pdfRef?: HTMLElement | HTMLElement[];
@@ -70,6 +71,7 @@ interface RenderNativeTablesParams {
   pageIndex: number;
   autoTable: any;
   logoImage: HTMLImageElement;
+  documentTimestamp: string;
 }
 
 const renderNativeTablesForPage = (params: RenderNativeTablesParams) => {
@@ -84,6 +86,7 @@ const renderNativeTablesForPage = (params: RenderNativeTablesParams) => {
     pageIndex,
     autoTable,
     logoImage,
+    documentTimestamp,
   } = params;
   for (const table of tables) {
     if (table.headers.length > 0 && table.rows.length > 0) {
@@ -233,7 +236,7 @@ const renderNativeTablesForPage = (params: RenderNativeTablesParams) => {
             halign: 'center',
             didDrawPage: (data) => {
               if (data.pageNumber > 1) {
-                addTopFormatting(doc, logoImage, 'landscape');
+                addTopFormatting(doc, logoImage, 'landscape', documentTimestamp);
               }
             },
           };
@@ -269,6 +272,8 @@ const DownloadAsPDF = async (props: Props) => {
     table.element.style.display = 'none';
   });
 
+  const documentTimestamp = dayjs().format('MM/DD/YYYY, HH:mm:ss');
+
   try {
     const Logo = getBranding().logoDark;
     const logoImage = new Image();
@@ -298,10 +303,10 @@ const DownloadAsPDF = async (props: Props) => {
     let position = 20;
     addAndSetFonts(doc);
 
-    addTopFormatting(doc, logoImage, orientation);
+    addTopFormatting(doc, logoImage, orientation, documentTimestamp);
     if (reportTitle) {
       doc.setFontSize(16);
-      doc.text(reportTitle, 15, position + 7);
+      doc.text(reportTitle, 15, position + 12);
       doc.setFontSize(12);
     }
 
@@ -311,7 +316,7 @@ const DownloadAsPDF = async (props: Props) => {
         const input = inputArray[i];
         if (i > 0) {
           doc.addPage();
-          addTopFormatting(doc, logoImage, orientation);
+          addTopFormatting(doc, logoImage, orientation, documentTimestamp);
           position = 0;
         }
         position += reportTitle ? 16 : 0;
@@ -337,6 +342,7 @@ const DownloadAsPDF = async (props: Props) => {
           pageIndex: 0,
           autoTable,
           logoImage,
+          documentTimestamp,
         });
       }
     }
@@ -350,12 +356,12 @@ const DownloadAsPDF = async (props: Props) => {
     }
 
     // Add table if data is available
-    addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable });
+    addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable, documentTimestamp });
 
     const pageCount = doc.internal.pages.length - 1;
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
-      addTopFormatting(doc, logoImage, orientation);
+      addTopFormatting(doc, logoImage, orientation, documentTimestamp);
       doc.setFontSize(10);
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -406,6 +412,7 @@ const addTopFormatting = (
   doc: jsPDF,
   logoImage: HTMLImageElement,
   _orientation: 'portrait' | 'landscape',
+  documentTimestamp: string,
 ) => {
   doc.setFillColor(17, 105, 249);
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -414,6 +421,21 @@ const addTopFormatting = (
   const LOGO_HEIGHT = 14;
   const scaleRatio = LOGO_HEIGHT / logoImage.height;
   doc.addImage(logoData, 'PNG', 12, 10, logoImage.width * scaleRatio, LOGO_HEIGHT);
+
+  const timestampText = `Timestamp: ${documentTimestamp}`;
+  const rightMargin = 15;
+  const topMargin = 25;
+
+  const currentFontSize = doc.getFontSize();
+
+  doc.setFontSize(8);
+  doc.setTextColor(128, 128, 128);
+  const timestampWidth = doc.getTextWidth(timestampText);
+  const timestampX = pageWidth - rightMargin - timestampWidth;
+  doc.text(timestampText, timestampX, topMargin);
+
+  doc.setFontSize(currentFontSize);
+  doc.setTextColor(0, 0, 0);
 };
 
 const addTable = ({
@@ -422,12 +444,14 @@ const addTable = ({
   tableOptions,
   logoImage,
   autoTable,
+  documentTimestamp,
 }: {
   position: number;
   doc: jsPDF;
   tableOptions?: TableOptions[];
   logoImage: HTMLImageElement;
   autoTable: any;
+  documentTimestamp: string;
 }) => {
   if (tableOptions?.length) {
     const tableWidth = 180;
@@ -452,7 +476,7 @@ const addTable = ({
         },
         ...table.tableOptions,
         willDrawPage: () => {
-          addTopFormatting(doc, logoImage, 'portrait');
+          addTopFormatting(doc, logoImage, 'portrait', documentTimestamp);
         },
         didDrawPage: () => {
           addPageNumber({ doc });

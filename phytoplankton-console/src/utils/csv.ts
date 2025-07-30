@@ -2,6 +2,7 @@ import { download } from './browser';
 import { ExportData } from './data-export';
 import { message } from '@/components/library/Message';
 import { getCurrentDomain } from '@/utils/routing';
+import { dayjs } from '@/utils/dayjs';
 
 export interface CsvValue {
   escaped: string;
@@ -55,6 +56,7 @@ export function transformCSVTableRows(data: ExportData): CsvRow[] {
     }
     result.push(csvRow);
   }
+  result.unshift([{ escaped: 'Timestamp' }, { escaped: dayjs().format('MM/DD/YYYY, HH:mm:ss') }]);
 
   return result;
 }

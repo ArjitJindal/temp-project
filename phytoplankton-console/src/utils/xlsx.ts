@@ -1,6 +1,7 @@
 import { CellObject, CellStyle } from 'xlsx-js-style';
 import { ExportData } from './data-export';
 import { getCurrentDomain } from './routing';
+import { dayjs } from '@/utils/dayjs';
 
 const EXCEL_CHAR_LIMIT = Math.pow(2, 15) - 1;
 
@@ -42,13 +43,36 @@ export function transformXLSXTableRows(data: ExportData) {
     },
   };
 
-  const rows: CellObject[][] = [
+  const rows: CellObject[][] = [];
+
+  const timestampRow: CellObject[] = [
+    {
+      t: 's',
+      v: 'Timestamp',
+      s: style,
+    },
+    {
+      t: 's',
+      v: dayjs().format('MM/DD/YYYY, HH:mm:ss'),
+    },
+  ];
+  rows.push(timestampRow);
+
+  const emptyRow: CellObject[] = [];
+  for (let i = 0; i < columnTitles.length; i++) {
+    emptyRow.push({
+      t: 's',
+      v: '',
+    });
+  }
+
+  rows.push(
     columnTitles.map((title) => ({
       t: 's',
       v: title,
       s: style,
     })),
-  ];
+  );
 
   const dataRows = data.rows.map((row) => {
     const rowData: CellObject[] = [];
@@ -77,7 +101,6 @@ export async function downloadAsXLSX(data: ExportData) {
   const lib = await import('xlsx-js-style');
   const { utils, writeFile } = lib.default;
   const rows = transformXLSXTableRows(data);
-
   const wb = utils.book_new();
   const ws = utils.aoa_to_sheet(rows);
 
