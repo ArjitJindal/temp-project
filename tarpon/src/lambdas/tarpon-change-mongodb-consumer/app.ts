@@ -359,7 +359,6 @@ export class TarponChangeMongoDbConsumer {
     })
 
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
 
     const settings = await tenantSettings(tenantId)
     const existingTransactionSubSegment = await addNewSubsegment(
@@ -440,28 +439,16 @@ export class TarponChangeMongoDbConsumer {
     if (!applyNewVersion(transaction, existingTransaction)) {
       return
     }
-    const arsScoreSubSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleTransaction arsScore'
-    )
-    const arsScore = isRiskScoringEnabled
-      ? await riskRepository.getArsScore(transaction.transactionId)
-      : undefined
-
-    arsScoreSubSegment?.close()
 
     const transactionInMongoSubSegment = await addNewSubsegment(
       'StreamConsumer',
       'handleTransaction transactionInMongo'
     )
     const [transactionInMongo, ruleInstances] = await Promise.all([
-      transactionsRepo.addTransactionToMongo(
-        {
-          ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
-          ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
-        },
-        arsScore
-      ),
+      transactionsRepo.addTransactionToMongo({
+        ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
+        ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
+      }),
       ruleInstancesRepo.getRuleInstancesByIds(
         filterLiveRules(
           { hitRules: transaction?.hitRules ?? [] },
