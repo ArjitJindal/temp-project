@@ -14,6 +14,7 @@ export interface CommonProps {
   step?: number;
   marks?: AntSliderBaseProps['marks'];
   className?: string;
+  testName?: string;
 }
 
 export interface SingleModeProps extends CommonProps, InputProps<number> {
@@ -84,7 +85,11 @@ export default function Slider(props: Props) {
       )}
       {props.mode === 'SINGLE' && props.textInput && !isEmpty(props.textInput) && (
         <div style={{ marginLeft: '0.5rem' }}>
-          <NumberInput {...omit(props, ['className'])} htmlAttrs={props.textInput.htmlAttrs} />
+          <NumberInput
+            {...omit(props, ['className'])}
+            htmlAttrs={props.textInput.htmlAttrs}
+            testName={props.testName}
+          />
         </div>
       )}
     </div>

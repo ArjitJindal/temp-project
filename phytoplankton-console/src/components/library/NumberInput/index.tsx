@@ -21,6 +21,7 @@ export default function NumberInput(props: Props) {
     max = Number.MAX_SAFE_INTEGER,
     step = 1,
     commitMode = 'ON_CHANGE',
+    testName,
     ...rest
   } = props;
   const textValue =
@@ -94,6 +95,7 @@ export default function NumberInput(props: Props) {
         step,
         ...rest.htmlAttrs,
       }}
+      testName={testName}
     />
   );
 }

@@ -152,6 +152,7 @@ const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } })
                 step: 1,
                 htmlAttrs: { style: { width: '2.5rem' } },
               }}
+              testName="sampling-quantity"
             />
           );
         }}

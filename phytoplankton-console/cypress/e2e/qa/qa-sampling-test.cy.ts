@@ -25,6 +25,7 @@ describe('QA Assignee Column', () => {
   it('Should Create a Sample if QA flag is true', () => {
     cy.visit('/case-management/cases');
     cy.get('[data-cy="qa-toggle"]').click();
+    cy.waitNothingLoading();
     cy.get('[data-cy="segmented-control-qa-unchecked-alerts"]').click();
     cy.get('[data-cy="qa-sampling-dropdown"]').should('exist').click();
     cy.get('.ant-dropdown-menu-item').first().click();
