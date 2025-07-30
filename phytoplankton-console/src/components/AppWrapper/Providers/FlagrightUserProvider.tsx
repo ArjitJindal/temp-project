@@ -33,6 +33,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
       const tenantName: string | null = user[`${NAMESPACE}/tenantName`];
       const verifiedEmail: string | null = user[`${NAMESPACE}/verifiedEmail`];
       const demoMode: boolean | null = user[`${NAMESPACE}/demoMode`];
+      const orgName: string | null = user[`${NAMESPACE}/orgName`];
       const role = user[`${NAMESPACE}/role`] ?? 'user';
       const userId = user[`${NAMESPACE}/userId`] ?? null;
       const permissionsList: Permission[] = user[`permissions`] ?? [];
@@ -59,6 +60,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
         permissions,
         allowTenantDeletion,
         allowedRegions,
+        orgName: orgName ?? null,
       };
 
       return appUser;

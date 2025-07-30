@@ -8,6 +8,7 @@ import {
   BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
+  MicroTenantInfo,
   PatchAccountData,
   Tenant,
 } from '.'
@@ -73,16 +74,17 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
 
     const usersManagement = managementClient.users
-    const organizations: GetOrganizations200ResponseOneOfInner[] =
-      await auth0AsyncWrapper(() =>
-        usersManagement.getUserOrganizations({ id: userId })
-      )
-    if (organizations.length > 1) {
-      throw new createHttpError.Conflict(
-        'User can be a member of only one tenant'
-      )
-    }
-    const [organization] = organizations
+
+    const user = await auth0AsyncWrapper(() =>
+      usersManagement.get({ id: userId })
+    )
+
+    const organization = await auth0AsyncWrapper(() =>
+      managementClient.organizations.getByName({
+        name: user.app_metadata.orgName,
+      })
+    )
+
     if (organization == null) {
       throw new createHttpError.Conflict(
         'User suppose to be a member of tenant organization'
@@ -92,7 +94,10 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     return organizationToTenant(organization)
   }
 
-  async unblockAccount(accountId: string): Promise<Account> {
+  async unblockAccount(
+    _tenantInfo: MicroTenantInfo,
+    accountId: string
+  ): Promise<Account> {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users
 
@@ -109,17 +114,16 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   async getAccountTenant(userId: string): Promise<Tenant> {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
 
-    const usersManagement = managementClient.users
-    const organizations: GetOrganizations200ResponseOneOfInner[] =
-      await auth0AsyncWrapper(() =>
-        usersManagement.getUserOrganizations({ id: userId })
-      )
-    if (organizations.length > 1) {
-      throw new createHttpError.Conflict(
-        'User can be a member of only one tenant'
-      )
-    }
-    const [organization] = organizations
+    const user = await auth0AsyncWrapper(() =>
+      managementClient.users.get({ id: userId })
+    )
+
+    const organization = await auth0AsyncWrapper(() =>
+      managementClient.organizations.getByName({
+        name: user.app_metadata.orgName,
+      })
+    )
+
     if (organization == null) {
       throw new createHttpError.Conflict(
         'User suppose to be a member of tenant organization'
@@ -130,7 +134,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   }
 
   async createAccount(
-    _tenantId: string,
+    tenantInfo: MicroTenantInfo,
     createParams: InternalAccountCreate
   ): Promise<Account> {
     const { type, params: account } = createParams
@@ -155,6 +159,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           reviewerId: account.reviewerId,
           escalationLevel: account.escalationLevel,
           escalationReviewerId: account.escalationReviewerId,
+          orgName: tenantInfo.orgName,
+          tenantId: tenantInfo.tenantId,
         } as AppMetadata,
         user_metadata: {
           ...(account.department && { department: account.department }),
@@ -168,7 +174,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   }
 
   async patchAccount(
-    _tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     patchData: PatchAccountData
   ): Promise<Account> {
@@ -203,6 +209,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
             ...(patchData.role && {
               role: patchData.role,
             }),
+            tenantId: tenantInfo.tenantId,
+            orgName: tenantInfo.orgName,
           },
           user_metadata: {
             ...user.user_metadata,

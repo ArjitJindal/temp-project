@@ -233,4 +233,5 @@ export interface JWTAuthorizerResult extends Credentials {
   auth0Domain: string
   allowTenantDeletion: boolean
   encodedAllowedRegions: string
+  orgName: string
 }

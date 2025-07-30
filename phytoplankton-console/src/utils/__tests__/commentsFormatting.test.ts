@@ -17,6 +17,8 @@ const testUsers: { [key: string]: Account } = {
     id: 'user1',
     name: 'user1',
     role: 'analyst',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
 };
 

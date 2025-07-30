@@ -138,7 +138,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user1, role: 'Admin' },
+        user: { id: user1, role: 'Admin', orgName: 'flagright' },
       }))
 
       const users: Account[] = [
@@ -218,7 +218,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user1, role: 'Admin' },
+        user: { id: user1, role: 'Admin', orgName: 'flagright' },
       }))
 
       const users: Account[] = [
@@ -286,7 +286,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user, role: 'Admin' },
+        user: { id: user, role: 'Admin', orgName: 'flagright' },
       }))
 
       const users: Account[] = [
@@ -381,7 +381,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
-        user: users[0],
+        user: { ...users[0], orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)
@@ -495,7 +495,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
-        user: users[0],
+        user: { ...users[0], orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)
@@ -571,7 +571,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user, role: 'Admin' },
+        user: { id: user, role: 'Admin', orgName: 'flagright' },
       }))
 
       const users: Account[] = [
@@ -646,7 +646,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user, role: 'Admin' },
+        user: { id: user, role: 'Admin', orgName: 'flagright' },
       }))
 
       const users: Account[] = [
@@ -735,7 +735,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
-        user: users[0],
+        user: { ...users[0], orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)
@@ -832,7 +832,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS', 'ADVANCED_WORKFLOWS'],
-        user: users[0],
+        user: { ...users[0], orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)
@@ -917,7 +917,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user, role: 'Admin' },
+        user: { id: user, role: 'Admin', orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)
@@ -990,7 +990,7 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
           },
         },
         features: ['NOTIFICATIONS'],
-        user: { id: user, role: 'Admin' },
+        user: { id: user, role: 'Admin', orgName: 'flagright' },
       }))
 
       getSpyes(users, roles)

@@ -12,6 +12,7 @@ import {
   BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
+  MicroTenantInfo,
   PatchAccountData,
   Tenant,
 } from '.'
@@ -27,7 +28,7 @@ import { getNonDemoTenantId } from '@/utils/tenant'
 import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 
-type CacheAccount = Account & { tenantId: string }
+type CacheAccount = Account & { tenantId: string; orgName: string }
 
 @traceable
 export class DynamoAccountsRepository extends BaseAccountsRepository {
@@ -47,6 +48,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: key,
+        ConsistentRead: true,
       })
     )
 
@@ -150,14 +152,14 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async createAccount(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     createParams: InternalAccountCreate
   ): Promise<CacheAccount> {
     if (createParams.type === 'AUTH0') {
       throw new Error('Cannot create account in cache with auth0 payload')
     }
 
-    const nonDemoTenantId = this.getNonDemoTenantId(tenantId)
+    const nonDemoTenantId = this.getNonDemoTenantId(tenantInfo.tenantId)
     const account = createParams.params
 
     await Promise.all([
@@ -185,7 +187,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       this.addAccountToOrganization({ id: nonDemoTenantId }, account),
     ])
 
-    return { ...account, tenantId }
+    return { ...account, ...tenantInfo }
   }
 
   async createAccountByEmail(
@@ -205,19 +207,22 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     return account
   }
 
-  async unblockAccount(tenantId: string, accountId: string): Promise<Account> {
+  async unblockAccount(
+    tenantInfo: MicroTenantInfo,
+    accountId: string
+  ): Promise<Account> {
     const account = (await this.getAccount(accountId)) as Account
     account.blocked = false
-    await this.createAccount(tenantId, { type: 'DATABASE', params: account })
+    await this.createAccount(tenantInfo, { type: 'DATABASE', params: account })
     return account
   }
 
   async patchAccount(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     patchData: PatchAccountData
   ): Promise<Account> {
-    const nonDemoTenantId = this.getNonDemoTenantId(tenantId)
+    const nonDemoTenantId = this.getNonDemoTenantId(tenantInfo.tenantId)
     const account = (await this.getAccount(accountId)) as Account
 
     const updatedAccount: Account = {
@@ -231,9 +236,11 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       ...(patchData.blockedReason && {
         blockedReason: patchData.blockedReason,
       }),
+      orgName: tenantInfo.orgName,
+      tenantId: nonDemoTenantId,
     }
 
-    await this.createAccount(nonDemoTenantId, {
+    await this.createAccount(tenantInfo, {
       type: 'DATABASE',
       params: updatedAccount,
     })

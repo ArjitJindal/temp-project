@@ -63,8 +63,6 @@ export class TransactionsTypeDistributionDashboardMetric {
       },
     })
 
-    console.log(queryResult)
-
     return {
       data: queryResult.map(({ type, count }) => ({
         type,

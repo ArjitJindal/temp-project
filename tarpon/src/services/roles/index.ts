@@ -2,7 +2,7 @@ import { BadRequest, Conflict } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { memoize } from 'lodash'
 import { AccountsService } from '../accounts'
-import { Tenant } from '../accounts/repository'
+import { MicroTenantInfo, Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { getOptimizedPermissions } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
@@ -220,12 +220,12 @@ export class RoleService {
   }
 
   async setRole(
-    tenantId: string,
+    tenant: MicroTenantInfo,
     userId: string,
     roleName: string
   ): Promise<void> {
     // Assign the role
-    const tenantRoles = await this.getTenantRoles(tenantId)
+    const tenantRoles = await this.getTenantRoles(tenant.tenantId)
     const role = tenantRoles.find((r) => r.name == roleName)
     if (role == undefined) {
       throw new Conflict(`"${roleName}" not valid for tenant`)
@@ -247,21 +247,21 @@ export class RoleService {
       { id: userId },
       { roles: [role.id as string] }
     )
-    await this.updateUserRoleInAccounts(tenantId, userId, roleName)
+    await this.updateUserRoleInAccounts(tenant, userId, roleName)
   }
 
   private async updateUserRoleInAccounts(
-    tenantId: string,
+    tenant: MicroTenantInfo,
     userId: string,
     roleName: string
   ) {
     const accountsService = AccountsService.getInstance(this.dynamoDb)
 
-    await accountsService.auth0.patchAccount(tenantId, userId, {
+    await accountsService.auth0.patchAccount(tenant, userId, {
       role: roleName,
     })
 
-    await accountsService.cache.patchAccount(tenantId, userId, {
+    await accountsService.cache.patchAccount(tenant, userId, {
       role: roleName,
     })
   }

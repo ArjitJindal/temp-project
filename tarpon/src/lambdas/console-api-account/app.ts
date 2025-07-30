@@ -109,7 +109,7 @@ export const accountsHandler = lambdaApi()(
     handlers.registerAccountChangeSettings(
       async (ctx, request) =>
         await accountsService.patchUserSettings(
-          ctx.tenantId,
+          { tenantId: ctx.tenantId, orgName: ctx.orgName },
           request.accountId,
           request.AccountSettings
         )
@@ -117,7 +117,7 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerAccountsDeactivate(async (ctx, request) => {
       const response = await accountsService.deactivateUser(
-        ctx.tenantId,
+        { tenantId: ctx.tenantId, orgName: ctx.orgName },
         request.accountId,
         request.InlineObject2.deactivate
       )

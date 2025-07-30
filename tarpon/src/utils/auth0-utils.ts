@@ -14,6 +14,7 @@ import { Tenant } from '@/services/accounts/repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getContext } from '@/core/utils/context-storage'
+
 export type Auth0ManagementAPICreds = {
   clientId: string
   clientSecret: string
@@ -120,6 +121,7 @@ export const organizationToTenant = (
     tenantCreatedAt: organization.metadata?.tenantCreatedAt,
     consoleApiUrl: organization.metadata?.consoleApiUrl,
     auth0Domain: organization.metadata?.auth0Domain,
+    orgName: organization.name,
   }
 }
 

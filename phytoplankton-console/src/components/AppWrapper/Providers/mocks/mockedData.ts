@@ -11,6 +11,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/46c62de3a8839e49cac3090e55b614e6?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsh.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63a876262ed33a01a61c498e',
@@ -22,6 +24,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/0dd3a7acf82a1d58e5e3646e38285532?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fha.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|62669ecdbd8f02006a1ebc41',
@@ -32,6 +36,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/5c450a650a6507b2227ef6e12a7fc12d?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fni.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|635f9aed8eca9c6258ce7f6e',
@@ -42,6 +48,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/d2858c6fbdaaa746cbb971a88775b32c?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6214112c1f466500695754f9',
@@ -52,6 +60,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/4739c203ce0d7d008d36c9b61b977a52?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fch.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|656d5e82c9e814cb583fc5dd',
@@ -62,6 +72,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/7b7b9082f41968472fe4a82773fd2822?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fja.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|65ded68859261c2cff233db2',
@@ -72,7 +84,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/623693ece45dc48016f044ceba03fb0e?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: false,
-
+    orgName: 'flagright',
+    tenantId: 'flagright',
     reviewerId: 'auth0|635f9aed8eca9c6258ce7f6e',
   },
   {
@@ -84,6 +97,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/f0916380f61f1f26945478d07d54faad?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fna.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|648fce0cc0ac57b737ac6f0a',
@@ -96,6 +111,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     blocked: false,
     escalationLevel: 'L1',
     reviewerId: 'auth0|644fbed5c6779e5c9b7b0848',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6400b8c5a1560438dae96464',
@@ -106,6 +123,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/e541b4333196e994c70a325eff2e0468?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fch.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64ea7b18ded4cc0cdfe79727',
@@ -117,6 +136,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/0ddaafcf1706d0a50cc1df1e9d2997bc?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fan.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6541579f67dd0cbe811a0ad0',
@@ -128,6 +149,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/b61be68a05e6ef582db44cc121208b36?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fja.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6459d9c1a0a86c36105be1d8',
@@ -138,6 +161,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/481ffb50baf9030556011042982595ee?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsu.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|654eb30b727b08278bbabec8',
@@ -148,6 +173,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/16da66ca0a63f37a294b96f3bf61a3f1?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|633301d843be9f5100f27cf9',
@@ -158,6 +185,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/9e2c8a2cc4a0fdcf15d535b02de86a0f?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fba.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|649353b7c0ac57b737ad0dd8',
@@ -168,6 +197,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/4080b18063f03aaff0d597b64236ee6e?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsu.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64a93fbb6a1c99d418951fb0',
@@ -180,6 +211,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     blocked: true,
 
     reviewerId: 'auth0|633301d843be9f5100f27cf9',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64ad189301e5c78459a3a4c1',
@@ -192,6 +225,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     blocked: false,
 
     reviewerId: 'auth0|63f4ee88944f4227d82db6a3',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63f4ee88944f4227d82db6a3',
@@ -203,6 +238,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/07848c33efc92255f7a3db7936e010a8?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fni.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64b02726253dbb88fa9ab66d',
@@ -213,6 +250,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/6f4781df6a588038df6210c95581e0c7?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fpr.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64c00b492d9de3b2bf29f781',
@@ -223,6 +262,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/780ada32f7450951f21af220972d132e?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fpo.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64c00bf949553cc3d0489482',
@@ -233,6 +274,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/9c1f2f832548cb2b29077f3887e2d029?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fge.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64be61cf2c41f23613784279',
@@ -243,6 +286,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/a100463c7eea94c3058a6eca96839c93?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fha.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63f1f09b8aabe642ab49ef06',
@@ -255,6 +300,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     blocked: false,
 
     reviewerId: 'auth0|633301d843be9f5100f27cf9',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|645100e4ee985430fe8c19ea',
@@ -265,6 +312,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/6b101eaae4b7e64f79cf2f0b36efe7a4?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fke.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64354d59599345267722642c',
@@ -276,6 +325,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/d9fb7ce16b126fab1a49bd5e24b3710e?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsh.png',
     blocked: true,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63f2e1d520f87ea55f1c7200',
@@ -286,6 +337,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/7f781c2711c0da564d8102682370ac5a?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fbr.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6419e13140ee26f5cdc9fd42',
@@ -296,6 +349,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/5eed06726e91823d7016c6a25b61315e?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63ec254338c97a15dfd1ad06',
@@ -306,6 +361,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/b811d6f284956cae5466cb0267775014?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|62e80194aca3e64c0a52b4d5',
@@ -316,6 +373,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/c5b4a8f68c88dde0623c7a31a27f4d22?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fda.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'google-oauth2|115375364452127009464',
@@ -326,6 +385,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://lh3.googleusercontent.com/a/AEdFTp5SG-lz9JWmY9w3WM1msDS-WP_bq7qatSa61T05=s96-c',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63dd583f107b97b9f751b7dd',
@@ -336,6 +397,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/1c4e2421042ab12b9defdfdc474b65ff?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'google-apps|baran@flagright.com',
@@ -346,6 +409,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://lh3.googleusercontent.com/a-/ACNPEu-cEjAarGECe1flUtD4uxetlGuYHrvHULH5tVPC=s96-c',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|630f638c9d3c783927583d57',
@@ -356,6 +421,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/a72ed524a8eff4e8404faa24eee7191d?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fma.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|65ded6a3110ae652fb7c9d36',
@@ -366,6 +433,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/3a4abd007fd9fddcf216a2aa4d7b3e6d?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|65ded9faa41fc4870607b640',
@@ -376,6 +445,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/6eb4c7d10463e6904874e5ab44d9bc10?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63f1f00e31f9693e09869a3c',
@@ -386,6 +457,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/f38d9f7698b4f404898306513ba41a0f?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|65afa7fed5622038fb20bc63',
@@ -397,6 +470,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/912a67c46c22e1db7e698be3587757b9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fra.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63eb674d7a814ecd4850ec6f',
@@ -407,6 +482,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/eb4896af2acac50c4a054713e410d456?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|65158c61ea6e45c018d323e1',
@@ -417,6 +494,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/17174d4604f60ae86b030bbba014e813?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fch.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63e3bc1cbf7ef9f089efd2b5',
@@ -428,6 +507,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/47205be1b966bdab34da94285efa232c?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fde.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63eb60a7feb6b7341b877926',
@@ -438,6 +519,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/15c2bedaef4e6346b78a675115bc3162?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fte.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64a7e29a71a1ae853e12695f',
@@ -448,6 +531,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/0890397a75a441c40d3227467bdf2e39?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64a7e0cbd9250a5adf5c1865',
@@ -458,6 +543,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/4db1e9eaeacfb4c9afb4eeca84df5112?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fam.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64935380d755561e9dcabc3a',
@@ -468,6 +555,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/7990d6d567b64aa6d573e2b66c18967c?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsu.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|6420e01bf4202505da9ad3cb',
@@ -478,6 +567,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/16b63689c5531812fb62b368f4699d06?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fbr.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|640f8f6fddb6e71796605865',
@@ -488,6 +579,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/338dd7fdd65c517358231440f88b2e18?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fbr.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|640fc9affda06590890a9b1b',
@@ -498,6 +591,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/cf4cf5629702d6d3816ff1a76fc4bff5?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fme.png',
     blocked: true,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63e3bd0051878f0df2dc13a4',
@@ -508,6 +603,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/ad5258f419879d8ebe9eb5e6f923e6b4?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fja.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63c03158c01c73668e6046b5',
@@ -518,6 +615,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/ec09d861d9a97e5b518099ca0bebacc7?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fin.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|64b4ffb3e713637733ce9747',
@@ -528,6 +627,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/994e77411391d22b42d1bb5f12b31f30?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fka.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|644fbed5c6779e5c9b7b0848',
@@ -538,6 +639,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/27deabad3afdb36c9b659a307e98e0fb?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fja.png',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|652f875b46064ed6ccc03d19',
@@ -549,6 +652,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
       'https://s.gravatar.com/avatar/0510a52b02d761331477a892cbc42846?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fra.png',
     blocked: false,
     escalationLevel: 'L1',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     id: 'auth0|63e6800baaf38434b2b31d00',
@@ -559,7 +664,8 @@ export const MOCKED_ACCOUNTS: Account[] = [
     picture:
       'https://s.gravatar.com/avatar/b5f7277082e489b957ff731031bb2a53?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fti.png',
     blocked: false,
-
+    orgName: 'flagright',
+    tenantId: 'flagright',
     reviewerId: 'auth0|64ea7b18ded4cc0cdfe79727',
   },
 ];

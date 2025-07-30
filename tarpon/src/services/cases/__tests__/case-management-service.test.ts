@@ -20,6 +20,8 @@ const accounts: Account[] = [
     emailVerified: true,
     name: 'test',
     role: 'admin',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     blocked: false,
@@ -28,6 +30,8 @@ const accounts: Account[] = [
     emailVerified: true,
     name: 'test 2',
     role: 'admin',
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
 ]
 

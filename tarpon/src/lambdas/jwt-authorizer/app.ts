@@ -163,6 +163,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       verifiedDecoded[
         `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/allowTenantDeletion`
       ] === true
+    const orgName = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/orgName`]
     const fullTenantId = getFullTenantId(tenantId, demoMode)
     const tenantScopeCredentials = await getTenantScopeCredentials(
       fullTenantId,
@@ -217,6 +218,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
         auth0Domain,
         allowTenantDeletion,
         encodedAllowedRegions,
+        orgName,
       } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
     }
   }

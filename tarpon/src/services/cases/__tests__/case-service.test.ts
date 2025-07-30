@@ -40,6 +40,8 @@ const TEST_ACCOUNT_1: Account = {
   blocked: false,
   escalationLevel: 'L1',
   escalationReviewerId: 'ACCOUNT-4',
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 const TEST_ACCOUNT_2: Account = {
@@ -49,6 +51,8 @@ const TEST_ACCOUNT_2: Account = {
   emailVerified: true,
   name: 'ACCOUNT-2',
   blocked: false,
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 const REVIEWEE: Account = {
@@ -59,6 +63,8 @@ const REVIEWEE: Account = {
   name: 'ACCOUNT-3',
   blocked: false,
   reviewerId: 'ACCOUNT-1',
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 const ESCALATION_L2_ACCOUNT: Account = {
@@ -69,6 +75,8 @@ const ESCALATION_L2_ACCOUNT: Account = {
   name: 'ACCOUNT-4',
   blocked: false,
   escalationLevel: 'L2',
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 const CASE_TRANSACTION_IDS = ['T-1', 'T-2', 'T-3', 'T-4']
@@ -219,6 +227,7 @@ describe('Case service', () => {
       user: {
         id: 'ACCOUNT-1',
         role: 'admin',
+        orgName: 'flagright',
       },
     })
   })
@@ -1671,7 +1680,7 @@ describe('Test Review Approvals Send Back Flow', () => {
   it('Should Send a Case To In Review when closed', async () => {
     const caseService = await getCaseService(tenantId)
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'admin' },
+      user: { id: REVIEWEE.id, role: 'admin', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId: 'C-1-5',
@@ -1752,7 +1761,7 @@ describe('Test Review Approvals Send Back Flow', () => {
   it('Should Send a Case To In Review when Escalated', async () => {
     const caseService = await getCaseService(tenantId)
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'admin' },
+      user: { id: REVIEWEE.id, role: 'admin', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId: 'C-1-5',
@@ -1851,7 +1860,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-5'
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,
@@ -1980,7 +1989,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-6'
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWER' },
+      user: { id: REVIEWEE.id, role: 'REVIEWER', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,
@@ -2007,7 +2016,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-6'
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWER' },
+      user: { id: REVIEWEE.id, role: 'REVIEWER', orgName: 'flagright' },
     })
     const alertId1 = nanoid()
     const alertId2 = nanoid()
@@ -2136,7 +2145,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const caseService = await getCaseService(tenantId)
     const caseId = 'C-1-7'
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWER' },
+      user: { id: REVIEWEE.id, role: 'REVIEWER', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,
@@ -2227,7 +2236,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const testAlertId = nanoid()
     const testAlertId2 = nanoid()
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWER' },
+      user: { id: REVIEWEE.id, role: 'REVIEWER', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,
@@ -2295,7 +2304,7 @@ describe('Test Review Approvals Send Back Flow', () => {
     const closedTestAlertId = nanoid()
 
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
 
     const testAlerts = testAlertIds
@@ -2413,7 +2422,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
     const caseId = nanoid()
 
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
 
     await caseService.caseRepository.addCaseMongo({
@@ -2673,7 +2682,7 @@ describe('Case/Alerts Service - Status Change Tests', () => {
     const alertId = nanoid()
 
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
 
     await caseService.caseRepository.addCaseMongo({
@@ -2880,7 +2889,7 @@ describe('Test alert should reopen if qa status is failed', () => {
     })
     await caseRepository.addCaseMongo(case_)
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
     const alertsService = await getAlertsService(testTenantId)
     await alertsService.updateAlertQaStatus({
@@ -2900,7 +2909,7 @@ describe('Test case escalation l2', () => {
   const testTenantId = getTestTenantId()
   test('should escalate case to l2 if l1 is not assigned', async () => {
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
     // create a case
     const caseService = await getCaseService(testTenantId)
@@ -2977,7 +2986,7 @@ describe('Test no double escalation review', () => {
     const alertService = await getAlertsService(testTenantId)
     const caseId = nanoid()
     getContextMocker.mockReturnValue({
-      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+      user: { id: REVIEWEE.id, role: 'REVIEWEE', orgName: 'flagright' },
     })
     await caseService.caseRepository.addCaseMongo({
       caseId,

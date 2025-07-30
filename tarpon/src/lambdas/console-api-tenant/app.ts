@@ -66,8 +66,6 @@ const assertSettings = (
   settings: TenantSettings,
   statements: PermissionStatements[]
 ) => {
-  console.log('statements', statements)
-
   const settingsKeys = Object.keys(settings).filter(
     (key) => settings[key as keyof TenantSettings] != null
   ) as (keyof TenantSettings)[]
@@ -623,8 +621,6 @@ export const tenantsHandler = lambdaApi()(
         ctx.tenantId,
         getDynamoDbClientByEvent(event)
       )
-
-      console.log('request', request)
 
       await nangoService.linkCrmRecord({
         crmName: request.CRMRecordLink.crmName,

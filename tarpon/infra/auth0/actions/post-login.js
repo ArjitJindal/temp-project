@@ -13,12 +13,13 @@ exports.onExecutePostLogin = async (event, api) => {
   let {
     role,
     tenantId,
-    tenantName,
+    orgName,
     region,
     consoleApiUrl,
     apiAudience,
     allowTenantDeletion,
     allowedRegions,
+    tenantName,
   } = app_metadata
   let auth0Domain = ''
   let mfaEnabled = false
@@ -33,10 +34,11 @@ exports.onExecutePostLogin = async (event, api) => {
         clientSecret: event.secrets.clientSecret,
       })
 
-      const [organization] = await management.users.getUserOrganizations({
-        id: user_id,
+      const organization = await management.organizations.getByName({
+        name: orgName,
       })
-      if (organization != null) {
+
+      if (organization) {
         tenantId = organization.name
         tenantName = organization.display_name ?? tenantName
         if (organization.metadata != null) {
@@ -141,6 +143,7 @@ exports.onExecutePostLogin = async (event, api) => {
       namespace + '/allowTenantDeletion',
       allowTenantDeletion === true
     )
+    api.accessToken.setCustomClaim(namespace + '/orgName', orgName)
     if (allowedRegions) {
       api.accessToken.setCustomClaim(
         namespace + '/allowedRegions',

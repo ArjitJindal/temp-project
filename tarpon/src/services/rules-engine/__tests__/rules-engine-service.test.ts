@@ -62,6 +62,8 @@ const TEST_ACCOUNT_1: Account = {
   blocked: false,
   escalationLevel: 'L1',
   escalationReviewerId: 'ACCOUNT-4',
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 jest

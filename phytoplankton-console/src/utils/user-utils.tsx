@@ -48,6 +48,7 @@ export interface FlagrightAuth0User {
   permissions?: Map<Permission, boolean>;
   allowTenantDeletion?: boolean;
   allowedRegions?: string[];
+  orgName: string | null;
 }
 
 const SYSTEM_USERS: Account[] = [
@@ -59,6 +60,8 @@ const SYSTEM_USERS: Account[] = [
     id: FLAGRIGHT_SYSTEM_USER,
     emailVerified: true,
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   {
     name: API_USER,
@@ -68,6 +71,8 @@ const SYSTEM_USERS: Account[] = [
     id: API_USER,
     emailVerified: true,
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
 ];
 

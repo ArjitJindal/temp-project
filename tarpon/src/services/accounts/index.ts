@@ -6,7 +6,12 @@ import { memoize } from 'lodash'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
-import { Auth0TenantMetadata, InternalUserCreate, Tenant } from './repository'
+import {
+  Auth0TenantMetadata,
+  InternalUserCreate,
+  MicroTenantInfo,
+  Tenant,
+} from './repository'
 import { DynamoAccountsRepository } from './repository/dynamo'
 import { Auth0AccountsRepository } from './repository/auth0'
 import { Account } from '@/@types/openapi-internal/Account'
@@ -216,7 +221,12 @@ export class AccountsService {
       )
     }
 
-    return this.createAccount(organization, { ...values, role })
+    return this.createAccount(organization, {
+      ...values,
+      role,
+      tenantName: organization.name,
+      tenantId: organization.id, // This is tenant id, not org id
+    })
   }
 
   @auditLog('ACCOUNT', 'ACCOUNT', 'CREATE')
@@ -231,12 +241,25 @@ export class AccountsService {
 
       if (!account) {
         account = await this.createAccountInternal(tenant, params)
-        await this.roleService.setRole(tenant.id, account.id, params.role)
+        await this.roleService.setRole(
+          { tenantId: tenant.id, orgName: tenant.orgName },
+          account.id,
+          params.role
+        )
       } else {
         deletedAccountIfError = false
         if (account.blocked) {
-          await this.updateBlockedReason(tenant.id, account.id, false, null)
-          await this.roleService.setRole(tenant.id, account.id, params.role)
+          await this.updateBlockedReason(
+            { tenantId: tenant.id, orgName: tenant.orgName },
+            account.id,
+            false,
+            null
+          )
+          await this.roleService.setRole(
+            { tenantId: tenant.id, orgName: tenant.orgName },
+            account.id,
+            params.role
+          )
         } else {
           throw new BadRequest('The user already exists.')
         }
@@ -269,14 +292,14 @@ export class AccountsService {
     tenant: Tenant,
     params: InternalUserCreate
   ): Promise<Account> {
-    const account = await this.auth0.createAccount(tenant.id, {
-      type: 'AUTH0',
-      params,
-    })
-    await this.cache.createAccount(tenant.id, {
-      type: 'DATABASE',
-      params: account,
-    })
+    const account = await this.auth0.createAccount(
+      { tenantId: tenant.id, orgName: tenant.orgName },
+      { type: 'AUTH0', params }
+    )
+    await this.cache.createAccount(
+      { tenantId: tenant.id, orgName: tenant.orgName },
+      { type: 'DATABASE', params: account }
+    )
     return account
   }
 
@@ -315,7 +338,7 @@ export class AccountsService {
   }
 
   private async updateUserCache(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     userId: string,
     data: Partial<Account>
   ) {
@@ -325,7 +348,7 @@ export class AccountsService {
       return
     }
 
-    await this.cache.createAccount(tenantId, {
+    await this.cache.createAccount(tenantInfo, {
       type: 'DATABASE',
       params: { ...account, ...data },
     })
@@ -362,10 +385,10 @@ export class AccountsService {
       if (!account) {
         const data = await this.auth0.getAccount(id)
         if (data) {
-          await this.cache.createAccount(id, {
-            type: 'DATABASE',
-            params: data,
-          })
+          await this.cache.createAccount(
+            { tenantId: data.tenantId, orgName: data.orgName },
+            { type: 'DATABASE', params: data }
+          )
         }
 
         return data
@@ -419,6 +442,7 @@ export class AccountsService {
       this.getAccountTenant(idToChange),
       this.getTenantById(newTenantId),
     ])
+
     if (newTenant == null) {
       throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
     }
@@ -433,12 +457,27 @@ export class AccountsService {
     if (!user) {
       throw new BadRequest(`Unable to find user by id: ${userId}`)
     }
-    await this.addAccountToOrganization(newTenant, user)
+
+    const updatedUser: Account = {
+      ...user,
+      tenantId: newTenant.id,
+      orgName: newTenant.orgName,
+    }
+
+    await this.addAccountToOrganization(newTenant, updatedUser)
     try {
-      await this.deleteAccountFromOrganization(oldTenant, user)
+      await this.patchUser(newTenant, userId, {})
     } catch (e) {
       // If the user was not deleted from the old tenant, we need to remove it from the new tenant
-      await this.deleteAccountFromOrganization(newTenant, user)
+      const updatedUser: Account = {
+        ...user,
+        tenantId: oldTenant.id,
+        orgName: oldTenant.orgName,
+      }
+      await Promise.all([
+        this.patchUser(oldTenant, userId, {}),
+        this.addAccountToOrganization(newTenant, updatedUser),
+      ])
       throw e
     }
     if (oldTenant.region !== newTenant.region) {
@@ -490,9 +529,11 @@ export class AccountsService {
 
       promises.push(
         ...usersWithReviewer.map((user) =>
-          this.auth0.patchAccount(tenant.id, user.id, {
-            app_metadata: { reviewerId: reassignedTo },
-          })
+          this.auth0.patchAccount(
+            { tenantId: tenant.id, orgName: tenant.orgName },
+            user.id,
+            { app_metadata: { reviewerId: reassignedTo } }
+          )
         )
       )
     }
@@ -504,7 +545,11 @@ export class AccountsService {
 
     promises.push(
       ...[
-        this.blockAccount(tenant.id, idToDelete, 'DELETED'),
+        this.blockAccount(
+          { tenantId: tenant.id, orgName: tenant.orgName },
+          idToDelete,
+          'DELETED'
+        ),
         caseRepository.reassignCases(idToDelete, reassignedTo),
         alertRepository.reassignAlerts(idToDelete, reassignedTo),
         slaPolicyRepository.reassignSLAPolicies(idToDelete, reassignedTo),
@@ -526,18 +571,18 @@ export class AccountsService {
   }
 
   public async updateBlockedReason(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     blocked: boolean,
     blockedReason: Account['blockedReason'] | null
   ) {
     const data = { blocked, blockedReason }
-    await this.auth0.patchAccount(tenantId, accountId, data)
-    await this.cache.patchAccount(tenantId, accountId, data)
+    await this.auth0.patchAccount(tenantInfo, accountId, data)
+    await this.cache.patchAccount(tenantInfo, accountId, data)
   }
 
   public async blockAccount(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     blockedReason: Account['blockedReason'],
     skipRemovingRoles: boolean = false
@@ -548,16 +593,16 @@ export class AccountsService {
     )
     const userManager = managementClient.users
 
-    if (userTenant == null || userTenant.id !== tenantId) {
+    if (userTenant == null || userTenant.id !== tenantInfo.tenantId) {
       throw new BadRequest(
-        `Unable to find user "${accountId}" in the tenant |${tenantId}|`
+        `Unable to find user "${accountId}" in the tenant |${tenantInfo.tenantId}|`
       )
     }
 
     const userRoles = await userManager.getRoles({ id: accountId })
 
     await Promise.all([
-      this.updateBlockedReason(tenantId, accountId, true, blockedReason),
+      this.updateBlockedReason(tenantInfo, accountId, true, blockedReason),
       userRoles.data.length &&
         !skipRemovingRoles &&
         userManager.deleteRoles(
@@ -603,7 +648,11 @@ export class AccountsService {
     }
 
     if (patch.role) {
-      await this.roleService.setRole(tenant.id, accountId, patch.role)
+      await this.roleService.setRole(
+        { tenantId: tenant.id, orgName: tenant.orgName },
+        accountId,
+        patch.role
+      )
     }
 
     // This is done to reset old saved state and would only apply the new review permission by resetting all permission to undefined
@@ -619,12 +668,17 @@ export class AccountsService {
       ...patch,
     }
 
-    const patchedUser = await this.auth0.patchAccount(tenant.id, accountId, {
-      app_metadata: patchedData,
-      role: patchedData.role,
-    })
+    const patchedUser = await this.auth0.patchAccount(
+      { tenantId: tenant.id, orgName: tenant.orgName },
+      accountId,
+      { app_metadata: patchedData, role: patchedData.role }
+    )
 
-    await this.updateUserCache(tenant.id, accountId, patchedData)
+    await this.updateUserCache(
+      { tenantId: tenant.id, orgName: tenant.orgName },
+      accountId,
+      patchedData
+    )
 
     return {
       result: patchedUser,
@@ -652,11 +706,11 @@ export class AccountsService {
    * @deprecated The role service setRole method should be used instead.
    */
   async patchUserSettings(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     patch: Partial<AccountSettings>
   ): Promise<AccountSettings> {
-    await this.auth0.patchAccount(tenantId, accountId, {
+    await this.auth0.patchAccount(tenantInfo, accountId, {
       user_metadata: patch,
     })
 
@@ -667,18 +721,18 @@ export class AccountsService {
 
   @auditLog('ACCOUNT', 'ACCOUNT', 'DEACTIVATE')
   async deactivateUser(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     deactivate: boolean
   ): Promise<AuditLogReturnData<Account, Account, Account>> {
     await Promise.all([
       this.updateBlockedReason(
-        tenantId,
+        tenantInfo,
         accountId,
         deactivate,
         deactivate ? 'DEACTIVATED' : null
       ),
-      this.updateUserCache(tenantId, accountId, {
+      this.updateUserCache(tenantInfo, accountId, {
         blocked: deactivate,
         blockedReason: deactivate ? 'DEACTIVATED' : undefined,
       }),
@@ -773,7 +827,12 @@ export class AccountsService {
     role: string
   ): Promise<void> {
     for await (const email of emails) {
-      await this.createAccount(tenant, { email, role })
+      await this.createAccount(tenant, {
+        email,
+        role,
+        tenantName: tenant.name,
+        tenantId: tenant.id,
+      })
     }
   }
 
@@ -857,7 +916,14 @@ export class AccountsService {
 
     await Promise.all([
       ...(!account.blocked
-        ? [this.updateBlockedReason(tenant.id, account.id, true, 'BRUTE_FORCE')]
+        ? [
+            this.updateBlockedReason(
+              { tenantId: tenant.id, orgName: tenant.orgName },
+              account.id,
+              true,
+              'BRUTE_FORCE'
+            ),
+          ]
         : []),
       this.unblockBruteForceAccount(account),
       sendInternalProxyWebhook(tenant.region as FlagrightRegion, {

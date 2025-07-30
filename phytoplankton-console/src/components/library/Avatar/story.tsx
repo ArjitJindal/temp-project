@@ -25,6 +25,8 @@ export default function (): JSX.Element {
                 emailVerified: true,
                 role: 'admin',
                 picture: hasPicture ? ImageUrl : null,
+                orgName: 'flagright',
+                tenantId: 'flagright',
               }}
             />
           )}

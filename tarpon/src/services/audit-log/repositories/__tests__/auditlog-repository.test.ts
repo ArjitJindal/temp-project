@@ -19,6 +19,8 @@ const createTestAuditLog = (overrides: Partial<AuditLog> = {}): AuditLog => ({
     emailVerified: true,
     name: 'John Doe',
     blocked: false,
+    orgName: 'flagright',
+    tenantId: 'flagright',
   },
   type: 'ALERT',
   subtype: 'ALERT_LIST',

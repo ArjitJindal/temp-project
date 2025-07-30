@@ -33,7 +33,7 @@ const getContextMocker = jest.spyOn(Context, 'getContext')
 
 beforeAll(() => {
   getContextMocker.mockReturnValue({
-    user: { id: 'test', role: 'ADMIN' },
+    user: { id: 'test', role: 'ADMIN', orgName: 'flagright' },
   })
 })
 

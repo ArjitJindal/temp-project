@@ -5,6 +5,7 @@ import { getContext } from '../utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { RoleService } from '@/services/roles'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { MicroTenantInfo } from '@/services/accounts/repository'
 
 export async function removeDemoRoles(
   tenantId: string,
@@ -24,20 +25,29 @@ export async function removeDemoRoles(
   tenantDemoRoles.forEach((role) => rolesMap.set(role.name, 1))
   // all account with demo roles are now shifted to analyst role
   const analystRoleName = 'analyst'
-  const accountIdToUpdate: string[] = []
+  const accountToUpdate: (MicroTenantInfo & { id: string })[] = []
+
   for (let i = 0; i < tenantAccount.length; i++) {
     const account = tenantAccount[i]
     if (rolesMap.has(account.role)) {
-      accountIdToUpdate.push(account.id)
+      accountToUpdate.push({
+        id: account.id,
+        tenantId: account.tenantId,
+        orgName: account.orgName,
+      })
     }
   }
   const tenantDemoRolesId = tenantDemoRoles.map((role) => role.id)
-  console.log(tenantDemoRolesId, accountIdToUpdate)
 
   await pMap(
-    accountIdToUpdate,
-    async (id) =>
-      await roleService.setRole(originalTenantId, id, analystRoleName),
+    accountToUpdate,
+    async (account) => {
+      await roleService.setRole(
+        { tenantId: account.tenantId, orgName: account.orgName },
+        account.id,
+        analystRoleName
+      )
+    },
     { concurrency: 5 }
   )
 

@@ -5,6 +5,7 @@ export type Context = {
   userId: string
   role: string
   tenantId: string
+  orgName: string
 }
 
 // fromGlobalContext pulls context values from our context object for the console only.
@@ -20,5 +21,6 @@ export function fromGlobalContext(context: GlobalContext | undefined): Context {
     userId: context.user?.id as string,
     role: context.user?.role as string,
     tenantId: context.tenantId as string,
+    orgName: context.user?.orgName as string,
   }
 }

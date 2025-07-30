@@ -45,6 +45,8 @@ const TEST_ACCOUNT: Account = {
   name: 'ACCOUNT',
   blocked: false,
   escalationLevel: 'L1',
+  orgName: 'flagright',
+  tenantId: 'flagright',
 }
 
 jest.mock('@/core/utils/context-storage', () => {

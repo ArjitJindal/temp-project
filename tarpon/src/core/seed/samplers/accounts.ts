@@ -17,6 +17,8 @@ export const getAccounts = () => {
         emailVerified: true,
         name: FLAGRIGHT_SYSTEM_USER,
         blocked: false,
+        orgName: 'flagright',
+        tenantId: 'flagright',
       },
     ]
   }

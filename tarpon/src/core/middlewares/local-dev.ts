@@ -46,6 +46,7 @@ export const localDev =
         userId: 'unknown',
         role: 'user',
         auth0Domain: 'dev-flagright.eu.auth0.com',
+        orgName: 'flagright',
         ...authorizer,
       }
     } else {
@@ -66,6 +67,7 @@ export const localDev =
 
         const tenantId = userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`]
         const demoMode = userInfo[`${CUSTOM_CLAIMS_NS}/demoMode`] === true
+        const orgName = userInfo[`${CUSTOM_CLAIMS_NS}/orgName`]
 
         const fullTenantId = getFullTenantId(tenantId as string, demoMode)
         const permissionsArray = (userInfo[`permissions`] || []) as Permission[]
@@ -80,6 +82,7 @@ export const localDev =
           tenantId,
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
+          orgName,
           verifiedEmail:
             userInfo[`${CUSTOM_CLAIMS_NS}/verifiedEmail`] ?? undefined,
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],

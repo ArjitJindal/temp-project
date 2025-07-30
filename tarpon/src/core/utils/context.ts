@@ -39,7 +39,10 @@ type LogMetaData = {
   tenantName?: string
 }
 export type ContextUser =
-  | (Pick<Account, 'id' | 'role' | 'allowTenantDeletion' | 'allowedRegions'> & {
+  | (Pick<
+      Account,
+      'id' | 'role' | 'allowTenantDeletion' | 'allowedRegions' | 'orgName'
+    > & {
       email?: string
     })
   | undefined
@@ -89,6 +92,7 @@ export async function getInitialContext(
       allowTenantDeletion,
       encodedAllowedRegions,
       auth0Domain,
+      orgName,
     } = (event as APIGatewayEvent)?.requestContext?.authorizer || {}
 
     if (tenantId) {
@@ -146,6 +150,7 @@ export async function getInitialContext(
             role: role ?? '',
             allowTenantDeletion: Boolean(allowTenantDeletion),
             allowedRegions,
+            orgName: orgName ?? '',
           }
         : undefined,
       settings,

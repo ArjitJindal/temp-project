@@ -8,6 +8,7 @@ export type Tenant = {
   id: string
   name: string
   orgId: string
+  orgName: string
   apiAudience: string
   region: string
   isProductionAccessDisabled: boolean
@@ -27,6 +28,8 @@ export type InternalUserCreate = {
   name?: string
   staffId?: string
   department?: string
+  tenantName: string
+  tenantId: string
 }
 
 export type InternalAccountCreate =
@@ -47,6 +50,7 @@ export type Auth0TenantMetadata = {
   tenantCreatedAt: string
   mfaEnabled: boolean
   passwordResetDays: number
+  orgName: string
 }
 
 /**
@@ -65,26 +69,31 @@ export type PatchAccountData = {
   department?: string
 }
 
+export type MicroTenantInfo = {
+  tenantId: string
+  orgName: string
+}
+
 @traceable
 export abstract class BaseAccountsRepository {
   abstract getAccount(accountId: string): Promise<Account | null>
   abstract getAccountByEmail(email: string): Promise<Account | null>
   abstract getAccountTenant(accountId: string): Promise<Tenant | null>
-  abstract getOrganization(
-    tenantId: string,
-    userId?: string
-  ): Promise<Tenant | null>
+  abstract getOrganization(tenantId: string): Promise<Tenant | null>
   abstract deleteOrganization(tenant: Tenant): Promise<void>
   abstract patchAccount(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     accountId: string,
     patchData: PatchAccountData
   ): Promise<Account>
   abstract createAccount(
-    tenantId: string,
+    tenantInfo: MicroTenantInfo,
     createParams: InternalAccountCreate
   ): Promise<Account>
-  abstract unblockAccount(tenantId: string, accountId: string): Promise<Account>
+  abstract unblockAccount(
+    tenantInfo: MicroTenantInfo,
+    accountId: string
+  ): Promise<Account>
   abstract getTenantAccounts(tenant: Tenant): Promise<Account[]>
   abstract getAccountByIds(accountIds: string[]): Promise<Account[]>
   abstract createOrganization(
