@@ -194,27 +194,21 @@ export const webhooksHandler = lambdaApi()(
         })
         const tenantSettings = await tenantRepository.getTenantSettings()
 
-        if (log.data.type === 'limit_wc') {
-          // check if it's a brute force limit webhook
-          if (!tenantSettings.bruteForceAccountBlockingEnabled) {
-            if (account.blocked && account.blockedReason === 'BRUTE_FORCE') {
-              // only unblocking account if it's a brute force blocked account
-              logger.info(
-                `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
-              )
-              // Brute force account blocking acutally disables you from IP so we need to unblock it
-              await accountsService.unblockBruteForceAccount(account)
-            }
-            continue
-          }
-
-          await accountsService.blockAccountBruteForce(tenant, account)
+        if (!tenantSettings.bruteForceAccountBlockingEnabled) {
+          logger.info(
+            `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
+          )
+          // Brute force account blocking acutally disables you from IP so we need to unblock it
+          await accountsService.unblockBruteForceAccount(account)
+          continue
         }
 
         if (log.data.type !== 'limit_wc') {
           logger.info(`Skipping non-limit_wc webhook event: ${log.data.type}`)
           continue
         }
+
+        await accountsService.blockAccountBruteForce(tenant, account)
       }
     })
 
