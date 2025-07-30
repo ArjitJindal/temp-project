@@ -405,6 +405,44 @@ export class PermissionStatementManager {
 
     let newStatements = [...statements];
 
+    if (action === 'read') {
+      const hasWritePermission = newStatements.some(
+        (stmt) =>
+          stmt.actions.includes('write') &&
+          stmt.resources.some(
+            (res) =>
+              [resource, resourceWildcard].includes(res) ||
+              (res.includes(':::') &&
+                [resourcePath, resourceWildcardPath].includes(res.split(':::')[1])),
+          ),
+      );
+
+      if (hasWritePermission) {
+        newStatements = this.removePermission(permPath, 'write', newStatements, permissionsData);
+      }
+
+      if (resourcePath) {
+        const childWildcardPattern = resourcePath + '/*';
+        const hasChildWildcardWritePermission = newStatements.some(
+          (stmt) =>
+            stmt.actions.includes('write') &&
+            stmt.resources.some(
+              (res) => res.includes(':::') && res.split(':::')[1] === childWildcardPattern,
+            ),
+        );
+
+        if (hasChildWildcardWritePermission) {
+          const childWildcardPath = permPath + '/*';
+          newStatements = this.removePermission(
+            childWildcardPath,
+            'write',
+            newStatements,
+            permissionsData,
+          );
+        }
+      }
+    }
+
     newStatements = this.removeResourceFromStatements(
       newStatements,
       resource,
@@ -616,7 +654,8 @@ export class PermissionStatementManager {
             }
 
             if (node.children?.length) {
-              paths = [...paths, ...findPaths(node.children, fullPath)];
+              const childPaths = findPaths(node.children, fullPath);
+              paths = [...paths, ...childPaths];
             }
           }
 
@@ -642,13 +681,31 @@ export class PermissionStatementManager {
         actions: [action],
         resources: siblingResources,
       });
+    } else {
+      // No siblingPaths found
+    }
+    let finalStatements = newStatements;
+    if (action === 'read') {
+      const statementsWithWrite = finalStatements.filter(
+        (stmt) =>
+          stmt.actions.includes('write') && stmt.resources.some((res) => res === parentWildcard),
+      );
+      if (statementsWithWrite.length > 0) {
+        finalStatements = this.removeParentWildcard(
+          finalStatements,
+          parentWildcard,
+          'write',
+          permPath,
+          permissionsData,
+        );
+      }
     }
 
     if (parentStmt.resources.length === 1) {
       if (parentStmt.actions.length === 1) {
-        newStatements.splice(parentStmtIndex, 1);
+        finalStatements.splice(parentStmtIndex, 1);
       } else {
-        newStatements[parentStmtIndex] = {
+        finalStatements[parentStmtIndex] = {
           ...parentStmt,
           actions: parentStmt.actions.filter((a) => a !== action),
         };
@@ -656,13 +713,12 @@ export class PermissionStatementManager {
     } else {
       const otherResources = parentStmt.resources.filter((res) => res !== parentWildcard);
 
-      newStatements[parentStmtIndex] = {
+      finalStatements[parentStmtIndex] = {
         ...parentStmt,
         resources: otherResources,
       };
     }
-
-    return newStatements;
+    return finalStatements;
   }
 
   /**
@@ -1036,17 +1092,39 @@ const getAllPathsCoveredByParent = (
 
   // Find all paths that start with the parent path
   // BUT exclude any paths that are parents of the excluded path
+
+  const isWildcard = parentPath.endsWith('/*');
+  const parentPathBase = isWildcard ? parentPath.slice(0, -2) : parentPath;
+  const excludePathParts = excludePath.split('/');
+
   allPaths.forEach((path) => {
-    const isUnderParent = path.startsWith(parentPath + '/');
-    const isExcludedPath = path === excludePath;
-    const isParentOfExcluded = excludePath.startsWith(path + '/');
-
-    const excludePathParts = excludePath.split('/');
     const pathParts = path.split('/');
-    const mightCoverExcluded =
-      pathParts.length < excludePathParts.length && excludePath.startsWith(path);
+    let shouldInclude = false;
 
-    if (isUnderParent && !isExcludedPath && !isParentOfExcluded && !mightCoverExcluded) {
+    if (isWildcard) {
+      if (pathParts.length === 2 && excludePathParts.length === 2) {
+        const isSibling = pathParts[0] === excludePathParts[0] && path !== excludePath;
+        shouldInclude = isSibling;
+      } else {
+        const isUnderParent = path.startsWith(parentPathBase + '/');
+        const isExcludedPath = path === excludePath;
+        const isParentOfExcluded = excludePath.startsWith(path + '/');
+        const mightCoverExcluded =
+          pathParts.length < excludePathParts.length && excludePath.startsWith(path);
+        shouldInclude =
+          isUnderParent && !isExcludedPath && !isParentOfExcluded && !mightCoverExcluded;
+      }
+    } else {
+      const isUnderParent = path.startsWith(parentPath + '/');
+      const isExcludedPath = path === excludePath;
+      const isParentOfExcluded = excludePath.startsWith(path + '/');
+      const mightCoverExcluded =
+        pathParts.length < excludePathParts.length && excludePath.startsWith(path);
+      shouldInclude =
+        isUnderParent && !isExcludedPath && !isParentOfExcluded && !mightCoverExcluded;
+    }
+
+    if (shouldInclude) {
       allCoveredPaths.push(path);
     }
   });
