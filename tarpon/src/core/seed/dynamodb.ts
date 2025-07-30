@@ -151,12 +151,6 @@ export async function seedDynamo(dynamoDb: DynamoDBClient, tenantId: string) {
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
     })
-    const consumer = new TarponChangeMongoDbConsumer()
-    await consumer.handleRuleStats(
-      tenantId,
-      { newExecutedRules: txn?.executedRules ?? [], oldExecutedRules: [] },
-      { dynamoDb, mongoDb: await getMongoDbClient() }
-    )
   }
 
   logger.info('Updating average ARS score for users...')
