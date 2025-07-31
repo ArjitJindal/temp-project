@@ -261,7 +261,7 @@ export function useGetAlias() {
       return (
         transactionStateAlias?.find((item) => item.state === x)?.alias ??
         riskLevelAlias?.find((item) => item.level === x)?.alias ??
-        x
+        humanizeConstant(x)
       );
     },
     [transactionStateAlias, riskLevelAlias],

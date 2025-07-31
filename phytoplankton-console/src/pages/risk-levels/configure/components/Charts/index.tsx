@@ -1,5 +1,4 @@
 import React from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import BarChart from '@/components/charts/BarChart';
 import { success } from '@/utils/asyncResource';
@@ -10,6 +9,7 @@ import {
   getEntityConfiguration,
   ToolTipOptions,
 } from '@/components/charts/BarChart/helpers';
+import { useGetAlias } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface Props {
   data: any[];
@@ -26,6 +26,7 @@ const colors = {
 
 const GroupedColumn = React.memo((props: Props) => {
   const { data } = props;
+  const getAlias = useGetAlias();
   const configuration: Configuration = {
     [ChartParts.BAR]: getEntityConfiguration<ChartParts.BAR>(ChartParts.BAR, {
       renderWholeGroupData: true,
@@ -43,7 +44,7 @@ const GroupedColumn = React.memo((props: Props) => {
         colors={{}}
         data={success(data.map((x) => ({ category: x.name, series: x.label, value: x.value })))}
         grouping={'GROUPED'}
-        formatCategory={(x) => humanizeConstant(x)}
+        formatCategory={(x) => getAlias(x)}
         customBarColors={(category, series, defaultColor) => {
           if (series === 'Before') {
             return colors[category].base;
