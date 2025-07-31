@@ -15,6 +15,7 @@ import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_PAGINATION_ENABLED,
 } from '../../../consts';
+import { ExportConfig } from '..';
 import s from './styles.module.less';
 import { iterateItems } from './helpers';
 import Popover from '@/components/ui/Popover';
@@ -38,6 +39,8 @@ type Props<Item extends object, Params extends object> = {
   params: PaginatedParams<Params>;
   cursorPagination?: boolean;
   totalPages?: number;
+  downloadCallback?: (format: 'csv' | 'pdf', exportConfig?: ExportConfig) => void;
+  supportedDownloadFormats: ('csv' | 'xlsx' | 'pdf')[];
 };
 
 export default function DownloadButton<T extends object, Params extends object>(
@@ -52,16 +55,45 @@ export default function DownloadButton<T extends object, Params extends object>(
       view = DEFAULT_DOWNLOAD_VIEW,
     },
     totalPages = 1,
+    supportedDownloadFormats = ['csv', 'xlsx'],
+    downloadCallback,
   } = props;
 
   const [pagesMode, setPagesMode] = useState<'ALL' | 'CURRENT'>('CURRENT');
   const [progress, setProgress] = useState<null | { page: number; totalPages?: number }>(null);
-  const [format, setFormat] = useState<'csv' | 'xlsx'>('csv');
+  const [format, setFormat] = useState<'csv' | 'xlsx' | 'pdf'>(supportedDownloadFormats[0]);
   const [isDownloadError, setIsDownloadError] = useState<boolean>(false);
+
+  const handleDownloadCallback = (
+    format: 'csv' | 'pdf',
+    cb: (format: 'csv' | 'pdf', exportConfig?: ExportConfig) => void,
+  ) => {
+    try {
+      cb(
+        format,
+        pagesMode === 'CURRENT'
+          ? {
+              pageSize: props.params.pageSize,
+              page: props.params.page ?? 1,
+              exportSinglePage: true,
+            }
+          : undefined,
+      );
+    } catch (_e) {
+      setIsDownloadError(true);
+    }
+  };
+
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsDownloadError(false);
     const columnsToExport = prepareColumns(columns);
+
+    if (downloadCallback && (format === 'pdf' || format === 'csv')) {
+      handleDownloadCallback(format, downloadCallback);
+      return;
+    }
+
     const allFlatData: T[] = [];
     for await (const item of iterateItems({
       pagesMode,
@@ -82,11 +114,10 @@ export default function DownloadButton<T extends object, Params extends object>(
     );
     if (format === 'csv') {
       await downloadAsCSV(exportData);
-    } else {
+    } else if (format === 'xlsx') {
       await downloadAsXLSX(exportData);
     }
   };
-
   const handleNonPaginatedDownload = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsDownloadError(false);
@@ -104,10 +135,22 @@ export default function DownloadButton<T extends object, Params extends object>(
         props.params,
       );
 
-      if (format === 'csv') {
-        await downloadAsCSV(exportData);
-      } else {
-        await downloadAsXLSX(exportData);
+      switch (format) {
+        case 'csv':
+          if (downloadCallback) {
+            handleDownloadCallback(format, downloadCallback);
+          }
+          await downloadAsCSV(exportData);
+          break;
+        case 'xlsx':
+          await downloadAsXLSX(exportData);
+          break;
+        case 'pdf':
+          if (downloadCallback) {
+            handleDownloadCallback(format, downloadCallback);
+          }
+          message.info('PDF export is not supported yet');
+          break;
       }
     } catch (e) {
       message.fatal(`Unable to export data. ${getErrorMessage(e)}`);
@@ -167,8 +210,10 @@ export default function DownloadButton<T extends object, Params extends object>(
                 }}
                 value={format}
                 options={[
-                  { value: 'csv', label: 'CSV' },
-                  { value: 'xlsx', label: 'XLSX' },
+                  ...supportedDownloadFormats.map((format) => ({
+                    value: format,
+                    label: format.toUpperCase(),
+                  })),
                 ]}
               />
             </Form.Layout.Label>

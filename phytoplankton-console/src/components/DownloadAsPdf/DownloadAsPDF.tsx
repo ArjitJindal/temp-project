@@ -11,6 +11,7 @@ interface Props {
   tableOptions?: TableOptions[];
   onCustomPdfGeneration?: (doc: jsPDF) => number;
   orientation?: 'portrait' | 'landscape' | 'auto';
+  addPageNumber?: boolean;
 }
 
 export interface TableOptions {
@@ -262,6 +263,7 @@ const DownloadAsPDF = async (props: Props) => {
     reportTitle,
     onCustomPdfGeneration,
     orientation: orientationProp = 'auto',
+    addPageNumber = false,
   } = props;
 
   const inputArray = (Array.isArray(pdfRef) ? pdfRef : [pdfRef]).filter(notNullish);
@@ -306,7 +308,7 @@ const DownloadAsPDF = async (props: Props) => {
     addTopFormatting(doc, logoImage, orientation, documentTimestamp);
     if (reportTitle) {
       doc.setFontSize(16);
-      doc.text(reportTitle, 15, position + 12);
+      doc.text(reportTitle, 15, position + 10);
       doc.setFontSize(12);
     }
 
@@ -360,7 +362,9 @@ const DownloadAsPDF = async (props: Props) => {
 
     const pageCount = doc.internal.pages.length - 1;
     for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
+      if (addPageNumber) {
+        doc.setPage(i);
+      }
       addTopFormatting(doc, logoImage, orientation, documentTimestamp);
       doc.setFontSize(10);
       const pageWidth = doc.internal.pageSize.getWidth();

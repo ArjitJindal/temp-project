@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { isManualDrsTxId, isNotArsChangeTxId } from '@flagright/lib/utils/risk';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { ValueItem } from '../../RiskScoreDisplay/types';
 import MainPanel from '../../RiskScoreDisplay/MainPanel';
 import Id from '../../Id';
@@ -13,7 +14,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
 import { DefaultApiGetDrsValuesRequest } from '@/apis/types/ObjectParamAPI';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { ExtendedDrsScore } from '@/apis';
+import { ExtendedDrsScore, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
@@ -22,6 +23,19 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RiskScore, RiskScores } from '@/pages/users-item/Header/HeaderMenu';
+import { message } from '@/components/library/Message';
+import {
+  drsTableHeaders,
+  getUserDrsReportTables,
+  getUserWidgetTable,
+} from '@/pages/users-item/UserReport';
+import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
+import { ExportDataRow } from '@/utils/data-export';
+import { downloadAsCSV } from '@/utils/csv';
+import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
+import { isSuccess } from '@/utils/asyncResource';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
 
 interface Props {
   userId: string;
@@ -55,17 +69,65 @@ function DynamicRiskHistoryModal(props: Props) {
     pageSize: 10,
   });
   const settings = useSettings();
-
+  const consoleUser = useConsoleUser(userId);
+  const riskClassificationValues = useRiskClassificationScores();
   const queryResult = usePaginatedQuery<ExtendedDrsScore>(
     USER_DRS_VALUES(userId, params),
     async (paginationParams) => {
       return await api.getDrsValues({
         userId,
-        ...paginationParams,
         ...params,
+        ...paginationParams,
       });
     },
   );
+
+  const handleDrsReportDownload = async (
+    user: InternalBusinessUser | InternalConsumerUser,
+    riskScores: RiskScores,
+    format: 'csv' | 'pdf',
+    exportConfig?: {
+      pageSize: number;
+      page: number;
+      exportSinglePage: boolean;
+    },
+  ) => {
+    const hideMessage = message.loading('Downloading report...');
+
+    try {
+      const drsData = await getUserDrsReportTables(queryResult, exportConfig);
+      if (format === 'pdf') {
+        await DownloadAsPDF({
+          fileName: `user-${user.userId}-CRA-report.pdf`,
+          tableOptions: [
+            getUserWidgetTable(user, riskScores, settings, riskClassificationValues),
+            ...drsData,
+          ],
+          reportTitle: `${firstLetterUpper(settings.userAlias)} CRA report`,
+        });
+      } else {
+        // converting pdf table to csv table
+        const tableData =
+          drsData[0].tableOptions.body
+            ?.map((row): ExportDataRow => {
+              if (row && Array.isArray(row)) {
+                return row.map((cell) => ({ value: cell.content }));
+              }
+              return [];
+            })
+            .filter((row) => row.length > 0) ?? [];
+        await downloadAsCSV({
+          headers: drsTableHeaders,
+          rows: tableData,
+        });
+      }
+      message.success('Report downloaded successfully');
+    } catch (err) {
+      message.fatal('Unable to complete the download!', err);
+    } finally {
+      hideMessage && hideMessage();
+    }
+  };
   const helper = new ColumnHelper<ExtendedDrsScore>();
 
   const columns = helper.list([
@@ -171,7 +233,7 @@ function DynamicRiskHistoryModal(props: Props) {
         <QueryResultsTable<ExtendedDrsScore>
           rowKey="createdAt"
           columns={columns}
-          tableId="sla-policy-table"
+          tableId="cra-history-table"
           hideFilters={true}
           params={params}
           pagination
@@ -185,7 +247,51 @@ function DynamicRiskHistoryModal(props: Props) {
             );
           }}
           renderExpanded={(item) => <ExpandedRowRenderer {...item} />}
-          toolsOptions={false}
+          toolsOptions={{
+            download: isSuccess(consoleUser.data) ? true : false,
+            supportedDownloadFormats: ['csv', 'pdf'],
+            downloadCallback: (
+              format: 'csv' | 'pdf',
+              exportConfig?: {
+                pageSize: number;
+                page: number;
+                exportSinglePage: boolean;
+              },
+            ) => {
+              if (isSuccess(consoleUser.data)) {
+                const userDrsScore = consoleUser.data.value.drsScore;
+                const userKrsScore = consoleUser.data.value.krsScore;
+                const drsRiskScore: RiskScore | null = userDrsScore
+                  ? {
+                      score: userDrsScore?.drsScore ?? 0,
+                      riskLevel: userDrsScore?.derivedRiskLevel,
+                      createdAt: userDrsScore?.createdAt ?? 0,
+                      components: userDrsScore?.components,
+                      manualRiskLevel: userDrsScore?.manualRiskLevel,
+                    }
+                  : null;
+
+                const kycRiskScore: RiskScore | null = userKrsScore
+                  ? {
+                      score: userKrsScore?.krsScore ?? 0,
+                      riskLevel: userKrsScore?.riskLevel,
+                      createdAt: userKrsScore?.createdAt ?? 0,
+                      components: userKrsScore?.components,
+                      manualRiskLevel: userKrsScore?.manualRiskLevel ?? undefined,
+                    }
+                  : null;
+                handleDrsReportDownload(
+                  consoleUser.data.value,
+                  {
+                    drsRiskScore,
+                    kycRiskScore,
+                  },
+                  format,
+                  exportConfig,
+                );
+              }
+            },
+          }}
         />
       </div>
     </Modal>

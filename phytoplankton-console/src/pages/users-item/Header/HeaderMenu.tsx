@@ -26,6 +26,7 @@ import { AsyncResource, all, map } from '@/utils/asyncResource';
 import { sortByDate } from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CommentType } from '@/utils/user-utils';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
 
 export interface RiskScores {
   kycRiskScore?: RiskScore | null;
@@ -51,6 +52,7 @@ export const HeaderMenu = (props: Props) => {
   const userId = user.userId;
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelEnabled = useFeatureEnabled('RISK_LEVELS');
+  const riskClassificationValues = useRiskClassificationScores();
   const api = useApi();
   const settings = useSettings();
   const drsQueryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => {
@@ -59,7 +61,6 @@ export const HeaderMenu = (props: Props) => {
   const kycQueryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => {
     return isRiskScoringEnabled ? api.getKrsValue({ userId }) : null;
   });
-
   const drsRiskScore: AsyncResource<RiskScore | null> = useMemo(
     () =>
       map(drsQueryResult.data, (v) => {
@@ -105,7 +106,12 @@ export const HeaderMenu = (props: Props) => {
     try {
       await DownloadAsPDF({
         fileName: `user-${user.userId}-report.pdf`,
-        tableOptions: getUserReportTables(user, riskScores, tenantSettings),
+        tableOptions: getUserReportTables(
+          user,
+          riskScores,
+          tenantSettings,
+          riskClassificationValues,
+        ),
         reportTitle: `${firstLetterUpper(settings.userAlias)} report`,
       });
       message.success('Report downloaded successfully');
@@ -161,6 +167,7 @@ export const HeaderMenu = (props: Props) => {
       value: 'EDIT_TAGS',
     },
   ];
+
   return (
     <div>
       <Dropdown options={options} optionClassName={s.option}>

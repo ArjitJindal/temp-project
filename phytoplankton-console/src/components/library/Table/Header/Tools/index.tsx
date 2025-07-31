@@ -8,11 +8,18 @@ import AdvancedDownloadButton from './AdvancedDownloadButton';
 import ReloadButton from './ReloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
 
+export type ExportConfig = {
+  pageSize: number;
+  page: number;
+  exportSinglePage: boolean;
+};
 export interface ToolsOptions {
   reload?: boolean;
   setting?: boolean;
   download?: boolean;
+  supportedDownloadFormats?: ('csv' | 'xlsx' | 'pdf')[];
   advancedDownload?: boolean;
+  downloadCallback?: (format: 'csv' | 'pdf', exportConfig?: ExportConfig) => void;
 }
 
 interface Props<Item extends object, Params> {
@@ -51,6 +58,8 @@ export default function Tools<Item extends object, Params>(props: Props<Item, Pa
             columns={columns}
             cursorPagination={props.cursorPagination}
             totalPages={props.totalPages}
+            supportedDownloadFormats={options?.supportedDownloadFormats ?? ['csv', 'xlsx']}
+            downloadCallback={options?.downloadCallback}
           />
         ))}
       {options?.reload !== false && onReload && <ReloadButton onClick={onReload} />}

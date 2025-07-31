@@ -80,6 +80,7 @@ const AiForensicsPdfDownloadButton: React.FC<Props> = ({ alertId }) => {
         pdfRef: pageElements,
         fileName: `AI-Forensics-Alert-${alertId}.pdf`,
         orientation: 'landscape',
+        addPageNumber: true,
       });
       message.success('PDF downloaded successfully');
     } catch (error) {
