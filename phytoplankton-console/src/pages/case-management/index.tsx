@@ -87,15 +87,16 @@ export default function CaseManagementPage() {
   useEffect(() => {
     if (isQaModeChanged) {
       handleChangeParams((prevState) => {
+        // using default params as the prev params may contain filter which we don't require in qa mode or vice versa
         if (qaMode && !isQaScope(prevState.showCases)) {
           return {
-            ...prevState,
+            ...DEFAULT_PARAMS_STATE,
             showCases: 'QA_UNCHECKED_ALERTS',
           };
         }
         if (!qaMode && isQaScope(prevState.showCases)) {
           return {
-            ...prevState,
+            ...DEFAULT_PARAMS_STATE,
             showCases: 'ALL',
           };
         }
