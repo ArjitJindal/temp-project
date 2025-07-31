@@ -10,7 +10,6 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
-
 import { executeClickhouseQuery } from './clickhouse/utils'
 
 export type PageSize = number
@@ -411,6 +410,246 @@ export async function offsetPaginateClickhouseWithoutDataTable(
     items: items,
     count: isNumber(count[0].count) ? Number(count[0].count) : count[0].count,
   }
+}
+
+export async function cursorPaginateClickhouse<T>(
+  client: ClickHouseClient,
+  dataTableName: string,
+  queryTableName: string,
+  filter: string,
+  query: CursorPaginationParams,
+  columns: Record<string, string>,
+  callback?: (item: Record<string, string | number>) => T
+): Promise<CursorPaginationResponse<T>> {
+  const field = query.sortField || 'timestamp'
+  const fromRaw: any = query.fromCursorKey || ''
+  const fromOperator = query.sortOrder === 'ascend' ? '>' : '<'
+  const toOperator = query.sortOrder === 'ascend' ? '<' : '>'
+  const direction = query.sortOrder === 'ascend' ? 'ASC' : 'DESC'
+  const prevDirection = query.sortOrder === 'ascend' ? 'DESC' : 'ASC'
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+
+  const findFilters = [filter]
+  const prevFindFilters = [filter]
+  const lastFindFilters = [filter]
+
+  // Decode cursor from base64
+  const buff = Buffer.from(fromRaw, 'base64')
+  const from = buff.toString('ascii')
+
+  const [sortValue, id] = from.split(PAGINATION_CURSOR_KEY_SEPERATOR)
+  let parsedSortValue: any = sortValue
+
+  // Parse fields that are not string values
+  if (sortValue && sortValue !== 'EMPTY') {
+    const asNumber = parseFloat(sortValue)
+    if (!isNaN(asNumber)) {
+      parsedSortValue = asNumber
+    }
+  }
+
+  if (parsedSortValue === 'EMPTY') {
+    parsedSortValue = null
+  }
+
+  // Filter query
+  if (from && sortValue && id) {
+    // Format value for SQL query
+    const formattedSortValue =
+      parsedSortValue === null
+        ? 'NULL'
+        : typeof parsedSortValue === 'string'
+        ? `'${parsedSortValue.replace(/'/g, "''")}'`
+        : parsedSortValue
+
+    // Forward pagination condition
+    const fromCondition =
+      parsedSortValue === null && query.sortOrder === 'ascend'
+        ? `${field} IS NOT NULL`
+        : `(${field} ${fromOperator} ${formattedSortValue} OR (${field} = ${formattedSortValue} AND id ${fromOperator} '${id.replace(
+            /'/g,
+            "''"
+          )}')`
+
+    findFilters.push(fromCondition)
+
+    // Backward pagination condition
+    const prevCondition =
+      parsedSortValue === null && query.sortOrder === 'descend'
+        ? `${field} IS NOT NULL`
+        : `(${field} ${toOperator} ${formattedSortValue} OR (${field} = ${formattedSortValue} AND id ${toOperator} '${id.replace(
+            /'/g,
+            "''"
+          )}')`
+
+    prevFindFilters.push(prevCondition)
+  }
+
+  // Build column projections
+  const columnsProjectionString = Object.entries(columns)
+    .map(([key, value]) => `${value} AS ${key}`)
+    .join(', ')
+
+  // Main query (current page)
+  const findSql = `
+    SELECT ${columnsProjectionString}
+    FROM ${dataTableName} FINAL
+    WHERE id IN (
+      SELECT DISTINCT id 
+      FROM ${queryTableName} FINAL
+      WHERE ${findFilters.join(' AND ')}
+      ORDER BY ${field} ${direction}, id ${direction}
+      LIMIT ${pageSize + 1}
+    )
+    ORDER BY ${field} ${direction}, id ${direction}
+  `
+
+  // Previous page query (for prev cursor)
+  const prevSql = `
+    SELECT ${columnsProjectionString}
+    FROM ${dataTableName} FINAL
+    WHERE id IN (
+      SELECT DISTINCT id 
+      FROM ${queryTableName} FINAL
+      WHERE ${prevFindFilters.join(' AND ')}
+      ORDER BY ${field} ${prevDirection}, id ${prevDirection}
+      LIMIT ${pageSize + 1}
+    )
+    ORDER BY ${field} ${prevDirection}, id ${prevDirection}
+  `
+
+  // Count query (only on first page to avoid expensive count)
+  const countSql = `
+    SELECT COUNT(DISTINCT id) as count
+    FROM ${queryTableName} FINAL
+    WHERE ${filter}
+  `
+
+  // Last page query (for last cursor)
+  const lastSql = `
+    SELECT ${columnsProjectionString}
+    FROM ${dataTableName} FINAL
+    WHERE id IN (
+      SELECT DISTINCT id 
+      FROM ${queryTableName} FINAL
+      WHERE ${lastFindFilters.join(' AND ')}
+      ORDER BY ${field} ${prevDirection}, id ${prevDirection}
+      LIMIT ${pageSize + 1}
+    )
+    ORDER BY ${field} ${prevDirection}, id ${prevDirection}
+  `
+
+  // Execute queries
+  const [items, prevItems, countResult, lastItems] = await Promise.all([
+    executeClickhouseQuery<Record<string, string | number>[]>(client, {
+      query: findSql,
+      format: 'JSONEachRow',
+    }),
+    from
+      ? executeClickhouseQuery<Record<string, string | number>[]>(client, {
+          query: prevSql,
+          format: 'JSONEachRow',
+        })
+      : Promise.resolve([]),
+    !query.fromCursorKey
+      ? executeClickhouseQuery<Array<{ count: number }>>(client, {
+          query: countSql,
+          format: 'JSONEachRow',
+        })
+      : Promise.resolve([{ count: 0 }]),
+    executeClickhouseQuery<Record<string, string | number>[]>(client, {
+      query: lastSql,
+      format: 'JSONEachRow',
+    }),
+  ])
+
+  const count = countResult[0]?.count || 0
+  const itemsOnLastPage = count % pageSize || pageSize
+  const hasLastPage = count > pageSize
+
+  // Handle previous cursor
+  const { hasPrev, prev } = await getClickhousePrevCursor(
+    prevItems,
+    query,
+    field
+  )
+
+  // Handle last cursor
+  const lastItem =
+    hasLastPage && lastItems.length > itemsOnLastPage
+      ? lastItems[itemsOnLastPage]
+      : undefined
+  const last = createClickhouseCursor(lastItem, field)
+
+  // Remove extra item and determine if there's a next page
+  let hasNext = false
+  if (items.length > pageSize) {
+    hasNext = true
+    items.pop()
+  }
+
+  // Create next cursor
+  const next =
+    hasNext && items.length > 0
+      ? createClickhouseCursor(items[items.length - 1], field)
+      : ''
+
+  const processedItems = callback
+    ? items.map(callback)
+    : (items as unknown as T[])
+
+  return {
+    items: processedItems,
+    next,
+    prev,
+    last,
+    hasNext,
+    hasPrev,
+    count,
+    limit: COUNT_QUERY_LIMIT,
+    pageSize,
+  }
+}
+
+async function getClickhousePrevCursor(
+  prevItems: Record<string, string | number>[],
+  query: CursorPaginationParams,
+  field: string
+): Promise<{ prev: string; hasPrev: boolean }> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+
+  if (!query.fromCursorKey) {
+    return { hasPrev: false, prev: '' }
+  }
+
+  if (prevItems.length === 0) {
+    return { hasPrev: false, prev: '' }
+  }
+
+  const prevItem =
+    prevItems.length >= 2 ? prevItems[prevItems.length - 2] : undefined
+
+  if (!prevItem || prevItems.length === pageSize - 1) {
+    return { hasPrev: true, prev: '' }
+  }
+
+  return { hasPrev: true, prev: createClickhouseCursor(prevItem, field) }
+}
+
+function createClickhouseCursor(
+  item: Record<string, string | number> | undefined,
+  sortField: string
+): string {
+  if (!item || !sortField) {
+    return ''
+  }
+
+  const sortValue = get(item, sortField) ?? 'EMPTY'
+  const itemId = item.id || item.userId
+  const raw = `${sortValue}${PAGINATION_CURSOR_KEY_SEPERATOR}${itemId}`
+
+  // Encode cursor
+  return encodeCursor(raw)
 }
 
 function cursor<T>(item?: WithId<T>, sortField?: string): string {

@@ -2232,6 +2232,17 @@ export class UserService {
   public async searchUsers(
     params: DefaultApiGetUsersSearchRequest
   ): Promise<UsersSearchResponse> {
+    if (isClickhouseEnabled()) {
+      const result = await this.userClickhouseRepository.usersSearchExternal(
+        params
+      )
+      const items = result.items.map((user) => internalUserToExternalUser(user))
+      return {
+        ...omit(result, ['limit']),
+        items,
+      }
+    }
+
     const result = await this.userRepository.usersSearchExternal(params)
     const items = result.items.map((user) => internalUserToExternalUser(user))
     return {

@@ -13,6 +13,8 @@ import {
   COUNT_QUERY_LIMIT,
   DEFAULT_PAGE_SIZE,
   offsetPaginateClickhouse,
+  CursorPaginationResponse,
+  cursorPaginateClickhouse,
 } from '@/utils/pagination'
 import {
   getSortedData,
@@ -28,6 +30,9 @@ import {
   AllUsersTableItemPreview,
 } from '@/@types/openapi-internal/all'
 import { LinkerService } from '@/services/linker'
+import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 type UserCasesCount = {
   casesCount: number
@@ -305,10 +310,91 @@ export class UserClickhouseRepository {
     }
   }
 
+  public async usersSearchExternal(
+    params: DefaultApiGetUsersSearchRequest
+  ): Promise<
+    CursorPaginationResponse<InternalConsumerUser | InternalBusinessUser>
+  > {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return {
+        items: [],
+        next: '',
+        prev: '',
+        last: '',
+        hasNext: false,
+        hasPrev: false,
+        count: 0,
+        limit: COUNT_QUERY_LIMIT,
+        pageSize: params.pageSize || 20,
+      }
+    }
+
+    const whereClause = await this.buildWhereClause({
+      filterName: params.name,
+      filterEmail: params.email,
+    })
+
+    const sortField =
+      params.sortBy === 'createdTimestamp'
+        ? 'timestamp'
+        : params.sortBy || 'timestamp'
+    const sortOrder =
+      params.sortOrder === 'asc'
+        ? 'ascend'
+        : params.sortOrder === 'desc'
+        ? 'descend'
+        : 'ascend'
+    const pageSize = params.pageSize || 20
+
+    const columns = {
+      id: 'id',
+      userId: 'id',
+      data: 'data',
+      createdTimestamp: 'timestamp',
+      timestamp: 'timestamp',
+      type: 'type',
+      username: 'username',
+    }
+
+    const callback = (data: Record<string, string | number>) => {
+      const userData = JSON.parse(data.data as string)
+      return {
+        ...userData,
+        userId: data.userId as string,
+        createdTimestamp: data.createdTimestamp as number,
+        type: data.type as string,
+      } as InternalConsumerUser | InternalBusinessUser
+    }
+
+    const result = await cursorPaginateClickhouse<
+      InternalConsumerUser | InternalBusinessUser
+    >(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      whereClause,
+      {
+        pageSize,
+        sortField,
+        fromCursorKey: params.start,
+        sortOrder,
+      },
+      columns,
+      callback
+    )
+
+    return result
+  }
+
   private async buildWhereClause(
     params: DefaultApiGetAllUsersListRequest &
       DefaultApiGetConsumerUsersListRequest &
-      DefaultApiGetBusinessUsersListRequest,
+      DefaultApiGetBusinessUsersListRequest & {
+        filterEmail?: string
+      },
     userType?: 'BUSINESS' | 'CONSUMER',
     options?: {
       isPulseEnabled?: boolean
@@ -345,6 +431,15 @@ export class UserClickhouseRepository {
     if (params.filterName) {
       filterConditions.push(
         `ilike(username, '%${params.filterName.replace(/'/g, "''")}%')`
+      )
+    }
+
+    if (params.filterEmail) {
+      filterConditions.push(
+        `arrayExists(x -> ilike(x, '%${params.filterEmail.replace(
+          /'/g,
+          "''"
+        )}%'), emailIds)`
       )
     }
 
