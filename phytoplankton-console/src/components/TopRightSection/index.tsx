@@ -1,4 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { titleCaseWord } from '@flagright/lib/utils/humanize';
 import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import { Authorized } from '../utils/Authorized';
@@ -78,8 +79,11 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
             closeMessage = message.loading('Starting import...');
             await props.importExport?.import(uploadingFile);
             closeMessage?.();
-            message.success(
-              `Import started for ${props.importExport?.type.toLowerCase()} successfully will reflect in a few minutes`,
+            message.info(
+              `${titleCaseWord(
+                props.importExport?.type ?? 'Job for',
+                true,
+              )} import started successfully. Changes will be reflected within a few minutes.`,
               { duration: 10000 },
             );
           }

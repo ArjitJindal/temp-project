@@ -79,7 +79,7 @@ export function humanizeStrings(items: string[]): string {
   }, '')
 }
 
-function titleCaseWord(word: string, isFirst: boolean): string {
+export function titleCaseWord(word: string, isFirst: boolean): string {
   const SMALL_WORDS = new Set([
     'and',
     'or',

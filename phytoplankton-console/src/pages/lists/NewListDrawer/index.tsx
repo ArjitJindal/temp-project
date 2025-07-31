@@ -379,7 +379,7 @@ export default function NewListDrawer(props: Props) {
                                 <div className={cn(s.columnName, s.headerText)}>Column name</div>
                                 <div className={cn(s.columnType, s.headerText)}>Column type</div>
                                 <div className={cn(s.columnPrimaryKey, s.headerText)}>
-                                  Is Unique
+                                  Is unique
                                 </div>
                                 <div className={cn(s.columnActions, s.headerText)}>Actions</div>
                               </div>
