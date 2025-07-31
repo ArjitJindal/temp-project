@@ -10,7 +10,7 @@ import { compact, intersection, replace, uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -225,7 +225,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     const settings = await tenantSettings(tenantId)
     const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
@@ -260,7 +260,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     tenantId: string,
     screeningTypes: DowJonesSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.DOW_JONES, tenantId, connections)
     this.authHeader =

@@ -1,6 +1,6 @@
 import { BadRequest } from 'http-errors'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { CounterRepository } from '../counter/repository'
 import { MongoSanctionSourcesRepository } from '../sanctions/repositories/sanction-source-repository'
 import { ScreeningProfileRepository } from './repositories/screening-profile-repository'
@@ -17,11 +17,11 @@ import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourc
 export class ScreeningProfileService {
   private screeningProfileRepository: ScreeningProfileRepository
   private mongoDb: MongoClient
-  private dynamoDb: DynamoDBClient
+  private dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.screeningProfileRepository = new ScreeningProfileRepository(
       tenantId,

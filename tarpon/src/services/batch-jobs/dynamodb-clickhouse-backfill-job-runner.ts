@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ApiUsageMetrics } from '../metrics/utils'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -83,7 +83,7 @@ const handleAlertsQaSamplingBatchJob = async (
     dynamoDb,
   }: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   }
 ) => {
   const { DynamoAlertRepository } = await import('../alerts/dynamo-repository')
@@ -119,7 +119,7 @@ export const handleNotificationsBatchJob = async (
     dynamoDb,
   }: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   }
 ) => {
   const { DynamoNotificationRepository } = await import(
@@ -196,7 +196,7 @@ export const handleAuditLogBatchJob = async (
     dynamoDb,
   }: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   }
 ) => {
   const { DynamoAuditLogRepository } = await import(
@@ -226,7 +226,7 @@ export const handleMetricsBatchJob = async (
     dynamoDb,
   }: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   }
 ) => {
   const { ApiUsageMetricsService } = await import(
@@ -258,7 +258,7 @@ export const handleJobBatchJob = async (
     dynamoDb,
   }: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   }
 ) => {
   const { DynamoBatchJobRepository } = await import(

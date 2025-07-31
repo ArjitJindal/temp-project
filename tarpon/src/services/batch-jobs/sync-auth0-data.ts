@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AccountsService } from '../accounts'
 import { TenantService } from '../tenants'
 import { RoleService } from '../roles'
@@ -15,7 +16,7 @@ import { logger } from '@/core/logger'
 
 @traceable
 export class SyncAuth0DataRunner extends BatchJobRunner {
-  private dynamoDb?: DynamoDBClient
+  private dynamoDb?: DynamoDBDocumentClient
   protected async run(job: SyncAuth0DataBatchJob) {
     this.dynamoDb = getDynamoDbClient()
     const allAuth0Domains: Set<string> = new Set()

@@ -1,7 +1,7 @@
 import createHttpError from 'http-errors'
 import { compact, groupBy, uniqBy } from 'lodash'
 import { MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { filterOutInternalRules } from './pnb-custom-logic'
@@ -358,7 +358,7 @@ const sqs = getSQSClient()
 
 export async function sendTransactionAggregationTasks(
   messages: FifoSqsMessage[],
-  dynamoDb: DynamoDBClient,
+  dynamoDb: DynamoDBDocumentClient,
   mongoDb: MongoClient
 ) {
   if (envIs('local', 'test')) {

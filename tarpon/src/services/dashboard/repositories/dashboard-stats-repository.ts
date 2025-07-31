@@ -1,6 +1,5 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { TransactionStatsDashboardMetric } from '../../analytics/dashboard-metrics/transaction-stats'
 import { HitsByUserStatsDashboardMetric } from '../../analytics/dashboard-metrics/hits-by-user-stats'
 import { RuleHitsStatsDashboardMetric } from '../../analytics/dashboard-metrics/rule-stats'
@@ -228,7 +227,7 @@ export class DashboardStatsRepository {
   }
 
   public async refreshTeamStats(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     caseUpdatedAtTimeRange?: TimeRange
   ) {
     await TeamStatsDashboardMetric.refresh(

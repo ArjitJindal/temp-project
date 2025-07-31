@@ -1,6 +1,6 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
 import { intersection, isNil, omit, omitBy } from 'lodash'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -45,11 +45,11 @@ function toComplyAdvantageType(type: SanctionsSearchType) {
 export class SanctionsSearchRepository {
   tenantId: string
   mongoDb: MongoClient
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb

@@ -10,7 +10,7 @@ import {
 import { Db, MongoClient } from 'mongodb'
 import { Search_Response } from '@opensearch-project/opensearch/api'
 import { CommonOptions, format } from '@fragaria/address-formatter'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
 import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import {
@@ -71,12 +71,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly searchRepository: SanctionsProviderSearchRepository
   private readonly tenantId: string
   private readonly mongoDb: MongoClient
-  private readonly dynamoDb: DynamoDBClient
+  private readonly dynamoDb: DynamoDBDocumentClient
 
   constructor(
     provider: SanctionsDataProviderName,
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.providerName = provider
     this.searchRepository = new SanctionsProviderSearchRepository()

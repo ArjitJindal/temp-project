@@ -1,7 +1,7 @@
 import { range, uniq } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getSanctionsCollectionName } from '../sanctions/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DeltaSanctionsDataFetchBatchJob } from '@/@types/batch-job'
@@ -46,7 +46,7 @@ export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
 export async function runDeltaSanctionsDataFetchJob(
   job: DeltaSanctionsDataFetchBatchJob,
   client: MongoClient,
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   const { tenantId, providers, settings } = job
   const version = Date.now().toString()

@@ -1,11 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import { ObjectId } from 'mongodb'
 import { OpenAI } from 'openai'
-import {
-  GetCommand,
-  GetCommandInput,
-  DynamoDBDocumentClient,
-} from '@aws-sdk/lib-dynamodb'
+import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
 import { CLICKHOUSE_DEFINITIONS } from './clickhouse/definition'
 import {
   batchInsertToClickhouse,
@@ -127,8 +123,7 @@ export async function linkGPTRequestDynamoDB(
   const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
 
   // Create document client and batch for operations
-  const docClient = DynamoDBDocumentClient.from(dynamoDb)
-  const batch = new DynamoTransactionBatch(docClient, tableName)
+  const batch = new DynamoTransactionBatch(dynamoDb, tableName)
 
   for (const gptResponse of gptResponses) {
     if (!gptResponse._id) {

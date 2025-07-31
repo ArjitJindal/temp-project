@@ -4,10 +4,10 @@ import {
   QueryCommandInput,
   DeleteCommand,
   UpdateCommand,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { BadRequest } from 'http-errors'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { ScreeningProfileRequest } from '@/@types/openapi-internal/ScreeningProfileRequest'
 import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningProfileResponse'
 import { traceable } from '@/core/xray'
@@ -19,9 +19,9 @@ import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
 export class ScreeningProfileRepository {
   private tenantId: string
   private tableName: string
-  private dynamoDb: DynamoDBClient
+  private dynamoDb: DynamoDBDocumentClient
 
-  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     this.dynamoDb = dynamoDb
@@ -114,7 +114,7 @@ export class ScreeningProfileRepository {
   }
 
   public async updateScreeningProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     existingScreeningProfile: ScreeningProfileResponse,
     screeningProfile: ScreeningProfileRequest
   ): Promise<ScreeningProfileResponse> {

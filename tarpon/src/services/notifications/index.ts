@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { compact, memoize } from 'lodash'
 import { v4 as uuid } from 'uuid'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { hasResources, Resource } from '@flagright/lib/utils'
 import { RiskLevelApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { AccountsService } from '../accounts'
@@ -44,11 +44,11 @@ import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/Risk
 export class NotificationsService {
   tenantId: string
   mongoDb: MongoClient
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb

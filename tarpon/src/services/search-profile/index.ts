@@ -1,4 +1,4 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { BadRequest } from 'http-errors'
 import { CounterRepository } from '../counter/repository'
 import { SearchProfileRepository } from './repositories/search-profile-repository'
@@ -25,7 +25,7 @@ export class SearchProfileService {
   }
 
   public async getExistingSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfileId: string
   ): Promise<SearchProfileResponse> {
     const searchProfile = await this.searchProfileRepository.getSearchProfiles(
@@ -39,7 +39,7 @@ export class SearchProfileService {
   }
 
   public async createSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfile: SearchProfileRequest
   ): Promise<SearchProfileResponse> {
     if (searchProfile.isDefault) {
@@ -54,7 +54,7 @@ export class SearchProfileService {
   }
 
   public async getSearchProfiles(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     filterSearchProfileId?: string[],
     filterSearchProfileName?: string[],
     filterSearchProfileStatus?: string
@@ -71,7 +71,7 @@ export class SearchProfileService {
   }
 
   public async updateSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfileId: string,
     searchProfile: SearchProfileRequest
   ): Promise<SearchProfileResponse> {
@@ -95,7 +95,7 @@ export class SearchProfileService {
   }
 
   public async deleteSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfileId: string
   ): Promise<void> {
     await this.getExistingSearchProfile(dynamoDb, searchProfileId)

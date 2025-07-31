@@ -1,4 +1,4 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DefaultFiltersRepository } from './repositories/default-filters-repository'
 import { DefaultManualScreeningFiltersRequest } from '@/@types/openapi-internal/DefaultManualScreeningFiltersRequest'
 import { DefaultManualScreeningFiltersResponse } from '@/@types/openapi-internal/DefaultManualScreeningFiltersResponse'
@@ -14,14 +14,14 @@ export class DefaultFiltersService {
 
   public async createDefaultFilters(
     filters: DefaultManualScreeningFiltersRequest,
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   ): Promise<DefaultManualScreeningFiltersResponse> {
     // Always replace the existing entry
     return this.defaultFiltersRepository.createDefaultFilters(filters, dynamoDb)
   }
 
   public async getDefaultFilters(
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   ): Promise<DefaultManualScreeningFiltersResponse | null> {
     return this.defaultFiltersRepository.getDefaultFilters(dynamoDb)
   }

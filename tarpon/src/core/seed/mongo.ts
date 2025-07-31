@@ -1,6 +1,6 @@
 import { MongoClient, MongoError } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
@@ -128,7 +128,7 @@ const skipCollections = (tenantId: string) => [JOBS_COLLECTION(tenantId)]
 export async function seedMongo(
   tenantId: string,
   client: MongoClient,
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   logger.info('Seeding MongoDB...')
   const db = client.db()

@@ -22,7 +22,7 @@ import {
 
 import { isEqual, memoize } from 'lodash'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
@@ -319,7 +319,7 @@ export async function createCollectionIfNotExist(
 
 export const createMongoDBCollections = async (
   mongoClient: MongoClient,
-  dynamoDb: DynamoDBClient,
+  dynamoDb: DynamoDBDocumentClient,
   tenantId: string
 ) => {
   const indexDefinitions = getMongoDbIndexDefinitions(tenantId)

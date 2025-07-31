@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 import {
@@ -29,7 +29,7 @@ async function runRulesForUser(
   type: 'BUSINESS' | 'CONSUMER',
   ruleInstances: RuleInstance[],
   rules: readonly Rule[],
-  dynamoDb: DynamoDBClient,
+  dynamoDb: DynamoDBDocumentClient,
   mongoDb: MongoClient,
   rulesEngineService: RulesEngineService
 ) {

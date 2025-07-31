@@ -1,12 +1,12 @@
 import { Db, MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { allCollections, createMongoDBCollections } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 
 const BATCH_SIZE = 1000
 export async function copyCollections(
   client: MongoClient,
-  inputDynamoDb: DynamoDBClient,
+  inputDynamoDb: DynamoDBDocumentClient,
   inputTenantId: string,
   inputDB: Db,
   outputTenantId: string,

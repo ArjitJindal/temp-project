@@ -1,5 +1,3 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-
 import { StackConstants } from '@lib/constants'
 import {
   GetCommand,
@@ -18,10 +16,10 @@ import { DynamoTransactionBatch } from '@/utils/dynamodb'
 @traceable
 export class DynamoCounterRepository {
   private tenantId: string
-  private dynamoDb: DynamoDBClient
+  private dynamoDb: DynamoDBDocumentClient
   private tableName: string
 
-  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
@@ -107,8 +105,7 @@ export class DynamoCounterRepository {
     counters: { entity: CounterEntity; count: number }[]
   ) {
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     for (const counter of counters) {
       const key = DynamoDbKeys.COUNTER(this.tenantId, counter.entity)

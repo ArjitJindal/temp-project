@@ -4,10 +4,10 @@ import {
   QueryCommandInput,
   UpdateCommand,
   DeleteCommand,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { BadRequest } from 'http-errors'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SearchProfileRequest } from '@/@types/openapi-internal/SearchProfileRequest'
 import { SearchProfileResponse } from '@/@types/openapi-internal/SearchProfileResponse'
 import { traceable } from '@/core/xray'
@@ -25,7 +25,7 @@ export class SearchProfileRepository {
   }
 
   public async markAllProfilesAsNonDefault(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     excludeProfileId?: string
   ): Promise<void> {
     const timestamp = Date.now()
@@ -73,7 +73,7 @@ export class SearchProfileRepository {
   }
 
   public async createSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfile: SearchProfileRequest,
     searchProfileId: string
   ): Promise<SearchProfileResponse> {
@@ -110,7 +110,7 @@ export class SearchProfileRepository {
   }
 
   public async updateSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     existingSearchProfile: SearchProfileResponse,
     searchProfile: SearchProfileRequest
   ): Promise<SearchProfileResponse> {
@@ -189,7 +189,7 @@ export class SearchProfileRepository {
   }
 
   public async getSearchProfiles(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     filterSearchProfileIds?: string[],
     filterSearchProfileNames?: string[],
     filterSearchProfileStatus?: string
@@ -261,7 +261,7 @@ export class SearchProfileRepository {
   }
 
   public async deleteSearchProfile(
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     searchProfileId: string
   ): Promise<void> {
     const key = DynamoDbKeys.SEARCH_PROFILE(this.tenantId, searchProfileId)

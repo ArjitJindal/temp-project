@@ -3,7 +3,6 @@ import {
   QueryCommandInput,
   UpdateCommand,
   PutCommand,
-  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
@@ -125,8 +124,7 @@ export async function saveMigrationTmpProgressToDynamo(migrationTmp: any[]) {
   const dynamoDb = getDynamoDbClient()
 
   // Create document client and batch for operations
-  const docClient = DynamoDBDocumentClient.from(dynamoDb)
-  const batch = new DynamoTransactionBatch(docClient, TableName)
+  const batch = new DynamoTransactionBatch(dynamoDb, TableName)
 
   for (const migration of migrationTmp) {
     if (!migration._id) {

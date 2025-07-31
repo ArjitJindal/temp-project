@@ -4,7 +4,6 @@ import * as Sentry from '@sentry/aws-serverless'
 
 import { omit } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { logger } from '@/core/logger'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import {
@@ -32,7 +31,7 @@ export class AuditLogRepository {
   tenantId: string
   mongoDb: MongoClient
   clickhouseAuditLogRepository?: ClickhouseAuditLogRepository
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
   dynamoAuditLogRepository: DynamoAuditLogRepository
   auditLogTableName: string
   constructor(

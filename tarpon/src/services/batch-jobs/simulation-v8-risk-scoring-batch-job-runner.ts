@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { chunk, cloneDeep, flatMap, memoize, uniq } from 'lodash'
 import pMap from 'p-map'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import PQueue from 'p-queue'
 import { LogicEvaluator } from '../logic-evaluator/engine'
@@ -65,7 +65,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
   private riskRepository!: RiskRepository
   private riskFactors?: SegregatedRiskFactors
   private job?: SimulationRiskFactorsV8BatchJob
-  private dynamoDb?: DynamoDBClient
+  private dynamoDb?: DynamoDBDocumentClient
   private transactionsResult?: SimulationRiskFactorsResultRaw
   private usersKrsResult?: SimulationRiskFactorsResultRaw
   private usersDrsResult?: SimulationRiskFactorsResultRaw

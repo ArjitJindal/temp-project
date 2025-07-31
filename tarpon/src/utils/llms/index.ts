@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
@@ -68,8 +67,7 @@ export async function linkLLMRequestDynamoDB(
   const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
 
   // Create document client and batch for operations
-  const docClient = DynamoDBDocumentClient.from(dynamoDb)
-  const batch = new DynamoTransactionBatch(docClient, tableName)
+  const batch = new DynamoTransactionBatch(dynamoDb, tableName)
 
   for (const gptResponse of gptResponses) {
     if (!gptResponse._id) {

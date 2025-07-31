@@ -1,7 +1,7 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { StackConstants } from '@lib/constants'
 import {
   DeleteCommand,
+  DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   QueryCommand,
@@ -32,10 +32,10 @@ type CacheAccount = Account & { tenantId: string; orgName: string }
 
 @traceable
 export class DynamoAccountsRepository extends BaseAccountsRepository {
-  private readonly dynamoClient: DynamoDBClient
+  private readonly dynamoClient: DynamoDBDocumentClient
   private readonly auth0Domain: string
 
-  constructor(auth0Domain: string, dynamoClient: DynamoDBClient) {
+  constructor(auth0Domain: string, dynamoClient: DynamoDBDocumentClient) {
     super()
     this.auth0Domain = auth0Domain
     this.dynamoClient = dynamoClient

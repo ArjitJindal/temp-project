@@ -3,7 +3,7 @@ import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
 import axios from 'axios'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import slackify from 'slackify-markdown'
 import { sendCaseCreatedAlert } from '../slack-app/app'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -249,7 +249,7 @@ async function clearTriageQueueTickets() {
 
 async function checkDormantUsers(
   tenantInfos: TenantInfo[],
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   for await (const tenant of tenantInfos) {
     const accountsService = new AccountsService(

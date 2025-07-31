@@ -1,7 +1,7 @@
 import { AggregationCursor, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { compact, omit, range } from 'lodash'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
@@ -49,7 +49,7 @@ export class SLAService {
   constructor(
     tenantId: string,
     auth0Domain: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.mongoDb = connections.mongoDb
     this.tenantId = tenantId

@@ -5,7 +5,7 @@ import { capitalize, compact, concat, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
 import { Client } from '@opensearch-project/opensearch/.'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   COLLECTIONS_MAP,
   extractCountryFromSource,
@@ -308,7 +308,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient },
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: AcurisSanctionsSearchType[] | undefined
@@ -345,7 +345,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
     apiKey: string,
     screeningTypes: AcurisSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.ACURIS, tenantId, connections)
     this.apiKey = apiKey

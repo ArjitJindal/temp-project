@@ -1,6 +1,6 @@
 import { Collection, MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { compact, omit, startCase, uniq } from 'lodash'
 import { sanitizeString } from '@flagright/lib/utils'
 import { GenericSanctionsConsumerUserRuleParameters } from '../rules-engine/user-rules/generic-sanctions-consumer-user'
@@ -49,7 +49,7 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
   private async init(
     tenantId: string,
     mongoDb: MongoClient,
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     provider: SanctionsDataProviderName
   ) {
     const db = mongoDb.db()
@@ -289,7 +289,7 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
 
   private async handleRuleInstance(
     ruleInstance: RuleInstance,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     const parameters = ruleInstance.parameters
     const ruleInstanceId = await this.ruleInstanceService?.getNewRuleInstanceId(

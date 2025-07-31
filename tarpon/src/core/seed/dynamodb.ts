@@ -1,6 +1,6 @@
 import { pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '../logger'
 import { hasFeature } from '../utils/context'
 import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
@@ -47,7 +47,10 @@ import { DynamoNotificationRepository } from '@/services/notifications/dynamo-re
 import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
 import { DynamoReasonsRepository } from '@/services/tenants/repositories/reasons/dynamo-repository'
 
-export async function seedDynamo(dynamoDb: DynamoDBClient, tenantId: string) {
+export async function seedDynamo(
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string
+) {
   logger.info('Seeding DynamoDB...')
   disableLocalChangeHandler()
 

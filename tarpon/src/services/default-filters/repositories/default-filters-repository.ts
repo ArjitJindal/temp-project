@@ -3,9 +3,9 @@ import {
   QueryCommand,
   QueryCommandInput,
   DeleteCommand,
+  DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DefaultManualScreeningFiltersRequest } from '@/@types/openapi-internal/DefaultManualScreeningFiltersRequest'
 import { DefaultManualScreeningFiltersResponse } from '@/@types/openapi-internal/DefaultManualScreeningFiltersResponse'
 import { traceable } from '@/core/xray'
@@ -22,7 +22,7 @@ export class DefaultFiltersRepository {
 
   public async createDefaultFilters(
     filters: DefaultManualScreeningFiltersRequest,
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   ): Promise<DefaultManualScreeningFiltersResponse> {
     // First delete any existing entry
     const key = DynamoDbKeys.DEFAULT_FILTERS(this.tenantId)
@@ -70,7 +70,7 @@ export class DefaultFiltersRepository {
   }
 
   public async getDefaultFilters(
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   ): Promise<DefaultManualScreeningFiltersResponse | null> {
     const queryInput: QueryCommandInput = {
       TableName: this.tableName,

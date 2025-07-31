@@ -1,4 +1,4 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, updateRoles, withUpdatedAt } from './utils'
@@ -14,7 +14,6 @@ import {
   DASHBOARD_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_TEAM_CASES_STATS_HOURLY,
 } from '@/utils/mongodb-definitions'
-
 import { Case } from '@/@types/openapi-internal/Case'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
@@ -38,7 +37,7 @@ interface TimestampCondition {
 export class TeamStatsDashboardMetric {
   public static async refresh(
     tenantId: string,
-    dynamoDb: DynamoDBClient,
+    dynamoDb: DynamoDBDocumentClient,
     timeRange?: TimeRange
   ): Promise<void> {
     const db = await getMongoDbClientDb()

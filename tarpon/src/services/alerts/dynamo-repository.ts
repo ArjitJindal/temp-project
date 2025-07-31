@@ -1,4 +1,4 @@
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb'
+import { QueryCommand } from '@aws-sdk/client-dynamodb'
 import {
   GetCommand,
   PutCommand,
@@ -69,13 +69,13 @@ const handleLocalChangeCapture = async (
 @traceable
 export class DynamoAlertRepository {
   private readonly tenantId: string
-  private readonly dynamoDb: DynamoDBClient
+  private readonly dynamoDb: DynamoDBDocumentClient
   private readonly tableName: string
   private readonly AlertsQaSamplingTableName: string
   private readonly CasesClickhouseTableName: string
   private readonly AlertsClickhouseTableName: string
 
-  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
@@ -100,8 +100,7 @@ export class DynamoAlertRepository {
 
     if (!batch) {
       // Create document client and batch for operations
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      batch = new DynamoTransactionBatch(docClient, this.tableName)
+      batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       // Add case update
       const caseKey = DynamoDbKeys.CASE(this.tenantId, caseId)
@@ -176,8 +175,7 @@ export class DynamoAlertRepository {
 
     if (!batch) {
       // Create document client and batch for operations
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      batch = new DynamoTransactionBatch(docClient, this.tableName)
+      batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       const {
         writeRequests: alertWriteRequests,
@@ -318,8 +316,7 @@ export class DynamoAlertRepository {
     let activeBatch: DynamoTransactionBatch
     if (!batch) {
       // Create document client and batch for operations
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      activeBatch = new DynamoTransactionBatch(docClient, this.tableName)
+      activeBatch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       // Get timestamp update requests
       const {
@@ -471,8 +468,7 @@ export class DynamoAlertRepository {
     alert.caseCreatedTimestamp = caseItem.createdTimestamp
 
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     const { message } = await this.saveAlertsForCase([alert], caseId, batch)
 
@@ -536,8 +532,7 @@ export class DynamoAlertRepository {
     }
 
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     const {
       writeRequests: alertWriteRequests,
@@ -800,8 +795,7 @@ export class DynamoAlertRepository {
     comment: Comment
   ): Promise<void> {
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     // Add all comments to batch
     for (const alertId of alertIds) {
@@ -1794,8 +1788,7 @@ export class DynamoAlertRepository {
     const keyLists: dynamoKeyList = []
 
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     for (const item of result.Items) {
       const key = DynamoDbKeys.ALERTS_QA_SAMPLING(
@@ -1834,8 +1827,7 @@ export class DynamoAlertRepository {
     )
 
     // Create document client from raw client for batch operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     batch.put({
       Item: {

@@ -1,4 +1,3 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { StackConstants } from '@lib/constants'
 import {
   UpdateCommand,
@@ -33,10 +32,10 @@ const handleLocalChangeCapture = async (
 @traceable
 export class DynamoNotificationRepository {
   private readonly tenantId: string
-  private readonly dynamoDb: DynamoDBClient
+  private readonly dynamoDb: DynamoDBDocumentClient
   private readonly tableName: string
 
-  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
@@ -45,13 +44,7 @@ export class DynamoNotificationRepository {
   public async saveToDynamoDb(notifications: Notification[]) {
     const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
 
-    // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb, {
-      marshallOptions: {
-        removeUndefinedValues: true,
-      },
-    })
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     for (const notification of notifications) {
       if (!notification.id) {

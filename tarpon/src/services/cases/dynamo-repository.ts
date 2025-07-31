@@ -1,4 +1,3 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import {
   GetCommand,
   GetCommandInput,
@@ -67,7 +66,7 @@ const CASES_TABLE_NAME_CH = CLICKHOUSE_DEFINITIONS.CASES_V2.tableName
 @traceable
 export class DynamoCaseRepository {
   private readonly tenantId: string
-  private readonly dynamoDb: DynamoDBClient
+  private readonly dynamoDb: DynamoDBDocumentClient
   private readonly dynamoAlertRepository: DynamoAlertRepository
   private readonly tableName: string
 
@@ -77,7 +76,7 @@ export class DynamoCaseRepository {
    * @param tenantId - The tenant ID for multi-tenancy support
    * @param dynamoDb - Initialized DynamoDB client to use for all operations
    */
-  constructor(tenantId: string, dynamoDb: DynamoDBClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
@@ -118,12 +117,7 @@ export class DynamoCaseRepository {
     saveToClickhouse: boolean = true
   ): Promise<void> {
     // Create document client from raw client for batch operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb, {
-      marshallOptions: {
-        removeUndefinedValues: true,
-      },
-    })
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     const keyLists: dynamoKeyList = []
     let alertsMessage: { message?: DynamoConsumerMessage } = {}
@@ -223,8 +217,7 @@ export class DynamoCaseRepository {
 
     // If no batch provided, create one and execute immediately
     if (!batch) {
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      batch = new DynamoTransactionBatch(docClient, this.tableName)
+      batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       const { writeRequests: caseWriteRequests, keyLists: caseKeyLists } =
         await this.prepareCaseUpdates(caseId)
@@ -308,8 +301,7 @@ export class DynamoCaseRepository {
 
     // If no batch provided, create one and execute immediately
     if (!batch) {
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      batch = new DynamoTransactionBatch(docClient, this.tableName)
+      batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       const { writeRequests: caseWriteRequests, keyLists: caseKeyLists } =
         await this.prepareCaseUpdates(caseId)
@@ -464,8 +456,7 @@ export class DynamoCaseRepository {
     const shouldExecute = !batch
     if (!batch) {
       // If no batch provided, create one and execute immediately
-      const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-      batch = new DynamoTransactionBatch(docClient, this.tableName)
+      batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
     }
 
     batch.put({
@@ -1236,8 +1227,7 @@ export class DynamoCaseRepository {
       })
 
     // Create document client and batch for operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     // Add case operations to batch
     for (const operation of caseOperations) {
@@ -1800,8 +1790,7 @@ export class DynamoCaseRepository {
     }
 
     // Create document client and batch for all operations
-    const docClient = DynamoDBDocumentClient.from(this.dynamoDb)
-    const batch = new DynamoTransactionBatch(docClient, this.tableName)
+    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     let allKeyLists: dynamoKeyList = []
 

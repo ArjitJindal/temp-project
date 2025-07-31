@@ -1,4 +1,3 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import {
   DynamoDBDocumentClient,
   QueryCommand,
@@ -19,7 +18,7 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { CounterRepository, CounterEntity } from '@/services/counter/repository'
 
 interface WorkflowServiceDeps {
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
 }
 
@@ -48,7 +47,7 @@ export class WorkflowService {
     private readonly tenantId: string,
     private readonly deps: WorkflowServiceDeps
   ) {
-    this.docClient = DynamoDBDocumentClient.from(deps.dynamoDb)
+    this.docClient = deps.dynamoDb
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     this.counterRepo = new CounterRepository(tenantId, {
       mongoDb: deps.mongoDb,

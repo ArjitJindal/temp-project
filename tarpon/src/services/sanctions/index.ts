@@ -12,7 +12,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import {
   GetObjectCommand,
@@ -99,11 +99,11 @@ export class SanctionsService {
   tenantId: string
   initializationPromise: Promise<void> | null = null
   mongoDb: MongoClient
-  dynamoDb: DynamoDBClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
@@ -149,7 +149,7 @@ export class SanctionsService {
 
   private async getProvider(
     provider: SanctionsDataProviderName,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient },
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {

@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AcurisProvider } from './providers/acuris-provider'
 import { SanctionsDataProviders } from './types'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
@@ -13,7 +13,7 @@ export async function sanctionsDataFetcher(
   provider: SanctionsDataProviderName,
   connections: {
     mongoDb: MongoClient
-    dynamoDb: DynamoDBClient
+    dynamoDb: DynamoDBDocumentClient
   },
   settings?: SanctionsSettingsProviderScreeningTypes[]
 ): Promise<SanctionsDataFetcher | undefined> {
