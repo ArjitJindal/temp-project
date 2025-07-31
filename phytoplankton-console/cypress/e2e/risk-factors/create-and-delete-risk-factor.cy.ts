@@ -14,7 +14,7 @@ describe('Create and update risk factor', () => {
 
   it('create, update and delete risk factor', () => {
     cy.intercept('POST', '**/risk-factors').as('riskFactor');
-    cy.intercept('PUT', '**/risk-factors/*').as('updateRiskFactor');
+    cy.intercept('PUT', '**/risk-factors').as('updateRiskFactor');
     createRiskFactor();
     updateRiskFactor();
   });
@@ -72,7 +72,9 @@ function updateRiskFactor() {
   cy.visit('risk-levels/risk-factors/transaction');
   cy.get('button[data-cy="edit-risk-factors-button"]').click();
   //scroll to the first risk factor
-  cy.get('button[data-cy="risk-factor-edit-button"]').first().scrollIntoView().click();
+  cy.get('button[data-cy="risk-factor-edit-button"]').first().scrollIntoView().click({
+    force: true,
+  });
   cy.waitNothingLoading();
   cy.get('[data-cy="risk-level-VERY_HIGH"]').click({ multiple: true });
   cy.get('button[data-cy="drawer-create-save-button"]').click();
