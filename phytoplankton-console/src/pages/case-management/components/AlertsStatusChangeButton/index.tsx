@@ -68,6 +68,7 @@ export default function AlertsStatusChangeButton(
           statusTransitions={statusTransitions}
           isDisabled={isDisabled}
           haveModal={haveModal}
+          entityType="alert"
         >
           {({ isVisible, setVisible, newStatus }) => (
             <AlertsStatusChangeModal
@@ -96,6 +97,7 @@ export default function AlertsStatusChangeButton(
           statusTransitions={statusTransitions}
           isDisabled={isDisabled}
           haveModal={haveModal}
+          entityType="alert"
           updateModalState={(newStatus: AlertStatus) => {
             (props as AlertsStatusChangeButtonWithoutModalProps).updateModalState({
               isVisible: true,

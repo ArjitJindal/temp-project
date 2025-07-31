@@ -3,11 +3,15 @@ import { compact } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { Resource } from '@flagright/lib/utils';
 import { ActionLabel } from './StatusChangeModal';
-import { AlertStatus, CaseStatus, FileInfo } from '@/apis';
+import { AlertStatus, CaseStatus, FileInfo, SanctionsHitStatus } from '@/apis';
 import Button, { ButtonProps } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { getNextStatus } from '@/utils/case-utils';
+import { useApi } from '@/api';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { isLoading } from '@/utils/asyncResource';
+import Confirm from '@/components/utils/Confirm';
 
 export const statusToOperationName = (
   status: AlertStatus | CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD',
@@ -64,6 +68,7 @@ interface Props {
   isDisabled?: boolean;
   className?: string;
   haveModal?: boolean;
+  entityType: 'alert' | 'case';
 }
 interface ChildrenProps {
   isVisible: boolean;
@@ -176,27 +181,71 @@ const ModalButton = (
     newStatus,
     overridenStatus,
     requiredResources,
+    entityType,
   } = props;
+
+  const api = useApi();
+  const sanctionsHitsMutation = useMutation(async (alertId: string) => {
+    return await api.searchSanctionsHits({
+      alertId,
+      filterStatus: ['OPEN' as SanctionsHitStatus],
+      pageSize: 1,
+    });
+  });
+
+  const handleButtonClick = async () => {
+    if (
+      entityType === 'alert' &&
+      ['CLOSED', 'ESCALATED', 'ESCALATED_L2'].includes(newStatus) &&
+      ids.length > 0
+    ) {
+      const response = await sanctionsHitsMutation.mutateAsync(ids[0]);
+      if (response.items && response.items.length > 0) {
+        return true;
+      }
+    }
+
+    updateModalState(newStatus);
+    setModalVisibility(true);
+    return false;
+  };
 
   return (
     <>
       {ids.length > 0 && (
-        <Button
-          type="TETRIARY"
-          analyticsName={`update-status-${newStatus}`}
-          onClick={() => {
+        <Confirm
+          text={`There are pending hits that require human review. Are you sure you want to ${
+            newStatus === 'CLOSED' ? 'close' : 'escalate'
+          } this alert?`}
+          onConfirm={() => {
             updateModalState(newStatus);
             setModalVisibility(true);
           }}
-          isDisabled={isDisabled ? isDisabled : !ids.length}
-          style={{ width: 'max-content' }}
-          testName="update-status-button"
-          requiredResources={requiredResources}
-          className={className}
-          {...buttonProps}
+          isDanger
         >
-          {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
-        </Button>
+          {({ onClick }) => (
+            <Button
+              type="TETRIARY"
+              analyticsName={`update-status-${newStatus}`}
+              onClick={async () => {
+                const needsConfirmation = await handleButtonClick();
+                if (needsConfirmation) {
+                  onClick();
+                }
+              }}
+              isDisabled={
+                isDisabled || isLoading(sanctionsHitsMutation.dataResource) || !ids.length
+              }
+              style={{ width: 'max-content' }}
+              testName="update-status-button"
+              requiredResources={requiredResources}
+              className={className}
+              {...buttonProps}
+            >
+              {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
+            </Button>
+          )}
+        </Confirm>
       )}
     </>
   );

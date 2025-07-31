@@ -278,23 +278,34 @@ export class SanctionsHitService {
         if (params.filterPaymentMethodId) {
           params.filterSearchId = undefined
         }
-        params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails
-          ?.filter((data) => {
-            if (params.filterPaymentMethodId) {
-              return params.filterPaymentMethodId.includes(
-                data.hitContext?.paymentMethodId ?? ''
-              )
-            }
-            if (params.filterSearchId) {
-              return (
-                params.filterSearchId.includes(data.searchId) &&
-                (!params.filterScreeningHitEntityType ||
-                  data.entityType === params.filterScreeningHitEntityType)
-              )
-            }
-            return false
-          })
-          .flatMap(({ sanctionHitIds }) => sanctionHitIds ?? [])
+        if (params.filterPaymentMethodId || params.filterSearchId) {
+          params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails
+            ?.filter((data) => {
+              if (params.filterPaymentMethodId) {
+                return params.filterPaymentMethodId.includes(
+                  data.hitContext?.paymentMethodId ?? ''
+                )
+              }
+              if (params.filterSearchId) {
+                return (
+                  params.filterSearchId.includes(data.searchId) &&
+                  (!params.filterScreeningHitEntityType ||
+                    data.entityType === params.filterScreeningHitEntityType)
+                )
+              }
+              return false
+            })
+            .flatMap(({ sanctionHitIds }) => sanctionHitIds ?? [])
+        } else {
+          params.filterHitIds =
+            alert.ruleHitMeta?.sanctionsDetails?.flatMap(
+              ({ sanctionHitIds }) => sanctionHitIds ?? []
+            ) ?? []
+          params.filterSearchId =
+            alert.ruleHitMeta?.sanctionsDetails?.flatMap(
+              ({ searchId }) => searchId ?? []
+            ) ?? []
+        }
         params.ruleId = alert.ruleId
         params.filterUserId =
           alert.ruleHitMeta?.sanctionsDetails?.[0]?.hitContext?.userId ??

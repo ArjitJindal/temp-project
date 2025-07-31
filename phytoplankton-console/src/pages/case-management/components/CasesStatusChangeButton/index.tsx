@@ -61,6 +61,7 @@ export default function CasesStatusChangeButton(
           isDisabled={isDisabled}
           className={className}
           haveModal={haveModal}
+          entityType="case"
         >
           {({ isVisible, setVisible, newStatus }) => (
             <CasesStatusChangeModal
@@ -88,6 +89,7 @@ export default function CasesStatusChangeButton(
           isDisabled={isDisabled}
           className={className}
           haveModal={haveModal}
+          entityType="case"
           updateModalState={(newStatus: CaseStatus) => {
             (props as CasesStatusChangeButtonWithoutModalProps).updateModalState({
               isVisible: true,
