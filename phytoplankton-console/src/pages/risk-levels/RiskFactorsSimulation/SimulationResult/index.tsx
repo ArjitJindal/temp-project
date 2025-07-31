@@ -2,9 +2,14 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 import { capitalizeWords, firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
-import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
+import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors';
+import {
+  ScopeSelectorValue,
+  scopeToRiskEntityType,
+} from '../../risk-factors/RiskFactorsTable/utils';
 import { drawSimulationGraphs } from './report-utils';
 import styles from './styles.module.less';
+import { useTempRiskFactors } from '@/store/risk-factors';
 import { Progress } from '@/components/Simulation/Progress';
 import {
   RiskEntityType,
@@ -48,7 +53,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
-import RiskFactorsTable from '@/pages/risk-levels/shared/RiskFactorsTable';
+import RiskFactorsTable from '@/pages/risk-levels/risk-factors/RiskFactorsTable';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 
 interface Props {
@@ -483,6 +488,22 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     [iteration],
   );
 
+  const { simulationRiskFactorsMap } = useTempRiskFactors({
+    riskFactors: (iteration.parameters as SimulationV8RiskFactorsParameters)?.parameters || [],
+    simulationStorageKey: `${jobId ?? 'new'}-${activeIterationIndex}`,
+    isSimulation: true,
+  });
+
+  const getRiskFactorsForSelectedSection = useCallback(
+    (selectedSection: ScopeSelectorValue) => ({
+      data: success({
+        items: simulationRiskFactorsMap[scopeToRiskEntityType(selectedSection)],
+      }),
+      refetch: () => {},
+    }),
+    [simulationRiskFactorsMap],
+  );
+
   const getGraphData = useCallback(
     (graphType: SimulationV8RiskFactorsStatisticsRiskTypeEnum) => {
       let max = 0;
@@ -628,11 +649,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
             params={params}
             onChangeParams={setParams}
             pagination
-            toolsOptions={{
-              download: true,
-              reload: false,
-              setting: false,
-            }}
+            toolsOptions={{ download: true, reload: false, setting: false }}
             extraFilters={filter}
           />
         </Card.Section>
@@ -642,7 +659,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           <span className={styles.title}>Updated risk factors</span>
           {(iteration.parameters as SimulationV8RiskFactorsParameters)?.parameters ? (
             <SimulationCustomRiskFactorsTable
-              riskFactors={(iteration.parameters as SimulationV8RiskFactorsParameters).parameters}
+              simulationRiskFactors={
+                (iteration.parameters as SimulationV8RiskFactorsParameters)?.parameters || []
+              }
               canEditRiskFactors={false}
               activeIterationIndex={activeIterationIndex}
               jobId={jobId}
@@ -650,8 +669,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           ) : (
             <RiskFactorsTable
               type="consumer"
-              isSimulation={true}
-              riskFactors={
+              mode="simulation"
+              queryResults={getRiskFactorsForSelectedSection}
+              simulationRiskFactors={
                 (iteration.parameters as SimulationV8RiskFactorsParameters)?.parameters || []
               }
               canEditRiskFactors={false}

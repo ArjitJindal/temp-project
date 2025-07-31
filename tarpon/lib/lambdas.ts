@@ -245,6 +245,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CONSOLE_API_VERSION_HISTORY_FUNCTION_NAME]: {
+    codePath: 'console-api-version-history',
+    handlerName: 'versionHistoryHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME]: {
     codePath: 'console-api-pulse',
     handlerName: 'manualRiskAssignmentHandler',

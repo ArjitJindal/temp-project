@@ -56,7 +56,6 @@ import { NotificationRepository } from '@/services/notifications/notifications-r
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
-import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
 import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
@@ -177,14 +176,6 @@ export class TarponChangeMongoDbConsumer {
         )
         .setLLMRequestsHandler((tenantId, newLLMRequests) =>
           this.handleLLMRequests(tenantId, newLLMRequests)
-        )
-        .setRiskClassificationHistoryHandler(
-          (tenantId, newRiskClassificationHistory, dbClients) =>
-            this.handleRiskClassificationHistory(
-              tenantId,
-              newRiskClassificationHistory,
-              dbClients
-            )
         )
     )
   }
@@ -727,30 +718,6 @@ export class TarponChangeMongoDbConsumer {
       'handleGptRequests'
     )
     await linkLLMRequestClickhouse(tenantId, newLLMRequests)
-    subSegment?.close()
-  }
-
-  async handleRiskClassificationHistory(
-    tenantId: string,
-    newRiskClassificationHistory: RiskClassificationHistory | undefined,
-    dbClients: DbClients
-  ): Promise<void> {
-    if (!newRiskClassificationHistory) {
-      return
-    }
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleRiskClassificationHistory'
-    )
-
-    const riskClassificationHistoryRepository = new RiskRepository(
-      tenantId,
-      dbClients
-    )
-    await riskClassificationHistoryRepository.createRiskClassificationHistoryInClickhouse(
-      newRiskClassificationHistory
-    )
-
     subSegment?.close()
   }
 }

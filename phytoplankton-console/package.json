@@ -110,6 +110,7 @@
     "filesize": "^8.0.7",
     "flat": "^5.0.2",
     "html2canvas": "^1.4.1",
+    "jotai": "^2.12.5",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.7.0",
     "jszip": "^3.10.1",

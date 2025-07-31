@@ -1,4 +1,4 @@
-import { Filter, FindCursor, MongoClient, WithId } from 'mongodb'
+import { FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { InternalServerError } from 'http-errors'
 import {
@@ -20,7 +20,6 @@ import {
   getRiskScoreFromLevel,
   isNotArsChangeTxId,
 } from '@flagright/lib/utils/risk'
-import { WithOperators } from 'thunder-schema'
 import {
   hasFeature,
   updateTenantRiskClassificationValues,
@@ -43,7 +42,6 @@ import {
   ARS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
-  RISK_CLASSIFICATION_HISTORY_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
@@ -58,11 +56,7 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
-import {
-  getClickhouseCredentials,
-  isClickhouseEnabledInRegion,
-  sendMessageToMongoConsumer,
-} from '@/utils/clickhouse/utils'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -72,14 +66,7 @@ import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
 import { handleSmallNumber } from '@/utils/helpers'
 import { CounterRepository } from '@/services/counter/repository'
 import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
-import {
-  DefaultApiGetDrsValuesRequest,
-  DefaultApiGetRiskLevelVersionHistoryRequest,
-} from '@/@types/openapi-internal/RequestParameters'
-import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
-import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
-import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
 import { updateInMongoWithVersionCheck } from '@/utils/downstream-version'
 
@@ -427,12 +414,11 @@ export class RiskRepository {
 
   async createOrUpdateRiskClassificationConfig(
     id: string,
-    comment: string,
     riskClassificationValues: RiskClassificationScore[]
-  ): Promise<RiskClassificationHistory> {
+  ): Promise<RiskClassificationConfig> {
     logger.debug(`Updating risk classification config.`)
     const now = Date.now()
-    const newRiskClassificationValues: RiskClassificationConfig = {
+    const riskClassificationConfig: RiskClassificationConfig = {
       classificationValues: riskClassificationValues,
       updatedAt: now,
       createdAt: now,
@@ -442,29 +428,17 @@ export class RiskRepository {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
-        ...newRiskClassificationValues,
+        ...riskClassificationConfig,
       },
     }
 
-    const historyItem: RiskClassificationHistory = {
-      comment,
-      createdAt: now,
-      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
-      id,
-      scores: newRiskClassificationValues.classificationValues,
-      updatedAt: now,
-    }
-
-    await Promise.all([
-      this.dynamoDb.send(new PutCommand(putItemInput)),
-      this.createRiskClassificationHistoryInClickhouse(historyItem),
-    ])
+    await this.dynamoDb.send(new PutCommand(putItemInput))
 
     logger.debug(`Updated risk classification config.`)
 
     updateTenantRiskClassificationValues(riskClassificationValues)
 
-    return historyItem
+    return riskClassificationConfig
   }
 
   async getDRSRiskItem(userId: string): Promise<DrsScore | null> {
@@ -812,6 +786,69 @@ export class RiskRepository {
     return newRiskFactor
   }
 
+  async bulkUpdateRiskFactors(
+    riskFactors: RiskFactor[]
+  ): Promise<RiskFactor[]> {
+    const now = Date.now()
+    const updatedRiskFactors: RiskFactor[] = []
+
+    logger.info(`Bulk updating ${riskFactors.length} risk factors for V8`)
+
+    // Process each risk factor to update logic aggregation variables and timestamps
+    for (const riskFactor of riskFactors) {
+      const updatedRiskFactor: RiskFactor = {
+        ...riskFactor,
+        logicAggregationVariables:
+          (await getLogicAggVarsWithUpdatedVersion(
+            riskFactor,
+            riskFactor.id,
+            riskFactor,
+            this.aggregationRepository
+          )) ?? [],
+        updatedAt: now,
+        createdAt: riskFactor.createdAt,
+      }
+
+      updatedRiskFactors.push(updatedRiskFactor)
+    }
+
+    // Prepare batch write requests
+    const writeRequests: BatchWriteRequestInternal[] = updatedRiskFactors.map(
+      (riskFactor) => ({
+        PutRequest: {
+          Item: {
+            ...riskFactor,
+            ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
+          },
+        },
+      })
+    )
+
+    // Execute bulk write
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests,
+      StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
+
+    // Handle local change capture for development
+    if (process.env.NODE_ENV === 'development') {
+      await Promise.all(
+        updatedRiskFactors.map((riskFactor) =>
+          handleLocalChangeCapture(
+            this.tenantId,
+            DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id)
+          )
+        )
+      )
+    }
+
+    logger.debug(
+      `Bulk updated ${updatedRiskFactors.length} risk factors for V8`
+    )
+    return updatedRiskFactors
+  }
+
   async updateRiskFactorStatus(
     riskFactorId: string,
     status: RuleInstanceStatus
@@ -1076,189 +1113,6 @@ export class RiskRepository {
       return `RF-${count.toString().padStart(3, '0')}`
     }
   }
-
-  async createRiskClassificationHistoryInMongo(
-    riskClassificationHistory: RiskClassificationHistory
-  ) {
-    await this.mongoDb
-      .db()
-      .collection<RiskClassificationHistory>(
-        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
-      )
-      .insertOne(riskClassificationHistory)
-  }
-
-  async createRiskClassificationHistoryInClickhouse(
-    riskClassificationHistory: RiskClassificationHistory
-  ) {
-    if (!isClickhouseEnabledInRegion()) {
-      return this.createRiskClassificationHistoryInMongo(
-        riskClassificationHistory
-      )
-    }
-
-    const credentials = await getClickhouseCredentials(this.tenantId)
-    const clickhouseRepository = new RiskClassificationHistoryTable({
-      credentials,
-    })
-    await clickhouseRepository.create(riskClassificationHistory).save()
-  }
-
-  private getFilters(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Partial<WithOperators<RiskClassificationHistory>> {
-    const filters: Partial<WithOperators<RiskClassificationHistory>> = {}
-
-    if (params.filterVersionId != null) {
-      filters.id = params.filterVersionId
-    }
-    if (params.filterCreatedBy != null) {
-      filters.createdBy__in = params.filterCreatedBy
-    }
-
-    if (
-      params.filterBeforeTimestamp != null &&
-      params.filterAfterTimestamp != null
-    ) {
-      filters.createdAt__lt = params.filterBeforeTimestamp
-      filters.createdAt__gt = params.filterAfterTimestamp
-    }
-    return filters
-  }
-
-  private getMongoFilters(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Filter<RiskClassificationHistory> {
-    const filters: Filter<RiskClassificationHistory> = {}
-
-    if (params.filterVersionId != null) {
-      filters.id = params.filterVersionId
-    }
-    if (params.filterCreatedBy != null) {
-      filters.createdBy = { $in: params.filterCreatedBy }
-    }
-
-    if (
-      params.filterBeforeTimestamp != null &&
-      params.filterAfterTimestamp != null
-    ) {
-      filters.createdAt = {
-        $gte: params.filterAfterTimestamp,
-        $lte: params.filterBeforeTimestamp,
-      }
-    }
-
-    return filters
-  }
-
-  async getRiskClassificationHistoryMongo(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Promise<RiskClassificationHistory[]> {
-    const result = await this.mongoDb
-      .db()
-      .collection<RiskClassificationHistory>(
-        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
-      )
-      .find(this.getMongoFilters(params))
-      .toArray()
-
-    return result
-  }
-
-  async getRiskClassificationHistory(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Promise<RiskClassificationHistory[]> {
-    if (!isClickhouseEnabledInRegion()) {
-      return this.getRiskClassificationHistoryMongo(params)
-    }
-
-    const credentials = await getClickhouseCredentials(this.tenantId)
-    const clickhouseRepository = new RiskClassificationHistoryTable({
-      credentials,
-    })
-
-    const filters = this.getFilters(params)
-
-    const result = await clickhouseRepository.objects
-      .filter(filters)
-      .final()
-      .limit(params.pageSize ?? DEFAULT_PAGE_SIZE)
-      .offset(((params.page ?? 1) - 1) * (params.pageSize ?? DEFAULT_PAGE_SIZE))
-      .sort({
-        [params.sortField ?? 'createdAt']:
-          params.sortOrder === 'descend' ? -1 : 1,
-      })
-      .all()
-
-    return result
-  }
-
-  async getRiskClassificationHistoryCountMongo(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Promise<number> {
-    const result = await this.mongoDb
-      .db()
-      .collection<RiskClassificationHistory>(
-        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
-      )
-      .countDocuments(this.getMongoFilters(params))
-    return result
-  }
-
-  async getRiskClassificationHistoryCount(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Promise<number> {
-    if (!isClickhouseEnabledInRegion()) {
-      return this.getRiskClassificationHistoryCountMongo(params)
-    }
-
-    const credentials = await getClickhouseCredentials(this.tenantId)
-    const clickhouseRepository = new RiskClassificationHistoryTable({
-      credentials,
-    })
-
-    const filters = this.getFilters(params)
-
-    const count = await clickhouseRepository.objects
-      .filter(filters)
-      .final()
-      .count()
-
-    return count
-  }
-
-  async getRiskClassificationHistoryByIdMongo(
-    id: string
-  ): Promise<RiskClassificationHistory | null> {
-    const result = await this.mongoDb
-      .db()
-      .collection<RiskClassificationHistory>(
-        RISK_CLASSIFICATION_HISTORY_COLLECTION(this.tenantId)
-      )
-      .findOne({ id })
-    return result
-  }
-
-  async getRiskClassificationHistoryById(
-    id: string
-  ): Promise<RiskClassificationHistory | null> {
-    if (!isClickhouseEnabledInRegion()) {
-      return this.getRiskClassificationHistoryByIdMongo(id)
-    }
-
-    const credentials = await getClickhouseCredentials(this.tenantId)
-    const table = new RiskClassificationHistoryTable({
-      credentials,
-    })
-
-    const data = await table.objects.filter({ id }).final().first()
-
-    if (!data) {
-      return null
-    }
-
-    return data
-  }
 }
 
 /** Kinesis Util */
@@ -1273,3 +1127,13 @@ const handleLocalChangeCapture = async (
 
   await localTarponChangeCaptureHandler(tenantId, primaryKey, 'HAMMERHEAD')
 }
+
+/**
+ * Version history
+ * - Non Active Verison History
+ * - Dynamo we keep another latest and pending
+ * - On approve to
+ *
+ *
+ *
+ */

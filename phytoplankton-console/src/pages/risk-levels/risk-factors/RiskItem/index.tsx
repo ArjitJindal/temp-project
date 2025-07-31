@@ -2,13 +2,18 @@ import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { useEffect } from 'react';
-import { RiskFactorConfiguration, serializeRiskItem } from '../RiskFactorConfiguration';
-import { RiskFactorConfigurationFormValues } from '../RiskFactorConfiguration/RiskFactorConfigurationForm';
+import { useAtom, useAtomValue } from 'jotai';
+import { RiskFactorConfiguration } from '../RiskFactorConfiguration';
+import { RiskFactorsTypeMap, scopeToRiskEntityType } from '../RiskFactorsTable/utils';
 import {
-  LocalStorageKey,
-  RiskFactorsTypeMap,
-  scopeToRiskEntityType,
-} from '../../RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
+  RiskFactorConfigurationFormValues,
+  serializeRiskItem,
+} from '../RiskFactorConfiguration/utils';
+import {
+  riskFactorsAtom,
+  riskFactorsEditEnabled,
+  SimulationLocalStorageKey,
+} from '@/store/risk-factors';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
@@ -20,8 +25,8 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
 import { message } from '@/components/library/Message';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
-import { useSafeLocalStorageState } from '@/utils/hooks';
 import { useAuth0User } from '@/utils/user-utils';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 
 export default function () {
   const isSimulationMode = window.localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
@@ -180,7 +185,7 @@ interface SimulationRiskItemFormProps {
 function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
   const { type, mode, id, riskClassificationValues, navigateToRiskFactors, dataKey } = props;
   const [riskFactorsMap, setRiskFactorsMap] = useSafeLocalStorageState<RiskFactorsTypeMap>(
-    `${LocalStorageKey}-${dataKey}`,
+    `${SimulationLocalStorageKey}-${dataKey}`,
     {
       CONSUMER_USER: [],
       BUSINESS: [],
@@ -217,8 +222,7 @@ function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
         }}
         mode={'CREATE'}
         dataKey={dataKey}
-        isLoadingUpdation={false}
-        isLoadingCreation={false}
+        isLoading={false}
       />
     );
   }
@@ -273,8 +277,7 @@ function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
       id={id}
       dataKey={dataKey}
       riskItem={riskFactor}
-      isLoadingUpdation={false}
-      isLoadingCreation={false}
+      isLoading={false}
     />
   );
 }
@@ -297,6 +300,7 @@ function RiskItemForm(props: RiskItemFormProps) {
     }
     return null;
   });
+  const [riskFactors, setRiskFactors] = useAtom(riskFactorsAtom);
 
   const navigateToRiskFactor = () => {
     navigate(
@@ -307,44 +311,7 @@ function RiskItemForm(props: RiskItemFormProps) {
   };
 
   const queryClient = useQueryClient();
-  const updateRiskFactorMutation = useMutation(
-    async ({
-      variables: { riskFactorFormValues, riskItem },
-    }: {
-      variables: { riskFactorFormValues: RiskFactorConfigurationFormValues; riskItem: RiskFactor };
-    }) => {
-      if (!riskItem || !id) {
-        throw new Error('Risk item is missing');
-      }
-      return api.putRiskFactors({
-        riskFactorId: id,
-        RiskFactorsUpdateRequest: {
-          ...serializeRiskItem(riskFactorFormValues, type, riskClassificationValues),
-          status: riskItem.status,
-        },
-      });
-    },
-    {
-      onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactor();
-        await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
-        message.success('Risk factor updated successfully', {
-          link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
-            type,
-            id: newRiskFactor.id,
-          }),
-          linkTitle: 'View risk factor',
-          details: `${capitalizeNameFromEmail(user?.name || '')} updated a risk factor ${
-            newRiskFactor.id
-          }`,
-          copyFeedback: 'Risk factor URL copied to clipboard',
-        });
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to update the risk factor - Some parameters are missing`, err);
-      },
-    },
-  );
+
   const createRiskFactorMutation = useMutation(
     async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
       return api.postCreateRiskFactor({
@@ -378,11 +345,18 @@ function RiskItemForm(props: RiskItemFormProps) {
       },
     },
   );
+  const isEditEnabled = useAtomValue(riskFactorsEditEnabled);
   const handleSubmit = (formValues: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => {
-    if (mode === 'edit' && riskItem) {
-      updateRiskFactorMutation.mutate({
-        variables: { riskFactorFormValues: formValues, riskItem },
+    if (mode === 'edit' && riskItem && isEditEnabled) {
+      if (id == null) {
+        throw new Error(`ID must be defined for editing`);
+      }
+      const serialized = serializeRiskItem(formValues, type, riskClassificationValues);
+      setRiskFactors({
+        id,
+        ...serialized,
       });
+      navigateToRiskFactor();
     } else if (mode === 'create' || mode === 'duplicate') {
       if (mode === 'duplicate' && riskItem) {
         if (riskItem.parameter) {
@@ -412,8 +386,7 @@ function RiskItemForm(props: RiskItemFormProps) {
         riskItemType={type}
         onSubmit={handleSubmit}
         mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
-        isLoadingUpdation={updateRiskFactorMutation?.isLoading}
-        isLoadingCreation={createRiskFactorMutation?.isLoading}
+        isLoading={createRiskFactorMutation?.isLoading}
       />
     );
   }
@@ -427,9 +400,8 @@ function RiskItemForm(props: RiskItemFormProps) {
             onSubmit={handleSubmit}
             mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
             id={id}
-            riskItem={data || undefined}
-            isLoadingUpdation={updateRiskFactorMutation?.isLoading}
-            isLoadingCreation={createRiskFactorMutation?.isLoading}
+            riskItem={(id ? riskFactors.getById(id) ?? data : data) ?? undefined}
+            isLoading={false}
           />
         );
       }}

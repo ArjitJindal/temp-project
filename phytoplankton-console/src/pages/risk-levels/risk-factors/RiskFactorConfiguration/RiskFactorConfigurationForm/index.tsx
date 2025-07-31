@@ -1,11 +1,10 @@
 import { ConfigProvider } from 'antd';
 import React, { useMemo, useState, useRef, useImperativeHandle, useEffect } from 'react';
 import cn from 'clsx';
+import { RiskFactorConfigurationFormValues } from '../utils';
 import s from './style.module.less';
-import { BasicDetailsFormValues, BasicDetailsStep } from './BasicDetailsStep';
-import RiskFactorConfigurationStep, {
-  RiskFactorConfigurationStepFormValues,
-} from './RiskFactorConfigurationStep';
+import { BasicDetailsStep } from './BasicDetailsStep';
+import RiskFactorConfigurationStep from './RiskFactorConfigurationStep';
 import Form, { FormRef } from '@/components/library/Form';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { FieldValidators } from '@/components/library/Form/utils/validation/types';
@@ -50,15 +49,6 @@ interface RiskFactorConfigurationFormProps {
   formInitialValues?: RiskFactorConfigurationFormValues;
   newRiskId?: string;
   liftedParameters?: LiftedParameters;
-}
-
-export interface RiskFactorConfigurationFormValues {
-  basicDetailsStep: BasicDetailsFormValues;
-  riskFactorConfigurationStep: Partial<RiskFactorConfigurationStepFormValues>;
-  v2Props?: {
-    parameter: RiskFactorParameter;
-    item: RiskFactor;
-  };
 }
 
 export const BASIC_DETAILS_STEP = 'basicDetailsStep';

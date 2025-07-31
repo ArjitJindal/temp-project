@@ -131,6 +131,7 @@ export class RiskScoringV8Service {
       if (hit) {
         result = {
           riskFactorId: factor.id,
+          versionId: factor.versionId,
           vars: vars,
           hit: true,
           score: logicDetails.riskScore,
@@ -158,6 +159,7 @@ export class RiskScoringV8Service {
           factor.defaultRiskScore ??
           getDefaultRiskValue(riskClassificationValues),
         hit: false,
+        versionId: factor.versionId,
         weight: factor.defaultWeight ?? 0,
       }
     )
@@ -187,6 +189,7 @@ export class RiskScoringV8Service {
             ...context,
             metricDimensions: {
               riskFactorId: id,
+              riskFactorVersionId: factor.versionId,
             },
           }
         )

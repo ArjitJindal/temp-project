@@ -1,17 +1,20 @@
 import { useParams } from 'react-router';
-import { useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import RiskFactorsTable from '../shared/RiskFactorsTable';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useMutation } from '@tanstack/react-query';
 import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
+import RiskFactorsTable from './RiskFactorsTable';
 import { useRiskFactors } from './utils';
-import { useApi } from '@/api';
-import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { useHasResources } from '@/utils/user-utils';
-import { message } from '@/components/library/Message';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { map } from '@/utils/queries/types';
-import { RiskLevel, RiskParameterLevelKeyValue } from '@/apis';
+import { PageWrapperContentContainer } from '@/components/PageWrapper';
+import VersionHistoryFooter from '@/components/VersionHistory/Footer';
+import { useNewVersionId } from '@/utils/version';
+import { message } from '@/components/library/Message';
+import { useApi } from '@/api';
+import { riskFactorsAtom, riskFactorsEditEnabled, riskFactorsStore } from '@/store/risk-factors';
+import { getOr } from '@/utils/asyncResource';
 
 interface Props {
   type: string;
@@ -24,45 +27,38 @@ export default function ({ isSimulationMode }: { isSimulationMode: boolean }) {
 
 export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
-  const api = useApi();
   const queryResult = useRiskFactors(type as 'consumer' | 'business' | 'transaction');
   const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
-  const queryClient = useQueryClient();
+  const [isUpdateEnabled, setIsUpdateEnabled] = useAtom(riskFactorsEditEnabled);
+  const riskFactors = useAtomValue(riskFactorsAtom);
+  const store = useSetAtom(riskFactorsStore);
+  const count = riskFactors.getCount();
+  const api = useApi();
+  const newVersionIdQuery = useNewVersionId('RiskFactors');
+  const versionId = getOr(newVersionIdQuery.data, {
+    id: '',
+  });
 
-  const handleSaveParameters = useCallback(
-    async ({
-      values,
-      defaultRiskLevel,
-      defaultWeight,
-      defaultRiskScore,
-      riskFactorId,
-    }: {
-      values: RiskParameterLevelKeyValue[];
-      defaultRiskLevel: RiskLevel;
-      defaultWeight: number;
-      defaultRiskScore: number;
-      riskFactorId: string;
-    }) => {
-      const hideSavingMessage = message.loading('Saving parameters...');
-      try {
-        await api.putRiskFactors({
-          riskFactorId: riskFactorId,
-          RiskFactorsUpdateRequest: {
-            defaultWeight,
-            defaultRiskScore,
-            defaultRiskLevel,
-            riskLevelAssignmentValues: values,
-          },
-        });
-        await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
-        message.success('Risk factor parameters updated successfully');
-      } catch (error) {
-        message.fatal('Failed to update risk factor parameters', error);
-      } finally {
-        hideSavingMessage();
-      }
+  const saveRiskFactorsMutation = useMutation<void, Error, { comment: string }>(
+    async ({ comment }: { comment: string }) => {
+      await api.putRiskFactors({
+        RiskFactorsUpdateRequest: {
+          comment: comment,
+          riskFactors: riskFactors.getAll(),
+        },
+      });
     },
-    [api, queryClient, type],
+    {
+      onSuccess: () => {
+        queryResult.refetch();
+        setIsUpdateEnabled(false);
+        newVersionIdQuery.refetch();
+        store(new Map());
+      },
+      onError: (error) => {
+        message.fatal('Failed to save risk factors', error);
+      },
+    },
   );
 
   if (type === 'simulation') {
@@ -76,13 +72,42 @@ export const CustomRiskFactors = (props: Props) => {
   }
 
   return (
-    <RiskFactorsTable
-      type={type}
-      queryResults={map(queryResult, (data) => ({
-        items: data,
-      }))}
-      handleSaveParameters={handleSaveParameters}
-      canEditRiskFactors={canWriteRiskFactors}
-    />
+    <PageWrapperContentContainer
+      footer={
+        isUpdateEnabled && (
+          <VersionHistoryFooter
+            onCancel={() => {
+              store(new Map());
+              setIsUpdateEnabled(false);
+            }}
+            versionId={versionId.id ?? ''}
+            mutation={saveRiskFactorsMutation}
+            isDisabled={count === 0}
+            modalTitle="Update risk factors"
+            modalIdLabel="Risk factor version"
+            footerMessage={
+              count > 0
+                ? `${count} risk factors have been updated`
+                : 'Note that updating risk factors would save as a new version'
+            }
+          />
+        )
+      }
+    >
+      <RiskFactorsTable
+        type={type}
+        mode="normal"
+        baseUrl={`/risk-levels/risk-factors`}
+        queryResults={() =>
+          map(queryResult, (data) => ({
+            items: data.map((riskFactor) => {
+              const changedFactor = riskFactors.getById(riskFactor.id);
+              return changedFactor ?? riskFactor;
+            }),
+          }))
+        }
+        canEditRiskFactors={canWriteRiskFactors}
+      />
+    </PageWrapperContentContainer>
   );
 };

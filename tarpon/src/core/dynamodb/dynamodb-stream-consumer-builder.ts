@@ -37,7 +37,6 @@ import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject } from '@/utils/llms'
-import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
 import { TenantService } from '@/services/tenants'
 
 export type DbClients = {
@@ -144,11 +143,6 @@ type LLMRequestsHandler = (
   dbClients: DbClients
 ) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
-type RiskClassificationHistoryHandler = (
-  tenantId: string,
-  newRiskClassificationHistory: RiskClassificationHistory | undefined,
-  dbClients: DbClients
-) => Promise<void>
 
 const sqsClient = getSQSClient()
 
@@ -175,7 +169,6 @@ export class StreamConsumerBuilder {
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
   notificationsHandler?: NotificationsHandler
   llmRequestsHandler?: LLMRequestsHandler
-  riskClassificationHistoryHandler?: RiskClassificationHistoryHandler
 
   constructor(
     name: string,
@@ -294,12 +287,6 @@ export class StreamConsumerBuilder {
     return this
   }
 
-  public setRiskClassificationHistoryHandler(
-    riskClassificationHistoryHandler: RiskClassificationHistoryHandler
-  ): StreamConsumerBuilder {
-    this.riskClassificationHistoryHandler = riskClassificationHistoryHandler
-    return this
-  }
   public async handleDynamoDbUpdates(
     updates: DynamoDbEntityUpdate[],
     dbClients: DbClients

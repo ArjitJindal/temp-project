@@ -92,7 +92,7 @@ async function buildCode(env, options) {
   let httpServer = null;
   let WebSocket = null;
   if (hotReload) {
-    const WebSocket = require('ws');
+    WebSocket = require('ws');
     const http = require('http');
     try {
       // Create HTTP server to serve livereload.js

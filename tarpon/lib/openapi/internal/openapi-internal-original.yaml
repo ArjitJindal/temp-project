@@ -3806,13 +3806,17 @@ paths:
       x-flagright:
         resources:
           - write:::accounts/overview
-  /risk-levels/new-risk-level-id:
+  /version-history/new-version-id/{type}:
     get:
-      summary: Risk Level - New Risk Level ID
-      operationId: get-new-risk-level-id
-      x-flagright:
-        resources:
-          - read:::risk-scoring/risk-levels
+      summary: New Version ID
+      operationId: get-new-version-id
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: type
+          required: true
+          description: Type of version to get
       responses:
         '200':
           description: OK
@@ -3820,10 +3824,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewIdResponse'
-  /risk-levels/version-history:
+  /version-history:
     get:
-      summary: Risk Level - Version History
-      operationId: get-risk-level-version-history
+      summary: Version History
+      operationId: get-version-history
       x-flagright:
         resources:
           - read:::risk-scoring/risk-levels
@@ -3833,7 +3837,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedRiskClassificationHistory'
+                $ref: '#/components/schemas/PaginatedVersionHistory'
       parameters:
         - schema:
             $ref: '#/components/schemas/PageSize'
@@ -3869,7 +3873,33 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
-  /risk-levels/version-history/{versionId}:
+        - schema:
+            type: string
+            enum:
+              - RiskClassification
+              - RiskFactors
+          in: query
+          name: type
+          required: true
+          description: Type of version to get
+    post:
+      summary: Version History - Restore
+      operationId: restore-version-history
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-levels
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionHistoryRestorePayload'
+        required: true
+  /version-history/{versionId}:
     parameters:
       - schema:
           type: string
@@ -3877,8 +3907,8 @@ paths:
         in: path
         required: true
     get:
-      summary: Risk Level - Version History
-      operationId: get-risk-level-version-history-by-version-id
+      summary: Version History
+      operationId: get-version-history-by-version-id
       x-flagright:
         resources:
           - read:::risk-scoring/risk-levels
@@ -3888,7 +3918,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskClassificationHistory'
+                $ref: '#/components/schemas/VersionHistory'
   /pulse/risk-classification:
     get:
       summary: Risk classification - GET
@@ -3917,7 +3947,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskClassificationHistory'
+                $ref: '#/components/schemas/RiskClassificationConfig'
         '400':
           description: Bad Request
       requestBody:
@@ -4316,6 +4346,24 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RiskFactor'
+    put:
+      summary: Risk factors - PUT
+      operationId: put-risk-factors
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-factors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorsUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      parameters: []
   /risk-factors/bulk:
     post:
       summary: Risk factors - POST Bulk
@@ -4368,29 +4416,6 @@ paths:
         name: riskFactorId
         in: path
         required: true
-    put:
-      summary: Risk factor - PUT
-      operationId: put-risk-factors
-      x-flagright:
-        resources:
-          - write:::risk-scoring/risk-factors
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RiskFactorsUpdateRequest'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RiskFactor'
-        '403':
-          description: Not enough privileges
-      parameters: []
-      description: ''
     get:
       summary: Risk factor - GET
       operationId: get-risk-factor
@@ -11474,31 +11499,6 @@ components:
         - updatedAt
         - createdBy
         - type
-    RiskClassificationHistory:
-      type: object
-      title: RiskClassificationHistory
-      properties:
-        scores:
-          type: array
-          items:
-            $ref: '#/components/schemas/RiskClassificationScore'
-        comment:
-          type: string
-        id:
-          type: string
-        createdAt:
-          type: number
-        updatedAt:
-          type: number
-        createdBy:
-          type: string
-      required:
-        - scores
-        - comment
-        - id
-        - createdAt
-        - updatedAt
-        - createdBy
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
@@ -11535,19 +11535,33 @@ components:
       required:
         - scores
         - comment
-    PaginatedRiskClassificationHistory:
+    PaginatedVersionHistory:
       type: object
-      title: PaginatedRiskClassificationHistory
+      title: PaginatedVersionHistory
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/RiskClassificationHistory'
+            $ref: '#/components/schemas/VersionHistory'
         total:
           type: number
       required:
         - items
         - total
+    VersionHistoryRestorePayload:
+      type: object
+      title: VersionHistoryRestorePayload
+      properties:
+        versionId:
+          type: string
+        type:
+          $ref: '#/components/schemas/VersionHistoryType'
+        comment:
+          type: string
+      required:
+        - versionId
+        - type
+        - comment
     RiskLevelRuleLogic:
       title: RiskLevelRuleLogic
       type: object
@@ -11883,6 +11897,19 @@ components:
       title: RiskFactorsUpdateRequest
       type: object
       properties:
+        riskFactors:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactor'
+        comment:
+          type: string
+      required:
+        - riskFactors
+        - comment
+    RiskFactorsUpdate:
+      title: RiskFactorsUpdate
+      type: object
+      properties:
         riskFactorId:
           type: string
         status:
@@ -11967,7 +11994,7 @@ components:
       title: RiskFactorsPostRequest
       type: object
       allOf:
-        - $ref: '#/components/schemas/RiskFactorsUpdateRequest'
+        - $ref: '#/components/schemas/RiskFactorsUpdate'
       required:
         - name
         - description
@@ -11988,6 +12015,8 @@ components:
           type: number
         updatedAt:
           type: number
+        versionId:
+          type: string
       required:
         - id
         - name
@@ -12047,6 +12076,8 @@ components:
       type: object
       properties:
         riskFactorId:
+          type: string
+        versionId:
           type: string
         vars:
           type: array

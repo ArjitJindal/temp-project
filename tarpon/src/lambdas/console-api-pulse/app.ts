@@ -32,23 +32,20 @@ export const riskClassificationHandler = lambdaApi({
 
     const handlers = new Handlers()
 
-    handlers.registerGetPulseRiskClassification(
-      async () => await riskService.getRiskClassificationItem()
-    )
-
-    handlers.registerGetNewRiskLevelId(async () => {
-      const counter = await riskService.getCounterValue()
-      return {
-        id: RiskService.getRiskLevelId(counter),
-      }
+    handlers.registerGetPulseRiskClassification(async () => {
+      const result = await riskService.getRiskClassificationItem()
+      console.log('result', result)
+      return result
     })
 
     handlers.registerPostPulseRiskClassification(async (ctx, request) => {
       // If approval workflows are enabled, use the workflow route instead
       if (hasFeature('APPROVAL_WORKFLOWS')) {
-        throw new BadRequest(
-          'Approval workflows are enabled. Please refresh the page.'
+        const response = await riskService.workflowProposeRiskLevelChange(
+          request.RiskClassificationRequest.scores,
+          request.RiskClassificationRequest.comment
         )
+        return response.result.riskClassificationConfig
       }
 
       const response = await riskService.createOrUpdateRiskClassificationConfig(
@@ -57,22 +54,6 @@ export const riskClassificationHandler = lambdaApi({
       )
       return response.result
     })
-
-    // Workflow routes for risk classification approval
-    handlers.registerPostPulseRiskClassificationWorkflowProposal(
-      async (ctx, request) => {
-        // Check if approval workflows feature is enabled
-        if (!hasFeature('APPROVAL_WORKFLOWS')) {
-          throw new BadRequest('Approval workflows feature is not enabled')
-        }
-
-        const response = await riskService.workflowProposeRiskLevelChange(
-          request.RiskClassificationRequest.scores,
-          request.RiskClassificationRequest.comment
-        )
-        return response.result
-      }
-    )
 
     handlers.registerPostPulseRiskClassificationWorkflowAction(
       async (ctx, request) => {
@@ -98,18 +79,6 @@ export const riskClassificationHandler = lambdaApi({
         return await riskService.workflowGetPendingRiskLevelChange()
       }
     )
-
-    handlers.registerGetRiskLevelVersionHistoryByVersionId(
-      async (ctx, request) => {
-        return await riskService.getRiskLevelVersionHistoryById(
-          request.versionId
-        )
-      }
-    )
-
-    handlers.registerGetRiskLevelVersionHistory(async (ctx, request) => {
-      return await riskService.getRiskLevelVersionHistory(request)
-    })
 
     return await handlers.handle(event)
   }
@@ -152,12 +121,10 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     })
 
     handlers.registerPutRiskFactors(async (ctx, request) => {
-      return (
-        await riskService.createOrUpdateRiskFactor(
-          request.RiskFactorsUpdateRequest,
-          request.riskFactorId
-        )
-      ).result
+      await riskService.bulkUpdateRiskFactors(
+        request.RiskFactorsUpdateRequest.riskFactors,
+        request.RiskFactorsUpdateRequest.comment
+      )
     })
 
     handlers.registerGetNewRiskFactorId(async (ctx, request) => {

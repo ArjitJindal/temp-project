@@ -2,24 +2,20 @@ import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
-import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
+import { useAtomValue } from 'jotai';
 import s from './style.module.less';
-import RiskFactorConfigurationForm, {
-  RiskFactorConfigurationFormValues,
-  STEPS,
-} from './RiskFactorConfigurationForm';
-import { BasicDetailsFormValues } from './RiskFactorConfigurationForm/BasicDetailsStep';
+import RiskFactorConfigurationForm, { STEPS } from './RiskFactorConfigurationForm';
+import { deserializeRiskItem, RiskFactorConfigurationFormValues } from './utils';
+import { riskFactorsEditEnabled } from '@/store/risk-factors';
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
 import { useHasResources } from '@/utils/user-utils';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import {
-  RiskClassificationScore,
   RiskEntityType,
   RiskFactor,
   RiskFactorParameter,
-  RiskFactorsPostRequest,
   RiskParameterLevelKeyValue,
   RiskScoreValueLevel,
   RiskScoreValueScore,
@@ -43,8 +39,7 @@ interface Props {
   id?: string;
   riskItem?: RiskFactor;
   onSubmit: (values: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => void;
-  isLoadingUpdation?: boolean;
-  isLoadingCreation?: boolean;
+  isLoading?: boolean;
   dataKey?: string;
 }
 
@@ -53,16 +48,8 @@ interface LocationState {
 }
 
 export const RiskFactorConfiguration = (props: Props) => {
-  const {
-    riskItemType,
-    mode,
-    id,
-    riskItem,
-    onSubmit,
-    isLoadingUpdation,
-    isLoadingCreation,
-    dataKey,
-  } = props;
+  const { riskItemType, mode, id, riskItem, onSubmit, isLoading, dataKey } = props;
+  const isEditEnabled = useAtomValue(riskFactorsEditEnabled);
   const navigate = useNavigate();
   const location = useLocation();
   const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
@@ -227,7 +214,7 @@ export const RiskFactorConfiguration = (props: Props) => {
           <>
             <Button
               htmlType="submit"
-              isLoading={isLoadingCreation}
+              isLoading={isLoading}
               isDisabled={!canWriteRiskFactors}
               onClick={() => {
                 if (!formRef?.current?.validate()) {
@@ -246,8 +233,8 @@ export const RiskFactorConfiguration = (props: Props) => {
         {canWriteRiskFactors && (mode === 'EDIT' || mode === 'DUPLICATE') && (
           <Button
             htmlType="submit"
-            isLoading={isLoadingUpdation}
-            isDisabled={!canWriteRiskFactors}
+            isLoading={isLoading}
+            isDisabled={!canWriteRiskFactors || !isEditEnabled}
             onClick={() => {
               if (!formRef?.current?.validate()) {
                 formRef?.current?.submit(); // To show errors
@@ -294,75 +281,3 @@ export const RiskFactorConfiguration = (props: Props) => {
     </>
   );
 };
-
-export function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormValues {
-  const basicDetailsStep = {
-    name: riskItem.name,
-    description: riskItem.description,
-    defaultWeight: riskItem.defaultWeight,
-    defaultRiskValue: riskItem.defaultRiskScore ?? 'HIGH',
-  };
-  const riskFactorConfigurationStep = {
-    baseCurrency: riskItem.baseCurrency,
-    aggregationVariables: riskItem.logicAggregationVariables,
-    riskLevelLogic: riskItem.riskLevelLogic,
-    entityVariables: riskItem.logicEntityVariables,
-  };
-  if (riskItem.parameter) {
-    return {
-      basicDetailsStep: basicDetailsStep as BasicDetailsFormValues,
-      riskFactorConfigurationStep: riskFactorConfigurationStep,
-      v2Props: {
-        parameter: riskItem.parameter as RiskFactorParameter,
-        item: riskItem,
-      },
-    };
-  }
-  return {
-    basicDetailsStep: basicDetailsStep as BasicDetailsFormValues,
-    riskFactorConfigurationStep,
-  };
-}
-
-export function serializeRiskItem(
-  riskFactorFormValues: RiskFactorConfigurationFormValues,
-  type: 'consumer' | 'business' | 'transaction',
-  riskClassificationValues: RiskClassificationScore[],
-  riskFactorId?: string,
-  v2Props?: {
-    parameter: RiskFactorParameter;
-    item: RiskFactor;
-  },
-): RiskFactorsPostRequest {
-  const baseRequest = {
-    name: riskFactorFormValues.basicDetailsStep.name ?? '',
-    description: riskFactorFormValues.basicDetailsStep.description ?? '',
-    status: 'ACTIVE',
-    defaultWeight: riskFactorFormValues.basicDetailsStep.defaultWeight ?? 1,
-    baseCurrency: riskFactorFormValues.riskFactorConfigurationStep.baseCurrency,
-    defaultRiskScore: getSelectedRiskScore(
-      riskFactorFormValues.basicDetailsStep.defaultRiskValue,
-      riskClassificationValues,
-    ),
-    defaultRiskLevel: getSelectedRiskLevel(
-      riskFactorFormValues.basicDetailsStep.defaultRiskValue,
-      riskClassificationValues,
-    ),
-    riskLevelLogic: riskFactorFormValues.riskFactorConfigurationStep.riskLevelLogic ?? [],
-    logicAggregationVariables:
-      riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
-    logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
-    type: type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
-    riskFactorId,
-  } as RiskFactorsPostRequest;
-  if (v2Props) {
-    return {
-      ...baseRequest,
-      parameter: v2Props.parameter,
-      dataType: v2Props.item.dataType,
-      valueType: v2Props.item.valueType,
-      riskLevelAssignmentValues: v2Props.item.riskLevelAssignmentValues,
-    } as RiskFactorsPostRequest;
-  }
-  return baseRequest;
-}

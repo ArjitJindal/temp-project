@@ -70,10 +70,18 @@ function createRiskFactor() {
 
 function updateRiskFactor() {
   cy.visit('risk-levels/risk-factors/transaction');
-  cy.get('button[data-cy="risk-factor-edit-button"]').eq(0).click();
+  cy.get('button[data-cy="edit-risk-factors-button"]').click();
+  //scroll to the first risk factor
+  cy.get('button[data-cy="risk-factor-edit-button"]').first().scrollIntoView().click();
   cy.waitNothingLoading();
   cy.get('[data-cy="risk-level-VERY_HIGH"]').click({ multiple: true });
   cy.get('button[data-cy="drawer-create-save-button"]').click();
+  cy.get('button[data-cy="version-history-save-button"]').click();
+  cy.get('div[data-cy="version-history-modal-content"]').within(() => {
+    cy.get('textarea').type('Test comment');
+  });
+  cy.get('button[data-cy="modal-ok"]').click();
+  // Add comment
   cy.wait('@updateRiskFactor', { timeout: 15000 }).then((interception) => {
     expect(interception.response?.statusCode).to.eq(200);
   });

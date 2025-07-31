@@ -244,6 +244,9 @@ export const StackConstants = {
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskClassificationFunction'
   ),
+  CONSOLE_API_VERSION_HISTORY_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiVersionHistoryFunction'
+  ),
   CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME:
     getResourceNameForTarpon('ConsoleApiManualUserRiskAssignmentFunction'),
   CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME: getResourceNameForTarpon(

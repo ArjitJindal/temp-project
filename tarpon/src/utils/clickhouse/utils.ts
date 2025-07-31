@@ -11,7 +11,7 @@ import { backOff, BackoffOptions } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
-import { ConnectionCredentials } from 'thunder-schema'
+import { ConnectionCredentials, JsonMigrationService } from 'thunder-schema'
 import { envIs, envIsNot } from '../env'
 import { bulkSendMessages } from '../sns-sqs-client'
 import {
@@ -36,6 +36,7 @@ import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 import { addNewSubsegment } from '@/core/xray'
+import { MigrationTrackerTable } from '@/models/migration-tracker'
 
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
@@ -390,6 +391,21 @@ export async function createTenantDatabase(tenantId: string) {
     await createOrUpdateClickHouseTable(tenantId, table, {
       skipDefaultClient: true,
     })
+  }
+}
+
+export async function syncThunderSchemaTables(tenantId: string) {
+  const defaultConfig = await getClickhouseDefaultCredentials()
+  const clickhouseCredentials = await getClickhouseCredentials(tenantId)
+  const jsonMigrationService = new JsonMigrationService(clickhouseCredentials)
+  const migrationTracker = new MigrationTrackerTable({
+    credentials: defaultConfig,
+  }).objects
+
+  for await (const migration of migrationTracker) {
+    const fileName = migration.id
+    const migrationData = JSON.parse(migration.data)
+    await jsonMigrationService.migrate(`${fileName}.ts`, migrationData)
   }
 }
 

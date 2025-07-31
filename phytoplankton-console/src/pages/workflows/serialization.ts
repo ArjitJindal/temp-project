@@ -24,9 +24,9 @@ export function serialize(workflowBuilderState: WorkflowBuilderState): WorkflowI
       .filter(notEmpty),
   );
   return {
+    enabled: true,
     author: '', // TODO: add author
     statuses: statuses,
-    enabled: workflowBuilderState.enabled,
     transitions: workflowBuilderState.transitions,
     statusAssignments: statuses.reduce((acc, status) => {
       if (status === FINAL_STATE) {

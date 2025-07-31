@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import s from './styles.module.less';
-import SimulationCustomRiskFactorsTable, {
-  LocalStorageKey,
-} from './SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
+import SimulationCustomRiskFactorsTable from './SimulationCustomRiskFactors';
 import { FormValues, RiskFactorsSimulationForm } from './SimulationDetailsForm';
+import { SimulationLocalStorageKey } from '@/store/risk-factors';
 import * as Card from '@/components/ui/Card';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import Button from '@/components/library/Button';
@@ -30,6 +29,7 @@ export type ParameterValue = {
     [key in RiskFactorParameter]?: AsyncResource<ParameterSettings>;
   };
 };
+
 interface Props {
   parameterValues: ParameterValue;
   riskFactors: RiskFactor[];
@@ -80,7 +80,7 @@ export function RiskFactorsSimulation(props: Props) {
     {
       onSuccess: (data) => {
         for (let i = 0; i < data.taskIds.length; i++) {
-          localStorage.removeItem(`${LocalStorageKey}-new-${data.taskIds[i]}`);
+          localStorage.removeItem(`${SimulationLocalStorageKey}-new-${data.taskIds[i]}`);
         }
         localStorage.removeItem('SIMULATION_ITERATIONS');
         setCreatedJobId(data.jobId);
@@ -94,7 +94,7 @@ export function RiskFactorsSimulation(props: Props) {
   const handleStartSimulation = useCallback(() => {
     const getRiskFactors = (iterationIndex: number): RiskFactor[] => {
       const key = `new-${iterationIndex + 1}`;
-      const data = localStorage.getItem(`${LocalStorageKey}-${key}`);
+      const data = localStorage.getItem(`${SimulationLocalStorageKey}-${key}`);
       const riskFactors = data ? JSON.parse(data) : undefined;
       if (!riskFactors) {
         return [];
@@ -148,7 +148,7 @@ export function RiskFactorsSimulation(props: Props) {
 
   const handleDeleteIteration = (index: number) => {
     setIterations((prevIterations) => prevIterations.filter((_iteration, i) => i !== index));
-    localStorage.removeItem(`${LocalStorageKey}-new-${index + 1}`);
+    localStorage.removeItem(`${SimulationLocalStorageKey}-new-${index + 1}`);
     setStoredIterations((prevStoredIterations) =>
       (prevStoredIterations ?? []).filter((_, i) => i !== index),
     );
@@ -212,14 +212,16 @@ export function RiskFactorsSimulation(props: Props) {
           </div>
         </Card.Section>
       </Card.Root>
-      <div className={s.riskFactorsTableContainer}>
-        <SimulationCustomRiskFactorsTable
-          riskFactors={riskFactors}
-          canEditRiskFactors={true}
-          activeIterationIndex={activeIterationIndex}
-          jobId={createdJobId}
-        />
-      </div>
+      <Card.Root>
+        <Card.Section>
+          <SimulationCustomRiskFactorsTable
+            simulationRiskFactors={riskFactors}
+            canEditRiskFactors={true}
+            activeIterationIndex={activeIterationIndex}
+            jobId={createdJobId}
+          />
+        </Card.Section>
+      </Card.Root>
       <div className={s.footer}>
         <div className={s.footerButtons}>
           <Button type="PRIMARY" onClick={handleStartSimulation}>

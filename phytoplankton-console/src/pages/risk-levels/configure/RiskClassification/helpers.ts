@@ -12,19 +12,11 @@ import { Mutation } from '@/utils/queries/types';
 export function useSendProposalActionMutation(): Mutation<
   unknown,
   unknown,
-  {
-    action: RiskClassificationApprovalRequestActionEnum;
-  }
+  { action: RiskClassificationApprovalRequestActionEnum }
 > {
   const api = useApi();
   const queryClient = useQueryClient();
-  return useMutation<
-    unknown,
-    unknown,
-    {
-      action: RiskClassificationApprovalRequestActionEnum;
-    }
-  >(
+  return useMutation<unknown, unknown, { action: RiskClassificationApprovalRequestActionEnum }>(
     async (vars) => {
       let messageText = 'Applying changes...';
       if (vars.action === 'cancel') {

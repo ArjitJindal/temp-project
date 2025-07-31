@@ -15,7 +15,7 @@ import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
 import { thunderSchemaSetupHook } from '@/test-utils/clickhouse-test-utils'
-import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
+import { VersionHistoryTable } from '@/models/version-history'
 
 dynamoDbSetupHook()
 withFeatureHook(['SIMULATOR'])
@@ -23,7 +23,7 @@ withFeatureHook(['SIMULATOR'])
 describe('Simulation (Pulse) batch job runner', () => {
   const tenantId = getTestTenantId()
   thunderSchemaSetupHook(tenantId, [
-    RiskClassificationHistoryTable.tableDefinition.tableName,
+    VersionHistoryTable.tableDefinition.tableName,
   ])
   test('new risk level classifications', async () => {
     const mongoDb = await getMongoDbClient()
@@ -50,7 +50,6 @@ describe('Simulation (Pulse) batch job runner', () => {
     ])
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     await riskRepository.createOrUpdateRiskClassificationConfig(
-      'test-simulation',
       'test-simulation',
       [
         {

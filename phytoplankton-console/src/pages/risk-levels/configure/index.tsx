@@ -129,7 +129,12 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
         {!isSimulationMode ? (
           <AsyncResourceRenderer resource={riskValuesQueryResults.data}>
             {(data) => (
-              <RiskClassification state={newState} setState={setNewState} riskValues={data} />
+              <RiskClassification
+                riskValuesRefetch={riskValuesQueryResults.refetch}
+                state={newState}
+                setState={setNewState}
+                riskValues={data}
+              />
             )}
           </AsyncResourceRenderer>
         ) : (

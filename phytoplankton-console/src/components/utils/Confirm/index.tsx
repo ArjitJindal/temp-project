@@ -11,16 +11,16 @@ interface ChildrenProps {
 export interface Props {
   title?: string;
   text: string | React.ReactNode;
-  commentRequired?: boolean;
   res?: AsyncResource;
   isDanger?: boolean;
-  onConfirm: () => void;
+  commentRequired?: boolean;
+  onConfirm: (formValues: { comment?: string }) => void;
   onSuccess?: () => void;
   children: (props: ChildrenProps) => React.ReactNode;
 }
 
 export default function Confirm(props: Props) {
-  const { res, onConfirm, onSuccess, children, commentRequired, ...rest } = props;
+  const { res, onConfirm, onSuccess, children, ...rest } = props;
   const [isVisible, setIsVisible] = useState(false);
   const isSuccessfull = useFinishedSuccessfully(res ?? init());
   useEffect(() => {
@@ -31,12 +31,16 @@ export default function Confirm(props: Props) {
       }
     }
   }, [isSuccessfull, onSuccess]);
-  const handleOk = useCallback(() => {
-    onConfirm();
-    if (res == null) {
-      setIsVisible(false);
-    }
-  }, [res, onConfirm]);
+
+  const handleOk = useCallback(
+    (formValues: { comment?: string }) => {
+      onConfirm(formValues);
+      if (res == null) {
+        setIsVisible(false);
+      }
+    },
+    [res, onConfirm],
+  );
 
   const handleCancel = useCallback(() => {
     setIsVisible(false);
@@ -50,7 +54,6 @@ export default function Confirm(props: Props) {
     <>
       <ConfirmModal
         {...rest}
-        commentRequired={commentRequired}
         res={res}
         isVisible={isVisible}
         onConfirm={handleOk}

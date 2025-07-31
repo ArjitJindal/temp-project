@@ -1,4 +1,5 @@
 import { getSelectedRiskLevel, getSelectedRiskScore } from '../../../utils';
+import { BasicDetailsFormValues } from '../../utils';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import * as Card from '@/components/ui/Card';
@@ -6,17 +7,8 @@ import InputField from '@/components/library/Form/InputField';
 import TextInput from '@/components/library/TextInput';
 import Slider from '@/components/library/Slider';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { RiskLevel } from '@/apis';
 import NumberInput from '@/components/library/NumberInput';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
-
-export interface BasicDetailsFormValues {
-  name: string;
-  description: string;
-  defaultRiskValue: RiskLevel | number;
-  defaultWeight: number;
-  riskFactorId?: string;
-}
 
 interface Props {
   newRiskId?: string;

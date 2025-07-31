@@ -13,27 +13,27 @@ import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { CounterRepository } from '../counter/repository'
 import { WorkflowService } from '../workflow'
+import { VersionHistoryService } from '../version-history'
 import { riskFactorAggregationVariablesRebuild } from './utils'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import {
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RiskRepository,
+} from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { traceable } from '@/core/xray'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
-import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
+import { RiskFactorsUpdate } from '@/@types/openapi-internal/RiskFactorsUpdate'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { publishAuditLog } from '@/services/audit-log'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import {
-  DefaultApiGetDrsValuesRequest,
-  DefaultApiGetRiskLevelVersionHistoryRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
-import { RiskClassificationHistory } from '@/@types/openapi-internal/RiskClassificationHistory'
 import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
 import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
@@ -42,6 +42,7 @@ import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelAp
 import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-internal/RiskClassificationApprovalRequest'
 
 export const RISK_LEVEL_CONSTANT = 'RLV'
+export const RISK_FACTORS_VERSION_CONSTANT = 'RFV'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -59,9 +60,9 @@ const validateClassificationRequest = (
 }
 
 type RiskClassificationAuditLogReturnData = AuditLogReturnData<
-  RiskClassificationHistory,
   RiskClassificationConfig,
-  RiskClassificationHistory
+  RiskClassificationConfig,
+  RiskClassificationConfig
 >
 
 type RiskClassificationApprovalAuditLogReturnData = AuditLogReturnData<
@@ -90,28 +91,22 @@ export class RiskService {
   ) {
     this.tenantId = tenantId
     this.dynamoDb = connections.dynamoDb
-    this.riskRepository = new RiskRepository(tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: connections.mongoDb,
-    })
+    this.riskRepository = new RiskRepository(tenantId, connections)
     this.mongoDb = connections.mongoDb
     this.workflowService = new WorkflowService(tenantId, connections)
   }
 
   async getRiskClassificationItem() {
-    return await this.riskRepository.getRiskClassificationItem()
-  }
+    const DEFAULT_VALUES: RiskClassificationConfig = {
+      classificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+      updatedAt: Date.now(),
+      createdAt: Date.now(),
+      id: '',
+    }
 
-  async getCounterValue() {
-    const counterRepository = new CounterRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.dynamoDb,
-    })
-    return await counterRepository.getNextCounter('RiskLevel')
-  }
-
-  public static getRiskLevelId(counter: number) {
-    return `${RISK_LEVEL_CONSTANT}-${padStart(counter.toString(), 3, '0')}`
+    return (
+      (await this.riskRepository.getRiskClassificationItem()) || DEFAULT_VALUES
+    )
   }
 
   @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION', 'UPDATE')
@@ -124,18 +119,20 @@ export class RiskService {
     const oldClassificationValues =
       await this.riskRepository.getRiskClassificationItem()
 
-    const counterRepository = new CounterRepository(this.tenantId, {
+    const versionService = new VersionHistoryService(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
 
-    const counter = await counterRepository.getNextCounterAndUpdate('RiskLevel')
-    const id = RiskService.getRiskLevelId(counter)
+    const versionHistory = await versionService.createVersionHistory(
+      'RiskClassification',
+      riskClassificationValues,
+      comment
+    )
 
     const result =
       await this.riskRepository.createOrUpdateRiskClassificationConfig(
-        id,
-        comment,
+        versionHistory.id,
         riskClassificationValues
       )
 
@@ -149,23 +146,6 @@ export class RiskService {
       ],
       result: result,
     }
-  }
-
-  async getRiskLevelVersionHistory(
-    params: DefaultApiGetRiskLevelVersionHistoryRequest
-  ): Promise<{ items: RiskClassificationHistory[]; total: number }> {
-    const [result, count] = await Promise.all([
-      this.riskRepository.getRiskClassificationHistory(params),
-      this.riskRepository.getRiskClassificationHistoryCount(params),
-    ])
-    return {
-      items: result,
-      total: count,
-    }
-  }
-
-  async getRiskLevelVersionHistoryById(id: string) {
-    return await this.riskRepository.getRiskClassificationHistoryById(id)
   }
 
   async getV2RiskFactorID(riskEntityType: string, parameter: string) {
@@ -270,9 +250,73 @@ export class RiskService {
 
   async bulkCreateandReplaceRiskFactors(riskFactors: RiskFactorsPostRequest[]) {
     await this.riskRepository.deleteAllRiskFactors()
-    for (const riskFactor of riskFactors) {
-      await this.createOrUpdateRiskFactor(riskFactor)
-    }
+    await this.updateRiskFactors(riskFactors, 'Bulk create risk factors')
+  }
+
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'UPDATE')
+  async bulkUpdateRiskFactors(
+    riskFactors: RiskFactor[],
+    comment: string
+  ): Promise<AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor>> {
+    const allRiskFactors = await this.riskRepository.getAllRiskFactors()
+    const now = Date.now()
+
+    const allUpdatedRiskFactors = allRiskFactors.map((riskFactor) => {
+      const newRiskFactor = riskFactors.find((rf) => rf.id === riskFactor.id)
+      return {
+        ...riskFactor,
+        ...newRiskFactor,
+      }
+    })
+
+    const versionService = new VersionHistoryService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
+    const versionHistory = await versionService.createVersionHistory(
+      'RiskFactors',
+      allUpdatedRiskFactors,
+      comment
+    )
+
+    const updatedRiskFactors = await this.riskRepository.bulkUpdateRiskFactors(
+      riskFactors.map((riskFactor) => ({
+        ...riskFactor,
+        versionId: versionHistory.id,
+      }))
+    )
+
+    await Promise.all(
+      updatedRiskFactors.map((riskFactor) =>
+        riskFactorAggregationVariablesRebuild(
+          riskFactor,
+          now,
+          this.tenantId,
+          this.riskRepository
+        )
+      )
+    )
+
+    // Clear cache
+    this.riskRepository.getAllRiskFactors.cache.clear?.()
+
+    // Prepare audit log data
+    const auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> =
+      {
+        entities: updatedRiskFactors.map((riskFactor) => {
+          return {
+            entityId: riskFactor.id,
+            newImage: riskFactor,
+            oldImage:
+              allRiskFactors.find((rf) => rf.id === riskFactor.id) || undefined,
+          }
+        }),
+        result: updatedRiskFactors[0] ?? null, // Return first updated factor as result
+        actionTypeOverride: 'UPDATE',
+      }
+
+    return auditLogData
   }
 
   async getDrsScoreFromDynamo(userId: string) {
@@ -297,9 +341,115 @@ export class RiskService {
     return result
   }
 
+  private async getRiskFactorId(
+    riskFactor: RiskFactorsUpdate,
+    riskFactorId?: string
+  ) {
+    if (riskFactorId && !riskFactor.riskFactorId) {
+      return riskFactorId
+    }
+    if (riskFactorId || riskFactor.riskFactorId) {
+      return await this.getNewRiskFactorId(riskFactor.riskFactorId, true)
+    }
+    return await this.getNewRiskFactorId(undefined, true)
+  }
+
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'UPDATE')
+  async updateRiskFactors(
+    riskFactors: RiskFactorsUpdate[],
+    comment: string
+  ): Promise<AuditLogReturnData<void, RiskFactor, RiskFactor>> {
+    const versionService = new VersionHistoryService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    const now = Date.now()
+    const [allRiskFactors, riskClassificationValues] = await Promise.all([
+      this.riskRepository.getAllRiskFactors(),
+      this.riskRepository.getRiskClassificationValues(),
+    ])
+
+    const DEFAULT_VALUES: RiskFactorsPostRequest = {
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultRiskScore: getRiskScoreFromLevel(
+        riskClassificationValues,
+        DEFAULT_RISK_LEVEL
+      ),
+      defaultWeight: 1,
+      description: '',
+      status: 'ACTIVE',
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      name: '',
+      type: 'CONSUMER_USER',
+    }
+
+    const riskFactorData: RiskFactor[] = []
+
+    for (const riskFactor of riskFactors) {
+      const id = await this.getRiskFactorId(riskFactor)
+      const currentRiskFactor = await this.riskRepository.getRiskFactor(id)
+      const isDefaultFactor =
+        isDefaultRiskFactor(riskFactor) ||
+        (currentRiskFactor && isDefaultRiskFactor(currentRiskFactor))
+      let migratedFactor: Partial<RiskFactor> | null = null
+      if (isDefaultFactor) {
+        migratedFactor = createMigratedFactor(
+          { ...currentRiskFactor, ...riskFactor },
+          riskClassificationValues
+        )
+      }
+
+      const data: RiskFactor = {
+        ...(currentRiskFactor ?? DEFAULT_VALUES),
+        ...(isDefaultFactor ? migratedFactor : riskFactor),
+        id,
+        createdAt: currentRiskFactor?.createdAt ?? now,
+        updatedAt: now,
+      }
+      riskFactorData.push(data)
+    }
+
+    const versionHistory = await versionService.createVersionHistory(
+      'RiskFactors',
+      riskFactorData,
+      comment
+    )
+
+    const updatedRiskFactors = await this.riskRepository.bulkUpdateRiskFactors(
+      riskFactorData.map((riskFactor) => ({
+        ...riskFactor,
+        versionId: versionHistory.id,
+      }))
+    )
+
+    await Promise.all(
+      riskFactorData.map((riskFactor) =>
+        riskFactorAggregationVariablesRebuild(
+          riskFactor,
+          now,
+          this.tenantId,
+          this.riskRepository
+        )
+      )
+    )
+
+    this.riskRepository.getAllRiskFactors.cache.clear?.()
+
+    return {
+      entities: updatedRiskFactors.map((riskFactor) => ({
+        entityId: riskFactor.id,
+        newImage: riskFactor,
+        oldImage:
+          allRiskFactors.find((rf) => rf.id === riskFactor.id) || undefined,
+      })),
+      result: undefined,
+    }
+  }
+
   @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'CREATE')
   async createOrUpdateRiskFactor(
-    riskFactor: RiskFactorsUpdateRequest,
+    riskFactor: RiskFactorsUpdate,
     riskFactorId?: string
   ): Promise<AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor>> {
     if (!this.mongoDb) {
@@ -307,19 +457,14 @@ export class RiskService {
     }
     let currentRiskFactor: RiskFactor | null = null
     const isNewRiskFactor = riskFactorId ? false : true
-
-    const id =
-      riskFactorId || riskFactor.riskFactorId
-        ? riskFactorId && !riskFactor.riskFactorId
-          ? riskFactorId
-          : await this.getNewRiskFactorId(riskFactor.riskFactorId, true)
-        : await this.getNewRiskFactorId(undefined, true)
+    const id = await this.getRiskFactorId(riskFactor, riskFactorId)
     if (!riskFactor.riskFactorId && riskFactorId) {
       currentRiskFactor = await this.riskRepository.getRiskFactor(id)
     }
     const isDefaultFactor =
       isDefaultRiskFactor(riskFactor) ||
       (currentRiskFactor && isDefaultRiskFactor(currentRiskFactor))
+
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
 
@@ -349,6 +494,11 @@ export class RiskService {
 
     const now = Date.now()
 
+    const versionService = new VersionHistoryService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+
     const data: RiskFactor = {
       ...(currentRiskFactor ?? DEFAULT_VALUES),
       ...(isDefaultFactor ? migratedFactor : riskFactor),
@@ -357,9 +507,20 @@ export class RiskService {
       updatedAt: now,
     }
 
+    const allRiskFactors = await this.riskRepository.getAllRiskFactors()
+
+    const versionData = await versionService.createVersionHistory(
+      'RiskFactors',
+      [...allRiskFactors, data],
+      `New Risk Factor created: ${data.name}`
+    )
+
     const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
 
-    const updatedData = await this.riskRepository.createOrUpdateRiskFactor(data)
+    const updatedData = await this.riskRepository.createOrUpdateRiskFactor({
+      ...data,
+      versionId: versionData.id,
+    })
 
     let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> = {
       entities: [
@@ -457,9 +618,11 @@ export class RiskService {
       'risk-levels-approval',
       '_default'
     )
+
     if (!workflowDefinition) {
       throw new BadRequest('Risk level approval workflow not found')
     }
+
     const workflowRef: WorkflowRef = {
       id: workflowDefinition.id,
       version: workflowDefinition.version,
@@ -472,7 +635,7 @@ export class RiskService {
     })
 
     const counter = await counterRepository.getNextCounterAndUpdate('RiskLevel')
-    const id = RiskService.getRiskLevelId(counter)
+    const id = `RLV-${padStart(counter.toString(), 3, '0')}`
 
     const riskClassificationConfig: RiskClassificationConfig = {
       id,
@@ -613,16 +776,13 @@ export class RiskService {
     // Handle accept action - last step
     if (currentStep.isLastStep) {
       // Get the old risk classification values before updating
-      const oldClassificationValues =
-        await this.riskRepository.getRiskClassificationItem()
+      const oldClassificationValues = await this.getRiskClassificationItem()
 
       // Update the risk classification config
-      const result =
-        await this.riskRepository.createOrUpdateRiskClassificationConfig(
-          pendingApproval.riskClassificationConfig.id,
-          pendingApproval.comment,
-          pendingApproval.riskClassificationConfig.classificationValues
-        )
+      const result = await this.createOrUpdateRiskClassificationConfig(
+        pendingApproval.riskClassificationConfig.classificationValues,
+        pendingApproval.comment
+      )
 
       // Manually publish audit log for risk classification update
       const auditLog: AuditLog = {
@@ -702,7 +862,7 @@ function createDefaultFactorAuditData(riskFactor: RiskFactor): RiskFactor {
 }
 
 function createMigratedFactor(
-  riskFactor: RiskFactorsUpdateRequest,
+  riskFactor: RiskFactorsUpdate,
   riskClassificationValues: RiskClassificationScore[]
 ): Partial<RiskFactor> {
   return createV8FactorFromV2(

@@ -7,11 +7,9 @@ import { getNextStatus, statusEscalated, statusInReview } from '@/utils/case-uti
 import Button from '@/components/library/Button';
 import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useQuery } from '@/utils/queries/hooks';
-import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 import { map, success } from '@/utils/asyncResource';
-import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
 
 interface Props {
   notification: Notification;
@@ -21,17 +19,8 @@ export default function NotificationMessage(props: Props) {
   const { notification } = props;
   const sendProposalActionMutation = useSendProposalActionMutation();
 
-  const api = useApi();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
-  const { data: pendingProposalRes } = useQuery(
-    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
-    async () => {
-      return await api.getPulseRiskClassificationWorkflowProposal();
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const { data: pendingProposalRes } = usePendingProposal();
   const isPendingApprovalRes = useMemo(() => {
     if (!isApprovalWorkflowsEnabled) {
       return success(false);

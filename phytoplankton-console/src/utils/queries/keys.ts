@@ -9,6 +9,7 @@ import {
   ListType,
   ReasonType,
   SanctionsSourceType,
+  VersionHistoryType,
   WorkflowRef,
 } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
@@ -198,15 +199,20 @@ export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];
-export const RISK_LEVELS_VERSION_HISTORY = (params: AnyParameters): QueryKey => [
-  'risk-levels',
+export const VERSION_HISTORY = (type: VersionHistoryType, params: AnyParameters): QueryKey => [
   'version-history',
+  type,
   params,
 ];
-export const RISK_LEVELS_VERSION_HISTORY_ITEM = (versionId: string): QueryKey => [
-  'risk-levels',
+export const NEW_VERSION_ID = (type: VersionHistoryType, params?: AnyParameters): QueryKey => [
+  'new-version-id',
+  type,
+  params,
+];
+
+export const VERSION_HISTORY_ITEM = (type: VersionHistoryType, versionId: string): QueryKey => [
   'version-history',
-  'item',
+  type,
   versionId,
 ];
 

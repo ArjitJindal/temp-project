@@ -1,9 +1,7 @@
+import { usePendingProposal } from '../../utils';
 import DefaultActions from './DefaultActions';
 import HeaderLayout from './HeaderLayout';
 import { Props } from '.';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useWorkflow } from '@/utils/api/workflows';
 import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
@@ -23,19 +21,8 @@ import {
 import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
 
 export default function ApprovalWorkflowActions(props: Props) {
-  const api = useApi();
-  const { data: pendingProposalRes } = useQuery(
-    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
-    async () => {
-      return await api.getPulseRiskClassificationWorkflowProposal();
-    },
-    {
-      onSuccess: (data) => {
-        const [_, setShowProposal] = props.showProposalState;
-        setShowProposal(parseApiState(data.riskClassificationConfig.classificationValues));
-      },
-    },
-  );
+  const { data: pendingProposalRes } = usePendingProposal();
+
   return (
     <AsyncResourceRenderer resource={pendingProposalRes}>
       {(pendingProposal) => {

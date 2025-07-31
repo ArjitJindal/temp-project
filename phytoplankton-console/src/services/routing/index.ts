@@ -47,8 +47,9 @@ import {
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
 import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
-import RiskLevelsVersionHistoryPage from '@/pages/risk-levels/configure/RiskLevelsVersionHistory';
+import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
+import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -351,7 +352,7 @@ export function useRoutes(): RouteItem[] {
                 {
                   name: 'risk-levels-version-history',
                   path: '/risk-levels/version-history',
-                  component: RiskLevelsVersionHistoryPage,
+                  component: VersionHistoryPage,
                   hideInMenu: true,
                   minRequiredResources: ['read:::risk-scoring/risk-levels/*'] as Resource[],
                 },
@@ -380,6 +381,20 @@ export function useRoutes(): RouteItem[] {
                     ? '/risk-levels/risk-factors/simulation/:type'
                     : '/risk-levels/risk-factors/:type',
                   component: RiskFactorPage,
+                  hideInMenu: true,
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
+                },
+                {
+                  name: 'risk-factors-version-history',
+                  path: '/risk-levels/risk-factors/version-history',
+                  component: VersionHistoryPage,
+                  hideInMenu: true,
+                  minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
+                },
+                {
+                  name: 'risk-factors-version-history-item',
+                  path: '/risk-levels/risk-factors/version-history/:versionId/:type',
+                  component: RiskFactorVersionHistoryItem,
                   hideInMenu: true,
                   minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },

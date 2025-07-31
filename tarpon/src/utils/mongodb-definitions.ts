@@ -301,8 +301,8 @@ export const DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-qa-alerts-by-rule-stats-hourly`
 }
 
-export const RISK_CLASSIFICATION_HISTORY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-risk-classification-history`
+export const VERSION_HISTORY_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-version-history`
 }
 
 export const DASHBOARD_QA_ALERTS_BY_ASSIGNEE_STATS_COLLECTION_HOURLY = (

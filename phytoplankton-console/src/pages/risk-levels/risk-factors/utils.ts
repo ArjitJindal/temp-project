@@ -36,10 +36,12 @@ export function useRiskFactors(type?: 'consumer' | 'business' | 'transaction') {
         : type === 'transaction'
         ? 'TRANSACTION'
         : undefined;
-    return await api.getAllRiskFactors({
+
+    const result = await api.getAllRiskFactors({
       entityType: entityType,
       includeV2: true,
     });
+    return result;
   });
 
   return queryResult;

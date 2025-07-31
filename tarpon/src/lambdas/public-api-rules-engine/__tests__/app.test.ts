@@ -57,6 +57,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RiskService } from '@/services/risk'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
+import { thunderSchemaSetupHook } from '@/test-utils/clickhouse-test-utils'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
@@ -1295,6 +1296,7 @@ describe('Risk Scoring Tests', () => {
   const testUser1 = getTestUser({ userId: 'userId1' })
   const testUser2 = getTestUser({ userId: 'userId2' })
   setUpUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
+  thunderSchemaSetupHook(TEST_TENANT_ID, ['version_history'])
 
   it('check on isUpdatable is true risk score changes', async () => {
     const mongoDb = await getMongoDbClient()
@@ -1397,6 +1399,7 @@ describe('Public API - Verify Transction and Transaction Event with V2 Risk scor
   const tenantId = getTestTenantId()
   const userId1 = uuidv4()
   const userId2 = uuidv4()
+  thunderSchemaSetupHook(tenantId, ['version_history'])
   it('should match transaction and transaction event', async () => {
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()

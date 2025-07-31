@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import CustomRiskFactors from './RiskFactor';
 import { useRiskFactors } from './utils';
+import s from './style.module.less';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
@@ -51,6 +52,7 @@ export default function () {
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadCrumbsWrapper
+        className={s.breadcrumbsWrapper}
         simulationStorageKey="SIMULATION_CUSTOM_RISK_FACTORS"
         nonSimulationDefaultUrl="/risk-levels/risk-factors/consumer"
         simulationDefaultUrl="/risk-levels/risk-factors/simulation"
@@ -92,6 +94,9 @@ export default function () {
             to: makeUrl(`/risk-levels/risk-factors/simulation`),
           },
         ].filter(notEmpty)}
+        versionHistory={{
+          url: '/risk-levels/risk-factors/version-history',
+        }}
       >
         <Tabs
           defaultActiveKey="risk-factor"

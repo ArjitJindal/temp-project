@@ -287,7 +287,10 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
     })
-
+    /* Version History function */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.CONSOLE_API_VERSION_HISTORY_FUNCTION_NAME,
+    })
     /* Manual User Risk Assignment function */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,

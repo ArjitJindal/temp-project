@@ -1,6 +1,7 @@
 import { compact, omit } from 'lodash'
 import { Document, WithId } from 'mongodb'
 import { logger } from '../logger'
+import { VersionHistoryTable } from '../../models/version-history'
 import { getCases } from './data/cases'
 import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { auditlogs } from './data/auditlogs'
@@ -15,11 +16,11 @@ import {
   createTenantDatabase,
   isClickhouseEnabledInRegion,
   getClickhouseClient,
+  syncThunderSchemaTables,
 } from '@/utils/clickhouse/utils'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RiskClassificationHistoryTable } from '@/models/risk-classification-history'
 
 type TableName = keyof typeof CLICKHOUSE_DEFINITIONS
 
@@ -35,14 +36,15 @@ export const seedClickhouse = async (tenantId: string) => {
   const client = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const db = client.db()
+  await syncThunderSchemaTables(tenantId)
 
   if (isClickhouseEnabledInRegion()) {
     const clickhouseClient = await getClickhouseClient(tenantId)
-    const riskClassificationHistoryTableName =
-      RiskClassificationHistoryTable.tableDefinition.tableName
+    const versionHistoryTableName =
+      VersionHistoryTable.tableDefinition.tableName
 
     await clickhouseClient.exec({
-      query: `DELETE FROM ${riskClassificationHistoryTableName} WHERE 1=1`,
+      query: `DELETE FROM ${versionHistoryTableName} WHERE 1=1`,
     })
 
     const promises = ClickHouseTables.map(async (table) => {

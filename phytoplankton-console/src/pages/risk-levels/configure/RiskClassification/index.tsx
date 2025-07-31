@@ -1,149 +1,102 @@
 import { useState } from 'react';
-import { Resource } from '@flagright/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import RiskClassificationTable, {
+  State,
   parseApiState,
-  State as RiskClassificationTableState,
+  prepareApiState,
 } from '../RiskClassificationTable';
-import { useRiskClassificationMutation } from '../hooks/useRiskClassificationMutation';
-import s from './index.module.less';
 import Header from './Header';
-import Button from '@/components/library/Button';
-import { useApi } from '@/api';
 import { useHasResources } from '@/utils/user-utils';
 import { RiskClassificationConfig } from '@/apis';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
-import Alert from '@/components/library/Alert';
-import Modal from '@/components/library/Modal';
-import Label from '@/components/library/Label';
-import TextInput from '@/components/library/TextInput';
-import TextArea from '@/components/library/TextArea';
-import { RISK_LEVEL_VERSION } from '@/utils/queries/keys';
+import { useNewVersionId } from '@/utils/version';
+import VersionHistoryFooter from '@/components/VersionHistory/Footer';
+import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
-import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
+import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 
 type Props = {
   riskValues: RiskClassificationConfig;
-  state: RiskClassificationTableState | null;
-  setState: React.Dispatch<React.SetStateAction<RiskClassificationTableState | null>>;
+  state: State | null;
+  setState: React.Dispatch<React.SetStateAction<State | null>>;
+  riskValuesRefetch: () => void;
 };
 
-export default function RiskClassification(props: Props) {
-  const api = useApi();
-  const requiredResources: Resource[] = ['write:::risk-scoring/risk-levels/*' as Resource];
-  const hasRiskLevelPermission = useHasResources(requiredResources);
-  const { riskValues, state, setState } = props;
-  const riskLevelQueryResults = useQuery(RISK_LEVEL_VERSION(), async () => {
-    const data = await api.getNewRiskLevelId();
-    return {
-      id: data.id ?? '',
-    };
+export default function RiskQualification(props: Props) {
+  const hasRiskLevelPermission = useHasResources(['write:::risk-scoring/risk-levels/*']);
+  const { riskValues, state, setState, riskValuesRefetch } = props;
+  const newVersionIdQuery = useNewVersionId('RiskClassification');
+  const riskLevelId = getOr(newVersionIdQuery.data, {
+    id: '',
   });
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
-  const [showProposedValues, setShowProposedValues] = useState<RiskClassificationTableState | null>(
-    null,
-  );
-
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+  const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
+  const api = useApi();
+  const queryClient = useQueryClient();
 
-  const saveRiskValuesMutation = useRiskClassificationMutation({
-    successAction: () => {
-      setState(parseApiState(riskValues.classificationValues));
-      setIsUpdateEnabled(false);
-      setIsModalOpen(false);
+  const versionHistoryMutation = useMutation<RiskClassificationConfig, Error, { comment: string }>(
+    async ({ comment }: { comment: string }) => {
+      if (!state) {
+        throw new Error('No state available');
+      }
+      return api.postPulseRiskClassification({
+        RiskClassificationRequest: { scores: prepareApiState(state), comment: comment },
+      });
     },
-  });
-
-  async function handleSave() {
-    if (state == null) {
-      return;
-    }
-    if (!data.comment) {
-      message.error('Comment is required');
-      return;
-    }
-    saveRiskValuesMutation.mutate({ state, comment: data.comment });
-  }
+    {
+      onSuccess: () => {
+        riskValuesRefetch();
+        setIsUpdateEnabled(false);
+        newVersionIdQuery.refetch();
+        setState(parseApiState(riskValues.classificationValues));
+        setIsUpdateEnabled(false);
+        queryClient.invalidateQueries(RISK_CLASSIFICATION_WORKFLOW_PROPOSAL());
+      },
+      onError: (error) => {
+        message.error(getErrorMessage(error));
+      },
+    },
+  );
 
   function handleCancel() {
     setState(parseApiState(riskValues.classificationValues));
     setIsUpdateEnabled(false);
   }
 
-  const riskLevelId = getOr(riskLevelQueryResults.data, { id: '' }).id;
-
-  const [data, setData] = useState<{ riskLevel: string; comment: string }>({
-    riskLevel: riskLevelId,
-    comment: '',
-  });
-
-  const modal = (
-    <Modal
-      title="Update risk levels"
-      isOpen={isModalOpen}
-      onCancel={() => setIsModalOpen(false)}
-      onOk={handleSave}
-      okText="Save"
-      width="M"
-      okProps={{ isDisabled: saveRiskValuesMutation.isLoading }}
-      cancelProps={{ isDisabled: saveRiskValuesMutation.isLoading }}
-      maskClosable
-      cancelText="Cancel"
-    >
-      <div className={s.modalContent}>
-        <Label label="Risk level" position="TOP" required={{ showHint: true, value: true }}>
-          <TextInput value={riskLevelId} isDisabled={true} />
-        </Label>
-        <Label label="Comment" position="TOP" required={{ showHint: true, value: true }}>
-          <TextArea
-            value={data.comment}
-            onChange={(comment) => setData({ ...data, comment: comment ?? '' })}
-            placeholder="Enter comment"
-          />
-        </Label>
-      </div>
-    </Modal>
-  );
+  // todo: i18n
 
   return (
     <PageWrapperContentContainer
       footer={
         isUpdateEnabled && (
-          <div className={s.footerButtons}>
-            <Alert type="TRANSPARENT">
-              {`Note that updating risk level would save the configuration as a new version. ${
-                isApprovalWorkflowsEnabled && ' Also, updating risk level would require approval.'
-              }`}
-            </Alert>
-            <div className={s.footerButtons}>
-              <Button
-                type="SECONDARY"
-                onClick={() => setIsModalOpen(true)}
-                isDisabled={!riskValues.classificationValues.length || isModalOpen}
-              >
-                Save
-              </Button>
-              <Button type="TETRIARY" onClick={handleCancel} isDisabled={isModalOpen}>
-                Cancel
-              </Button>
-            </div>
-          </div>
+          <VersionHistoryFooter<RiskClassificationConfig>
+            onCancel={handleCancel}
+            mutation={versionHistoryMutation}
+            modalTitle="Update risk levels"
+            modalIdLabel="Risk level version"
+            versionId={riskLevelId.id ?? ''}
+            isDisabled={!riskValues.classificationValues.length || !isUpdateEnabled}
+            footerMessage={`Note that updating risk level would save the configuration as a new version ${
+              isApprovalWorkflowsEnabled ? ' Also, updating risk level would require approval' : ''
+            }.`}
+          />
         )
       }
     >
-      {modal}
-      <Header
-        state={state}
-        riskValues={riskValues}
-        showProposalState={[showProposedValues, setShowProposedValues]}
-        updateEnabledState={[isUpdateEnabled, setIsUpdateEnabled]}
-        requiredResources={requiredResources}
-      />
+      {!isUpdateEnabled && (
+        <Header
+          riskValues={riskValues}
+          state={state}
+          showProposalState={[state, setState]}
+          updateEnabledState={[isUpdateEnabled, setIsUpdateEnabled]}
+          requiredResources={['write:::risk-scoring/risk-levels/*']}
+        />
+      )}
       <RiskClassificationTable
-        state={showProposedValues ?? state}
+        state={state}
         setState={setState}
         isDisabled={
           !riskValues.classificationValues.length || !hasRiskLevelPermission || !isUpdateEnabled

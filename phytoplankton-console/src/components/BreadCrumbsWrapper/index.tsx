@@ -12,13 +12,18 @@ import {
   VersionHistoryType,
 } from '@/components/TopRightSection';
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
-import { LocalStorageKey } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { SimulationLocalStorageKey } from '@/store/risk-factors';
 
 export type TopRightSectionRef = {
   refetchSimulationCount: () => void;
   onChange?: () => void;
 };
+
+export type SimulationStorageKey =
+  | 'SIMULATION_RULES'
+  | 'SIMULATION_CUSTOM_RISK_FACTORS'
+  | 'SIMULATION_RISK_LEVELS';
 
 export type PageWrapperProps = {
   breadcrumbs: BreadcrumbItem[];
@@ -26,10 +31,7 @@ export type PageWrapperProps = {
   simulationHistoryUrl: string;
   simulationDefaultUrl: string;
   nonSimulationDefaultUrl: string;
-  simulationStorageKey:
-    | 'SIMULATION_RULES'
-    | 'SIMULATION_CUSTOM_RISK_FACTORS'
-    | 'SIMULATION_RISK_LEVELS';
+  simulationStorageKey: SimulationStorageKey;
   importExport?: ImportExportType;
   className?: string;
   versionHistory?: VersionHistoryType;
@@ -67,7 +69,7 @@ export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProp
           // First, collect all keys to remove
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.includes(LocalStorageKey)) {
+            if (key && key.includes(SimulationLocalStorageKey)) {
               keysToRemove.push(key);
             }
           }
