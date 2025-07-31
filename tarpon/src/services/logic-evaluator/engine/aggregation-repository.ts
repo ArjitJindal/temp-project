@@ -313,7 +313,8 @@ export class AggregationRepository {
     aggregationVariable: LogicAggregationVariable,
     userKeyId: string,
     lastTransactionTimestamp: number,
-    totalTimeSlices?: number
+    totalTimeSlices?: number,
+    isSyncRebuild?: boolean
   ): Promise<void> {
     const ttl = this.backfillNamespace
       ? this.getBackfillTTL()
@@ -321,7 +322,7 @@ export class AggregationRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       UpdateExpression:
-        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, sliceCount = if_not_exists(sliceCount,:zero) +  :one, #ttl = :ttl',
+        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, sliceCount = if_not_exists(sliceCount,:zero) +  :one, #ttl = :ttl, isSyncRebuild=:isSyncRebuild',
       ExpressionAttributeNames: {
         '#ttl': 'ttl',
       },
@@ -331,6 +332,7 @@ export class AggregationRepository {
         ':ttl': ttl,
         ':zero': 0,
         ':one': 1,
+        ':isSyncRebuild': isSyncRebuild ?? false,
       },
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
@@ -358,8 +360,11 @@ export class AggregationRepository {
     const noOfReadySlices = result.Item?.sliceCount ?? 1
     const totalTimeSlices = result.Item?.totalTimeSlices ?? 1
     const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
+    const isSyncRebuild = result.Item?.isSyncRebuild ?? false
     return {
-      ready: Boolean(result.Item) && noOfReadySlices == totalTimeSlices,
+      ready:
+        Boolean(result.Item) &&
+        (noOfReadySlices == totalTimeSlices || isSyncRebuild),
       lastTransactionTimestamp,
     }
   }

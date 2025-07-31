@@ -759,7 +759,8 @@ export class LogicEvaluator {
       aggregationVariable,
       userKeyId,
       lastTransactionTimestamp,
-      totalTimeSlices
+      totalTimeSlices,
+      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices
     )
     logger.debug('Rebuilt aggregation for time window', timeRange)
     return true

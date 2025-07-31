@@ -169,7 +169,9 @@ export async function handleV8PreAggregationTask(
         task.aggregationVariable,
         task.currentTimestamp,
         task.userId,
-        task.paymentDetails
+        task.paymentDetails,
+        task.timeWindow,
+        task.totalSliceCount
       )
     }
 
@@ -210,7 +212,9 @@ export async function handleV8PreAggregationTask(
         task.aggregationVariable,
         task.currentTimestamp,
         task.userId,
-        task.paymentDetails
+        task.paymentDetails,
+        task.timeWindow,
+        task.totalSliceCount
       )
     }
 
@@ -230,7 +234,9 @@ export async function handleV8PreAggregationTask(
       task.aggregationVariable,
       task.currentTimestamp,
       task.userId,
-      task.paymentDetails
+      task.paymentDetails,
+      task.timeWindow,
+      task.totalSliceCount
     )
     await jobRepository.incrementCompleteTasksCount(task.jobId)
   }
