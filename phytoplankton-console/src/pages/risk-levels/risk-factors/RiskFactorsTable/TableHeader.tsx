@@ -8,6 +8,7 @@ import SegmentedControl from '@/components/library/SegmentedControl';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/library/Button';
 import { useHasResources } from '@/utils/user-utils';
+import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
 
 interface Props {
   selectedSection: ScopeSelectorValue;
@@ -33,6 +34,7 @@ export const TableHeader = ({
     useHasResources(['write:::risk-scoring/risk-factors/*']) && canEditRiskFactors !== false;
 
   const [isEditEnabled, setIsEditEnabled] = useAtom(riskFactorsEditEnabled);
+  const riskScoringRerun = useBulkRerunUsersStatus();
 
   return (
     <div className={s.header}>
@@ -83,7 +85,7 @@ export const TableHeader = ({
                 navigate(url, { replace: true });
               }
             }}
-            isDisabled={!canWriteRiskFactors}
+            isDisabled={!canWriteRiskFactors || riskScoringRerun.data.isAnyJobRunning}
             testName="create-risk-factor-button"
           >
             {isSimulation ? 'Simulate risk factor' : 'Custom risk factor'}

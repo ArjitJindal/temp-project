@@ -346,11 +346,20 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const batchRerunUsersQueue = this.createQueue(
+      SQSQueues.BATCH_RERUN_USERS_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(14),
+      }
+    )
+
     const downstreamSecondaryTarponEventQueue = this.createQueue(
       SQSQueues.DOWNSTREAM_SECONDARY_TARPON_QUEUE_NAME.name,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        retentionPeriod: Duration.days(14),
       }
     )
 
@@ -591,6 +600,7 @@ export class CdkTarponStack extends cdk.Stack {
         DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
         ACTION_PROCESSING_QUEUE_URL: actionProcessingQueue.queueUrl,
+        BATCH_RERUN_USERS_QUEUE_URL: batchRerunUsersQueue.queueUrl,
       },
     }
 
@@ -691,6 +701,7 @@ export class CdkTarponStack extends cdk.Stack {
             mongoUpdateConsumerQueue.queueArn,
             actionProcessingQueue.queueArn,
             dynamoDbConsumerQueue.queueArn,
+            batchRerunUsersQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -980,6 +991,24 @@ export class CdkTarponStack extends cdk.Stack {
         maxConcurrency:
           this.config.resource.REQUEST_LOGGER_LAMBDA?.PROVISIONED_CONCURRENCY ??
           5,
+        maxBatchingWindow: Duration.minutes(5),
+      })
+    )
+
+    /* Batch Rerun Users */
+    const { alias: batchRerunUsersConsumerAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.BATCH_RERUN_USERS_CONSUMER_FUNCTION_NAME,
+        memorySize: config.resource.LAMBDA_DEFAULT?.MEMORY_SIZE,
+      }
+    )
+
+    batchRerunUsersConsumerAlias.addEventSource(
+      new SqsEventSource(batchRerunUsersQueue, {
+        batchSize: 100,
+        maxConcurrency: 100,
         maxBatchingWindow: Duration.minutes(5),
       })
     )

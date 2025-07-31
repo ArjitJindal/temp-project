@@ -733,6 +733,13 @@ export default function SuperAdminPanel() {
             >
               Reset current API key view count
             </Button>
+            <Label label="Rerun risk scoring limit">
+              <NumberInput
+                value={limits?.rerunRiskScoringLimit ?? 0}
+                onChange={(value) => setLimits({ ...limits, rerunRiskScoringLimit: value })}
+                isDisabled={false}
+              />
+            </Label>
 
             <div className={s.divider} />
             <Label label="Secondary queue tenants">

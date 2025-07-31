@@ -1,4 +1,4 @@
-import { Collection, MongoClient } from 'mongodb'
+import { Collection, Filter, MongoClient, WithId } from 'mongodb'
 import { omit } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoBatchJobRepository } from './dynamo-repository'
@@ -28,6 +28,7 @@ export class BatchJobRepository {
   dynamoDb: DynamoDBDocumentClient
   dynamoBatchJobRepository: DynamoBatchJobRepository
   collection: Collection<BatchJobInDb>
+
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
@@ -126,16 +127,24 @@ export class BatchJobRepository {
     )
   }
 
-  public async isAnyJobRunning(type: BatchJobType): Promise<boolean> {
-    if (isClickhouseEnabledInRegion()) {
+  public async isAnyJobRunning(
+    type: BatchJobType,
+    subFilter?: Filter<WithId<BatchJobInDb>>
+  ): Promise<boolean> {
+    if (isClickhouseMigrationEnabled()) {
       return await this.dynamoBatchJobRepository.isAnyJobRunning(type)
     }
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
-    const result = await db.collection<BatchJobInDb>(collection).findOne({
+    const filters = {
       type,
       'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS'] },
-    })
+      ...(subFilter ? subFilter : {}),
+    }
+    const result = await db
+      .collection<BatchJobInDb>(collection)
+      .findOne(filters)
+
     return result !== null
   }
 
@@ -152,6 +161,22 @@ export class BatchJobRepository {
     )
 
     return result.value as BatchJobInDb
+  }
+
+  public async getJobsCount(
+    type: BatchJobType,
+    subFilter?: Filter<WithId<BatchJobInDb>>
+  ): Promise<number> {
+    const collection = JOBS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+
+    const result = await db
+      .collection<BatchJobInDb>(collection)
+      .countDocuments({
+        type,
+        ...(subFilter ? subFilter : {}),
+      })
+    return result
   }
 
   public async setMetadata(
@@ -254,6 +279,17 @@ export class BatchJobRepository {
       .sort({ 'latestStatus.timestamp': -1 })
       .limit(limit)
       .toArray()
+    return result
+  }
+
+  public async getLatestJob(
+    filters: Filter<WithId<BatchJobInDb>>
+  ): Promise<BatchJobInDb | null> {
+    const collection = JOBS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    const result = await db
+      .collection<BatchJobInDb>(collection)
+      .findOne(filters, { sort: { 'latestStatus.timestamp': -1 } })
     return result
   }
 }

@@ -117,6 +117,9 @@ export const StackConstants = {
   PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicApiTransactionEventFunction'
   ),
+  BATCH_RERUN_USERS_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'BatchRerunUsersConsumerFunction'
+  ),
   PUBLIC_API_USER_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicApiUserFunction'
   ),
@@ -406,6 +409,10 @@ export const SQSQueues: {
   },
   DYNAMO_DB_CONSUMER_QUEUE_NAME: {
     name: getResourceName('DynamoDbConsumerQueue'),
+  },
+  BATCH_RERUN_USERS_QUEUE_NAME: {
+    name: getResourceName('BatchRerunUsersQueue'),
+    oldestMsgAgeAlarmThresholdMinutes: 240, // 4 hours since there can be a lot of users to rerun
   },
 }
 

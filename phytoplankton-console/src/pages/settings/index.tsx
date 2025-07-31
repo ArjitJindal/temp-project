@@ -33,6 +33,7 @@ import { WebhookSettings } from './components/WebhookSettings';
 import { ReasonsSettings } from './components/ReasonsSettings';
 import { CRMSettings } from './components/CRMSettings';
 import UserAliasSettings from './components/UserAliasSettings/UserAliasSettings';
+import BatchRerunRiskScoringSettings from './components/BatchRerunRiskScoringSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import {
@@ -154,6 +155,7 @@ export default function SettingsPage() {
                   <CraToggleSettings />
                   <RiskAlgorithmsCra />
                   <ReRunTriggerSettings />
+                  <BatchRerunRiskScoringSettings />
                 </Feature>
                 <RiskLevelSettings />
                 <Feature name="APPROVAL_WORKFLOWS">

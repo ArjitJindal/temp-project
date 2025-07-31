@@ -96,6 +96,9 @@ const assertSettings = (
         'write:::settings/security/brute-force-account-blocking/*',
       ],
       narrativeMode: ['write:::settings/case-management/narrative-copilot/*'],
+      batchRerunRiskScoringFrequency: [
+        'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
+      ],
     }
 
   for (const settingsKey in settingsKeys) {
@@ -704,6 +707,22 @@ export const tenantsHandler = lambdaApi()(
         })
       )
       return tenantFeatures
+    })
+
+    handlers.registerGetBulkRerunRiskScoringBatchJobStatus(async (ctx) => {
+      const tenantService = new TenantService(ctx.tenantId, {
+        dynamoDb: getDynamoDbClientByEvent(event),
+        mongoDb,
+      })
+      return await tenantService.getBatchJobBulkRerunRiskScoringStatus()
+    })
+
+    handlers.registerPostBatchJobBulkRerunRiskScoring(async (ctx) => {
+      const tenantService = new TenantService(ctx.tenantId, {
+        dynamoDb: getDynamoDbClientByEvent(event),
+        mongoDb,
+      })
+      return await tenantService.postBatchJobBulkRerunRiskScoring()
     })
 
     handlers.registerGetTenantsSecondaryQueueTenants(async () => {

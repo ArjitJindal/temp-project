@@ -54,6 +54,8 @@ export function initializeEnvVars() {
     SQSQueues.ACTION_PROCESSING_QUEUE_NAME.name
   const transactionEventQueueName: string =
     SQSQueues.TRANSACTION_EVENT_QUEUE_NAME.name
+  const batchRerunUsersQueueName: string =
+    SQSQueues.BATCH_RERUN_USERS_QUEUE_NAME.name
 
   process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
   process.env.SHARED_ASSETS_BUCKET = getNameForGlobalResource(
@@ -81,6 +83,7 @@ export function initializeEnvVars() {
   process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
   process.env.ACTION_PROCESSING_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${actionProcessingQueueName}`
   process.env.AUDIT_LOG_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${auditLogQueueName}`
+  process.env.BATCH_RERUN_USERS_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchRerunUsersQueueName}`
   process.env.DOWNSTREAM_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamTarponQueueName}`
   process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamSecondaryTarponQueueName}`
 }

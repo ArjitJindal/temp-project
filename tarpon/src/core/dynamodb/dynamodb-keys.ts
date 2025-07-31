@@ -649,6 +649,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER}`,
     SortKeyID: migrationName,
   }),
+  BATCH_USERS_RERUN_PROGRESS: (tenantId: string, jobId: string) => ({
+    PartitionKeyID: `${tenantId}#batch-users-rerun-progress`,
+    SortKeyID: jobId,
+  }),
   SECONDARY_QUEUE_TENANTS: () => ({
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#secondary-queue-tenants`,
     SortKeyID: '1',

@@ -20,6 +20,7 @@ import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
 import { V8LogicAggregationRebuildTask } from '@/services/rules-engine'
 import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
+import { BatchRerunUsersJobType } from '@/@types/rerun-users'
 
 /* Simulation (Pulse) */
 export type SimulationRiskLevelsBatchJob = {
@@ -491,6 +492,14 @@ export type GoCardlessBackfillBatchJob = {
   }
 }
 
+export type BatchRerunUsers = {
+  type: 'BATCH_RERUN_USERS'
+  tenantId: string
+  parameters: {
+    jobType: BatchRerunUsersJobType
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -545,6 +554,7 @@ export type BatchJob =
   | FlatFilesRunnerBatchJob
   | SanctionsScreeningDetailsMigrationBatchJob
   | GoCardlessBackfillBatchJob
+  | BatchRerunUsers
 
 export type BatchJobWithId = BatchJob & {
   jobId: string
@@ -556,7 +566,7 @@ export type BatchJobInDb = BatchJobWithId & {
   latestStatus: TaskStatusChange
   statuses: TaskStatusChange[]
   metadata?: RulePreAggregationMetadata
-  parameters?: BatchJobParameters
+  parameters?: BatchJobParameters & BatchRerunUsers['parameters']
 }
 
 export type BatchJobParameters = {
@@ -579,6 +589,7 @@ export type BatchJobParams = {
     entityType?: SanctionsEntityType
     entityId?: string
     schema?: FlatFileSchema
+    jobType?: BatchRerunUsersJobType
   }
   tenantId?: string
   jobId?: {

@@ -5,6 +5,8 @@ import { WebClient } from '@slack/web-api'
 import axios from 'axios'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import slackify from 'slackify-markdown'
+import { MongoClient } from 'mongodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { sendCaseCreatedAlert } from '../slack-app/app'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -44,12 +46,16 @@ import {
 import { isDemoTenant } from '@/utils/tenant'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { createApiUsageJobs } from '@/utils/api-usage'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
+import { BatchRerunUsersService } from '@/services/batch-users-rerun'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
   if (envIs('dev')) {
     try {
-      await clearTriageQueueTickets()
+      await clearTriageQueueTickets(mongoDb)
     } catch (e) {
       logger.error(
         `Failed to clear triage queue tickets: ${(e as Error)?.message}`,
@@ -123,7 +129,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       return batchJobs
     })
   )
-  const mongoDb = await getMongoDbClient()
   const providers = await getTargetProviders(mongoDb)
   const batchJobCommands: Promise<void>[] = []
   for (const provider of providers) {
@@ -189,6 +194,25 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     logger.error(`Failed to check dormant users: ${(e as Error)?.message}`, e)
   }
 
+  try {
+    await Promise.all(
+      tenantInfos.map(async (tenant) => {
+        try {
+          return await rerunRiskScoring(tenant.tenant.id, { dynamoDb, mongoDb })
+        } catch (e) {
+          logger.error(
+            `Failed to rerun risk scoring for tenant ${tenant.tenant.id}: ${
+              (e as Error)?.message
+            }`,
+            e
+          )
+        }
+      })
+    )
+  } catch (e) {
+    logger.error(`Failed to rerun risk scoring: ${(e as Error)?.message}`, e)
+  }
+
   await Promise.all(
     tenantInfos.map((tenant) => {
       try {
@@ -221,7 +245,11 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       { monthly?: number; daily?: number }
     >()
     for (const tenant of tenantInfos) {
-      await transactionsDeviationAlert(tenant.tenant.id, diffPercentageMap)
+      await transactionsDeviationAlert(
+        tenant.tenant.id,
+        diffPercentageMap,
+        mongoDb
+      )
     }
     if (diffPercentageMap.size > 0) {
       await sendTransactionsDeviationAlert(diffPercentageMap, tenantInfos)
@@ -234,12 +262,11 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   }
 })
 
-async function clearTriageQueueTickets() {
+async function clearTriageQueueTickets(mongoDb: MongoClient) {
   if (isQaEnv()) {
     return
   }
 
-  const mongoDb = await getMongoDbClient()
   const collection = mongoDb
     .db()
     .collection<TriageQueueTicket>(TRIAGE_QUEUE_TICKETS_COLLECTION())
@@ -375,7 +402,8 @@ const calculatePercentage = (
 
 export async function transactionsDeviationAlert(
   tenantId: string,
-  diffPercentageMap: Map<string, { monthly?: number; daily?: number }>
+  diffPercentageMap: Map<string, { monthly?: number; daily?: number }>,
+  mongoDb: MongoClient
 ) {
   if (isDemoTenant(tenantId)) {
     return
@@ -410,7 +438,6 @@ export async function transactionsDeviationAlert(
     })
     dailyPercentage = calculatePercentage(dayCount1, dayCount2, 0.7)
   } else {
-    const mongoDb = await getMongoDbClient()
     const transactionsCollection = mongoDb
       .db()
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
@@ -501,4 +528,112 @@ async function sendTransactionsDeviationAlert(
       },
     ],
   })
+}
+
+async function rerunRiskScoring(
+  tenantId: string,
+  connections: { dynamoDb: DynamoDBClient; mongoDb: MongoClient }
+) {
+  const tenantService = new TenantService(tenantId, connections)
+  const settings = await tenantService.getTenantSettings()
+  if (
+    !settings.features?.includes('RISK_SCORING') ||
+    settings.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG'
+  ) {
+    logger.info(
+      `Skipping risk scoring rerun for tenant ${tenantId} because it is not enabled or using legacy moving average algorithm`
+    )
+    return
+  }
+
+  const frequency = settings.batchRerunRiskScoringFrequency || 'DISABLED'
+  if (frequency === 'DISABLED') {
+    logger.info(
+      `Skipping risk scoring rerun for tenant ${tenantId} because it is disabled`
+    )
+    return
+  }
+
+  const riskRepository = new RiskRepository(tenantId, connections)
+  const batchJobRepository = new BatchJobRepository(
+    tenantId,
+    connections.mongoDb
+  )
+
+  const [consumerRiskFactors, businessRiskFactors] = await Promise.all([
+    riskRepository.getAllRiskFactors('CONSUMER_USER'),
+    riskRepository.getAllRiskFactors('BUSINESS'),
+  ])
+
+  const lastUpdated = [...consumerRiskFactors, ...businessRiskFactors].reduce(
+    (acc, riskFactor) => {
+      return Math.max(acc, riskFactor.updatedAt ?? riskFactor.createdAt ?? 0)
+    },
+    0
+  )
+
+  const lastRerun = await batchJobRepository.getLatestJob({
+    type: 'BATCH_RERUN_USERS',
+    'parameters.jobType': 'RERUN_RISK_SCORING',
+    'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS', 'SUCCESS'] },
+  })
+
+  const now = dayjs()
+  const lastUpdatedDate = dayjs(lastUpdated)
+  const lastRerunDate = lastRerun?.latestStatus?.scheduledAt
+    ? dayjs(lastRerun.latestStatus.scheduledAt)
+    : null
+
+  let shouldRerun = false
+
+  switch (frequency) {
+    case 'DAILY':
+      // For daily rerun: check if risk factors have been updated since last rerun
+      shouldRerun = !lastRerunDate || lastUpdatedDate.isAfter(lastRerunDate)
+      break
+
+    case 'WEEKLY':
+      // only run on first day of the week and check if risk factors were updated since last rerun
+      shouldRerun =
+        now.day() === 1 &&
+        (!lastRerunDate || lastUpdatedDate.isAfter(lastRerunDate))
+      break
+
+    case 'MONTHLY':
+      // only run on first day of the month and check if risk factors were updated since last rerun
+      shouldRerun =
+        now.date() === 1 &&
+        (!lastRerunDate || lastUpdatedDate.isAfter(lastRerunDate))
+      break
+
+    default:
+      shouldRerun = false
+  }
+
+  if (shouldRerun) {
+    logger.info(
+      `Triggering risk scoring rerun for tenant ${tenantId} with frequency ${frequency}`
+    )
+
+    const batchRunnerService = new BatchRerunUsersService(tenantId, connections)
+    const status = await batchRunnerService.toRerunRiskScoring()
+    if (status.isError) {
+      logger.error(
+        `Failed to rerun risk scoring for tenant ${tenantId}: ${status.error}`
+      )
+      return
+    }
+
+    await sendBatchJobCommand({
+      type: 'BATCH_RERUN_USERS',
+      tenantId,
+      parameters: {
+        jobType: 'RERUN_RISK_SCORING',
+      },
+    })
+  } else {
+    logger.info(
+      `Skipping risk scoring rerun for tenant ${tenantId} with frequency ${frequency} - conditions not met`
+    )
+  }
 }

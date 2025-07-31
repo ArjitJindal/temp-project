@@ -54,6 +54,8 @@ import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-sum
 import { SanctionsDataFetchBatchJobRunner } from '@/services/batch-jobs/sanctions-data-fetch-job-runner'
 import { DynamodbClickhouseBackfillBatchJobRunner } from '@/services/batch-jobs/dynamodb-clickhouse-backfill-job-runner'
 import { UserRuleReRunBatchJobRunner } from '@/services/batch-jobs/user-rule-re-run-batch-job-runner'
+import { BatchRerunUsersBatchJobRunner } from '@/services/batch-jobs/batch-rerun-users'
+
 type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
 export function getBatchJobRunner(type: BatchJobType, jobId: string) {
@@ -140,6 +142,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     MANUAL_TRANSACTION_REVERIFICATION: (jobId) =>
       new ManualTransactionReverificationBatchJobRunner(jobId),
     USER_RULE_RE_RUN: (jobId) => new UserRuleReRunBatchJobRunner(jobId),
+    BATCH_RERUN_USERS: (jobId) => new BatchRerunUsersBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

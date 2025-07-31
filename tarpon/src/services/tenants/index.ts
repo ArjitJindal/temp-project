@@ -30,6 +30,7 @@ import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { CounterRepository } from '../counter/repository'
+import { BatchRerunUsersService } from '../batch-users-rerun'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -998,5 +999,33 @@ export class TenantService {
       tenantsDeletedRecently: tenantIdsDeletedRecently,
       tenantsMarkedForDelete: tenantIdsMarkedForDelete,
     }
+  }
+
+  async getBatchJobBulkRerunRiskScoringStatus() {
+    const batchRerunUsersService = new BatchRerunUsersService(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    return await batchRerunUsersService.getBatchJobBulkRerunRiskScoringStatus()
+  }
+
+  async postBatchJobBulkRerunRiskScoring() {
+    const batchRerunUsersService = new BatchRerunUsersService(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const toRerun = await batchRerunUsersService.toRerunRiskScoring()
+
+    if (toRerun.isError) {
+      throw new createHttpError.BadRequest(toRerun.error)
+    }
+
+    await sendBatchJobCommand({
+      type: 'BATCH_RERUN_USERS',
+      tenantId: this.tenantId,
+      parameters: {
+        jobType: 'RERUN_RISK_SCORING',
+      },
+    })
   }
 }

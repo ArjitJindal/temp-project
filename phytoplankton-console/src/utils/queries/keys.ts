@@ -539,3 +539,4 @@ export const RISK_CLASSIFICATION_WORKFLOW_PROPOSAL = (): QueryKey => [
 ];
 
 export const FLAT_FILE_PROGRESS = (entityId: string): QueryKey => ['flat-file-progress', entityId];
+export const BATCH_RERUN_USERS_STATUS = (): QueryKey => ['batch-rerun-users-status'];

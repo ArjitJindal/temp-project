@@ -17,6 +17,7 @@ import ActionMenu from '@/pages/risk-levels/risk-factors/components/ActionMenu';
 import Button from '@/components/library/Button';
 import { RiskFactor, RuleInstanceStatus } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';
+import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
 
 interface UseTableColumnsProps {
   actionRef: React.RefObject<TableRefType>;
@@ -39,7 +40,7 @@ export function useTableColumns({
   const isSimulation = mode === 'simulation';
   const navigate = useNavigate();
   const [riskFactors, setRiskFactors] = useAtom(riskFactorsAtom);
-
+  const riskScoringRerun = useBulkRerunUsersStatus();
   const [isEditEnabled] = useAtom(riskFactorsEditEnabled);
 
   const { simulationRiskFactorsMap, setSimulationRiskFactorsMap } = useTempRiskFactors({
@@ -214,7 +215,7 @@ export function useTableColumns({
                         type="SECONDARY"
                         onClick={() => handleEditRiskFactor(entity)}
                         testName="risk-factor-edit-button"
-                        isDisabled={!isEditEnabled}
+                        isDisabled={!isEditEnabled || riskScoringRerun.data.isAnyJobRunning}
                       >
                         Edit
                       </Button>
@@ -245,6 +246,7 @@ export function useTableColumns({
     setSimulationRiskFactorsMap,
     onActionsMenuClick,
     isEditEnabled,
+    riskScoringRerun.data.isAnyJobRunning,
     mode,
   ]);
 

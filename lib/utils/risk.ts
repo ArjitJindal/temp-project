@@ -511,6 +511,7 @@ export const DRS_CHANGE_PSEUDO_TX_IDS = [
   'FIRST_DRS',
   'MANUAL_UPDATE',
   'USER_UPDATE',
+  'RISK_SCORING_RERUN',
 ]
 
 export function isNotArsChangeTxId(transactionId?: string) {

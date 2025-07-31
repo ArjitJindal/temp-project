@@ -247,6 +247,7 @@ export class DynamoBatchJobRepository {
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
+
   public async incrementCompleteTasksCount(
     jobId: string
   ): Promise<BatchJobInDb> {

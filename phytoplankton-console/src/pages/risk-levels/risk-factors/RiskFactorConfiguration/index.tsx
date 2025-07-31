@@ -32,6 +32,8 @@ import {
 } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/const';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
@@ -88,6 +90,7 @@ export const RiskFactorConfiguration = (props: Props) => {
   const [values, setValues] = useState<RiskParameterLevelKeyValue[]>(
     riskItem?.riskLevelAssignmentValues || [],
   );
+  const riskScoringRerun = useBulkRerunUsersStatus();
   const [entity] = useState<RiskEntityType>(riskItem?.type || 'TRANSACTION');
   const [defaultRiskValueState, setDefaultRiskValueState] = useState<
     RiskScoreValueLevel | RiskScoreValueScore
@@ -212,70 +215,110 @@ export const RiskFactorConfiguration = (props: Props) => {
         )}
         {canWriteRiskFactors && mode === 'CREATE' && activeStepIndex === STEPS.length - 1 && (
           <>
-            <Button
-              htmlType="submit"
-              isLoading={isLoading}
-              isDisabled={!canWriteRiskFactors}
-              onClick={() => {
-                if (!formRef?.current?.validate()) {
-                  formRef?.current?.submit(); // To show errors
-                  return;
-                }
-                formRef?.current?.submit();
-              }}
-              requiredResources={['write:::risk-scoring/risk-factors/*']}
-              testName="drawer-create-save-button"
+            <Tooltip
+              title={
+                !canWriteRiskFactors
+                  ? "You don't have permission to create risk factors."
+                  : riskScoringRerun.data.isAnyJobRunning
+                  ? 'Bulk rerun risk scoring is currently running. Please wait until it finishes.'
+                  : undefined
+              }
+              placement="top"
             >
-              Create
-            </Button>
+              <span>
+                <Button
+                  htmlType="submit"
+                  isLoading={isLoading}
+                  isDisabled={!canWriteRiskFactors || riskScoringRerun.data.isAnyJobRunning}
+                  onClick={() => {
+                    if (!formRef?.current?.validate()) {
+                      formRef?.current?.submit(); // To show errors
+                      return;
+                    }
+                    formRef?.current?.submit();
+                  }}
+                  requiredResources={['write:::risk-scoring/risk-factors/*']}
+                  testName="drawer-create-save-button"
+                >
+                  Create
+                </Button>
+              </span>
+            </Tooltip>
           </>
         )}
         {canWriteRiskFactors && (mode === 'EDIT' || mode === 'DUPLICATE') && (
-          <Button
-            htmlType="submit"
-            isLoading={isLoading}
-            isDisabled={!canWriteRiskFactors || !isEditEnabled}
-            onClick={() => {
-              if (!formRef?.current?.validate()) {
-                formRef?.current?.submit(); // To show errors
-                return;
+          <>
+            <Tooltip
+              title={
+                !canWriteRiskFactors
+                  ? "You don't have permission to save risk factors."
+                  : riskScoringRerun.data.isAnyJobRunning
+                  ? 'Bulk rerun risk scoring is currently running. Please wait until it finishes.'
+                  : undefined
               }
-              formRef?.current?.submit();
-            }}
-            requiredResources={['write:::risk-scoring/risk-factors/*']}
-            testName="drawer-create-save-button"
-          >
-            Save
-          </Button>
+              placement="top"
+            >
+              <span>
+                <Button
+                  htmlType="submit"
+                  isLoading={isLoading}
+                  isDisabled={!canWriteRiskFactors || riskScoringRerun.data.isAnyJobRunning}
+                  onClick={() => {
+                    if (!formRef?.current?.validate()) {
+                      formRef?.current?.submit(); // To show errors
+                      return;
+                    }
+                    formRef?.current?.submit();
+                  }}
+                  requiredResources={['write:::risk-scoring/risk-factors/*']}
+                  testName="drawer-create-save-button"
+                >
+                  Save
+                </Button>
+              </span>
+            </Tooltip>
+          </>
         )}
         {canWriteRiskFactors && mode === 'READ' && (
-          <Button
-            type="SECONDARY"
-            onClick={() => {
-              if (dataKey) {
-                navigate(
-                  makeUrl(`/risk-levels/risk-factors/simulation-mode/:key/:type/:id/edit`, {
-                    type: riskItemType,
-                    key: dataKey,
-                    id,
-                  }),
-                  { replace: true },
-                );
-              } else {
-                navigate(
-                  makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
-                    type: riskItemType,
-                    id,
-                  }),
-                  { replace: true },
-                );
-              }
-            }}
-            icon={<EditOutlined />}
-            requiredResources={['write:::risk-scoring/risk-factors/*']}
+          <Tooltip
+            title={
+              riskScoringRerun.data.isAnyJobRunning
+                ? 'Bulk rerun risk scoring is currently running. Please wait until it finishes.'
+                : !isEditEnabled
+                ? 'You need to enable risk factors editing to create a new risk factor.'
+                : undefined
+            }
+            placement="top"
           >
-            Edit
-          </Button>
+            <Button
+              type="SECONDARY"
+              isDisabled={!isEditEnabled || riskScoringRerun.data.isAnyJobRunning}
+              onClick={() => {
+                if (dataKey) {
+                  navigate(
+                    makeUrl(`/risk-levels/risk-factors/simulation-mode/:key/:type/:id/edit`, {
+                      type: riskItemType,
+                      key: dataKey,
+                      id,
+                    }),
+                    { replace: true },
+                  );
+                } else {
+                  navigate(
+                    makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
+                      type: riskItemType,
+                      id,
+                    }),
+                    { replace: true },
+                  );
+                }
+              }}
+              icon={<EditOutlined />}
+              requiredResources={['write:::risk-scoring/risk-factors/*']}
+            >
+              Edit
+            </Button>
+          </Tooltip>
         )}
       </div>
     </>

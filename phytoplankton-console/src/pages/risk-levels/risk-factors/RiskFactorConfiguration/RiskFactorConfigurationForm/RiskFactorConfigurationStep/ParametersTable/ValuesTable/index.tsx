@@ -39,6 +39,7 @@ import Slider from '@/components/library/Slider';
 import NumberInput from '@/components/library/NumberInput';
 import Dropdown from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
+import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
 
 interface Props {
   entity: RiskFactor;
@@ -73,7 +74,7 @@ function ValuesTable(props: Props) {
   const [newRiskValue, setNewRiskValue] = useState<RiskScoreValueLevel | RiskScoreValueScore>();
   const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
   const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
-
+  const riskScoringRerun = useBulkRerunUsersStatus();
   const safeEntity = entity as Required<
     Pick<
       RiskFactor,
@@ -508,6 +509,7 @@ function ValuesTable(props: Props) {
           onClick={handleSave}
           type="PRIMARY"
           testName="save-risk-factor"
+          isLoading={riskScoringRerun.data.isAnyJobRunning}
         >
           Save
         </Button>

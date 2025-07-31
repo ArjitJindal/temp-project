@@ -48,6 +48,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/batch-job': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/features': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/bulk-rerun-risk-scoring':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/secondary-queue-tenants':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,

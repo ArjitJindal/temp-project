@@ -385,9 +385,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteReasons.bind(this),
         order: 22,
       },
+      BATCH_USERS_RERUN_PROGRESS: {
+        method: this.deleteBatchUsersRerunProgress.bind(this),
+        order: 23,
+      },
       RISK_CLASSIFICATION_APPROVAL: {
         method: this.deleteRiskClassificationApprovals.bind(this),
-        order: 23,
+        order: 24,
       },
     }
 
@@ -445,6 +449,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       (tenantId, alert) => {
         return this.deleteAlert(tenantId, alert)
       }
+    )
+  }
+
+  private async deleteBatchUsersRerunProgress(tenantId: string) {
+    const partitionKeyId = DynamoDbKeys.BATCH_USERS_RERUN_PROGRESS(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      'Batch Users Rerun Progress'
     )
   }
 

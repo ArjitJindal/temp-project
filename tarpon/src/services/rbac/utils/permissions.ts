@@ -117,6 +117,12 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read'],
         type: 'STATIC',
       },
+      {
+        id: 'batch-rerun-risk-scoring-settings',
+        name: 'Batch rerun risk scoring settings',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
     ],
   },
   {

@@ -3298,6 +3298,23 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantTriggerBatchJobRequest'
         required: true
+  /tenants/bulk-rerun-risk-scoring:
+    post:
+      summary: Tenant - Bulk rerun risk scoring
+      operationId: post-batch-job-bulk-rerun-risk-scoring
+      responses:
+        '200':
+          description: OK
+    get:
+      summary: Tenant - Get risk scoring status
+      operationId: get-bulk-rerun-risk-scoring-batch-job-status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUsersRerunStatus'
   /tenants/nango-connections:
     get:
       summary: Tenant - Get Nango Connections
@@ -10140,6 +10157,21 @@ components:
           $ref: '#/components/schemas/BatchJobNames'
       required:
         - jobName
+    BulkUsersRerunStatus:
+      title: BulkUsersRerunStatus
+      type: object
+      properties:
+        count:
+          type: number
+        isAnyJobRunning:
+          type: boolean
+        sentCount:
+          type: number
+        processedCount:
+          type: number
+      required:
+        - count
+        - isAnyJobRunning
     BatchJobNames:
       title: BatchJobNames
       type: string
@@ -11301,6 +11333,15 @@ components:
               type: number
             apiKeyView:
               type: number
+            rerunRiskScoringLimit:
+              type: number
+        batchRerunRiskScoringFrequency:
+          type: string
+          enum:
+            - DISABLED
+            - DAILY
+            - WEEKLY
+            - MONTHLY
         narrativeMode:
           $ref: '#/components/schemas/NarrativeMode'
         allowManualNarrativeModeUpdates:
