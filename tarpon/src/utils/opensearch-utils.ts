@@ -12,6 +12,7 @@ import { Bulk_RequestBody } from '@opensearch-project/opensearch/api'
 import { v4 as uuidv4 } from 'uuid'
 import { isEqual } from 'lodash'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
+import { backOff } from 'exponential-backoff'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from './opensearch-definitions'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -74,8 +75,7 @@ export async function bulkUpdate(
   entities: [Action, Partial<SanctionsEntity>][],
   version: string,
   indexName: string,
-  client: Client,
-  retry: boolean = true
+  client: Client
 ) {
   const operations: Bulk_RequestBody = entities.flatMap(
     ([action, entity]): Bulk_RequestBody => {
@@ -101,28 +101,25 @@ export async function bulkUpdate(
     }
   )
   try {
-    const response = await client.bulk(
-      {
-        body: operations,
+    await backOff(
+      async () => {
+        const response = await client.bulk({
+          body: operations,
+        })
+        if (response.body.errors) {
+          throw new Error('Error writing to opensearch, retrying...')
+        }
       },
       {
-        maxRetries: 3,
+        numOfAttempts: 5,
+        timeMultiple: 2,
+        maxDelay: 10000,
+        jitter: 'none',
+        startingDelay: 1000,
       }
     )
-    if (response.body.errors) {
-      const errors = response.body.items.filter(
-        (item) =>
-          Object.values(item)[0]?.status >= 400 && Object.values(item)[0]?.error
-      )
-      logger.info(
-        `Error writing to opensearch handle retry: ${JSON.stringify(errors)}`
-      )
-      if (retry) {
-        await bulkUpdate(provider, entities, version, indexName, client, false)
-      }
-    }
   } catch (e) {
-    logger.error(`Error writing to opensearch: ${e}`)
+    logger.info(`Error writing to opensearch: ${e}`)
   }
 }
 

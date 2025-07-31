@@ -133,7 +133,7 @@ type OpenSanctionsOrganizationEntity = OpenSanctionsEntity & {
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
-
+  private iteration: number = 0
   static async build(
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
@@ -179,6 +179,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     version: string,
     entityType?: SanctionsEntityType
   ) {
+    this.iteration = 0
     if (!entityType) {
       return
     }
@@ -196,6 +197,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     from: Date,
     entityType?: SanctionsEntityType
   ) {
+    this.iteration = 0
     if (entityType) {
       this.entityTypes = [entityType]
     }
@@ -262,7 +264,11 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         default:
           throw new Error(`Unknown operation ${parsedLine.op}`)
       }
-      if (entities.length > 1000) {
+      if (
+        (this.iteration < 100 && entities.length > 100) ||
+        entities.length > 1000
+      ) {
+        this.iteration++
         await repo.save(
           SanctionsDataProviders.OPEN_SANCTIONS,
           entities,
@@ -293,7 +299,11 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
       if (sanctionsEntity) {
         entities.push(['add', sanctionsEntity])
       }
-      if (entities.length > 1000) {
+      if (
+        (this.iteration < 100 && entities.length > 100) ||
+        entities.length > 1000
+      ) {
+        this.iteration++
         await repo.save(
           SanctionsDataProviders.OPEN_SANCTIONS,
           entities,

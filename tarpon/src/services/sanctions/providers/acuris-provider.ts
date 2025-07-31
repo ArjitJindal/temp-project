@@ -299,6 +299,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
   private uri: string = 'https://api.acuris.com/compliance-datafeed'
   private screeningTypes: AcurisSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
+  private iteration: number = 0
 
   private SanctionsSourceToEntityIdMapPerson = new Map<string, string[]>()
   private SanctionsSourceToEntityIdMapBusiness = new Map<string, string[]>()
@@ -530,7 +531,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
                 ])
                 lc++
 
-                if (entities.length > 1000) {
+                if (
+                  (this.iteration < 100 && entities.length > 100) ||
+                  entities.length > 1000
+                ) {
+                  this.iteration++
                   repo
                     .save(SanctionsDataProviders.ACURIS, entities, version)
                     .then(async () => {
