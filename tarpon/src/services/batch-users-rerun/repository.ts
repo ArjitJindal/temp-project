@@ -1,10 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  UpdateCommand,
-  PutCommand,
-} from '@aws-sdk/lib-dynamodb'
+import { GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -12,11 +7,11 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 @traceable
 export class BatchRerunUsersRepository {
   private tenantId: string
-  private dynamoDb: DynamoDBDocumentClient
+  private dynamoDb: DynamoDBClient
 
   constructor(tenantId: string, dynamoDb: DynamoDBClient) {
     this.tenantId = tenantId
-    this.dynamoDb = DynamoDBDocumentClient.from(dynamoDb)
+    this.dynamoDb = dynamoDb
   }
 
   public async createJobProgress(jobId: string) {

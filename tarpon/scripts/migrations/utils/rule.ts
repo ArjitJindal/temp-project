@@ -1,4 +1,4 @@
-import { get, keyBy, set, some, unset } from 'lodash'
+import { get, isEmpty, keyBy, set, some, unset } from 'lodash'
 import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { StackConstants } from '@lib/constants'
@@ -177,15 +177,20 @@ async function addRuleParameterPrivate(
     ).getAllRuleInstances()
     for (const ruleInstance of ruleInstances) {
       const parameters = ruleInstance.parameters
-      set(parameters, parameterPath, parameterValue)
-      await (
-        ruleRepository as RuleInstanceRepository
-      ).createOrUpdateRuleInstance(ruleInstance)
-      console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+      if (!isEmpty(parameters)) {
+        set(parameters, parameterPath, parameterValue)
+
+        await (
+          ruleRepository as RuleInstanceRepository
+        ).createOrUpdateRuleInstance(ruleInstance)
+        console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+      }
 
       const riskParameters = ruleInstance.riskLevelParameters
       for (const risk in riskParameters || {}) {
-        set((riskParameters as any)?.[risk], parameterPath, parameterValue)
+        if (!isEmpty((riskParameters as any)?.[risk])) {
+          set((riskParameters as any)?.[risk], parameterPath, parameterValue)
+        }
       }
     }
   } else {
