@@ -28,6 +28,7 @@ import { SyncAuth0DataRunner } from './sync-auth0-data'
 import { FailingBatchJobRunner } from './failing-batch-job-runner'
 import { FixArsBreakdownBatchJobRunner } from './fix-ars-breakdown-batch-job-runner'
 import { ClickhouseDataBatchJobRunner } from './clickhouse-data-batch-job-runner'
+import { BackfillTransactionsDescBatchJobRunner } from './backfill-transactions-desc-batch-job-runner'
 import { FixLocksForKrsBatchJobRunner } from './fix-locks-for-krs-batch-job-runner'
 import { DeltaSanctionsDataFetchBatchJobRunner } from './delta-sanctions-batch-job-runner'
 import { CasesDynamoBackfillBatchJobRunner } from './cases-backfill-dynamodb-job-runner'
@@ -127,6 +128,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     FIX_ARS_BREAKDOWN: (jobId) => new FixArsBreakdownBatchJobRunner(jobId),
     CLICKHOUSE_DATA_BACKFILL: (jobId) =>
       new ClickhouseDataBatchJobRunner(jobId),
+    BACKFILL_TRANSACTIONS_DESC: (jobId) =>
+      new BackfillTransactionsDescBatchJobRunner(jobId),
     FIX_LOCKS_FOR_KRS: (jobId) => new FixLocksForKrsBatchJobRunner(jobId),
     DELTA_SANCTIONS_DATA_FETCH: (jobId) =>
       new DeltaSanctionsDataFetchBatchJobRunner(jobId),

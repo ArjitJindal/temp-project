@@ -242,6 +242,14 @@ export type ClickhouseDataBackfillBatchJob = {
   }
 }
 
+export type BackfillTransactionsDescBatchJob = {
+  type: 'BACKFILL_TRANSACTIONS_DESC'
+  tenantId: string
+  parameters: {
+    batchSize?: number // defaults to 10000
+  }
+}
+
 export type FilesAISummary = {
   type: 'FILES_AI_SUMMARY'
   tenantId: string
@@ -554,6 +562,7 @@ export type BatchJob =
   | FlatFilesRunnerBatchJob
   | SanctionsScreeningDetailsMigrationBatchJob
   | GoCardlessBackfillBatchJob
+  | BackfillTransactionsDescBatchJob
   | BatchRerunUsers
 
 export type BatchJobWithId = BatchJob & {

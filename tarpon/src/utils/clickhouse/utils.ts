@@ -22,6 +22,7 @@ import {
   TableName,
   IndexType,
   IndexOptions,
+  CLICKHOUSE_DEFINITIONS,
 } from './definition'
 import {
   DATE_TIME_FORMAT_JS,
@@ -316,16 +317,33 @@ export async function batchInsertToClickhouse(
     return
   }
 
-  await clickhouseInsert(
-    tenantId,
-    sanitizeSqlName(table),
-    objects.map((object) => ({
-      id: object[tableDefinition.idColumn],
-      data: JSON.stringify(object),
-      is_deleted: 0,
-    })),
-    ['id', 'data', 'is_deleted']
-  )
+  const insertData = objects.map((object) => ({
+    id: object[tableDefinition.idColumn],
+    data: JSON.stringify(object),
+    is_deleted: 0,
+  }))
+
+  await clickhouseInsert(tenantId, sanitizeSqlName(table), insertData, [
+    'id',
+    'data',
+    'is_deleted',
+  ])
+
+  // For transactions, also write to transactions_desc table
+  if (table === CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName) {
+    const transactionsDescTableDefinition = await prepareClickhouseInsert(
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName,
+      tenantId
+    )
+    if (transactionsDescTableDefinition) {
+      await clickhouseInsert(
+        tenantId,
+        sanitizeSqlName(CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName),
+        insertData,
+        ['id', 'data', 'is_deleted']
+      )
+    }
+  }
 }
 
 export function isClickhouseEnabled() {
@@ -351,11 +369,18 @@ export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   const tableName = table.table
   const columns = getAllColumns(table)
   const indexOptions = createIndexOptions(table)
+
+  // Handle ReplacingMergeTree with version column
+  const engineClause =
+    table.engine === 'ReplacingMergeTree' && table.versionColumn
+      ? `${table.engine}(${table.versionColumn})`
+      : table.engine
+
   return `
     CREATE TABLE IF NOT EXISTS ${tableName} (
       ${columns.join(', ')}
       ${indexOptions.length ? `, ${indexOptions.join(',\n      ')}` : ''}
-    ) ENGINE = ${table.engine}
+    ) ENGINE = ${engineClause}
      ${table.projections?.length ? ',' : ''}
      ${
        table.projections?.length

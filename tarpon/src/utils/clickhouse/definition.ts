@@ -52,6 +52,7 @@ type BaseTableDefinition = {
     }
   }[]
   engine: 'ReplacingMergeTree' | 'AggregatingMergeTree' | 'SummingMergeTree'
+  versionColumn?: string
   primaryKey: string
   orderBy: string
   partitionBy?: string
@@ -137,6 +138,7 @@ const userNameMaterilizedColumn = `username String MATERIALIZED
 
 export enum ClickhouseTableNames {
   Transactions = 'transactions',
+  TransactionsDesc = 'transactions_desc',
   Users = 'users',
   TransactionEvents = 'transaction_events',
   UserEvents = 'user_events',
@@ -215,6 +217,141 @@ export const generatePaymentDetailsName = (prefix: string) => {
   ]
 }
 
+const sharedTransactionMaterializedColumns = [
+  enumFields(
+    PAYMENT_METHODS,
+    'originPaymentDetails.method',
+    'originPaymentMethod'
+  ),
+  enumFields(
+    PAYMENT_METHODS,
+    'destinationPaymentDetails.method',
+    'destinationPaymentMethod'
+  ),
+  "originUserId String MATERIALIZED JSON_VALUE(data, '$.originUserId')",
+  "destinationUserId String MATERIALIZED JSON_VALUE(data, '$.destinationUserId')",
+  enumFields(RULE_ACTIONS, 'status', 'status'),
+  "productType String MATERIALIZED JSON_VALUE(data, '$.productType')",
+  "type String MATERIALIZED JSON_VALUE(data, '$.type')",
+  "originAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
+  "destinationAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'destinationAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
+  "tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')",
+  enumFields(RISK_LEVELS, 'arsScore.riskLevel', 'arsScore_riskLevel'),
+  "arsScore_arsScore Float32 MATERIALIZED JSONExtractFloat(data, 'arsScore', 'arsScore')",
+  "ruleInstancesHit Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'hitRules'))",
+  "ruleInstancesExecuted Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'executedRules'))",
+  `nonShadowHitRules Array(String) MATERIALIZED arrayMap(
+    x -> JSONExtractString(x, 'ruleInstanceId'),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'hitRules')
+    )
+  )`,
+  `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+    arrayMap(x -> (
+      JSONExtractString(x, 'ruleInstanceId'),
+      JSONExtractString(x, 'ruleId')
+    ),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'hitRules')
+    )
+  )`,
+  `nonShadowExecutedRules Array(String) MATERIALIZED arrayMap(
+    x -> JSONExtractString(x, 'ruleInstanceId'),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'executedRules')
+    )
+  )`,
+  `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+    arrayMap(x -> (
+      JSONExtractString(x, 'ruleInstanceId'),
+      JSONExtractString(x, 'ruleId')
+    ),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'executedRules')
+    )
+  )`,
+  "originAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'transactionAmount')",
+  "originAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
+  "destinationAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'transactionAmount')",
+  "destinationAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'destinationAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
+  enumFields(TRANSACTION_STATES, 'transactionState', 'transactionState'),
+  "originPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.originPaymentMethodId')",
+  "destinationPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.destinationPaymentMethodId')",
+  ...generatePaymentDetailColumns('origin'),
+  ...generatePaymentDetailColumns('destination'),
+  ...generatePaymentDetailsName('origin'),
+  ...generatePaymentDetailsName('destination'),
+  "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
+  "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
+  "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",
+  `hitRulesWithMeta Array(
+    Tuple(
+      ruleInstanceId String,
+      hitDirections Array(String),
+      isShadow UInt8
+    )
+  ) MATERIALIZED 
+    arrayMap(x -> 
+      tuple(
+        JSONExtractString(x, 'ruleInstanceId'),
+        JSONExtractArrayRaw(JSONExtractRaw(x, 'ruleHitMeta'), 'hitDirections'),
+        JSONExtractBool(x, 'isShadow')
+      ),
+      JSONExtractArrayRaw(data, 'hitRules')
+    )`,
+
+  `originShadowHitRuleIds Array(String) MATERIALIZED
+    arrayMap(x -> x.1, 
+      arrayFilter(x -> 
+        hasAny(x.2, ['"ORIGIN"']) AND x.3 = 1, 
+        hitRulesWithMeta
+      )
+    )`,
+
+  `originNonShadowHitRuleIds Array(String) MATERIALIZED
+    arrayMap(x -> x.1,
+      arrayFilter(x -> 
+        hasAny(x.2, ['"ORIGIN"']) AND x.3 = 0, 
+        hitRulesWithMeta
+      )
+    )`,
+
+  `destinationShadowHitRuleIds Array(String) MATERIALIZED
+    arrayMap(x -> x.1, 
+      arrayFilter(x -> 
+        hasAny(x.2, ['"DESTINATION"']) AND x.3 = 1, 
+        hitRulesWithMeta
+      )
+    )`,
+
+  `destinationNonShadowHitRuleIds Array(String) MATERIALIZED
+    arrayMap(x -> x.1,
+      arrayFilter(x -> 
+        hasAny(x.2, ['"DESTINATION"']) AND x.3 = 0, 
+        hitRulesWithMeta
+      )
+    )`,
+  "ruleAction Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleAction'), JSONExtractArrayRaw(data, 'hitRules'))",
+  `derived_status String
+    MATERIALIZED
+      CASE
+        WHEN
+          length(ruleAction) > 0 AND
+          has(ruleAction, 'SUSPEND') AND
+          NOT has(ruleAction, 'BLOCK') AND
+          status IN ('ALLOW', 'BLOCK')
+        THEN concat(status, '_MANUAL')
+        ELSE status
+      END`,
+  `updateCount UInt64 MATERIALIZED JSONExtractUInt(data, 'updateCount')`,
+  `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
+  `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
+]
+
 export const CLICKHOUSE_DEFINITIONS = {
   TRANSACTIONS: {
     tableName: ClickhouseTableNames.Transactions,
@@ -243,6 +380,13 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: 'rule_stats_hourly_transactions_mv',
         table: 'rule_stats_hourly_transactions',
       },
+    },
+  },
+  TRANSACTIONS_DESC: {
+    tableName: ClickhouseTableNames.TransactionsDesc,
+    definition: {
+      idColumn: 'transactionId',
+      timestampColumn: 'timestamp',
     },
   },
   USERS: {
@@ -399,137 +543,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.idColumn,
     timestampColumn:
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.timestampColumn,
-    materializedColumns: [
-      enumFields(
-        PAYMENT_METHODS,
-        'originPaymentDetails.method',
-        'originPaymentMethod'
-      ),
-      enumFields(
-        PAYMENT_METHODS,
-        'destinationPaymentDetails.method',
-        'destinationPaymentMethod'
-      ),
-      "originUserId String MATERIALIZED JSON_VALUE(data, '$.originUserId')",
-      "destinationUserId String MATERIALIZED JSON_VALUE(data, '$.destinationUserId')",
-      enumFields(RULE_ACTIONS, 'status', 'status'),
-      "productType String MATERIALIZED JSON_VALUE(data, '$.productType')",
-      "type String MATERIALIZED JSON_VALUE(data, '$.type')",
-      "originAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
-      "destinationAmountDetails_country LowCardinality(String) MATERIALIZED JSONExtract(data, 'destinationAmountDetails', 'country', 'LowCardinality(FixedString(2))')",
-      "tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')",
-      enumFields(RISK_LEVELS, 'arsScore.riskLevel', 'arsScore_riskLevel'),
-      "arsScore_arsScore Float32 MATERIALIZED JSONExtractFloat(data, 'arsScore', 'arsScore')",
-      "ruleInstancesHit Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'hitRules'))",
-      "ruleInstancesExecuted Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'executedRules'))",
-      `nonShadowHitRules Array(String) MATERIALIZED arrayMap(
-        x -> JSONExtractString(x, 'ruleInstanceId'),
-        arrayFilter(
-          x -> JSONExtractBool(x, 'isShadow') != true,
-          JSONExtractArrayRaw(data, 'hitRules')
-        )
-      )`,
-      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-        arrayMap(x -> (
-          JSONExtractString(x, 'ruleInstanceId'),
-          JSONExtractString(x, 'ruleId')
-        ),
-        arrayFilter(
-          x -> JSONExtractBool(x, 'isShadow') != true,
-          JSONExtractArrayRaw(data, 'hitRules')
-        )
-      )`,
-      `nonShadowExecutedRules Array(String) MATERIALIZED arrayMap(
-        x -> JSONExtractString(x, 'ruleInstanceId'),
-        arrayFilter(
-          x -> JSONExtractBool(x, 'isShadow') != true,
-          JSONExtractArrayRaw(data, 'executedRules')
-        )
-      )`,
-      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-        arrayMap(x -> (
-          JSONExtractString(x, 'ruleInstanceId'),
-          JSONExtractString(x, 'ruleId')
-        ),
-        arrayFilter(
-          x -> JSONExtractBool(x, 'isShadow') != true,
-          JSONExtractArrayRaw(data, 'executedRules')
-        )
-      )`,
-      "originAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'transactionAmount')",
-      "originAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
-      "destinationAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'transactionAmount')",
-      "destinationAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'destinationAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
-      enumFields(TRANSACTION_STATES, 'transactionState', 'transactionState'),
-      "originPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.originPaymentMethodId')",
-      "destinationPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.destinationPaymentMethodId')",
-      ...generatePaymentDetailColumns('origin'),
-      ...generatePaymentDetailColumns('destination'),
-      ...generatePaymentDetailsName('origin'),
-      ...generatePaymentDetailsName('destination'),
-      "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
-      "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
-      "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",
-      `hitRulesWithMeta Array(
-        Tuple(
-          ruleInstanceId String,
-          hitDirections Array(String),
-          isShadow UInt8
-        )
-      ) MATERIALIZED 
-        arrayMap(x -> 
-          tuple(
-            JSONExtractString(x, 'ruleInstanceId'),
-            JSONExtractArrayRaw(JSONExtractRaw(x, 'ruleHitMeta'), 'hitDirections'),
-            JSONExtractBool(x, 'isShadow')
-          ),
-          JSONExtractArrayRaw(data, 'hitRules')
-        )`,
-
-      `originShadowHitRuleIds Array(String) MATERIALIZED
-        arrayMap(x -> x.1, 
-          arrayFilter(x -> 
-            hasAny(x.2, ['"ORIGIN"']) AND x.3 = 1, 
-            hitRulesWithMeta
-          )
-        )`,
-
-      `originNonShadowHitRuleIds Array(String) MATERIALIZED
-        arrayMap(x -> x.1,
-          arrayFilter(x -> 
-            hasAny(x.2, ['"ORIGIN"']) AND x.3 = 0, 
-            hitRulesWithMeta
-          )
-        )`,
-
-      `destinationShadowHitRuleIds Array(String) MATERIALIZED
-        arrayMap(x -> x.1, 
-          arrayFilter(x -> 
-            hasAny(x.2, ['"DESTINATION"']) AND x.3 = 1, 
-            hitRulesWithMeta
-          )
-        )`,
-
-      `destinationNonShadowHitRuleIds Array(String) MATERIALIZED
-        arrayMap(x -> x.1,
-          arrayFilter(x -> 
-            hasAny(x.2, ['"DESTINATION"']) AND x.3 = 0, 
-            hitRulesWithMeta
-          )
-        )`,
-      "ruleAction Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleAction'), JSONExtractArrayRaw(data, 'hitRules'))",
-      `derived_status String
-        MATERIALIZED
-          CASE
-            WHEN
-              length(ruleAction) > 0 AND
-              has(ruleAction, 'SUSPEND') AND
-              NOT has(ruleAction, 'BLOCK') AND
-              status IN ('ALLOW', 'BLOCK')
-            THEN concat(status, '_MANUAL')
-            ELSE status
-          END`,
-    ],
+    materializedColumns: [...sharedTransactionMaterializedColumns],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
     orderBy: '(timestamp, originUserId, destinationUserId, id)',
@@ -607,6 +621,23 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         ),
       },
     ],
+    optimize: true,
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName,
+    idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.definition.idColumn,
+    timestampColumn:
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.definition.timestampColumn,
+    materializedColumns: [
+      ...sharedTransactionMaterializedColumns,
+      `negative_timestamp Int64 MATERIALIZED -1*timestamp`,
+    ],
+    engine: 'ReplacingMergeTree',
+    versionColumn: 'updateCount',
+    primaryKey: '(negative_timestamp, originUserId, destinationUserId, id)',
+    orderBy: '(negative_timestamp, originUserId, destinationUserId, id)',
+    partitionBy: 'toYYYYMM(toDateTime(timestamp / 1000))',
+    mongoIdColumn: true,
     optimize: true,
   },
   {

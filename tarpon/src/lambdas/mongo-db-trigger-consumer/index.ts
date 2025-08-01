@@ -291,6 +291,12 @@ export class MongoDbConsumer {
     const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE ${filterConditions}`
     const client = await getClickhouseClient(tenantId)
     await client.query({ query })
+
+    // For transactions, also delete from transactions_desc table
+    if (tableName === 'transactions') {
+      const descQuery = `ALTER TABLE transactions_desc UPDATE is_deleted = 1 WHERE ${filterConditions}`
+      await client.query({ query: descQuery })
+    }
   }
 
   public segregateMessages(records: MongoConsumerMessage[]): {
