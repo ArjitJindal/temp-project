@@ -101,7 +101,6 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
               return;
             }
           }}
-          setUploading={setUploading}
         />
       </Modal>
     );
