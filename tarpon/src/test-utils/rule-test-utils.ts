@@ -591,6 +591,7 @@ export function testAggregationRebuild(
           tenantId,
           {
             transaction: lastTransaction,
+            stage: 'INITIAL',
           },
           { parameters: rule.defaultParameters, filters: ruleInstance.filters },
           { ruleInstance, rule },

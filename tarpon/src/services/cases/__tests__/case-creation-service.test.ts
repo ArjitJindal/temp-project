@@ -1192,6 +1192,7 @@ describe('Screening user rules', () => {
         screeningFields: ['NAME'],
         screeningTypes: ['SANCTIONS'],
         fuzziness: 50,
+        ruleStages: ['INITIAL', 'UPDATE'],
       },
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',

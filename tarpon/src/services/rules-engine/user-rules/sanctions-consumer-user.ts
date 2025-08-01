@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import {
   FUZZINESS_SCHEMA,
-  RULE_STAGE_SCHEMA,
+  USER_RULE_STAGE_SCHEMA,
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
@@ -11,13 +11,13 @@ import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
-import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { hasFeature } from '@/core/utils/context'
 
 export type SanctionsConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
-  ruleStages: RuleStage[]
+  ruleStages: UserRuleStage[]
 }
 
 export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsumerUserRuleParameters> {
@@ -31,7 +31,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
           },
         }),
         fuzziness: FUZZINESS_SCHEMA(),
-        ruleStages: RULE_STAGE_SCHEMA({
+        ruleStages: USER_RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),

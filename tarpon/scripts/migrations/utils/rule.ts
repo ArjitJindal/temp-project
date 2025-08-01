@@ -27,7 +27,7 @@ function isRule(rule: Rule | RuleInstance) {
 }
 
 export async function getRulesById(): Promise<{ [key: string]: Rule }> {
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
   const rules = await ruleRepository.getAllRules()
   return keyBy(rules, 'id')
@@ -133,6 +133,93 @@ async function renameRuleParameterPrivate(
         await (ruleRepository as RuleRepository).createOrUpdateRule(
           rule as Rule
         )
+      }
+    }
+  }
+}
+
+export async function addRuleParameter(
+  ruleImplementationNames: string[],
+  parameterPath: string,
+  parameterValue: any
+) {
+  await addRuleParameterPrivate(
+    ruleImplementationNames,
+    parameterPath,
+    parameterValue
+  )
+  await migrateAllTenants((tenant) =>
+    addRuleParameterPrivate(
+      ruleImplementationNames,
+      parameterPath,
+      parameterValue,
+      tenant.id
+    )
+  )
+}
+
+async function addRuleParameterPrivate(
+  ruleImplementationNames: string[] | undefined,
+  parameterPath: string,
+  parameterValue: any,
+  tenantId?: string
+) {
+  const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
+  const ruleRepository = tenantId
+    ? new RuleInstanceRepository(tenantId, { dynamoDb })
+    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb, mongoDb })
+
+  if (tenantId) {
+    // Handle rule instances for specific tenant
+    const ruleInstances = await (
+      ruleRepository as RuleInstanceRepository
+    ).getAllRuleInstances()
+    for (const ruleInstance of ruleInstances) {
+      const parameters = ruleInstance.parameters
+      set(parameters, parameterPath, parameterValue)
+      await (
+        ruleRepository as RuleInstanceRepository
+      ).createOrUpdateRuleInstance(ruleInstance)
+      console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+
+      const riskParameters = ruleInstance.riskLevelParameters
+      for (const risk in riskParameters || {}) {
+        set((riskParameters as any)?.[risk], parameterPath, parameterValue)
+      }
+    }
+  } else {
+    // Handle rules for FLAGRIGHT_TENANT_ID
+    const rules = await (ruleRepository as RuleRepository).getAllRules()
+    for (const rule of rules) {
+      if (
+        ruleImplementationNames &&
+        !ruleImplementationNames.includes(rule.ruleImplementationName ?? '')
+      ) {
+        continue
+      }
+      const parameters = (rule as Rule).defaultParameters
+      set(parameters, parameterPath, parameterValue)
+      await (ruleRepository as RuleRepository).createOrUpdateRule(rule)
+      console.info(`Updated 'rule' ${rule.id}`)
+
+      const ruleInstanceRepository = new RuleInstanceRepository(
+        FLAGRIGHT_TENANT_ID,
+        { dynamoDb }
+      )
+      const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+      for (const ruleInstance of ruleInstances) {
+        if (ruleInstance.ruleId === rule.id) {
+          const parameters = ruleInstance.parameters
+          set(parameters, parameterPath, parameterValue)
+          await ruleInstanceRepository.createOrUpdateRuleInstance(ruleInstance)
+          console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+        }
+
+        const riskParameters = ruleInstance.riskLevelParameters
+        for (const risk in riskParameters || {}) {
+          set((riskParameters as any)?.[risk], parameterPath, parameterValue)
+        }
       }
     }
   }

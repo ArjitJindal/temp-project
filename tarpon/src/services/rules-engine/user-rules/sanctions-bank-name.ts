@@ -9,7 +9,7 @@ import {
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
-  RULE_STAGE_SCHEMA,
+  USER_RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   GENERIC_SCREENING_VALUES_SCHEMA,
@@ -31,7 +31,7 @@ import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { Address } from '@/@types/openapi-public/Address'
 
@@ -41,7 +41,7 @@ type BankInfo = { bankName?: string; iban?: string; address?: Address }
 
 export type SanctionsBankUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
-  ruleStages: RuleStage[]
+  ruleStages: UserRuleStage[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   screeningProfileId: string
@@ -61,7 +61,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         fuzziness: FUZZINESS_SCHEMA(),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
-        ruleStages: RULE_STAGE_SCHEMA({
+        ruleStages: USER_RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),

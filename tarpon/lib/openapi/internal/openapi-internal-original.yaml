@@ -9358,13 +9358,19 @@ components:
         - WEEK
         - MONTH
         - YEAR
-    RuleStage:
-      title: RuleStage
+    UserRuleStage:
+      title: UserRuleStage
       type: string
       enum:
         - INITIAL
         - UPDATE
         - ONGOING
+    TransactionRuleStage:
+      title: TransactionRuleStage
+      type: string
+      enum:
+        - INITIAL
+        - UPDATE
     RuleInstanceStatus:
       title: RuleInstanceStatus
       type: string

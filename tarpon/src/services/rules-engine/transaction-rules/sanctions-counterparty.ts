@@ -12,6 +12,10 @@ export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
       return hitRules
     }
 
+    if (!this.parameters.ruleStages.includes(this.stage)) {
+      return hitRules
+    }
+
     const isThresholdHit = this.parameters?.transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
           this.transaction.originAmountDetails,

@@ -13,7 +13,7 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { hasFeature } from '@/core/utils/context'
 import { getUsersFilterByRiskLevel } from '@/services/users/utils/user-utils'
-import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 
 export interface UserVars<P> extends Vars {
   user: User | Business
@@ -31,7 +31,7 @@ export abstract class UserOngoingRule<P> extends Rule {
   dynamoDb: DynamoDBDocumentClient
   ruleInstance: RuleInstance
   rule: RuleModel
-  stage: RuleStage
+  stage: UserRuleStage
   riskLevelParameters: Record<RiskLevel, P>
   riskRepository: RiskRepository
   from?: string
@@ -45,7 +45,7 @@ export abstract class UserOngoingRule<P> extends Rule {
     services: { riskRepository: RiskRepository },
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient,
-    stage: RuleStage
+    stage: UserRuleStage
   ) {
     super()
     this.tenantId = tenantId
@@ -124,13 +124,13 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   ruleInstance: RuleInstance
   rule: RuleModel
   sanctionsService: SanctionsService
-  stage: RuleStage
+  stage: UserRuleStage
 
   constructor(
     tenantId: string,
     data: {
       user: User | Business
-      stage: RuleStage
+      stage: UserRuleStage
     },
     params: {
       parameters: P

@@ -110,6 +110,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           },
           fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
           screeningProfileId: 'default',
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
