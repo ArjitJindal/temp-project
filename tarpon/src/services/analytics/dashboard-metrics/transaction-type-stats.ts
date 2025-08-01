@@ -16,6 +16,8 @@ import {
   isClickhouseEnabled,
 } from '@/utils/clickhouse/utils'
 import { traceable } from '@/core/xray'
+import { logger } from '@/core/logger'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 async function createIndexes(tenantId: string) {
   const db = await getMongoDbClientDb()
@@ -44,6 +46,87 @@ export class TransactionsTypeDistributionDashboardMetric {
     startTimestamp: number,
     endTimestamp: number
   ): Promise<DashboardStatsTransactionTypeDistribution> {
+    try {
+      return await this.clickhouseDataOptimized(
+        tenantId,
+        startTimestamp,
+        endTimestamp
+      )
+    } catch (error) {
+      logger.warn(
+        'Optimized query failed, falling back to ReplacingMergeTree approach:',
+        error
+      )
+      return await this.clickhouseDataWithDeduplication(
+        tenantId,
+        startTimestamp,
+        endTimestamp
+      )
+    }
+  }
+
+  public static async clickhouseDataOptimized(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsTransactionTypeDistribution> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+
+    const daysDiff = (endTimestamp - startTimestamp) / (1000 * 60 * 60 * 24)
+
+    let query: string
+    if (daysDiff < 31) {
+      logger.debug(
+        `Small dataset expected (${daysDiff} days), using exact counting`
+      )
+      query = `
+        SELECT 
+          type,
+          uniqExact(id) as count
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE.table}
+        WHERE timestamp >= ${startTimestamp} 
+          AND timestamp <= ${endTimestamp}
+        GROUP BY type
+      `
+    } else {
+      // Large dataset: Use daily uniqState for efficiency
+      logger.debug(
+        `Large dataset expected (${daysDiff} days), using daily uniqState`
+      )
+      query = `
+        SELECT 
+          type,
+          uniqMerge(unique_transactions) as count
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE_DAILY.table}
+        WHERE day >= toDate(toDateTime(${startTimestamp} / 1000))
+          AND day <= toDate(toDateTime(${endTimestamp} / 1000))
+        GROUP BY type
+      `
+    }
+
+    const queryResult = await executeClickhouseQuery<
+      { type: string; count: number }[]
+    >(clickhouseClient, {
+      query,
+      format: 'JSONEachRow',
+      clickhouse_settings: {
+        output_format_json_quote_64bit_integers: 1,
+      },
+    })
+
+    return {
+      data: queryResult.map(({ type, count }) => ({
+        type,
+        count,
+      })),
+    }
+  }
+
+  public static async clickhouseDataWithDeduplication(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number
+  ): Promise<DashboardStatsTransactionTypeDistribution> {
     const clickhouseClient = await getClickhouseClient(tenantId)
 
     const queryResult = await executeClickhouseQuery<
@@ -52,9 +135,10 @@ export class TransactionsTypeDistributionDashboardMetric {
       query: `
         SELECT 
           type,
-          COUNT() as count
-        FROM transactions FINAL
-        WHERE timestamp >= ${startTimestamp} AND timestamp <= ${endTimestamp} AND timestamp != 0
+          uniqExact(id) as count
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+        WHERE timestamp >= ${startTimestamp} 
+          AND timestamp <= ${endTimestamp}
         GROUP BY type
         `,
       format: 'JSONEachRow',

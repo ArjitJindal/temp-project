@@ -380,6 +380,14 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: 'rule_stats_hourly_transactions_mv',
         table: 'rule_stats_hourly_transactions',
       },
+      BY_TYPE: {
+        viewName: 'transactions_by_type_mv',
+        table: 'transactions_by_type',
+      },
+      BY_TYPE_DAILY: {
+        viewName: 'transactions_by_type_daily_mv',
+        table: 'transactions_by_type_daily',
+      },
     },
   },
   TRANSACTIONS_DESC: {
@@ -544,6 +552,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     timestampColumn:
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.timestampColumn,
     materializedColumns: [...sharedTransactionMaterializedColumns],
+
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
     orderBy: '(timestamp, originUserId, destinationUserId, id)',
@@ -619,6 +628,56 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         query: ruleStatsTransactionsMVQuery(
           'toStartOfHour(toDateTime(timestamp / 1000))'
         ),
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE
+            .viewName,
+        columns: [
+          'id String',
+          'type String',
+          'timestamp UInt64',
+          'negative_timestamp Int64',
+        ],
+        engine: 'ReplacingMergeTree',
+        primaryKey: '(type, negative_timestamp, id)',
+        orderBy: '(type, negative_timestamp, id)',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE.table,
+        query: `
+          SELECT 
+            id,
+            type,
+            timestamp,
+            -1*timestamp as negative_timestamp
+          FROM transactions
+          WHERE timestamp != 0 AND updateCount = 1
+        `,
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE_DAILY
+            .viewName,
+        columns: [
+          'day Date',
+          'type String',
+          'unique_transactions AggregateFunction(uniq, String)',
+        ],
+        engine: 'AggregatingMergeTree',
+        primaryKey: '(day, type)',
+        orderBy: '(day, type)',
+        table:
+          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_TYPE_DAILY
+            .table,
+        query: `
+          SELECT 
+            toDate(toDateTime(timestamp / 1000)) as day,
+            type,
+            uniqState(id) as unique_transactions
+          FROM transactions
+          WHERE timestamp != 0 AND updateCount = 1
+          GROUP BY day, type
+        `,
       },
     ],
     optimize: true,
