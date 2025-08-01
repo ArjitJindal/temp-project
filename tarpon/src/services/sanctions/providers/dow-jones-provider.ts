@@ -10,26 +10,49 @@ import { compact, intersection, replace, uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
+import { adverseMediaCategoryMap } from '@flagright/lib/utils/screening'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  getSanctionsSourceDocumentsCollectionName,
+  normalizeSource,
+} from '../utils'
+import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
+import {
+  apiEndpoint,
+  PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE,
+  NATIONALITY_COUNTRY_TYPE,
+  ADVERSE_MEDIA_DESCRIPTION3_VALUES,
+  PERSON_ADVERSE_MEDIA_DESCRIPTION2_IDS,
+  ENTITY_ADVERSE_MEDIA_DESCRIPTION2_IDS,
+  ADVERSE_MEDIA_ID_TO_DESCRIPTION_MAP,
+  FLOATING_CATEGORIES_DESCRIPTION_VALUES,
+  NON_BUSINESS_CATEGORIES_DESCRIPTION_VALUES,
+  LEVEL_TIER_MAP,
+  ENTITY_SANCTIONS_DESCRIPTION2_VALUES,
+  BANK_DESCRIPTION3_VALUES,
+  ENTITY_ADVERSE_MEDIA_DESCRIPTION2_VALUES,
+  RELATIONSHIP_CODE_TO_NAME,
+  SANCTIONS_CATEGORY_MAP,
+  PERSON_SANCTIONS_DESCRIPTION2_VALUES,
+} from '../dow-jones-constants'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   Action,
   SanctionsProviderResponse,
   SanctionsRepository,
+  SanctionsSourceRepository,
 } from '@/services/sanctions/providers/types'
 import { logger } from '@/core/logger'
 import dayjs, { convertDateFormat } from '@/utils/dayjs'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { removeUndefinedFields } from '@/utils/object'
+import { removeUndefinedFields, generateHashFromString } from '@/utils/object'
 import { DOW_JONES_COUNTRIES } from '@/services/sanctions/providers/dow-jones-countries'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
-import { PepRank } from '@/@types/openapi-internal/PepRank'
-import { OccupationCode } from '@/@types/openapi-internal/OccupationCode'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { traceable } from '@/core/xray'
@@ -38,153 +61,8 @@ import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesS
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 import { tenantSettings } from '@/core/utils/context'
-
-// Define the API endpoint
-const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
-
-const PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE: Record<
-  string,
-  {
-    rank: PepRank
-    occupationCode: OccupationCode
-  }
-> = {
-  16: {
-    rank: 'LEVEL_1',
-    occupationCode: 'political_party_officials',
-  },
-  1: {
-    rank: 'LEVEL_1',
-    occupationCode: 'heads_and_deputies_state_national_government',
-  },
-  2: {
-    rank: 'LEVEL_1',
-    occupationCode: 'national_government_ministers',
-  },
-  3: {
-    rank: 'LEVEL_1',
-    occupationCode: 'members_of_the_national_legislature',
-  },
-  4: {
-    rank: 'LEVEL_1',
-    occupationCode: 'senior_civil_servants_national_government',
-  },
-  5: {
-    rank: 'LEVEL_1',
-    occupationCode: 'senior_civil_servants_regional_government',
-  },
-  7: {
-    rank: 'LEVEL_1',
-    occupationCode: 'senior_members_of_the_armed_forces',
-  },
-  9: {
-    rank: 'LEVEL_1',
-    occupationCode: 'senior_members_of_the_secret_services',
-  },
-  10: {
-    rank: 'LEVEL_1',
-    occupationCode: 'senior_members_of_the_judiciary',
-  },
-  18: {
-    rank: 'LEVEL_1',
-    occupationCode: 'city_mayors',
-  },
-  22: {
-    rank: 'LEVEL_1',
-    occupationCode: 'local_public_officials',
-  },
-  12: {
-    rank: 'LEVEL_1',
-    occupationCode: 'state_agency_officials',
-  },
-  13: {
-    rank: 'LEVEL_1',
-    occupationCode: 'heads_and_deputy_heads_regional_government',
-  },
-  14: {
-    rank: 'LEVEL_1',
-    occupationCode: 'regional_government_ministers',
-  },
-  11: {
-    rank: 'LEVEL_2',
-    occupationCode: 'state_corporation_executives',
-  },
-  6: {
-    rank: 'LEVEL_2',
-    occupationCode: 'embassy_consular_staff',
-  },
-  15: {
-    rank: 'LEVEL_2',
-    occupationCode: 'religious_leaders',
-  },
-  17: {
-    rank: 'LEVEL_2',
-    occupationCode: 'international_organisation_officials',
-  },
-  19: {
-    rank: 'LEVEL_2',
-    occupationCode: 'political_pressure_labour_group_officials',
-  },
-  26: {
-    rank: 'LEVEL_2',
-    occupationCode: 'international_sporting_organisation_officials',
-  },
-  20: {
-    rank: 'LEVEL_3',
-    occupationCode: 'other',
-  },
-}
-
-const NATIONALITY_COUNTRY_TYPE = [
-  'Citizenship',
-  'Resident of',
-  'Country of Registration',
-  'Jurisdiction',
-]
-
-export const RELATIONSHIP_CODE_TO_NAME: Record<string | number, string> = {}
-
-const ADVERSE_MEDIA_DESCRIPTION3_VALUES = [
-  '7',
-  '8',
-  '9',
-  '10',
-  '31',
-  '39',
-  '21',
-  '40',
-  '2',
-  '25',
-  '11',
-  '6',
-]
-
-const FLOATING_CATEGORIES_DESCRIPTION_VALUES = [
-  '12',
-  '13',
-  '14',
-  '15',
-  '17',
-  '22',
-]
-
-const NON_BUSINESS_CATEGORIES_DESCRIPTION_VALUES = [
-  '1',
-  '10',
-  '3',
-  '12',
-  '9',
-  '18',
-  '49',
-  '47',
-  '50',
-]
-
-const ENTITY_SANCTIONS_DESCRIPTION2_VALUES = ['3', '4', '34']
-
-const BANK_DESCRIPTION3_VALUES = ['3', '12']
-
-const ENTITY_ADVERSE_MEDIA_DESCRIPTION2_VALUES = ['27', '28', '29', '30']
+import { DowJonesAdverseMediaSourceRelevance } from '@/@types/openapi-internal/DowJonesAdverseMediaSourceRelevance'
+import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 
 // Define the XML parser
 export const parser = new XMLParser({
@@ -222,6 +100,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   authHeader: string
   private screeningTypes: DowJonesSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
+  private sanctionsSourceToEntityCountPerson: Map<string, number> = new Map()
+  private sanctionsSourceToEntityCountBusiness: Map<string, number> = new Map()
+  private pepSourceToEntityCountPerson: Map<string, number> = new Map()
+  private sourceNameToHash: Map<string, string> = new Map()
 
   static async build(
     tenantId: string,
@@ -269,6 +151,91 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     this.entityTypes = entityTypes
   }
 
+  private async saveSourceMapsToCollection(
+    repo: SanctionsSourceRepository,
+    version: string
+  ) {
+    const sourceDocuments: [Action, SourceDocument][] = []
+
+    // Process sanctions sources for persons
+    for (const [
+      displayName,
+      count,
+    ] of this.sanctionsSourceToEntityCountPerson.entries()) {
+      const sourceName = normalizeSource(displayName)
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds: [], // Keep empty as requested
+          entityCount: count,
+          entityType: 'PERSON',
+          sourceType: 'SANCTIONS',
+          sourceCountry: undefined,
+          displayName: displayName,
+          id: this.sourceNameToHash.get(sourceName),
+        },
+      ])
+    }
+
+    // Process sanctions sources for businesses
+    for (const [
+      displayName,
+      count,
+    ] of this.sanctionsSourceToEntityCountBusiness.entries()) {
+      const sourceName = normalizeSource(displayName)
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds: [], // Keep empty as requested
+          entityCount: count,
+          entityType: 'BUSINESS',
+          sourceType: 'SANCTIONS',
+          sourceCountry: undefined,
+          displayName: displayName,
+          id: this.sourceNameToHash.get(sourceName),
+        },
+      ])
+    }
+
+    // Process PEP sources
+    for (const [
+      displayName,
+      count,
+    ] of this.pepSourceToEntityCountPerson.entries()) {
+      const sourceName = normalizeSource(displayName)
+      sourceDocuments.push([
+        'add',
+        {
+          sourceName,
+          entityIds: [], // Keep empty as requested
+          entityCount: count,
+          entityType: 'PERSON',
+          sourceType: 'PEP',
+          displayName: displayName,
+          id: this.sourceNameToHash.get(sourceName),
+        },
+      ])
+    }
+
+    // Save all documents at once (since we know there won't be more than 4000)
+    if (sourceDocuments.length > 0) {
+      await repo.save(
+        SanctionsDataProviders.DOW_JONES,
+        sourceDocuments,
+        version
+      )
+      logger.info(
+        `Saved ${sourceDocuments.length} source documents to collection`
+      )
+    }
+
+    this.sanctionsSourceToEntityCountPerson.clear()
+    this.sanctionsSourceToEntityCountBusiness.clear()
+    this.pepSourceToEntityCountPerson.clear()
+  }
+
   async fullLoad(repo: SanctionsRepository, version: string) {
     const filePaths = (await this.getFilePaths()).sort()
     const indexOfLatestFullLoadFile = filePaths
@@ -279,15 +246,34 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       .slice(indexOfLatestFullLoadFile)
       .filter((fp) => fp.includes('_f_splits.zip') || fp.includes('_d.zip'))
 
+    const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
+      this.mongoDb,
+      getSanctionsSourceDocumentsCollectionName(
+        [SanctionsDataProviders.DOW_JONES],
+        this.tenantId
+      )
+    )
+
     for (const file of filesFromFullLoad) {
       const outputDir = await this.downloadZip(file)
       const isSplit = file.includes('_f_splits.zip')
       if (isSplit) {
-        await this.processSplitArchive(repo, version, outputDir)
+        await this.processSplitArchive(
+          repo,
+          sourceDocumentsRepo,
+          version,
+          outputDir
+        )
       } else {
-        await this.processSingleFile(repo, version, outputDir)
+        await this.processSingleFile(
+          repo,
+          sourceDocumentsRepo,
+          version,
+          outputDir
+        )
       }
     }
+    await this.saveSourceMapsToCollection(sourceDocumentsRepo, version)
   }
 
   async delta(repo: SanctionsRepository, version: string, from: Date) {
@@ -301,10 +287,23 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       )
     })
 
+    const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
+      this.mongoDb,
+      getSanctionsSourceDocumentsCollectionName(
+        [SanctionsDataProviders.DOW_JONES],
+        this.tenantId
+      )
+    )
     for (const file of filteredFiles) {
       const outputDir = await this.downloadZip(file)
-      await this.processSingleFile(repo, version, outputDir)
+      await this.processSingleFile(
+        repo,
+        sourceDocumentsRepo,
+        version,
+        outputDir
+      )
     }
+    await this.saveSourceMapsToCollection(sourceDocumentsRepo, version)
   }
   // Function to get the list of file paths
   async getFilePaths(): Promise<string[]> {
@@ -357,6 +356,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
   async processSplitArchive(
     repo: SanctionsRepository,
+    sourceDocumentsRepo: SanctionsSourceRepository,
     version: string,
     rootDir: string
   ) {
@@ -391,7 +391,13 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     for (const peopleFile of files) {
       const xml = this.readFile(peopleFile)
       logger.info(`Processing ${peopleFile}`)
-      await this.fileToEntities(repo, version, xml, masterContext)
+      await this.fileToEntities(
+        repo,
+        sourceDocumentsRepo,
+        version,
+        xml,
+        masterContext
+      )
     }
     const associationFiles = (
       await Promise.all([
@@ -403,12 +409,18 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       const xml = this.readFile(associationFile)
       const jsonObj = parser.parse(xml)
       logger.info(`Processing ${associationFile}`)
-      await this.processAssociations(repo, version, jsonObj.PFA)
+      await this.processAssociations(
+        repo,
+        sourceDocumentsRepo,
+        version,
+        jsonObj.PFA
+      )
     }
   }
 
   async processSingleFile(
     repo: SanctionsRepository,
+    sourceDocumentsRepo: SanctionsSourceRepository,
     version: string,
     filepath: string
   ) {
@@ -449,14 +461,25 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         }, {})
 
         this.checkContext(contextItems)
-        await this.fileToEntities(repo, version, xml, contextItems)
+        await this.fileToEntities(
+          repo,
+          sourceDocumentsRepo,
+          version,
+          xml,
+          contextItems
+        )
       })
     )
     await Promise.all(
       peopleFiles.map(async (peopleFile) => {
         const xml = this.readFile(peopleFile)
         const jsonObj = parser.parse(xml)
-        await this.processAssociations(repo, version, jsonObj.PFA.Associations)
+        await this.processAssociations(
+          repo,
+          sourceDocumentsRepo,
+          version,
+          jsonObj.PFA.Associations
+        )
       })
     )
   }
@@ -508,6 +531,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   private async processAssociations(
     repo: SanctionsRepository,
+    sourceDocumentsRepo: SanctionsSourceRepository,
     version: string,
     root: any
   ) {
@@ -521,6 +545,14 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         })),
       ]
     })
+    const displayName = LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS
+    for (const _association of associations) {
+      const currentCount =
+        this.pepSourceToEntityCountPerson.get(displayName) || 0
+      this.pepSourceToEntityCountPerson.set(displayName, currentCount + 1)
+    }
+    const sourceName = normalizeSource(displayName)
+    this.sourceNameToHash.set(sourceName, generateHashFromString(sourceName))
     if (associations.length) {
       await repo.saveAssociations(this.provider(), associations, version)
     }
@@ -528,6 +560,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   async fileToEntities(
     repo: SanctionsRepository,
+    sourceDocumentsRepo: SanctionsSourceRepository,
     version: string,
     xml: string,
     masters: any
@@ -548,7 +581,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       ...this.peopleToSanctionEntity(people, masters),
       ...this.entitiesToSanctionEntity(entities, masters),
     ]
-
     if (updates.length) {
       await repo.save(this.provider(), updates, version)
     }
@@ -618,7 +650,11 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       pepRcaMatchTypes.push('RCA')
     }
     if (descriptionValues?.includes('3')) {
-      if (description2Values?.includes('1')) {
+      if (
+        PERSON_SANCTIONS_DESCRIPTION2_VALUES.some((val) =>
+          description2Values?.includes(val)
+        )
+      ) {
         sanctionSearchTypes.push('SANCTIONS')
       }
       if (
@@ -631,7 +667,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     }
     if (descriptionValues?.includes('4')) {
       if (
-        ['3', '4'].some((val) => description2Values?.includes(val)) &&
+        ENTITY_SANCTIONS_DESCRIPTION2_VALUES.some((val) =>
+          description2Values?.includes(val)
+        ) &&
         (!sanctionsReferences || sanctionsReferences.length > 0)
       ) {
         sanctionSearchTypes.push('SANCTIONS')
@@ -905,7 +943,37 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             person,
             sanctionsReferencesList
           )
+        const sanctionsSources: SanctionsSource[] = []
+        const pepSources: SanctionsSource[] = []
+        const mediaSources: SanctionsSource[] = []
 
+        for (const sanctionSearchType of sanctionSearchTypes) {
+          if (sanctionSearchType === 'ADVERSE_MEDIA') {
+            const adverseMediaTypes = this.getAdverseMediaForPerson(person)
+            for (const adverseMediaType of adverseMediaTypes) {
+              const category = adverseMediaCategoryMap[adverseMediaType]
+              if (category) {
+                mediaSources.push({
+                  category: category,
+                  createdAt: Date.now(),
+                  internalId: generateHashFromString(category),
+                })
+              }
+            }
+          }
+          if (sanctionSearchType === 'SANCTIONS') {
+            const newSanctionsSources = this.getSanctionsSources(
+              person.SanctionsReferences,
+              sanctionsReferencesList,
+              PERSON_SANCTIONS_DESCRIPTION2_VALUES
+            )
+            sanctionsSources.push(...newSanctionsSources)
+          }
+          if (sanctionSearchType === 'PEP') {
+            const newPepSources = this.getPepSources(occupations)
+            pepSources.push(...newPepSources)
+          }
+        }
         const entity: SanctionsEntity = {
           id: person['@_id'],
           name: normalizedName,
@@ -931,10 +999,14 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           screeningSources: this.getSourceDescriptions(
             person.SourceDescription
           ),
+          sanctionsSources,
+          mediaSources,
+          pepSources,
           gender: person.Gender,
           dateMatched: true,
           aka,
           normalizedAka,
+          rawResponse: person,
           countries,
           nationality: countryOfNationality,
           countryCodes,
@@ -955,6 +1027,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           isActivePep,
           isActiveSanctioned: this.isActiveSanctioned(
             person.SanctionsReferences
+          ),
+          aggregatedSourceIds: compact(
+            uniq([
+              ...sanctionsSources
+                .filter((s) => s.sourceName && s.category)
+                .map((s) => `${s.internalId}-${s.category}`),
+              ...pepSources
+                .filter((s) => s.sourceName && s.category === 'PEP')
+                .map((s) => `${s.internalId}-PEP`),
+              ...mediaSources.map((s) => s.category),
+            ])
           ),
         }
 
@@ -1152,6 +1235,32 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             n.toLowerCase()
           )
         )
+
+        const sanctionsSources: SanctionsSource[] = []
+        const mediaSources: SanctionsSource[] = []
+
+        for (const sanctionSearchType of sanctionSearchTypes) {
+          if (sanctionSearchType === 'ADVERSE_MEDIA') {
+            const adverseMediaTypes = this.getAdverseMediaForEntity(entity)
+            for (const adverseMediaType of adverseMediaTypes) {
+              const category = adverseMediaCategoryMap[adverseMediaType]
+              mediaSources.push({
+                category: category,
+                createdAt: Date.now(),
+                internalId: generateHashFromString(category),
+              })
+            }
+          }
+          if (sanctionSearchType === 'SANCTIONS') {
+            const newSanctionsSources = this.getSanctionsSources(
+              entity.SanctionsReferences,
+              masters.SanctionsReferencesList,
+              ENTITY_SANCTIONS_DESCRIPTION2_VALUES
+            )
+            sanctionsSources.push(...newSanctionsSources)
+          }
+        }
+
         const sanctionsEntity: SanctionsEntity = {
           id: entity['@_id'],
           name: normalizedName,
@@ -1183,6 +1292,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           ),
           isActiveSanctioned: this.isActiveSanctioned(
             entity.SanctionsReferences
+          ),
+          sanctionsSources,
+          mediaSources,
+          rawResponse: entity,
+          aggregatedSourceIds: compact(
+            uniq([
+              ...sanctionsSources
+                .filter((s) => s.sourceName && s.category)
+                .map((s) => `${s.internalId}-${s.category}`),
+              ...mediaSources.map((s) => s.category),
+            ])
           ),
         }
 
@@ -1231,6 +1351,164 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       name = nameValue[SINGLE_STRING_NAME]
     }
     return name
+  }
+  private getAdverseMedia(
+    item: any,
+    description1Id: string,
+    adverseMediaIds: string[]
+  ): DowJonesAdverseMediaSourceRelevance[] {
+    const descriptions = this.getDescriptions(item)
+    const description1Values = descriptions
+      ?.map((d) => d['@_Description1'])
+      .filter(Boolean)
+
+    if (!description1Values?.includes(description1Id)) {
+      return []
+    }
+
+    const description2Values = descriptions
+      ?.map((d) => d['@_Description2'])
+      .filter(Boolean)
+
+    const matchingDescriptions: DowJonesAdverseMediaSourceRelevance[] = []
+    for (const description2Value of description2Values || []) {
+      if (adverseMediaIds.includes(description2Value)) {
+        const description =
+          ADVERSE_MEDIA_ID_TO_DESCRIPTION_MAP[description2Value]
+        if (description) {
+          matchingDescriptions.push(description)
+        }
+      }
+    }
+
+    return matchingDescriptions
+  }
+
+  private getAdverseMediaForPerson(
+    person: any
+  ): DowJonesAdverseMediaSourceRelevance[] {
+    return this.getAdverseMedia(
+      person,
+      '3', // SIP
+      PERSON_ADVERSE_MEDIA_DESCRIPTION2_IDS
+    )
+  }
+
+  private getAdverseMediaForEntity(
+    entity: any
+  ): DowJonesAdverseMediaSourceRelevance[] {
+    return this.getAdverseMedia(
+      entity,
+      '4', // SIE
+      ENTITY_ADVERSE_MEDIA_DESCRIPTION2_IDS
+    )
+  }
+
+  private getSanctionsSources(
+    sanctionsReferences,
+    sanctionsReferencesList,
+    description2Ids
+  ): SanctionsSource[] {
+    if (!sanctionsReferences || !sanctionsReferencesList) {
+      return []
+    }
+
+    return compact(
+      sanctionsReferences.flatMap((sanctionRef) => {
+        const references = Array.isArray(sanctionRef.Reference)
+          ? sanctionRef.Reference
+          : [sanctionRef.Reference]
+
+        return references.map((ref) => {
+          const referenceCode = ref['#text']
+          const referenceInfo = sanctionsReferencesList[referenceCode]
+
+          if (!referenceInfo) {
+            return undefined
+          }
+          const description2Value = referenceInfo['@_Description2Id']
+          if (!description2Ids.includes(description2Value)) {
+            return undefined
+          }
+          const name = referenceInfo['@_name']
+          const category =
+            SANCTIONS_CATEGORY_MAP[referenceInfo['@_status'].toLowerCase()]
+          const normalisedSourceName = name ? normalizeSource(name) : undefined
+          let internalId: string | undefined
+          if (normalisedSourceName) {
+            const hash = generateHashFromString(normalisedSourceName)
+            this.sourceNameToHash.set(normalisedSourceName, hash)
+            internalId = hash
+          }
+          if (name) {
+            if (
+              PERSON_SANCTIONS_DESCRIPTION2_VALUES.some((d) =>
+                description2Ids.includes(d)
+              )
+            ) {
+              const currentCount =
+                this.sanctionsSourceToEntityCountPerson.get(name) || 0
+              this.sanctionsSourceToEntityCountPerson.set(
+                name,
+                currentCount + 1
+              )
+            }
+            if (
+              ENTITY_SANCTIONS_DESCRIPTION2_VALUES.some((d) =>
+                description2Ids.includes(d)
+              )
+            ) {
+              const currentCount =
+                this.sanctionsSourceToEntityCountBusiness.get(name) || 0
+              this.sanctionsSourceToEntityCountBusiness.set(
+                name,
+                currentCount + 1
+              )
+            }
+          }
+          return {
+            name,
+            category,
+            sourceName: normalisedSourceName,
+            internalId: internalId,
+            createdAt: Date.now(),
+          }
+        })
+      })
+    )
+  }
+
+  private getPepSources(occupations: SanctionsOccupation[]): SanctionsSource[] {
+    if (!occupations || !Array.isArray(occupations)) {
+      return []
+    }
+
+    return compact(
+      occupations.map((occupation) => {
+        if (!occupation.rank) {
+          return undefined
+        }
+
+        const displayName = LEVEL_TIER_MAP[occupation.rank]
+        const sourceName = normalizeSource(displayName)
+        const internalId = generateHashFromString(sourceName)
+
+        // Store the mapping for future use
+        this.sourceNameToHash.set(sourceName, internalId)
+
+        // Update the count
+        const currentCount =
+          this.pepSourceToEntityCountPerson.get(displayName) || 0
+        this.pepSourceToEntityCountPerson.set(displayName, currentCount + 1)
+
+        return {
+          category: 'PEP',
+          createdAt: Date.now(),
+          sourceName: sourceName,
+          internalId: internalId,
+        }
+      })
+    )
   }
 
   async search(

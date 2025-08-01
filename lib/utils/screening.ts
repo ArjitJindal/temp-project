@@ -14,6 +14,15 @@ export const relevanceOptionsMap = {
   REPUTATIONAL_RISK_EXPOSURE: 'Reputational risk exposure',
   FINANCIAL_REGULATOR: 'Financial regulator',
   LAW_ENFORCEMENT: 'Law enforcement',
+  TAX_CRIME: 'Tax crime',
+  ENHANCED_COUNTRY_RISK: 'Enhanced country risk',
+  ORGANISED_CRIME_JAPAN: 'Organised crime (Japan)',
+  WAR_CRIMES: 'War crimes',
+  CORRUPTION: 'Corruption',
+  FINANCIAL_CRIME: 'Financial crime',
+  TERROR: 'Terror',
+  TRAFFICKING: 'Trafficking',
+  CHILD_SEXUAL_EXPLOITATION: 'Child sexual exploitation',
 }
 
 export const adverseMediaCategoryMap: Record<string, string> = {
@@ -25,4 +34,14 @@ export const adverseMediaCategoryMap: Record<string, string> = {
   ORGANISED_CRIME: 'Organised Crime',
   MODERN_SLAVERY: 'Modern Slavery',
   OTHER_ALLEGED_OFFENCES: 'Other alleged offences',
+  // DOW JONES
+  ENHANCED_COUNTRY_RISK: 'Enhanced country risk',
+  ORGANISED_CRIME_JAPAN: 'Organised crime (Japan)',
+  WAR_CRIMES: 'War crimes',
+  CORRUPTION: 'Corruption',
+  FINANCIAL_CRIME: 'Financial crime',
+  TERROR: 'Terror',
+  TRAFFICKING: 'Trafficking',
+  TAX_CRIME: 'Tax crime',
+  CHILD_SEXUAL_EXPLOITATION: 'Child sexual exploitation',
 }

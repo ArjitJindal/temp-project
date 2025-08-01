@@ -66,7 +66,8 @@ function createServer(serverInfo: ServerInfo) {
     server.url = new URL(server.url).origin
   })
 
-  app.use(express.text({ type: () => true }))
+  app.use(express.text({ type: () => true, limit: '10mb' }))
+  app.use(express.json({ limit: '10mb' }))
   app.use(serverLogMiddleware)
   app.use(
     OpenApiValidator.middleware({

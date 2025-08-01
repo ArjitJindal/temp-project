@@ -13,11 +13,11 @@ import {
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { SanctionsSourceType } from '@/@types/openapi-internal/SanctionsSourceType'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
 
 interface SourceDocumentWithEntityIds extends Document {
   entityIds?: string[]
+  entityCount?: number
 }
 
 @traceable
@@ -27,8 +27,8 @@ export class MongoSanctionSourcesRepository
   mongoClient: MongoClient
   collectionName: string
 
-  constructor(mongoClient: MongoClient) {
-    this.collectionName = SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()
+  constructor(mongoClient: MongoClient, collectionName: string) {
+    this.collectionName = collectionName
     this.mongoClient = mongoClient
   }
 
@@ -61,6 +61,14 @@ export class MongoSanctionSourcesRepository
               }),
             },
           }
+
+          // Always use $inc for entityCount to handle both insert and update
+          if (document.entityCount !== undefined) {
+            update.$inc = {
+              entityCount: document.entityCount,
+            }
+          }
+
           if (document.entityIds && document.entityIds.length > 0) {
             ;(update as any).$addToSet = {
               entityIds: {
@@ -162,9 +170,11 @@ export class MongoSanctionSourcesRepository
           entityType: { $first: '$entityType' },
           entityCount: {
             $sum: {
-              $size: {
-                $ifNull: ['$entityIds', []],
-              },
+              $cond: [
+                { $ifNull: ['$entityCount', false] },
+                '$entityCount',
+                { $size: { $ifNull: ['$entityIds', []] } },
+              ],
             },
           },
         },

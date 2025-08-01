@@ -3,7 +3,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { ScreeningProfileRepository } from '@/services/screening-profile/repositories/screening-profile-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
 import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/AdverseMediaSourceRelevance'
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
 import { PEP_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/PEPSourceRelevance'
@@ -20,7 +20,7 @@ async function migrateTenant(tenant: Tenant) {
   const sanctionsSourcesCount =
     (await mongoDb
       .db()
-      .collection(SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+      .collection(SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION())
       .countDocuments()) + ADVERSE_MEDIA_SOURCE_RELEVANCES.length
   for (const screeningProfile of screeningProfiles.items) {
     const selectedSourcesCount =

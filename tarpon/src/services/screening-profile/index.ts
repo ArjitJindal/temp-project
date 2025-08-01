@@ -3,6 +3,8 @@ import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { CounterRepository } from '../counter/repository'
 import { MongoSanctionSourcesRepository } from '../sanctions/repositories/sanction-source-repository'
+import { getSanctionsSourceDocumentsCollectionName } from '../sanctions/utils'
+import { SanctionsDataProviders } from '../sanctions/types'
 import { ScreeningProfileRepository } from './repositories/screening-profile-repository'
 import { ScreeningProfileRequest } from '@/@types/openapi-internal/ScreeningProfileRequest'
 import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningProfileResponse'
@@ -176,7 +178,8 @@ export class ScreeningProfileService {
     acurisSanctionsSearchType?: AcurisSanctionsSearchType[]
   ) {
     const mongoSanctionSourcesRepository = new MongoSanctionSourcesRepository(
-      this.mongoDb
+      this.mongoDb,
+      getSanctionsSourceDocumentsCollectionName([SanctionsDataProviders.ACURIS])
     )
     const sources = await mongoSanctionSourcesRepository.getSanctionsSources(
       undefined,

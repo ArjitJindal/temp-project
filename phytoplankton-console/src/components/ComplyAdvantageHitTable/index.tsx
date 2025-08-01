@@ -84,11 +84,11 @@ export default function SanctionsSearchTable(props: Props) {
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
 
-  // Move feature flag declarations here, before using them in useQuery dependencies
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
   const searchProfileResult = useQuery(
     SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
@@ -109,7 +109,7 @@ export default function SanctionsSearchTable(props: Props) {
       }
     },
     {
-      enabled: !hasFeatureAcuris, // Only fetch search profiles if ACURIS is not enabled
+      enabled: !isScreeningProfileEnabled,
       staleTime: 300000, // 5 minutes
     },
   );
@@ -133,7 +133,7 @@ export default function SanctionsSearchTable(props: Props) {
       }
     },
     {
-      enabled: hasFeatureAcuris,
+      enabled: isScreeningProfileEnabled,
       staleTime: 300000, // 5 minutes
     },
   );
@@ -211,14 +211,14 @@ export default function SanctionsSearchTable(props: Props) {
   ]);
 
   const acurisOptions = useMemo(() => {
-    if (!hasFeatureAcuris) {
+    if (!isScreeningProfileEnabled) {
       return [];
     }
     return (
       settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'acuris')
         ?.screeningTypes ?? ACURIS_SANCTIONS_SEARCH_TYPES
     );
-  }, [settings, hasFeatureAcuris]);
+  }, [settings, isScreeningProfileEnabled]);
 
   const openSanctionsOptions = useMemo(() => {
     if (!hasFeatureOpenSanctions) {
@@ -242,7 +242,7 @@ export default function SanctionsSearchTable(props: Props) {
   }, [settings, hasFeatureDowJones]);
 
   const sanctionsOptions = useMemo(() => {
-    if (!hasFeatureSanctions || hasFeatureAcuris || hasFeatureOpenSanctions || hasFeatureDowJones) {
+    if (!hasFeatureSanctions || isScreeningProfileEnabled || hasFeatureOpenSanctions) {
       return [];
     }
     return (
@@ -250,13 +250,7 @@ export default function SanctionsSearchTable(props: Props) {
         (type) => type.provider === 'comply-advantage',
       )?.screeningTypes ?? SANCTIONS_SEARCH_TYPES
     );
-  }, [
-    settings,
-    hasFeatureSanctions,
-    hasFeatureAcuris,
-    hasFeatureOpenSanctions,
-    hasFeatureDowJones,
-  ]);
+  }, [settings, hasFeatureSanctions, isScreeningProfileEnabled, hasFeatureOpenSanctions]);
 
   const options = uniq([
     ...openSanctionsOptions,
@@ -348,7 +342,7 @@ export default function SanctionsSearchTable(props: Props) {
     },
   ];
 
-  if (hasFeatureAcuris) {
+  if (isScreeningProfileEnabled) {
     const options = match(screeningProfilesResult.data, {
       init: () => [],
       loading: () => [{ label: 'Loading profiles...', value: '', isDisabled: true }],

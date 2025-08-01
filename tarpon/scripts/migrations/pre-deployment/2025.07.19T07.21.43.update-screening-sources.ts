@@ -1,6 +1,6 @@
 import { AnyBulkWriteOperation } from 'mongodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { generateHashFromString } from '@/utils/object'
 
@@ -9,12 +9,14 @@ export const up = async () => {
   const db = mongoDb.db()
   const collections = await db.listCollections().toArray()
   if (
-    !collections.some((c) => c.name === SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+    !collections.some(
+      (c) => c.name === SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()
+    )
   ) {
     return
   }
   const sourcesCollection = db.collection<SourceDocument>(
-    SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()
+    SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()
   )
   const sourcesCursor = sourcesCollection.find({})
   await processCursorInBatch(sourcesCursor, async (sources) => {
@@ -41,7 +43,7 @@ export const up = async () => {
     await sourcesCollection.bulkWrite(bulkOps)
   })
   await db
-    .collection(SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+    .collection(SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION())
     .createIndex({ refId: 1 })
 }
 export const down = async () => {

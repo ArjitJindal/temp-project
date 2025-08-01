@@ -4,19 +4,21 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { ScreeningProfileRepository } from '@/services/screening-profile/repositories/screening-profile-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
   const collections = await db.listCollections().toArray()
   if (
-    !collections.some((c) => c.name === SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+    !collections.some(
+      (c) => c.name === SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()
+    )
   ) {
     return
   }
   const sources = await db
-    .collection(SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+    .collection(SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION())
     .find(
       {},
       {
@@ -69,13 +71,15 @@ export const up = async () => {
   await migrateAllTenants(migrateTenant)
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  await db.collection(SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()).updateMany({}, [
-    {
-      $set: {
-        id: '$refId',
+  await db
+    .collection(SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION())
+    .updateMany({}, [
+      {
+        $set: {
+          id: '$refId',
+        },
       },
-    },
-  ])
+    ])
 }
 export const down = async () => {
   // skip

@@ -33,6 +33,9 @@ export const SanctionsSettings = () => {
   ]);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAcurisEnabled = useFeatureEnabled('ACURIS');
+  const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
+  const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
+  const isScreeningProfilesEnabled = isAcurisEnabled || isDowJonesEnabled;
   const branding = getBranding();
   const hasNoSanctionsProviders = useHasNoSanctionsProviders();
 
@@ -54,14 +57,8 @@ export const SanctionsSettings = () => {
   const updateTenantSettingsMutation = useUpdateTenantSettings();
 
   const settings = useSettings();
-  const hasFeatureAcuris = useFeatureEnabled('ACURIS');
-  const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
-  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const hasFeatureComplyAdvantage =
-    useFeatureEnabled('SANCTIONS') &&
-    !hasFeatureAcuris &&
-    !hasFeatureOpenSanctions &&
-    !hasFeatureDowJones;
+    isSanctionsEnabled && !isScreeningProfilesEnabled && !hasFeatureOpenSanctions;
   const getSettings = (
     provider: SanctionsDataProviderName,
     defaultScreeningTypes,
@@ -111,15 +108,17 @@ export const SanctionsSettings = () => {
   };
   return (
     <>
-      {isAcurisEnabled ? (
-        <ScreeningProfileList hasFeature={isSanctionsEnabled} />
+      {isScreeningProfilesEnabled ? (
+        <>
+          <ScreeningProfileList hasFeature={isSanctionsEnabled} />
+          <ScreeningProfileDefaultFilters />
+        </>
       ) : (
         <SearchProfileList hasFeature={isSanctionsEnabled} />
       )}
-      {isAcurisEnabled && <ScreeningProfileDefaultFilters />}
       <SanctionsProviderSettings
         title="Acuris"
-        hasFeature={hasFeatureAcuris}
+        hasFeature={isAcurisEnabled}
         screeningTypes={acurisScreeningTypes}
         searchTypes={ACURIS_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setAcurisScreeningTypes}
@@ -143,7 +142,7 @@ export const SanctionsSettings = () => {
 
       <SanctionsProviderSettings
         title="Dow Jones"
-        hasFeature={hasFeatureDowJones}
+        hasFeature={isDowJonesEnabled}
         screeningTypes={dowJonesScreeningTypes}
         searchTypes={DOW_JONES_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setDowJonesScreeningTypes}
@@ -199,7 +198,7 @@ export const SanctionsSettings = () => {
               </div>
             </div>
           </>
-        ) : hasFeatureAcuris ? (
+        ) : isAcurisEnabled ? (
           <div className={s.sanctionsModal}>
             <div className={s.sanctionsLayout}>
               <img src={KYC6Logo} alt="KYC6" style={{ height: '40px', width: 'auto' }} />

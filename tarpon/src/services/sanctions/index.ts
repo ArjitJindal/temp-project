@@ -70,6 +70,7 @@ import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comp
 import {
   DEFAULT_PROVIDER_TYEPS_MAP,
   getDefaultProviders,
+  getSanctionsSourceDocumentsCollectionName,
 } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -127,8 +128,10 @@ export class SanctionsService {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
+    const provider = getDefaultProviders()
     this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
-      this.mongoDb
+      this.mongoDb,
+      getSanctionsSourceDocumentsCollectionName(provider, this.tenantId)
     )
   }
 

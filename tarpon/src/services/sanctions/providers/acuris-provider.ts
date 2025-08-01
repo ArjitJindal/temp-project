@@ -10,6 +10,7 @@ import {
   COLLECTIONS_MAP,
   extractCountryFromSource,
   getSanctionsCollectionName,
+  getSanctionsSourceDocumentsCollectionName,
 } from '../utils'
 import { MongoSanctionsRepository } from '../repositories/sanctions-repository'
 import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
@@ -593,7 +594,10 @@ export class AcurisProvider extends SanctionsDataFetcher {
   }
 
   private getSourceDocumentsRepo(mongoDb: MongoClient) {
-    return new MongoSanctionSourcesRepository(mongoDb)
+    return new MongoSanctionSourcesRepository(
+      mongoDb,
+      getSanctionsSourceDocumentsCollectionName([SanctionsDataProviders.ACURIS])
+    )
   }
 
   private getFullExtractRepo(

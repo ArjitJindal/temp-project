@@ -1,6 +1,10 @@
 import { uniq } from 'lodash'
 import { Client } from '@opensearch-project/opensearch'
-import { RELATIONSHIP_CODE_TO_NAME } from '../providers/dow-jones-provider'
+import {
+  RELATIONSHIP_CODE_TO_NAME,
+  LEVEL_TIER_MAP,
+} from '../dow-jones-constants'
+import { normalizeSource } from '../utils'
 import {
   Action,
   SanctionsRepository,
@@ -14,6 +18,7 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 import { hasFeature } from '@/core/utils/context'
 import { bulkUpdate } from '@/utils/opensearch-utils'
+import { generateHashFromString } from '@/utils/object'
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
   opensearchClient?: Client
@@ -161,27 +166,58 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       }
       return acc
     }, {})
-    const bulkWriteOperations = associations.map(([entityId, associateIds]) => {
-      return {
-        updateOne: {
-          filter: {
-            id: entityId,
-            provider,
-            version,
-          },
-          update: {
-            $set: {
-              associates: associateIds.map(({ id, association }) => ({
-                ...associateNameMap[id],
-                association: association
-                  ? RELATIONSHIP_CODE_TO_NAME[association]
-                  : undefined,
-              })),
+    const bulkWriteOperations = associations.flatMap(
+      ([entityId, associateIds]) => {
+        const operations: any[] = [
+          {
+            updateOne: {
+              filter: {
+                id: entityId,
+                provider,
+                version,
+              },
+              update: {
+                $set: {
+                  associates: associateIds.map(({ id, association }) => ({
+                    ...associateNameMap[id],
+                    association: association
+                      ? RELATIONSHIP_CODE_TO_NAME[association]
+                      : undefined,
+                  })),
+                },
+              },
             },
           },
-        },
+          {
+            updateOne: {
+              filter: {
+                id: entityId,
+                provider,
+                version,
+              },
+              update: {
+                $push: {
+                  pepSources: {
+                    category: 'PEP',
+                    createdAt: Date.now(),
+                    sourceName: normalizeSource(
+                      LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS
+                    ),
+                    internalId: generateHashFromString(
+                      normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
+                    ),
+                  },
+                  aggregatedSourceIds: `${generateHashFromString(
+                    normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
+                  )}-PEP`,
+                },
+              },
+            },
+          },
+        ]
+        return operations
       }
-    })
+    )
     if (bulkWriteOperations.length > 0) {
       if (hasFeature('OPEN_SEARCH') && this.opensearchClient) {
         const entities = associations.map(

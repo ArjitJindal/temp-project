@@ -451,8 +451,12 @@ export const DELTA_SANCTIONS_GLOBAL_COLLECTION = () => {
   return 'delta-sanctions'
 }
 
-export const SANCTIONS_SOURCE_DOCUMENTS_COLLECTION = () => {
+export const SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION = () => {
   return `sanctions_source_documents`
+}
+
+export const SANCTIONS_SOURCE_DOCUMENTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions-source-documents`
 }
 
 /** Collection to log Requests and Responses to GPT */
@@ -1033,6 +1037,24 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           },
         ].map((index) => ({ index })),
     },
+    [SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        { index: { sourceCountry: 1 } },
+        { index: { sourceName: 1 } },
+        { index: { id: 1 } },
+        {
+          index: {
+            sourceName: 1,
+            sourceCountry: 1,
+            provider: 1,
+            entityType: 1,
+            sourceType: 1,
+          },
+          unique: true,
+        },
+        { index: { refId: 1 } },
+      ],
+    },
     [JOBS_COLLECTION(tenantId)]: {
       getIndexes: () => [
         { index: { jobId: 1 }, unique: true },
@@ -1060,7 +1082,7 @@ export const getGlobalCollectionIndexes = async (
     await getAllGlobalSanctionsCollectionDefinition(mongoClient)
   return {
     ...globalSanctionsCollectionDeinitions,
-    [SANCTIONS_SOURCE_DOCUMENTS_COLLECTION()]: {
+    [SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()]: {
       getIndexes: () => [
         { index: { sourceCountry: 1 } },
         { index: { sourceName: 1 } },

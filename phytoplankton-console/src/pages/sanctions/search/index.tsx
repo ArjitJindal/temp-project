@@ -47,6 +47,8 @@ export function SearchResultTable(props: Props) {
   const currentUser = useAuth0User();
   const hasSetDefaultProfile = useRef(false);
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
   const navigate = useNavigate();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
@@ -70,7 +72,7 @@ export function SearchResultTable(props: Props) {
       }
     },
     {
-      enabled: !hasFeatureAcuris,
+      enabled: !isScreeningProfileEnabled,
     },
   );
 
@@ -93,7 +95,7 @@ export function SearchResultTable(props: Props) {
       }
     },
     {
-      enabled: hasFeatureAcuris,
+      enabled: isScreeningProfileEnabled,
     },
   );
 
@@ -112,7 +114,7 @@ export function SearchResultTable(props: Props) {
     if (hasSetDefaultProfile.current) {
       return;
     }
-    if (hasFeatureAcuris) {
+    if (isScreeningProfileEnabled) {
       const response = getOr(defaultManualScreeningFilters.data, {});
       setParams((prevState) => ({
         ...prevState,
@@ -146,11 +148,11 @@ export function SearchResultTable(props: Props) {
       }
       hasSetDefaultProfile.current = true;
     }
-  }, [searchProfilesResult.data, defaultManualScreeningFilters.data, hasFeatureAcuris]);
+  }, [searchProfilesResult.data, defaultManualScreeningFilters.data, isScreeningProfileEnabled]);
 
   useEffect(() => {
     if (
-      hasFeatureAcuris &&
+      isScreeningProfileEnabled &&
       !hasSetDefaultProfile.current &&
       isSuccess(screeningProfilesResult.data)
     ) {
@@ -166,14 +168,14 @@ export function SearchResultTable(props: Props) {
           screeningProfileId: defaultProfile.screeningProfileId,
           searchProfileId: undefined,
         }));
-      } else if (hasFeatureAcuris) {
+      } else if (isScreeningProfileEnabled) {
         setParams((current) => ({
           ...current,
           searchProfileId: undefined,
         }));
       }
     }
-  }, [hasFeatureAcuris, screeningProfilesResult.data]);
+  }, [isScreeningProfileEnabled, screeningProfilesResult.data]);
 
   const historyItemQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId, { page: params.page, pageSize: params.pageSize }),
@@ -250,7 +252,9 @@ export function SearchResultTable(props: Props) {
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
           manualSearch: true,
-          screeningProfileId: hasFeatureAcuris ? searchParams.screeningProfileId : undefined,
+          screeningProfileId: isScreeningProfileEnabled
+            ? searchParams.screeningProfileId
+            : undefined,
         },
       });
     },

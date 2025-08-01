@@ -1,7 +1,13 @@
 import path from 'path'
 import axios from 'axios'
+import { SanctionsDataProviders } from '../types'
+import { getSanctionsSourceDocumentsCollectionName } from '../utils'
+import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
-import { SanctionsRepository } from '@/services/sanctions/providers/types'
+import {
+  SanctionsRepository,
+  SanctionsSourceRepository,
+} from '@/services/sanctions/providers/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
@@ -18,6 +24,7 @@ dynamoDbSetupHook()
 describe('DowJonesProvider', () => {
   let fetcher: DowJonesProvider
   let repo: SanctionsRepository
+  let sourceDocumentsRepo: SanctionsSourceRepository
 
   beforeEach(async () => {
     fetcher = new DowJonesProvider(
@@ -35,6 +42,13 @@ describe('DowJonesProvider', () => {
       save: jest.fn(),
       saveAssociations: jest.fn(),
     } as unknown as SanctionsRepository
+    sourceDocumentsRepo = new MongoSanctionSourcesRepository(
+      await getMongoDbClient(),
+      getSanctionsSourceDocumentsCollectionName(
+        [SanctionsDataProviders.DOW_JONES],
+        'test'
+      )
+    )
   })
 
   it('should fetch and parse file paths from the API', async () => {
@@ -56,7 +70,12 @@ describe('DowJonesProvider', () => {
   })
   it('should process single file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_single')
-    await fetcher.processSingleFile(repo, '2024-02', filePath)
+    await fetcher.processSingleFile(
+      repo,
+      sourceDocumentsRepo,
+      '2024-02',
+      filePath
+    )
     fetcher = new DowJonesProvider(
       'testuser',
       'testpass',
@@ -82,6 +101,17 @@ describe('DowJonesProvider', () => {
             isActivePep: true,
             isActiveSanctioned: false,
             aka: [],
+            aggregatedSourceIds: ['Organised Crime'],
+            mediaSources: [
+              {
+                category: 'Organised Crime',
+                createdAt: expect.any(Number),
+                internalId:
+                  '341c779e90c2d6452fc39213a32622fd74b054e8ba2ebd9d6498e7b30b0cc55c',
+              },
+            ],
+            pepSources: [],
+            rawResponse: expect.any(Object),
             countries: ['India'],
             countryCodes: ['IN'],
             matchTypes: ['Organised Crime'],
@@ -126,6 +156,7 @@ Jubilant Pharmova Ltd.`,
             types: ['Special Interest Person (SIP) - Organised Crime'],
             yearOfBirth: ['1976'],
             dateOfBirths: ['1976-10-04'],
+            sanctionsSources: [],
           },
         ],
         [
@@ -268,6 +299,21 @@ This company is to an unknown stake owned by OFAC SDN and UK and Canada and Japa
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - UK Related - Control',
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Canada Related - Ownership Unknown',
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Japan Related - Ownership Unknown',
+            ],
+            aggregatedSourceIds: [
+              '8d582980699dcce7efdb00d2772aba12c464e082db23a45a09096fc66db12075-CURRENT',
+            ],
+            mediaSources: [],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [
+              {
+                category: 'CURRENT',
+                createdAt: expect.any(Number),
+                internalId:
+                  '8d582980699dcce7efdb00d2772aba12c464e082db23a45a09096fc66db12075',
+                name: 'OFAC - Specially Designated National List',
+                sourceName: 'ofac - specially designated national list',
+              },
             ],
           },
         ],
@@ -456,6 +502,10 @@ Both the LIA and the LAIP are subject to the partial asset freeze. Subsidiaries 
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - UN Related - Majority Owned',
             ],
             yearOfBirth: ['2009'],
+            aggregatedSourceIds: [],
+            mediaSources: [],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
         [
@@ -560,6 +610,10 @@ This company is 82.83% owned by OFAC SDN and UK and Canada Sanctioned Htoo Htet 
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Canada Related - Control',
             ],
             yearOfBirth: ['2019'],
+            aggregatedSourceIds: [],
+            mediaSources: [],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
         [
@@ -659,6 +713,10 @@ This company is 100% owned by First National Insurance (Life) Holding Company Li
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Canada Related - Control',
             ],
             yearOfBirth: ['2019'],
+            aggregatedSourceIds: [],
+            mediaSources: [],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
         [
@@ -738,6 +796,10 @@ OFAC SDN and UK and Canada Sanctioned Khin Phyu Win is Director of this company.
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Canada Related - Control',
             ],
             yearOfBirth: ['2022'],
+            aggregatedSourceIds: [],
+            mediaSources: [],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
       ],
@@ -765,7 +827,12 @@ OFAC SDN and UK and Canada Sanctioned Khin Phyu Win is Director of this company.
   })
   it('should process split file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_splits')
-    await fetcher.processSplitArchive(repo, '2024-02', filePath)
+    await fetcher.processSplitArchive(
+      repo,
+      sourceDocumentsRepo,
+      '2024-02',
+      filePath
+    )
     fetcher = new DowJonesProvider(
       'testuser',
       'testpass',
@@ -994,6 +1061,29 @@ Patasse passed away on April 5, 2011.`,
                 ],
               },
             ],
+            aggregatedSourceIds: [
+              '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51-PEP',
+              'Corruption',
+            ],
+            mediaSources: [
+              {
+                category: 'Corruption',
+                createdAt: expect.any(Number),
+                internalId:
+                  'abf5645579cb98ff9391a57da629e9ea187f277496da76ef451a83a9c4357820',
+              },
+            ],
+            pepSources: [
+              {
+                category: 'PEP',
+                createdAt: expect.any(Number),
+                internalId:
+                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
+                sourceName: 'pep tier 1',
+              },
+            ],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
         [
@@ -1035,6 +1125,28 @@ Patasse passed away on April 5, 2011.`,
             yearOfBirth: ['1957'],
             types: ['Politically Exposed Person (PEP)'],
             dateOfBirths: ['1957-02-12'],
+            aggregatedSourceIds: [
+              '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51-PEP',
+            ],
+            mediaSources: [],
+            pepSources: [
+              {
+                category: 'PEP',
+                createdAt: expect.any(Number),
+                internalId:
+                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
+                sourceName: 'pep tier 1',
+              },
+              {
+                category: 'PEP',
+                createdAt: expect.any(Number),
+                internalId:
+                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
+                sourceName: 'pep tier 1',
+              },
+            ],
+            rawResponse: expect.any(Object),
+            sanctionsSources: [],
           },
         ],
       ],

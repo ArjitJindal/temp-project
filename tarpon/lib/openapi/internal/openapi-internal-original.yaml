@@ -14327,6 +14327,11 @@ components:
       enum:
         - FINANCIAL_REGULATOR
         - LAW_ENFORCEMENT
+    DowJonesPEPSourceRelevance:
+      title: DowJonesPEPSourceRelevance
+      type: string
+      enum:
+        - PEP
     AdverseMediaSourceRelevance:
       title: AdverseMediaSourceRelevance
       type: string
@@ -14339,6 +14344,20 @@ components:
         - CYBERCRIMES
         - OTHER_ALLEGED_OFFENCES
         - REPUTATIONAL_RISK_EXPOSURE
+    DowJonesAdverseMediaSourceRelevance:
+      title: DowJonesAdverseMediaSourceRelevance
+      type: string
+      enum:
+        - TERROR
+        - ORGANISED_CRIME
+        - FINANCIAL_CRIME
+        - TRAFFICKING
+        - CORRUPTION
+        - WAR_CRIMES
+        - ORGANISED_CRIME_JAPAN
+        - ENHANCED_COUNTRY_RISK
+        - TAX_CRIME
+        - CHILD_SEXUAL_EXPLOITATION
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
       type: object
@@ -14861,6 +14880,7 @@ components:
         - senior_civil_servants_regional_government
         - embassy_consular_staff
         - senior_members_of_the_armed_forces
+        - senior_members_of_the_police_service
         - senior_members_of_the_secret_services
         - senior_members_of_the_judiciary
         - state_corporation_executives
@@ -14912,6 +14932,8 @@ components:
           type: string
         refId:
           type: string
+        entityCount:
+          type: integer
     SanctionsEntity:
       title: SanctionsEntity
       type: object

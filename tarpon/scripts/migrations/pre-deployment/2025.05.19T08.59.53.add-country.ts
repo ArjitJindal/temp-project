@@ -1,5 +1,5 @@
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
 import { logger } from '@/core/logger'
 import { extractCountryFromSource } from '@/services/sanctions/utils'
 
@@ -8,7 +8,7 @@ export const up = async () => {
   const mongoDb = await getMongoDbClient()
   const collection = mongoDb
     .db()
-    .collection(SANCTIONS_SOURCE_DOCUMENTS_COLLECTION())
+    .collection(SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION())
 
   const totalCount = await collection.countDocuments()
   logger.info(`Total documents to process: ${totalCount}`)

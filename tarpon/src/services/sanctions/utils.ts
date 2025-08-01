@@ -13,6 +13,8 @@ import {
   SANCTIONS_GLOBAL_COLLECTION,
   SANCTIONS_INDEX_DEFINITION,
   SANCTIONS_SEARCH_INDEX_DEFINITION,
+  SANCTIONS_SOURCE_DOCUMENTS_COLLECTION,
+  SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
@@ -21,6 +23,7 @@ import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSan
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { envIs } from '@/utils/env'
+
 export const COLLECTIONS_MAP: {
   [key: string]: SanctionsEntityType[]
 } = {
@@ -44,6 +47,13 @@ export const FEATURE_FLAG_PROVIDER_MAP: Record<
   DOW_JONES: SanctionsDataProviders.DOW_JONES,
   OPEN_SANCTIONS: SanctionsDataProviders.OPEN_SANCTIONS,
   ACURIS: SanctionsDataProviders.ACURIS,
+}
+
+export function normalizeSource(source?: string) {
+  if (!source) {
+    return ''
+  }
+  return source.toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
 export function getDefaultProviders(): SanctionsDataProviderName[] {
@@ -104,6 +114,16 @@ export function getSanctionsCollectionName(
     return DELTA_SANCTIONS_COLLECTION(tenantId)
   }
   return SANCTIONS_COLLECTION(tenantId)
+}
+
+export function getSanctionsSourceDocumentsCollectionName(
+  providers: SanctionsDataProviderName[],
+  tenantId?: string
+): string {
+  if (providers.includes(SanctionsDataProviders.DOW_JONES) && tenantId) {
+    return SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(tenantId)
+  }
+  return SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()
 }
 
 function getAllGlobalSanctionsCollectionNames(

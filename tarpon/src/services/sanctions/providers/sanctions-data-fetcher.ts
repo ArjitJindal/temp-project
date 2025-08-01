@@ -12,13 +12,13 @@ import { Search_Response } from '@opensearch-project/opensearch/api'
 import { CommonOptions, format } from '@fragaria/address-formatter'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
-import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import {
   SanctionsDataProviders,
   SanctionsSearchProps,
   SanctionsSearchPropsWithRequest,
   SanctionsSearchPropsWithData,
 } from '../types'
+import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import {
   getNameMatches,
   getSecondaryMatches,
@@ -69,8 +69,9 @@ const OPENSEARCH_NON_PROJECTED_FIELDS = ['rawResponse', 'aggregatedSourceIds']
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository
-  private readonly tenantId: string
-  private readonly mongoDb: MongoClient
+
+  protected readonly tenantId: string
+  protected readonly mongoDb: MongoClient
   private readonly dynamoDb: DynamoDBDocumentClient
 
   constructor(
@@ -576,6 +577,46 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return match
   }
 
+  private getProjectionObject(providers: SanctionsDataProviderName[]): {
+    rawResponse: 0
+    mediaSources?: 0
+    sanctionsSources?: 0
+    pepSources?: 0
+  } {
+    const projection: {
+      rawResponse: 0
+      mediaSources?: 0
+      sanctionsSources?: 0
+      pepSources?: 0
+    } = {
+      rawResponse: 0,
+    }
+
+    // If Dow Jones is enabled, exclude additional fields
+    if (providers.includes(SanctionsDataProviders.DOW_JONES)) {
+      projection.mediaSources = 0
+      projection.sanctionsSources = 0
+      projection.pepSources = 0
+    }
+
+    return projection
+  }
+
+  private getOpensearchSourceFields(
+    providers: SanctionsDataProviderName[]
+  ): string[] {
+    const nonProjectedFields = [...OPENSEARCH_NON_PROJECTED_FIELDS]
+
+    // If Dow Jones is enabled, exclude additional fields
+    if (providers.includes(SanctionsDataProviders.DOW_JONES)) {
+      nonProjectedFields.push('mediaSources', 'sanctionsSources', 'pepSources')
+    }
+
+    return SanctionsEntity.attributeTypeMap
+      .map((a) => a.name)
+      .filter((a) => !nonProjectedFields.includes(a))
+  }
+
   async searchWithoutMatchingNames(
     request: SanctionsSearchRequest,
     db: Db
@@ -588,9 +629,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         db
           .collection<SanctionsEntity>(c)
           .find(match, {
-            projection: {
-              rawResponse: 0,
-            },
+            projection: this.getProjectionObject(providers),
           })
           .limit(500)
           .toArray()
@@ -1032,9 +1071,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 : limit + 50,
             },
             {
-              $project: {
-                rawResponse: 0,
-              },
+              $project: this.getProjectionObject(providers),
             },
           ])
           .toArray(),
@@ -1111,9 +1148,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               },
             },
             {
-              $project: {
-                rawResponse: 0,
-              },
+              $project: this.getProjectionObject(providers),
             },
           ])
           .toArray(),
@@ -1661,18 +1696,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       collectionNames.flatMap((c) => [
         client.search({
           index: c,
-          _source: SanctionsEntity.attributeTypeMap
-            .map((a) => a.name)
-            .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
+          _source: this.getOpensearchSourceFields(providers),
           body: queryWithoutStopwords,
         }),
         ...(queryWithStopwords
           ? [
               client.search({
                 index: c,
-                _source: SanctionsEntity.attributeTypeMap
-                  .map((a) => a.name)
-                  .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
+                _source: this.getOpensearchSourceFields(providers),
                 body: queryWithStopwords,
               }),
             ]

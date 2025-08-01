@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { humanizeAuto, humanizeCountryName } from '@flagright/lib/utils/humanize';
 import { SearchOutlined } from '@ant-design/icons';
@@ -14,6 +14,7 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import InputField from '@/components/library/Form/InputField';
 import {
   AdverseMediaSourceRelevance,
+  DowJonesAdverseMediaSourceRelevance,
   PEPSourceRelevance,
   RELSourceRelevance,
   SanctionsSourceRelevance,
@@ -22,12 +23,12 @@ import {
   ScreeningProfileResponse,
 } from '@/apis';
 import Button from '@/components/library/Button';
-// import { useHasResources } from '@/utils/user-utils';
 import { SCREENING_PROFILES, SANCTIONS_SOURCES } from '@/utils/queries/keys';
 import Checkbox from '@/components/library/Checkbox';
 import Tabs from '@/components/library/Tabs';
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/apis/models-custom/SanctionsSourceRelevance';
-import { SANCTIONS_SOURCE_TYPES } from '@/apis/models-custom/SanctionsSourceType';
+import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
+import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import Select from '@/components/library/Select';
 import { useQuery } from '@/utils/queries/hooks';
 import { PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/PEPSourceRelevance';
@@ -36,7 +37,10 @@ import { REL_SOURCE_RELEVANCES } from '@/apis/models-custom/RELSourceRelevance';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { getErrorMessage } from '@/utils/lang';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/apis/models-custom/DowJonesAdverseMediaSourceRelevance';
+import { DOW_JONES_PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/DowJonesPEPSourceRelevance';
+import { SANCTIONS_SOURCE_TYPES } from '@/apis/models-custom/SanctionsSourceType';
 
 const DEFAULT_INITIAL_VALUES: ScreeningProfileRequest = {
   screeningProfileName: '',
@@ -57,6 +61,7 @@ type SourceConfiguration = {
     | SanctionsSourceRelevance
     | PEPSourceRelevance
     | AdverseMediaSourceRelevance
+    | DowJonesAdverseMediaSourceRelevance
     | RELSourceRelevance
   )[];
 };
@@ -65,57 +70,72 @@ interface SearchFormValues {
   query: string;
 }
 
-const defaultConfig = {
-  SANCTIONS: {
-    selectedSources: [] as string[],
-    relevance: SANCTIONS_SOURCE_RELEVANCES,
-  },
-  PEP: {
-    selectedSources: [] as string[],
-    relevance: PEP_SOURCE_RELEVANCES,
-  },
-  ADVERSE_MEDIA: {
-    relevance: ADVERSE_MEDIA_SOURCE_RELEVANCES,
-  },
-  REGULATORY_ENFORCEMENT_LIST: {
-    relevance: REL_SOURCE_RELEVANCES,
-    selectedSources: [] as string[],
-  },
+const getDefaultConfig = (isDowJonesEnabled: boolean) => {
+  const defaultConfig = {
+    SANCTIONS: {
+      selectedSources: [] as string[],
+      relevance: SANCTIONS_SOURCE_RELEVANCES,
+    },
+    PEP: {
+      selectedSources: [] as string[],
+      relevance: isDowJonesEnabled ? DOW_JONES_PEP_SOURCE_RELEVANCES : PEP_SOURCE_RELEVANCES,
+    },
+    ADVERSE_MEDIA: {
+      relevance: isDowJonesEnabled
+        ? DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES
+        : ADVERSE_MEDIA_SOURCE_RELEVANCES,
+    },
+    REGULATORY_ENFORCEMENT_LIST: isDowJonesEnabled
+      ? {
+          relevance: [],
+          selectedSources: [] as string[],
+        }
+      : {
+          relevance: REL_SOURCE_RELEVANCES,
+          selectedSources: [] as string[],
+        },
+  };
+
+  return defaultConfig;
 };
 
 const columnHelper = new ColumnHelper<any>();
 
-const columns = columnHelper.list([
-  columnHelper.simple<'sourceCountry'>({
-    key: 'sourceCountry',
-    title: 'Country',
-    defaultWidth: 200,
-    enableResizing: false,
-    type: {
-      render: (value) => <div>{humanizeCountryName(value ?? '')}</div>,
-    },
-  }),
-  columnHelper.simple<'displayName'>({
-    key: 'displayName',
-    title: 'Source',
-    defaultWidth: 700,
-    enableResizing: false,
-    type: {
-      render: (value) => {
-        return <div>{value ?? ''}</div>;
-      },
-    },
-  }),
-  columnHelper.simple<'entityCount'>({
-    key: 'entityCount',
-    title: 'Number of entities',
-    defaultWidth: 100,
-    enableResizing: false,
-    type: {
-      render: (value) => <div>{value}</div>,
-    },
-  }),
-]);
+const getColumns = (isDowJonesEnabled: boolean) =>
+  columnHelper.list(
+    [
+      !isDowJonesEnabled &&
+        columnHelper.simple<'sourceCountry'>({
+          key: 'sourceCountry',
+          title: 'Country',
+          defaultWidth: 200,
+          enableResizing: false,
+          type: {
+            render: (value) => <div>{humanizeCountryName(value ?? '')}</div>,
+          },
+        }),
+      columnHelper.simple<'displayName'>({
+        key: 'displayName',
+        title: 'Source',
+        defaultWidth: 700,
+        enableResizing: false,
+        type: {
+          render: (value) => {
+            return <div>{value ?? ''}</div>;
+          },
+        },
+      }),
+      columnHelper.simple<'entityCount'>({
+        key: 'entityCount',
+        title: 'Number of entities',
+        defaultWidth: 100,
+        enableResizing: false,
+        type: {
+          render: (value) => <div>{value}</div>,
+        },
+      }),
+    ].filter(Boolean),
+  );
 
 export default function CreateScreeningProfileModal({ isOpen, onClose, initialValues }: Props) {
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
@@ -125,9 +145,13 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
   const queryClient = useQueryClient();
   const formRef = useRef<any>(null);
   const settings = useSettings();
+  const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
+  const isAcurisEnabled = useFeatureEnabled('ACURIS');
   const [sourceConfigurations, setSourceConfigurations] = useState<
     Record<string, SourceConfiguration>
   >(() => {
+    const defaultConfig = getDefaultConfig(isDowJonesEnabled);
+
     if (initialValues) {
       if (initialValues.sanctions) {
         defaultConfig.SANCTIONS = {
@@ -180,10 +204,10 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     // Get visible tabs based on provider screening types filter
     const visibleTabs = SANCTIONS_SOURCE_TYPES.filter((type) => {
-      const acurisProvider = settings.sanctions?.providerScreeningTypes?.find(
-        (p) => p.provider === 'acuris',
+      const provider = settings.sanctions?.providerScreeningTypes?.find(
+        (p) => p.provider === (isDowJonesEnabled ? 'dowjones' : 'acuris'),
       );
-      return !acurisProvider || acurisProvider.screeningTypes?.includes(type);
+      return !provider || provider.screeningTypes?.includes(type);
     });
 
     // Only validate visible tabs
@@ -205,7 +229,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [sourceConfigurations, settings.sanctions?.providerScreeningTypes]);
+  }, [sourceConfigurations, settings.sanctions?.providerScreeningTypes, isDowJonesEnabled]);
 
   const updateSourceConfiguration = useCallback(
     (type: SanctionsSourceType, update: Partial<SourceConfiguration>) => {
@@ -258,8 +282,10 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
 
     loadSources('SANCTIONS');
     loadSources('PEP');
-    loadSources('REGULATORY_ENFORCEMENT_LIST');
-  }, [isModalOpen, api, updateSourceConfiguration, initialValues, setAllSourcesCount]);
+    if (!isDowJonesEnabled) {
+      loadSources('REGULATORY_ENFORCEMENT_LIST');
+    }
+  }, [isModalOpen, api, updateSourceConfiguration, initialValues, isDowJonesEnabled]);
 
   const getInitialValues = (): ScreeningProfileRequest => {
     if (!initialValues) {
@@ -292,7 +318,8 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
       sourceConfig.adverseMediaRelevance = sourceConfigurations.ADVERSE_MEDIA.relevance;
     }
 
-    if (sourceConfigurations.REGULATORY_ENFORCEMENT_LIST) {
+    // REGULATORY_ENFORCEMENT_LIST is only available for Acuris (not Dow Jones)
+    if (sourceConfigurations.REGULATORY_ENFORCEMENT_LIST && isAcurisEnabled) {
       sourceConfig.regulatoryEnforcementListRelevance =
         sourceConfigurations.REGULATORY_ENFORCEMENT_LIST.relevance;
       sourceConfig.regulatoryEnforcementListSources =
@@ -390,6 +417,42 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
     }
   };
 
+  const tabItems = useMemo(() => {
+    return (isDowJonesEnabled ? DOW_JONES_SANCTIONS_SEARCH_TYPES : ACURIS_SANCTIONS_SEARCH_TYPES)
+      .filter((type) => {
+        const provider = settings.sanctions?.providerScreeningTypes?.find(
+          (p) => p.provider === (isDowJonesEnabled ? 'dowjones' : 'acuris'),
+        );
+        return !provider || provider.screeningTypes?.includes(type);
+      })
+      .map((type) => ({
+        title: humanizeAuto(type),
+        key: type,
+        children: (
+          <SanctionsSourceTypeTab
+            type={type}
+            config={sourceConfigurations[type]}
+            onChange={(update) => {
+              updateSourceConfiguration(type, update);
+              if (validationErrors[type]) {
+                setValidationErrors((prev) => {
+                  const newErrors = { ...prev };
+                  delete newErrors[type];
+                  return newErrors;
+                });
+              }
+            }}
+          />
+        ),
+      }));
+  }, [
+    isDowJonesEnabled,
+    settings.sanctions?.providerScreeningTypes,
+    sourceConfigurations,
+    updateSourceConfiguration,
+    validationErrors,
+  ]);
+
   return (
     <>
       {!initialValues && (
@@ -474,34 +537,7 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
             </div>
           )}
 
-          <Tabs
-            items={SANCTIONS_SOURCE_TYPES.filter((type) => {
-              const acurisProvider = settings.sanctions?.providerScreeningTypes?.find(
-                (p) => p.provider === 'acuris',
-              );
-              return !acurisProvider || acurisProvider.screeningTypes?.includes(type);
-            }).map((type) => ({
-              title: humanizeAuto(type),
-              key: type,
-              children: (
-                <SanctionsSourceTypeTab
-                  type={type}
-                  config={sourceConfigurations[type]}
-                  onChange={(update) => {
-                    updateSourceConfiguration(type, update);
-                    if (validationErrors[type]) {
-                      setValidationErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors[type];
-                        return newErrors;
-                      });
-                    }
-                  }}
-                />
-              ),
-            }))}
-            orientation="VERTICAL"
-          />
+          <Tabs items={tabItems} orientation="VERTICAL" />
         </div>
       </Modal>
     </>
@@ -520,11 +556,14 @@ const SanctionsSourceTypeTab = ({
   const api = useApi();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, { wait: 200 });
+  const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
 
   const options = {
     SANCTIONS: SANCTIONS_SOURCE_RELEVANCES,
     PEP: PEP_SOURCE_RELEVANCES,
-    ADVERSE_MEDIA: ADVERSE_MEDIA_SOURCE_RELEVANCES,
+    ADVERSE_MEDIA: isDowJonesEnabled
+      ? DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES
+      : ADVERSE_MEDIA_SOURCE_RELEVANCES,
     REGULATORY_ENFORCEMENT_LIST: REL_SOURCE_RELEVANCES,
   };
 
@@ -541,6 +580,7 @@ const SanctionsSourceTypeTab = ({
           | SanctionsSourceRelevance
           | PEPSourceRelevance
           | AdverseMediaSourceRelevance
+          | DowJonesAdverseMediaSourceRelevance
           | RELSourceRelevance
         )[]
       | undefined,
@@ -631,7 +671,7 @@ const SanctionsSourceTypeTab = ({
           <QueryResultsTable
             rowKey="id"
             queryResults={queryResults}
-            columns={columns}
+            columns={getColumns(isDowJonesEnabled)}
             toolsOptions={false}
             selection={true}
             pagination={false}
