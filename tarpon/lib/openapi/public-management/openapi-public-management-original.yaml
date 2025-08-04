@@ -868,7 +868,7 @@ paths:
         #### Uploading Your File
 
 
-        Once you have obtained the pre-signed URL and the accompanying fields (`key`, `name`, `x-amz-Algorithm`, `x-amz-credential`, `x-amz-date`, `x-amz-signature`) from the API endpoint:
+        Once you have obtained the pre-signed URL and the accompanying fields (`key`, `name`, `x-amz-Algorithm`, `x-amz-credential`, `x-amz-date`, `x-amz-signature`, `x-amz-security-token`) from the API endpoint:
 
 
         To upload your file to the designated storage location using the provided data, you need to make a request formatted as follows:
@@ -1603,6 +1603,8 @@ components:
             x-amz-date:
               type: string
             x-amz-signature:
+              type: string
+            x-amz-security-token:
               type: string
             name:
               type: string

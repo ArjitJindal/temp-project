@@ -52,11 +52,11 @@ export const fileUploadHandler = lambdaApi()(
         fields: {
           key: fields.key,
           name: fields.name,
-          policy: fields.policy,
-          x_amz_algorithm: fields.x_amz_algorithm,
-          x_amz_credential: fields.x_amz_credential,
-          x_amz_date: fields.x_amz_date,
-          x_amz_signature: fields.x_amz_signature,
+          policy: fields.Policy,
+          x_amz_algorithm: fields['X-Amz-Algorithm'],
+          x_amz_credential: fields['X-Amz-Credential'],
+          x_amz_date: fields['X-Amz-Date'],
+          x_amz_signature: fields['X-Amz-Signature'],
         },
       }
     })
