@@ -6,12 +6,13 @@ describe('Close Alerts from Table', () => {
     ...PERMISSIONS.CASE_REOPEN,
     ...PERMISSIONS.CASE_DETAILS,
     ...PERMISSIONS.NOTIFICATIONS,
+    ...PERMISSIONS.SANCTIONS,
   ];
 
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { NOTIFICATIONS: true },
+      features: { NOTIFICATIONS: true, SANCTIONS: true },
     });
   });
 
