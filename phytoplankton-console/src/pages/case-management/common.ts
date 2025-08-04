@@ -149,7 +149,7 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
       : caseUser?.destination?.userId
       ? caseUser?.destination
       : undefined;
-    return {
+    const alertData = {
       ...alert,
       age: rest.age,
       caseCreatedTimestamp: rest.caseCreatedTimestamp,
@@ -163,5 +163,14 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
       },
       proposedAction: alert.lastStatusChange?.caseStatus,
     };
+    if (alertData.lastStatusChangeReasons.reasons.length === 0) {
+      const inReviewChange = alert.statusChanges?.find((change) =>
+        change.caseStatus?.startsWith('IN_REVIEW'),
+      );
+
+      alertData.lastStatusChangeReasons.reasons = inReviewChange?.reason ?? [];
+      alertData.lastStatusChangeReasons.otherReason = inReviewChange?.otherReason ?? null;
+    }
+    return alertData;
   });
 }
