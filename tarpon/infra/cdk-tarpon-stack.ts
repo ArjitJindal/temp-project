@@ -117,6 +117,7 @@ import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import {
   createAPIGatewayThrottlingAlarm,
   createFinCENSTFPConnectionAlarm,
+  createKinesisThrottledRecordsPercentageAlarm,
 } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
@@ -370,6 +371,14 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.TARPON_STREAM_ID,
       StackConstants.TARPON_STREAM_NAME,
       Duration.days(7)
+    )
+
+    createKinesisThrottledRecordsPercentageAlarm(
+      this,
+      this.zendutyCloudWatchTopic,
+      tarponStream.streamName + 'ThrottledRecordsPercentage',
+      tarponStream.streamName,
+      20
     )
 
     /**

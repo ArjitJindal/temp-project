@@ -582,3 +582,52 @@ export const createFinCENSTFPConnectionAlarm = (
     }),
   }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
 }
+
+export const createKinesisThrottledRecordsPercentageAlarm = (
+  context: Construct,
+  zendutyCloudWatchTopic: Topic,
+  streamAlarmName: string,
+  kinesisStreamName: string,
+  threshold: number = 20
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${streamAlarmName}ThrottledRecordsPercentage`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: `Kinesis-${streamAlarmName}ThrottledRecordsPercentage`,
+    alarmDescription: `Covers throttled records percentage in ${kinesisStreamName} in the AWS account. 
+    Alarm triggers when throttled records percentage is higher than ${threshold}% for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
+    Throttled percentage is calculated by dividing throttled records by total records.`,
+    metric: new MathExpression({
+      expression: '100*(m1/m2)',
+      usingMetrics: {
+        m1: new Metric({
+          label: `${kinesisStreamName} Throttled Records`,
+          namespace: 'AWS/Kinesis',
+          metricName: 'PutRecords.ThrottledRecords',
+          dimensionsMap: {
+            StreamName: kinesisStreamName,
+          },
+        }).with({
+          period: Duration.seconds(300),
+          statistic: 'Sum',
+        }),
+        m2: new Metric({
+          label: `${kinesisStreamName} Total Records`,
+          namespace: 'AWS/Kinesis',
+          metricName: 'PutRecords.TotalRecords',
+          dimensionsMap: {
+            StreamName: kinesisStreamName,
+          },
+        }).with({
+          period: Duration.seconds(300),
+          statistic: 'Sum',
+        }),
+      },
+    }),
+  }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
+}
