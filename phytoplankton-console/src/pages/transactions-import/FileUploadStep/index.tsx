@@ -5,6 +5,7 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import Label from '@/components/library/Label';
 import TextArea from '@/components/library/TextArea';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
+import * as Card from '@/components/ui/Card';
 
 const TEMPLATE_OPTIONS = [
   {
@@ -36,36 +37,40 @@ type TemplateOptionValue = typeof TEMPLATE_OPTIONS[number]['value'];
 export default function FileUploadStep() {
   const [template, setTemplate] = useState<TemplateOptionValue>();
   return (
-    <div className={s.root}>
-      <Label
-        label="Import CSV file"
-        description={'Select from an option below to upload your CSV data.'}
-        required
-      >
-        <SelectionGroup<TemplateOptionValue>
-          mode={'SINGLE'}
-          value={template}
-          onChange={(value) => {
-            setTemplate(value);
-          }}
-          options={TEMPLATE_OPTIONS}
-        />
-      </Label>
-      {template === 'CUSTOM_CSV' && (
-        <>
-          <FilesDraggerInput
-            size={'LARGE'}
-            value={[]}
-            accept={['text/csv']}
-            onChange={() => {
-              throw new Error('Not implemented');
-            }}
-          />
-        </>
-      )}
-      <Label label="Import reason">
-        <TextArea />
-      </Label>
-    </div>
+    <Card.Root>
+      <Card.Section>
+        <div className={s.root}>
+          <Label
+            label="Import CSV file"
+            description={'Select from an option below to upload your CSV data.'}
+            required
+          >
+            <SelectionGroup<TemplateOptionValue>
+              mode={'SINGLE'}
+              value={template}
+              onChange={(value) => {
+                setTemplate(value);
+              }}
+              options={TEMPLATE_OPTIONS}
+            />
+          </Label>
+          {template === 'CUSTOM_CSV' && (
+            <>
+              <FilesDraggerInput
+                size={'LARGE'}
+                value={[]}
+                accept={['text/csv']}
+                onChange={() => {
+                  throw new Error('Not implemented');
+                }}
+              />
+            </>
+          )}
+          <Label label="Import reason">
+            <TextArea />
+          </Label>
+        </div>
+      </Card.Section>
+    </Card.Root>
   );
 }
