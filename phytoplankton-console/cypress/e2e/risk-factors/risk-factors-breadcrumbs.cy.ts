@@ -29,6 +29,7 @@ function simulationModeCheck() {
 }
 
 function nonSimulationModeCheck() {
+  cy.selectSegmentedControl('Consumer'); // need to updated navigation
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Consumer');
   cy.selectSegmentedControl('Business');
   cy.get('[id="breadcrumb-link"]').last().should('have.text', 'Business');
