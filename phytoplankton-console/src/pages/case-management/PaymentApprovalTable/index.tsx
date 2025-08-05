@@ -22,7 +22,7 @@ export default function PaymentApprovalsTable(props: Props) {
   const queryClient = useQueryClient();
   const filterStatus = params.status ?? 'SUSPEND';
 
-  const { queryResult, cacheKey } = useTransactionsQuery(
+  const { queryResult, countQueryResult, cacheKey } = useTransactionsQuery(
     { ...params, status: filterStatus, isPaymentApprovals: true },
     { isReadyToFetch: true, debounce: 500 },
   );
@@ -46,6 +46,7 @@ export default function PaymentApprovalsTable(props: Props) {
   return (
     <TransactionsTable
       queryResult={queryResult}
+      countQueryResult={countQueryResult}
       params={params}
       onChangeParams={setParams}
       fitHeight={370}

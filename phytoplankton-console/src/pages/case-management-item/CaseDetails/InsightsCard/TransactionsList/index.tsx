@@ -43,14 +43,15 @@ export default function TransactionsList(props: Props) {
     }));
   }, [selectorParams]);
 
-  const transactionsQueryResult = useTransactionsQuery(
+  const { queryResult, countQueryResult } = useTransactionsQuery(
     { ...tableParams, ...selectorParams, userId },
     { isReadyToFetch: true },
   );
 
   return (
     <TransactionsTable
-      queryResult={transactionsQueryResult.queryResult}
+      queryResult={queryResult}
+      countQueryResult={countQueryResult}
       params={tableParams}
       onChangeParams={setTableParams}
       fitHeight={300}

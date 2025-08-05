@@ -67,7 +67,7 @@ const TableList = () => {
     [setParams],
   );
 
-  const { queryResult } = useTransactionsQuery(params);
+  const { queryResult, countQueryResult } = useTransactionsQuery(params);
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
@@ -170,6 +170,7 @@ const TableList = () => {
             },
           ]}
           queryResult={queryResult}
+          countQueryResult={countQueryResult}
           params={params}
           onChangeParams={handleChangeParams}
           fitHeight

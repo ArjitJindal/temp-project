@@ -308,7 +308,7 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     }
   }, [params, timestamp]);
 
-  const queryResult = useTransactionsQuery(
+  const { queryResult, countQueryResult } = useTransactionsQuery(
     {
       ...params,
       filterShadowHit: checkShadowRule(ruleInstance),
@@ -321,7 +321,8 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
 
   return (
     <TransactionsTable
-      queryResult={queryResult.queryResult}
+      queryResult={queryResult}
+      countQueryResult={countQueryResult}
       params={params}
       onChangeParams={setParams}
       isExpandable={false}

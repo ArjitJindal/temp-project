@@ -96,6 +96,7 @@ export interface TransactionsTableParams extends CommonParams {
   filterShadowHit?: boolean;
   includeUsers?: boolean;
   isPaymentApprovals?: boolean;
+  responseType?: 'data' | 'count';
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -148,6 +149,7 @@ export const transactionParamsToRequest = (
     filterShadowHit,
     includeUsers,
     isPaymentApprovals,
+    responseType,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -165,6 +167,7 @@ export const transactionParamsToRequest = (
       ? undefined
       : defaultTimestamps().beforeTimestamp,
     filterId: transactionId,
+    responseType: responseType ?? 'data',
     filterOriginCurrencies: originCurrenciesFilter,
     filterDestinationCurrencies: destinationCurrenciesFilter,
     filterTransactionTypes: transactionTypes,
@@ -208,6 +211,7 @@ type Props = {
   tableRef?: React.Ref<TableRefType>;
   extraFilters?: ExtraFilterProps<TransactionsTableParams>[];
   queryResult: QueryResult<TableData<TransactionTableItem>>;
+  countQueryResult?: QueryResult<{ total: number }>;
   params?: AllParams<TransactionsTableParams>;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
   selectedIds?: string[];
@@ -289,6 +293,7 @@ export default function TransactionsTable(props: Props) {
   const {
     tableRef,
     queryResult,
+    countQueryResult,
     params,
     hideSearchForm,
     hideStatusFilter,
@@ -609,6 +614,12 @@ export default function TransactionsTable(props: Props) {
 
   const isTransactionsDownloadEnabled = useHasResources(['read:::transactions/export/*']);
 
+  const handleReload = () => {
+    if (countQueryResult) {
+      countQueryResult.refetch();
+    }
+  };
+
   return (
     <QueryResultsTable<TransactionTableItem, TransactionsTableParams>
       innerRef={tableRef}
@@ -627,11 +638,13 @@ export default function TransactionsTable(props: Props) {
       selectionActions={selectionActions}
       onSelect={onSelect}
       params={params}
+      onReload={handleReload}
       onChangeParams={onChangeParams}
       extraFilters={fullExtraFilters}
       showResultsInfo
       rowKey="transactionId"
       queryResults={queryResult}
+      countQueryResults={countQueryResult}
       columns={columns}
       pagination={true}
       hideFilters={hideSearchForm}

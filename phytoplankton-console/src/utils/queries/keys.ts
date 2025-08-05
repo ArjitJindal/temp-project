@@ -114,6 +114,12 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   searchParams,
 ];
 
+export const TRANSACTIONS_COUNT = (searchParams: AnyParameters): QueryKey => [
+  'transactions',
+  'count',
+  searchParams,
+];
+
 export const REPORTS_ITEM = (id: string): QueryKey => ['reports', 'item', id];
 export const REPORTS_LIST = (params?: AnyParameters): QueryKey =>
   compact(['reports', 'list', params]);

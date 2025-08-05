@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import { QueryKey } from '@tanstack/react-query';
 import { useApi } from '@/api';
 import { TransactionTableItem } from '@/apis';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_LIST, TRANSACTIONS_COUNT } from '@/utils/queries/keys';
+import { PaginatedData, usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import {
   TransactionsTableParams,
   transactionParamsToRequest,
@@ -20,6 +21,7 @@ export function useTransactionsQuery<T extends object = TransactionTableItem>(
   { isReadyToFetch, debounce, mapper }: UseTransactionsQueryParams<T> = {},
 ): {
   queryResult: QueryResult<PaginatedData<T>>;
+  countQueryResult: QueryResult<{ total: number }>;
   cacheKey: QueryKey;
 } {
   const api = useApi({ ...(debounce ? { debounce } : undefined) });
@@ -29,7 +31,7 @@ export function useTransactionsQuery<T extends object = TransactionTableItem>(
     async (paginationParams) => {
       const data = await api.getTransactionsList({
         ...transactionParamsToRequest(
-          { ...params, view: paginationParams.view },
+          { ...params, view: paginationParams.view, responseType: 'data' },
           { ignoreDefaultTimestamps: true },
         ),
         ...paginationParams,
@@ -37,14 +39,42 @@ export function useTransactionsQuery<T extends object = TransactionTableItem>(
 
       return {
         items: (mapper ? mapper(data.items) : data.items) as T[],
-        total: parseInt(`${data.count}`), // parse because clickhouse returns string
+        total: data.count ? parseInt(`${data.count}`) : 0,
       };
     },
     { enabled: isReadyToFetch },
   );
+  const countParams = useMemo(() => {
+    return {
+      ...params,
+      page: 0,
+      pageSize: 0,
+    };
+  }, [params]);
+  const countQueryResult = useQuery<{ total: number }>(
+    TRANSACTIONS_COUNT(countParams),
+    async () => {
+      const countData = await api.getTransactionsList({
+        ...transactionParamsToRequest(
+          { ...countParams, responseType: 'count' },
+          { ignoreDefaultTimestamps: true },
+        ),
+      });
+
+      return {
+        total: parseInt(`${countData.count}`),
+      };
+    },
+    {
+      enabled: isReadyToFetch,
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
+    },
+  );
 
   return {
     queryResult: queryResultOffset,
+    countQueryResult,
     cacheKey: TRANSACTIONS_LIST(params),
   };
 }

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
 import NumberInput from '../NumberInput';
+import Skeleton from '../Skeleton';
 import s from './index.module.less';
 import { formatNumber } from '@/utils/number';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
@@ -31,6 +32,7 @@ interface CursorProps {
 
 interface PageBasedProps {
   isDisabled?: boolean;
+  isLoading?: boolean;
   showResultsInfo?: boolean;
   pageSize?: number;
   onChange: (page: number, pageSize: number) => void;
@@ -54,6 +56,7 @@ export default function Pagination(props: Props) {
 function PageBasedPagination(props: PageBasedProps) {
   const {
     isDisabled,
+    isLoading,
     total,
     totalPages,
     currentItems,
@@ -102,6 +105,14 @@ function PageBasedPagination(props: PageBasedProps) {
       allPagesVisibleOnLeft = false;
       allPagesVisibleOnRight = false;
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className={s.root}>
+        <Skeleton />
+      </div>
+    );
   }
 
   return (

@@ -10,6 +10,7 @@ type Props<Item extends object, Params extends object = ParamsType> = Omit<
   'data' | 'loading'
 > & {
   queryResults: QueryResult<TableData<Item>>;
+  countQueryResults?: QueryResult<{ total: number }>;
   showResultsInfo?: boolean;
   retainSelectedIds?: boolean;
 };
@@ -17,7 +18,14 @@ type Props<Item extends object, Params extends object = ParamsType> = Omit<
 export default function QueryResultsTable<T extends object, Params extends object = CommonParams>(
   props: Props<T, Params>,
 ): JSX.Element {
-  const { queryResults, showResultsInfo = true, expandedRowId, retainSelectedIds, ...rest } = props;
+  const {
+    queryResults,
+    countQueryResults,
+    showResultsInfo = true,
+    expandedRowId,
+    retainSelectedIds,
+    ...rest
+  } = props;
   const { selectedIds, rowKey, onSelect } = rest;
   const handleReload = useCallback(() => {
     rest.onReload?.();
@@ -54,6 +62,7 @@ export default function QueryResultsTable<T extends object, Params extends objec
       cursor={queryResults?.cursor}
       onPaginateData={queryResults.paginate ?? rest.onPaginateData}
       showResultsInfo={showResultsInfo}
+      countResults={countQueryResults?.data}
       expandedRowId={expandedRowId}
     />
   );

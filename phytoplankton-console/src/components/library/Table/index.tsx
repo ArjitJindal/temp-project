@@ -46,6 +46,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   tableId?: string;
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
+  countResults?: AsyncResource<{ total: number }>;
   pagination?: boolean | 'HIDE_FOR_ONE_PAGE';
   selection?: boolean | ((row: TableRow<Item>) => boolean);
   selectionActions?: SelectionAction<Item, Params>[];
@@ -145,6 +146,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
   }, [props.data]);
 
   const data = useMemo(() => getOr(dataRes, { items: [] }), [dataRes]);
+
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
       if (newParams?.page != null && !isEqual(omit(newParams, 'page'), omit(params, 'page'))) {
@@ -307,13 +309,17 @@ function Table<Item extends object, Params extends object = CommonParams>(
       <div data-cy={`${cyId}-pagination-wrapper`}>
         {!cursor && pagination && (
           <Pagination
-            isDisabled={isLoading(dataRes)}
+            isLoading={props.countResults ? isLoading(props.countResults) : isLoading(dataRes)}
             current={params?.page ?? 1}
             pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
             onChange={(page, pageSize) =>
               handleChangeParamsPaginated({ ...params, page, pageSize })
             }
-            total={data.total ?? data.items.length}
+            total={
+              props.countResults
+                ? getOr(props.countResults, { total: 0 }).total
+                : data.total ?? data.items.length
+            }
             totalPages={data.totalPages}
             currentItems={data.items.length}
           />
