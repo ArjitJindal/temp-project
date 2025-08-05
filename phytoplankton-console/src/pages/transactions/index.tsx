@@ -17,6 +17,8 @@ import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { dayjs } from '@/utils/dayjs';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Button from '@/components/library/Button';
+import Upload2LineIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
 
 const TableList = () => {
   const i18n = useI18n();
@@ -70,7 +72,19 @@ const TableList = () => {
   const { queryResult, countQueryResult } = useTransactionsQuery(params);
 
   return (
-    <PageWrapper title={i18n('menu.transactions.transactions-list')}>
+    <PageWrapper
+      title={i18n('menu.transactions.transactions-list')}
+      actionButton={
+        <Button
+          type={'TETRIARY'}
+          asLink={true}
+          to={'/transactions/import/csv'}
+          icon={<Upload2LineIcon />}
+        >
+          Import CSV
+        </Button>
+      }
+    >
       <PageWrapperContentContainer>
         <TransactionsTable
           extraFilters={[

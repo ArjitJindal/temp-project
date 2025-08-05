@@ -7,7 +7,7 @@ import MoreLineIcon from '@/components/ui/icons/Remix/system/more-line.react.svg
 export type Step = {
   key: string;
   title: string;
-  description: string;
+  description?: string;
   isOptional?: boolean;
   isUnfilled?: boolean;
   isInvalid?: boolean;
@@ -80,7 +80,7 @@ export function StepperSteps(
                     <span className={s.required}>{'\xa0*'}</span>
                   ))}
               </div>
-              <div className={s.stepDescription}>{description}</div>
+              {step.description && <div className={s.stepDescription}>{description}</div>}
             </div>
           </div>
         );

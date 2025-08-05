@@ -52,6 +52,7 @@ import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPag
 import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
+import TransactionsImport from '@/pages/transactions-import';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -174,6 +175,15 @@ export function useRoutes(): RouteItem[] {
             name: 'transactions-list',
             component: TransactionsListPage,
             path: '/transactions/list',
+          },
+          {
+            name: 'transactions-import',
+            component: TransactionsImport,
+            path: '/transactions/import/csv',
+          },
+          {
+            path: '/transactions/import',
+            redirect: '/transactions/import/csv',
           },
           {
             path: '/transactions',
