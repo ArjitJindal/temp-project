@@ -1,5 +1,6 @@
 import { compact, omit } from 'lodash'
 import { Document, WithId } from 'mongodb'
+import pMap from 'p-map'
 import { logger } from '../logger'
 import { VersionHistoryTable } from '../../models/version-history'
 import { getCases } from './data/cases'
@@ -49,8 +50,8 @@ export const seedClickhouse = async (tenantId: string) => {
 
     const promises = ClickHouseTables.map(async (table) => {
       try {
-        await clickhouseClient.exec({
-          query: `DELETE FROM ${table.table} WHERE 1=1`,
+        await clickhouseClient.command({
+          query: `TRUNCATE TABLE ${table.table}`,
         })
       } catch (error) {
         // error code 60 is returned when the table does not exist
@@ -67,7 +68,7 @@ export const seedClickhouse = async (tenantId: string) => {
         }
       }
     })
-    await Promise.all(promises)
+    await pMap(promises, async (promise) => await promise, { concurrency: 10 })
     const mongoConsumerService = new MongoDbConsumer(client, dynamoDb)
     await createTenantDatabase(tenantId)
     await Promise.all(
