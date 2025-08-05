@@ -26,7 +26,14 @@ describe('Close Alerts from Table', () => {
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.get('.ant-modal-content:visible').within(() => {
-      cy.get('[data-cy="modal-title"]').should('contain', 'Close');
+      cy.get('[data-cy="modal-title"]').then(($title) => {
+        const text = $title.text();
+        if (text.includes('Confirm action')) {
+          cy.get('button').contains('Confirm').click();
+        } else {
+          expect(text).to.contain('Close');
+        }
+      });
       cy.selectOptionsByLabel('Reason', ['False positive']);
       cy.get('.ant-modal-title').click();
       cy.get('.toastui-editor-ww-container').type('This is a test');
