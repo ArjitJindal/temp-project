@@ -320,6 +320,7 @@ export const MannualCaseCreationModal = (props: Props) => {
 
         <Label label={'Upload attachments'}>
           <FilesDraggerInput
+            size="LARGE"
             onChange={(value) => {
               setFileList(value ?? []);
             }}

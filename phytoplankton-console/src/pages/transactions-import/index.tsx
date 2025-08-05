@@ -5,9 +5,10 @@ import Breadcrumbs from '@/components/library/Breadcrumbs';
 import * as Card from '@/components/ui/Card';
 import Stepper from '@/components/library/Stepper';
 import Button from '@/components/library/Button';
+import FileUploadStep from '@/pages/transactions-import/FileUploadStep';
 
 export default function TransactionsImport() {
-  const [activeStep, setActiveStep] = useState('UPLOAD');
+  const [activeStep, setActiveStep] = useState('UPLOAD_FILE');
 
   return (
     <PageWrapper
@@ -23,7 +24,7 @@ export default function TransactionsImport() {
             active={activeStep}
             onChange={setActiveStep}
             steps={[
-              { key: 'UPLOAD', title: 'Upload file' },
+              { key: 'UPLOAD_FILE', title: 'Upload file' },
               { key: 'DATA_MAPPING', title: 'Data mapping' },
               { key: 'DATA_VALIDATION', title: 'Data validation' },
             ]}
@@ -36,121 +37,13 @@ export default function TransactionsImport() {
           <Button type={'TETRIARY'}>Cancel</Button>
         </div>
       }
+      enableTopPadding={true}
     >
       <Card.Root>
         <Card.Section>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
-          <div>
-            Transactions Import, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda
-            das, asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das,
-            asda das, asda das, asda das, asda das, asda das, asda das, asda das, asda das
-          </div>
+          {activeStep === 'UPLOAD_FILE' && <FileUploadStep />}
+          {activeStep === 'DATA_MAPPING' && <b>DATA_MAPPING</b>}
+          {activeStep === 'DATA_VALIDATION' && <b>DATA_VALIDATION</b>}
         </Card.Section>
       </Card.Root>
     </PageWrapper>
