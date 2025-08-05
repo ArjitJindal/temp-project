@@ -617,6 +617,12 @@ export class MongoDbTransactionRepository
       })
     }
 
+    if (params.filterReference) {
+      conditions.push({
+        reference: { $in: [params.filterReference] },
+      })
+    }
+
     if (conditions.length === 0) {
       return {}
     }

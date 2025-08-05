@@ -1414,6 +1414,10 @@ paths:
           name: isPaymentApprovals
         - schema:
             type: string
+          in: query
+          name: filterReference
+        - schema:
+            type: string
             enum:
               - data
               - count

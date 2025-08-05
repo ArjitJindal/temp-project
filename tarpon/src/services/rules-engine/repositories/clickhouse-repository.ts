@@ -252,6 +252,11 @@ export class ClickhouseTransactionsRepository {
         }%')`
       )
     }
+
+    if (params.filterReference) {
+      whereConditions.push(`reference = '${params.filterReference}'`)
+    }
+
     const queryWhereConditions = [...whereConditions]
     if (
       queryWhereConditions.length === timestampFilterCount &&

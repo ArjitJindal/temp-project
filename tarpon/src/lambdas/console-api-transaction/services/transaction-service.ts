@@ -503,6 +503,7 @@ export class TransactionService {
             ? { ruleName: 1, ruleDescription: 1 }
             : [],
         alertIds: 1,
+        reference: 1,
       },
     }
   }

@@ -97,6 +97,7 @@ export interface TransactionsTableParams extends CommonParams {
   includeUsers?: boolean;
   isPaymentApprovals?: boolean;
   responseType?: 'data' | 'count';
+  reference?: string;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -150,6 +151,7 @@ export const transactionParamsToRequest = (
     includeUsers,
     isPaymentApprovals,
     responseType,
+    reference,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -195,6 +197,7 @@ export const transactionParamsToRequest = (
     includeRuleHitDetails: includeRuleHitDetails,
     filterShadowHit: filterShadowHit,
     isPaymentApprovals: isPaymentApprovals,
+    filterReference: reference,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;
@@ -609,6 +612,14 @@ export default function TransactionsTable(props: Props) {
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
+    } as ExtraFilterProps<TransactionsTableParams>,
+    {
+      title: 'Reference',
+      key: 'reference',
+      renderer: {
+        kind: 'string',
+        allowClear: true,
+      },
     } as ExtraFilterProps<TransactionsTableParams>,
   ];
 
