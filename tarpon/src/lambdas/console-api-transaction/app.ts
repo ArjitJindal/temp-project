@@ -110,9 +110,37 @@ export const transactionsViewHandler = lambdaApi()(
 
     handlers.registerGetTransactionsList(async (context, request) => {
       if (isClickhouseEnabled()) {
+        if (request.responseType === 'data') {
+          const items = await transactionService.getTransactionsTableDataOnly(
+            request
+          )
+          return { items, count: 0 }
+        }
+
+        if (request.responseType === 'count') {
+          const count = await transactionService.getTransactionsCountOnly(
+            request
+          )
+          return { items: [], count }
+        }
+
         const result = await transactionService.getTransactionsListV2(request)
         return result.result
       }
+
+      if (request.responseType === 'data') {
+        const items =
+          await transactionService.getTransactionsTableDataOnlyMongo(request)
+        return { items, count: 0 }
+      }
+
+      if (request.responseType === 'count') {
+        const count = await transactionService.getTransactionsCountOnlyMongo(
+          request
+        )
+        return { items: [], count }
+      }
+
       const result = await transactionService.getTransactionsList(request, {
         includeUsers: request.includeUsers,
       })

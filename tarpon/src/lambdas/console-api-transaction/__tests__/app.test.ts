@@ -8,6 +8,8 @@ const testApiEndPoints = new TestApiEndpoint(transactionsViewHandler)
 
 describe.each<TestApiEndpointOptions>([
   { method: 'GET', path: '/transactions' },
+  { method: 'GET', path: '/transactions?responseType=data' },
+  { method: 'GET', path: '/transactions?responseType=count' },
   {
     method: 'GET',
     path: '/transactions/stats/by-types',

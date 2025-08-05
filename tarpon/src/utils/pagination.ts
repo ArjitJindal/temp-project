@@ -304,6 +304,72 @@ export async function offsetPaginateClickhouse<T>(
   }
 }
 
+/**
+ * Gets only the data from ClickHouse without calculating count
+ */
+export async function getClickhouseDataOnly<T>(
+  client: ClickHouseClient,
+  dataTableName: string,
+  queryTableName: string,
+  query: ClickhousePaginationParams,
+  where = '1',
+  columnsProjection: Record<string, string>,
+  callbackMap?: (item: Record<string, string | number>) => T
+): Promise<T[]> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  const sortField = (query.sortField || 'id').replace(/\./g, '_')
+  const sortOrder = query.sortOrder || 'ascend'
+  const page = query.page || 1
+  const offset = (page - 1) * pageSize
+
+  const columnsProjectionString = Object.entries(columnsProjection)
+    .map(([key, value]) => `${value} AS ${key}`)
+    .join(', ')
+
+  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+  const findSql = `SELECT ${
+    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
+  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
+
+  const items = await executeClickhouseQuery<Record<string, string | number>[]>(
+    client,
+    {
+      query: findSql,
+      format: 'JSONEachRow',
+    }
+  )
+
+  return callbackMap
+    ? items.map((item) => callbackMap(item))
+    : (items as unknown as T[])
+}
+
+/**
+ * Gets only the count from ClickHouse without fetching data
+ */
+export async function getClickhouseCountOnly(
+  client: ClickHouseClient,
+  queryTableName: string,
+  where = '1',
+  countWhereClause?: string
+): Promise<number> {
+  const countWhere = countWhereClause === undefined ? where : countWhereClause
+  const countQuery = `SELECT COUNT(DISTINCT id) as count FROM ${queryTableName} FINAL ${
+    countWhere
+      ? `WHERE ${countWhere} AND timestamp != 0`
+      : 'WHERE timestamp != 0'
+  }`
+
+  const count = await executeClickhouseQuery<Array<{ count: number }>>(client, {
+    query: countQuery,
+    format: 'JSONEachRow',
+  })
+
+  return count[0].count
+}
+
 export async function offsetPaginateClickhousePreview<T>(
   client: ClickHouseClient,
   tableName: string,

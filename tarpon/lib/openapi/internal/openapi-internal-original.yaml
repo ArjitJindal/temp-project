@@ -1412,6 +1412,14 @@ paths:
             type: boolean
           in: query
           name: isPaymentApprovals
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
     post:
       summary: Flat file upload transaction
       operationId: post-transaction-flat-file-upload

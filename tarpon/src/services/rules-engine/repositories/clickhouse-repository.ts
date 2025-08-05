@@ -3,7 +3,11 @@ import { compact } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '../../../core/xray'
-import { offsetPaginateClickhouse } from '../../../utils/pagination'
+import {
+  offsetPaginateClickhouse,
+  getClickhouseDataOnly,
+  getClickhouseCountOnly,
+} from '../../../utils/pagination'
 import {
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
@@ -446,6 +450,185 @@ export class ClickhouseTransactionsRepository {
       items: compact(sortedTransactions),
       count: data.count,
     }
+  }
+
+  /**
+   * Gets only transaction data without count calculation for improved performance
+   */
+  async getTransactionsDataOnly(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
+  ): Promise<TransactionTableItem[]> {
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
+
+    let sortField = params.sortField ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    const columnsProjection = {
+      transactionId: 'id',
+      timestamp: "JSONExtractFloat(data, 'timestamp')",
+      updatedAt: "JSONExtractFloat(data, 'updatedAt')",
+      arsScore: "JSONExtractFloat(data, 'arsScore', 'arsScore')",
+      originPaymentMethod:
+        "JSONExtractString(data, 'originPaymentDetails', 'method')",
+      destinationPaymentMethod:
+        "JSONExtractString(data, 'destinationPaymentDetails', 'method')",
+      destinationPaymentMethodId:
+        "JSONExtractString(data, 'destinationPaymentMethodId')",
+      originPaymentMethodId: "JSONExtractString(data, 'originPaymentMethodId')",
+      destinationAmountDetails_amount:
+        "JSONExtractFloat(data, 'destinationAmountDetails', 'transactionAmount')",
+      destinationAmountDetails_transactionCurrency:
+        "JSONExtractString(data, 'destinationAmountDetails', 'transactionCurrency')",
+      originAmountDetails_amount:
+        "JSONExtractFloat(data, 'originAmountDetails', 'transactionAmount')",
+      originAmountDetails_transactionCurrency:
+        "JSONExtractString(data, 'originAmountDetails', 'transactionCurrency')",
+      destinationUserId: "JSONExtractString(data, 'destinationUserId')",
+      originUserId: "JSONExtractString(data, 'originUserId')",
+      type: "JSONExtractString(data, 'type')",
+      tags: "JSONExtractRaw(data, 'tags')",
+      originCountry:
+        "JSONExtractString(data, 'originAmountDetails', 'country')",
+      destinationCountry:
+        "JSONExtractString(data, 'destinationAmountDetails', 'country')",
+      ...(params.includePaymentDetails
+        ? {
+            originPaymentDetails:
+              "JSONExtractRaw(data, 'originPaymentDetails')",
+            destinationPaymentDetails:
+              "JSONExtractRaw(data, 'destinationPaymentDetails')",
+          }
+        : {}),
+      productType: "JSONExtractString(data, 'productType')",
+      state: "JSONExtractString(data, 'transactionState')",
+      status: "JSONExtractString(data, 'status')",
+      reference: "JSONExtractString(data, 'reference')",
+      ...(params.includeRuleHitDetails &&
+      params.view === ('TABLE' as TableListViewEnum)
+        ? {
+            hitRules:
+              "toJSONString(JSONExtract(data, 'hitRules', 'Array(Tuple(ruleName String, ruleDescription String))'))",
+          }
+        : {}),
+      hasHitRules: `length(arrayFilter(hitRule -> NOT isNull(hitRule),JSONExtractArrayRaw(data, 'hitRules'))) > 0`,
+      originFundsInfo:
+        "JSONExtract(data, 'originFundsInfo', 'Tuple(sourceOfFunds String, sourceOfWealth String)')",
+      alertIds: "toJSONString(JSONExtract(data, 'alertIds', 'Array(String)'))",
+    }
+
+    const sortFieldMapper: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+      ars_score: 'arsScore',
+    }
+
+    if (sortField in sortFieldMapper) {
+      sortField = sortFieldMapper[sortField]
+    }
+
+    const items = await getClickhouseDataOnly<TransactionTableItem>(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
+      columnsProjection,
+      (item) => {
+        const destinationPaymentDetails = item.destinationPaymentDetails
+          ? (JSON.parse(
+              item.destinationPaymentDetails as string
+            ) as PaymentDetails)
+          : undefined
+
+        const originPaymentDetails = item.originPaymentDetails
+          ? (JSON.parse(item.originPaymentDetails as string) as PaymentDetails)
+          : undefined
+
+        return {
+          transactionId: item.transactionId as string,
+          timestamp: item.timestamp as number,
+          updatedAt: item.updatedAt as number,
+          arsScore: { arsScore: item.arsScore as number },
+          destinationPayment: {
+            paymentMethodId: item.destinationPaymentMethodId as string,
+            amount: item.destinationAmountDetails_amount as number,
+            currency:
+              item.destinationAmountDetails_transactionCurrency as CurrencyCode,
+            country: item.destinationCountry as CountryCode,
+            paymentDetails: params.includePaymentDetails
+              ? destinationPaymentDetails
+              : ({
+                  method: item.destinationPaymentMethod as PaymentMethod,
+                } as PaymentDetails),
+          },
+          originPayment: {
+            paymentMethodId: item.originPaymentMethodId as string,
+            amount: item.originAmountDetails_amount as number,
+            currency:
+              item.originAmountDetails_transactionCurrency as CurrencyCode,
+            country: item.originCountry as CountryCode,
+            paymentDetails: params.includePaymentDetails
+              ? originPaymentDetails
+              : ({
+                  method: item.originPaymentMethod as PaymentMethod,
+                } as PaymentDetails),
+          },
+          destinationUser: { id: item.destinationUserId as string },
+          originUser: { id: item.originUserId as string },
+          type: item.type as string,
+          tags: (item.tags as string)?.length
+            ? (JSON.parse(item.tags as string) as Tag[])
+            : undefined,
+          productType: item.productType as string,
+          status: item.status as RuleAction,
+          transactionState: item.state as TransactionState,
+          reference: item.reference as string,
+          hasHitRules: Boolean(item.hasHitRules ?? false),
+          hitRules: item.hitRules
+            ? (JSON.parse(item.hitRules as string) as {
+                ruleName: string
+                ruleDescription: string
+              }[])
+            : undefined,
+          originFundsInfo: item.originFundsInfo as OriginFundsInfo,
+          alertIds: item.alertIds
+            ? (JSON.parse(item.alertIds as string) as string[])
+            : [],
+        }
+      }
+    )
+
+    const sortedTransactions = getSortedData<TransactionTableItem>({
+      data: items,
+      sortField,
+      sortOrder,
+      groupByField: 'transactionId',
+      groupBySortField: 'updatedAt',
+    })
+
+    return compact(sortedTransactions)
+  }
+
+  /**
+   * Gets only the count of transactions for pagination metadata
+   */
+  async getTransactionsCountOnly(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
+  ): Promise<number> {
+    const { countWhereClause } = await this.getTransactionsWhereConditions(
+      params
+    )
+
+    const count = await getClickhouseCountOnly(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      '1',
+      countWhereClause
+    )
+
+    return count
   }
 
   public async getStatsByType(

@@ -920,6 +920,54 @@ export class MongoDbTransactionRepository
     return { items, count }
   }
 
+  /**
+   * Gets only transaction data without count calculation for improved performance
+   */
+  public async getTransactionsDataOnly(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
+    options?: { projection?: Document },
+    alert?: Alert | null
+  ): Promise<InternalTransaction[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const filter = this.getTransactionsMongoQuery(params, [], alert)
+
+    const limit = params.pageSize !== 'DISABLED' ? Number(params.pageSize) : 20
+    const page = params.page ?? 1
+
+    const items = await collection
+      .find(filter, {
+        sort: {
+          [params.sortField ?? 'timestamp']:
+            params.sortOrder === 'ascend' ? 1 : -1,
+        },
+        limit,
+        skip: (page - 1) * limit,
+        projection: options?.projection,
+      })
+      .toArray()
+
+    return items
+  }
+
+  /**
+   * Gets only the count of transactions without fetching data for improved performance
+   */
+  public async getTransactionsCountOnly(
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
+    alert?: Alert | null
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const filter = this.getTransactionsMongoQuery(params, [], alert)
+
+    return await collection.countDocuments(filter)
+  }
+
   public async getTransactionsCursorPaginated(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
     options?: { projection?: Document },

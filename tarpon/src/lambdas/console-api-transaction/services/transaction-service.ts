@@ -157,6 +157,116 @@ export class TransactionService {
     }
   }
 
+  /**
+   * Gets only transaction table data without count calculation for improved performance
+   */
+  public async getTransactionsTableDataOnly(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<TransactionTableItem[]> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    const clickhouseTransactionsRepository =
+      new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        this.tenantId
+      )
+
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
+
+    const items =
+      await clickhouseTransactionsRepository.getTransactionsDataOnly(params)
+
+    if (params.includeUsers) {
+      return await this.getTransactionUsers(items)
+    }
+
+    return items
+  }
+
+  /**
+   * Gets only the count of transactions without fetching actual data
+   */
+  public async getTransactionsCountOnly(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<number> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    const clickhouseTransactionsRepository =
+      new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        this.tenantId
+      )
+
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
+
+    return await clickhouseTransactionsRepository.getTransactionsCountOnly(
+      params
+    )
+  }
+
+  /**
+   * Gets only transaction table data without count calculation for MongoDB (non-ClickHouse)
+   */
+  public async getTransactionsTableDataOnlyMongo(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<TransactionTableItem[]> {
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
+
+    const items = await this.transactionRepository.getTransactionsDataOnly(
+      params,
+      this.getProjection(params.view as TableListViewEnum),
+      undefined
+    )
+
+    let mappedTransactions = items.map((transaction) =>
+      this.mongoTransactionMapper(transaction)
+    )
+
+    if (params.includeUsers) {
+      mappedTransactions = await this.getTransactionUsers(mappedTransactions)
+    }
+
+    return mappedTransactions
+  }
+
+  /**
+   * Gets only the count of transactions for MongoDB (non-ClickHouse)
+   */
+  public async getTransactionsCountOnlyMongo(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<number> {
+    if (params.filterParentUserId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(
+        params.filterParentUserId
+      )
+      params.filterUserIds = userIds
+    }
+
+    return await this.transactionRepository.getTransactionsCountOnly(
+      params,
+      undefined
+    )
+  }
+
   public async getCasesTransactions(
     params: DefaultApiGetCaseTransactionsRequest
   ) {
