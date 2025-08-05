@@ -1,6 +1,5 @@
 import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import Select from '../library/Select';
-import s from './index.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { NARRATIVE_TEMPLATE_LIST } from '@/utils/queries/keys';
@@ -33,22 +32,23 @@ const NarrativeTemplateSelect = (props: Props) => {
         }));
 
         return (
-          <Select
-            className={s[`mode-${mode}`]}
-            placeholder="Narrative templates"
-            options={narrativeTemplatesOptions}
-            style={{ width: 180 }}
-            value={templateValue}
-            onChange={(value) => {
-              const narrativeTemplate = narrativeTemplates.items.find(
-                (narrativeTemplate) => narrativeTemplate.id === value,
-              );
+          <div style={{ width: 180 }}>
+            <Select
+              hideBorders={mode === 'TEXT'}
+              placeholder="Narrative templates"
+              options={narrativeTemplatesOptions}
+              value={templateValue}
+              onChange={(value) => {
+                const narrativeTemplate = narrativeTemplates.items.find(
+                  (narrativeTemplate) => narrativeTemplate.id === value,
+                );
 
-              if (narrativeTemplate) {
-                setTemplateValue(narrativeTemplate.description);
-              }
-            }}
-          />
+                if (narrativeTemplate) {
+                  setTemplateValue(narrativeTemplate.description);
+                }
+              }}
+            />
+          </div>
         );
       }}
     </AsyncResourceRenderer>

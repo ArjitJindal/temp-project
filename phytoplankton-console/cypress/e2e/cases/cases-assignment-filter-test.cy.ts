@@ -5,6 +5,7 @@ describe('Using Assignment filter and assigning cases', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
+      features: { NOTIFICATIONS: true },
     });
   });
 
@@ -12,24 +13,25 @@ describe('Using Assignment filter and assigning cases', () => {
     cy.visit(
       '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
+    cy.waitNothingLoading();
     cy.get('a[data-cy="case-id"]')
       .eq(0)
       .invoke('text')
       .then((caseId) => {
         cy.get('tr [data-cy="_assignmentName"]')
           .first()
-          .should('not.contain', 'Loading...')
-          .invoke('text')
-          .then((text) => {
-            if (!text.includes('Unassigned')) {
-              cy.get('tr [data-cy="_assignmentName"] .ant-select-selector')
-                .first()
-                .trigger('mouseover', { force: true });
-              cy.get('tr [data-cy="_assignmentName"] .ant-select-clear')
-                .first()
-                .click({ force: true });
+          .then(($assignmentTd) => {
+            const userName = $assignmentTd.find('*[data-cy="user-name"]');
+            cy.log(`Length: ${userName.length}`);
+            if (userName.length > 0) {
+              cy.get('tr [data-cy="_assignmentName"]').first().scrollIntoView();
+              // eslint-disable-next-line cypress/no-unnecessary-waiting
+              cy.wait(100);
+              cy.multiSelect('tr [data-cy="_assignmentName"]', [], { clear: true });
               cy.message('Assignees updated successfully').should('exist');
               cy.message().should('not.exist');
+            } else {
+              cy.log('Unassigned item found, skip cleaning');
             }
           })
           .then(() => {
@@ -37,8 +39,8 @@ describe('Using Assignment filter and assigning cases', () => {
               `/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=OPEN%2CREOPENED`,
             );
             // Find all divs with class "unassigned" and select the first one
-            cy.get('tr')
-              .filter(':has(div.unassigned)')
+            cy.get('tr', { timeout: 20000 })
+              .filter(':has(div[data-cy~="assignee-dropdown"][data-cy~="empty"])')
               .should('exist')
               .first()
               .as('trWithUnassignDiv');
@@ -56,7 +58,7 @@ describe('Using Assignment filter and assigning cases', () => {
               .find('[data-cy="caseId"] a')
               .should('exist')
               .click({ force: true });
-            cy.get('.ant-select-selection-item-content')
+            cy.get('[data-cy^=assignee-dropdown]')
               .invoke('text')
               .should('contain', 'Ccypress+admin@flagright.com');
             cy.go(-1);

@@ -27,7 +27,7 @@ describe('Copilot', () => {
       .then((userName) => {
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Close');
-        cy.get('.ant-modal-body:visible').within(() => {
+        cy.get('[data-cy~=modal][data-cy~=open]').within(() => {
           cy.selectOptionsByLabel('Reason', ['False positive']);
 
           cy.intercept('POST', '**/copilot/narrative').as('copilotNarrative');

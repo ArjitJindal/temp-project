@@ -2,6 +2,9 @@ describe('Accounts - CRUD Test', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: [],
+      features: {
+        ADVANCED_WORKFLOWS: true,
+      },
       loginWithRole: 'admin',
       settings: {
         limits: {
@@ -13,6 +16,8 @@ describe('Accounts - CRUD Test', () => {
 
   it('perform crud operation on accounts in team management', () => {
     cy.visit('/accounts/team');
+    cy.waitNothingLoading();
+
     const randomNumber = Math.floor(Math.random() * 10000);
     const randomEmail = `test-cypress-${randomNumber}@gmail.com`;
 
@@ -20,8 +25,7 @@ describe('Accounts - CRUD Test', () => {
     cy.contains('Invite').click();
     cy.intercept('POST', '**/accounts**').as('accounts');
     cy.get('input[data-cy="accounts-email"]').type(randomEmail);
-    cy.get('.ant-select-selector').first().click();
-    cy.get('.ant-select-item-option-content').contains('Developer').click();
+    cy.singleSelect('', 'Developer');
     cy.get('input[data-cy="checker"]').click();
     cy.get('button[data-cy="modal-ok"]').click();
     cy.wait(`@accounts`, { timeout: 30000 })
@@ -33,8 +37,8 @@ describe('Accounts - CRUD Test', () => {
     cy.contains('td', randomEmail).parent().find('button[data-cy="accounts-edit-button"]').click();
 
     cy.wait(1000); // eslint-disable-line cypress/no-unnecessary-waiting
-    cy.get('.ant-select-selector').click();
-    cy.get('.ant-select-item-option-content').contains('Analyst').click();
+    cy.singleSelect('', 'Analyst');
+
     cy.get('button[data-cy="modal-ok"]').click();
     cy.intercept('GET', '**/accounts**').as('update');
     cy.wait(`@update`, { timeout: 30000 })

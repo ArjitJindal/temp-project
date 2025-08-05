@@ -2,36 +2,12 @@
   height: 32px;
 }
 
-.select {
-  :global {
-    .ant-select-selection-item {
-      height: 32px !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      padding: 0 4px !important;
-    }
-  }
-}
-
 .item {
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 
 .avatar {
   flex-shrink: 0;
-}
-
-.fixSelectorHeight {
-  :global {
-    .ant-select-selector {
-      max-height: 40px;
-      width: 250px;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    .ant-select-selection-item-content {
-      max-width: 185px !important;
-    }
-  }
 }

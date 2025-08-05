@@ -224,7 +224,6 @@ function PageBasedPagination(props: PageBasedProps) {
                   value: pageSize,
                   label: `${pageSize} / page`,
                 }))}
-                dropdownPlacement="topRight"
               />
             </Label>
           </div>
@@ -283,7 +282,6 @@ function CursorPagination(props: CursorProps) {
             value: pageSize,
             label: `${pageSize} / page`,
           }))}
-          dropdownPlacement="topRight"
         />
         <IconButton
           onClick={() => {

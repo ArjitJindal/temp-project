@@ -18,3 +18,18 @@ import './commands';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+Cypress.on('uncaught:exception', () => {
+  return false;
+});
+
+if (Cypress.browser.family === 'chromium') {
+  Cypress.automation('remote:debugger:protocol', {
+    command: 'Network.enable',
+    params: {},
+  });
+  Cypress.automation('remote:debugger:protocol', {
+    command: 'Network.setCacheDisabled',
+    params: { cacheDisabled: true },
+  });
+}

@@ -5,6 +5,7 @@ import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useHasResources } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 export type ButtonRef = {
   click: () => void;
@@ -103,6 +104,7 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
       buttonDisabled && s.isDisabled,
       (children === '' || children == null) && s.iconOnly,
       className,
+      isLoading && CY_LOADING_FLAG_CLASS,
     ),
     onClick: handleClick,
     disabled: buttonDisabled,

@@ -34,7 +34,8 @@ describe('Escalate a case from case-details', () => {
       .should('exist')
       .click();
     cy.intercept('POST', '**/cases/*/escalate').as('escalate');
-    cy.multiSelect('.ant-modal-body', 'Fraud');
+    cy.waitNothingLoading(); // Wait for comment editor to load
+    cy.multiSelect('.ant-modal-body *[data-cy="narrative-reason"]', 'Fraud');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
     cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();

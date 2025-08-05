@@ -22,18 +22,16 @@ describe('Create and update risk factor', () => {
 
 /* eslint-disable cypress/no-unnecessary-waiting */
 function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') {
-  cy.get('button[data-cy="add-variable-v8"]').first().click();
+  cy.get('button[data-cy~="add-variable-v8"]').first().click();
   cy.get('[role="menuitem"]').contains('Entity variable').click();
   if (type === 'USER') {
-    cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
+    cy.get('input[data-cy~="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
   } else {
-    cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+    cy.get('input[data-cy~="variable-type-v8"]').eq(0).click();
   }
-  cy.get('[data-cy="variable-entity-v8"]')
-    .click()
-    .type(`${entityText}`)
-    .type('{downarrow}') // To get consumer user / user id instead of getting User / child user Ids
-    .type('{enter}');
+  cy.getInputContainerByLabel('Entity').within(() => {
+    cy.singleSelect('', entityText);
+  });
   cy.get('button[data-cy="modal-ok"]').first().click();
 }
 
@@ -42,9 +40,7 @@ function addCondition(variableName, value) {
   cy.get('.query-builder .group-or-rule-container')
     .last()
     .within(() => {
-      cy.get('[data-cy="logic-variable"] [data-cy~="input"]')
-        .click()
-        .type(`${variableName}{enter}`);
+      cy.singleSelect('', 0);
       cy.get('[data-cy="value-source"] [data-cy~="input"]').click().type(`${value}`);
     });
 }
@@ -57,7 +53,7 @@ function createRiskFactor() {
   cy.getInputByLabel('Risk factor description', 'input').type('Test Description');
   cy.get('button[data-cy="drawer-next-button-v8"]').click();
   cy.wait(1000);
-  createEntityVariable('user id', 'TRANSACTION');
+  createEntityVariable('User id (origin or destination)', 'TRANSACTION');
   addCondition('user id', '123');
   cy.getInputByLabel('Risk score', 'input').type('50');
   cy.get('input[data-cy="input text-input"]').last().type('0.27');

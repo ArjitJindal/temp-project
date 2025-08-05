@@ -29,10 +29,10 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
     },
     { cacheAcrossSpecs: true },
   );
+  cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
   cy.visit('/');
   cy.waitNothingLoading();
-  cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
-  cy.wait('@tenantSettings');
+  cy.wait('@tenantSettings', { timeout: 15000 });
   if (role === 'super_admin') {
     cy.checkAndSwitchToTenant('Cypress Tenant');
   }
@@ -103,15 +103,18 @@ Cypress.Commands.add('checkAndSwitchToTenant', (tenantDisplayName: string) => {
   cy.intercept('POST', '**/change_tenant').as('changeTenant');
   cy.visit('/');
   cy.waitNothingLoading();
-  cy.get("button[data-cy='superadmin-panel-button']").then((button) => {
+  cy.get("button[data-cy='superadmin-panel-button']", { timeout: 15000 }).then((button) => {
     if (button.text() !== tenantDisplayName) {
       cy.get("button[data-cy='superadmin-panel-button']").click({ force: true });
+      cy.verifyModalOpen('Super admin panel');
+      cy.waitNothingLoading();
       cy.wait('@tenants', { timeout: 15000 }).then((tenantsInterception) => {
         expect(tenantsInterception.response?.statusCode).to.be.oneOf([200, 304]);
-        cy.get('.ant-modal .ant-select').first().type(`${tenantDisplayName}{enter}`);
+        cy.singleSelect('*[data-cy="tenant-name"]', tenantDisplayName);
         cy.wait('@changeTenant', { timeout: 15000 }).then((changeTenantInterception) => {
           expect(changeTenantInterception.response?.statusCode).to.eq(200);
         });
+        cy.assertLoading();
         cy.get("button[data-cy='superadmin-panel-button']").should(
           'contain.text',
           tenantDisplayName,
@@ -170,19 +173,53 @@ Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
   });
 });
 
-Cypress.Commands.add('multiSelect', (preSelector, text) => {
-  cy.get(
-    `${preSelector} .ant-select > .ant-select-selector > .ant-select-selection-overflow`,
-  ).click();
-  cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
-    .invoke('attr', 'id')
-    .then((_) => {
-      cy.get(`${preSelector} .ant-select .ant-select-selection-search input`)
-        .eq(0)
-        .type(`${text}`, { force: true });
-      cy.get(`div[title="${text}"]`).click();
+Cypress.Commands.add('singleSelect', (preSelector, textOrIndex: string | number) => {
+  cy.get(`${preSelector} *[data-cy~=select-root]`).first().scrollIntoView();
+  if (typeof textOrIndex === 'number') {
+    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click();
+    cy.document().within(() => {
+      cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(
+        () => {
+          cy.get(`*[data-cy^=menu-item-label]:visible`).eq(textOrIndex).click();
+        },
+      );
     });
-  cy.get(`${preSelector} .ant-select`).first().click();
+  } else {
+    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click().type(`${textOrIndex}{enter}`);
+    cy.document().within(() => {
+      cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(
+        () => {
+          cy.get(`*[data-cy^=menu-item-label][title*="${textOrIndex}"]:visible`).click();
+        },
+      );
+    });
+  }
+});
+
+Cypress.Commands.add('multiSelect', (preSelector, options, params = {}) => {
+  const { fullOptionMatch = false, clear = false } = params;
+  const toSelect = Array.isArray(options) ? options : [options];
+  cy.get(`${preSelector} *[data-cy~=select-root]`).first().click({ force: true });
+  cy.document().within(() => {
+    cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`)
+      .should('be.visible')
+      .first()
+      .within(() => {
+        if (clear) {
+          cy.get(`input[type=checkbox]:checked`).uncheck();
+        }
+
+        if (!clear && toSelect.length > 0) {
+          for (const toSelectElement of toSelect) {
+            cy.get(
+              `*[data-cy^=menu-item-label][title${
+                fullOptionMatch ? '=' : '^='
+              }"${toSelectElement}"]:visible`,
+            ).click();
+          }
+        }
+      });
+  });
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {
@@ -190,7 +227,8 @@ Cypress.Commands.add('caseAlertAction', (action: string) => {
     timeout: 8000,
   })
     .contains(action)
-    .click();
+    .click()
+    .should('not.be.disabled');
 });
 
 Cypress.Commands.add('message', (text?: string) => {
@@ -231,7 +269,7 @@ Cypress.Commands.add('toggleFeatures', (features) => {
   if (Object.keys(features).length === 0) {
     return;
   }
-  cy.wait('@tenantSettings').then((interception) => {
+  cy.wait('@tenantSettings', { timeout: 15000 }).then((interception) => {
     const tenantSettings = interception?.response?.body;
     const existingFeatures = (tenantSettings as TenantSettings)?.features ?? [];
     const newFeatures = [...existingFeatures];
@@ -327,6 +365,10 @@ Cypress.Commands.add('closeDrawerWithConfirmation', () => {
   cy.get('button[data-cy="modal-ok"]').filter(':visible').first().click();
 });
 
+Cypress.Commands.add('getInputContainerByLabel', (label: string) => {
+  cy.get(`[data-cy~=label]`).contains(label).parent('div').parent('div');
+});
+
 Cypress.Commands.add('getInputByLabel', (label, element) => {
   cy.contains(label)
     .parent('div')
@@ -338,10 +380,12 @@ Cypress.Commands.add('getInputByLabel', (label, element) => {
 });
 
 Cypress.Commands.add('selectOptionsByLabel', (label: string, option: string[]) => {
-  cy.getInputByLabel(label, 'input')
-    .focus()
-    .type(`${option.join('{enter}')}`)
-    .blur();
+  cy.contains(label)
+    .parent('div')
+    .parent('div')
+    .within(() => {
+      cy.multiSelect('', option);
+    });
 });
 
 Cypress.Commands.add('selectRadioByLabel', (label, option) => {
@@ -386,12 +430,21 @@ Cypress.Commands.add('asertInputDisabled', (label: string) => {
 
 Cypress.Commands.add('waitNothingLoading', () => {
   // wait cy loading element to be removed
-  cy.get('body').then(($body) => {
-    if ($body.find('.cy-loading').length > 0) {
-      cy.get('.cy-loading', { timeout: 10000 }).should('not.exist');
-    }
+  cy.document().within(() => {
+    cy.get('[data-cy=AppWrapper]', { timeout: 30000 }).should('exist');
+  });
+  cy.get('.cy-loading,*[data-cy=cy-loading]', { timeout: 60000 }).should('not.exist');
+});
 
-    cy.waitSkeletonLoader();
+Cypress.Commands.add('confirmIfRequired', () => {
+  cy.waitNothingLoading();
+  cy.get('body').then(($body) => {
+    const length = $body.find('*[data-cy~="confirmation-modal"][data-cy~="open"]').length;
+    if (length > 0) {
+      cy.get('*[data-cy="modal-ok"]').click();
+      cy.waitNothingLoading();
+      cy.get('*[data-cy~="confirmation-modal"][data-cy~="open"]').should('not.exist');
+    }
   });
 });
 

@@ -45,12 +45,13 @@ describe('Checklkist Crud', () => {
 
     //check if checklist template is showing when still in draft
     cy.visit('/rules/rules-library');
+    cy.waitNothingLoading();
+
     cy.get('button[data-cy="configure-rule-button"]').first().click();
     cy.contains('Investigation checklist').click();
-    cy.get('.ant-select-selector').click();
-    cy.get('.ant-select-selector').each(($el) => {
-      const text = $el.text().trim();
-      expect(text).not.to.contain(checklistText);
+    cy.get(`*[data-cy~=select-root]`).first().click();
+    cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(() => {
+      cy.get(`*[data-cy^=menu-item-label][title="${checklistText}"]:visible`).should('not.exist');
     });
 
     //making checklist template from draft to acive
@@ -75,8 +76,10 @@ describe('Checklkist Crud', () => {
     cy.visit('/rules/rules-library');
     cy.get('button[data-cy="configure-rule-button"]').first().click();
     cy.contains('Investigation checklist').click();
-    cy.get('.ant-select-selector').click();
-    cy.contains(checklistText);
+    cy.get(`*[data-cy~=select-root]`).first().click();
+    cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(() => {
+      cy.get(`*[data-cy^=menu-item-label][title="${checklistText}"]:visible`).should('exist');
+    });
 
     //deleting the checklist template
     cy.visit('/settings/case-management');
@@ -94,10 +97,9 @@ describe('Checklkist Crud', () => {
     cy.visit('/rules/rules-library');
     cy.get('button[data-cy="configure-rule-button"]').first().click();
     cy.contains('Investigation checklist').click();
-    cy.get('.ant-select-selector').click();
-    cy.get('.ant-select-selector').each(($el) => {
-      const text = $el.text().trim();
-      expect(text).not.to.contain(checklistText);
+    cy.get(`*[data-cy~=select-root]`).first().click();
+    cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(() => {
+      cy.get(`*[data-cy^=menu-item-label][title="${checklistText}"]:visible`).should('not.exist');
     });
   });
 });

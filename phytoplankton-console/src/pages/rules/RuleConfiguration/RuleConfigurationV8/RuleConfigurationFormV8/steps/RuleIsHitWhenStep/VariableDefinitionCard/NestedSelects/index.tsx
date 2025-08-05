@@ -72,7 +72,6 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
           value={localValue}
           onChange={handleSelect}
           mode="SINGLE"
-          portaled={true}
           options={options}
           testId={testId}
           placeholder={'Select an option'}

@@ -91,11 +91,7 @@ describe('Case Creation test', () => {
             .eq(0)
             .should('exist')
             .click();
-          cy.get('.ant-popover .ant-select-selector')
-            .should('exist')
-            .first()
-            .click()
-            .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`);
+          cy.multiSelect('[data-cy="QuickFilter"]', `${ruleName} ${ruleInstanceId} (R-2)`);
           cy.waitNothingLoading();
         });
       };

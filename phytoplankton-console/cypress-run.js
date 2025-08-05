@@ -106,7 +106,14 @@ async function getCypressCreds() {
     ENV_VARS.push(`${key}_username=${credentials[key].username}`);
     ENV_VARS.push(`${key}_password=${credentials[key].password}`);
   });
-  execSync(`./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}`, {
-    stdio: 'inherit',
-  });
+
+  // const spec = ` --spec="cypress/e2e/team-management/accounts-crud-test.cy.ts"`;
+  const spec = ``;
+
+  execSync(
+    `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}${spec}`,
+    {
+      stdio: 'inherit',
+    },
+  );
 })();

@@ -634,16 +634,17 @@ const SanctionsSourceTypeTab = ({
   return (
     <div className={s.sourceTabContainer}>
       <label className={s.label}>Relevance</label>
-      <Select
-        className={s.select}
-        mode="MULTIPLE"
-        value={config.relevance}
-        onChange={handleRelevanceChange}
-        options={options[type].map((option) => ({
-          label: relevanceOptionsMap[option],
-          value: option,
-        }))}
-      />
+      <div className={s.select}>
+        <Select
+          mode="MULTIPLE"
+          value={config.relevance}
+          onChange={handleRelevanceChange}
+          options={options[type].map((option) => ({
+            label: relevanceOptionsMap[option],
+            value: option,
+          }))}
+        />
+      </div>
 
       {showSourcesTable && (
         <Form initialValues={{ query: searchQuery }}>

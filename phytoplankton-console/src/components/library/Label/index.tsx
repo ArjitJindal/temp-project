@@ -46,7 +46,7 @@ export default function Label(props: Props) {
   const showHint = (typeof required === 'boolean' ? required : required?.showHint) === true;
 
   const labelEl = (
-    <div className={cn(s.label, s[`level-${level}`])}>
+    <div className={cn(s.label, s[`level-${level}`])} data-cy={'label'}>
       {iconRight ? (
         <div className={s.labelText}>
           <span>{label}</span>

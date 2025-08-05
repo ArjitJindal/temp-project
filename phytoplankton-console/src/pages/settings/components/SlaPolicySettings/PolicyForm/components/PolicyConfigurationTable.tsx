@@ -141,24 +141,25 @@ function PolicyConfigurationTable() {
               'statuses'
             > name="statuses">
               {(inputProps) => (
-                <Select<PolicyStatusDetailsStatusesEnum>
-                  className={s.statusSelect}
-                  mode="MULTIPLE"
-                  options={(
-                    DERIVED_STATUSS.filter(
-                      (status) => status !== 'CLOSED',
-                    ) as PolicyStatusDetailsStatusesEnum[]
-                  ).map((status) => ({
-                    value: status,
-                    label: <CaseStatusTag caseStatus={status} />,
-                    labelText: humanizeSnakeCase(status),
-                  }))}
-                  {...inputProps}
-                  value={inputProps.value}
-                  onChange={(value) => {
-                    inputProps.onChange?.(value);
-                  }}
-                />
+                <div className={s.statusSelect}>
+                  <Select<PolicyStatusDetailsStatusesEnum>
+                    mode="MULTIPLE"
+                    options={(
+                      DERIVED_STATUSS.filter(
+                        (status) => status !== 'CLOSED',
+                      ) as PolicyStatusDetailsStatusesEnum[]
+                    ).map((status) => ({
+                      value: status,
+                      label: <CaseStatusTag caseStatus={status} />,
+                      labelText: humanizeSnakeCase(status),
+                    }))}
+                    {...inputProps}
+                    value={inputProps.value}
+                    onChange={(value) => {
+                      inputProps.onChange?.(value);
+                    }}
+                  />
+                </div>
               )}
             </GenericFormField>
             <Button

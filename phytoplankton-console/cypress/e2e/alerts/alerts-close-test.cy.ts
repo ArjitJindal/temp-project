@@ -24,16 +24,11 @@ describe('Close Alerts from Table', () => {
     cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
     cy.get('td[data-cy="alertId"] a[data-cy="alert-id"]').first().invoke('text').as('alertIdValue');
     cy.caseAlertAction('Close');
+    cy.confirmIfRequired();
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
-    cy.get('.ant-modal-content:visible').within(() => {
-      cy.get('[data-cy="modal-title"]').then(($title) => {
-        const text = $title.text();
-        if (text.includes('Confirm action')) {
-          cy.get('button').contains('Confirm').click();
-        } else {
-          expect(text).to.contain('Close');
-        }
-      });
+    cy.get('[data-cy~="modal"][data-cy~="open"]').within(() => {
+      cy.get('[data-cy="modal-title"]').should('contain', 'Close');
+      cy.waitNothingLoading();
       cy.selectOptionsByLabel('Reason', ['False positive']);
       cy.get('.ant-modal-title').click();
       cy.get('.toastui-editor-ww-container').type('This is a test');

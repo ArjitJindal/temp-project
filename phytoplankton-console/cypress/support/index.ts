@@ -21,7 +21,15 @@ declare global {
         loginWithRole?: 'custom_role' | 'admin';
       }): Chainable<Element>;
       loginByRequest(username: string, password: string): Chainable<Element>;
-      multiSelect(preSelector: string, text: string): Chainable<Element>;
+      singleSelect(preSelector: string, textOrIndex: string | number): Chainable<Element>;
+      multiSelect(
+        preSelector: string,
+        text: string | string[],
+        params?: {
+          fullOptionMatch?: boolean;
+          clear?: boolean;
+        },
+      ): Chainable<Element>;
       caseAlertAction(action: string): Chainable<Element>;
       checkAndSwitchToTenant(tenantDisplayName: string): Chainable<Promise<Element>>;
       clickTableRowLink(
@@ -53,6 +61,7 @@ declare global {
         body?: any;
       }): Chainable<Promise<Element>>;
       addSettings(settings: TenantSettings): Chainable<Promise<Element>>;
+      getInputContainerByLabel(label: string): Chainable<Element>;
       getInputByLabel(label: string, element: 'input' | 'textarea'): Chainable<Element>;
       selectOptionsByLabel(label: string, options: string[]): Chainable<Element>;
       selectRadioByLabel(label: string, value: string): Chainable<Element>;
@@ -62,6 +71,8 @@ declare global {
       asertInputDisabled(label: string): Chai.Assertion;
       waitNothingLoading(): Chai.Assertion;
       waitSkeletonLoader(): Chai.Assertion;
+      confirmIfRequired(): Chai.Assertion;
+      waitModalOpen(): Chai.Assertion;
       assertSkeletonLoader(): Chai.Assertion;
       checkNotification(statement: string[]): Chainable<Element>;
       deleteRuleInstance(ruleInstanceId: string): Chainable<Element>;

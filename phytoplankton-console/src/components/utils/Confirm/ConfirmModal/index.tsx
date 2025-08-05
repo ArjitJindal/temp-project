@@ -56,6 +56,7 @@ export default function ConfirmModal(props: Props) {
         htmlType: 'button',
         isDisabled: res != null && isLoading(res),
       }}
+      testId={'confirmation-modal'}
     >
       <Form
         ref={formRef}

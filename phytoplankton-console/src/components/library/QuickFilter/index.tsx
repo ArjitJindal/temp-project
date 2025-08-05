@@ -10,7 +10,7 @@ export default function DefaultQuickFilter(props: Props) {
   return (
     <QuickFilterBase {...rest}>
       {(childrenProps) => (
-        <div className={s.root}>
+        <div className={s.root} data-cy="QuickFilter">
           {typeof children === 'function' ? children(childrenProps) : children}
         </div>
       )}

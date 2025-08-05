@@ -37,7 +37,7 @@ function MainContent(props: Props) {
   }, [auth0User]);
 
   return (
-    <div className={`${s.root} ${isCollapsed && s.isCollapsed}`}>
+    <div className={`${s.root} ${isCollapsed && s.isCollapsed}`} data-cy={'AppWrapper'}>
       <Helmet>
         <link rel="icon" href={branding.faviconUrl} />
       </Helmet>

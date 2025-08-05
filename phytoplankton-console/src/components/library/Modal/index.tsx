@@ -42,6 +42,7 @@ interface Props {
   footerExtra?: React.ReactNode;
   isResizable?: boolean;
   destroyOnClose?: boolean;
+  testId?: string;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -85,6 +86,7 @@ export default function Modal(props: Props) {
     footerExtra,
     isResizable = false,
     destroyOnClose = false,
+    testId,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -106,7 +108,9 @@ export default function Modal(props: Props) {
         disablePadding && s.disablePadding,
         s[`height-${derivedHeight}`],
         disableInternalBorders && s.disableInternalBorders,
+        isOpen && 'isOpen',
       )}
+      data-cy={cn(testId, 'modal', isOpen && 'open')}
       title={
         !hideHeader ? (
           <div className={s.header}>

@@ -116,7 +116,6 @@ export default function CRMRecords({ userId }: Props) {
               placeholder={`Search and select a ${startCase(
                 scope.toLowerCase(),
               )} to link to this user`}
-              className={s.select}
               onSearch={setSearch}
               onChange={(value) => {
                 if (value) {
