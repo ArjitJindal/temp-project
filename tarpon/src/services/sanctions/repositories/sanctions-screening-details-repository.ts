@@ -143,6 +143,9 @@ export class SanctionsScreeningDetailsRepository {
     const allItems = [...userItems, ...transactionItems]
     const messagesV2: Array<Omit<SendMessageBatchRequestEntry, 'Id'>> = []
 
+    const isPublicApi = getTriggerSource() === 'PUBLIC_API'
+    const isLocalOrTest = envIs('local') || envIs('test')
+
     for (const item of allItems) {
       const screeningId = `S-${await counterRepository.getNextCounterAndUpdate(
         'ScreeningDetails'
@@ -163,32 +166,27 @@ export class SanctionsScreeningDetailsRepository {
         },
       }
 
-      messagesV2.push({
-        MessageBody: JSON.stringify({
-          filter: { lastScreenedAt: roundedScreenedAt, [item.type]: item.id },
-          operationType: 'updateOne',
-          updateMessage: updateMessageV2,
-          sendToClickhouse: true,
-          collectionName: sanctionsScreeningCollectionNameV2,
-          upsert: true,
-        }),
-        MessageGroupId: SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(
-          this.tenantId
-        ),
-        MessageDeduplicationId: `${item.id}-${roundedScreenedAt}`,
-      })
-    }
-
-    if (envIs('local') || envIs('test')) {
-      // For local and test environments, directly call the database
-      for (const message of messagesV2) {
-        const messageBody = JSON.parse(message.MessageBody || '{}')
+      if (isLocalOrTest || !isPublicApi) {
         await this.callMongoDatabaseV2(
-          messageBody.filter,
-          messageBody.updateMessage
+          { lastScreenedAt: roundedScreenedAt, [item.type]: item.id },
+          updateMessageV2
         )
+      } else {
+        messagesV2.push({
+          MessageBody: JSON.stringify({
+            filter: { lastScreenedAt: roundedScreenedAt, [item.type]: item.id },
+            operationType: 'updateOne',
+            updateMessage: updateMessageV2,
+            sendToClickhouse: true,
+            collectionName: sanctionsScreeningCollectionNameV2,
+            upsert: true,
+          }),
+          MessageGroupId: SANCTIONS_SCREENING_DETAILS_V2_COLLECTION(
+            this.tenantId
+          ),
+          MessageDeduplicationId: `${item.id}-${roundedScreenedAt}`,
+        })
       }
-      return
     }
 
     if (messagesV2.length > 0) {
@@ -198,7 +196,20 @@ export class SanctionsScreeningDetailsRepository {
           'MONGO_UPDATE_CONSUMER_QUEUE_URL environment variable is not set'
         )
       }
-      await bulkSendMessages(this.sqsClient, queueUrl, messagesV2)
+      try {
+        await bulkSendMessages(this.sqsClient, queueUrl, messagesV2)
+      } catch (e) {
+        logger.warn(
+          `Failed to send message to mongo update consumer for sanctions screening details: ${e}`
+        )
+        for (const message of messagesV2) {
+          const messageBody = JSON.parse(message.MessageBody || '{}')
+          await this.callMongoDatabaseV2(
+            messageBody.filter,
+            messageBody.updateMessage
+          )
+        }
+      }
     }
   }
 
