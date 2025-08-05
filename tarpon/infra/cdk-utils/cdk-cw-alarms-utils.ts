@@ -598,7 +598,7 @@ export const createKinesisThrottledRecordsPercentageAlarm = (
     threshold,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
-    alarmName: `Kinesis-${streamAlarmName}ThrottledRecordsPercentage`,
+    alarmName: `Kinesis-${streamAlarmName}`,
     alarmDescription: `Covers throttled records percentage in ${kinesisStreamName} in the AWS account. 
     Alarm triggers when throttled records percentage is higher than ${threshold}% for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
     Throttled percentage is calculated by dividing throttled records by total records.`,

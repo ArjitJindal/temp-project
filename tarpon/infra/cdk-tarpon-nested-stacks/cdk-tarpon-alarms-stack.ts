@@ -32,6 +32,7 @@ import {
   createCanarySuccessPercentageAlarm,
   createRuleHitRateAlarm,
   createStateMachineAlarm,
+  createKinesisThrottledRecordsPercentageAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -140,6 +141,13 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         this.zendutyCloudWatchTopic,
         `${streamDetails.streamId}PutRecordErrorRate`,
         streamDetails.streamName
+      )
+      createKinesisThrottledRecordsPercentageAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        `${streamDetails.streamId}ThrottledRecordsPercentage`,
+        streamDetails.streamName,
+        20
       )
     }
     for (const tableName of dynamoTables(this.config)) {
