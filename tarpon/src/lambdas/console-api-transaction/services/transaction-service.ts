@@ -51,6 +51,8 @@ import { LinkerService } from '@/services/linker'
 import { TransactionFlatFileUploadRequest } from '@/@types/openapi-internal/TransactionFlatFileUploadRequest'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { S3Service } from '@/services/aws/s3-service'
+import { UserClickhouseRepository } from '@/services/users/repositories/user-clickhouse-repository'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 @traceable
 export class TransactionService {
@@ -442,15 +444,51 @@ export class TransactionService {
         )
       )
     )
-
-    const users = await this.userRepository.getMongoUsersByIds(userIds, {
-      projection: {
-        type: 1,
-        'userDetails.name': 1,
-        'legalEntity.companyGeneralDetails.legalName': 1,
-        userId: 1,
-      },
-    })
+    let users: InternalUser[]
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(this.tenantId)
+      const clickhouseUserRepository = new UserClickhouseRepository(
+        this.tenantId,
+        clickhouseClient,
+        this.dynamoDb
+      )
+      const columns = {
+        type: 'type',
+        username: 'username',
+        legalEntity_companyGeneralDetails_legalName:
+          'legalEntity_companyGeneralDetails_legalName',
+        userId: 'id',
+      }
+      const callback = (data: Record<string, string | number>) => {
+        return {
+          type: data.type as string,
+          userDetails: {
+            name: data.username as string,
+          },
+          legalEntity: {
+            companyGeneralDetails: {
+              legalName:
+                data.legalEntity_companyGeneralDetails_legalName as string,
+            },
+          },
+          userId: data.userId as string,
+        } as unknown as InternalUser
+      }
+      users = await clickhouseUserRepository.getUsersByIds(
+        userIds,
+        columns,
+        callback
+      )
+    } else {
+      users = await this.userRepository.getMongoUsersByIds(userIds, {
+        projection: {
+          type: 1,
+          'userDetails.name': 1,
+          'legalEntity.companyGeneralDetails.legalName': 1,
+          userId: 1,
+        },
+      })
+    }
 
     const userMap = new Map()
     users.forEach((u) => userMap.set(u.userId, u))

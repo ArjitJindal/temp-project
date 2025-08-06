@@ -25,6 +25,7 @@ import {
   PNB_INTERNAL_RULES,
 } from '../rules-engine/pnb-custom-logic'
 import { mergeUserTags } from '../rules-engine/utils'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
@@ -1201,8 +1202,13 @@ export class UserService {
     ruleInstanceId: string,
     params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
   ): Promise<AllUsersOffsetPaginateListResponse> {
+    const transactionRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
     const result =
-      await this.userRepository.getRuleInstancesTransactionUsersHit(
+      await transactionRepository.getRuleInstancesTransactionUsersHit(
         ruleInstanceId,
         params,
         this.mapAllUserToTableItem

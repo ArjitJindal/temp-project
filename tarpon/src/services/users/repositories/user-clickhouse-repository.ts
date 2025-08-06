@@ -26,6 +26,7 @@ import {
   AllUsersTableItem,
   RiskClassificationScore,
   AllUsersOffsetPaginateListResponse,
+  InternalUser,
   AllUsersPreviewOffsetPaginateListResponse,
   AllUsersTableItemPreview,
 } from '@/@types/openapi-internal/all'
@@ -33,6 +34,8 @@ import { LinkerService } from '@/services/linker'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 
 type UserCasesCount = {
   casesCount: number
@@ -556,5 +559,83 @@ export class UserClickhouseRepository {
     }
 
     return whereClauses.join(' AND ')
+  }
+
+  public async getUserIdsByEmails(emails: string[]): Promise<string[]> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return []
+    }
+    const escapedEmails = emails.map((email) => `"${email}"`).join(',')
+    const query = `
+      SELECT id FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+      WHERE hasAny(emailIds, ['${escapedEmails}'])
+    `
+
+    const users = await executeClickhouseQuery<{ id: string }[]>(
+      this.tenantId,
+      query,
+      {
+        format: 'JSONEachRow',
+      }
+    )
+    return users.map((user) => user.id)
+  }
+
+  public async getChildUserIds(parentUserId: string): Promise<string[]> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return []
+    }
+    const query = `
+      SELECT id FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+      WHERE linkedEntities_parentUserId = '${parentUserId}'
+    `
+    const users = await executeClickhouseQuery<{ id: string }[]>(
+      this.tenantId,
+      query,
+      {
+        format: 'JSONEachRow',
+      }
+    )
+    return users.map((user) => user.id)
+  }
+
+  public async getUsersByIds<
+    T extends UserWithRulesResult | BusinessWithRulesResult
+  >(
+    userIds: string[],
+    columnProjection: Record<string, string> = {},
+    callbackMap?: (item: Record<string, string | number>) => InternalUser
+  ): Promise<T[]> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return []
+    }
+    const columnProjectionString =
+      Object.entries(columnProjection)
+        .map(([key, value]) => `${value} AS ${key}`)
+        .join(', ') || '*'
+    const ids = userIds.map((id) => `'${id}'`).join(',')
+    const query = `
+      SELECT ${columnProjectionString} FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+      WHERE id IN (${ids})
+    `
+    const items = await executeClickhouseQuery<{ data: string }[]>(
+      this.tenantId,
+      query,
+      {
+        format: 'JSONEachRow',
+      }
+    )
+    return items.map((item) =>
+      callbackMap ? callbackMap(item) : JSON.parse(item.data)
+    )
   }
 }

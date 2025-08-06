@@ -749,6 +749,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         JSONExtract(JSONExtractRaw(data, 'executedRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
       `hitRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
         JSONExtract(JSONExtractRaw(data, 'hitRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
+      `linkedEntities_parentUserId String MATERIALIZED JSONExtractString(data, 'linkedEntities', 'parentUserId')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -783,6 +784,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         name: 'risk_score_idx',
         type: 'minmax',
         options: { granularity: 4 },
+      },
+      {
+        column: 'linkedEntities_parentUserId',
+        name: 'linked_entities_parent_user_id_idx',
+        type: 'tokenbf_v1',
+        options: {
+          granularity: 4,
+          ngramSize: 3,
+          bloomFilterSize: 512,
+          numHashFunctions: 5,
+          randomSeed: 1,
+        },
       },
     ],
     materializedViews: [

@@ -55,6 +55,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
+  DefaultApiGetRuleInstancesTransactionUsersHitRequest,
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
@@ -87,6 +88,12 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -100,6 +107,7 @@ export class MongoDbTransactionRepository
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
+  userRepository: UserRepository
 
   constructor(
     tenantId: string,
@@ -109,6 +117,11 @@ export class MongoDbTransactionRepository
     this.mongoDb = mongoDb
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
+
+    this.userRepository = new UserRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
   }
 
   public static async fromEvent(
@@ -2249,6 +2262,109 @@ export class MongoDbTransactionRepository
           { upsert: true }
         )
       )
+    )
+  }
+  public async getRuleInstancesTransactionUsersHit(
+    ruleInstanceId: string,
+    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest,
+    mapper: (
+      user: InternalUser | InternalBusinessUser | InternalConsumerUser
+    ) => AllUsersTableItem
+  ): Promise<AllUsersOffsetPaginateListResponse> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const ruleMatchCondition: Document = { ruleInstanceId }
+    if (params.filterShadowHit != null) {
+      if (params.filterShadowHit) {
+        ruleMatchCondition.isShadow = true
+      } else {
+        ruleMatchCondition.isShadow = { $ne: true }
+      }
+    }
+
+    const pipeline: Document[] = [
+      {
+        $match: {
+          timestamp: {
+            $gte: params.txAfterTimestamp ?? 0,
+            $lt: params.txBeforeTimestamp ?? Number.MAX_SAFE_INTEGER,
+          },
+          hitRules: { $elemMatch: ruleMatchCondition },
+        },
+      },
+      {
+        $project: {
+          originUserId: 1,
+          destinationUserId: 1,
+          ruleHitData: {
+            $first: {
+              $filter: {
+                input: '$hitRules',
+                as: 'hitRule',
+                cond: { $eq: ['$$hitRule.ruleInstanceId', ruleInstanceId] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          userIds: {
+            $addToSet: {
+              $switch: {
+                branches: [
+                  {
+                    case: {
+                      $and: [
+                        {
+                          $in: [
+                            'ORIGIN',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                        {
+                          $in: [
+                            'DESTINATION',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                      ],
+                    },
+                    then: ['$originUserId', '$destinationUserId'],
+                  },
+                  {
+                    case: {
+                      $in: ['ORIGIN', '$ruleHitData.ruleHitMeta.hitDirections'],
+                    },
+                    then: '$originUserId',
+                  },
+                  {
+                    case: {
+                      $in: [
+                        'DESTINATION',
+                        '$ruleHitData.ruleHitMeta.hitDirections',
+                      ],
+                    },
+                    then: '$destinationUserId',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]
+
+    const result = collection.aggregate<{ userIds: string[] }>(pipeline)
+
+    const data = await result.next()
+
+    return this.userRepository.getMongoUsersPaginate(
+      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
+      mapper
     )
   }
 }
