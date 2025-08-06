@@ -29,7 +29,7 @@ import {
   useCaseReviewAssignmentUpdateMutation,
   useTableData,
 } from '@/pages/case-management/CaseTable/helpers';
-import { TableItem } from '@/pages/case-management/CaseTable/types';
+import { isSpecificUserTableItem, TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
@@ -268,7 +268,12 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         icon: <AccountCircleLineIcon />,
         type: {
           render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <>-</>),
-          stringify: (value) => value?.status ?? '',
+          stringify: (value, { user }) => {
+            if (!user || !isSpecificUserTableItem(user)) {
+              return '';
+            }
+            return user.kycStatusDetails?.status ?? '';
+          },
         },
       }),
       ...((isRiskLevelsEnabled

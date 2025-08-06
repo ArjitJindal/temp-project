@@ -7,7 +7,7 @@ import {
   MissingUser,
   UserDetails,
 } from '@/apis';
-import { TableUser } from '@/pages/case-management/CaseTable/types';
+import { isAllUsersTableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 import { makeUrl } from '@/utils/routing';
 
 export function formatConsumerName(name: ConsumerName | undefined): string {
@@ -30,6 +30,9 @@ export function businessName(legalEntity: LegalEntity): string {
 export function getUserName(user?: TableUser | MissingUser | null): string {
   if (user == null || !('type' in user)) {
     return '-';
+  }
+  if (isAllUsersTableItem(user)) {
+    return user.name || '-';
   }
   if (user.type === 'CONSUMER') {
     return getFullName(user.userDetails);

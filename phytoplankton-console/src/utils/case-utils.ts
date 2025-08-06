@@ -1,4 +1,4 @@
-import { every, some, uniq, map, intersection } from 'lodash';
+import { every, intersection, map, some, uniq } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { areArraysOfObjectsEqual } from '@flagright/lib/utils';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
@@ -23,7 +23,7 @@ import { FormValues } from '@/pages/case-management/components/StatusChangeModal
 import { expandPEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
 import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 import { OTHER_REASON } from '@/components/Narrative';
-import { TableUser } from '@/pages/case-management/CaseTable/types';
+import { isAllUsersTableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 
 export const statusInReview = (
   status: CaseStatus | undefined | DerivedStatus,
@@ -491,7 +491,7 @@ export function getStatusChangeUpdatesFromFormValues<
       updates.tags = areArraysOfObjectsEqual(formValues?.tags ?? [], userDetails?.tags ?? [])
         ? undefined
         : formValues?.tags;
-      if (userDetails.type === 'CONSUMER') {
+      if (!isAllUsersTableItem(userDetails) && userDetails.type === 'CONSUMER') {
         updates.screeningDetails = {
           sanctionsStatus:
             formValues?.screeningDetails?.sanctionsStatus === userDetails.sanctionsStatus

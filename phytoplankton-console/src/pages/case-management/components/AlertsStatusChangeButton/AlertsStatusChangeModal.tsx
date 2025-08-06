@@ -7,7 +7,7 @@ import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
-import { TableUser } from '../../CaseTable/types';
+import { isAllUsersTableItem, TableUser } from '../../CaseTable/types';
 import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
@@ -259,20 +259,18 @@ export default function AlertsStatusChangeModal(props: Props) {
       }
       initialValues={{
         tags: props.user?.tags ?? [],
-        ...(props?.user?.type === 'CONSUMER' && {
-          screeningDetails: {
-            pepStatus: [
-              {} as PEPStatus,
-              ...(consolidatePEPStatus(props?.user?.pepStatus ?? []) as PEPStatus[]),
-            ],
-            sanctionsStatus:
-              props?.user?.sanctionsStatus === undefined ? undefined : props?.user?.sanctionsStatus,
-            adverseMediaStatus:
-              props?.user?.adverseMediaStatus === undefined
-                ? undefined
-                : props?.user?.adverseMediaStatus,
-          },
-        }),
+        ...(props.user &&
+          !isAllUsersTableItem(props?.user) &&
+          props?.user?.type === 'CONSUMER' && {
+            screeningDetails: {
+              pepStatus: [
+                {} as PEPStatus,
+                ...(consolidatePEPStatus(props?.user?.pepStatus ?? []) as PEPStatus[]),
+              ],
+              sanctionsStatus: props?.user?.sanctionsStatus,
+              adverseMediaStatus: props?.user?.adverseMediaStatus,
+            },
+          }),
       }}
     />
   );
