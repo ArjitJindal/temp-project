@@ -22,6 +22,7 @@ import {
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
   NOTIFICATIONS_KEY_IDENTIFIER,
   GPT_REQUESTS_KEY_IDENTIFIER,
+  JOBS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -48,6 +49,7 @@ export type DynamoDbEntityType =
   | 'ALERTS_QA_SAMPLING'
   | 'NOTIFICATION'
   | 'GPT_REQUESTS'
+  | 'BATCH_JOB'
 
 export const LOCK_FREE_ENTITIES: DynamoDbEntityType[] = [
   'GPT_REQUESTS',
@@ -223,6 +225,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'GPT_REQUESTS',
       entityId: `GPT_REQUESTS:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(JOBS_KEY_IDENTIFIER)) {
+    const entityId = entity.jobId
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'BATCH_JOB',
+      entityId: `BATCH_JOB:${entityId}`,
     }
   }
 

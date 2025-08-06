@@ -316,7 +316,7 @@ export class DynamoBatchJobRepository {
       filterExpressions,
       expressionAttributeValues,
       expressionAttributeNames,
-    } = BatchJobFilterUtils.buildDynamoFilters(filters)
+    } = new BatchJobFilterUtils().buildDynamoFilters(filters)
 
     const { PartitionKeyID } = DynamoDbKeys.JOBS(this.tenantId, '')
 

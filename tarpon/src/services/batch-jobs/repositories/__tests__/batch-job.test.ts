@@ -5,6 +5,12 @@ import { createMockBatchJob } from './batch-job-mock-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { BatchJobTable } from '@/models/batch-job'
+import {
+  setupClickHouseForTest,
+  cleanupClickHouseForTest,
+} from '@/test-utils/clickhouse-test-utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 // --- Test Suite ---
 
@@ -17,7 +23,18 @@ withFeaturesToggled([], ['CLICKHOUSE_MIGRATION', 'CLICKHOUSE_ENABLED'], () => {
 
     beforeEach(async () => {
       tenantId = getTestTenantId()
-      repository = await getBatchJobRepository(tenantId)
+      if (isClickhouseEnabled()) {
+        await setupClickHouseForTest(tenantId, [
+          BatchJobTable.tableDefinition.tableName,
+        ])
+      }
+      repository = await getBatchJobRepository(tenantId, [
+        BatchJobTable.tableDefinition.tableName,
+      ])
+    })
+
+    afterEach(async () => {
+      await cleanupClickHouseForTest(tenantId)
     })
 
     it('should retrieve a job by its ID', async () => {

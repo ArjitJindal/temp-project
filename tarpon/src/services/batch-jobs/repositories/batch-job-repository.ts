@@ -3,6 +3,7 @@ import { omit } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoBatchJobRepository } from './dynamo-repository'
 import { BatchJobFilterUtils } from './filter-utils'
+import { BatchJobClickhouseRepository } from './clickhouse-repository'
 import {
   BatchJobInDb,
   BatchJobParameters,
@@ -27,6 +28,7 @@ export class BatchJobRepository {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   dynamoBatchJobRepository: DynamoBatchJobRepository
+  batchJobClickhouseRepository: BatchJobClickhouseRepository
   collection: Collection<BatchJobInDb>
 
   constructor(tenantId: string, mongoDb: MongoClient) {
@@ -39,11 +41,14 @@ export class BatchJobRepository {
     )
     const db = this.mongoDb.db()
     this.collection = db.collection<BatchJobInDb>(JOBS_COLLECTION(tenantId))
+    this.batchJobClickhouseRepository = new BatchJobClickhouseRepository(
+      tenantId
+    )
   }
 
   public async getJobById(jobId: string): Promise<BatchJobInDb | null> {
     if (isClickhouseMigrationEnabled()) {
-      return await this.dynamoBatchJobRepository.getJobById(jobId)
+      return await this.batchJobClickhouseRepository.getJobById(jobId)
     }
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
@@ -57,12 +62,10 @@ export class BatchJobRepository {
     }
   ): Promise<BatchJobInDb[]> {
     if (isClickhouseMigrationEnabled()) {
-      return await this.dynamoBatchJobRepository.getJobsByStatus(
+      return await this.batchJobClickhouseRepository.getJobsByStatus({
         latestStatuses,
-        {
-          filterTypes: params?.filterTypes,
-        }
-      )
+        filterTypes: params?.filterTypes,
+      })
     }
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
@@ -260,7 +263,7 @@ export class BatchJobRepository {
   }
 
   private getMongoFilters(filters: BatchJobParams) {
-    return BatchJobFilterUtils.buildMongoFilters(filters).mongoFilters
+    return new BatchJobFilterUtils().buildMongoFilters(filters).mongoFilters
   }
 
   public async getJobs(
@@ -268,7 +271,7 @@ export class BatchJobRepository {
     limit: number = 20
   ): Promise<BatchJobInDb[]> {
     if (isClickhouseMigrationEnabled()) {
-      return await this.dynamoBatchJobRepository.getJobs(filters, limit)
+      return await this.batchJobClickhouseRepository.getJobs(filters, limit)
     }
     const collection = JOBS_COLLECTION(this.tenantId)
     const mongoFilters = this.getMongoFilters(filters)

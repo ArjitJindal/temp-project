@@ -6,6 +6,8 @@ import { jobTriggerHandler as handler } from '@/lambdas/batch-job/app'
 import { createSqsEvent } from '@/test-utils/sqs-test-utils'
 import { BatchJobWithId } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { BatchJobTable } from '@/models/batch-job'
+import { setupClickHouseForTest } from '@/test-utils/clickhouse-test-utils'
 
 const MOCK_BATCH_JOB_STATE_MACHINE_ARN = 'mock-sfn-arn'
 process.env.BATCH_JOB_STATE_MACHINE_ARN = MOCK_BATCH_JOB_STATE_MACHINE_ARN
@@ -26,6 +28,11 @@ describe('Batch job trigger', () => {
       type: 'DASHBOARD_REFRESH',
       parameters: { checkTimeRange: {} },
     }
+
+    await setupClickHouseForTest(TEST_TENANT_ID, [
+      BatchJobTable.tableDefinition.tableName,
+    ])
+
     await jobTriggerHandler(createSqsEvent([batchJob]))
 
     expect(sfnMock).toHaveReceivedCommandTimes(StartExecutionCommand as any, 1)
@@ -44,6 +51,11 @@ describe('Batch job trigger', () => {
       type: 'DASHBOARD_REFRESH',
       parameters: { checkTimeRange: {} },
     }
+
+    await setupClickHouseForTest(TEST_TENANT_ID, [
+      BatchJobTable.tableDefinition.tableName,
+    ])
+
     await jobTriggerHandler(createSqsEvent([batchJob, batchJob, batchJob]))
 
     expect(sfnMock).toHaveReceivedCommandTimes(StartExecutionCommand as any, 3)

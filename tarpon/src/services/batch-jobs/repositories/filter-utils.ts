@@ -1,4 +1,5 @@
 import { Filter } from 'mongodb'
+import { WithOperators } from 'thunder-schema'
 import { BatchJobParams, BatchJobInDb } from '@/@types/batch-job'
 
 export interface MongoFilters {
@@ -12,7 +13,9 @@ export interface DynamoFilters {
 }
 
 export class BatchJobFilterUtils {
-  static buildMongoFilters(filters: BatchJobParams): MongoFilters {
+  public buildMongoFilters: (filters: BatchJobParams) => MongoFilters = (
+    filters: BatchJobParams
+  ) => {
     const mongoFilters: Filter<BatchJobInDb> = {}
 
     if (filters.type) {
@@ -62,7 +65,9 @@ export class BatchJobFilterUtils {
     return { mongoFilters }
   }
 
-  static buildDynamoFilters(filters: BatchJobParams): DynamoFilters {
+  public buildDynamoFilters: (filters: BatchJobParams) => DynamoFilters = (
+    filters: BatchJobParams
+  ) => {
     const filterExpressions: string[] = []
     const expressionAttributeValues: Record<string, any> = {}
     const expressionAttributeNames: Record<string, string> = {}
@@ -124,5 +129,46 @@ export class BatchJobFilterUtils {
       expressionAttributeValues,
       expressionAttributeNames,
     }
+  }
+
+  public buildClickhouseFilters: (
+    filters: BatchJobParams
+  ) => Partial<WithOperators<BatchJobInDb>> = (filters: BatchJobParams) => {
+    const conditions: Partial<WithOperators<BatchJobInDb>> = {}
+    if (filters.type) {
+      conditions.type = filters.type
+    }
+
+    if (filters.latestStatus?.status) {
+      conditions.latestStatus = {
+        status: filters.latestStatus.status,
+      }
+    }
+
+    if (filters.latestStatus?.latestStatusAfterTimestamp) {
+      conditions.latestStatus = {
+        timestamp__gt: filters.latestStatus.latestStatusAfterTimestamp,
+      }
+    }
+
+    if (filters.latestStatus?.latestStatusBeforeTimestamp) {
+      conditions.latestStatus = {
+        timestamp__lt: filters.latestStatus.latestStatusBeforeTimestamp,
+      }
+    }
+
+    if (filters.providers && filters.providers.length > 0) {
+      conditions.parameters = {
+        providers__has_any: filters.providers,
+      }
+    }
+
+    if (filters.parameters?.entityType) {
+      conditions.parameters = {
+        entityType__has_any: filters.parameters.entityType,
+      }
+    }
+
+    return conditions
   }
 }

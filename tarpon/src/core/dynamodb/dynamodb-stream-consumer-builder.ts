@@ -38,6 +38,7 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject } from '@/utils/llms'
 import { TenantService } from '@/services/tenants'
+import { BatchJobInDb } from '@/@types/batch-job'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -142,6 +143,11 @@ type LLMRequestsHandler = (
   newGptRequests: LLMLogObject | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type BatchJobsHandler = (
+  tenantId: string,
+  newBatchJobs: BatchJobInDb | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
@@ -169,6 +175,7 @@ export class StreamConsumerBuilder {
   alertsQaSamplingHandler?: AlertsQaSamplingHandler
   notificationsHandler?: NotificationsHandler
   llmRequestsHandler?: LLMRequestsHandler
+  batchJobsHandler?: BatchJobsHandler
 
   constructor(
     name: string,
@@ -284,6 +291,13 @@ export class StreamConsumerBuilder {
     llmRequestsHandler: LLMRequestsHandler
   ): StreamConsumerBuilder {
     this.llmRequestsHandler = llmRequestsHandler
+    return this
+  }
+
+  public setBatchJobsHandler(
+    batchJobsHandler: BatchJobsHandler
+  ): StreamConsumerBuilder {
+    this.batchJobsHandler = batchJobsHandler
     return this
   }
 
@@ -484,6 +498,12 @@ export class StreamConsumerBuilder {
       await this.llmRequestsHandler(
         update.tenantId,
         update.NewImage as LLMLogObject,
+        dbClients
+      )
+    } else if (update.type === 'BATCH_JOB' && this.batchJobsHandler) {
+      await this.batchJobsHandler(
+        update.tenantId,
+        update.NewImage as BatchJobInDb,
         dbClients
       )
     }

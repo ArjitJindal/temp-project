@@ -28,6 +28,8 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import * as snsSqsClient from '@/utils/sns-sqs-client'
 import { TIME_SLICE_COUNT } from '@/services/logic-evaluator/engine/aggregation-repository'
 import { generateChecksum } from '@/utils/object'
+import { BatchJobTable } from '@/models/batch-job'
+import { setupClickHouseForTest } from '@/test-utils/clickhouse-test-utils'
 
 dynamoDbSetupHook()
 withFeatureHook(['RULES_ENGINE_V8', 'RISK_SCORING'])
@@ -82,7 +84,11 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   const tenantId = getTestTenantId()
   const now = dayjs()
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await setupClickHouseForTest(tenantId, [
+      BatchJobTable.tableDefinition.tableName,
+    ])
+
     bulkSendMessagesMock.mockClear()
     mockClient(SQSClient)
   })
