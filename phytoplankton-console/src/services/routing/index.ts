@@ -230,7 +230,7 @@ export function useRoutes(): RouteItem[] {
         icon: 'rules',
         hideChildrenInMenu: true,
         position: 'top',
-        minRequiredResources: ['read:::rules/library/*'],
+        minRequiredResources: ['read:::rules/my-rules/*', 'read:::rules/library/*'],
         routes: [
           {
             path: '/rules',
