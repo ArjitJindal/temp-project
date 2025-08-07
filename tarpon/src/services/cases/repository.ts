@@ -835,7 +835,7 @@ export class CaseRepository {
         alerts: {
           ...(options.includeAlertTransactionIds
             ? { transactionIds: 1, alertId: 1, comments: 1 }
-            : { comments: 1 }),
+            : { comments: 1, alertId: 1 }),
         },
         caseType: 1,
         comments: params.view === ('TABLE' as TableListViewEnum) ? [] : 1,
