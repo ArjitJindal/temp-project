@@ -419,16 +419,6 @@ export function useRoutes(): RouteItem[] {
                   hideInMenu: true,
                   minRequiredResources: ['read:::risk-scoring/risk-factors/*'] as Resource[],
                 },
-              ]
-            : []),
-          {
-            name: 'risk-algorithms',
-            path: '/risk-levels/risk-algorithms',
-            component: RiskAlgorithmTable,
-            minRequiredResources: ['read:::risk-scoring/risk-algorithms/*'] as Resource[],
-          },
-          ...(isRiskScoringEnabled
-            ? [
                 {
                   name: 'risk-factors-create',
                   path: '/risk-levels/risk-factors/:type/create',
@@ -485,6 +475,12 @@ export function useRoutes(): RouteItem[] {
                 },
               ]
             : []),
+          {
+            name: 'risk-algorithms',
+            path: '/risk-levels/risk-algorithms',
+            component: RiskAlgorithmTable,
+            minRequiredResources: ['read:::risk-scoring/risk-algorithms/*'] as Resource[],
+          },
         ],
       },
       {

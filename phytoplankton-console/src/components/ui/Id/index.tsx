@@ -38,6 +38,7 @@ export default function Id(props: Props) {
         target={toNewTab ? '_blank' : '_self'}
         title={children}
         data-cy={testName}
+        onClick={onClick}
       >
         {children}
         {alwaysShowCopy && <FileCopyLineIcon className={style.icon} onClick={handleClickCopy} />}

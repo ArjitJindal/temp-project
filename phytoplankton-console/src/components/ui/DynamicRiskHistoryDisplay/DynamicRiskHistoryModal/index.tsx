@@ -185,12 +185,28 @@ function DynamicRiskHistoryModal(props: Props) {
       render: (item) => {
         if (item.transactionId && !isNotArsChangeTxId(item.transactionId)) {
           return (
-            <Id to={makeUrl(`risk-levels/risk-factors/transaction`)}>View TRS risk factors</Id>
+            <Id
+              onClick={() => {
+                localStorage.removeItem('SIMULATION_CUSTOM_RISK_FACTORS');
+              }}
+              to={makeUrl(`risk-levels/risk-factors/transaction`)}
+            >
+              View TRS risk factors
+            </Id>
           );
         } else if (isManualDrsTxId(item.transactionId ?? '')) {
           return <>(Manual update)</>;
         }
-        return <Id to={makeUrl(`risk-levels/risk-factors/consumer`)}>View KRS risk factors</Id>;
+        return (
+          <Id
+            onClick={() => {
+              localStorage.removeItem('SIMULATION_CUSTOM_RISK_FACTORS');
+            }}
+            to={makeUrl(`risk-levels/risk-factors/consumer`)}
+          >
+            View KRS risk factorssssss
+          </Id>
+        );
       },
     }),
   ]);
