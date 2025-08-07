@@ -194,21 +194,37 @@ export const webhooksHandler = lambdaApi()(
         })
         const tenantSettings = await tenantRepository.getTenantSettings()
 
-        if (!tenantSettings.bruteForceAccountBlockingEnabled) {
-          logger.info(
-            `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
-          )
-          // Brute force account blocking acutally disables you from IP so we need to unblock it
-          await accountsService.unblockBruteForceAccount(account)
-          continue
-        }
-
         if (log.data.type !== 'limit_wc') {
           logger.info(`Skipping non-limit_wc webhook event: ${log.data.type}`)
           continue
         }
 
-        await accountsService.blockAccountBruteForce(tenant, account)
+        // https://auth0.com/docs/deploy-monitor/logs/log-event-type-codes, search for limit_wc
+        // An IP address is blocked because it reached the maximum failed login attempts into a single account.
+        if (log.data.type === 'limit_wc') {
+          if (!tenantSettings.bruteForceAccountBlockingEnabled) {
+            try {
+              // Brute force account blocking acutally disables you from IP so we need to unblock it
+              await accountsService.unblockBruteForceAccount(account)
+            } catch (error) {
+              // handles cases when we are trying to unblock an account this is deleted
+              logger.warn(
+                `Unable to remove brute force blocking ${account.email} because of ${error}`
+              )
+            }
+            continue
+          }
+          logger.info(
+            `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
+          )
+
+          if (!account.blocked) {
+            // only blocking the account if it's not already blocked
+            // else we will get 400 error from auth0
+            logger.info(`Blocking account ${account.email}`)
+            await accountsService.blockAccountBruteForce(tenant, account)
+          }
+        }
       }
     })
 
