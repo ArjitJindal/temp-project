@@ -1,8 +1,18 @@
 import { describe, expect, test } from '@jest/globals';
 
-import React, { Dispatch, SetStateAction, useState } from 'react';
-import { render, screen, userEvent } from 'testing-library-wrapper';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { render, screen } from 'testing-library-wrapper';
 import NumberInput, { Props, Styles as NumberInputStyles } from '..';
+import {
+  typeIntoInput,
+  clearInputByBackspace,
+  clearInputWithButton,
+  expectInputValue,
+  expectInputDisabled,
+  expectBorderColor,
+  tabOutOfInput,
+  getBorderColor,
+} from './number-input.jest-helpers';
 import {
   FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
   FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
@@ -18,15 +28,12 @@ describe('Different states', () => {
   });
   test('Disabled state', () => {
     render(<RenderNumberInput isDisabled={true} />);
-    const inputEl = getInput();
-    expect(inputEl).toBeDisabled();
-    const borderColor = getBorderColor();
-    expect(borderColor).toBeColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
+    expectInputDisabled(true);
+    expectBorderColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
   });
   test.each([false, true])('Focused state when error is %p', async (isError) => {
     render(<RenderNumberInput isError={isError} />);
-    const input = getInput();
-    await userEvent.click(input);
+    await typeIntoInput('123');
     const borderColor = getBorderColor();
     if (isError) {
       expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
@@ -48,64 +55,49 @@ describe('Different states', () => {
 describe('Editing', () => {
   test('Simple editing', async () => {
     render(<RenderNumberInput />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123abc456');
-    expect(inputEl).toHaveDisplayValue('123456');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveDisplayValue('');
+    await typeIntoInput('123abc456');
+    expectInputValue('123456');
+    await clearInputByBackspace();
+    expectInputValue('');
   });
   test('Floating numbers', async () => {
     render(<RenderNumberInput />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123.45');
-    await userEvent.keyboard('{Tab}');
-    expect(inputEl).toHaveDisplayValue('123.45');
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveDisplayValue('');
+    await typeIntoInput('123.45');
+    await tabOutOfInput();
+    expectInputValue('123.45');
+    await typeIntoInput('');
+    await clearInputByBackspace();
+    expectInputValue('');
   });
   test('Floating numbers with coma as separator', async () => {
     render(<RenderNumberInput />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('12,34');
-    expect(inputEl).toHaveDisplayValue('12.34');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
+    await typeIntoInput('12,34');
+    expectInputValue('12.34');
+    await clearInputByBackspace();
   });
   test('Negative numbers', async () => {
     render(<RenderNumberInput />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('-123');
-    expect(inputEl).toHaveDisplayValue('-123');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveDisplayValue('');
+    await typeIntoInput('-123');
+    expectInputValue('-123');
+    await clearInputByBackspace();
+    expectInputValue('');
   });
   test('Min/max values', async () => {
     render(<RenderNumberInput min={5} max={10} allowClear={true} />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123');
-    await userEvent.keyboard('{Tab}');
-    expect(inputEl).toHaveDisplayValue('10');
-    const clearBtn = getClearButton();
-    await userEvent.click(clearBtn);
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('2');
-    await userEvent.keyboard('{Tab}');
-    expect(inputEl).toHaveDisplayValue('5');
+    await typeIntoInput('123');
+    await tabOutOfInput();
+    expectInputValue('10');
+    await clearInputWithButton();
+    await typeIntoInput('2');
+    await tabOutOfInput();
+    expectInputValue('5');
   });
   test('Clearing', async () => {
     render(<RenderNumberInput allowClear={true} />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123');
-    expect(inputEl).toHaveDisplayValue('123');
-    const clearBtn = getClearButton();
-    await userEvent.click(clearBtn);
-    expect(inputEl).toHaveDisplayValue('');
+    await typeIntoInput('123');
+    expectInputValue('123');
+    await clearInputWithButton();
+    expectInputValue('');
   });
 });
 
@@ -121,14 +113,12 @@ describe('Confirm modes', () => {
         )}
       </RenderWithState>,
     );
-    const inputEl = getInput();
     const stateEl = screen.getByTestId('state');
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123abc456');
-    expect(inputEl).toHaveDisplayValue('123456');
+    await typeIntoInput('123abc456');
+    expectInputValue('123456');
     expect(stateEl).toHaveTextContent('123456');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveDisplayValue('');
+    await clearInputByBackspace();
+    expectInputValue('');
     expect(stateEl).toHaveTextContent('');
   });
   test('ON_BLUR', async () => {
@@ -142,13 +132,11 @@ describe('Confirm modes', () => {
         )}
       </RenderWithState>,
     );
-    const inputEl = getInput();
     const stateEl = screen.getByTestId('state');
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('123abc456');
-    expect(inputEl).toHaveDisplayValue('123456');
+    await typeIntoInput('123abc456');
+    expectInputValue('123456');
     expect(stateEl).toHaveTextContent('');
-    await userEvent.keyboard('{Tab}');
+    await tabOutOfInput();
     expect(stateEl).toHaveTextContent('123456');
   });
 });
@@ -169,18 +157,4 @@ function RenderNumberInput(props: Props) {
       {([value, setValue]) => <NumberInput {...props} value={value} onChange={setValue} />}
     </RenderWithState>
   );
-}
-
-function getInput() {
-  return screen.getByRole('textbox');
-}
-
-function getClearButton() {
-  return screen.getByRole('button', { name: 'Clear' });
-}
-
-function getBorderColor(): string {
-  const rootEl = screen.getByClassName(NumberInputStyles.inputWrapper);
-  const style = window.getComputedStyle(rootEl);
-  return style.getPropertyValue('border-color').toUpperCase();
 }

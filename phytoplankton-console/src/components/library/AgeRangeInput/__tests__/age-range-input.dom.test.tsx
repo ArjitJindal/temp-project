@@ -1,7 +1,15 @@
-import React from 'react';
-import { render, fireEvent, screen } from 'testing-library-wrapper';
-import { describe, expect } from '@jest/globals';
+import { describe } from '@jest/globals';
+import { render } from 'testing-library-wrapper';
 import AgeRangeInput, { ValueType } from '..';
+import {
+  setMinAge,
+  setMaxAge,
+  expectMinAgeValue,
+  expectMaxAgeValue,
+  expectMaxAgeDisabled,
+  expectOnChangeCalledWith,
+} from './age-range-input.jest-helpers';
+
 describe('AgeRangeInput', () => {
   const defaultValue: ValueType = {
     minAge: {
@@ -19,25 +27,22 @@ describe('AgeRangeInput', () => {
 
   it('renders the component with default values', () => {
     renderComponent();
-    const minAgeInput = screen.getByTestId('min-age-input');
-    const maxAgeInput = screen.getByTestId('max-age-input');
-
-    expect(minAgeInput).toHaveValue(18);
-    expect(maxAgeInput).toHaveValue(null);
-    expect(maxAgeInput).toBeDisabled();
+    expectMinAgeValue(18);
+    expectMaxAgeValue(null);
+    expectMaxAgeDisabled(true);
   });
 
   it('updates the minAge value correctly', () => {
     const onChange = jest.fn();
     renderComponent(defaultValue, onChange);
-    const minAgeInput = screen.getByTestId('min-age-input', {});
 
-    fireEvent.change(minAgeInput, { target: { value: '25' } });
+    setMinAge('25');
 
-    expect(onChange).toHaveBeenCalledWith({
+    expectOnChangeCalledWith(onChange, {
       minAge: { granularity: 'year', units: 25 },
     });
   });
+
   it('updates the maxAge value correctly', () => {
     const onChange = jest.fn();
     renderComponent(
@@ -53,11 +58,10 @@ describe('AgeRangeInput', () => {
       },
       onChange,
     );
-    const maxAgeInput = screen.getByTestId('max-age-input', {});
 
-    fireEvent.change(maxAgeInput, { target: { value: '25' } });
+    setMaxAge('25');
 
-    expect(onChange).toHaveBeenCalledWith({
+    expectOnChangeCalledWith(onChange, {
       minAge: { granularity: 'year', units: 18 },
       maxAge: { granularity: 'year', units: 25 },
     });

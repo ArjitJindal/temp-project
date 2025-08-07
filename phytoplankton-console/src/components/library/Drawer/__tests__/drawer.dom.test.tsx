@@ -1,8 +1,16 @@
-import React from 'react';
 import { describe, expect } from '@jest/globals';
-import { fireEvent, render, screen } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import Drawer from '..';
-import s from '../index.module.less';
+import {
+  findDrawerTitle,
+  findDrawerContent,
+  findFooterContent,
+  findDescription,
+  clickCloseButton,
+  clickButton,
+  expectFooterAlignment,
+  expectConfirmationDialogVisible,
+} from './drawer.jest-helpers';
 
 const props = {
   isVisible: true,
@@ -14,23 +22,23 @@ const props = {
 describe('Drawer Component', () => {
   it('renders Drawer component with title', () => {
     render(<Drawer {...props} />);
-    expect(screen.getByText('Test Drawer')).toBeInTheDocument();
+    expect(findDrawerTitle('Test Drawer')).toBeInTheDocument();
   });
 
-  it('closes Drawer on clicking the close button', () => {
+  it('closes Drawer on clicking the close button', async () => {
     render(<Drawer {...props} />);
-    fireEvent.click(screen.getByTestId('drawer-close-button'));
+    await clickCloseButton();
     expect(props.onChangeVisibility).toHaveBeenCalledWith(false);
   });
 
   it('renders Drawer with children', () => {
     render(<Drawer {...props} />);
-    expect(screen.getByText('Drawer Content')).toBeInTheDocument();
+    expect(findDrawerContent('Drawer Content')).toBeInTheDocument();
   });
 
   it('renders Drawer with footer', () => {
     render(<Drawer {...props} footer={<div>Footer Content</div>} />);
-    expect(screen.getByText('Footer Content')).toBeInTheDocument();
+    expect(findFooterContent('Footer Content')).toBeInTheDocument();
   });
 
   it('renders Drawer with description', () => {
@@ -39,7 +47,7 @@ describe('Drawer Component', () => {
       description: 'Test Description',
     };
     render(<Drawer {...propsWithDescription} />);
-    expect(screen.getByText('Test Description')).toBeInTheDocument();
+    expect(findDescription('Test Description')).toBeInTheDocument();
   });
 
   it('renders Drawer with right-aligned buttons in footer', () => {
@@ -53,39 +61,35 @@ describe('Drawer Component', () => {
       ),
     };
     render(<Drawer {...propsWithRightAlignedFooter} />);
-    const footerSections = screen.getAllByClassName(s.footerSection);
-    expect(footerSections).toHaveLength(1);
-    const [footerSection] = footerSections;
-    expect(footerSection).toHaveClass(s.right);
+    expectFooterAlignment('right');
   });
 
-  it('shows confirmation dialog when closing Drawer with unsaved changes', () => {
+  it('shows confirmation dialog when closing Drawer with unsaved changes', async () => {
     const onChangeVisibility = jest.fn();
     render(<Drawer {...props} hasChanges={true} onChangeVisibility={onChangeVisibility} />);
 
-    fireEvent.click(screen.getByTestId('drawer-close-button'));
+    await clickCloseButton();
 
-    expect(
-      screen.getByText(
-        'Are you sure you want to close the drawer? You will lose all unsaved changes.',
-      ),
-    ).toBeInTheDocument();
+    expectConfirmationDialogVisible(
+      true,
+      'Are you sure you want to close the drawer? You will lose all unsaved changes.',
+    );
 
-    fireEvent.click(screen.getByText('Cancel'));
+    await clickButton('Cancel');
     expect(onChangeVisibility).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByTestId('drawer-close-button'));
-    fireEvent.click(screen.getByText('Confirm'));
+    await clickCloseButton();
+    await clickButton('Confirm');
     expect(onChangeVisibility).toHaveBeenCalledWith(false);
   });
 
-  it('does not show confirmation dialog when closing Drawer without unsaved changes', () => {
+  it('does not show confirmation dialog when closing Drawer without unsaved changes', async () => {
     const onChangeVisibility = jest.fn();
     render(<Drawer {...props} hasChanges={false} onChangeVisibility={onChangeVisibility} />);
 
-    fireEvent.click(screen.getByTestId('drawer-close-button'));
+    await clickCloseButton();
 
-    expect(screen.queryByText('Are you sure you want to close?')).not.toBeInTheDocument();
+    expectConfirmationDialogVisible(false, 'Are you sure you want to close?');
     expect(onChangeVisibility).toHaveBeenCalledWith(false);
   });
 });

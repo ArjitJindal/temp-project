@@ -1,6 +1,12 @@
-import React from 'react';
 import { describe, expect } from '@jest/globals';
-import { render, fireEvent, screen, waitFor, within } from 'testing-library-wrapper';
+import { render, waitFor } from 'testing-library-wrapper';
+import {
+  clickStep,
+  findStepByNumber,
+  expectStepOptional,
+  expectStepHasClass,
+  expectStepperLayout,
+} from './stepper.jest-helpers';
 import Stepper from '@/components/library/Stepper';
 import '@testing-library/jest-dom/extend-expect';
 
@@ -39,24 +45,23 @@ describe('Stepper Component', () => {
     },
   ];
 
-  it('handles step click and calls onChange correctly', () => {
+  it('handles step click and calls onChange correctly', async () => {
     const handleChange = jest.fn();
     render(<Stepper steps={steps} active={steps[0].key} onChange={handleChange} />);
 
     // Click on the second step
-    fireEvent.click(screen.getByText(steps[1].title));
+    await clickStep(steps[1].title);
 
     // Check if onChange is called with the correct step key
     expect(handleChange).toHaveBeenCalledWith(steps[1].key);
   });
 
-  it('handles step click correctly', () => {
+  it('handles step click correctly', async () => {
     const mockOnChange = jest.fn();
     render(<Stepper steps={steps} active={steps[0].key} onChange={mockOnChange} />);
 
     // Click on the second step
-    const secondStep = screen.getByText('Standard filters');
-    fireEvent.click(secondStep);
+    await clickStep('Standard filters');
 
     // Check if the onChange function is called with the correct key
     expect(mockOnChange).toHaveBeenCalledWith('second_item');
@@ -64,7 +69,8 @@ describe('Stepper Component', () => {
 
   it('renders the correct step number', () => {
     render(<Stepper steps={steps} active={steps[0].key} onChange={() => {}} />);
-    expect(screen.getByText('1')).toBeInTheDocument();
+    const stepNumber = findStepByNumber('1');
+    expect(stepNumber).toBeInTheDocument();
   });
 
   it('renders children component correctly based on active step', async () => {
@@ -77,49 +83,33 @@ describe('Stepper Component', () => {
 
   it('handles layout prop correctly for Vertical layout', () => {
     render(<Stepper steps={steps} active={steps[0].key} onChange={() => {}} layout="VERTICAL" />);
-    const verticalLayout = screen.getByTestId('stepper');
-    expect(verticalLayout.className).toContain('layout-VERTICAL');
+    expectStepperLayout('VERTICAL');
   });
 
   it('handles layout prop correctly for Horizontal layout', () => {
     render(<Stepper steps={steps} active={steps[0].key} onChange={() => {}} layout="HORIZONTAL" />);
-    const horizontalLayout = screen.getByTestId('stepper');
-    expect(horizontalLayout.className).toContain('layout-HORIZONTAL');
+    expectStepperLayout('HORIZONTAL');
   });
 
   it('renders optional indicator for optional steps', () => {
     render(<Stepper steps={steps} active={steps[0].key} onChange={() => {}} />);
-    expect(screen.getByText('Standard filters')).toHaveTextContent(/optional/i);
-    expect(screen.getByText('Last step')).toHaveTextContent(/optional/i);
-    expect(screen.queryByText('Basic details')).not.toHaveTextContent(/optional/i);
+    expectStepOptional('Standard filters', true);
+    expectStepOptional('Last step', true);
+    expectStepOptional('Basic details', false);
   });
 
   it('renders steps with "isOptional" class when isOptional is true', () => {
     render(<Stepper steps={steps} active={steps[1].key} onChange={() => {}} />);
-    const optionalStep = screen.getByText('Standard filters');
-    const optionalSpan = within(optionalStep).getByTestId('optional-span');
-    expect(optionalSpan).toHaveClass(styles.optional);
+    expectStepOptional('Standard filters', true);
   });
 
   it('renders steps with "isInvalid" class when isInvalid is true', () => {
     render(<Stepper steps={steps} active={steps[2].key} onChange={() => {}} />);
-    const invalidSteps = screen.queryAllByTestId('step-prop');
-
-    invalidSteps.forEach((step) => {
-      if (step.classList.contains(styles.isInvalid)) {
-        expect(step).toHaveClass(styles.isInvalid);
-      }
-    });
+    expectStepHasClass('Third step', styles.isInvalid);
   });
 
   it('renders steps with "isUnfilled" class when isUnfilled is true', () => {
     render(<Stepper steps={steps} active={steps[0].key} onChange={() => {}} />);
-    const unfilledSteps = screen.queryAllByTestId('step-prop');
-
-    unfilledSteps.forEach((step) => {
-      if (step.classList.contains(styles.isUnfilled)) {
-        expect(step).toHaveClass(styles.isUnfilled);
-      }
-    });
+    expectStepHasClass('Basic details', styles.isUnfilled);
   });
 });

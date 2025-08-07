@@ -1,9 +1,15 @@
-import { test, expect, describe } from '@jest/globals';
+import { test, describe } from '@jest/globals';
 
 import React, { useState } from 'react';
-import { render, screen, within, userEvent } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import Tabs, { Props } from '..';
-import TabsStyles from '../index.module.less';
+import {
+  expectTabs,
+  expectTabDisabled,
+  clickTabAdd,
+  clickTabDelete,
+  expectRootRendered,
+} from './tabs.jest-helpers';
 
 describe('Basic rendering for all types', () => {
   describe.each<Props['type']>(['line', 'card', 'editable-card'])('Testing for %p type', (type) => {
@@ -17,9 +23,7 @@ describe('Basic rendering for all types', () => {
           ]}
         />,
       );
-      const rootEl = screen.queryByClassName(TabsStyles.root);
-      expect(rootEl).toBeInTheDocument();
-      expect(rootEl).toBeVisible();
+      expectRootRendered();
     });
     test('All tabs are rendered', async () => {
       const tabs = [
@@ -27,10 +31,7 @@ describe('Basic rendering for all types', () => {
         { title: 'Second option', key: 'option2' },
       ];
       render(<Tabs type={type} items={tabs} />);
-      for (const tab of tabs) {
-        const tabEl = screen.getByText(tab.title);
-        expect(tabEl).toBeVisible();
-      }
+      expectTabs(tabs.map((tab) => tab.title));
     });
     test('Disabled tabs', async () => {
       const tabs = [
@@ -84,44 +85,4 @@ function RenderTabs(props: Props) {
       }}
     />
   );
-}
-
-async function expectTabs(tabs: string[]) {
-  const tabEls = screen.queryAllByRole('tab');
-  const titles = tabEls.map((x) => x.textContent?.trim());
-  expect(titles).toEqual(tabs);
-}
-
-async function expectTabDisabled(title: string, expectedDisabled: boolean) {
-  const tabEl = getTabByTitle(title);
-  if (expectedDisabled) {
-    expect(tabEl).toHaveClass('ant-tabs-tab-disabled');
-  } else {
-    expect(tabEl).not.toHaveClass('ant-tabs-tab-disabled');
-  }
-}
-
-async function clickTabAdd() {
-  const tabsContainerEl = screen.getByClassName('ant-tabs-nav-wrap');
-  const addButtonEl = within(tabsContainerEl).getByClassName('ant-tabs-nav-add');
-  await userEvent.click(addButtonEl);
-}
-
-async function clickTabDelete(title: string) {
-  const tabEl = getTabByTitle(title);
-  const deleteButtonEl = within(tabEl).getByClassName('ant-tabs-tab-remove');
-  await userEvent.click(deleteButtonEl);
-}
-
-function getTabByTitle(title: string) {
-  const tabsContainerEl = screen.getByClassName('ant-tabs-nav-wrap');
-  const tabEls = within(tabsContainerEl).queryAllByClassName('ant-tabs-tab');
-  const titles = tabEls.map((x) => x.textContent);
-  expect(titles).toContain(title);
-  const result = tabEls.find((x) => within(x).queryByText(title) != null);
-  if (!result) {
-    throw new Error(`Tab with title "${title}" not found`);
-  }
-  expect(result).toBeInTheDocument();
-  return result;
 }

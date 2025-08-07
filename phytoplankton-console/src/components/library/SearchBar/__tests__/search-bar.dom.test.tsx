@@ -1,10 +1,12 @@
-import { test, expect } from '@jest/globals';
+import { test } from '@jest/globals';
 
-import React from 'react';
-import { render, screen, userEvent } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import SearchBar, { SearchBarProps } from '..';
-import SearchBarStyles from '../index.module.less';
-import SearchBarDropdownStyles from '../SearchBarDropdown/index.module.less';
+import {
+  clickSearchBar,
+  clickOutsideSearchBar,
+  expectDropdownOpen,
+} from './search-bar.jest-helpers';
 import { success } from '@/utils/asyncResource';
 
 interface FilterParams {}
@@ -20,9 +22,9 @@ describe('Open/closing dropdown', () => {
       />,
     );
     expectDropdownOpen(false);
-    await userEvent.click(screen.getByClassName(SearchBarStyles.root));
+    await clickSearchBar();
     expectDropdownOpen(true);
-    await userEvent.click(container);
+    await clickOutsideSearchBar(container);
     expectDropdownOpen(false);
   });
 });
@@ -32,17 +34,4 @@ describe('Open/closing dropdown', () => {
  */
 function RenderSearchBar(props: SearchBarProps<FilterParams>) {
   return <SearchBar {...props} />;
-}
-
-/*
-  Assertions
- */
-function expectDropdownOpen(shouldBeOpen: boolean = true) {
-  const dropdownEl = screen.queryByClassName(SearchBarDropdownStyles.root);
-  if (shouldBeOpen) {
-    expect(dropdownEl).toBeInTheDocument();
-    expect(dropdownEl).toBeVisible();
-  } else {
-    expect(dropdownEl).not.toBeInTheDocument();
-  }
 }

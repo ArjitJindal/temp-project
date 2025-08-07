@@ -1,9 +1,18 @@
 import { describe, expect, test } from '@jest/globals';
 
 import React, { useState } from 'react';
-import { render, screen, userEvent } from 'testing-library-wrapper';
+import { render, screen } from 'testing-library-wrapper';
 import TextInput, { Props } from '..';
 import TextInputStyles from '../style.module.less';
+import {
+  getBorderColor,
+  typeIntoInput,
+  clearInput,
+  expectInputValue,
+  expectInputDisabled,
+  expectBorderColor,
+  clickInput,
+} from './text-input.jest-helpers';
 import {
   FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
   FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
@@ -19,15 +28,12 @@ describe('Different states', () => {
   });
   test('Disabled state', () => {
     render(<RenderTextInput isDisabled={true} />);
-    const inputEl = getInput();
-    expect(inputEl).toBeDisabled();
-    const borderColor = getBorderColor();
-    expect(borderColor).toBeColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
+    expectInputDisabled(true);
+    expectBorderColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
   });
   test.each([false, true])('Focused state when error is %p', async (isError) => {
     render(<RenderTextInput isError={isError} />);
-    const input = getInput();
-    await userEvent.click(input);
+    await clickInput();
     const borderColor = getBorderColor();
     if (isError) {
       expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
@@ -49,22 +55,17 @@ describe('Different states', () => {
 describe('Editing', () => {
   test('Simple editing', async () => {
     render(<RenderTextInput />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('abc');
-    expect(inputEl).toHaveValue('abc');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveValue('');
+    await typeIntoInput('abc');
+    expectInputValue('abc');
+    await typeIntoInput('{Backspace}{Backspace}{Backspace}');
+    expectInputValue('');
   });
   test('Clearing', async () => {
     render(<RenderTextInput allowClear={true} />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('abc');
-    expect(inputEl).toHaveValue('abc');
-    const clearBtn = getClearButton();
-    await userEvent.click(clearBtn);
-    expect(inputEl).toHaveValue('');
+    await typeIntoInput('abc');
+    expectInputValue('abc');
+    await clearInput();
+    expectInputValue('');
   });
 });
 
@@ -74,18 +75,4 @@ describe('Editing', () => {
 function RenderTextInput(props: Props) {
   const [value, setValue] = useState<string>();
   return <TextInput {...props} value={value} onChange={setValue} />;
-}
-
-function getInput() {
-  return screen.getByRole('textbox');
-}
-
-function getClearButton() {
-  return screen.getByRole('button', { name: 'Clear' });
-}
-
-function getBorderColor(): string {
-  const rootEl = screen.getByClassName(TextInputStyles.inputWrapper);
-  const style = window.getComputedStyle(rootEl);
-  return style.getPropertyValue('border-color').toUpperCase();
 }

@@ -1,10 +1,14 @@
 import { describe, expect, test } from '@jest/globals';
-import { render, screen, userEvent, within } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import React from 'react';
 import NestedSelects, { Props } from '..';
-import { notEmpty } from '@/utils/array';
-import LabelStyles from '@/components/library/Label/style.module.less';
-import SelectStyles from '@/components/library/Select/style.module.less';
+import {
+  findSelect,
+  expectSelectNumber,
+  selectOption,
+  clickClear,
+  expectValues,
+} from './nested-selects.jest-helpers';
 
 const options = [
   { value: 'o1', label: 'Option 1' },
@@ -154,74 +158,4 @@ function RenderComponent(
       }}
     />
   );
-}
-
-async function selectOption(select, option: string) {
-  await userEvent.click(select);
-  expectDropdownOpen(select, true);
-
-  const dropdownEl = getDropdownBySelect(select);
-  const options = within(dropdownEl).getAllByText(option);
-  if (options.length === 0) {
-    throw new Error(`Option with text "${option}" not found`);
-  }
-  // If there are multiple options with the same text, select the first one
-  const optionEl = options[0];
-  await userEvent.click(optionEl);
-
-  expectDropdownOpen(select, false);
-}
-
-async function expectSelectNumber(number) {
-  const allLabelContainers = await screen.findAllByClassName(LabelStyles.root);
-  return expect(allLabelContainers).toHaveLength(number);
-}
-
-async function findSelect(selectLabel: string) {
-  const allLabelContainers = await screen.findAllByClassName(LabelStyles.root);
-  const matchingLabels = allLabelContainers.filter((x) => {
-    const labelEl = within(x).getByClassName(LabelStyles.label);
-    const text = labelEl != null ? labelEl.textContent?.trim() : undefined;
-    return text === selectLabel || text === `${selectLabel} *`;
-  });
-  expect(matchingLabels).toHaveLength(1);
-  const label = matchingLabels[0];
-  const select = within(label).getByClassName(SelectStyles.root);
-  return select;
-}
-
-async function clickClear(select) {
-  const clearButtonEl = within(select).getByClassName(SelectStyles.clearIcon);
-  expect(clearButtonEl).toBeInTheDocument();
-  expect(clearButtonEl).toBeVisible();
-  await userEvent.click(clearButtonEl);
-}
-
-function expectValues(select, values: string[]) {
-  const items = within(select).queryAllByClassName(SelectStyles.selectedOptionLabel);
-  const itemsText = items.map((item) => item.textContent).filter(notEmpty);
-  expect(itemsText).toEqual(values);
-}
-
-function expectDropdownOpen(select: HTMLElement, shouldBeOpen: boolean = true) {
-  const dropdownEl = getDropdownBySelect(select);
-  expect(dropdownEl).toBeInTheDocument();
-  if (shouldBeOpen) {
-    expect(dropdownEl).toHaveClass(SelectStyles.isOpen);
-  } else {
-    expect(dropdownEl).not.toHaveClass(SelectStyles.isOpen);
-  }
-}
-
-function getDropdownBySelect(select: HTMLElement) {
-  const portalId = select.getAttribute('data-portal-id');
-  if (!portalId) {
-    throw new Error('Portal ID not found');
-  }
-  const portalEl = document.getElementById(portalId);
-  if (!portalEl) {
-    throw new Error('Portal element not found');
-  }
-  const dropdownEl = within(portalEl).getByClassName(SelectStyles.menuWrapper);
-  return dropdownEl;
 }

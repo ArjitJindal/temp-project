@@ -1,68 +1,47 @@
 import '@testing-library/jest-dom';
-import { describe, expect } from '@jest/globals';
-import { render, screen, fireEvent, waitFor } from 'testing-library-wrapper';
+import { describe } from '@jest/globals';
+import { render } from 'testing-library-wrapper';
 import LogicBuilder from '..';
-import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-
-// Helper function to generate initial state with default values
-const generateInitialState = (customConfig = {}) => {
-  return {
-    value: undefined,
-    config: makeConfig({
-      fields: { 'Transaction:id': { label: 'Transaction/id', type: 'text' } },
-      enableNesting: false,
-      ...customConfig,
-    }),
-    onChange: jest.fn(),
-  };
-};
-
-// Helper function to render LogicBuilder with initial state
-const renderLogicBuilder = (initialState) => {
-  return render(<LogicBuilder {...initialState} />);
-};
+import {
+  generateInitialState,
+  expectQueryBuilderExists,
+  expectOnChangeCalledWithUpdatedValues,
+  expectConjunctionsVisibility,
+  expectReorderingEnabled,
+  clickAddCondition,
+  findAddConditionButton,
+} from './logic-builder.jest-helpers';
 
 describe('LogicBuilder Component', () => {
   it.skip('renders LogicBuilder with basic configuration', () => {
     const initialState = generateInitialState();
-
-    const { container } = renderLogicBuilder(initialState);
-
-    expect(container.querySelector('.query-builder')).toBeInTheDocument();
+    const { container } = render(<LogicBuilder {...initialState} />);
+    expectQueryBuilderExists(container);
   });
 
   it.skip('updates value on user interaction', async () => {
     const initialState = generateInitialState();
-    renderLogicBuilder(initialState);
+    render(<LogicBuilder {...initialState} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Add condition')).toBeInTheDocument();
-    });
+    await findAddConditionButton();
+    await clickAddCondition();
 
-    fireEvent.click(screen.getByText('Add condition'));
-
-    const [updatedValue, updatedConfig] = initialState.onChange.mock.calls[0];
-
-    expect(updatedValue).toBeDefined();
-    expect(updatedConfig).toEqual(initialState.config);
+    expectOnChangeCalledWithUpdatedValues(initialState.onChange);
   });
 
   it.skip('hides conjunctions when specified', () => {
     const initialState = generateInitialState({ enableNesting: false });
-    const { container } = renderLogicBuilder({
-      ...initialState,
-      hideConjunctions: true,
-    });
+    const { container } = render(<LogicBuilder {...initialState} hideConjunctions={true} />);
 
     // Assert that conjunctions are hidden
-    expect(container.querySelector('.group--header .group--conjunctions')).toBeInTheDocument();
+    expectConjunctionsVisibility(container, false);
   });
 
   it('disables reordering when specified', () => {
     const initialState = generateInitialState({ enableReorder: false });
-    const { container } = renderLogicBuilder(initialState);
+    const { container } = render(<LogicBuilder {...initialState} />);
 
     // Assert that reordering is disabled
-    expect(container.querySelector('.group--header .group--actions .action--DRAG')).toBeNull();
+    expectReorderingEnabled(container, false);
   });
 });

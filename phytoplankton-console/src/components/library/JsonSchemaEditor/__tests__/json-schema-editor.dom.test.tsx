@@ -1,16 +1,22 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import '@testing-library/jest-dom';
 
-import React from 'react';
-import { render, screen, userEvent, within } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import Component from '..';
+import {
+  findInputField,
+  addArrayItem,
+  toggleArrayItem,
+  toggleItem,
+  expectArrayItemError,
+  expectFieldError,
+  typeIntoField,
+  clearField,
+} from './json-schema-editor.jest-helpers';
 import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import { getOrderedProps, makeValidators } from '@/components/library/JsonSchemaEditor/utils';
 import Form from '@/components/library/Form';
-import InputFieldStyles from '@/components/library/Form/InputField/index.module.less';
 import CardStyles from '@/components/ui/Card/index.module.less';
-import ArrayPropertyInputStyles from '@/components/library/JsonSchemaEditor/Property/PropertyInput/ArrayPropertyInput/style.module.less';
-import ExpandIconStyles from '@/components/library/ExpandIcon/style.module.less';
 
 describe('Basic fields rendering', () => {
   test('Required fields should have validation messages', async () => {
@@ -61,9 +67,9 @@ describe('Basic fields rendering', () => {
     const field1 = await findInputField('text_field');
     const field2 = await findInputField('number_field');
     await expectFieldError(field1, false);
-    await userEvent.click(field1);
+    await typeIntoField(field1, '');
     await expectFieldError(field1, false);
-    await userEvent.click(field2);
+    await typeIntoField(field2, '');
     await expectFieldError(field1, true);
   });
   test('Validation message disappear when changing field', async () => {
@@ -80,10 +86,9 @@ describe('Basic fields rendering', () => {
     render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
     const field1 = await findInputField('text_field');
     await expectFieldError(field1, true);
-    await userEvent.click(field1);
-    await userEvent.keyboard('abc');
+    await typeIntoField(field1, 'abc');
     await expectFieldError(field1, false);
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+    await clearField(field1, 3);
     await expectFieldError(field1, true);
   });
 });
@@ -140,7 +145,7 @@ describe('Array fields rendering', () => {
     await toggleArrayItem(item, true);
     // Fill required field
     const objectStringField = await findInputField('object_string_field');
-    await userEvent.type(objectStringField, 'abc');
+    await typeIntoField(objectStringField, 'abc');
     // Close item, make sure it is still valid
     await toggleArrayItem(item, false);
     await expectArrayItemError(item, false);
@@ -222,8 +227,7 @@ describe('Objects validation', () => {
       await toggleItem(objectItem);
       const f3 = await findInputField('f3');
       const f4 = await findInputField('f4');
-      await userEvent.click(f3);
-      await userEvent.keyboard('abc');
+      await typeIntoField(f3, 'abc');
       // After editing field in optional nested object sibling fields should be validated
       await expectFieldError(f3, false);
       await expectFieldError(f4, true);
@@ -238,8 +242,7 @@ describe('Objects validation', () => {
       await toggleItem(objectItem);
       const f3 = await findInputField('f3');
       const f4 = await findInputField('f4');
-      await userEvent.click(f3);
-      await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+      await clearField(f3, 3);
       await expectFieldError(f3, false);
       await expectFieldError(f4, false);
       await toggleItem(arrayFieldHeader);
@@ -263,9 +266,8 @@ describe('Objects validation', () => {
 
     render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
     const f1 = await findInputField('f1');
-    await userEvent.click(f1);
-    await userEvent.keyboard('abc');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+    await typeIntoField(f1, 'abc');
+    await clearField(f1, 3);
     await expectFieldError(f1, true);
   });
 
@@ -285,9 +287,8 @@ describe('Objects validation', () => {
 
     render(<RenderSchema alwaysShowErrors={true} schema={schema} />);
     const f1 = await findInputField('f1');
-    await userEvent.click(f1);
-    await userEvent.keyboard('abc');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
+    await typeIntoField(f1, 'abc');
+    await clearField(f1, 3);
     await expectFieldError(f1, true);
   });
 });
@@ -309,55 +310,4 @@ function RenderSchema(props: { alwaysShowErrors?: boolean; schema: ExtendedSchem
       <Component parametersSchema={schema} />
     </Form>
   );
-}
-
-async function findInputField(fieldName) {
-  const result = await screen.queryByTestId(`Property/${fieldName}`);
-  expect(result).not.toBeNull();
-  return result as HTMLElement;
-}
-
-async function addArrayItem(arrayField: HTMLElement) {
-  const addItemButton = await within(arrayField).findByClassName(
-    ArrayPropertyInputStyles.addButton,
-  );
-  await userEvent.click(addItemButton);
-  const itemsEl = await within(arrayField).findByClassName(ArrayPropertyInputStyles.items);
-  const items = await within(itemsEl).queryAllByClassName(CardStyles.root);
-  expect(items).not.toHaveLength(0);
-  return items[items.length - 1];
-}
-async function toggleArrayItem(item: HTMLElement, expectedOpenState?: boolean) {
-  const expandButton = await within(item).findByClassName(ExpandIconStyles.root);
-  await userEvent.click(expandButton);
-  if (expectedOpenState != null) {
-    if (expectedOpenState) {
-      expect(item).not.toHaveClass(CardStyles.isCollapsed);
-    } else {
-      expect(item).toHaveClass(CardStyles.isCollapsed);
-    }
-  }
-}
-
-async function toggleItem(item: HTMLElement) {
-  await userEvent.click(item);
-}
-
-async function expectArrayItemError(item: HTMLElement, isErrorExpected: boolean) {
-  if (isErrorExpected) {
-    expect(item).toHaveClass(CardStyles.isInvalid);
-  } else {
-    expect(item).not.toHaveClass(CardStyles.isInvalid);
-  }
-}
-
-async function expectFieldError(inputField: HTMLElement, isErrorExpected: boolean) {
-  if (isErrorExpected) {
-    const hint = await within(inputField).findByClassName(InputFieldStyles.hint);
-    expect(hint).toHaveClass(InputFieldStyles.isError);
-    expect(hint).toHaveTextContent('This field can not be empty');
-  } else {
-    const hint = await within(inputField).queryByClassName(InputFieldStyles.hint);
-    expect(hint).toBeNull();
-  }
 }

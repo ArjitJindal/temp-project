@@ -1,9 +1,16 @@
 import { describe, expect, test } from '@jest/globals';
 
 import React, { useState } from 'react';
-import { render, screen, userEvent } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import TextArea, { Props } from '..';
-import TextAreaStyles from '../styles.module.less';
+import {
+  getBorderColor,
+  typeIntoTextArea,
+  expectTextAreaValue,
+  expectTextAreaDisabled,
+  expectBorderColor,
+  clickTextArea,
+} from './text-area.jest-helpers';
 import {
   FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
   FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
@@ -13,15 +20,12 @@ import {
 describe('Different states', () => {
   test('Disabled state', () => {
     render(<RenderTextArea isDisabled={true} />);
-    const inputEl = getInput();
-    expect(inputEl).toBeDisabled();
-    const borderColor = getBorderColor();
-    expect(borderColor).toBeColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
+    expectTextAreaDisabled(true);
+    expectBorderColor(FIGMA_VARS_TOKENS_COLOR_STROKE_TERTIARY);
   });
   test.each([false, true])('Focused state when error is %p', async (isError) => {
     render(<RenderTextArea isError={isError} />);
-    const input = getInput();
-    await userEvent.click(input);
+    await clickTextArea();
     const borderColor = getBorderColor();
     if (isError) {
       expect(borderColor).toEqual(FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR);
@@ -43,21 +47,17 @@ describe('Different states', () => {
 describe('Editing', () => {
   test('Simple editing', async () => {
     render(<RenderTextArea />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('abc');
-    expect(inputEl).toHaveValue('abc');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveValue('');
+    await typeIntoTextArea('abc');
+    expectTextAreaValue('abc');
+    await typeIntoTextArea('{Backspace}{Backspace}{Backspace}');
+    expectTextAreaValue('');
   });
   test('Length limit', async () => {
     render(<RenderTextArea maxLength={5} />);
-    const inputEl = getInput();
-    await userEvent.click(inputEl);
-    await userEvent.keyboard('12345xyz');
-    expect(inputEl).toHaveValue('12345');
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
-    expect(inputEl).toHaveValue('');
+    await typeIntoTextArea('12345xyz');
+    expectTextAreaValue('12345');
+    await typeIntoTextArea('{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}');
+    expectTextAreaValue('');
   });
 });
 
@@ -67,14 +67,4 @@ describe('Editing', () => {
 function RenderTextArea(props: Props) {
   const [value, setValue] = useState<string>();
   return <TextArea {...props} value={value} onChange={setValue} />;
-}
-
-function getInput() {
-  return screen.getByRole('textbox');
-}
-
-function getBorderColor(): string {
-  const rootEl = screen.getByClassName(TextAreaStyles.input);
-  const style = window.getComputedStyle(rootEl);
-  return style.getPropertyValue('border-color').toUpperCase();
 }

@@ -1,7 +1,17 @@
-import React from 'react';
 import { describe, expect } from '@jest/globals';
-import { fireEvent, render, screen } from 'testing-library-wrapper';
+import { render, screen, fireEvent } from 'testing-library-wrapper';
 import Modal from '..';
+import {
+  findModalTitle,
+  clickCloseButton,
+  clickOkButton,
+  expectOkButtonVisible,
+  expectHeaderVisible,
+  expectFooterVisible,
+  findTab,
+  clickTab,
+  expectTabContentVisible,
+} from './modal.jest-helpers';
 
 const MockChildComponent = ({ onChildClick }) => {
   return <button onClick={onChildClick}>Child Component Button</button>;
@@ -11,42 +21,37 @@ describe('Modal Component', () => {
   it('renders modal with title and content', () => {
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} title="Test Modal" onCancel={onCancelMock} />);
-    const title = screen.getByText('Test Modal');
+    const title = findModalTitle('Test Modal');
     expect(title).toBeInTheDocument();
   });
-  it('calls onCancel callback when close button is clicked', () => {
+  it('calls onCancel callback when close button is clicked', async () => {
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} onCancel={onCancelMock} />);
-    const closeButton = screen.getByTestId('modal-close');
-    fireEvent.click(closeButton);
+    await clickCloseButton();
     expect(onCancelMock).toHaveBeenCalledTimes(1);
   });
-  it('calls onOk callback when OK button is clicked', () => {
+  it('calls onOk callback when OK button is clicked', async () => {
     const onOkMock = jest.fn();
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} onOk={onOkMock} onCancel={onCancelMock} />);
-    const okButton = screen.getByTestId('modal-ok');
-    fireEvent.click(okButton);
+    await clickOkButton();
     expect(onOkMock).toHaveBeenCalledTimes(1);
   });
   it('does not render OK button when hideOk is true', () => {
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} hideOk={true} onCancel={onCancelMock} />);
-    const okButton = screen.queryByTestId('modal-ok');
-    expect(okButton).not.toBeInTheDocument();
+    expectOkButtonVisible(false);
   });
 
   it('does not render header when hideHeader is true', () => {
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} hideHeader={true} onCancel={onCancelMock} />);
-    const header = screen.queryByTestId('modal-header');
-    expect(header).not.toBeInTheDocument();
+    expectHeaderVisible(false);
   });
   it('does not render footer when hideFooter is true', () => {
     const onCancelMock = jest.fn();
     render(<Modal isOpen={true} hideFooter={true} onCancel={onCancelMock} />);
-    const footer = screen.queryByTestId('modal-footer');
-    expect(footer).not.toBeInTheDocument();
+    expectFooterVisible(false);
   });
   it('renders cancel button with custom text', () => {
     const onCancelMock = jest.fn();
@@ -72,8 +77,8 @@ describe('Modal Component', () => {
         onCancel={onCancelMock}
       />,
     );
-    const tab1 = screen.getByText('Tab 1');
-    const tab2 = screen.getByText('Tab 2');
+    const tab1 = findTab('Tab 1');
+    const tab2 = findTab('Tab 2');
     expect(tab1).toBeInTheDocument();
     expect(tab2).toBeInTheDocument();
   });
@@ -84,7 +89,7 @@ describe('Modal Component', () => {
     expect(icon).toBeInTheDocument();
   });
 
-  it('renders content of the active tab', () => {
+  it('renders content of the active tab', async () => {
     const onCancelMock = jest.fn();
     render(
       <Modal
@@ -97,14 +102,11 @@ describe('Modal Component', () => {
       />,
     );
 
-    const tab2 = screen.getByText('Tab 2');
-    fireEvent.click(tab2);
-
-    const tab2Content = screen.getByText('Tab 2 Content');
-    expect(tab2Content).toBeInTheDocument();
+    await clickTab('Tab 2');
+    expectTabContentVisible('Tab 2 Content');
   });
 
-  it('passes props to child component and handles interaction', () => {
+  it('passes props to child component and handles interaction', async () => {
     const onChildClickMock = jest.fn();
     const onCancelMock = jest.fn();
 

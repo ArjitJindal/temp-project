@@ -1,11 +1,18 @@
 import '@testing-library/jest-dom';
 import { describe, expect } from '@jest/globals';
-import { render, fireEvent, screen } from 'testing-library-wrapper';
+import { render } from 'testing-library-wrapper';
 import StepButtons from '..';
+import {
+  findActionButton,
+  clickPreviousButton,
+  clickNextButton,
+  clickActionButton,
+  expectButtonVisible,
+} from './step-button.jest-helpers';
 
 describe('StepButtons', () => {
   it('renders the component with basic case', () => {
-    const { getByText } = render(
+    render(
       <StepButtons
         prevDisabled={false}
         nextDisabled={false}
@@ -14,12 +21,12 @@ describe('StepButtons', () => {
       />,
     );
 
-    expect(getByText('Previous')).toBeInTheDocument();
-    expect(getByText('Next')).toBeInTheDocument();
+    expectButtonVisible('Previous');
+    expectButtonVisible('Next');
   });
 
   it('renders the component with action', async () => {
-    const { getByText } = render(
+    render(
       <StepButtons
         prevDisabled={false}
         nextDisabled={true}
@@ -32,14 +39,14 @@ describe('StepButtons', () => {
       />,
     );
 
-    expect(getByText('Previous')).toBeInTheDocument();
-    const saveButton = await screen.findByText('Save');
+    expectButtonVisible('Previous');
+    const saveButton = findActionButton('Save');
     expect(saveButton).toBeInTheDocument();
   });
 
-  it('calls onPrevious when Previous button is clicked', () => {
+  it('calls onPrevious when Previous button is clicked', async () => {
     const onPreviousMock = jest.fn();
-    const { getByText } = render(
+    render(
       <StepButtons
         prevDisabled={false}
         nextDisabled={false}
@@ -48,13 +55,13 @@ describe('StepButtons', () => {
       />,
     );
 
-    fireEvent.click(getByText('Previous'));
+    await clickPreviousButton();
     expect(onPreviousMock).toHaveBeenCalled();
   });
 
-  it('calls onNext when Next button is clicked', () => {
+  it('calls onNext when Next button is clicked', async () => {
     const onNextMock = jest.fn();
-    const { getByText } = render(
+    render(
       <StepButtons
         prevDisabled={false}
         nextDisabled={false}
@@ -63,13 +70,13 @@ describe('StepButtons', () => {
       />,
     );
 
-    fireEvent.click(getByText('Next'));
+    await clickNextButton();
     expect(onNextMock).toHaveBeenCalled();
   });
 
-  it('calls onAction when Action button is clicked', () => {
+  it('calls onAction when Action button is clicked', async () => {
     const onActionMock = jest.fn();
-    const { getByText } = render(
+    render(
       <StepButtons
         prevDisabled={false}
         nextDisabled={true}
@@ -82,7 +89,7 @@ describe('StepButtons', () => {
       />,
     );
 
-    fireEvent.click(getByText('Save'));
+    await clickActionButton('Save');
     expect(onActionMock).toHaveBeenCalled();
   });
 });

@@ -1,10 +1,21 @@
-import { describe, expect, test } from '@jest/globals';
-import { act, render, screen, userEvent, within } from 'testing-library-wrapper';
+import { describe, test, expect } from '@jest/globals';
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
+
+import { getNotNull } from 'jest-utils';
+import { act, render, screen, userEvent, within } from 'testing-library-wrapper';
 import { useState } from 'react';
-import { findCheckbox, getNotNull } from 'jest-utils';
 import Table from '..';
 import { ColumnHelper } from '../columnHelper';
+import {
+  findTableBody,
+  findCell,
+  findPagination,
+  expectRowCount,
+  expectColumnVisible,
+  expectEmptyTable,
+  toggleColumnVisibility,
+} from './table.jest-helpers';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
 
@@ -31,10 +42,7 @@ describe('Basic data rendering', () => {
       />,
     );
 
-    const rows = await within(getNotNull(await findTableBody())).findAllByRole('row');
-    expect(rows).toHaveLength(1);
-    const row = rows[0];
-    expect(row).toHaveTextContent('No data to display');
+    await expectEmptyTable();
   });
   test('One row data should be rendered to a single row', async () => {
     render(
@@ -104,26 +112,26 @@ describe('Settings', () => {
     );
 
     // ASSERT
-    expect(await findColumn('ID')).toBeInTheDocument();
-    expect(await findColumn('First name')).toBeInTheDocument();
+    await expectColumnVisible('ID', true);
+    await expectColumnVisible('First name', true);
 
     // ACT
     await toggleColumnVisibility('firstName');
     await toggleColumnVisibility('lastName');
 
     // ASSERT
-    expect(await findColumn('ID')).toBeInTheDocument();
-    expect(await findColumn('First name')).not.toBeInTheDocument();
-    expect(await findColumn('Last name')).not.toBeInTheDocument();
+    await expectColumnVisible('ID', true);
+    await expectColumnVisible('First name', false);
+    await expectColumnVisible('Last name', false);
 
     // ACT
     await toggleColumnVisibility('lastName');
     await toggleColumnVisibility('firstName');
 
     // ASSERT
-    expect(await findColumn('ID')).toBeInTheDocument();
-    expect(await findColumn('First name')).toBeInTheDocument();
-    expect(await findColumn('Last name')).toBeInTheDocument();
+    await expectColumnVisible('ID', true);
+    await expectColumnVisible('First name', true);
+    await expectColumnVisible('Last name', true);
   });
 });
 
@@ -279,8 +287,7 @@ describe('Pagination', () => {
       );
     }
     render(<TestComponent />);
-    const rows = await findTableBodyRows();
-    expect(rows).toHaveLength(2);
+    await expectRowCount(2);
   });
 
   test('Multi-rows collapse into single row if all visible columns are marked as spanned', async () => {
@@ -331,59 +338,6 @@ describe('Pagination', () => {
       );
     }
     render(<TestComponent />);
-    const rows = await findTableBodyRows();
-    expect(rows).toHaveLength(1);
+    await expectRowCount(1);
   });
 });
-
-/*
-  Helpers
- */
-
-/*
-  Specific helpers
- */
-
-async function findTableBody() {
-  return (await screen.findByRole('table')).querySelector('tbody');
-}
-
-async function findTableBodyRows() {
-  const tableBodyEl = await findTableBody();
-  if (tableBodyEl == null) {
-    throw new Error(`Unable to find table body`);
-  }
-  return Array.from(tableBodyEl.querySelectorAll('tr'));
-}
-
-async function findColumn(title: string) {
-  return await screen.queryByRole('columnheader', { name: `"${title}" column header` });
-}
-async function findCell(row: HTMLElement, columnId: string) {
-  return await within(row).queryByTestId(columnId);
-}
-
-async function findPagination() {
-  const pagination = await screen.queryByTestId('pagination');
-  return pagination;
-}
-
-async function clickSettingsButton() {
-  await userEvent.click(screen.getByRole('button', { name: 'Settings button' }));
-}
-
-async function openSettings() {
-  await clickSettingsButton();
-}
-
-async function closeSettings() {
-  await clickSettingsButton();
-}
-
-async function toggleColumnVisibility(columnId: string) {
-  await openSettings();
-  const popup = await screen.getByTestId('popup-content');
-  const checkbox = await findCheckbox(columnId, popup);
-  await userEvent.click(checkbox);
-  await closeSettings();
-}

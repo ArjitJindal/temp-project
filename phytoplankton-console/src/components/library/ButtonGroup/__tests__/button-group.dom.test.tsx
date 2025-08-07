@@ -1,6 +1,12 @@
-import { test, describe, expect } from '@jest/globals';
-import { render, screen } from 'testing-library-wrapper';
+import { test, describe } from '@jest/globals';
+import { render } from 'testing-library-wrapper';
 import ButtonGroup from '..';
+import {
+  expectButtonCount,
+  expectButtonTexts,
+  expectButtonGroupGap,
+  expectNoGapStyle,
+} from './button-group.jest-helpers';
 
 describe('ButtonGroup Component', () => {
   test('renders children correctly', () => {
@@ -10,10 +16,8 @@ describe('ButtonGroup Component', () => {
         <button>Button 2</button>
       </ButtonGroup>,
     );
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(2);
-    expect(buttons[0]).toHaveTextContent('Button 1');
-    expect(buttons[1]).toHaveTextContent('Button 2');
+    expectButtonCount(2);
+    expectButtonTexts(['Button 1', 'Button 2']);
   });
 
   test('applies gap style when provided', () => {
@@ -24,8 +28,7 @@ describe('ButtonGroup Component', () => {
         <button>Button 2</button>
       </ButtonGroup>,
     );
-    const buttonGroupDiv = screen.getByText('Button 1').parentElement;
-    expect(buttonGroupDiv).toHaveStyle(`gap: ${testGap}px`);
+    expectButtonGroupGap(testGap);
   });
 
   test('renders without gap when not provided', () => {
@@ -35,10 +38,6 @@ describe('ButtonGroup Component', () => {
         <button>Button 2</button>
       </ButtonGroup>,
     );
-    const buttonGroupDiv = screen.getByTestId('button-group');
-
-    // Check if the style attribute is either not set or empty
-    const styleAttribute = buttonGroupDiv.getAttribute('style');
-    expect(styleAttribute).toBeFalsy();
+    expectNoGapStyle();
   });
 });
