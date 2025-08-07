@@ -622,10 +622,13 @@ export class UserClickhouseRepository {
       Object.entries(columnProjection)
         .map(([key, value]) => `${value} AS ${key}`)
         .join(', ') || '*'
-    const ids = userIds.map((id) => `'${id}'`).join(',')
+    const whereConditions =
+      userIds.length > 0
+        ? `id IN (${userIds.map((id) => `'${id}'`).join(',')})`
+        : '1 = 1'
     const query = `
       SELECT ${columnProjectionString} FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
-      WHERE id IN (${ids})
+      WHERE (${whereConditions})
     `
     const items = await executeClickhouseQuery<{ data: string }[]>(
       this.tenantId,

@@ -455,8 +455,7 @@ export class TransactionService {
       const columns = {
         type: 'type',
         username: 'username',
-        legalEntity_companyGeneralDetails_legalName:
-          'legalEntity_companyGeneralDetails_legalName',
+        legalEntity_companyGeneralDetails_legalName: `JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'legalName')`,
         userId: 'id',
       }
       const callback = (data: Record<string, string | number>) => {
@@ -468,7 +467,7 @@ export class TransactionService {
           legalEntity: {
             companyGeneralDetails: {
               legalName:
-                data.legalEntity_companyGeneralDetails_legalName as string,
+                `JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'legalName')` as string,
             },
           },
           userId: data.userId as string,
