@@ -13,7 +13,7 @@ module.exports = {
     'plugin:react-hooks/recommended',
     'plugin:cypress/recommended',
   ],
-  plugins: ['custom-rules', 'eslint-plugin-react'],
+  plugins: ['custom-rules', 'eslint-plugin-react', 'unused-imports'],
   ignorePatterns: ['.eslintrc.js', 'build', 'node_modules', 'jest.config.js', 'cypress-run.js'],
   rules: {
     'no-console': ['error', { allow: ['error', 'warn', 'info'] }],
@@ -23,6 +23,7 @@ module.exports = {
       'error',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
     ],
+    'unused-imports/no-unused-imports': 'error',
     'import/no-unresolved': 'off',
     'import/order': 'error',
     'react-hooks/rules-of-hooks': 'error',

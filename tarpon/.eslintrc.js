@@ -11,6 +11,7 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:import/typescript',
   ],
+  plugins: ['unused-imports'],
   ignorePatterns: ['.eslintrc.js', 'cdk.out', 'dist', 'node_modules'],
   rules: {
     'no-console': 'off',
@@ -22,6 +23,7 @@ module.exports = {
       'error',
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
     ],
+    'unused-imports/no-unused-imports': 'error',
     'import/no-unresolved': [
       'error',
       {

@@ -1,7 +1,6 @@
 import {
   S3Client,
   ListObjectsV2Command,
-  _Object,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3'
 import { memoize } from 'lodash'
