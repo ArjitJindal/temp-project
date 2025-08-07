@@ -2001,6 +2001,7 @@ export class AlertsService extends CaseAlertsCommonService {
           id: uuid4(),
           updatedAt: Date.now(),
           userId: getContext()?.user?.id ?? '',
+          otherReason: update.otherReason,
         }
 
         const checklistStatus = update.checklistStatus

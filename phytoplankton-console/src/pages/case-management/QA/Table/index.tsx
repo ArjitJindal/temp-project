@@ -143,6 +143,24 @@ export default function QaTable(props: Props) {
       type: RULE_NATURE,
       filtering: true,
     }),
+    ...(params.showCases === 'QA_PASSED_ALERTS' || params.showCases === 'QA_FAILED_ALERTS'
+      ? [
+          helper.derived<string>({
+            title: 'QA reason',
+            value: (entity) => {
+              return entity.comments?.find((c) => c.body.startsWith('Alert QA status set to'))
+                ?.otherReason;
+            },
+          }),
+          helper.derived<string>({
+            title: 'QA comment',
+            value: (entity) => {
+              return entity.comments?.find((c) => c.body.startsWith('Alert QA status set to'))
+                ?.body;
+            },
+          }),
+        ]
+      : []),
     helper.simple<'updatedAt'>({
       title: 'Alert closed at',
       key: 'updatedAt',

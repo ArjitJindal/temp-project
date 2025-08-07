@@ -41,6 +41,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
           alertIds,
           checklistStatus: status,
           reason: values.reasons,
+          otherReason: values.reasonOther,
           comment: values.comment,
           files: values.files,
         },
