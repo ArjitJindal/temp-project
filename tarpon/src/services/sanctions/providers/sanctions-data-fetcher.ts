@@ -1083,23 +1083,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 index: getSearchIndexName(c),
                 concurrent: true,
                 compound: {
-                  should: [
+                  must: [
                     {
-                      text: {
-                        query: nameWithSpaces,
-                        path: 'normalizedAka',
-                        fuzzy: {
-                          maxEdits: 2,
-                          maxExpansions: 100,
-                          prefixLength: 0,
-                        },
-                      },
-                    },
-                    ...(nameWithoutSpecialCharacters !== nameWithSpaces
-                      ? [
+                      compound: {
+                        should: [
                           {
                             text: {
-                              query: nameWithoutSpecialCharacters,
+                              query: nameWithSpaces,
                               path: 'normalizedAka',
                               fuzzy: {
                                 maxEdits: 2,
@@ -1108,10 +1098,26 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                               },
                             },
                           },
-                        ]
-                      : []),
+                          ...(nameWithoutSpecialCharacters !== nameWithSpaces
+                            ? [
+                                {
+                                  text: {
+                                    query: nameWithoutSpecialCharacters,
+                                    path: 'normalizedAka',
+                                    fuzzy: {
+                                      maxEdits: 2,
+                                      maxExpansions: 100,
+                                      prefixLength: 0,
+                                    },
+                                  },
+                                },
+                              ]
+                            : []),
+                        ],
+                        minimumShouldMatch: 1,
+                      },
+                    },
                   ],
-                  minimumShouldMatch: 1,
                   ...(orFilters.length > 0
                     ? { should: orFilters, minimumShouldMatch: 1 }
                     : {}),
