@@ -14169,7 +14169,7 @@ components:
             relevance:
               type: array
               items:
-                $ref: '#/components/schemas/PEPSourceRelevance'
+                $ref: '#/components/schemas/PEPRelevanceInternal'
             sourceIds:
               type: array
               items:
@@ -14191,7 +14191,7 @@ components:
             relevance:
               type: array
               items:
-                $ref: '#/components/schemas/AdverseMediaSourceRelevance'
+                $ref: '#/components/schemas/AdverseMediaRelevanceInternal'
         screeningProfileStatus:
           type: string
           enum:
@@ -14411,6 +14411,33 @@ components:
       enum:
         - TERROR
         - ORGANISED_CRIME
+        - FINANCIAL_CRIME
+        - TRAFFICKING
+        - CORRUPTION
+        - WAR_CRIMES
+        - ORGANISED_CRIME_JAPAN
+        - ENHANCED_COUNTRY_RISK
+        - TAX_CRIME
+        - CHILD_SEXUAL_EXPLOITATION
+    PEPRelevanceInternal:
+      title: PEPRelevanceInternal
+      type: string
+      enum:
+        - POI
+        - PEP
+    AdverseMediaRelevanceInternal:
+      title: AdverseMediaRelevanceInternal
+      type: string
+      enum:
+        - TERRORISM
+        - ORGANISED_CRIME
+        - MODERN_SLAVERY
+        - FINANCIAL_CRIME_AND_FRAUD
+        - BRIBERY_AND_CORRUPTION
+        - CYBERCRIMES
+        - OTHER_ALLEGED_OFFENCES
+        - REPUTATIONAL_RISK_EXPOSURE
+        - TERROR
         - FINANCIAL_CRIME
         - TRAFFICKING
         - CORRUPTION
