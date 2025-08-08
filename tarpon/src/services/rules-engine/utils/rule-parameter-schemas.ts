@@ -21,11 +21,10 @@ import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { RULE_STAGES } from '@/@types/openapi-internal-custom/RuleStage'
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/GenericSanctionsSearchType'
 import { FUZZINESS_SETTING_OPTIONSS } from '@/@types/openapi-internal-custom/FuzzinessSettingOptions'
 import { PRODUCT_TYPES } from '@/@types/openapi-internal-custom/ProductType'
-import { USER_RULE_STAGES } from '@/@types/openapi-internal-custom/UserRuleStage'
-import { TRANSACTION_RULE_STAGES } from '@/@types/openapi-internal-custom/TransactionRuleStage'
 
 type SchemaOptions = {
   title?: string
@@ -280,7 +279,7 @@ export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>
     uniqueItems: true,
   } as const)
 
-export const USER_RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
+export const RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {
       subtype: 'RULE_STAGES',
@@ -290,35 +289,11 @@ export const USER_RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
     description: options?.description,
     items: {
       type: 'string',
-      enum: USER_RULE_STAGES,
-      enumNames: USER_RULE_STAGES.map((stage) =>
-        startCase(stage.toLowerCase())
-      ),
+      enum: RULE_STAGES,
+      enumNames: RULE_STAGES.map((stage) => startCase(stage.toLowerCase())),
     },
     labelProps: {
       hint: 'Initial - Screening is triggered once, when the user is first created on the platform.\nUpdate - Screening runs every time a User Event is received, and user details are updated.\nOngoing - Screening runs every 24 hours for all existing consumer users, starting from the moment it is enabled.',
-    },
-    uniqueItems: true,
-    nullable: false,
-  } as const)
-
-export const TRANSACTION_RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...uiSchema(options?.uiSchema, {
-      subtype: 'TRANSACTION_RULE_STAGES',
-    }),
-    type: 'array',
-    title: options?.title || 'Transaction rule stage',
-    description: options?.description,
-    items: {
-      type: 'string',
-      enum: TRANSACTION_RULE_STAGES,
-      enumNames: TRANSACTION_RULE_STAGES.map((stage) =>
-        startCase(stage.toLowerCase())
-      ),
-    },
-    labelProps: {
-      hint: 'Initial - Screening is triggered once, when the transaction is first created on the platform.\nUpdate - Screening runs every time a transaction is updated.',
     },
     uniqueItems: true,
     nullable: false,

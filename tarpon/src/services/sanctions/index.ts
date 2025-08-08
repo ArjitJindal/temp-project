@@ -54,7 +54,7 @@ import {
 } from '@/utils/pagination'
 import {
   GenericSanctionsSearchType,
-  UserRuleStage,
+  RuleStage,
   SanctionsDataProviderName,
   SanctionsHit,
   SanctionsSearchResponse,
@@ -84,7 +84,7 @@ const DEFAULT_FUZZINESS = 0.5
 
 export type ProviderConfig = {
   providerName?: SanctionsDataProviderName
-  stage: UserRuleStage
+  stage: RuleStage
   listId?: string
 }
 

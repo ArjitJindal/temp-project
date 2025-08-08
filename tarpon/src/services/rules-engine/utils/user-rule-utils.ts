@@ -2,7 +2,7 @@ import { isV8RuleInstance } from '../utils'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 export function isConsumerUser(user: User | Business): user is User {
   return !isBusinessUser(user)
@@ -23,7 +23,7 @@ export function isOngoingUserRuleInstance(
 
   const checkForOngoing = (parameters: {
     ongoingScreening?: boolean
-    ruleStages?: UserRuleStage[]
+    ruleStages?: RuleStage[]
   }) =>
     Boolean(
       parameters?.ongoingScreening ||
@@ -40,12 +40,12 @@ export function isOngoingUserRuleInstance(
 
 export function isRuleInstanceUpdateOrOnboarding(
   ruleInstance: RuleInstance,
-  stage: UserRuleStage,
+  stage: RuleStage,
   isRiskLevelsEnabled: boolean
 ) {
   const checkForUpdatedEntity = (parameters: {
     ongoingScreening?: boolean
-    ruleStages?: UserRuleStage[]
+    ruleStages?: RuleStage[]
   }) =>
     Boolean(
       (isV8RuleInstance(ruleInstance) &&

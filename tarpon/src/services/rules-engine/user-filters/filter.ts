@@ -5,14 +5,14 @@ import { getMigratedV8Config } from '../v8-migrations'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
-import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 export abstract class UserRuleFilter<P> extends RuleFilter {
   tenantId: string
   user: User | Business
   parameters: P
   dynamoDb: DynamoDBDocumentClient
-  stage: UserRuleStage
+  stage: RuleStage
 
   constructor(
     tenantId: string,
@@ -21,7 +21,7 @@ export abstract class UserRuleFilter<P> extends RuleFilter {
     },
     parameters: P,
     dynamoDb: DynamoDBDocumentClient,
-    stage: UserRuleStage = 'INITIAL'
+    stage: RuleStage = 'INITIAL'
   ) {
     super()
     this.tenantId = tenantId

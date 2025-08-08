@@ -328,7 +328,6 @@ export async function handleTransactionAggregationTask(
       transaction,
       receiverUser: destinationUser,
       senderUser: originUser,
-      stage: 'INITIAL',
     },
     { parameters, filters: ruleInstance.filters },
     { ruleInstance, rule },

@@ -8,7 +8,7 @@ import {
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
-  USER_RULE_STAGE_SCHEMA,
+  RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
@@ -33,7 +33,7 @@ import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { Address } from '@/@types/openapi-public/Address'
 
@@ -52,7 +52,7 @@ export type SanctionsBusinessUserRuleParameters = {
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   screeningProfileId: string
-  ruleStages: UserRuleStage[]
+  ruleStages: RuleStage[]
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
@@ -82,7 +82,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         fuzziness: FUZZINESS_SCHEMA(),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
-        ruleStages: USER_RULE_STAGE_SCHEMA({
+        ruleStages: RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),

@@ -2280,7 +2280,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-169',
       casePriority: 'P1',
       parameters: {
-        ruleStages: ['INITIAL', 'UPDATE'],
         screeningFields: ['NAME'],
         fuzziness: 20,
         ongoingScreening: false,
@@ -2378,7 +2377,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
         screeningProfileId: 'default',
-        ruleStages: ['INITIAL', 'UPDATE'],
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [

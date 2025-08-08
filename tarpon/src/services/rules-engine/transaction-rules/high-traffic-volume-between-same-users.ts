@@ -331,7 +331,6 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         transaction: this.transaction,
         senderUser: this.senderUser,
         receiverUser: this.receiverUser,
-        stage: this.stage,
       },
       {
         parameters: this

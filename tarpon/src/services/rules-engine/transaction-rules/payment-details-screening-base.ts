@@ -13,7 +13,6 @@ import {
   SCREENING_PROFILE_ID_SCHEMA,
   STOPWORDS_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
-  TRANSACTION_RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
@@ -44,7 +43,6 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
-import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
 
 export type ScreeningField = 'NAME' | 'BANK_NAME'
 export const SCREENING_FIELDS: ScreeningField[] = ['NAME', 'BANK_NAME']
@@ -64,7 +62,6 @@ export type PaymentDetailsScreeningRuleParameters = {
   screeningValues?: GenericScreeningValues[]
   fuzzyAddressMatching?: boolean
   enableShortNameMatching?: boolean
-  ruleStages: TransactionRuleStage[]
 }
 
 @traceable
@@ -95,10 +92,6 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           },
           ['YOB', 'NATIONALITY']
         ),
-        ruleStages: TRANSACTION_RULE_STAGE_SCHEMA({
-          description:
-            'Select specific stage(s) of the transaction lifecycle that this rule will run for',
-        }),
         fuzzyAddressMatching: FUZZY_ADDRESS_MATCHING_SCHEMA,
       },
       required: [

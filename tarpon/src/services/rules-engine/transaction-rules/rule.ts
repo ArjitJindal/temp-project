@@ -16,7 +16,6 @@ import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { traceable } from '@/core/xray'
 import { SanctionsService } from '@/services/sanctions'
 import { GeoIPService } from '@/services/geo-ip'
-import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
@@ -63,7 +62,6 @@ export abstract class TransactionRule<
   sanctionsService: SanctionsService
   mode: 'DYNAMODB' | 'MONGODB'
   geoIpService: GeoIPService
-  stage: TransactionRuleStage
 
   constructor(
     tenantId: string,
@@ -72,7 +70,6 @@ export abstract class TransactionRule<
       senderUser?: User | Business
       receiverUser?: User | Business
       transactionRiskScore?: number
-      stage: TransactionRuleStage
     },
     params: {
       parameters: P
@@ -104,7 +101,7 @@ export abstract class TransactionRule<
     this.mongoDb = mongoDb
     this.mode = mode
     this.geoIpService = services.geoIpService
-    this.stage = data.stage
+
     if (mode === 'DYNAMODB' && dynamoDb) {
       this.transactionRepository = new DynamoDbTransactionRepository(
         tenantId,
