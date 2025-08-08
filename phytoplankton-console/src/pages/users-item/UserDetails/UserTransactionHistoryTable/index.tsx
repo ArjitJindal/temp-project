@@ -96,7 +96,7 @@ export function Content(props: { userId: string }) {
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
-  const responseRes = useTransactionsQuery<TableDataItem<DataItem>>(
+  const { queryResult, countQueryResult } = useTransactionsQuery<TableDataItem<DataItem>>(
     { ...params, userId, includeRuleHitDetails: true, showDetailedView: showDetailsView },
     {
       isReadyToFetch: true,
@@ -384,7 +384,8 @@ export function Content(props: { userId: string }) {
       rowKey="rowKey"
       params={params}
       onChangeParams={setParams}
-      queryResults={responseRes.queryResult}
+      queryResults={queryResult}
+      countQueryResults={countQueryResult}
       rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
       columns={columns}
       renderExpanded={(item) => <TransactionEventsTable transactionId={item.transactionId} />}
