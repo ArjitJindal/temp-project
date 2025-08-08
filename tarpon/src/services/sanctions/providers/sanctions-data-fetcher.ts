@@ -1690,8 +1690,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.fuzzy': {
-                              query:
-                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              query: normalizedSearchTerm,
                               fuzziness: 2,
                               max_expansions: 100,
                               prefix_length: 0,
@@ -1721,8 +1720,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.exact': {
-                              query:
-                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              query: normalizedSearchTerm,
                               boost: 5,
                             },
                           },
@@ -1730,8 +1728,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.fuzzy_with_stopwords_removal': {
-                              query:
-                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              query: normalizedSearchTerm,
                               fuzziness: 2,
                               max_expansions: 100,
                               prefix_length: 0,
@@ -1746,6 +1743,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                         {
                           match: {
                             'normalizedAka.fuzzy': {
+                              query:
+                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+                              fuzziness: 2,
+                              max_expansions: 100,
+                              prefix_length: 0,
+                              boost: 1,
+                            },
+                          },
+                        },
+                        {
+                          match: {
+                            'normalizedAka.fuzzy_with_stopwords_removal': {
                               query:
                                 sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
                               fuzziness: 2,

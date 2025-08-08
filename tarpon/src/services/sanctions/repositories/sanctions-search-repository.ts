@@ -377,6 +377,7 @@ export class SanctionsSearchRepository {
           _source: SanctionsEntity.attributeTypeMap
             .map((a) => a.name)
             .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
+          size: entityIds.length,
           body: {
             query: {
               bool: {

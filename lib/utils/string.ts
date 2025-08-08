@@ -66,6 +66,12 @@ export function sanitizeStringWithSpecialCharactersForTokenization(
   }
   // replace all consecutive underscores with a single underscore
   result = result.replace(/_+/g, '_')
+  // remove leading and trailing underscores for each word
+  result = result
+    .split(' ')
+    .map((word) => word.replace(/^_+|_+$/g, ''))
+    .filter((word) => word.length > 0)
+    .join(' ')
   return result
 }
 
