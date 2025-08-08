@@ -621,14 +621,13 @@ export class UserClickhouseRepository {
     const columnProjectionString =
       Object.entries(columnProjection)
         .map(([key, value]) => `${value} AS ${key}`)
-        .join(', ') || '*'
-    const whereConditions =
-      userIds.length > 0
-        ? `id IN (${userIds.map((id) => `'${id}'`).join(',')})`
-        : '1 = 1'
+        .join(', ') || 'data'
+    const whereClause = `id IN (${userIds.map((id) => `'${id}'`).join(',')})`
     const query = `
-      SELECT ${columnProjectionString} FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
-      WHERE (${whereConditions})
+      SELECT ${columnProjectionString} FROM ${
+      CLICKHOUSE_DEFINITIONS.USERS.tableName
+    } FINAL
+      ${whereClause ? `WHERE ${whereClause}` : ''} LIMIT 1000
     `
     const items = await executeClickhouseQuery<{ data: string }[]>(
       this.tenantId,
