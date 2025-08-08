@@ -65,8 +65,6 @@ import {
   isClickhouseEnabled,
 } from '@/utils/clickhouse/utils'
 import { UserClickhouseRepository } from '@/services/users/repositories/user-clickhouse-repository'
-import { BatchJobInDb } from '@/@types/batch-job'
-import { BatchJobClickhouseRepository } from '@/services/batch-jobs/repositories/clickhouse-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -180,9 +178,6 @@ export class TarponChangeMongoDbConsumer {
         .setNotificationsHandler(
           (tenantId, oldNotifications, newNotifications, dbClients) =>
             this.handleNotifications(tenantId, newNotifications, dbClients)
-        )
-        .setBatchJobsHandler((tenantId, newBatchJobs) =>
-          this.handleBatchJobs(tenantId, newBatchJobs)
         )
         .setLLMRequestsHandler((tenantId, newLLMRequests) =>
           this.handleLLMRequests(tenantId, newLLMRequests)
@@ -738,22 +733,6 @@ export class TarponChangeMongoDbConsumer {
       'handleGptRequests'
     )
     await linkLLMRequestClickhouse(tenantId, newLLMRequests)
-    subSegment?.close()
-  }
-
-  async handleBatchJobs(
-    tenantId: string,
-    newBatchJobs: BatchJobInDb | undefined
-  ): Promise<void> {
-    if (!newBatchJobs) {
-      return
-    }
-    const subSegment = await addNewSubsegment(
-      'StreamConsumer',
-      'handleBatchJobs'
-    )
-    const batchJobRepository = new BatchJobClickhouseRepository(tenantId)
-    await batchJobRepository.linkClickhouseJob([newBatchJobs])
     subSegment?.close()
   }
 }
