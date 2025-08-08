@@ -1,7 +1,12 @@
 import { compact, intersection, uniq } from 'lodash'
 import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import { SanctionsDataProviders, SanctionsSearchPropsWithData } from '../types'
+import {
+  SanctionsDataProviders,
+  SanctionsSearchProps,
+  SanctionsSearchPropsWithData,
+} from '../types'
+import { getDefaultProviders, getSanctionsCollectionName } from '../utils'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -15,6 +20,15 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/Op
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsMatchTypeDetailsEnum } from '@/@types/openapi-internal/SanctionsMatchTypeDetailsEnum'
 import { generateHashFromString } from '@/utils/object'
+import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
+import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { getNonDemoTenantId } from '@/utils/tenant'
+import { ScreeningProfileService } from '@/services/screening-profile'
+import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
+import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
+import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
+import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -65,7 +79,7 @@ function checkTermMatch(
   }
 }
 
-export function getNameMatches(
+function getNameMatches(
   entity: SanctionsEntity,
   searchRequest: SanctionsSearchRequest
 ) {
@@ -102,7 +116,26 @@ export function getNameMatches(
     .filter(notEmpty)
 }
 
-export function getSecondaryMatches(
+export function deriveMatchingDetails(
+  searchRequest: SanctionsSearchRequest,
+  entity: SanctionsEntity
+): SanctionsMatchTypeDetails {
+  // Calculate name matches
+  const nameMatches = getNameMatches(entity, searchRequest)
+
+  // Calculate year matches
+  const secondaryMatches = getSecondaryMatches(entity, searchRequest)
+
+  return {
+    amlTypes: [],
+    matchingName: entity.name,
+    nameMatches: nameMatches,
+    secondaryMatches: secondaryMatches,
+    sources: [],
+  }
+}
+
+function getSecondaryMatches(
   entity: SanctionsEntity,
   searchRequest: SanctionsSearchRequest
 ): SanctionsNameMatched[] {
@@ -188,7 +221,47 @@ export function getNameAndAka(
   }
 }
 
-export function sanitizeAcurisEntities(
+export async function sanitizeEntities(props: SanctionsSearchPropsWithData) {
+  const {
+    data,
+    sanctionSourceIds,
+    pepSourceIds,
+    relSourceIds,
+    sanctionsCategory,
+    pepCategory,
+    relCategory,
+    adverseMediaCategory,
+  } = props
+  const providers = getDefaultProviders().filter(
+    (p) =>
+      p === SanctionsDataProviders.OPEN_SANCTIONS ||
+      p === SanctionsDataProviders.ACURIS
+  )
+  if (!providers.length || !data) {
+    return data
+  }
+  const acurisEntities = data.filter(
+    (e) => e.provider === SanctionsDataProviders.ACURIS
+  )
+  const openSanctionsEntities = data.filter(
+    (e) => e.provider === SanctionsDataProviders.OPEN_SANCTIONS
+  )
+  return [
+    ...sanitizeAcurisEntities({
+      data: acurisEntities,
+      sanctionSourceIds,
+      pepSourceIds,
+      relSourceIds,
+      sanctionsCategory,
+      pepCategory,
+      relCategory,
+      adverseMediaCategory,
+    }),
+    ...sanitizeOpenSanctionsEntities(openSanctionsEntities),
+  ]
+}
+
+function sanitizeAcurisEntities(
   props: SanctionsSearchPropsWithData
 ): SanctionsEntity[] {
   const {
@@ -327,7 +400,7 @@ export function sanitizeAcurisEntities(
   return processedEntities
 }
 
-export function sanitizeOpenSanctionsEntities(
+function sanitizeOpenSanctionsEntities(
   entities: SanctionsEntity[]
 ): SanctionsEntity[] {
   const sanctions = getContext()?.settings?.sanctions
@@ -376,4 +449,191 @@ export function getFuzzinessEvaluationResult(
   return request.fuzziness != null
     ? percentageDissimilarity <= request.fuzziness * 100
     : false
+}
+
+export function hydrateHitsWithMatchTypes(
+  hits: SanctionsEntity[],
+  request: SanctionsSearchRequest
+) {
+  return hits.map((hit) => {
+    const matchTypes: SanctionsMatchType[] = []
+
+    if (request.types?.some((t) => hit.sanctionSearchTypes?.includes(t))) {
+      matchTypes.push('screening_type_match')
+    }
+
+    if (
+      hit.associates?.length &&
+      hit.associates.some((a) =>
+        a.sanctionsSearchTypes?.some((t) => request.types?.includes(t))
+      )
+    ) {
+      matchTypes.push('associate_screening_type_match')
+    }
+
+    if (
+      request.documentId?.length &&
+      hit.documents?.length &&
+      hit.documents.some(
+        (doc) => doc.id && request.documentId?.includes(doc.id)
+      )
+    ) {
+      matchTypes.push('document_id')
+    }
+
+    if (
+      request.nationality?.length &&
+      hit.nationality?.length &&
+      request.nationality.some(
+        (nationality) =>
+          nationality && (hit.nationality as string[])?.includes(nationality)
+      )
+    ) {
+      matchTypes.push('nationality')
+    }
+
+    if (
+      request.yearOfBirth &&
+      hit.yearOfBirth &&
+      hit.yearOfBirth.includes(request.yearOfBirth.toString())
+    ) {
+      matchTypes.push('year_of_birth')
+    }
+
+    if (request.gender && hit.gender && request.gender === hit.gender) {
+      matchTypes.push('gender')
+    }
+
+    if (request.searchTerm && hit.name) {
+      if (sanitizeString(request.searchTerm) == sanitizeString(hit.name)) {
+        matchTypes.push('name_exact')
+      } else if (
+        hit.aka?.some(
+          (aka) => sanitizeString(request.searchTerm) == sanitizeString(aka)
+        )
+      ) {
+        matchTypes.push('aka_exact')
+      } else {
+        matchTypes.push('aka_fuzzy')
+      }
+    }
+
+    if (request.PEPRank && (hit.occupations || hit.associates)?.length) {
+      if (
+        hit.occupations
+          ?.map((occupation) => occupation.rank)
+          .includes(request.PEPRank)
+      ) {
+        matchTypes.push('PEP_rank')
+      }
+      if (
+        hit.associates
+          ?.flatMap((associate) => associate?.ranks ?? [])
+          .includes(request.PEPRank)
+      ) {
+        matchTypes.push('associate_PEP_rank')
+      }
+    }
+    return {
+      ...hit,
+      matchTypes,
+    }
+  })
+}
+
+export function getEntityTypes(
+  request: SanctionsSearchRequest
+): SanctionsEntityType[] {
+  if (request.entityType === 'EXTERNAL_USER' || request.manualSearch) {
+    return ['PERSON', 'BUSINESS', 'BANK']
+  }
+  switch (request.entityType) {
+    case 'PERSON':
+      return ['PERSON']
+    case 'BUSINESS':
+    case 'BANK':
+      return ['BUSINESS', 'BANK']
+    default:
+      return ['PERSON', 'BUSINESS', 'BANK']
+  }
+}
+
+export function getCollectionNames(
+  request: SanctionsSearchRequest,
+  providers: SanctionsDataProviderName[],
+  tenantId: string
+) {
+  const nonDemoTenantId = getNonDemoTenantId(tenantId)
+  const entityTypes: SanctionsEntityType[] = getEntityTypes(request)
+  return uniq(
+    providers.flatMap((p) => {
+      return entityTypes.map((entityType) =>
+        getSanctionsCollectionName(
+          {
+            provider: p,
+            entityType: entityType,
+          },
+          nonDemoTenantId,
+          request.isOngoingScreening ? 'delta' : 'full'
+        )
+      )
+    })
+  )
+}
+
+export async function getSanctionSourceDetails(
+  request: SanctionsSearchRequest,
+  tenantId: string,
+  screeningProfileService: ScreeningProfileService
+): Promise<SanctionsSearchProps> {
+  let sanctionSourceIds: string[] | undefined = undefined
+  let pepSourceIds: string[] | undefined = undefined
+  let relSourceIds: string[] | undefined = undefined
+  let sanctionsCategory: SanctionsSourceRelevance[] | undefined
+  let pepCategory: PEPSourceRelevance[] | undefined
+  let relCategory: RELSourceRelevance[] | undefined
+  let adverseMediaCategory: AdverseMediaSourceRelevance[] | undefined
+  let containAllSources: boolean | undefined = undefined
+  if (request.screeningProfileId) {
+    const screeningProfileId = request.screeningProfileId
+    const screeningProfile =
+      await screeningProfileService.getExistingScreeningProfile(
+        screeningProfileId
+      )
+    sanctionSourceIds = screeningProfile.sanctions?.sourceIds
+    pepSourceIds = screeningProfile.pep?.sourceIds
+    relSourceIds = screeningProfile.rel?.sourceIds
+    sanctionsCategory = screeningProfile.sanctions?.relevance
+    pepCategory = screeningProfile.pep?.relevance
+    relCategory = screeningProfile.rel?.relevance
+    adverseMediaCategory = screeningProfile.adverseMedia?.relevance
+    containAllSources = screeningProfile.containAllSources
+    if (request.types) {
+      if (!request.types.includes('PEP')) {
+        pepSourceIds = []
+        pepCategory = []
+      }
+      if (!request.types.includes('SANCTIONS')) {
+        sanctionSourceIds = []
+        sanctionsCategory = []
+      }
+      if (!request.types.includes('REGULATORY_ENFORCEMENT_LIST')) {
+        relSourceIds = []
+        relCategory = []
+      }
+      if (!request.types.includes('ADVERSE_MEDIA')) {
+        adverseMediaCategory = []
+      }
+    }
+  }
+  return {
+    sanctionSourceIds,
+    pepSourceIds,
+    relSourceIds,
+    sanctionsCategory,
+    pepCategory,
+    relCategory,
+    adverseMediaCategory,
+    containAllSources,
+  }
 }

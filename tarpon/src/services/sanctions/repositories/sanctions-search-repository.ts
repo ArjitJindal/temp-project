@@ -1,6 +1,17 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
 import { intersection, isNil, omit, omitBy } from 'lodash'
+import { Search_Response } from '@opensearch-project/opensearch/api'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { getDefaultProviders } from '../utils'
+import {
+  deriveMatchingDetails,
+  getCollectionNames,
+  getSanctionSourceDetails,
+  hydrateHitsWithMatchTypes,
+  sanitizeEntities,
+} from '../providers/utils'
+import { OPENSEARCH_NON_PROJECTED_FIELDS } from '../providers/sanctions-data-fetcher'
+import { SanctionsSearchProps } from '../types'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -25,6 +36,10 @@ import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { getContext } from '@/core/utils/context-storage'
+import { hasFeature } from '@/core/utils/context'
+import { getOpensearchClient } from '@/utils/opensearch-utils'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { ScreeningProfileService } from '@/services/screening-profile'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -322,6 +337,115 @@ export class SanctionsSearchRepository {
     return results[0] || null
   }
 
+  private async getSanctionSourceDetailsInternal(
+    request: SanctionsSearchRequest
+  ): Promise<SanctionsSearchProps> {
+    const screeningProfileService = new ScreeningProfileService(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    return getSanctionSourceDetails(
+      request,
+      this.tenantId,
+      screeningProfileService
+    )
+  }
+
+  private async getSearchResultFromOpensearch(
+    result: SanctionsSearchHistory
+  ): Promise<SanctionsSearchHistory | null> {
+    const { response, request } = result
+    if (!response?.data?.length) {
+      return result
+    }
+    const entityIds = response.data
+      .filter((entity) => entity.name == null)
+      .map((entity) => entity.id)
+    if (!entityIds.length) {
+      return result
+    }
+    const opensearchClient = await getOpensearchClient()
+    const collectionNames = getCollectionNames(
+      result.request,
+      getDefaultProviders(),
+      this.tenantId
+    )
+    const results = await Promise.allSettled(
+      collectionNames.map(async (collectionName) => {
+        return opensearchClient.search({
+          index: collectionName,
+          _source: SanctionsEntity.attributeTypeMap
+            .map((a) => a.name)
+            .filter((a) => !OPENSEARCH_NON_PROJECTED_FIELDS.includes(a)),
+          body: {
+            query: {
+              bool: {
+                must: [
+                  {
+                    terms: {
+                      id: entityIds,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        })
+      })
+    )
+    if (results.some((r) => r.status === 'rejected')) {
+      logger.error(
+        `Error in opensearch search: ${JSON.stringify(
+          results
+            .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+            .map((r) => r.reason)
+        )}`
+      )
+    }
+    const hits = results
+      .filter(
+        (r): r is PromiseFulfilledResult<Search_Response> =>
+          r.status === 'fulfilled'
+      )
+      .map((r) => r.value)
+      .flatMap((r) =>
+        r.body.hits.hits.map((h) => h._source)
+      ) as SanctionsEntity[]
+    const sanctionSourceDetails = await this.getSanctionSourceDetailsInternal(
+      request
+    )
+    const updatedHits = await sanitizeEntities({
+      data: hydrateHitsWithMatchTypes(hits, request).map((entity) => ({
+        ...entity,
+        matchTypeDetails: [deriveMatchingDetails(request, entity)],
+      })),
+      ...sanctionSourceDetails,
+    })
+    const updatedResponse: SanctionsSearchResponse = {
+      ...result.response,
+      data: result.response?.data?.map((entity) => {
+        const entityFromOpensearch = updatedHits?.find(
+          (e) => e.id === entity.id && e.entityType === entity.entityType
+        )
+        return {
+          ...entity,
+          ...entityFromOpensearch,
+        }
+      }),
+      searchId: result._id,
+    } as SanctionsSearchResponse
+    await this.mongoDb
+      .db()
+      .collection<SanctionsSearchHistory>(
+        SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+      )
+      .updateOne({ _id: result._id }, { $set: { response: updatedResponse } })
+    return {
+      ...result,
+      response: updatedResponse,
+    }
+  }
+
   public async getSearchResult(
     searchId: string
   ): Promise<SanctionsSearchHistory | null> {
@@ -329,7 +453,20 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    return await collection.findOne({ _id: searchId })
+    const result = await collection.findOne({ _id: searchId })
+    if (!result) {
+      return null
+    }
+    if (hasFeature('OPEN_SEARCH') && result.response?.data?.length) {
+      const isResultComplete = result.response.data?.every(
+        (entity) => entity.name != null
+      )
+      if (isResultComplete) {
+        return result
+      }
+      return await this.getSearchResultFromOpensearch(result)
+    }
+    return result
   }
 
   public async getSearchResultByIds(

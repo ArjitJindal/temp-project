@@ -1,5 +1,6 @@
 import path from 'path'
 import axios from 'axios'
+import { deriveMatchingDetails } from '../providers/utils'
 import { SanctionsDataProviders } from '../types'
 import { getSanctionsSourceDocumentsCollectionName } from '../utils'
 import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
@@ -1218,7 +1219,7 @@ Patasse passed away on April 5, 2011.`,
 describe('Sanctions data fetcher', () => {
   describe('Deriving match details', () => {
     test('For unrelated search term there should be no match details', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'unrelated',
         },
@@ -1232,7 +1233,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('For exact match every term should have exact match', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'Vladimir Putiin',
         },
@@ -1250,7 +1251,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('Missing terms should be ignored', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'Vladimir Vladimirovich Putiin',
         },
@@ -1269,7 +1270,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('Different case match should also be considered as exact match', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'VLADIMIR PUTIIN',
         },
@@ -1287,7 +1288,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('Should properly match terms by edit distance', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'Voladimir Putin',
           fuzzinessRange: {
@@ -1309,7 +1310,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('Should properly match terms by edit distance in AKA', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'Vovka Pupka',
           fuzzinessRange: {
@@ -1333,7 +1334,7 @@ describe('Sanctions data fetcher', () => {
   })
   describe('Deriving birth year details', () => {
     test('Should properly derive exact birth year match', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'unrelated',
           yearOfBirth: 1952,
@@ -1349,7 +1350,7 @@ describe('Sanctions data fetcher', () => {
       ])
     })
     test('Should properly derive fuzzy birth year match', async () => {
-      const result = DowJonesProvider.deriveMatchingDetails(
+      const result = deriveMatchingDetails(
         {
           searchTerm: 'unrelated',
           yearOfBirth: 1950,
