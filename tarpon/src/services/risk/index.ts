@@ -40,6 +40,9 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { WorkflowRef } from '@/@types/openapi-internal/WorkflowRef'
 import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-internal/RiskClassificationApprovalRequest'
+import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
+import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 
 export const RISK_LEVEL_CONSTANT = 'RLV'
 export const RISK_FACTORS_VERSION_CONSTANT = 'RFV'
@@ -570,6 +573,22 @@ export class RiskService {
     }
 
     return data
+  }
+
+  async getRiskFactorLogic(
+    riskFactorId: string,
+    versionId: string,
+    riskLevel: RiskLevel
+  ): Promise<{
+    riskFactorLogic: RiskFactorLogic
+    riskFactorEntityVariables: Array<LogicEntityVariableInUse>
+    riskFactorAggregationVariables: Array<LogicAggregationVariable>
+  }> {
+    return await this.riskRepository.getRiskFactorLogic(
+      riskFactorId,
+      versionId,
+      riskLevel
+    )
   }
 
   @auditLog('RISK_FACTOR', 'RISK_FACTOR_V8', 'DELETE')

@@ -1,6 +1,6 @@
 import { FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { InternalServerError } from 'http-errors'
+import { InternalServerError, NotFound } from 'http-errors'
 import {
   DeleteCommand,
   DeleteCommandInput,
@@ -14,6 +14,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
+
 import { isEmpty, memoize, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
@@ -42,6 +43,7 @@ import {
   ARS_SCORES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
+  VERSION_HISTORY_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
@@ -56,7 +58,11 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
-import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseCredentials,
+  isClickhouseEnabledInRegion,
+  sendMessageToMongoConsumer,
+} from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -69,6 +75,11 @@ import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
 import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
 import { updateInMongoWithVersionCheck } from '@/utils/downstream-version'
+import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
+import { VersionHistoryTable } from '@/models/version-history'
+import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
+import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -901,6 +912,95 @@ export class RiskRepository {
       throw new InternalServerError(
         `Parameter Risk Item not found for ${riskFactorId}`
       )
+    }
+  }
+
+  async getRiskFactorLogic(
+    riskFactorId: string,
+    versionId: string,
+    riskLevel: RiskLevel
+  ): Promise<{
+    riskFactorLogic: RiskFactorLogic
+    riskFactorEntityVariables: Array<LogicEntityVariableInUse>
+    riskFactorAggregationVariables: Array<LogicAggregationVariable>
+    isDefaultRiskLevel: boolean
+  }> {
+    let riskFactors: Array<RiskFactor> = []
+    if (versionId === 'CURRENT') {
+      const riskFactor = await this.getRiskFactor(riskFactorId)
+      if (!riskFactor) {
+        throw new NotFound('Risk factor not found')
+      }
+      riskFactors = [riskFactor]
+    } else {
+      if (isClickhouseEnabledInRegion()) {
+        const credentials = await getClickhouseCredentials(this.tenantId)
+        const clickhouseRepository = new VersionHistoryTable({
+          credentials,
+        })
+        const result = await clickhouseRepository.objects
+          .filter({
+            type: 'RiskFactors',
+            id: versionId,
+          })
+          .final()
+          .limit(1)
+          .all()
+
+        if (result.length === 0) {
+          throw new NotFound('Version history not found')
+        }
+
+        riskFactors = JSON.parse(result[0].data) as Array<RiskFactor>
+      } else {
+        const result = await this.mongoDb
+          .db()
+          .collection<VersionHistory>(VERSION_HISTORY_COLLECTION(this.tenantId))
+          .find({
+            type: 'RiskFactors',
+            id: versionId,
+          })
+          .toArray()
+
+        if (result.length === 0) {
+          throw new NotFound('Version history not found')
+        }
+
+        riskFactors = result[0].data as Array<RiskFactor>
+      }
+    }
+
+    const riskFactor = riskFactors.find((factor) => factor.id === riskFactorId)
+
+    if (!riskFactor) {
+      throw new NotFound('Risk factor not found')
+    }
+
+    const logic = riskFactor.riskLevelLogic?.find(
+      (logic) => logic.riskLevel === riskLevel
+    )
+
+    let isDefaultRiskLevel = false
+
+    if (!logic) {
+      if (riskFactor.defaultRiskLevel === riskLevel) {
+        isDefaultRiskLevel = true
+      } else {
+        throw new NotFound('Risk factor logic not found')
+      }
+    }
+
+    return {
+      riskFactorLogic: logic ?? {
+        logic: {},
+        riskLevel: riskFactor.defaultRiskLevel ?? 'LOW',
+        weight: riskFactor.defaultWeight,
+        riskScore: riskFactor.defaultRiskScore ?? 1,
+      },
+      riskFactorEntityVariables: riskFactor.logicEntityVariables ?? [],
+      riskFactorAggregationVariables:
+        riskFactor.logicAggregationVariables ?? [],
+      isDefaultRiskLevel,
     }
   }
 

@@ -4469,6 +4469,53 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+  /risk-factors/logic:
+    parameters:
+      - schema:
+          type: string
+        name: riskFactorId
+        in: query
+        required: true
+      - schema:
+          type: string
+        name: versionId
+        in: query
+        required: true
+      - schema:
+          $ref: '#/components/schemas/RiskLevel'
+        name: riskLevel
+        in: query
+        required: true
+    get:
+      summary: Risk factor logic - GET
+      operationId: risk-factor-logic
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-factors
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  riskFactorLogic:
+                    $ref: '#/components/schemas/RiskFactorLogic'
+                  riskFactorEntityVariables:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LogicEntityVariableInUse'
+                  riskFactorAggregationVariables:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LogicAggregationVariable'
+                  isDefaultRiskLevel:
+                    type: boolean
+                required:
+                  - riskFactorLogic
+                  - riskFactorEntityVariables
+                  - riskFactorAggregationVariables
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect

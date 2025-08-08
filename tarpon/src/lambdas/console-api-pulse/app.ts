@@ -107,6 +107,14 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       return await riskService.getRiskFactor(request.riskFactorId)
     })
 
+    handlers.registerRiskFactorLogic(async (ctx, request) => {
+      return await riskService.getRiskFactorLogic(
+        request.riskFactorId,
+        request.versionId,
+        request.riskLevel
+      )
+    })
+
     handlers.registerDeleteRiskFactor(async (ctx, request) => {
       return (await riskService.deleteRiskFactor(request.riskFactorId)).result
     })

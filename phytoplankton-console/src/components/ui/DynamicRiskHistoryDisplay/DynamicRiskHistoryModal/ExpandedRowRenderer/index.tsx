@@ -5,16 +5,20 @@ import {
   USER_RISK_PARAMETERS,
 } from '@flagright/lib/utils/risk';
 import { keyBy } from 'lodash';
-import React from 'react';
+import s from './index.module.less';
 import { useApi } from '@/api';
 import { ExtendedDrsScore, RiskLevel } from '@/apis';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { NUMBER, RISK_LEVEL, STRING } from '@/components/library/Table/standardDataTypes';
 import { H4 } from '@/components/ui/Typography';
-import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
-import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
+import { RISK_FACTOR_LOGIC, RISK_FACTORS_V8 } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+import LogicDisplay from '@/components/ui/LogicDisplay';
+import Tooltip from '@/components/library/Tooltip';
+import COLORS from '@/components/ui/colors';
 
 export type TableItem = {
   name: string;
@@ -22,7 +26,69 @@ export type TableItem = {
   riskScore: number;
   weight: number;
   riskLevel: RiskLevel;
+  rowKey: string;
+  isCustom: boolean;
+  riskFactorId?: string;
+  versionId?: string;
 };
+
+export type CoustomRiskFactorLogicProps = {
+  riskFactorId: string;
+  versionId: string;
+  riskLevel: RiskLevel;
+};
+
+function CustomRiskFactorLogic(props: CoustomRiskFactorLogicProps) {
+  const api = useApi();
+
+  const riskFactorLogic = useQuery(
+    RISK_FACTOR_LOGIC(props.riskFactorId, props.versionId, props.riskLevel),
+    async () => {
+      const data = await api.riskFactorLogic({
+        riskFactorId: props.riskFactorId,
+        versionId: props.versionId,
+        riskLevel: props.riskLevel,
+      });
+      return data;
+    },
+  );
+
+  return (
+    <Tooltip
+      placement="top"
+      arrowColor={COLORS.white}
+      overlay={
+        <div className={s.riskFactorLogicModal}>
+          <div className={s.title}>Risk factor configuration</div>
+          <AsyncResourceRenderer
+            resource={riskFactorLogic.data}
+            renderFailed={() => <div>Risk factor logic not found</div>}
+          >
+            {(data) => {
+              if (data.isDefaultRiskLevel) {
+                return (
+                  <span>
+                    Default (value does not meet any defined risk factor logic conditions).
+                  </span>
+                );
+              }
+              return (
+                <LogicDisplay
+                  logic={data.riskFactorLogic?.logic ?? {}}
+                  entityVariables={data.riskFactorEntityVariables}
+                  aggregationVariables={data.riskFactorAggregationVariables}
+                  ruleType={'USER'}
+                />
+              );
+            }}
+          </AsyncResourceRenderer>
+        </div>
+      }
+    >
+      <InformationLineIcon className={s.infoIcon} />
+    </Tooltip>
+  );
+}
 
 function ExpandedRowRenderer(props: ExtendedDrsScore) {
   const label = isNotArsChangeTxId(props.transactionId) ? 'KRS' : 'TRS';
@@ -30,11 +96,21 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
   const columnHelper = new ColumnHelper<TableItem>();
   const columns = columnHelper.list([
     columnHelper.display({
-      // Todo fdt-6098: Display logic on info icon
       id: 'name',
       title: 'Risk factor name',
-      render: (item) => {
-        return <>{item.name}</>;
+      render: (item, { item: entity }) => {
+        return (
+          <div className={s.riskFactorName}>
+            {item.name}{' '}
+            {entity.isCustom && entity.riskFactorId && entity.versionId && entity.riskLevel && (
+              <CustomRiskFactorLogic
+                riskFactorId={entity.riskFactorId}
+                versionId={entity.versionId}
+                riskLevel={entity.riskLevel}
+              />
+            )}
+          </div>
+        );
       },
       defaultWidth: 200,
     }),
@@ -82,30 +158,44 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
         riskScore: val.score,
         weight: val.weight,
         riskLevel: val.riskLevel,
-      };
-    }) ?? [];
-  const factorMap = getOr(factorMapResult.data, {});
-  const customRiskFactorsData =
-    props.factorScoreDetails?.map((val): TableItem => {
-      return {
-        name: factorMap[val.riskFactorId]?.name ?? '-',
-        value: factorMap[val.riskFactorId]?.description ?? '-',
-        riskScore: val.score,
-        riskLevel: val.riskLevel,
-        weight: val.weight,
+        rowKey: val.parameter,
+        isCustom: false,
       };
     }) ?? [];
   return (
-    <div>
-      <H4>{`${label} risk factors`}</H4>
-      <Table<TableItem>
-        hideFilters
-        columns={columns}
-        toolsOptions={false}
-        rowKey="name"
-        data={{ items: defaultFactorsData?.concat(customRiskFactorsData) }}
-      ></Table>
-    </div>
+    <AsyncResourceRenderer resource={factorMapResult.data}>
+      {(factorMap) => {
+        const customRiskFactorsData =
+          props.factorScoreDetails
+            ?.map((val): TableItem => {
+              const isDefault = !!factorMap[val.riskFactorId]?.parameter;
+              return {
+                name: factorMap[val.riskFactorId]?.name ?? '-',
+                value: factorMap[val.riskFactorId]?.description ?? '-',
+                riskScore: val.score,
+                riskLevel: val.riskLevel,
+                weight: val.weight,
+                rowKey: val.riskFactorId,
+                isCustom: !isDefault,
+                riskFactorId: val.riskFactorId,
+                versionId: val.versionId ?? 'CURRENT',
+              };
+            })
+            .filter((val) => val.isCustom) ?? [];
+        return (
+          <div>
+            <H4>{`${label} risk factors`}</H4>
+            <Table<TableItem>
+              hideFilters
+              columns={columns}
+              toolsOptions={false}
+              rowKey="rowKey"
+              data={{ items: defaultFactorsData?.concat(customRiskFactorsData) }}
+            ></Table>
+          </div>
+        );
+      }}
+    </AsyncResourceRenderer>
   );
 }
 
