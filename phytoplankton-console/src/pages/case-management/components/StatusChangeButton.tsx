@@ -12,6 +12,7 @@ import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { isLoading } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const statusToOperationName = (
   status: AlertStatus | CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD',
@@ -185,6 +186,7 @@ const ModalButton = (
   } = props;
 
   const api = useApi();
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const sanctionsHitsMutation = useMutation(async (alertId: string) => {
     return await api.searchSanctionsHits({
       alertId,
@@ -195,6 +197,7 @@ const ModalButton = (
 
   const handleButtonClick = async () => {
     if (
+      isSanctionsEnabled &&
       entityType === 'alert' &&
       ['CLOSED', 'ESCALATED', 'ESCALATED_L2'].includes(newStatus) &&
       ids.length > 0
