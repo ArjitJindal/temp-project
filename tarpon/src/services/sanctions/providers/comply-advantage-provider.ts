@@ -24,7 +24,7 @@ import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMa
 import { removeUndefinedFields } from '@/utils/object'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { traceable } from '@/core/xray'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsEntityOtherSources } from '@/@types/openapi-internal/SanctionsEntityOtherSources'
@@ -261,7 +261,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     this.complyAdvantageSearchProfileId = complyAdvantageSearchProfileId
   }
 
-  static async build(tenantId: string, stage?: RuleStage) {
+  static async build(tenantId: string, stage?: UserRuleStage) {
     const settings = await tenantSettings(tenantId)
     let complyAdvantageSearchProfileId =
       settings.sanctions?.customSearchProfileId

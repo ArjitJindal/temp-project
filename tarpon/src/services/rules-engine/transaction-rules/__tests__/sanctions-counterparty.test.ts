@@ -91,6 +91,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -147,6 +148,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -216,6 +218,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningFields: ['NAME'],
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -286,6 +289,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           transactionAmountThreshold: {
             EUR: 1000,
           },
+          ruleStages: ['INITIAL', 'UPDATE'],
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])

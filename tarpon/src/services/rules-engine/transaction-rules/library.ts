@@ -1695,6 +1695,7 @@ const _RULES_LIBRARY: Array<
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       screeningProfileId: '',
       enableShortNameMatching: true,
+      ruleStages: ['INITIAL', 'UPDATE'],
     }
 
     return {
@@ -1985,6 +1986,7 @@ const _RULES_LIBRARY: Array<
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
       screeningProfileId: '',
       enableShortNameMatching: true,
+      ruleStages: ['INITIAL', 'UPDATE'],
     }
 
     return {

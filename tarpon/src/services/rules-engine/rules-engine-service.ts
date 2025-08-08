@@ -118,7 +118,8 @@ import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
-import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { AccountsService } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
@@ -177,6 +178,8 @@ type ValidationOptions = {
   validateOriginUserId?: boolean
   validateDestinationUserId?: boolean
 }
+
+type RuleStage = TransactionRuleStage | UserRuleStage
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -1428,6 +1431,7 @@ export class RulesEngineService {
               transaction: transactionWithValidUserId,
               senderUser,
               receiverUser,
+              stage: options.stage as TransactionRuleStage,
             },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule: rule },
