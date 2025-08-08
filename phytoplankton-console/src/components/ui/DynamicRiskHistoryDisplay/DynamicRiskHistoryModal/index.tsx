@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { isManualDrsTxId, isNotArsChangeTxId } from '@flagright/lib/utils/risk';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { v4 as uuidv4 } from 'uuid';
 import { ValueItem } from '../../RiskScoreDisplay/types';
 import MainPanel from '../../RiskScoreDisplay/MainPanel';
 import Id from '../../Id';
@@ -8,13 +9,13 @@ import styles from './index.module.less';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import Modal from '@/components/library/Modal';
 import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { USER_DRS_VALUES } from '@/utils/queries/keys';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { RISK_FACTORS_V8, USER_DRS_VALUES } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
 import { DefaultApiGetDrsValuesRequest } from '@/apis/types/ObjectParamAPI';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { ExtendedDrsScore, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { ExtendedDrsScore, InternalBusinessUser, InternalConsumerUser, RiskFactor } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
@@ -36,6 +37,7 @@ import { downloadAsCSV } from '@/utils/csv';
 import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
 import { isSuccess } from '@/utils/asyncResource';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   userId: string;
@@ -49,11 +51,15 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
 }
 
-export function isFirstDrs(item: ExtendedDrsScore) {
+interface ExtendedDrsScoreWithRowId extends ExtendedDrsScore {
+  rowId: string;
+}
+
+export function isFirstDrs(item: ExtendedDrsScoreWithRowId) {
   return !item.transactionId || item.transactionId === 'FIRST_DRS';
 }
 
-export function isLatestDrs(item: ExtendedDrsScore, value: ValueItem) {
+export function isLatestDrs(item: ExtendedDrsScoreWithRowId, value: ValueItem) {
   return (
     item.transactionId === value.transactionId &&
     item.createdAt === value.createdAt &&
@@ -71,21 +77,33 @@ function DynamicRiskHistoryModal(props: Props) {
   const settings = useSettings();
   const consoleUser = useConsoleUser(userId);
   const riskClassificationValues = useRiskClassificationScores();
-  const queryResult = usePaginatedQuery<ExtendedDrsScore>(
+  const queryResult = usePaginatedQuery<ExtendedDrsScoreWithRowId>(
     USER_DRS_VALUES(userId, params),
     async (paginationParams) => {
-      return await api.getDrsValues({
+      const result = await api.getDrsValues({
         userId,
         ...params,
         ...paginationParams,
       });
+      return {
+        ...result,
+        items: result.items.map((item) => ({ ...item, rowId: uuidv4() })),
+      };
     },
   );
+  const factorMapResult = useQuery(RISK_FACTORS_V8('ALL'), async () => {
+    const data = await api.getAllRiskFactors({ includeV2: true });
+    return data.reduce((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {} as Record<string, RiskFactor>);
+  });
 
   const handleDrsReportDownload = async (
     user: InternalBusinessUser | InternalConsumerUser,
     riskScores: RiskScores,
     format: 'csv' | 'pdf',
+    factorMap: Record<string, RiskFactor>,
     exportConfig?: {
       pageSize: number;
       page: number;
@@ -95,7 +113,7 @@ function DynamicRiskHistoryModal(props: Props) {
     const hideMessage = message.loading('Downloading report...');
 
     try {
-      const drsData = await getUserDrsReportTables(queryResult, exportConfig);
+      const drsData = await getUserDrsReportTables(queryResult, exportConfig, factorMap);
       if (format === 'pdf') {
         await DownloadAsPDF({
           fileName: `user-${user.userId}-CRA-report.pdf`,
@@ -128,7 +146,7 @@ function DynamicRiskHistoryModal(props: Props) {
       hideMessage && hideMessage();
     }
   };
-  const helper = new ColumnHelper<ExtendedDrsScore>();
+  const helper = new ColumnHelper<ExtendedDrsScoreWithRowId>();
 
   const columns = helper.list([
     helper.display({
@@ -246,69 +264,77 @@ function DynamicRiskHistoryModal(props: Props) {
             )}
           </div>
         </div>
-        <QueryResultsTable<ExtendedDrsScore>
-          rowKey="createdAt"
-          columns={columns}
-          tableId="cra-history-table"
-          hideFilters={true}
-          params={params}
-          pagination
-          onChangeParams={setParams}
-          queryResults={queryResult}
-          isExpandable={(item) => {
+        <AsyncResourceRenderer resource={factorMapResult.data}>
+          {(factorMap) => {
             return (
-              ((item.content.factorScoreDetails && item.content.factorScoreDetails.length > 0) ||
-                (item.content.components && item.content.components.length > 0)) ??
-              false
+              <QueryResultsTable<ExtendedDrsScoreWithRowId>
+                rowKey="rowId"
+                columns={columns}
+                tableId="cra-history-table"
+                hideFilters={true}
+                params={params}
+                pagination
+                onChangeParams={setParams}
+                queryResults={queryResult}
+                isExpandable={(item) => {
+                  return (
+                    ((item.content.factorScoreDetails &&
+                      item.content.factorScoreDetails.length > 0) ||
+                      (item.content.components && item.content.components.length > 0)) ??
+                    false
+                  );
+                }}
+                renderExpanded={(item) => <ExpandedRowRenderer {...item} />}
+                toolsOptions={{
+                  download: isSuccess(consoleUser.data) ? true : false,
+                  supportedDownloadFormats: ['csv', 'pdf'],
+                  downloadCallback: (
+                    format: 'csv' | 'pdf',
+                    exportConfig?: {
+                      pageSize: number;
+                      page: number;
+                      exportSinglePage: boolean;
+                    },
+                  ) => {
+                    if (isSuccess(consoleUser.data)) {
+                      const userDrsScore = consoleUser.data.value.drsScore;
+                      const userKrsScore = consoleUser.data.value.krsScore;
+                      const drsRiskScore: RiskScore | null = userDrsScore
+                        ? {
+                            score: userDrsScore?.drsScore ?? 0,
+                            riskLevel: userDrsScore?.derivedRiskLevel,
+                            createdAt: userDrsScore?.createdAt ?? 0,
+                            components: userDrsScore?.components,
+                            manualRiskLevel: userDrsScore?.manualRiskLevel,
+                          }
+                        : null;
+
+                      const kycRiskScore: RiskScore | null = userKrsScore
+                        ? {
+                            score: userKrsScore?.krsScore ?? 0,
+                            riskLevel: userKrsScore?.riskLevel,
+                            createdAt: userKrsScore?.createdAt ?? 0,
+                            components: userKrsScore?.components,
+                            manualRiskLevel: userKrsScore?.manualRiskLevel ?? undefined,
+                          }
+                        : null;
+                      handleDrsReportDownload(
+                        consoleUser.data.value,
+                        {
+                          drsRiskScore,
+                          kycRiskScore,
+                        },
+                        format,
+                        factorMap,
+                        exportConfig,
+                      );
+                    }
+                  },
+                }}
+              />
             );
           }}
-          renderExpanded={(item) => <ExpandedRowRenderer {...item} />}
-          toolsOptions={{
-            download: isSuccess(consoleUser.data) ? true : false,
-            supportedDownloadFormats: ['csv', 'pdf'],
-            downloadCallback: (
-              format: 'csv' | 'pdf',
-              exportConfig?: {
-                pageSize: number;
-                page: number;
-                exportSinglePage: boolean;
-              },
-            ) => {
-              if (isSuccess(consoleUser.data)) {
-                const userDrsScore = consoleUser.data.value.drsScore;
-                const userKrsScore = consoleUser.data.value.krsScore;
-                const drsRiskScore: RiskScore | null = userDrsScore
-                  ? {
-                      score: userDrsScore?.drsScore ?? 0,
-                      riskLevel: userDrsScore?.derivedRiskLevel,
-                      createdAt: userDrsScore?.createdAt ?? 0,
-                      components: userDrsScore?.components,
-                      manualRiskLevel: userDrsScore?.manualRiskLevel,
-                    }
-                  : null;
-
-                const kycRiskScore: RiskScore | null = userKrsScore
-                  ? {
-                      score: userKrsScore?.krsScore ?? 0,
-                      riskLevel: userKrsScore?.riskLevel,
-                      createdAt: userKrsScore?.createdAt ?? 0,
-                      components: userKrsScore?.components,
-                      manualRiskLevel: userKrsScore?.manualRiskLevel ?? undefined,
-                    }
-                  : null;
-                handleDrsReportDownload(
-                  consoleUser.data.value,
-                  {
-                    drsRiskScore,
-                    kycRiskScore,
-                  },
-                  format,
-                  exportConfig,
-                );
-              }
-            },
-          }}
-        />
+        </AsyncResourceRenderer>
       </div>
     </Modal>
   );

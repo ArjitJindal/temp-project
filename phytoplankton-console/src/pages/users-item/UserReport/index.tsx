@@ -1,7 +1,7 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { CellInput } from 'jspdf-autotable';
-import { getRiskLevelFromScore } from '@flagright/lib/utils';
+import { CellInput, Styles } from 'jspdf-autotable';
+import { getRiskLevelFromScore, isNotArsChangeTxId } from '@flagright/lib/utils';
 import { RiskScores } from '../Header/HeaderMenu';
 import {
   ExtendedDrsScore,
@@ -10,6 +10,7 @@ import {
   LegalEntity,
   Person,
   RiskClassificationScore,
+  RiskFactor,
   RiskFactorParameter,
   RiskScoreComponent,
   TenantSettings,
@@ -289,13 +290,25 @@ const getUserSupportTables = (
     });
 };
 
-const getDrsSupportTables = (drsScores: ExtendedDrsScore[]): TableOptions[] => {
+const getDrsSupportTables = (
+  drsScores: ExtendedDrsScore[],
+  factorMap: Record<string, RiskFactor>,
+): TableOptions[] => {
   const tableValues = {
     title: 'CRA details',
+    columnStyles: {
+      riskFactors: {
+        cellWidth: 20,
+      } as Partial<Styles>,
+      transactionId: {
+        cellWidth: 'wrap',
+      } as Partial<Styles>,
+    },
     rows:
       drsScores
         .map((drsScore) => {
-          const riskFactors = drsScore.components
+          // combining the default and custom risk factors
+          const defaultRiskFactors = drsScore.components
             ?.map((component) => {
               const parameterName =
                 findParameter(component.entityType, component.parameter as RiskFactorParameter)
@@ -304,18 +317,42 @@ const getDrsSupportTables = (drsScores: ExtendedDrsScore[]): TableOptions[] => {
               return `${parameterName} (${parameterValue}) - ${component.score}`;
             })
             .join('\n');
+
+          const customRiskFactors = drsScore.factorScoreDetails
+            ?.map((factor) => {
+              const isDefault = !!factorMap[factor.riskFactorId]?.parameter;
+              if (!isDefault) {
+                const rf = factorMap[factor.riskFactorId];
+                const parameterName = rf.name;
+                const parameterValue = rf.description;
+                return `${parameterName} (${parameterValue}) - ${factor.score}`;
+              }
+            })
+            .filter(Boolean)
+            .join('\n');
+
+          const riskFactors = [defaultRiskFactors, customRiskFactors].join('');
+
+          const shouldShowTransactionId = !isNotArsChangeTxId(drsScore.transactionId);
+
           return [
-            { value: drsScore.drsScore.toFixed(2), fontSize: 8, width: 10 },
-            { value: drsScore.derivedRiskLevel ?? '-', fontSize: 8, width: 10 },
-            { value: drsScore.transactionId ?? '-', fontSize: 8, width: 20 },
-            { value: drsScore.arsRiskLevel ?? '-', fontSize: 8, width: 10 },
-            { value: drsScore.arsRiskScore?.toFixed(2) ?? '-', fontSize: 8, width: 10 },
-            { value: dayjs(drsScore.createdAt).format(DATE_TIME_FORMAT), fontSize: 8, width: 20 },
-            { value: riskFactors, fontSize: 6, width: 20 },
+            { value: drsScore.drsScore.toFixed(2), fontSize: 8 },
+            { value: drsScore.derivedRiskLevel ?? '-', fontSize: 8 },
+            {
+              value:
+                shouldShowTransactionId && drsScore.transactionId ? drsScore.transactionId : '-',
+              fontSize: 8,
+            },
+            { value: drsScore.arsRiskLevel ?? '-', fontSize: 8 },
+            { value: drsScore.arsRiskScore?.toFixed(2) ?? '-', fontSize: 8 },
+            {
+              value: dayjs(drsScore.createdAt).format(DATE_TIME_FORMAT),
+              fontSize: 8,
+            },
+            { value: riskFactors, fontSize: 6 },
           ].map((row) => ({
             styles: {
               fontSize: row.fontSize,
-              minCellWidth: row.width,
             },
             content: row.value,
           }));
@@ -323,7 +360,7 @@ const getDrsSupportTables = (drsScores: ExtendedDrsScore[]): TableOptions[] => {
         .filter((row) => row)
         .map((row) => row as CellInput[]) ?? [],
   };
-  return [getTable(drsTableHeaders, tableValues.rows, tableValues.title)];
+  return [getTable(drsTableHeaders, tableValues.rows, tableValues.title, tableValues.columnStyles)];
 };
 
 export const getUserReportTables = (
@@ -349,6 +386,7 @@ export const getUserDrsReportTables = async (
     page: 1,
     exportSinglePage: false,
   },
+  factorMap: Record<string, RiskFactor>,
 ): Promise<TableOptions[]> => {
   const maxLimit = MAXIMUM_EXPORT_ITEMS;
 
@@ -376,5 +414,5 @@ export const getUserDrsReportTables = async (
     }
     params.page++;
   }
-  return getDrsSupportTables(drsScores);
+  return getDrsSupportTables(drsScores, factorMap);
 };

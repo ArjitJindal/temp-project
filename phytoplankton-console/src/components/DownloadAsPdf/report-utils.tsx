@@ -1,4 +1,4 @@
-import { RowInput } from 'jspdf-autotable';
+import type { RowInput, Styles } from 'jspdf-autotable';
 import { FONT_FAMILY_REGULAR, FONT_FAMILY_SEMIBOLD, TableOptions } from './DownloadAsPDF';
 
 export type ReportTableId = 'link' | 'bold' | 'header' | 'item';
@@ -119,7 +119,12 @@ const getCell = (value: string) => {
   return cell;
 };
 
-export const getTable = (head, rows: RowInput[], title?: string): TableOptions => {
+export const getTable = (
+  head,
+  rows: RowInput[],
+  title?: string,
+  columnStyles?: { [key: string]: Partial<Styles> },
+): TableOptions => {
   const idFields = head
     .map((h, i) => {
       if (h.endsWith('ID')) {
@@ -140,6 +145,7 @@ export const getTable = (head, rows: RowInput[], title?: string): TableOptions =
       },
       alternateRowStyles: { fillColor: COLORS.TABLE.ALTERNATE },
       bodyStyles: { fillColor: COLORS.TABLE.BODY, textColor: COLORS.TEXT.HEADER },
+      columnStyles: columnStyles,
       didParseCell: (data) => {
         if (
           idFields.includes(data.column.index) &&
