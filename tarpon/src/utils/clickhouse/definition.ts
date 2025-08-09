@@ -785,18 +785,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         type: 'minmax',
         options: { granularity: 4 },
       },
-      {
-        column: 'linkedEntities_parentUserId',
-        name: 'linked_entities_parent_user_id_idx',
-        type: 'tokenbf_v1',
-        options: {
-          granularity: 4,
-          ngramSize: 3,
-          bloomFilterSize: 512,
-          numHashFunctions: 5,
-          randomSeed: 1,
-        },
-      },
     ],
     materializedViews: [
       {
