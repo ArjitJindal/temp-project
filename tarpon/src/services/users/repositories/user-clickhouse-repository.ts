@@ -618,6 +618,9 @@ export class UserClickhouseRepository {
       }
       return []
     }
+    if (userIds.length === 0) {
+      return []
+    }
     const columnProjectionString =
       Object.entries(columnProjection)
         .map(([key, value]) => `${value} AS ${key}`)
