@@ -39,11 +39,41 @@ function Example() {
   );
 }
 
+function MinimalExample() {
+  const [search, setSearch] = useState<string>();
+  const [filterParams, setFilterParams] = useState<FilterParams>({});
+  const debouncedSearchTerm = useDebounce(search, { wait: 500 });
+
+  const queryResult = useQuery(['storybook', 'example', debouncedSearchTerm], async () => {
+    return await fetchItems(debouncedSearchTerm);
+  });
+
+  return (
+    <SearchBar
+      search={search}
+      onSearch={setSearch}
+      filterParams={filterParams}
+      onChangeFilterParams={setFilterParams}
+      filters={filters}
+      items={queryResult.data}
+      placeholder={`Search for any rule or use-case using natural language`}
+      onSelectItem={(item) => {
+        console.info('Selected item', item);
+      }}
+      onClear={() => {}}
+      variant="minimal"
+    />
+  );
+}
+
 export default function (): JSX.Element {
   return (
     <>
       <UseCase title={'Combined'}>
         <Example />
+      </UseCase>
+      <UseCase title={'Minimal'}>
+        <MinimalExample />
       </UseCase>
     </>
   );

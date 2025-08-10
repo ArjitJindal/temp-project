@@ -13,7 +13,6 @@ import {
 } from '../helpers';
 import NestedSelects, { Option as NestedSelectsOption, RefType } from './NestedSelects';
 import VariableFilters from './VariableFilters';
-import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
@@ -26,11 +25,14 @@ import {
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
-import Select from '@/components/library/Select';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
 import Alert from '@/components/library/Alert';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { FilterProps } from '@/components/library/Filter/types';
+import { RuleUniversalSearchFilters } from '@/pages/rules/RulesTable/RulesSearchBar';
+import { success } from '@/utils/asyncResource';
+import SearchBar from '@/components/library/SearchBar';
 
 type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
 type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
@@ -169,14 +171,6 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     getInitialFormValues(ruleType, variable, entityVariables),
   );
   const settings = useSettings();
-  const [searchKey, setSearchKey] = useState<string | undefined>();
-  const [showFilters, setShowFilters] = useState(false);
-  const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
-    setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
-    if (!newValues.name || Object.keys(newValues).length > 1) {
-      setSearchKey(undefined);
-    }
-  }, []);
 
   const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
@@ -186,18 +180,51 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
 
+  const [searchKey, setSearchKey] = useState<string | undefined>();
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterParams, setFilterParams] = useState<RuleUniversalSearchFilters>({
+    typologies: [],
+    checksFor: [],
+    defaultNature: [],
+    types:
+      ruleType === 'TRANSACTION'
+        ? TX_ENTITY_TYPE_OPTIONS[0].value
+        : USER_ENTITY_TYPE_OPTIONS[0].value,
+  });
+
+  const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
+    setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
+    if (!newValues.name || Object.keys(newValues).length > 1) {
+      setSearchKey(undefined);
+    }
+  }, []);
+
   const allVariableOptions = useMemo(() => {
-    const filteredEntityVariables =
-      ruleType === 'USER'
-        ? entityVariables.filter(
-            (v) => !v.entity?.startsWith('TRANSACTION') && isUserSenderVariable(v.key),
-          )
-        : entityVariables;
-    return filteredEntityVariables.map((v) => ({
-      value: v.key,
-      label: v.uiDefinition.label,
-    }));
-  }, [entityVariables, ruleType]);
+    const filterType = filterParams.types as string;
+    const isUserRule = ruleType === 'USER';
+
+    return entityVariables
+      .filter((v) => {
+        if (isUserRule && (v.entity?.startsWith('TRANSACTION') || !isUserSenderVariable(v.key))) {
+          return false;
+        }
+
+        if (filterType && !v.entity?.includes(filterType)) {
+          return false;
+        }
+
+        if (searchKey) {
+          return v.uiDefinition.label.toLowerCase().includes(searchKey.toLowerCase());
+        }
+
+        return true;
+      })
+      .map((v) => ({
+        itemId: v.key,
+        itemName: firstLetterUpper(v.uiDefinition.label.split('/')[1]?.trim()),
+        itemDescription: '',
+      }));
+  }, [entityVariables, ruleType, filterParams.types, searchKey]);
 
   const entityVariablesFiltered = useMemo(() => {
     return entityVariables.filter((v) => {
@@ -269,6 +296,30 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       nestedSelectsRef.current?.reset(variableKey);
     }
   }, [formValues.entityVariableKey, isSearchKeyChanged]);
+
+  const filters = useMemo(() => {
+    return [
+      {
+        title: 'Entity type',
+        dataType: {
+          kind: 'select',
+          options: (ruleType === 'TRANSACTION'
+            ? TX_ENTITY_TYPE_OPTIONS
+            : USER_ENTITY_TYPE_OPTIONS
+          ).map((option) => ({
+            value: option.value,
+            label: option.label,
+          })),
+          mode: 'SINGLE',
+          displayMode: 'list',
+          allowClear: false,
+        },
+        kind: 'AUTO',
+        key: 'types',
+      } as FilterProps<RuleUniversalSearchFilters>,
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruleType]);
 
   const variableOptions = useMemo((): NestedSelectsOption[] => {
     type Tree = {
@@ -351,27 +402,53 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
         registration period, status, or type)"
       >
         <Card.Section direction="vertical">
-          <Select<string | null>
-            value={formValues.entityVariableKey ?? null}
-            onChange={(variableKey) => {
-              setSearchKey(variableKey ?? undefined);
-              if (variableKey) {
+          <SearchBar
+            search={searchKey}
+            onSearch={(value) => {
+              setSearchKey(value);
+            }}
+            onBlur={() => {
+              if (formValues.entityVariableKey) {
+                const selectedVariable = entityVariables.find(
+                  (v) => v.key === formValues.entityVariableKey,
+                );
+                if (selectedVariable) {
+                  setSearchKey(
+                    firstLetterUpper(selectedVariable.uiDefinition.label.split('/')[1]?.trim()),
+                  );
+                } else {
+                  setSearchKey('');
+                }
+              } else {
+                setSearchKey('');
+              }
+            }}
+            items={success([{ items: allVariableOptions, title: 'Entity variables' }])}
+            variant="minimal"
+            onSelectItem={(item) => {
+              if (item.itemId) {
                 setFormValues(
                   getInitialFormValues(
                     ruleType,
-                    { key: getNewEntityVariableKey(), entityKey: variableKey },
+                    { key: getNewEntityVariableKey(), entityKey: item.itemId },
                     entityVariables,
                   ),
                 );
               }
             }}
+            filters={filters}
+            onChangeFilterParams={(params) => {
+              setFilterParams(params);
+              setSearchKey('');
+              setFormValues(getInitialFormValues(ruleType, undefined, entityVariables));
+            }}
             placeholder="Search for entity variable here or configure below"
-            placeholderIcon={<SearchIcon />}
-            mode="SINGLE"
-            options={allVariableOptions}
-            testId="variable-search-v8"
-            isDisabled={readOnly}
+            onClear={() => {
+              setFormValues({ entityVariableKey: undefined });
+            }}
+            filterParams={filterParams}
           />
+          {/* TODO: add variable name */}
           <Label label="Variable name" required={{ value: false, showHint: true }}>
             <TextInput
               value={formValues.name}
@@ -386,13 +463,17 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             <Label label="Variable type" required={{ value: true, showHint: true }}>
               <SelectionGroup
                 value={formValues.type}
-                onChange={(type) =>
+                onChange={(type) => {
                   handleUpdateForm({
                     type: type as 'TRANSACTION' | 'USER',
                     entityVariableKey: undefined,
                     userNatures: undefined,
-                  })
-                }
+                  });
+                  setFilterParams({
+                    ...filterParams,
+                    types: type as 'TRANSACTION' | 'USER',
+                  });
+                }}
                 mode={'SINGLE'}
                 options={
                   ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS

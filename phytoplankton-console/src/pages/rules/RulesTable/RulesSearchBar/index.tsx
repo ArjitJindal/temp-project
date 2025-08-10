@@ -21,11 +21,11 @@ type Props = {
   onScenarioClick: () => void;
 };
 
-type RuleUniversalSearchFilters = {
+export type RuleUniversalSearchFilters = {
   typologies: string[];
   checksFor: string[];
   defaultNature: RuleNature[];
-  types: string[];
+  types: string[] | string;
 };
 
 const DEFAULT_FILTER_PARAMS: RuleUniversalSearchFilters = {
@@ -141,7 +141,11 @@ export const RulesSearchBar = (props: Props) => {
       filterTypology: sendFilters ? universalSearchFilterParams.typologies : [],
       filterChecksFor: sendFilters ? universalSearchFilterParams.checksFor : [],
       filterNature: sendFilters ? universalSearchFilterParams.defaultNature : [],
-      filterTypes: sendFilters ? universalSearchFilterParams.types : [],
+      filterTypes: sendFilters
+        ? Array.isArray(universalSearchFilterParams.types)
+          ? universalSearchFilterParams.types
+          : [universalSearchFilterParams.types]
+        : [],
       isAISearch: isAIEnabled,
       disableGptSearch: isAIEnabled && isAiFiltersIncreased,
     });
@@ -312,7 +316,6 @@ export const RulesSearchBar = (props: Props) => {
       setShowEmptyState(false);
     }
   }, [search, searchQueryResult.data]);
-
   return (
     <SearchBar<RuleUniversalSearchFilters>
       filters={filters}

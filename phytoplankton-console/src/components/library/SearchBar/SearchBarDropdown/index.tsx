@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import cn from 'clsx';
 import { EmptyEntitiesInfo } from '../../EmptyDataInfo';
 import { SearchBarProps } from '..';
 import Spinner from '../../Spinner';
@@ -37,11 +38,12 @@ interface Props<FilterParams> {
   emptyState?: SearchBarProps<FilterParams>['emptyState'];
   moreFilters?: FilterProps<FilterParams>[];
   showEmptyState?: () => boolean;
-  isAIEnabled: boolean;
+  isAIEnabled?: boolean;
   setIsAIEnabled?: (isAIEnabled: boolean) => void;
   search?: string;
   onAISearch?: (search: string) => void;
   showTitleOnSingleItem?: boolean;
+  variant?: 'default' | 'minimal';
 }
 
 const AskAI = (props: { onClick: () => void }) => {
@@ -80,6 +82,7 @@ export default function SearchBarDropdown<FilterParams extends object = object>(
     search,
     onAISearch,
     showTitleOnSingleItem,
+    variant,
   } = props;
 
   const [showMoreFilters, setShowMoreFilters] = useState(false);
@@ -110,43 +113,47 @@ export default function SearchBarDropdown<FilterParams extends object = object>(
     </div>
   ) : (
     <div className={s.root}>
-      {filters && filterParams != null && onChangeFilterParams && filters.length > 0 && (
-        <ExpandContainer isCollapsed={!showFilters}>
-          <div className={s.filters}>
-            {filters.map((filter) => (
-              <Filter<FilterParams>
-                key={filter.key}
-                filter={filter}
-                params={filterParams}
-                onChangeParams={onChangeFilterParams}
-              />
-            ))}
-            {moreFilters?.length && showMoreFilters
-              ? moreFilters.map((filter) => (
-                  <Filter<FilterParams>
-                    key={filter.key}
-                    filter={filter}
-                    params={filterParams}
-                    onChangeParams={onChangeFilterParams}
-                  />
-                ))
-              : null}
+      {filters &&
+        filterParams != null &&
+        onChangeFilterParams &&
+        filters.length > 0 &&
+        variant !== 'minimal' && (
+          <ExpandContainer isCollapsed={!showFilters}>
+            <div className={s.filters}>
+              {filters.map((filter) => (
+                <Filter<FilterParams>
+                  key={filter.key}
+                  filter={filter}
+                  params={filterParams}
+                  onChangeParams={onChangeFilterParams}
+                />
+              ))}
+              {moreFilters?.length && showMoreFilters
+                ? moreFilters.map((filter) => (
+                    <Filter<FilterParams>
+                      key={filter.key}
+                      filter={filter}
+                      params={filterParams}
+                      onChangeParams={onChangeFilterParams}
+                    />
+                  ))
+                : null}
 
-            {moreFilters?.length && !showMoreFilters ? (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMoreFilters(true);
-                }}
-              >
-                <H6 style={{ color: COLORS.brandBlue.base, cursor: 'pointer' }} bold>
-                  More filters
-                </H6>
-              </div>
-            ) : null}
-          </div>
-        </ExpandContainer>
-      )}
+              {moreFilters?.length && !showMoreFilters ? (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMoreFilters(true);
+                  }}
+                >
+                  <H6 style={{ color: COLORS.brandBlue.base, cursor: 'pointer' }} bold>
+                    More filters
+                  </H6>
+                </div>
+              ) : null}
+            </div>
+          </ExpandContainer>
+        )}
       {!isAIEnabled && setIsAIEnabled && search ? (
         <div style={{ marginTop: showFilters ? 8 : 16, marginBottom: 8 }}>
           <AskAI
@@ -169,33 +176,41 @@ export default function SearchBarDropdown<FilterParams extends object = object>(
         {(items) =>
           items.map(({ title, items: groupItems }) => (
             <React.Fragment key={title}>
-              {(showTitleOnSingleItem || items.length > 1) && groupItems.length > 0 ? (
+              {(showTitleOnSingleItem || items.length > 1) &&
+              groupItems.length > 0 &&
+              variant !== 'minimal' ? (
                 <div className={s.subheader}>
                   {title} ({groupItems.length})
                 </div>
               ) : null}
               <div className={s.items}>
-                {(showAllItems ? groupItems : groupItems.slice(0, collapsedMaxLength)).map(
-                  (item) => (
-                    <div
-                      key={item.itemId}
-                      className={s.item}
-                      onClick={() => {
-                        onSelectItem?.(item);
-                      }}
-                    >
-                      <div className={s.itemId}>{item.itemId}</div>
-                      <div className={s.itemName}>{item.itemName}</div>
-                      <div className={s.itemDescription}>{item.itemDescription}</div>
+                {(showAllItems || variant === 'minimal'
+                  ? groupItems
+                  : groupItems.slice(0, collapsedMaxLength)
+                ).map((item) => (
+                  <div
+                    key={item.itemId}
+                    className={cn(s.item, variant === 'minimal' && s.minimalItem)}
+                    onClick={() => {
+                      onSelectItem?.(item);
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    {variant !== 'minimal' && <div className={s.itemId}>{item.itemId}</div>}
+                    <div className={cn(s.itemName, variant === 'minimal' && s.minimalItemName)}>
+                      {item.itemName}
                     </div>
-                  ),
-                )}
+                    <div className={s.itemDescription}>{item.itemDescription}</div>
+                  </div>
+                ))}
               </div>
             </React.Fragment>
           ))
         }
       </AsyncResourceRenderer>
-      {totalAmount > collapsedMaxLength && !showAllItems && (
+      {totalAmount > collapsedMaxLength && !showAllItems && variant !== 'minimal' && (
         <button
           className={s.seeAllButton}
           onClick={(e) => {

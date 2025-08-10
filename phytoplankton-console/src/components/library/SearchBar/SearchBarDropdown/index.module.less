@@ -67,9 +67,21 @@
     letter-spacing: 0.14px;
   }
 
+  .minimalItemName {
+    font-weight: 400;
+  }
+
   .itemDescription {
     grid-column: span 2;
     color: @fr-colors-v2-gray-8;
+  }
+}
+
+.minimalItem {
+  padding: 6px 8px;
+
+  &:not(:first-child) {
+    border-top: none;
   }
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import cn from 'classnames';
 import s from './index.module.less';
 import SearchBarField from './SearchBarField';
 import SearchBarDropdown, { ItemGroup, Item } from './SearchBarDropdown';
@@ -26,8 +27,10 @@ export interface SearchBarProps<FilterParams> {
   onClear: () => void;
   onAISearch?: (search: string) => void;
   showTitleOnSingleItem?: boolean;
-  isAIEnabled: boolean;
-  setIsAIEnabled: (isAIEnabled: boolean) => void;
+  isAIEnabled?: boolean;
+  setIsAIEnabled?: (isAIEnabled: boolean) => void;
+  variant?: 'default' | 'minimal';
+  onBlur?: () => void;
 }
 
 export default function SearchBar<FilterParams extends object = object>(
@@ -50,6 +53,8 @@ export default function SearchBar<FilterParams extends object = object>(
     showTitleOnSingleItem = true,
     isAIEnabled,
     setIsAIEnabled,
+    onBlur,
+    variant = 'default',
   } = props;
 
   const [isDropdownVisible, setDropdownVisible] = useState(false);
@@ -79,7 +84,7 @@ export default function SearchBar<FilterParams extends object = object>(
     (item: Item) => {
       onSelectItem?.(item);
       setDropdownVisible(false);
-      onSearch?.(undefined);
+      onSearch?.(item.itemName);
     },
     [onSelectItem, onSearch],
   );
@@ -105,6 +110,7 @@ export default function SearchBar<FilterParams extends object = object>(
             : undefined
         }
         filterParams={filterParams}
+        filters={filters}
         onClear={() => {
           onClear();
           setFiltersVisible(false);
@@ -112,9 +118,11 @@ export default function SearchBar<FilterParams extends object = object>(
         isAIEnabled={isAIEnabled}
         setIsAIEnabled={setIsAIEnabled}
         onChangeFilterParams={onChangeFilterParams}
+        variant={variant}
+        onBlur={onBlur}
       />
       <div className={s.dropdown}>
-        <div className={s.dropdownPosition}>
+        <div className={cn(s.dropdownPosition, variant === 'minimal' && s.minimalDropdownPosition)}>
           {isDropdownVisible && (
             <SearchBarDropdown<FilterParams>
               key={'dropdown'}
@@ -139,6 +147,7 @@ export default function SearchBar<FilterParams extends object = object>(
                 setFiltersVisible(true);
               }}
               showTitleOnSingleItem={showTitleOnSingleItem}
+              variant={variant}
             />
           )}
         </div>

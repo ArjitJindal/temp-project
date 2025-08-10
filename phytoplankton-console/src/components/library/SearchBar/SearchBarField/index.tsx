@@ -1,6 +1,8 @@
 import cn from 'clsx';
 import { useMemo, useRef } from 'react';
 import { isEmpty } from 'lodash';
+import { FilterProps } from '../../Filter/types';
+import Filter from '../../Filter';
 import s from './index.module.less';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import BackIcon from '@/components/ui/icons/Remix/system/arrow-left-line.react.svg';
@@ -11,6 +13,7 @@ import { InputProps } from '@/components/library/Form';
 
 interface Props<FilterParams extends object = object> extends InputProps<string> {
   isExpanded?: boolean;
+  filters?: FilterProps<FilterParams>[];
   onToggleFilters?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -19,9 +22,10 @@ interface Props<FilterParams extends object = object> extends InputProps<string>
   onEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   filterParams?: FilterParams;
   onClear: () => void;
-  isAIEnabled: boolean;
+  isAIEnabled?: boolean;
   setIsAIEnabled?: (isAIEnabled: boolean) => void;
   onChangeFilterParams?: (filterParams: FilterParams) => void;
+  variant?: 'default' | 'minimal';
 }
 
 export default function SearchBarField<FilterParams extends object = object>(
@@ -36,10 +40,12 @@ export default function SearchBarField<FilterParams extends object = object>(
     onToggleFilters,
     onEnter,
     filterParams,
+    filters,
+    onChangeFilterParams,
     onClear,
     isAIEnabled,
     setIsAIEnabled,
-    onChangeFilterParams,
+    variant,
   } = props;
 
   const isAllFiltersEmpty = useMemo(() => {
@@ -87,7 +93,7 @@ export default function SearchBarField<FilterParams extends object = object>(
         }}
       />
       <div className={s.icons}>
-        {value || !isAllFiltersEmpty ? (
+        {(value || !isAllFiltersEmpty) && variant !== 'minimal' ? (
           <CloseIcon
             className={cn(s.icon, s.rightIcon)}
             onClick={(e) => {
@@ -97,8 +103,20 @@ export default function SearchBarField<FilterParams extends object = object>(
             }}
           />
         ) : null}
-        {onToggleFilters && (
+        {onToggleFilters && variant !== 'minimal' && (
           <EqualizerLineIcon className={cn(s.icon, s.rightIcon)} onClick={onToggleFilters} />
+        )}
+        {variant === 'minimal' && filterParams && filters && onChangeFilterParams && (
+          <>
+            {filters.map((filter) => (
+              <Filter<FilterParams>
+                key={filter.key}
+                filter={filter}
+                params={filterParams}
+                onChangeParams={onChangeFilterParams}
+              />
+            ))}
+          </>
         )}
       </div>
     </div>

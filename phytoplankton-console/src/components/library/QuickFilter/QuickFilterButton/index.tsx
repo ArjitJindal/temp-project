@@ -25,7 +25,8 @@ export default function QuickFilterButton(props: Props) {
         autoWidth && s.autoWidth,
         onClick != null && s.isClickable,
       )}
-      onClick={() => {
+      onClick={(event) => {
+        event.stopPropagation();
         onClick?.();
       }}
     >
