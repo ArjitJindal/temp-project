@@ -12,6 +12,7 @@ import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 import './global.less';
 import { getBranding } from '@/utils/branding';
 import { makeUrl } from '@/utils/routing';
+import { NotFoundError } from '@/utils/errors';
 
 interface HttpError {
   code?: number;
@@ -63,6 +64,15 @@ Sentry.init({
       typeof hint.originalException === 'string' &&
       /Object Not Found Matching Id:.+, MethodName:.+, ParamCount:.+/.test(hint.originalException)
     ) {
+      return null;
+    }
+
+    // Ignore client-side 404 flows represented by our custom NotFoundError
+    if (hint?.originalException instanceof NotFoundError) {
+      return null;
+    }
+    // Fallback: ignore by error type name if instance check fails
+    if (event?.exception?.values?.some((v) => v.type === 'NotFoundError')) {
       return null;
     }
 
