@@ -69,6 +69,7 @@ class FlatFilesRecords extends Model<FlatFilesRecordsSchema> {
               PARSE_STORE: 3,
               RUNNER: 4,
               VALIDATE_STORE: 5,
+              DUPLICATE: 6,
             },
           }),
         },

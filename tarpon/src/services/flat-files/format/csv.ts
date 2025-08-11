@@ -10,6 +10,8 @@ import { FlatFileRecord } from '@/@types/flat-files'
 import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
+import { FlatFilesRecords } from '@/models/flat-files-records'
+import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
 
 @traceable
 export class CsvFormat extends FlatFileFormat {
@@ -102,6 +104,16 @@ export class CsvFormat extends FlatFileFormat {
       })
     )
 
+    const clickhouseConfig = await getClickhouseCredentials(this.tenantId)
+    const flatFilesRecords = new FlatFilesRecords({
+      credentials: clickhouseConfig,
+      options: {
+        keepAlive: true,
+        keepAliveTimeout: 9000, // our ch server timeout is 10 seconds it is recommended to set it below server timeout
+        maxRetries: 10,
+      },
+    })
+
     let index = 0
     for await (const flatRow of parser) {
       try {
@@ -119,7 +131,7 @@ export class CsvFormat extends FlatFileFormat {
           })
         ) {
           await this.saveError(
-            flatRow,
+            flatFilesRecords,
             { index: index++, record: { record: flatRow } },
             new Error('Duplicate record'),
             'DUPLICATE'
@@ -130,7 +142,7 @@ export class CsvFormat extends FlatFileFormat {
         yield { index: index++, record: nested }
       } catch (error) {
         await this.saveError(
-          flatRow,
+          flatFilesRecords,
           { index: index++, record: { record: flatRow } },
           error,
           'PARSE'

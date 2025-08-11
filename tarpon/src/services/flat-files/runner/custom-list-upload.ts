@@ -4,6 +4,7 @@ import { FlatFilesRecordsSchema } from '@/@types/flat-files'
 import { EntityModel } from '@/@types/model'
 import { CustomListMetadataList } from '@/@types/openapi-internal/CustomListMetadataList'
 import { ListRepository } from '@/services/list/repositories/list-repository'
+import { logger } from '@/core/logger'
 
 export class CustomListUploadRunner extends FlatFileRunner<{
   [key: string]: string
@@ -37,19 +38,34 @@ export class CustomListUploadRunner extends FlatFileRunner<{
 
   public async _run(
     data: { [key: string]: string },
-    _record: FlatFilesRecordsSchema,
+    record: FlatFilesRecordsSchema,
     metadata: CustomListMetadataList
   ) {
     const { listId } = metadata
     const listRepository = new ListRepository(this.tenantId, this.dynamoDb)
 
-    await listRepository.setListItems(listId, [
-      {
-        key: uuidv4(),
-        metadata: {
-          ...data,
+    try {
+      await listRepository.setListItems(listId, [
+        {
+          key: uuidv4(),
+          metadata: {
+            ...data,
+          },
         },
-      },
-    ])
+      ])
+    } catch (error) {
+      logger.error(`Failed to set list items ${listId}`, {
+        error,
+        listId,
+      })
+      await this.updateRecordStatus(record, true, [
+        {
+          keyword: error instanceof Error ? error.name : 'unknown',
+          message: error instanceof Error ? error.message : 'unknown',
+          stage: 'RUNNER',
+          params: error instanceof Error ? error.stack : undefined,
+        },
+      ])
+    }
   }
 }

@@ -220,6 +220,7 @@ export class FlatFilesService {
   async getProgress(schema: FlatFileSchema, entityId: string) {
     const mongoDb = await getMongoDbClient()
     let s3Key: string | null = null
+    let isValidationJobRunning = true
     let batchJobStatus: TaskStatusChangeStatusEnum | null = null
     // get s3Key from Batchjob collection
     const batchJobRepository = new BatchJobRepository(this.tenantId, mongoDb)
@@ -248,6 +249,7 @@ export class FlatFilesService {
       1
     )
     if (fileRunnerJobs.length > 0) {
+      isValidationJobRunning = false
       s3Key = fileRunnerJobs[0].parameters?.s3Key ?? ''
       batchJobStatus = fileRunnerJobs[0].latestStatus.status
     }
@@ -260,7 +262,7 @@ export class FlatFilesService {
     const query = `
     SELECT COUNT(DISTINCT row) AS totalCount,
     COUNT(DISTINCT IF(isProcessed = true AND isError = false, row, NULL)) AS savedRows,
-    COUNT(DISTINCT IF(isError = true AND isProcessed = true, row, NULL))  AS erroredRows
+    COUNT(DISTINCT IF(isError = true, row, NULL))  AS erroredRows
     FROM ${FlatFilesRecords.tableDefinition.tableName}
     WHERE fileId = '${s3Key}'
     `
@@ -280,6 +282,7 @@ export class FlatFilesService {
       saved: savedRows,
       errored: erroredRows,
       status: batchJobStatus,
+      isValidationJobRunning,
     }
   }
 }

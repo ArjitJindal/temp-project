@@ -19,7 +19,7 @@ export abstract class FlatFileBaseRunner<
   protected readonly mongoDb: MongoClient
   protected readonly clickhouseClient: ClickHouseClient
   protected readonly clickhouseConnectionConfig: ConnectionCredentials
-  protected readonly flatFilesRecords: FlatFilesRecords
+  protected flatFilesRecords: FlatFilesRecords
 
   constructor(
     tenantId: string,
@@ -36,7 +36,11 @@ export abstract class FlatFileBaseRunner<
     this.clickhouseClient = connections?.clickhouseClient as ClickHouseClient
     this.clickhouseConnectionConfig =
       connections?.clickhouseConnectionConfig as ConnectionCredentials
-    this.flatFilesRecords = new FlatFilesRecords({
+    this.flatFilesRecords = this.getFlatFilesRecordClient()
+  }
+
+  private getFlatFilesRecordClient() {
+    return new FlatFilesRecords({
       credentials: this.clickhouseConnectionConfig,
       options: {
         keepAlive: true,
@@ -84,14 +88,48 @@ export abstract class FlatFileBaseRunner<
     isProcessed: boolean,
     errors?: FlatFilesRecordsError[]
   ): Promise<void> {
-    await this.flatFilesRecords
-      .create({
-        ...schema,
-        isProcessed,
-        updatedAt: Date.now(),
-        error: errors || schema.error,
-      })
-      .save()
+    const operation = () =>
+      this.flatFilesRecords
+        .create({
+          ...schema,
+          isProcessed,
+          updatedAt: Date.now(),
+          error: errors || schema.error,
+        })
+        .save()
+    await this.operationWithRetry(operation)
+  }
+
+  protected async operationWithRetry(
+    operation: () => Promise<void>,
+    maxRetries: number = 2
+  ) {
+    let retries = 0
+    while (retries <= maxRetries) {
+      logger.info('Retrying operation', retries)
+      try {
+        await operation()
+        return
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          error.code === 'ECONNRESET'
+        ) {
+          logger.info('ECONNRESET detected')
+          retries++
+          if (retries > maxRetries) {
+            throw error
+          }
+          logger.warn(`ECONNRESET detected. Retrying...`)
+          this.flatFilesRecords = this.getFlatFilesRecordClient()
+          continue
+        } else {
+          throw error
+        }
+      }
+    }
+    throw new Error('Max retries reached')
   }
 
   protected async sanitizeRecord(

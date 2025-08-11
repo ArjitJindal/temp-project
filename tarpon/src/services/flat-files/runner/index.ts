@@ -70,7 +70,6 @@ export abstract class FlatFileRunner<
     ).filter(
       (v): v is { data: T; schema: FlatFilesRecordsSchema } => v !== undefined
     )
-
     await Promise.all(
       sanitizedBatch.map((record) => this.processRecord(record, metadata))
     )

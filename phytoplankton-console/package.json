@@ -181,7 +181,7 @@
     "detect-port": "^1.5.1",
     "esbuild": "^0.15.5",
     "esbuild-jest": "^0.5.0",
-    "eslint": "8.22.0",
+    "eslint": "^8.57.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-formatter-pretty": "5",
     "eslint-plugin-custom-rules": "file:eslint-custom-rules",

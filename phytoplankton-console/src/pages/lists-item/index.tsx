@@ -63,7 +63,7 @@ export default function ListsItemPage() {
     {
       enabled: !!listId && isSuccess(listHeaderRes) && listHeaderData?.subtype === 'CUSTOM',
       onSuccess: (data) => {
-        setShowProgress(['IN_PROGRESS', 'PENDING'].includes(data.status ?? ''));
+        setShowProgress(['IN_PROGRESS'].includes(data.status ?? ''));
         if (data.status === 'SUCCESS' || data.status === 'FAILED') {
           queryClient.invalidateQueries({
             queryKey: LISTS_ITEM_TYPE(params.id ?? '', listType, listHeaderData?.subtype ?? null),
@@ -185,7 +185,12 @@ export default function ListsItemPage() {
               progress={(getOr(flatFileProgressQueryResult.data, { saved: 0 }).saved || 0) / 100}
               totalEntities={getOr(flatFileProgressQueryResult.data, { total: 0 }).total}
               progressMessage="Items imported"
-              loadingMessage="Importing items..."
+              loadingMessage={
+                getOr(flatFileProgressQueryResult.data, { isValidationJobRunning: false })
+                  .isValidationJobRunning
+                  ? 'Validating items...'
+                  : 'Importing items...'
+              }
             />
           ) : (
             <ItemsTable
