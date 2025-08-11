@@ -442,7 +442,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                 className={cn(s.rightIcon, s.clearIcon)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  props.onChange?.(undefined);
+                  if (props.mode === 'MULTIPLE' || props.mode === 'TAGS') {
+                    props.onChange?.([]);
+                  } else {
+                    props.onChange?.(undefined);
+                  }
                 }}
               />
             )}

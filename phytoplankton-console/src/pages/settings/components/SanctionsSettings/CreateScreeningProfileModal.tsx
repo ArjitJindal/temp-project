@@ -185,18 +185,28 @@ export default function CreateScreeningProfileModal({ isOpen, onClose, initialVa
   });
 
   const hasSelectedSources = useCallback(() => {
-    const hasAtLeastOneSource = Object.entries(sourceConfigurations).some(([type, config]) => {
-      if (type === 'ADVERSE_MEDIA') {
-        return false;
-      }
-      return (config.selectedSources?.length ?? 0) > 0;
-    });
+    const entries = Object.entries(sourceConfigurations);
 
-    const hasAtLeastOneRelevance = Object.values(sourceConfigurations).some(
-      (config) => config.relevance?.length > 0,
+    const hasAtLeastOneRelevance = entries.some(
+      ([, config]) => (config.relevance?.length ?? 0) > 0,
+    );
+    if (!hasAtLeastOneRelevance) {
+      return false;
+    }
+
+    const hasNonAdverseRelevant = entries.some(
+      ([type, config]) => type !== 'ADVERSE_MEDIA' && (config.relevance?.length ?? 0) > 0,
     );
 
-    return hasAtLeastOneSource && hasAtLeastOneRelevance;
+    if (!hasNonAdverseRelevant) {
+      return true;
+    }
+
+    const hasAtLeastOneNonAdverseSource = entries.some(
+      ([type, config]) => type !== 'ADVERSE_MEDIA' && (config.selectedSources?.length ?? 0) > 0,
+    );
+
+    return hasAtLeastOneNonAdverseSource;
   }, [sourceConfigurations]);
 
   const validateSourcesAndRelevance = useCallback(() => {
@@ -560,7 +570,7 @@ const SanctionsSourceTypeTab = ({
 
   const options = {
     SANCTIONS: SANCTIONS_SOURCE_RELEVANCES,
-    PEP: PEP_SOURCE_RELEVANCES,
+    PEP: isDowJonesEnabled ? DOW_JONES_PEP_SOURCE_RELEVANCES : PEP_SOURCE_RELEVANCES,
     ADVERSE_MEDIA: isDowJonesEnabled
       ? DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES
       : ADVERSE_MEDIA_SOURCE_RELEVANCES,
