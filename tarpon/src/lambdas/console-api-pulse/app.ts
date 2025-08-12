@@ -39,18 +39,18 @@ export const riskClassificationHandler = lambdaApi({
     })
 
     handlers.registerPostPulseRiskClassification(async (ctx, request) => {
-      // If approval workflows are enabled, use the workflow route instead
       if (hasFeature('APPROVAL_WORKFLOWS')) {
-        throw new BadRequest(
-          'Approval workflows are enabled. Please refresh the page.'
+        const response = await riskService.workflowProposeRiskLevelChange(
+          request.RiskClassificationRequest.scores,
+          request.RiskClassificationRequest.comment
         )
+        return response.result.riskClassificationConfig
       }
-
-      const response = await riskService.workflowProposeRiskLevelChange(
+      const response = await riskService.createOrUpdateRiskClassificationConfig(
         request.RiskClassificationRequest.scores,
         request.RiskClassificationRequest.comment
       )
-      return response.result.riskClassificationConfig
+      return response.result
     })
 
     // Workflow routes for risk classification approval
