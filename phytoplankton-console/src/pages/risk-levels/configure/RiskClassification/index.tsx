@@ -4,7 +4,6 @@ import RiskClassificationTable, {
   State,
   parseApiState,
   prepareApiState,
-  State as RiskClassificationTableState,
 } from '../RiskClassificationTable';
 import Header from './Header';
 import { useHasResources } from '@/utils/user-utils';
@@ -18,6 +17,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
+import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
 
 type Props = {
   riskValues: RiskClassificationConfig;
@@ -38,7 +38,8 @@ export default function RiskQualification(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
 
-  const [showProposal, setShowProposal] = useState<RiskClassificationTableState | null>(null);
+  const [showProposal, setShowProposal] = useState<boolean>(true);
+  const pendingProposalQueryResult = usePendingProposal();
 
   const versionHistoryMutation = useMutation<RiskClassificationConfig, Error, { comment: string }>(
     async ({ comment }: { comment: string }) => {
@@ -69,7 +70,8 @@ export default function RiskQualification(props: Props) {
     setIsUpdateEnabled(false);
   }
 
-  // todo: i18n
+  const pendingProposal = getOr(pendingProposalQueryResult.data, null);
+  const showingProposal = showProposal && pendingProposal != null;
 
   return (
     <PageWrapperContentContainer
@@ -98,10 +100,17 @@ export default function RiskQualification(props: Props) {
         />
       )}
       <RiskClassificationTable
-        state={showProposal != null ? showProposal : state}
-        setState={showProposal != null ? () => {} : setState}
+        state={
+          showingProposal
+            ? parseApiState(pendingProposal.riskClassificationConfig.classificationValues)
+            : state
+        }
+        setState={showingProposal ? () => {} : setState}
         isDisabled={
-          !riskValues.classificationValues.length || !hasRiskLevelPermission || !isUpdateEnabled
+          !riskValues.classificationValues.length ||
+          !hasRiskLevelPermission ||
+          !isUpdateEnabled ||
+          showingProposal
         }
       />
     </PageWrapperContentContainer>

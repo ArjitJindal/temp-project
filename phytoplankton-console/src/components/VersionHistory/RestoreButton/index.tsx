@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { H4 } from '@/components/ui/Typography';
 import Tag from '@/components/library/Tag';
@@ -12,6 +13,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, match, success, map, init } from '@/utils/asyncResource';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';
+import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 
 interface VersionHistoryRestoreButtonProps {
   versionId: string;
@@ -33,9 +35,11 @@ interface VersionHistoryRestoreButtonProps {
 export default function VersionHistoryHeader(props: VersionHistoryRestoreButtonProps) {
   const { versionId, type, isActiveCheck, navigateUrl, handleDownload, approvalWorkflows } = props;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const onSuccess = useCallback(() => {
     navigate(navigateUrl);
-  }, [navigate, navigateUrl]);
+    queryClient.invalidateQueries(RISK_CLASSIFICATION_WORKFLOW_PROPOSAL());
+  }, [navigate, navigateUrl, queryClient]);
   const mutationRiskFactorsRestore = useVersionHistoryRestore(onSuccess);
   const versionHistoryItem = useVersionHistoryItem(type, versionId);
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');

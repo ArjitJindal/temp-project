@@ -8,7 +8,7 @@ export const usePendingProposal = () => {
   const api = useApi();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
 
-  const pendingProposalRes = useQuery<RiskClassificationConfigApproval>(
+  const pendingProposalRes = useQuery<RiskClassificationConfigApproval | null>(
     RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
     async () => {
       return await api.getPulseRiskClassificationWorkflowProposal();

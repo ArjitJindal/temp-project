@@ -4,12 +4,11 @@ import ApprovalWorkflowActions from './ApprovalWorkflowActions';
 import { RiskClassificationConfig } from '@/apis';
 import { StatePair } from '@/utils/state';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { State as RiskClassificationTableState } from '@/pages/risk-levels/configure/RiskClassificationTable';
 
 export type Props = {
   requiredResources?: Resource[];
   riskValues: RiskClassificationConfig;
-  showProposalState: StatePair<RiskClassificationTableState | null>;
+  showProposalState: StatePair<boolean>;
   updateEnabledState: StatePair<boolean>;
 };
 

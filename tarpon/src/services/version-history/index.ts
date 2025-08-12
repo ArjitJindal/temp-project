@@ -14,6 +14,7 @@ import { traceable } from '@/core/xray'
 import { VersionHistoryRestorePayload } from '@/@types/openapi-internal/VersionHistoryRestorePayload'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskFactorsUpdate } from '@/@types/openapi-internal/RiskFactorsUpdate'
+import { hasFeature } from '@/core/utils/context'
 
 type Prefix = 'RLV' | 'RFV'
 
@@ -126,6 +127,14 @@ export class VersionHistoryService {
           mongoDb: this.mongoDb,
           dynamoDb: this.dynamoDb,
         })
+        if (hasFeature('APPROVAL_WORKFLOWS')) {
+          await service.workflowProposeRiskLevelChange(
+            versionHistory.data as RiskClassificationScore[],
+            comment
+          )
+          break
+        }
+
         await service.createOrUpdateRiskClassificationConfig(
           versionHistory.data as RiskClassificationScore[],
           comment

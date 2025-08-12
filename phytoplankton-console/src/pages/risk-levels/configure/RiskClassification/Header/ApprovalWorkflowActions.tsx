@@ -14,10 +14,7 @@ import { RiskClassificationConfigApproval } from '@/apis';
 import { StatePair } from '@/utils/state';
 import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
-import {
-  parseApiState,
-  State as RiskClassificationTableState,
-} from '@/pages/risk-levels/configure/RiskClassificationTable';
+
 import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
 
 export default function ApprovalWorkflowActions(props: Props) {
@@ -50,7 +47,7 @@ function PendingProposalActions(
   const sendProposalActionMutation = useSendProposalActionMutation();
 
   const [showProposal] = showProposalState;
-  const showingProposalState = showProposal != null;
+  const showingProposalState = showProposal;
   const showComment = showingProposalState;
 
   return (
@@ -125,10 +122,7 @@ function PendingProposalActions(
                   }}
                 </Confirm>
               )}
-              <ShowProposalButton
-                pendingProposal={pendingProposal}
-                showProposalState={showProposalState}
-              />
+              <ShowProposalButton showProposalState={showProposalState} />
               <RiskLevelsDownloadButton
                 classificationValues={riskValues.classificationValues}
                 isDisabled={showingProposalState}
@@ -177,10 +171,7 @@ function PendingProposalActions(
                   </Button>
                 </>
               )}
-              <ShowProposalButton
-                pendingProposal={pendingProposal}
-                showProposalState={showProposalState}
-              />
+              <ShowProposalButton showProposalState={showProposalState} />
               <RiskLevelsDownloadButton
                 classificationValues={riskValues.classificationValues}
                 isDisabled={showingProposalState}
@@ -202,10 +193,7 @@ function PendingProposalActions(
               )
             }
           >
-            <ShowProposalButton
-              pendingProposal={pendingProposal}
-              showProposalState={showProposalState}
-            />
+            <ShowProposalButton showProposalState={showProposalState} />
             <RiskLevelsDownloadButton
               classificationValues={riskValues.classificationValues}
               isDisabled={showingProposalState}
@@ -221,22 +209,15 @@ function PendingProposalActions(
   Helpers
  */
 
-function ShowProposalButton(props: {
-  pendingProposal: RiskClassificationConfigApproval;
-  showProposalState: StatePair<RiskClassificationTableState | null>;
-}) {
-  const { pendingProposal, showProposalState } = props;
+function ShowProposalButton(props: { showProposalState: StatePair<boolean> }) {
+  const { showProposalState } = props;
   const [showProposal, setShowProposal] = showProposalState;
   return (
     <Label label={'Show proposed changes'} position={'RIGHT'}>
       <Toggle
-        value={showProposal != null}
+        value={showProposal}
         onChange={() => {
-          setShowProposal((x) =>
-            x == null
-              ? parseApiState(pendingProposal.riskClassificationConfig.classificationValues)
-              : null,
-          );
+          setShowProposal((x) => !x);
         }}
       />
     </Label>
