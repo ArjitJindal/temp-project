@@ -2,7 +2,9 @@ import {
   BaseCaseAlertWorkflow,
   CaseWorkflow,
   AlertWorkflow,
+  BaseApprovalWorkflow,
   RiskLevelApprovalWorkflow,
+  RiskFactorsApprovalWorkflow,
 } from '../@types/workflow'
 
 export abstract class BaseWorkflowMachine {
@@ -117,6 +119,55 @@ export class AlertWorkflowMachine extends BaseWorkflowMachine {
   }
 }
 
+export class BaseApprovalWorkflowMachine {
+  protected definition: BaseApprovalWorkflow
+
+  constructor(definition: BaseApprovalWorkflow) {
+    BaseApprovalWorkflowMachine.validate(definition)
+    this.definition = definition
+  }
+
+  public static validate(definition: BaseApprovalWorkflow): void {
+    // ensure approvalChain is defined and has at least one role
+    if (!definition.approvalChain || definition.approvalChain.length === 0) {
+      throw new Error('Approval workflow must have at least one role')
+    }
+    // ensure approvalChain has at least one role
+    if (definition.approvalChain.length === 0) {
+      throw new Error('Approval workflow must have at least one role')
+    }
+    // ensure approvalChain does not have duplicate roles
+    if (
+      new Set(definition.approvalChain).size !== definition.approvalChain.length
+    ) {
+      throw new Error('Approval workflow must have unique roles')
+    }
+    // ensure approvalChain does not exceed 3 steps
+    if (definition.approvalChain.length > 3) {
+      throw new Error('Approval workflow must have at most 3 steps')
+    }
+  }
+
+  public getDefinition(): BaseApprovalWorkflow {
+    return this.definition
+  }
+
+  public getApprovalStep(currentStep: number): {
+    role: string
+    isLastStep: boolean
+  } {
+    const approvalChain = this.definition.approvalChain
+    const steps = approvalChain.length
+
+    if (currentStep >= steps) {
+      throw new Error('Approval workflow is already at the last step') // already approved
+    }
+
+    const isLastStep = currentStep === steps - 1
+    return { role: approvalChain[currentStep], isLastStep }
+  }
+}
+
 // TODO: this needs to be implemented properly with validation method and everythign else
 export class RiskLevelApprovalWorkflowMachine {
   private definition: RiskLevelApprovalWorkflow
@@ -168,5 +219,15 @@ export class RiskLevelApprovalWorkflowMachine {
 
     const isLastStep = currentStep === steps - 1
     return { role: approvalChain[currentStep], isLastStep }
+  }
+}
+
+export class RiskFactorsApprovalWorkflowMachine extends BaseApprovalWorkflowMachine {
+  constructor(definition: RiskFactorsApprovalWorkflow) {
+    super(definition)
+  }
+
+  public getDefinition(): RiskFactorsApprovalWorkflow {
+    return this.definition as RiskFactorsApprovalWorkflow
   }
 }

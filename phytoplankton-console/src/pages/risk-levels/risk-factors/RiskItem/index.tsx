@@ -1,32 +1,42 @@
 import { useNavigate, useParams } from 'react-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
-import { useEffect } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
-import { RiskFactorConfiguration } from '../RiskFactorConfiguration';
-import { RiskFactorsTypeMap, scopeToRiskEntityType } from '../RiskFactorsTable/utils';
+import { useEffect, useMemo, useState } from 'react';
+import { useAtom } from 'jotai';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { notEmpty } from '@/utils/array';
+import { makeUrl } from '@/utils/routing';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { CUSTOM_RISK_FACTORS_ITEM, RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
+import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
+import { useSafeLocalStorageState } from '@/utils/hooks';
 import {
-  RiskFactorConfigurationFormValues,
-  serializeRiskItem,
-} from '../RiskFactorConfiguration/utils';
+  AsyncResource,
+  getOr,
+  isFailed,
+  isLoading,
+  isSuccess,
+  map,
+  success,
+} from '@/utils/asyncResource';
+import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';
+import { useCreateMutation } from '@/pages/risk-levels/risk-factors/RiskItem/helpers';
 import {
   riskFactorsAtom,
   riskFactorsEditEnabled,
   SimulationLocalStorageKey,
 } from '@/store/risk-factors';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { notEmpty } from '@/utils/array';
-import { makeUrl } from '@/utils/routing';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { CUSTOM_RISK_FACTORS_ITEM, RISK_FACTORS_V8 } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
-import { message } from '@/components/library/Message';
-import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
-import { useAuth0User } from '@/utils/user-utils';
-import { useSafeLocalStorageState } from '@/utils/hooks';
+import {
+  RiskFactorsTypeMap,
+  scopeToRiskEntityType,
+} from '@/pages/risk-levels/risk-factors/RiskFactorsTable/utils';
+import { RiskFactorConfiguration } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration';
+import {
+  RiskFactorConfigurationFormValues,
+  serializeRiskItem,
+} from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/utils';
 
 export default function () {
   const isSimulationMode = window.localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
@@ -290,17 +300,27 @@ interface RiskItemFormProps {
 }
 
 function RiskItemForm(props: RiskItemFormProps) {
-  const { type, id, riskClassificationValues, mode } = props;
-  const navigate = useNavigate();
+  const { type, id, mode } = props;
   const api = useApi();
-  const user = useAuth0User();
-  const queryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+
+  const itemQueryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
     if (id) {
       return await api.getRiskFactor({ riskFactorId: id });
     }
     return null;
   });
+  const [isRiskFactorsEditEnabled, setRiskFactorsEditEnabled] = useAtom(riskFactorsEditEnabled);
   const [riskFactors, setRiskFactors] = useAtom(riskFactorsAtom);
+  const itemRes = useMemo((): AsyncResource<RiskFactor | null> => {
+    if (id) {
+      const byId = riskFactors.getById(id);
+      if (byId != null) {
+        return success(byId || null);
+      }
+    }
+    return itemQueryResult.data;
+  }, [id, itemQueryResult.data, riskFactors]);
 
   const navigateToRiskFactor = () => {
     navigate(
@@ -310,52 +330,113 @@ function RiskItemForm(props: RiskItemFormProps) {
     );
   };
 
-  const queryClient = useQueryClient();
-
-  const createRiskFactorMutation = useMutation(
-    async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
-      return api.postCreateRiskFactor({
-        RiskFactorsPostRequest: serializeRiskItem(
-          riskFactorFormValues,
-          type,
-          riskClassificationValues,
-          id,
-          riskFactorFormValues?.v2Props,
-        ),
+  const pendingProposalsQueryResult = useQuery(
+    RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM(id ?? 'NEW'),
+    async () => {
+      if (id == null) {
+        return null;
+      }
+      const proposals = await api.getPulseRiskFactorsWorkflowProposal({
+        riskFactorId: id,
       });
+      return proposals.find((x) => x.riskFactor.id === id) ?? null;
     },
     {
-      onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactor();
-        await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
-        message.success('Risk factor created successfully', {
-          link: makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
-            type,
-            id: newRiskFactor.id,
-          }),
-          linkTitle: 'View risk factor',
-          details: `${capitalizeNameFromEmail(user?.name || '')} created a risk factor ${
-            newRiskFactor.id
-          }`,
-          copyFeedback: 'Risk factor URL copied to clipboard',
-        });
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to create the risk factor - Some parameters are missing`, err);
-      },
+      enabled: isApprovalWorkflowsEnabled,
     },
   );
-  const isEditEnabled = useAtomValue(riskFactorsEditEnabled);
-  const handleSubmit = (formValues: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => {
-    if (mode === 'edit' && riskItem && isEditEnabled) {
+
+  const itemOrProposalRes: AsyncResource<RiskFactor | null> = useMemo(() => {
+    if (id == null) {
+      return success(null);
+    }
+    if (isLoading(itemRes)) {
+      return itemRes;
+    }
+    if (!isApprovalWorkflowsEnabled) {
+      return itemRes;
+    }
+    if (isFailed(pendingProposalsQueryResult.data)) {
+      return itemRes;
+    }
+    if (isFailed(itemRes)) {
+      return map(pendingProposalsQueryResult.data, (proposal) => {
+        if (proposal == null) {
+          throw new Error(`Unable to find a risk factor or related proposal by id`);
+        }
+        return proposal.riskFactor;
+      });
+    }
+    return itemRes;
+  }, [id, isApprovalWorkflowsEnabled, itemRes, pendingProposalsQueryResult.data]);
+
+  // A hack to redirect v2-version risk factor to table view, required for redirect from notification link
+  const navigate = useNavigate();
+  {
+    const item = getOr(itemQueryResult.data, null);
+    const isV2RiskFactor = item && item?.parameter != null;
+    let hasPendingApproval = false;
+    if (isApprovalWorkflowsEnabled) {
+      if (isLoading(pendingProposalsQueryResult.data)) {
+        hasPendingApproval = true;
+      }
+      if (isSuccess(pendingProposalsQueryResult.data)) {
+        hasPendingApproval = pendingProposalsQueryResult.data != null;
+      }
+    }
+
+    useEffect(() => {
+      if (isV2RiskFactor && !hasPendingApproval) {
+        navigate(
+          makeUrl(`/risk-levels/risk-factors/:type`, {
+            type,
+          }) + `#${id}`,
+          {
+            replace: true,
+          },
+        );
+      }
+    }, [id, isV2RiskFactor, hasPendingApproval, navigate, type]);
+  }
+
+  const createRiskFactorMutation = useCreateMutation(type, id ?? null);
+
+  const [showConfirmationModal, setShowConfirmationModal] = useState<{
+    formValues: RiskFactorConfigurationFormValues;
+    riskItem?: RiskFactor;
+  } | null>(null);
+
+  const handleConfirm = (params: {
+    comment?: string;
+    formValues: RiskFactorConfigurationFormValues;
+    riskItem?: RiskFactor;
+  }) => {
+    let formValues: RiskFactorConfigurationFormValues;
+    let riskItem: RiskFactor | undefined;
+    if (isApprovalWorkflowsEnabled && mode === 'create') {
+      if (showConfirmationModal == null) {
+        return;
+      }
+      formValues = showConfirmationModal.formValues;
+      riskItem = showConfirmationModal.riskItem;
+    } else {
+      formValues = params.formValues;
+      riskItem = params.riskItem;
+    }
+    const comment = params.comment;
+
+    if (mode === 'edit') {
       if (id == null) {
         throw new Error(`ID must be defined for editing`);
       }
-      const serialized = serializeRiskItem(formValues, type, riskClassificationValues);
+      const serialized = serializeRiskItem(formValues, type, props.riskClassificationValues);
       setRiskFactors({
         id,
         ...serialized,
       });
+      if (!isRiskFactorsEditEnabled) {
+        setRiskFactorsEditEnabled(true);
+      }
       navigateToRiskFactor();
     } else if (mode === 'create' || mode === 'duplicate') {
       if (mode === 'duplicate' && riskItem) {
@@ -376,35 +457,68 @@ function RiskItemForm(props: RiskItemFormProps) {
       if (mode !== 'duplicate' && formValues.riskFactorConfigurationStep) {
         delete (formValues.riskFactorConfigurationStep as any).riskFactorId;
       }
-      createRiskFactorMutation.mutate(formValues);
+      createRiskFactorMutation.mutate({
+        riskFactorFormValues: formValues,
+        comment,
+      });
     }
   };
 
+  const handleSubmit = (formValues: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => {
+    if (isApprovalWorkflowsEnabled && mode === 'create') {
+      setShowConfirmationModal({ formValues, riskItem });
+    } else {
+      handleConfirm({ formValues, riskItem });
+    }
+  };
+
+  const confirmationModal = (
+    <ConfirmModal
+      title={mode === 'create' ? 'Create risk factor' : 'Update risk factor'}
+      text={'Please, provide a comment for you update'}
+      isVisible={showConfirmationModal != null}
+      commentRequired={true}
+      onConfirm={(confirmFormValues) => {
+        if (showConfirmationModal) {
+          handleConfirm({ ...showConfirmationModal, ...confirmFormValues });
+        }
+      }}
+      onCancel={() => {
+        setShowConfirmationModal(null);
+      }}
+    />
+  );
+
   if (mode === 'create') {
     return (
-      <RiskFactorConfiguration
-        riskItemType={type}
-        onSubmit={handleSubmit}
-        mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
-        isLoading={createRiskFactorMutation?.isLoading}
-      />
+      <>
+        <RiskFactorConfiguration
+          riskItemType={type}
+          onSubmit={handleSubmit}
+          mode={'CREATE'}
+          isLoading={isLoading(createRiskFactorMutation.dataResource)}
+        />
+        {confirmationModal}
+      </>
     );
   }
 
   return (
-    <AsyncResourceRenderer resource={queryResult.data}>
-      {(data) => {
-        return (
-          <RiskFactorConfiguration
-            riskItemType={type}
-            onSubmit={handleSubmit}
-            mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
-            id={id}
-            riskItem={(id ? riskFactors.getById(id) ?? data : data) ?? undefined}
-            isLoading={false}
-          />
-        );
-      }}
-    </AsyncResourceRenderer>
+    <>
+      <AsyncResourceRenderer resource={itemOrProposalRes}>
+        {(data) => {
+          return (
+            <RiskFactorConfiguration
+              riskItemType={type}
+              onSubmit={handleSubmit}
+              mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
+              id={id}
+              riskItem={data || undefined}
+            />
+          );
+        }}
+      </AsyncResourceRenderer>
+      {confirmationModal}
+    </>
   );
 }

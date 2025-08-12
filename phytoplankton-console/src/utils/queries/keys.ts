@@ -542,7 +542,20 @@ export const WORKFLOWS_ITEM_BY_REF = (ref?: WorkflowRef): QueryKey => [
 export const RISK_LEVEL_VERSION = (): QueryKey => ['risk-level', 'version'];
 
 export const RISK_CLASSIFICATION_WORKFLOW_PROPOSAL = (): QueryKey => [
-  'classification-workflow-proposal',
+  'risk-levels-workflow-proposal',
+];
+
+export const RISK_FACTOR_WORKFLOW_PROPOSAL = (): QueryKey => ['risk-factor-workflow-proposals'];
+
+export const RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM = (factorId: string): QueryKey => [
+  'risk-factor-workflow-proposals',
+  'item',
+  factorId,
+];
+
+export const RISK_FACTOR_WORKFLOW_PROPOSAL_LIST = (): QueryKey => [
+  'risk-factor-workflow-proposals',
+  'list',
 ];
 
 export const FLAT_FILE_PROGRESS = (entityId: string): QueryKey => ['flat-file-progress', entityId];

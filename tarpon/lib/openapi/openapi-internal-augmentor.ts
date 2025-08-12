@@ -229,6 +229,10 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/risk-factors/new-risk-factor-id':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/risk-factors/workflowProposal':
+    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/risk-factors/workflowAction':
+    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/risk-factors/logic':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-assignment':

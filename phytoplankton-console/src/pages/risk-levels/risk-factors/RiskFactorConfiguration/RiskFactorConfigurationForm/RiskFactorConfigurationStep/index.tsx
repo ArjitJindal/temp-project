@@ -6,15 +6,11 @@ import {
   LogicAggregationVariable,
   LogicEntityVariableEntityEnum,
   LogicEntityVariableInUse,
-  RuleType,
-  RiskFactorLogic,
   RiskFactor,
-  RiskFactorParameter,
   RiskFactorDataType as DataType,
-  RiskEntityType,
-  RiskScoreValueScore,
-  RiskScoreValueLevel,
-  RiskParameterLevelKeyValue,
+  RiskFactorLogic,
+  RiskFactorParameter,
+  RuleType,
 } from '@/apis';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import VariableDefinitionCard from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
@@ -26,28 +22,13 @@ export interface RiskFactorConfigurationStepFormValues {
   entityVariables?: LogicEntityVariableInUse[];
   aggregationVariables?: LogicAggregationVariable[];
 }
-interface V2Props {
-  item: RiskFactor;
-  parameter: RiskFactorParameter;
-}
-interface LiftedParameters {
-  parameter: RiskFactorParameter;
-  values: RiskParameterLevelKeyValue[];
-  setValues: (values: RiskParameterLevelKeyValue[]) => void;
-  entity: RiskEntityType;
-  defaultRiskValue: RiskScoreValueLevel | RiskScoreValueScore;
-  weight: number;
-  setDefaultRiskValue: (value: RiskScoreValueLevel | RiskScoreValueScore) => void;
-  setWeight: (value: number) => void;
-  onSave: () => void;
-}
+
 interface Props {
   ruleType: RuleType;
   readOnly?: boolean;
   entity?: LogicEntityVariableEntityEnum;
-  v2Props?: V2Props;
-  liftedParameters?: LiftedParameters;
 }
+
 const RiskFactorConfigurationStep = forwardRef((props: Props) => {
   const aggVariablesFieldState = useFieldState<any, 'aggregationVariables'>('aggregationVariables');
   const entityVariablesFieldState = useFieldState<any, 'entityVariables'>('entityVariables');

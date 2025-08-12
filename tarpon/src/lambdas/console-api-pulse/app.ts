@@ -41,19 +41,58 @@ export const riskClassificationHandler = lambdaApi({
     handlers.registerPostPulseRiskClassification(async (ctx, request) => {
       // If approval workflows are enabled, use the workflow route instead
       if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new BadRequest(
+          'Approval workflows are enabled. Please refresh the page.'
+        )
+      }
+
+      const response = await riskService.workflowProposeRiskLevelChange(
+        request.RiskClassificationRequest.scores,
+        request.RiskClassificationRequest.comment
+      )
+      return response.result.riskClassificationConfig
+    })
+
+    // Workflow routes for risk classification approval
+    handlers.registerPostPulseRiskClassificationWorkflowProposal(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
         const response = await riskService.workflowProposeRiskLevelChange(
           request.RiskClassificationRequest.scores,
           request.RiskClassificationRequest.comment
         )
-        return response.result.riskClassificationConfig
+        return response.result
       }
+    )
 
-      const response = await riskService.createOrUpdateRiskClassificationConfig(
-        request.RiskClassificationRequest.scores,
-        request.RiskClassificationRequest.comment
-      )
-      return response.result
-    })
+    handlers.registerPostPulseRiskClassificationWorkflowAction(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
+        const response = await riskService.workflowApproveRiskLevelChange(
+          request.RiskClassificationApprovalRequest.action
+        )
+        return response.result
+      }
+    )
+
+    handlers.registerGetPulseRiskClassificationWorkflowProposal(
+      async (_ctx, _request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new BadRequest('Approval workflows feature is not enabled')
+        }
+
+        return await riskService.workflowGetPendingRiskLevelChange()
+      }
+    )
 
     handlers.registerPostPulseRiskClassificationWorkflowAction(
       async (ctx, request) => {
@@ -116,10 +155,22 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     })
 
     handlers.registerDeleteRiskFactor(async (ctx, request) => {
+      if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new Error(
+          'Approval workflows are enabled. Please use the workflow routes instead.'
+        )
+      }
+
       return (await riskService.deleteRiskFactor(request.riskFactorId)).result
     })
 
     handlers.registerPostCreateRiskFactor(async (ctx, request) => {
+      if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new Error(
+          'Approval workflows are enabled. Please use the workflow routes instead.'
+        )
+      }
+
       return (
         await riskService.createOrUpdateRiskFactor(
           request.RiskFactorsPostRequest,
@@ -129,6 +180,12 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     })
 
     handlers.registerPutRiskFactors(async (ctx, request) => {
+      if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new Error(
+          'Approval workflows are enabled. Please use the workflow routes instead.'
+        )
+      }
+
       await riskService.bulkUpdateRiskFactors(
         request.RiskFactorsUpdateRequest.riskFactors,
         request.RiskFactorsUpdateRequest.comment
@@ -142,10 +199,68 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     })
 
     handlers.registerPostBulkRiskFactors(async (ctx, request) => {
+      if (hasFeature('APPROVAL_WORKFLOWS')) {
+        throw new Error(
+          'Approval workflows are enabled. Please use the workflow routes instead.'
+        )
+      }
+
       return await riskService.bulkCreateandReplaceRiskFactors(
         request.RiskFactorsPostRequest
       )
     })
+
+    // Workflow routes for risk factors approval
+    handlers.registerPostPulseRiskFactorsWorkflowProposal(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new Error('Approval workflows feature is not enabled')
+        }
+
+        const response = await riskService.workflowProposeRiskFactorChange(
+          request.RiskFactorRequest.riskFactor,
+          request.RiskFactorRequest.action,
+          request.RiskFactorRequest.comment
+        )
+        return response.result
+      }
+    )
+
+    handlers.registerPostPulseRiskFactorsWorkflowAction(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new Error('Approval workflows feature is not enabled')
+        }
+
+        const response = await riskService.workflowApproveRiskFactorChange(
+          request.RiskFactorsApprovalRequest.riskFactorId,
+          request.RiskFactorsApprovalRequest.action as
+            | 'accept'
+            | 'reject'
+            | 'cancel'
+        )
+        return response.result
+      }
+    )
+
+    handlers.registerGetPulseRiskFactorsWorkflowProposal(
+      async (ctx, request) => {
+        // Check if approval workflows feature is enabled
+        if (!hasFeature('APPROVAL_WORKFLOWS')) {
+          throw new Error('Approval workflows feature is not enabled')
+        }
+
+        const riskFactorId = request.riskFactorId
+        if (riskFactorId) {
+          const proposal =
+            await riskService.workflowGetPendingRiskFactorProposal(riskFactorId)
+          return proposal ? [proposal] : []
+        }
+        return await riskService.workflowGetPendingRiskFactorProposals()
+      }
+    )
 
     handlers.registerPostRiskFactorsImport(async (ctx, request) => {
       const { file } = request.ImportConsoleDataRequest

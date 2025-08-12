@@ -74,6 +74,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { DrsValuesResponse } from '@/@types/openapi-internal/DrsValuesResponse'
 import { DefaultApiGetDrsValuesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
+import { RiskFactorApproval } from '@/@types/openapi-internal/RiskFactorApproval'
 import { updateInMongoWithVersionCheck } from '@/utils/downstream-version'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { VersionHistoryTable } from '@/models/version-history'
@@ -692,6 +693,70 @@ export class RiskRepository {
     const deleteItemInput: DeleteCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.RISK_CLASSIFICATION_APPROVAL(this.tenantId, version),
+    }
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+  }
+
+  // Risk Factors Approval methods
+  async getPendingRiskFactor(
+    riskFactorId: string
+  ): Promise<RiskFactorApproval | null> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId, riskFactorId),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return result.Item ? (result.Item as RiskFactorApproval) : null
+  }
+
+  async getPendingRiskFactors(): Promise<RiskFactorApproval[]> {
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId).PartitionKeyID,
+      },
+    }
+    const result = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+    // Log partition/sort keys and risk factor id for each item
+    logger.info(
+      'Found partition and sort keys:',
+      result.Items?.map((item) => ({
+        PartitionKeyID: item.PartitionKeyID,
+        SortKeyID: item.SortKeyID,
+        riskFactorId: item.riskFactor?.id,
+      }))
+    )
+
+    return result.Items
+      ? (result.Items.map((item) =>
+          omit(item, ['PartitionKeyID', 'SortKeyID'])
+        ) as RiskFactorApproval[])
+      : []
+  }
+
+  // Sets (creates or updates) the RiskFactorApproval object in DynamoDB for the given riskFactorId (or 'LATEST' if not provided).
+  async setPendingRiskFactorsConfig(
+    riskFactorId: string,
+    approval: RiskFactorApproval
+  ): Promise<RiskFactorApproval> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId, riskFactorId),
+        ...approval,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    return approval
+  }
+
+  // Deletes the RiskFactorConfigApproval object from DynamoDB for the given riskFactorId (or 'LATEST' if not provided).
+  async deletePendingRiskFactorConfig(riskFactorId: string): Promise<void> {
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId, riskFactorId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }

@@ -393,6 +393,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteRiskClassificationApprovals.bind(this),
         order: 24,
       },
+      RISK_FACTORS_APPROVAL: {
+        method: this.deleteRiskFactorsApprovals.bind(this),
+        order: 25,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -901,6 +905,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Risk Classification Approval'
+    )
+  }
+
+  private async deleteRiskFactorsApprovals(tenantId: string) {
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId =
+      DynamoDbKeys.RISK_FACTORS_APPROVAL(tenantId).PartitionKeyID
+
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Risk Factors Approval'
     )
   }
 

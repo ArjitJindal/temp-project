@@ -309,6 +309,8 @@ Cypress.Commands.add('toggleFeatures', (features) => {
                     'CASE_COMMENT',
                     'ALERT_STATUS_UPDATE',
                     'CASE_STATUS_UPDATE',
+                    'RISK_CLASSIFICATION_APPROVAL',
+                    'RISK_FACTORS_APPROVAL',
                   ],
                 },
               }

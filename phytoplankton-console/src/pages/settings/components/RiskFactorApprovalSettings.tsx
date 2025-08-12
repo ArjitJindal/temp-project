@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import Button from '@/components/library/Button';
-import { ApiException, RiskLevelApprovalWorkflow } from '@/apis';
+import { ApiException, RiskFactorsApprovalWorkflow } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -16,10 +16,11 @@ import { WORKFLOWS_ITEM } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
-export const RiskLevelApprovalSettings: React.FC = () => {
+export const RiskFactorApprovalSettings: React.FC = () => {
   const api = useApi();
   const queryClient = useQueryClient();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+  // todo: use factors permissions
   const permissions = useHasResources(['write:::settings/risk-scoring/risk-levels-approval/*']);
   const [roles, isLoadingRoles] = useRoles();
 
@@ -35,14 +36,14 @@ export const RiskLevelApprovalSettings: React.FC = () => {
 
   // Fetch current workflow configuration
   const currentWorkflowQueryResult = useQuery(
-    WORKFLOWS_ITEM('risk-levels-approval', '_default'),
-    async (): Promise<RiskLevelApprovalWorkflow | null> => {
+    WORKFLOWS_ITEM('risk-factors-approval', '_default'),
+    async (): Promise<RiskFactorsApprovalWorkflow | null> => {
       try {
         const workflow = await api.getWorkflowById({
-          workflowType: 'risk-levels-approval',
+          workflowType: 'risk-factors-approval',
           workflowId: '_default',
         });
-        return workflow as unknown as RiskLevelApprovalWorkflow | null;
+        return workflow as unknown as RiskFactorsApprovalWorkflow;
       } catch (error) {
         if (error instanceof ApiException && error.code === 404) {
           return null;
@@ -68,8 +69,8 @@ export const RiskLevelApprovalSettings: React.FC = () => {
       const closeMessage = message.loading('Applying changes...');
       try {
         const payload = {
-          riskLevelApprovalWorkflow: {
-            name: 'Rule Approval - Reviewer Workflow',
+          riskFactorsApprovalWorkflow: {
+            name: 'Risk Factor Approval Workflow - Reviewer Workflow',
             description:
               'Single-step rule approval workflow where a reviewer role can approve or reject rule change proposals',
             enabled: true,
@@ -78,7 +79,7 @@ export const RiskLevelApprovalSettings: React.FC = () => {
         };
 
         return await api.postWorkflowVersion({
-          workflowType: 'risk-levels-approval',
+          workflowType: 'risk-factors-approval',
           workflowId: '_default',
           CreateWorkflowType: payload,
         });
@@ -88,11 +89,11 @@ export const RiskLevelApprovalSettings: React.FC = () => {
     },
     {
       onSuccess: async () => {
-        message.success('Risk level approval role updated successfully');
-        await queryClient.invalidateQueries(WORKFLOWS_ITEM('risk-levels-approval', '_default'));
+        message.success('Risk factor approval role updated successfully');
+        await queryClient.invalidateQueries(WORKFLOWS_ITEM('risk-factors-approval', '_default'));
       },
       onError: (error) => {
-        message.error('Failed to update risk level approval role', {
+        message.error('Failed to update risk factor approval role', {
           details: getErrorMessage(error),
         });
       },
@@ -118,8 +119,8 @@ export const RiskLevelApprovalSettings: React.FC = () => {
     <AsyncResourceRenderer resource={currentWorkflowQueryResult.data}>
       {() => (
         <SettingsCard
-          title="Risk Level Approval Role"
-          description="Configure the role that can approve or reject risk level changes. When this role is changed, a new default workflow will be created with the new role."
+          title="Risk Factor Approval Role"
+          description="Configure the role that can approve or reject risk factor changes. When this role is changed, a new default workflow will be created with the new role."
           minRequiredResources={['read:::settings/risk-scoring/risk-levels-approval/*']}
         >
           <div style={{ marginBottom: '16px' }}>

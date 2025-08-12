@@ -16,13 +16,18 @@ import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { CounterRepository, CounterEntity } from '@/services/counter/repository'
+import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
 
 interface WorkflowServiceDeps {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
 }
 
-export type Workflow = CaseWorkflow | AlertWorkflow | RiskLevelApprovalWorkflow
+export type Workflow =
+  | CaseWorkflow
+  | AlertWorkflow
+  | RiskLevelApprovalWorkflow
+  | RiskFactorsApprovalWorkflow
 
 type InternalWorkflow = Workflow & {
   PartitionKeyID: string

@@ -5,11 +5,14 @@ import { neverReturn } from '@/utils/lang';
 import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 import { getNextStatus, statusEscalated, statusInReview } from '@/utils/case-utils';
 import Button from '@/components/library/Button';
-import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
+import { useSendProposalActionMutation as useSendRiskLevelsProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
+import { useSendProposalActionMutation as useSendRiskFactorsProposalActionMutation } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useQuery } from '@/utils/queries/hooks';
+import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 import { map, success } from '@/utils/asyncResource';
+import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
 
 interface Props {
   notification: Notification;
@@ -17,10 +20,20 @@ interface Props {
 
 export default function NotificationMessage(props: Props) {
   const { notification } = props;
-  const sendProposalActionMutation = useSendProposalActionMutation();
+  const sendRiskLevelsProposalActionMutation = useSendRiskLevelsProposalActionMutation();
+  const sendRiskFactorsProposalActionMutation = useSendRiskFactorsProposalActionMutation();
 
+  const api = useApi();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
-  const { data: pendingProposalRes } = usePendingProposal();
+  const { data: pendingProposalRes } = useQuery(
+    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
+    async () => {
+      return await api.getPulseRiskClassificationWorkflowProposal();
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
   const isPendingApprovalRes = useMemo(() => {
     if (!isApprovalWorkflowsEnabled) {
       return success(false);
@@ -139,7 +152,7 @@ export default function NotificationMessage(props: Props) {
                 <Button
                   type={'PRIMARY'}
                   onClick={() => {
-                    sendProposalActionMutation.mutate({ action: 'accept' });
+                    sendRiskLevelsProposalActionMutation.mutate({ action: 'accept' });
                   }}
                 >
                   Accept
@@ -147,7 +160,7 @@ export default function NotificationMessage(props: Props) {
                 <Button
                   type={'DANGER'}
                   onClick={() => {
-                    sendProposalActionMutation.mutate({ action: 'reject' });
+                    sendRiskLevelsProposalActionMutation.mutate({ action: 'reject' });
                   }}
                 >
                   Reject
@@ -158,6 +171,49 @@ export default function NotificationMessage(props: Props) {
             )
           }
         </AsyncResourceRenderer>
+      </>
+    );
+  } else if (notification.notificationType === 'RISK_FACTORS_APPROVAL') {
+    // Extract risk factor ID from the notification data
+    const riskFactorId = notification.notificationData?.approval?.id;
+
+    return (
+      <>
+        <Author {...props} />
+        {' updated '}
+        <Entity {...props} />
+        {'and waiting for approval'}
+        {riskFactorId && (
+          <div
+            className={s.buttons}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <Button
+              type={'PRIMARY'}
+              onClick={() => {
+                sendRiskFactorsProposalActionMutation.mutate({
+                  riskFactorId,
+                  action: 'accept',
+                });
+              }}
+            >
+              Accept
+            </Button>
+            <Button
+              type={'DANGER'}
+              onClick={() => {
+                sendRiskFactorsProposalActionMutation.mutate({
+                  riskFactorId,
+                  action: 'reject',
+                });
+              }}
+            >
+              Reject
+            </Button>
+          </div>
+        )}
       </>
     );
   } else {
@@ -182,6 +238,8 @@ function Entity(props: Props) {
     label = 'a user ';
   } else if (notification.entityType === 'RISK_LEVELS') {
     label = 'a risk levels ';
+  } else if (notification.entityType === 'RISK_FACTORS') {
+    label = 'a risk factor ';
   } else {
     label = neverReturn(notification.entityType, 'unknown object');
   }

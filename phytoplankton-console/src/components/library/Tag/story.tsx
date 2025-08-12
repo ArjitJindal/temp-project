@@ -24,6 +24,7 @@ import { USER_STATES } from '@/apis/models-custom/UserState';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import SanctionsHitStatusTag from '@/components/ui/SanctionsHitStatusTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 
 function TagsList<T>(props: { items: T[]; children: (value: T) => JSX.Element }) {
   return (
@@ -159,6 +160,9 @@ export default function (): JSX.Element {
         <TagsList items={['Some tooltip title']}>
           {(x) => <RecommendedTag tooltipTitle={x} />}
         </TagsList>
+      </UseCase>
+      <UseCase title={'PendingApprovalTag'}>
+        <PendingApprovalTag />
       </UseCase>
       <UseCase title={'RuleHitInsightsTag'}>
         <PropertyMatrix xLabel="Percentage" x={[0, 1, 5, 10, 100]} yLabel="Runs" y={[0, 10, 100]}>

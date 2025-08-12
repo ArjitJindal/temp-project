@@ -39,5 +39,9 @@ export const NOTIFICATION_TYPES: {
       label: 'When a change to risk levels requires approval.',
       value: ['RISK_CLASSIFICATION_APPROVAL'],
     },
+    {
+      label: 'When a change to a risk factor requires approval.',
+      value: ['RISK_FACTORS_APPROVAL'],
+    },
   ],
 };

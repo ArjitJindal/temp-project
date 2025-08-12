@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
+import { pickBy } from 'lodash';
 import ValuesTable from '../../risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/ValuesTable';
 import { ScopeSelectorValue, scopeToRiskEntityType } from './utils';
 import s from './styles.module.less';
@@ -7,9 +8,12 @@ import { riskFactorsAtom, useTempRiskFactors } from '@/store/risk-factors';
 import { message } from '@/components/library/Message';
 import { RiskFactor } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';
+import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/types';
+import ApprovalHeader from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader';
+import SpecialAttributesChanges from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/SpecialAttributesChanges';
 
 type Props = {
-  riskFactor: RiskFactor;
+  riskFactor: RiskFactorRow;
   mode: 'simulation' | 'normal' | 'version-history';
   jobId?: string;
   activeIterationIndex: number;
@@ -45,6 +49,8 @@ export const ExpandedComponent = (props: Props) => {
     isSimulation: true,
   });
 
+  const [showPendingProposalFlag, setShowPendingProposalFlag] = useState(true);
+
   if (isSimulation) {
     return (
       <div className={s.expandedRow}>
@@ -75,12 +81,30 @@ export const ExpandedComponent = (props: Props) => {
   } else {
     return (
       <div className={s.expandedRow}>
+        {riskFactor.proposal && (
+          <div className={s.approvalHeader}>
+            <ApprovalHeader
+              riskFactorId={riskFactor.id}
+              showProposalState={[showPendingProposalFlag, setShowPendingProposalFlag]}
+              pendingProposal={riskFactor.proposal}
+              onProposalActionSuccess={() => {}}
+            />
+            <SpecialAttributesChanges pendingProposal={riskFactor.proposal} riskItem={riskFactor} />
+          </div>
+        )}
         <ValuesTable
-          entity={updatedRiskFactor || riskFactor}
+          entity={
+            updatedRiskFactor || {
+              ...riskFactor,
+              ...(showPendingProposalFlag && riskFactor.proposal?.riskFactor
+                ? pickBy(riskFactor.proposal.riskFactor, (v) => v != null)
+                : {}),
+            }
+          }
           onSave={(updatedEntity) => {
             setRiskFactors(updatedEntity);
           }}
-          canEditParameters={canWriteRiskFactors}
+          canEditParameters={canWriteRiskFactors && !riskFactor.proposal}
         />
       </div>
     );

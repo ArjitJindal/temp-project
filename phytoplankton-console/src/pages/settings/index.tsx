@@ -5,6 +5,7 @@ import { WebhookConfigurations } from './components/WebhookConfigurations';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { RiskLevelApprovalSettings } from './components/RiskLevelApprovalSettings';
+import { RiskFactorApprovalSettings } from './components/RiskFactorApprovalSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
 import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import { RiskAlgorithmsSettings } from './components/RiskAlgorithmsSettings';
@@ -160,6 +161,7 @@ export default function SettingsPage() {
                 <RiskLevelSettings />
                 <Feature name="APPROVAL_WORKFLOWS">
                   <RiskLevelApprovalSettings />
+                  <RiskFactorApprovalSettings />
                 </Feature>
               </>
             ),

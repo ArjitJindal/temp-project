@@ -4,6 +4,7 @@ import RiskClassificationTable, {
   State,
   parseApiState,
   prepareApiState,
+  State as RiskClassificationTableState,
 } from '../RiskClassificationTable';
 import Header from './Header';
 import { useHasResources } from '@/utils/user-utils';
@@ -36,6 +37,8 @@ export default function RiskQualification(props: Props) {
   const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
   const api = useApi();
   const queryClient = useQueryClient();
+
+  const [showProposal, setShowProposal] = useState<RiskClassificationTableState | null>(null);
 
   const versionHistoryMutation = useMutation<RiskClassificationConfig, Error, { comment: string }>(
     async ({ comment }: { comment: string }) => {
@@ -79,8 +82,8 @@ export default function RiskQualification(props: Props) {
             modalIdLabel="Risk level version"
             versionId={riskLevelId.id ?? ''}
             isDisabled={!riskValues.classificationValues.length || !isUpdateEnabled}
-            footerMessage={`Note that updating risk level would save the configuration as a new version ${
-              isApprovalWorkflowsEnabled ? ' Also, updating risk level would require approval' : ''
+            footerMessage={`Note that updating risk level would save the configuration as a new version${
+              isApprovalWorkflowsEnabled ? '. Also, updating risk level would require approval' : ''
             }.`}
           />
         )
@@ -89,15 +92,14 @@ export default function RiskQualification(props: Props) {
       {!isUpdateEnabled && (
         <Header
           riskValues={riskValues}
-          state={state}
-          showProposalState={[state, setState]}
+          showProposalState={[showProposal, setShowProposal]}
           updateEnabledState={[isUpdateEnabled, setIsUpdateEnabled]}
           requiredResources={['write:::risk-scoring/risk-levels/*']}
         />
       )}
       <RiskClassificationTable
-        state={state}
-        setState={setState}
+        state={showProposal != null ? showProposal : state}
+        setState={showProposal != null ? () => {} : setState}
         isDisabled={
           !riskValues.classificationValues.length || !hasRiskLevelPermission || !isUpdateEnabled
         }

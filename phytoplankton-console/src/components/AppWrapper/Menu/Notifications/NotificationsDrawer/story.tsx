@@ -174,6 +174,7 @@ function sampleNotification(notificationType: NotificationType, users: Account[]
       entityType = 'USER';
       break;
     case 'RISK_CLASSIFICATION_APPROVAL':
+    case 'RISK_FACTORS_APPROVAL':
       entityType = 'USER';
       break;
     default:

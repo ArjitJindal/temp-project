@@ -47,7 +47,7 @@ export default function VersionHistoryFooter<R>(props: Props<R>) {
       }}
       okText="Save"
       width="M"
-      okProps={{ isDisabled: mutation.isLoading }}
+      okProps={{ isLoading: mutation.isLoading }}
       cancelProps={{ isDisabled: mutation.isLoading }}
       maskClosable={!mutation.isLoading}
       cancelText="Cancel"

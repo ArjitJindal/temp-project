@@ -8,7 +8,6 @@ import { State as RiskClassificationTableState } from '@/pages/risk-levels/confi
 
 export type Props = {
   requiredResources?: Resource[];
-  state: RiskClassificationTableState | null;
   riskValues: RiskClassificationConfig;
   showProposalState: StatePair<RiskClassificationTableState | null>;
   updateEnabledState: StatePair<boolean>;

@@ -21,6 +21,20 @@ export interface AlertWorkflow extends BaseCaseAlertWorkflow {
   workflowType: 'alert'
 }
 
+export interface BaseApprovalWorkflow {
+  id: string
+  workflowType:
+    | 'risk-levels-approval'
+    | 'risk-factors-approval'
+    | 'rule-approval'
+  version: number
+  name: string
+  description?: string
+  author: string
+  enabled: boolean
+  approvalChain: string[]
+}
+
 export interface RiskLevelApprovalWorkflow {
   id: string
   workflowType: 'risk-levels-approval'
@@ -30,4 +44,12 @@ export interface RiskLevelApprovalWorkflow {
   author: string
   enabled: boolean
   approvalChain: string[]
+}
+
+export interface RiskFactorsApprovalWorkflow extends BaseApprovalWorkflow {
+  workflowType: 'risk-factors-approval'
+}
+
+export interface RuleApprovalWorkflow extends BaseApprovalWorkflow {
+  workflowType: 'rule-approval'
 }

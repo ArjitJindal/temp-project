@@ -4047,6 +4047,75 @@ paths:
         '400':
           description: Bad Request
     parameters: []
+  /risk-factors/workflowProposal:
+    get:
+      summary: Get pending risk factors approval
+      operationId: get-pulse-risk-factors-workflow-proposal
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: riskFactorId
+          description: Risk factor ID to get pending approval for
+      x-flagright:
+        resources:
+          - read:::risk-scoring/risk-factors
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskFactorApproval'
+        '404':
+          description: No pending approval found
+    post:
+      summary: Propose risk factors changes for approval
+      operationId: post-pulse-risk-factors-workflow-proposal
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-factors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactorApproval'
+        '400':
+          description: Bad Request
+    parameters: []
+  /risk-factors/workflowAction:
+    post:
+      summary: Approve or reject risk factors changes
+      operationId: post-pulse-risk-factors-workflow-action
+      x-flagright:
+        resources:
+          - write:::risk-scoring/risk-factors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorsApprovalRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactorApproval'
+        '400':
+          description: Bad Request
+    parameters: []
   /pulse/risk-assignment:
     parameters: []
     post:
@@ -11789,6 +11858,80 @@ components:
         - approvalStep
         - createdAt
         - createdBy
+    RiskFactorApproval:
+      type: object
+      title: RiskFactorApproval
+      properties:
+        action:
+          type: string
+          enum:
+            - create
+            - update
+            - delete
+        riskFactor:
+          $ref: '#/components/schemas/RiskFactor'
+        comment:
+          type: string
+        workflowRef:
+          $ref: '#/components/schemas/WorkflowRef'
+        approvalStatus:
+          $ref: '#/components/schemas/RiskFactorApprovalStatus'
+        approvalStep:
+          type: number
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+      required:
+        - action
+        - riskFactor
+        - comment
+        - workflowRef
+        - approvalStatus
+        - createdAt
+        - createdBy
+    RiskFactorApprovalStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - CANCELLED
+    RiskFactorsApprovalRequest:
+      type: object
+      title: RiskFactorsApprovalRequest
+      properties:
+        riskFactorId:
+          type: string
+        action:
+          type: string
+          enum:
+            - accept
+            - reject
+            - cancel
+          description: Whether to accept or reject the proposed changes
+      required:
+        - riskFactorId
+        - action
+    RiskFactorRequest:
+      type: object
+      title: RiskFactorRequest
+      properties:
+        riskFactor:
+          $ref: '#/components/schemas/RiskFactorsPostRequest'
+          nullable: true
+        action:
+          type: string
+          enum:
+            - create
+            - update
+            - delete
+        comment:
+          type: string
+      required:
+        - riskFactor
+        - action
+        - comment
     RiskClassificationApprovalStatus:
       type: string
       enum:
@@ -15820,6 +15963,8 @@ components:
             - DOCUMENT
             - RISK_CLASSIFICATION
             - RISK_CLASSIFICATION_PROPOSAL
+            - RISK_FACTOR
+            - RISK_FACTOR_PROPOSAL
             - DRS_RISK_LEVEL
             - PARAMETER_RISK_ITEM
             - ASSIGNMENT
@@ -17788,6 +17933,7 @@ components:
         - ALERT_STATUS_UPDATE
         - CASE_STATUS_UPDATE
         - RISK_CLASSIFICATION_APPROVAL
+        - RISK_FACTORS_APPROVAL
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -17926,6 +18072,7 @@ components:
             - ALERT
             - USER
             - RISK_LEVELS
+            - RISK_FACTORS
         notificationData:
           type: object
         consoleNotificationStatuses:

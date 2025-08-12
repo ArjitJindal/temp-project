@@ -8,20 +8,28 @@ import {
   RuleApprovalWorkflow,
   RuleApprovalWorkflowWorkflowTypeEnum,
   WorkflowRef,
+  RiskFactorsApprovalWorkflow,
+  RiskFactorsApprovalWorkflowWorkflowTypeEnum,
 } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { WORKFLOWS_ITEM_BY_REF } from '@/utils/queries/keys';
+import { QueryResult } from '@/utils/queries/types';
 
 export type CaseAlertWorkflowItem = CaseWorkflow | AlertWorkflow;
 
-export type WorkflowItem = CaseAlertWorkflowItem | RiskLevelApprovalWorkflow | RuleApprovalWorkflow;
+export type WorkflowItem =
+  | CaseAlertWorkflowItem
+  | RiskFactorsApprovalWorkflow
+  | RiskLevelApprovalWorkflow
+  | RuleApprovalWorkflow;
 
 export type WorkflowType =
   | CaseWorkflowWorkflowTypeEnum
   | AlertWorkflowWorkflowTypeEnum
   | RiskLevelApprovalWorkflowWorkflowTypeEnum
-  | RuleApprovalWorkflowWorkflowTypeEnum;
+  | RuleApprovalWorkflowWorkflowTypeEnum
+  | RiskFactorsApprovalWorkflowWorkflowTypeEnum;
 
 export function parseWorkflowType(type: unknown): WorkflowType {
   if (type === 'alert') {
@@ -36,7 +44,15 @@ export function parseWorkflowType(type: unknown): WorkflowType {
 /*
     Helpers
 */
-export function useWorkflow(workflowType: string, workflowRef?: WorkflowRef) {
+export function useWorkflow(
+  workflowType: RiskLevelApprovalWorkflowWorkflowTypeEnum,
+  workflowRef?: WorkflowRef,
+): QueryResult<RiskLevelApprovalWorkflow>;
+export function useWorkflow(
+  workflowType: RiskFactorsApprovalWorkflowWorkflowTypeEnum,
+  workflowRef?: WorkflowRef,
+): QueryResult<RiskFactorsApprovalWorkflow>;
+export function useWorkflow(workflowType: WorkflowType, workflowRef?: WorkflowRef) {
   const api = useApi();
   const workflowsQueryResult = useQuery(
     WORKFLOWS_ITEM_BY_REF(workflowRef),

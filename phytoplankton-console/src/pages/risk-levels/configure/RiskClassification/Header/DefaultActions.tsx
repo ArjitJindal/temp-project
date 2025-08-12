@@ -7,7 +7,6 @@ import RiskLevelsDownloadButton from '@/pages/risk-levels/configure/components/R
 export default function DefaultActions(props: Props) {
   const { riskValues, updateEnabledState } = props;
   const [isUpdateEnabled, setIsUpdateEnabled] = updateEnabledState;
-
   return (
     <>
       {!isUpdateEnabled && (

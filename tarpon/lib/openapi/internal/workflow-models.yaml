@@ -103,7 +103,7 @@ components:
           properties:
             workflowType:
               type: string
-              enum: [risk-levels-approval, rule-approval]
+              enum: [risk-levels-approval, risk-factors-approval, rule-approval]
             approvalChain:
               type: array
               items:
@@ -124,6 +124,17 @@ components:
           required:
             - workflowType
 
+    RiskFactorsApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [risk-factors-approval]
+          required:
+            - workflowType
+
     RuleApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/BaseApprovalWorkflow'
@@ -141,15 +152,27 @@ components:
         workflows:
           type: array
           items:
-            oneOf:
-              - $ref: '#/components/schemas/CaseWorkflow'
-              - $ref: '#/components/schemas/AlertWorkflow'
-              - $ref: '#/components/schemas/RiskLevelApprovalWorkflow'
-              - $ref: '#/components/schemas/RuleApprovalWorkflow'
+            $ref: '#/components/schemas/AnyWorkflow'
+
+    AnyWorkflow:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/CaseWorkflow'
+        - $ref: '#/components/schemas/AlertWorkflow'
+        - $ref: '#/components/schemas/RiskLevelApprovalWorkflow'
+        - $ref: '#/components/schemas/RiskFactorsApprovalWorkflow'
+        - $ref: '#/components/schemas/RuleApprovalWorkflow'
 
     WorkflowType:
       type: string
-      enum: [case, alert, risk-levels-approval, rule-approval]
+      enum:
+        [
+          case,
+          alert,
+          risk-levels-approval,
+          risk-factors-approval,
+          rule-approval,
+        ]
 
     # Creation schemas for AWS API Gateway compatibility
     CreateBaseWorkflow:
@@ -188,6 +211,10 @@ components:
         - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
 
     CreateRuleApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateRiskFactorsApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
 

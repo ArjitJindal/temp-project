@@ -1,14 +1,28 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ScopeSelectorValue } from './utils';
 import { useTableColumns } from './hooks/useTableColumns';
 import { ExpandedComponent } from './ExpandedComponent';
 import { TableHeader } from './TableHeader';
 import { RiskFactor } from '@/apis';
-import { TableRefType } from '@/components/library/Table/types';
+import { isSingleRow, TableData, TableRefType } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { QueryResult } from '@/utils/queries/types';
+import { map, QueryResult } from '@/utils/queries/types';
 import { makeUrl } from '@/utils/routing';
+import { useQuery } from '@/utils/queries/hooks';
+import { RISK_FACTOR_WORKFLOW_PROPOSAL_LIST } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  failed,
+  init,
+  isFailed,
+  isInit,
+  isLoading,
+  isSuccess,
+  loading,
+} from '@/utils/asyncResource';
+import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/types';
 
 interface Props {
   type: string;
@@ -27,7 +41,7 @@ export default function RiskFactorsTable(props: Props) {
     type,
     mode,
     simulationRiskFactors,
-    queryResults,
+    queryResults: queryResultsFactory,
     activeIterationIndex = 1,
     jobId,
     canEditRiskFactors = true,
@@ -39,6 +53,7 @@ export default function RiskFactorsTable(props: Props) {
   const [selectedSection, setSelectedSection] = useState<ScopeSelectorValue>(
     type as ScopeSelectorValue,
   );
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
 
   const riskFactorsColumns = useTableColumns({
     actionRef,
@@ -48,6 +63,96 @@ export default function RiskFactorsTable(props: Props) {
     mode,
     handleSimulationSave: handleSimulationSave || (() => {}),
   });
+
+  const queryResults: QueryResult<{ items: RiskFactor[] }> = useMemo(() => {
+    return queryResultsFactory(selectedSection);
+  }, [queryResultsFactory, selectedSection]);
+
+  const api = useApi();
+  const { data: pendingProposalRes } = useQuery(
+    RISK_FACTOR_WORKFLOW_PROPOSAL_LIST(),
+    async () => {
+      const proposals = await api.getPulseRiskFactorsWorkflowProposal();
+      return proposals;
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+
+  // Merging query results with pending proposals
+  const queryResultsWithProposals: QueryResult<TableData<RiskFactorRow>> = useMemo(() => {
+    if (!queryResults) {
+      return {
+        data: init(),
+        refetch: () => {},
+      };
+    }
+    if (!isApprovalWorkflowsEnabled) {
+      return queryResults;
+    }
+    if (isFailed(pendingProposalRes)) {
+      return {
+        data: failed(pendingProposalRes.message),
+        refetch: () => {},
+      };
+    }
+    if (isLoading(pendingProposalRes) || isInit(pendingProposalRes)) {
+      return {
+        data: loading(),
+        refetch: () => {},
+      };
+    }
+    const proposals = pendingProposalRes.value;
+    if (isApprovalWorkflowsEnabled && !isSuccess(pendingProposalRes)) {
+      return {
+        data: loading(),
+        refetch: () => {},
+      };
+    }
+
+    return map(queryResults, (data): TableData<RiskFactorRow> => {
+      const newRiskFactorsRows = proposals
+        .filter((x) => {
+          if (x.action !== 'create') {
+            return false;
+          }
+          switch (x.riskFactor.type) {
+            case 'CONSUMER_USER':
+              return type === 'consumer';
+            case 'BUSINESS':
+              return type === 'business';
+            case 'TRANSACTION':
+              return type === 'transaction';
+          }
+          return false;
+        })
+        .map((proposal): RiskFactorRow => {
+          return {
+            ...proposal.riskFactor,
+            proposal: proposal,
+          };
+        });
+
+      return {
+        ...data,
+        items: [
+          ...newRiskFactorsRows,
+          ...data.items.map((item) => {
+            return {
+              ...item,
+              proposal: proposals.find(
+                (x) =>
+                  (x.action === 'update' || x.action === 'delete') &&
+                  isSingleRow(item) &&
+                  x.riskFactor.id === item.id,
+              ),
+            };
+          }),
+        ],
+      };
+    });
+  }, [queryResults, pendingProposalRes, isApprovalWorkflowsEnabled, type]);
 
   return (
     <>
@@ -62,11 +167,11 @@ export default function RiskFactorsTable(props: Props) {
         }}
         mode={mode}
       />
-      <QueryResultsTable<RiskFactor>
+      <QueryResultsTable<RiskFactorRow>
         rowKey="id"
         tableId={`custom-risk-factors-${selectedSection}`}
         innerRef={actionRef}
-        queryResults={queryResults(selectedSection)}
+        queryResults={queryResultsWithProposals}
         columns={riskFactorsColumns}
         pagination={false}
         fitHeight={mode !== 'simulation'}

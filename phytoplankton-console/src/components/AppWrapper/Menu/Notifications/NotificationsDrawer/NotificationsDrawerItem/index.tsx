@@ -74,6 +74,24 @@ const getNotificationUrl = (notification: Notification) => {
   if (notificationType === 'RISK_CLASSIFICATION_APPROVAL') {
     return '/risk-levels/configure';
   }
+  if (notificationType === 'RISK_FACTORS_APPROVAL') {
+    // Extract risk factor ID and type from notification data and navigate to the risk factor
+    const riskFactorId = notification.notificationData?.approval?.id;
+    const riskFactorType = notification.notificationData?.approval?.riskFactorType;
+    if (riskFactorId) {
+      // Map the risk factor type to the URL parameter
+      let typeParam = 'consumer'; // Default
+      if (riskFactorType === 'CONSUMER_USER') {
+        typeParam = 'consumer';
+      } else if (riskFactorType === 'BUSINESS') {
+        typeParam = 'business';
+      } else if (riskFactorType === 'TRANSACTION') {
+        typeParam = 'transaction';
+      }
+      return `/risk-levels/risk-factors/${typeParam}/${riskFactorId}/read`;
+    }
+    return '/risk-levels/risk-factors';
+  }
   switch (entityType) {
     case 'ALERT': {
       const caseId = metadata?.alert?.caseId;

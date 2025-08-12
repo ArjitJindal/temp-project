@@ -8,7 +8,10 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { intersection, padStart, pick } from 'lodash'
-import { RiskLevelApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import {
+  RiskLevelApprovalWorkflowMachine,
+  RiskFactorsApprovalWorkflowMachine,
+} from '@flagright/lib/classes/workflow-machine'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { CounterRepository } from '../counter/repository'
@@ -39,6 +42,8 @@ import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { WorkflowRef } from '@/@types/openapi-internal/WorkflowRef'
 import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
+import { RiskFactorApproval } from '@/@types/openapi-internal/RiskFactorApproval'
+import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
 import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-internal/RiskClassificationApprovalRequest'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
@@ -78,6 +83,12 @@ type DrsRiskItemAuditLogReturnData = AuditLogReturnData<
   DrsScore,
   DrsScore,
   DrsScore
+>
+
+type RiskFactorApprovalAuditLogReturnData = AuditLogReturnData<
+  RiskFactorApproval,
+  RiskFactorApproval,
+  RiskFactorApproval
 >
 
 @traceable
@@ -863,6 +874,325 @@ export class RiskService {
     }
 
     return pendingApproval
+  }
+
+  /**
+   * Proposes a change to risk factors (creates a pending approval)
+   */
+  // This method is used to propose a change to a risk factor
+  // It can be used to CREATE, UPDATE or DELETE a risk factor
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_PROPOSAL', 'CREATE')
+  async workflowProposeRiskFactorChange(
+    riskFactor: RiskFactorsPostRequest,
+    action: 'create' | 'update' | 'delete',
+    comment: string
+  ): Promise<RiskFactorApprovalAuditLogReturnData> {
+    // fetch the workflow definition
+    const workflowDefinition = await this.workflowService.getWorkflow(
+      'risk-factors-approval',
+      '_default'
+    )
+    if (!workflowDefinition) {
+      throw new BadRequest('Risk factors approval workflow not found')
+    }
+    const workflowRef: WorkflowRef = {
+      id: workflowDefinition.id,
+      version: workflowDefinition.version,
+    }
+
+    // validate the request and set variables for the approval object
+    let riskFactorId: string
+    let existingRiskFactor: RiskFactor | null = null
+
+    if (action === 'delete') {
+      if (!riskFactor.riskFactorId) {
+        throw new BadRequest(
+          'riskFactorId must be provided when action is delete'
+        )
+      }
+
+      riskFactorId = riskFactor.riskFactorId
+
+      // check that the risk factor exists
+      existingRiskFactor = await this.riskRepository.getRiskFactor(riskFactorId)
+      if (!existingRiskFactor) {
+        throw new BadRequest(`Risk factor ${riskFactor.riskFactorId} not found`)
+      }
+
+      // check that the risk factor is not already pending approval
+      const existingPending = await this.riskRepository.getPendingRiskFactor(
+        riskFactorId
+      )
+      if (existingPending && existingPending.approvalStatus === 'PENDING') {
+        throw new BadRequest(
+          `There is already a pending risk factor change for ${riskFactorId}. Please approve or reject the current proposal first.`
+        )
+      }
+    } else if (action === 'create') {
+      // ensure no risk factor id is provided
+      if (riskFactor.riskFactorId) {
+        throw new BadRequest(
+          'riskFactorId must not be provided when action is create'
+        )
+      }
+
+      // create a new risk factor id
+      riskFactorId = await this.getNewRiskFactorId(undefined, true)
+    } else if (action === 'update') {
+      // ensure a risk factor id is provided
+      if (!riskFactor.riskFactorId) {
+        throw new BadRequest(
+          'riskFactorId must be provided when action is update'
+        )
+      }
+
+      riskFactorId = riskFactor.riskFactorId
+
+      // check that the risk factor exists
+      existingRiskFactor = await this.riskRepository.getRiskFactor(
+        riskFactor.riskFactorId
+      )
+      if (!existingRiskFactor) {
+        throw new BadRequest(`Risk factor ${riskFactor.riskFactorId} not found`)
+      }
+
+      // check that the risk factor is not already pending approval
+      const existingPending = await this.riskRepository.getPendingRiskFactor(
+        riskFactor.riskFactorId
+      )
+      if (existingPending && existingPending.approvalStatus === 'PENDING') {
+        throw new BadRequest(
+          `There is already a pending risk factor change for ${riskFactor.riskFactorId}. Please approve or reject the current proposal first.`
+        )
+      }
+    } else {
+      throw new BadRequest('Invalid action')
+    }
+
+    const riskFactorConfig: RiskFactor = {
+      ...riskFactor,
+      id: riskFactorId,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    // Create the approval object
+    const approval: RiskFactorApproval = {
+      action,
+      riskFactor: riskFactorConfig,
+      comment,
+      workflowRef,
+      approvalStatus: 'PENDING',
+      approvalStep: 0,
+      createdAt: Date.now(),
+      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+    }
+
+    // Store the pending approval
+    // NOTE: if a previous approval exists, it will be overwritten
+    // (we check above to ensure that there is no PENDING approval)
+    await this.riskRepository.setPendingRiskFactorsConfig(
+      riskFactorId,
+      approval
+    )
+
+    return {
+      entities: [
+        {
+          newImage: approval,
+          entityId: 'RISK_FACTORS_APPROVAL',
+        },
+      ],
+      result: approval,
+    }
+  }
+
+  /**
+   * Approves, rejects, or cancels a change to risk factors
+   * @param action Either 'accept', 'reject', or 'cancel'
+   */
+  @auditLog('RISK_FACTOR', 'RISK_FACTOR_PROPOSAL', 'UPDATE')
+  async workflowApproveRiskFactorChange(
+    riskFactorId: string,
+    action: 'accept' | 'reject' | 'cancel'
+  ): Promise<RiskFactorApprovalAuditLogReturnData> {
+    const pendingApproval = await this.riskRepository.getPendingRiskFactor(
+      riskFactorId
+    )
+    // validate action
+    if (action !== 'accept' && action !== 'reject' && action !== 'cancel') {
+      throw new BadRequest('Invalid action')
+    }
+
+    // validate pending approval
+    if (!pendingApproval) {
+      throw new BadRequest(
+        `No pending risk factor approval found for ${riskFactorId}`
+      )
+    }
+
+    if (pendingApproval.approvalStatus === 'APPROVED') {
+      // should not happen, we always delete the approval object after approval
+      await this.riskRepository.deletePendingRiskFactorConfig(riskFactorId)
+      throw new BadRequest(
+        `Risk factor ${riskFactorId} change has already been approved`
+      )
+    }
+
+    if (pendingApproval.approvalStatus === 'REJECTED') {
+      // should not happen, we always delete the approval object after rejection
+      await this.riskRepository.deletePendingRiskFactorConfig(riskFactorId)
+      throw new BadRequest(
+        `Risk factor ${riskFactorId} change has already been rejected`
+      )
+    }
+
+    // Handle cancel action - only the author can cancel at step 0
+    if (action === 'cancel') {
+      const currentUserId = getContext()?.user?.id
+      if (!currentUserId) {
+        throw new BadRequest('User context not available')
+      }
+
+      // Only the author can cancel the proposal
+      if (pendingApproval.createdBy !== currentUserId) {
+        throw new BadRequest('Only the author can cancel the proposal')
+      }
+
+      // Only allow cancellation at step 0 (first step)
+      if (pendingApproval.approvalStep !== 0) {
+        throw new BadRequest('Can only cancel at the first step of approval')
+      }
+
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskFactorConfig(riskFactorId)
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'CANCELLED' },
+            entityId: 'RISK_FACTORS_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'CANCELLED' },
+      }
+    }
+
+    // fetch the workflow definition
+    const wRef = pendingApproval.workflowRef
+    if (!wRef) {
+      throw new BadRequest('No workflow reference found')
+    }
+    // TODO: make types uniform and get rid of toString() cast
+    const workflow = await this.workflowService.getWorkflowVersion(
+      'risk-factors-approval',
+      wRef.id,
+      wRef.version.toString()
+    )
+    const workflowMachine = new RiskFactorsApprovalWorkflowMachine(
+      workflow as RiskFactorsApprovalWorkflow
+    )
+
+    // ensure the user performing the action has the role referenced in the current step of the workflow
+    const currentStep = workflowMachine.getApprovalStep(
+      pendingApproval.approvalStep as number
+    )
+    if (currentStep.role !== getContext()?.user?.role) {
+      // TODO: keeping this check disabled in backend for now
+      // throw new BadRequest('User does not have the role required to perform this action')
+    }
+
+    if (action === 'reject') {
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskFactorConfig(riskFactorId)
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'REJECTED' },
+            entityId: 'RISK_FACTORS_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'REJECTED' },
+      }
+    }
+
+    // Handle accept action - last step
+    if (currentStep.isLastStep) {
+      const riskFactorId = pendingApproval.riskFactor.id
+      // perform the appropriate update operation based on the action
+      if (pendingApproval.action === 'delete') {
+        await this.deleteRiskFactor(riskFactorId)
+      } else if (
+        pendingApproval.action === 'create' ||
+        pendingApproval.action === 'update'
+      ) {
+        await this.createOrUpdateRiskFactor(
+          pendingApproval.riskFactor,
+          riskFactorId
+        )
+      } else {
+        throw new BadRequest('Invalid action')
+      }
+
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskFactorConfig(riskFactorId)
+
+      return {
+        entities: [
+          {
+            oldImage: pendingApproval,
+            newImage: { ...pendingApproval, approvalStatus: 'APPROVED' },
+            entityId: 'RISK_FACTORS_APPROVAL',
+          },
+        ],
+        result: { ...pendingApproval, approvalStatus: 'APPROVED' },
+      }
+    }
+
+    // Handle accept action - not last step
+    // Update the approval object with the next step
+    await this.riskRepository.setPendingRiskFactorsConfig(riskFactorId, {
+      ...pendingApproval,
+      approvalStep: (pendingApproval.approvalStep as number) + 1,
+    })
+
+    // NOTE: Notifications for approval are handled by the audit log consumer
+
+    return {
+      entities: [
+        {
+          oldImage: pendingApproval,
+          newImage: { ...pendingApproval, approvalStatus: 'PENDING' },
+          entityId: 'RISK_FACTORS_APPROVAL',
+        },
+      ],
+      result: { ...pendingApproval, approvalStatus: 'PENDING' },
+    }
+  }
+
+  /**
+   * Gets the pending risk factors change approval if it exists
+   */
+  async workflowGetPendingRiskFactorProposal(
+    riskFactorId: string
+  ): Promise<RiskFactorApproval | null> {
+    const pendingApproval = await this.riskRepository.getPendingRiskFactor(
+      riskFactorId
+    )
+
+    if (!pendingApproval) {
+      return null
+    }
+
+    return pendingApproval
+  }
+
+  async workflowGetPendingRiskFactorProposals(): Promise<RiskFactorApproval[]> {
+    const pendingApprovals = await this.riskRepository.getPendingRiskFactors()
+    return pendingApprovals
   }
 }
 

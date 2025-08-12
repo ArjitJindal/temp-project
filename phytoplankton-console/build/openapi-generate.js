@@ -194,8 +194,6 @@ fi`);
     'src/apis/models/SimulationGetResponse.ts',
     'src/apis/models/SimulationRiskLevelsAndRiskFactorsResultResponse.ts',
   ]);
-  replaceWorkflow(['src/apis/models/WorkflowResponse.ts']);
-  replaceWorkflowDefaultApi(['src/apis/apis/DefaultApi.ts']);
 
   exec('npx prettier --write src/apis');
 }

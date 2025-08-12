@@ -1,4 +1,4 @@
-# TODO: unify workflow-routes and workflow-models
+lib/openapi/internal/workflow-routes.yaml# TODO: unify workflow-routes and workflow-models
 openapi: 3.0.0
 info:
   title: Workflow Routes
@@ -31,11 +31,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
 
     patch:
       summary: Update the enabled status of the latest workflow version
@@ -81,12 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
-
+                $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
   /workflows/{workflowType}/{workflowId}/{version}:
     get:
       summary: Get a specific version of a workflow
@@ -113,11 +104,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
 
   /workflows/{workflowType}:
     post:
@@ -141,11 +128,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                  - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
 
     get:
       summary: Get all workflows of a specific type
@@ -164,11 +147,7 @@ paths:
               schema:
                 type: array
                 items:
-                  oneOf:
-                    - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                  $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
 
   /workflows/{workflowType}/statuses:
     get:
@@ -211,11 +190,7 @@ paths:
               schema:
                 type: array
                 items:
-                  oneOf:
-                    - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                  $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
   /workflows:
     get:
       summary: Get all workflows of all types
@@ -254,11 +229,7 @@ paths:
               schema:
                 type: array
                 items:
-                  oneOf:
-                    - $ref: 'workflow-models.yaml#/components/schemas/CaseWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/AlertWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RiskLevelApprovalWorkflow'
-                    - $ref: 'workflow-models.yaml#/components/schemas/RuleApprovalWorkflow'
+                  $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
 
 components:
   schemas:
@@ -272,6 +243,8 @@ components:
           $ref: 'workflow-models.yaml#/components/schemas/CreateAlertWorkflow'
         riskLevelApprovalWorkflow:
           $ref: 'workflow-models.yaml#/components/schemas/CreateRiskLevelApprovalWorkflow'
+        riskFactorsApprovalWorkflow:
+          $ref: 'workflow-models.yaml#/components/schemas/CreateRiskFactorsApprovalWorkflow'
         ruleApprovalWorkflow:
           $ref: 'workflow-models.yaml#/components/schemas/CreateRuleApprovalWorkflow'
 

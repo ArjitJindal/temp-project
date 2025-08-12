@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import { EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { useAtom } from 'jotai';
 import s from '../styles.module.less';
 import { ScopeSelectorValue, scopeToRiskEntityType } from '../utils';
 import { useOnMenuClick } from './useOnMenusClick';
+import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 import { riskFactorsAtom, riskFactorsEditEnabled, useTempRiskFactors } from '@/store/risk-factors';
 import { makeUrl } from '@/utils/routing';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -18,6 +18,8 @@ import Button from '@/components/library/Button';
 import { RiskFactor, RuleInstanceStatus } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';
 import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
+import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/types';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 
 interface UseTableColumnsProps {
   actionRef: React.RefObject<TableRefType>;
@@ -86,8 +88,8 @@ export function useTableColumns({
     handleSimulationSave,
   );
 
-  const columns: TableColumn<RiskFactor>[] = useMemo(() => {
-    const columnHelper = new ColumnHelper<RiskFactor>();
+  const columns: TableColumn<RiskFactorRow>[] = useMemo(() => {
+    const columnHelper = new ColumnHelper<RiskFactorRow>();
 
     return columnHelper.list([
       columnHelper.simple<'id'>({
@@ -99,7 +101,18 @@ export function useTableColumns({
             return (
               <div className={s.idWithTag}>
                 {entity.parameter ? (
-                  <Id onClick={() => actionRef.current?.expandRow(entity.id)}>{id}</Id>
+                  <Id
+                    to={
+                      makeUrl(`/risk-levels/risk-factors/:type`, {
+                        type: selectedSection,
+                      }) +
+                      '#' +
+                      id
+                    }
+                    onClick={() => actionRef.current?.expandRow(entity.id)}
+                  >
+                    {id}
+                  </Id>
                 ) : (
                   <Id
                     to={
@@ -118,11 +131,14 @@ export function useTableColumns({
                     {id}
                   </Id>
                 )}
-                {!entity.parameter && (
-                  <Tag key={entity.id} color="blue">
-                    Custom
-                  </Tag>
-                )}
+                <div className={s.tags}>
+                  {!entity.parameter && (
+                    <Tag key={entity.id} color="blue">
+                      Custom
+                    </Tag>
+                  )}
+                  {entity.proposal != null && <PendingApprovalTag />}
+                </div>
               </div>
             );
           },
@@ -153,7 +169,7 @@ export function useTableColumns({
         type: {
           ...BOOLEAN,
           render: (_, { item: entity }) => {
-            if (!entity.id) {
+            if (!entity.id || entity.proposal != null) {
               return <></>;
             }
 
@@ -210,7 +226,7 @@ export function useTableColumns({
                   <div className={s.actions}>
                     {canWriteRiskFactors && (
                       <Button
-                        icon={<EditOutlined />}
+                        icon={<EditLineIcon />}
                         size="MEDIUM"
                         type="SECONDARY"
                         onClick={() => handleEditRiskFactor(entity)}
@@ -220,11 +236,13 @@ export function useTableColumns({
                         Edit
                       </Button>
                     )}
-                    <ActionMenu
-                      entity={entity}
-                      onDuplicate={(entity) => onActionsMenuClick('duplicate', entity)}
-                      canWriteRiskFactors={canWriteRiskFactors && isEditEnabled}
-                    />
+                    {entity.proposal == null && (
+                      <ActionMenu
+                        entity={entity}
+                        onDuplicate={(entity) => onActionsMenuClick('duplicate', entity)}
+                        canWriteRiskFactors={canWriteRiskFactors && isEditEnabled}
+                      />
+                    )}
                   </div>
                 );
               },
