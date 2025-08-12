@@ -56,8 +56,8 @@ export const featureDescriptions: Record<
   ALERT_DETAILS_PAGE: {
     title: 'Alert details page',
     description: 'Enable showing alert details on a separate page',
-    tag: FeatureTag.WIP,
   },
+
   RISK_LEVELS: { title: 'Risk levels', description: 'Enable risk levels' },
   RISK_SCORING: { title: ' Risk scoring', description: 'Enables risk scoring' },
   SLACK_ALERTS: { title: 'Slack alerts', description: 'Enables slack alerts for cases' },
@@ -174,8 +174,8 @@ export const featureDescriptions: Record<
   CHAINALYSIS: {
     title: 'Chainalysis',
     description: 'Enables Chainalysis',
-    tag: FeatureTag.ENG,
   },
+
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',
