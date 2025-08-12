@@ -33,7 +33,6 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
-import { UserClickhouseRepository } from '../users/repositories/user-clickhouse-repository'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
 import {
@@ -115,10 +114,7 @@ import {
 import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import {
-  getClickhouseClient,
-  isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
 
@@ -459,17 +455,7 @@ export class CaseCreationService {
       userIds.add(transaction.destinationUserId)
     }
     if (userIds.size) {
-      if (isClickhouseMigrationEnabled()) {
-        const clickhouseClient = await getClickhouseClient(this.tenantId)
-        const clickhouseUserRepository = new UserClickhouseRepository(
-          this.tenantId,
-          clickhouseClient,
-          this.dynamoDb
-        )
-        return await clickhouseUserRepository.getUsersByIds([...userIds])
-      } else {
-        return await this.userRepository.getMongoUsersByIds([...userIds])
-      }
+      return await this.userRepository.getMongoUsersByIds([...userIds])
     } else {
       return []
     }

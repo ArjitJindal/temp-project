@@ -6,7 +6,6 @@ import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dyna
 import { AsyncBatchRecord } from '../rules-engine/utils'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
-import { UserClickhouseRepository } from '../users/repositories/user-clickhouse-repository'
 import { BatchRepository } from './batch-repository'
 import { BatchEntity } from './utils'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
@@ -35,10 +34,6 @@ import { BatchConsumerUserEventsWithRulesResult } from '@/@types/openapi-public/
 import { BatchConsumerUserEventWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventWithRulesResult'
 import { BatchBusinessUserEventsWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventsWithRulesResult'
 import { BatchBusinessUserEventWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventWithRulesResult'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
 
 const ID_ALREADY_EXISTS = 'ID_ALREADY_EXISTS'
 const ID_NOT_FOUND = 'ID_NOT_FOUND'
@@ -66,8 +61,7 @@ export class BatchImportService {
   private readonly batchRepository: BatchRepository
   private readonly userEventRepository: UserEventRepository
   private readonly transactionEventRepository: TransactionEventRepository
-  private readonly dynamoDb: DynamoDBDocumentClient
-  userClickhouseRepository?: UserClickhouseRepository
+
   constructor(
     private readonly tenantId: string,
     readonly connections: {
@@ -97,33 +91,8 @@ export class BatchImportService {
         mongoDb: connections.mongoDb,
       }
     )
-    this.dynamoDb = connections.dynamoDb
   }
 
-  private async getUserClickhouseRepository() {
-    if (this.userClickhouseRepository) {
-      return this.userClickhouseRepository
-    }
-    const clickhouseClient = await getClickhouseClient(this.tenantId)
-    this.userClickhouseRepository = new UserClickhouseRepository(
-      this.tenantId,
-      clickhouseClient,
-      this.dynamoDb
-    )
-    return this.userClickhouseRepository
-  }
-  private async getUsersByIds<
-    T extends UserWithRulesResult | BusinessWithRulesResult
-  >(userIds: string[]) {
-    let existingUsers: T[] = []
-    if (isClickhouseEnabled()) {
-      const userClickhouseRepository = await this.getUserClickhouseRepository()
-      existingUsers = await userClickhouseRepository.getUsersByIds(userIds)
-    } else {
-      existingUsers = await this.userRepository.getUsersByIds(userIds)
-    }
-    return existingUsers as T[]
-  }
   public async importTransactions(
     batchId: string,
     transactions: Transaction[],
@@ -149,7 +118,7 @@ export class BatchImportService {
         transaction.destinationUserId,
       ])
     )
-    const existingUsers = await this.getUsersByIds(allUserIds)
+    const existingUsers = await this.userRepository.getUsersByIds(allUserIds)
     const failedRecords: BatchResponseFailedRecord[] = []
     const idsCountMap = new Map<string, number>()
     for (const transaction of transactions) {
@@ -352,7 +321,7 @@ export class BatchImportService {
     response: BatchResponse
     validatedUsers: Array<T>
   }> {
-    const existingUsers = await this.getUsersByIds(
+    const existingUsers = await this.userRepository.getUsersByIds(
       users.map((user) => user.userId)
     )
     const idsCountMap = new Map<string, number>()
@@ -362,7 +331,9 @@ export class BatchImportService {
     const parentUserIds = compact(
       users.map((user) => user.linkedEntities?.parentUserId)
     )
-    const existingParentUsers = await this.getUsersByIds(parentUserIds)
+    const existingParentUsers = await this.userRepository.getUsersByIds(
+      parentUserIds
+    )
     const failedRecords: BatchResponseFailedRecord[] = []
     const validatedUsers: T[] = []
     for (const user of users) {
@@ -459,8 +430,10 @@ export class BatchImportService {
       )
     )
     const [existingUsers, existingParentUsers] = await Promise.all([
-      this.getUsersByIds(userEvents.map((event) => event.userId)),
-      this.getUsersByIds(parentUserIds),
+      this.userRepository.getUsersByIds(
+        userEvents.map((event) => event.userId)
+      ),
+      this.userRepository.getUsersByIds(parentUserIds),
     ])
 
     const failedRecords: BatchResponseFailedRecord[] = []
@@ -602,7 +575,10 @@ export class BatchImportService {
       paginationParams,
       'BUSINESS'
     )
-    const users = await this.getUsersByIds<BusinessWithRulesResult>(entityIds)
+    const users =
+      await this.userRepository.getUsersByIds<BusinessWithRulesResult>(
+        entityIds
+      )
     return {
       businessUsers: users,
       totalCount: totalCount,
@@ -618,7 +594,9 @@ export class BatchImportService {
       'USER_BATCH',
       paginationParams
     )
-    const users = await this.getUsersByIds<UserWithRulesResult>(entityIds)
+    const users = await this.userRepository.getUsersByIds<UserWithRulesResult>(
+      entityIds
+    )
     const formattedUsers = users.map((user) =>
       pickKnownEntityFields(user, BatchConsumerUserWithRulesResult)
     )

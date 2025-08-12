@@ -47,6 +47,7 @@ import {
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
   CASES_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -83,9 +84,11 @@ import {
   DefaultApiGetAllUsersListRequest,
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
+  DefaultApiGetRuleInstancesTransactionUsersHitRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
@@ -1547,6 +1550,110 @@ export class UserRepository {
       .map((user) => user.userId)
       .toArray()
     return userIds
+  }
+
+  public async getRuleInstancesTransactionUsersHit(
+    ruleInstanceId: string,
+    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest,
+    mapper: (
+      user: InternalUser | InternalBusinessUser | InternalConsumerUser
+    ) => AllUsersTableItem
+  ): Promise<AllUsersOffsetPaginateListResponse> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const ruleMatchCondition: Document = { ruleInstanceId }
+    if (params.filterShadowHit != null) {
+      if (params.filterShadowHit) {
+        ruleMatchCondition.isShadow = true
+      } else {
+        ruleMatchCondition.isShadow = { $ne: true }
+      }
+    }
+
+    const pipeline: Document[] = [
+      {
+        $match: {
+          timestamp: {
+            $gte: params.txAfterTimestamp ?? 0,
+            $lt: params.txBeforeTimestamp ?? Number.MAX_SAFE_INTEGER,
+          },
+          hitRules: { $elemMatch: ruleMatchCondition },
+        },
+      },
+      {
+        $project: {
+          originUserId: 1,
+          destinationUserId: 1,
+          ruleHitData: {
+            $first: {
+              $filter: {
+                input: '$hitRules',
+                as: 'hitRule',
+                cond: { $eq: ['$$hitRule.ruleInstanceId', ruleInstanceId] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          userIds: {
+            $addToSet: {
+              $switch: {
+                branches: [
+                  {
+                    case: {
+                      $and: [
+                        {
+                          $in: [
+                            'ORIGIN',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                        {
+                          $in: [
+                            'DESTINATION',
+                            '$ruleHitData.ruleHitMeta.hitDirections',
+                          ],
+                        },
+                      ],
+                    },
+                    then: ['$originUserId', '$destinationUserId'],
+                  },
+                  {
+                    case: {
+                      $in: ['ORIGIN', '$ruleHitData.ruleHitMeta.hitDirections'],
+                    },
+                    then: '$originUserId',
+                  },
+                  {
+                    case: {
+                      $in: [
+                        'DESTINATION',
+                        '$ruleHitData.ruleHitMeta.hitDirections',
+                      ],
+                    },
+                    then: '$destinationUserId',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]
+
+    const result = collection.aggregate<{ userIds: string[] }>(pipeline)
+
+    const data = await result.next()
+
+    return this.getMongoUsersPaginate(
+      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
+      mapper
+    )
   }
 
   public async getRuleInstanceStats(

@@ -60,11 +60,6 @@ import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
 } from '@/utils/downstream-version'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { UserClickhouseRepository } from '@/services/users/repositories/user-clickhouse-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -563,28 +558,18 @@ export class TarponChangeMongoDbConsumer {
       mongoDb: dbClients.mongoDb,
     })
 
-    const emailIds = compact(
-      uniq([
-        ...(newCrmRecord.data.record.email
-          ? [newCrmRecord.data.record.email]
-          : []),
-        ...(newCrmRecord.data.record.ccEmails ?? []),
-        ...(newCrmRecord.data.record.replyCcEmails ?? []),
-        ...(newCrmRecord.data.record.fwdEmails ?? []),
-      ])
-    )
-    let userIds: string[] = []
-    if (isClickhouseEnabled()) {
-      const clickhouseClient = await getClickhouseClient(tenantId)
-      const clickhouseUserRepository = new UserClickhouseRepository(
-        tenantId,
-        clickhouseClient,
-        dbClients.dynamoDb
+    const userIds = await userRepository.getUserIdsByEmails(
+      compact(
+        uniq([
+          ...(newCrmRecord.data.record.email
+            ? [newCrmRecord.data.record.email]
+            : []),
+          ...(newCrmRecord.data.record.ccEmails ?? []),
+          ...(newCrmRecord.data.record.replyCcEmails ?? []),
+          ...(newCrmRecord.data.record.fwdEmails ?? []),
+        ])
       )
-      userIds = await clickhouseUserRepository.getUserIdsByEmails(emailIds)
-    } else {
-      userIds = await userRepository.getUserIdsByEmails(emailIds)
-    }
+    )
 
     await new NangoRepository(
       tenantId,

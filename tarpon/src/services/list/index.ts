@@ -16,7 +16,6 @@ import { LogicEvaluator } from '../logic-evaluator/engine'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
-import { UserClickhouseRepository } from '../users/repositories/user-clickhouse-repository'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListData } from '@/@types/openapi-public/ListData'
@@ -53,11 +52,6 @@ import { notEmpty } from '@/utils/array'
 import { CustomColumn } from '@/@types/openapi-internal/CustomColumn'
 import { BatchJobInDb, UserRuleReRunBatchJob } from '@/@types/batch-job'
 import dayjs from '@/utils/dayjs'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -607,17 +601,7 @@ export class ListService {
         this.listRepository.getListItems(listId, pagination)
       )) {
         const userIds = items.map((x) => x.key)
-        let users: InternalUser[] = []
-        if (isClickhouseEnabled()) {
-          const clickhouseClient = await getClickhouseClient(this.tenantId)
-          const clickhouseUserRepository = new UserClickhouseRepository(
-            this.tenantId,
-            clickhouseClient
-          )
-          users = await clickhouseUserRepository.getUsersByIds(userIds)
-        } else {
-          users = await this.userRepository.getMongoUsersByIds(userIds)
-        }
+        const users = await this.userRepository.getMongoUsersByIds(userIds)
         const newItems = items.map((item): ListItem => {
           const itemUser = users.find((x) => x.userId === item.key)
           return {
