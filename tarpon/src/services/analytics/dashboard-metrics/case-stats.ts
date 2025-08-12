@@ -181,7 +181,7 @@ export class CaseStatsDashboardMetric {
       const query = `
         SELECT
           reason,
-          count(*) as value
+          uniqExact(id) as value
         FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
         ARRAY JOIN lastStatusChangeReasons as reason
         WHERE caseStatus = 'CLOSED'
@@ -203,7 +203,7 @@ export class CaseStatsDashboardMetric {
       const query = `
         SELECT
           reason,
-          count(*) as value
+          uniqExact(alert.alertId) as value
         FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
         ARRAY JOIN alerts AS alert
         ARRAY JOIN alert.lastStatusChangeReasons AS reason
