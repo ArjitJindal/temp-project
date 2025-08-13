@@ -259,10 +259,10 @@ export function useGetAlias() {
   return useCallback(
     (x: string) => {
       return (
-        kycStatusAlias?.find((item) => item.state === x)?.alias ??
-        userStateAlias?.find((item) => item.state === x)?.alias ??
-        transactionStateAlias?.find((item) => item.state === x)?.alias ??
-        riskLevelAlias?.find((item) => item.level === x)?.alias ??
+        kycStatusAlias?.find((item) => item.state === x)?.alias ||
+        userStateAlias?.find((item) => item.state === x)?.alias ||
+        transactionStateAlias?.find((item) => item.state === x)?.alias ||
+        riskLevelAlias?.find((item) => item.level === x)?.alias ||
         humanizeConstant(x)
       );
     },

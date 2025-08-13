@@ -38,13 +38,15 @@ export default function FiltersLogicBuilder(props: Props) {
   const { jsonLogic, logicBuilderProps, configParams, ruleType, onChange, settings } = props;
   const [state, setState] = useState<State>(null);
 
-  const [mentionedVariables, setMentionedVariables] = useState<string[]>([]);
+  const [mentionedVariables, setMentionedVariables] = useState<string[] | undefined>(
+    props.entityVariablesInUse?.map((item) => item.key) ?? undefined,
+  );
 
   // Initialize state when config is loaded or changed
   const configRes = useRuleLogicBuilderConfig(
     ruleType,
     props.entityVariableTypes,
-    props.entityVariablesInUse,
+    props.entityVariablesInUse?.length ? props.entityVariablesInUse : undefined,
     mentionedVariables,
     [],
     configParams ?? {},
@@ -104,12 +106,18 @@ export default function FiltersLogicBuilder(props: Props) {
           tree: immutableTree,
           config,
         };
-        handleChangeLogic(newState);
         return newState;
       });
     },
-    [handleChangeLogic],
+    [],
   );
+
+  useEffect(() => {
+    if (!state || !state.tree) {
+      return;
+    }
+    handleChangeLogic(state);
+  }, [state, handleChangeLogic]);
 
   return (
     <AsyncResourceRenderer resource={configRes}>
