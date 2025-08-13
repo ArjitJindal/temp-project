@@ -9590,6 +9590,28 @@ components:
       required:
         - state
         - alias
+    UserStateAlias:
+      type: object
+      title: UserStateAlias
+      properties:
+        state:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+        alias:
+          type: string
+      required:
+        - state
+        - alias
+    KYCStatusAlias:
+      type: object
+      title: KYCStatusAlias
+      properties:
+        state:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        alias:
+          type: string
+      required:
+        - state
+        - alias
     RiskLevelAlias:
       type: object
       title: RiskLevelAlias
@@ -11420,6 +11442,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TransactionStateAlias'
+        userStateAlias:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserStateAlias'
+        kycStatusAlias:
+          type: array
+          items:
+            $ref: '#/components/schemas/KYCStatusAlias'
         riskScoringCraEnabled:
           type: boolean
         riskScoringAlgorithm:

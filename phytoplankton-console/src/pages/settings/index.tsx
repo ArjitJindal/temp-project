@@ -34,6 +34,7 @@ import { WebhookSettings } from './components/WebhookSettings';
 import { ReasonsSettings } from './components/ReasonsSettings';
 import { CRMSettings } from './components/CRMSettings';
 import UserAliasSettings from './components/UserAliasSettings/UserAliasSettings';
+import StatusAliasSettings from './components/StatusAliasSettings/StatusAliasSettings';
 import BatchRerunRiskScoringSettings from './components/BatchRerunRiskScoringSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -134,6 +135,7 @@ export default function SettingsPage() {
                 <PepStatusConfigSettings />
                 <TagSettings />
                 <UserAliasSettings />
+                <StatusAliasSettings />
               </>
             ),
           },

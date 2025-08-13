@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import s from './index.module.less';
 import { AuditLog, RuleAction, RuleInstance } from '@/apis';
 import Modal from '@/components/library/Modal';
@@ -212,7 +213,7 @@ const RuleAuditLogModal = (props: Props) => {
         onCancel={() => setIsModalVisible(false)}
         width={'L'}
         hideFooter
-        title={`Changes for ${humanizeAuto(data.type)}`}
+        title={setUserAlias(`Changes for ${humanizeAuto(data.type)}`, settings.userAlias)}
       >
         <div className={s.modalContent}>
           {changedDetails.length && (

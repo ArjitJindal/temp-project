@@ -27,6 +27,7 @@ import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import Label from '@/components/library/Label';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
 import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   isVisible: boolean;
@@ -52,6 +53,7 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
 };
 export default function KYCChangeModal(props: Props) {
   const { title, isVisible, onClose, user, onOkay } = props;
+  const settings = useSettings();
   const [fileList, setFileList] = useState<FileInfo[]>(DEFAULT_INITIAL_VALUES.files);
   const ref = useRef<FormRef<FormValues>>(null);
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
@@ -188,7 +190,7 @@ export default function KYCChangeModal(props: Props) {
               <Select
                 {...inputProps}
                 options={KYC_STATUSS.map((kycStatus: KYCStatus) => ({
-                  label: humanizeKYCStatus(kycStatus),
+                  label: humanizeKYCStatus(kycStatus, settings.kycStatusAlias),
                   value: kycStatus,
                 }))}
                 mode="SINGLE"

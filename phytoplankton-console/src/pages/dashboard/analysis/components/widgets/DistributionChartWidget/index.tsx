@@ -2,7 +2,6 @@
 import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { snakeCase } from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import GranularDatePicker, {
   GranularityValuesType,
@@ -20,6 +19,9 @@ import { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import BarChart, { BarChartData, GroupBy } from '@/components/charts/BarChart';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { KYCStatus } from '@/apis/models/KYCStatus';
 
 interface Props<DataType, ValueType extends string, GroupType extends string> extends WidgetProps {
   groups: Array<{
@@ -98,9 +100,12 @@ export default function DistributionChartWidget<
     [groups, selectedGroup],
   );
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
+  const settings = useSettings();
   const getValueName = useCallback(
-    (value: string) => valueNames?.[value] ?? humanizeAuto(String(value)),
-    [valueNames],
+    (value: string) => {
+      return valueNames?.[value] ?? humanizeKYCStatus(value as KYCStatus, settings.kycStatusAlias);
+    },
+    [valueNames, settings],
   );
   const selectedGroupPrefix = groups.length > 1 ? `-${snakeCase(attributeName)}` : '';
 

@@ -41,23 +41,25 @@ const UserAliasSettings = () => {
         }}
       >
         <p className={s.aliasLabel}>User alias</p>
-        <div className={s.inputContainer}>
-          <TextInput
-            name={'alias'}
-            value={alias}
-            onChange={(value) => {
-              setAlias((value?.toLocaleLowerCase() ?? '').slice(0, 30));
-              setIsDisabled(false);
-            }}
-          />
+        <div className={s.inputItem}>
+          <div className={s.inputContainer}>
+            <TextInput
+              name={'alias'}
+              value={alias}
+              onChange={(value) => {
+                setAlias((value?.toLocaleLowerCase() ?? '').slice(0, 30));
+                setIsDisabled(false);
+              }}
+            />
+          </div>
+          <Button
+            isLoading={isLoading}
+            isDisabled={isDisabled || alias === settings.userAlias}
+            htmlType="submit"
+          >
+            Update
+          </Button>
         </div>
-        <Button
-          isLoading={isLoading}
-          isDisabled={isDisabled || alias === settings.userAlias}
-          htmlType="submit"
-        >
-          Update
-        </Button>
       </Form>
     </SettingsCard>
   );

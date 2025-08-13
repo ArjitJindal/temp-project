@@ -1,7 +1,7 @@
 import { ImportOutlined } from '@ant-design/icons';
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { SideBarContext } from '../Providers/SidebarProvider';
 import { useFeaturesEnabled, useFeatureEnabled, useSettings } from '../Providers/SettingsProvider';
 import TeamOutlined from './icons/Team_Outlined.react.svg';
@@ -179,7 +179,7 @@ function RenderItem(props: {
       disabledByFeature={disabledByFeature}
       isActiveHighlightingEnabled={isNotificationsDrawerVisible}
     >
-      {i18n(fullKey as TranslationId).replace('Users', `${firstLetterUpper(settings.userAlias)}s`)}
+      {setUserAlias(i18n(fullKey as TranslationId), settings.userAlias)}
     </TopLevelLink>
   );
 }

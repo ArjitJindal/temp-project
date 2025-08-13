@@ -148,7 +148,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
             {(inputProps) => (
               <Select<KYCStatus>
                 options={KYC_STATUSS.map((state) => ({
-                  label: humanizeKYCStatus(state),
+                  label: humanizeKYCStatus(state, settings.kycStatusAlias),
                   value: state,
                 }))}
                 {...inputProps}

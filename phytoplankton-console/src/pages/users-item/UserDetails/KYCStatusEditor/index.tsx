@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import KYCChangeModal from './KYCChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -10,6 +9,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Skeleton from '@/components/library/Skeleton';
 import { AsyncResource, isSuccess } from '@/utils/asyncResource';
+import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
 
 interface Props {
   title: string;
@@ -40,7 +40,10 @@ export default function KycStatusEditor(props: Props) {
       <p>
         <Skeleton res={userRes}>
           {(user) =>
-            humanizeConstant(kycChanged ? newKycStatus : user.kycStatusDetails?.status ?? '')
+            humanizeKYCStatus(
+              (kycChanged ? newKycStatus : user.kycStatusDetails?.status ?? '') as KYCStatus,
+              settings.kycStatusAlias,
+            )
           }
         </Skeleton>
       </p>

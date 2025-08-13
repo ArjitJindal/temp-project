@@ -43,8 +43,12 @@ export default function ArrayPropertyInput(props: Props) {
     const enumItems = schema.items.enum ?? [];
     const enumNames: string[] = schema.items.enumNames ?? [];
 
-    const displayNames =
+    let displayNames =
       enumNames?.length && enumNames.length === enumItems.length ? enumNames : enumItems;
+
+    if (['{{UserAlias}} KYC status', '{{UserAlias}} status'].includes(schema.title ?? '')) {
+      displayNames = enumItems;
+    }
 
     if (enumItems.length > 0 && enumItems.length <= 4) {
       return (

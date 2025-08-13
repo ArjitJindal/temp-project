@@ -1,13 +1,9 @@
 import React from 'react';
 import cn from 'clsx';
-import {
-  firstLetterUpper,
-  humanizeAuto,
-  humanizeCamelCase,
-  humanizeSnakeCase,
-} from '@flagright/lib/utils/humanize';
+import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { ExtendedSchema, PropertyItem } from '../types';
-import { getUiSchema, useOrderedProps, replacePlaceholders } from '../utils';
+import { getUiSchema, useOrderedProps } from '../utils';
 import PropertyInput from './PropertyInput';
 import s from './style.module.less';
 import { Props as LabelProps } from '@/components/library/Label';
@@ -93,10 +89,7 @@ export default function Property(props: Props) {
     defaultValue?: T,
   ): T | undefined => {
     if (typeof text === 'string') {
-      return replacePlaceholders(text, {
-        userAlias: tenantSettings.userAlias ?? 'user',
-        UserAlias: firstLetterUpper(tenantSettings.userAlias ?? 'user'),
-      }) as T;
+      return setUserAlias(text, tenantSettings.userAlias) as T;
     }
     return defaultValue;
   };

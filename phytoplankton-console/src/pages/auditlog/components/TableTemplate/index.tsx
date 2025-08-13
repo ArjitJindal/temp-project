@@ -1,10 +1,19 @@
 import { isEmpty, isEqual, uniq } from 'lodash';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AccountTag from '@/components/AccountTag';
 import { AuditLog } from '@/apis/models/AuditLog';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
+import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
+import { KYCStatus } from '@/apis/models/KYCStatus';
+import { TenantSettings } from '@/apis/models/TenantSettings';
+import { USER_STATES } from '@/apis/models-custom/UserState';
+import { UserState } from '@/apis/models/UserState';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 
 type TableItem = {
   key: string;
@@ -63,7 +72,7 @@ export const summarizeAdvancedOptions = (data: AuditLog) => {
 
 const UNIX_TIMESTAMP_MS_REGEX = /^\d{13}$/;
 const AUTH0_USER_ID_REGEX = /^(google-oauth2|auth0)\|\S+$/;
-const RenderModalData = (value: any | undefined) => {
+const RenderModalData = (value: any | undefined, settings: TenantSettings) => {
   if (typeof value === 'object' && isEmpty(value)) {
     return <em>Empty</em>;
   } else if (typeof value === 'number' && UNIX_TIMESTAMP_MS_REGEX.test(String(value))) {
@@ -80,6 +89,10 @@ const RenderModalData = (value: any | undefined) => {
     return <pre>{JSON.stringify(value, null, 2)}</pre>;
   } else if (typeof value === 'boolean') {
     return <p>{value ? 'True' : 'False'}</p>;
+  } else if (typeof value === 'string' && KYC_STATUSS.includes(value as KYCStatus)) {
+    return <p>{humanizeKYCStatus(value as KYCStatus, settings.kycStatusAlias)}</p>;
+  } else if (typeof value === 'string' && USER_STATES.includes(value as UserState)) {
+    return <p>{humanizeUserStatus(value as UserState, settings.userStateAlias)}</p>;
   } else {
     return <p>{value}</p>;
   }
@@ -89,6 +102,7 @@ const TableTemplate = (
   props: TableTemplateProp & { showOldImage?: boolean; isMetaData?: boolean },
 ) => {
   const helper = new ColumnHelper<TableItem>();
+  const settings = useSettings();
   return (
     <Table<TableItem>
       rowKey={'key'}
@@ -102,7 +116,15 @@ const TableTemplate = (
           defaultWidth: props.showOldImage ? 250 : 350,
           type: {
             render: (text) => (
-              <>{text ? <b>{getFlattenedObjectHumanReadableKey(text)}</b> : 'N/A'}</>
+              <>
+                {text ? (
+                  <b>
+                    {setUserAlias(getFlattenedObjectHumanReadableKey(text), settings.userAlias)}
+                  </b>
+                ) : (
+                  'N/A'
+                )}
+              </>
             ),
           },
         }),
@@ -114,7 +136,7 @@ const TableTemplate = (
                 defaultWidth: 350,
                 type: {
                   render: (data) => {
-                    return RenderModalData(data);
+                    return RenderModalData(data, settings);
                   },
                 },
               }),
@@ -126,7 +148,7 @@ const TableTemplate = (
           defaultWidth: 350,
           type: {
             render: (data) => {
-              return RenderModalData(data);
+              return RenderModalData(data, settings);
             },
           },
         }),

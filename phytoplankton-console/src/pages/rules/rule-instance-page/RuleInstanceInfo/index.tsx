@@ -6,6 +6,7 @@ import {
   humanizeAuto,
   humanizeConstant,
 } from '@flagright/lib/utils/humanize';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import {
   getRuleInstanceDisplayId,
   isShadowRule,
@@ -39,6 +40,7 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -49,7 +51,7 @@ export const RuleInstanceInfo = (props: Props) => {
   const [ruleInstance, setRuleInstance] = useState(_ruleInstance);
   const api = useApi();
   const auth0User = useAuth0User();
-
+  const settings = useSettings();
   const handleRuleInstanceUpdate = useCallback(async (ruleInstance: RuleInstance) => {
     const ruleInstanceId = ruleInstance.id;
     if (!ruleInstanceId) {
@@ -158,9 +160,11 @@ export const RuleInstanceInfo = (props: Props) => {
             <div className={s.header}>
               <PriorityTag priority={ruleInstance.casePriority} />
               <span>{ruleInstance.id}</span>
-              <span>{ruleInstance.ruleNameAlias}</span>
+              <span>{setUserAlias(ruleInstance.ruleNameAlias, settings.userAlias)}</span>
             </div>
-            <div className={s.description}>{ruleInstance.ruleDescriptionAlias}</div>
+            <div className={s.description}>
+              {setUserAlias(ruleInstance.ruleDescriptionAlias, settings.userAlias)}
+            </div>
           </div>
           <RuleStatusSwitch
             entity={ruleInstance}
@@ -184,9 +188,12 @@ export const RuleInstanceInfo = (props: Props) => {
             </Form.Layout.Label>
             <Form.Layout.Label title={'Rule nature'}>{ruleInstance.nature}</Form.Layout.Label>
             <Form.Layout.Label title={'Alert created for'}>
-              {(ruleInstance.alertConfig?.alertCreatedFor ?? ['-'])
-                .map((val) => humanizeConstant(val))
-                .join(', ')}
+              {setUserAlias(
+                (ruleInstance.alertConfig?.alertCreatedFor ?? ['-'])
+                  .map((val) => humanizeConstant(val))
+                  .join(', '),
+                settings.userAlias,
+              )}
             </Form.Layout.Label>
             <Form.Layout.Label title={'Created by'}>
               {ruleInstance.createdBy ? (

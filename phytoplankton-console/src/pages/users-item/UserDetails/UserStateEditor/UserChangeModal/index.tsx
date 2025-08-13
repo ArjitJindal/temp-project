@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -28,6 +28,7 @@ import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import Label from '@/components/library/Label';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 
 interface Props {
   isVisible: boolean;
@@ -81,9 +82,9 @@ export default function UserChangeModal(props: Props) {
   const mutation = useMutation(
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, userStatus } = values;
-      messageLoading = message.loading(`Changing ${settings.userAlias} Status...`);
+      messageLoading = message.loading(`Changing ${settings.userAlias} status...`);
       if (userStatus === '' || userStatus == null) {
-        throw new Error(`${firstLetterUpper(settings.userAlias)} Status Empty`);
+        throw new Error(`${firstLetterUpper(settings.userAlias)} status empty`);
       }
       const newStateDetails: UserStateDetailsInternal = {
         state: userStatus,
@@ -171,7 +172,7 @@ export default function UserChangeModal(props: Props) {
               <Select
                 {...inputProps}
                 options={USER_STATES.map((userStatus: UserState) => ({
-                  label: humanizeConstant(userStatus),
+                  label: humanizeUserStatus(userStatus, settings.userStateAlias),
                   value: userStatus,
                 }))}
                 mode="SINGLE"
@@ -237,7 +238,7 @@ export default function UserChangeModal(props: Props) {
                   <TextArea
                     {...inputProps}
                     rows={4}
-                    placeholder={`Write a narrative explaining the ${settings.userAlias} Status change reason and findings, if any.`}
+                    placeholder={`Write a narrative explaining the ${settings.userAlias} status change reason and findings, if any.`}
                   />
                 </>
               )}

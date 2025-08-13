@@ -1,4 +1,4 @@
-import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEmpty } from 'lodash';
 import { getBusinessUserColumns } from './business-user-columns';
@@ -8,7 +8,7 @@ import { RiskLevelButton } from './RiskLevelFilterButton';
 import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
 import { UserSearchParams } from '.';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { AllUsersTableItem, RiskClassificationScore, RiskLevel } from '@/apis';
+import { AllUsersTableItem, RiskClassificationScore, RiskLevel, TenantSettings } from '@/apis';
 import { TableColumn, TableData } from '@/components/library/Table/types';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -27,6 +27,8 @@ import { QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
+import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 
 type Props = {
   type: 'all' | 'business' | 'consumer';
@@ -41,6 +43,8 @@ const extraFilters = (
   params: UserSearchParams,
   handleChangeParams: (params: UserSearchParams) => void,
   userAlias: string,
+  userStateAlias: TenantSettings['userStateAlias'],
+  kycStatusAlias: TenantSettings['kycStatusAlias'],
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
@@ -117,7 +121,10 @@ const extraFilters = (
       title: `${firstLetterUpper(userAlias)} status`,
       renderer: {
         kind: 'select',
-        options: USER_STATES.map((state) => ({ value: state, label: humanizeAuto(state) })),
+        options: USER_STATES.map((state) => ({
+          value: state,
+          label: humanizeUserStatus(state, userStateAlias),
+        })),
         mode: 'MULTIPLE',
         displayMode: 'list',
       },
@@ -127,7 +134,10 @@ const extraFilters = (
       title: 'KYC status',
       renderer: {
         kind: 'select',
-        options: KYC_STATUSS.map((status) => ({ value: status, label: humanizeAuto(status) })),
+        options: KYC_STATUSS.map((status) => ({
+          value: status,
+          label: humanizeKYCStatus(status, kycStatusAlias),
+        })),
         mode: 'MULTIPLE',
         displayMode: 'list',
       },
@@ -270,7 +280,14 @@ export const UsersTable = (props: Props) => {
     <QueryResultsTable<AllUsersTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type, params, handleChangeParams, settings.userAlias || '')}
+      extraFilters={extraFilters(
+        type,
+        params,
+        handleChangeParams,
+        settings.userAlias || '',
+        settings.userStateAlias,
+        settings.kycStatusAlias,
+      )}
       columns={columns}
       queryResults={queryResults}
       params={params}

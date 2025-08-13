@@ -173,7 +173,3 @@ export function getScopeSelectorItems(schema?: ExtendedSchema): Item<string>[] |
   }
   return null;
 }
-
-export function replacePlaceholders(text: string, values: Record<string, string>): string {
-  return text.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] ?? match);
-}

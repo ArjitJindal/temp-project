@@ -10,7 +10,12 @@ export const setUserAlias = (
   if (!str) {
     return ''
   }
+
+  const aliasUpper = firstLetterUpper(alias)
+
   return str
-    .replace('{{userAlias}}', alias || '')
-    .replace('{{UserAlias}}', firstLetterUpper(alias) || '')
+    .replace(/{{userAlias}}/g, alias)
+    .replace(/{{UserAlias}}/g, aliasUpper)
+    .replace(/\bUser\b/g, aliasUpper)
+    .replace(/\buser\b/g, alias)
 }

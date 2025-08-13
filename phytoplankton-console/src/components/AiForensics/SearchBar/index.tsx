@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import cn from 'clsx';
 import { useDebounce } from 'ahooks';
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils';
-import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { useFinishedSuccessfully } from '../../../utils/asyncResource';
 import s from './styles.module.less';
 import ExpandIcon from '@/components/library/ExpandIcon';
@@ -121,9 +121,7 @@ export const SearchBar = (props: Props) => {
                 className={cn(s.suggestion, highlightedSuggestionIndex === i && s.isHighlighted)}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
-                {suggestion
-                  .replace('user', userAlias || '')
-                  .replace('User', firstLetterUpper(userAlias) || '')}
+                {setUserAlias(suggestion, userAlias)}
               </button>
             ))}
           </div>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Tag from '../index';
 import { UserState } from '@/apis';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   userState: UserState;
@@ -9,6 +10,7 @@ interface Props {
 
 export default function UserStateTag(props: Props) {
   const { userState } = props;
+  const settings = useSettings();
 
-  return <Tag>{humanizeConstant(userState)}</Tag>;
+  return <Tag>{humanizeUserStatus(userState, settings.userStateAlias)}</Tag>;
 }

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import UserChangeModal from './UserChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -10,6 +9,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import Skeleton from '@/components/library/Skeleton';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 
 interface Props {
   title: string;
@@ -39,7 +39,10 @@ export default function UserStateEditor(props: Props) {
       <p>
         <Skeleton res={userRes}>
           {(user) =>
-            humanizeConstant(userStatusChanged ? newUserStatus : user.userStateDetails?.state ?? '')
+            humanizeUserStatus(
+              (userStatusChanged ? newUserStatus : user.userStateDetails?.state ?? '') as UserState,
+              settings.userStateAlias,
+            )
           }
         </Skeleton>
       </p>

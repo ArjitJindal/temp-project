@@ -23,6 +23,8 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import DonutChart from '@/components/charts/DonutChart';
+import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const COLORS = {
   UNACCEPTABLE: COLORS_V2_ANALYTICS_CHARTS_07,
@@ -56,7 +58,7 @@ export default function UserStatusDistributionCard(props: Props) {
   const queryResult = useQuery(USERS_STATS(params), async () => {
     return await api.getDashboardStatsUsersByTime(params);
   });
-
+  const settings = useSettings();
   const dataResource = map(queryResult.data, (data: DashboardStatsUsersStats[]) => {
     const statusMap = data.reduce((acc, curr) => {
       Object.entries(curr).forEach(([key, value]) => {
@@ -111,8 +113,9 @@ export default function UserStatusDistributionCard(props: Props) {
         <DonutChart<UserState>
           data={dataResource}
           colors={COLORS}
-          // legendPosition="RIGHT"
-          formatName={(action) => capitalizeWords(action) ?? action}
+          formatName={(action) =>
+            humanizeUserStatus(action, settings.userStateAlias) ?? capitalizeWords(action)
+          }
         />
       </Widget>
     </div>

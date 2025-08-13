@@ -255,15 +255,17 @@ export function useUpdateTenantSettings(successMessage?: string) {
 }
 
 export function useGetAlias() {
-  const { transactionStateAlias, riskLevelAlias } = useSettings();
+  const { transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias } = useSettings();
   return useCallback(
     (x: string) => {
       return (
+        kycStatusAlias?.find((item) => item.state === x)?.alias ??
+        userStateAlias?.find((item) => item.state === x)?.alias ??
         transactionStateAlias?.find((item) => item.state === x)?.alias ??
         riskLevelAlias?.find((item) => item.level === x)?.alias ??
         humanizeConstant(x)
       );
     },
-    [transactionStateAlias, riskLevelAlias],
+    [transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias],
   );
 }
