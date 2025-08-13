@@ -46,9 +46,13 @@ import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
 import SameUserUsingTooManyPaymentIdentifiersRule from './same-user-using-too-many-payment-identifiers'
 import { BankAccountHolderNameChangeRule } from './bank-account-holder-name-change'
 import { PaymentDetailsScreeningRule } from './payment-details-screening'
-import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
-import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
+import TransactionAnomalyRule from './transaction-anomaly'
+import TransactionsFrequencyAnomalyRule from './transactions-frequency-anomaly'
+import AverageTransactionValueSpikeRule from './average-transaction-value-spike'
+import RoundAmountAnomalyRule from './round-amount-anomaly'
 import BankNameChangeRule from '@/services/rules-engine/transaction-rules/bank-name-change'
+import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
+import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 export class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
     // skip
@@ -109,6 +113,11 @@ export const _TRANSACTION_RULES = {
   'bank-name-change': BankNameChangeRule,
   'bank-account-holder-name-change': BankAccountHolderNameChangeRule,
   'payment-details-screening': PaymentDetailsScreeningRule,
+  // Stddev anomaly rules
+  'transaction-anomaly': TransactionAnomalyRule,
+  'transactions-frequency-anomaly': TransactionsFrequencyAnomalyRule,
+  'average-transaction-value-spike': AverageTransactionValueSpikeRule,
+  'round-amount-anomaly': RoundAmountAnomalyRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

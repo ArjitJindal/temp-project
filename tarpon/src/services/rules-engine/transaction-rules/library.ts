@@ -203,6 +203,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         'A user, usually transacting under 500 SGD, initiates a sudden 10,000 SGD transaction, prompting a review for unusual high-value activity.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -231,6 +232,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         'A user typically transacts domestically, then suddenly starts sending high-value transactions abroad.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -259,6 +261,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         'An account mainly using USD suddenly transacts in EUR. This significant shift triggers an alert for potential scrutiny.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -288,6 +291,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.MoneyMules, RuleTypology.UnusualBehaviour],
       sampleUseCases:
         "An account shows no activity for six months (time 't'), then suddenly executes a high-value transaction.",
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -347,6 +351,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.Structuring],
       sampleUseCases:
         'Over a week, an individual receive multiple transactions from different recipients, all marginally under the reporting limit, suggesting a deliberate effort to stay under the radar.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -380,6 +385,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.Structuring, RuleTypology.MoneyMules],
       sampleUseCases:
         'Over a week, an individual sends multiple transactions to different recipients, all marginally under the reporting limit, suggesting a deliberate effort to stay under the radar.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -449,6 +455,7 @@ const _RULES_LIBRARY: Array<
       ],
       sampleUseCases:
         'Within a week, an unusually large number of different counterparties send money to a single user, suggesting a possible scam or money laundering operation.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -507,6 +514,106 @@ const _RULES_LIBRARY: Array<
       ],
       sampleUseCases:
         'Multiple transactions are initiated to and from a country that has been identified as having high levels of corruption and money laundering.',
+    }
+  },
+  () => {
+    return {
+      id: 'R-11',
+      type: 'TRANSACTION',
+      name: 'Transaction Anomaly',
+      description: 'Check for anomalous transaction volumes',
+      descriptionTemplate:
+        'Transaction volume in last 30 days is anomalously high vs 90-day baseline (stddev)',
+      defaultParameters: {},
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transaction-anomaly',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P1',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'Recent 30-day total amount is > 2 standard deviations above 90-day baseline.',
+      tags: ['DYNAMIC'],
+    }
+  },
+  () => {
+    return {
+      id: 'R-12',
+      type: 'TRANSACTION',
+      name: 'Transactions Frequency Anomaly',
+      description: 'Check for anomalous transaction patterns',
+      descriptionTemplate:
+        'Transaction count in last 30 days is anomalously high vs 90-day baseline (stddev)',
+      defaultParameters: {},
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transactions-frequency-anomaly',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.NumberOfTransactions,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P1',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'Recent 30-day transaction count is > 2 standard deviations above 90-day baseline.',
+      tags: ['DYNAMIC'],
+    }
+  },
+  () => {
+    return {
+      id: 'R-25',
+      type: 'TRANSACTION',
+      name: 'Average Transaction Value Spike',
+      description: 'Check for spikes in average transaction amounts',
+      descriptionTemplate:
+        'Average transaction value in last 30 days is anomalously high vs 90-day baseline (stddev)',
+      defaultParameters: {},
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'average-transaction-value-spike',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P1',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'Avg txn value over last 30 days > 2 std dev above 90-day baseline.',
+      tags: ['DYNAMIC'],
+    }
+  },
+  () => {
+    return {
+      id: 'R-26',
+      type: 'TRANSACTION',
+      name: 'Round-Amount Anomaly',
+      description: 'Detect abnormal frequency of round-amount transactions',
+      descriptionTemplate:
+        'Percentage of round-number transactions in last 30 days is anomalously high vs 90-day baseline (stddev)',
+      defaultParameters: {},
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'round-amount-anomaly',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.TransactionAmount,
+        RuleChecksForField.Time,
+      ],
+      defaultNature: RuleNature.FRAUD,
+      defaultCasePriority: 'P2',
+      types: [RuleTypeField.AnomalyDetection],
+      typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
+      sampleUseCases:
+        'Share of round-number txns in last 30 days > 2 std dev above 90-day baseline.',
+      tags: ['DYNAMIC'],
     }
   },
 
@@ -701,6 +808,7 @@ const _RULES_LIBRARY: Array<
       ],
       sampleUseCases:
         'If a person sends several transactions exceeding a set limit (e.g., $10,000) within a brief period (e.g., 24 hours). ',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -798,6 +906,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.CardFraud, RuleTypology.AcquiringFraud],
       sampleUseCases:
         "A user's use of several unique cards within a week hints at possible card testing or fraud.",
+      tags: ['RECOMMENDED'],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -836,6 +945,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         'An account typically making $100 monthly transactions suddenly sends $3,000 in three days, triggering an investigation due to the unusual increase.',
+      tags: ['RECOMMENDED'],
     }
   },
   () => {
@@ -1090,6 +1200,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         "User's avg daily transactions increase significantly in the first month and drop the next, indicating a possible change in transaction behaviour or risk profile.",
+      tags: ['RECOMMENDED'],
     }
   },
   // TODO: Change Rule Description once rule is split into two
@@ -1134,7 +1245,8 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.VolumeComparison],
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'In early May (t1), sender’s daily transaction was $200 on average, which dropped to $20 daily in late May (t2), triggering an alert due to this significant decrease.',
+        "In early May (t1), sender's daily transaction was $200 on average, which dropped to $20 daily in late May (t2), triggering an alert due to this significant decrease.",
+      tags: ['RECOMMENDED'],
     }
   },
   // TODO: Change rule description when rule is split into two
@@ -1254,6 +1366,7 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
       sampleUseCases:
         "A user's account receives 10 transactions of round values (e.g., $100, $200, $300) within a single day, exceeding the set limit for round transactions and raising concerns about the legitimacy of the user's activities.",
+      tags: ['RECOMMENDED'],
     }
   },
   () => {

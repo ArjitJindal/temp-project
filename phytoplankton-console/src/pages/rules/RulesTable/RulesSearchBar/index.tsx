@@ -3,7 +3,8 @@ import { compact, isEmpty, isEqual, sortBy, uniq } from 'lodash';
 import { useDebounce } from 'ahooks';
 import { replaceMagicKeyword } from '@flagright/lib/utils/object';
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency';
-import { Rule, RuleNature, Feature as FeatureName } from '@/apis';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { Rule, RuleNature, Feature as FeatureName, FilterTags } from '@/apis';
 import { FilterProps } from '@/components/library/Filter/types';
 import SearchBar from '@/components/library/SearchBar';
 import { ItemGroup, Item } from '@/components/library/SearchBar/SearchBarDropdown';
@@ -14,6 +15,7 @@ import { AsyncResource, getOr, isLoading, isSuccess, success } from '@/utils/asy
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Option } from '@/components/library/Select';
 import { useDeepEqualEffect, useSafeLocalStorageState } from '@/utils/hooks';
+import { FILTER_TAGSS } from '@/apis/models-custom/FilterTags';
 
 type Props = {
   rules: Rule[];
@@ -26,6 +28,7 @@ export type RuleUniversalSearchFilters = {
   checksFor: string[];
   defaultNature: RuleNature[];
   types: string[] | string;
+  tags: FilterTags[];
 };
 
 const DEFAULT_FILTER_PARAMS: RuleUniversalSearchFilters = {
@@ -33,6 +36,7 @@ const DEFAULT_FILTER_PARAMS: RuleUniversalSearchFilters = {
   checksFor: [],
   defaultNature: [],
   types: [],
+  tags: [],
 };
 
 const RECENT_RULE_SEARCHES_KEY = 'recent-rule-searches';
@@ -65,20 +69,24 @@ export const RulesSearchBar = (props: Props) => {
   const getRuleOptionsByKey = useCallback(
     (key: keyof Rule): Option<string>[] =>
       sortBy(compact(uniq(rules.flatMap((rule) => rule[key])))).map((label) => ({
-        label,
+        label: humanizeAuto(label),
         value: label,
       })),
     [rules],
   );
 
   const getRuleFilter = useCallback(
-    (label: string, key: keyof Rule): FilterProps<RuleUniversalSearchFilters> => ({
+    (
+      label: string,
+      key: keyof Rule,
+      options?: Option<string>[],
+    ): FilterProps<RuleUniversalSearchFilters> => ({
       key,
       title: label,
       kind: 'AUTO',
       dataType: {
         kind: 'select',
-        options: getRuleOptionsByKey(key),
+        options: options ?? getRuleOptionsByKey(key),
         mode: 'MULTIPLE',
         displayMode: 'list',
       },
@@ -92,6 +100,11 @@ export const RulesSearchBar = (props: Props) => {
       getRuleFilter('Checking for', 'checksFor'),
       getRuleFilter('Nature', 'defaultNature'),
       getRuleFilter('Type', 'types'),
+      getRuleFilter(
+        'Tag',
+        'tags',
+        FILTER_TAGSS.map((tag) => ({ label: humanizeAuto(tag), value: tag })),
+      ),
     ];
 
     return filters;
@@ -146,6 +159,7 @@ export const RulesSearchBar = (props: Props) => {
           ? universalSearchFilterParams.types
           : [universalSearchFilterParams.types]
         : [],
+      filterTags: sendFilters ? universalSearchFilterParams.tags : [],
       isAISearch: isAIEnabled,
       disableGptSearch: isAIEnabled && isAiFiltersIncreased,
     });
@@ -202,6 +216,7 @@ export const RulesSearchBar = (props: Props) => {
       checksFor: rulesSearchResult?.filtersApplied?.checksFor || [],
       defaultNature: rulesSearchResult?.filtersApplied?.ruleNature || [],
       types: rulesSearchResult?.filtersApplied?.types || [],
+      tags: rulesSearchResult.filtersApplied?.tags || [],
     };
 
     if (isAIEnabled) {

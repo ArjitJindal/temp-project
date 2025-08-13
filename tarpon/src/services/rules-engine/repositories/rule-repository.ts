@@ -143,6 +143,26 @@ export class RuleRepository {
       ...(filters?.filterTypes?.length && {
         types: { $in: filters.filterTypes },
       }),
+      ...(filters?.filterTags?.length && {
+        $or: [
+          // If NONE is in filterTags, include rules with no tags or empty tags array
+          ...(filters.filterTags.includes('NONE')
+            ? [{ tags: { $exists: false } }, { tags: { $size: 0 } }]
+            : []),
+          // Include rules with the specified tags (excluding NONE)
+          ...(filters.filterTags.filter((tag) => tag !== 'NONE').length > 0
+            ? [
+                {
+                  tags: {
+                    $in: filters.filterTags.filter(
+                      (tag) => tag !== 'NONE'
+                    ) as any,
+                  },
+                },
+              ]
+            : []),
+        ],
+      }),
     }
 
     const stringOtherRegex: string = processedQuery.split(' ').join('|')
@@ -167,6 +187,25 @@ export class RuleRepository {
 
     if (filters?.filterTypes?.length) {
       aiSearchSchema.push({ types: { $in: filters.filterTypes } })
+    }
+
+    if (filters?.filterTags?.length) {
+      const tagFilters: any[] = []
+
+      // If NONE is in filterTags, include rules with no tags or empty tags array
+      if (filters.filterTags.includes('NONE')) {
+        tagFilters.push({ tags: { $exists: false } }, { tags: { $size: 0 } })
+      }
+
+      // Include rules with the specified tags (excluding NONE)
+      const nonNoneTags = filters.filterTags.filter((tag) => tag !== 'NONE')
+      if (nonNoneTags.length > 0) {
+        tagFilters.push({ tags: { $in: nonNoneTags as any } })
+      }
+
+      if (tagFilters.length > 0) {
+        aiSearchSchema.push({ $or: tagFilters })
+      }
     }
 
     const commonAndQuery: Filter<Rule>[] = []
@@ -214,6 +253,7 @@ export class RuleRepository {
         ruleNature: filters?.filterNature || [],
         typologies: filters?.filterTypology || [],
         types: filters?.filterTypes || [],
+        tags: filters?.filterTags || [],
       },
     }
   }

@@ -66,12 +66,15 @@ import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityV
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ModelTier } from '@/utils/llms/base-service'
+import { FilterTags } from '@/@types/openapi-internal/FilterTags'
+import { RULE_TAGS } from '@/@types/openapi-internal-custom/RuleTag'
 
 type AIFilters = {
   ruleTypes?: string[]
   checksFor?: string[]
   typologies?: string[]
   nature?: string[]
+  tags?: string[]
 }
 type FeatureRuleMapping = {
   feature: Feature
@@ -299,8 +302,28 @@ export class RuleService {
         )
       }
 
-      const { filterTypes, filterChecksFor, filterTypology, filterNature } =
-        filters
+      const processTags = (
+        field: keyof AIFilters,
+        enumValues?: any,
+        regularFilter?: string[]
+      ): string[] => {
+        return compact(
+          uniq(
+            concat(
+              aiSearchResult[field]?.map((value) => enumValues?.[value]),
+              regularFilter
+            )
+          )
+        )
+      }
+
+      const {
+        filterTypes,
+        filterChecksFor,
+        filterTypology,
+        filterNature,
+        filterTags,
+      } = filters
 
       filters.filterTypes = processFilters(
         'ruleTypes',
@@ -322,6 +345,12 @@ export class RuleService {
         RuleNature,
         filterNature || []
       ) as RuleNature[]
+
+      filters.filterTags = processTags(
+        'tags',
+        RULE_TAGS,
+        filterTags || []
+      ) as FilterTags[]
     }
 
     const { bestSearches, otherSearches, filtersApplied } =

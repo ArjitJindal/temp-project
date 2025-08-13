@@ -216,16 +216,21 @@ const RuleConfigurationForm = (
             : []),
         ],
       },
-      {
-        key: RULE_PARAMETERS_STEP,
-        title: 'Rule parameters',
-        isUnfilled:
-          validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
-        description: 'Configure filters & risk thresholds that are specific to this rule',
-        tabs: isRiskLevelsEnabled
-          ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
-          : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
-      },
+      ...(!rule?.tags?.includes('DYNAMIC')
+        ? [
+            {
+              key: RULE_PARAMETERS_STEP,
+              title: 'Rule parameters',
+              isUnfilled:
+                validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) !=
+                null,
+              description: 'Configure filters & risk thresholds that are specific to this rule',
+              tabs: isRiskLevelsEnabled
+                ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
+                : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
+            },
+          ]
+        : []),
     ],
     [
       fieldValidators.basicDetailsStep,
@@ -236,6 +241,7 @@ const RuleConfigurationForm = (
       formState?.ruleParametersStep,
       simulationMode,
       rule?.type,
+      rule?.tags,
       isRiskLevelsEnabled,
       isAlertCreationEnabled,
       settings.userAlias,

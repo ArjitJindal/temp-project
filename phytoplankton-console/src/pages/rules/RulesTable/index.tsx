@@ -22,6 +22,7 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { OverviewToolTip } from '@/components/OverviewToolTip';
 import Tag from '@/components/library/Tag';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
+import DynamicRuleTag from '@/components/library/Tag/DynamicRuleTag';
 
 interface RulesTableParams extends CommonParams {}
 
@@ -124,7 +125,7 @@ export const RulesTable: React.FC<Props> = (props) => {
                 >
                   <span className={style.root}>
                     {id}{' '}
-                    {id && recommendedRules.includes(id) ? (
+                    {entity.tags?.some((tag) => tag === 'RECOMMENDED') && (
                       <>
                         {isDemoMode ? (
                           <Random3Reasons />
@@ -134,9 +135,8 @@ export const RulesTable: React.FC<Props> = (props) => {
                           />
                         )}
                       </>
-                    ) : (
-                      ''
                     )}
+                    {entity.tags?.some((tag) => tag === 'DYNAMIC') && <DynamicRuleTag />}
                   </span>{' '}
                 </a>
                 <span style={{ fontSize: '12px', whiteSpace: 'normal' }}>{entity.name}</span>

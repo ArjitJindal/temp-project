@@ -130,54 +130,59 @@ export default function RuleConfigurationV2(props: Props) {
               Previous
             </Button>
           )}
-          {(type === 'EDIT' || activeStepIndex !== 2) && (
+          {(type === 'EDIT' ||
+            activeStepIndex !== (rule?.tags?.some((tag) => tag === 'DYNAMIC') ? 1 : 2)) && (
             <Button
               type="SECONDARY"
               onClick={() => {
                 const nextStep = RULE_CONFIGURATION_STEPS[activeStepIndex + 1];
                 setActiveStepKey(nextStep);
               }}
-              isDisabled={activeStepIndex === RULE_CONFIGURATION_STEPS.length - 1}
+              isDisabled={
+                activeStepIndex === (rule?.tags?.some((tag) => tag === 'DYNAMIC') ? 1 : 2)
+              }
               iconRight={<ArrowRightSLineIcon />}
               testName="drawer-next-button"
             >
               Next
             </Button>
           )}
-          {!readOnly && (type === 'CREATE' || type === 'DUPLICATE') && activeStepIndex === 2 && (
-            <>
-              {isValuesSame && type === 'DUPLICATE' ? (
-                <Tooltip
-                  placement="topRight"
-                  title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
-                >
-                  <div>
-                    <Button isDisabled={true} requiredResources={['write:::rules/my-rules/*']}>
-                      Create
-                    </Button>
-                  </div>
-                </Tooltip>
-              ) : (
-                <Button
-                  htmlType="submit"
-                  isLoading={createRuleInstanceMutation.isLoading}
-                  isDisabled={readOnly}
-                  onClick={() => {
-                    if (!formRef?.current?.validate()) {
-                      formRef?.current?.submit(); // To show errors
-                      return;
-                    }
+          {!readOnly &&
+            (type === 'CREATE' || type === 'DUPLICATE') &&
+            activeStepIndex === (rule?.tags?.some((tag) => tag === 'DYNAMIC') ? 1 : 2) && (
+              <>
+                {isValuesSame && type === 'DUPLICATE' ? (
+                  <Tooltip
+                    placement="topRight"
+                    title="Rule parameters have not changed. To save the rule, please modify some rule parameters."
+                  >
+                    <div>
+                      <Button isDisabled={true} requiredResources={['write:::rules/my-rules/*']}>
+                        Create
+                      </Button>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    htmlType="submit"
+                    isLoading={createRuleInstanceMutation.isLoading}
+                    isDisabled={readOnly}
+                    onClick={() => {
+                      if (!formRef?.current?.validate()) {
+                        formRef?.current?.submit(); // To show errors
+                        return;
+                      }
 
-                    setIsRuleModeModalOpen(true);
-                  }}
-                  requiredResources={['write:::rules/my-rules/*']}
-                  testName="drawer-create-save-button"
-                >
-                  Create
-                </Button>
-              )}
-            </>
-          )}
+                      setIsRuleModeModalOpen(true);
+                    }}
+                    requiredResources={['write:::rules/my-rules/*']}
+                    testName="drawer-create-save-button"
+                  >
+                    Create
+                  </Button>
+                )}
+              </>
+            )}
           {!readOnly && type === 'EDIT' && (
             <Button
               htmlType="submit"

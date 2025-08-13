@@ -186,6 +186,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     typologies: [],
     checksFor: [],
     defaultNature: [],
+    tags: [],
     types:
       ruleType === 'TRANSACTION'
         ? TX_ENTITY_TYPE_OPTIONS[0].value

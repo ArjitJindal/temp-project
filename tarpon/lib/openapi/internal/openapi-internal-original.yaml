@@ -202,6 +202,12 @@ paths:
             type: boolean
           in: query
           name: disableGptSearch
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/FilterTags'
+          in: query
+          name: filterTags
   /rule-filters:
     get:
       summary: Rule Filters - List
@@ -9170,6 +9176,10 @@ components:
           type: array
           items:
             type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleTag'
         sampleUseCases:
           type: string
       required:
@@ -14591,6 +14601,19 @@ components:
         - ENHANCED_COUNTRY_RISK
         - TAX_CRIME
         - CHILD_SEXUAL_EXPLOITATION
+    RuleTag:
+      title: RuleTag
+      type: string
+      enum:
+        - DYNAMIC
+        - RECOMMENDED
+    FilterTags:
+      title: FilterTags
+      type: string
+      enum:
+        - NONE
+        - DYNAMIC
+        - RECOMMENDED
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
       type: object
@@ -16433,6 +16456,10 @@ components:
                 type: string
             isAi:
               type: boolean
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/FilterTags'
       required:
         - bestSearches
         - otherSearches
