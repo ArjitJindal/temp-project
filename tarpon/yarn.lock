@@ -4896,7 +4896,7 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@foliojs-fork/fontkit@npm:^1.9.1":
+"@foliojs-fork/fontkit@npm:^1.9.2":
   version: 1.9.2
   resolution: "@foliojs-fork/fontkit@npm:1.9.2"
   dependencies:
@@ -4912,7 +4912,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@foliojs-fork/linebreak@npm:^1.1.1":
+"@foliojs-fork/linebreak@npm:^1.1.1, @foliojs-fork/linebreak@npm:^1.1.2":
   version: 1.1.2
   resolution: "@foliojs-fork/linebreak@npm:1.1.2"
   dependencies:
@@ -4922,15 +4922,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@foliojs-fork/pdfkit@npm:^0.14.0":
-  version: 0.14.0
-  resolution: "@foliojs-fork/pdfkit@npm:0.14.0"
+"@foliojs-fork/pdfkit@npm:^0.15.3":
+  version: 0.15.3
+  resolution: "@foliojs-fork/pdfkit@npm:0.15.3"
   dependencies:
-    "@foliojs-fork/fontkit": "npm:^1.9.1"
+    "@foliojs-fork/fontkit": "npm:^1.9.2"
     "@foliojs-fork/linebreak": "npm:^1.1.1"
     crypto-js: "npm:^4.2.0"
+    jpeg-exif: "npm:^1.1.4"
     png-js: "npm:^1.0.0"
-  checksum: d0670a3510287376dedd72deddd2980b8c2394685c5ec057afc35148987befb5a45a99bc07942dcd5fe4044933caeba028e169dfc562bf69848fb9d8d33e49c6
+  checksum: cefd13f5d2d4b4cb2f7e5f0f0852000c3b868d755dbc0761e59565f42d10e42385a158d8847defef9b255ec5d994a8106b5233c7f7b8aea609597866e3766129
   languageName: node
   linkType: hard
 
@@ -17423,6 +17424,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jpeg-exif@npm:^1.1.4":
+  version: 1.1.4
+  resolution: "jpeg-exif@npm:1.1.4"
+  checksum: 75699bd7161de1be99e847166917957bfb405ed736655361c58f0390e7182cc28999b2cbc31e650b71b6d2ad38843789439a121ac64988b2ccaa00f6832bb3d9
+  languageName: node
+  linkType: hard
+
 "js-sdsl@npm:4.3.0":
   version: 4.3.0
   resolution: "js-sdsl@npm:4.3.0"
@@ -19960,14 +19968,14 @@ __metadata:
   linkType: hard
 
 "pdfmake@npm:^0.2.13":
-  version: 0.2.13
-  resolution: "pdfmake@npm:0.2.13"
+  version: 0.2.20
+  resolution: "pdfmake@npm:0.2.20"
   dependencies:
-    "@foliojs-fork/linebreak": "npm:^1.1.1"
-    "@foliojs-fork/pdfkit": "npm:^0.14.0"
+    "@foliojs-fork/linebreak": "npm:^1.1.2"
+    "@foliojs-fork/pdfkit": "npm:^0.15.3"
     iconv-lite: "npm:^0.6.3"
-    xmldoc: "npm:^1.1.2"
-  checksum: 7d59e962f2be86763a6211deb9f4d938e5a4acdadbaac38054cbb52390a3aff8bbb06d15af133d8a6919e947a2029bc7abf079087c04c98bf25e77a253a1187f
+    xmldoc: "npm:^2.0.1"
+  checksum: 524807370eb9f9c2a55b7aadfb2dfbd183ac81b2d7dbcba8e4f79566f220fcbf8e73d3a28e5988d42b38094615c82b966d7a039a07159db836c800a7395b5d44
   languageName: node
   linkType: hard
 
@@ -23605,12 +23613,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xmldoc@npm:^1.1.2":
-  version: 1.3.0
-  resolution: "xmldoc@npm:1.3.0"
+"xmldoc@npm:^2.0.1":
+  version: 2.0.2
+  resolution: "xmldoc@npm:2.0.2"
   dependencies:
     sax: "npm:^1.2.4"
-  checksum: 7a084948c3671d9337764168c40d72f8e73f5483cae6a561e2fdb338c4942d16c7d61d9163c089b041a5d588916b57a0835547841acafae02e388b62fe86b821
+  checksum: b62fe5b2de3c9f79e5d26d1737583a7988dcc19eb0bb1710480940b0500c50f5d565ebf9682b5be0b43658811ab919e05cab45b8ad5e8fee4bb9300a3e3cd758
   languageName: node
   linkType: hard
 

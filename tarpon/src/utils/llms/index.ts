@@ -45,7 +45,7 @@ export const ask = async (
   promptString: string,
   options?: LLMOptions
 ) => {
-  const service = await getLLMServiceForTenant(tenantId)
+  const service = await getLLMServiceForTenant(tenantId, options?.provider)
   return service.ask(promptString, options)
 }
 

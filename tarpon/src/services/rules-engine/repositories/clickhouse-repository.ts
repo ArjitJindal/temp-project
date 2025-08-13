@@ -672,6 +672,24 @@ export class ClickhouseTransactionsRepository {
     return result
   }
 
+  public async getTotalOriginAmount(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<number> {
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
+
+    const query = `
+      SELECT sum(originAmountDetails_amountInUsd) as totalOriginAmount
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      WHERE ${whereClause}
+    `
+
+    const result = await executeClickhouseQuery<
+      { totalOriginAmount: number }[]
+    >(this.clickhouseClient, query)
+
+    return result[0].totalOriginAmount
+  }
+
   public async getStatsByTime(
     params: DefaultApiGetTransactionsStatsByTimeRequest,
     referenceCurrency: CurrencyCode

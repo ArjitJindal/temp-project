@@ -131,6 +131,7 @@ export const jobDecisionHandler = async (
     USER_RULE_RE_RUN: 'FARGATE',
     SANCTIONS_SCREENING_DETAILS_MIGRATION: 'FARGATE',
     BATCH_RERUN_USERS: 'FARGATE',
+    EDD_REVIEW: 'LAMBDA',
   }
 
   return {

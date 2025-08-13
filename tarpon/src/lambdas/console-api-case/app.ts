@@ -15,6 +15,8 @@ import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { getContext } from '@/core/utils/context-storage'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -392,6 +394,19 @@ export const casesHandler = lambdaApi()(
         request.commentId
       )
       return response.result
+    })
+
+    handlers.registerGenerateCaseEddReport(async (ctx, request) => {
+      await sendBatchJobCommand({
+        tenantId: ctx.tenantId,
+        type: 'EDD_REVIEW',
+        parameters: {
+          caseId: request.caseId,
+          createdBy: ctx.userId,
+          auth0Domain: getContext()?.auth0Domain ?? '',
+          userId: request.EDDReportRequest.userId,
+        },
+      })
     })
 
     return await handlers.handle(event)

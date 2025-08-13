@@ -34,7 +34,7 @@ export function getResourceNameForHammerhead(
 }
 
 export function getNameForGlobalResource(name: string, config: Config) {
-  return `${name + (config.stage ? `-${config.stage}` : '')}-${
+  return `${name + (config.stage === 'local' ? '-dev' : `-${config.stage}`)}-${
     config.env.region ? config.env.region : 'eu-central-1'
   }`
 }

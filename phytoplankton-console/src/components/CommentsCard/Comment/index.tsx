@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
+import { marked } from 'marked';
 import { Reply } from '../Reply';
 import { CommentWithReplies } from '..';
 import styles from './index.module.less';
@@ -80,6 +81,129 @@ export default function Comment(props: Props) {
     setShowReplyEditor(!showReplyEditor);
   };
 
+  const handlePrint = () => {
+    // Convert markdown to HTML
+    const htmlContent = marked(comment.body || '');
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to print this comment.');
+      return;
+    }
+
+    // Create the print-friendly HTML
+    const printHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Comment - ${comment.id || 'unknown'}</title>
+          <style>
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              font-size: 12px;
+              line-height: 1.4;
+              color: #333;
+              margin: 20px;
+              max-width: 800px;
+            }
+            .header {
+              border-bottom: 2px solid #1890ff;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              color: #1890ff;
+              margin: 0;
+              font-size: 18px;
+            }
+            .meta {
+              background-color: #f8f9fa;
+              border-left: 3px solid #1890ff;
+              padding: 10px;
+              margin-bottom: 15px;
+              border-radius: 4px;
+            }
+            .meta div {
+              margin-bottom: 5px;
+            }
+            .meta strong {
+              color: #1890ff;
+            }
+            .content {
+              border: 1px solid #e8e8e8;
+              padding: 15px;
+              border-radius: 4px;
+              background-color: #ffffff;
+            }
+            .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+              color: #1890ff;
+              margin-top: 15px;
+              margin-bottom: 10px;
+            }
+            .content p {
+              margin-bottom: 10px;
+            }
+            .content code {
+              background-color: #f1f1f1;
+              padding: 2px 4px;
+              border-radius: 3px;
+              font-family: 'Courier New', monospace;
+            }
+            .content pre {
+              background-color: #f8f9fa;
+              padding: 10px;
+              border-radius: 4px;
+              overflow-x: auto;
+              border: 1px solid #e9ecef;
+            }
+            .content blockquote {
+              border-left: 4px solid #1890ff;
+              margin: 0;
+              padding-left: 15px;
+              color: #666;
+            }
+            .content ul, .content ol {
+              margin-bottom: 10px;
+              padding-left: 20px;
+            }
+            @media print {
+              body { margin: 0; }
+              .header { page-break-after: avoid; }
+              .meta { page-break-after: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Comment Details</h1>
+          </div>
+          
+          <div class="meta">
+            <div><strong>Author:</strong> ${getDisplayedUserInfo(user).name}</div>
+            <div><strong>Date:</strong> ${
+              comment.createdAt ? new Date(comment.createdAt).toLocaleString() : 'N/A'
+            }</div>
+            <div><strong>Comment ID:</strong> ${comment.id || 'N/A'}</div>
+          </div>
+          
+          <div class="content">
+            ${htmlContent}
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+  };
+
   const replies = comment.replies?.length ?? 0;
   return (
     <div className={cn(styles.root, isDeleting && styles.isDeleting)} data-cy="comment">
@@ -125,6 +249,13 @@ export default function Comment(props: Props) {
               Reply
             </div>
           )}
+          <div
+            className={styles.footerText}
+            style={{ width: 'fit-content' }}
+            onClick={() => handlePrint()}
+          >
+            Print
+          </div>
           {currentUserId === comment.userId && level === 1 && areRepliesEnabled && (
             <div className={styles.separator}>.</div>
           )}

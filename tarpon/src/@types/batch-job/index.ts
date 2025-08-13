@@ -508,6 +508,17 @@ export type BatchRerunUsers = {
   }
 }
 
+export type EddReviewBatchJob = {
+  type: 'EDD_REVIEW'
+  tenantId: string
+  parameters: {
+    userId: string
+    caseId: string
+    createdBy: string
+    auth0Domain: string
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -564,6 +575,7 @@ export type BatchJob =
   | GoCardlessBackfillBatchJob
   | BackfillTransactionsDescBatchJob
   | BatchRerunUsers
+  | EddReviewBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

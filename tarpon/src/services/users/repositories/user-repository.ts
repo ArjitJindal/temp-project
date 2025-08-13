@@ -912,6 +912,15 @@ export class UserRepository {
     )
   }
 
+  public async getChildUsers(userId: string): Promise<InternalUser[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const cursor = collection.find({ linkedEntities: { parentUserId: userId } })
+    return cursor.toArray()
+  }
+
   public async updateUserWithExecutedRules(
     userId: string,
     executedRules: ExecutedRulesResult[],

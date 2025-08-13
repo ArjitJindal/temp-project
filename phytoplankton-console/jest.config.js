@@ -8,6 +8,7 @@ const includeEsModules = [
   '@ant-design/icons',
   'rc-[a-z]+',
   'mime',
+  'marked',
 ];
 
 process.env.TZ = 'Etc/UTC';

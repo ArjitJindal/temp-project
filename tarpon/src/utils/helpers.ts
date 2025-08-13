@@ -1,5 +1,5 @@
 import { isValidEmail } from '@flagright/lib/utils'
-import { uniq } from 'lodash'
+import { compact, uniq } from 'lodash'
 import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
 import { envIs } from './env'
 import { isDemoTenant } from './tenant'
@@ -14,6 +14,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { Address } from '@/@types/openapi-public/Address'
+import { Person } from '@/@types/openapi-public/Person'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -258,4 +259,12 @@ export const getPaymentDetailsName = (
 
 export const isValidSARRequest = (tenantId: string) => {
   return !isDemoTenant(tenantId) && (envIs('sandbox') || envIs('prod'))
+}
+
+export const getPersonName = (person?: Person) => {
+  return compact([
+    person?.generalDetails?.name?.firstName,
+    person?.generalDetails?.name?.middleName,
+    person?.generalDetails?.name?.lastName,
+  ]).join(' ')
 }

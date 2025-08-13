@@ -202,6 +202,11 @@ export const featureDescriptions: Record<
       "Disables global aggregation (Only use for tenants that ideally don't use V2 rules engine) ",
     tag: FeatureTag.ENG,
   },
+  EDD_REPORT: {
+    title: 'EDD Report',
+    description: 'Enables EDD Report',
+    tag: FeatureTag.WIP,
+  },
 };
 
 export default function SuperAdminPanel() {

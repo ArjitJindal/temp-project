@@ -2439,6 +2439,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.26.7":
+  version: 7.28.2
+  resolution: "@babel/runtime@npm:7.28.2"
+  checksum: c20afe253629d53a405a610b12a62ac74d341a2c1e0fb202bbef0c118f6b5c84f94bf16039f58fd0483dd256901259930a43976845bdeb180cab1f882c21b6e0
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.9.2":
   version: 7.22.5
   resolution: "@babel/runtime@npm:7.22.5"
@@ -6211,6 +6218,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/trusted-types@npm:^2.0.7":
+  version: 2.0.7
+  resolution: "@types/trusted-types@npm:2.0.7"
+  checksum: 4c4855f10de7c6c135e0d32ce462419d8abbbc33713b31d294596c0cc34ae1fa6112a2f9da729c8f7a20707782b0d69da3b1f8df6645b0366d08825ca1522e0c
+  languageName: node
+  linkType: hard
+
 "@types/unist@npm:*, @types/unist@npm:^2.0.0, @types/unist@npm:^2.0.2":
   version: 2.0.6
   resolution: "@types/unist@npm:2.0.6"
@@ -7983,6 +7997,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"canvg@npm:^3.0.11":
+  version: 3.0.11
+  resolution: "canvg@npm:3.0.11"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+    "@types/raf": "npm:^3.4.0"
+    core-js: "npm:^3.8.3"
+    raf: "npm:^3.4.1"
+    regenerator-runtime: "npm:^0.13.7"
+    rgbcolor: "npm:^1.0.1"
+    stackblur-canvas: "npm:^2.0.0"
+    svg-pathdata: "npm:^6.0.3"
+  checksum: 03ea5b69e97a4a476ef5fc8455d0da2718bd68cd8ace3e42718176bf4b7dfd80eb1d0eba47dcd04b34ed9a0c5c8ed849ead0f364dad0e35369254a45d5e098c4
+  languageName: node
+  linkType: hard
+
 "canvg@npm:^3.0.6":
   version: 3.0.10
   resolution: "canvg@npm:3.0.10"
@@ -9608,6 +9638,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dompurify@npm:^3.2.4":
+  version: 3.2.6
+  resolution: "dompurify@npm:3.2.6"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: c8f8e5b0879a0d93c84a2e5e78649a47d0c057ed0f7850ca3d573d2cca64b84fb1ff85bd4b20980ade69c4e5b80ae73011340f1c2ff375c7ef98bb8268e1d13a
+  languageName: node
+  linkType: hard
+
 "domutils@npm:^1.5.1":
   version: 1.7.0
   resolution: "domutils@npm:1.7.0"
@@ -10027,6 +10069,13 @@ __metadata:
     is-date-object: "npm:^1.0.1"
     is-symbol: "npm:^1.0.2"
   checksum: 0886572b8dc075cb10e50c0af62a03d03a68e1e69c388bd4f10c0649ee41b1fbb24840a1b7e590b393011b5cdbe0144b776da316762653685432df37d6de60f1
+  languageName: node
+  linkType: hard
+
+"es6-promise@npm:^4.2.5":
+  version: 4.2.8
+  resolution: "es6-promise@npm:4.2.8"
+  checksum: 2373d9c5e9a93bdd9f9ed32ff5cb6dd3dd785368d1c21e9bbbfd07d16345b3774ae260f2bd24c8f836a6903f432b4151e7816a7fa8891ccb4e1a55a028ec42c3
   languageName: node
   linkType: hard
 
@@ -12162,13 +12211,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
+"html2canvas@npm:^1.0.0, html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
   version: 1.4.1
   resolution: "html2canvas@npm:1.4.1"
   dependencies:
     css-line-break: "npm:^2.1.0"
     text-segmentation: "npm:^1.0.3"
   checksum: 6de86f75762b00948edf2ea559f16da0a1ec3facc4a8a7d3f35fcec59bb0c5970463478988ae3d9082152e0173690d46ebf4082e7ac803dd4817bae1d355c0db
+  languageName: node
+  linkType: hard
+
+"html2pdf.js@npm:^0.10.3":
+  version: 0.10.3
+  resolution: "html2pdf.js@npm:0.10.3"
+  dependencies:
+    es6-promise: "npm:^4.2.5"
+    html2canvas: "npm:^1.0.0"
+    jspdf: "npm:^3.0.0"
+  checksum: ed4339602dbb7f55bafafcaa56e2790cfed97547b1f72e84106e4ce206000b84e4bd60083ba24d7c107f48beefa41df0d9cc7a5effd842833f15db41f3209b05
   languageName: node
   linkType: hard
 
@@ -14268,6 +14328,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jspdf@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "jspdf@npm:3.0.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.26.7"
+    atob: "npm:^2.1.2"
+    btoa: "npm:^1.2.1"
+    canvg: "npm:^3.0.11"
+    core-js: "npm:^3.6.0"
+    dompurify: "npm:^3.2.4"
+    fflate: "npm:^0.8.1"
+    html2canvas: "npm:^1.0.0-rc.5"
+  dependenciesMeta:
+    canvg:
+      optional: true
+    core-js:
+      optional: true
+    dompurify:
+      optional: true
+    html2canvas:
+      optional: true
+  checksum: db900f44d9cdf2c51bd5a7ffe9c55711aff68e7751a61291cc2451f06cfa1e268ecd5947c37e0f9097c999d751e3cdd1560f5a4a242376530100654c70970eda
+  languageName: node
+  linkType: hard
+
 "jsprim@npm:^2.0.2":
   version: 2.0.2
   resolution: "jsprim@npm:2.0.2"
@@ -14795,6 +14880,15 @@ __metadata:
   dependencies:
     object-visit: "npm:^1.0.0"
   checksum: fb3475e5311939a6147e339999113db607adc11c7c3cd3103e5e9dbf502898416ecba6b1c7c649c6d4d12941de00cee58b939756bdf20a9efe7d4fa5a5738b73
+  languageName: node
+  linkType: hard
+
+"marked@npm:^16.1.2":
+  version: 16.1.2
+  resolution: "marked@npm:16.1.2"
+  bin:
+    marked: bin/marked.js
+  checksum: 4e5878f1aa89de139bed14835865af20f26527674f41dedf2b33d2f85360298a1a0cc0505c675f072175c86eb30684c7b4e287d18f5958daa26e36bc1308d321
   languageName: node
   linkType: hard
 
@@ -16173,6 +16267,7 @@ __metadata:
     gh-pages: "npm:^3.0.0"
     glob: "npm:^11.0.3"
     html2canvas: "npm:^1.4.1"
+    html2pdf.js: "npm:^0.10.3"
     husky: "npm:^8.0.3"
     identity-obj-proxy: "npm:^3.0.0"
     jest: "npm:^29.2.2"
@@ -16187,6 +16282,7 @@ __metadata:
     lint-staged: "npm:^10.0.0"
     lodash: "npm:^4.17.11"
     lodash-es: "npm:^4.17.21"
+    marked: "npm:^16.1.2"
     mime: "npm:^4.0.4"
     nanoid: "npm:^4.0.0"
     node-notifier: "npm:^10.0.1"

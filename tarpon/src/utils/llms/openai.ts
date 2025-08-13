@@ -18,7 +18,7 @@ export class OpenAIService extends BaseLLMService<OpenAI> {
   protected modelClassification: Record<ModelTier, string> = {
     [ModelTier.ENTERPRISE]: 'gpt-4.1',
     [ModelTier.PROFESSIONAL]: 'gpt-4o',
-    [ModelTier.STANDARD]: 'gpt-4o-mini',
+    [ModelTier.STANDARD]: 'gpt-5-mini',
     [ModelTier.ECONOMY]: 'gpt-3.5-turbo',
   }
 
@@ -35,8 +35,9 @@ export class OpenAIService extends BaseLLMService<OpenAI> {
         content: msg.content,
       })),
       model: this.modelClassification[configuredOptions.tier],
-      max_tokens: configuredOptions.maxTokens,
-      temperature: configuredOptions.temperature,
+      temperature:
+        options?.tier === ModelTier.STANDARD ? 1 : options?.temperature ?? 0.5,
+      max_completion_tokens: configuredOptions.maxTokens,
     })
 
     const response = completion.choices[0].message.content || ''

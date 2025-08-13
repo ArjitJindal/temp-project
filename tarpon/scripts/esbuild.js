@@ -23,6 +23,7 @@ const IGNORED = [
   'Synthetics',
   'SyntheticsLogger',
   'superagent-proxy',
+  'highlight.js',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)

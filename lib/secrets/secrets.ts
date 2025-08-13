@@ -35,6 +35,9 @@ export type Secrets = {
   acuris: {
     apiKey: string
   }
+  perplexity: {
+    apiKey: string
+  }
 }
 
 export type SecretName = keyof Secrets

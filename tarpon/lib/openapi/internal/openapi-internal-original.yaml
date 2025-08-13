@@ -5960,6 +5960,28 @@ paths:
                     type: string
                 required:
                   - downloadUrl
+  /cases/{caseId}/edd-report:
+    post:
+      summary: Generate EDD report for a case
+      operationId: generate-case-edd-report
+      x-flagright:
+        resources:
+          - read:::case-management/case-overview
+      responses:
+        '200':
+          description: OK
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: caseId
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EDDReportRequest'
+        required: true
   /cases/{caseId}/transactions:
     get:
       summary: Get transactions for a case
@@ -12536,6 +12558,7 @@ components:
         - OPEN_SEARCH
         - APPROVAL_WORKFLOWS
         - DISABLE_GLOBAL_AGGREGATIONS
+        - EDD_REPORT
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -18816,6 +18839,16 @@ components:
       required:
         - resources
         - actions
+    EDDReportRequest:
+      type: object
+      properties:
+        caseId:
+          type: string
+        userId:
+          type: string
+      required:
+        - caseId
+        - userId
   securitySchemes:
     Authorization:
       type: http

@@ -3,6 +3,7 @@ import { InternalBusinessUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import Tags from '@/pages/users-item/UserDetails/shared/Tags';
 
 interface Props {
   user: InternalBusinessUser;
@@ -54,6 +55,10 @@ export default function RegistrationDetails(props: Props) {
         {
           label: 'Legal entity type',
           value: user?.legalEntity?.companyRegistrationDetails?.legalEntityType ?? '-',
+        },
+        {
+          label: 'Tags',
+          value: <Tags tags={user?.legalEntity?.companyRegistrationDetails?.tags ?? []} />,
         },
       ]}
     />

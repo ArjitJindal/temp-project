@@ -1,4 +1,4 @@
-import { MoreOutlined } from '@ant-design/icons';
+import { DownloadOutlined, MoreOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import s from './style.module.less';
 import Dropdown from '@/components/library/Dropdown';
@@ -21,6 +21,9 @@ import {
 } from '@/pages/case-management/components/ApproveSendBackButton';
 import { useAuth0User, useUser } from '@/utils/user-utils';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { useApi } from '@/api';
+import { message } from '@/components/library/Message';
 
 interface Props {
   caseItem: Case;
@@ -61,12 +64,24 @@ const useOptions = (props: Props) => {
   }, [caseItem]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const isEddReportEnabled = useFeatureEnabled('EDD_REPORT');
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);
   }, [caseItem]);
-
+  const api = useApi();
+  const mutation = useMutation(
+    async () =>
+      await api.generateCaseEddReport({
+        caseId: caseItem.caseId ?? '',
+        EDDReportRequest: {
+          userId:
+            caseItem.caseUsers?.origin?.userId || caseItem.caseUsers?.destination?.userId || '',
+          caseId: caseItem.caseId ?? '',
+        },
+      }),
+  );
   const currentUser = useAuth0User();
   const currentUserAccount = useUser(currentUser.userId);
   const displayApproveButtons = useMemo(() => {
@@ -260,6 +275,28 @@ const useOptions = (props: Props) => {
                 haveModal={true}
                 user={tableUser}
               />
+            ),
+          },
+        ]
+      : []),
+    ...(isEddReportEnabled
+      ? [
+          {
+            value: 'GENERATE_EDD_REPORT',
+            label: (
+              <Button
+                type="TETRIARY"
+                icon={<DownloadOutlined />}
+                className={s.optionButton}
+                onClick={async () => {
+                  await mutation.mutateAsync();
+                  message.success(
+                    'EDD report queued for generation and will be generated and will be available in the Comments section of the case in 5-10 minutes',
+                  );
+                }}
+              >
+                Generate EDD Report
+              </Button>
             ),
           },
         ]
