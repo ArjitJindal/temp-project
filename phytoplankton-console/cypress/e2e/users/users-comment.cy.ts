@@ -18,7 +18,7 @@ describe('Add a comment to a user', () => {
     const fileContent = `file content of ${fileName}`;
 
     // Navigate to user
-    cy.visit('/users/list/consumer/all');
+    cy.visit('/users/list/consumer');
     cy.get('[data-cy="consumer-user-id"]', { timeout: 15000 }).eq(0).click();
 
     // Open comment window and fill it

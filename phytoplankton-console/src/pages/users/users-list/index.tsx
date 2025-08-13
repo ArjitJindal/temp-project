@@ -68,7 +68,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         ...queryAdapter.deserializer(raw),
       }),
     },
-    makeUrl: (rawQueryParams) => makeUrl('/users/list/:list/all', { list: type }, rawQueryParams),
+    makeUrl: (rawQueryParams) => makeUrl('/users/list/:list', { list: type }, rawQueryParams),
     persist: {
       id: `users-list-navigation-params-${type}`,
     },
@@ -158,7 +158,7 @@ export default function UsersList() {
       <PageTabs
         activeKey={list}
         onChange={(key) => {
-          navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
+          navigate(makeUrl(`/users/list/:list`, { list: key }), { replace: true });
         }}
         items={[
           { title: `All ${settings.userAlias}s`, key: 'all', children: <UsersTab type={list} /> },

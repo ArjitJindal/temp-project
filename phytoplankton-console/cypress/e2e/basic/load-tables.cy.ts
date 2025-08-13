@@ -43,9 +43,9 @@ describe.skip('Main pages loading', () => {
       url: '/transactions/list',
       title: 'Transactions',
     },
-    { testName: 'Users(all)', url: '/users/list/all/all', title: 'Users' },
-    { testName: 'Users(consumer)', url: '/users/list/consumer/all', title: 'Users' },
-    { testName: 'Users(business)', url: '/users/list/business/all', title: 'Users' },
+    { testName: 'Users(all)', url: '/users/list/all', title: 'Users' },
+    { testName: 'Users(consumer)', url: '/users/list/consumer', title: 'Users' },
+    { testName: 'Users(business)', url: '/users/list/business', title: 'Users' },
     {
       testName: 'My rules(live)',
       url: '/rules/my-rules',

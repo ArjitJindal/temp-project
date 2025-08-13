@@ -200,13 +200,13 @@ export function useRoutes(): RouteItem[] {
                 path: '/users/list',
                 redirect:
                   lastActiveTab === 'consumer'
-                    ? '/users/list/consumer/all'
+                    ? '/users/list/consumer'
                     : lastActiveTab === 'all'
-                    ? '/users/list/all/all'
-                    : '/users/list/business/all',
+                    ? '/users/list/all'
+                    : '/users/list/business',
               },
               {
-                path: '/users/list/:list/all',
+                path: '/users/list/:list',
                 name: 'user-lists-all',
                 component: UsersUsersListPage,
               },
