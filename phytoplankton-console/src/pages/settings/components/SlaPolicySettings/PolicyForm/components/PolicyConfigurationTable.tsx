@@ -50,7 +50,7 @@ function PolicyConfigurationTable() {
         <Label label="Account Role" />
         <OperatorSelect value="EQ" options={[{ value: 'EQ', label: '=' }]} isDisabled />
         <GenericFormField<FormValues['policyConfiguration'], 'accountRoles'> name="accountRoles">
-          {(inputProps) => <Select mode="MULTIPLE" options={roleOptions} {...inputProps} />}
+          {(inputProps) => <Select mode="TAGS" options={roleOptions} {...inputProps} />}
         </GenericFormField>
         <NestedForm name="SLATime">
           <Label label="Service level agreement time" required={{ value: true, showHint: true }} />
@@ -126,7 +126,7 @@ function PolicyConfigurationTable() {
           isDisabled
         />
         <GenericFormField<FormValues['policyConfiguration'], 'workingDays'> name="workingDays">
-          {(inputProps) => <Select mode="MULTIPLE" options={workingDaysOptions} {...inputProps} />}
+          {(inputProps) => <Select mode="TAGS" options={workingDaysOptions} {...inputProps} />}
         </GenericFormField>
         <NestedForm name="statusDetails">
           <Label label="Statuses" required={{ value: true, showHint: true }} />
@@ -143,7 +143,7 @@ function PolicyConfigurationTable() {
               {(inputProps) => (
                 <div className={s.statusSelect}>
                   <Select<PolicyStatusDetailsStatusesEnum>
-                    mode="MULTIPLE"
+                    mode="TAGS"
                     options={(
                       DERIVED_STATUSS.filter(
                         (status) => status !== 'CLOSED',

@@ -506,7 +506,7 @@ export default function SuperAdminPanel() {
               testId="features-select"
             >
               <Select<Feature>
-                mode="MULTIPLE"
+                mode="TAGS"
                 options={Object.keys(featureDescriptions)
                   .sort()
                   .map((featureKey) => {
@@ -560,7 +560,7 @@ export default function SuperAdminPanel() {
             {isSARToBeEnabled && (
               <Label label="Select SAR jurisdictions">
                 <Select<string>
-                  mode="MULTIPLE"
+                  mode="TAGS"
                   options={SARCountries.map((sarCountry) => ({
                     label: humanizeConstant(sarCountry.country),
                     value: sarCountry.countryCode,
@@ -746,7 +746,7 @@ export default function SuperAdminPanel() {
               <AsyncResourceRenderer resource={secondaryQueueTenants.data}>
                 {(data) => (
                   <Select
-                    mode="MULTIPLE"
+                    mode="TAGS"
                     options={tenantOptions}
                     onChange={async (value) => {
                       if (value) {

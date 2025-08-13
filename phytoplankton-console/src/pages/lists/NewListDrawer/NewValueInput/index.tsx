@@ -183,11 +183,6 @@ function CountriesInput(props: InputProps<string[]> & { excludeCountries?: Set<s
   }, [excludeCountries]);
 
   return (
-    <Select
-      mode={'MULTIPLE'}
-      options={filteredOptions}
-      placeholder={`Select countries`}
-      {...restProps}
-    />
+    <Select mode="TAGS" options={filteredOptions} placeholder={`Select countries`} {...restProps} />
   );
 }

@@ -92,7 +92,7 @@ export const WebhookSettings: React.FC = () => {
                 setWebhookSettings({ ...webhookSettings, retryOnlyFor: value });
               }
             }}
-            mode="MULTIPLE"
+            mode="TAGS"
           />
         </Label>
         <Label label="Backoff type">

@@ -202,10 +202,10 @@ const EXTENDED_DAY_RANGE_GRANULARITY: Option<RiskParameterValueDayRangeEndGranul
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
     options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
-    mode?: 'MULTIPLE' | 'TAGS';
+    mode?: 'TAGS';
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
+  const { value, disabled, onChange, options, existedValues = [], mode = 'TAGS' } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );

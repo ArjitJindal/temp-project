@@ -676,12 +676,14 @@ function MultiSelectWidget(props: any) {
   return (
     <WidgetWrapper widgetFactoryProps={props}>
       <Select<string | number>
-        mode={props.allowCustomValues ? 'TAGS' : 'MULTIPLE'}
+        mode="TAGS"
         allowClear={true}
         options={options}
         value={value}
         onChange={(newValue) => {
-          props.setValue(isCountryField ? serializeCountries(newValue) : newValue);
+          props.setValue(
+            isCountryField ? serializeCountries(newValue as string[]) : (newValue as string[]),
+          );
         }}
       />
     </WidgetWrapper>

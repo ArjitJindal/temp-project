@@ -42,7 +42,7 @@ function PopupContent(props: Props) {
           labelProps={{ level: 2 }}
         >
           {(inputProps) => (
-            <Select<string> {...inputProps} options={slaPolicyOptions} mode="MULTIPLE" />
+            <Select<string> {...inputProps} options={slaPolicyOptions} mode="TAGS" />
           )}
         </InputField>
         <InputField<FormValues, 'slaPolicyStatus'>
@@ -51,11 +51,7 @@ function PopupContent(props: Props) {
           labelProps={{ level: 2 }}
         >
           {(inputProps) => (
-            <Select<SLAPolicyStatus>
-              {...inputProps}
-              options={policyStatusOptions}
-              mode="MULTIPLE"
-            />
+            <Select<SLAPolicyStatus> {...inputProps} options={policyStatusOptions} mode="TAGS" />
           )}
         </InputField>
         <div className={s.buttons}>

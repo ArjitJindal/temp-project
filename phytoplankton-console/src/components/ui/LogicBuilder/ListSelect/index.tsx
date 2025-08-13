@@ -28,7 +28,7 @@ export default function ListSelect(props: Props) {
   }
   return (
     <Select<string>
-      mode={'MULTIPLE'}
+      mode="TAGS"
       allowClear={true}
       options={getOr(res, [])
         .filter((list) => list.subtype !== 'CUSTOM')

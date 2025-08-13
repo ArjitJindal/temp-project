@@ -2,14 +2,17 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useMemo } from 'react';
 import { uniq } from 'lodash';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Select, { MultipleProps } from '@/components/library/Select';
+import Select from '@/components/library/Select';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
-interface Props extends Pick<MultipleProps<string>, 'value' | 'onChange'> {}
+interface Props {
+  value?: string[];
+  onChange?: (value?: string[]) => void;
+}
 
 export const GenericSanctionScreeningTypes = (props: Props) => {
   const settings = useSettings();
@@ -65,7 +68,7 @@ export const GenericSanctionScreeningTypes = (props: Props) => {
     value: option,
   }));
   return options.length > 4 ? (
-    <Select options={options} {...props} mode="MULTIPLE" />
+    <Select options={options} {...props} mode="TAGS" />
   ) : (
     <SelectionGroup mode="MULTIPLE" options={options ?? []} {...props} />
   );

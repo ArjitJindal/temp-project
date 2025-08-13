@@ -159,7 +159,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         {(inputProps: InputProps<R[]>) => (
           <Select<R>
             {...inputProps}
-            mode={'MULTIPLE'}
+            mode="TAGS"
             options={possibleReasons.map((value) => ({ value: value, label: humanizeAuto(value) }))}
           />
         )}

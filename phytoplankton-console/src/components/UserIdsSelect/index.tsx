@@ -4,7 +4,7 @@ import Select, { Props } from '../library/Select';
 import { useUsersSearch } from '@/pages/transactions/components/UserSearchPopup/helpers';
 import { getOr } from '@/utils/asyncResource';
 
-type LocalProps = Omit<Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' }>, 'options'>;
+type LocalProps = Omit<Extract<Props<string>, { mode: 'SINGLE' | 'TAGS' }>, 'options'>;
 
 function UserIdsSelect(props: LocalProps) {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();

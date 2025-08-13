@@ -35,7 +35,7 @@ export default function PaymentChannelInput(props: Props) {
     <Select
       options={getOr(result.data, [])}
       placeholder="Select payment channel"
-      mode="MULTIPLE"
+      mode="TAGS"
       {...rest}
     />
   );

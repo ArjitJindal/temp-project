@@ -234,7 +234,7 @@ export default function CreateSearchProfileModal({
       case 'multi':
         return (
           <Select
-            mode="MULTIPLE"
+            mode="TAGS"
             placeholder="Select an option"
             options={filterConfig.options || []}
             value={currentValue}

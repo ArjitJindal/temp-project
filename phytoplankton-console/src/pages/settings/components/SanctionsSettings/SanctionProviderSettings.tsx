@@ -43,7 +43,7 @@ const SanctionsProviderSettings = (props: SanctionsProviderSettingsProps) => {
       <div className={s.sanctionsSettingsRoot}>
         <Label title={`Screening types for ${title}`} color="dark">
           <Select
-            mode="MULTIPLE"
+            mode="TAGS"
             options={searchTypes.map((type) => ({
               label: humanizeAuto(type),
               value: type,
@@ -61,7 +61,7 @@ const SanctionsProviderSettings = (props: SanctionsProviderSettingsProps) => {
         </Label>
         <Label title="Required entities data" color="dark">
           <Select
-            mode="MULTIPLE"
+            mode="TAGS"
             options={SANCTIONS_ENTITY_TYPES.map((type) => ({
               label: humanizeAuto(type),
               value: type,

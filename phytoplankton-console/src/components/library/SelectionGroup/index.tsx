@@ -35,7 +35,16 @@ interface SingleProps<Value extends SelectionGroupValueType>
   mode: 'SINGLE';
 }
 
-type Props<Value extends SelectionGroupValueType> = MultipleProps<Value> | SingleProps<Value>;
+interface TagsProps<Value extends SelectionGroupValueType>
+  extends CommonProps<Value>,
+    InputProps<Value[]> {
+  mode: 'TAGS';
+}
+
+type Props<Value extends SelectionGroupValueType> =
+  | MultipleProps<Value>
+  | SingleProps<Value>
+  | TagsProps<Value>;
 
 export default function SelectionGroup<
   Value extends SelectionGroupValueType = SelectionGroupValueType,
