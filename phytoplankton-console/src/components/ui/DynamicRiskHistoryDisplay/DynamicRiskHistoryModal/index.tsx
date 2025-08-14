@@ -222,7 +222,7 @@ function DynamicRiskHistoryModal(props: Props) {
             }}
             to={makeUrl(`risk-levels/risk-factors/consumer`)}
           >
-            View KRS risk factorssssss
+            View KRS risk factors
           </Id>
         );
       },
