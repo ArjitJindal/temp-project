@@ -99,13 +99,19 @@ function V8ModalDetails(props: Props) {
                   toolsOptions={false}
                   data={{
                     total: v8FactorScoreDetails.length,
-                    items: v8FactorScoreDetails.map((scoreDetail) => ({
-                      id: scoreDetail.riskFactorId,
-                      name: factorMap[scoreDetail.riskFactorId]?.name,
-                      riskScore: scoreDetail.score,
-                      riskLevel: scoreDetail.riskLevel,
-                      weight: scoreDetail.weight,
-                    })),
+                    items: v8FactorScoreDetails
+                      .filter((scoreDetail) => {
+                        const rf = factorMap[scoreDetail.riskFactorId];
+                        const isDefault = !!rf?.parameter;
+                        return !isDefault;
+                      })
+                      .map((scoreDetail) => ({
+                        id: scoreDetail.riskFactorId,
+                        name: factorMap[scoreDetail.riskFactorId]?.name,
+                        riskScore: scoreDetail.score,
+                        riskLevel: scoreDetail.riskLevel,
+                        weight: scoreDetail.weight,
+                      })),
                   }}
                   columns={v8Columns}
                 />
