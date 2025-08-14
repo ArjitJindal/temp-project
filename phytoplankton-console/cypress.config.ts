@@ -44,6 +44,41 @@ export default defineConfig({
           }
         }
       });
+
+      on(
+        'after:run',
+        (
+          results: CypressCommandLine.CypressRunResult | CypressCommandLine.CypressFailedRunResult,
+        ) => {
+          // we accumulate all the failed tests for all the runs
+          // NOTE: we have a retry for each test, so we need to accumulate the failed attempts
+          if (results.status === 'finished') {
+            let failedTests: Record<string, number> = results?.runs?.reduce((globalAcc, run) => {
+              return run.tests.reduce((acc, test) => {
+                const testName = test.title.join('-');
+                const failedAttempts = test.attempts.filter(
+                  (attempt) => attempt.state === 'failed',
+                );
+                if (failedAttempts.length > 0) {
+                  if (!acc[testName]) {
+                    acc[testName] = 0;
+                  }
+                  acc[testName] += failedAttempts.length;
+                }
+                return acc;
+              }, globalAcc);
+            }, {});
+            failedTests = Object.fromEntries(
+              Object.entries(failedTests).sort(([, a], [, b]) => b - a),
+            );
+            // writing the failed tests to a file
+            fs.writeFileSync(
+              './cypress/failed-e2e-tests.json',
+              JSON.stringify(failedTests, null, 2),
+            );
+          }
+        },
+      );
     },
   },
   chromeWebSecurity: false,

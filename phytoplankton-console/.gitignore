@@ -48,6 +48,7 @@ config/openapi.yaml
 cypress.env.json
 cypress/screenshots
 cypress/videos
+cypress/failed-e2e-tests.json
 
 # analyze-bundle.js
 stats.html

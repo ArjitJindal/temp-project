@@ -144,6 +144,7 @@
     "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.844.0",
     "@aws-sdk/client-secrets-manager": "^3.370.0",
     "@aws-sdk/credential-providers": "^3.370.0",
     "@babel/plugin-transform-modules-commonjs": "^7.24.8",

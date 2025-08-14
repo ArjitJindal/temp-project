@@ -169,6 +169,7 @@ export class CdkOrcaPipelineStack extends Stack {
         },
         {
           stageName: 'E2E_Test_Dev',
+
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'E2E_Test_Dev',
@@ -179,7 +180,6 @@ export class CdkOrcaPipelineStack extends Stack {
             }),
           ],
         },
-
         {
           stageName: 'Approve_Sandbox',
           actions: [

@@ -1,15 +1,120 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const detectPort = require('detect-port');
 const prompts = require('prompts');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 const { fromIni } = require('@aws-sdk/credential-providers');
+const { CloudWatchClient, PutMetricDataCommand } = require('@aws-sdk/client-cloudwatch');
+const { WebClient } = require('@slack/web-api');
+const slackifyMarkdown = require('slackify-markdown');
 
+const DEPLOYMENT_SLACK_CHANNEL = 'C03L5KRE2E8';
+const ENGINEERING_ON_CALL_GROUP_ID = 'S063WMNMSCD';
 const CYPRESS_CREDS_SECRET_ARN = 'rbacCypressCreds';
 
 if (!process.env.ENV) {
   process.env.ENV = 'local';
+}
+
+async function notifySlack(failedTests) {
+  const slackClient = new WebClient(process.env.SLACK_TOKEN);
+  const buildNumber = process.env.CODEBUILD_BUILD_NUMBER;
+  const buildUrl =
+    getCodeBuildConsoleUrlFromArn() ?? 'https://console.aws.amazon.com/codebuild/home';
+
+  const s3Url = process.env.E2E_ARTIFACT_S3_URL ?? buildUrl;
+  const message = slackifyMarkdown(
+    `<!subteam^${ENGINEERING_ON_CALL_GROUP_ID}> E2E tests failing summary <${buildUrl}|Build #${buildNumber}>
+
+# List of failing E2E tests
+${Object.entries(failedTests)
+  .map(([test, count]) => {
+    if (count === 1) {
+      return `⚠️ *${test}* - Failing *${count} time*`;
+    } else {
+      return `❌ *${test}* - Failing *${count} times*`;
+    }
+  })
+  .join('\n')}
+`,
+  );
+  console.log('Publishing slack message');
+  console.log(message); // todo: remove this after testing
+  await slackClient.chat.postMessage({
+    channel: DEPLOYMENT_SLACK_CHANNEL,
+    blocks: [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: message },
+      },
+    ],
+  });
+}
+
+function getCodeBuildConsoleUrlFromArn() {
+  const buildArn = process.env.E2E_TEST_ARN;
+  if (buildArn) {
+    const arnRegex = /^arn:aws:codebuild:([^:]+):([^:]+):build\/([^:]+):(.+)$/;
+    const match = buildArn.match(arnRegex);
+
+    if (!match) {
+      console.error(`Invalid CodeBuild ARN format: ${buildArn}`);
+      return '-';
+    }
+
+    const [, region, _accountId, projectName, buildGuid] = match;
+    const buildId = `${projectName}:${buildGuid}`;
+    console.log('Creating build url');
+    return `https://console.aws.amazon.com/codesuite/codebuild/projects/${projectName}/build/${buildId}/log?region=${region}`;
+  }
+}
+
+async function updateCloudWatchMetrics(failedTests) {
+  const buildNumber = process.env.CODEBUILD_BUILD_NUMBER || 'unknown';
+  const cloudWatchClient = new CloudWatchClient({
+    region: 'eu-central-1',
+  });
+
+  const metricData = Object.entries(failedTests).map(([testName, count]) => ({
+    MetricName: 'E2ETestFailure',
+    Dimensions: [
+      { Name: 'TestName', Value: testName },
+      { Name: 'BuildNumber', Value: buildNumber },
+    ],
+    Value: count,
+    Unit: 'Count',
+  }));
+
+  const metricParams = new PutMetricDataCommand({
+    Namespace: 'E2ETestSuite',
+    MetricData: metricData,
+  });
+
+  console.log('Publishing cloudwatch metrics');
+  try {
+    await cloudWatchClient.send(metricParams);
+  } catch (e) {
+    console.error('Error publishing cloudwatch metrics', e);
+  }
+}
+
+async function afterCypressRun() {
+  const filePath = path.resolve(__dirname, 'cypress', 'failed-e2e-tests.json');
+  if (fs.existsSync(filePath)) {
+    const data = fs.readFileSync(filePath, 'utf8');
+    const failedTests = JSON.parse(data);
+
+    const failedTestsCount = Object.values(failedTests).reduce((acc, count) => acc + count, 0);
+    if (failedTestsCount > 0) {
+      await notifySlack(failedTests);
+    }
+    await updateCloudWatchMetrics(failedTests);
+  } else {
+    console.warn('No failed tests found at', filePath);
+  }
 }
 
 async function getCypressCreds() {
@@ -96,6 +201,7 @@ async function getCypressCreds() {
       process.exit(1);
     }
   }
+
   const credentials = {
     super_admin: super_admin,
     custom_role: custom_role,
@@ -107,13 +213,18 @@ async function getCypressCreds() {
     ENV_VARS.push(`${key}_password=${credentials[key].password}`);
   });
 
-  // const spec = ` --spec="cypress/e2e/team-management/accounts-crud-test.cy.ts"`;
-  const spec = ``;
-
-  execSync(
-    `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}${spec}`,
-    {
-      stdio: 'inherit',
-    },
-  );
+  try {
+    const spec = ``;
+    execSync(
+      `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}${spec}`,
+      {
+        stdio: 'inherit',
+      },
+    );
+    await afterCypressRun();
+  } catch (e) {
+    await afterCypressRun();
+    console.error(e);
+    process.exit(1);
+  }
 })();
