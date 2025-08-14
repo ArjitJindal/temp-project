@@ -278,7 +278,7 @@ export async function offsetPaginateClickhouse<T>(
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
   const countWhere = countWhereClause === undefined ? where : countWhereClause
-  const countQuery = `SELECT COUNT(DISTINCT id) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
     countWhere
       ? `WHERE ${countWhere} AND timestamp != 0`
       : 'WHERE timestamp != 0'
@@ -356,7 +356,7 @@ export async function getClickhouseCountOnly(
   countWhereClause?: string
 ): Promise<number> {
   const countWhere = countWhereClause === undefined ? where : countWhereClause
-  const countQuery = `SELECT COUNT(DISTINCT id) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
     countWhere
       ? `WHERE ${countWhere} AND timestamp != 0`
       : 'WHERE timestamp != 0'
@@ -400,8 +400,8 @@ export async function offsetPaginateClickhousePreview<T>(
   `
 
   const countQuery = `
-    SELECT COUNT(DISTINCT id) as count 
-    FROM ${tableName} FINAL 
+    SELECT uniqExact(id) as count 
+    FROM ${tableName} 
     WHERE ${where}
   `
 
@@ -456,7 +456,7 @@ export async function offsetPaginateClickhouseWithoutDataTable(
       : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
 
-  const countQuery = `SELECT COUNT(id) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 
@@ -586,8 +586,8 @@ export async function cursorPaginateClickhouse<T>(
 
   // Count query (only on first page to avoid expensive count)
   const countSql = `
-    SELECT COUNT(DISTINCT id) as count
-    FROM ${queryTableName} FINAL
+    SELECT uniqExact(id) as count
+    FROM ${queryTableName}
     WHERE ${filter}
   `
 
