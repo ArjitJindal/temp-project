@@ -110,6 +110,10 @@ export const transactionsViewHandler = lambdaApi()(
 
     handlers.registerGetTransactionsList(async (context, request) => {
       if (isClickhouseEnabled()) {
+        if (request.view === 'DOWNLOAD') {
+          const result = await transactionService.getTransactionsListV2(request)
+          return result.result
+        }
         if (request.responseType === 'data') {
           const items = await transactionService.getTransactionsTableDataOnly(
             request
@@ -126,6 +130,13 @@ export const transactionsViewHandler = lambdaApi()(
 
         const result = await transactionService.getTransactionsListV2(request)
         return result.result
+      }
+
+      if (request.view === 'DOWNLOAD') {
+        const result = await transactionService.getTransactionsList(request, {
+          includeUsers: request.includeUsers,
+        })
+        return result
       }
 
       if (request.responseType === 'data') {
