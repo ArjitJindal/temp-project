@@ -446,10 +446,13 @@ export class RiskScoringV8Service {
     avgArsScore: number | null,
     transactionId: string
   ) {
-    if (!userId || !arsScore) {
+    if (!userId) {
       return
     }
     const oldDrsScore = await this.getDrsScore(userId)
+    if (!arsScore) {
+      return oldDrsScore?.drsScore
+    }
     if (oldDrsScore?.isUpdatable === false) {
       return oldDrsScore.drsScore
     }
