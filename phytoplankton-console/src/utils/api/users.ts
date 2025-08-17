@@ -44,7 +44,7 @@ export function getUserName(user?: TableUser | MissingUser | null): string {
 }
 
 export function getUserLink(user?: Pick<TableUser, 'type' | 'userId'> | null): string | undefined {
-  if (user == null || !('type' in user)) {
+  if (user == null || !('type' in user) || !('userId' in user)) {
     return undefined;
   }
   return makeUrl(`/users/list/:list/:id`, {
