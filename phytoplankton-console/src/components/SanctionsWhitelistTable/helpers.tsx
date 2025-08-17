@@ -119,17 +119,27 @@ export function useExtraFilters(singleUserMode: boolean) {
       [
         !singleUserMode && {
           key: 'userId',
-          title: `${firstLetterUpper(settings.userAlias)} ID/Name`,
+          title: `${firstLetterUpper(settings.userAlias)} ID`,
           showFilterByDefault: true,
           renderer: ({ params, setParams }) => (
             <UserSearchButton
               userId={params.userId ?? null}
-              onConfirm={(userId) => {
-                setParams((state) => ({
-                  ...state,
-                  userId: userId ?? undefined,
-                }));
-              }}
+              params={params}
+              onConfirm={setParams}
+              filterType="id"
+            />
+          ),
+        },
+        !singleUserMode && {
+          key: 'userName',
+          title: `${firstLetterUpper(settings.userAlias)} name`,
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.userId ?? null}
+              params={params}
+              onConfirm={setParams}
+              filterType="name"
             />
           ),
         },

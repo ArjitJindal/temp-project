@@ -260,16 +260,25 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
           extraFilters={[
             {
               key: 'userId',
-              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
+              title: `${firstLetterUpper(settings.userAlias)} ID`,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
                   userId={params.userId ?? null}
-                  onConfirm={(userId) => {
-                    setParams((state) => ({
-                      ...state,
-                      userId: userId ?? undefined,
-                    }));
-                  }}
+                  params={params}
+                  onConfirm={setParams}
+                  filterType="id"
+                />
+              ),
+            },
+            {
+              key: 'userName',
+              title: `${firstLetterUpper(settings.userAlias)} name`,
+              renderer: ({ params, setParams }) => (
+                <UserSearchButton
+                  userId={params.userId ?? null}
+                  params={params}
+                  onConfirm={setParams}
+                  filterType="name"
                 />
               ),
             },

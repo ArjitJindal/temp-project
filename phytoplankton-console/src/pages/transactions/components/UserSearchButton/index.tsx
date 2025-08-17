@@ -14,21 +14,38 @@ import { UserSearchParams } from '@/pages/users/users-list';
 interface Props {
   userId: string | null;
   title?: string;
-  onConfirm: (userId: string | null) => void;
+  onConfirm: (cb: (oldState: any) => any) => void;
   onUpdateFilterClose?: (status: boolean) => void;
   userType?: UserType;
   handleChangeParams?: (params: UserSearchParams) => void;
   params?: UserSearchParams;
+  filterType?: 'id' | 'name';
 }
 
 export default function UserSearchButton(props: Props) {
-  const { userId, title, onConfirm, onUpdateFilterClose, userType, handleChangeParams, params } =
-    props;
+  const {
+    userId,
+    title,
+    onConfirm,
+    onUpdateFilterClose,
+    userType,
+    handleChangeParams,
+    params,
+    filterType,
+  } = props;
   const settings = useSettings();
   const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
   const currentUserId = user?.userId ?? null;
   const api = useApi();
+
+  const handleConfirm = (newUserId: string | null, newUserName: string | null) => {
+    onConfirm((state) => ({
+      ...state,
+      userName: newUserName ?? undefined,
+      userId: newUserId ?? undefined,
+    }));
+  };
 
   useEffect(() => {
     if (userId == null || userId === 'all') {
@@ -74,19 +91,12 @@ export default function UserSearchButton(props: Props) {
     <QuickFilterBase
       title={title ?? `${firstLetterUpper(settings.userAlias)} ID/Name`}
       icon={<UserProfileIcon />}
-      buttonText={user?.name ?? userId ?? params?.userName}
+      buttonText={filterType === 'id' ? userId : user?.name ?? userId ?? params?.userName}
       onClear={
         isEmpty
           ? undefined
           : () => {
-              onConfirm(null);
-              if (params) {
-                handleChangeParams?.({
-                  ...params,
-                  userId: undefined,
-                  userName: undefined,
-                });
-              }
+              handleConfirm(null, null);
             }
       }
       onUpdateFilterClose={onUpdateFilterClose}
@@ -96,10 +106,11 @@ export default function UserSearchButton(props: Props) {
           params={params}
           handleChangeParams={handleChangeParams}
           initialSearch={userId ?? ''}
+          filterType={filterType}
           isVisible={isOpen}
           onConfirm={(user) => {
             setUserRest(success({ userId: user.userId, name: user.name ?? '' }));
-            onConfirm(user?.userId ?? null);
+            handleConfirm(user.userId, user.name ?? null);
             setOpen(false);
           }}
           onCancel={() => {
@@ -107,7 +118,7 @@ export default function UserSearchButton(props: Props) {
           }}
           onEnterInput={(userId) => {
             setUserRest(init());
-            onConfirm(userId);
+            handleConfirm(userId, null);
             setOpen(false);
           }}
           userType={userType}

@@ -541,12 +541,22 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       renderer: ({ params, setParams }) => (
         <UserSearchButton
           userId={params.userId ? String(params.userId) : null}
-          onConfirm={(userId) => {
-            setParams((state) => ({
-              ...state,
-              userId: userId ?? undefined,
-            }));
-          }}
+          params={params}
+          onConfirm={setParams}
+          filterType="id"
+        />
+      ),
+    },
+    {
+      key: 'userName',
+      title: `${userAlias} name`,
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          userId={params.userId ? String(params.userId) : null}
+          params={params}
+          onConfirm={setParams}
+          filterType="name"
         />
       ),
     },

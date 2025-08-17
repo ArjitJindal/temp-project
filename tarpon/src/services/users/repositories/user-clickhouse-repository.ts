@@ -180,14 +180,14 @@ export class UserClickhouseRepository {
       return { items: [], count: 0 }
     }
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
-
+    const whereConditions = params.filterName
+      ? `ilike(username, '%${params.filterName}%')`
+      : `id = '${params.filterId}'`
     // Use the lite pagination utility
     const selectQuery = `
       select id as userId, username as name, JSONExtractString(data, 'riskLevel') as riskLevel
       from ${CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table} FINAL
-      where (id = '${params.filterId}' OR ilike(username, '%${
-      params.filterName
-    }%'))
+      where ${whereConditions}
       limit ${pageSize + 1}
     `
 

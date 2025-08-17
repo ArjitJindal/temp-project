@@ -268,6 +268,7 @@ export default function QaTable(props: Props) {
     'caseTypesFilter',
     'rulesHitFilter',
     'userId',
+    'userName',
     'assignedTo',
     'ruleQueueIds',
   ]);

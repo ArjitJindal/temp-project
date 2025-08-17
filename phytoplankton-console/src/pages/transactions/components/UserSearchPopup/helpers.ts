@@ -32,7 +32,11 @@ export function useLastSearches(): {
   };
 }
 
-export function useUsersSearch(search: string, userType?: UserType): QueryResult<UsersResponse> {
+export function useUsersSearch(
+  search: string,
+  userType?: UserType,
+  filterType?: 'id' | 'name',
+): QueryResult<UsersResponse> {
   const api = useApi();
 
   return useQuery(USERS_FIND(search), async (): Promise<UsersResponse> => {
@@ -44,9 +48,8 @@ export function useUsersSearch(search: string, userType?: UserType): QueryResult
     }
 
     const users = await api.getAllUsersPreviewList({
-      filterName: search,
-      filterId: search,
-      filterOperator: 'OR',
+      ...(filterType === 'name' && { filterName: search }),
+      ...(filterType === 'id' && { filterId: search }),
       includeCasesCount: true,
       ...(userType && { filterUserType: userType }),
     });

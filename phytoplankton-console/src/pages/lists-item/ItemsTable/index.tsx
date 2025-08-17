@@ -844,18 +844,29 @@ function useExtraFilters(listSubtype: ListSubtypeInternal | null): ExtraFilterPr
       return [
         {
           kind: 'EXTRA',
-          title: `${firstLetterUpper(settings.userAlias)} ID/name`,
+          title: `${firstLetterUpper(settings.userAlias)} ID`,
           key: 'userId',
           showFilterByDefault: true,
           renderer: ({ params, setParams }) => (
             <UserSearchButton
               userId={params.userId ?? null}
-              onConfirm={(userId) => {
-                setParams((state) => ({
-                  ...state,
-                  userId: userId ?? undefined,
-                }));
-              }}
+              params={params}
+              onConfirm={setParams}
+              filterType="id"
+            />
+          ),
+        },
+        {
+          kind: 'EXTRA',
+          title: `${firstLetterUpper(settings.userAlias)} name`,
+          key: 'userName',
+          showFilterByDefault: true,
+          renderer: ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.userId ?? null}
+              params={params}
+              onConfirm={setParams}
+              filterType="name"
             />
           ),
         },

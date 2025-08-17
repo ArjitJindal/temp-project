@@ -24,6 +24,7 @@ export type CommonCaseParams = {
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
   userId: string;
+  userName: string;
   parentUserId: string;
   status: RuleAction[];
   transactionState: TransactionState[];

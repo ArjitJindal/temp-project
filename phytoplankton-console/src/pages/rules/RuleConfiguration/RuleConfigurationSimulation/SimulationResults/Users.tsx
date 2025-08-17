@@ -25,6 +25,7 @@ interface SimulationUsersHitProps {
 
 interface TableParams extends CommonParams {
   userId?: string;
+  userName?: string;
 }
 
 export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
@@ -150,16 +151,29 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
           extraFilters={[
             {
               key: 'userId',
-              title: `${firstLetterUpper(settings.userAlias)} ID/name`,
+              title: `${firstLetterUpper(settings.userAlias)} ID`,
+              showFilterByDefault: true,
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
+                  title={`${firstLetterUpper(settings.userAlias)} ID`}
                   userId={params.userId ?? null}
-                  onConfirm={(userId) => {
-                    setParams((state) => ({
-                      ...state,
-                      userId: userId ?? undefined,
-                    }));
-                  }}
+                  params={params}
+                  onConfirm={setParams}
+                  filterType="id"
+                />
+              ),
+            },
+            {
+              key: 'userName',
+              title: `${firstLetterUpper(settings.userAlias)} name`,
+              showFilterByDefault: true,
+              renderer: ({ params, setParams }) => (
+                <UserSearchButton
+                  title={`${firstLetterUpper(settings.userAlias)} name`}
+                  userId={params.userId ?? null}
+                  params={params}
+                  onConfirm={setParams}
+                  filterType="name"
                 />
               ),
             },

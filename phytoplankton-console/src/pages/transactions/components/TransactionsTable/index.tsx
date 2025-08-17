@@ -68,6 +68,7 @@ export interface TransactionsTableParams extends CommonParams {
   originCurrenciesFilter?: string[];
   destinationCurrenciesFilter?: string[];
   userId?: string;
+  userName?: string;
   parentUserId?: string;
   tagKey?: string;
   tagValue?: string;

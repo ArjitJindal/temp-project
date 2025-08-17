@@ -59,6 +59,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
       userId: params.userId,
+      userName: params.userName,
       parentUserId: params.parentUserId,
       status: params.status?.join(','),
       originMethodFilter: params.originMethodFilter?.join(','),
@@ -118,6 +119,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: raw.rulesHitFilter?.split(','),
       rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
       userId: raw.userId,
+      userName: raw.userName,
       parentUserId: raw.parentUserId,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
       originMethodFilter: raw.originMethodFilter?.split(',') as PaymentMethod[],
@@ -178,6 +180,7 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
       originCurrenciesFilter: params.originCurrenciesFilter?.join(','),
       destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(','),
       userId: params.userId,
+      userName: params.userName,
       tagKey: params.tagKey,
       tagValue: params.tagValue,
       originMethodFilter: params.originMethodFilter,
@@ -212,6 +215,7 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
       originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
       destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
       userId: raw.userId,
+      userName: raw.userName,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
       originMethodFilter: isPaymentMethod(raw.originMethodFilter)
@@ -298,17 +302,29 @@ export const useCaseAlertFilters = (
     },
     {
       key: 'userId',
-      title: `${firstLetterUpper(settings.userAlias)} ID/Name`,
+      title: `${firstLetterUpper(settings.userAlias)} ID`,
       showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
+          title={`${firstLetterUpper(settings.userAlias)} ID`}
           userId={params.userId ?? null}
-          onConfirm={(userId) => {
-            setParams((state) => ({
-              ...state,
-              userId: userId ?? undefined,
-            }));
-          }}
+          params={params}
+          onConfirm={setParams}
+          filterType="id"
+        />
+      ),
+    },
+    {
+      key: 'userName',
+      title: `${firstLetterUpper(settings.userAlias)} name`,
+      showFilterByDefault: false,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          title={`${firstLetterUpper(settings.userAlias)} name`}
+          userId={params.userId ?? null}
+          params={params}
+          onConfirm={setParams}
+          filterType="name"
         />
       ),
     },
@@ -320,12 +336,8 @@ export const useCaseAlertFilters = (
         <UserSearchButton
           title={`Parent ${settings.userAlias} ID/Name`}
           userId={params.parentUserId ?? null}
-          onConfirm={(parentUserId) => {
-            setParams((state) => ({
-              ...state,
-              parentUserId: parentUserId ?? undefined,
-            }));
-          }}
+          params={params}
+          onConfirm={setParams}
         />
       ),
     },

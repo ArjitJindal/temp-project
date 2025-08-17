@@ -49,19 +49,29 @@ const extraFilters = (
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
       key: 'userId',
-      title: `${firstLetterUpper(userAlias)} ID/Name`,
+      title: `${firstLetterUpper(userAlias)} ID`,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
+          title={`${firstLetterUpper(userAlias)} ID`}
           userId={params.userId ?? null}
-          onConfirm={(userId) => {
-            setParams((state) => ({
-              ...state,
-              userId: userId ?? undefined,
-            }));
-          }}
-          userType={list === 'business' ? 'BUSINESS' : list === 'consumer' ? 'CONSUMER' : undefined}
-          handleChangeParams={handleChangeParams}
+          onConfirm={setParams}
           params={params}
+          userType={list === 'business' ? 'BUSINESS' : list === 'consumer' ? 'CONSUMER' : undefined}
+          filterType="id"
+        />
+      ),
+    },
+    {
+      key: 'userName',
+      title: `${firstLetterUpper(userAlias)} name`,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          title={`${firstLetterUpper(userAlias)} name`}
+          userId={params.userId ?? null}
+          params={params}
+          onConfirm={setParams}
+          userType={list === 'business' ? 'BUSINESS' : list === 'consumer' ? 'CONSUMER' : undefined}
+          filterType="name"
         />
       ),
     },
@@ -73,12 +83,8 @@ const extraFilters = (
         <UserSearchButton
           title={`Parent ${userAlias} ID/Name`}
           userId={params.parentUserId ?? null}
-          onConfirm={(parentUserId) => {
-            setParams((state) => ({
-              ...state,
-              parentUserId: parentUserId ?? undefined,
-            }));
-          }}
+          params={params}
+          onConfirm={setParams}
         />
       ),
     },

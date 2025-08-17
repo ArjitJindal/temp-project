@@ -20,6 +20,7 @@ interface Props {
   handleChangeParams?: (params: UserSearchParams) => void;
   params?: UserSearchParams;
   onClose?: () => void;
+  filterType?: 'id' | 'name';
 }
 
 export default function PopupContent(props: Props) {
@@ -32,13 +33,14 @@ export default function PopupContent(props: Props) {
     handleChangeParams,
     params,
     onClose,
+    filterType,
   } = props;
   const settings = useSettings();
 
   const [search, setSearch] = useState(initialSearch);
 
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const usersRes = useUsersSearch(debouncedSearch, userType);
+  const usersRes = useUsersSearch(debouncedSearch, userType, filterType);
   const { onAdd } = useLastSearches();
 
   const usersCount = isSuccess(usersRes.data) ? usersRes.data.value.total : null;
