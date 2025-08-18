@@ -26,7 +26,7 @@ export function SandboxEmail() {
           View API key"
           logo="https://lh3.googleusercontent.com/pw/ABLVV86XOUgjBsf9fWku-vUF5Uty49v3nDKeIPEOLGDGLBjKjd7xgG1bbTizIZllzqjRJWkZNiUVjLkn7qN61C6VvN-700bVk5o5X_miLjyhBdhIkYy-GeiSmPuYcnQXyKaO7Db_fDbiWZQpdNpouJpOjXOK=w64-h65-s-no-gm?authuser=0"
           image="https://lh3.googleusercontent.com/pw/ABLVV85E1G0HGNA6c8oeCilQaO6KzOEqrh58sEWhH1C025OKYOCIvTwEkamcSVWk9PkPew24fVgb-vKx4GtqQY-3UUZXW71buZ0kuHlCJLdfPfUHe3jNHZYZcba9KBs0W08YdB5uKi5aIiyv_ENEyHgE7h8O=w468-h275-s-no-gm?authuser=0"
-          imageLink="https://www.loom.com/share/403f7fb3c7494e1b8181590c2f2a30af?sid=cfa5504c-b033-4087-a5a0-f3b99e70815c"
+          imageLink="https://sandbox.support.flagright.com/share/475b99f9-9692-45f2-a8ed-8c1e3065f874"
           textLink="https://sandbox.console.flagright.com/settings/developers"
           description="
           Retrieve API key from developers settings."
@@ -36,7 +36,7 @@ export function SandboxEmail() {
           Customer support"
           logo="https://lh3.googleusercontent.com/pw/ABLVV85NlUsMiZXeZRU4RgxFwWI1wiQvUSRz3LK1oKr5QNzWqAsjAAnM0_GhDssAJk8c0y6sR3DyhFgNX340meAPJ4iQonmo_R_Xu_qM9xtaBB5EuzOLuPRd8SzNfF3EPfgFsSS2sjClbbZ2VJJSF_F4nig9=w64-h65-s-no-gm?authuser=0"
           image="https://lh3.googleusercontent.com/pw/ABLVV85S3He_sr100XH0pEzixVHtbyOYn18Z7adJHUC07Y_bBRmhfWLRPK-tQKMP8dUqq2VuO3-JZieZ9tPPLFywKx1qsKoY_e-A2d6k036c2Hwd_LbBUFB-cSZt4kyJoJZgJ6Pu7ZkZIO39egasWTWIEIlP=w468-h275-s-no-gm?authuser=0"
-          imageLink="https://www.loom.com/share/80ff0f0f72ae4e269ef132618da7d9e5?sid=a5df64c5-0a59-45de-a065-49542c2dca4b"
+          imageLink="https://sandbox.support.flagright.com/share/d07217e0-17aa-456a-afa3-bcf767f72bab"
           textLink="https://www.support.flagright.com/tickets"
           description="If you run into any issues or have questions, Flagright support team is here to assist you."
         />
@@ -87,7 +87,7 @@ export function TeamManagementCard() {
                     Add your team to Flagright"
       logo="https://lh3.googleusercontent.com/pw/ABLVV84jn_0smcxYsGTzWu55W9EgKHk5huQsH_bxLhixRzq6iF3SsyXizF1wimTTg66tLLGHVz8CHwe7R0VlPavWugIVDEEDcPNbRpbxT9XZcVSBd0YLW3L5RT8vFADRlPQZ6Wd42zu_fwyLZdRbkBIGgIXY=w64-h65-s-no-gm?authuser=0"
       image="https://lh3.googleusercontent.com/pw/ABLVV86h6hX0gHtS1dhy2gng44qSGinBc74uGS3_HAlHAR0JTRRvwg1ftt4YBuUxPJ78fUvCLLCMrpj0gPFYgGnmUavKcHM1KB5ox1LDn9sqTViJWfKNzpG3dDd7LUuQ5rGuT-ZnaREwo5Cj8kf0htH-sARd=w468-h275-s-no-gm?authuser=0"
-      imageLink="https://www.loom.com/share/ccedacb2562b4ddbb70f8a0a35d92242?sid=dbc9b291-9606-4709-923c-fccaca90aedc"
+      imageLink="https://sandbox.support.flagright.com/share/1d46ef45-0490-4da9-960c-b596f0dc1f27"
       textLink="
           https://sandbox.console.flagright.com/accounts/team"
       description="
@@ -136,6 +136,11 @@ export function WelcomeHeading() {
       <Text>
         We’re excited to welcome you to Flagright. And we’re committed to
         pushing our own limits so that we can help you reach yours.{' '}
+      </Text>
+      <Text>
+        Below, you’ll find our most useful links and short video instructions to
+        help you get started - please note that you must join the console first
+        to view them.
       </Text>
     </>
   )
