@@ -13,6 +13,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
     paths:
       - "tarpon/**"
@@ -28,6 +29,7 @@ on:
 jobs:
   test:
     runs-on: large
+    if: github.event.pull_request.draft == false
     services:
       clickhouse-server:
         image: clickhouse/clickhouse-server:25.1.2
