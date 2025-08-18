@@ -117,7 +117,7 @@ export default function RuleConfigurationV2(props: Props) {
               Cancel
             </Button>
           )}
-          {isMutable && (
+          {(isMutable || activeStepIndex !== 0) && (
             <Button
               type="TETRIARY"
               onClick={() => {
