@@ -128,7 +128,7 @@ export default function GeneralDetailsCard(props: Props) {
             : '-',
         },
         {
-          label: 'Ongoing sanctions screening',
+          label: 'Ongoing screening',
           value: (
             <div className={s.ongoingSanctions}>
               <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>

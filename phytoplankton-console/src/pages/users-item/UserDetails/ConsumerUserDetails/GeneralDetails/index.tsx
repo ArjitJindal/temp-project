@@ -1,4 +1,5 @@
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import s from './index.module.less';
 import { InternalConsumerUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
@@ -7,6 +8,11 @@ import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApi } from '@/api';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
+import { useQuery } from '@/utils/queries/hooks';
+
 interface Props {
   user: InternalConsumerUser;
   columns?: number;
@@ -21,6 +27,12 @@ const GENDER_MAP = {
 export default function GeneralDetails(props: Props) {
   const { user, columns = 1 } = props;
   const settings = useSettings();
+  const api = useApi();
+  const ongoingSanctionsScreeningQueryResult = useQuery(['user-status', user.userId], async () => {
+    return await api.getUserScreeningStatus({
+      userId: user.userId,
+    });
+  });
   return (
     <EntityPropertiesCard
       title={'General details'}
@@ -108,6 +120,24 @@ export default function GeneralDetails(props: Props) {
         {
           label: 'Alias',
           value: user.userDetails?.alias,
+        },
+        {
+          label: 'Ongoing screening',
+          value: (
+            <div className={s.ongoingSanctions}>
+              <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>
+                {({ isOngoingScreening }) =>
+                  isOngoingScreening ? (
+                    <>
+                      <CheckMark className={s.successIcon} /> Yes
+                    </>
+                  ) : (
+                    <>No</>
+                  )
+                }
+              </AsyncResourceRenderer>
+            </div>
+          ),
         },
       ]}
     />
