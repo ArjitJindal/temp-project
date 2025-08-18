@@ -42,20 +42,23 @@ ${Object.entries(failedTests)
 `,
   );
   console.log('Publishing slack message');
-  console.log(message); // todo: remove this after testing
-  await slackClient.chat.postMessage({
-    channel: DEPLOYMENT_SLACK_CHANNEL,
-    blocks: [
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: message },
-      },
-    ],
-  });
+  try {
+    await slackClient.chat.postMessage({
+      channel: DEPLOYMENT_SLACK_CHANNEL,
+      blocks: [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: message },
+        },
+      ],
+    });
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 function getCodeBuildConsoleUrlFromArn() {
-  const buildArn = process.env.E2E_TEST_ARN;
+  const buildArn = process.env.CODEBUILD_BUILD_ARN;
   if (buildArn) {
     const arnRegex = /^arn:aws:codebuild:([^:]+):([^:]+):build\/([^:]+):(.+)$/;
     const match = buildArn.match(arnRegex);

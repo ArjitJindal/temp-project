@@ -72,6 +72,7 @@ export const getE2ETestProject = (
       env: {
         'secrets-manager': {
           CYPRESS_CREDS: STACK_CONSTANTS.CYPRESS_CREDS,
+          SLACK_TOKEN: STACK_CONSTANTS.SLACK_TOKEN,
         },
       },
     }),
