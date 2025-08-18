@@ -33,6 +33,7 @@ import {
   createRuleHitRateAlarm,
   createStateMachineAlarm,
   createKinesisThrottledRecordsPercentageAlarm,
+  createLambdaFail5xxCountAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -132,6 +133,14 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         this.zendutyCloudWatchTopic,
         API_GATEWAY_ALARM_NAMES[i],
         API_GATEWAY_NAMES[i]
+      )
+
+      createLambdaFail5xxCountAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        API_GATEWAY_ALARM_NAMES[i],
+        API_GATEWAY_NAMES[i],
+        5
       )
     }
 

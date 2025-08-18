@@ -214,6 +214,39 @@ const createApiGatewayThrottlingMetricFilter = (
   })
 }
 
+export const createLambdaFail5xxCountAlarm = (
+  context: Construct,
+  zendutyCloudWatchTopic: Topic,
+  restApiAlarmName: string,
+  restApiName: string,
+  threshold: number = 5
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${restApiAlarmName}Fail5xxCount`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: `APIGateway-${restApiAlarmName}-Fail5xxCount`,
+    alarmDescription: `Covers 5XX error count in ${restApiName} in the AWS account. 
+    Alarm triggers when 5XX error count is higher than ${threshold} for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
+    5XX error count is calculated using '5XXError' metric with Sum statistic.`,
+    metric: new Metric({
+      label: `APIGateway-${restApiAlarmName} 5XX error count`,
+      namespace: 'AWS/ApiGateway',
+      metricName: '5XXError',
+      dimensionsMap: {
+        ApiName: restApiName,
+      },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Sum',
+    }),
+  }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
+}
+
 export const createAPIGatewayThrottlingAlarm = (
   context: Construct,
   zendutyCloudWatchTopic: Topic,
