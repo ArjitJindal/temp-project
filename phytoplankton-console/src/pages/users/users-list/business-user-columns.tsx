@@ -1,5 +1,5 @@
 import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { BusinessUserTableItem } from '@/apis';
+import s from './styles.module.less';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -12,6 +12,8 @@ import {
 import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import Tag from '@/components/library/Tag';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import { BusinessUserTableItem } from '@/pages/users/users-list/data';
 
 export function getBusinessUserColumns(userAlias?: string): TableColumn<BusinessUserTableItem>[] {
   const helper = new ColumnHelper<BusinessUserTableItem>();
@@ -24,9 +26,12 @@ export function getBusinessUserColumns(userAlias?: string): TableColumn<Business
       type: {
         render: (userId, { item: entity }) => {
           return (
-            <Id to={getUserLink(entity)} testName="business-user-id">
-              {userId}
-            </Id>
+            <div className={s.idWrapper}>
+              <Id to={getUserLink(entity)} testName="business-user-id">
+                {userId}
+              </Id>
+              {!!entity.proposals?.length && <PendingApprovalTag />}
+            </div>
           );
         },
         link(value, item) {

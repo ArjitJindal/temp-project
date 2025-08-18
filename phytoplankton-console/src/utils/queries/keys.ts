@@ -531,6 +531,19 @@ export const WORKFLOWS_ITEM = (workflowType: WorkflowType, id: string): QueryKey
   id,
 ];
 
+export const WORKFLOWS_ITEMS = (workflowType: WorkflowType, id: string[]): QueryKey => [
+  'workflows',
+  workflowType,
+  'item',
+  id.join(','),
+];
+
+export const WORKFLOWS_ITEMS_ALL = (workflowType: WorkflowType): QueryKey => [
+  'workflows',
+  workflowType,
+  'item',
+];
+
 export const WORKFLOWS_ITEM_BY_REF = (ref?: WorkflowRef): QueryKey => [
   'workflows',
   'item',
@@ -560,6 +573,20 @@ export const RISK_FACTOR_WORKFLOW_PROPOSAL_LIST = (): QueryKey => [
 
 export const FLAT_FILE_PROGRESS = (entityId: string): QueryKey => ['flat-file-progress', entityId];
 export const BATCH_RERUN_USERS_STATUS = (): QueryKey => ['batch-rerun-users-status'];
+
+export const USER_CHANGES_PROPOSALS = (): QueryKey => ['user-changes-proposals'];
+export const USER_CHANGES_PROPOSALS_BY_ID = (userId: string): QueryKey => [
+  'user-changes-proposals',
+  userId,
+];
+
+export const USER_FIELDS_CHANGES_PROPOSALS = (userId: string, fields: string[]): QueryKey => [
+  'user-changes-proposals',
+  userId,
+  'by-fields',
+  fields.reduce((acc, x) => ({ ...acc, [x]: true }), {}),
+];
+
 export const RISK_FACTOR_LOGIC = (
   riskFactorId: string,
   versionId: string,

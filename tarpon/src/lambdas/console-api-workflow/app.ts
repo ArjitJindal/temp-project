@@ -8,6 +8,7 @@ import {
   AlertWorkflowMachine,
   RiskLevelApprovalWorkflowMachine,
   RiskFactorsApprovalWorkflowMachine,
+  UserUpdateApprovalWorkflowMachine,
 } from '@flagright/lib/classes/workflow-machine'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -19,6 +20,7 @@ import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
 import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
+import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 
 type GenericWorkflow =
@@ -26,6 +28,7 @@ type GenericWorkflow =
   | AlertWorkflow
   | RiskLevelApprovalWorkflow
   | RiskFactorsApprovalWorkflow
+  | UserUpdateApprovalWorkflow
 
 function parseWorkflow(request): GenericWorkflow {
   let workflow: GenericWorkflow
@@ -70,8 +73,16 @@ function parseWorkflow(request): GenericWorkflow {
         'Invalid workflow definition: ' + (error as Error).message
       )
     }
-    // } else if (request.workflowType === 'rule-approval') {
-    //   workflow = inlineObject.ruleApprovalWorkflow as RuleApprovalWorkflow
+  } else if (request.workflowType === 'user-update-approval') {
+    workflow =
+      inlineObject.userUpdateApprovalWorkflow as UserUpdateApprovalWorkflow
+    try {
+      UserUpdateApprovalWorkflowMachine.validate(workflow)
+    } catch (error) {
+      throw new BadRequest(
+        'Invalid workflow definition: ' + (error as Error).message
+      )
+    }
   } else {
     throw new BadRequest('Invalid workflow type')
   }

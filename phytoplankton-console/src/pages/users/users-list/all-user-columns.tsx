@@ -3,7 +3,7 @@ import React from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { capitalize } from 'lodash';
 import s from './styles.module.less';
-import { AllUsersTableItem, UserType } from '@/apis';
+import { UserType } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
@@ -14,9 +14,11 @@ import {
   USER_KYC_STATUS_TAG,
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
+import { AllUserTableItem } from '@/pages/users/users-list/data';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 
-export function getAllUserColumns(userAlias?: string): TableColumn<AllUsersTableItem>[] {
-  const helper = new ColumnHelper<AllUsersTableItem>();
+export function getAllUserColumns(userAlias?: string): TableColumn<AllUserTableItem>[] {
+  const helper = new ColumnHelper<AllUserTableItem>();
 
   return [
     helper.simple<'userId'>({
@@ -25,7 +27,12 @@ export function getAllUserColumns(userAlias?: string): TableColumn<AllUsersTable
       tooltip: `Unique identification of ${userAlias}.`,
       type: {
         render: (userId, { item: entity }) => {
-          return <Link to={getUserLink(entity) ?? '#'}>{userId}</Link>;
+          return (
+            <div className={s.idWrapper}>
+              <Link to={getUserLink(entity) ?? '#'}>{userId}</Link>
+              {!!entity.proposals?.length && <PendingApprovalTag />}
+            </div>
+          );
         },
         link: (userId, entity) => {
           return getUserLink(entity) ?? '#';

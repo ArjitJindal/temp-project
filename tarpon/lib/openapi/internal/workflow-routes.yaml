@@ -78,6 +78,7 @@ paths:
             application/json:
               schema:
                 $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
+
   /workflows/{workflowType}/{workflowId}/{version}:
     get:
       summary: Get a specific version of a workflow
@@ -191,6 +192,7 @@ paths:
                 type: array
                 items:
                   $ref: 'workflow-models.yaml#/components/schemas/AnyWorkflow'
+
   /workflows:
     get:
       summary: Get all workflows of all types
@@ -245,6 +247,8 @@ components:
           $ref: 'workflow-models.yaml#/components/schemas/CreateRiskLevelApprovalWorkflow'
         riskFactorsApprovalWorkflow:
           $ref: 'workflow-models.yaml#/components/schemas/CreateRiskFactorsApprovalWorkflow'
+        userUpdateApprovalWorkflow:
+          $ref: 'workflow-models.yaml#/components/schemas/CreateUserUpdateApprovalWorkflow'
         ruleApprovalWorkflow:
           $ref: 'workflow-models.yaml#/components/schemas/CreateRuleApprovalWorkflow'
 

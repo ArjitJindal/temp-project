@@ -18,4 +18,10 @@
   width: 16px;
   color: @fr-colors-v2-gray-10;
   cursor: pointer;
+
+  &.isDisabled,
+  &.isLoading {
+    pointer-events: none;
+    opacity: 0.5;
+  }
 }

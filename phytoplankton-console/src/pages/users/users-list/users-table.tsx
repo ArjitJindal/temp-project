@@ -1,6 +1,7 @@
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEmpty } from 'lodash';
+import { useMemo } from 'react';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
@@ -9,7 +10,7 @@ import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilt
 import { UserSearchParams } from '.';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllUsersTableItem, RiskClassificationScore, RiskLevel, TenantSettings } from '@/apis';
-import { TableColumn, TableData } from '@/components/library/Table/types';
+import { isSingleRow, TableColumn, TableData } from '@/components/library/Table/types';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -23,10 +24,23 @@ import {
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
-import { QueryResult } from '@/utils/queries/types';
+import { map, QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { USER_CHANGES_PROPOSALS } from '@/utils/queries/keys';
+import {
+  failed,
+  init,
+  isFailed,
+  isInit,
+  isLoading,
+  isSuccess,
+  loading,
+} from '@/utils/asyncResource';
+import { AllUserTableItem } from '@/pages/users/users-list/data';
 import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
 import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 
@@ -45,6 +59,7 @@ const extraFilters = (
   userAlias: string,
   userStateAlias: TenantSettings['userStateAlias'],
   kycStatusAlias: TenantSettings['kycStatusAlias'],
+  isApprovalWorkflowsEnabled: boolean,
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
@@ -198,6 +213,15 @@ const extraFilters = (
     }
   }
 
+  if (isApprovalWorkflowsEnabled) {
+    extraFilters.push({
+      kind: 'EXTRA',
+      title: 'Pending approval',
+      key: 'pendingApproval',
+      renderer: BOOLEAN.autoFilterDataType,
+    });
+  }
+
   return extraFilters;
 };
 
@@ -282,20 +306,84 @@ export const UsersTable = (props: Props) => {
 
   columns.push(getLastUpdatedColumn());
 
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+
+  const api = useApi();
+  const { data: pendingProposalRes } = useQuery(
+    USER_CHANGES_PROPOSALS(),
+    async () => {
+      const proposals = await api.getAllUserApprovalProposals();
+      return proposals;
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+
+  // Merging query results with pending proposals
+  const queryResultsWithProposals: QueryResult<TableData<AllUserTableItem>> = useMemo(() => {
+    if (!queryResults) {
+      return {
+        data: init(),
+        refetch: () => {},
+      };
+    }
+    if (!isApprovalWorkflowsEnabled) {
+      return queryResults;
+    }
+    if (isFailed(pendingProposalRes)) {
+      return {
+        data: failed(pendingProposalRes.message),
+        refetch: () => {},
+      };
+    }
+    if (isLoading(pendingProposalRes) || isInit(pendingProposalRes)) {
+      return {
+        data: loading(),
+        refetch: () => {},
+      };
+    }
+    const proposals = pendingProposalRes.value;
+    if (isApprovalWorkflowsEnabled && !isSuccess(pendingProposalRes)) {
+      return {
+        data: loading(),
+        refetch: () => {},
+      };
+    }
+
+    return map(queryResults, (data): TableData<AllUserTableItem> => {
+      return {
+        ...data,
+        items: data.items.map((item) => {
+          const userProposals = proposals.filter(
+            (x) => isSingleRow(item) && x.userId === item.userId,
+          );
+          return {
+            ...item,
+            proposals: userProposals.length > 0 ? userProposals : undefined,
+          };
+        }),
+      };
+    });
+  }, [queryResults, pendingProposalRes, isApprovalWorkflowsEnabled]);
+
+  const filters = extraFilters(
+    type,
+    params,
+    handleChangeParams,
+    settings.userAlias || '',
+    settings.userStateAlias,
+    settings.kycStatusAlias,
+    isApprovalWorkflowsEnabled,
+  );
+
   return (
-    <QueryResultsTable<AllUsersTableItem, UserSearchParams>
+    <QueryResultsTable<AllUserTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(
-        type,
-        params,
-        handleChangeParams,
-        settings.userAlias || '',
-        settings.userStateAlias,
-        settings.kycStatusAlias,
-      )}
+      extraFilters={filters}
       columns={columns}
-      queryResults={queryResults}
+      queryResults={queryResultsWithProposals}
       params={params}
       onChangeParams={handleChangeParams}
       fitHeight={fitHeight}

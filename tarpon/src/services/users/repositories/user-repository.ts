@@ -15,6 +15,10 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
+  PutCommand,
+  PutCommandInput,
+  QueryCommand,
+  QueryCommandInput,
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
@@ -98,6 +102,7 @@ import { batchGet, upsertSaveDynamo } from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
+import { UserApproval } from '@/@types/openapi-internal/UserApproval'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
@@ -1369,7 +1374,6 @@ export class UserRepository {
   }
 
   public async deleteUserAttachment(userId: string, attachmentId: string) {
-    console.info(userId, attachmentId)
     await this.updateUserAttachment(
       { userId, 'attachments.id': attachmentId },
       {
@@ -1787,5 +1791,157 @@ export class UserRepository {
     }
 
     return cursor
+  }
+
+  // User Approval methods
+
+  // Fetches the UserApproval object from DynamoDB for the given user and timestamp
+  async getPendingUserApproval(
+    userId: string,
+    id: number
+  ): Promise<UserApproval | null> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.USERS_PROPOSAL(this.tenantId, userId, id),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    if (!result.Item) {
+      return null
+    }
+
+    const approval = result.Item as UserApproval & {
+      PartitionKeyID?: string
+      SortKeyID?: string
+    }
+    delete approval.PartitionKeyID
+    delete approval.SortKeyID
+
+    return approval as UserApproval
+  }
+
+  // Sets (creates or updates) the UserApproval object in DynamoDB
+  async setPendingUserApproval(approval: UserApproval): Promise<UserApproval> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...DynamoDbKeys.USERS_PROPOSAL(
+          this.tenantId,
+          approval.userId,
+          approval.createdAt
+        ),
+        ...approval,
+      },
+      ConditionExpression:
+        'attribute_not_exists(PartitionKeyID) AND attribute_not_exists(SortKeyID)',
+    }
+
+    try {
+      await this.dynamoDb.send(new PutCommand(putItemInput))
+      return approval
+    } catch (error: any) {
+      if (error.name === 'ConditionalCheckFailedException') {
+        throw new Error('User approval with same id already exists')
+      }
+      throw error
+    }
+  }
+
+  async updatePendingUserApproval(
+    approval: UserApproval
+  ): Promise<UserApproval> {
+    const updateItemInput: UpdateCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.USERS_PROPOSAL(
+        this.tenantId,
+        approval.userId,
+        approval.createdAt
+      ),
+      UpdateExpression:
+        'set #approvalStatus = :approvalStatus, #approvalStep = :approvalStep',
+      ExpressionAttributeNames: {
+        '#approvalStatus': 'approvalStatus',
+        '#approvalStep': 'approvalStep',
+      },
+      ExpressionAttributeValues: {
+        ':approvalStep': approval.approvalStep,
+        ':approvalStatus': approval.approvalStatus,
+      },
+    }
+
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+    return approval
+  }
+
+  // Deletes the UserApproval object from DynamoDB
+  async deletePendingUserApproval(
+    userId: string,
+    id: number
+  ): Promise<boolean> {
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.USERS_PROPOSAL(this.tenantId, userId, id),
+      ReturnValues: 'ALL_OLD',
+    }
+    const result = await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    return !!result.Attributes
+  }
+
+  // Gets all pending user approvals for a specific user
+  async getPendingUserApprovalsForUser(
+    userId: string
+  ): Promise<UserApproval[]> {
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression:
+        'PartitionKeyID = :pk AND begins_with(SortKeyID, :userId)',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.USERS_PROPOSAL(this.tenantId, userId)
+          .PartitionKeyID,
+        ':userId': userId,
+      },
+    }
+
+    const result = await this.dynamoDb.send(new QueryCommand(queryInput))
+    if (!result.Items) {
+      return []
+    }
+
+    return result.Items.map((item) => {
+      const approval = item as UserApproval & {
+        PartitionKeyID?: string
+        SortKeyID?: string
+      }
+      delete approval.PartitionKeyID
+      delete approval.SortKeyID
+
+      return approval as UserApproval
+    })
+  }
+
+  // Gets all pending user approvals across all users
+  async getAllPendingUserApprovals(): Promise<UserApproval[]> {
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '').PartitionKeyID,
+      },
+    }
+
+    const result = await this.dynamoDb.send(new QueryCommand(queryInput))
+    if (!result.Items) {
+      return []
+    }
+
+    return result.Items.map((item) => {
+      const approval = item as UserApproval & {
+        PartitionKeyID?: string
+        SortKeyID?: string
+      }
+      delete approval.PartitionKeyID
+      delete approval.SortKeyID
+
+      return approval as UserApproval
+    })
   }
 }

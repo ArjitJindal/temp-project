@@ -1,14 +1,24 @@
 import { useState } from 'react';
 import s from './index.module.less';
-import EODDChangeModal from './EODDChangeModal';
+import EODDChangeModal, {
+  FormValues as EoodFormValues,
+  useEODDChangeMutation,
+} from './EODDChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
-import { AsyncResource, isSuccess } from '@/utils/asyncResource';
+import { AsyncResource, getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Skeleton from '@/components/library/Skeleton';
-import { dayjs } from '@/utils/dayjs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useUserFieldChainDefined,
+  useUserFieldChangesPendingApprovals,
+} from '@/utils/api/workflows';
+import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import Confirm from '@/components/utils/Confirm';
+import { dayjs } from '@/utils/dayjs';
 
 interface Props {
   title: string;
@@ -17,10 +27,8 @@ interface Props {
 
 export default function UserEODDEditor(props: Props) {
   const { title, userRes } = props;
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newUserEODDDate, setNewUserEODDDate] = useState('');
-  const [userEODDDateChanged, setUserEODDDateChanged] = useState(false);
-  const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
+
+  const [newUserEODDDate, setNewUserEODDDate] = useState<string | null>(null);
 
   if (!useFeatureEnabled('PNB')) {
     return null;
@@ -44,32 +52,93 @@ export default function UserEODDEditor(props: Props) {
     <div>
       <div className={s.row}>
         <span className={s.title}>{title}</span>
-        {hasUserOveviewWritePermissions ? (
-          <Tooltip placement="bottomLeft" title="Click to edit or update EODD of the user. ">
-            <Icon onClick={() => setModalVisible(true)} className={s.icon} />
-          </Tooltip>
-        ) : (
-          ''
-        )}
+        <Skeleton res={userRes}>
+          {(user) => <HeaderTools user={user} setNewUserEODDDate={setNewUserEODDDate} />}
+        </Skeleton>
       </div>
       <p>
         <Skeleton res={userRes}>
-          {(user) => formatEODDDate(userEODDDateChanged ? newUserEODDDate : user.eoddDate)}
+          {(user) => {
+            return formatEODDDate(newUserEODDDate != null ? newUserEODDDate : user.eoddDate);
+          }}
         </Skeleton>
       </p>
-      {isSuccess(userRes) && (
-        <EODDChangeModal
-          isVisible={modalVisible}
-          user={userRes.value}
-          onOkay={(eoddDate: string): void => {
-            // api call to save the EODD date
-            setNewUserEODDDate(eoddDate);
-            setUserEODDDateChanged(true);
-          }}
-          onClose={() => setModalVisible(false)}
-          title={`Update EODD Date`}
+    </div>
+  );
+}
+
+function HeaderTools(props: {
+  user: InternalConsumerUser | InternalBusinessUser;
+  setNewUserEODDDate: (value: string | null) => void;
+}) {
+  const { user, setNewUserEODDDate } = props;
+  const pendingProposals = useUserFieldChangesPendingApprovals(user.userId, ['eoddDate']);
+  const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
+
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const makeProposalRes = useUserFieldChainDefined('eoddDate');
+  const makeProposal = getOr(makeProposalRes, false);
+
+  const lockedByPendingProposals =
+    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+
+  const eoodChangeMutation = useEODDChangeMutation(user, makeProposal);
+  return (
+    <Skeleton res={makeProposalRes}>
+      {lockedByPendingProposals && !isLoading(pendingProposals) && (
+        <PendingApprovalTag
+          renderModal={({ isOpen, setIsOpen }) => (
+            <UserPendingApprovalsModal
+              userId={user.userId}
+              isOpen={isOpen}
+              onCancel={() => {
+                setIsOpen(false);
+              }}
+              pendingProposalsRes={pendingProposals}
+              requiredResources={['write:::users/user-overview/*']}
+            />
+          )}
         />
       )}
-    </div>
+      {hasUserOveviewWritePermissions && !lockedByPendingProposals ? (
+        <Tooltip placement="bottomLeft" title="Click to edit or update EODD of the user. ">
+          <Icon onClick={() => setModalVisible(true)} className={s.icon} />
+        </Tooltip>
+      ) : (
+        ''
+      )}
+      <Confirm<EoodFormValues>
+        title={'Changes request'}
+        text={
+          'These changes should be approved before they are applied. Please, lease a comment with the reason for the change.'
+        }
+        skipConfirm={!makeProposal}
+        res={eoodChangeMutation.dataResource}
+        commentRequired={true}
+        onConfirm={async ({ args, comment }) => {
+          await eoodChangeMutation.mutateAsync({
+            formValues: args,
+            comment,
+          });
+          setModalVisible(false);
+          if (!makeProposal) {
+            setNewUserEODDDate(args.eoddDate);
+          }
+        }}
+      >
+        {({ onClick }) => (
+          <EODDChangeModal
+            isVisible={modalVisible}
+            user={user}
+            onConfirm={(formValues): void => {
+              onClick(formValues);
+            }}
+            onClose={() => setModalVisible(false)}
+            title={`Update EODD Date`}
+          />
+        )}
+      </Confirm>
+    </Skeleton>
   );
 }

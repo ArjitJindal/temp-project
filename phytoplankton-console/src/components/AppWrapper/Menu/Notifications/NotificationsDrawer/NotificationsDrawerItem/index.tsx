@@ -92,6 +92,10 @@ const getNotificationUrl = (notification: Notification) => {
     }
     return '/risk-levels/risk-factors';
   }
+  if (notificationType === 'USER_CHANGES_APPROVAL') {
+    const userId = notification.notificationData?.approval?.userId;
+    return userId ? `/users/list/all/${userId}` : '#';
+  }
   switch (entityType) {
     case 'ALERT': {
       const caseId = metadata?.alert?.caseId;

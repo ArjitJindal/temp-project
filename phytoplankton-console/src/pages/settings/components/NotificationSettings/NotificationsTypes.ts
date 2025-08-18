@@ -43,5 +43,9 @@ export const NOTIFICATION_TYPES: {
       label: 'When a change to a risk factor requires approval.',
       value: ['RISK_FACTORS_APPROVAL'],
     },
+    {
+      label: 'When a change to a user field requires approval.',
+      value: ['USER_CHANGES_APPROVAL'],
+    },
   ],
 };

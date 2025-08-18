@@ -1,28 +1,17 @@
-export type TableListItem = {
-  key: number;
-  disabled?: boolean;
-  transactionId: string;
-  name: string;
-  rulesHit: number;
-  amount: number;
-  sendingCurrency: string;
-  receivingCurrency: string;
-  originCountry: string;
-  destinationCountry: string;
-  paymentMethod: string;
-  payoutMethod: string;
-  tags: object[];
-  status: string;
-  updatedAt: Date;
-  createdAt: Date;
-  businessIndustry: string[];
-  legalName: string;
-  mainProductsAndServicesSold: string[];
-  expectedTransactionAmountPerMonth: string;
-  expectedTurnoverAmountPerMonth: string;
-  registrationIdentifier: string;
-  registrationCountry: string;
+import {
+  AllUsersTableItem as ApiAllUsersTableItem,
+  UserApproval,
+  BusinessUserTableItem as ApiBusinessUserTableItem,
+  ConsumerUserTableItem as ApiConsumerUserTableItem,
+} from '@/apis';
+
+type WithProposals = {
+  proposals?: UserApproval[];
 };
+
+export type AllUserTableItem = ApiAllUsersTableItem & WithProposals;
+export type BusinessUserTableItem = ApiBusinessUserTableItem & WithProposals;
+export type ConsumerUserTableItem = ApiConsumerUserTableItem & WithProposals;
 
 export type TableListPagination = {
   total: number;
@@ -33,7 +22,7 @@ export type TableListPagination = {
 };
 
 export type TableListData = {
-  list: TableListItem[];
+  list: UserTableItemExtended[];
   pagination: Partial<TableListPagination>;
 };
 

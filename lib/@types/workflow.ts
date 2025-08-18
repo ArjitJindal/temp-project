@@ -26,6 +26,7 @@ export interface BaseApprovalWorkflow {
   workflowType:
     | 'risk-levels-approval'
     | 'risk-factors-approval'
+    | 'user-update-approval'
     | 'rule-approval'
   version: number
   name: string
@@ -52,4 +53,8 @@ export interface RiskFactorsApprovalWorkflow extends BaseApprovalWorkflow {
 
 export interface RuleApprovalWorkflow extends BaseApprovalWorkflow {
   workflowType: 'rule-approval'
+}
+
+export interface UserUpdateApprovalWorkflow extends BaseApprovalWorkflow {
+  workflowType: 'user-update-approval'
 }

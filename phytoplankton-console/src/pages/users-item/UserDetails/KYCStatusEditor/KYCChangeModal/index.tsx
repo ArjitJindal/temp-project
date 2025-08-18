@@ -115,6 +115,18 @@ export default function KYCChangeModal(props: Props) {
       };
 
       if (user.type === 'CONSUMER') {
+        await api.postUserApprovalProposal({
+          userId: user.userId,
+          UserApprovalUpdateRequest: {
+            proposedChanges: [
+              {
+                field: 'kycStatusDetails',
+                value: newStateDetails,
+              },
+            ],
+            comment: commentText,
+          },
+        });
         updatedComment = await api.postConsumerUsersUserId({
           userId: user.userId,
           UserUpdateRequest: payload,

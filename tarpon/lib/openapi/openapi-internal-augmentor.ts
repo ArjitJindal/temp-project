@@ -286,6 +286,14 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/comments/{commentId}':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/update-proposal':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/update-proposals':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/update-proposal/{id}':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/update-proposal/{id}/action':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/webhooks/complyadvantage':
     StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import RiskClassificationTable, {
-  State,
+  State as RiskClassificationTableState,
   parseApiState,
   prepareApiState,
 } from '../RiskClassificationTable';
@@ -21,8 +21,8 @@ import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
 
 type Props = {
   riskValues: RiskClassificationConfig;
-  state: State | null;
-  setState: React.Dispatch<React.SetStateAction<State | null>>;
+  state: RiskClassificationTableState | null;
+  setState: React.Dispatch<React.SetStateAction<RiskClassificationTableState | null>>;
   riskValuesRefetch: () => void;
 };
 

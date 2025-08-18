@@ -13,6 +13,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { isEmpty, isEqual, omit, pick, uniq, uniqBy } from 'lodash'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
+import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
@@ -47,7 +49,7 @@ import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -101,6 +103,14 @@ import { ListItem } from '@/@types/openapi-internal/ListItem'
 import { UserFlatFileUploadRequest } from '@/@types/openapi-internal/UserFlatFileUploadRequest'
 import { WebhookUserStateDetails } from '@/@types/openapi-public/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-public/WebhookKYCStatusDetails'
+import { UserApproval } from '@/@types/openapi-internal/UserApproval'
+import { UserProposedChange } from '@/@types/openapi-internal/UserProposedChange'
+import { UserApprovalRequest } from '@/@types/openapi-internal/UserApprovalRequest'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { WorkflowService } from '@/services/workflow'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
+import { RiskService } from '@/services/risk'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -162,6 +172,7 @@ export class UserService {
   userManagementService: UserManagementService
   riskScoringV8Service: RiskScoringV8Service
   listService: ListService
+  workflowService: WorkflowService
   private s3Service: S3Service
 
   constructor(
@@ -232,6 +243,10 @@ export class UserService {
         tmpBucketName: this.tmpBucketName,
       }
     )
+    this.workflowService = new WorkflowService(tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
   }
 
   public static async fromEvent(
@@ -2282,5 +2297,427 @@ export class UserService {
             : 'BUSINESS_USERS_UPLOAD',
       },
     })
+  }
+
+  @auditLog('USER', 'USER_CHANGE_PROPOSAL', 'CREATE')
+  public async proposeUserFieldChange(
+    userId: string,
+    proposedChange: UserProposedChange,
+    comment: string,
+    createdBy: string
+  ): Promise<AuditLogReturnData<UserApproval>> {
+    // Fetch tenant settings to get workflow mapping
+    const settings: TenantSettings = await tenantSettings(this.tenantId)
+    const workflowId =
+      settings.workflowSettings?.userApprovalWorkflows?.[proposedChange.field]
+
+    if (!workflowId) {
+      // No workflow configured - automatically apply the change
+      console.log(
+        `No workflow configured for field: ${proposedChange.field}. Auto-approving change for user: ${userId}`
+      )
+
+      const oldUser = await this.userRepository.getUser<
+        UserWithRulesResult | BusinessWithRulesResult
+      >(userId)
+      if (!oldUser) {
+        throw new createError.NotFound('User not found')
+      }
+
+      // Create update request from the proposed change
+      const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
+      ;(updateRequest as any)[proposedChange.field] = proposedChange.value
+
+      // Use the existing updateUser method to apply the change
+      // This ensures all the proper validation, audit logging, and side effects are handled
+      await this.updateUser(oldUser, updateRequest, undefined, {
+        bySystem: true,
+      })
+
+      // Return a mock approval object indicating the change was auto-approved
+      // This allows the frontend to know that the change was processed successfully
+      const timestamp = Date.now()
+      const autoApproval = new UserApproval()
+      autoApproval.id = timestamp
+      autoApproval.userId = userId
+      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.comment = comment
+      autoApproval.workflowRef = { id: 'auto-approved', version: 1 }
+      autoApproval.approvalStatus = 'APPROVED'
+      autoApproval.approvalStep = 0
+      autoApproval.createdAt = timestamp
+      autoApproval.createdBy = createdBy
+
+      return {
+        entities: [
+          {
+            entityId: userId,
+            entityType: 'USER',
+            entitySubtype: 'USER_CHANGE_PROPOSAL',
+            entityAction: 'CREATE',
+            oldImage: undefined,
+            newImage: autoApproval,
+          },
+        ],
+        result: autoApproval,
+        publishAuditLog: () => true,
+      }
+    }
+
+    // Workflow exists - proceed with normal approval process
+    const workflow = await this.workflowService.getWorkflow(
+      'user-update-approval',
+      workflowId
+    )
+    const timestamp = Date.now()
+
+    const approval: UserApproval = {
+      id: timestamp,
+      userId,
+      proposedChanges: [proposedChange],
+      comment,
+      workflowRef: { id: workflow.id, version: workflow.version },
+      approvalStatus: 'PENDING',
+      approvalStep: 0,
+      createdAt: timestamp,
+      createdBy,
+    }
+
+    const savedApproval = await this.userRepository.setPendingUserApproval(
+      approval
+    )
+
+    return {
+      entities: [
+        {
+          entityId: userId,
+          entityType: 'USER',
+          entitySubtype: 'USER_CHANGE_PROPOSAL',
+          entityAction: 'CREATE',
+          oldImage: undefined,
+          newImage: savedApproval,
+        },
+      ],
+      result: savedApproval,
+      publishAuditLog: () => true,
+    }
+  }
+
+  // Get a specific user approval proposal
+  public async getUserApprovalProposal(
+    userId: string,
+    id: number
+  ): Promise<UserApproval | null> {
+    return this.userRepository.getPendingUserApproval(userId, id)
+  }
+
+  // Get all pending user approval proposals for a user
+  public async getUserApprovalProposals(
+    userId: string
+  ): Promise<UserApproval[]> {
+    return this.userRepository.getPendingUserApprovalsForUser(userId)
+  }
+
+  // List all pending user approval proposals
+  public async listUserApprovalProposals(): Promise<UserApproval[]> {
+    return this.userRepository.getAllPendingUserApprovals()
+  }
+
+  // Delete a user approval proposal
+  public async deleteUserApprovalProposal(
+    userId: string,
+    id: number
+  ): Promise<void> {
+    const deleted = await this.userRepository.deletePendingUserApproval(
+      userId,
+      id
+    )
+    if (!deleted) {
+      throw new createError.NotFound('User approval proposal not found')
+    }
+  }
+
+  // Approve or reject a user approval proposal
+  @auditLog('USER', 'USER_CHANGE_PROPOSAL', 'UPDATE')
+  public async processUserApproval(
+    userId: string,
+    id: number,
+    request: UserApprovalRequest
+  ): Promise<AuditLogReturnData<UserApproval>> {
+    const approval = await this.getUserApprovalProposal(userId, id)
+    if (!approval) {
+      throw new createError.NotFound('User approval proposal not found')
+    }
+    if (approval.approvalStatus !== 'PENDING') {
+      throw new createError.BadRequest('Approval already processed')
+    }
+
+    // validate action
+    if (
+      request.action !== 'accept' &&
+      request.action !== 'reject' &&
+      request.action !== 'cancel'
+    ) {
+      throw new createError.BadRequest('Invalid action')
+    }
+
+    // Handle cancel action - only the author can cancel at step 0
+    if (request.action === 'cancel') {
+      const currentUserId = getContext()?.user?.id
+      if (!currentUserId) {
+        throw new createError.BadRequest('User context not available')
+      }
+
+      // Only the author can cancel the proposal
+      if (approval.createdBy !== currentUserId) {
+        throw new createError.BadRequest(
+          'Only the author can cancel the proposal'
+        )
+      }
+
+      // Only allow cancellation at step 0 (first step)
+      if (approval.approvalStep !== 0) {
+        throw new createError.BadRequest(
+          'Can only cancel at the first step of approval'
+        )
+      }
+
+      // Delete the approval object from database
+      await this.userRepository.deletePendingUserApproval(userId, id)
+
+      return {
+        entities: [
+          {
+            entityId: userId,
+            entityType: 'USER',
+            entitySubtype: 'USER_CHANGE_PROPOSAL',
+            entityAction: 'UPDATE',
+            oldImage: approval,
+            newImage: { ...approval, approvalStatus: 'CANCELLED' },
+          },
+        ],
+        result: { ...approval, approvalStatus: 'CANCELLED' },
+      }
+    }
+
+    // fetch the workflow definition
+    const wRef = approval.workflowRef
+    if (!wRef) {
+      throw new createError.BadRequest('No workflow reference found')
+    }
+
+    const workflow = await this.workflowService.getWorkflowVersion(
+      'user-update-approval',
+      wRef.id,
+      wRef.version.toString()
+    )
+    const workflowMachine = new UserUpdateApprovalWorkflowMachine(
+      workflow as UserUpdateApprovalWorkflow
+    )
+
+    // ensure the user performing the action has the role referenced in the current step of the workflow
+    const currentStep = workflowMachine.getApprovalStep(approval.approvalStep)
+    if (currentStep.role !== getContext()?.user?.role) {
+      // TODO: keeping this check disabled in backend for now
+      // throw new createError.BadRequest('User does not have the role required to perform this action')
+    }
+
+    if (request.action === 'reject') {
+      // Delete the approval object from database
+      await this.userRepository.deletePendingUserApproval(userId, id)
+
+      return {
+        entities: [
+          {
+            entityId: userId,
+            entityType: 'USER',
+            entitySubtype: 'USER_CHANGE_PROPOSAL',
+            entityAction: 'UPDATE',
+            oldImage: approval,
+            newImage: { ...approval, approvalStatus: 'REJECTED' },
+          },
+        ],
+        result: { ...approval, approvalStatus: 'REJECTED' },
+      }
+    }
+
+    // Handle accept action - last step
+    if (currentStep.isLastStep) {
+      // Get the old user before updating
+      const oldUser = await this.userRepository.getUser<
+        UserWithRulesResult | BusinessWithRulesResult
+      >(userId)
+      if (!oldUser) {
+        throw new createError.NotFound('User not found')
+      }
+
+      // Handle CRA fields through the risk service
+      // Cra = risk level value, CraLock = isUpdatable flag
+      const craChange = approval.proposedChanges.find(
+        (change) => change.field === 'Cra'
+      )
+      const craLockChange = approval.proposedChanges.find(
+        (change) => change.field === 'CraLock'
+      )
+
+      // Handle CRA level changes (requires account to be unlocked)
+      if (craChange) {
+        const riskService = new RiskService(this.tenantId, {
+          dynamoDb: this.dynamoDb,
+          mongoDb: this.mongoDb,
+        })
+
+        // Check if the account is currently locked
+        const currentRiskAssignment = await riskService.getRiskAssignment(
+          userId
+        )
+        if (currentRiskAssignment?.isUpdatable === false) {
+          throw new createError.BadRequest(
+            'Cannot change CRA level when the account is locked. Please unlock the account first.'
+          )
+        }
+
+        const newRiskLevel = craChange.value as RiskLevel
+        const newIsUpdatable =
+          (craLockChange?.value as boolean) ??
+          currentRiskAssignment?.isUpdatable ??
+          true
+
+        await riskService.createOrUpdateRiskAssignment(
+          userId,
+          newRiskLevel,
+          newIsUpdatable
+        )
+        console.log(
+          `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${newIsUpdatable}`
+        )
+      }
+
+      // Handle CRA lock changes (independent of CRA level)
+      if (craLockChange) {
+        const riskService = new RiskService(this.tenantId, {
+          dynamoDb: this.dynamoDb,
+          mongoDb: this.mongoDb,
+        })
+
+        const newIsUpdatable = craLockChange.value as boolean
+        await riskService.updateRiskAssignmentLock(userId, newIsUpdatable)
+        console.log(
+          `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}`
+        )
+      }
+
+      // Handle other fields through the standard updateUser method
+      const otherFields = approval.proposedChanges.filter(
+        (change) => change.field !== 'Cra' && change.field !== 'CraLock'
+      )
+
+      if (otherFields.length > 0) {
+        const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
+
+        for (const change of otherFields) {
+          if (change.field === 'PepStatus') {
+            // Handle PepStatus field specially - it contains multiple sub-fields
+            const pepStatusValue = change.value as any
+            if (pepStatusValue.pepStatus) {
+              ;(updateRequest as any).pepStatus = pepStatusValue.pepStatus
+            }
+            if (pepStatusValue.adverseMediaStatus !== undefined) {
+              ;(updateRequest as any).adverseMediaStatus =
+                pepStatusValue.adverseMediaStatus
+            }
+            if (pepStatusValue.sanctionsStatus !== undefined) {
+              ;(updateRequest as any).sanctionsStatus =
+                pepStatusValue.sanctionsStatus
+            }
+          } else {
+            // Apply other changes directly to the update request
+            ;(updateRequest as any)[change.field] = change.value
+          }
+        }
+
+        // Use the existing updateUser method to apply the changes
+        console.log(
+          `About to call updateUser with:`,
+          JSON.stringify(updateRequest, null, 2)
+        )
+        console.log(
+          `Old user before update:`,
+          JSON.stringify(
+            {
+              pepStatus: (oldUser as any).pepStatus,
+              adverseMediaStatus: (oldUser as any).adverseMediaStatus,
+              sanctionsStatus: (oldUser as any).sanctionsStatus,
+            },
+            null,
+            2
+          )
+        )
+
+        await this.updateUser(oldUser, updateRequest, undefined, {
+          bySystem: true,
+        })
+
+        // Verify the update worked by fetching the user again
+        const updatedUser = await this.userRepository.getUser<
+          UserWithRulesResult | BusinessWithRulesResult
+        >(userId)
+        console.log(
+          `User after update:`,
+          JSON.stringify(
+            {
+              pepStatus: (updatedUser as any)?.pepStatus,
+              adverseMediaStatus: (updatedUser as any)?.adverseMediaStatus,
+              sanctionsStatus: (updatedUser as any)?.sanctionsStatus,
+            },
+            null,
+            2
+          )
+        )
+
+        console.log(
+          `Standard fields updated for user ${userId} through updateUser method`
+        )
+      }
+
+      // Delete the approval object from database
+      await this.userRepository.deletePendingUserApproval(userId, id)
+
+      return {
+        entities: [
+          {
+            entityId: userId,
+            entityType: 'USER',
+            entitySubtype: 'USER_CHANGE_PROPOSAL',
+            entityAction: 'UPDATE',
+            oldImage: approval,
+            newImage: { ...approval, approvalStatus: 'APPROVED' },
+          },
+        ],
+        result: { ...approval, approvalStatus: 'APPROVED' },
+      }
+    }
+
+    // Handle accept action - not last step
+    // Update the approval object with the next step
+    const updatedApproval = {
+      ...approval,
+      approvalStep: approval.approvalStep + 1,
+    }
+    await this.userRepository.updatePendingUserApproval(updatedApproval)
+
+    return {
+      entities: [
+        {
+          entityId: userId,
+          entityType: 'USER',
+          entitySubtype: 'USER_CHANGE_PROPOSAL',
+          entityAction: 'UPDATE',
+          oldImage: approval,
+          newImage: updatedApproval,
+        },
+      ],
+      result: updatedApproval,
+    }
   }
 }

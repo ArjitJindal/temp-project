@@ -7,7 +7,6 @@ import {
   useQuery as useQueryRQ,
 } from '@tanstack/react-query';
 import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
-import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
 import { LISTS } from './keys';
@@ -40,11 +39,26 @@ export function useQueries<T>({
   queries,
   context,
 }: {
-  queries: readonly [...QueriesOptions<T[]>];
+  queries: UseQueryOptions<T>[];
   context?: UseQueryOptions['context'];
 }): QueryResult<T>[] {
   const results = useQueriesRQ({ queries, context });
   return results.map((x: any) => convertQueryResult(x));
+}
+
+export function useQueryDataUpdatedAt<TQueryKey extends QueryKey = QueryKey>(key: TQueryKey) {
+  const results = useQueryRQ(
+    key,
+    () => {
+      throw new Error(
+        `This query should never run, since it is used only as a stub for query observing`,
+      );
+    },
+    {
+      enabled: false,
+    },
+  );
+  return results.dataUpdatedAt;
 }
 
 function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(

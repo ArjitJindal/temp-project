@@ -177,6 +177,9 @@ function sampleNotification(notificationType: NotificationType, users: Account[]
     case 'RISK_FACTORS_APPROVAL':
       entityType = 'USER';
       break;
+    case 'USER_CHANGES_APPROVAL':
+      entityType = 'USER';
+      break;
     default:
       entityType = neverReturn(notificationType, null);
   }

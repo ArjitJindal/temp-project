@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { Forbidden, NotFound } from 'http-errors'
+import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import { compact } from 'lodash'
 import { UserService } from '../../services/users'
 import { UserAuditLogService } from './services/user-audit-log-service'
@@ -234,6 +234,56 @@ export const allUsersViewHandler = lambdaApi()(
 
     handlers.registerPostUsersFlatFileUpload(async (ctx, request) => {
       return await userService.importFlatFile(request.UserFlatFileUploadRequest)
+    })
+
+    // User Approval Routes
+    handlers.registerPostUserApprovalProposal(async (ctx, request) => {
+      const { proposedChanges, comment } = request.UserApprovalUpdateRequest
+      const response = await userService.proposeUserFieldChange(
+        request.userId,
+        proposedChanges[0],
+        comment,
+        userId
+      )
+      return response.result
+    })
+
+    handlers.registerGetUserApprovalProposal(async (ctx, request) => {
+      const proposalId = parseInt(request.id, 10)
+      if (isNaN(proposalId)) {
+        throw new BadRequest('Invalid id parameter: must be a valid number')
+      }
+
+      const approval = await userService.getUserApprovalProposal(
+        request.userId,
+        proposalId
+      )
+      if (!approval) {
+        throw new NotFound('User approval proposal not found')
+      }
+      return approval
+    })
+
+    handlers.registerGetUserApprovalProposals(async (ctx, request) => {
+      return await userService.getUserApprovalProposals(request.userId)
+    })
+
+    handlers.registerGetAllUserApprovalProposals(async (_ctx, _request) => {
+      return await userService.listUserApprovalProposals()
+    })
+
+    handlers.registerPostUserApprovalProcess(async (ctx, request) => {
+      const proposalId = parseInt(request.id, 10)
+      if (isNaN(proposalId)) {
+        throw new BadRequest('Invalid id parameter: must be a valid number')
+      }
+
+      const response = await userService.processUserApproval(
+        request.userId,
+        proposalId,
+        request.UserApprovalRequest
+      )
+      return response.result
     })
 
     return await handlers.handle(event)

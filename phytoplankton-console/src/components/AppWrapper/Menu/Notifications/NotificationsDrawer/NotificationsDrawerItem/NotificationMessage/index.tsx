@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router';
 import s from './index.module.less';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import { neverReturn } from '@/utils/lang';
@@ -20,6 +21,7 @@ interface Props {
 
 export default function NotificationMessage(props: Props) {
   const { notification } = props;
+  const navigate = useNavigate();
   const sendRiskLevelsProposalActionMutation = useSendRiskLevelsProposalActionMutation();
   const sendRiskFactorsProposalActionMutation = useSendRiskFactorsProposalActionMutation();
 
@@ -211,6 +213,37 @@ export default function NotificationMessage(props: Props) {
               }}
             >
               Reject
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  } else if (notification.notificationType === 'USER_CHANGES_APPROVAL') {
+    // Extract user approval ID from the notification data
+    const approvalId = notification.notificationData?.approval?.id;
+    const userId = notification.notificationData?.approval?.userId;
+
+    return (
+      <>
+        <Author {...props} />
+        {' updated '}
+        <Entity {...props} />
+        {'and waiting for approval'}
+        {approvalId && userId && (
+          <div
+            className={s.buttons}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <Button
+              type={'PRIMARY'}
+              onClick={() => {
+                // Navigate to the user page where the approval modal can be opened
+                navigate(`/users/list/all/${userId}`);
+              }}
+            >
+              View Changes
             </Button>
           </div>
         )}

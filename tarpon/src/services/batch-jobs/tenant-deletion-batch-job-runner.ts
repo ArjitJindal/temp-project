@@ -397,6 +397,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteRiskFactorsApprovals.bind(this),
         order: 25,
       },
+      USERS_PROPOSAL: {
+        method: this.deleteUsersProposal.bind(this),
+        order: 26,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -919,6 +923,22 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Risk Factors Approval'
+    )
+  }
+
+  private async deleteUsersProposal(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.USERS_PROPOSAL(
+      tenantId,
+      ''
+    ).PartitionKeyID
+
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Users Proposal'
     )
   }
 

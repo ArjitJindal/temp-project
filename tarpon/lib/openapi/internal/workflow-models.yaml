@@ -135,6 +135,17 @@ components:
           required:
             - workflowType
 
+    UserUpdateApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [user-update-approval]
+          required:
+            - workflowType
+
     RuleApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/BaseApprovalWorkflow'
@@ -171,6 +182,7 @@ components:
           alert,
           risk-levels-approval,
           risk-factors-approval,
+          user-update-approval,
           rule-approval,
         ]
 
@@ -207,6 +219,10 @@ components:
             - approvalChain
 
     CreateRiskLevelApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateUserUpdateApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
+import s from './styles.module.less';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
-import { ConsumerUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -14,6 +14,8 @@ import {
 import { getUserLink } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import { ConsumerUserTableItem } from '@/pages/users/users-list/data';
 
 export function getConsumerUserColumns(userAlias?: string): TableColumn<ConsumerUserTableItem>[] {
   const helper = new ColumnHelper<ConsumerUserTableItem>();
@@ -26,9 +28,12 @@ export function getConsumerUserColumns(userAlias?: string): TableColumn<Consumer
       type: {
         render: (userId, { item: entity }) => {
           return (
-            <Id to={getUserLink(entity)} testName="consumer-user-id">
-              {userId}
-            </Id>
+            <div className={s.idWrapper}>
+              <Id to={getUserLink(entity)} testName="consumer-user-id">
+                {userId}
+              </Id>
+              {!!entity.proposals?.length && <PendingApprovalTag />}
+            </div>
           );
         },
         link(value, item) {

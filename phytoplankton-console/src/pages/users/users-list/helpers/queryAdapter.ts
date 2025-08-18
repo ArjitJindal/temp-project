@@ -31,6 +31,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       countryOfResidence: params.countryOfResidence?.join(',') ?? '',
       userState: params.userState?.join(',') ?? '',
       kycStatus: params.kycStatus?.join(',') ?? '',
+      pendingApproval: params.pendingApproval,
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -60,6 +61,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         : undefined,
       userState: raw.userState ? (raw.userState.split(',') as UserState[]) : undefined,
       kycStatus: raw.kycStatus ? (raw.kycStatus.split(',') as KYCStatus[]) : undefined,
+      pendingApproval: raw.pendingApproval as 'true' | 'false' | undefined,
     };
   },
 };

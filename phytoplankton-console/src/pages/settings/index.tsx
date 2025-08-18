@@ -48,6 +48,7 @@ import Alert from '@/components/library/Alert';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
 import { Authorized } from '@/components/utils/Authorized';
+import { UserUpdateApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
 
 export default function SettingsPage() {
   const { section = 'system' } = useParams<'section'>() as {
@@ -136,6 +137,9 @@ export default function SettingsPage() {
                 <TagSettings />
                 <UserAliasSettings />
                 <StatusAliasSettings />
+                <Feature name="USER_CHANGES_APPROVAL">
+                  <UserUpdateApprovalSettings />
+                </Feature>
               </>
             ),
           },

@@ -2667,6 +2667,136 @@ paths:
                 items:
                   type: string
       operationId: get-users-uniques
+  /users/{userId}/update-proposal:
+    post:
+      summary: User Approval - Create Proposal
+      tags: []
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserApproval'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserApprovalUpdateRequest'
+        required: true
+      operationId: post-user-approval-proposal
+      description: Create a new user approval proposal
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+    get:
+      summary: User Approval - Get Proposals for User
+      tags: []
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserApproval'
+      operationId: get-user-approval-proposals
+      description: Get all approval proposals for a specific user
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+  /users/update-proposals:
+    get:
+      summary: User Approval - Get All Proposals
+      tags: []
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserApproval'
+      operationId: get-all-user-approval-proposals
+      description: Get all user approval proposals
+      parameters: []
+  /users/{userId}/update-proposal/{id}:
+    get:
+      summary: User Approval - Get Specific Proposal
+      tags: []
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserApproval'
+      operationId: get-user-approval-proposal
+      description: Get a specific user approval proposal
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: id
+          in: path
+          required: true
+  /users/{userId}/update-proposal/{id}/action:
+    post:
+      summary: User Approval - Process Proposal
+      tags: []
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserApproval'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserApprovalRequest'
+        required: true
+      operationId: post-user-approval-process
+      description: Process a user approval proposal (approve/reject/cancel)
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: id
+          in: path
+          required: true
   /dashboard_stats/transactions:
     get:
       summary: DashboardStats - Transactions
@@ -11581,11 +11711,105 @@ components:
             type: string
         llmProvider:
           $ref: '#/components/schemas/LLMProvider'
+        workflowSettings:
+          $ref: '#/components/schemas/WorkflowSettings'
     LLMProvider:
       type: string
       enum:
         - ANTHROPIC
         - OPEN_AI
+    WorkflowSettings:
+      type: object
+      properties:
+        userApprovalWorkflows:
+          type: object
+          properties:
+            Cra:
+              type: string
+            CraLock:
+              type: string
+            eoddDate:
+              type: string
+            PepStatus:
+              type: string
+    UserApprovalUpdateRequest:
+      type: object
+      title: UserApprovalUpdateRequest
+      properties:
+        proposedChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProposedChange'
+        comment:
+          type: string
+      required:
+        - proposedChanges
+        - comment
+    UserApproval:
+      type: object
+      title: UserApproval
+      properties:
+        id:
+          type: number
+        userId:
+          type: string
+        proposedChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProposedChange'
+        comment:
+          type: string
+        workflowRef:
+          $ref: '#/components/schemas/WorkflowRef'
+        approvalStatus:
+          $ref: '#/components/schemas/UserApprovalStatus'
+        approvalStep:
+          type: number
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+      required:
+        - userId
+        - proposedChanges
+        - comment
+        - workflowRef
+        - approvalStatus
+        - approvalStep
+        - createdAt
+        - createdBy
+    UserProposedChange:
+      type: object
+      title: UserProposedChange
+      properties:
+        field:
+          type: string
+          description: The field name to be changed
+        value:
+          description: The new value for the field
+      required:
+        - field
+        - value
+    UserApprovalStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - CANCELLED
+    UserApprovalRequest:
+      type: object
+      title: UserApprovalRequest
+      properties:
+        action:
+          type: string
+          enum:
+            - accept
+            - reject
+            - cancel
+          description: Whether to accept or reject the proposed changes
+      required:
+        - action
     NangoPostConnect:
       title: NangoPostConnect
       type: object
@@ -12557,6 +12781,7 @@ components:
         - TRANSLITERATION
         - OPEN_SEARCH
         - APPROVAL_WORKFLOWS
+        - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
       description: ''
@@ -16052,6 +16277,7 @@ components:
             - CHECKLIST_ITEM_STATUS_CHANGE
             - USER_STATUS_CHANGE
             - USER_KYC_STATUS_CHANGE
+            - USER_CHANGE_PROPOSAL
             - REVIEW_ASSIGNMENT
             - API_UPDATE
             - API_CREATION
@@ -18014,6 +18240,7 @@ components:
         - CASE_STATUS_UPDATE
         - RISK_CLASSIFICATION_APPROVAL
         - RISK_FACTORS_APPROVAL
+        - USER_CHANGES_APPROVAL
     NotificationChannels:
       title: NotificationChannels
       type: string

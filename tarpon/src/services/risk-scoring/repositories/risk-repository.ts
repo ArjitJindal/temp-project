@@ -362,6 +362,54 @@ export class RiskRepository {
     return newDrsScoreItem
   }
 
+  async updateRiskAssignmentLock(
+    userId: string,
+    isUpdatable: boolean
+  ): Promise<DrsScore> {
+    logger.debug(
+      `Updating risk assignment lock for user ${userId} to ${isUpdatable}`
+    )
+
+    const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
+    console.log(`Primary key for update:`, primaryKey)
+
+    // Atomic update - only modify the isUpdatable field
+    const updateInput: UpdateCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: primaryKey,
+      UpdateExpression:
+        'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':isUpdatable': isUpdatable,
+        ':updatedAt': Date.now(),
+      },
+      ReturnValues: 'ALL_NEW',
+    }
+
+    console.log(`Update input:`, JSON.stringify(updateInput, null, 2))
+
+    const result = await this.dynamoDb.send(new UpdateCommand(updateInput))
+    console.log(`Update result:`, result)
+
+    if (!result.Attributes) {
+      throw new Error(
+        `Failed to update risk assignment lock for user ${userId}`
+      )
+    }
+
+    const updatedDrsScore = result.Attributes as DrsScore
+
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
+    }
+
+    logger.debug(
+      `Updated risk assignment lock for user ${userId} to ${isUpdatable}`
+    )
+
+    return updatedDrsScore
+  }
+
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
     const contextRiskClassificationValues =
       getContext()?.riskClassificationValues

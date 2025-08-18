@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Resource } from '@flagright/lib/utils';
 import s from './style.module.less';
 import Modal from '@/components/library/Modal';
 import InputField from '@/components/library/Form/InputField';
@@ -21,12 +22,23 @@ export interface Props {
   res?: AsyncResource;
   isDanger?: boolean;
   isVisible: boolean;
+  requiredResources?: Resource[];
   onConfirm: (formValues: FormValues) => void;
   onCancel: () => void;
 }
 
 export default function ConfirmModal(props: Props) {
-  const { isVisible, isDanger, title, text, res, onConfirm, onCancel, commentRequired } = props;
+  const {
+    isVisible,
+    isDanger,
+    title,
+    text,
+    res,
+    onConfirm,
+    onCancel,
+    commentRequired,
+    requiredResources,
+  } = props;
 
   const formRef = useRef<FormRef<FormValues>>(null);
 
@@ -57,6 +69,7 @@ export default function ConfirmModal(props: Props) {
         isDisabled: res != null && isLoading(res),
       }}
       testId={'confirmation-modal'}
+      writeResources={requiredResources}
     >
       <Form
         ref={formRef}

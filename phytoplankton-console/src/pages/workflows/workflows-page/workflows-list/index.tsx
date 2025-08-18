@@ -51,7 +51,12 @@ export default function WorkflowsList() {
         title: 'Category',
         key: 'workflowType',
         type: TAG as ColumnDataType<
-          'case' | 'alert' | 'risk-levels-approval' | 'risk-factors-approval' | 'rule-approval'
+          | 'case'
+          | 'alert'
+          | 'risk-levels-approval'
+          | 'risk-factors-approval'
+          | 'rule-approval'
+          | 'user-update-approval'
         >,
       }),
       helper.simple<'version'>({

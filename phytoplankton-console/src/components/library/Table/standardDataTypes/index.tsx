@@ -89,14 +89,12 @@ import Tooltip from '@/components/library/Tooltip';
 
 export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export'>> &
   Pick<FullColumnDataType<unknown>, 'export'> = {
-  render: (value) => {
-    if (
-      value == null ||
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
-    ) {
+  render: (value): JSX.Element => {
+    if (value == null) {
       return <>{value}</>;
+    }
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return <>{`${value}`}</>;
     }
     return <>{JSON.stringify(value)}</>;
   },

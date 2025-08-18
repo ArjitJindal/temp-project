@@ -196,6 +196,11 @@ export const featureDescriptions: Record<
     description: 'Enables approval workflows',
     tag: FeatureTag.WIP,
   },
+  USER_CHANGES_APPROVAL: {
+    title: 'User changes approval',
+    description: 'Enables approval workflows for user field changes',
+    tag: FeatureTag.WIP,
+  },
   DISABLE_GLOBAL_AGGREGATIONS: {
     title: 'Disable global aggregations ',
     description:

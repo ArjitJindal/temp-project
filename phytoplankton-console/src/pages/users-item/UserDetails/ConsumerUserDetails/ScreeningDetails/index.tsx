@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ScreeningDetailsUpdateForm } from './UpdateForm';
 import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus } from './PepStatus/utils';
@@ -14,7 +15,15 @@ import Form from '@/components/library/Form';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
-import { isLoading } from '@/utils/asyncResource';
+import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
+import Confirm from '@/components/utils/Confirm';
+import { USER_CHANGES_PROPOSALS, USER_CHANGES_PROPOSALS_BY_ID } from '@/utils/queries/keys';
+import {
+  useUserFieldChainDefined,
+  useUserFieldChangesPendingApprovals,
+} from '@/utils/api/workflows';
+import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 
 interface Props {
   user: InternalConsumerUser;
@@ -70,6 +79,10 @@ const getInitialValue = (user: InternalConsumerUser) => {
 export default function ScreeningDetails(props: Props) {
   const { user, columns = 1 } = props;
   const [isOpen, setIsOpen] = useState(false);
+  // const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const makeProposalRes = useUserFieldChainDefined('PepStatus');
+  const makeProposal = getOr(makeProposalRes, false);
+
   const api = useApi();
   const formRef = useRef(null);
 
@@ -95,8 +108,16 @@ export default function ScreeningDetails(props: Props) {
     setPepValidationResult(error);
   };
 
-  const userUpdateMutation = useMutation<FormValues, unknown, FormValues>(
-    async (formValues) => {
+  const queryClient = useQueryClient();
+  const userUpdateMutation = useMutation<
+    FormValues,
+    unknown,
+    {
+      formValues: FormValues;
+      comment?: string;
+    }
+  >(
+    async ({ formValues, comment }) => {
       if (pepValidationResult !== null) {
         return screeningDetails;
       }
@@ -108,29 +129,59 @@ export default function ScreeningDetails(props: Props) {
         adverseMediaStatus: formValues.adverseMediaStatus,
         sanctionsStatus: formValues.sanctionsStatus,
       };
-      await api.postConsumerUsersUserId({
-        userId: user.userId,
-        UserUpdateRequest: updates,
-      });
+
+      if (makeProposal) {
+        if (!comment) {
+          throw new Error(`Comment is required here`);
+        }
+        await api.postUserApprovalProposal({
+          userId: user.userId,
+          UserApprovalUpdateRequest: {
+            proposedChanges: [
+              {
+                field: 'PepStatus',
+                value: updates,
+              },
+            ],
+            comment: comment,
+          },
+        });
+        await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
+        await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
+      } else {
+        await api.postConsumerUsersUserId({
+          userId: user.userId,
+          UserUpdateRequest: updates,
+        });
+      }
       return formValues;
     },
     {
       onSuccess: (formValues) => {
-        message.success(
-          'Screening details updated successfully (It might take a few seconds to be visible in Console)',
-        );
-        // form submitted successfully
-        setScreeningDetails(() => {
-          const newState = {
-            ...formValues,
-            pepStatus: expandPEPStatus(
-              (formValues.pepStatus.slice(0, formValues.pepStatus.length - 1) as PepFormValues[]) ??
-                [],
-            ),
-          };
-          writeUpdatesToLocalStorage(user.userId, newState);
-          return newState;
-        });
+        if (makeProposal) {
+          message.success('Approval request submitted successfully', {
+            details: 'It needs to be approved before the changes are applied',
+          });
+        } else {
+          message.success(
+            'Screening details updated successfully (It might take a few seconds to be visible in Console)',
+          );
+          // form submitted successfully
+          setScreeningDetails(() => {
+            const newState = {
+              ...formValues,
+              pepStatus: expandPEPStatus(
+                (formValues.pepStatus.slice(
+                  0,
+                  formValues.pepStatus.length - 1,
+                ) as PepFormValues[]) ?? [],
+              ),
+            };
+            writeUpdatesToLocalStorage(user.userId, newState);
+            return newState;
+          });
+        }
+
         setIsOpen(false);
       },
       onError: () => {
@@ -139,10 +190,35 @@ export default function ScreeningDetails(props: Props) {
     },
   );
 
+  const pendingProposals = useUserFieldChangesPendingApprovals(user.userId, ['PepStatus']);
+
+  const lockedByPendingProposals =
+    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+
   return (
     <EntityPropertiesCard
       title={'Screening details'}
-      extraControls={<EditIcon className={s.icon} onClick={() => setIsOpen(true)} />}
+      extraControls={
+        !lockedByPendingProposals ? (
+          <EditIcon className={s.icon} onClick={() => setIsOpen(true)} />
+        ) : !isLoading(pendingProposals) ? (
+          <PendingApprovalTag
+            renderModal={({ isOpen, setIsOpen }) => (
+              <UserPendingApprovalsModal
+                userId={user.userId}
+                isOpen={isOpen}
+                onCancel={() => {
+                  setIsOpen(false);
+                }}
+                pendingProposalsRes={pendingProposals}
+                requiredResources={['write:::users/user-pep-status/*']}
+              />
+            )}
+          />
+        ) : (
+          <></>
+        )
+      }
       columns={columns}
       items={[
         {
@@ -169,51 +245,70 @@ export default function ScreeningDetails(props: Props) {
         },
       ]}
       modal={
-        <Modal
-          id={'user-screening-details-update-modal'}
-          isOpen={isOpen}
-          onCancel={() => setIsOpen(false)}
-          onOk={() => {
-            if (formState.isValid) {
-              userUpdateMutation.mutate(formState.values);
-            }
-          }}
-          title="Screening details"
-          width="L"
-          maskClosable={!isLoading(userUpdateMutation.dataResource)}
-          okText="Save"
-          okProps={{
-            isDisabled:
-              pepValidationResult !== null ||
-              !formState.isValid ||
-              isLoading(userUpdateMutation.dataResource),
-          }}
-          cancelProps={{
-            isDisabled: isLoading(userUpdateMutation.dataResource),
+        <Confirm<FormValues>
+          title={'Changes request'}
+          text={
+            'These changes should be approved before they are applied. Please, lease a comment with the reason for the change.'
+          }
+          skipConfirm={!makeProposal}
+          res={userUpdateMutation.dataResource}
+          commentRequired={true}
+          onConfirm={({ args, comment }) => {
+            userUpdateMutation.mutate({
+              formValues: args,
+              comment,
+            });
           }}
         >
-          <div className={s.formContainer}>
-            <Form<FormValues>
-              ref={formRef}
-              initialValues={formState.values}
-              onChange={(values) => {
-                setFormState(() => ({
-                  ...values,
-                  isValid: values.isValid,
-                  values: {
-                    ...values.values,
-                  },
-                }));
+          {({ onClick }) => (
+            <Modal
+              id={'user-screening-details-update-modal'}
+              isOpen={isOpen}
+              onCancel={() => setIsOpen(false)}
+              onOk={() => {
+                if (formState.isValid) {
+                  onClick(formState.values);
+                }
+              }}
+              title="Screening details"
+              width="L"
+              maskClosable={!isLoading(userUpdateMutation.dataResource)}
+              okText="Save"
+              okProps={{
+                requiredResources: ['write:::users/user-overview/*'],
+                isDisabled:
+                  pepValidationResult !== null ||
+                  !formState.isValid ||
+                  isLoading(userUpdateMutation.dataResource),
+              }}
+              cancelProps={{
+                isDisabled: isLoading(userUpdateMutation.dataResource),
               }}
             >
-              <ScreeningDetailsUpdateForm
-                size="L"
-                updatePepValidationResult={updatePepValidationResult}
-                isLoading={isLoading(userUpdateMutation.dataResource)}
-              />
-            </Form>
-          </div>
-        </Modal>
+              <div className={s.formContainer}>
+                <Form<FormValues>
+                  ref={formRef}
+                  initialValues={formState.values}
+                  onChange={(values) => {
+                    setFormState(() => ({
+                      ...values,
+                      isValid: values.isValid,
+                      values: {
+                        ...values.values,
+                      },
+                    }));
+                  }}
+                >
+                  <ScreeningDetailsUpdateForm
+                    size="L"
+                    updatePepValidationResult={updatePepValidationResult}
+                    isLoading={isLoading(userUpdateMutation.dataResource)}
+                  />
+                </Form>
+              </div>
+            </Modal>
+          )}
+        </Confirm>
       }
     />
   );

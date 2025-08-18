@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useNavigate, useParams } from 'react-router';
 import { queryAdapter } from './helpers/queryAdapter';
@@ -8,12 +8,12 @@ import { useApi } from '@/api';
 import {
   AllUsersTableItem,
   CountryCode,
+  KYCStatus,
   PepRank,
   RiskLevel,
   UserRegistrationStatus,
   UserState,
   UserType,
-  KYCStatus,
 } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
@@ -21,9 +21,9 @@ import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
-import { USERS } from '@/utils/queries/keys';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { USER_CHANGES_PROPOSALS, USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import {
@@ -31,6 +31,7 @@ import {
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
 } from '@/apis/types/ObjectParamAPI';
+import { AsyncResource, getOr, map, success } from '@/utils/asyncResource';
 
 type DefaultParams = DefaultApiGetAllUsersListRequest &
   DefaultApiGetConsumerUsersListRequest &
@@ -54,6 +55,7 @@ export interface UserSearchParams extends CommonParams {
   userState?: UserState[];
   userType?: UserType;
   kycStatus?: KYCStatus[];
+  pendingApproval?: 'true' | 'false';
 }
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
@@ -76,14 +78,33 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
   const handleChangeParams = useCallback(
     (newParams: UserSearchParams) => {
+      if (newParams.pendingApproval === 'false') {
+        newParams.pendingApproval = undefined;
+      }
       setParams(newParams);
     },
     [setParams],
   );
 
+  const pendingProposalsUserIdsRes = usePendingProposalsUserIds(params);
+
   const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
-    USERS(type, params),
+    USERS(type, { ...params, pendingProposalsUserIds: pendingProposalsUserIdsRes }),
     async (paginationParams) => {
+      const pendingProposalsUserIds = getOr(pendingProposalsUserIdsRes, undefined);
+      if (
+        params.pendingApproval === 'true' &&
+        pendingProposalsUserIds != null &&
+        pendingProposalsUserIds.length === 0
+      ) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+
+      const filterUserIds = pendingProposalsUserIds;
+
       const queryObj: DefaultParams = {
         pageSize: params.pageSize,
         page: params.page,
@@ -93,7 +114,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         beforeTimestamp: params.createdTimestamp
           ? dayjs(params.createdTimestamp[1]).valueOf()
           : undefined,
-        filterId: params.userId,
+        filterId: filterUserIds == null ? params.userId : undefined,
         filterParentId: params.parentUserId,
         filterTagKey: params.tagKey,
         filterTagValue: params.tagValue,
@@ -107,6 +128,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterUserState: params.userState,
         filterKycStatus: params.kycStatus,
         filterName: params.userName,
+        filterIds: filterUserIds,
         ...paginationParams,
       };
 
@@ -176,4 +198,28 @@ export default function UsersList() {
       />
     </PageWrapper>
   );
+}
+
+/*
+  Helpers
+ */
+function usePendingProposalsUserIds(params: UserSearchParams): AsyncResource<string[] | undefined> {
+  const api = useApi();
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const { data: pendingProposalRes } = useQuery(
+    USER_CHANGES_PROPOSALS(),
+    async () => {
+      const proposals = await api.getAllUserApprovalProposals();
+      return proposals;
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+  return useMemo(() => {
+    if (isApprovalWorkflowsEnabled && params.pendingApproval === 'true') {
+      return map(pendingProposalRes, (approvals) => approvals.map((x) => x.userId));
+    }
+    return success(undefined);
+  }, [pendingProposalRes, params.pendingApproval, isApprovalWorkflowsEnabled]);
 }

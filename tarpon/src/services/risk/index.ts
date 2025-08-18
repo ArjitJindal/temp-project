@@ -212,6 +212,64 @@ export class RiskService {
     }
   }
 
+  @auditLog('RISK_SCORING', 'DRS_RISK_LEVEL', 'UPDATE')
+  async updateRiskAssignmentLock(
+    userId: string,
+    isUpdatable: boolean
+  ): Promise<DrsRiskItemAuditLogReturnData> {
+    console.log(
+      `updateRiskAssignmentLock called for user ${userId} with isUpdatable=${isUpdatable}`
+    )
+
+    const oldDrsRiskItem = await this.riskRepository.getDRSRiskItem(userId)
+    console.log(`Found existing risk item:`, oldDrsRiskItem ? 'yes' : 'no')
+
+    if (!oldDrsRiskItem) {
+      throw new BadRequest(
+        'No risk assignment found for user. Please create a risk assignment first.'
+      )
+    }
+
+    console.log(`Current risk item:`, {
+      userId: oldDrsRiskItem.userId,
+      drsScore: oldDrsRiskItem.drsScore,
+      isUpdatable: oldDrsRiskItem.isUpdatable,
+      transactionId: oldDrsRiskItem.transactionId,
+    })
+
+    // Update only the isUpdatable field atomically
+    const newDrsRiskItem = await this.riskRepository.updateRiskAssignmentLock(
+      userId,
+      isUpdatable
+    )
+
+    console.log(`Updated risk item:`, {
+      userId: newDrsRiskItem.userId,
+      drsScore: newDrsRiskItem.drsScore,
+      isUpdatable: newDrsRiskItem.isUpdatable,
+      transactionId: newDrsRiskItem.transactionId,
+    })
+
+    const logMetadata = {
+      userId: newDrsRiskItem?.userId,
+      type: 'MANUAL',
+      transactionId: newDrsRiskItem?.transactionId,
+      createdAt: newDrsRiskItem?.createdAt,
+    }
+
+    return {
+      entities: [
+        {
+          oldImage: oldDrsRiskItem ?? undefined,
+          newImage: newDrsRiskItem,
+          entityId: userId,
+          logMetadata,
+        },
+      ],
+      result: newDrsRiskItem,
+    }
+  }
+
   async getKrsValueFromMongo(userId: string) {
     return await this.riskRepository.getKrsValueFromMongo(userId)
   }

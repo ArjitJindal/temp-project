@@ -1,28 +1,32 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Resource } from '@flagright/lib/utils';
 import ConfirmModal from './ConfirmModal';
 import { AsyncResource, init, useFinishedSuccessfully } from '@/utils/asyncResource';
 
-export type Confirm = () => void;
+export type Confirm<Args> = (args?: Args) => void;
 
-interface ChildrenProps {
-  onClick: Confirm;
+interface ChildrenProps<Args> {
+  onClick: Confirm<Args>;
 }
 
-export interface Props {
+export interface Props<Args = unknown> {
+  skipConfirm?: boolean;
   title?: string;
   text: string | React.ReactNode;
   res?: AsyncResource;
   isDanger?: boolean;
   commentRequired?: boolean;
-  onConfirm: (formValues: { comment?: string }) => void;
+  onConfirm: (formValues: { comment?: string; args: Args }) => void;
   onSuccess?: () => void;
-  children: (props: ChildrenProps) => React.ReactNode;
+  requiredResources?: Resource[];
+  children: (props: ChildrenProps<Args>) => React.ReactNode;
 }
 
-export default function Confirm(props: Props) {
-  const { res, onConfirm, onSuccess, children, ...rest } = props;
+export default function Confirm<Args = unknown>(props: Props<Args>) {
+  const { res, onConfirm, onSuccess, children, skipConfirm, ...rest } = props;
   const [isVisible, setIsVisible] = useState(false);
   const isSuccessfull = useFinishedSuccessfully(res ?? init());
+  const [args, setArgs] = useState<Args>();
   useEffect(() => {
     if (isSuccessfull) {
       setIsVisible(false);
@@ -34,21 +38,34 @@ export default function Confirm(props: Props) {
 
   const handleOk = useCallback(
     (formValues: { comment?: string }) => {
-      onConfirm(formValues);
+      onConfirm({
+        ...formValues,
+        args: args as Args,
+      });
       if (res == null) {
         setIsVisible(false);
       }
     },
-    [res, onConfirm],
+    [res, onConfirm, args],
   );
 
   const handleCancel = useCallback(() => {
     setIsVisible(false);
   }, []);
 
-  const handleChildrenClick = useCallback(() => {
-    setIsVisible(true);
-  }, []);
+  const handleChildrenClick = useCallback(
+    (args?: Args) => {
+      if (skipConfirm) {
+        onConfirm({
+          args: args as Args,
+        });
+      } else {
+        setArgs(args);
+        setIsVisible(true);
+      }
+    },
+    [onConfirm, skipConfirm],
+  );
 
   return (
     <>
