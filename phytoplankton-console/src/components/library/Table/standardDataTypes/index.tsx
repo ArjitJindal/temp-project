@@ -45,6 +45,11 @@ import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import TransactionStateDisplay from '@/components/ui/TransactionStateDisplay';
+import {
+  useTransactionStateLabel,
+  FeatureEnabled,
+  useRuleActionLabel,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
@@ -79,7 +84,6 @@ import { ALERT_ITEM } from '@/utils/queries/keys';
 import Tag from '@/components/library/Tag';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 import { PEP_RANKS } from '@/apis/models-custom/PepRank';
-import { FeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
 
@@ -334,12 +338,17 @@ export const TRANSACTION_STATE: ColumnDataType<ApiTransactionState> = {
     kind: 'select',
     options: TRANSACTION_STATES.map((type) => ({
       value: type,
-      label: humanizeConstant(type),
+      label: <TransactionStateAliasText transactionState={type} />,
     })),
     displayMode: 'list',
     mode: 'MULTIPLE',
   },
 };
+
+function TransactionStateAliasText(props: { transactionState: ApiTransactionState }) {
+  const label = useTransactionStateLabel(props.transactionState);
+  return <>{label}</>;
+}
 
 export const SANCTIONS_HIT_STATUS: ColumnDataType<ApiSanctionsHitStatus> = {
   render: (value) => <SanctionsHitStatusTag status={value} />,
@@ -710,15 +719,20 @@ export const RULE_ACTION_STATUS: ColumnDataType<RuleAction> = {
     kind: 'select',
     options: [
       { value: 'all', label: 'All' },
-      { value: 'ALLOW', label: 'ALLOW' },
-      { value: 'FLAG', label: 'FLAG' },
-      { value: 'BLOCK', label: 'BLOCK' },
-      { value: 'SUSPEND', label: 'SUSPEND' },
+      { value: 'ALLOW', label: <RuleActionAliasText ruleAction="ALLOW" /> },
+      { value: 'FLAG', label: <RuleActionAliasText ruleAction="FLAG" /> },
+      { value: 'BLOCK', label: <RuleActionAliasText ruleAction="BLOCK" /> },
+      { value: 'SUSPEND', label: <RuleActionAliasText ruleAction="SUSPEND" /> },
     ],
     displayMode: 'list',
     mode: 'SINGLE',
   },
 };
+
+function RuleActionAliasText(props: { ruleAction: RuleAction }) {
+  const label = useRuleActionLabel(props.ruleAction);
+  return <>{label}</>;
+}
 
 export const ASSIGNMENTS: ColumnDataType<Assignment[]> = {
   render: (value) => {
