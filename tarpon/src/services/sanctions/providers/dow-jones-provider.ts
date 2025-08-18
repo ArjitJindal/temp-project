@@ -615,6 +615,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   private getScreeningTypesForPerson(person): {
     pepRcaMatchTypes: string[]
     sanctionSearchTypes: SanctionsSearchType[]
+    screeningProfileTypes: SanctionsSearchType[]
   } {
     const sanctionsReferences = this.getActiveSanctionReferences(
       person.SanctionsReferences
@@ -627,6 +628,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     )
 
     const sanctionSearchTypes: SanctionsSearchType[] = []
+    const screeningProfileTypes: SanctionsSearchType[] = []
     const descriptions = this.getDescriptions(person)
     const descriptionValues = descriptions
       ?.map((d) => d['@_Description1'])
@@ -650,19 +652,29 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       pepRcaMatchTypes.push('RCA')
     }
     if (descriptionValues?.includes('3')) {
+      if (['1'].some((val) => description2Values?.includes(val))) {
+        sanctionSearchTypes.push('SANCTIONS')
+      }
       if (
         PERSON_SANCTIONS_DESCRIPTION2_VALUES.some((val) =>
           description2Values?.includes(val)
         )
       ) {
-        sanctionSearchTypes.push('SANCTIONS')
+        screeningProfileTypes.push('SANCTIONS')
       }
       if (
-        ADVERSE_MEDIA_DESCRIPTION3_VALUES.some((val) =>
+        [...ADVERSE_MEDIA_DESCRIPTION3_VALUES, '2', '25'].some((val) =>
           description2Values?.includes(val)
         )
       ) {
         sanctionSearchTypes.push('ADVERSE_MEDIA')
+      }
+      if (
+        FLOATING_CATEGORIES_DESCRIPTION_VALUES.some((val) =>
+          description2Values?.includes(val)
+        )
+      ) {
+        screeningProfileTypes.push('ADVERSE_MEDIA')
       }
     }
     if (descriptionValues?.includes('4')) {
@@ -688,6 +700,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         this.screeningTypes
       ),
       pepRcaMatchTypes,
+      screeningProfileTypes: intersection(
+        screeningProfileTypes,
+        this.screeningTypes
+      ),
     }
   }
 
@@ -912,8 +928,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         // Merging with RELATIONSHIP_CODE_TO_NAME to avoid loss of previous data
         Object.assign(RELATIONSHIP_CODE_TO_NAME, relationshipCodeToName)
         const descriptions = this.getDescriptions(person)
-        const { sanctionSearchTypes, pepRcaMatchTypes } =
+        const { sanctionSearchTypes, pepRcaMatchTypes, screeningProfileTypes } =
           this.getScreeningTypesForPerson(person)
+
         const name = this.getNames(person.NameDetails?.Name, true)?.[0]
         if (!name) {
           return
@@ -947,8 +964,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const pepSources: SanctionsSource[] = []
         const mediaSources: SanctionsSource[] = []
 
-        for (const sanctionSearchType of sanctionSearchTypes) {
-          if (sanctionSearchType === 'ADVERSE_MEDIA') {
+        for (const screeningProfileType of screeningProfileTypes) {
+          if (screeningProfileType === 'ADVERSE_MEDIA') {
             const adverseMediaTypes = this.getAdverseMediaForPerson(person)
             for (const adverseMediaType of adverseMediaTypes) {
               const category = adverseMediaCategoryMap[adverseMediaType]
@@ -961,7 +978,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               }
             }
           }
-          if (sanctionSearchType === 'SANCTIONS') {
+          if (screeningProfileType === 'SANCTIONS') {
             const newSanctionsSources = this.getSanctionsSources(
               person.SanctionsReferences,
               sanctionsReferencesList,
@@ -969,7 +986,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             )
             sanctionsSources.push(...newSanctionsSources)
           }
-          if (sanctionSearchType === 'PEP') {
+          if (screeningProfileType === 'PEP') {
             const newPepSources = this.getPepSources(occupations)
             pepSources.push(...newPepSources)
           }

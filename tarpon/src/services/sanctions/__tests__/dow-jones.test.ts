@@ -102,15 +102,8 @@ describe('DowJonesProvider', () => {
             isActivePep: true,
             isActiveSanctioned: false,
             aka: [],
-            aggregatedSourceIds: ['Organised Crime'],
-            mediaSources: [
-              {
-                category: 'Organised Crime',
-                createdAt: expect.any(Number),
-                internalId:
-                  '341c779e90c2d6452fc39213a32622fd74b054e8ba2ebd9d6498e7b30b0cc55c',
-              },
-            ],
+            aggregatedSourceIds: [],
+            mediaSources: [],
             pepSources: [],
             rawResponse: expect.any(Object),
             countries: ['India'],
@@ -1062,27 +1055,9 @@ Patasse passed away on April 5, 2011.`,
                 ],
               },
             ],
-            aggregatedSourceIds: [
-              '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51-PEP',
-              'Corruption',
-            ],
-            mediaSources: [
-              {
-                category: 'Corruption',
-                createdAt: expect.any(Number),
-                internalId:
-                  'abf5645579cb98ff9391a57da629e9ea187f277496da76ef451a83a9c4357820',
-              },
-            ],
-            pepSources: [
-              {
-                category: 'PEP',
-                createdAt: expect.any(Number),
-                internalId:
-                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
-                sourceName: 'pep tier 1',
-              },
-            ],
+            aggregatedSourceIds: [],
+            mediaSources: [],
+            pepSources: [],
             rawResponse: expect.any(Object),
             sanctionsSources: [],
           },
@@ -1126,26 +1101,9 @@ Patasse passed away on April 5, 2011.`,
             yearOfBirth: ['1957'],
             types: ['Politically Exposed Person (PEP)'],
             dateOfBirths: ['1957-02-12'],
-            aggregatedSourceIds: [
-              '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51-PEP',
-            ],
+            aggregatedSourceIds: [],
             mediaSources: [],
-            pepSources: [
-              {
-                category: 'PEP',
-                createdAt: expect.any(Number),
-                internalId:
-                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
-                sourceName: 'pep tier 1',
-              },
-              {
-                category: 'PEP',
-                createdAt: expect.any(Number),
-                internalId:
-                  '53847e9566e82de3180ff6eab60eda098a5f6beb09b1b14ddae474ca3ebf0c51',
-                sourceName: 'pep tier 1',
-              },
-            ],
+            pepSources: [],
             rawResponse: expect.any(Object),
             sanctionsSources: [],
           },
