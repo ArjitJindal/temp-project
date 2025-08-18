@@ -1,6 +1,7 @@
 import { Popover as AntPopover, PopoverProps } from 'antd';
 import cn from 'classnames';
 import s from './index.module.less';
+import { usePortalContainer } from '@/components/ui/PortalContainerProvider';
 
 interface Props
   extends Pick<
@@ -25,9 +26,12 @@ interface Props
 }
 
 export default function Popover(props: Props) {
+  const portalContainer = usePortalContainer();
+
   return (
     <AntPopover
       {...props}
+      getPopupContainer={props.getPopupContainer || portalContainer.getElement}
       overlayClassName={cn(s.root, {
         [s.disablePointerEvents]: props.disablePointerEvents,
         [s.hideArrow]: props.hideArrow,

@@ -20,6 +20,7 @@ import { scrollTo, useElementSize } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
 import { notEmpty } from '@/utils/array';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import PortalContainerProvider from '@/components/ui/PortalContainerProvider';
 
 type HistoryItem = QuestionResponse | QuestionResponseSkeleton;
 
@@ -230,55 +231,63 @@ export default function InvestigativeCoPilot(props: Props) {
   const isHistoryLoading = isLoading(historyRes);
   return (
     <div className={s.root} ref={setRootRef}>
-      <div className={s.history} ref={historyRef}>
-        {/*<AiAlertSummary alertId={alertId} summary={'derasd'} onReload={() => {}} />*/}
-        <AsyncResourceRenderer
-          resource={historyRes}
-          renderLoading={(value) => (
-            <History
-              alertId={alertId}
-              items={
-                value ?? [
-                  {
-                    questionType: 'SKELETON',
-                    requestId: 'loading_1',
-                  },
-                  {
-                    questionType: 'SKELETON',
-                    requestId: 'loading_2',
-                  },
-                ]
-              }
-              seenItems={allSeenIds}
-              setSizes={setSizes}
+      <PortalContainerProvider
+        getElement={() => {
+          return rootRef || document.body;
+        }}
+      >
+        <div className={s.history} ref={historyRef}>
+          {/*<AiAlertSummary alertId={alertId} summary={'derasd'} onReload={() => {}} />*/}
+          <AsyncResourceRenderer
+            resource={historyRes}
+            renderLoading={(value) => (
+              <History
+                alertId={alertId}
+                items={
+                  value ?? [
+                    {
+                      questionType: 'SKELETON',
+                      requestId: 'loading_1',
+                    },
+                    {
+                      questionType: 'SKELETON',
+                      requestId: 'loading_2',
+                    },
+                  ]
+                }
+                seenItems={allSeenIds}
+                setSizes={setSizes}
+              />
+            )}
+          >
+            {() => (
+              <History
+                alertId={alertId}
+                items={allItems}
+                seenItems={allSeenIds}
+                setSizes={setSizes}
+              />
+            )}
+          </AsyncResourceRenderer>
+        </div>
+        <div className={s.form}>
+          <div
+            className={cn(s.scrollToBottom, (!isScrollVisible || isHistoryLoading) && s.isHidden)}
+          >
+            <ScrollButton
+              isBottom={isBottom}
+              onScroll={handleScrollTo}
+              unreadResponses={unreadResponses}
             />
-          )}
-        >
-          {() => (
-            <History
-              alertId={alertId}
-              items={allItems}
-              seenItems={allSeenIds}
-              setSizes={setSizes}
-            />
-          )}
-        </AsyncResourceRenderer>
-      </div>
-      <div className={s.form}>
-        <div className={cn(s.scrollToBottom, (!isScrollVisible || isHistoryLoading) && s.isHidden)}>
-          <ScrollButton
-            isBottom={isBottom}
-            onScroll={handleScrollTo}
-            unreadResponses={unreadResponses}
+          </div>
+          <RequestForm
+            mutation={postQuestionMutation}
+            history={history}
+            alertId={alertId}
+            isLoading={isLoading(historyRes)}
           />
         </div>
-        <RequestForm
-          mutation={postQuestionMutation}
-          history={history}
-          alertId={alertId}
-          isLoading={isLoading(historyRes)}
-        />
-      </div>
+      </PortalContainerProvider>
     </div>
   );
 }

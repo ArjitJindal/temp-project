@@ -1,12 +1,12 @@
-import { useRef, useCallback, useMemo, Dispatch } from 'react';
+import { Dispatch, useCallback, useMemo, useRef } from 'react';
 import { omitBy } from 'lodash';
 import { QuestionResponse, QuestionResponseSkeleton } from '../types';
 import s from './index.module.less';
 import EmptyIcon from './empty.react.svg';
 import HistoryItem from './HistoryItem';
-import { GAP, DATA_KEY } from './helpers';
+import { DATA_KEY, GAP } from './helpers';
 import HistoryItemSkeleton from './HistoryItemSkeleton';
-import { Updater, applyUpdater } from '@/utils/state';
+import { applyUpdater, Updater } from '@/utils/state';
 import { itemId } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/helpers';
 import { useDeepEqualMemo } from '@/utils/hooks';
 

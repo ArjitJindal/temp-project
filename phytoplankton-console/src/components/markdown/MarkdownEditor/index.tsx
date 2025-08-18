@@ -13,9 +13,16 @@ const AsyncEditor = React.forwardRef<any, any>((props, ref) => {
 
   useEffect(() => {
     Promise.all([
+      import('prosemirror-view'),
       import('@toast-ui/react-editor'),
       import('@toast-ui/editor/dist/toastui-editor.css'),
-    ]).then(([mod]) => {
+    ]).then(([{ EditorView }, mod]) => {
+      /*
+       Hack to prevent issue when container scrolled to editor when editor mounted
+       */
+      // @ts-expect-error This property is not declared, only exists in runtime, so it causes TS error
+      EditorView.prototype.scrollToSelection = () => {};
+
       setEditorComponent(() => mod.Editor);
       setTimeout(() => setIsReady(true), 100);
     });

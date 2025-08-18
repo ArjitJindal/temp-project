@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
-import Popover from '@/components/ui/Popover/AutoHidePopover';
+import PopoverV2 from '@/components/ui/PopoverV2';
 import CommentEditor, {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,
@@ -43,9 +43,11 @@ export default function CommentPopover(props: Props) {
   }, [isCommentSubmitted]);
 
   return (
-    <Popover
+    <PopoverV2
       trigger="click"
-      placement="bottomLeft"
+      placement="bottom-end"
+      portal={true}
+      triggerEscapedDetectPaddings={{ bottom: 100 }}
       content={
         <div className={s.commentPopover}>
           <CommentEditor
@@ -63,9 +65,9 @@ export default function CommentPopover(props: Props) {
         </div>
       }
     >
-      <div>
+      <div className={s.trigger}>
         <AiForensicsLogo />
       </div>
-    </Popover>
+    </PopoverV2>
   );
 }

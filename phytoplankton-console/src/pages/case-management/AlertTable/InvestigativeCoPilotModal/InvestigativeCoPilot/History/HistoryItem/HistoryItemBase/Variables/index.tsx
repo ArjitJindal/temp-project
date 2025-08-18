@@ -1,10 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
-import { AutoComplete } from 'antd';
 import { DataSourceItemType } from 'antd/lib/auto-complete';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
-import Popover from '@/components/ui/Popover';
 import { QuestionVariableOption } from '@/apis';
 import Label from '@/components/library/Label';
 import TextInput from '@/components/library/TextInput';
@@ -18,6 +16,8 @@ import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { useApi } from '@/api';
 import Checkbox from '@/components/library/Checkbox';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import PopoverV2 from '@/components/ui/PopoverV2';
+import AutoComplete from '@/components/ui/AutoComplete';
 
 export type VariablesValues = Record<string, any>;
 
@@ -74,9 +74,11 @@ export default function Variables(props: Props) {
   }
 
   return (
-    <Popover
-      visible={isVisible}
+    <PopoverV2
+      open={isVisible}
       trigger="click"
+      portal={true}
+      triggerEscapedDetectPaddings={{ bottom: 100 }}
       content={
         <div className={s.root}>
           <VariablesPopoverContent
@@ -92,13 +94,13 @@ export default function Variables(props: Props) {
           </div>
         </div>
       }
-      placement="bottomRight"
-      onVisibleChange={setVisible}
+      placement="bottom-start"
+      onOpenChange={setVisible}
     >
       <Button size="SMALL" type="TETRIARY">
         Parameters
       </Button>
-    </Popover>
+    </PopoverV2>
   );
 }
 
