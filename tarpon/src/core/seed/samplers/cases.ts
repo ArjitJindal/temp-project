@@ -4,7 +4,7 @@ import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
-import { ID_PREFIXES, TIME_BACK_TO } from '../data/seeds'
+import { ID_PREFIXES, TIME_BACK_TO_12_MONTH_WINDOW } from '../data/seeds'
 import { BaseSampler } from './base'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -195,6 +195,18 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
 
     const alerts: Alert[] = []
 
+    // alerts for users rules
+    user?.hitRules?.map((hitRule) => {
+      const alert = this.alertSampler.getSample(undefined, {
+        caseId,
+        ruleInstanceId: hitRule.ruleInstanceId,
+        ruleHit: hitRule,
+        transactions: [],
+      })
+      alerts.push(alert)
+    })
+
+    // alerts for transaction
     ruleInstanceTransactionMap.forEach((transactions, ruleInstanceId) => {
       const ruleHit = transactions[0].hitRules.find(
         (rh) => rh.ruleInstanceId === ruleInstanceId
@@ -208,17 +220,6 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
         })
         alerts.push(alert)
       }
-    })
-
-    // alerts for users rules
-    user?.hitRules?.map((hitRule) => {
-      const alert = this.alertSampler.getSample(undefined, {
-        caseId,
-        ruleInstanceId: hitRule.ruleInstanceId,
-        ruleHit: hitRule,
-        transactions: [],
-      })
-      alerts.push(alert)
     })
 
     const caseStatus = this.rng.pickRandom(
@@ -245,7 +246,9 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
         this.rng.r(2).pickRandom(getAccounts())
       )
     }
-    const caseCreatedTimestamp = this.sampleTimestamp(TIME_BACK_TO)
+    const caseCreatedTimestamp = this.sampleTimestamp(
+      TIME_BACK_TO_12_MONTH_WINDOW
+    )
 
     let ruleHits = uniqBy(
       transactions.flatMap((t) => t.hitRules),
@@ -334,7 +337,9 @@ export class AlertSampler extends BaseSampler<Alert> {
     transactions: InternalTransaction[]
   }): Alert {
     const { ruleHit, ruleInstanceId } = params
-    const createdTimestamp = this.rng.r(1).randomTimestamp(TIME_BACK_TO)
+    const createdTimestamp = this.rng
+      .r(1)
+      .randomTimestamp(TIME_BACK_TO_12_MONTH_WINDOW)
     const ruleInstance = getRuleInstance(ruleInstanceId)
     this.statusChangeSampler.setRandomSeed(this.rng.randomInt())
 

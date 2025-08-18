@@ -12,7 +12,8 @@ import {
 import {
   ID_PREFIXES,
   PAYMENT_METHODS_SEED,
-  TIME_BACK_TO,
+  TIME_BACK_TO_12_MONTH_WINDOW,
+  TIME_BACK_TO_3_MONTH_WINDOW,
   TRANSACTIONS_SEED,
 } from './seeds'
 import {
@@ -306,7 +307,10 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     })
     const ruleHitIds = randomHitRules.map((ri) => ri.ruleInstanceId)
 
-    const timestamp = this.sampleTimestamp(TIME_BACK_TO)
+    const timestamp =
+      this.rng.randomFloat(1) < 0.45
+        ? this.sampleTimestamp(TIME_BACK_TO_3_MONTH_WINDOW)
+        : this.sampleTimestamp(TIME_BACK_TO_12_MONTH_WINDOW)
 
     const transactionAmount = this.rng.randomInt(1_00_000)
 

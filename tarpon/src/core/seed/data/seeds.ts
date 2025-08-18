@@ -35,7 +35,8 @@ export const CONSUMER_USER_SEED = 20000
 export const SHAREHOLDER_SEED = 21000
 export const DIRECTOR_SEED = 22000
 
-export const TIME_BACK_TO = 12 * 30 * 24 * 60 * 60 * 1000 // 12 months
+export const TIME_BACK_TO_3_MONTH_WINDOW = 3 * 30 * 24 * 60 * 60 * 1000 // 3 months
+export const TIME_BACK_TO_12_MONTH_WINDOW = 12 * 30 * 24 * 60 * 60 * 1000 // 12 months
 
 export const ID_PREFIXES = {
   CASE: 'C-',
