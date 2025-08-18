@@ -1,4 +1,6 @@
 import { Filter, MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ClickhouseWebhookDeliveryRepository } from './clickhouse-webhook-delivery-repository'
 import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongodb-definitions'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 import { traceable } from '@/core/xray'
@@ -6,20 +8,47 @@ import { DefaultApiGetWebhooksWebhookIdDeliveriesRequest } from '@/@types/openap
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { prefixRegexMatchFilterForArray } from '@/utils/mongodb-utils'
-
+import {
+  batchInsertToClickhouse,
+  isClickhouseMigrationEnabled,
+  getClickhouseClient,
+  isClickhouseEnabledInRegion,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 @traceable
 export class WebhookDeliveryRepository {
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
+  clickhouseWebhookDeliveryRepository?: ClickhouseWebhookDeliveryRepository
 
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.mongoDb = mongoDb as MongoClient
     this.tenantId = tenantId
+    this.dynamoDb = getDynamoDbClient()
   }
-
+  private async getClickhouseWebhookDeliveryRepository() {
+    if (this.clickhouseWebhookDeliveryRepository) {
+      return this.clickhouseWebhookDeliveryRepository
+    }
+    this.clickhouseWebhookDeliveryRepository =
+      new ClickhouseWebhookDeliveryRepository(this.tenantId, {
+        clickhouseClient: await getClickhouseClient(this.tenantId),
+        dynamoDb: this.dynamoDb,
+      })
+    return this.clickhouseWebhookDeliveryRepository
+  }
   public async getLatestWebhookDeliveryAttempt(
     deliveryTaskId: string
   ): Promise<WebhookDeliveryAttempt | null> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseWebhookDeliveryRepository =
+        await this.getClickhouseWebhookDeliveryRepository()
+      return await clickhouseWebhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+        deliveryTaskId
+      )
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
@@ -36,6 +65,13 @@ export class WebhookDeliveryRepository {
   public async getFirstWebhookDeliveryAttempt(
     deliveryTaskId: string
   ): Promise<WebhookDeliveryAttempt | null> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseWebhookDeliveryRepository =
+        await this.getClickhouseWebhookDeliveryRepository()
+      return await clickhouseWebhookDeliveryRepository.getFirstWebhookDeliveryAttempt(
+        deliveryTaskId
+      )
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
@@ -188,6 +224,14 @@ export class WebhookDeliveryRepository {
     webhookId: string,
     params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
   ): Promise<WebhookDeliveryAttempt[]> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseWebhookDeliveryRepository =
+        await this.getClickhouseWebhookDeliveryRepository()
+      return await clickhouseWebhookDeliveryRepository.getWebhookDeliveryAttempts(
+        webhookId,
+        params
+      )
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
@@ -213,6 +257,17 @@ export class WebhookDeliveryRepository {
     webhookId: string,
     params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
   ): Promise<number> {
+    if (isClickhouseMigrationEnabled()) {
+      const clickhouseWebhookDeliveryRepository =
+        await this.getClickhouseWebhookDeliveryRepository()
+      return await clickhouseWebhookDeliveryRepository.getWebhookDeliveryCount(
+        webhookId,
+        {
+          ...params,
+          manualRetry: 'false',
+        }
+      )
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
@@ -227,10 +282,22 @@ export class WebhookDeliveryRepository {
   public async addWebhookDeliveryAttempt(
     deliveryAttempt: WebhookDeliveryAttempt
   ): Promise<void> {
+    if (isClickhouseEnabledInRegion()) {
+      await this.linkWebhookDeliveryClickhouse([deliveryAttempt])
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookDeliveryAttempt>(
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
     )
     await collection.insertOne(deliveryAttempt)
+  }
+  public async linkWebhookDeliveryClickhouse(
+    deliveryAttempts: WebhookDeliveryAttempt[]
+  ): Promise<void> {
+    await batchInsertToClickhouse(
+      this.tenantId,
+      CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
+      deliveryAttempts
+    )
   }
 }

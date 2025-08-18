@@ -22,6 +22,7 @@ import {
   ALERTS_QA_SAMPLING_KEY_IDENTIFIER,
   NOTIFICATIONS_KEY_IDENTIFIER,
   GPT_REQUESTS_KEY_IDENTIFIER,
+  WEBHOOK_CONFIGURATION_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -48,6 +49,7 @@ export type DynamoDbEntityType =
   | 'ALERTS_QA_SAMPLING'
   | 'NOTIFICATION'
   | 'GPT_REQUESTS'
+  | 'WEBHOOK_CONFIGURATION'
 
 export const LOCK_FREE_ENTITIES: DynamoDbEntityType[] = [
   'GPT_REQUESTS',
@@ -63,6 +65,7 @@ export const LOCK_FREE_ENTITIES: DynamoDbEntityType[] = [
   'AVG_ARS_VALUE',
   'CRM_RECORD',
 ]
+
 export type DynamoDbEntityUpdate = {
   tenantId: string
   type?: DynamoDbEntityType
@@ -205,6 +208,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'ALERTS_QA_SAMPLING',
       entityId: `ALERTS_QA_SAMPLING:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(WEBHOOK_CONFIGURATION_KEY_IDENTIFIER)) {
+    const entityId = entity._id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'WEBHOOK_CONFIGURATION',
+      entityId: `WEBHOOK_CONFIGURATION:${entityId}`,
     }
   } else if (partitionKeyId.includes(NOTIFICATIONS_KEY_IDENTIFIER)) {
     const entityId = entity.id

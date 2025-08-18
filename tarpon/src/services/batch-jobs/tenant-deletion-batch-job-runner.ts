@@ -383,19 +383,23 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
       REASONS: {
         method: this.deleteReasons.bind(this),
-        order: 22,
+        order: 23,
       },
       BATCH_USERS_RERUN_PROGRESS: {
         method: this.deleteBatchUsersRerunProgress.bind(this),
-        order: 23,
+        order: 24,
       },
       RISK_CLASSIFICATION_APPROVAL: {
         method: this.deleteRiskClassificationApprovals.bind(this),
-        order: 24,
+        order: 25,
       },
       RISK_FACTORS_APPROVAL: {
         method: this.deleteRiskFactorsApprovals.bind(this),
-        order: 25,
+        order: 26,
+      },
+      WEBHOOK_CONFIGURATION: {
+        method: this.deleteWebhooks.bind(this),
+        order: 27,
       },
       USERS_PROPOSAL: {
         method: this.deleteUsersProposal.bind(this),
@@ -1122,6 +1126,21 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Reasons'
+    )
+  }
+
+  private async deleteWebhooks(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.WEBHOOK_CONFIGURATION(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Webhook'
     )
   }
 }

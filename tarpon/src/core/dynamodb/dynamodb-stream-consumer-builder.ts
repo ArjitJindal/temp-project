@@ -38,6 +38,7 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject } from '@/utils/llms'
 import { TenantService } from '@/services/tenants'
+import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -142,6 +143,12 @@ type LLMRequestsHandler = (
   newGptRequests: LLMLogObject | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type WebhookConfigurationHandler = (
+  tenantId: string,
+  oldWebhookConfiguration: WebhookConfiguration | undefined,
+  newWebhookConfiguration: WebhookConfiguration | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
@@ -170,6 +177,7 @@ export class StreamConsumerBuilder {
   notificationsHandler?: NotificationsHandler
   llmRequestsHandler?: LLMRequestsHandler
 
+  webhookConfigurationHandler?: WebhookConfigurationHandler
   constructor(
     name: string,
     fanOutSqsQueue: string,
@@ -284,6 +292,13 @@ export class StreamConsumerBuilder {
     llmRequestsHandler: LLMRequestsHandler
   ): StreamConsumerBuilder {
     this.llmRequestsHandler = llmRequestsHandler
+    return this
+  }
+
+  public setWebhookConfigurationHandler(
+    webhookConfigurationHandler: WebhookConfigurationHandler
+  ): StreamConsumerBuilder {
+    this.webhookConfigurationHandler = webhookConfigurationHandler
     return this
   }
 
@@ -484,6 +499,16 @@ export class StreamConsumerBuilder {
       await this.llmRequestsHandler(
         update.tenantId,
         update.NewImage as LLMLogObject,
+        dbClients
+      )
+    } else if (
+      update.type === 'WEBHOOK_CONFIGURATION' &&
+      this.webhookConfigurationHandler
+    ) {
+      await this.webhookConfigurationHandler(
+        update.tenantId,
+        update.OldImage as WebhookConfiguration,
+        update.NewImage as WebhookConfiguration,
         dbClients
       )
     }

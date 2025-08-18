@@ -160,6 +160,8 @@ export enum ClickhouseTableNames {
   Notifications = 'notifications',
   GptRequests = 'gpt_request_logs',
   Metrics = 'metrics',
+  Webhook = 'webhook',
+  WebhookDelivery = 'webhook_deliveries',
 }
 const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
@@ -499,6 +501,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   METRICS: {
     tableName: ClickhouseTableNames.Metrics,
+  },
+  WEBHOOK: {
+    tableName: ClickhouseTableNames.Webhook,
+  },
+  WEBHOOK_DELIVERIES: {
+    tableName: ClickhouseTableNames.WebhookDelivery,
   },
 } as const
 
@@ -1261,6 +1269,45 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "collectedTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'collectedTimestamp')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
+    idColumn: '_id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id)',
+    orderBy: '(id)',
+    materializedColumns: [
+      "_id String MATERIALIZED JSONExtractString(data, '_id')",
+      "createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')",
+      "webhookUrl String MATERIALIZED JSONExtractString(data, 'webhookUrl')",
+      "enabled Bool MATERIALIZED JSONExtractBool(data, 'enabled')",
+      "enabledAt UInt64 MATERIALIZED JSONExtractUInt(data, 'enabledAt')",
+      "autoDisableMessage String MATERIALIZED JSONExtractString(data, 'autoDisableMessage')",
+      "events Array(String) MATERIALIZED JSONExtract(data, 'events', 'Array(String)')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
+    idColumn: '_id',
+    timestampColumn: 'eventCreatedAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id)',
+    orderBy: '(id)',
+    materializedColumns: [
+      "_id String MATERIALIZED JSONExtractString(data, '_id')",
+      "deliveryTaskId String MATERIALIZED JSONExtractString(data, 'deliveryTaskId')",
+      "webhookId String MATERIALIZED JSONExtractString(data, 'webhookId')",
+      "webhookUrl String MATERIALIZED JSONExtractString(data, 'webhookUrl')",
+      "requestStartedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'requestStartedAt')",
+      "requestFinishedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'requestFinishedAt')",
+      "success Bool MATERIALIZED JSONExtractBool(data, 'success')",
+      "event String MATERIALIZED JSONExtractString(data, 'event')",
+      "eventCreatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'eventCreatedAt')",
+      "entityId String MATERIALIZED JSONExtractString(data, 'entityId')",
+      "manualRetry Bool MATERIALIZED JSONExtractBool(data, 'manualRetry')",
+      "deliveredAt UInt64 MATERIALIZED JSONExtractUInt(data, 'deliveredAt')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -1295,6 +1342,9 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
   [MONGO_TABLE_SUFFIX_MAP.NOTIFICATIONS]:
     CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.METRICS]: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK]: CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK_DELIVERIES]:
+    CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

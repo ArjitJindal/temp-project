@@ -8,9 +8,9 @@ import {
 import express from 'express'
 import bodyParser from 'body-parser'
 import { AwsStub, mockClient } from 'aws-sdk-client-mock'
-import { WebhookDeliveryRepository } from '../../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../../services/webhook/repositories/webhook-repository'
 import { webhookDeliveryHandler as handler } from '../app'
+import { getWebhookDeliveryRepository, getWebhookRepository } from './utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
@@ -24,6 +24,8 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { retryWebhookTasks } from '@/services/webhook/utils'
+import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
+import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -76,52 +78,115 @@ function getExpectedPayload(deliveryTask: WebhookDeliveryTask): WebhookEvent {
   }
 }
 
-describe('Webhook delivery', () => {
-  const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
-  const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
-  const webhookDeliveryHandler = handler as any as (
-    event: SQSEvent
-  ) => Promise<void>
+withLocalChangeHandler()
+withFeaturesToggled([], ['CLICKHOUSE_ENABLED', 'CLICKHOUSE_MIGRATION'], () => {
+  describe('Webhook delivery', () => {
+    const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
+    const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
+    const webhookDeliveryHandler = handler as any as (
+      event: SQSEvent
+    ) => Promise<void>
 
-  let smMock: AwsStub<any, any, any>
+    let smMock: AwsStub<any, any, any>
 
-  beforeEach(() => {
-    smMock = mockClient(SecretsManagerClient)
-      .on(GetSecretValueCommand)
-      .resolves({
-        SecretString: JSON.stringify({
-          [MOCK_SECRET_KEY]: null,
-        }),
-      })
-  })
+    beforeEach(() => {
+      smMock = mockClient(SecretsManagerClient)
+        .on(GetSecretValueCommand)
+        .resolves({
+          SecretString: JSON.stringify({
+            [MOCK_SECRET_KEY]: null,
+          }),
+        })
+    })
 
-  describe('Enabled webhook', () => {
-    for (const isWhitelabelAuth0Domain of [true, false]) {
-      test(`POST to external webhook server with correct payload and headers (isWhitelabelAuth0Domain=${isWhitelabelAuth0Domain})`, async () => {
-        const TEST_TENANT_ID = getTestTenantId()
-        const webhookDeliveryRepository = new WebhookDeliveryRepository(
-          TEST_TENANT_ID,
-          await getMongoDbClient()
-        )
+    describe('Enabled webhook', () => {
+      for (const isWhitelabelAuth0Domain of [true, false]) {
+        test(`POST to external webhook server with correct payload and headers (isWhitelabelAuth0Domain=${isWhitelabelAuth0Domain})`, async () => {
+          const TEST_TENANT_ID = getTestTenantId()
+          const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+            TEST_TENANT_ID
+          )
+          jest
+            .spyOn(TenantUtils, 'isWhitelabeledTenantFromSettings')
+            .mockReturnValue(isWhitelabelAuth0Domain)
 
-        jest
-          .spyOn(TenantUtils, 'isWhitelabeledTenantFromSettings')
-          .mockReturnValue(isWhitelabelAuth0Domain)
-
-        let receivedPayload = undefined
-        let receivedHeaders = undefined
-        const webhookUrl = await startTestWebhookServer(
-          {
-            status: 200,
-            headers: {
-              foo: 'bar',
+          let receivedPayload = undefined
+          let receivedHeaders = undefined
+          const webhookUrl = await startTestWebhookServer(
+            {
+              status: 200,
+              headers: {
+                foo: 'bar',
+              },
+              body: 'OK',
             },
-            body: 'OK',
-          },
-          async (headers, payload) => {
-            receivedHeaders = headers
-            receivedPayload = payload
+            async (headers, payload) => {
+              receivedHeaders = headers
+              receivedPayload = payload
+            }
+          )
+          const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+          await webhookRepository.saveWebhook({
+            _id: ACTIVE_WEBHOOK_ID,
+            webhookUrl: webhookUrl,
+            events: ['USER_STATE_UPDATED'],
+            enabled: true,
+          })
+
+          const deliveryTask: WebhookDeliveryTask = {
+            event: 'USER_STATE_UPDATED',
+            entityId: 'entity_id',
+            payload: { statusReason: 'reason', status: 'DELETED' },
+            _id: 'task_id',
+            tenantId: TEST_TENANT_ID,
+            webhookId: ACTIVE_WEBHOOK_ID,
+            createdAt: Date.now(),
+            triggeredBy: 'SYSTEM',
           }
+          const expectedPayload = getExpectedPayload(deliveryTask)
+          await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
+          const command =
+            smMock.commandCalls(GetSecretValueCommand)[1]?.firstArg ??
+            smMock.commandCalls(GetSecretValueCommand)[0].firstArg
+          expect(command.input.SecretId).toEqual(
+            `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
+          )
+
+          // Check headers
+          const expectedReceivedHeaders = getExpectedRequestHeaders(
+            receivedPayload,
+            isWhitelabelAuth0Domain
+          )
+          expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
+
+          // Check payload
+          expect(receivedPayload).toEqual(expectedPayload)
+
+          // Check webhook delivery history
+          const attempt =
+            (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+              deliveryTask._id
+            )) as WebhookDeliveryAttempt
+          expect(attempt).toMatchObject({
+            deliveryTaskId: deliveryTask._id,
+            event: deliveryTask.event,
+            eventCreatedAt: deliveryTask.createdAt,
+            requestStartedAt: expect.any(Number),
+            requestFinishedAt: expect.any(Number),
+            request: {
+              headers: expectedReceivedHeaders,
+              body: receivedPayload,
+            },
+          })
+          expect(attempt.response?.status).toEqual(200)
+          expect(attempt.response?.body).toEqual('OK')
+        })
+      }
+      test('POST to invalid webhook server should throw error', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
         )
         const webhookRepository = new WebhookRepository(
           TEST_TENANT_ID,
@@ -129,7 +194,7 @@ describe('Webhook delivery', () => {
         )
         await webhookRepository.saveWebhook({
           _id: ACTIVE_WEBHOOK_ID,
-          webhookUrl: webhookUrl,
+          webhookUrl: 'http://foo',
           events: ['USER_STATE_UPDATED'],
           enabled: true,
         })
@@ -137,7 +202,7 @@ describe('Webhook delivery', () => {
         const deliveryTask: WebhookDeliveryTask = {
           event: 'USER_STATE_UPDATED',
           entityId: 'entity_id',
-          payload: { statusReason: 'reason', status: 'DELETED' },
+          payload: {},
           _id: 'task_id',
           tenantId: TEST_TENANT_ID,
           webhookId: ACTIVE_WEBHOOK_ID,
@@ -145,22 +210,9 @@ describe('Webhook delivery', () => {
           triggeredBy: 'SYSTEM',
         }
         const expectedPayload = getExpectedPayload(deliveryTask)
-        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-
-        const command = smMock.commandCalls(GetSecretValueCommand)[0].firstArg
-        expect(command.input.SecretId).toEqual(
-          `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
-        )
-
-        // Check headers
-        const expectedReceivedHeaders = getExpectedRequestHeaders(
-          receivedPayload,
-          isWhitelabelAuth0Domain
-        )
-        expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
-
-        // Check payload
-        expect(receivedPayload).toEqual(expectedPayload)
+        await expect(
+          webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        ).rejects.toThrow()
 
         // Check webhook delivery history
         const attempt =
@@ -174,507 +226,425 @@ describe('Webhook delivery', () => {
           requestStartedAt: expect.any(Number),
           requestFinishedAt: expect.any(Number),
           request: {
-            headers: expectedReceivedHeaders,
-            body: receivedPayload,
+            headers: getExpectedRequestHeaders(expectedPayload),
+            body: expectedPayload,
           },
+          response: null,
         })
-        expect(attempt.response?.status).toEqual(200)
-        expect(attempt.response?.body).toEqual('OK')
-      })
-    }
-    test('POST to invalid webhook server should throw error', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl: 'http://foo',
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
       })
 
-      const deliveryTask: WebhookDeliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        entityId: 'entity_id',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-        triggeredBy: 'SYSTEM',
-      }
-      const expectedPayload = getExpectedPayload(deliveryTask)
-      await expect(
-        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      ).rejects.toThrow()
-
-      // Check webhook delivery history
-      const attempt =
-        (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
-          deliveryTask._id
-        )) as WebhookDeliveryAttempt
-      expect(attempt).toMatchObject({
-        deliveryTaskId: deliveryTask._id,
-        event: deliveryTask.event,
-        eventCreatedAt: deliveryTask.createdAt,
-        requestStartedAt: expect.any(Number),
-        requestFinishedAt: expect.any(Number),
-        request: {
-          headers: getExpectedRequestHeaders(expectedPayload),
-          body: expectedPayload,
-        },
-        response: null,
-      })
-    })
-
-    test('webhook server returns status 3xx-5xx should throw error', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookUrl = await startTestWebhookServer(
-        {
-          status: 301,
-          headers: {},
-          body: 'ERROR',
-        },
-        async () => null
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
-      })
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
-      await expect(
-        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      ).rejects.toThrow()
-    })
-
-    test('webhook server returns status 600 should not throw error', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookUrl = await startTestWebhookServer(
-        {
-          status: 600,
-          headers: {},
-          body: 'ERROR',
-        },
-        async () => null
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
-      })
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        createdAt: Date.now(),
-      }
-
-      // Should not throw
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-    })
-
-    test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should not throw error', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookUrl = await startTestWebhookServer(
-        {
-          status: 200,
-          headers: {},
-          body: 'OK',
-        },
-        async () => {
-          await new Promise((resolve) =>
-            setTimeout(
-              resolve,
-              Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC ?? 10) * 2 * 1000
-            )
-          )
+      test('webhook server returns status 3xx-5xx should throw error', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookUrl = await startTestWebhookServer(
+          {
+            status: 301,
+            headers: {},
+            body: 'ERROR',
+          },
+          async () => null
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
         }
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
-      })
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        createdAt: Date.now(),
-      }
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-    })
-
-    test('Stop retrying after 24 hours (96 hours for production)', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookUrl = await startTestWebhookServer(
-        { status: 301, headers: {}, body: 'ERROR' },
-        async () => null
-      )
-
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
-
-      const mongoDb = await getMongoDbClient()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        mongoDb
-      )
-
-      const webhookRepository = new WebhookRepository(TEST_TENANT_ID, mongoDb)
-
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
+        await expect(
+          webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        ).rejects.toThrow()
       })
 
-      await webhookDeliveryRepository.addWebhookDeliveryAttempt({
-        _id: '1',
-        deliveryTaskId: deliveryTask._id,
-        entityId: 'entity_id',
-        webhookId: ACTIVE_WEBHOOK_ID,
-        webhookUrl: webhookUrl,
-        requestStartedAt: dayjs().subtract(1, 'day').valueOf(),
-        requestFinishedAt: dayjs().subtract(1, 'day').valueOf(),
-        success: false,
-        event: 'USER_STATE_UPDATED',
-        eventCreatedAt: dayjs().subtract(1, 'day').valueOf(),
-        request: {},
-      })
-
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-
-      expect(
-        (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
-      ).toBe(false)
-    })
-
-    test('Keep retrying before 24 hours (96 hours for production)', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookUrl = await startTestWebhookServer(
-        { status: 301, headers: {}, body: 'ERROR' },
-        async () => null
-      )
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
-      const mongoDb = await getMongoDbClient()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        mongoDb
-      )
-      const webhookRepository = new WebhookRepository(TEST_TENANT_ID, mongoDb)
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
-      })
-      await webhookDeliveryRepository.addWebhookDeliveryAttempt({
-        _id: '1',
-        deliveryTaskId: deliveryTask._id,
-        entityId: 'entity_id',
-        webhookId: ACTIVE_WEBHOOK_ID,
-        webhookUrl: webhookUrl,
-        requestStartedAt: dayjs().subtract(12, 'hour').valueOf(),
-        requestFinishedAt: dayjs().subtract(12, 'hour').valueOf(),
-        success: false,
-        event: 'USER_STATE_UPDATED',
-        eventCreatedAt: dayjs().subtract(12, 'hour').valueOf(),
-        request: {},
-      })
-      await expect(
-        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      ).rejects.toThrow()
-      expect(
-        (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
-      ).toBe(true)
-    })
-  })
-  describe('Invalid webhook', () => {
-    test('Skip non-existent webhook', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: 'ghost-webhook-id',
-        createdAt: Date.now(),
-      }
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      expect(
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
-          'ghost-webhook-id',
-          { page: 1, pageSize: 20, webhookId: 'ghost-webhook-id' }
-        )
-      ).toHaveLength(0)
-    })
-    test('Skip disabled webhook', async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: INACTIVE_WEBHOOK_ID,
-        webhookUrl: 'http://foo',
-        events: ['USER_STATE_UPDATED'],
-        enabled: false,
-      })
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: INACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      expect(
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
-          INACTIVE_WEBHOOK_ID,
-          { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
-        )
-      ).toHaveLength(0)
-    })
-    test("Skip webhook if the events don't include the task event", async () => {
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl: 'http://foo',
-        events: [],
-        enabled: true,
-      })
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-      expect(
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
-          INACTIVE_WEBHOOK_ID,
-          { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
-        )
-      ).toHaveLength(0)
-    })
-  })
-
-  describe('Webhook delivery attempt when settings are configured on faliure', () => {
-    test('Exponential backoff should add to webhook retry repository', async () => {
-      jest
-        .spyOn(TenantRepository.prototype, 'getTenantSettings')
-        .mockResolvedValue({
-          webhookSettings: {
-            retryBackoffStrategy: 'EXPONENTIAL',
-            maxRetryHours: 24,
-            retryOnlyFor: ['3XX'],
-            maxRetryReachedAction: 'DISABLE_WEBHOOK',
+      test('webhook server returns status 600 should not throw error', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookUrl = await startTestWebhookServer(
+          {
+            status: 600,
+            headers: {},
+            body: 'ERROR',
           },
+          async () => null
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
         })
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-      const webhookUrl = await startTestWebhookServer(
-        { status: 301, headers: {}, body: 'ERROR' },
-        async () => null
-      )
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          createdAt: Date.now(),
+        }
 
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
+        // Should not throw
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       })
 
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
+      test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should not throw error', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookUrl = await startTestWebhookServer(
+          {
+            status: 200,
+            headers: {},
+            body: 'OK',
+          },
+          async () => {
+            await new Promise((resolve) =>
+              setTimeout(
+                resolve,
+                Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC ?? 10) * 2 * 1000
+              )
+            )
+          }
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          createdAt: Date.now(),
+        }
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+      })
 
-      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-
-      const attempts =
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
-          ACTIVE_WEBHOOK_ID,
-          { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+      test('Stop retrying after 24 hours (96 hours for production)', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookUrl = await startTestWebhookServer(
+          { status: 301, headers: {}, body: 'ERROR' },
+          async () => null
         )
 
-      expect(attempts).toHaveLength(1)
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
 
-      const webhookRetryRepository = new WebhookRetryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
 
-      const time = dayjs().add(10, 'minutes').valueOf()
-      const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
-        time
-      )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
 
-      expect(retries).toHaveLength(1)
-      expect(retries[0].lastRetryMinutes).toEqual(10)
-
-      await retryWebhookTasks(
-        TEST_TENANT_ID,
-        retries.map((r) => r.task)
-      )
-
-      const time2 = dayjs().add(20, 'minutes').valueOf()
-      const newRetries = await webhookRetryRepository.getAllWebhookRetryEvents(
-        time2
-      )
-
-      expect(newRetries).toHaveLength(1)
-      expect(newRetries[0].lastRetryMinutes).toEqual(20)
-    })
-
-    test('Linear backoff should not add to webhook retry repository', async () => {
-      jest
-        .spyOn(TenantRepository.prototype, 'getTenantSettings')
-        .mockResolvedValue({
-          webhookSettings: {
-            retryBackoffStrategy: 'LINEAR',
-            maxRetryHours: 24,
-            retryOnlyFor: ['3XX'],
-            maxRetryReachedAction: 'DISABLE_WEBHOOK',
-          },
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
         })
 
-      const TEST_TENANT_ID = getTestTenantId()
-      const webhookDeliveryRepository = new WebhookDeliveryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
+        await webhookDeliveryRepository.addWebhookDeliveryAttempt({
+          _id: '1',
+          deliveryTaskId: deliveryTask._id,
+          entityId: 'entity_id',
+          webhookId: ACTIVE_WEBHOOK_ID,
+          webhookUrl: webhookUrl,
+          requestStartedAt: dayjs().subtract(1, 'day').valueOf(),
+          requestFinishedAt: dayjs().subtract(1, 'day').valueOf(),
+          success: false,
+          event: 'USER_STATE_UPDATED',
+          eventCreatedAt: dayjs().subtract(1, 'day').valueOf(),
+          request: {},
+        })
 
-      const webhookUrl = await startTestWebhookServer(
-        { status: 301, headers: {}, body: 'ERROR' },
-        async () => null
-      )
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
 
-      const webhookRepository = new WebhookRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
-
-      await webhookRepository.saveWebhook({
-        _id: ACTIVE_WEBHOOK_ID,
-        webhookUrl,
-        events: ['USER_STATE_UPDATED'],
-        enabled: true,
+        expect(
+          (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
+        ).toBe(false)
       })
 
-      const deliveryTask = {
-        event: 'USER_STATE_UPDATED',
-        payload: {},
-        _id: 'task_id',
-        tenantId: TEST_TENANT_ID,
-        webhookId: ACTIVE_WEBHOOK_ID,
-        createdAt: Date.now(),
-      }
+      test('Keep retrying before 24 hours (96 hours for production)', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookUrl = await startTestWebhookServer(
+          { status: 301, headers: {}, body: 'ERROR' },
+          async () => null
+        )
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
+        await webhookDeliveryRepository.addWebhookDeliveryAttempt({
+          _id: '1',
+          deliveryTaskId: deliveryTask._id,
+          entityId: 'entity_id',
+          webhookId: ACTIVE_WEBHOOK_ID,
+          webhookUrl: webhookUrl,
+          requestStartedAt: dayjs().subtract(12, 'hour').valueOf(),
+          requestFinishedAt: dayjs().subtract(12, 'hour').valueOf(),
+          success: false,
+          event: 'USER_STATE_UPDATED',
+          eventCreatedAt: dayjs().subtract(12, 'hour').valueOf(),
+          request: {},
+        })
+        await expect(
+          webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        ).rejects.toThrow()
+        expect(
+          (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
+        ).toBe(true)
+      })
+    })
+    describe('Invalid webhook', () => {
+      test('Skip non-existent webhook', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: 'ghost-webhook-id',
+          createdAt: Date.now(),
+        }
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        expect(
+          await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+            'ghost-webhook-id',
+            { page: 1, pageSize: 20, webhookId: 'ghost-webhook-id' }
+          )
+        ).toHaveLength(0)
+      })
+      test('Skip disabled webhook', async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: INACTIVE_WEBHOOK_ID,
+          webhookUrl: 'http://foo',
+          events: ['USER_STATE_UPDATED'],
+          enabled: false,
+        })
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: INACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        expect(
+          await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+            INACTIVE_WEBHOOK_ID,
+            { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
+          )
+        ).toHaveLength(0)
+      })
+      test("Skip webhook if the events don't include the task event", async () => {
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl: 'http://foo',
+          events: [],
+          enabled: true,
+        })
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+        expect(
+          await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+            INACTIVE_WEBHOOK_ID,
+            { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
+          )
+        ).toHaveLength(0)
+      })
+    })
 
-      const result = webhookDeliveryHandler(createSqsEvent([deliveryTask]))
-
-      await expect(result).rejects.toThrow()
-
-      const attempts =
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
-          ACTIVE_WEBHOOK_ID,
-          { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+    describe('Webhook delivery attempt when settings are configured on faliure', () => {
+      test('Exponential backoff should add to webhook retry repository', async () => {
+        jest
+          .spyOn(TenantRepository.prototype, 'getTenantSettings')
+          .mockResolvedValue({
+            webhookSettings: {
+              retryBackoffStrategy: 'EXPONENTIAL',
+              maxRetryHours: 24,
+              retryOnlyFor: ['3XX'],
+              maxRetryReachedAction: 'DISABLE_WEBHOOK',
+            },
+          })
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+        const webhookUrl = await startTestWebhookServer(
+          { status: 301, headers: {}, body: 'ERROR' },
+          async () => null
         )
 
-      expect(attempts).toHaveLength(1)
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
 
-      const webhookRetryRepository = new WebhookRetryRepository(
-        TEST_TENANT_ID,
-        await getMongoDbClient()
-      )
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
 
-      const time = dayjs().add(10, 'minutes').valueOf()
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
 
-      const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
-        time
-      )
+        await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
 
-      expect(retries).toHaveLength(0)
+        const attempts =
+          await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+            ACTIVE_WEBHOOK_ID,
+            { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+          )
+
+        expect(attempts).toHaveLength(1)
+
+        const webhookRetryRepository = new WebhookRetryRepository(
+          TEST_TENANT_ID,
+          await getMongoDbClient()
+        )
+
+        const time = dayjs().add(10, 'minutes').valueOf()
+        const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
+          time
+        )
+
+        expect(retries).toHaveLength(1)
+        expect(retries[0].lastRetryMinutes).toEqual(10)
+
+        await retryWebhookTasks(
+          TEST_TENANT_ID,
+          retries.map((r) => r.task)
+        )
+
+        const time2 = dayjs().add(20, 'minutes').valueOf()
+        const newRetries =
+          await webhookRetryRepository.getAllWebhookRetryEvents(time2)
+
+        expect(newRetries).toHaveLength(1)
+        expect(newRetries[0].lastRetryMinutes).toEqual(20)
+      })
+
+      test('Linear backoff should not add to webhook retry repository', async () => {
+        jest
+          .spyOn(TenantRepository.prototype, 'getTenantSettings')
+          .mockResolvedValue({
+            webhookSettings: {
+              retryBackoffStrategy: 'LINEAR',
+              maxRetryHours: 24,
+              retryOnlyFor: ['3XX'],
+              maxRetryReachedAction: 'DISABLE_WEBHOOK',
+            },
+          })
+
+        const TEST_TENANT_ID = getTestTenantId()
+        const webhookDeliveryRepository = await getWebhookDeliveryRepository(
+          TEST_TENANT_ID
+        )
+
+        const webhookUrl = await startTestWebhookServer(
+          { status: 301, headers: {}, body: 'ERROR' },
+          async () => null
+        )
+
+        const webhookRepository = await getWebhookRepository(TEST_TENANT_ID)
+
+        await webhookRepository.saveWebhook({
+          _id: ACTIVE_WEBHOOK_ID,
+          webhookUrl,
+          events: ['USER_STATE_UPDATED'],
+          enabled: true,
+        })
+
+        const deliveryTask = {
+          event: 'USER_STATE_UPDATED',
+          payload: {},
+          _id: 'task_id',
+          tenantId: TEST_TENANT_ID,
+          webhookId: ACTIVE_WEBHOOK_ID,
+          createdAt: Date.now(),
+        }
+
+        const result = webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
+        await expect(result).rejects.toThrow()
+
+        const attempts =
+          await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+            ACTIVE_WEBHOOK_ID,
+            { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+          )
+
+        expect(attempts).toHaveLength(1)
+
+        const webhookRetryRepository = new WebhookRetryRepository(
+          TEST_TENANT_ID,
+          await getMongoDbClient()
+        )
+
+        const time = dayjs().add(10, 'minutes').valueOf()
+
+        const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
+          time
+        )
+
+        expect(retries).toHaveLength(0)
+      })
     })
   })
 })

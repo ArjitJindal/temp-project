@@ -704,6 +704,10 @@ export function sanitizeMongoObject<T>(obj: T): T {
     return obj
   }
 
+  if (obj === undefined) {
+    return null as unknown as T
+  }
+
   if (Array.isArray(obj)) {
     return obj.map(sanitizeMongoObject) as unknown as T
   }
@@ -726,7 +730,8 @@ export function sanitizeMongoObject<T>(obj: T): T {
       if (key === '_id') {
         result[key] = obj[key]?.toString()
       } else {
-        result[key] = sanitizeMongoObject(obj[key])
+        const value = sanitizeMongoObject(obj[key])
+        result[key] = value === undefined ? null : value
       }
     }
 

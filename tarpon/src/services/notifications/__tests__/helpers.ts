@@ -9,6 +9,14 @@ export const getNotificationRepository = async (tenantId: string) => {
     CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
     tenantId
   )
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
+    tenantId
+  )
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
+    tenantId
+  )
   return new NotificationRepository(tenantId, {
     mongoDb: await getMongoDbClient(),
     dynamoDb: getDynamoDbClient(),

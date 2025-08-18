@@ -78,11 +78,13 @@ export const NOTIFICATIONS_KEY_IDENTIFIER = '#notification'
 export const GPT_REQUESTS_KEY_IDENTIFIER = '#gpt-request-logs'
 export const JOBS_KEY_IDENTIFIER = '#jobs'
 export const REASONS_KEY_IDENTIFIER = '#reasons'
+export const WEBHOOK_CONFIGURATION_KEY_IDENTIFIER = '#webhook'
 export const MIGRATION_TMP_KEY_IDENTIFIER = 'migration-tmp'
 export const MIGRATION_PRE_DEPLOYMENT_KEY_IDENTIFIER =
   'migrations-pre-deployment'
 export const MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER =
   'migrations-post-deployment'
+
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
   transactionId: string
@@ -644,6 +646,10 @@ export const DynamoDbKeys = {
   REASONS: (tenantId: string, id: string, reasonType?: ReasonType) => ({
     PartitionKeyID: `${tenantId}${REASONS_KEY_IDENTIFIER}`,
     SortKeyID: `${reasonType}#${id}`,
+  }),
+  WEBHOOK_CONFIGURATION: (tenantId: string, webhookId: string) => ({
+    PartitionKeyID: `${tenantId}${WEBHOOK_CONFIGURATION_KEY_IDENTIFIER}`,
+    SortKeyID: webhookId,
   }),
   MIGRATION_TMP: (id: string) => ({
     PartitionKeyID: `${MIGRATION_TMP_KEY_IDENTIFIER}`,

@@ -163,6 +163,8 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   NOTIFICATIONS: 'notifications',
   JOBS: 'jobs',
   REASONS: 'reasons',
+  WEBHOOK: 'webhook',
+  WEBHOOK_DELIVERIES: 'webhook-deliveries',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {

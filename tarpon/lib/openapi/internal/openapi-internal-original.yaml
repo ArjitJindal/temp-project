@@ -8490,6 +8490,8 @@ components:
         - AUDIT_LOG
         - METRICS
         - BATCH_JOBS
+        - WEBHOOK_CONFIGURATION
+        - WEBHOOK_DELIVERY
     FlatFileSchema:
       title: FlatFileSchema
       type: string

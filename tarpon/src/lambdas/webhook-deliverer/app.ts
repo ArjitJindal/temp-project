@@ -155,11 +155,13 @@ export async function simpleSendWebhookRequest(
           : fetchOptions.body,
       },
       entityId: webhookDeliveryTask.entityId,
-      response: response && {
-        status: response.status,
-        headers: JSON.stringify(response.headers),
-        body: await response.text(),
-      },
+      response: response
+        ? {
+            status: response.status,
+            headers: JSON.stringify(response.headers),
+            body: await response.text(),
+          }
+        : null,
       manualRetry: true,
     })
   }
@@ -346,11 +348,13 @@ export async function deliverWebhookEvent(
         headers: fetchOptions.headers,
         body: requestBody,
       },
-      response: response && {
-        status: response.status,
-        headers: JSON.stringify(response.headers),
-        body: await response.text(),
-      },
+      response: response
+        ? {
+            status: response.status,
+            headers: JSON.stringify(response.headers),
+            body: await response.text(),
+          }
+        : null,
       manualRetry: false,
     })
   }

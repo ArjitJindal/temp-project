@@ -60,6 +60,8 @@ import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
 } from '@/utils/downstream-version'
+import { WebhookConfiguration } from '@/@types/openapi-internal/all'
+import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -176,6 +178,19 @@ export class TarponChangeMongoDbConsumer {
         )
         .setLLMRequestsHandler((tenantId, newLLMRequests) =>
           this.handleLLMRequests(tenantId, newLLMRequests)
+        )
+        .setWebhookConfigurationHandler(
+          (
+            tenantId,
+            oldWebhookConfiguration,
+            newWebhookConfiguration,
+            dbClients
+          ) =>
+            this.handleWebhookConfiguration(
+              tenantId,
+              newWebhookConfiguration,
+              dbClients
+            )
         )
     )
   }
@@ -718,6 +733,23 @@ export class TarponChangeMongoDbConsumer {
       'handleGptRequests'
     )
     await linkLLMRequestClickhouse(tenantId, newLLMRequests)
+    subSegment?.close()
+  }
+
+  async handleWebhookConfiguration(
+    tenantId: string,
+    newWebhookConfiguration: WebhookConfiguration | undefined,
+    dbClients: DbClients
+  ): Promise<void> {
+    if (!newWebhookConfiguration) {
+      return
+    }
+    const subSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleWebhookConfiguration'
+    )
+    const webhookRepository = new WebhookRepository(tenantId, dbClients.mongoDb)
+    await webhookRepository.linkWebhookClickhouse(newWebhookConfiguration)
     subSegment?.close()
   }
 }

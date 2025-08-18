@@ -16,12 +16,16 @@ import {
   GPT_REQUESTS_COLLECTION,
   AUDITLOG_COLLECTION,
   JOBS_COLLECTION,
+  WEBHOOK_COLLECTION,
+  WEBHOOK_DELIVERY_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
+import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/all'
 
 @traceable
 export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
@@ -68,6 +72,17 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
         await handleJobBatchJob(job, {
           mongoDb,
           dynamoDb,
+        })
+        break
+      case 'WEBHOOK_CONFIGURATION':
+        await handleWebhookConfigurationBatchJob(job, {
+          mongoDb,
+          dynamoDb,
+        })
+        break
+      case 'WEBHOOK_DELIVERY':
+        await handleWebhookDeliveryBatchJob(job, {
+          mongoDb,
         })
         break
       default:
@@ -275,6 +290,54 @@ export const handleJobBatchJob = async (
     jobCollection.find({}),
     async (jobs) => {
       await dynamoRepository.saveJobs(jobs)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+const handleWebhookConfigurationBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+) => {
+  const { DynamoWebhookRepository } = await import(
+    '../webhook/repositories/dynamo-webhook-repository'
+  )
+  const db = mongoDb.db()
+  const webhookCollection = db.collection<WebhookConfiguration>(
+    WEBHOOK_COLLECTION(job.tenantId)
+  )
+  const dynamoWebhookRepository = new DynamoWebhookRepository(
+    job.tenantId,
+    dynamoDb
+  )
+  await processCursorInBatch(
+    webhookCollection.find({}),
+    async (webhooks) => {
+      await dynamoWebhookRepository.saveToDynamo(webhooks)
+    },
+    { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+const handleWebhookDeliveryBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  { mongoDb }: { mongoDb: MongoClient }
+) => {
+  const { WebhookDeliveryRepository } = await import(
+    '../webhook/repositories/webhook-delivery-repository'
+  )
+  const db = mongoDb.db()
+  const webhookDeliveryCollection = db.collection<WebhookDeliveryAttempt>(
+    WEBHOOK_DELIVERY_COLLECTION(job.tenantId)
+  )
+  const webhookRepository = new WebhookDeliveryRepository(job.tenantId, mongoDb)
+  await processCursorInBatch(
+    webhookDeliveryCollection.find({}),
+    async (webhookDeliveries) => {
+      await webhookRepository.linkWebhookDeliveryClickhouse(webhookDeliveries)
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
   )

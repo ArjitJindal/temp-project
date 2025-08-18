@@ -33,10 +33,13 @@ export class ClickhouseNotificationRepository {
     SELECT data FROM 
     ${this.notificationsClickHouseTableName} FINAL
     WHERE arrayExists(x -> x = '${recipient}', recievers)`
-    const result = await executeClickhouseQuery<any[]>(this.tenantId, {
-      query,
-      format: 'JSONEachRow',
-    })
+    const result = await executeClickhouseQuery<{ data: string }[]>(
+      this.tenantId,
+      {
+        query,
+        format: 'JSONEachRow',
+      }
+    )
     const data = result.map((r) => JSON.parse(r.data))
     return data
   }
