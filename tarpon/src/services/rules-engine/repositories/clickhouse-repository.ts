@@ -115,14 +115,43 @@ export class ClickhouseTransactionsRepository {
       }
     }
     let timestampFilterCount = 0
-    if (params.afterTimestamp != null) {
-      whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
-      timestampFilterCount++
-    }
 
-    if (params.beforeTimestamp != null) {
+    // Add partition filtering when both timestamps are provided
+    if (params.afterTimestamp != null && params.beforeTimestamp != null) {
+      const afterDate = new Date(params.afterTimestamp)
+      const beforeDate = new Date(params.beforeTimestamp)
+
+      const afterPartition =
+        afterDate.getFullYear() * 100 + (afterDate.getMonth() + 1)
+      const beforePartition =
+        beforeDate.getFullYear() * 100 + (beforeDate.getMonth() + 1)
+
+      if (afterPartition === beforePartition) {
+        whereConditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) = ${afterPartition}`
+        )
+      } else {
+        whereConditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) >= ${afterPartition}`
+        )
+        whereConditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) <= ${beforePartition}`
+        )
+      }
+
+      whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
       whereConditions.push(`timestamp <= ${params.beforeTimestamp}`)
-      timestampFilterCount++
+      timestampFilterCount += 2
+    } else {
+      if (params.afterTimestamp != null) {
+        whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
+        timestampFilterCount++
+      }
+
+      if (params.beforeTimestamp != null) {
+        whereConditions.push(`timestamp <= ${params.beforeTimestamp}`)
+        timestampFilterCount++
+      }
     }
 
     if (params.filterOriginCountries?.length) {
