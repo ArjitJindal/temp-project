@@ -134,12 +134,11 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         ...advancedOptionsValidators,
       }}
       onChange={(values) => {
-        onChange((state) => ({
+        onChange(() => ({
           ...values,
           isValid: values.isValid,
           values: {
             ...values.values,
-            files: state.values.files,
           },
         }));
       }}

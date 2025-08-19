@@ -151,6 +151,7 @@ export default function CasesStatusChangeModal(props: Props) {
       let updates: CaseStatusUpdate = {
         caseStatus: props.newStatus,
         reason: formValues?.reasons ?? [],
+        files: formValues?.files ?? [],
       };
 
       updates = getStatusChangeUpdatesFromFormValues<CaseStatusUpdate>(

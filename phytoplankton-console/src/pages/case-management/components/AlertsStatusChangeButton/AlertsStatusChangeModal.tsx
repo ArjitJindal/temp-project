@@ -196,6 +196,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       let updates: AlertStatusUpdateRequest = {
         alertStatus: props.newStatus,
         reason: formValues?.reasons ?? [],
+        files: formValues?.files ?? [],
       };
 
       updates = getStatusChangeUpdatesFromFormValues<AlertStatusUpdateRequest>(
