@@ -41,34 +41,36 @@ const migrationType = process.env.MIGRATION_TYPE as MigrationType
 
 loadConfigEnv()
 
+async function refreshCredentials() {
+  try {
+    const sts = new STS({
+      region: process.env.AWS_REGION,
+    })
+
+    const assumeRoleCommand = new AssumeRoleCommand({
+      RoleArn: process.env.ASSUME_ROLE_ARN as string,
+      RoleSessionName: 'migration',
+    })
+
+    const assumeRoleResult = await sts.send(assumeRoleCommand)
+
+    process.env.AWS_ACCESS_KEY_ID = assumeRoleResult.Credentials?.AccessKeyId
+    process.env.AWS_SECRET_ACCESS_KEY =
+      assumeRoleResult.Credentials?.SecretAccessKey
+    process.env.AWS_SESSION_TOKEN = assumeRoleResult.Credentials?.SessionToken
+    console.info('Refreshed AWS credentials')
+  } catch (e) {
+    console.error('Failed to refresh AWS credentials')
+    console.error(e)
+  }
+}
+
 function refreshCredentialsPeriodically() {
   // Refresh the AWS credentials before it expires (1 hour). We're using role chaining to
   // assume a cross-account role in deployment and the max session duration is 1 hour.
   setInterval(
     async () => {
-      try {
-        const sts = new STS({
-          region: process.env.AWS_REGION,
-        })
-
-        const assumeRoleCommand = new AssumeRoleCommand({
-          RoleArn: process.env.ASSUME_ROLE_ARN as string,
-          RoleSessionName: 'migration',
-        })
-
-        const assumeRoleResult = await sts.send(assumeRoleCommand)
-
-        process.env.AWS_ACCESS_KEY_ID =
-          assumeRoleResult.Credentials?.AccessKeyId
-        process.env.AWS_SECRET_ACCESS_KEY =
-          assumeRoleResult.Credentials?.SecretAccessKey
-        process.env.AWS_SESSION_TOKEN =
-          assumeRoleResult.Credentials?.SessionToken
-        console.info('Refreshed AWS credentials')
-      } catch (e) {
-        console.error('Failed to refresh AWS credentials')
-        console.error(e)
-      }
+      await refreshCredentials()
     },
     // 30 minutes
     30 * 60 * 1000
@@ -197,4 +199,8 @@ main()
   .catch((e) => {
     console.error(e)
     exit(1)
+  })
+  .finally(async () => {
+    console.info('Migrations completed, refreshing credentials')
+    await refreshCredentials()
   })
