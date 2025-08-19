@@ -30,7 +30,7 @@ export default function TableModalProvider<
   };
 
   const updateModalState = (newState: TModalProps) => {
-    setModalState(newState);
+    setModalState((prevState) => ({ ...prevState, ...newState }));
   };
 
   return (

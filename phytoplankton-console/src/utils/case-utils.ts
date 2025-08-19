@@ -463,7 +463,12 @@ export function createAssignments(
 
 export function getStatusChangeUpdatesFromFormValues<
   T extends AlertStatusUpdateRequest | CaseStatusUpdate,
->(updates: T, isNewFeaturesEnabled: boolean, userDetails: TableUser, formValues: FormValues): T {
+>(
+  updates: T,
+  isNewFeaturesEnabled: boolean,
+  userDetails: TableUser | undefined,
+  formValues: FormValues,
+): T {
   if (formValues) {
     const expandedPepStatus = expandPEPStatus(
       (formValues?.screeningDetails?.pepStatus?.slice(1) as PepFormValues[]) ?? [],
@@ -491,7 +496,7 @@ export function getStatusChangeUpdatesFromFormValues<
       updates.tags = areArraysOfObjectsEqual(formValues?.tags ?? [], userDetails?.tags ?? [])
         ? undefined
         : formValues?.tags;
-      if (!isAllUsersTableItem(userDetails) && userDetails.type === 'CONSUMER') {
+      if (userDetails && !isAllUsersTableItem(userDetails) && userDetails?.type === 'CONSUMER') {
         updates.screeningDetails = {
           sanctionsStatus:
             formValues?.screeningDetails?.sanctionsStatus === userDetails.sanctionsStatus

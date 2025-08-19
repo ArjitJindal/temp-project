@@ -6,7 +6,7 @@ import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
 } from '../StatusChangeModal';
-import { isAllUsersTableItem, TableUser } from '../../CaseTable/types';
+import { isAllUsersTableItem } from '../../CaseTable/types';
 import { useApi } from '@/api';
 import { CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
@@ -156,7 +156,7 @@ export default function CasesStatusChangeModal(props: Props) {
       updates = getStatusChangeUpdatesFromFormValues<CaseStatusUpdate>(
         updates,
         isNewFeaturesEnabled,
-        props.user as TableUser,
+        props.user,
         formValues,
       );
 
