@@ -3,6 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ScreeningDetailsUpdateForm } from './UpdateForm';
 import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus } from './PepStatus/utils';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
+import { useQuery } from '@/utils/queries/hooks';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import {
   PepFormValues,
   PepStatusValue,
@@ -85,6 +89,12 @@ export default function ScreeningDetails(props: Props) {
 
   const api = useApi();
   const formRef = useRef(null);
+
+  const ongoingSanctionsScreeningQueryResult = useQuery(['user-status', user.userId], async () => {
+    return await api.getUserScreeningStatus({
+      userId: user.userId,
+    });
+  });
 
   // reading data from local storage, adhock fix as screening detail updates go through CDC,
   // there is delay in updating the console, so we are optimistically updating the ui state
@@ -242,6 +252,36 @@ export default function ScreeningDetails(props: Props) {
               : screeningDetails.adverseMediaStatus
               ? 'Yes'
               : 'No',
+        },
+        {
+          label: 'Ongoing screening',
+          value: (
+            <div className={s.ongoingSanctions}>
+              <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>
+                {({ isOngoingScreening }) =>
+                  isOngoingScreening ? (
+                    <>
+                      <CheckMark className={s.successIcon} /> Yes
+                    </>
+                  ) : (
+                    <>No</>
+                  )
+                }
+              </AsyncResourceRenderer>
+            </div>
+          ),
+        },
+        {
+          label: '',
+          value: (
+            <AsyncResourceRenderer resource={ongoingSanctionsScreeningQueryResult.data}>
+              {({ isOngoingScreening }) =>
+                isOngoingScreening
+                  ? dayjs().utc().startOf('day').format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
+                  : null
+              }
+            </AsyncResourceRenderer>
+          ),
         },
       ]}
       modal={

@@ -26,7 +26,6 @@ import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Provider
 type TableSearchParams = AllParams<{
   entity?: SanctionsScreeningEntity[];
   isHit?: BooleanString;
-  isOngoingScreening?: BooleanString;
   isNew?: BooleanString;
   name?: string;
   afterTimestamp?: number;
@@ -71,7 +70,6 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
         filterEntities: params.entity,
         filterName: params.name,
         filterIsHit: params.isHit,
-        filterIsOngoingScreening: params.isOngoingScreening,
         filterIsNew: params.isNew,
         afterTimestamp: params.afterTimestamp,
         beforeTimestamp: params.beforeTimestamp,
@@ -181,7 +179,7 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
       helper.simple<'isOngoingScreening'>({
         title: 'Ongoing screening',
         key: 'isOngoingScreening',
-        filtering: true,
+        hideInTable: true,
         defaultWidth: 100,
         type: {
           render: (isOngoingScreening) => <>{isOngoingScreening ? 'Yes' : 'No'}</>,
