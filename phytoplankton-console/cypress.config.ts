@@ -14,6 +14,7 @@ if (process.env.ENV === 'local') {
 }
 
 export default defineConfig({
+  numTestsKeptInMemory: 3,
   env: {
     environment: process.env.ENV ?? 'local',
     loginUrl: 'https://login.console.flagright.dev/',

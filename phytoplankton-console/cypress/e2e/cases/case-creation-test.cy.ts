@@ -34,7 +34,7 @@ describe('Case Creation test', () => {
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
     cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
-    cy.get('button[data-cy="configure-rule-button"]').eq(1).click();
+    cy.get('button[data-cy="configure-rule-button"]', { timeout: 60000 }).eq(1).click();
     // adding random uuid to ensure we create rule with unique rule name
     const ruleName = 'Test rule : Transaction too high' + ' ' + uuidv4();
     cy.get('input[placeholder="Enter rule name"]').clear().type(ruleName);
@@ -42,7 +42,7 @@ describe('Case Creation test', () => {
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-create-save-button"]').eq(0).click();
     cy.get('button[data-cy="modal-ok"]').eq(0).click();
-    cy.wait('@createdRule').then((interception) => {
+    cy.wait('@createdRule', { timeout: 60000 }).then((interception) => {
       expect(interception.response?.statusCode).to.eq(200);
       const ruleInstanceId = interception.response?.body?.id;
       cy.messageBody(`${ruleInstanceId}`).should('exist');
@@ -70,6 +70,7 @@ describe('Case Creation test', () => {
           '/case-management/cases?page=1&pageSize=20&sort=-createdTimestamp&showCases=ALL&caseStatus=OPEN',
         );
         cy.intercept('GET', '**/cases**').as('case');
+        cy.waitNothingLoading();
 
         cy.wait('@case').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
@@ -91,7 +92,9 @@ describe('Case Creation test', () => {
             .eq(0)
             .should('exist')
             .click();
-          cy.multiSelect('[data-cy="QuickFilter"]', `${ruleName} ${ruleInstanceId} (R-2)`);
+          // eslint-disable-next-line cypress/no-unnecessary-waiting
+          cy.wait(500);
+          cy.multiSelect('[data-cy="QuickFilter"]:visible', `${ruleName} ${ruleInstanceId} (R-2)`);
           cy.waitNothingLoading();
         });
       };

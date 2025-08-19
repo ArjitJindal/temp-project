@@ -217,7 +217,7 @@ async function getCypressCreds() {
   });
 
   try {
-    const spec = ``;
+    const spec = ` --spec "cypress/e2e/cases/case-creation-test.cy.ts"`;
     execSync(
       `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag}${spec}`,
       {

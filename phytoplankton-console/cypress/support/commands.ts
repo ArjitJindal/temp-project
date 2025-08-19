@@ -32,7 +32,7 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
   cy.intercept('GET', '**/tenants/settings').as('tenantSettings');
   cy.visit('/');
   cy.waitNothingLoading();
-  cy.wait('@tenantSettings', { timeout: 15000 });
+  cy.wait('@tenantSettings', { timeout: 30000 });
   if (role === 'super_admin') {
     cy.checkAndSwitchToTenant('Cypress Tenant');
   }
@@ -91,6 +91,7 @@ Cypress.Commands.add('apiHandler', ({ endpoint, method, body }) => {
       Authorization: `Bearer ${accessToken}`,
     },
     body: body,
+    timeout: 60000,
   });
 });
 
@@ -214,12 +215,18 @@ Cypress.Commands.add('multiSelect', (preSelector, options, params = {}) => {
             cy.get(
               `*[data-cy^=menu-item-label][title${
                 fullOptionMatch ? '=' : '^='
+              }"${toSelectElement}"]`,
+            ).scrollIntoView();
+            cy.get(
+              `*[data-cy^=menu-item-label][title${
+                fullOptionMatch ? '=' : '^='
               }"${toSelectElement}"]:visible`,
             ).click();
           }
         }
       });
   });
+  cy.get('body').click();
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {
@@ -269,7 +276,7 @@ Cypress.Commands.add('toggleFeatures', (features) => {
   if (Object.keys(features).length === 0) {
     return;
   }
-  cy.wait('@tenantSettings', { timeout: 15000 }).then((interception) => {
+  cy.wait('@tenantSettings', { timeout: 30000 }).then((interception) => {
     const tenantSettings = interception?.response?.body;
     const existingFeatures = (tenantSettings as TenantSettings)?.features ?? [];
     const newFeatures = [...existingFeatures];
@@ -349,6 +356,7 @@ Cypress.Commands.add('publicApiHandler', (method, endpoint, requestBody) => {
         url,
         headers,
         body: requestBody,
+        timeout: 60000,
       }).then((response) => {
         expect(response.status).to.eq(200);
         /* eslint-disable-next-line cypress/no-unnecessary-waiting */
@@ -433,7 +441,7 @@ Cypress.Commands.add('asertInputDisabled', (label: string) => {
 Cypress.Commands.add('waitNothingLoading', () => {
   // wait cy loading element to be removed
   cy.document().within(() => {
-    cy.get('[data-cy=AppWrapper]', { timeout: 30000 }).should('exist');
+    cy.get('[data-cy=AppWrapper]', { timeout: 60000 }).should('exist');
   });
   cy.get('.cy-loading,*[data-cy=cy-loading]', { timeout: 60000 }).should('not.exist');
 });

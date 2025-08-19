@@ -30,6 +30,8 @@ module.exports = {
   moduleDirectories: ['node_modules', 'jest'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^src/(.*)$': '<rootDir>/src/$1',
+    '^~antd/(.*)$': '<rootDir>/node_modules/antd/$1',
     '^@flagright/(.*)$': '<rootDir>/../$1',
     '^(.+\\.module\\.(?:less|css))$': '$1',
     '^.+\\.(less|css|ttf)$': 'identity-obj-proxy',
