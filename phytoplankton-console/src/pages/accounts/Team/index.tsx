@@ -466,6 +466,7 @@ export default function Team() {
             ? [
                 () => (
                   <Button
+                    className={s.inviteButtonWrapper}
                     type="TETRIARY"
                     onClick={() => {
                       setEditAccount(null);
