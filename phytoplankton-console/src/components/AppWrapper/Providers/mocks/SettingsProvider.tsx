@@ -1,5 +1,5 @@
 import React from 'react';
-import { Context as SettingsContext } from '../SettingsProvider';
+import { SettingsContext } from '../SettingsProvider';
 import { Feature } from '@/apis';
 
 interface Props {

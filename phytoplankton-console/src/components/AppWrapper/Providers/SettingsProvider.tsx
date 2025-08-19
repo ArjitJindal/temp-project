@@ -1,45 +1,64 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useAuth0 } from '@auth0/auth0-react';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
-import { useAuth0 } from '@auth0/auth0-react';
-import { useApi } from '@/api';
 import {
-  ApiException,
+  PermissionStatements,
   Feature as FeatureName,
-  ManagedRoleName,
-  RiskLevel,
-  RuleAction,
   TenantSettings,
+  ApiException,
+  ManagedRoleName,
+  RuleAction,
+  RiskLevel,
   TransactionState,
 } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
-import { SETTINGS } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { PageLoading } from '@/components/PageLoading';
+import { PERMISSIONS_STATEMENTS, SETTINGS } from '@/utils/queries/keys';
+import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { usePrevious } from '@/utils/hooks';
-import { isFailed, isSuccess } from '@/utils/asyncResource';
+import { all, isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import ErrorPage from '@/components/ErrorPage';
-import { useAccountRole, UserRole } from '@/utils/user-utils';
-import { PageLoading } from '@/components/PageLoading';
 import { SuspendedAccount } from '@/components/SuspendedAccount';
 import Alert from '@/components/library/Alert';
 import { TransactionChartSeries } from '@/pages/dashboard/analysis/components/TransactionsChartWidget';
 
-interface ContextValue {
-  features: FeatureName[];
+interface StatementsContextValue {
+  statements: PermissionStatements[];
+}
+
+interface SettingsContextValue {
   settings: TenantSettings;
+  features: FeatureName[] | null;
   reloadSettings: () => void;
 }
 
-export const Context = React.createContext<ContextValue | null>(null);
+export const StatementsContext = createContext<StatementsContextValue | undefined>(undefined);
+export const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
 
-export default function SettingsProvider(props: { children: React.ReactNode }) {
+export const useResources = () => {
+  const context = useContext(StatementsContext);
+  if (!context) {
+    throw new Error('useResources must be used within a StatementsProvider');
+  }
+  return context;
+};
+
+export const StatementsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}): JSX.Element => {
   const globalFeatures = FEATURES_ENABLED as FeatureName[];
   const api = useApi();
   const role = useAccountRole();
   const { logout } = useAuth0();
 
-  const queryResults = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
+  const queryResult = useQuery(PERMISSIONS_STATEMENTS(), () => api.getRolesByNameStatements());
+
+  const settingsResults = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
     try {
       return await api.getTenantsSettings();
     } catch (e) {
@@ -52,33 +71,30 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
     }
   });
 
-  const previousQueryResults = usePrevious(queryResults);
+  const previousSettingsResults = usePrevious(settingsResults);
 
   const settings = useMemo(() => {
-    return isSuccess(queryResults.data) || !previousQueryResults
-      ? isSuccess(queryResults.data)
-        ? queryResults.data.value
+    return isSuccess(settingsResults.data) || !previousSettingsResults
+      ? isSuccess(settingsResults.data)
+        ? settingsResults.data.value
         : {}
-      : isSuccess(previousQueryResults.data)
-      ? previousQueryResults.data.value
+      : isSuccess(previousSettingsResults.data)
+      ? previousSettingsResults.data.value
       : {};
-  }, [queryResults.data, previousQueryResults]);
+  }, [settingsResults.data, previousSettingsResults]);
 
   const features = useMemo(() => {
     return !isEmpty(settings) ? (settings.features || []).concat(globalFeatures ?? []) : null;
   }, [settings, globalFeatures]);
 
   const reloadSettings = () => {
-    queryResults.refetch();
+    settingsResults.refetch();
   };
 
-  if (isFailed(queryResults.data)) {
+  if (isFailed(settingsResults.data)) {
     return (
-      <ErrorPage title={'Unable to load user settings'}>{queryResults.data.message}</ErrorPage>
+      <ErrorPage title={'Unable to load user settings'}>{settingsResults.data.message}</ErrorPage>
     );
-  }
-  if (features == null) {
-    return <PageLoading />;
   }
 
   if (role !== UserRole.ROOT && settings.isAccountSuspended) {
@@ -86,14 +102,27 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
   }
 
   return (
-    <Context.Provider value={{ features, settings, reloadSettings }}>
-      {props.children}
-    </Context.Provider>
+    <AsyncResourceRenderer
+      resource={all([queryResult.data, settingsResults.data])}
+      renderLoading={() => {
+        return <PageLoading />;
+      }}
+    >
+      {([statements, settings]) => (
+        <StatementsContext.Provider value={{ statements }}>
+          <SettingsContext.Provider value={{ settings, features, reloadSettings }}>
+            {children}
+          </SettingsContext.Provider>
+        </StatementsContext.Provider>
+      )}
+    </AsyncResourceRenderer>
   );
-}
+};
 
-function useSettingsContext() {
-  const context = useContext(Context);
+export default StatementsProvider;
+
+export function useSettingsContext() {
+  const context = useContext(SettingsContext);
   if (context == null) {
     throw new Error(`Features context is not initialized`);
   }
@@ -112,7 +141,7 @@ export function useReloadSettings() {
 
 export function useFeatures(): FeatureName[] {
   const context = useSettingsContext();
-  return context.features;
+  return context.features || [];
 }
 
 export function useFeatureEnabled(feature: FeatureName): boolean {

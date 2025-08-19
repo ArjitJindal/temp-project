@@ -9,8 +9,7 @@ import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
 import { useApi } from '@/api';
 import { Account, AccountRole, Permission, PermissionStatements } from '@/apis';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
+import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export enum CommentType {
   COMMENT,

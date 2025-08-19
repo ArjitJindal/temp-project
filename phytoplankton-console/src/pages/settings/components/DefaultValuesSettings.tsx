@@ -6,13 +6,13 @@ import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
+  useResources,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import Table from '@/components/library/Table';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
-import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 
 type TableItem = {
   valueType: string;

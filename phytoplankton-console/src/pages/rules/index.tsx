@@ -8,7 +8,10 @@ import { useRulesResults } from './utils';
 import { Authorized } from '@/components/utils/Authorized';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useFeatureEnabled,
+  useResources,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
@@ -18,7 +21,6 @@ import { getOr } from '@/utils/asyncResource';
 import { exportJsonlFile } from '@/utils/json';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 import { hasMinimumPermission } from '@/utils/user-utils';
 
 const TableList = () => {

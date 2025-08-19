@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApi } from '@/api';
-import { PageLoading } from '@/components/PageLoading';
 
 export default function ActiveSessionProvider(props: { children: React.ReactNode }) {
   const api = useApi();
@@ -18,11 +17,10 @@ export default function ActiveSessionProvider(props: { children: React.ReactNode
     searchParams.get('state');
   useEffect(() => {
     if (isPostLogin) {
-      api.getPostLogin().then(() => {
-        navigate('/');
-      });
+      navigate('/');
+      api.getPostLogin();
     }
   }, [navigate, api, isPostLogin]);
 
-  return isPostLogin ? <PageLoading /> : props.children;
+  return props.children;
 }

@@ -2,7 +2,7 @@ import { Resource } from '@flagright/lib/utils';
 import Tabs, { TabItem, Props as TabsProps } from '@/components/library/Tabs';
 import { captureTabEvent } from '@/utils/postHog';
 import { hasMinimumPermission } from '@/utils/user-utils';
-import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
+import { useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const TABS_LINE_HEIGHT = 81;
 

@@ -14,7 +14,6 @@ import { SuperAdminModeProvider } from './SuperAdminModeProvider';
 import { PostHogProviderWrapper } from './PostHogProvider';
 import SessionTimeoutProvider from './SessionTimeoutDetector';
 import ActiveSessionProvider from './ActiveSessionsProvider';
-import { StatementsProvider } from './StatementsProvider';
 import StatementsProviderMock from './mocks/StatementsProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
@@ -41,14 +40,13 @@ const StoryBookProviders = withProviders(
   SideBarProvider,
 );
 const AllProviders = withProviders(
-  ToastsProvider,
   AuthProvider,
+  ToastsProvider,
   AntConfigProvider,
   QueryClientProvider,
   FlagrightUserProvider,
   ApiProvider,
   ActiveSessionProvider,
-  StatementsProvider,
   SettingsProvider,
   SessionTimeoutProvider,
   PostHogProviderWrapper,

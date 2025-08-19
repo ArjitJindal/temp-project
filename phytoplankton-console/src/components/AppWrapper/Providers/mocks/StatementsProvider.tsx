@@ -1,4 +1,4 @@
-import { StatementsContext } from '../StatementsProvider';
+import { StatementsContext } from '../SettingsProvider';
 
 export default function StatementsProviderMock_(props: { children: React.ReactNode }) {
   return (

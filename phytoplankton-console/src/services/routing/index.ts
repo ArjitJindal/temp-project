@@ -4,7 +4,10 @@ import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
 import WorkflowsItemPage from 'src/pages/workflows/workflows-item-page';
 import { Resource } from '@flagright/lib/utils';
 import { PermissionStatements } from '@/apis';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useFeatureEnabled,
+  useResources,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import ForbiddenPage from '@/pages/403';
 import Page404 from '@/pages/404';
 import AccountsPage from '@/pages/accounts';
@@ -46,7 +49,6 @@ import {
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
-import { useResources } from '@/components/AppWrapper/Providers/StatementsProvider';
 import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
