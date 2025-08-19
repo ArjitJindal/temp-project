@@ -2245,6 +2245,12 @@ components:
         tags:
           - key: customKey
             value: customValue
+        metaData:
+          batteryLevel: 76.3
+          deviceLatitude: 13.009711
+          deviceLongitude: 76.102898
+          ipAddress: 79.144.2.20
+          vpnUsed: true
       x-examples:
         example-1:
           userId: 96647cfd9e8fe66ee0f3362e011e34e8
@@ -2288,6 +2294,12 @@ components:
           tags:
             - key: customKey
               value: customValue
+          metaData:
+            batteryLevel: 76.3
+            deviceLatitude: 13.009711
+            deviceLongitude: 76.102898
+            ipAddress: 79.144.2.20
+            vpnUsed: true
       properties:
         activatedTimestamp:
           type: number
@@ -2375,6 +2387,8 @@ components:
           description: Uploaded user's attachment
           items:
             $ref: '#/components/schemas/PersonAttachment'
+        metaData:
+          $ref: '#/components/schemas/DeviceData'
         updateCount:
           x-fern-ignore: true
           type: number
@@ -4283,6 +4297,12 @@ components:
         tags:
           - key: customKey
             value: customValue
+        metaData:
+          batteryLevel: 76.3
+          deviceLatitude: 13.009711
+          deviceLongitude: 76.102898
+          ipAddress: 79.144.2.20
+          vpnUsed: true
       x-examples:
         example-1:
           userId: 96647cfd9e8fe66ee0f3362e011e34e8
@@ -4401,6 +4421,12 @@ components:
           tags:
             - key: customKey
               value: customValue
+          metaData:
+            batteryLevel: 76.3
+            deviceLatitude: 13.009711
+            deviceLongitude: 76.102898
+            ipAddress: 79.144.2.20
+            vpnUsed: true
       description: Model for a business user - optional fields
       properties:
         activatedTimestamp:
@@ -4471,6 +4497,8 @@ components:
           description: User's attachments uploaded by business user
           items:
             $ref: '#/components/schemas/PersonAttachment'
+        metaData:
+          $ref: '#/components/schemas/DeviceData'
         updateCount:
           x-fern-ignore: true
           type: number
