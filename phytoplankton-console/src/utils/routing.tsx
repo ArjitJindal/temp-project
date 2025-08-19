@@ -123,8 +123,9 @@ export function useNavigationParams<Params>(options: {
       const savedDataItem = window.localStorage.getItem(persistId);
       if (savedDataItem != null) {
         try {
-          const result = JSON.parse(savedDataItem);
-          return persist?.adjustParsed ? persist.adjustParsed(result) : result;
+          const rawParams = JSON.parse(savedDataItem);
+          const parsedParams = queryAdapter.deserializer(rawParams);
+          return persist?.adjustParsed ? persist.adjustParsed(parsedParams) : parsedParams;
         } catch (e) {
           console.warn(
             `Unable to parse navigation params from local storage, using default params`,
@@ -141,10 +142,11 @@ export function useNavigationParams<Params>(options: {
   const isParamsChanged = useIsChanged(params);
   useEffect(() => {
     if (isParamsChanged) {
-      const url = makeUrl(queryAdapter.serializer(params));
+      const serializedParams = queryAdapter.serializer(params);
+      const url = makeUrl(serializedParams);
       navigate(url, { replace });
       if (persistId != null) {
-        window.localStorage.setItem(persistId, JSON.stringify(params));
+        window.localStorage.setItem(persistId, JSON.stringify(serializedParams));
       }
     }
   }, [queryAdapter, params, replace, navigate, makeUrl, persistId, isParamsChanged]);
