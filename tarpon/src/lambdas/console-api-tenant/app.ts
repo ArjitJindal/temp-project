@@ -20,7 +20,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { publishAuditLog } from '@/services/audit-log'
-import { envIsNot } from '@/utils/env'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { NarrativeService } from '@/services/tenants/narrative-template-service'
@@ -156,14 +155,6 @@ export const tenantsHandler = lambdaApi()(
         const response = await tenantService.createTenant(
           request.TenantCreationRequest
         )
-        if (envIsNot('prod')) {
-          const fullTenantId = getFullTenantId(tenantId, true)
-          await sendBatchJobCommand({
-            type: 'DEMO_MODE_DATA_LOAD',
-            tenantId: fullTenantId,
-            awsCredentials: getCredentialsFromEvent(event),
-          })
-        }
         return response
       } catch (e) {
         addSentryExtras({
