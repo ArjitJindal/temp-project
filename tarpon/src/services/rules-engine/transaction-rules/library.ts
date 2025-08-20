@@ -520,7 +520,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-11',
       type: 'TRANSACTION',
-      name: 'Transaction Anomaly',
+      name: 'Transaction anomaly',
       description: 'Check for anomalous transaction volumes',
       descriptionTemplate:
         'Transaction volume in last 30 days is anomalously high vs 90-day baseline (stddev)',
@@ -545,7 +545,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-12',
       type: 'TRANSACTION',
-      name: 'Transactions Frequency Anomaly',
+      name: 'Transactions frequency anomaly',
       description: 'Check for anomalous transaction patterns',
       descriptionTemplate:
         'Transaction count in last 30 days is anomalously high vs 90-day baseline (stddev)',
@@ -570,7 +570,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-25',
       type: 'TRANSACTION',
-      name: 'Average Transaction Value Spike',
+      name: 'Average transaction value spike',
       description: 'Check for spikes in average transaction amounts',
       descriptionTemplate:
         'Average transaction value in last 30 days is anomalously high vs 90-day baseline (stddev)',
@@ -595,7 +595,7 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-26',
       type: 'TRANSACTION',
-      name: 'Round-Amount Anomaly',
+      name: 'Round-amount anomaly',
       description: 'Detect abnormal frequency of round-amount transactions',
       descriptionTemplate:
         'Percentage of round-number transactions in last 30 days is anomalously high vs 90-day baseline (stddev)',
