@@ -1,6 +1,6 @@
 import { exit } from 'process'
 import { execSync } from 'child_process'
-import { refreshCredentials } from './deploy-ci'
+import { refreshCredentials } from './utils'
 
 const main = async () => {
   const env = process.argv[2]
@@ -11,7 +11,7 @@ const main = async () => {
 Usage: yarn deploy:cdktf <stage:region>
 
 Example:
-  yarn deploy:cdktf dev:eu1
+  yarn deploy:cdktf dev:eu-1
   yarn deploy:cdktf sandbox:asia-1
 
 Defaulting to 'dev' stage and 'eu-1' region...
