@@ -1,14 +1,21 @@
 import { RuleThresholdOptimizer } from '../index'
 import { VarOptimizationData } from '../types'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 describe('RuleThresholdOptimizer', () => {
-  describe('calculateThreshold', () => {
-    // Create minimal instance for testing just calculateThreshold
-    const optimizer = new RuleThresholdOptimizer('test-tenant-id', {
-      dynamoDb: {} as any,
-      mongoDb: {} as any,
-    })
+  let optimizer: RuleThresholdOptimizer
 
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    optimizer = new RuleThresholdOptimizer('test-tenant-id', {
+      dynamoDb,
+      mongoDb,
+    })
+  })
+
+  describe('calculateThreshold', () => {
     it('should calculate threshold correctly for typical values', () => {
       const testData: VarOptimizationData = {
         varKey: 'test_var',

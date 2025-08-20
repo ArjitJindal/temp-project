@@ -1,4 +1,3 @@
-import { QueryCommand } from '@aws-sdk/client-dynamodb'
 import {
   GetCommand,
   PutCommand,
@@ -89,17 +88,16 @@ export class DynamoAlertRepository {
     alerts: Alert[],
     caseId: string,
     batch?: DynamoTransactionBatch
-  ): Promise<{
-    message?: DynamoConsumerMessage
-  }> {
+  ): Promise<dynamoKeyList> {
     if (!alerts || alerts.length === 0) {
-      return {}
+      return []
     }
     const alertKeys: dynamoKeyList = []
     const shouldExecute = !batch
 
     if (!batch) {
       // Create document client and batch for operations
+
       batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       // Add case update
@@ -154,10 +152,9 @@ export class DynamoAlertRepository {
 
     if (shouldExecute) {
       await batch.executeWithClickhouse(message)
-      return {}
+      return []
     }
-
-    return { message: message[0] }
+    return alertKeys
   }
 
   public async saveCommentsForAlert(
@@ -175,6 +172,7 @@ export class DynamoAlertRepository {
 
     if (!batch) {
       // Create document client and batch for operations
+
       batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       const {
@@ -316,6 +314,7 @@ export class DynamoAlertRepository {
     let activeBatch: DynamoTransactionBatch
     if (!batch) {
       // Create document client and batch for operations
+
       activeBatch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
       // Get timestamp update requests
@@ -383,6 +382,34 @@ export class DynamoAlertRepository {
 
       await activeBatch.executeWithClickhouse(dynamoDbConsumerMessage)
     }
+  }
+
+  /**
+   * Saves transaction IDs to DynamoDB in a different partition
+   *
+   * @param alertId - The ID of the alert to save the transaction IDs for
+   * @param transactionIds - Array of transaction IDs to save
+   * @returns Promise resolving to write operations
+   */
+  public async saveTransactionIds(
+    alertId: string,
+    transactionIds: string[]
+  ): Promise<TransactWriteOperation[]> {
+    if (!transactionIds || transactionIds.length === 0) {
+      return []
+    }
+    const writeRequests: TransactWriteOperation[] = []
+    const key = DynamoDbKeys.ALERT_TRANSACTION_IDS(this.tenantId, alertId)
+    writeRequests.push({
+      Put: {
+        TableName: this.tableName,
+        Item: {
+          ...key,
+          transactionIds,
+        },
+      },
+    })
+    return writeRequests
   }
 
   /**
@@ -468,9 +495,10 @@ export class DynamoAlertRepository {
     alert.caseCreatedTimestamp = caseItem.createdTimestamp
 
     // Create document client and batch for operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
-    const { message } = await this.saveAlertsForCase([alert], caseId, batch)
+    const alertsKeyLists = await this.saveAlertsForCase([alert], caseId, batch)
 
     const updateCaseExpression = `SET caseAggregates = :caseAggregates, caseTransactionsIds = :caseTransactionsIds, caseTransactionsCount = :caseTransactionsCount`
     const updateCaseExpressionAttributeValues = {
@@ -504,8 +532,12 @@ export class DynamoAlertRepository {
       generateDynamoConsumerMessage(this.tenantId, [
         { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
       ])
-    if (message) {
-      dynamoDbConsumerMessage.push(message)
+    if (alertsKeyLists.length > 0) {
+      dynamoDbConsumerMessage.push({
+        tenantId: this.tenantId,
+        tableName: this.AlertsClickhouseTableName,
+        items: alertsKeyLists,
+      })
     }
 
     await batch.executeWithClickhouse(dynamoDbConsumerMessage)
@@ -532,6 +564,7 @@ export class DynamoAlertRepository {
     }
 
     // Create document client and batch for operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     const {
@@ -795,6 +828,7 @@ export class DynamoAlertRepository {
     comment: Comment
   ): Promise<void> {
     // Create document client and batch for operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     // Add all comments to batch
@@ -1379,9 +1413,28 @@ export class DynamoAlertRepository {
 
     return alertIds.map((id) => alertMap[id]).filter(Boolean)
   }
+
+  async getAlertTransactionIds(alertId: string): Promise<string[]> {
+    const key = DynamoDbKeys.ALERT_TRANSACTION_IDS(this.tenantId, alertId)
+    const commandInput: GetCommandInput = {
+      TableName: this.tableName,
+      Key: key,
+    }
+    const command = new GetCommand(commandInput)
+
+    const result = await this.dynamoDb.send(command)
+
+    const transactionIds = (result.Item?.transactionIds as string[]) || []
+
+    return [...new Set(transactionIds)]
+  }
+
   public async getAlertsByCaseIds(
     caseIds: string[],
-    { getComments = false }: { getComments?: boolean } = {}
+    {
+      getComments = false,
+      getTransactionIds = false,
+    }: { getComments?: boolean; getTransactionIds?: boolean } = {}
   ): Promise<Alert[]> {
     const queryPromises = caseIds.map((caseId) => {
       const partitionKey = DynamoDbKeys.CASE_ALERT(
@@ -1404,7 +1457,7 @@ export class DynamoAlertRepository {
     const results = await Promise.all(queryPromises)
 
     // Combine all results
-    const alerts: Alert[] = []
+    let alerts: Alert[] = []
     results.forEach((result) => {
       if (result.Items) {
         alerts.push(...(result.Items as Alert[]))
@@ -1419,16 +1472,60 @@ export class DynamoAlertRepository {
       comments = await this.getComments(alertIds)
       files = await this.getFiles(alertIds)
     }
+    if (getTransactionIds) {
+      alerts = await Promise.all(
+        alerts.map(async (item) => {
+          const transactionIds = await this.getAlertTransactionIds(
+            item.alertId as string
+          )
+          return {
+            ...item,
+            transactionIds,
+          }
+        })
+      )
+    }
+
+    // Create maps for efficient lookup
+    const commentsByAlertId = new Map<string, AlertCommentsInternal[]>()
+    const filesByAlertAndComment = new Map<string, AlertCommentFileInternal[]>()
+
+    // Group comments by alertId
+    comments.forEach((comment) => {
+      const alertId = comment.alertId
+      if (!alertId) {
+        return
+      }
+      if (!commentsByAlertId.has(alertId)) {
+        commentsByAlertId.set(alertId, [])
+      }
+      commentsByAlertId.get(alertId)?.push(comment)
+    })
+
+    // Group files by alertId + commentId combination
+    files.forEach((file) => {
+      if (file.alertId && file.commentId) {
+        const key = `${file.alertId}:${file.commentId}`
+        if (!filesByAlertAndComment.has(key)) {
+          filesByAlertAndComment.set(key, [])
+        }
+        const existingFiles = filesByAlertAndComment.get(key)
+        if (existingFiles) {
+          existingFiles.push(file)
+        }
+      }
+    })
+
     return alerts.map((item) => {
-      const enrichedComments = comments
-        .filter((comment) => comment.alertId === item.alertId)
-        .map((comment) => ({
-          ...comment,
-          files: files.filter(
-            (file) =>
-              file.alertId === item.alertId && file.commentId === comment.id
-          ),
-        }))
+      const alertComments = commentsByAlertId.get(item.alertId as string) || []
+      const enrichedComments = alertComments.map((comment) => ({
+        ...comment,
+        files:
+          item.alertId && comment.id
+            ? filesByAlertAndComment.get(`${item.alertId}:${comment.id}`) || []
+            : [],
+      }))
+
       item = omit(item, ['PartitionKeyID', 'SortKeyID']) as Alert
       return { ...item, comments: enrichedComments }
     })
@@ -1685,11 +1782,13 @@ export class DynamoAlertRepository {
               .PartitionKeyID,
           },
         }
-        const result = await this.dynamoDb.send(new QueryCommand(queryInput))
-        alertIds.push(
-          ...(result.Items?.map((item) => item.alertId as unknown as string) ||
-            [])
-        )
+        const result = await paginateQuery(this.dynamoDb, queryInput)
+        if (result.Items) {
+          const caseAlertIds = result.Items.map(
+            (item) => item.alertId as string
+          ).filter(Boolean)
+          alertIds.push(...caseAlertIds)
+        }
       })
     )
 
@@ -1788,6 +1887,7 @@ export class DynamoAlertRepository {
     const keyLists: dynamoKeyList = []
 
     // Create document client and batch for operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     for (const item of result.Items) {
@@ -1827,6 +1927,7 @@ export class DynamoAlertRepository {
     )
 
     // Create document client from raw client for batch operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     batch.put({

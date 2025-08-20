@@ -67,7 +67,7 @@ export const CASE_COMMENT_KEY_IDENTIFIER = '#case-comment'
 export const CASE_COMMENT_FILE_KEY_IDENTIFIER = '#case-comment-file'
 export const CASE_SUBJECT_KEY_IDENTIFIER = '#case-subject'
 export const CASE_TRANSACTION_IDS_KEY_IDENTIFIER = '#case-transaction-ids'
-
+export const ALERT_TRANSACTION_IDS_KEY_IDENTIFIER = '#alert-transaction-ids'
 export const CRM_RECORD_KEY_IDENTIFIER = '#crm-record'
 export const CRM_RECORD_MODEL_KEY_IDENTIFIER = '#crm-record-model'
 export const CRM_USER_RECORD_LINK_KEY_IDENTIFIER = '#crm-user-record-link'
@@ -84,6 +84,8 @@ export const MIGRATION_PRE_DEPLOYMENT_KEY_IDENTIFIER =
   'migrations-pre-deployment'
 export const MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER =
   'migrations-post-deployment'
+export const DYNAMO_CLICKHOUSE_KEY_IDENTIFIER =
+  '#dynamo-clickhouse-console-backfill'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -148,6 +150,10 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}${ALERT_FILE_ID_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
     SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
+  ALERT_TRANSACTION_IDS: (tenantId: string, alertId: string) => ({
+    PartitionKeyID: `${tenantId}${ALERT_TRANSACTION_IDS_KEY_IDENTIFIER}`,
+    SortKeyID: alertId,
   }),
   CASE_ALERT: (tenantId: string, caseId: string, alertId?: string) => ({
     PartitionKeyID: `${tenantId}#alert#${CASE_ID_PREFIX}${caseId}`,
@@ -670,6 +676,10 @@ export const DynamoDbKeys = {
   SECONDARY_QUEUE_TENANTS: () => ({
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#secondary-queue-tenants`,
     SortKeyID: '1',
+  }),
+  DYNAMO_CLICKHOUSE: (tenantId: string, entity: string) => ({
+    PartitionKeyID: `${tenantId}${DYNAMO_CLICKHOUSE_KEY_IDENTIFIER}`,
+    SortKeyID: entity,
   }),
 }
 

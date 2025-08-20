@@ -117,6 +117,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'BATCH_BUSINESS_USER'
   | 'BATCH_BUSINESS_USER_EVENT'
   | 'CASE_TRANSACTION_IDS'
+  | 'ALERT_TRANSACTION_IDS'
   | 'GPT_REQUESTS'
   | 'MIGRATION_TMP'
   | 'MIGRATION_PRE_DEPLOYMENT'
@@ -385,6 +386,11 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteReasons.bind(this),
         order: 23,
       },
+      DYNAMO_CLICKHOUSE: {
+        method: this.deleteDynamoClickhouse.bind(this),
+        order: 23,
+      },
+
       BATCH_USERS_RERUN_PROGRESS: {
         method: this.deleteBatchUsersRerunProgress.bind(this),
         order: 24,
@@ -1128,7 +1134,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       'Reasons'
     )
   }
-
+  private async deleteDynamoClickhouse(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.DYNAMO_CLICKHOUSE(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Dynamo Clickhouse'
+    )
+  }
   private async deleteWebhooks(tenantId: string) {
     const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId = DynamoDbKeys.WEBHOOK_CONFIGURATION(

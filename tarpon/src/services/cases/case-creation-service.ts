@@ -114,7 +114,8 @@ import {
 import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { isDemoTenant } from '@/utils/tenant'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
+
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
 
@@ -1204,7 +1205,7 @@ export class CaseCreationService {
     subject: CaseSubject,
     params: SubjectCasesQueryParams
   ) {
-    if (isClickhouseMigrationEnabled()) {
+    if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCasesBySubject(subject, params)
     }
     return subject.type === 'USER'

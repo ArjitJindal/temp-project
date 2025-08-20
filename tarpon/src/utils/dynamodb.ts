@@ -38,8 +38,9 @@ import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { StackConstants } from '@lib/constants'
 import { getCredentialsFromEvent } from './credentials'
-import { generateChecksum } from './object'
+import { generateChecksum, removeUndefinedFields } from './object'
 import { addNewSubsegment } from '@/core/xray'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -50,7 +51,7 @@ import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
-
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
 export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
@@ -748,7 +749,36 @@ export async function transactWrite(
   dynamoDb: DynamoDBDocumentClient,
   operations: TransactWriteOperation[]
 ): Promise<void> {
-  for (const nextChunk of chunk(operations, 100)) {
+  // Clean up ExpressionAttributeValues by removing undefined fields for all operation types
+  const cleanedOperations = operations.map((operation) => {
+    if (operation.Put && operation.Put.ExpressionAttributeValues) {
+      operation.Put.ExpressionAttributeValues = removeUndefinedFields(
+        operation.Put.ExpressionAttributeValues
+      )
+    }
+    if (operation.Delete && operation.Delete.ExpressionAttributeValues) {
+      operation.Delete.ExpressionAttributeValues = removeUndefinedFields(
+        operation.Delete.ExpressionAttributeValues
+      )
+    }
+    if (operation.Update && operation.Update.ExpressionAttributeValues) {
+      operation.Update.ExpressionAttributeValues = removeUndefinedFields(
+        operation.Update.ExpressionAttributeValues
+      )
+    }
+    if (
+      operation.ConditionCheck &&
+      operation.ConditionCheck.ExpressionAttributeValues
+    ) {
+      operation.ConditionCheck.ExpressionAttributeValues =
+        removeUndefinedFields(
+          operation.ConditionCheck.ExpressionAttributeValues
+        )
+    }
+    return operation
+  })
+
+  for (const nextChunk of chunk(cleanedOperations, 100)) {
     let retryCount = 0
     let retryDelay = 100
     let success = false
@@ -1042,4 +1072,17 @@ export async function sendMessageToDynamoDbConsumer(
       MessageBody: JSON.stringify(message),
     })
   )
+}
+
+export async function isBackfillDone(
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  entity: string
+) {
+  const command = new GetCommand({
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+    Key: DynamoDbKeys.DYNAMO_CLICKHOUSE(tenantId, entity),
+  })
+  const commandResult = await dynamoDb.send(command)
+  return commandResult.Item?.isMigrated === true
 }

@@ -8490,6 +8490,7 @@ components:
         - AUDIT_LOG
         - METRICS
         - BATCH_JOBS
+        - CASES
         - WEBHOOK_CONFIGURATION
         - WEBHOOK_DELIVERY
     FlatFileSchema:
@@ -12781,6 +12782,7 @@ components:
         - CHAINALYSIS
         - WORKFLOWS_BUILDER
         - TRANSLITERATION
+        - CONSOLE_MIGRATION
         - OPEN_SEARCH
         - APPROVAL_WORKFLOWS
         - USER_CHANGES_APPROVAL

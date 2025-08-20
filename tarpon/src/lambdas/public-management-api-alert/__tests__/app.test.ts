@@ -73,7 +73,11 @@ describe('Test Create Alert', () => {
       caseId: 'CA-1',
       entityDetails: {
         type: 'PAYMENT',
-        paymentDetails: { method: 'WALLET', walletType: 'PAYTM' },
+        paymentDetails: {
+          method: 'WALLET',
+          walletType: 'PAYTM',
+          walletId: '1234567890',
+        },
       },
       priority: 'P1',
       createdTimestamp: Date.now(),
@@ -95,6 +99,7 @@ describe('Test Create Alert', () => {
         paymentDetails: {
           method: 'WALLET',
           walletType: 'PAYTM',
+          walletId: '1234567890',
         },
       },
       priority: 'P1',

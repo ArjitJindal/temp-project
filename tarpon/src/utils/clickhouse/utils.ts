@@ -354,6 +354,10 @@ export function isClickhouseMigrationEnabled() {
   return isClickhouseEnabledInRegion() && hasFeature('CLICKHOUSE_MIGRATION')
 }
 
+export function isConsoleMigrationEnabled() {
+  return isClickhouseEnabledInRegion() && hasFeature('CONSOLE_MIGRATION')
+}
+
 const getAllColumns = (table: ClickhouseTableDefinition) => [
   'id String',
   'data String',

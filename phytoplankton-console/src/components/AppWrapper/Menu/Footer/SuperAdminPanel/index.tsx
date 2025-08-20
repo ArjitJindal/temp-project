@@ -191,6 +191,12 @@ export const featureDescriptions: Record<
     description: 'Enables opensearch for screening searches',
     tag: FeatureTag.ENG,
   },
+  CONSOLE_MIGRATION: {
+    title: 'Console migration',
+    description: 'Enables console migration for cases and alerts',
+    tag: FeatureTag.WIP,
+  },
+
   APPROVAL_WORKFLOWS: {
     title: 'Approval workflows',
     description: 'Enables approval workflows',

@@ -136,15 +136,48 @@ export class CaseClickhouseRepository {
     if (params.filterPriority != null) {
       conditions.push(`priority IN ('${params.filterPriority}')`)
     }
-    if (params.afterTimestamp != null || params.beforeTimestamp != null) {
+    const nowTimestamp = Date.now()
+    if (
+      params.afterTimestamp != null &&
+      params.afterTimestamp > 0 &&
+      params.beforeTimestamp != null &&
+      params.beforeTimestamp < nowTimestamp * 10
+    ) {
       const timeConditions: string[] = []
-      if (params.afterTimestamp != null) {
-        timeConditions.push(`timestamp >= ${params.afterTimestamp}`)
+      const afterDate = new Date(params.afterTimestamp)
+      const beforeDate = new Date(params.beforeTimestamp)
+
+      const afterPartition =
+        afterDate.getFullYear() * 100 + (afterDate.getMonth() + 1)
+      const beforePartition =
+        beforeDate.getFullYear() * 100 + (beforeDate.getMonth() + 1)
+
+      if (afterPartition === beforePartition) {
+        conditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) = ${afterPartition}`
+        )
+      } else {
+        conditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) >= ${afterPartition}`
+        )
+        conditions.push(
+          `toYYYYMM(toDateTime(timestamp / 1000)) <= ${beforePartition}`
+        )
       }
-      if (params.beforeTimestamp != null) {
-        timeConditions.push(`timestamp <= ${params.beforeTimestamp}`)
-      }
+
+      timeConditions.push(`negativeTimestamp <= ${-1 * params.afterTimestamp}`)
+      timeConditions.push(`negativeTimestamp >= ${-1 * params.beforeTimestamp}`)
       conditions.push(`(${timeConditions.join(' AND ')})`)
+    } else {
+      if (params.afterTimestamp != null && params.afterTimestamp > 0) {
+        conditions.push(`negativeTimestamp <= ${-1 * params.afterTimestamp}`)
+      }
+      if (
+        params.beforeTimestamp != null &&
+        params.beforeTimestamp < nowTimestamp * 10
+      ) {
+        conditions.push(`negativeTimestamp >= ${-1 * params.beforeTimestamp}`)
+      }
     }
 
     // Add filter for case closure reasons
@@ -389,7 +422,7 @@ export class CaseClickhouseRepository {
         "','"
       )}'])
     OR
-    (${key} = [] OR ${key} = ''))
+    (${key} = [] OR empty(${key})))
   `
     } else {
       assignmentCondition = `hasAny(${assignmentArrayExtraction}, ['${filterAssignmentsIds.join(
@@ -409,7 +442,7 @@ export class CaseClickhouseRepository {
       conditions.push(
         `ruleQueueId IN ('${params.filterRuleQueueIds.join(
           "','"
-        )}') ${defaultCondition})`
+        )}') ${defaultCondition}`
       )
     }
     if (params.filterRulesHit != null) {
@@ -862,20 +895,22 @@ export class CaseClickhouseRepository {
   }> {
     const assignmentsQuery = `
       SELECT 
-        id as caseId,
-        arrayLength(assignments) > 1 as hasMultipleAssignments
+        id AS caseId,
+        count(*) > 1 AS hasMultipleAssignments
       FROM ${CASES_TABLE_NAME_CH} FINAL
       ARRAY JOIN assignments
       WHERE assignments.assigneeUserId = '${assigneeId}'
+      GROUP BY id
     `
 
     const reviewAssignmentsQuery = `
       SELECT 
-        id as caseId,
-        arrayLength(reviewAssignments) > 1 as hasMultipleAssignments
+        id AS caseId,
+        count(*) > 1 AS hasMultipleAssignments
       FROM ${CASES_TABLE_NAME_CH} FINAL
       ARRAY JOIN reviewAssignments
       WHERE reviewAssignments.assigneeUserId = '${assigneeId}'
+      GROUP BY id
     `
 
     const [assignmentResults, reviewAssignmentResults] = await Promise.all([

@@ -1,5 +1,4 @@
 import { Document, MongoClient } from 'mongodb'
-import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import {
   getAllGlobalSanctionsCollectionDefinition,
@@ -554,40 +553,11 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         })
 
         txnIndexes.push(
-          {
-            destinationUserId: 1,
-            'executedRules.ruleInstanceId': 1,
-            timestamp: 1,
-            _id: 1,
-          },
-          {
-            originUserId: 1,
-            'executedRules.ruleInstanceId': 1,
-            timestamp: 1,
-            _id: 1,
-          },
           { originUserId: 1, timestamp: -1, _id: -1 },
           { destinationUserId: 1, timestamp: -1, _id: -1 },
-          { arsScore: 1 },
           { alertIds: 1, timestamp: -1, _id: -1 },
           { timestamp: 1, _id: 1 }
         )
-
-        // NOTE: These indexes are for running the rules in the Simulation mode
-        for (const fields of Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)) {
-          txnIndexes.push({
-            'originPaymentDetails.method': 1,
-            ...Object.fromEntries(
-              fields.map((field) => [`originPaymentDetails.${field}`, 1])
-            ),
-          })
-          txnIndexes.push({
-            'destinationPaymentDetails.method': 1,
-            ...Object.fromEntries(
-              fields.map((field) => [`destinationPaymentDetails.${field}`, 1])
-            ),
-          })
-        }
 
         const uniqueTransactionIdIndex = {
           index: { transactionId: 1 },

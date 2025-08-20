@@ -1,6 +1,7 @@
 import {
   GetCommand,
   GetCommandInput,
+  NativeAttributeValue,
   QueryCommandInput,
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
@@ -69,6 +70,7 @@ export class DynamoCaseRepository {
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly dynamoAlertRepository: DynamoAlertRepository
   private readonly tableName: string
+  private readonly alertsClickhouseTableName: string
 
   /**
    * Initializes a new DynamoCaseRepository instance
@@ -81,6 +83,7 @@ export class DynamoCaseRepository {
     this.dynamoDb = dynamoDb
     this.dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    this.alertsClickhouseTableName = CLICKHOUSE_DEFINITIONS.ALERTS.tableName
   }
 
   /**
@@ -120,7 +123,7 @@ export class DynamoCaseRepository {
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     const keyLists: dynamoKeyList = []
-    let alertsMessage: { message?: DynamoConsumerMessage } = {}
+    let alertsKeyLists: dynamoKeyList = []
 
     for (const caseItem of cases) {
       const caseId = caseItem.caseId as string
@@ -179,10 +182,12 @@ export class DynamoCaseRepository {
       await this.saveCaseTransactionIds(caseId, caseTransactionIds, batch)
 
       // Add case alerts if they exist
-      alertsMessage = await this.dynamoAlertRepository.saveAlertsForCase(
-        alertsToSave,
-        caseId,
-        batch
+      alertsKeyLists = alertsKeyLists.concat(
+        await this.dynamoAlertRepository.saveAlertsForCase(
+          alertsToSave,
+          caseId,
+          batch
+        )
       )
     }
     let dynamoDbConsumerMessage: DynamoConsumerMessage[] = []
@@ -190,8 +195,12 @@ export class DynamoCaseRepository {
       dynamoDbConsumerMessage = generateDynamoConsumerMessage(this.tenantId, [
         { keyLists: keyLists, tableName: CASES_TABLE_NAME_CH },
       ])
-      if (alertsMessage.message) {
-        dynamoDbConsumerMessage.push(alertsMessage.message)
+      if (alertsKeyLists.length > 0) {
+        dynamoDbConsumerMessage.push({
+          tenantId: this.tenantId,
+          tableName: this.alertsClickhouseTableName,
+          items: alertsKeyLists,
+        })
       }
     }
 
@@ -382,51 +391,63 @@ export class DynamoCaseRepository {
   public async updateStatus(
     caseIds: string[],
     statusChange: CaseStatusChange,
-    isLastInReview?: boolean
+    isLastInReview?: boolean,
+    lastStatusChangeUserIdCaseIdMap?: Map<string, string>
   ) {
     const now = Date.now()
-
-    const updateExpression = `SET lastStatusChange = :statusChange, updatedAt = :updatedAt, ${
-      isLastInReview
-        ? 'userId = lastStatusChange.userId, reviewerId = :reviewerId'
-        : 'userId = :userId'
-    }, statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange), caseStatus = :caseStatus`
-
-    const expressionAttributeValues = removeUndefinedFields({
-      ':statusChange': [statusChange],
-      ...(!isLastInReview && { ':userId': statusChange.userId }),
-      ...(isLastInReview && { ':reviewerId': statusChange.userId }),
-      ':updatedAt': now,
-      ':caseStatus': statusChange.caseStatus,
-      ':empty_list': [],
-    })
-
     const operationsAndKeyLists = await Promise.all(
       caseIds.map(async (caseId) => {
         const caseItem = await this.getCaseById(caseId)
         if (!caseItem) {
           return { operations: [], keyLists: [] }
         }
+
+        const lastStatusChangeUserId =
+          lastStatusChangeUserIdCaseIdMap?.get(caseId)
+
+        const updateExpressionParts = [
+          'lastStatusChange = :statusChange',
+          'updatedAt = :updatedAt',
+          'caseStatus = :caseStatus',
+          'statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange)',
+        ]
+
+        const expressionAttributeValues: Record<string, NativeAttributeValue> =
+          {
+            ':statusChange': [statusChange],
+            ':updatedAt': now,
+            ':caseStatus': statusChange.caseStatus,
+            ':empty_list': [],
+          }
+
+        if (isLastInReview) {
+          const reviewerId = lastStatusChangeUserId
+          updateExpressionParts.push('reviewerId = :reviewerId')
+          expressionAttributeValues[':reviewerId'] = reviewerId
+        } else {
+          updateExpressionParts.push('userId = :userId')
+          expressionAttributeValues[':userId'] = statusChange.userId
+        }
+        const updateExpression = 'SET ' + updateExpressionParts.join(', ')
         return await createUpdateCaseQueries(this.tenantId, this.tableName, {
           caseId,
           UpdateExpression: updateExpression,
-          ExpressionAttributeValues: expressionAttributeValues,
+          ExpressionAttributeValues: removeUndefinedFields(
+            expressionAttributeValues
+          ),
           caseItem,
         })
       })
     )
-
     const operations = operationsAndKeyLists.flatMap(
       (result) => result.operations
     )
     const keyLists = operationsAndKeyLists.flatMap((result) => result.keyLists)
-
     // Create dynamic consumer message for Clickhouse
     const dynamoDbConsumerMessage: DynamoConsumerMessage[] =
       generateDynamoConsumerMessage(this.tenantId, [
         { keyLists: keyLists, tableName: CASES_TABLE_NAME_CH },
       ])
-
     await transactWriteWithClickhouse(
       this.dynamoDb,
       operations,
@@ -456,6 +477,7 @@ export class DynamoCaseRepository {
     const shouldExecute = !batch
     if (!batch) {
       // If no batch provided, create one and execute immediately
+
       batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
     }
 
@@ -778,10 +800,12 @@ export class DynamoCaseRepository {
       joinAlerts = false,
       joinComments = false,
       joinFiles = false,
+      joinTransactionIds = false,
     }: {
       joinAlerts?: boolean
       joinComments?: boolean
       joinFiles?: boolean
+      joinTransactionIds?: boolean
     } = {}
   ): Promise<Case[]> {
     // Extract case IDs from the results
@@ -822,6 +846,16 @@ export class DynamoCaseRepository {
         })),
       }))
     }
+    if (joinTransactionIds) {
+      cases = await Promise.all(
+        cases.map(async (caseItem) => ({
+          ...caseItem,
+          transactionIds: await this.getCasesTransactions(
+            caseItem.caseId as string
+          ),
+        }))
+      )
+    }
     // If not joining alerts, return cases
     if (!joinAlerts) {
       return cases
@@ -829,7 +863,10 @@ export class DynamoCaseRepository {
 
     // Join alerts data if required
     const alertsData = await this.dynamoAlertRepository.getAlertsByCaseIds(
-      caseIds
+      caseIds,
+      {
+        getTransactionIds: joinTransactionIds,
+      }
     )
 
     // Convert alerts data to a map with caseId as key
@@ -956,6 +993,7 @@ export class DynamoCaseRepository {
       joinAlerts: true,
       joinComments: true,
       joinFiles: true,
+      joinTransactionIds: true,
     })
   }
 
@@ -1034,6 +1072,15 @@ export class DynamoCaseRepository {
     }))
   }
 
+  public async getTransactionIdsForCaseIds(
+    caseIds: string[]
+  ): Promise<string[]> {
+    const transactionIds = await Promise.all(
+      caseIds.map(this.getCasesTransactions)
+    )
+    return [...new Set(transactionIds.flat())]
+  }
+
   /**
    * Get all transaction IDs associated with a case
    * This method retrieves transaction IDs from all alerts linked to the specified case
@@ -1042,24 +1089,17 @@ export class DynamoCaseRepository {
    * @returns Promise resolving to an array of transaction IDs
    */
   public async getCasesTransactions(caseId: string): Promise<string[]> {
-    const partitionKey = DynamoDbKeys.CASE_ALERT(
-      this.tenantId,
-      caseId
-    ).PartitionKeyID
+    const key = DynamoDbKeys.CASE_TRANSACTION_IDS(this.tenantId, caseId)
 
-    const queryInput: QueryCommandInput = {
+    const commandInput: GetCommandInput = {
       TableName: this.tableName,
-      KeyConditionExpression: 'PartitionKeyID = :pk',
-      ExpressionAttributeValues: {
-        ':pk': partitionKey,
-      },
-      ProjectionExpression: 'transactionIds',
+      Key: key,
     }
+    const command = new GetCommand(commandInput)
 
-    const result = await paginateQuery(this.dynamoDb, queryInput)
+    const result = await this.dynamoDb.send(command)
 
-    const transactionIds =
-      result.Items?.flatMap((alert) => alert.transactionIds || []) || []
+    const transactionIds = (result.Item?.transactionIds as string[]) || []
 
     return [...new Set(transactionIds)]
   }
@@ -1227,6 +1267,7 @@ export class DynamoCaseRepository {
       })
 
     // Create document client and batch for operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     // Add case operations to batch
@@ -1790,6 +1831,7 @@ export class DynamoCaseRepository {
     }
 
     // Create document client and batch for all operations
+
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
     let allKeyLists: dynamoKeyList = []

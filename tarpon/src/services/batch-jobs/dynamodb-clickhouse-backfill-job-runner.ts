@@ -1,5 +1,7 @@
 import { MongoClient } from 'mongodb'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { UpdateCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { ApiUsageMetrics } from '../metrics/utils'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -13,9 +15,10 @@ import { logger } from '@/core/logger'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import {
   API_REQUEST_LOGS_COLLECTION,
-  GPT_REQUESTS_COLLECTION,
   AUDITLOG_COLLECTION,
+  GPT_REQUESTS_COLLECTION,
   JOBS_COLLECTION,
+  CASES_COLLECTION,
   WEBHOOK_COLLECTION,
   WEBHOOK_DELIVERY_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -24,6 +27,8 @@ import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { Case } from '@/@types/openapi-internal/Case'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/all'
 
@@ -66,6 +71,12 @@ export class DynamodbClickhouseBackfillBatchJobRunner extends BatchJobRunner {
       case 'API_REQUEST_LOGS':
         await handleApiRequestLogsBatchJob(job, {
           mongoDb,
+        })
+        break
+      case 'CASES':
+        await handleCasesBatchJob(job, {
+          mongoDb,
+          dynamoDb,
         })
         break
       case 'BATCH_JOBS':
@@ -263,6 +274,65 @@ export const handleMetricsBatchJob = async (
       await metricsService.linkMetricsToClickhouse(job.tenantId, metrics)
     },
     { mongoBatchSize: 100, processBatchSize: 10, debug: true }
+  )
+}
+
+export const handleCasesBatchJob = async (
+  job: DynamodbClickhouseBackfillBatchJob,
+  {
+    mongoDb,
+    dynamoDb,
+  }: {
+    mongoDb: MongoClient
+    dynamoDb: DynamoDBClient
+  }
+) => {
+  const { DynamoCaseRepository } = await import(
+    '@/services/cases/dynamo-repository'
+  )
+  const keys = DynamoDbKeys.DYNAMO_CLICKHOUSE(job.tenantId, 'CASES_ALERTS')
+  const createdAt = Date.now()
+  await dynamoDb.send(
+    new UpdateCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(job.tenantId),
+      Key: keys,
+      UpdateExpression: 'SET isMigrated = :isMigrated, createdAt = :createdAt',
+      ExpressionAttributeValues: {
+        ':isMigrated': false,
+        ':createdAt': createdAt,
+      },
+    })
+  )
+  const db = mongoDb.db()
+  const casesCollection = db.collection<Case>(CASES_COLLECTION(job.tenantId))
+  const caseRepository = new DynamoCaseRepository(job.tenantId, dynamoDb)
+  await processCursorInBatch(
+    casesCollection.find({}),
+    async (cases) => {
+      await caseRepository.saveCases(cases, job.parameters.saveToClickhouse)
+    },
+    { mongoBatchSize: 1000, processBatchSize: 100, debug: true }
+  )
+  const updatedAt = Date.now()
+  await dynamoDb.send(
+    new UpdateCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(job.tenantId),
+      Key: keys,
+      UpdateExpression: 'SET isMigrated = :isMigrated, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':isMigrated': true,
+        ':updatedAt': updatedAt,
+      },
+    })
+  )
+  await processCursorInBatch(
+    casesCollection.find({
+      updatedAt: { $exists: true, $gte: createdAt, $lt: updatedAt },
+    }),
+    async (cases) => {
+      await caseRepository.saveCases(cases, job.parameters.saveToClickhouse)
+    },
+    { mongoBatchSize: 1000, processBatchSize: 100, debug: true }
   )
 }
 
