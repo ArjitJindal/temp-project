@@ -153,7 +153,7 @@ function renderValue(
     const tags: ApiTag[] = Array.isArray(value) ? value : [value];
     return tags.filter(notNullish).map((tag) => <KeyValueTag key={tag.key} tag={tag} />);
   }
-  if (key === 'bankAddress' || key === 'shippingAddress') {
+  if (['bankAddress', 'shippingAddress', 'billingAddress', 'address'].includes(key)) {
     const address = value as ApiAddress;
     return <Address address={address} />;
   }
