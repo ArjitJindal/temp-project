@@ -216,17 +216,11 @@ Cypress.Commands.add('multiSelect', (preSelector, options, params = {}) => {
               `*[data-cy^=menu-item-label][title${
                 fullOptionMatch ? '=' : '^='
               }"${toSelectElement}"]`,
-            ).scrollIntoView();
-            cy.get(
-              `*[data-cy^=menu-item-label][title${
-                fullOptionMatch ? '=' : '^='
-              }"${toSelectElement}"]:visible`,
             ).click();
           }
         }
       });
   });
-  cy.get('body').click();
 });
 
 Cypress.Commands.add('caseAlertAction', (action: string) => {

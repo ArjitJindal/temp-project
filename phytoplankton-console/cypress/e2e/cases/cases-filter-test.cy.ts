@@ -52,7 +52,9 @@ describe('Filter according to case id (optimized)', () => {
     cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
     cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
     cy.get('[data-cy="rules-filter"]:contains("Alert priority")').first().click();
-    cy.multiSelect('[data-cy=QuickFilter]', 'P1');
+    cy.multiSelect('[data-cy=QuickFilter]', 'P1', {
+      fullOptionMatch: true,
+    });
   });
 
   it('should filter according to rule name', () => {
