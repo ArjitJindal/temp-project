@@ -23,7 +23,14 @@ import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_COMMENTS, ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
-import { all, AsyncResource, getOr, success, useFinishedSuccessfully } from '@/utils/asyncResource';
+import {
+  all,
+  AsyncResource,
+  getOr,
+  isSuccess,
+  success,
+  useFinishedSuccessfully,
+} from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
@@ -108,12 +115,13 @@ function CaseDetails(props: Props) {
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
   const tabs = useTabs(caseItemRes, expandedAlertId, alertIds, comments);
-  const { tab = tabs[0].key } = useParams<'list' | 'id' | 'tab'>();
+  const { tab } = useParams<'list' | 'id' | 'tab'>();
+  const activeTabKey = tab ?? tabs[0]?.key ?? '';
   return (
     <>
       <PageTabs
         sticky={entityHeaderHeight}
-        activeKey={tab}
+        activeKey={activeTabKey}
         onChange={(newTab) => {
           navigate(
             keepBackUrl(makeUrl('/case-management/case/:id/:tab', { id: caseId, tab: newTab })),
@@ -187,24 +195,21 @@ function useTabs(
   comments: CommentsHandlers,
 ): TabItem[] {
   const settings = useSettings();
-  const caseItem = getOr(caseItemRes, undefined);
   const api = useApi();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
+  const [users] = useUsers();
+  const riskClassificationValues = useRiskClassificationScores();
+  const queryClient = useQueryClient();
+  const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
+  const caseItem = isSuccess(caseItemRes) ? caseItemRes.value : undefined;
+  const entityIds = caseItem ? getEntityIds(caseItem) : [];
   const paymentDetails =
     caseItem?.paymentDetails?.origin ?? caseItem?.paymentDetails?.destination ?? undefined;
   const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
-  const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
-  const isUserSubject = subjectType === 'USER';
-  const isPaymentSubject = subjectType === 'PAYMENT';
-  const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
-  const entityIds = getEntityIds(caseItem);
-  const [users, _] = useUsers();
-
-  const riskClassificationValues = useRiskClassificationScores();
-
-  const queryClient = useQueryClient();
-  const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
+  const linkingState = useLinkingState(user?.userId ?? '');
+  const handleFollow = useUserEntityFollow(linkingState);
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -212,7 +217,7 @@ function useTabs(
     { commentId: string; groupId: string }
   >(
     async (variables) => {
-      if (caseItem?.caseId == null) {
+      if (!caseItem?.caseId) {
         throw new Error(`Case is null`);
       }
       const { commentId, groupId } = variables;
@@ -261,17 +266,23 @@ function useTabs(
       },
     },
   );
-  const linkingState = useLinkingState(user?.userId ?? '');
-  const handleFollow = useUserEntityFollow(linkingState);
+  const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
+  const isUserSubject = subjectType === 'USER';
+  const isPaymentSubject = subjectType === 'PAYMENT';
+
+  if (!caseItem) {
+    return [];
+  }
 
   return [
-    isPaymentSubject && {
-      title: 'Payment identifier details',
-      key: 'payment-details',
-      children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
-      isClosable: false,
-      isDisabled: false,
-    },
+    isPaymentSubject &&
+      paymentDetails?.method && {
+        title: 'Payment identifier details',
+        key: 'payment-details',
+        children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
+        isClosable: false,
+        isDisabled: false,
+      },
     isUserSubject && {
       title: `${firstLetterUpper(settings.userAlias)} details`,
       key: 'user-details',

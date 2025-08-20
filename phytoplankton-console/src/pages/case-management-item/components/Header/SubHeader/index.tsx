@@ -160,10 +160,13 @@ export default function SubHeader(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.attributes}>
-        {caseItem &&
-          (caseItem.subjectType === 'PAYMENT'
-            ? paymentSubjectLabels(caseItem)
-            : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias)))}
+        <Skeleton res={caseItemRes}>
+          {(caseItem) =>
+            caseItem.subjectType === 'PAYMENT'
+              ? paymentSubjectLabels(caseItem)
+              : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias))
+          }
+        </Skeleton>
         <Form.Layout.Label title={'Created at'}>
           <Skeleton res={caseItemRes}>
             {(caseItem) =>
@@ -362,7 +365,7 @@ function paymentSubjectLabels(caseItem: Case) {
 }
 
 function userSubjectLabels(caseItem: Case, userAlias: string) {
-  const caseUser = (caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined) as
+  const caseUser = (caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination) as
     | TableUser
     | undefined;
 
