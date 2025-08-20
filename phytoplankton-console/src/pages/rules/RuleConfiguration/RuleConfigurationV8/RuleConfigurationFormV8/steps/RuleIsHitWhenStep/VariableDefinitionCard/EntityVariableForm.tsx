@@ -83,10 +83,14 @@ export function getInitialFormValues(
   ruleType: RuleType,
   variable: LogicEntityVariableInUse | undefined,
   entityVariables: LogicEntityVariable[],
+  variableType?: 'TRANSACTION' | 'USER',
 ): FormRuleEntityVariable {
   const entityVariable = entityVariables.find((v) => v.key === variable?.entityKey);
   if (!entityVariable) {
-    if (ruleType === 'TRANSACTION') {
+    if (variableType === 'USER') {
+      return { type: 'USER', userType: 'BOTH' };
+    }
+    if (ruleType === 'TRANSACTION' || variableType === 'TRANSACTION') {
       return { type: 'TRANSACTION' };
     }
     return { type: 'USER', userType: 'BOTH' };
@@ -441,7 +445,14 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             onChangeFilterParams={(params) => {
               setFilterParams(params);
               setSearchKey('');
-              setFormValues(getInitialFormValues(ruleType, undefined, entityVariables));
+              setFormValues(
+                getInitialFormValues(
+                  ruleType,
+                  undefined,
+                  entityVariables,
+                  params.types as 'TRANSACTION' | 'USER',
+                ),
+              );
             }}
             placeholder="Search for entity variable here or configure below"
             onClear={() => {
