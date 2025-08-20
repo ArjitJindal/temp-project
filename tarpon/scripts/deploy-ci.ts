@@ -89,7 +89,7 @@ const main = async () => {
   })
   execSync('npm run cdktf:init', { stdio: 'inherit' })
   execSync(
-    `npm run deploy:cdktf ${stage}:${region} ${isPipeline ? '--CI' : ''}`,
+    `npm run deploy:cdktf ${stage}:${region} ${isPipeline ? 'CI' : ''}`,
     {
       stdio: 'inherit',
     }

@@ -15,12 +15,13 @@ Example:
   yarn deploy:cdktf sandbox:asia-1
 
 Defaulting to 'dev' stage and 'eu-1' region...
+CI flag indicates deployment is done by pipeline
           `)
   }
   const selectedEnv = env || 'dev:eu-1'
   const [stage, region] = selectedEnv.split(':')
 
-  const isPipeline = args.includes('--CI')
+  const isPipeline = args.includes('CI')
 
   if (isPipeline) {
     await refreshCredentials(stage, region)
