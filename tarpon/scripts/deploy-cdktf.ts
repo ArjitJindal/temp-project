@@ -1,8 +1,10 @@
 import { exit } from 'process'
 import { execSync } from 'child_process'
+import { refreshCredentials } from './deploy-ci'
 
 const main = async () => {
   const env = process.argv[2]
+  const args = process.argv.slice(3)
 
   if (!env) {
     console.info(`
@@ -16,6 +18,13 @@ Defaulting to 'dev' stage and 'eu-1' region...
           `)
   }
   const selectedEnv = env || 'dev:eu-1'
+  const [stage, region] = selectedEnv.split(':')
+
+  const isPipeline = args.includes('--CI')
+
+  if (isPipeline) {
+    await refreshCredentials(stage, region)
+  }
 
   const command = `ENV='${selectedEnv}' ASSUME_ROLE_ARN='' cdktf deploy --quiet --auto-approve`
 

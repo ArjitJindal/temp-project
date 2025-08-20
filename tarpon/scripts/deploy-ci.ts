@@ -1,10 +1,31 @@
 import { execSync } from 'child_process'
+import { getTarponConfig } from '@flagright/lib/constants/config'
+
+export const refreshCredentials = async (stage: string, region: string) => {
+  const config = getTarponConfig(stage, region)
+  if (!config) {
+    console.error('Invalid stage or region')
+    process.exit(1)
+  }
+  console.info('Refreshing AWS credentials')
+
+  const commands = [
+    `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,
+    `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy-${config.region})`,
+    'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
+    'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
+    'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
+  ]
+
+  execSync(commands.join(' && '), { stdio: 'inherit' })
+}
 
 const main = async () => {
   // example: yarn deploy:sandbox:ci --region=asia-1 --stage=dev
   const args = process.argv.slice(2)
   const region = args.find((arg) => arg.startsWith('--region='))?.split('=')[1]
   const stage = args.find((arg) => arg.startsWith('--stage='))?.split('=')[1]
+  const isPipeline = args.includes('--CI')
   const clean = args.includes('--clean')
   const synth = args.includes('--synth')
 
@@ -66,6 +87,10 @@ const main = async () => {
 
   process.env.ENV = config.env
 
+  if (region && isPipeline) {
+    await refreshCredentials(stage, region)
+  }
+
   if (clean) {
     execSync(`./torpedo/build.sh`, { stdio: 'inherit' })
     execSync('yarn build', { stdio: 'inherit' })
@@ -83,7 +108,12 @@ const main = async () => {
     stdio: 'inherit',
   })
   execSync('npm run cdktf:init', { stdio: 'inherit' })
-  execSync(`npm run deploy:cdktf ${stage}:${region}`, { stdio: 'inherit' })
+  execSync(
+    `npm run deploy:cdktf ${stage}:${region} ${isPipeline ? '--CI' : ''}`,
+    {
+      stdio: 'inherit',
+    }
+  )
 }
 
 void main().catch((e) => {

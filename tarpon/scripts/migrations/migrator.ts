@@ -200,7 +200,3 @@ main()
     console.error(e)
     exit(1)
   })
-  .finally(async () => {
-    console.info('Migrations completed, refreshing credentials')
-    await refreshCredentials()
-  })
