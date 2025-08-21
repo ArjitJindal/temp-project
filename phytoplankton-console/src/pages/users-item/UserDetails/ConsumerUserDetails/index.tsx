@@ -1,4 +1,5 @@
 import Attachments from '../Attachments';
+import LinkedEntitiesTable from '../BusinessUserDetails/LegalEntityDetails/LinkedEntitiesTable';
 import GeneralDetails from './GeneralDetails';
 import LegalDocuments from './LegalDocuments';
 import ContactDetails from '@/pages/users-item/UserDetails/shared/ContactDetailsCard';
@@ -69,6 +70,9 @@ export default function ConsumerUserDetails(props: Props) {
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={3}>
         <SavedPaymentDetails user={user} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={3}>
+        <LinkedEntitiesTable userId={user.userId} />
       </EntityInfoGrid.Cell>
     </EntityInfoGrid.Root>
   );

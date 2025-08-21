@@ -261,7 +261,17 @@ export const USER_EVENTS_LIST = (params: AnyParameters): QueryKey => [
 ];
 export const USERS_ITEM = (userId: string | undefined): QueryKey => ['users', 'item', userId];
 export const USERS_ENTITY = (userId: string | undefined): QueryKey => ['users', 'entity', userId];
-
+export const USERS_ENTITY_LINKED_ENTITIES_PARENT = (userId: string | undefined): QueryKey => [
+  'users',
+  'entity',
+  userId,
+  'linked-entities',
+  'parent',
+];
+export const USERS_ENTITY_LINKED_ENTITIES_CHILD = (
+  userId: string | undefined,
+  params?: AnyParameters,
+): QueryKey => ['users', 'entity', userId, 'linked-entities', 'child', params];
 export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
   'users',
   'item',

@@ -27,6 +27,7 @@ import {
   PNB_INTERNAL_RULES,
 } from '../rules-engine/pnb-custom-logic'
 import { mergeUserTags } from '../rules-engine/utils'
+import { LinkerService } from '../linker'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
@@ -39,6 +40,7 @@ import {
   DefaultApiGetConsumerUsersListRequest,
   DefaultApiGetEventsListRequest,
   DefaultApiGetRuleInstancesTransactionUsersHitRequest,
+  DefaultApiGetUserEntityChildUsersRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
@@ -2718,6 +2720,47 @@ export class UserService {
         },
       ],
       result: updatedApproval,
+    }
+  }
+
+  public async getUserEntityChildUsers(
+    request: DefaultApiGetUserEntityChildUsersRequest
+  ) {
+    const linkerService = new LinkerService(this.tenantId)
+    const { childUserIds } = await linkerService.entityGraphNodesOnly(
+      request.userId
+    )
+    const userIds = [...childUserIds]
+    if (isClickhouseEnabled()) {
+      const result = await this.getClickhouseUsers({
+        filterIds: userIds,
+        page: request.page,
+        pageSize: request.pageSize,
+      })
+      return result
+    } else {
+      const result = await this.getUsers({
+        filterIds: userIds,
+      })
+      return result.result
+    }
+  }
+
+  public async getUserEntityParentUser(userId: string) {
+    const linkerService = new LinkerService(this.tenantId)
+    const { parentUserIds } = await linkerService.entityGraphNodesOnly(userId)
+
+    const userIds = [...parentUserIds]
+    if (isClickhouseEnabled()) {
+      const users = await this.getClickhouseUsers({
+        filterIds: userIds,
+      })
+      return users.items as AllUsersTableItem[]
+    } else {
+      const users = await this.getUsers({
+        filterIds: userIds,
+      })
+      return users.result.items as AllUsersTableItem[]
     }
   }
 }

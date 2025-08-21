@@ -1,26 +1,18 @@
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
-import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
 import { RiskLevelButton } from './RiskLevelFilterButton';
 import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
+import { getRiskScoringColumns } from './risk-scoring-column';
 import { UserSearchParams } from '.';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { AllUsersTableItem, RiskClassificationScore, RiskLevel, TenantSettings } from '@/apis';
+import { AllUsersTableItem, TenantSettings } from '@/apis';
 import { isSingleRow, TableColumn, TableData } from '@/components/library/Table/types';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import {
-  BOOLEAN,
-  COUNTRY,
-  DATE,
-  FLOAT,
-  PEP_RANK,
-  RISK_LEVEL,
-} from '@/components/library/Table/standardDataTypes';
+import { BOOLEAN, COUNTRY, DATE, PEP_RANK } from '@/components/library/Table/standardDataTypes';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
@@ -224,57 +216,6 @@ const extraFilters = (
 
   return extraFilters;
 };
-
-function getRiskScoringColumns(
-  riskClassificationValuesMap: RiskClassificationScore[],
-): TableColumn<AllUsersTableItem>[] {
-  const helper = new ColumnHelper<AllUsersTableItem>();
-
-  return helper.list([
-    helper.derived<RiskLevel>({
-      title: 'CRA risk level',
-      type: RISK_LEVEL,
-      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
-      value: (entity): RiskLevel | undefined => {
-        return !isEmpty(entity.manualRiskLevel)
-          ? entity.manualRiskLevel
-          : getRiskLevelFromScore(riskClassificationValuesMap, entity.drsScore || null);
-      },
-    }),
-    helper.derived({
-      title: 'CRA risk score',
-      type: FLOAT,
-      tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
-      value: (entity) =>
-        !isEmpty(entity.manualRiskLevel) && entity.manualRiskLevel != null
-          ? getRiskScoreFromLevel(riskClassificationValuesMap, entity.manualRiskLevel)
-          : entity.drsScore,
-    }),
-    helper.simple<'isRiskLevelLocked'>({
-      key: 'isRiskLevelLocked',
-      title: 'Is locked',
-      type: {
-        render: (value) => <>{value ? 'Yes' : 'No'}</>,
-      },
-      tooltip: 'Whether customer risk assessment score is locked',
-    }),
-    helper.derived({
-      title: 'KRS risk level',
-      value: (entity) => {
-        const score = entity.krsScore;
-        return getRiskLevelFromScore(riskClassificationValuesMap, score || null);
-      },
-      type: RISK_LEVEL,
-      tooltip: 'Know your customer - accounts for KYC Risk Level',
-    }),
-    helper.simple<'krsScore'>({
-      key: 'krsScore',
-      title: 'KRS risk score',
-      type: FLOAT,
-      tooltip: 'Know your customer - accounts for KYC Risk Score',
-    }),
-  ]);
-}
 
 export const UsersTable = (props: Props) => {
   const { type, queryResults, params, handleChangeParams, fitHeight = false } = props;

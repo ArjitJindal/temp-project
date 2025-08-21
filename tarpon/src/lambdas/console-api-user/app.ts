@@ -186,6 +186,16 @@ export const allUsersViewHandler = lambdaApi()(
       return await linkerService.entityGraphNodesOnly(request.userId)
     })
 
+    handlers.registerGetUserEntityChildUsers(async (_ctx, request) => {
+      const result = await userService.getUserEntityChildUsers(request)
+      return result
+    })
+
+    handlers.registerGetUserEntityParentUser(async (_ctx, request) => {
+      const result = await userService.getUserEntityParentUser(request.userId)
+      return result
+    })
+
     handlers.registerGetTxnLinking(async (ctx, request) => {
       return linkerService.transactions(
         request.userId,

@@ -117,6 +117,7 @@ async function main() {
     // Sync clickhouse tables before handling migrations
     await syncClickhouseTables()
     await migrateClickhouse()
+    return
   }
 
   const mongodb = await getMongoDbClient()

@@ -17,7 +17,6 @@ interface Props {
 
 export default function PersonDetails(props: Props) {
   const { userId, person, personType, currentUserId, onNewComment } = props;
-
   return (
     <EntityInfoGrid.Root columns={3}>
       <EntityInfoGrid.Cell maxHeight={400}>

@@ -163,6 +163,10 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/entity/linked-users':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/entity/child-users':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/entity/parent-user':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/events':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/txn-links':

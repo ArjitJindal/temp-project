@@ -6,8 +6,8 @@ import GeneralDetailsCard from './GeneralDetailsCard';
 import RegistrationDetailsCard from './RegistrationDetailsCard';
 import FinancialDetailsCard from './FinancialDetailsCard';
 import MerchantCategoryCodeCard from './MerchantCategoryCodeCard';
-import LinkedEntitiesCard from './LinkedEntitiesCard';
 import TransactionAndPaymentMethodLimits from './TransactionAndPaymentMethodLimits';
+import LinkedEntitiesTable from './LinkedEntitiesTable';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { InternalBusinessUser } from '@/apis';
 
@@ -49,14 +49,11 @@ export default function LegalEntityDetails(props: Props) {
       <EntityInfoGrid.Cell columnSpan={1} rowSpan={2} maxHeight={350}>
         <TransactionAndPaymentMethodLimits user={user} />
       </EntityInfoGrid.Cell>
-      <EntityInfoGrid.ColumnGroup
-        columnSpan={1}
-        rowSpan={2}
-        maxHeight={350}
-        childrens={[<LinkedEntitiesCard user={user} key="linked-entities-card" />]}
-      />
       <EntityInfoGrid.Cell columnSpan={3}>
         <SavedPaymentDetailsCard user={user} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={3}>
+        <LinkedEntitiesTable userId={user.userId} />
       </EntityInfoGrid.Cell>
     </EntityInfoGrid.Root>
   );

@@ -1842,6 +1842,58 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
+  /users/{userId}/entity/child-users:
+    get:
+      summary: Entity - Child Users
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
+      operationId: get-user-entity-child-users
+      description: 'Get child linked users for a user'
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          required: true
+          in: path
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+  /users/{userId}/entity/parent-user:
+    get:
+      summary: Entity - Parent User
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AllUsersTableItem'
+      operationId: get-user-entity-parent-user
+      description: 'Get parent linked users for a user'
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          required: true
+          in: path
   /users/{userId}/txn-links:
     get:
       summary: Transaction Linking
