@@ -456,15 +456,40 @@ export type AsyncRuleRecord = (
   tenantId: string
 }
 
-function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
+function getGroupIdForGcTxAndTxEvent(
+  record: (AsyncRuleRecordTransaction | AsyncRuleRecordTransactionEvent) & {
+    tenantId: string
+  }
+) {
+  let userId: string | undefined
+  const accessor =
+    record.type === 'TRANSACTION' ? 'transaction' : 'updatedTransaction'
+  if (record.senderUser) {
+    userId = record[accessor].originUserId
+  } else if (record.receiverUser) {
+    userId = record[accessor].destinationUserId
+  }
+  return userId ?? record.tenantId
+}
+
+function getAsyncRuleMessageGroupId(
+  record: AsyncRuleRecord,
+  isGc: boolean
+): string {
   switch (record.type) {
     case 'TRANSACTION':
+      if (isGc) {
+        return getGroupIdForGcTxAndTxEvent(record)
+      }
       return compact([
         record.transaction.originUserId,
         record.transaction.destinationUserId,
         record.tenantId,
       ])[0]
     case 'TRANSACTION_EVENT':
+      if (isGc) {
+        return getGroupIdForGcTxAndTxEvent(record)
+      }
       return compact([
         record.updatedTransaction.originUserId,
         record.updatedTransaction.destinationUserId,
@@ -538,7 +563,7 @@ export async function sendAsyncRuleTasks(
         QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
         MessageGroupId: generateChecksum(
           isConcurrentAsyncRulesEnabled
-            ? getAsyncRuleMessageGroupId(task)
+            ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
             : task.tenantId,
           10
         ),
@@ -571,15 +596,13 @@ export async function sendAsyncRuleTasks(
           }`
         )
       }
+      const messageGroupId = isConcurrentAsyncRulesEnabled
+        ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
+        : task.tenantId
       return {
         MessageBody: JSON.stringify(task),
         QueueUrl: process.env.BATCH_ASYNC_RULE_QUEUE_URL,
-        MessageGroupId: generateChecksum(
-          isConcurrentAsyncRulesEnabled
-            ? getAsyncRuleMessageGroupId(task)
-            : task.tenantId,
-          10
-        ),
+        MessageGroupId: generateChecksum(messageGroupId, 10),
         MessageDeduplicationId: messageDeduplicationId,
       }
     })
