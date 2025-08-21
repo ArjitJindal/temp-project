@@ -739,6 +739,12 @@ export function sanitizeMongoObject<T>(obj: T): T {
     return result as unknown as T
   }
 
+  if (typeof obj === 'number') {
+    if (obj === Infinity || obj === -Infinity || Number.isNaN(obj)) {
+      return null as unknown as T
+    }
+  }
+
   return obj
 }
 
