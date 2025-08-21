@@ -34,7 +34,6 @@ export const riskClassificationHandler = lambdaApi({
 
     handlers.registerGetPulseRiskClassification(async () => {
       const result = await riskService.getRiskClassificationItem()
-      console.log('result', result)
       return result
     })
 

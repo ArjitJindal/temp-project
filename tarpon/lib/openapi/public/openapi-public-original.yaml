@@ -2651,6 +2651,10 @@ components:
           type: number
         deletedAt:
           type: number
+        tags:
+          type: array
+          items:
+            type: string
       description: PersonAttachment model generalizes User's uploaded attachments
       example:
         comment: Arun's tax information
@@ -5186,6 +5190,10 @@ components:
             WALLET:
               $ref: '#/components/schemas/TransactionLimit'
             CHECK:
+              $ref: '#/components/schemas/TransactionLimit'
+            CASH:
+              $ref: '#/components/schemas/TransactionLimit'
+            NPP:
               $ref: '#/components/schemas/TransactionLimit'
     ExpectedIncome:
       title: ExpectedIncome

@@ -4,10 +4,10 @@ import {
   S3,
 } from '@aws-sdk/client-s3'
 import { fromBuffer } from 'file-type'
-import PDFParser from 'pdf2json'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { UserRepository } from '../users/repositories/user-repository'
+import { PDFExtractionService } from '../pdf-extraction'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import { FilesAISummary } from '@/@types/batch-job'
@@ -37,6 +37,12 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   s3?: S3
   repo?: CaseRepository | AlertsRepository | UserRepository
   tenantId?: string
+  private pdfExtractionService: PDFExtractionService
+
+  constructor(jobId: string) {
+    super(jobId)
+    this.pdfExtractionService = new PDFExtractionService()
+  }
 
   public async run(job: FilesAISummary): Promise<void> {
     this.job = job
@@ -219,27 +225,17 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   }
 
   private async pdfExtractor(file: Buffer): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pdfParser = new PDFParser(this, true)
-
-      pdfParser.on('pdfParser_dataError', (errData) => {
-        logger.error('Error extracting text from PDF', errData)
-        reject(errData)
+    try {
+      const result = await this.pdfExtractionService.extractText(file, {
+        removePageBreaks: true,
+        maxPages: 100,
+        timeout: 30000,
       })
-
-      pdfParser.on('pdfParser_dataReady', () => {
-        const data = pdfParser.getRawTextContent()
-
-        const sanitisedText = data.replace(
-          /----------------Page \(\d+\) Break----------------/g,
-          ''
-        )
-
-        resolve(sanitisedText)
-      })
-
-      pdfParser.parseBuffer(file)
-    })
+      return result.text
+    } catch (error) {
+      logger.error('Error extracting text from PDF', { error })
+      throw error
+    }
   }
 
   private promptGenerator(

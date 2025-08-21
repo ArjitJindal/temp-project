@@ -126,7 +126,11 @@ async function main() {
         logLevel: 'warning',
         sourcemap: 'external',
         minifyIdentifiers: false,
-        external: ['aws-sdk', ...builtinModules, ...IGNORED],
+        external: [
+          'aws-sdk',
+          ...builtinModules.filter((mod) => mod !== 'punycode'),
+          ...IGNORED,
+        ],
         loader: { '.node': 'file' },
         keepNames: true,
       })

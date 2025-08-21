@@ -5,3 +5,12 @@ export type transactionListResult = {
   numberOfItems: number
   token?: string
 }
+
+export type TransactionAmountAggregates = {
+  totalOriginAmount: number
+  totalDeposits: number
+  totalLoans: number
+  totalLoanBalance: number
+  totalTransactions: number
+  totalAccounts: number
+}

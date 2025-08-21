@@ -1,5 +1,7 @@
 import type { Config } from 'jest'
 
+const includeEsModules = ['marked']
+
 const config: Config = {
   testTimeout: 120000,
   preset: 'ts-jest',
@@ -13,6 +15,7 @@ const config: Config = {
   globals: {
     'ts-jest': {
       isolatedModules: true,
+      allowJs: true,
     },
   },
   transform: {
@@ -21,9 +24,12 @@ const config: Config = {
       {
         tsconfig: 'tsconfig.json',
         isolatedModules: false,
+        allowJs: true,
       },
     ],
   },
+  transformIgnorePatterns: [`node_modules/(?!${includeEsModules.join('|')})`],
+  extensionsToTreatAsEsm: ['.ts'],
   collectCoverage: true,
   collectCoverageFrom: [
     '<rootDir>/src/lambdas/**/*.ts',

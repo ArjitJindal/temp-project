@@ -1856,7 +1856,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
       operationId: get-user-entity-child-users
-      description: 'Get child linked users for a user'
+      description: Get child linked users for a user
       parameters:
         - schema:
             type: string
@@ -1887,7 +1887,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/AllUsersTableItem'
       operationId: get-user-entity-parent-user
-      description: 'Get parent linked users for a user'
+      description: Get parent linked users for a user
       parameters:
         - schema:
             type: string

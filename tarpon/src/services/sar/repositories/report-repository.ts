@@ -362,6 +362,27 @@ export class ReportRepository {
     }
   }
 
+  public async getReportsByUserIds(userIds: string[]) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    const reports = await collection
+      .aggregate<Report>([
+        { $match: { caseUserId: { $in: userIds } } },
+        {
+          $lookup: {
+            from: USERS_COLLECTION(this.tenantId),
+            localField: 'caseUserId',
+            foreignField: 'userId',
+            as: 'caseUser',
+          },
+        },
+        { $unwind: '$caseUser' },
+        { $unset: ['revisions', 'schema'] },
+      ])
+      .toArray()
+    return reports
+  }
+
   public async deleteReports(reportIds: string[]) {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))

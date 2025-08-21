@@ -13,6 +13,8 @@ import COLORS from '@/components/ui/colors';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { CommentType, useHasResources } from '@/utils/user-utils';
+import Select, { Option } from '@/components/library/Select';
+import Label from '@/components/library/Label';
 
 interface Props {
   attachments: PersonAttachment[];
@@ -122,6 +124,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
   } = props;
   const [comment, setComment] = useState('');
   const [fileList, setFileList] = useState<FileInfo[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const api = useApi();
 
@@ -135,19 +138,16 @@ const AttachmentUploadModal = (props: ModalProps) => {
       files: FileInfo[];
       comment: string;
       personType: AttachmentUserType;
+      tags: string[];
     }
   >(
-    async ({ userId, personId, files, comment, personType }) => {
+    async ({ userId, personId, files, comment, personType, tags }) => {
       return api.postUserAttachment({
         userId,
         personId: personId,
         personType,
         UserAttachmentUpdateRequest: {
-          attachment: {
-            files,
-            comment,
-            userId: currentUserId,
-          },
+          attachment: { files, comment, userId: currentUserId, tags },
         },
       });
     },
@@ -215,6 +215,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
             personType,
             files: fileList,
             comment: sanitizeComment(comment),
+            tags,
           });
         }
       }}
@@ -249,6 +250,17 @@ const AttachmentUploadModal = (props: ModalProps) => {
               placeholder="Enter your text here"
             />
           </div>
+          <Label label="Tags">
+            <Select
+              mode="TAGS"
+              options={[] as Option<string>[]}
+              placeholder="Select tags"
+              value={tags}
+              onChange={(value) => {
+                setTags(value ?? []);
+              }}
+            />
+          </Label>
         </div>
       </div>
     </Modal>

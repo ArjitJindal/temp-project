@@ -1,5 +1,5 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { compact } from 'lodash'
+import { compact, round } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '../../../core/xray'
@@ -31,6 +31,8 @@ import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTable
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { CurrencyService } from '@/services/currency'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
+import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 type StatsByType = {
   transactionType: string
@@ -704,22 +706,89 @@ export class ClickhouseTransactionsRepository {
     return result
   }
 
-  public async getTotalOriginAmount(
+  public async getTransactionAmountAggregates(
     params: DefaultApiGetTransactionsListRequest
-  ): Promise<number> {
+  ): Promise<TransactionAmountAggregates> {
     const { whereClause } = await this.getTransactionsWhereConditions(params)
 
     const query = `
-      SELECT sum(originAmountDetails_amountInUsd) as totalOriginAmount
+      SELECT 
+        round(sum(originAmountDetails_amountInUsd), 2) as totalOriginAmount,
+        round(sum(CASE WHEN type = 'DEPOSIT' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalDeposits,
+        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoans,
+        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoanBalance,
+        count() as totalTransactions,
+        count(DISTINCT originPaymentMethodId) as totalAccounts  
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE ${whereClause}
     `
 
-    const result = await executeClickhouseQuery<
-      { totalOriginAmount: number }[]
-    >(this.clickhouseClient, query)
+    const result = await executeClickhouseQuery<TransactionAmountAggregates[]>(
+      this.clickhouseClient,
+      query
+    )
 
-    return result[0].totalOriginAmount
+    return result[0]
+  }
+
+  public async getAverageByMethodTable(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<
+    { method: PaymentMethod; inLast12Months: number; average: number }[]
+  > {
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
+
+    // Query for average per payment method for the past 12 months
+    const last12MonthsQuery = `
+      SELECT
+        originPaymentMethod as method,
+        1 as inLast12Months,
+        avg(originAmountDetails_amountInUsd) as average
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      WHERE ${whereClause}
+        AND toStartOfMonth(toDateTime(timestamp / 1000)) >= toStartOfMonth(now() - INTERVAL 12 MONTH)
+      GROUP BY method
+      ORDER BY method
+    `
+
+    // Query for average per payment method for the full lifespan
+    const fullLifespanQuery = `
+      SELECT
+        originPaymentMethod as method,
+        0 as inLast12Months,
+        avg(originAmountDetails_amountInUsd) as average
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      WHERE ${whereClause}
+      GROUP BY method
+      ORDER BY method
+    `
+
+    const [last12MonthsResult, fullLifespanResult] = await Promise.all([
+      executeClickhouseQuery<{ method: PaymentMethod; average: number }[]>(
+        this.clickhouseClient,
+        last12MonthsQuery
+      ),
+      executeClickhouseQuery<{ method: PaymentMethod; average: number }[]>(
+        this.clickhouseClient,
+        fullLifespanQuery
+      ),
+    ])
+
+    // Execute both queries and combine results
+
+    const finalData = PAYMENT_METHODS.map((method) => {
+      const last12Months = last12MonthsResult.find((x) => x.method === method)
+      const fullLifespan = fullLifespanResult.find((x) => x.method === method)
+      return {
+        method,
+        inLast12Months:
+          last12Months?.average == null ? 0 : round(last12Months.average, 2),
+        average:
+          fullLifespan?.average == null ? 0 : round(fullLifespan.average, 2),
+      }
+    })
+
+    return finalData
   }
 
   public async getStatsByTime(
