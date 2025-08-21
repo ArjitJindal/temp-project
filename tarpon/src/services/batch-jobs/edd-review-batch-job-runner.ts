@@ -23,7 +23,6 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Person } from '@/@types/openapi-public/Person'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { CaseRepository } from '@/services/cases/repository'
-import { CaseService } from '@/services/cases'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -1377,12 +1376,7 @@ Use official sources such as regulatory databases, government websites, filings 
   ): Promise<void> {
     const { mongoDb, dynamoDb } = await this.databaseClients()
     const caseRepository = new CaseRepository(tenantId, { mongoDb, dynamoDb })
-    const s3Client = getS3Client()
-    const caseService = new CaseService(caseRepository, s3Client, {
-      documentBucketName: process.env.DOCUMENT_BUCKET || '',
-      tmpBucketName: process.env.TMP_BUCKET || '',
-    })
-    await caseService.saveComment(caseId, {
+    await caseRepository.saveComment(caseId, {
       body: finalDraft,
       files,
     })
@@ -1726,8 +1720,12 @@ ${financialInformationText}
         region: process.env.AWS_REGION,
       })
 
+      logger.info('Uploading DOCX document to S3 bucket: ', {
+        docx,
+      })
+
       const s3Key = `edd-review/${job.parameters.caseId}-${dayjs().format(
-        'YYYY-MM-DD HH:mm:ss'
+        'YYYY-MM-DD-HH-mm-ss'
       )}.docx`
 
       this.executionLogs.push(
@@ -1748,9 +1746,10 @@ ${financialInformationText}
           process.env.TMP_BUCKET
         }`
       )
+
       await s3Client.send(
         new PutObjectCommand({
-          Bucket: process.env.TMP_BUCKET || '',
+          Bucket: process.env.DOCUMENT_BUCKET || '',
           Key: s3Key,
           Body: body,
         })
@@ -1763,11 +1762,22 @@ ${financialInformationText}
         this.executionLogs.push(
           `[${new Date().toISOString()}]: EDD review batch job completed successfully`
         )
+
+        logger.info('Saving comment to case: ', {
+          caseId: job.parameters.caseId,
+          comment: this.executionLogs.join('\n'),
+        })
+
         const comment = `## EDD Review Logs\n\n${this.executionLogs.join(
           '\n'
         )}\n\n## Sources\n\n${this.sources
           .map((r) => `- [${r.title}](${r.url})`)
           .join('\n')}`
+
+        logger.info('Saving comment to case: ', {
+          caseId: job.parameters.caseId,
+          comment,
+        })
 
         await this.saveComment(tenantId, job.parameters.caseId, comment, [
           {
