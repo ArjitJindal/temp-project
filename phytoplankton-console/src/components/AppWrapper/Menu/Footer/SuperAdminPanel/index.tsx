@@ -65,7 +65,10 @@ export const featureDescriptions: Record<
     title: 'Narrative copilot',
     description: 'Enables AI copilot feature in case management',
   },
-  AI_FORENSICS: { title: 'AI forensics', description: 'Enables AI forensics' },
+  AI_FORENSICS: {
+    title: 'AI forensics',
+    description: 'Enables AI forensics (Requires Clickhouse Feature Flag)',
+  },
   SANCTIONS: { title: 'Screening', description: 'Enables screening' },
   FALSE_POSITIVE_CHECK: {
     title: 'False positive check',
@@ -523,23 +526,22 @@ export default function SuperAdminPanel() {
             >
               <Select<Feature>
                 mode="TAGS"
-                options={Object.keys(featureDescriptions)
-                  .sort()
-                  .map((featureKey) => {
-                    return {
-                      label:
-                        featureDescriptions[featureKey].title +
-                        (featureDescriptions[featureKey].tag
-                          ? ` (${featureDescriptions[featureKey].tag})`
-                          : ''),
-                      value: featureKey as Feature,
-                      title: featureDescriptions[featureKey].description,
-                      tag: featureDescriptions[featureKey].tag,
-                    };
-                  })}
                 onChange={(v) => setFeatures(v ?? [])}
                 allowClear
                 isDisabled={!initialFeatures}
+                options={Object.entries(featureDescriptions).map(
+                  ([key, { title, tag, description }]) => ({
+                    value: key as Feature,
+                    label: (
+                      <span title={description}>
+                        {title}
+                        {tag ? ` (${tag})` : ''}
+                      </span>
+                    ),
+                    labelText: description,
+                    title: description,
+                  }),
+                )}
                 value={features || initialFeatures}
                 onDropdownVisibleChange={(visible) => {
                   if (!visible) {
