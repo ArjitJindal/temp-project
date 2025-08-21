@@ -333,6 +333,24 @@ export class RiskService {
     const allRiskFactors = await this.riskRepository.getAllRiskFactors()
     const now = Date.now()
 
+    const v2factors = riskFactors.filter((rf) => rf.parameter)
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+    const v2factorsMigrated = v2factors.map((rf) => {
+      const migratedFactor = createMigratedFactor(rf, riskClassificationValues)
+      return {
+        ...rf,
+        ...migratedFactor,
+      }
+    })
+
+    v2factorsMigrated.forEach((migrated) => {
+      const idx = riskFactors.findIndex((rf) => rf.id === migrated.id)
+      if (idx !== -1) {
+        riskFactors[idx] = { ...riskFactors[idx], ...migrated }
+      }
+    })
+
     const allUpdatedRiskFactors = allRiskFactors.map((riskFactor) => {
       const newRiskFactor = riskFactors.find((rf) => rf.id === riskFactor.id)
       return {
