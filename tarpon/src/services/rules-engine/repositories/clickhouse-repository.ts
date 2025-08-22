@@ -563,14 +563,11 @@ export class ClickhouseTransactionsRepository {
     if (sortField in sortFieldMapper) {
       sortField = sortFieldMapper[sortField]
     }
-    const tableName =
-      sortOrder === 'descend' && sortField === 'timestamp'
-        ? CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName
-        : CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName
+
     const items = await getClickhouseDataOnly<TransactionTableItem>(
       this.clickhouseClient,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
-      tableName,
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
       { page, pageSize, sortField, sortOrder },
       whereClause,
       columnsProjection,
