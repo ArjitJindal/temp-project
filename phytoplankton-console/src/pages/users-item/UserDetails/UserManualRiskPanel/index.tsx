@@ -236,7 +236,7 @@ export default function UserManualRiskPanel(props: Props) {
       <Confirm<RiskLevel | undefined>
         title={'Changes request'}
         text={
-          'These changes should be approved before they are applied. Please, lease a comment with the reason for the change.'
+          'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
         }
         res={changeRiskLevelMutation.dataResource}
         skipConfirm={!makeProposalCra}
@@ -293,7 +293,7 @@ export default function UserManualRiskPanel(props: Props) {
           <Confirm<boolean>
             title={'Changes request'}
             text={
-              'These changes should be approved before they are applied. Please, lease a comment with the reason for the change.'
+              'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
             }
             res={lockingAndUnlockingMutation.dataResource}
             skipConfirm={!makeProposalCraLock}

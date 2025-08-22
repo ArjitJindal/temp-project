@@ -545,107 +545,212 @@ export class RiskService {
     if (!this.mongoDb) {
       throw new Error('MongoDB connection not available')
     }
-    let currentRiskFactor: RiskFactor | null = null
     const isNewRiskFactor = riskFactorId ? false : true
-    const id = await this.getRiskFactorId(riskFactor, riskFactorId)
-    if (!riskFactor.riskFactorId && riskFactorId) {
-      currentRiskFactor = await this.riskRepository.getRiskFactor(id)
-    }
-    const isDefaultFactor =
-      isDefaultRiskFactor(riskFactor) ||
-      (currentRiskFactor && isDefaultRiskFactor(currentRiskFactor))
 
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
-
-    let migratedFactor: Partial<RiskFactor> | null = null
-
-    if (isDefaultFactor) {
-      migratedFactor = createMigratedFactor(
-        { ...currentRiskFactor, ...riskFactor },
-        riskClassificationValues
-      )
-    }
-
-    const DEFAULT_VALUES: RiskFactorsPostRequest = {
-      defaultRiskLevel: DEFAULT_RISK_LEVEL,
-      defaultRiskScore: getRiskScoreFromLevel(
-        riskClassificationValues,
-        DEFAULT_RISK_LEVEL
-      ),
-      defaultWeight: 1,
-      description: '',
-      status: 'ACTIVE',
-      logicAggregationVariables: [],
-      logicEntityVariables: [],
-      name: '',
-      type: 'CONSUMER_USER',
-    }
-
-    const now = Date.now()
-
-    const versionService = new VersionHistoryService(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.dynamoDb,
-    })
-
-    const data: RiskFactor = {
-      ...(currentRiskFactor ?? DEFAULT_VALUES),
-      ...(isDefaultFactor ? migratedFactor : riskFactor),
-      id,
-      createdAt: currentRiskFactor?.createdAt ?? now,
-      updatedAt: now,
-    }
-
-    const allRiskFactors = await this.riskRepository.getAllRiskFactors()
-
-    const versionData = await versionService.createVersionHistory(
-      'RiskFactors',
-      [...allRiskFactors, data],
-      `New Risk Factor created: ${data.name}`
-    )
-
-    const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
-
-    const updatedData = await this.riskRepository.createOrUpdateRiskFactor({
-      ...data,
-      versionId: versionData.id,
-    })
-
-    let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> = {
-      entities: [
-        {
-          entityId: id,
-          newImage: isDefaultFactor ? createDefaultFactorAuditData(data) : data,
-        },
-      ],
-      result: data,
-    }
-    if (!isNewRiskFactor && oldRiskFactor) {
-      auditLogData = {
-        ...auditLogData,
-        entities: [
-          {
-            entityId: id,
-            newImage: isDefaultFactor
-              ? createDefaultFactorAuditData(data)
-              : data,
-            oldImage: isDefaultFactor
-              ? createDefaultFactorAuditData(oldRiskFactor)
-              : oldRiskFactor,
-          },
-        ],
-        actionTypeOverride: 'UPDATE',
+    if (isNewRiskFactor) {
+      let currentRiskFactor: RiskFactor | null = null
+      const id = await this.getRiskFactorId(riskFactor, riskFactorId)
+      if (!riskFactor.riskFactorId && riskFactorId) {
+        currentRiskFactor = await this.riskRepository.getRiskFactor(id)
       }
+      const isDefaultFactor =
+        isDefaultRiskFactor(riskFactor) ||
+        (currentRiskFactor && isDefaultRiskFactor(currentRiskFactor))
+
+      const riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+
+      let migratedFactor: Partial<RiskFactor> | null = null
+
+      if (isDefaultFactor) {
+        migratedFactor = createMigratedFactor(
+          { ...currentRiskFactor, ...riskFactor },
+          riskClassificationValues
+        )
+      }
+
+      const DEFAULT_VALUES: RiskFactorsPostRequest = {
+        defaultRiskLevel: DEFAULT_RISK_LEVEL,
+        defaultRiskScore: getRiskScoreFromLevel(
+          riskClassificationValues,
+          DEFAULT_RISK_LEVEL
+        ),
+        defaultWeight: 1,
+        description: '',
+        status: 'ACTIVE',
+        logicAggregationVariables: [],
+        logicEntityVariables: [],
+        name: '',
+        type: 'CONSUMER_USER',
+      }
+
+      const now = Date.now()
+
+      const versionService = new VersionHistoryService(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
+
+      const data: RiskFactor = {
+        ...(currentRiskFactor ?? DEFAULT_VALUES),
+        ...(isDefaultFactor ? migratedFactor : riskFactor),
+        id,
+        createdAt: currentRiskFactor?.createdAt ?? now,
+        updatedAt: now,
+      }
+
+      const allRiskFactors = await this.riskRepository.getAllRiskFactors()
+
+      const versionData = await versionService.createVersionHistory(
+        'RiskFactors',
+        [...allRiskFactors, data],
+        `New Risk Factor created: ${data.name}`
+      )
+
+      const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
+
+      const updatedData = await this.riskRepository.createOrUpdateRiskFactor({
+        ...data,
+        versionId: versionData.id,
+      })
+
+      let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> =
+        {
+          entities: [
+            {
+              entityId: id,
+              newImage: isDefaultFactor
+                ? createDefaultFactorAuditData(data)
+                : data,
+            },
+          ],
+          result: data,
+        }
+      if (!isNewRiskFactor && oldRiskFactor) {
+        auditLogData = {
+          ...auditLogData,
+          entities: [
+            {
+              entityId: id,
+              newImage: isDefaultFactor
+                ? createDefaultFactorAuditData(data)
+                : data,
+              oldImage: isDefaultFactor
+                ? createDefaultFactorAuditData(oldRiskFactor)
+                : oldRiskFactor,
+            },
+          ],
+          actionTypeOverride: 'UPDATE',
+        }
+      }
+      await riskFactorAggregationVariablesRebuild(
+        updatedData,
+        now,
+        this.tenantId,
+        this.riskRepository
+      )
+      this.riskRepository.getAllRiskFactors.cache.clear?.()
+      return auditLogData
+    } else {
+      const riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+
+      let migratedFactor: Partial<RiskFactor> | null = null
+
+      const isDefaultFactor = isDefaultRiskFactor(riskFactor)
+
+      if (isDefaultFactor) {
+        migratedFactor = createMigratedFactor(
+          riskFactor,
+          riskClassificationValues
+        )
+      }
+
+      const DEFAULT_VALUES: RiskFactorsPostRequest = {
+        defaultRiskLevel: DEFAULT_RISK_LEVEL,
+        defaultRiskScore: getRiskScoreFromLevel(
+          riskClassificationValues,
+          DEFAULT_RISK_LEVEL
+        ),
+        defaultWeight: 1,
+        description: '',
+        status: 'ACTIVE',
+        logicAggregationVariables: [],
+        logicEntityVariables: [],
+        name: '',
+        type: 'CONSUMER_USER',
+      }
+
+      const now = Date.now()
+
+      const versionService = new VersionHistoryService(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
+
+      // ID is always there when risk factor is coming from a proposal
+      const id = riskFactor.riskFactorId ?? (riskFactorId as string)
+      const data: RiskFactor = {
+        ...DEFAULT_VALUES,
+        ...(isDefaultFactor ? migratedFactor : riskFactor),
+        id,
+        createdAt: riskFactor.createdAt ?? now,
+        updatedAt: now,
+      }
+
+      const allRiskFactors = await this.riskRepository.getAllRiskFactors()
+
+      const versionData = await versionService.createVersionHistory(
+        'RiskFactors',
+        [...allRiskFactors, data],
+        `New Risk Factor created: ${data.name}`
+      )
+
+      const oldRiskFactor = await this.riskRepository.getRiskFactor(id)
+
+      const updatedData = await this.riskRepository.createOrUpdateRiskFactor({
+        ...data,
+        versionId: versionData.id,
+      })
+
+      let auditLogData: AuditLogReturnData<RiskFactor, RiskFactor, RiskFactor> =
+        {
+          entities: [
+            {
+              entityId: id,
+              newImage: isDefaultFactor
+                ? createDefaultFactorAuditData(data)
+                : data,
+            },
+          ],
+          result: data,
+        }
+      if (!isNewRiskFactor && oldRiskFactor) {
+        auditLogData = {
+          ...auditLogData,
+          entities: [
+            {
+              entityId: id,
+              newImage: isDefaultFactor
+                ? createDefaultFactorAuditData(data)
+                : data,
+              oldImage: isDefaultFactor
+                ? createDefaultFactorAuditData(oldRiskFactor)
+                : oldRiskFactor,
+            },
+          ],
+          actionTypeOverride: 'UPDATE',
+        }
+      }
+      await riskFactorAggregationVariablesRebuild(
+        updatedData,
+        now,
+        this.tenantId,
+        this.riskRepository
+      )
+      this.riskRepository.getAllRiskFactors.cache.clear?.()
+      return auditLogData
     }
-    await riskFactorAggregationVariablesRebuild(
-      updatedData,
-      now,
-      this.tenantId,
-      this.riskRepository
-    )
-    this.riskRepository.getAllRiskFactors.cache.clear?.()
-    return auditLogData
   }
 
   async getNewRiskFactorId(riskFactorId?: string, update = false) {

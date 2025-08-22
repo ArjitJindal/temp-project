@@ -163,6 +163,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       return (await riskService.deleteRiskFactor(request.riskFactorId)).result
     })
 
+    // UNUSED ROUTE
     handlers.registerPostCreateRiskFactor(async (ctx, request) => {
       if (hasFeature('APPROVAL_WORKFLOWS')) {
         throw new Error(

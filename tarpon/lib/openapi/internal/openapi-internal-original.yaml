@@ -12559,6 +12559,8 @@ components:
             - TIME_RANGE
             - DAY_RANGE
             - AMOUNT_RANGE
+        createdAt:
+          type: number
     RiskFactorDataType:
       title: RiskFactorDataType
       type: string

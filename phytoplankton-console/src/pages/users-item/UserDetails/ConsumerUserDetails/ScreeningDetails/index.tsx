@@ -288,7 +288,7 @@ export default function ScreeningDetails(props: Props) {
         <Confirm<FormValues>
           title={'Changes request'}
           text={
-            'These changes should be approved before they are applied. Please, lease a comment with the reason for the change.'
+            'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
           }
           skipConfirm={!makeProposal}
           res={userUpdateMutation.dataResource}
