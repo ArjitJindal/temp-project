@@ -128,6 +128,7 @@ async function main() {
         minifyIdentifiers: false,
         external: [
           'aws-sdk',
+          '@aws-sdk/*',
           ...builtinModules.filter((mod) => mod !== 'punycode'),
           ...IGNORED,
         ],
