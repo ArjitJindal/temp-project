@@ -7,6 +7,7 @@ import { localDev } from './local-dev'
 import { initSentryLambda } from './init-sentry-lambda'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 import { requestLoggerMiddleware } from './request-logger'
+import { performanceLoggerMiddleware } from './performance-logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
@@ -14,7 +15,10 @@ import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middlew
 import { checkHeaders } from '@/core/middlewares/check-headers'
 import { responseHeaderHandler } from '@/core/middlewares/response-header-handler'
 
-export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
+export const lambdaApi = (options?: {
+  requiredFeatures?: Feature[]
+  enablePerformanceLogging?: boolean
+}) => {
   registerUnhandledErrorHandler()
   const middlewares = [
     localDev(),
@@ -24,6 +28,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     responseHeaderHandler(),
     httpErrorHandler(),
     requestLoggerMiddleware(),
+    performanceLoggerMiddleware(undefined, options?.enablePerformanceLogging),
     jsonSerializer(),
     rbacMiddleware(),
     initSentryLambda(),

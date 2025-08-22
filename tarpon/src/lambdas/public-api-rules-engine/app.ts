@@ -64,7 +64,7 @@ async function getMissingRelatedTransactions(
   }
 }
 
-export const transactionHandler = lambdaApi()(
+export const transactionHandler = lambdaApi({ enablePerformanceLogging: true })(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<Credentials>
