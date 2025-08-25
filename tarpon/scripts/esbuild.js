@@ -128,7 +128,8 @@ async function main() {
         minifyIdentifiers: false,
         external: [
           'aws-sdk',
-          '@aws-sdk/*',
+          // Only mark AWS SDK as external for lambdas, not for fargate
+          ...(outDir.includes('fargate') ? [] : ['@aws-sdk/*']),
           ...builtinModules.filter((mod) => mod !== 'punycode'),
           ...IGNORED,
         ],
