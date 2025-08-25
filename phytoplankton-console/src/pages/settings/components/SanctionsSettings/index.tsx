@@ -117,7 +117,7 @@ export const SanctionsSettings = () => {
         <SearchProfileList hasFeature={isSanctionsEnabled} />
       )}
       <SanctionsProviderSettings
-        title="Acuris"
+        title="KYC6"
         hasFeature={isAcurisEnabled}
         screeningTypes={acurisScreeningTypes}
         searchTypes={ACURIS_SANCTIONS_SEARCH_TYPES}
