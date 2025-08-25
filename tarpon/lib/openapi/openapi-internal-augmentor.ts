@@ -173,6 +173,10 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/screening-status':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/edd-reviews':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/edd-reviews/{eddReviewId}':
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/transactions/total':

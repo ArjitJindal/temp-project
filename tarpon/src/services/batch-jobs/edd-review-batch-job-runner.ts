@@ -15,8 +15,10 @@ import {
 } from '@aws-sdk/client-s3'
 import { marked } from 'marked'
 import htmlToDocx from 'html-to-docx'
+import { v4 as uuidv4 } from 'uuid'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { PDFExtractionService } from '../pdf-extraction'
+import { EddRepository } from '../edd/repository'
 import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { EddReviewBatchJob } from '@/@types/batch-job'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
@@ -129,7 +131,10 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
     return table
   }
 
-  private async getPerplexityResponse(prompt: string) {
+  private async getPerplexityResponse(
+    prompt: string,
+    model: 'sonar' | 'sonar-pro' = 'sonar'
+  ) {
     const perplexityApiKey = await getSecretByName('perplexity')
     const url = 'https://api.perplexity.ai/chat/completions'
     const headers = {
@@ -139,7 +144,7 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
 
     // Define the request payload
     const payload = {
-      model: 'sonar',
+      model,
       messages: [{ role: 'user', content: prompt }],
     }
 
@@ -991,47 +996,70 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
       return null
     }
 
-    const shareHolders = user.shareHolders
-      ?.map((s) => getPersonName(s))
-      .join(', ')
-    const directors = user.directors?.map((d) => getPersonName(d)).join(', ')
-    const peopleToSearch = uniq(compact([shareHolders, directors])).join(', ')
-
-    const perplexityPrompt = `
-    Provide a detailed “Management and C-Levels in Details” section for ${getUserName(
-      user
-    )} or its parent ${
-      parentUser ? getUserName(parentUser) : ''
-    }. Use only verified information from official sources such as SEC EDGAR filings, offering memoranda, company websites, fact sheets, and press releases. For each shareholder, director, and C-level executive, write in paragraph format (no bullet points or headings) and include only the following: current role and responsibilities, previous professional experience, education, notable achievements, and any relevant regulatory or media presence. Exclude any speculative or non-verified content. Ensure the style is professional, factual, and suitable for compliance due diligence documentation.
-      `
-
-    const perplexityResponse = await this.getPerplexityResponse(
-      perplexityPrompt
+    const shareHolders = compact(
+      user.shareHolders?.map((s) => getPersonName(s))
     )
 
-    const perplexityPromptWithPeopleToSearch = `${perplexityPrompt}
-    Apart from your knowledge you should also search for ${peopleToSearch}
+    const directors = compact(user.directors?.map((d) => getPersonName(d)))
+    const peopleToSearch = uniq(compact([...shareHolders, ...directors]))
+
+    const gptPrompt = `Provide a JSON array of the exact full names of all individuals who are shareholders, founders, directors, C-level executives, or senior management of "${getUserName(
+      user
+    )}" or its parent "${
+      parentUser ? getUserName(parentUser) : ''
+    }" and its direct subsidiaries only. 
+  
+    Like Directors, Shareholders of the company are ${peopleToSearch}
+
+Strict rules:  
+- Include only individuals directly employed by or holding executive/board roles at the company.  
+- Exclude independent trustees, fund board members, external advisors, consultants, or members of affiliated investment trusts.  
+- Only use official sources: company website, official press releases, SEC filings referencing the company directly.  
+- Return strictly a JSON array of names only. Do not include titles, roles, explanations, or any starting or ending text
+- Also include the names I have provided in the list.
     `
 
-    const perplexityResponseWithPeopleToSearch =
-      await this.getPerplexityResponse(perplexityPromptWithPeopleToSearch)
-
-    const gptMergePrompt = `
-     Merge the following responses into a single, cohesive professional overview. The merged response should be in paragraph format, with clear, factual language suitable for compliance and due diligence documentation. Do not use bullet points or headings. Retain all relevant details from both responses, including information about the company, its launch date, target investors, regulatory positioning, and all available details on executives, founders, board members, and senior leadership, covering their current roles, previous experience, education, achievements, media presence, and responsibilities in investment strategy, compliance, operations, and investor relations. Ensure the final text reads as one seamless narrative, integrating overlapping information without omitting any material facts.
-      1. ${perplexityResponse}
-      2. ${perplexityResponseWithPeopleToSearch}
-    `
-
-    const gptMergeResponse = await ask(tenantId, gptMergePrompt, {
+    const gptResponse = await ask(tenantId, gptPrompt, {
       provider: 'OPEN_AI',
       tier: ModelTier.ENTERPRISE,
-      maxTokens: 10000,
+      maxTokens: 1000,
       temperature: 0.1,
     })
 
+    const allNames = JSON.parse(
+      gptResponse.replace('```json', '').replace('```', '')
+    ) as string[]
+
+    const namesToSearch = uniq([...allNames, ...shareHolders, ...directors])
+    const inShortOrLong = namesToSearch.length > 3 ? 'short' : 'very detailed'
+
+    let text = ''
+    await pMap(
+      namesToSearch,
+      async (name) => {
+        const prompt = `Generate a ${inShortOrLong} professional profile for ${name} who works in ${getUserName(
+          user
+        )} or its parent ${
+          parentUser ? getUserName(parentUser) : ''
+        } using only publicly available and verifiable sources such as LinkedIn, company websites, press releases, news articles, official regulatory filings, and publications. The profile should include their education (degrees, universities, majors/specializations), career history (roles, companies, periods), notable projects or entrepreneurial initiatives, publications, achievements (professional, personal, awards, recognitions) or patents authored, and any awards or recognitions or media presence. Include professional links like LinkedIn or company bios where relevant. In a paragraph format you can have ${
+          inShortOrLong === 'short' ? 'single' : 'multiple'
+        } paragraphs. Do not have paragraphs of what you don't know even don't explain it. `
+
+        const response = await ask(tenantId, prompt, {
+          provider: 'OPEN_AI',
+          tier: ModelTier.ENTERPRISE,
+          maxTokens: 4096,
+          temperature: 0.1,
+        })
+
+        text += `**${name}**: ${response}\n\n\n`
+      },
+      { concurrency: 5 }
+    )
+
     return {
       header: 'Management',
-      body: gptMergeResponse,
+      body: text,
     }
   })
 
@@ -1720,9 +1748,7 @@ ${financialInformationText}
         region: process.env.AWS_REGION,
       })
 
-      logger.info('Uploading DOCX document to S3 bucket: ', {
-        docx,
-      })
+      logger.info('Uploading DOCX document to S3 bucket')
 
       const s3Key = `edd-review/${job.parameters.caseId}-${dayjs().format(
         'YYYY-MM-DD-HH-mm-ss'
@@ -1746,6 +1772,7 @@ ${financialInformationText}
           process.env.TMP_BUCKET
         }`
       )
+      const { mongoDb } = await this.databaseClients()
 
       await s3Client.send(
         new PutObjectCommand({
@@ -1777,6 +1804,33 @@ ${financialInformationText}
         logger.info('Saving comment to case: ', {
           caseId: job.parameters.caseId,
           comment,
+        })
+
+        const { transactionAmountDataMap } = await this.data(job)
+        const eddRepository = new EddRepository(tenantId, mongoDb)
+
+        await eddRepository.createEddReview({
+          caseId: job.parameters.caseId,
+          userId: job.parameters.userId,
+          review: finalText,
+          id: uuidv4(),
+          createdAt: dayjs().valueOf(),
+          updatedAt: dayjs().valueOf(),
+          createdBy: job.parameters.userId,
+          updatedBy: job.parameters.userId,
+          periodStart: Object.keys(transactionAmountDataMap).length
+            ? dayjs().subtract(6, 'months').valueOf()
+            : dayjs().valueOf(),
+          periodEnd: Object.keys(transactionAmountDataMap).length
+            ? dayjs().valueOf()
+            : dayjs().add(6, 'months').valueOf(),
+          files: [
+            {
+              filename: s3Key.split('/').pop() || 'EDD Review.docx',
+              size: body.byteLength,
+              s3Key,
+            },
+          ],
         })
 
         await this.saveComment(tenantId, job.parameters.caseId, comment, [

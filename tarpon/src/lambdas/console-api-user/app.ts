@@ -17,6 +17,8 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments } from '@/utils/helpers'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { EddService } from '@/services/edd'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -295,6 +297,34 @@ export const allUsersViewHandler = lambdaApi()(
       )
       return response.result
     })
+
+    handlers.registerGetUsersUserIdEddReviews(async (ctx, request) => {
+      const mongoDb = await getMongoDbClient()
+      return await new EddService(tenantId, mongoDb).getEddReviews(
+        request.userId
+      )
+    })
+
+    handlers.registerGetUsersUserIdEddReviewsEddReviewId(
+      async (ctx, request) => {
+        const mongoDb = await getMongoDbClient()
+        return await new EddService(tenantId, mongoDb).getEddReview(
+          request.userId,
+          request.eddReviewId
+        )
+      }
+    )
+
+    handlers.registerPatchUsersUserIdEddReviewsEddReviewId(
+      async (ctx, request) => {
+        const mongoDb = await getMongoDbClient()
+        return await new EddService(tenantId, mongoDb).updateEddReview(
+          request.userId,
+          request.eddReviewId,
+          request.EDDReviewUpdateRequest.review
+        )
+      }
+    )
 
     return await handlers.handle(event)
   }

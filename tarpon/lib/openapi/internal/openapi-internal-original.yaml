@@ -2297,6 +2297,70 @@ paths:
             schema:
               $ref: '#/components/schemas/CommentRequest'
         required: true
+  /users/{userId}/edd-reviews:
+    get:
+      summary: Get EDD Reviews
+      operationId: get-users-userId-edd-reviews
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EDDReviewResponse'
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+  /users/{userId}/edd-reviews/{eddReviewId}:
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: eddReviewId
+        in: path
+        required: true
+    get:
+      summary: Get EDD Review
+      operationId: get-users-userId-edd-reviews-eddReviewId
+      x-flagright:
+        resources:
+          - read:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EDDReview'
+    patch:
+      summary: Update EDD Review
+      operationId: patch-users-userId-edd-reviews-eddReviewId
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EDDReview'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EDDReviewUpdateRequest'
+        required: true
   /copilot/narrative:
     post:
       summary: Generate an AI narrative
@@ -19134,6 +19198,56 @@ components:
       required:
         - caseId
         - userId
+    EDDReviewResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EDDReview'
+        total:
+          type: number
+      required:
+        - data
+        - total
+    EDDReview:
+      type: object
+      properties:
+        caseId:
+          type: string
+        userId:
+          type: string
+        review:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+        periodStart:
+          type: number
+        periodEnd:
+          type: number
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+        id:
+          type: string
+      required:
+        - caseId
+        - userId
+        - id
+    EDDReviewUpdateRequest:
+      type: object
+      properties:
+        review:
+          type: string
+      required:
+        - review
   securitySchemes:
     Authorization:
       type: http

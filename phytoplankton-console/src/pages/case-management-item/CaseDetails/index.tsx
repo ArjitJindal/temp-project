@@ -8,6 +8,7 @@ import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
+import { EDDDetails } from './EDDDetails';
 import {
   Alert,
   AlertStatus,
@@ -107,7 +108,7 @@ function CaseDetails(props: Props) {
   const { caseId, caseItemRes, headerStickyElRef, expandedAlertId, comments } = props;
   useScrollToFocus();
   const navigate = useNavigate();
-
+  const isEnhancedDueDiligenceEnabled = useFeatureEnabled('EDD_REPORT');
   const caseItem = getOr(caseItemRes, undefined);
   const alertIds = (caseItem?.alerts ?? [])
     .map(({ alertId }) => alertId)
@@ -116,7 +117,9 @@ function CaseDetails(props: Props) {
   const entityHeaderHeight = rect?.height ?? 0;
   const tabs = useTabs(caseItemRes, expandedAlertId, alertIds, comments);
   const { tab } = useParams<'list' | 'id' | 'tab'>();
-  const activeTabKey = tab ?? tabs[0]?.key ?? '';
+  const activeTabKey =
+    tab ?? tabs[0]?.key ?? (isEnhancedDueDiligenceEnabled ? 'enhanced-due-diligence' : '');
+
   return (
     <>
       <PageTabs
@@ -198,6 +201,7 @@ function useTabs(
   const api = useApi();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+  const isEnhancedDueDiligenceEnabled = useFeatureEnabled('EDD_REPORT');
   const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
   const [users] = useUsers();
   const riskClassificationValues = useRiskClassificationScores();
@@ -275,6 +279,13 @@ function useTabs(
   }
 
   return [
+    {
+      title: 'Enhanced Due Diligence',
+      key: 'enhanced-due-diligence',
+      children: <EDDDetails userId={user?.userId ?? ''} />,
+      isClosable: false,
+      isDisabled: false,
+    },
     isPaymentSubject &&
       paymentDetails?.method && {
         title: 'Payment identifier details',
@@ -307,7 +318,8 @@ function useTabs(
     caseItem &&
       caseItem.caseId &&
       user &&
-      caseItem.caseType === 'MANUAL' && {
+      caseItem.caseType === 'MANUAL' &&
+      !isEnhancedDueDiligenceEnabled && {
         title: 'Case transactions',
         key: 'case-transactions',
         children: (
@@ -323,7 +335,8 @@ function useTabs(
       },
     user &&
       isCrmEnabled &&
-      settings.crmIntegrationName && {
+      settings.crmIntegrationName &&
+      !isEnhancedDueDiligenceEnabled && {
         title: humanizeAuto(settings.crmIntegrationName),
         key: 'crm-records',
         children: user.userId ? (
@@ -348,7 +361,8 @@ function useTabs(
       },
     isUserSubject &&
       user &&
-      isEntityLinkingEnabled && {
+      isEntityLinkingEnabled &&
+      !isEnhancedDueDiligenceEnabled && {
         title: <div className={style.icon}>Ontology</div>,
         key: 'ontology',
         children: user.userId ? (
@@ -373,7 +387,8 @@ function useTabs(
         captureEvents: true,
       },
     isUserSubject &&
-      user?.userId && {
+      user?.userId &&
+      !isEnhancedDueDiligenceEnabled && {
         title: 'Transaction insights',
         key: 'transaction-insights',
         children: (
@@ -383,17 +398,18 @@ function useTabs(
         captureEvents: true,
         isDisabled: false,
       },
-    isExistedUser(user) && {
-      title: 'Expected transaction limits',
-      key: 'expected-transaction-limits',
-      children: (
-        <Card.Root>
-          <ExpectedTransactionLimits user={user as InternalBusinessUser | InternalConsumerUser} />
-        </Card.Root>
-      ),
-      isClosable: false,
-      isDisabled: false,
-    },
+    isExistedUser(user) &&
+      !isEnhancedDueDiligenceEnabled && {
+        title: 'Expected transaction limits',
+        key: 'expected-transaction-limits',
+        children: (
+          <Card.Root>
+            <ExpectedTransactionLimits user={user as InternalBusinessUser | InternalConsumerUser} />
+          </Card.Root>
+        ),
+        isClosable: false,
+        isDisabled: false,
+      },
     {
       title: 'Activity',
       key: 'activity',

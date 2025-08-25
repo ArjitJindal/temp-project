@@ -486,6 +486,10 @@ export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-dynamodb-partition-keys`
 }
 
+export const EDD_REVIEWS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-edd-reviews`
+}
+
 /** Tenant Deletion Collection */
 export const TENANT_DELETION_COLLECTION =
   FLAGRIGHT_TENANT_ID + '-tenant-deletion'
