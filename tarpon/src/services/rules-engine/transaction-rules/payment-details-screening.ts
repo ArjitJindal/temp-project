@@ -52,7 +52,13 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
         hitRules.push({
           direction: 'ORIGIN',
           vars: super.getTransactionVars('origin'),
-          sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
+          sanctionsDetails: uniqBy(
+            sanctionsDetails,
+            (detail) => detail.name
+          ).map((detail) => ({
+            ...detail,
+            hitDirection: 'ORIGIN',
+          })),
         })
       }
     }
@@ -65,7 +71,13 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
         hitRules.push({
           direction: 'DESTINATION',
           vars: super.getTransactionVars('destination'),
-          sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
+          sanctionsDetails: uniqBy(
+            sanctionsDetails,
+            (detail) => detail.name
+          ).map((detail) => ({
+            ...detail,
+            hitDirection: 'DESTINATION',
+          })),
         })
       }
     }

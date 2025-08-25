@@ -1478,8 +1478,8 @@ describe('Screening counterparty alerts R-170', () => {
     )
 
     expect(caseCreationResult).toHaveLength(2) // Since we are creating two cases always hence
-    expect(caseCreationResult[0].alerts).toHaveLength(2)
-    expect(caseCreationResult[1].alerts).toHaveLength(2)
+    expect(caseCreationResult[0].alerts).toHaveLength(1)
+    expect(caseCreationResult[1].alerts).toHaveLength(1)
 
     const transaction2 = getTestTransaction({
       transactionId: '222',
@@ -1488,14 +1488,14 @@ describe('Screening counterparty alerts R-170', () => {
       originPaymentDetails: {
         method: 'CARD',
         nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
-        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29b2',
         cardIssuedCountry: 'US',
         transactionReferenceField: 'DEPOSIT',
       },
       destinationPaymentDetails: {
         method: 'CARD',
         nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
-        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29b2',
         cardIssuedCountry: 'US',
         transactionReferenceField: 'DEPOSIT',
       },
@@ -1518,9 +1518,8 @@ describe('Screening counterparty alerts R-170', () => {
     )
 
     expect(caseCreationResult2).toHaveLength(2) // Since we are creating two cases always hence
-    expect(caseCreationResult2[0].alerts).toHaveLength(3)
-    expect(caseCreationResult2[1].alerts).toHaveLength(3)
-
+    expect(caseCreationResult2[0].alerts).toHaveLength(1)
+    expect(caseCreationResult2[1].alerts).toHaveLength(1)
     for (const caseItem of caseCreationResult2) {
       for (const alert of caseItem.alerts ?? []) {
         expect(alert.ruleHitMeta?.sanctionsDetails).toHaveLength(1)

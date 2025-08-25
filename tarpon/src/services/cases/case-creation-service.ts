@@ -1247,6 +1247,35 @@ export class CaseCreationService {
     })
   }
 
+  private sanitizeHitRules(
+    hitRules: HitRulesDetails[],
+    direction: RuleHitDirection
+  ) {
+    return compact(
+      hitRules.map((rule) => {
+        if (rule.ruleId === 'R-170') {
+          const updatedRule = {
+            ...rule,
+            ruleHitMeta: {
+              ...rule.ruleHitMeta,
+              hitDirections: rule.ruleHitMeta?.hitDirections?.filter(
+                (hitDirection) => hitDirection === direction
+              ),
+              sanctionsDetails: rule.ruleHitMeta?.sanctionsDetails?.filter(
+                (detail) => detail.hitDirection === direction
+              ),
+            },
+          }
+          if (updatedRule.ruleHitMeta?.sanctionsDetails?.length === 0) {
+            return undefined
+          }
+          return updatedRule
+        }
+        return rule
+      })
+    )
+  }
+
   private async getOrCreateCases(
     hitSubjects: Array<{
       subject: CaseSubject
@@ -1286,7 +1315,10 @@ export class CaseCreationService {
 
       try {
         // keep only user related hits
-        let filteredHitRules = flattenedHitRules.filter((hitRule) => {
+        let filteredHitRules = this.sanitizeHitRules(
+          flattenedHitRules,
+          direction
+        ).filter((hitRule) => {
           if (
             !hitRule.ruleHitMeta?.hitDirections?.some(
               (hitDirection) => hitDirection === direction

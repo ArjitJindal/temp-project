@@ -384,11 +384,18 @@ export class TransactionService {
       ) {
         const hasOriginDirection =
           alert.ruleHitMeta?.hitDirections?.includes('ORIGIN')
-
-        if (hasOriginDirection) {
-          params.filterDestinationPaymentMethodId = filterPaymentMethodId
+        if (alert.ruleId === 'R-169') {
+          if (hasOriginDirection) {
+            params.filterDestinationPaymentMethodId = filterPaymentMethodId
+          } else {
+            params.filterOriginPaymentMethodId = filterPaymentMethodId
+          }
         } else {
-          params.filterOriginPaymentMethodId = filterPaymentMethodId
+          if (hasOriginDirection) {
+            params.filterOriginPaymentMethodId = filterPaymentMethodId
+          } else {
+            params.filterDestinationPaymentMethodId = filterPaymentMethodId
+          }
         }
       }
     }
