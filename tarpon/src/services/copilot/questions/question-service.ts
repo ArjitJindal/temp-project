@@ -182,7 +182,7 @@ export class QuestionService {
     }
   }
 
-  private async answer(
+  public async answer(
     question: Question<any>,
     varObject: Variables,
     c: Case,

@@ -1,4 +1,5 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import { buildPaymentIdentifierQuery } from './queries/payment-identifier-query'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import {
   currencyDefault,
@@ -60,51 +61,12 @@ export const UniquePaymentIdentifier: TableQuestion<
       orderByClause = `ORDER BY ${actualSortField} ${direction}`
     }
 
-    const query = `
-    SELECT
-      any(${directionSmall}PaymentMethod) AS paymentMethod,
-      count(*) AS count,
-      sum(originAmountDetails_amountInUsd) AS sum,
-      ${directionSmall}PaymentMethodId AS paymentIdentifier,
-      arrayDistinct(
-        arrayFilter(x -> x != '', arrayFlatten(groupArray(names)))
-      ) AS names
-    FROM (
-      SELECT
-        ${directionSmall}PaymentMethodId,
-        ${directionSmall}PaymentMethod,
-        originAmountDetails_amountInUsd,
-        CASE
-          WHEN ${directionSmall}PaymentMethod = 'CARD' THEN trimBoth(replaceRegexpAll(CONCAT(
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'firstName'),
-            ' ',
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'middleName'),
-            ' ',
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'nameOnCard', 'lastName')
-          ),
-          '\\s+',
-          ' '
-        ))
-          WHEN ${directionSmall}PaymentMethod = 'NPP' THEN trimBoth(replaceRegexpAll(CONCAT(
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'firstName'),
-            ' ',
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'middleName'),
-            ' ',
-            JSONExtractString(data, '${directionSmall}PaymentDetails', 'name', 'lastName')
-          ),
-          '\\s+',
-          ' '
-        ))
-          ELSE trimBoth(JSONExtractString(data, '${directionSmall}PaymentDetails', 'name'))
-        END AS names
-      FROM transactions FINAL
-      WHERE
-        ${directionSmall}UserId = '{{ userId }}'
-        AND timestamp BETWEEN {{ from }} AND {{ to }}
-    ) AS pre_aggregated
-    GROUP BY ${directionSmall}PaymentMethodId
-    ${orderByClause}
-`
+    const query = buildPaymentIdentifierQuery(
+      directionSmall,
+      orderByClause,
+      userId,
+      period
+    )
 
     let topPaymentIdentifier: PaymentIdentifier | undefined = undefined
 

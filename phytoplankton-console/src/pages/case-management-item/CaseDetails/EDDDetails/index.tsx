@@ -29,7 +29,7 @@ export const EDDDetails = (props: { userId: string }) => {
     const latestEddReview = response.data.sort((a, b) => {
       return dayjs(b.createdAt).diff(dayjs(a.createdAt));
     })[0];
-    setSelectedEddId(latestEddReview.id);
+    setSelectedEddId(latestEddReview?.id || null);
     return response;
   });
 

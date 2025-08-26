@@ -1,4 +1,5 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import { buildTransactionTypeQuery } from './queries/transaction-type-query'
 import { BarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -9,8 +10,6 @@ import {
   Period,
   periodDefaults,
   periodVars,
-  paymentIdentifierQueryClickhouse,
-  matchPeriodSQL,
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
@@ -18,7 +17,6 @@ import {
   isClickhouseEnabled,
   executeClickhouseQuery,
 } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',
@@ -35,19 +33,8 @@ export const TransactionType: BarchartQuestion<Period> = {
       { type: InternalTransaction['type']; count: number }[]
     > => {
       const clickhouseClient = await getClickhouseClient(tenantId)
-      const identifierQuery = userId
-        ? `(originUserId = '${userId}' OR destinationUserId = '${userId}')`
-        : paymentIdentifierQueryClickhouse(paymentIdentifier)
 
-      const query = `
-      SELECT type, count() as count
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-      WHERE
-      ${matchPeriodSQL('timestamp', period)} AND
-      ${identifierQuery}
-      GROUP BY type
-      SETTINGS output_format_json_quote_64bit_integers = 0
-    `
+      const query = buildTransactionTypeQuery(userId, paymentIdentifier, period)
 
       return await executeClickhouseQuery<
         Array<{ type: InternalTransaction['type']; count: number }>
