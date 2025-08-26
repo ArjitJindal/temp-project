@@ -27,9 +27,6 @@ import { envIsNot } from '@/utils/env'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
-    if (envIsNot('prod')) {
-      return
-    }
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const batchJobRepository = new BatchJobRepository(job.tenantId, client)
@@ -51,7 +48,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       },
       1
     )
-    if (existingJobs.length > 0) {
+    if (existingJobs.length > 0 && envIsNot('local')) {
       logger.info(
         `Skipping ${job.type} job because it's already running ${existingJobs[0].jobId}`
       )
