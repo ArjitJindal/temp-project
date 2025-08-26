@@ -127,7 +127,9 @@ export const config: Config = {
     MONGO_EVENT_TRIGGER_RULE_ID: '66d9d1170604e3825f395f1c',
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 3,
+    dataNodeInstanceType: 'm7g.medium.search',
+    volumeSize: 10,
   },
 }

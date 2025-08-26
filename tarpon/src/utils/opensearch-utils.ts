@@ -1,60 +1,88 @@
-import {
-  OpenSearchServerlessClient,
-  ListCollectionsCommand,
-  ListCollectionsCommandOutput,
-} from '@aws-sdk/client-opensearchserverless'
-import { Config } from '@flagright/lib/config/config'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { Client } from '@opensearch-project/opensearch'
 import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws'
-import { Bulk_RequestBody } from '@opensearch-project/opensearch/api'
+import {
+  Bulk_RequestBody,
+  DeleteByQuery_RequestBody,
+  Indices_Create_RequestBody,
+} from '@opensearch-project/opensearch/api'
 import { v4 as uuidv4 } from 'uuid'
-import { isEqual } from 'lodash'
+import { chunk, isEqual } from 'lodash'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { backOff } from 'exponential-backoff'
+import {
+  OpenSearchClient,
+  DescribeDomainsCommand,
+} from '@aws-sdk/client-opensearch'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from './opensearch-definitions'
+import { getSecret } from './secrets-manager'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { Action } from '@/services/sanctions/providers/types'
 import { logger } from '@/core/logger'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 
-export async function getCollectionEndpoint(config: Config): Promise<string> {
-  const collectionName = `${config.stage}-${config.region ?? ''}-opensearch`
-  const client = new OpenSearchServerlessClient({ region: config.env.region })
-  const command = new ListCollectionsCommand({
-    collectionFilters: { name: collectionName },
-  })
-  const response: ListCollectionsCommandOutput = await client.send(command)
-  if (response.collectionSummaries && response.collectionSummaries.length > 0) {
-    const collectionId = response.collectionSummaries[0].id
-    if (collectionId) {
-      return `https://${collectionId}.${config.env.region}.aoss.amazonaws.com`
+export async function getDomainEndpoint(
+  stage: string,
+  region: string,
+  awsRegion: string
+): Promise<string> {
+  const secretName = `opensearch-${stage}-${region}-endpoint`
+
+  try {
+    const secret = await getSecret<{ endpoint: string }>(secretName)
+    if (secret?.endpoint) {
+      return secret.endpoint
     }
-    throw new Error('Collection ID not found')
+    logger.info(
+      `No endpoint found in Secrets Manager, falling back to API discovery`
+    )
+  } catch (error) {
+    logger.warn(
+      `Could not fetch OpenSearch endpoint from Secrets Manager (${secretName}), falling back to API discovery`
+    )
   }
-  throw new Error('Collection not found')
+  const domains = [`${stage}-${region}-opensearch`]
+  const client = new OpenSearchClient({
+    region: awsRegion,
+    maxAttempts: 3,
+  })
+
+  const response = await client.send(
+    new DescribeDomainsCommand({ DomainNames: domains })
+  )
+
+  const domainStatus = response.DomainStatusList?.[0]
+  if (!domainStatus?.Endpoint) {
+    throw new Error(`Endpoint not found for domain "${domains[0]}"`)
+  }
+  return `https://${domainStatus.Endpoint}`
 }
 
 export async function getOpensearchClient(): Promise<Client> {
   const [stage, region] = stageAndRegion()
   const config = getTarponConfig(stage, region)
+
   if (config.stage === 'local') {
     return getLocalClient()
   }
-  const collectionEndpoint = await getCollectionEndpoint(config)
-  if (!collectionEndpoint || !config.env.region) {
-    throw new Error('Collection endpoint not found')
-  }
+
+  const domainEndpoint = await getDomainEndpoint(
+    stage,
+    config.region as string,
+    config.env.region as string
+  )
+
   const client = new Client({
-    node: collectionEndpoint,
+    node: domainEndpoint,
     ...AwsSigv4Signer({
-      region: config.env.region,
+      region: config.env.region as string,
+      service: 'es',
       getCredentials: defaultProvider(),
-      service: 'aoss',
     }),
   })
+
   return client
 }
 
@@ -72,54 +100,56 @@ function getLocalClient(): Client {
 
 export async function bulkUpdate(
   provider: SanctionsDataProviderName,
-  entities: [Action, Partial<SanctionsEntity>][],
+  data: [Action, Partial<SanctionsEntity>][],
   version: string,
   indexName: string,
   client: Client
 ) {
-  const operations: Bulk_RequestBody = entities.flatMap(
-    ([action, entity]): Bulk_RequestBody => {
-      const e = {
-        ...entity,
-        provider,
-        version,
-      }
-      switch (action) {
-        case 'add':
-          return [
-            { update: { _index: indexName, _id: entity.id } },
-            { doc: e, doc_as_upsert: true },
-          ]
-        case 'chg':
-          return [
-            { update: { _index: indexName, _id: entity.id } },
-            { doc: e, doc_as_upsert: true },
-          ]
-        case 'del':
-          return [{ delete: { _index: indexName, _id: entity.id } }]
-      }
-    }
-  )
-  try {
-    await backOff(
-      async () => {
-        const response = await client.bulk({
-          body: operations,
-        })
-        if (response.body.errors) {
-          throw new Error('Error writing to opensearch, retrying...')
+  for (const entities of chunk(data, 100)) {
+    const operations: Bulk_RequestBody = entities.flatMap(
+      ([action, entity]): Bulk_RequestBody => {
+        const e = {
+          ...entity,
+          provider,
+          version,
         }
-      },
-      {
-        numOfAttempts: 5,
-        timeMultiple: 2,
-        maxDelay: 10000,
-        jitter: 'none',
-        startingDelay: 1000,
+        switch (action) {
+          case 'add':
+            return [
+              { update: { _index: indexName, _id: entity.id } },
+              { doc: e, doc_as_upsert: true },
+            ]
+          case 'chg':
+            return [
+              { update: { _index: indexName, _id: entity.id } },
+              { doc: e, doc_as_upsert: true },
+            ]
+          case 'del':
+            return [{ delete: { _index: indexName, _id: entity.id } }]
+        }
       }
     )
-  } catch (e) {
-    logger.info(`Error writing to opensearch: ${e}`)
+    try {
+      await backOff(
+        async () => {
+          const response = await client.bulk({
+            body: operations,
+          })
+          if (response.body.errors) {
+            throw new Error('Error writing to opensearch, retrying...')
+          }
+        },
+        {
+          numOfAttempts: 5,
+          timeMultiple: 2,
+          maxDelay: 10000,
+          jitter: 'none',
+          startingDelay: 1000,
+        }
+      )
+    } catch (e) {
+      logger.info(`Error writing to opensearch: ${e}`)
+    }
   }
 }
 
@@ -191,17 +221,20 @@ export async function updateIndex(client: Client, indexName: string) {
 export async function createIndex(
   client: Client,
   indexName: string,
-  aliasName?: string
+  aliasName?: string,
+  indexDefinition?: Indices_Create_RequestBody
 ) {
   logger.info(`Creating index ${indexName}`)
   const newIndexName = indexName + '-' + uuidv4()
   await client.indices.create({
     index: newIndexName,
-    body: SANCTIONS_SEARCH_INDEX_DEFINITION({
-      aliasName: aliasName ?? indexName,
-      isDelta: indexName.includes('delta'),
-      provider: getProviderNameFromIndexName(indexName),
-    }),
+    body:
+      indexDefinition ??
+      SANCTIONS_SEARCH_INDEX_DEFINITION({
+        aliasName: aliasName ?? indexName,
+        isDelta: indexName.includes('delta'),
+        provider: getProviderNameFromIndexName(indexName),
+      }),
   })
   logger.info(`Created index ${indexName}`)
   await putAlias(client, newIndexName, aliasName ?? indexName)
@@ -220,6 +253,17 @@ export async function putAlias(
   await client.indices.putAlias({
     index: indexName,
     name: aliasName,
+  })
+}
+
+export async function deleteByQuery(
+  client: Client,
+  indexName: string,
+  query: DeleteByQuery_RequestBody
+) {
+  await client.deleteByQuery({
+    index: indexName,
+    body: query,
   })
 }
 
@@ -259,11 +303,12 @@ export async function checkIndexExists(client: Client, indexName: string) {
 
 export async function createIndexIfNotExists(
   client: Client,
-  indexName: string
+  indexName: string,
+  indexDefinition?: Indices_Create_RequestBody
 ) {
   if (!(await checkIndexExists(client, indexName))) {
     logger.info(`Creating index ${indexName}`)
-    await createIndex(client, indexName)
+    await createIndex(client, indexName, undefined, indexDefinition)
     return
   }
   logger.info(`Index ${indexName} already exists`)
@@ -407,5 +452,5 @@ export async function keepAlive(client: Client) {
 export function isOpensearchAvailableInRegion() {
   const [stage, region] = stageAndRegion()
   const config = getTarponConfig(stage, region)
-  return config.opensearch.availability && config.opensearch.deploy
+  return config.opensearch.deploy
 }

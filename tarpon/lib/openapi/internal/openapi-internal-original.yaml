@@ -18582,6 +18582,8 @@ components:
                 type: array
                 items:
                   type: string
+        aggregateScreeningProfileData:
+          type: boolean
     SanctionsSettingsMarketType:
       title: SanctionsSettingsMarketType
       type: string

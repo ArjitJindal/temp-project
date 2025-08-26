@@ -130,7 +130,9 @@ export const config: Config = {
     FINCEN_SFTP_PORT: '2222',
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 3,
+    dataNodeInstanceType: 'm7g.medium.search',
+    volumeSize: 10,
   },
 }

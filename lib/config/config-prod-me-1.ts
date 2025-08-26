@@ -129,7 +129,9 @@ export const config: Config = {
     maxTotalMemoryGb: 24,
   },
   opensearch: {
-    availability: false,
     deploy: false,
+    dataNodes: 5,
+    dataNodeInstanceType: 'm7g.large.search',
+    volumeSize: 20,
   },
 }

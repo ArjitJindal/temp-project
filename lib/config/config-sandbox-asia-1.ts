@@ -23,7 +23,9 @@ export const config: Config = {
       'com.amazonaws.vpce.ap-southeast-1.vpce-svc-0a2b4df11b06e4872',
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 3,
+    dataNodeInstanceType: 'm7g.medium.search',
+    volumeSize: 10,
   },
 }

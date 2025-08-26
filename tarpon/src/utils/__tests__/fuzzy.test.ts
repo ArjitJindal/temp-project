@@ -1,6 +1,7 @@
 import {
   token_similarity_sort_ratio,
   calculateJaroWinklerDistance,
+  fuzzyEarlyTermination,
 } from '../fuzzy'
 import { calculateLevenshteinDistancePercentage } from '../search'
 
@@ -11,6 +12,7 @@ describe('token_similarity_sort_ratio', () => {
         partialMatch: false,
         partialMatchLength: 3,
         omitSpaces: true,
+        fuzzinessThreshold: 100,
       })
     ).toBe(
       calculateLevenshteinDistancePercentage('abdulaliaziz', 'abdulmutalibaziz')
@@ -20,6 +22,7 @@ describe('token_similarity_sort_ratio', () => {
         partialMatch: false,
         partialMatchLength: 2,
         omitSpaces: true,
+        fuzzinessThreshold: 100,
       })
     ).toBe(calculateLevenshteinDistancePercentage('JohnDoe', 'JohnSmith'))
     expect(
@@ -27,6 +30,7 @@ describe('token_similarity_sort_ratio', () => {
         partialMatch: false,
         partialMatchLength: 2,
         omitSpaces: true,
+        fuzzinessThreshold: 100,
       })
     ).toBe(calculateLevenshteinDistancePercentage('JonSmit', 'JohnSmith'))
     expect(
@@ -34,6 +38,7 @@ describe('token_similarity_sort_ratio', () => {
         partialMatch: false,
         partialMatchLength: 3,
         omitSpaces: true,
+        fuzzinessThreshold: 100,
       })
     ).toBe(
       calculateLevenshteinDistancePercentage('JohnSmithDeo', 'JohnSmithDeo')
@@ -42,7 +47,12 @@ describe('token_similarity_sort_ratio', () => {
       token_similarity_sort_ratio(
         'Abdul Ali Abdul Aziz',
         'Kadir Abdul Ali Azizul Khan',
-        { partialMatch: false, partialMatchLength: 4, omitSpaces: true }
+        {
+          partialMatch: false,
+          partialMatchLength: 4,
+          omitSpaces: true,
+          fuzzinessThreshold: 100,
+        }
       )
     ).toBe(
       calculateLevenshteinDistancePercentage(
@@ -55,8 +65,26 @@ describe('token_similarity_sort_ratio', () => {
         partialMatch: true,
         partialMatchLength: 2,
         omitSpaces: false,
+        fuzzinessThreshold: 100,
       })
     ).toBe(calculateLevenshteinDistancePercentage('mohammadohab', 'muhammad'))
+  })
+})
+
+describe('fuzzyEarlyTermination', () => {
+  it('should return true if the strings are similar', () => {
+    expect(fuzzyEarlyTermination('hello', 'world', 100)).toBe(false)
+  })
+  it('should return true if the strings are similar', () => {
+    expect(fuzzyEarlyTermination('hello', 'hello', 0)).toBe(false)
+  })
+  it('should return true if the strings are similar', () => {
+    expect(fuzzyEarlyTermination('hello', 'hello ', 10)).toBe(false)
+  })
+  it('should return true if the strings are similar', () => {
+    expect(fuzzyEarlyTermination('hello iiiii', 'hello world force', 10)).toBe(
+      true
+    )
   })
 })
 

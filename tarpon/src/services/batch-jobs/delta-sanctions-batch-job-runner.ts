@@ -2,8 +2,10 @@ import { range, uniq } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { Client } from '@opensearch-project/opensearch/.'
 import { getSanctionsCollectionName } from '../sanctions/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { runScreeningProfileDataFetcherBatchJob } from './screening-profile-data-fetcher'
 import { DeltaSanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetcher } from '@/services/sanctions/data-fetchers'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
@@ -30,7 +32,23 @@ export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: DeltaSanctionsDataFetchBatchJob): Promise<void> {
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
-    await runDeltaSanctionsDataFetchJob(job, client, dynamoDb)
+    const openSearchClient = isOpensearchAvailableInRegion()
+      ? await getOpensearchClient()
+      : undefined
+    await runDeltaSanctionsDataFetchJob(job, client, dynamoDb, openSearchClient)
+    if (openSearchClient) {
+      await Promise.all([
+        runScreeningProfileDataFetcherBatchJob(
+          dynamoDb,
+          client,
+          openSearchClient,
+          {
+            provider: job.providers[0],
+            type: 'delta',
+          }
+        ),
+      ])
+    }
     // Once lists are updated, run the ongoing screening jobs'
     if (job.parameters.from && job.parameters.ongoingScreeningTenantIds) {
       const tenantIds = job.parameters.ongoingScreeningTenantIds
@@ -46,15 +64,12 @@ export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
 export async function runDeltaSanctionsDataFetchJob(
   job: DeltaSanctionsDataFetchBatchJob,
   client: MongoClient,
-  dynamoDb: DynamoDBDocumentClient
+  dynamoDb: DynamoDBDocumentClient,
+  opensearchClient?: Client
 ) {
   const { tenantId, providers, settings } = job
   const version = Date.now().toString()
   logger.info(`Running delta`)
-
-  const opensearchClient = isOpensearchAvailableInRegion()
-    ? await getOpensearchClient()
-    : undefined
 
   const deltaSanctionsCollectionNames = uniq(
     providers.map((p) => {

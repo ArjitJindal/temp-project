@@ -5,6 +5,7 @@ export interface FuzzinessOptions {
   partialMatch: boolean
   omitSpaces: boolean
   partialMatchLength: number
+  fuzzinessThreshold: number
 }
 
 /**
@@ -27,13 +28,16 @@ export function token_similarity_sort_ratio(
       tokens2,
       separator,
       options.partialMatchLength,
-      calculateLevenshteinDistancePercentage
+      calculateLevenshteinDistancePercentage,
+      options.fuzzinessThreshold
     )
   }
-  return calculateLevenshteinDistancePercentage(
-    tokens1.join(separator),
-    tokens2.join(separator)
-  )
+  const s1 = tokens1.join(separator)
+  const s2 = tokens2.join(separator)
+  if (fuzzyEarlyTermination(s1, s2, options.fuzzinessThreshold)) {
+    return 0
+  }
+  return calculateLevenshteinDistancePercentage(s1, s2)
 }
 
 export function fuzzy_levenshtein_distance(
@@ -42,6 +46,9 @@ export function fuzzy_levenshtein_distance(
   options: FuzzinessOptions
 ) {
   if (!options.partialMatch) {
+    if (fuzzyEarlyTermination(str1, str2, options.fuzzinessThreshold)) {
+      return 0
+    }
     return calculateLevenshteinDistancePercentage(str1, str2)
   }
   const { tokens1, tokens2 } = arrange_token_lists(str1, str2)
@@ -51,7 +58,8 @@ export function fuzzy_levenshtein_distance(
     tokens2,
     separator,
     options.partialMatchLength,
-    calculateLevenshteinDistancePercentage
+    calculateLevenshteinDistancePercentage,
+    options.fuzzinessThreshold
   )
 }
 
@@ -353,10 +361,42 @@ function getSimilarityPercentage(
   tokens2: string[],
   separator: string,
   partialMatchLength: number,
-  operatingFunction: (s1: string, s2: string) => number
+  operatingFunction: (s1: string, s2: string) => number,
+  fuzzinessThreshold?: number
 ) {
-  return operatingFunction(
-    tokens1.slice(0, partialMatchLength).join(separator),
-    tokens2.slice(0, partialMatchLength).join(separator)
-  )
+  const str1 = tokens1.slice(0, partialMatchLength).join(separator)
+  const str2 = tokens2.slice(0, partialMatchLength).join(separator)
+  if (
+    fuzzinessThreshold &&
+    fuzzyEarlyTermination(str1, str2, fuzzinessThreshold)
+  ) {
+    return 0
+  }
+  return operatingFunction(str1, str2)
+}
+
+export function fuzzyEarlyTermination(
+  str1: string,
+  str2: string,
+  fuzzinessThreshold: number
+): boolean {
+  const lengthDiff = Math.abs(str1.length - str2.length)
+  const maxLength = Math.max(str1.length, str2.length)
+
+  if (maxLength === 0) {
+    return false
+  }
+
+  const fuzzinessFloor = Math.floor(100 / fuzzinessThreshold)
+  const searchTermLength = Math.min(str1.length, str2.length)
+
+  if (fuzzinessThreshold != 0 && searchTermLength <= fuzzinessFloor) {
+    return false
+  }
+
+  const bestCaseSimilarity = ((maxLength - lengthDiff) / maxLength) * 100
+  if (bestCaseSimilarity < 100 - fuzzinessThreshold) {
+    return true
+  }
+  return false
 }

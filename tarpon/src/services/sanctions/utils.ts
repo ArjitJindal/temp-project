@@ -7,6 +7,7 @@ import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityTy
 import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
+  AGGREGATED_SANCTIONS_COLLECTION,
   DELTA_SANCTIONS_COLLECTION,
   DELTA_SANCTIONS_GLOBAL_COLLECTION,
   SANCTIONS_COLLECTION,
@@ -91,8 +92,23 @@ export function getSanctionsCollectionName(
     entityType?: SanctionsEntityType
   },
   tenantId: string,
-  type: 'delta' | 'full'
+  type: 'delta' | 'full',
+  aggregationProps?: {
+    screeningProfileId?: string
+    aggregate: boolean
+    screeningProfileContainsAllSources?: boolean
+  }
 ): string {
+  if (
+    aggregationProps &&
+    aggregationProps.screeningProfileId &&
+    !aggregationProps.screeningProfileContainsAllSources
+  ) {
+    return AGGREGATED_SANCTIONS_COLLECTION(
+      tenantId,
+      aggregationProps.screeningProfileId.toLowerCase()
+    )
+  }
   const { provider } = providerInfo
   let { entityType } = providerInfo
   if (provider && COLLECTIONS_MAP[provider]) {

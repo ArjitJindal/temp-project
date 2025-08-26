@@ -171,7 +171,9 @@ export type Config = {
     FINCEN_SFTP_PORT?: string
   }
   opensearch: {
-    availability: boolean
     deploy: boolean
+    dataNodes: number
+    dataNodeInstanceType: string
+    volumeSize: number
   }
 }

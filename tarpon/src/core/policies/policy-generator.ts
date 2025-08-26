@@ -86,14 +86,21 @@ export default class PolicyBuilder {
   opensearch() {
     const [stage, region] = stageAndRegion()
     this.statements.push({
-      Action: ['aoss:APIAccessAll'],
+      Action: [
+        'es:ESHttpGet',
+        'es:ESHttpPost',
+        'es:ESHttpPut',
+        'es:ESHttpDelete',
+        'es:ESHttpHead',
+        'es:ESHttpPatch',
+      ],
       Effect: 'Allow',
-      Resource: `arn:aws:aoss:*:*:collection/${stage}-${region}-opensearch`,
+      Resource: `arn:aws:es:*:*:domain/${stage}-${region}-opensearch*`,
     })
     this.statements.push({
-      Action: ['aoss:DashboardAccessAll', 'aoss:ListCollections'],
+      Action: ['es:DescribeDomains', 'es:DescribeElasticsearchDomains'],
       Effect: 'Allow',
-      Resource: `arn:aws:aoss:*:*:collection/${stage}-${region}-opensearch`,
+      Resource: `arn:aws:es:*:*:domain/${stage}-${region}-opensearch*`,
     })
     return this
   }

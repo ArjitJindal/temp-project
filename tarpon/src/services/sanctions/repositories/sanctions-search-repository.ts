@@ -344,11 +344,7 @@ export class SanctionsSearchRepository {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-    return getSanctionSourceDetails(
-      request,
-      this.tenantId,
-      screeningProfileService
-    )
+    return getSanctionSourceDetails(request, screeningProfileService)
   }
 
   private async getSearchResultFromOpensearch(

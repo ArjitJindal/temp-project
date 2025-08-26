@@ -124,7 +124,9 @@ export const config: Config = {
     POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
   },
   opensearch: {
-    availability: true,
     deploy: false,
+    dataNodes: 5,
+    dataNodeInstanceType: 'm7g.large.search',
+    volumeSize: 20,
   },
 }

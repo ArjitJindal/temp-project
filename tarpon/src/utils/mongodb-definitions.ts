@@ -452,6 +452,13 @@ export const DELTA_SANCTIONS_GLOBAL_COLLECTION = () => {
   return 'delta-sanctions'
 }
 
+export const AGGREGATED_SANCTIONS_COLLECTION = (
+  tenantId: string,
+  screeningProfileId: string
+) => {
+  return `${tenantId}-aggregated-sanctions-${screeningProfileId}`
+}
+
 export const SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION = () => {
   return `sanctions_source_documents`
 }

@@ -1,5 +1,10 @@
 import { compact, intersection, uniq } from 'lodash'
-import { isLatinScript, normalize, sanitizeString } from '@flagright/lib/utils'
+import {
+  adverseMediaCategoryMap,
+  isLatinScript,
+  normalize,
+  sanitizeString,
+} from '@flagright/lib/utils'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import {
   SanctionsDataProviders,
@@ -29,6 +34,7 @@ import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSou
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'
 import { RELSourceRelevance } from '@/@types/openapi-internal/RELSourceRelevance'
 import { AdverseMediaSourceRelevance } from '@/@types/openapi-internal/AdverseMediaSourceRelevance'
+import { ScreeningProfileResponse } from '@/@types/openapi-internal/ScreeningProfileResponse'
 
 export function shouldLoadScreeningData<T>(
   screeningTypes: T[],
@@ -561,8 +567,15 @@ export function getEntityTypes(
 export function getCollectionNames(
   request: SanctionsSearchRequest,
   providers: SanctionsDataProviderName[],
-  tenantId: string
+  tenantId: string,
+  props?: {
+    screeningProfileId?: string
+    screeningProfileContainsAllSources?: boolean
+  }
 ) {
+  const { screeningProfileId, screeningProfileContainsAllSources } = props ?? {}
+  const sanctions = getContext()?.settings?.sanctions
+  const aggregateScreeningProfileData = sanctions?.aggregateScreeningProfileData
   const nonDemoTenantId = getNonDemoTenantId(tenantId)
   const entityTypes: SanctionsEntityType[] = getEntityTypes(request)
   return uniq(
@@ -574,7 +587,13 @@ export function getCollectionNames(
             entityType: entityType,
           },
           nonDemoTenantId,
-          request.isOngoingScreening ? 'delta' : 'full'
+          request.isOngoingScreening ? 'delta' : 'full',
+          {
+            screeningProfileId: screeningProfileId,
+            aggregate: aggregateScreeningProfileData ?? false,
+            screeningProfileContainsAllSources:
+              screeningProfileContainsAllSources,
+          }
         )
       )
     })
@@ -583,7 +602,6 @@ export function getCollectionNames(
 
 export async function getSanctionSourceDetails(
   request: SanctionsSearchRequest,
-  tenantId: string,
   screeningProfileService: ScreeningProfileService
 ): Promise<SanctionsSearchProps> {
   let sanctionSourceIds: string[] | undefined = undefined
@@ -600,14 +618,15 @@ export async function getSanctionSourceDetails(
       await screeningProfileService.getExistingScreeningProfile(
         screeningProfileId
       )
-    sanctionSourceIds = screeningProfile.sanctions?.sourceIds
-    pepSourceIds = screeningProfile.pep?.sourceIds
-    relSourceIds = screeningProfile.rel?.sourceIds
-    sanctionsCategory = screeningProfile.sanctions?.relevance
-    pepCategory = screeningProfile.pep?.relevance
-    relCategory = screeningProfile.rel?.relevance
-    adverseMediaCategory = screeningProfile.adverseMedia?.relevance
-    containAllSources = screeningProfile.containAllSources
+    const screeningProfileData = getScreeningProfileData(screeningProfile)
+    sanctionSourceIds = screeningProfileData.sanctionSourceIds
+    pepSourceIds = screeningProfileData.pepSourceIds
+    relSourceIds = screeningProfileData.relSourceIds
+    sanctionsCategory = screeningProfileData.sanctionsCategory
+    pepCategory = screeningProfileData.pepCategory
+    relCategory = screeningProfileData.relCategory
+    adverseMediaCategory = screeningProfileData.adverseMediaCategory
+    containAllSources = screeningProfileData.containAllSources
     if (request.types) {
       if (!request.types.includes('PEP')) {
         pepSourceIds = []
@@ -636,4 +655,81 @@ export async function getSanctionSourceDetails(
     adverseMediaCategory,
     containAllSources,
   }
+}
+
+export function getScreeningProfileData(
+  screeningProfile: ScreeningProfileResponse
+) {
+  const sanctionSourceIds = screeningProfile.sanctions?.sourceIds
+  const pepSourceIds = screeningProfile.pep?.sourceIds
+  const relSourceIds = screeningProfile.rel?.sourceIds
+  const sanctionsCategory = screeningProfile.sanctions?.relevance
+  const pepCategory = screeningProfile.pep?.relevance
+  const relCategory = screeningProfile.rel?.relevance
+  const adverseMediaCategory = screeningProfile.adverseMedia?.relevance
+  const containAllSources = screeningProfile.containAllSources
+  return {
+    sanctionSourceIds,
+    pepSourceIds,
+    relSourceIds,
+    sanctionsCategory,
+    pepCategory,
+    relCategory,
+    adverseMediaCategory,
+    containAllSources,
+  }
+}
+
+export function getAggregatedSourceIds(props: SanctionsSearchProps) {
+  const {
+    sanctionSourceIds = [],
+    pepSourceIds = [],
+    relSourceIds = [],
+    sanctionsCategory = [],
+    pepCategory = [],
+    relCategory = [],
+    adverseMediaCategory = [],
+  } = props
+  const allSourceIds: string[] = []
+  if (sanctionSourceIds?.length) {
+    sanctionSourceIds.forEach((sourceId) => {
+      sanctionsCategory.forEach((category) => {
+        allSourceIds.push(`${sourceId}-${category}`)
+      })
+    })
+  }
+  if (pepSourceIds?.length) {
+    if (pepCategory.includes('PEP')) {
+      pepSourceIds.forEach((sourceId) => {
+        allSourceIds.push(`${sourceId}-PEP`)
+      })
+    }
+    if (pepCategory.includes('POI')) {
+      allSourceIds.push('POI')
+    }
+  }
+  if (relSourceIds?.length) {
+    relSourceIds.forEach((sourceId) => {
+      relCategory.forEach((category) => {
+        allSourceIds.push(`${sourceId}-${category}`)
+      })
+    })
+  }
+  if (adverseMediaCategory?.length) {
+    adverseMediaCategory.forEach((category) => {
+      allSourceIds.push(adverseMediaCategoryMap[category])
+    })
+  }
+  return uniq(allSourceIds)
+}
+
+export function getFuzzinessThreshold(request: SanctionsSearchRequest): number {
+  let fuzziness = request.fuzzinessRange?.upperBound
+  if (fuzziness == null && request.fuzziness != null) {
+    fuzziness = request.fuzziness * 100
+  }
+  if (fuzziness == null) {
+    return 100
+  }
+  return fuzziness
 }

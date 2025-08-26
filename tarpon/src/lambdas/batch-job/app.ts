@@ -132,6 +132,7 @@ export const jobDecisionHandler = async (
     SANCTIONS_SCREENING_DETAILS_MIGRATION: 'FARGATE',
     BATCH_RERUN_USERS: 'FARGATE',
     EDD_REVIEW: 'LAMBDA',
+    SCREENING_PROFILE_DATA_FETCH: 'FARGATE',
   }
 
   return {

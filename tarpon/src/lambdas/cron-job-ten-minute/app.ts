@@ -3,6 +3,7 @@ import { LinearClient } from '@linear/sdk'
 import { WebClient } from '@slack/web-api'
 import { isQaEnv } from '@flagright/lib/qa'
 import slackifyMarkdown from 'slackify-markdown'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -19,7 +20,7 @@ import {
   shouldRun,
 } from '@/utils/sla-scheduler'
 import { SLAService } from '@/services/sla/sla-service'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { getSecret } from '@/utils/secrets-manager'
 import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TriageQueueTicket } from '@/@types/triage'
@@ -40,6 +41,8 @@ import {
   isOpensearchAvailableInRegion,
   keepAlive,
 } from '@/utils/opensearch-utils'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { ScreeningProfileRepository } from '@/services/screening-profile/repositories/screening-profile-repository'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
@@ -176,6 +179,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       'USER_RULE_RE_RUN',
     ])
     await deleteOldWebhookRetryEvents(tenantIds)
+    await dispatchScreeningDataFetchJob(dynamoDb)
 
     if (envIs('dev')) {
       try {
@@ -318,5 +322,59 @@ export async function notifyTriageIssues() {
         )
       })
     )
+  }
+}
+
+async function dispatchScreeningDataFetchJob(dynamoDb: DynamoDBDocumentClient) {
+  if (envIsNot('prod')) {
+    return
+  }
+  const tenantIds = await TenantService.getAllTenantIds()
+  const tenantIdsToDispatch: string[] = []
+  for (const tenantId of tenantIds) {
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb,
+    })
+    const settings = await tenantRepository.getTenantSettings()
+    if (settings.sanctions?.aggregateScreeningProfileData) {
+      const screeningProfileRepository = new ScreeningProfileRepository(
+        tenantId,
+        dynamoDb
+      )
+      const screeningProfiles =
+        await screeningProfileRepository.getScreeningProfiles()
+      if (
+        screeningProfiles.items.length > 0 &&
+        screeningProfiles.items.some(
+          (sp) =>
+            sp.updatedAt &&
+            dayjs(sp.updatedAt).isAfter(dayjs().subtract(10, 'minutes'))
+        )
+      ) {
+        tenantIdsToDispatch.push(tenantId)
+      }
+    }
+  }
+  if (tenantIdsToDispatch.length > 0) {
+    await sendBatchJobCommand({
+      type: 'SCREENING_PROFILE_DATA_FETCH',
+      tenantId: 'flagright',
+      parameters: {
+        provider: SanctionsDataProviders.ACURIS,
+        entityType: 'PERSON',
+        type: 'full',
+        tenantIds: tenantIdsToDispatch,
+      },
+    })
+    await sendBatchJobCommand({
+      type: 'SCREENING_PROFILE_DATA_FETCH',
+      tenantId: 'flagright',
+      parameters: {
+        provider: SanctionsDataProviders.ACURIS,
+        entityType: 'BUSINESS',
+        type: 'full',
+        tenantIds: tenantIdsToDispatch,
+      },
+    })
   }
 }

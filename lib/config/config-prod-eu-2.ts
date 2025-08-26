@@ -54,7 +54,7 @@ export const config: Config = {
     TRANSACTION_LAMBDA: {
       MAX_PROVISIONED_CONCURRENCY: 32,
       MIN_PROVISIONED_CONCURRENCY: 5,
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 2048,
     },
     ASYNC_RULES_LAMBDA: {
       MEMORY_SIZE: 1024,
@@ -140,7 +140,9 @@ export const config: Config = {
     numReplicas: 3,
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 7,
+    dataNodeInstanceType: 'm7g.xlarge.search',
+    volumeSize: 25,
   },
 }

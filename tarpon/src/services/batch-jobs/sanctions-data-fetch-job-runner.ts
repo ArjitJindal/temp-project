@@ -4,6 +4,7 @@ import { getSanctionsCollectionName } from '../sanctions/utils'
 import { SanctionsDataProviders } from '../sanctions/types'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { BatchJobRepository } from './repositories/batch-job-repository'
+import { sendBatchJobCommand } from './batch-job'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetcher } from '@/services/sanctions/data-fetchers'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
@@ -22,9 +23,13 @@ import {
   syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { envIsNot } from '@/utils/env'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
+    if (envIsNot('prod')) {
+      return
+    }
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const batchJobRepository = new BatchJobRepository(job.tenantId, client)
@@ -137,6 +142,20 @@ export async function runSanctionsDataFetchJob(
             )
           : undefined,
       ])
+    }
+    if (
+      provider === SanctionsDataProviders.ACURIS &&
+      job.parameters.entityType
+    ) {
+      await sendBatchJobCommand({
+        type: 'SCREENING_PROFILE_DATA_FETCH',
+        tenantId,
+        parameters: {
+          provider: 'acuris',
+          entityType: job.parameters.entityType,
+          type: 'full',
+        },
+      })
     }
   }
 }

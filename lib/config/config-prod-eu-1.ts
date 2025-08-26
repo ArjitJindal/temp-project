@@ -130,7 +130,9 @@ export const config: Config = {
       'com.amazonaws.vpce.eu-central-1.vpce-svc-09b4c3c24933d2ee2',
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 7,
+    dataNodeInstanceType: 'm7g.xlarge.search',
+    volumeSize: 25,
   },
 }

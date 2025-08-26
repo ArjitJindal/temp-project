@@ -8,7 +8,10 @@ import {
   sanitizeStringWithSpecialCharactersForTokenization,
 } from '@flagright/lib/utils'
 import { Db, MongoClient } from 'mongodb'
-import { Search_Response } from '@opensearch-project/opensearch/api'
+import {
+  Search_RequestBody,
+  Search_Response,
+} from '@opensearch-project/opensearch/api'
 import { CommonOptions, format } from '@fragaria/address-formatter'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
@@ -20,7 +23,9 @@ import {
 import { getDefaultProviders } from '../utils'
 import {
   deriveMatchingDetails,
+  getAggregatedSourceIds,
   getCollectionNames,
+  getFuzzinessThreshold,
   getSanctionSourceDetails,
   hydrateHitsWithMatchTypes,
   sanitizeEntities,
@@ -53,6 +58,7 @@ import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntit
 import { ask } from '@/utils/llms'
 import { ModelTier } from '@/utils/llms/base-service'
 import { generateHashFromString } from '@/utils/object'
+import { getContext } from '@/core/utils/context-storage'
 
 export const OPENSEARCH_NON_PROJECTED_FIELDS = [
   'rawResponse',
@@ -98,7 +104,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     percentageSimilarity: number
   ): boolean {
     const percentageDissimilarity = 100 - percentageSimilarity
-
     // If short name matching is enabled, calculate the fuzziness floor
     if (request.enableShortNameMatching) {
       let fuzziness
@@ -1122,12 +1127,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           return false // Lengths are too different for a likely meaningful fuzzy match.
         }
 
-        const similarity = jaro_winkler_distance(lowerCaseWord, stopword, {
-          omitSpaces: true,
-          partialMatch: false,
-          partialMatchLength: 0,
-        })
-
         // Dynamic Jaro-Winkler Threshold
         // Adjust the similarity threshold based on the length of the stopword.
         // Shorter stopwords might need a slightly different sensitivity.
@@ -1136,6 +1135,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           // For shorter stopwords (length 3 or 4, e.g., "inc", "ltd", "bank").
           dynamicThreshold = 80.0 // Use a slightly different threshold.
         }
+
+        const similarity = jaro_winkler_distance(lowerCaseWord, stopword, {
+          omitSpaces: true,
+          partialMatch: false,
+          partialMatchLength: 0,
+          fuzzinessThreshold: dynamicThreshold,
+        })
 
         // If the similarity score exceeds the dynamic threshold, consider it a fuzzy match.
         if (similarity > dynamicThreshold) {
@@ -1216,6 +1222,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               omitSpaces: false,
               partialMatch: true,
               partialMatchLength: formattedUserAddress.split(' ').length,
+              fuzzinessThreshold: 70,
             }
           )
           if (percentageSimilarity >= 70) {
@@ -1233,6 +1240,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     fuzzinessSettings: FuzzinessSetting | undefined,
     stopwordSet: Set<string> | undefined
   ): SanctionsEntity[] {
+    const evaluatingFunction = this.getFuzzinessFunction(
+      fuzzinessSettings,
+      request.manualSearch
+    )
+    const fuzzinessThreshold = getFuzzinessThreshold(request)
     const keepSpaces = Boolean(!fuzzinessSettings?.sanitizeInputForFuzziness)
     const shouldSanitizeString =
       fuzzinessSettings?.sanitizeInputForFuzziness ||
@@ -1264,6 +1276,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     )
     return results.filter((entity) => {
       if (
+        request.addresses?.length &&
         !this.isAddressFuzzyMatch(
           request.addresses ?? [],
           entity.addresses ?? []
@@ -1296,14 +1309,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             if (name === searchTerm) {
               return true
             }
-            const evaluatingFunction = this.getFuzzinessFunction(
-              fuzzinessSettings,
-              request.manualSearch
-            )
             const percentageSimilarity = evaluatingFunction(searchTerm, name, {
               omitSpaces: !keepSpaces,
               partialMatch: !!request.partialMatch || !!request.manualSearch,
               partialMatchLength: searchTermTokensLength,
+              fuzzinessThreshold,
             })
             const fuzzyMatch =
               SanctionsDataFetcher.getFuzzinessEvaluationResult(
@@ -1325,54 +1335,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-    return getSanctionSourceDetails(
-      request,
-      this.tenantId,
-      screeningProfileService
-    )
-  }
-
-  private getAggregatedSourceIds(props: SanctionsSearchProps) {
-    const {
-      sanctionSourceIds = [],
-      pepSourceIds = [],
-      relSourceIds = [],
-      sanctionsCategory = [],
-      pepCategory = [],
-      relCategory = [],
-      adverseMediaCategory = [],
-    } = props
-    const allSourceIds: string[] = []
-    if (sanctionSourceIds?.length) {
-      sanctionSourceIds.forEach((sourceId) => {
-        sanctionsCategory.forEach((category) => {
-          allSourceIds.push(`${sourceId}-${category}`)
-        })
-      })
-    }
-    if (pepSourceIds?.length) {
-      if (pepCategory.includes('PEP')) {
-        pepSourceIds.forEach((sourceId) => {
-          allSourceIds.push(`${sourceId}-PEP`)
-        })
-      }
-      if (pepCategory.includes('POI')) {
-        allSourceIds.push('POI')
-      }
-    }
-    if (relSourceIds?.length) {
-      relSourceIds.forEach((sourceId) => {
-        relCategory.forEach((category) => {
-          allSourceIds.push(`${sourceId}-${category}`)
-        })
-      })
-    }
-    if (adverseMediaCategory?.length) {
-      adverseMediaCategory.forEach((category) => {
-        allSourceIds.push(adverseMediaCategoryMap[category])
-      })
-    }
-    return uniq(allSourceIds)
+    return getSanctionSourceDetails(request, screeningProfileService)
   }
 
   private getOpensearchProjectionFields(request: SanctionsSearchRequest) {
@@ -1395,8 +1358,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const { request, containAllSources } = props
     const shouldConditions: QueryContainer[] = []
     const mustConditions: QueryContainer[] = []
-    const allSourceIds = this.getAggregatedSourceIds(props)
-    if (allSourceIds.length && !containAllSources) {
+    const allSourceIds = getAggregatedSourceIds(props)
+    const aggregateScreeningProfileData =
+      getContext()?.settings?.sanctions?.aggregateScreeningProfileData
+    if (
+      allSourceIds.length &&
+      !containAllSources &&
+      !aggregateScreeningProfileData
+    ) {
       mustConditions.push({
         terms: {
           aggregatedSourceIds: allSourceIds,
@@ -1405,7 +1374,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (
       request?.types?.length &&
-      (request.manualSearch || !containAllSources)
+      (request.manualSearch || !containAllSources) &&
+      !aggregateScreeningProfileData
     ) {
       const typesCondition = [
         { terms: { sanctionSearchTypes: request.types } },
@@ -1563,6 +1533,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         },
       })
     }
+
+    if (
+      request.entityType &&
+      request.entityType !== 'EXTERNAL_USER' &&
+      aggregateScreeningProfileData
+    ) {
+      const entityTypes: SanctionsEntityType[] =
+        request.entityType !== 'PERSON'
+          ? ['BANK', 'BUSINESS']
+          : [request.entityType]
+      if (request.orFilters?.includes('entityType')) {
+        shouldConditions.push({
+          terms: {
+            entityType: entityTypes,
+          },
+        })
+      } else {
+        mustConditions.push({
+          terms: {
+            entityType: entityTypes,
+          },
+        })
+      }
+    }
     return {
       shouldConditions,
       mustConditions,
@@ -1581,43 +1575,29 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const collectionNames = getCollectionNames(
       request,
       providers,
-      this.tenantId
+      this.tenantId,
+      {
+        screeningProfileContainsAllSources: props.containAllSources,
+        screeningProfileId: request.screeningProfileId,
+      }
     )
-    const queryWithoutStopwords = this.getOpensearchQuery({
+    const query = this.getOpensearchQuery({
       searchTerm,
       shouldConditions,
       mustConditions,
-      onlyFuzzyQuery: false,
       request,
     })
-
-    const queryWithStopwords = searchTerm.split(' ').includes('the')
-      ? this.getOpensearchQuery({
-          searchTerm,
-          shouldConditions,
-          mustConditions,
-          onlyFuzzyQuery: true,
-          request,
-        })
-      : undefined
+    const time = Date.now()
     const results = await Promise.allSettled(
       collectionNames.flatMap((c) => [
         client.search({
           index: c,
           _source: this.getOpensearchProjectionFields(request),
-          body: queryWithoutStopwords,
+          body: query,
         }),
-        ...(queryWithStopwords
-          ? [
-              client.search({
-                index: c,
-                _source: this.getOpensearchProjectionFields(request),
-                body: queryWithStopwords,
-              }),
-            ]
-          : []),
       ])
     )
+    logger.info(`Query time: ${Date.now() - time}`)
     if (results.some((r) => r.status === 'rejected')) {
       logger.error(
         `Error in opensearch search: ${JSON.stringify(
@@ -1647,130 +1627,104 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       : undefined
     const hits = await this.getOpensearchQueryResults(props)
     const fuzzinessSettings = request?.fuzzinessSettings
+    const filterResultsTime = Date.now()
     const filteredResults = this.filterResults(
       uniqBy(hits, (s) => s.id),
       request,
       fuzzinessSettings,
       stopwordSet
     )
-    return this.searchRepository.saveSearch(filteredResults, request)
+    logger.info(`filterResultsTime: ${Date.now() - filterResultsTime}`)
+    const data = await this.searchRepository.saveSearch(
+      filteredResults,
+      request
+    )
+    return data
   }
 
   private getOpensearchQuery({
     searchTerm,
     shouldConditions,
     mustConditions,
-    onlyFuzzyQuery,
     request,
-  }) {
+  }): Search_RequestBody {
     const normalizedSearchTerm = normalize(searchTerm)
     const sanitizeStringWithSpecialCharactersForTokenizationSearchTerm =
       sanitizeStringWithSpecialCharactersForTokenization(normalizedSearchTerm)
+    const addPlainFuzzyQuery = searchTerm.split(' ').includes('the')
+    const fields: string[] = ['normalizedAka.fuzzy_with_stopwords_removal']
+    const terms = uniq([
+      normalizedSearchTerm,
+      sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
+    ])
+    if (addPlainFuzzyQuery) {
+      fields.push('normalizedAka.fuzzy')
+    }
+    const fuzzyQueryTerms = terms.map((term) => {
+      const tokens = uniq(term.split(' '))
+      return tokens.join(' ')
+    })
+    const hasMustConditions =
+      mustConditions.length > 0 || shouldConditions.length > 0
     return {
-      size: 1000,
+      size: 250,
+      track_total_hits: false,
+      min_score: 0.1,
       query: {
         bool: {
-          must: [
-            ...(shouldConditions.length
-              ? [
-                  {
-                    bool: {
-                      should: shouldConditions,
-                      minimum_should_match: 1,
-                    },
-                  },
-                ]
-              : []),
-            ...mustConditions,
-            {
-              bool: {
-                should: [
-                  ...(onlyFuzzyQuery
+          ...(hasMustConditions
+            ? {
+                must: [
+                  ...(shouldConditions.length
                     ? [
                         {
-                          match: {
-                            'normalizedAka.fuzzy': {
-                              query: normalizedSearchTerm,
-                              fuzziness: 2,
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
-                          },
-                        },
-                        ...(sanitizeStringWithSpecialCharactersForTokenizationSearchTerm !==
-                        normalizedSearchTerm
-                          ? [
-                              {
-                                match: {
-                                  'normalizedAka.fuzzy': {
-                                    query:
-                                      sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
-                                    fuzziness: 2,
-                                    max_expansions: 100,
-                                    prefix_length: 0,
-                                    boost: 1,
-                                  },
-                                },
-                              },
-                            ]
-                          : []),
-                      ]
-                    : [
-                        {
-                          match: {
-                            'normalizedAka.exact': {
-                              query: normalizedSearchTerm,
-                              boost: 5,
-                            },
-                          },
-                        },
-                        {
-                          match: {
-                            'normalizedAka.fuzzy_with_stopwords_removal': {
-                              query: normalizedSearchTerm,
-                              fuzziness: 2,
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
-                          },
-                        },
-                      ]),
-                  ...(sanitizeStringWithSpecialCharactersForTokenizationSearchTerm !==
-                  normalizedSearchTerm
-                    ? [
-                        {
-                          match: {
-                            'normalizedAka.fuzzy': {
-                              query:
-                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
-                              fuzziness: 2,
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
-                          },
-                        },
-                        {
-                          match: {
-                            'normalizedAka.fuzzy_with_stopwords_removal': {
-                              query:
-                                sanitizeStringWithSpecialCharactersForTokenizationSearchTerm,
-                              fuzziness: 2,
-                              max_expansions: 100,
-                              prefix_length: 0,
-                              boost: 1,
-                            },
+                          bool: {
+                            should: shouldConditions,
+                            minimum_should_match: 1,
                           },
                         },
                       ]
                     : []),
+                  ...mustConditions,
                 ],
-                minimum_should_match: 1,
+              }
+            : {}),
+          should: [
+            {
+              terms: {
+                'normalizedAka.exact': terms,
+                boost: 5,
               },
             },
+            ...(fields.length > 1
+              ? fuzzyQueryTerms.map(
+                  (term): QueryContainer => ({
+                    multi_match: {
+                      query: term,
+                      fields: fields,
+                      type: 'best_fields',
+                      tie_breaker: 0.25,
+                      fuzziness: 2,
+                      max_expansions: 100,
+                      prefix_length: 1,
+                    },
+                  })
+                )
+              : fuzzyQueryTerms.map(
+                  (term): QueryContainer => ({
+                    match: {
+                      'normalizedAka.fuzzy_with_stopwords_removal': {
+                        query: term,
+                        boost: 1,
+                        fuzziness: 2,
+                        max_expansions: 100,
+                        prefix_length: 1,
+                      },
+                    },
+                  })
+                )),
           ],
+          minimum_should_match: 1,
         },
       },
       _source: this.getOpensearchProjectionFields(request),

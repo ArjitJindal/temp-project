@@ -4,14 +4,20 @@ import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 type SanctionsSearchIndexDefinitionProps = {
   aliasName: string
-  isDelta: boolean
+  isDelta?: boolean
   provider: SanctionsDataProviderName
+  aggregatedIndex?: boolean
 }
 
 export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
   props: SanctionsSearchIndexDefinitionProps
 ): Indices_Create_RequestBody => {
-  const { aliasName, isDelta = false, provider } = props
+  const {
+    aliasName,
+    isDelta = false,
+    provider,
+    aggregatedIndex = false,
+  } = props
   const isDowJones = provider === SanctionsDataProviders.DOW_JONES
   return {
     settings: {
@@ -36,7 +42,7 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
         },
       },
       index: {
-        number_of_shards: 3,
+        number_of_shards: 1,
         number_of_replicas: 1,
       },
     },
@@ -76,15 +82,23 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
         aggregatedSourceIds: {
           type: 'keyword',
         },
-        sanctionSearchTypes: {
-          type: 'keyword',
-        },
+        ...(!aggregatedIndex
+          ? {
+              sanctionSearchTypes: {
+                type: 'keyword',
+              },
+            }
+          : {}),
         ...(isDelta || isDowJones
           ? {
-              entityType: { type: 'keyword' },
               provider: {
                 type: 'keyword',
               },
+            }
+          : {}),
+        ...(aggregatedIndex || isDelta || isDowJones
+          ? {
+              entityType: { type: 'keyword' },
             }
           : {}),
         ...(isDowJones

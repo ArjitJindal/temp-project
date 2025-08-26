@@ -93,7 +93,9 @@ export const config: Config = {
     API_USAGE_GOOGLE_SHEET_ID: '14VIlFKYsJq6R-UYAj-JVdAZA9PiBK5T7IgLzcFKRKlU',
   },
   opensearch: {
-    availability: true,
     deploy: true,
+    dataNodes: 3,
+    dataNodeInstanceType: '__local__',
+    volumeSize: 10,
   },
 }

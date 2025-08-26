@@ -40,6 +40,7 @@ import { FlatFilesValidationBatchJobRunner } from './flat-files-validation-batch
 import { FlatFilesRunnerBatchJobRunner } from './flat-files-runner-batch-job'
 import { SanctionsScreeningDetailsMigrationBatchJobRunner } from './sanctions-screening-details-migration'
 import { GoCardlessBackfillBatchJobRunner } from './go-cardless-backfill'
+import { ScreeningProfileDataFetcherBatchJobRunner } from './screening-profile-data-fetcher'
 import { EddReviewBatchJobRunner } from './edd-review-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
@@ -147,6 +148,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new ManualTransactionReverificationBatchJobRunner(jobId),
     USER_RULE_RE_RUN: (jobId) => new UserRuleReRunBatchJobRunner(jobId),
     BATCH_RERUN_USERS: (jobId) => new BatchRerunUsersBatchJobRunner(jobId),
+    SCREENING_PROFILE_DATA_FETCH: (jobId) =>
+      new ScreeningProfileDataFetcherBatchJobRunner(jobId),
     EDD_REVIEW: (jobId) => new EddReviewBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)

@@ -219,6 +219,17 @@ export type DeltaSanctionsDataFetchBatchJob = {
   }
 }
 
+export type ScreeningProfileDataFetchBatchJob = {
+  type: 'SCREENING_PROFILE_DATA_FETCH'
+  tenantId: string
+  parameters: {
+    provider: SanctionsDataProviderName
+    entityType: SanctionsEntityType
+    type: 'delta' | 'full'
+    tenantIds?: string[]
+  }
+}
+
 export type PnbTransactionEventUpdatesBatchJob = {
   type: 'PNB_TRANSACTION_UPDATES'
   tenantId: string
@@ -575,6 +586,7 @@ export type BatchJob =
   | GoCardlessBackfillBatchJob
   | BackfillTransactionsDescBatchJob
   | BatchRerunUsers
+  | ScreeningProfileDataFetchBatchJob
   | EddReviewBatchJob
 
 export type BatchJobWithId = BatchJob & {
@@ -611,6 +623,7 @@ export type BatchJobParams = {
     entityId?: string
     schema?: FlatFileSchema
     jobType?: BatchRerunUsersJobType
+    type?: 'delta' | 'full'
   }
   tenantId?: string
   jobId?: {

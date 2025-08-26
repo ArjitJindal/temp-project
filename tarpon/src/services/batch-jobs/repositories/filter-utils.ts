@@ -51,12 +51,30 @@ export class BatchJobFilterUtils {
       }
     }
 
+    if (filters.parameters?.type) {
+      mongoFilters.parameters = {
+        $elemMatch: {
+          provider: filters.parameters.type,
+        },
+      }
+    }
     if (filters.parameters?.schema) {
       mongoFilters['parameters.schema'] = filters.parameters.schema
     }
 
     if (filters.parameters?.entityId) {
       mongoFilters['parameters.entityId'] = filters.parameters.entityId
+    }
+
+    if (filters.jobId) {
+      if (filters.jobId.notEqualTo) {
+        mongoFilters.jobId = {
+          $ne: filters.jobId.notEqualTo,
+        }
+      }
+      if (filters.jobId.equalTo) {
+        mongoFilters.jobId = filters.jobId.equalTo
+      }
     }
 
     return { mongoFilters }

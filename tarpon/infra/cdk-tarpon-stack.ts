@@ -44,6 +44,7 @@ import {
 } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
+  EbsDeviceVolumeType,
   InterfaceVpcEndpoint,
   InterfaceVpcEndpointService,
   IpAddresses,
@@ -105,12 +106,7 @@ import {
 } from 'aws-cdk-lib/aws-ecs'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants'
-import {
-  CfnAccessPolicy,
-  CfnCollection,
-  CfnSecurityPolicy,
-  CfnVpcEndpoint,
-} from 'aws-cdk-lib/aws-opensearchserverless'
+import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -754,22 +750,22 @@ export class CdkTarponStack extends cdk.Stack {
           actions: ['lambda:InvokeFunction'],
           resources: ['*'],
         }),
-
-        //OpenSearch
         new PolicyStatement({
           effect: Effect.ALLOW,
           actions: [
-            'aoss:CreateCollection',
-            'aoss:DeleteCollection',
-            'aoss:UpdateCollection',
-            'aoss:APIAccessAll',
-            'aoss:ListCollections',
+            'es:ESHttpGet',
+            'es:ESHttpPost',
+            'es:ESHttpPut',
+            'es:ESHttpDelete',
+            'es:ESHttpHead',
+            'es:ESHttpPatch',
+            'es:DescribeDomains',
+            'es:DescribeElasticsearchDomains',
           ],
           resources: ['*'],
         }),
       ],
     })
-
     const logListingPolicy = new Policy(this, `${id}-${this.config.stage}`, {
       policyName: `${lambdaExecutionRoleWithLogsListing.roleName}-LogListingPolicy`,
       statements: [
@@ -786,7 +782,7 @@ export class CdkTarponStack extends cdk.Stack {
     lambdaExecutionRoleWithLogsListing.attachInlinePolicy(policy)
     lambdaExecutionRoleWithLogsListing.attachInlinePolicy(logListingPolicy)
     ecsTaskExecutionRole.attachInlinePolicy(policy)
-    this.createOpensearch(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
+    this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -2055,38 +2051,19 @@ export class CdkTarponStack extends cdk.Stack {
     })
   }
 
-  private createOpensearch(
-    vpc,
+  private createOpensearchService(
+    vpc: Vpc,
     lambdaExecutionRole: cdk.aws_iam.Role,
     ecsTaskExecutionRole: cdk.aws_iam.Role
   ) {
-    if (isQaEnv() || !this.config.opensearch.deploy) {
+    if (!this.config.opensearch.deploy || isQaEnv()) {
       return
     }
-    const opensearchCollectionName = `${this.config.stage}-${
-      this.config.region ?? ''
-    }-opensearch`
-
-    const opensearchEncryptionPolicy = new CfnSecurityPolicy(
-      this,
-      'TarponOpenSearchEncryptionPolicy',
-      {
-        name: `${this.config.stage}-${this.config.region ?? ''}-osencpolicy`,
-        type: 'encryption',
-        policy: JSON.stringify({
-          Rules: [
-            {
-              ResourceType: 'collection',
-              Resource: [`collection/${opensearchCollectionName}`],
-            },
-          ],
-          AWSOwnedKey: true,
-        }),
-      }
-    )
-
-    let endpoint: CfnVpcEndpoint | undefined
-    if (vpc) {
+    let vpcProps: {
+      vpc?: Vpc
+      securityGroups?: cdk.aws_ec2.ISecurityGroup[]
+    } = {}
+    if (vpc && (envIs('sandbox') || envIs('prod'))) {
       const endpointSecurityGroup = new SecurityGroup(this, 'AossEndpointSG', {
         vpc,
         description: 'Security group for OpenSearch Serverless VPC endpoint',
@@ -2096,106 +2073,55 @@ export class CdkTarponStack extends cdk.Stack {
         Peer.ipv4('10.0.0.0/21'),
         Port.tcp(443)
       )
-      const uniqueAzSubnets: { [az: string]: string } = {}
-      for (const subnet of vpc.privateSubnets) {
-        if (!uniqueAzSubnets[subnet.availabilityZone]) {
-          uniqueAzSubnets[subnet.availabilityZone] = subnet.subnetId
-        }
+      vpcProps = {
+        vpc,
+        securityGroups: [endpointSecurityGroup],
       }
-      const subnetIds = Object.values(uniqueAzSubnets)
-      endpoint = new CfnVpcEndpoint(this, 'AossEndpoint', {
-        name: 'aoss-endpoint',
-        vpcId: vpc.vpcId,
-        subnetIds: subnetIds,
-        securityGroupIds: [endpointSecurityGroup.securityGroupId],
-      })
     }
-
-    const opensearchNetworkPolicy = new CfnSecurityPolicy(
-      this,
-      'TarponOpenSearchNetworkPolicy',
-      {
-        name: `${this.config.stage}-${this.config.region ?? ''}-osnetpolicy`,
-        type: 'network',
-        policy: JSON.stringify([
-          {
-            Rules: [
-              {
-                ResourceType: 'collection',
-                Resource: [`collection/${opensearchCollectionName}`],
-              },
-              {
-                Resource: [`collection/${opensearchCollectionName}`],
-                ResourceType: 'dashboard',
-              },
-            ],
-            ...(!endpoint || envIsNot('prod', 'sandbox')
-              ? { AllowFromPublic: true }
-              : { SourceVPCEs: [endpoint.attrId] }),
-          },
-        ]),
-      }
-    )
-
-    const opensearchAccessPolicy = new CfnAccessPolicy(
-      this,
-      'TarponOpenSearchAccessPolicy',
-      {
-        name: `${this.config.stage}-${this.config.region ?? ''}-osaccesspolicy`,
-        type: 'data',
-        policy: JSON.stringify([
-          {
-            Rules: [
-              {
-                Resource: [`collection/${opensearchCollectionName}`],
-                Permission: [
-                  'aoss:CreateCollectionItems',
-                  'aoss:DeleteCollectionItems',
-                  'aoss:UpdateCollectionItems',
-                  'aoss:DescribeCollectionItems',
-                ],
-                ResourceType: 'collection',
-              },
-              {
-                Resource: [`index/${opensearchCollectionName}/*`],
-                Permission: [
-                  'aoss:CreateIndex',
-                  'aoss:DeleteIndex',
-                  'aoss:UpdateIndex',
-                  'aoss:DescribeIndex',
-                  'aoss:ReadDocument',
-                  'aoss:WriteDocument',
-                ],
-                ResourceType: 'index',
-              },
-            ],
-            Principal: [
-              lambdaExecutionRole.roleArn,
-              `arn:aws:iam::${this.config.env.account}:role/CodePipelineDeployRole`,
-              ecsTaskExecutionRole.roleArn,
-            ],
-          },
-        ]),
-      }
-    )
-
-    // --- OpenSearch Serverless Collection ---
-    const opensearchCollection = new CfnCollection(
-      this,
-      'TarponOpenSearchCollection',
-      {
-        name: opensearchCollectionName,
-        type: 'SEARCH',
-        description: 'Tarpon OpenSearch Serverless Collection',
-      }
-    )
-
-    opensearchCollection.node.addDependency(opensearchEncryptionPolicy)
-    opensearchCollection.node.addDependency(opensearchNetworkPolicy)
-    opensearchCollection.node.addDependency(opensearchAccessPolicy)
-
-    new CfnOutput(this, 'OpenSearchCollectionArn', {
-      value: opensearchCollection.attrArn,
+    const domainName = `${this.config.stage}-${
+      this.config.region ?? ''
+    }-opensearch`
+    new Domain(this, domainName, {
+      version: EngineVersion.OPENSEARCH_2_17,
+      enableVersionUpgrade: true,
+      domainName: domainName,
+      capacity: {
+        dataNodes: this.config.opensearch.dataNodes,
+        dataNodeInstanceType: this.config.opensearch.dataNodeInstanceType,
+      },
+      nodeToNodeEncryption: true,
+      encryptionAtRest: {
+        enabled: true,
+      },
+      ...vpcProps,
+      enforceHttps: true,
+      automatedSnapshotStartHour: undefined,
+      ebs: {
+        volumeType: EbsDeviceVolumeType.GP3,
+        volumeSize: this.config.opensearch.volumeSize,
+        iops: 3000,
+        throughput: 125,
+      },
+      zoneAwareness: {
+        enabled: true,
+        availabilityZoneCount: 3,
+      },
+      accessPolicies: [
+        new PolicyStatement({
+          actions: ['es:*'],
+          effect: Effect.ALLOW,
+          principals: [
+            lambdaExecutionRole,
+            ecsTaskExecutionRole,
+            new ArnPrincipal(
+              `arn:aws:iam::${this.config.env.account}:role/CodePipelineDeployRole`
+            ),
+          ],
+          resources: [
+            `arn:aws:es:${this.config.env.region}:${this.config.env.account}:domain/${domainName}/*`,
+          ],
+        }),
+      ],
     })
   }
 }
