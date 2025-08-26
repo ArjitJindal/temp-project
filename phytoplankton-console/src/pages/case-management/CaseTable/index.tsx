@@ -16,7 +16,7 @@ import {
   Comment,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import {
   AllParams,
   DerivedColumn,
@@ -110,6 +110,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
   } = props;
 
   const settings = useSettings();
+  const accounts = useAccounts();
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
@@ -381,10 +382,16 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
             helper.display({
               title: 'SLA status',
               render: (entity) => {
-                return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+                return (
+                  <SlaStatus
+                    slaPolicyDetails={entity.slaPolicyDetails}
+                    entity={entity as Case}
+                    accounts={accounts}
+                  />
+                );
               },
             }),
-            ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
+            ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], accounts),
           ]
         : []) as TableColumn<TableItem>[]),
       ...((isInReview
@@ -654,6 +661,7 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     setFirstModalVisibility,
     userAccount?.escalationLevel,
     settings.userAlias,
+    accounts,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');

@@ -23,6 +23,7 @@ import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton'
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
 import {
+  Account,
   CaseReasons,
   ChecklistStatus,
   DerivedStatus,
@@ -548,6 +549,7 @@ export const useCaseAlertFilters = (
 export const getSlaColumnsForExport = <T extends ColumnHelper<any>>(
   helper: T,
   slaPolicies: SLAPolicy[],
+  accounts: Account[],
 ) => {
   const columns = range(0, MAX_SLA_POLICIES_PER_ENTITY).flatMap((i) => [
     helper.simple<'slaPolicyDetails'>({
@@ -585,12 +587,14 @@ export const getSlaColumnsForExport = <T extends ColumnHelper<any>>(
             return '-';
           }
 
-          const { policyStatus, slaPolicyId, elapsedTime } = policyDetail;
+          const { policyStatus, slaPolicyId } = policyDetail;
           const policy = slaPolicies.find((policy) => policy.id === slaPolicyId);
 
           const timeDescription = policyStatus === 'BREACHED' ? 'Exceeded by ' : 'Exceeding in ';
 
-          return policy ? `${timeDescription}${getPolicyTime(policy, elapsedTime)}` : '-';
+          return policy
+            ? `${timeDescription}${getPolicyTime(policy, policyDetail, accounts)}`
+            : '-';
         },
       },
       hideInTable: true,

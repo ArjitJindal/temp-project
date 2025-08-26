@@ -2,6 +2,7 @@ import { AggregationCursor, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { compact, omit, range } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ClickHouseClient } from '@clickhouse/client'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
@@ -13,6 +14,7 @@ import {
   getSLAStatusFromElapsedTime,
   matchPolicyRoleConditions,
   matchPolicyStatusConditions,
+  calculateSLATimeWindowsForPolicy,
 } from './sla-utils'
 import { SLAAuditLogService } from './sla-audit-log-service'
 import { traceable } from '@/core/xray'
@@ -27,6 +29,12 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Account } from '@/@types/openapi-internal/Account'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+  isClickhouseMigrationEnabled,
+  processClickhouseInBatch,
+} from '@/utils/clickhouse/utils'
 
 const CONCURRENCY = 50
 const BATCH_SIZE = 10000
@@ -75,7 +83,13 @@ export class SLAService {
     slaPolicyId: string,
     type: 'alert' | 'case' = 'alert'
   ): Promise<
-    | { elapsedTime: number; policyStatus: SLAPolicyStatus; startedAt: number }
+    | {
+        elapsedTime: number
+        policyStatus: SLAPolicyStatus
+        startedAt: number
+        timeToWarning: number
+        timeToBreach: number
+      }
     | undefined
   > {
     const slaPolicy = await this.getSLAPolicy(slaPolicyId)
@@ -112,9 +126,10 @@ export class SLAService {
     if (!isRoleMatched) {
       return undefined
     }
+    const createdTimestamp = entity.createdTimestamp ?? Date.now()
     const initialStatusAsChange: CaseStatusChange = {
       userId: 'system',
-      timestamp: entity.createdTimestamp ?? Date.now(),
+      timestamp: createdTimestamp,
       caseStatus: 'OPEN',
     }
     const statusChanges = entity.statusChanges
@@ -154,6 +169,16 @@ export class SLAService {
       slaPolicy.policyConfiguration
     )
 
+    const { timeToWarning, timeToBreach } = calculateSLATimeWindowsForPolicy(
+      slaPolicy.policyConfiguration,
+      elapsedTime,
+      getDerivedStatus(
+        type === 'alert'
+          ? (entity as Alert).alertStatus
+          : (entity as Case).caseStatus
+      )
+    )
+
     const existingStatus = entity.slaPolicyDetails?.find(
       (detail) => detail.slaPolicyId === slaPolicyId
     )?.policyStatus
@@ -181,7 +206,9 @@ export class SLAService {
     return {
       elapsedTime: elapsedTime,
       policyStatus: newStatus,
-      startedAt: entity.createdTimestamp ?? Date.now(),
+      startedAt: createdTimestamp,
+      timeToWarning: timeToWarning,
+      timeToBreach: timeToBreach,
     }
   }
 
@@ -221,6 +248,8 @@ export class SLAService {
                   policyStatus: statusData.policyStatus,
                   updatedAt: Date.now(),
                   startedAt: statusData.startedAt,
+                  timeToWarning: statusData.timeToWarning,
+                  timeToBreach: statusData.timeToBreach,
                 }
               })
             )
@@ -246,19 +275,260 @@ export class SLAService {
     )
   }
 
+  private async processEntity<T extends Alert | Case>(
+    entities: T[],
+    type: 'alert' | 'case',
+    checkFor: 'BREACHED' | 'WARNING',
+    updateEntity: (updates: SlaUpdates[]) => Promise<void>
+  ) {
+    logger.debug(`Updating SLA Statuses for ${entities.length} ${type}s`)
+    const updates: {
+      entityId: string
+      slaPolicyDetails: SLAPolicyDetails[]
+    }[] = []
+    const now = Date.now()
+    await pMap(
+      entities,
+      async (entity) => {
+        if (!entity.caseId) {
+          return
+        }
+        const slaPolicyDetails = entity.slaPolicyDetails ?? []
+        const updatedSlaPolicyDetails: SLAPolicyDetails[] = []
+        for (const slaPolicyDetail of slaPolicyDetails) {
+          if (
+            checkFor === 'BREACHED' &&
+            slaPolicyDetail.timeToBreach &&
+            slaPolicyDetail.timeToBreach < now
+          ) {
+            slaPolicyDetail.policyStatus = 'BREACHED'
+            slaPolicyDetail.updatedAt = Date.now()
+          } else if (
+            checkFor === 'WARNING' &&
+            slaPolicyDetail.timeToWarning &&
+            slaPolicyDetail.timeToWarning < now
+          ) {
+            slaPolicyDetail.policyStatus = 'WARNING'
+            slaPolicyDetail.updatedAt = Date.now()
+          }
+          updatedSlaPolicyDetails.push(slaPolicyDetail)
+        }
+        const entityId =
+          type === 'alert' ? (entity as Alert).alertId : (entity as Case).caseId
+        if (entityId) {
+          updates.push({
+            entityId,
+            slaPolicyDetails: updatedSlaPolicyDetails,
+          })
+        }
+      },
+      {
+        concurrency: CONCURRENCY,
+      }
+    )
+    console.log('updates', updates)
+    await updateEntity(updates)
+    logger.debug(`SLA Statuses updated for ${entities.length} ${type}s`)
+  }
+  public async updateSLAStatusesForEntity<T extends Alert | Case>(
+    type: 'alert' | 'case',
+    cursor: AggregationCursor<T>,
+    checkFor: 'BREACHED' | 'WARNING',
+    updateEntity: (updates: SlaUpdates[]) => Promise<void>
+  ) {
+    await processCursorInBatch(
+      cursor,
+      async (entities) => {
+        logger.debug(`Updating SLA Statuses for ${entities.length} ${type}s`)
+        const updates: {
+          entityId: string
+          slaPolicyDetails: SLAPolicyDetails[]
+        }[] = []
+        const now = Date.now()
+        await pMap(
+          entities,
+          async (entity) => {
+            if (!entity.caseId) {
+              return
+            }
+            const slaPolicyDetails = entity.slaPolicyDetails ?? []
+            const updatedSlaPolicyDetails: SLAPolicyDetails[] = []
+            for (const slaPolicyDetail of slaPolicyDetails) {
+              if (
+                checkFor === 'BREACHED' &&
+                slaPolicyDetail.timeToBreach &&
+                slaPolicyDetail.timeToBreach < now
+              ) {
+                slaPolicyDetail.policyStatus = 'BREACHED'
+                slaPolicyDetail.updatedAt = Date.now()
+              } else if (
+                checkFor === 'WARNING' &&
+                slaPolicyDetail.timeToWarning &&
+                slaPolicyDetail.timeToWarning < now
+              ) {
+                slaPolicyDetail.policyStatus = 'WARNING'
+                slaPolicyDetail.updatedAt = Date.now()
+              }
+              updatedSlaPolicyDetails.push(slaPolicyDetail)
+            }
+            const entityId =
+              type === 'alert'
+                ? (entity as Alert).alertId
+                : (entity as Case).caseId
+            if (entityId) {
+              updates.push({
+                entityId,
+                slaPolicyDetails: updatedSlaPolicyDetails,
+              })
+            }
+          },
+          {
+            concurrency: CONCURRENCY,
+          }
+        )
+        await updateEntity(updates)
+        logger.debug(`SLA Statuses updated for ${entities.length} ${type}s`)
+      },
+      { mongoBatchSize: BATCH_SIZE, processBatchSize: BATCH_SIZE }
+    )
+  }
+
+  private async processSlaPolicyStatus(
+    clickhouseClient: ClickHouseClient,
+    excludedStatuses: string[],
+    tableName: 'alerts' | 'cases',
+    updateEntity: (updates: SlaUpdates[]) => Promise<void>
+  ) {
+    const additionalWhere =
+      excludedStatuses.length > 0
+        ? `policyStatus NOT IN (${excludedStatuses
+            .map((s) => `'${s}'`)
+            .join(', ')})`
+        : undefined
+
+    await processClickhouseInBatch<{
+      caseId: string
+      slaPolicyId: string
+      policyStatus: string
+      elapsedTime: number
+      timeToWarning: number
+      timeToBreach: number
+      timestamp: number
+      updatedAt: number
+      id: string
+      alertId: string
+    }>(
+      tableName,
+      async (entities) => {
+        const targetStatus =
+          excludedStatuses.length === 1 ? 'BREACHED' : 'WARNING'
+
+        await this.processEntity<Alert>(
+          entities as unknown as Alert[],
+          'alert',
+          targetStatus,
+          async (updates) => {
+            await updateEntity(updates)
+          }
+        )
+      },
+      {
+        clickhouseBatchSize: BATCH_SIZE,
+        processBatchSize: BATCH_SIZE,
+        debug: true,
+        clickhouseClient,
+        additionalSelect: [
+          { name: 'slaPolicyId', expr: 'tupleElement(slaPolicyDetails, 1)' },
+          { name: 'policyStatus', expr: 'tupleElement(slaPolicyDetails, 2)' },
+          { name: 'elapsedTime', expr: 'tupleElement(slaPolicyDetails, 3)' },
+          { name: 'timeToWarning', expr: 'tupleElement(slaPolicyDetails, 4)' },
+          { name: 'timeToBreach', expr: 'tupleElement(slaPolicyDetails, 5)' },
+        ],
+        additionalJoin: `slaPolicyDetails`,
+        additionalWhere,
+      }
+    )
+  }
+
+  private async calculateAndUpdateSLAStatusesForAlertsClickhouse() {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    await this.processSlaPolicyStatus(
+      clickhouseClient,
+      ['BREACHED'],
+      'alerts',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+        await this.alertsRepository.updateAlertSlaPolicyDetails(updates)
+      }
+    )
+    await this.processSlaPolicyStatus(
+      clickhouseClient,
+      ['BREACHED', 'WARNING'],
+      'alerts',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+        await this.alertsRepository.updateAlertSlaPolicyDetails(updates)
+      }
+    )
+  }
+
+  private async calculateAndUpdateSLAStatusesForCasesClickhouse() {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    await this.processSlaPolicyStatus(
+      clickhouseClient,
+      ['BREACHED'],
+      'cases',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+        await this.caseRepository.updateCaseSlaPolicyDetails(updates)
+      }
+    )
+    await this.processSlaPolicyStatus(
+      clickhouseClient,
+      ['BREACHED', 'WARNING'],
+      'cases',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+        await this.caseRepository.updateCaseSlaPolicyDetails(updates)
+      }
+    )
+  }
+
   public async calculateAndUpdateSLAStatusesForAlerts(
-    from?: string,
-    to?: string
+    to?: string,
+    from?: string
   ) {
     if (!hasFeature('ALERT_SLA')) {
       return
     }
-    const alertsCursor = this.alertsRepository
-      .getNonClosedAlertsCursor(from, to)
-      .addCursorFlag('noCursorTimeout', true) // As for some tenants the alerts count could be in the millions, we need to make sure the cursor does not timeout
-    await this.calculateAndUpdateSLAStatusesForEntity<Alert>(
+    // TODO: Change it to isConsoleMigrationEnabled() once #7217 is merged
+    if (isClickhouseMigrationEnabled()) {
+      return await this.calculateAndUpdateSLAStatusesForAlertsClickhouse()
+    }
+    const alertBreachCursor = this.alertsRepository.getNonClosedAlertsCursor(
+      from,
+      to,
+      undefined,
+      ['BREACHED']
+    )
+    const alertWarningCursor = this.alertsRepository.getNonClosedAlertsCursor(
+      from,
+      to,
+      undefined,
+      ['WARNING', 'BREACHED']
+    )
+    await this.updateSLAStatusesForEntity(
       'alert',
-      alertsCursor,
+      alertBreachCursor,
+      'BREACHED',
       async (updates: SlaUpdates[]) => {
         if (updates.length === 0) {
           return
@@ -267,6 +537,19 @@ export class SLAService {
         await this.alertsRepository.updateAlertSlaPolicyDetails(updates)
       }
     )
+    await this.updateSLAStatusesForEntity(
+      'alert',
+      alertWarningCursor,
+      'WARNING',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+
+        await this.alertsRepository.updateAlertSlaPolicyDetails(updates)
+      }
+    )
+
     logger.debug('SLA Statuses updated for all alerts')
   }
 
@@ -274,12 +557,31 @@ export class SLAService {
     if (!hasFeature('PNB')) {
       return
     }
-    const casesCursor = this.caseRepository
+    if (isClickhouseEnabled()) {
+      return await this.calculateAndUpdateSLAStatusesForCasesClickhouse()
+    }
+    const caseBreachCursor = this.caseRepository
       .getNonClosedManualCasesCursor()
       .addCursorFlag('noCursorTimeout', true)
-    await this.calculateAndUpdateSLAStatusesForEntity<Case>(
+    const caseWarningCursor = this.caseRepository
+      .getNonClosedManualCasesCursor()
+      .addCursorFlag('noCursorTimeout', true)
+    await this.updateSLAStatusesForEntity<Case>(
       'case',
-      casesCursor,
+      caseBreachCursor,
+      'BREACHED',
+      async (updates: SlaUpdates[]) => {
+        if (updates.length === 0) {
+          return
+        }
+
+        await this.caseRepository.updateCaseSlaPolicyDetails(updates)
+      }
+    )
+    await this.updateSLAStatusesForEntity<Case>(
+      'case',
+      caseWarningCursor,
+      'WARNING',
       async (updates: SlaUpdates[]) => {
         if (updates.length === 0) {
           return

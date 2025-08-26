@@ -397,6 +397,8 @@ export class CaseCreationService {
                       policyStatus: slaDetail?.policyStatus,
                       elapsedTime: slaDetail?.elapsedTime,
                       startedAt: slaDetail?.startedAt,
+                      timeToWarning: slaDetail?.timeToWarning,
+                      timeToBreach: slaDetail?.timeToBreach,
                     }
                   : {}),
               }
@@ -775,6 +777,8 @@ export class CaseCreationService {
                     elapsedTime: slaDetail?.elapsedTime,
                     policyStatus: slaDetail?.policyStatus,
                     startedAt: slaDetail?.startedAt,
+                    timeToWarning: slaDetail?.timeToWarning,
+                    timeToBreach: slaDetail?.timeToBreach,
                   }
                 : {}),
             }

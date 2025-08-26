@@ -1337,6 +1337,8 @@ export class CaseService extends CaseAlertsCommonService {
                 elapsedTime: slaDetail?.elapsedTime,
                 policyStatus: slaDetail?.policyStatus,
                 startedAt: slaDetail?.startedAt,
+                timeToWarning: slaDetail?.timeToWarning,
+                timeToBreach: slaDetail?.timeToBreach,
               }
             : {}),
         }

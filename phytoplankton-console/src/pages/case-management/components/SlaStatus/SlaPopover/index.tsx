@@ -6,14 +6,17 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SLA_POLICY } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
+import { Case, Alert, Account } from '@/apis';
 
 interface Props {
   slaPolicyDetail: SLAPolicyStatusDetails;
   index: number;
+  entity: Case | Alert;
+  accounts: Account[];
 }
 
 function SlaPopover(props: Props) {
-  const { slaPolicyDetail, index } = props;
+  const { slaPolicyDetail, index, entity, accounts } = props;
   const api = useApi();
   const policyResult = useQuery(SLA_POLICY(slaPolicyDetail.slaPolicyId), async () => {
     return api.getSlaPolicy({ slaId: slaPolicyDetail.slaPolicyId });
@@ -22,7 +25,14 @@ function SlaPopover(props: Props) {
   return (
     <Popover
       title={`Policy name: ${policy?.name ?? '-'}`}
-      content={<SlaPolicyDetails slaPolicyDetail={slaPolicyDetail} policy={policy} />}
+      content={
+        <SlaPolicyDetails
+          slaPolicyDetail={slaPolicyDetail}
+          policy={policy}
+          entity={entity}
+          accounts={accounts}
+        />
+      }
       trigger="click"
       getPopupContainer={(triggerNode: HTMLElement) => triggerNode.parentElement as HTMLElement}
       key={`SlaPopover-${index}`}

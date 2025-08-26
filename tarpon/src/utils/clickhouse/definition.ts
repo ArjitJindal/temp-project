@@ -566,6 +566,7 @@ const commonMaterializedColumns = [
   "destinationUserDrsScore Float32 MATERIALIZED JSONExtractFloat(data, 'caseUsers', 'destinationUserDrsScore')",
   "originUserState String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userStateDetails', 'state')",
   "destinationUserState String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userStateDetails', 'state')",
+  "slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64, startedAt UInt64, slaPolicyType String)) MATERIALIZED JSONExtract(data, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64))')",
 ]
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
@@ -929,7 +930,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         priority String,
         lastStatusChangeReasons Array(String),
         lastStatusChangeTimestamp UInt64,
-        slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)),
+        slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)),
         updatedAt UInt64,
         ruleQaStatus String,
         ruleChecklistTemplateId String,
@@ -950,14 +951,14 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractString(x, 'priority'),
           JSONExtractArrayRaw(x, 'lastStatusChange', 'reason'),
           JSONExtractUInt(x, 'lastStatusChange', 'timestamp'),
-          JSONExtract(x, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64))'),
+          JSONExtract(x, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64))'),
           JSONExtractUInt(x, 'updatedAt'),
           JSONExtractString(x, 'ruleQaStatus'),
           JSONExtractString(x, 'ruleChecklistTemplateId'),
           JSONExtractArrayRaw(x, 'ruleChecklist', 'checklistItemId'),
           JSONExtract(x, 'qaAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
           JSONExtractString(x, 'ruleNature')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String)'),
+        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String)'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
     materializedViews: [
@@ -1144,7 +1145,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
 
       // SLA Policies
-      `slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64)) MATERIALIZED JSONExtract(data, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64))')`,
+      `slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)) MATERIALIZED JSONExtract(data, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64))')`,
 
       "lastStatusChangeReasons Array(String) MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'reason')",
       "lastStatusChangeUserId String MATERIALIZED tupleElement(JSONExtract(data, 'lastStatusChange', 'Tuple(caseStatus String, timestamp UInt64, reason Array(String), userId String)'), 'userId')",

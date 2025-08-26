@@ -1,6 +1,8 @@
 import { Account } from '@/@types/openapi-internal/Account'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { NumberOperators } from '@/@types/openapi-internal/NumberOperators'
+import { PolicyStatusDetailsStatusesEnum } from '@/@types/openapi-internal/PolicyStatusDetails'
 import {
   SLAPolicyConfiguration,
   SLAPolicyConfigurationWorkingDaysEnum,
@@ -172,5 +174,42 @@ export function operatorCheck(
       return lhs <= rhs
     default:
       return false
+  }
+}
+
+export function calculateSLATimeWindowsForPolicy(
+  slaPolicyConfiguration: SLAPolicyConfiguration,
+  elapsedTime: number,
+  entityStatus: DerivedStatus | PolicyStatusDetailsStatusesEnum
+): { timeToWarning: number; timeToBreach: number } {
+  const { warningTime, breachTime } = slaPolicyConfiguration.SLATime
+  if (
+    slaPolicyConfiguration.statusDetails.statuses.includes(
+      entityStatus as PolicyStatusDetailsStatusesEnum
+    )
+  ) {
+    return {
+      timeToWarning: Number.MAX_SAFE_INTEGER,
+      timeToBreach: Number.MAX_SAFE_INTEGER,
+    }
+  }
+  const warningTimeMs = warningTime
+    ? duration(warningTime.units, warningTime.granularity).asMilliseconds()
+    : 0
+  const breachTimeMs = duration(
+    breachTime.units,
+    breachTime.granularity
+  ).asMilliseconds()
+
+  const currentTime = Date.now()
+  const timeToWarning = warningTime
+    ? currentTime + (warningTimeMs - elapsedTime)
+    : Number.MAX_SAFE_INTEGER
+
+  const timeToBreach = currentTime + (breachTimeMs - elapsedTime)
+
+  return {
+    timeToWarning,
+    timeToBreach,
   }
 }

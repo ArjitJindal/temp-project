@@ -49,6 +49,10 @@ export const statusEscalatedL2 = (
   return status?.startsWith('ESCALATED_L2') ?? false;
 };
 
+export function isStatusInReview(status: CaseStatus | undefined): boolean {
+  return status?.startsWith('IN_REVIEW') ?? false;
+}
+
 export const getAssigneeName = (
   users: {
     [userId: string]: Account;

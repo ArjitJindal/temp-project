@@ -13869,6 +13869,10 @@ components:
           type: number
         startedAt:
           type: number
+        timeToWarning:
+          type: number
+        timeToBreach:
+          type: number
       required:
         - slaPolicyId
     SLAPolicyStatus:

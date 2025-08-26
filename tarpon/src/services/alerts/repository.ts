@@ -6,7 +6,7 @@ import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { LinkerService } from '../linker'
-import { SlaUpdates } from '../sla/sla-service'
+import { SLAService, SlaUpdates } from '../sla/sla-service'
 import { DynamoAlertRepository } from './dynamo-repository'
 import { ClickhouseAlertRepository } from './clickhouse-repository'
 import {
@@ -1013,11 +1013,13 @@ export class AlertsRepository {
 
   public getNonClosedAlertsCursor(
     from?: string,
-    to?: string
+    to?: string,
+    alertIds?: string[],
+    policyStatusNE?: string[]
   ): AggregationCursor<Alert> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const matchFilter =
+    const matchFilter: Record<string, any> =
       from || to
         ? {
             'alerts.alertId': {
@@ -1034,11 +1036,36 @@ export class AlertsRepository {
             },
           }
         : {}
+    if (alertIds) {
+      if (matchFilter['alerts.alertId']) {
+        matchFilter['alerts.alertId'] = {
+          ...matchFilter['alerts.alertId'],
+          $in: alertIds,
+        }
+      } else {
+        matchFilter['alerts.alertId'] = { $in: alertIds }
+      }
+    }
     const pipeline = [
       {
         $match: {
           alerts: {
-            $elemMatch: { alertStatus: { $ne: 'CLOSED' } },
+            $elemMatch: {
+              $and: [
+                { alertStatus: { $ne: 'CLOSED' } },
+                ...(policyStatusNE && policyStatusNE.length > 0
+                  ? [
+                      {
+                        slaPolicyDetails: {
+                          $elemMatch: {
+                            policyStatus: { $nin: policyStatusNE },
+                          },
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
           },
           ...matchFilter,
         },
@@ -1503,6 +1530,8 @@ export class AlertsRepository {
       ]
     )
 
+    await this.updateAlertsSlaPolicyDetails(alertIds)
+
     const caseItems = await collection
       .find({ caseId: { $in: caseIds } })
       .toArray()
@@ -1529,6 +1558,33 @@ export class AlertsRepository {
       caseIdsWithAllAlertsSameStatus: compact(caseIdsWithAllAlertsSameStatus),
       caseStatusToChange: caseStatusToCheck,
     }
+  }
+
+  public async updateAlertsSlaPolicyDetails(alertIds: string[]): Promise<void> {
+    if (!hasFeature('ALERT_SLA')) {
+      return
+    }
+    const slaService = new SLAService(
+      this.tenantId,
+      getContext()?.auth0Domain ?? '',
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      }
+    )
+    const alertsCursor = this.getNonClosedAlertsCursor(
+      undefined,
+      undefined,
+      alertIds,
+      ['BREACHED']
+    )
+    await slaService.calculateAndUpdateSLAStatusesForEntity<Alert>(
+      'alert',
+      alertsCursor,
+      async (updates: SlaUpdates[]) => {
+        await this.updateAlertSlaPolicyDetails(updates)
+      }
+    )
   }
 
   public async updateAssignments(

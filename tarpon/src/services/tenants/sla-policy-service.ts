@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { memoize } from 'lodash'
 import { SLAAuditLogService } from '../sla/sla-audit-log-service'
 import { SLAPolicyRepository } from './repositories/sla-policy-repository'
 import { traceable } from '@/core/xray'
@@ -26,7 +27,12 @@ export class SLAPolicyService {
     return { total: data.length, items: data }
   }
   public async getSLAPolicyById(id: string): Promise<SLAPolicy | null> {
-    return await this.slaPolicyRepository.getSLAPolicyById(id)
+    return await memoize(
+      async (id: string): Promise<SLAPolicy | null> => {
+        return await this.slaPolicyRepository.getSLAPolicyById(id)
+      },
+      (id: string) => id
+    )(id)
   }
   public async createSLAPolicy(policy: SLAPolicy): Promise<SLAPolicy> {
     const id = await this.slaPolicyRepository.getNewId(true)

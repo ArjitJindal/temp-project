@@ -25,6 +25,7 @@ import {
   SanctionsHitStatus,
   CaseStatusChange,
   Account,
+  Alert,
 } from '@/apis';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -46,7 +47,7 @@ import { getAlertUrl, makeUrl } from '@/utils/routing';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -275,6 +276,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     setModalVisibility,
   } = props;
   const settings = useSettings();
+  const accounts = useAccounts();
   const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isPNBDay2Enabled = useFeatureEnabled('PNB_DAY_2');
@@ -595,10 +597,16 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 helper.display({
                   title: 'SLA status',
                   render: (entity) => {
-                    return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+                    return (
+                      <SlaStatus
+                        slaPolicyDetails={entity.slaPolicyDetails}
+                        entity={entity as Alert}
+                        accounts={accounts}
+                      />
+                    );
                   },
                 }),
-                ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
+                ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], accounts),
               ]
             : []),
           helper.simple<'alertStatus'>({
@@ -1172,6 +1180,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     expandedAlertId,
     capitalizeUserAlias,
     isPNBDay2Enabled,
+    accounts,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

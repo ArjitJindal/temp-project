@@ -10,9 +10,10 @@ import {
   ObjectId,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { intersection, isEmpty, isNil, omitBy } from 'lodash'
+import { compact, intersection, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
-import { SlaUpdates } from '../sla/sla-service'
+import { SLAService, SlaUpdates } from '../sla/sla-service'
+import { AlertsRepository } from '../alerts/repository'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { LinkerService } from '@/services/linker'
 import { CaseClickhouseRepository } from '@/services/cases/clickhouse-repository'
@@ -301,6 +302,21 @@ export class CaseRepository {
         caseToSave
       )
     })
+    if (hasFeature('ALERT_SLA')) {
+      const caseId = caseEntity.caseId
+      if (caseId) {
+        await this.updateSlaPolicyDetailsOfCases([caseId])
+      }
+      const alertIds = compact(caseEntity.alerts?.map((alert) => alert.alertId))
+      if (alertIds.length) {
+        const alertsRepository = new AlertsRepository(this.tenantId, {
+          mongoDb: this.mongoDb,
+          dynamoDb: this.dynamoDb,
+        })
+        await alertsRepository.updateAlertsSlaPolicyDetails(alertIds)
+      }
+    }
+
     if (isTenantConsoleMigrated(this.tenantId)) {
       await this.dynamoCaseRepository.addCase(caseEntity)
     }
@@ -325,7 +341,10 @@ export class CaseRepository {
   }
 
   //TODO: add in the caller function; but unsure about the implementation
-  public getNonClosedManualCasesCursor(): AggregationCursor<Case> {
+  public getNonClosedManualCasesCursor(
+    caseIds?: string[],
+    policyStatusNE?: string[]
+  ): AggregationCursor<Case> {
     return this.mongoDb
       .db()
       .collection<Case>(CASES_COLLECTION(this.tenantId))
@@ -333,6 +352,7 @@ export class CaseRepository {
         {
           $match: {
             $and: [
+              ...(caseIds ? [{ caseId: { $in: caseIds } }] : []),
               {
                 caseType: { $eq: 'MANUAL' },
               },
@@ -340,6 +360,15 @@ export class CaseRepository {
               {
                 caseStatus: { $ne: 'CLOSED' },
               },
+              ...(policyStatusNE && policyStatusNE.length > 0
+                ? [
+                    {
+                      slaPolicyDetails: {
+                        $elemMatch: { policyStatus: { $nin: policyStatusNE } },
+                      },
+                    },
+                  ]
+                : []),
             ],
           },
         },
@@ -1153,6 +1182,25 @@ export class CaseRepository {
     await this.updateManyCases(
       { caseId: { $in: caseIds } },
       this.getUpdatePipeline(statusChange, isLastInReview).updatePipeline
+    )
+  }
+
+  public async updateSlaPolicyDetailsOfCases(caseIds: string[]) {
+    const slaService = new SLAService(
+      this.tenantId,
+      getContext()?.auth0Domain ?? '',
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      }
+    )
+    const caseCursor = this.getNonClosedManualCasesCursor(caseIds, ['BREACHED'])
+    await slaService.calculateAndUpdateSLAStatusesForEntity<Case>(
+      'case',
+      caseCursor,
+      async (updates: SlaUpdates[]) => {
+        await this.updateCaseSlaPolicyDetails(updates)
+      }
     )
   }
 

@@ -264,6 +264,11 @@ export function useAccountsQueryResult(): QueryResult<Account[]> {
   });
 }
 
+export function useAccounts(): Account[] {
+  const accountsQueryResult = useAccountsQueryResult();
+  return getOr(accountsQueryResult.data, []);
+}
+
 export function useUsers(
   options: {
     includeRootUsers?: boolean;
