@@ -17,6 +17,7 @@ import {
 } from '@aws-sdk/client-opensearch'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from './opensearch-definitions'
 import { getSecret } from './secrets-manager'
+import { envIs } from './env'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { Action } from '@/services/sanctions/providers/types'
@@ -54,10 +55,17 @@ export async function getDomainEndpoint(
   )
 
   const domainStatus = response.DomainStatusList?.[0]
-  if (!domainStatus?.Endpoint) {
-    throw new Error(`Endpoint not found for domain "${domains[0]}"`)
+  if (envIs('sandbox') || envIs('prod')) {
+    if (!domainStatus?.Endpoints?.vpc) {
+      throw new Error(`Endpoint not found for domain "${domains[0]}"`)
+    }
+    return `https://${domainStatus?.Endpoints?.vpc}`
+  } else {
+    if (!domainStatus?.Endpoint) {
+      throw new Error(`Endpoint not found for domain "${domains[0]}"`)
+    }
+    return `https://${domainStatus.Endpoint}`
   }
-  return `https://${domainStatus.Endpoint}`
 }
 
 export async function getOpensearchClient(): Promise<Client> {
