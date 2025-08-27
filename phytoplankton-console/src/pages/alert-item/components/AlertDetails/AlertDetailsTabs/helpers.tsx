@@ -551,6 +551,7 @@ export function useAlertTabs(props: Props): TabItem[] {
             Icon: settings.crmIntegrationName
               ? React.createElement(
                   CRM_ICON_MAP[settings.crmIntegrationName as keyof typeof CRM_ICON_MAP],
+                  { className: styles.crmIcon },
                 )
               : null,
             TrailIcon: (

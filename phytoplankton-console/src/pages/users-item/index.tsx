@@ -242,6 +242,7 @@ export default function UserItem() {
                   Icon: settings.crmIntegrationName
                     ? React.createElement(
                         CRM_ICON_MAP[settings.crmIntegrationName as keyof typeof CRM_ICON_MAP],
+                        { className: s.crmIcon },
                       )
                     : null,
                   TrailIcon: (
