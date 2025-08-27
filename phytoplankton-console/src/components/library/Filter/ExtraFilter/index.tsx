@@ -37,7 +37,13 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
       filter={{ ...filter, kind: 'AUTO', dataType: { ...renderer, readOnly: isReadOnly } }}
       value={params?.[filter.key]}
       onChange={(value: unknown) => {
-        onChangeParams({ ...params, [filter.key]: value });
+        let normalized: unknown = value;
+
+        if (Array.isArray(value) && value.length === 0) {
+          normalized = undefined;
+        }
+
+        onChangeParams({ ...params, [filter.key]: normalized });
       }}
     />
   );
