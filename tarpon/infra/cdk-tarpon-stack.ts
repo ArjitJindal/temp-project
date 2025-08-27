@@ -2062,6 +2062,7 @@ export class CdkTarponStack extends cdk.Stack {
     let vpcProps: {
       vpc?: Vpc
       securityGroups?: cdk.aws_ec2.ISecurityGroup[]
+      vpcSubnets?: cdk.aws_ec2.SubnetSelection[]
     } = {}
     if (vpc && (envIs('sandbox') || envIs('prod'))) {
       const endpointSecurityGroup = new SecurityGroup(this, 'AossEndpointSG', {
@@ -2073,9 +2074,15 @@ export class CdkTarponStack extends cdk.Stack {
         Peer.ipv4('10.0.0.0/21'),
         Port.tcp(443)
       )
+      const privateSubnets = vpc
+        .selectSubnets({
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+        })
+        .subnets.slice(0, 3)
       vpcProps = {
         vpc,
         securityGroups: [endpointSecurityGroup],
+        vpcSubnets: privateSubnets.map((subnet) => ({ subnets: [subnet] })),
       }
     }
     const domainName = `${this.config.stage}-${

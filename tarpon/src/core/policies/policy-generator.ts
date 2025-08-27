@@ -87,18 +87,10 @@ export default class PolicyBuilder {
     const [stage, region] = stageAndRegion()
     this.statements.push({
       Action: [
-        'es:ESHttpGet',
-        'es:ESHttpPost',
-        'es:ESHttpPut',
-        'es:ESHttpDelete',
-        'es:ESHttpHead',
-        'es:ESHttpPatch',
+        'es:ESHttp*',
+        'es:DescribeDomains',
+        'es:DescribeElasticsearchDomains',
       ],
-      Effect: 'Allow',
-      Resource: `arn:aws:es:*:*:domain/${stage}-${region}-opensearch*`,
-    })
-    this.statements.push({
-      Action: ['es:DescribeDomains', 'es:DescribeElasticsearchDomains'],
       Effect: 'Allow',
       Resource: `arn:aws:es:*:*:domain/${stage}-${region}-opensearch*`,
     })
