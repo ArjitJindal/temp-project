@@ -253,7 +253,7 @@ const SARProperties = (props: SARPropertiesProps) => {
         </Label>
       )}
       <Alert type="WARNING">
-        A maximum of 20 transactions can be selected to file an STR/SAR. Please contact Flagright if
+        A maximum of 30 transactions can be selected to file an STR/SAR. Please contact Flagright if
         the limit needs to be increased.
       </Alert>
     </PropertyListLayout>

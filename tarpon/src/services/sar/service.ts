@@ -81,6 +81,8 @@ export class ReportService {
   s3Config: S3Config
   dynamoDb: DynamoDBDocumentClient
 
+  private static readonly MAX_TRANSACTIONS = 30
+
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -204,8 +206,13 @@ export class ReportService {
     alertIds?: string[],
     transactionIds?: string[]
   ): Promise<Report> {
-    if (transactionIds != null && transactionIds.length > 20) {
-      throw new NotFound(`Cant select more than 20 transactions`)
+    if (
+      transactionIds != null &&
+      transactionIds.length > ReportService.MAX_TRANSACTIONS
+    ) {
+      throw new NotFound(
+        `Cant select more than ${ReportService.MAX_TRANSACTIONS} transactions`
+      )
     }
     const userRepository = new UserRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -281,8 +288,13 @@ export class ReportService {
     alertIds?: string[],
     transactionIds?: string[]
   ): Promise<Report> {
-    if (transactionIds != null && transactionIds.length > 20) {
-      throw new NotFound(`Cant select more than 20 transactions`)
+    if (
+      transactionIds != null &&
+      transactionIds.length > ReportService.MAX_TRANSACTIONS
+    ) {
+      throw new NotFound(
+        `Cant select more than ${ReportService.MAX_TRANSACTIONS} transactions`
+      )
     }
 
     const caseRepository = new CaseRepository(this.tenantId, {
@@ -311,7 +323,7 @@ export class ReportService {
     const transactions = await txpRepo.getTransactions({
       filterTransactionIds: transactionIds ?? [],
       includeUsers: true,
-      pageSize: 20,
+      pageSize: ReportService.MAX_TRANSACTIONS,
     })
 
     const account = getContext()?.user as Account
