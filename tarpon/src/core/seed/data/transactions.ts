@@ -415,6 +415,14 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
   let transactions = [...Array(TXN_COUNT)].map((_, index) => {
     return fullTransactionSampler.getSample(undefined, index, false)
   })
+  // manullay changing txn status to suspend for cypress tenant
+  if (process.env.TENANT_ID === 'cypress-tenant') {
+    transactions.forEach((t, idx) => {
+      if (idx % 10 === 0) {
+        t.status = 'SUSPEND'
+      }
+    })
+  }
   if (hasFeature('CHAINALYSIS')) {
     const cryptoTransactions = [...Array(CRYPTO_TXN_COUNT)].map((_, index) => {
       return fullTransactionSampler.getSample(

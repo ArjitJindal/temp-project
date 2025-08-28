@@ -21,6 +21,9 @@ export async function seedDemoData(tenantId: string) {
   const dynamo = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
 
+  // setting tenant id
+  process.env.TENANT_ID = tenantId
+
   const account = await fetchAndSetAccounts(tenantId, dynamo)
   await removeDemoRoles(tenantId, account, dynamo)
   await createTenantDatabase(tenantId)

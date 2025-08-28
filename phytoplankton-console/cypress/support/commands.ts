@@ -390,6 +390,8 @@ Cypress.Commands.add('selectOptionsByLabel', (label: string, option: string[]) =
     .within(() => {
       cy.multiSelect('', option);
     });
+  // hacky way to close the select portal should be updated after FDT-7776
+  cy.contains(label).click();
 });
 
 Cypress.Commands.add('selectRadioByLabel', (label, option) => {
