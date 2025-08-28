@@ -12,11 +12,10 @@
   "author": "",
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.749.0",
-    "@types/fast-levenshtein": "^0.0.4",
     "aws-cdk-lib": "~2.178.1",
     "constructs": "^10.4.2",
     "dayjs": "^1.11.12",
-    "fast-levenshtein": "^3.0.0",
+    "fastest-levenshtein": "^1.0.16",
     "lodash": "^4.17.21",
     "nanoid": "^3.3.8"
   },

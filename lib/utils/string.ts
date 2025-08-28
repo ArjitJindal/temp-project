@@ -1,9 +1,16 @@
-import * as levenshtein from 'fast-levenshtein'
 import { compact } from 'lodash'
+import { distance } from 'fastest-levenshtein'
 import { ACCENTS_MAP } from './accents'
 
 export function getEditDistance(str1: string, str2: string): number {
-  return levenshtein.get(str1, str2, { useCollator: true })
+  return distance(normalize(str1), normalize(str2))
+}
+
+export function getEditDistanceForNormalizedStrings(
+  str1: string,
+  str2: string
+): number {
+  return distance(str1, str2)
 }
 
 export function getEditDistancePercentage(str1: string, str2: string): number {

@@ -976,7 +976,6 @@ __metadata:
     "@aws-sdk/client-api-gateway": "npm:^3.749.0"
     "@tsconfig/node20": "npm:^20.1.5"
     "@types/eslint": "npm:^8"
-    "@types/fast-levenshtein": "npm:^0.0.4"
     "@types/jest": "npm:^29.5.12"
     "@types/lodash": "npm:^4"
     "@types/node": "npm:^20.11.16"
@@ -990,7 +989,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.29.1"
     eslint-plugin-prettier: "npm:^5.1.3"
     eslint-plugin-unused-imports: "npm:^4.1.4"
-    fast-levenshtein: "npm:^3.0.0"
+    fastest-levenshtein: "npm:^1.0.16"
     jest: "npm:^29.7.0"
     lodash: "npm:^4.17.21"
     nanoid: "npm:^3.3.8"
@@ -2008,13 +2007,6 @@ __metadata:
   version: 1.0.8
   resolution: "@types/estree@npm:1.0.8"
   checksum: 39d34d1afaa338ab9763f37ad6066e3f349444f9052b9676a7cc0252ef9485a41c6d81c9c4e0d26e9077993354edf25efc853f3224dd4b447175ef62bdcc86a5
-  languageName: node
-  linkType: hard
-
-"@types/fast-levenshtein@npm:^0.0.4":
-  version: 0.0.4
-  resolution: "@types/fast-levenshtein@npm:0.0.4"
-  checksum: d9a3c6b9e8181315ccd97c321ad11e6c791116488145c549db6f2e5463570476f735c5f8f07a89d727f6142ccdea53c62d8c5ec8b9fa7e8186358441ed985490
   languageName: node
   linkType: hard
 
@@ -3600,15 +3592,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-levenshtein@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "fast-levenshtein@npm:3.0.0"
-  dependencies:
-    fastest-levenshtein: "npm:^1.0.7"
-  checksum: 9e147c682bd0ca54474f1cbf906f6c45262fd2e7c051d2caf2cc92729dcf66949dc809f2392de6adbe1c8716fdf012f91ce38c9422aef63b5732fc688eee4046
-  languageName: node
-  linkType: hard
-
 "fast-uri@npm:^3.0.1":
   version: 3.0.6
   resolution: "fast-uri@npm:3.0.6"
@@ -3627,7 +3610,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastest-levenshtein@npm:^1.0.7":
+"fastest-levenshtein@npm:^1.0.16":
   version: 1.0.16
   resolution: "fastest-levenshtein@npm:1.0.16"
   checksum: 7e3d8ae812a7f4fdf8cad18e9cde436a39addf266a5986f653ea0d81e0de0900f50c0f27c6d5aff3f686bcb48acbd45be115ae2216f36a6a13a7dbbf5cad878b

@@ -1,4 +1,7 @@
-import { getEditDistance } from '@flagright/lib/utils'
+import {
+  getEditDistance,
+  getEditDistanceForNormalizedStrings,
+} from '@flagright/lib/utils'
 import { max } from 'lodash'
 
 export function calculateLevenshteinDistancePercentage(
@@ -6,7 +9,23 @@ export function calculateLevenshteinDistancePercentage(
   str2: string
 ): number {
   const distance = getEditDistance(str1, str2)
-  const maxLength = max<number>([str1.length, str2.length])
+  return getLevenshteinSimilarityPercentage(str1.length, str2.length, distance)
+}
+
+export function calculateLevenshteinDistancePercentageForNormalizedStrings(
+  str1: string,
+  str2: string
+): number {
+  const distance = getEditDistanceForNormalizedStrings(str1, str2)
+  return getLevenshteinSimilarityPercentage(str1.length, str2.length, distance)
+}
+
+function getLevenshteinSimilarityPercentage(
+  str1Length: number,
+  str2Length: number,
+  distance: number
+): number {
+  const maxLength = max<number>([str1Length, str2Length])
   if (maxLength == null) {
     return 0
   }

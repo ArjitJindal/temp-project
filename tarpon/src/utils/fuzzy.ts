@@ -1,5 +1,5 @@
 import { compact, intersection as intersectionFn, uniq } from 'lodash'
-import { calculateLevenshteinDistancePercentage } from './search'
+import { calculateLevenshteinDistancePercentageForNormalizedStrings } from './search'
 
 export interface FuzzinessOptions {
   partialMatch: boolean
@@ -28,7 +28,7 @@ export function token_similarity_sort_ratio(
       tokens2,
       separator,
       options.partialMatchLength,
-      calculateLevenshteinDistancePercentage,
+      calculateLevenshteinDistancePercentageForNormalizedStrings,
       options.fuzzinessThreshold
     )
   }
@@ -37,7 +37,7 @@ export function token_similarity_sort_ratio(
   if (fuzzyEarlyTermination(s1, s2, options.fuzzinessThreshold)) {
     return 0
   }
-  return calculateLevenshteinDistancePercentage(s1, s2)
+  return calculateLevenshteinDistancePercentageForNormalizedStrings(s1, s2)
 }
 
 export function fuzzy_levenshtein_distance(
@@ -49,7 +49,10 @@ export function fuzzy_levenshtein_distance(
     if (fuzzyEarlyTermination(str1, str2, options.fuzzinessThreshold)) {
       return 0
     }
-    return calculateLevenshteinDistancePercentage(str1, str2)
+    return calculateLevenshteinDistancePercentageForNormalizedStrings(
+      str1,
+      str2
+    )
   }
   const { tokens1, tokens2 } = arrange_token_lists(str1, str2)
   const separator = options?.omitSpaces ? '' : ' '
@@ -58,7 +61,7 @@ export function fuzzy_levenshtein_distance(
     tokens2,
     separator,
     options.partialMatchLength,
-    calculateLevenshteinDistancePercentage,
+    calculateLevenshteinDistancePercentageForNormalizedStrings,
     options.fuzzinessThreshold
   )
 }
@@ -164,11 +167,11 @@ function token_similarity_sort(sorted1: string[], sorted2: string[]) {
       return b.similarity - a.similarity
     }
     return (
-      calculateLevenshteinDistancePercentage(
+      calculateLevenshteinDistancePercentageForNormalizedStrings(
         sorted1[b.coorinates[0]],
         oldSorted2[b.coorinates[1]]
       ) -
-      calculateLevenshteinDistancePercentage(
+      calculateLevenshteinDistancePercentageForNormalizedStrings(
         sorted1[a.coorinates[0]],
         oldSorted2[a.coorinates[1]]
       )
