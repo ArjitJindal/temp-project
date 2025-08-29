@@ -34,16 +34,24 @@ export const DYNAMODB_WRITE_CAPACITY_METRIC: Metric = {
   name: 'ConsumedWriteCapacityUnits',
   kind: 'CULMULATIVE',
 }
+export const RuleEngineNamespace = 'flagright/RulesEngine'
 
 export const RULE_EXECUTION_TIME_MS_METRIC: Metric = {
-  namespace: 'flagright/RulesEngine',
+  namespace: RuleEngineNamespace,
   name: 'RuleExecutionTimeMs',
   kind: 'GAUGE',
 }
+
 export const RULE_HIT_PERCENTAGE: Metric = {
-  namespace: 'flagright/RulesEngine',
+  namespace: RuleEngineNamespace,
   name: 'RuleHitPercentage',
   kind: 'GAUGE',
+}
+
+export const RULE_ERROR_COUNT_METRIC: Metric = {
+  namespace: RuleEngineNamespace,
+  name: 'RuleErrorCount',
+  kind: 'CULMULATIVE',
 }
 
 export const CUSTOM_API_USAGE_METRIC_NAMES = {

@@ -84,7 +84,10 @@ import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
+import {
+  RULE_ERROR_COUNT_METRIC,
+  RULE_EXECUTION_TIME_MS_METRIC,
+} from '@/core/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -1628,7 +1631,12 @@ export class RulesEngineService {
             aggregationMessages,
           }
         } catch (e) {
-          logger.error(e)
+          publishMetric(RULE_ERROR_COUNT_METRIC, 1, undefined, {
+            aggregateOnNamespace: true,
+          })
+          logger.error(
+            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`
+          )
         }
       },
       {

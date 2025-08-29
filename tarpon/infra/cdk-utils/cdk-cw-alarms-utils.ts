@@ -13,6 +13,10 @@ import { Topic } from 'aws-cdk-lib/aws-sns'
 import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
 import { isQaEnv } from '@flagright/lib/qa'
 import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
+import {
+  RULE_ERROR_COUNT_METRIC,
+  RuleEngineNamespace,
+} from '@/core/cloudwatch/metrics'
 
 export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
 const isDevUserStack = isQaEnv()
@@ -661,6 +665,33 @@ export const createKinesisThrottledRecordsPercentageAlarm = (
           statistic: 'Sum',
         }),
       },
+    }),
+  }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
+}
+
+export const createRuleErrorCountAlarm = (
+  context: Construct,
+  zendutyCloudWatchTopic: Topic,
+  threshold: number = 5
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+
+  return new Alarm(context, `RuleErrorCount`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold,
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
+    alarmName: `RuleErrorCount`,
+    alarmDescription: `Covers rule error count. Alarm triggers when rule run error count is higher than ${threshold} for 1 data points in 5 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: `Rule Error Count`,
+      namespace: RuleEngineNamespace,
+      metricName: RULE_ERROR_COUNT_METRIC.name,
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Sum',
     }),
   }).addAlarmAction(new SnsAction(zendutyCloudWatchTopic))
 }

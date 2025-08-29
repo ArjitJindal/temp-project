@@ -40,4 +40,28 @@ describe('Publish metric', () => {
       }
     )
   })
+
+  test('aggregate on namespace', async () => {
+    await withContext(async () => {
+      publishMetric(
+        { name: 'Thingy', namespace: 'Flagright', kind: 'CULMULATIVE' },
+        100,
+        undefined,
+        {
+          aggregateOnNamespace: true,
+        }
+      )
+
+      publishMetric(
+        { name: 'Thingy', namespace: 'Flagright', kind: 'CULMULATIVE' },
+        1,
+        undefined,
+        {
+          aggregateOnNamespace: true,
+        }
+      )
+      expect(getContext()?.metrics?.['Flagright']).toHaveLength(1)
+      expect(getContext()?.metrics?.['Flagright'][0].Value).toBe(101)
+    })
+  })
 })

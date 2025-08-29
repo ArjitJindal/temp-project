@@ -245,25 +245,33 @@ export function updateTenantRiskClassificationValues(
 export function publishMetric(
   metric: Metric,
   value: number,
-  dimensions?: { [key: string]: string }
+  dimensions?: { [key: string]: string },
+  options?: {
+    aggregateOnNamespace?: boolean
+  }
 ) {
   const context = getContext()
   if (!context) {
     return
   }
+  const aggregateOnNamespace = options?.aggregateOnNamespace ?? false
   const dimensionsWithContext = {
     ...context.metricDimensions,
     ...dimensions,
   }
   const metricDatum: MetricDatum = {
     MetricName: metric.name,
-    Dimensions: Object.entries(dimensionsWithContext || {})
-      // Lambda function name isn't defined in local dev.
-      .filter((entry) => entry[1] !== undefined)
-      .map((entry) => ({
-        Name: entry[0],
-        Value: entry[1],
-      })),
+    ...(aggregateOnNamespace
+      ? {}
+      : {
+          Dimensions: Object.entries(dimensionsWithContext || {})
+            // Lambda function name isn't defined in local dev.
+            .filter((entry) => entry[1] !== undefined)
+            .map((entry) => ({
+              Name: entry[0],
+              Value: entry[1],
+            })),
+        }),
     Unit: 'None',
     Value: value,
     Timestamp: new Date(),
@@ -272,10 +280,24 @@ export function publishMetric(
   if (context.metrics == undefined) {
     context.metrics = {}
   }
-  context.metrics[metric.namespace] = [
-    metricDatum,
-    ...(context.metrics[metric.namespace] || []),
-  ]
+
+  if (!aggregateOnNamespace) {
+    context.metrics[metric.namespace] = [
+      metricDatum,
+      ...(context.metrics[metric.namespace] || []),
+    ]
+  } else {
+    let aggregateValue = value
+    context.metrics[metric.namespace]?.forEach((metricDatum) => {
+      aggregateValue += metricDatum.Value ?? 0
+    })
+    context.metrics[metric.namespace] = [
+      {
+        ...metricDatum,
+        Value: aggregateValue,
+      },
+    ]
+  }
 }
 
 export async function publishContextMetrics(context: Context | undefined) {
