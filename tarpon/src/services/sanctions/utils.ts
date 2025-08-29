@@ -101,6 +101,7 @@ export function getSanctionsCollectionName(
 ): string {
   if (
     aggregationProps &&
+    aggregationProps.aggregate &&
     aggregationProps.screeningProfileId &&
     !aggregationProps.screeningProfileContainsAllSources
   ) {
