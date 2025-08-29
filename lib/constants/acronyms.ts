@@ -10,7 +10,7 @@ export const ACRONYMS: ReadonlyArray<string> = [
   'RTGS',
   'NEFT',
   'IMPS',
-  'CFT',
+  'CTF',
   'AML',
   'KYC',
   'NPP',
