@@ -476,7 +476,7 @@ export class AccountsService {
       }
       await Promise.all([
         this.patchUser(oldTenant, userId, {}),
-        this.addAccountToOrganization(newTenant, updatedUser),
+        this.deleteAccountFromOrganization(newTenant, updatedUser),
       ])
       throw e
     }

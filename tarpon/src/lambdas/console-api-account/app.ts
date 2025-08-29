@@ -40,12 +40,19 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerMe(async () => await accountsService.getAccount(userId))
 
-    handlers.registerGetAccounts(async () => {
+    handlers.registerGetAccounts(async (ctx) => {
+      const { tenantId } = ctx
       const accountsService = new AccountsService(
         { auth0Domain, useCache: true },
         { dynamoDb }
       )
-      const organization = await accountsService.getAccountTenant(userId)
+      // cache not updated in different aws region
+      // tenantid from auth header is the source of truth
+      const organization = await accountsService.getTenantById(tenantId)
+
+      if (!organization) {
+        throw new createHttpError.InternalServerError('Tenant not found')
+      }
 
       return await accountsService.getTenantAccounts(organization)
     })
