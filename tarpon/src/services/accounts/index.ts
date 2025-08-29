@@ -237,8 +237,9 @@ export class AccountsService {
     let account: Account | null = null
     let deletedAccountIfError: boolean = true
     try {
-      account = await this.getAccountByEmail(params.email)
-
+      account = await this.getAccountByEmail(params.email, {
+        consistentRead: true,
+      })
       if (!account) {
         account = await this.createAccountInternal(tenant, params)
         await this.roleService.setRole(
@@ -267,7 +268,8 @@ export class AccountsService {
 
       if (account) {
         deletedAccountIfError = false
-        await this.addAccountToOrganizationInternal(tenant, account)
+        // while adding account to organization, we should patch the account with new updates
+        //await this.addAccountToOrganizationInternal(tenant, account) // already handled when we patch the account
         await this.sendPasswordResetEmail(params.email)
       }
     } catch (e) {
@@ -874,12 +876,17 @@ export class AccountsService {
       .map((account) => account.id)
   }
 
-  async getAccountByEmail(email: string): Promise<Account | null> {
+  async getAccountByEmail(
+    email: string,
+    option?: { consistentRead?: boolean }
+  ): Promise<Account | null> {
     if (!this.shouldUseCache()) {
       return this.auth0.getAccountByEmail(email)
     }
 
-    const account = await this.cache.getAccountByEmail(email)
+    const account = await this.cache.getAccountByEmail(email, {
+      consistentRead: option?.consistentRead ?? undefined,
+    })
 
     if (!account) {
       const data = await this.auth0.getAccountByEmail(email)

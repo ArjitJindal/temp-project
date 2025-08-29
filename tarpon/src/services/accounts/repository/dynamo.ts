@@ -111,13 +111,17 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     return data.Item as Tenant
   }
 
-  async getAccountByEmail(email: string): Promise<CacheAccount | null> {
+  async getAccountByEmail(
+    email: string,
+    option?: { consistentRead?: boolean }
+  ): Promise<CacheAccount | null> {
     const key = DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, email)
     const data = await this.dynamoClient.send(
       new GetCommand({
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: key,
+        ConsistentRead: option?.consistentRead ?? undefined,
       })
     )
 
@@ -169,21 +173,11 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
             StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
           Item: {
             ...account,
-            ...DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
-            tenantId: nonDemoTenantId,
-          },
-        })
-      ),
-      this.dynamoClient.send(
-        new PutCommand({
-          TableName:
-            StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-          Item: {
-            ...account,
             ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
           },
         })
       ),
+      // we update accounts in this function no need to do above
       this.addAccountToOrganization({ id: nonDemoTenantId }, account),
     ])
 
@@ -232,19 +226,23 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       ...(patchData.user_metadata && {
         user_metadata: patchData.user_metadata,
       }),
-      ...(patchData.blocked != null && { blocked: patchData.blocked }),
       ...(patchData.blockedReason && {
         blockedReason: patchData.blockedReason,
+      }),
+      ...(patchData.blocked != null && {
+        blocked: patchData.blocked,
+        // if blocked is false, we are resetting the blockedReason to undefined
+        ...(patchData.blocked === false && { blockedReason: undefined }),
       }),
       orgName: tenantInfo.orgName,
       tenantId: nonDemoTenantId,
     }
 
-    await this.createAccount(tenantInfo, {
+    const accountInCache = await this.createAccount(tenantInfo, {
       type: 'DATABASE',
       params: updatedAccount,
     })
-    return updatedAccount
+    return accountInCache
   }
 
   async getAccountByIds(accountIds: string[]): Promise<Account[]> {
