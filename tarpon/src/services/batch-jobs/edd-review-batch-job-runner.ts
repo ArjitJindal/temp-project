@@ -7,14 +7,14 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import pMap from 'p-map'
-import { memoize, uniqBy } from 'lodash'
+import memoize from 'lodash/memoize'
+import uniqBy from 'lodash/uniqBy'
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3'
 import { marked } from 'marked'
-import htmlToDocx from 'html-to-docx'
 import { v4 as uuidv4 } from 'uuid'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { PDFExtractionService } from '../pdf-extraction'
@@ -1907,6 +1907,7 @@ ${financialInformationText}
       this.executionLogs.push(
         `[${new Date().toISOString()}]: Converting HTML to DOCX format`
       )
+      const { default: htmlToDocx } = await import('html-to-docx')
       const docx = await htmlToDocx(html, undefined, {
         margins: { top: 540, bottom: 540, left: 540, right: 540 }, // 0.75 inch = 540pt
         font: 'Noto Sans',

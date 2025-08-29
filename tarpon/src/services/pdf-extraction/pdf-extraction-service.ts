@@ -1,4 +1,3 @@
-import PDFParser from 'pdf2json'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 
@@ -36,12 +35,11 @@ export class PDFExtractionService {
     } = options
 
     const startTime = Date.now()
-
+    const PDFParser = (await import('pdf2json')).default
     return new Promise<PDFExtractionResult>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('PDF extraction timed out'))
       }, timeout)
-
       const pdfParser = new PDFParser(this, true)
 
       pdfParser.on('pdfParser_dataError', (errData) => {

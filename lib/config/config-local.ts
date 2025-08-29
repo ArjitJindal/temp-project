@@ -1,5 +1,4 @@
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
-import { Config } from './config'
+import { Config, RetentionDays } from './config'
 
 const account = '911899431626'
 const region = 'eu-central-1'

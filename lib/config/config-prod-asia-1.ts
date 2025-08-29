@@ -3,10 +3,8 @@
  * (Full list of regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
  */
 
-import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { ADMIN_EMAILS } from '../constants'
-import { Config } from './config'
+import { Config, BillingMode, RetentionDays } from './config'
 
 const account = '870721492449'
 const region = 'ap-southeast-1'

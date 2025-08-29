@@ -428,7 +428,7 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
       ...this.generatePartC(reportParams),
     ]
 
-    const pdfData = generatePdf(document)
+    const pdfData = await generatePdf(document)
 
     return {
       type: 'STREAM',

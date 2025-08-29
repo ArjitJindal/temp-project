@@ -4,6 +4,7 @@ const esbuild = require('esbuild')
 const fs = require('fs-extra')
 const { chunk } = require('lodash')
 const builtinModules = require('builtin-modules')
+const { execSync } = require('child_process')
 
 // These are transitive dependencies of our dependencies, which for some reasons
 // are not specified in dependencies or specified in devDependencies and are
@@ -132,6 +133,11 @@ async function main() {
           ...(outDir.includes('fargate') ? [] : ['@aws-sdk/*']),
           ...builtinModules.filter((mod) => mod !== 'punycode'),
           ...IGNORED,
+          'aws-cdk-lib',
+          '../lib/node_modules/aws-cdk-lib/*',
+          ...(outDir.includes('fargate')
+            ? []
+            : ['pdf2json', 'xlsx-js-style', 'html-to-docx', 'pdfmake']),
         ],
         loader: { '.node': 'file' },
         keepNames: true,
@@ -139,7 +145,16 @@ async function main() {
       for (const [file, info] of Object.entries(
         bundleResults.metafile.outputs
       )) {
-        console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
+        console.log(`\n${file}: ${info.bytes.toLocaleString()} bytes`)
+
+        const inputs = Object.entries(info.inputs)
+          .map(([input, { bytesInOutput }]) => ({ input, size: bytesInOutput }))
+          .sort((a, b) => b.size - a.size)
+          .slice(0, 10) // top 10 biggest inputs
+
+        for (const { input, size } of inputs) {
+          console.log(`   - ${input}: ${size.toLocaleString()} bytes`)
+        }
       }
     }
   }
@@ -216,7 +231,54 @@ async function main() {
     )
   }
 
+  await buildLambdaLayer()
+
   console.timeEnd('Total build time')
+}
+
+// Add at the top of your script
+const LAYER_PACKAGES = ['pdf2json', 'xlsx-js-style', 'html-to-docx', 'pdfmake']
+const LAYER_DIR = path.join(ROOT_DIR, 'dist/layers/heavy-libs/nodejs')
+
+async function buildLambdaLayer() {
+  console.log('📚 Building Lambda Layer...')
+
+  // Read root package.json
+  const rootPkg = await fs.readJson(path.join(ROOT_DIR, 'package.json'))
+  const deps = rootPkg.dependencies || {}
+
+  // Ensure all layer packages exist in root package.json
+  const layerDeps = {}
+  for (const pkg of LAYER_PACKAGES) {
+    if (!deps[pkg]) {
+      throw new Error(
+        `❌ Package "${pkg}" is not listed in root package.json dependencies`
+      )
+    }
+    layerDeps[pkg] = deps[pkg] // pin exact version
+  }
+
+  // Prepare layer package.json
+  const layerPkg = {
+    name: 'heavy-libs-layer',
+    version: '1.0.0',
+    private: true,
+    dependencies: layerDeps,
+  }
+
+  await fs.remove(LAYER_DIR)
+  await fs.ensureDir(LAYER_DIR)
+  await fs.writeJson(path.join(LAYER_DIR, 'package.json'), layerPkg, {
+    spaces: 2,
+  })
+
+  console.log(`📥 Installing ${Object.keys(layerDeps).join(', ')}`)
+  execSync(`npm install --production`, {
+    cwd: LAYER_DIR,
+    stdio: 'inherit',
+  })
+
+  console.log('✅ Layer built at:', LAYER_DIR)
 }
 
 main().catch((e) => {

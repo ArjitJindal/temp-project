@@ -1,7 +1,12 @@
 import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
-import { AttributeType, ITable, Table } from 'aws-cdk-lib/aws-dynamodb'
+import {
+  AttributeType,
+  BillingMode,
+  ITable,
+  Table,
+} from 'aws-cdk-lib/aws-dynamodb'
 import {
   BlockPublicAccess,
   Bucket,
@@ -33,7 +38,14 @@ import {
   Queue,
 } from 'aws-cdk-lib/aws-sqs'
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
-import { Alias, FunctionProps, StartingPosition } from 'aws-cdk-lib/aws-lambda'
+import {
+  Alias,
+  Code,
+  FunctionProps,
+  LayerVersion,
+  Runtime,
+  StartingPosition,
+} from 'aws-cdk-lib/aws-lambda'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import { Construct, IConstruct } from 'constructs'
 import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
@@ -107,6 +119,7 @@ import {
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -788,13 +801,24 @@ export class CdkTarponStack extends cdk.Stack {
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
     Metric.grantPutMetricData(ecsTaskExecutionRole)
 
+    const heavyLibLayer = new LayerVersion(this, 'heavy-libs', {
+      code: Code.fromAsset('dist/layers/heavy-libs'),
+      compatibleRuntimes: [Runtime.NODEJS_20_X],
+      layerVersionName: 'heavy-libs-layer',
+    })
+
     /* API Key Authorizer */
     const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
-      createFunction(this, lambdaExecutionRole, {
-        name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
-        provisionedConcurrency:
-          config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
-      })
+      createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
+          provisionedConcurrency:
+            config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
+        },
+        heavyLibLayer
+      )
 
     /* Transaction and Transaction Event */
     const transactionFunctionProps = {
@@ -809,7 +833,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
         ...transactionFunctionProps,
-      }
+      },
+      heavyLibLayer
     )
     const { alias: transactionEventAlias } = createFunction(
       this,
@@ -817,7 +842,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
         ...transactionFunctionProps,
-      }
+      },
+      heavyLibLayer
     )
 
     // Configure AutoScaling for Tx Function
@@ -835,55 +861,100 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     /*  User Event */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
-      provisionedConcurrency:
-        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+        provisionedConcurrency:
+          config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
 
     /* Rule Template (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* Lists Function (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* Rule Instance (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* Case (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* Alert (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_ALERT_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* Upload file (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_FILE_UPLOAD_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* User (Public) */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
+      },
+      heavyLibLayer
+    )
 
     /* User */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-      provisionedConcurrency:
-        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+        provisionedConcurrency:
+          config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
 
     /* Slack App */
     const { alias: slackAlertAlias } = createFunction(
@@ -891,7 +962,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.SLACK_ALERT_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
 
     slackAlertAlias.addEventSource(
@@ -905,7 +977,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
 
     webhookDelivererAlias.addEventSource(
@@ -919,7 +992,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
         memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
-      }
+      },
+      heavyLibLayer
     )
 
     // non-batch async rule
@@ -941,7 +1015,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.MONGO_UPDATE_CONSUMER_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
 
     mongoUpdateConsumerAlias.addEventSource(
@@ -959,7 +1034,8 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
         memorySize:
           this.config.resource.TRANSACTION_AGGREGATION_LAMBDA?.MEMORY_SIZE,
-      }
+      },
+      heavyLibLayer
     )
 
     transactionAggregatorAlias.addEventSource(
@@ -978,7 +1054,8 @@ export class CdkTarponStack extends cdk.Stack {
         name: StackConstants.REQUEST_LOGGER_FUNCTION_NAME,
         memorySize:
           this.config.resource.REQUEST_LOGGER_LAMBDA?.MEMORY_SIZE ?? 512,
-      }
+      },
+      heavyLibLayer
     )
 
     requestLoggerAlias.addEventSource(
@@ -998,7 +1075,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.BATCH_RERUN_USERS_CONSUMER_FUNCTION_NAME,
         memorySize: config.resource.LAMBDA_DEFAULT?.MEMORY_SIZE,
-      }
+      },
+      heavyLibLayer
     )
 
     batchRerunUsersConsumerAlias.addEventSource(
@@ -1015,7 +1093,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
     auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
 
@@ -1025,7 +1104,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.NOTIFICATIONS_CONSUMER_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
 
     notificationsConsumerAlias.addEventSource(
@@ -1041,7 +1121,8 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.ACTION_PROCESSING_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
 
     actionProcessingFunction.addEventSource(
@@ -1058,16 +1139,22 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
-      }
+      },
+      heavyLibLayer
     )
     // batch job runner lambda has permission to describe and delete log groups - qa cleanup job required this
     const { alias: jobRunnerAlias, func: batchJobRunnerHandler } =
-      createFunction(this, lambdaExecutionRoleWithLogsListing, {
-        name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
-        memorySize:
-          config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
-          config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-      })
+      createFunction(
+        this,
+        lambdaExecutionRoleWithLogsListing,
+        {
+          name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
+          memorySize:
+            config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
+            config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
+        },
+        heavyLibLayer
+      )
     const batchJobRunnerLogGroupName = batchJobRunnerHandler.logGroup
     createFinCENSTFPConnectionAlarm(
       this,
@@ -1219,6 +1306,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME,
       },
+      heavyLibLayer,
       {
         environment: {
           BATCH_JOB_STATE_MACHINE_ARN: batchJobStateMachine.stateMachineArn,
@@ -1237,14 +1325,13 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.CRON_JOB_MONTHLY,
-        }
+        },
+        heavyLibLayer
       )
       const monthlyRule = new Rule(
         this,
         getResourceNameForTarpon('MonthlyRule'),
-        {
-          schedule: Schedule.cron({ minute: '0', hour: '0', day: '1' }),
-        }
+        { schedule: Schedule.cron({ minute: '0', hour: '0', day: '1' }) }
       )
       monthlyRule.addTarget(new LambdaFunctionTarget(cronJobMonthlyHandler))
 
@@ -1256,7 +1343,8 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.CRON_JOB_DAILY,
 
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
-        }
+        },
+        heavyLibLayer
       )
       if (envIs('dev')) {
         // For cleaning up QA stacks
@@ -1322,7 +1410,8 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.CRON_JOB_TEN_MINUTE,
 
           memorySize: config.resource.CRON_JOB_LAMBDA?.MEMORY_SIZE,
-        }
+        },
+        heavyLibLayer
       )
       const everyTenMinuteRule = new Rule(
         this,
@@ -1341,7 +1430,8 @@ export class CdkTarponStack extends cdk.Stack {
         const { func: cronJobHourlyHandler } = createFunction(
           this,
           lambdaExecutionRole,
-          { name: StackConstants.CRON_JOB_HOURLY }
+          { name: StackConstants.CRON_JOB_HOURLY },
+          heavyLibLayer
         )
 
         let minute = '0'
@@ -1389,7 +1479,8 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-        }
+        },
+        heavyLibLayer
       )
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
@@ -1405,7 +1496,8 @@ export class CdkTarponStack extends cdk.Stack {
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
             1024,
-        }
+        },
+        heavyLibLayer
       )
 
       tarponQueueConsumerAlias.addEventSource(
@@ -1435,7 +1527,8 @@ export class CdkTarponStack extends cdk.Stack {
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
             1024,
-        }
+        },
+        heavyLibLayer
       )
 
       secondaryTarponQueueConsumerAlias.addEventSource(
@@ -1629,6 +1722,7 @@ export class CdkTarponStack extends cdk.Stack {
         functionProps: this.functionProps,
         domainName,
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+        heavyLibLayer,
       }
     )
 
@@ -1673,10 +1767,15 @@ export class CdkTarponStack extends cdk.Stack {
     const {
       alias: mongoDbTriggerQueueConsumerAlias,
       func: mongoDbTriggerQueueConsumerFunc,
-    } = createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
-      memorySize: this.config.resource.MONGO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
-    })
+    } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+        memorySize: this.config.resource.MONGO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
 
     this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
       [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
@@ -1699,10 +1798,15 @@ export class CdkTarponStack extends cdk.Stack {
     const {
       alias: dynamoDbTriggerQueueConsumerAlias,
       func: dynamoDbTriggerQueueConsumerFunc,
-    } = createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.DYNAMO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
-      memorySize: config.resource.DYNAMO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
-    })
+    } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.DYNAMO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+        memorySize: config.resource.DYNAMO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
 
     this.addTagsToResource(dynamoDbTriggerQueueConsumerAlias, {
       [FEATURE]: FEATURES.DYNAMO_DB_CONSUMER,
@@ -1775,7 +1879,8 @@ export class CdkTarponStack extends cdk.Stack {
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
       readCapacity: this.config.resource.DYNAMODB.READ_CAPACITY,
       writeCapacity: this.config.resource.DYNAMODB.WRITE_CAPACITY,
-      billingMode: this.config.resource.DYNAMODB.BILLING_MODE,
+      billingMode: this.config.resource.DYNAMODB
+        .BILLING_MODE as unknown as BillingMode,
       kinesisStream,
       pointInTimeRecovery: true,
       removalPolicy:
@@ -1861,7 +1966,8 @@ export class CdkTarponStack extends cdk.Stack {
 
     createVpcLogGroup(this, vpc, {
       name: 'MongoAtlas',
-      logRetention: this.config.resource.CLOUD_WATCH.logRetention,
+      logRetention: this.config.resource.CLOUD_WATCH
+        .logRetention as unknown as RetentionDays,
     })
 
     const securityGroup = new SecurityGroup(

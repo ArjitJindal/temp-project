@@ -1,4 +1,3 @@
-import PdfPrinter from 'pdfmake'
 import { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces'
 import { neverReturn } from '@/utils/lang'
 
@@ -60,7 +59,12 @@ export function textField(value: string): ReportResultFormTextField {
   }
 }
 
-export function generatePdf(document: ReportDocument): NodeJS.ReadableStream {
+export async function generatePdf(
+  document: ReportDocument
+): Promise<NodeJS.ReadableStream> {
+  const pdfMake = await import('pdfmake')
+  const PdfPrinter = pdfMake.default
+
   const printer = new PdfPrinter({
     Helvetica: {
       normal: 'Helvetica',

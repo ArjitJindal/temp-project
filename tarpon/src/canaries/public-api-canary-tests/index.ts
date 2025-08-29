@@ -1,8 +1,10 @@
 import { RequestOptions, IncomingMessage } from 'http'
-import * as AWS from 'aws-sdk'
 import synthetics from 'Synthetics' // eslint-disable-line
 import logger from 'SyntheticsLogger' // eslint-disable-line
-import { isEqual, memoize, omit } from 'lodash'
+import { APIGatewayClient, GetApiKeyCommand } from '@aws-sdk/client-api-gateway'
+import isEqual from 'lodash/isEqual'
+import memoize from 'lodash/memoize'
+import omit from 'lodash/omit'
 import pMap from 'p-map'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -18,7 +20,9 @@ import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { Business } from '@/@types/openapi-public/Business'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
-const awsApiGateway = new AWS.APIGateway()
+const awsApiGateway = new APIGatewayClient({
+  region: process.env.AWS_REGION,
+})
 
 interface ValidationError {
   message: string
@@ -39,12 +43,12 @@ interface NotFoundError {
 }
 
 const getApiKey = memoize(async () => {
-  const apiKey = await awsApiGateway
-    .getApiKey({
+  const apiKey = await awsApiGateway.send(
+    new GetApiKeyCommand({
       apiKey: (process.env.INTEGRATION_TEST_API_KEY_ID as string) || '',
       includeValue: true,
     })
-    .promise()
+  )
 
   return apiKey.value as string
 })

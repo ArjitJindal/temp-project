@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
-import { FunctionProps } from 'aws-cdk-lib/aws-lambda'
+import { FunctionProps, ILayerVersion } from 'aws-cdk-lib/aws-lambda'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { DomainName } from 'aws-cdk-lib/aws-apigateway'
 import {
@@ -30,6 +30,7 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
   functionProps: Partial<FunctionProps>
   zendutyCloudWatchTopic: Topic
   domainName?: DomainName
+  heavyLibLayer: ILayerVersion
 }
 
 export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
@@ -71,11 +72,16 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
 
     /* JWT Authorizer */
     const { alias: jwtAuthorizerAlias, func: jwtAuthorizerFunction } =
-      createFunction(this, lambdaExecutionRole, {
-        name: StackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
-        provisionedConcurrency:
-          this.config.resource.JWT_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
-      })
+      createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
+          provisionedConcurrency:
+            this.config.resource.JWT_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
+        },
+        props.heavyLibLayer
+      )
     const jwtAuthorizerBaseRoleName = getNameForGlobalResource(
       StackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME,
       this.config
@@ -126,7 +132,8 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       lambdaExecutionRole,
       {
         name: StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
-      }
+      },
+      props.heavyLibLayer
     )
 
     presignedUrlAlias?.role?.attachInlinePolicy(
@@ -146,32 +153,57 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Rule Template */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Rule Instance */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Transactions view */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
-      memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
-      provisionedConcurrency:
-        this.config.resource.TRANSACTIONS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+        memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
+        provisionedConcurrency:
+          this.config.resource.TRANSACTIONS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+      },
+      props.heavyLibLayer
+    )
 
     /* Accounts */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Roles */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Tenants */
     const { alias: tenantsFunctionAlias } = createFunction(
@@ -182,7 +214,8 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
         provisionedConcurrency:
           this.config.resource.TENANT_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: this.config.resource.TENANT_LAMBDA.MEMORY_SIZE,
-      }
+      },
+      props.heavyLibLayer
     )
 
     tenantsFunctionAlias.role?.attachInlinePolicy(
@@ -206,108 +239,203 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Business users view */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-      provisionedConcurrency:
-        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
+        provisionedConcurrency:
+          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* Copilot */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
-      memorySize: this.config.resource.COPILOT_LAMBDA?.MEMORY_SIZE ?? 1024,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
+        memorySize: this.config.resource.COPILOT_LAMBDA?.MEMORY_SIZE ?? 1024,
+      },
+      props.heavyLibLayer
+    )
 
     /* Notifications */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Consumer users view */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-      provisionedConcurrency:
-        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+        provisionedConcurrency:
+          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* All users view */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-      provisionedConcurrency:
-        this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+        provisionedConcurrency:
+          this.config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* dashboard stats */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
-      provisionedConcurrency:
-        this.config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: this.config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
+        provisionedConcurrency:
+          this.config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: this.config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* List Importer */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Flat Files  */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_FLAT_FILES_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Case */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
-      memorySize: this.config.resource.CASE_LAMBDA?.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+        memorySize: this.config.resource.CASE_LAMBDA?.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* Webhook */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
-    })
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
-      memorySize: this.config.resource.INCOMING_WEBHOOK_LAMBDA?.MEMORY_SIZE,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+        memorySize: this.config.resource.INCOMING_WEBHOOK_LAMBDA?.MEMORY_SIZE,
+      },
+      props.heavyLibLayer
+    )
 
     /* Simulation */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Sanctions */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
-      memorySize: this.config.resource.SANCTIONS_LAMBDA?.MEMORY_SIZE ?? 1024,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+        memorySize: this.config.resource.SANCTIONS_LAMBDA?.MEMORY_SIZE ?? 1024,
+      },
+      props.heavyLibLayer
+    )
     /* Risk Classification function */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
     /* Version History function */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_VERSION_HISTORY_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_VERSION_HISTORY_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
     /* Manual User Risk Assignment function */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
     /* Parameter risk level assignment function */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Get Risk Scores */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
     /* Audit Log */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
     /* API Key Generator */
     const { alias: apiKeyGeneratorAlias } = createFunction(
       this,
@@ -318,6 +446,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
           this.config.resource.API_KEY_GENERATOR_LAMBDA?.MEMORY_SIZE ??
           this.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       },
+      props.heavyLibLayer,
       { timeout: Duration.minutes(4) }
     )
 
@@ -338,19 +467,34 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     )
 
     /* Slack App Configuration */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* SAR */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_SAR_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /* Workflows */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
-    })
+    createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME,
+      },
+      props.heavyLibLayer
+    )
 
     /**
      * Outputs

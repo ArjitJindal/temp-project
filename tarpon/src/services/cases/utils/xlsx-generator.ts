@@ -1,6 +1,5 @@
 import { ReadStream } from 'fs'
 import path from 'path'
-import * as XLSX from 'xlsx-js-style'
 import fs from 'fs-extra'
 
 export const SECTION_HEADER_STYLE = {
@@ -42,7 +41,8 @@ export type Report = Sheet[]
 
 export async function convert(report: Report): Promise<ReadStream> {
   // Create a new workbook
-  const wb = XLSX.utils.book_new()
+  const { utils: XLSXUtils, writeFile } = await import('xlsx-js-style')
+  const wb = XLSXUtils.book_new()
 
   function countMaxColumns(items: Item[], level = 0): number {
     function countItem(item: Item): number {
@@ -125,8 +125,8 @@ export async function convert(report: Report): Promise<ReadStream> {
 
     const data = sheet.children.flatMap((item) => renderItem(item))
 
-    const ws = XLSX.utils.aoa_to_sheet(data)
-    XLSX.utils.book_append_sheet(wb, ws, sheet.sheet)
+    const ws = XLSXUtils.aoa_to_sheet(data)
+    XLSXUtils.book_append_sheet(wb, ws, sheet.sheet)
   }
 
   // Write Excel file to temporal dir
@@ -136,7 +136,7 @@ export async function convert(report: Report): Promise<ReadStream> {
     `case-report-${Date.now()}.xlsx`
   )
   await fs.ensureDir(path.dirname(outputPath))
-  XLSX.writeFile(wb, outputPath)
+  writeFile(wb, outputPath)
 
   // Turn into string
   const readStream = fs.createReadStream(outputPath)

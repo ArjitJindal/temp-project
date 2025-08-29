@@ -17,6 +17,7 @@ import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
 import { Duration } from 'aws-cdk-lib'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 
 export type InternalFunctionProps = {
   name: string
@@ -60,13 +61,17 @@ export function createFunction(
   },
   role: IRole,
   internalFunctionProps: InternalFunctionProps,
+  heavyLibLayer: ILayerVersion,
   props: Partial<FunctionProps> = {}
 ): { alias: Alias; func: LambdaFunction } {
   return createLambdaFunction(
     'nodejs',
     context,
     role,
-    internalFunctionProps,
+    {
+      ...internalFunctionProps,
+      layers: [...(internalFunctionProps.layers ?? []), heavyLibLayer],
+    },
     props,
     (name) => `dist/lambdas/${LAMBDAS[name].codePath}`
   )
@@ -166,7 +171,8 @@ function createLambdaFunction(
       ? memorySize
       : context.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
     layers: layersArray,
-    logRetention: context.config.resource.CLOUD_WATCH.logRetention,
+    logRetention: context.config.resource.CLOUD_WATCH
+      .logRetention as unknown as RetentionDays,
     logRetentionRetryOptions: {
       maxRetries: 10,
     },

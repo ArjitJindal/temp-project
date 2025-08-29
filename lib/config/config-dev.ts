@@ -1,7 +1,5 @@
-import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { ALL_ENGINEERS } from '../constants'
-import { Config } from './config'
+import { Config, BillingMode, RetentionDays } from './config'
 
 const account = '911899431626'
 const region = 'eu-central-1'

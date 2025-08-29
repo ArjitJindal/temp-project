@@ -9,7 +9,7 @@ import {
 } from 'aws-cdk-lib/aws-ecs'
 import { IRole } from 'aws-cdk-lib/aws-iam'
 import { FunctionProps } from 'aws-cdk-lib/aws-lambda'
-import { LogGroup } from 'aws-cdk-lib/aws-logs'
+import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Construct } from 'constructs'
 
 export const createFargateTaskDefinition = (
@@ -69,7 +69,8 @@ export const addFargateContainer = (
           process.env.ENV === 'dev'
             ? RemovalPolicy.DESTROY
             : RemovalPolicy.RETAIN,
-        retention: scope.config.resource.CLOUD_WATCH.logRetention,
+        retention: scope.config.resource.CLOUD_WATCH
+          .logRetention as unknown as RetentionDays,
       }),
     }),
     // Ulimit: https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Ulimit.html

@@ -1,7 +1,282 @@
-import { Duration, Environment } from 'aws-cdk-lib'
-import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { FlagrightRegion, Stage } from '../constants/deploy'
+
+export const enum RetentionDays {
+  /**
+   * 1 day
+   */
+  ONE_DAY = 1,
+  /**
+   * 3 days
+   */
+  THREE_DAYS = 3,
+  /**
+   * 5 days
+   */
+  FIVE_DAYS = 5,
+  /**
+   * 1 week
+   */
+  ONE_WEEK = 7,
+  /**
+   * 2 weeks
+   */
+  TWO_WEEKS = 14,
+  /**
+   * 1 month
+   */
+  ONE_MONTH = 30,
+  /**
+   * 2 months
+   */
+  TWO_MONTHS = 60,
+  /**
+   * 3 months
+   */
+  THREE_MONTHS = 90,
+  /**
+   * 4 months
+   */
+  FOUR_MONTHS = 120,
+  /**
+   * 5 months
+   */
+  FIVE_MONTHS = 150,
+  /**
+   * 6 months
+   */
+  SIX_MONTHS = 180,
+  /**
+   * 1 year
+   */
+  ONE_YEAR = 365,
+  /**
+   * 13 months
+   */
+  THIRTEEN_MONTHS = 400,
+  /**
+   * 18 months
+   */
+  EIGHTEEN_MONTHS = 545,
+  /**
+   * 2 years
+   */
+  TWO_YEARS = 731,
+  /**
+   * 3 years
+   */
+  THREE_YEARS = 1096,
+  /**
+   * 5 years
+   */
+  FIVE_YEARS = 1827,
+  /**
+   * 6 years
+   */
+  SIX_YEARS = 2192,
+  /**
+   * 7 years
+   */
+  SEVEN_YEARS = 2557,
+  /**
+   * 8 years
+   */
+  EIGHT_YEARS = 2922,
+  /**
+   * 9 years
+   */
+  NINE_YEARS = 3288,
+  /**
+   * 10 years
+   */
+  TEN_YEARS = 3653,
+  /**
+   * Retain logs forever
+   */
+  INFINITE = 9999,
+}
+
+export const enum BillingMode {
+  /**
+   * Pay only for what you use. You don't configure Read/Write capacity units.
+   */
+  PAY_PER_REQUEST = 'PAY_PER_REQUEST',
+  /**
+   * Explicitly specified Read/Write capacity units.
+   */
+  PROVISIONED = 'PROVISIONED',
+}
+
+export interface TimeConversionOptions {
+  /**
+   * If `true`, conversions into a larger time unit (e.g. `Seconds` to `Minutes`) will fail if the result is not an
+   * integer.
+   *
+   * @default true
+   */
+  readonly integral?: boolean
+}
+
+export declare class Duration {
+  /**
+   * Create a Duration representing an amount of milliseconds
+   *
+   * @param amount the amount of Milliseconds the `Duration` will represent.
+   * @returns a new `Duration` representing `amount` ms.
+   */
+  static millis(amount: number): Duration
+  /**
+   * Create a Duration representing an amount of seconds
+   *
+   * @param amount the amount of Seconds the `Duration` will represent.
+   * @returns a new `Duration` representing `amount` Seconds.
+   */
+  static seconds(amount: number): Duration
+  /**
+   * Create a Duration representing an amount of minutes
+   *
+   * @param amount the amount of Minutes the `Duration` will represent.
+   * @returns a new `Duration` representing `amount` Minutes.
+   */
+  static minutes(amount: number): Duration
+  /**
+   * Create a Duration representing an amount of hours
+   *
+   * @param amount the amount of Hours the `Duration` will represent.
+   * @returns a new `Duration` representing `amount` Hours.
+   */
+  static hours(amount: number): Duration
+  /**
+   * Create a Duration representing an amount of days
+   *
+   * @param amount the amount of Days the `Duration` will represent.
+   * @returns a new `Duration` representing `amount` Days.
+   */
+  static days(amount: number): Duration
+  /**
+   * Parse a period formatted according to the ISO 8601 standard
+   *
+   * Days are the largest ISO duration supported, i.e.,
+   * weeks, months, and years are not supported.
+   *
+   * @example
+   * // This represents 1 day, 2 hours, 3 minutes, 4 seconds, and 567 milliseconds.
+   * 'P1DT2H3M4.567S'
+   *
+   * @see https://www.iso.org/standard/70907.html
+   * @param duration an ISO-formatted duration to be parsed.
+   * @returns the parsed `Duration`.
+   */
+  static parse(duration: string): Duration
+  private readonly amount
+  private readonly unit
+  private constructor()
+  /**
+   * Add two Durations together
+   */
+  plus(rhs: Duration): Duration
+  /**
+   * Substract two Durations together
+   */
+  minus(rhs: Duration): Duration
+  /**
+   * Return the total number of milliseconds in this Duration
+   *
+   * @returns the value of this `Duration` expressed in Milliseconds.
+   */
+  toMilliseconds(opts?: TimeConversionOptions): number
+  /**
+   * Return the total number of seconds in this Duration
+   *
+   * @returns the value of this `Duration` expressed in Seconds.
+   */
+  toSeconds(opts?: TimeConversionOptions): number
+  /**
+   * Return the total number of minutes in this Duration
+   *
+   * @returns the value of this `Duration` expressed in Minutes.
+   */
+  toMinutes(opts?: TimeConversionOptions): number
+  /**
+   * Return the total number of hours in this Duration
+   *
+   * @returns the value of this `Duration` expressed in Hours.
+   */
+  toHours(opts?: TimeConversionOptions): number
+  /**
+   * Return the total number of days in this Duration
+   *
+   * @returns the value of this `Duration` expressed in Days.
+   */
+  toDays(opts?: TimeConversionOptions): number
+  /**
+   * Return an ISO 8601 representation of this period
+   *
+   * @returns a string starting with 'P' describing the period
+   * @see https://www.iso.org/standard/70907.html
+   */
+  toIsoString(): string
+  /**
+   * Turn this duration into a human-readable string
+   */
+  toHumanString(): string
+  /**
+   * Returns a string representation of this `Duration`
+   *
+   * This is is never the right function to use when you want to use the `Duration`
+   * object in a template. Use `toSeconds()`, `toMinutes()`, `toDays()`, etc. instead.
+   */
+  toString(): string
+  /**
+   * Return the duration in a set of whole numbered time components, ordered from largest to smallest
+   *
+   * Only components != 0 will be returned.
+   *
+   * Can combine millis and seconds together for the benefit of toIsoString,
+   * makes the logic in there simpler.
+   */
+  private components
+  /**
+   * Checks if duration is a token or a resolvable object
+   */
+  isUnresolved(): boolean
+  /**
+   * Returns unit of the duration
+   */
+  unitLabel(): string
+  /**
+   * Returns stringified number of duration
+   */
+  formatTokenToNumber(): string
+}
+
+export interface Environment {
+  /**
+   * The AWS account ID for this environment.
+   *
+   * This can be either a concrete value such as `585191031104` or `Aws.ACCOUNT_ID` which
+   * indicates that account ID will only be determined during deployment (it
+   * will resolve to the CloudFormation intrinsic `{"Ref":"AWS::AccountId"}`).
+   * Note that certain features, such as cross-stack references and
+   * environmental context providers require concrete region information and
+   * will cause this stack to emit synthesis errors.
+   *
+   * @default Aws.ACCOUNT_ID which means that the stack will be account-agnostic.
+   */
+  readonly account?: string
+  /**
+   * The AWS region for this environment.
+   *
+   * This can be either a concrete value such as `eu-west-2` or `Aws.REGION`
+   * which indicates that account ID will only be determined during deployment
+   * (it will resolve to the CloudFormation intrinsic `{"Ref":"AWS::Region"}`).
+   * Note that certain features, such as cross-stack references and
+   * environmental context providers require concrete region information and
+   * will cause this stack to emit synthesis errors.
+   *
+   * @default Aws.REGION which means that the stack will be region-agnostic.
+   */
+  readonly region?: string
+}
 
 type ApiGatewayConfig = {
   CACHE?: {
