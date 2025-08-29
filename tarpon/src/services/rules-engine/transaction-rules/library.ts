@@ -523,7 +523,7 @@ const _RULES_LIBRARY: Array<
       name: 'Transaction anomaly',
       description: 'Check for anomalous transaction volumes',
       descriptionTemplate:
-        'Transaction volume in last 30 days is anomalously high vs 90-day baseline (stddev)',
+        'Transaction volume in last 7 days is anomalously high vs 30-day baseline (stddev)',
       defaultParameters: {},
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-anomaly',
@@ -537,7 +537,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'Recent 30-day total amount is > 2 standard deviations above 90-day baseline.',
+        'Recent 7-day total amount is > 2 standard deviations above 30-day baseline.',
       tags: ['DYNAMIC'],
     }
   },
