@@ -926,6 +926,35 @@ export class UserRepository {
     return cursor.toArray()
   }
 
+  public async getParentUser(userId: string): Promise<InternalUser | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const [result] = await collection
+      .aggregate([
+        { $match: { userId } },
+        {
+          $lookup: {
+            from: USERS_COLLECTION(this.tenantId),
+            localField: 'linkedEntities.parentUserId',
+            foreignField: 'userId',
+            as: 'parentUser',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            parentUser: { $arrayElemAt: ['$parentUser', 0] },
+          },
+        },
+      ])
+      .toArray()
+
+    return result?.parentUser || null
+  }
+
   public async updateUserWithExecutedRules(
     userId: string,
     executedRules: ExecutedRulesResult[],

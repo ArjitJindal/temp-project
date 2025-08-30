@@ -186,6 +186,39 @@ export class LinkerService {
     }
   }
 
+  public async getChildUsers(userId: string): Promise<string[]> {
+    if (isClickhouseEnabled()) {
+      const client = await getClickhouseClient(this.tenantId)
+      const usersTable = CLICKHOUSE_DEFINITIONS.USERS.tableName
+      const query = `
+      SELECT id
+      FROM ${usersTable} FINAL
+      WHERE linkedEntities_parentUserId = '${userId}'`
+
+      const result = await executeClickhouseQuery<{ id: string }[]>(
+        client,
+        query
+      )
+
+      return result.length > 0 ? result.map((row) => row.id) : []
+    }
+
+    const mongoClient = await getMongoDbClient()
+    const db = mongoClient.db()
+    const userCollection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const childUsers = await userCollection
+      .find({ 'linkedEntities.parentUserId': userId })
+      .project({ userId: 1 })
+      .toArray()
+
+    return childUsers.length > 0
+      ? childUsers.map((child: any) => child.userId)
+      : []
+  }
+
   private getAllContactDetails(user: UsersProjectedData): ContactDetails[] {
     const sharedHolders = user.shareHolders || []
     const directors = user.directors || []

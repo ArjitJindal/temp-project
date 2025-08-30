@@ -773,6 +773,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         JSONExtract(JSONExtractRaw(data, 'executedRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
       `hitRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
         JSONExtract(JSONExtractRaw(data, 'hitRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
+      `linkedEntities_parentUserId String MATERIALIZED JSONExtractString(data, 'linkedEntities', 'parentUserId')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',

@@ -2727,9 +2727,7 @@ export class UserService {
     request: DefaultApiGetUserEntityChildUsersRequest
   ) {
     const linkerService = new LinkerService(this.tenantId)
-    const { childUserIds } = await linkerService.entityGraphNodesOnly(
-      request.userId
-    )
+    const childUserIds = await linkerService.getChildUsers(request.userId)
     const userIds = [...childUserIds]
     if (isClickhouseEnabled()) {
       const result = await this.getClickhouseUsers({
@@ -2747,20 +2745,7 @@ export class UserService {
   }
 
   public async getUserEntityParentUser(userId: string) {
-    const linkerService = new LinkerService(this.tenantId)
-    const { parentUserIds } = await linkerService.entityGraphNodesOnly(userId)
-
-    const userIds = [...parentUserIds]
-    if (isClickhouseEnabled()) {
-      const users = await this.getClickhouseUsers({
-        filterIds: userIds,
-      })
-      return users.items as AllUsersTableItem[]
-    } else {
-      const users = await this.getUsers({
-        filterIds: userIds,
-      })
-      return users.result.items as AllUsersTableItem[]
-    }
+    const user = await this.userRepository.getParentUser(userId)
+    return user ? [this.mapAllUserToTableItem(user)] : []
   }
 }
