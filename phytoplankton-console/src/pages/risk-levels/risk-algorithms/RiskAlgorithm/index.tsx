@@ -258,7 +258,7 @@ const RiskAlgorithmTable = () => {
               <span className={styles.KRSheader}>Transaction Risk Score (TRS)</span>
               <div className={styles.KRSsubheader}>
                 Risk score of your customer's transaction activity. TRS changes corresponding to
-                {settings.userAlias} activity.
+                {` ${settings.userAlias} `} activity.
               </div>
             </>
           }
