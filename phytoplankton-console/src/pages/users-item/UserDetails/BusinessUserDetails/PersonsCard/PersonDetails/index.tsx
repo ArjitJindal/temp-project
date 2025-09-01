@@ -1,6 +1,7 @@
 import React from 'react';
 import Attachments from '../../../Attachments';
 import LegalDocuments from '../../LegalDocuments';
+import PepStatus from '../../PepStatus';
 import GeneralDetails from './GeneralDetails';
 import ContactDetails from '@/pages/users-item/UserDetails/shared/ContactDetailsCard';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
@@ -37,6 +38,9 @@ export default function PersonDetails(props: Props) {
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={3}>
         <LegalDocuments legalDocuments={person.legalDocuments} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={3}>
+        <PepStatus pepStatus={person.pepStatus} />
       </EntityInfoGrid.Cell>
     </EntityInfoGrid.Root>
   );
