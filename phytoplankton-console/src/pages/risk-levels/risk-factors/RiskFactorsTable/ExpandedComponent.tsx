@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
 import { pickBy } from 'lodash';
 import ValuesTable from '../../risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/ValuesTable';
@@ -21,6 +21,8 @@ type Props = {
   selectedSection: ScopeSelectorValue;
   simulationRiskFactors?: RiskFactor[];
   canEditRiskFactors?: boolean;
+  isEditable: boolean;
+  setEditableRiskFactor: (riskFactor: RiskFactor | null) => void;
 };
 
 export const ExpandedComponent = (props: Props) => {
@@ -33,6 +35,8 @@ export const ExpandedComponent = (props: Props) => {
     selectedSection,
     simulationRiskFactors,
     canEditRiskFactors,
+    isEditable,
+    setEditableRiskFactor,
   } = props;
   const isSimulation = mode === 'simulation';
   const [riskFactors, setRiskFactors] = useAtom(riskFactorsAtom);
@@ -41,7 +45,9 @@ export const ExpandedComponent = (props: Props) => {
   }, [riskFactors, riskFactor]);
 
   const canWriteRiskFactors =
-    useHasResources(['write:::risk-scoring/risk-factors/*']) && canEditRiskFactors !== false;
+    useHasResources(['write:::risk-scoring/risk-factors/*']) &&
+    canEditRiskFactors !== false &&
+    isEditable;
 
   const { simulationRiskFactorsMap, setSimulationRiskFactorsMap } = useTempRiskFactors({
     riskFactors: simulationRiskFactors || [],
@@ -50,6 +56,12 @@ export const ExpandedComponent = (props: Props) => {
   });
 
   const [showPendingProposalFlag, setShowPendingProposalFlag] = useState(true);
+
+  useEffect(() => {
+    return () => {
+      setEditableRiskFactor(null);
+    };
+  }, [setEditableRiskFactor]);
 
   if (isSimulation) {
     return (

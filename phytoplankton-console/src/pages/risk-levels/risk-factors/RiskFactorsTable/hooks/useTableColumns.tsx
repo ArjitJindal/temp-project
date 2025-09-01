@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAtom } from 'jotai';
 import s from '../styles.module.less';
@@ -28,6 +28,7 @@ interface UseTableColumnsProps {
   selectedSection: ScopeSelectorValue;
   mode: 'simulation' | 'normal' | 'version-history';
   handleSimulationSave: (riskFactors: RiskFactor[]) => void;
+  setEditableRiskFactor: Dispatch<SetStateAction<RiskFactor | null>>;
 }
 
 export function useTableColumns({
@@ -37,6 +38,7 @@ export function useTableColumns({
   activeIterationIndex = 1,
   selectedSection,
   handleSimulationSave,
+  setEditableRiskFactor,
 }: UseTableColumnsProps) {
   const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
   const isSimulation = mode === 'simulation';
@@ -54,7 +56,10 @@ export function useTableColumns({
   const handleEditRiskFactor = useCallback(
     (entity: RiskFactor) => {
       if (entity.parameter) {
-        actionRef.current?.expandRow(entity.id);
+        setEditableRiskFactor(entity);
+        if (!actionRef.current?.isRowExpanded(entity.id)) {
+          actionRef.current?.expandRow(entity.id);
+        }
       } else {
         if (isSimulation) {
           navigate(
@@ -76,7 +81,15 @@ export function useTableColumns({
         }
       }
     },
-    [navigate, selectedSection, isSimulation, jobId, activeIterationIndex, actionRef],
+    [
+      navigate,
+      selectedSection,
+      isSimulation,
+      jobId,
+      activeIterationIndex,
+      actionRef,
+      setEditableRiskFactor,
+    ],
   );
 
   const { onActionsMenuClick } = useOnMenuClick(
@@ -229,7 +242,9 @@ export function useTableColumns({
                         icon={<EditLineIcon />}
                         size="MEDIUM"
                         type="SECONDARY"
-                        onClick={() => handleEditRiskFactor(entity)}
+                        onClick={() => {
+                          handleEditRiskFactor(entity);
+                        }}
                         testName="risk-factor-edit-button"
                         isDisabled={!isEditEnabled || riskScoringRerun.data.isAnyJobRunning}
                       >

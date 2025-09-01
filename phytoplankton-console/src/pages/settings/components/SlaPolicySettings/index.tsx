@@ -318,7 +318,7 @@ export function SlaPolicySettings() {
                   isReadOnly ? undefined : (
                     <Button
                       type="PRIMARY"
-                      onClick={handleOpenForm}
+                      onClick={() => handleOpenForm(undefined)}
                       requiredResources={['write:::settings/case-management/*']}
                     >
                       <PlusOutlined />

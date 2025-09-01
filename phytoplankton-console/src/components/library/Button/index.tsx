@@ -15,11 +15,10 @@ export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
-export interface CommonButtonProps {
+export interface CommonButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
   type?: ButtonType;
   icon?: React.ReactNode;
   size?: ButtonSize;
-  onClick?: () => void;
   analyticsName?: string;
   children?: React.ReactNode;
   isDisabled?: boolean;
@@ -64,9 +63,9 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
     analyticsName,
   } = props;
 
-  const handleClick = () => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (onClick) {
-      onClick?.();
+      onClick(event);
     }
   };
 
@@ -95,7 +94,7 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
 
   const buttonDisabled = isDisabled || isLoading;
 
-  const sharedProps = {
+  const baseProps = {
     style: style,
     className: cn(
       s.root,
@@ -106,12 +105,25 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
       className,
       isLoading && CY_LOADING_FLAG_CLASS,
     ),
-    onClick: handleClick,
     disabled: buttonDisabled,
     type: htmlType,
     'data-cy': testName,
     'data-attr': analyticsName,
     'data-sentry-allow': true,
+  };
+
+  const buttonProps = {
+    ...baseProps,
+    onClick: handleClick,
+  };
+
+  const linkProps = {
+    ...baseProps,
+    onClick: (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (onClick) {
+        onClick(event as any);
+      }
+    },
   };
 
   const newChildren = (
@@ -124,14 +136,14 @@ const BaseButton = React.forwardRef<ButtonRef, Props>((props: Props, ref) => {
 
   if ('asLink' in props && props.asLink === true) {
     return (
-      <Link ref={linkRef} to={props.to} {...sharedProps} {...props.htmlAttrs}>
+      <Link ref={linkRef} to={props.to} {...linkProps} {...props.htmlAttrs}>
         {newChildren}
       </Link>
     );
   }
 
   return (
-    <button ref={buttonRef} {...sharedProps} {...props.htmlAttrs}>
+    <button ref={buttonRef} {...buttonProps} {...props.htmlAttrs}>
       {newChildren}
     </button>
   );

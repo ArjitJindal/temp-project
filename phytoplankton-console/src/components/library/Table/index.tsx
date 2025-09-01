@@ -217,6 +217,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
           table.getRow(id).toggleExpanded(true);
         }
       },
+      isRowExpanded: (id: string) => {
+        return table.getRow(id)?.getIsExpanded() ?? false;
+      },
     }),
     [handleReload, table],
   );

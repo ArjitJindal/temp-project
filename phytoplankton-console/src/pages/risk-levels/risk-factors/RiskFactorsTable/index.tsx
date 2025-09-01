@@ -53,6 +53,7 @@ export default function RiskFactorsTable(props: Props) {
   const [selectedSection, setSelectedSection] = useState<ScopeSelectorValue>(
     type as ScopeSelectorValue,
   );
+  const [editableRiskFactor, setEditableRiskFactor] = useState<RiskFactor | null>(null);
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
 
   const riskFactorsColumns = useTableColumns({
@@ -62,6 +63,7 @@ export default function RiskFactorsTable(props: Props) {
     selectedSection,
     mode,
     handleSimulationSave: handleSimulationSave || (() => {}),
+    setEditableRiskFactor,
   });
 
   const queryResults: QueryResult<{ items: RiskFactor[] }> = useMemo(() => {
@@ -186,6 +188,8 @@ export default function RiskFactorsTable(props: Props) {
             canEditRiskFactors={canEditRiskFactors}
             mode={mode}
             jobId={jobId}
+            isEditable={editableRiskFactor?.id === row.id}
+            setEditableRiskFactor={setEditableRiskFactor}
             activeIterationIndex={activeIterationIndex}
           />
         )}
