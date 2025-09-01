@@ -1864,7 +1864,9 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     // Create performance dashboards
-    createTransactionFunctionPerformanceDashboard(this)
+    if (!isQaEnv()) {
+      createTransactionFunctionPerformanceDashboard(this)
+    }
   }
 
   private createDynamodbTable(
