@@ -60,6 +60,9 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
   USERS_COUNT_METRIC_NAME: 'UsersCount',
   USER_EVENTS_COUNT_METRIC_NAME: 'UserEventsCount',
   ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME: 'ActiveRuleInstancesCount',
+  CONSUMER_RISK_FACTOR_COUNT_METRIC_NAME: 'ConsumerRiskFactorCount',
+  BUSINESS_RISK_FACTOR_COUNT_METRIC_NAME: 'BusinessRiskFactorCount',
+  TRANSACTION_RISK_FACTOR_COUNT_METRIC_NAME: 'TransactionRiskFactorCount',
   SANCTIONS_SEARCHES_COUNT_METRIC_NAME: 'SanctionsSearchesCount',
   COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC_NAME:
     'ComplyAdvantageSanctionsSearchesCount',
@@ -71,6 +74,11 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
   USERS_SCREENING_COUNT_METRIC_NAME: 'UsersScreeningCount',
   TRANSACTIONS_SCREENING_COUNT_METRIC_NAME: 'TransactionsScreeningCount',
   TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
+  ALERTS_OPEN_COUNT_METRIC_NAME: 'AlertsOpenCount',
+  ALERTS_CLOSED_COUNT_METRIC_NAME: 'AlertsClosedCount',
+  REPORTS_COUNT_METRIC_NAME: 'ReportsCount',
+  SLA_POLICY_COUNT_METRIC_NAME: 'SlaPolicyCount',
+  SCREENING_COUNT_METRIC_NAME: 'ScreeningCount',
 }
 
 export const TRANSACTIONS_COUNT_METRIC: Metric = {
@@ -149,6 +157,54 @@ export const ACTIVE_RULE_INSTANCES_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
   name: CUSTOM_API_USAGE_METRIC_NAMES.ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME,
   kind: 'GAUGE',
+}
+
+export const CONSUMER_RISK_FACTOR_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.CONSUMER_RISK_FACTOR_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const BUSINESS_RISK_FACTOR_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.BUSINESS_RISK_FACTOR_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const TRANSACTION_RISK_FACTOR_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.TRANSACTION_RISK_FACTOR_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const ALERTS_OPEN_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.ALERTS_OPEN_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const ALERTS_CLOSED_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.ALERTS_CLOSED_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const REPORTS_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.REPORTS_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const SLA_POLICY_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.SLA_POLICY_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const SCREENING_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.SCREENING_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
 }
 
 export const publishMetrics = async (metrics: Array<MetricsData>) => {

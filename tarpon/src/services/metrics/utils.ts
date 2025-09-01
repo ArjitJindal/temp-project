@@ -35,11 +35,11 @@ export type ApiUsageMetrics = {
 
 export async function getDailyUsage(
   tenantId: string,
-  collection: { mongo: string; clickHouse: string },
+  collection: { mongo: string; clickHouse?: string },
   createAtFieldName: string,
   timeRange: { startTimestamp: number; endTimestamp: number }
 ): Promise<DailyStats> {
-  if (isClickhouseMigrationEnabled()) {
+  if (isClickhouseMigrationEnabled() && collection.clickHouse) {
     return getDailyUsageFromClickhouse(
       tenantId,
       collection.clickHouse,

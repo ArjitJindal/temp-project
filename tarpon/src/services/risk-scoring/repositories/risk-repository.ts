@@ -82,6 +82,8 @@ import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 
+export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
+
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
 >({
@@ -1325,6 +1327,56 @@ export class RiskRepository {
       ]('RiskFactor' as any)
       return `RF-${count.toString().padStart(3, '0')}`
     }
+  }
+
+  async getDailyRiskFactorCount(timeRange: {
+    startTimestamp: number
+    endTimestamp: number
+  }): Promise<DailyStats> {
+    const keyConditionExpr = 'PartitionKeyID = :pk'
+    const expressionAttributeVals: Record<string, any> = {
+      ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
+      ':startTime': timeRange.startTimestamp,
+      ':endTime': timeRange.endTimestamp,
+    }
+
+    const expressionAttributeNames: Record<string, string> = {
+      '#createdAt': 'createdAt',
+    }
+
+    const filterExpression = '#createdAt BETWEEN :startTime AND :endTime'
+
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: keyConditionExpr,
+      ExpressionAttributeValues: expressionAttributeVals,
+      ExpressionAttributeNames: expressionAttributeNames,
+      FilterExpression: filterExpression,
+    }
+
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+
+    const dailyStats: DailyStats = {}
+
+    if (result.Items?.length) {
+      result.Items.forEach((item) => {
+        const createdAt = item.createdAt as number
+        const type = item.type as RiskEntityType
+        const dayLabel = new Date(createdAt).toISOString().split('T')[0] // YYYY-MM-DD
+
+        if (!dailyStats[dayLabel]) {
+          dailyStats[dayLabel] = {
+            CONSUMER_USER: 0,
+            BUSINESS: 0,
+            TRANSACTION: 0,
+          }
+        }
+
+        dailyStats[dayLabel][type]++
+      })
+    }
+
+    return dailyStats
   }
 }
 

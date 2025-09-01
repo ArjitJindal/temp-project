@@ -22,6 +22,7 @@ import {
 } from 'lodash'
 import { PostHog } from 'posthog-node'
 import { SanctionsDataProviders } from '../sanctions/types'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import {
   DailyMetricStats,
   DailyStats,
@@ -33,8 +34,11 @@ import {
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
 import {
+  CASES_COLLECTION,
   METRICS_COLLECTION,
+  REPORT_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
+  SLA_POLICIES_COLLECTION,
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
@@ -58,11 +62,19 @@ import {
   SANCTIONS_SEARCHES_COUNT_METRIC,
   USERS_SCREENING_COUNT_METRIC,
   TRANSACTIONS_SCREENING_COUNT_METRIC,
+  CONSUMER_RISK_FACTOR_COUNT_METRIC,
+  TRANSACTION_RISK_FACTOR_COUNT_METRIC,
+  BUSINESS_RISK_FACTOR_COUNT_METRIC,
+  ALERTS_CLOSED_COUNT_METRIC,
+  ALERTS_OPEN_COUNT_METRIC,
+  REPORTS_COUNT_METRIC,
+  SLA_POLICY_COUNT_METRIC,
+  SCREENING_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   DAY_DATE_FORMAT,
   MONTH_DATE_FORMAT_JS,
@@ -172,6 +184,45 @@ export class ApiUsageMetricsService {
     ])
     const activeRuleInstanceCounts =
       await this.getDailyActiveRuleInstancesCount(tenantInfo, timeRange)
+    const activeRiskFactorCounts = await this.getDailyActiveRiskFactorsCount(
+      tenantInfo,
+      timeRange
+    )
+    const alertsOpenCounts = await this.getAlertsCount(
+      tenantInfo,
+      'OPEN',
+      timeRange
+    )
+    const alertsClosedCounts = await this.getAlertsCount(
+      tenantInfo,
+      'CLOSED',
+      timeRange
+    )
+    const reportsCounts = await getDailyUsage(
+      tenantInfo.id,
+      {
+        mongo: REPORT_COLLECTION(tenantInfo.id),
+        clickHouse: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
+      },
+      'createdAt',
+      timeRange
+    )
+    const slaPolicyCounts = await getDailyUsage(
+      tenantInfo.id,
+      {
+        mongo: SLA_POLICIES_COLLECTION(tenantInfo.id),
+      },
+      'createdAt',
+      timeRange
+    )
+    const screeningCounts = await getDailyUsage(
+      tenantInfo.id,
+      {
+        mongo: SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id),
+      },
+      'createdAt',
+      timeRange
+    )
     const tenantSeatCounts = await this.getDailyNumberOfSeats(
       tenantInfo,
       timeRange
@@ -239,6 +290,24 @@ export class ApiUsageMetricsService {
           value: v,
         },
       ]),
+      mapValues(activeRiskFactorCounts, (v) => [
+        {
+          metric: CONSUMER_RISK_FACTOR_COUNT_METRIC,
+          value: v['CONSUMER_USER'],
+        },
+      ]),
+      mapValues(activeRiskFactorCounts, (v) => [
+        {
+          metric: BUSINESS_RISK_FACTOR_COUNT_METRIC,
+          value: v['BUSINESS'],
+        },
+      ]),
+      mapValues(activeRiskFactorCounts, (v) => [
+        {
+          metric: TRANSACTION_RISK_FACTOR_COUNT_METRIC,
+          value: v['TRANSACTION'],
+        },
+      ]),
       mapValues(userSanctionsChecksCounts, (v) => [
         {
           metric: USERS_SCREENING_COUNT_METRIC,
@@ -254,6 +323,36 @@ export class ApiUsageMetricsService {
       mapValues(tenantSeatCounts, (v) => [
         {
           metric: TENANT_SEATS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(alertsOpenCounts, (v) => [
+        {
+          metric: ALERTS_OPEN_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(alertsClosedCounts, (v) => [
+        {
+          metric: ALERTS_CLOSED_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(reportsCounts, (v) => [
+        {
+          metric: REPORTS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(slaPolicyCounts, (v) => [
+        {
+          metric: SLA_POLICY_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(screeningCounts, (v) => [
+        {
+          metric: SCREENING_COUNT_METRIC,
           value: v,
         },
       ]),
@@ -439,6 +538,59 @@ export class ApiUsageMetricsService {
       ...dailyValues,
       [dayjs().format(DAY_DATE_FORMAT_JS)]: allInstances.length,
     }
+  }
+
+  public async getDailyActiveRiskFactorsCount(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange
+  ) {
+    const riskRepository = new RiskRepository(tenantInfo.id, {
+      dynamoDb: this.connections.dynamoDb,
+    })
+    const dailyStats = await riskRepository.getDailyRiskFactorCount(timeRange)
+    return dailyStats
+  }
+
+  public async getAlertsCount(
+    tenantInfo: TenantBasic,
+    alertStatus: 'CLOSED' | 'OPEN',
+    timeRange: TimeRange
+  ): Promise<DailyStats> {
+    const db = (await getMongoDbClient()).db()
+    const collection = db.collection(CASES_COLLECTION(tenantInfo.id))
+    const pipeline = [
+      {
+        $unwind: '$alerts',
+      },
+      {
+        $match: {
+          'alerts.alertStatus': alertStatus,
+          'alerts.createdTimestamp': {
+            $gte: timeRange.startTimestamp,
+            $lte: timeRange.endTimestamp,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: DAY_DATE_FORMAT,
+              date: {
+                $toDate: {
+                  $toLong: '$alerts.createdTimestamp',
+                },
+              },
+            },
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ]
+    const result = await collection.aggregate(pipeline).toArray()
+    return Object.fromEntries(result.map((item) => [item._id, item.count]))
   }
 
   private async getDailyNumberOfSeats(

@@ -25,6 +25,10 @@ export const getApiUsageMetricsService = async (tenantId: string) => {
     CLICKHOUSE_DEFINITIONS.METRICS.tableName,
     tenantId
   )
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
+    tenantId
+  )
   return new ApiUsageMetricsService({
     mongoDb: await getMongoDbClient(),
     dynamoDb: getDynamoDbClient(),
