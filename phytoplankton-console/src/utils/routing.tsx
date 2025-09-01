@@ -124,7 +124,13 @@ export function useNavigationParams<Params>(options: {
       if (savedDataItem != null) {
         try {
           const rawParams = JSON.parse(savedDataItem);
-          const parsedParams = queryAdapter.deserializer(rawParams);
+          const filteredParams = {};
+          Object.keys(rawParams).forEach((key) => {
+            if (rawParams[key]) {
+              filteredParams[key] = rawParams[key];
+            }
+          });
+          const parsedParams = queryAdapter.deserializer(filteredParams);
           return persist?.adjustParsed ? persist.adjustParsed(parsedParams) : parsedParams;
         } catch (e) {
           console.warn(
