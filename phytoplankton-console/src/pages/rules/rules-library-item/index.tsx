@@ -48,7 +48,7 @@ export default function RulesLibraryItemPage() {
             {
               title:
                 ruleId === 'create'
-                  ? 'Create new rule'
+                  ? 'Create scenario'
                   : isSimulationEnabled
                   ? 'Simulate'
                   : 'Configure',
