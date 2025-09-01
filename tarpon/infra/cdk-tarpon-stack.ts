@@ -2171,10 +2171,14 @@ export class CdkTarponStack extends cdk.Stack {
       vpcSubnets?: cdk.aws_ec2.SubnetSelection[]
     } = {}
     if (vpc && (envIs('sandbox') || envIs('prod'))) {
-      const endpointSecurityGroup = new SecurityGroup(this, 'AossEndpointSG', {
-        vpc,
-        description: 'Security group for OpenSearch Serverless VPC endpoint',
-      })
+      const endpointSecurityGroup = new SecurityGroup(
+        this,
+        'OpenSearchEndpointSG',
+        {
+          vpc,
+          description: 'Security group for OpenSearch Serverless VPC endpoint',
+        }
+      )
 
       endpointSecurityGroup.addIngressRule(
         Peer.ipv4('10.0.0.0/21'),
