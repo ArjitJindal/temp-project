@@ -373,21 +373,30 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 data-cy="rule-preview-button"
               />
               {canWriteRules && (
-                <EditOutlined
-                  className={s.actionIcons}
-                  onClick={() => {
-                    if (canWriteRules && !deleting && entity.status !== 'DEPLOYING') {
-                      onEditRule(entity);
-                    }
-                  }}
-                  data-cy="rule-edit-button"
-                  style={{
-                    cursor:
-                      !canWriteRules || deleting || entity.status === 'DEPLOYING'
-                        ? 'not-allowed'
-                        : 'pointer',
-                  }}
-                />
+                <Tooltip
+                  title={
+                    entity.status === 'DEPLOYING'
+                      ? 'Editing will be available once the rule is deployed'
+                      : undefined
+                  }
+                  placement="top"
+                >
+                  <EditOutlined
+                    className={s.actionIcons}
+                    onClick={() => {
+                      if (canWriteRules && !deleting && entity.status !== 'DEPLOYING') {
+                        onEditRule(entity);
+                      }
+                    }}
+                    data-cy="rule-edit-button"
+                    style={{
+                      cursor:
+                        !canWriteRules || deleting || entity.status === 'DEPLOYING'
+                          ? 'not-allowed'
+                          : 'pointer',
+                    }}
+                  />
+                </Tooltip>
               )}
               {canWriteRules && (
                 <RuleActionsMenu
