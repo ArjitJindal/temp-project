@@ -679,6 +679,7 @@ function useTabs(
                     resourceId={entity.resourceId}
                     evidenceId={source.evidenceId}
                     entityType={entity.entityType}
+                    sanctionsSourceFields={source.fields}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
@@ -713,18 +714,20 @@ function useTabs(
                       </div>
                     ) : (
                       <div className={s.fieldGrid}>
-                        {source.fields?.map((field) => (
-                          <React.Fragment key={field.name}>
-                            <Form.Layout.Label title={field.name ?? '(Unknown field)'} />
-                            <div>
-                              {field.values?.map((value) => (
-                                <div key={value}>
-                                  <FieldValue name={field.name || ''} value={value} />
-                                </div>
-                              ))}
-                            </div>
-                          </React.Fragment>
-                        ))}
+                        {source.fields
+                          ?.filter((field) => field.name !== 'Asset url')
+                          .map((field) => (
+                            <React.Fragment key={field.name}>
+                              <Form.Layout.Label title={field.name ?? '(Unknown field)'} />
+                              <div>
+                                {field.values?.map((value) => (
+                                  <div key={value}>
+                                    <FieldValue name={field.name || ''} value={value} />
+                                  </div>
+                                ))}
+                              </div>
+                            </React.Fragment>
+                          ))}
                       </div>
                     )}
                   </ListingCard>

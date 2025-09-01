@@ -6,7 +6,7 @@ import { Small } from '@/components/ui/Typography';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
-import { CountryCode, SanctionsEntityType } from '@/apis';
+import { CountryCode, SanctionsEntityType, SanctionsSourceFields } from '@/apis';
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 import DownloadIcon from '@/components/ui/icons/Remix/system/download-2-line.react.svg';
 import { downloadLink } from '@/utils/download-link';
@@ -23,12 +23,14 @@ interface Props {
   hasUpdates: boolean;
   pdfMode?: boolean;
   description?: string;
+  sanctionsSourceFields?: SanctionsSourceFields[];
 }
 
 interface DownloadSourceProps {
   resourceId?: string;
   evidenceId?: string;
   entityType?: SanctionsEntityType;
+  sanctionsSourceFields?: SanctionsSourceFields[];
 }
 
 export default function ListingCard(props: Props & DownloadSourceProps) {
@@ -44,6 +46,7 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
     resourceId,
     evidenceId,
     entityType,
+    sanctionsSourceFields,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = compact(listedTime);
@@ -68,11 +71,12 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
           )}
           <div className={s.titleText}>
             {title}
-            {!pdfMode ? (
+            {!pdfMode && typeof title !== 'string' ? (
               <DownloadButton
                 resourceId={resourceId}
                 evidenceId={evidenceId}
                 entityType={entityType}
+                sanctionsSourceFields={sanctionsSourceFields}
               />
             ) : (
               <></>
@@ -95,13 +99,14 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
 }
 
 const DownloadButton = (props: DownloadSourceProps) => {
-  const { resourceId, evidenceId, entityType } = props;
+  const { resourceId, evidenceId, entityType, sanctionsSourceFields } = props;
   const [loading, setLoading] = useState(false);
   const api = useApi();
   const handleDownload = async (
     evidenceId?: string,
     resourceId?: string,
     entityType?: SanctionsEntityType,
+    sanctionsSourceFields?: SanctionsSourceFields[],
   ) => {
     if (!resourceId || !evidenceId || !entityType) {
       return;
@@ -117,9 +122,15 @@ const DownloadButton = (props: DownloadSourceProps) => {
       message.success('File downloaded successfully');
       downloadLink(response.url, `${evidenceId}.pdf`, true);
     } catch (error) {
-      if (error instanceof Error && error.message?.includes('404')) {
-        message.error('Source is not copyrighted and can be directly accessed from console.');
-      } else {
+      try {
+        const assetField = sanctionsSourceFields?.find((field) => field.name === 'Asset url');
+        const url = assetField?.values?.find((value) => value.startsWith('http'));
+        if (url) {
+          downloadLink(url, `${evidenceId}.pdf`, true);
+        } else {
+          message.error('Source is not copyrighted and can be directly accessed from Console.');
+        }
+      } catch (error) {
         message.error('Failed to download file');
       }
     } finally {
@@ -131,7 +142,7 @@ const DownloadButton = (props: DownloadSourceProps) => {
       {!loading ? (
         <DownloadIcon
           className={s.icon}
-          onClick={() => handleDownload(evidenceId, resourceId, entityType)}
+          onClick={() => handleDownload(evidenceId, resourceId, entityType, sanctionsSourceFields)}
         />
       ) : (
         <LoadingIcon className={s.icon} />
