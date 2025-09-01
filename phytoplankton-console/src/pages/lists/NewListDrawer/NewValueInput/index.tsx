@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'ahooks';
 import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import Select, { Option } from '@/components/library/Select';
 import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField } from '@/apis';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
 import { useApi } from '@/api';
@@ -50,6 +50,7 @@ export default function NewValueInput(props: Props) {
 }
 
 function UserIdInput(props: Omit<Props, 'listSubtype'>) {
+  const settings = useSettings();
   const { onChange, onChangeMeta, params, handleChangeParams } = props;
   const [newUserData, setNewUserData] = useState<{
     userId: string | null;
@@ -83,7 +84,9 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
       params={params}
       handleChangeParams={handleChangeParams}
     >
-      <Button style={{ width: '100%' }}>{newUserData.userFullName || 'Choose user'}</Button>
+      <Button style={{ width: '100%' }}>
+        {newUserData.userFullName || `Choose ${settings.userAlias}`}
+      </Button>
     </UserSearchPopup>
   );
 }
