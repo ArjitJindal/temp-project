@@ -741,20 +741,23 @@ export const TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+// rule-parameter-schemas.ts
 export const KEY_VALUE_PAIR_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
+    additionalProperties: {
+      tags: {
+        type: 'array',
+        items: {
+          type: 'string',
+        },
+      },
+    },
     ...uiSchema(options?.uiSchema, {
-      subtype: 'TRANSACTION_KEY_VALUE',
+      subtype: 'KEY_VALUE_PAIR',
     }),
     title: options?.title || 'Transaction key value',
     description: options?.description,
-    additionalProperties: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
     required: [],
   } as const)
 

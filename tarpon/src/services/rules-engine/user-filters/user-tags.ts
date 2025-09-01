@@ -24,7 +24,7 @@ export class UserTagsRuleFilter extends UserRuleFilter<UserTagsRuleFilterParamet
           },
         }),
       },
-    }
+    } as any
   }
 
   public async predicate(): Promise<boolean> {

@@ -213,10 +213,7 @@ function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {
     filters.map((filter) => {
       const { properties } = filter.getSchema() as JSONSchemaType<unknown>
       const keys = Object.keys(properties)
-      if (Object.keys(properties).length !== 1) {
-        throw new Error('Rule filter can only have one key')
-      }
-      return [keys[0], filter]
+      return [keys, filter]
     })
   )
 }

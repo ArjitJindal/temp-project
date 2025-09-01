@@ -27,6 +27,7 @@ import { NumberRangeInput } from './custom/NumberRangeInput';
 import { GenericSanctionScreeningTypes } from './custom/GenericSanctionScreeningTypes';
 import { FuzzinessSettingsInput } from './custom/FuzzinessSettings';
 import FreeTextEnumInput from './custom/FreeTextEnum';
+import KeyValuePairInput from './custom/keyValuePair';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -131,6 +132,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'FREE_TEXT_ENUM') {
     return <FreeTextEnumInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'KEY_VALUE_PAIR') {
+    return <KeyValuePairInput {...props} schema={schema} />;
   }
 
   if (uiSchema['ui:subtype'] === 'TRANSACTION_TYPES') {

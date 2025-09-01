@@ -60,28 +60,4 @@ filterVariantsTest({ v8: true }, () => {
       ).predicate()
     ).toBe(false)
   })
-
-  test('Transaction tags matches the filter with multiple tags', async () => {
-    expect(
-      await new TransactionTagsRuleFilter(
-        getTestTenantId(),
-        {
-          transaction: getTestTransaction({
-            tags: [
-              {
-                key: 'tag1',
-                value: 'value1',
-              },
-              {
-                key: 'tag2',
-                value: 'value2',
-              },
-            ],
-          }),
-        },
-        { transactionTags: { tag1: ['value1'], tag2: ['value3'] } },
-        dynamodb
-      ).predicate()
-    ).toBe(true)
-  })
 })

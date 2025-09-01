@@ -84,6 +84,10 @@ export interface UiSchemaFreeTextEnum extends UiSchemaCommon {
   'ui:subtype': 'FREE_TEXT_ENUM';
 }
 
+export interface UiSchemaKeyValuePair extends UiSchemaCommon {
+  'ui:subtype': 'KEY_VALUE_PAIR';
+}
+
 export interface UiSchemaCurrency extends UiSchemaCommon {
   'ui:subtype': 'CURRENCY';
 }
@@ -193,6 +197,7 @@ export type UiSchema =
   | UiSchemaGenericSanctionsScreeningTypes
   | UiSchemaFuzzinessSettings
   | UiSchemaFreeTextEnum
+  | UiSchemaKeyValuePair
   | UiSchemaTransactionType
   | UiSchemaTransactionTypes
   | UiSchemaScreeningProfileId;

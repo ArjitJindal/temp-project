@@ -16,7 +16,8 @@ import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
-  filterTag: { [key: string]: string[] } | undefined
+  filterTag: { [key: string]: string[] } | undefined,
+  useAndLogic?: boolean
 ): boolean => {
   if (isEmpty(filterTag) || !filterTag) {
     return true
@@ -26,19 +27,29 @@ export const tagsRuleFilter = (
     return false
   }
 
-  let isTagMatched = false
+  if (useAndLogic) {
+    // For AND logic, every key in filterTag must be present in incomingTags with at least one matching value
+    return Object.entries(filterTag).every(([key, values]) =>
+      incomingTags.some(
+        (incomingTag) =>
+          incomingTag.key === key && values.includes(incomingTag.value)
+      )
+    )
+  } else {
+    // OR logic (default): at least one tag matches
+    let isTagMatched = false
+    incomingTags.forEach((incomingTag) => {
+      if (!filterTag[incomingTag.key]) {
+        return
+      }
 
-  incomingTags.forEach((incomingTag) => {
-    if (!filterTag[incomingTag.key]) {
-      return
-    }
+      if (filterTag[incomingTag.key].includes(incomingTag.value)) {
+        isTagMatched = true
+      }
+    })
 
-    if (filterTag[incomingTag.key].includes(incomingTag.value)) {
-      isTagMatched = true
-    }
-  })
-
-  return isTagMatched
+    return isTagMatched
+  }
 }
 
 export function mergeRules<T extends { ruleInstanceId: string }>(
