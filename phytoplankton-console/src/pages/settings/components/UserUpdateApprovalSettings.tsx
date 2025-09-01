@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import Select from '@/components/library/Select';
@@ -20,17 +20,13 @@ import {
 import { formatRoleName } from '@/pages/accounts/utils';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { SETTINGS, WORKFLOWS_ITEMS, WORKFLOWS_ITEMS_ALL } from '@/utils/queries/keys';
 import {
-  all,
-  AsyncResource,
-  getOr,
-  isLoading,
-  loading,
-  map,
-  success,
-  useFinishedSuccessfully,
-} from '@/utils/asyncResource';
+  SETTINGS,
+  USER_CHANGES_PROPOSALS,
+  WORKFLOWS_ITEMS,
+  WORKFLOWS_ITEMS_ALL,
+} from '@/utils/queries/keys';
+import { all, AsyncResource, getOr, isLoading, loading, map, success } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -38,6 +34,7 @@ import { InputProps } from '@/components/library/Form';
 import Alert from '@/components/library/Alert';
 import ArrowRightLineIcon from '@/components/ui/icons/Remix/system/arrow-right-line.react.svg';
 import { notEmpty } from '@/utils/array';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 const MAX_ROLES_LIMIT = 3;
 
@@ -75,48 +72,79 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     PepStatus: [],
   });
 
-  const [previousState, setPreviousState] = useState<Values>(state);
+  const [originalState, setOriginalState] = useState<Values>(state);
 
   // Fetch current workflows configuration
   const currentApprovalSettingsRes = useUserApprovalSettings();
-
-  const isSettingsLoaded = useFinishedSuccessfully(currentApprovalSettingsRes);
-  useEffect(() => {
+  useDeepEqualEffect(() => {
     const data = getOr(currentApprovalSettingsRes, null);
-    if (isSettingsLoaded && data) {
-      const updater = (prev) => {
-        const result = {};
-        for (const [key, roles] of Object.entries(data)) {
-          result[key] = roles?.approvalChain ?? prev[key];
-        }
-        return result;
+    if (data) {
+      const newState: Values = {
+        Cra: data.Cra?.approvalChain ?? [],
+        CraLock: data.CraLock?.approvalChain ?? [],
+        eoddDate: data.eoddDate?.approvalChain ?? [],
+        PepStatus: data.PepStatus?.approvalChain ?? [],
       };
-      setState(updater);
-      setPreviousState(updater);
+      setState(newState);
+      setOriginalState(newState);
     }
-  }, [currentApprovalSettingsRes, isSettingsLoaded]);
+  }, [currentApprovalSettingsRes]);
 
   const mutateTenantSettings = useUpdateTenantSettings();
 
-  // Update workflow mutation
+  // Check which fields have changed
+  const changedFields = useMemo(() => {
+    const changes: Array<keyof WorkflowSettingsUserApprovalWorkflows> = [];
+    for (const field of Object.keys(state) as Array<keyof WorkflowSettingsUserApprovalWorkflows>) {
+      const current = state[field];
+      const original = originalState[field];
+
+      // Ensure both arrays exist and are arrays
+      if (!Array.isArray(current) || !Array.isArray(original)) {
+        continue;
+      }
+
+      // Check if arrays have different lengths
+      if (current.length !== original.length) {
+        changes.push(field);
+        continue;
+      }
+
+      // Check if any roles have changed (deep comparison)
+      const hasChanges = current.some((role, index) => role !== original[index]);
+      if (hasChanges) {
+        changes.push(field);
+      }
+    }
+    return changes;
+  }, [state, originalState]);
+
+  // Check if there are any changes to save
+  const hasChanges = changedFields.length > 0;
+
+  // Update workflow mutation - now only updates changed fields
   const updateWorkflowMutation = useMutation(
     async () => {
       const closeMessage = message.loading('Applying changes...');
       try {
-        for (const [field, roles] of Object.entries(state)) {
-          if (roles.length > 0) {
+        // Only update workflows for fields that have changed
+        for (const field of changedFields) {
+          const roles = state[field];
+          const workflowId = WORKFLOW_IDS[field as keyof WorkflowSettingsUserApprovalWorkflows];
+
+          if (roles && roles.length > 0 && workflowId) {
             const payload: CreateWorkflowType = {
               userUpdateApprovalWorkflow: {
                 name: `User Update Approval - Reviewer Workflow - "${field}" field`,
                 description:
                   'Single-step user approval workflow where a reviewer role can approve or reject user change proposals',
                 enabled: true,
-                approvalChain: roles,
+                approvalChain: roles as string[],
               },
             };
             await api.postWorkflowVersion({
               workflowType: 'user-update-approval',
-              workflowId: WORKFLOW_IDS[field],
+              workflowId: workflowId,
               CreateWorkflowType: payload,
             });
           }
@@ -141,6 +169,10 @@ export const UserUpdateApprovalSettings: React.FC = () => {
       onSuccess: async () => {
         message.success('User approval roles updated successfully');
         await queryClient.invalidateQueries(WORKFLOWS_ITEMS_ALL('user-update-approval'));
+        // Update original state after successful save
+        setOriginalState(state);
+        // Invalidate proposal since we change proposal when change role
+        await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
       },
       onError: (error) => {
         message.error('Failed to update approval roles', {
@@ -190,16 +222,30 @@ export const UserUpdateApprovalSettings: React.FC = () => {
                     columnHelper.display({
                       title: 'Roles',
                       render: (item) => {
+                        const isFieldChanged = changedFields.includes(item.field);
                         return (
-                          <RoleList
-                            value={state[item.field]}
-                            onChange={(newValue) => {
-                              setState((prev) => ({
-                                ...prev,
-                                [item.field]: newValue ?? [],
-                              }));
-                            }}
-                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <RoleList
+                              value={state[item.field]}
+                              onChange={(newValue) => {
+                                setState((prev) => ({
+                                  ...prev,
+                                  [item.field]: newValue ?? [],
+                                }));
+                              }}
+                            />
+                            {isFieldChanged && (
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  fontStyle: 'italic',
+                                }}
+                              >
+                                Modified
+                              </div>
+                            )}
+                          </div>
                         );
                       },
                     }),
@@ -211,7 +257,7 @@ export const UserUpdateApprovalSettings: React.FC = () => {
             <div style={{ display: 'flex', gap: '12px' }}>
               <Button
                 type="PRIMARY"
-                isDisabled={validationError != null}
+                isDisabled={validationError != null || !hasChanges}
                 isLoading={isLoading(updateWorkflowMutation.dataResource)}
                 onClick={() => {
                   updateWorkflowMutation.mutate();
@@ -221,9 +267,10 @@ export const UserUpdateApprovalSettings: React.FC = () => {
               </Button>
               <Button
                 type="SECONDARY"
+                isDisabled={!hasChanges}
                 isLoading={isLoading(updateWorkflowMutation.dataResource)}
                 onClick={() => {
-                  setState(previousState);
+                  setState(originalState);
                 }}
               >
                 Cancel

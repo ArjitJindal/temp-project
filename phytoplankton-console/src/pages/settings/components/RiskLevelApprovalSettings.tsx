@@ -12,7 +12,7 @@ import { ApiException, RiskLevelApprovalWorkflow } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { WORKFLOWS_ITEM } from '@/utils/queries/keys';
+import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL, WORKFLOWS_ITEM } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
@@ -90,6 +90,8 @@ export const RiskLevelApprovalSettings: React.FC = () => {
       onSuccess: async () => {
         message.success('Risk level approval role updated successfully');
         await queryClient.invalidateQueries(WORKFLOWS_ITEM('risk-levels-approval', '_default'));
+        // Invalidate proposal since we change proposal when change role
+        await queryClient.invalidateQueries(RISK_CLASSIFICATION_WORKFLOW_PROPOSAL());
       },
       onError: (error) => {
         message.error('Failed to update risk level approval role', {

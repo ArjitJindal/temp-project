@@ -1058,6 +1058,32 @@ export class RiskService {
   }
 
   /**
+   * Updates all pending risk level approvals to use a new workflow reference and reset approval step to 0
+   * This is called when a risk levels approval workflow is updated
+   */
+  async updatePendingRiskLevelApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    return await this.riskRepository.bulkUpdateRiskLevelApprovalsWorkflow(
+      newWorkflowRef
+    )
+  }
+
+  /**
+   * Updates all pending risk factor approvals to use a new workflow reference and reset approval step to 0
+   * This is called when a risk factors approval workflow is updated
+   */
+  async updatePendingRiskFactorApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    return await this.riskRepository.bulkUpdateRiskFactorApprovalsWorkflow(
+      newWorkflowRef
+    )
+  }
+
+  /**
    * Proposes a change to risk factors (creates a pending approval)
    */
   // This method is used to propose a change to a risk factor

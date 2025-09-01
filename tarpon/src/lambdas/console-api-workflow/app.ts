@@ -130,11 +130,25 @@ export const workflowHandler = lambdaApi()(
 
     handlers.registerPostWorkflowVersion(async (_ctx, request) => {
       const workflow = parseWorkflow(request)
-      return (await workflowService.saveWorkflow(
+      const result = await workflowService.saveWorkflow(
         request.workflowType as WorkflowType,
         request.workflowId,
         workflow
-      )) as any
+      )
+
+      // TODO: when enabling workflow builder and storing a reference to the workflow
+      // in the tenant config, we can remove this call and move it to the tenant conf POST route
+      const updateCount =
+        await workflowService.updatePendingApprovalsForWorkflow(
+          request.workflowType as WorkflowType,
+          { id: result.id, version: result.version }
+        )
+      if (updateCount > 0) {
+        console.log(
+          `Updated ${updateCount} pending approvals after workflow update`
+        )
+      }
+      return result as any
     })
 
     // Get specific version of workflow

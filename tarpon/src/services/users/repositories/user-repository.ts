@@ -21,6 +21,7 @@ import {
   QueryCommandInput,
   UpdateCommand,
   UpdateCommandInput,
+  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
 import {
   get,
@@ -1972,5 +1973,97 @@ export class UserRepository {
 
       return approval as UserApproval
     })
+  }
+
+  /**
+   * Bulk updates all pending user approvals to use a new workflow reference and reset approval step to 0
+   * This is used when a workflow is updated to restart all pending approval flows
+   */
+  // TODO: the logic of this method needs to be updated once implementing
+  //       workflow builder and workflows are referenced by their id in tenant settings
+  async bulkUpdateUserApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    console.log(`Updating user approvals workflow to:`, newWorkflowRef)
+
+    // Use a query with a filter to find items that need updating
+    const result = await this.dynamoDb.send(
+      new QueryCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        FilterExpression:
+          'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+        ExpressionAttributeValues: {
+          ':pk': DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '').PartitionKeyID,
+          ':newWorkflowId': newWorkflowRef.id,
+          ':newWorkflowVersion': newWorkflowRef.version,
+        },
+      })
+    )
+
+    // get the field associated to the workflowRef
+    const userField = newWorkflowRef.id.split('_').pop()
+    console.log(`User field:`, userField)
+
+    // filter the result to only include items where the user field is not null
+    const filteredResult = result.Items?.filter((item) => {
+      const proposedChanges = item.proposedChanges
+      return proposedChanges.some((change) => change.field === userField)
+    })
+
+    if (!filteredResult || !filteredResult.length) {
+      return 0
+    }
+
+    console.log(`Filtered result:`, filteredResult.length)
+
+    console.log(
+      `User approvals query result:`,
+      JSON.stringify(
+        {
+          partitionKey: DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '')
+            .PartitionKeyID,
+          totalItems: filteredResult.length,
+          items: filteredResult.map((item) => ({
+            SortKeyID: item.SortKeyID,
+            workflowRef: item.workflowRef,
+            approvalStep: item.approvalStep,
+            proposedChanges: item.proposedChanges.map((change) => change.field),
+          })),
+        },
+        null,
+        2
+      )
+    )
+
+    // Batch write up to 25 items at a time (DynamoDB limit)
+    const batchSize = 25
+    let updatedCount = 0
+
+    for (let i = 0; i < filteredResult.length; i += batchSize) {
+      const batch = filteredResult.slice(i, i + batchSize)
+
+      const batchWriteInput = {
+        RequestItems: {
+          [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: batch.map(
+            (item) => ({
+              PutRequest: {
+                Item: {
+                  ...item,
+                  workflowRef: newWorkflowRef,
+                  approvalStep: 0,
+                },
+              },
+            })
+          ),
+        },
+      }
+
+      await this.dynamoDb.send(new BatchWriteCommand(batchWriteInput))
+      updatedCount += batch.length
+    }
+
+    return updatedCount
   }
 }

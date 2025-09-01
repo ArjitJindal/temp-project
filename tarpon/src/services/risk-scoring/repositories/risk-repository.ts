@@ -13,6 +13,7 @@ import {
   QueryCommandInput,
   UpdateCommand,
   UpdateCommandInput,
+  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
 
 import { isEmpty, memoize, omit } from 'lodash'
@@ -809,6 +810,115 @@ export class RiskRepository {
       Key: DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId, riskFactorId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+  }
+
+  /**
+   * Bulk updates all pending risk level approvals to use a new workflow reference and reset approval step to 0
+   * This is used when a workflow is updated to restart all pending approval flows
+   */
+  async bulkUpdateRiskLevelApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    // Use a single UpdateItem operation with a condition to update all items
+    // where workflowRef doesn't match the new workflow reference
+    const updateInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: {
+        PartitionKeyID: DynamoDbKeys.RISK_CLASSIFICATION_APPROVAL(this.tenantId)
+          .PartitionKeyID,
+        SortKeyID: 'LATEST', // Update the LATEST version
+      },
+      UpdateExpression:
+        'SET workflowRef = :newWorkflowRef, approvalStep = :newApprovalStep',
+      ConditionExpression:
+        'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+      ExpressionAttributeValues: {
+        ':newWorkflowRef': newWorkflowRef,
+        ':newApprovalStep': 0,
+        ':newWorkflowId': newWorkflowRef.id,
+        ':newWorkflowVersion': newWorkflowRef.version,
+      },
+      ReturnValues: 'ALL_NEW' as const,
+    }
+
+    try {
+      await this.dynamoDb.send(new UpdateCommand(updateInput))
+      return 1 // Updated one item
+    } catch (error: any) {
+      if (error.name === 'ConditionalCheckFailedException') {
+        // No items matched the condition, nothing to update
+        return 0
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Bulk updates all pending risk factor approvals to use a new workflow reference and reset approval step to 0
+   * This is used when a workflow is updated to restart all pending approval flows
+   */
+  async bulkUpdateRiskFactorApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    // First, query to find all risk factor approvals that need updating
+    const queryInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression:
+        'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId).PartitionKeyID,
+        ':newWorkflowId': newWorkflowRef.id,
+        ':newWorkflowVersion': newWorkflowRef.version,
+      },
+    }
+
+    const result = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+    console.log(`Risk factors approval query result:`, {
+      partitionKey: DynamoDbKeys.RISK_FACTORS_APPROVAL(this.tenantId)
+        .PartitionKeyID,
+      totalItems: result.Items?.length || 0,
+      items: result.Items?.map((item) => ({
+        SortKeyID: item.SortKeyID,
+        workflowRef: item.workflowRef,
+        approvalStep: item.approvalStep,
+      })),
+    })
+
+    if (!result.Items?.length) {
+      return 0
+    }
+
+    // Use BatchWriteItem for bulk update (DynamoDB allows up to 25 items per batch)
+    const batchSize = 25
+    let updatedCount = 0
+
+    for (let i = 0; i < result.Items.length; i += batchSize) {
+      const batch = result.Items.slice(i, i + batchSize)
+
+      const batchWriteInput = {
+        RequestItems: {
+          [StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId)]:
+            batch.map((item) => ({
+              PutRequest: {
+                Item: {
+                  ...item,
+                  workflowRef: newWorkflowRef,
+                  approvalStep: 0,
+                },
+              },
+            })),
+        },
+      }
+
+      await this.dynamoDb.send(new BatchWriteCommand(batchWriteInput))
+      updatedCount += batch.length
+    }
+
+    return updatedCount
   }
 
   /* MongoDB operations */

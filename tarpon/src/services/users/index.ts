@@ -2460,6 +2460,137 @@ export class UserService {
     }
   }
 
+  private async applyUserApprovalChanges(
+    userId: string,
+    oldUser: UserWithRulesResult | BusinessWithRulesResult,
+    proposedChanges: any[]
+  ): Promise<void> {
+    // Handle CRA fields through the risk service
+    // Cra = risk level value, CraLock = isUpdatable flag
+    const craChange = proposedChanges.find((change) => change.field === 'Cra')
+    const craLockChange = proposedChanges.find(
+      (change) => change.field === 'CraLock'
+    )
+
+    // Handle CRA level changes (requires account to be unlocked)
+    if (craChange) {
+      const riskService = new RiskService(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+        mongoDb: this.mongoDb,
+      })
+
+      // Check if the account is currently locked
+      const currentRiskAssignment = await riskService.getRiskAssignment(userId)
+      if (currentRiskAssignment?.isUpdatable === false) {
+        throw new createError.BadRequest(
+          'Cannot change CRA level when the account is locked. Please unlock the account first.'
+        )
+      }
+
+      const newRiskLevel = craChange.value as RiskLevel
+      const newIsUpdatable =
+        (craLockChange?.value as boolean) ??
+        currentRiskAssignment?.isUpdatable ??
+        true
+
+      await riskService.createOrUpdateRiskAssignment(
+        userId,
+        newRiskLevel,
+        newIsUpdatable
+      )
+      console.log(
+        `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${newIsUpdatable}`
+      )
+    }
+
+    // Handle CRA lock changes (independent of CRA level)
+    if (craLockChange) {
+      const riskService = new RiskService(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+        mongoDb: this.mongoDb,
+      })
+
+      const newIsUpdatable = craLockChange.value as boolean
+      await riskService.updateRiskAssignmentLock(userId, newIsUpdatable)
+      console.log(
+        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}`
+      )
+    }
+
+    // Handle other fields through the standard updateUser method
+    const otherFields = proposedChanges.filter(
+      (change) => change.field !== 'Cra' && change.field !== 'CraLock'
+    )
+
+    if (otherFields.length > 0) {
+      const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
+
+      for (const change of otherFields) {
+        if (change.field === 'PepStatus') {
+          // Handle PepStatus field specially - it contains multiple sub-fields
+          const pepStatusValue = change.value as any
+          if (pepStatusValue.pepStatus) {
+            ;(updateRequest as any).pepStatus = pepStatusValue.pepStatus
+          }
+          if (pepStatusValue.adverseMediaStatus !== undefined) {
+            ;(updateRequest as any).adverseMediaStatus =
+              pepStatusValue.adverseMediaStatus
+          }
+          if (pepStatusValue.sanctionsStatus !== undefined) {
+            ;(updateRequest as any).sanctionsStatus =
+              pepStatusValue.sanctionsStatus
+          }
+        } else {
+          // Apply other changes directly to the update request
+          ;(updateRequest as any)[change.field] = change.value
+        }
+      }
+
+      // Use the existing updateUser method to apply the changes
+      console.log(
+        `About to call updateUser with:`,
+        JSON.stringify(updateRequest, null, 2)
+      )
+      console.log(
+        `Old user before update:`,
+        JSON.stringify(
+          {
+            pepStatus: (oldUser as any).pepStatus,
+            adverseMediaStatus: (oldUser as any).adverseMediaStatus,
+            sanctionsStatus: (oldUser as any).sanctionsStatus,
+          },
+          null,
+          2
+        )
+      )
+
+      await this.updateUser(oldUser, updateRequest, undefined, {
+        bySystem: true,
+      })
+
+      // Verify the update worked by fetching the user again
+      const updatedUser = await this.userRepository.getUser<
+        UserWithRulesResult | BusinessWithRulesResult
+      >(userId)
+      console.log(
+        `User after update:`,
+        JSON.stringify(
+          {
+            pepStatus: (updatedUser as any)?.pepStatus,
+            adverseMediaStatus: (updatedUser as any)?.adverseMediaStatus,
+            sanctionsStatus: (updatedUser as any)?.sanctionsStatus,
+          },
+          null,
+          2
+        )
+      )
+
+      console.log(
+        `Standard fields updated for user ${userId} through updateUser method`
+      )
+    }
+  }
+
   // Approve or reject a user approval proposal
   @auditLog('USER', 'USER_CHANGE_PROPOSAL', 'UPDATE')
   public async processUserApproval(
@@ -2574,134 +2705,12 @@ export class UserService {
         throw new createError.NotFound('User not found')
       }
 
-      // Handle CRA fields through the risk service
-      // Cra = risk level value, CraLock = isUpdatable flag
-      const craChange = approval.proposedChanges.find(
-        (change) => change.field === 'Cra'
+      // Apply all the proposed changes using the reusable method
+      await this.applyUserApprovalChanges(
+        userId,
+        oldUser,
+        approval.proposedChanges
       )
-      const craLockChange = approval.proposedChanges.find(
-        (change) => change.field === 'CraLock'
-      )
-
-      // Handle CRA level changes (requires account to be unlocked)
-      if (craChange) {
-        const riskService = new RiskService(this.tenantId, {
-          dynamoDb: this.dynamoDb,
-          mongoDb: this.mongoDb,
-        })
-
-        // Check if the account is currently locked
-        const currentRiskAssignment = await riskService.getRiskAssignment(
-          userId
-        )
-        if (currentRiskAssignment?.isUpdatable === false) {
-          throw new createError.BadRequest(
-            'Cannot change CRA level when the account is locked. Please unlock the account first.'
-          )
-        }
-
-        const newRiskLevel = craChange.value as RiskLevel
-        const newIsUpdatable =
-          (craLockChange?.value as boolean) ??
-          currentRiskAssignment?.isUpdatable ??
-          true
-
-        await riskService.createOrUpdateRiskAssignment(
-          userId,
-          newRiskLevel,
-          newIsUpdatable
-        )
-        console.log(
-          `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${newIsUpdatable}`
-        )
-      }
-
-      // Handle CRA lock changes (independent of CRA level)
-      if (craLockChange) {
-        const riskService = new RiskService(this.tenantId, {
-          dynamoDb: this.dynamoDb,
-          mongoDb: this.mongoDb,
-        })
-
-        const newIsUpdatable = craLockChange.value as boolean
-        await riskService.updateRiskAssignmentLock(userId, newIsUpdatable)
-        console.log(
-          `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}`
-        )
-      }
-
-      // Handle other fields through the standard updateUser method
-      const otherFields = approval.proposedChanges.filter(
-        (change) => change.field !== 'Cra' && change.field !== 'CraLock'
-      )
-
-      if (otherFields.length > 0) {
-        const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
-
-        for (const change of otherFields) {
-          if (change.field === 'PepStatus') {
-            // Handle PepStatus field specially - it contains multiple sub-fields
-            const pepStatusValue = change.value as any
-            if (pepStatusValue.pepStatus) {
-              ;(updateRequest as any).pepStatus = pepStatusValue.pepStatus
-            }
-            if (pepStatusValue.adverseMediaStatus !== undefined) {
-              ;(updateRequest as any).adverseMediaStatus =
-                pepStatusValue.adverseMediaStatus
-            }
-            if (pepStatusValue.sanctionsStatus !== undefined) {
-              ;(updateRequest as any).sanctionsStatus =
-                pepStatusValue.sanctionsStatus
-            }
-          } else {
-            // Apply other changes directly to the update request
-            ;(updateRequest as any)[change.field] = change.value
-          }
-        }
-
-        // Use the existing updateUser method to apply the changes
-        console.log(
-          `About to call updateUser with:`,
-          JSON.stringify(updateRequest, null, 2)
-        )
-        console.log(
-          `Old user before update:`,
-          JSON.stringify(
-            {
-              pepStatus: (oldUser as any).pepStatus,
-              adverseMediaStatus: (oldUser as any).adverseMediaStatus,
-              sanctionsStatus: (oldUser as any).sanctionsStatus,
-            },
-            null,
-            2
-          )
-        )
-
-        await this.updateUser(oldUser, updateRequest, undefined, {
-          bySystem: true,
-        })
-
-        // Verify the update worked by fetching the user again
-        const updatedUser = await this.userRepository.getUser<
-          UserWithRulesResult | BusinessWithRulesResult
-        >(userId)
-        console.log(
-          `User after update:`,
-          JSON.stringify(
-            {
-              pepStatus: (updatedUser as any)?.pepStatus,
-              adverseMediaStatus: (updatedUser as any)?.adverseMediaStatus,
-              sanctionsStatus: (updatedUser as any)?.sanctionsStatus,
-            },
-            null,
-            2
-          )
-        )
-
-        console.log(
-          `Standard fields updated for user ${userId} through updateUser method`
-        )
-      }
 
       // Delete the approval object from database
       await this.userRepository.deletePendingUserApproval(userId, id)
@@ -2768,5 +2777,89 @@ export class UserService {
   public async getUserEntityParentUser(userId: string) {
     const user = await this.userRepository.getParentUser(userId)
     return user ? [this.mapAllUserToTableItem(user)] : []
+  }
+
+  public async updatePendingUserApprovalsWorkflow(newWorkflowRef: {
+    id: string
+    version: number
+  }): Promise<number> {
+    return await this.userRepository.bulkUpdateUserApprovalsWorkflow(
+      newWorkflowRef
+    )
+  }
+
+  public async autoApplyPendingUserApprovals(
+    fieldsWithRemovedWorkflows: string[]
+  ): Promise<number> {
+    console.log(
+      `Auto-applying pending user approvals for fields: ${fieldsWithRemovedWorkflows.join(
+        ', '
+      )}`
+    )
+
+    // Get all pending user approvals
+    const pendingApprovals =
+      await this.userRepository.getAllPendingUserApprovals()
+
+    // Filter approvals for the specified fields
+    const approvalsToApply = pendingApprovals.filter((approval) =>
+      approval.proposedChanges.some((change) =>
+        fieldsWithRemovedWorkflows.includes(change.field)
+      )
+    )
+
+    let appliedCount = 0
+
+    // Auto-apply each pending approval
+    for (const approval of approvalsToApply) {
+      try {
+        console.log(
+          `Auto-applying user approval ${approval.id} for user ${approval.userId}`
+        )
+
+        // Get the user to apply changes to
+        const user = await this.userRepository.getUser<
+          UserWithRulesResult | BusinessWithRulesResult
+        >(approval.userId)
+
+        if (!user) {
+          console.error(
+            `User ${approval.userId} not found, skipping approval ${approval.id}`
+          )
+          continue
+        }
+
+        // Filter proposed changes to only include those for fields with removed workflows
+        const changesToApply = approval.proposedChanges.filter((change) =>
+          fieldsWithRemovedWorkflows.includes(change.field)
+        )
+
+        if (changesToApply.length > 0) {
+          // Apply the changes using the reusable method that handles CRA, PepStatus, and other fields properly
+          await this.applyUserApprovalChanges(
+            approval.userId,
+            user,
+            changesToApply
+          )
+        }
+
+        // Delete the approval object from database
+        if (approval.id !== undefined) {
+          await this.userRepository.deletePendingUserApproval(
+            approval.userId,
+            approval.id
+          )
+        }
+        appliedCount++
+      } catch (error) {
+        console.error(
+          `Failed to auto-apply user approval ${approval.id}:`,
+          error
+        )
+        // Continue with other approvals even if one fails
+      }
+    }
+
+    return appliedCount
   }
 }

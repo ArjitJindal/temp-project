@@ -223,6 +223,51 @@ export class WorkflowService {
     return this.cleanWorkflow(item as InternalWorkflow)
   }
 
+  async updatePendingApprovalsForWorkflow(
+    workflowType: WorkflowType,
+    newWorkflowRef: { id: string; version: number }
+  ): Promise<number> {
+    // Update pending approvals based on workflow type
+    switch (workflowType) {
+      case 'risk-levels-approval': {
+        // Import and call risk service to update pending approvals
+        const { RiskService } = await import('@/services/risk')
+        const riskService = new RiskService(this.tenantId, {
+          dynamoDb: this.docClient,
+          mongoDb: this.deps.mongoDb,
+        })
+        return await riskService.updatePendingRiskLevelApprovalsWorkflow(
+          newWorkflowRef
+        )
+      }
+      case 'risk-factors-approval': {
+        // Import and call risk service to update pending approvals
+        const { RiskService: RiskService2 } = await import('@/services/risk')
+        const riskService2 = new RiskService2(this.tenantId, {
+          dynamoDb: this.docClient,
+          mongoDb: this.deps.mongoDb,
+        })
+        return await riskService2.updatePendingRiskFactorApprovalsWorkflow(
+          newWorkflowRef
+        )
+      }
+      case 'user-update-approval': {
+        // Import and call user service to update pending approvals
+        const { UserService } = await import('@/services/users')
+        const userService = new UserService(this.tenantId, {
+          dynamoDb: this.docClient,
+          mongoDb: this.deps.mongoDb,
+        })
+        return await userService.updatePendingUserApprovalsWorkflow(
+          newWorkflowRef
+        )
+      }
+      default:
+        // Other workflow types don't have pending approvals to update
+        return 0
+    }
+  }
+
   async patchWorkflowEnabled(
     workflowType: WorkflowType,
     workflowId: string,
@@ -276,5 +321,43 @@ export class WorkflowService {
     }
 
     return Array.from(statusesSet)
+  }
+
+  async autoApplyPendingApprovalsForRemovedWorkflows(
+    workflowType: WorkflowType,
+    fieldsWithRemovedWorkflows?: string[]
+  ): Promise<number> {
+    console.log(
+      `Auto-applying pending approvals for removed workflow type: ${workflowType}`
+    )
+
+    // Auto-apply pending approvals based on workflow type
+    switch (workflowType) {
+      // NOTE: when necessary here we can add auto-apply logic for other approval workflow types
+      case 'user-update-approval': {
+        if (
+          !fieldsWithRemovedWorkflows ||
+          fieldsWithRemovedWorkflows.length === 0
+        ) {
+          console.log(
+            'No fields specified for user workflow removal, skipping auto-apply'
+          )
+          return 0
+        }
+        // Import and call user service to auto-apply pending user approvals
+        const { UserService } = await import('@/services/users')
+        const userService = new UserService(this.tenantId, {
+          dynamoDb: this.docClient,
+          mongoDb: this.deps.mongoDb,
+        })
+        return await userService.autoApplyPendingUserApprovals(
+          fieldsWithRemovedWorkflows
+        )
+      }
+      default:
+        // Other workflow types don't have pending approvals to auto-apply
+        console.log(`No auto-apply logic for workflow type ${workflowType}`)
+        return 0
+    }
   }
 }

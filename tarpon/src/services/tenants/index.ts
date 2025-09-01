@@ -801,6 +801,15 @@ export class TenantService {
       ...existingTenantSettings,
       ...newTenantSettings,
     })
+
+    // Check for removed workflows and auto-apply pending approvals
+    if (newTenantSettings.workflowSettings) {
+      await this.handleWorkflowRemovals(
+        existingTenantSettings?.workflowSettings,
+        newTenantSettings.workflowSettings
+      )
+    }
+
     const isAcurisEnabled =
       newTenantSettings.features?.includes('ACURIS') &&
       !existingTenantSettings?.features?.includes('ACURIS')
@@ -1042,5 +1051,61 @@ export class TenantService {
         jobType: 'RERUN_RISK_SCORING',
       },
     })
+  }
+
+  /**
+   * Handles workflow removals by auto-applying pending approvals when workflows are set to undefined
+   */
+  private async handleWorkflowRemovals(
+    oldWorkflowSettings: any,
+    newWorkflowSettings: any
+  ): Promise<void> {
+    try {
+      // Import WorkflowService to call auto-apply methods
+      const { WorkflowService } = await import('@/services/workflow')
+      const workflowService = new WorkflowService(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+        mongoDb: this.mongoDb,
+      })
+
+      // Check for removed user approval workflows
+      if (
+        oldWorkflowSettings?.userApprovalWorkflows &&
+        newWorkflowSettings?.userApprovalWorkflows
+      ) {
+        const removedUserFields: string[] = []
+
+        // Check each user approval workflow field
+        for (const [field, oldWorkflowId] of Object.entries(
+          oldWorkflowSettings.userApprovalWorkflows
+        )) {
+          const newWorkflowId = newWorkflowSettings.userApprovalWorkflows[field]
+
+          // If workflow was removed (set to undefined) and previously had a workflow
+          if (oldWorkflowId && !newWorkflowId) {
+            removedUserFields.push(field)
+          }
+        }
+
+        if (removedUserFields.length > 0) {
+          console.log(
+            `Detected removed user workflow fields: ${removedUserFields.join(
+              ', '
+            )}`
+          )
+          const appliedCount =
+            await workflowService.autoApplyPendingApprovalsForRemovedWorkflows(
+              'user-update-approval',
+              removedUserFields
+            )
+          console.log(
+            `Auto-applied ${appliedCount} pending user approvals for removed workflows`
+          )
+        }
+      }
+    } catch (error) {
+      console.error('Error handling workflow removals:', error)
+      // Don't throw - we don't want to block tenant settings updates if auto-apply fails
+    }
   }
 }
