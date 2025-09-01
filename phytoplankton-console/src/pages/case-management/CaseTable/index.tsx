@@ -292,7 +292,6 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
         key: 'assignments',
         id: '_assignmentName',
         defaultWidth: 300,
-        enableResizing: false,
         type: {
           ...ASSIGNMENTS,
           stringify: (value) => {

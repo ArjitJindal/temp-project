@@ -190,7 +190,6 @@ export default function QaTable(props: Props) {
             id: '_assigneeName',
             sorting: true,
             defaultWidth: 300,
-            enableResizing: false,
             value: (item) =>
               statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
                 ? item.reviewAssignments
