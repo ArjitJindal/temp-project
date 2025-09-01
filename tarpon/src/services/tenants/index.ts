@@ -87,6 +87,13 @@ const secondaryQueueTenantsCache = createNonConsoleApiInMemoryCache<string[]>({
   ttlMinutes: 10,
 })
 
+export const maskPassword = (password: string): string => {
+  if (!password) {
+    return password
+  }
+  return '*'.repeat(password.length)
+}
+
 @traceable
 export class TenantService {
   tenantId: string
@@ -894,7 +901,15 @@ export class TenantService {
     const tenantRepository = new TenantRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    return tenantRepository.getTenantSettings()
+    const settings = await tenantRepository.getTenantSettings()
+
+    if (settings.sanctions?.dowjonesCreds?.password) {
+      settings.sanctions.dowjonesCreds.password = maskPassword(
+        settings.sanctions.dowjonesCreds.password
+      )
+    }
+
+    return settings
   }
 
   public async deleteTenant(

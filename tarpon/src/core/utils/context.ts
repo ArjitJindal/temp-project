@@ -103,6 +103,13 @@ export async function getInitialContext(
       )
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       const allSettings = await tenantRepository.getTenantSettings()
+
+      if (allSettings?.sanctions?.dowjonesCreds?.password) {
+        allSettings.sanctions.dowjonesCreds.password = '*'.repeat(
+          allSettings.sanctions.dowjonesCreds.password.length
+        )
+      }
+
       features = allSettings?.features
       settings = allSettings
     }
@@ -176,6 +183,13 @@ export async function initializeTenantContext(tenantId: string) {
   const dynamoDb = getDynamoDbClient()
   const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
   const tenantSettings = await tenantRepository.getTenantSettings()
+
+  if (tenantSettings?.sanctions?.dowjonesCreds?.password) {
+    tenantSettings.sanctions.dowjonesCreds.password = '*'.repeat(
+      tenantSettings.sanctions.dowjonesCreds.password.length
+    )
+  }
+
   context.tenantId = tenantId
   if (!context.logMetadata) {
     context.logMetadata = {}
@@ -488,6 +502,12 @@ export async function tenantSettings(
     dynamoDb: getDynamoDbClient(),
   })
   const settings = await tenantRepository.getTenantSettings()
+
+  if (settings?.sanctions?.dowjonesCreds?.password) {
+    settings.sanctions.dowjonesCreds.password = '*'.repeat(
+      settings.sanctions.dowjonesCreds.password.length
+    )
+  }
 
   if (isEmpty(contextSettings) && settings) {
     updateTenantSettings(settings)
