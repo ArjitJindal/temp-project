@@ -137,6 +137,7 @@ import {
 } from './cdk-utils/cdk-fargate-utils'
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 import { CdkTarponPythonStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-python-stack'
+import { createTransactionFunctionPerformanceDashboard } from './dashboards/public-api-transaction-function'
 import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -1861,6 +1862,9 @@ export class CdkTarponStack extends cdk.Stack {
         value: vpcCidr,
       })
     }
+
+    // Create performance dashboards
+    createTransactionFunctionPerformanceDashboard(this)
   }
 
   private createDynamodbTable(

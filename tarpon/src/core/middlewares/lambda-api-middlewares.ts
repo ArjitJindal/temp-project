@@ -7,7 +7,6 @@ import { localDev } from './local-dev'
 import { initSentryLambda } from './init-sentry-lambda'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 import { requestLoggerMiddleware } from './request-logger'
-import { performanceLoggerMiddleware } from './performance-logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
@@ -28,7 +27,8 @@ export const lambdaApi = (options?: {
     responseHeaderHandler(),
     httpErrorHandler(),
     requestLoggerMiddleware(),
-    performanceLoggerMiddleware(undefined, options?.enablePerformanceLogging),
+    // re-enable it if we want any custom reporting to be added
+    // performanceLoggerMiddleware(undefined, options?.enablePerformanceLogging),
     jsonSerializer(),
     rbacMiddleware(),
     initSentryLambda(),
