@@ -16,22 +16,22 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
 const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 100,
 }
 
 const TEST_TRANSACTION_AMOUNT_101: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 101,
 }
 
 const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 200,
 }
 
 const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
-  transactionCurrency: 'EUR',
+  transactionCurrency: 'USD',
   transactionAmount: 300,
 }
 
@@ -55,7 +55,7 @@ const TEST_PAYMENT_DETAILS_3: IBANDetails = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('R-130 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -453,10 +453,10 @@ ruleVariantsTest({ aggregation: true }, () => {
     ],
     {
       origin: [
-        { sendingCount: { '100EUR': 2, '200EUR': 1 }, hour: '2000010101' },
-        { sendingCount: { '300EUR': 1 }, hour: '2000010102' },
+        { sendingCount: { '100USD': 2, '200USD': 1 }, hour: '2000010101' },
+        { sendingCount: { '300USD': 1 }, hour: '2000010102' },
       ],
-      destination: [{ receivingCount: { '300EUR': 1 }, hour: '2000010102' }],
+      destination: [{ receivingCount: { '300USD': 1 }, hour: '2000010102' }],
     }
   )
 }

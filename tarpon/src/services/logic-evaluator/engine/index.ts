@@ -960,7 +960,6 @@ export class LogicEvaluator {
                   hasGroups && txGroupByEntityVariable
                     ? await txGroupByEntityVariable.load(transaction, context)
                     : undefined
-
                 return {
                   value,
                   groupValue: {
@@ -1645,10 +1644,14 @@ export class LogicEvaluator {
       result = aggregator.reduce(result, newDataValue)
       aggregationEntitiesCount++
     }
-
-    if (aggregationEntitiesCount < (aggregationVariable.lastNEntities ?? 0)) {
+    // To improve this as currently this returns null although the correct way should be to remove the last value from existing aggregation i.e pop value from last
+    if (
+      aggregationVariable.lastNEntities &&
+      aggregationEntitiesCount < (aggregationVariable.lastNEntities ?? 0)
+    ) {
       return null
     }
+
     return aggregator.compute(result)
   }
 
@@ -1676,7 +1679,7 @@ export class LogicEvaluator {
       )
     return Object.entries(rebuiltAggData).map(([time, value]) => ({
       time,
-      ...(groupValue ? value[groupValue] : value),
+      ...(groupValue ? value.value?.[String(groupValue)] : value),
     }))
   }
 

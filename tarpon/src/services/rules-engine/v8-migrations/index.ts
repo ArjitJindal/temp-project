@@ -26,6 +26,7 @@ import { TransactionsPatternPercentageRuleParameters } from '../transaction-rule
 import { SamePaymentDetailsParameters } from '../transaction-rules/same-payment-details'
 import { BlacklistPaymentdetailsRuleParameters } from '../transaction-rules/blacklist-payment-details'
 import { PaymentMethodNameRuleParameter } from '../transaction-rules/payment-method-name-levensthein-distance'
+import { TransactionsRoundValueVelocityRuleParameters } from '../transaction-rules/transactions-round-value-velocity'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -2302,6 +2303,242 @@ const V8_CONVERSION: Readonly<
     return {
       logic: { or: conditions },
       logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-130': (params: TransactionsRoundValueVelocityRuleParameters) => {
+    const {
+      timeWindow,
+      transactionsLimit,
+      sameAmount,
+      originMatchPaymentMethodDetails,
+      destinationMatchPaymentMethodDetails,
+      checkSender,
+      checkReceiver,
+      initialTransactions,
+    } = params
+
+    const roundfilter = {
+      or: [
+        {
+          '==': [
+            {
+              '%': [
+                {
+                  var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
+        {
+          '==': [
+            {
+              '%': [
+                {
+                  var: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+                },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
+      ],
+    }
+    const originRoundFilter = {
+      '==': [
+        {
+          '%': [
+            {
+              var: 'TRANSACTION:originAmountDetails-transactionAmount',
+            },
+            100,
+          ],
+        },
+        0,
+      ],
+    }
+    const destinationRoundFilter = {
+      '==': [
+        {
+          '%': [
+            {
+              var: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+            },
+            100,
+          ],
+        },
+        0,
+      ],
+    }
+
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:roundValueTransactionsCount',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: roundfilter,
+    })
+
+    if (checkSender !== 'none') {
+      logicAggregationVariables.push({
+        key: 'agg:sendingRoundValueTransactionsCount',
+        type: 'USER_TRANSACTIONS',
+        userDirection: 'SENDER',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+        filtersLogic: originRoundFilter,
+      })
+    }
+
+    if (checkReceiver !== 'none') {
+      logicAggregationVariables.push({
+        key: 'agg:receivingRoundValueTransactionsCount',
+        type: 'USER_TRANSACTIONS',
+        userDirection: 'RECEIVER',
+        transactionDirection: 'RECEIVING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: timeWindow,
+          end: { units: 0, granularity: 'now' },
+        },
+        includeCurrentEntity: true,
+        filtersLogic: destinationRoundFilter,
+      })
+    }
+
+    logicAggregationVariables.push({
+      key: 'agg:uniqueRoundValueTransactions',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+      aggregationFunc: 'COUNT',
+      aggregationGroupByFieldKey:
+        'TRANSACTION:originAmountDetails-transactionAmount',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: originRoundFilter,
+    })
+
+    logicAggregationVariables.push({
+      key: 'agg:sendingUniqueRoundValuePaymentMethodDetails',
+      type: 'PAYMENT_DETAILS_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originPaymentDetails-method',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: originRoundFilter,
+    })
+    logicAggregationVariables.push({
+      key: 'agg:receivingUniqueRoundValuePaymentMethodDetails',
+      type: 'PAYMENT_DETAILS_TRANSACTIONS',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:destinationPaymentDetails-method',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: timeWindow,
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: originRoundFilter,
+    })
+
+    const baseCurrency = 'USD'
+    const conditions: any[] = []
+
+    if (sameAmount) {
+      conditions.push({
+        '>=': [
+          {
+            var: 'agg:uniqueRoundValueTransactions',
+          },
+          transactionsLimit + (initialTransactions || 0) + 1,
+        ],
+      })
+    }
+
+    if (originMatchPaymentMethodDetails) {
+      conditions.push({
+        '>=': [
+          { var: 'agg:sendingUniqueRoundValuePaymentMethodDetails' },
+          transactionsLimit + (initialTransactions || 0) + 1,
+        ],
+      })
+    }
+
+    if (destinationMatchPaymentMethodDetails) {
+      conditions.push({
+        '>=': [
+          { var: 'agg:receivingUniqueRoundValuePaymentMethodDetails' },
+          transactionsLimit + (initialTransactions || 0) + 1,
+        ],
+      })
+    }
+
+    if (
+      !sameAmount &&
+      !originMatchPaymentMethodDetails &&
+      !destinationMatchPaymentMethodDetails
+    ) {
+      if (checkSender !== 'none' && checkReceiver !== 'none') {
+        conditions.push({
+          '>=': [
+            { var: 'agg:roundValueTransactionsCount' },
+            transactionsLimit + (initialTransactions || 0) + 1,
+          ],
+        })
+      }
+      if (checkSender == 'none' && checkReceiver !== 'none') {
+        conditions.push({
+          '>=': [
+            { var: 'agg:receivingRoundValueTransactionsCount' },
+            transactionsLimit + (initialTransactions || 0) + 1,
+          ],
+        })
+      }
+      if (checkSender !== 'none' && checkReceiver == 'none') {
+        conditions.push({
+          '>=': [
+            { var: 'agg:sendingRoundValueTransactionsCount' },
+            transactionsLimit + (initialTransactions || 0) + 1,
+          ],
+        })
+      }
+    }
+
+    return {
+      logic: { or: conditions },
+      logicAggregationVariables,
+      baseCurrency,
       alertCreationDirection: 'AUTO',
     }
   },
