@@ -44,7 +44,7 @@ export function prepareTableData(
       alertIds: item.alertIds,
     };
 
-    if (item.hitRules?.length === 0) {
+    if (item.hitRules == null || item.hitRules.length === 0) {
       return dataItem;
     }
 
