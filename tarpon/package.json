@@ -86,7 +86,11 @@
     "sync:nango:models": "ts-node scripts/sync-nango-models.ts",
     "deploy:load-test": "cdk deploy --app='./node_modules/.bin/ts-node infra/bin/cdk-load-testing.ts' --outputs-file load-testing/cdk-outputs/testing.json",
     "destroy:load-test": "cdk destroy --app='./node_modules/.bin/ts-node infra/bin/cdk-load-testing.ts'",
-    "load-test": "ts-node scripts/run-load-test.ts"
+    "load-test": "ts-node scripts/run-load-test.ts",
+    "close-screening-alerts": "ts-node scripts/close-screening-alerts.ts",
+    "close-screening-alerts:dry-run": "ts-node scripts/close-screening-alerts.ts --dry-run",
+    "close-screening-alerts:csv": "ts-node scripts/close-screening-alerts.ts --csv",
+    "close-screening-alerts:csv:dry-run": "ts-node scripts/close-screening-alerts.ts --dry-run --csv"
   },
   "repository": {
     "type": "git",

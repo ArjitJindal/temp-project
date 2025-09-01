@@ -68,6 +68,7 @@ const getMongoDbClientInternal = memoize(async (useCache = true) => {
         `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}?directConnection=true`
     )
   }
+  console.log('process.env.ENV', process.env.ENV)
   if (process.env.ENV?.includes('local')) {
     return await MongoClient.connect(
       `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}?directConnection=true`
@@ -734,6 +735,10 @@ export interface MongoUpdateMessage<T extends Document = Document> {
 export async function sendMessageToMongoUpdateConsumer<
   T extends Document = Document
 >(message: MongoUpdateMessage<T>) {
+  if (process.env.DISABLE_MONGO_CONSUMER === '1') {
+    return
+  }
+
   if (envIs('local') || envIs('test')) {
     await executeMongoUpdate([message as MongoUpdateMessage<Document>])
     return

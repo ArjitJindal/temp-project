@@ -1050,6 +1050,10 @@ async function truncateDynamoConsumerMessageItems(
 export async function sendMessageToDynamoDbConsumer(
   message: DynamoConsumerMessage
 ) {
+  if (process.env.DISABLE_DYNAMO_CONSUMER === '1') {
+    return
+  }
+
   if (envIs('test') && !hasFeature('CLICKHOUSE_MIGRATION')) {
     return
   }
@@ -1070,6 +1074,7 @@ export async function sendMessageToDynamoDbConsumer(
   logger.debug('Sending message to DynamoDb consumer', {
     message,
   })
+
   const sqs = new SQS({ region: process.env.AWS_REGION })
 
   await sqs.send(

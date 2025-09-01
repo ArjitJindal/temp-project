@@ -735,6 +735,10 @@ const sqs = new SQS({ region: process.env.AWS_REGION })
 export const sendMessageToMongoConsumer = async (
   message: MongoConsumerMessage
 ) => {
+  if (process.env.DISABLE_MONGO_CONSUMER === '1') {
+    return
+  }
+
   if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
     return
   }
@@ -756,6 +760,11 @@ export const sendMessageToMongoConsumer = async (
 export async function sendBulkMessagesToMongoConsumer(
   messages: MongoConsumerMessage[]
 ) {
+  if (process.env.DISABLE_MONGO_CONSUMER === '1') {
+    console.log('Skipping bulk message to MongoDb consumer')
+    return
+  }
+
   if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
     return
   }
