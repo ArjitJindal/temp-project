@@ -88,6 +88,7 @@ export type ProjectionsDefinition = {
 export type ClickhouseTableDefinition = BaseTableDefinition & {
   materializedViews?: MaterializedViewDefinition[]
   projections?: ProjectionsDefinition[]
+  model?: string // Optional: Generate columns from this model instead of materializedColumns
 }
 
 const enumFields = (
@@ -142,6 +143,7 @@ export const userNameMaterilizedColumn = `username String MATERIALIZED
     )`
 
 export enum ClickhouseTableNames {
+  TransactionsFromModel = 'transactions_v2',
   Transactions = 'transactions',
   TransactionsDesc = 'transactions_desc',
   Users = 'users',
@@ -370,6 +372,13 @@ const sharedTransactionMaterializedColumns = [
 ]
 
 export const CLICKHOUSE_DEFINITIONS = {
+  TRANSACTIONS_FROM_MODEL: {
+    tableName: ClickhouseTableNames.TransactionsFromModel,
+    definition: {
+      idColumn: 'transactionId',
+      timestampColumn: 'timestamp',
+    },
+  },
   TRANSACTIONS: {
     tableName: ClickhouseTableNames.Transactions,
     definition: {
@@ -570,6 +579,23 @@ const commonMaterializedColumns = [
 ]
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
+  // Example: Model-based table definition
+  {
+    table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.tableName,
+    idColumn:
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.definition.idColumn,
+    timestampColumn:
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.definition.timestampColumn,
+    materializedColumns: [`negative_timestamp Int64 MATERIALIZED -1*timestamp`],
+    engine: 'ReplacingMergeTree',
+    versionColumn: 'updateCount',
+    primaryKey: '(negative_timestamp, originUserId, destinationUserId, id)',
+    orderBy: '(negative_timestamp, originUserId, destinationUserId, id)',
+    partitionBy: 'toYYYYMM(toDateTime(timestamp / 1000))',
+    mongoIdColumn: true,
+    optimize: true,
+    model: 'InternalTransaction',
+  },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
     idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.idColumn,

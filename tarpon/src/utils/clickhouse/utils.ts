@@ -24,6 +24,7 @@ import {
   IndexOptions,
   CLICKHOUSE_DEFINITIONS,
 } from './definition'
+import { generateColumnsFromModel } from './model-schema-parser'
 import {
   DATE_TIME_FORMAT_JS,
   DAY_DATE_FORMAT_JS,
@@ -354,20 +355,49 @@ export function isClickhouseMigrationEnabled() {
   return isClickhouseEnabledInRegion() && hasFeature('CLICKHOUSE_MIGRATION')
 }
 
+const getAllColumns = (table: ClickhouseTableDefinition) => {
+  // If model is specified, generate columns from the model
+  if (table.model) {
+    try {
+      const modelColumns = generateColumnsFromModel(table.model)
+      return [
+        'id String',
+        'is_deleted UInt8 DEFAULT 0',
+        ...(table.mongoIdColumn
+          ? ["mongo_id String MATERIALIZED JSONExtractString(data, '_id')"]
+          : []),
+        ...modelColumns.map((col) => {
+          // ClickHouse doesn't support Nullable(JSON), so handle this case
+          if (col.nullable && col.type === 'JSON') {
+            return `${col.name} JSON`
+          }
+          return col.nullable
+            ? `${col.name} Nullable(${col.type})`
+            : `${col.name} ${col.type}`
+        }),
+      ]
+    } catch (error) {
+      logger.error(
+        `Failed to generate columns from model ${table.model}:`,
+        error
+      )
+    }
+  }
+  return [
+    'id String',
+    'data String',
+    `timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${table.timestampColumn}')`,
+    'is_deleted UInt8 DEFAULT 0',
+    ...(table.mongoIdColumn
+      ? ["mongo_id String MATERIALIZED JSONExtractString(data, '_id')"]
+      : []),
+    ...(table.materializedColumns || []),
+  ]
+}
+
 export function isConsoleMigrationEnabled() {
   return isClickhouseEnabledInRegion() && hasFeature('CONSOLE_MIGRATION')
 }
-
-const getAllColumns = (table: ClickhouseTableDefinition) => [
-  'id String',
-  'data String',
-  `timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${table.timestampColumn}')`,
-  'is_deleted UInt8 DEFAULT 0',
-  ...(table.mongoIdColumn
-    ? ["mongo_id String MATERIALIZED JSONExtractString(data, '_id')"]
-    : []),
-  ...(table.materializedColumns || []),
-]
 
 export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   const tableName = table.table
