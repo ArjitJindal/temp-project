@@ -2,7 +2,8 @@ import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import { isEmpty, toLower } from 'lodash';
-import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { capitalizeWords, humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { COUNTRIES } from '@flagright/lib/constants';
 import {
   PermissionStatements,
   Feature as FeatureName,
@@ -12,6 +13,7 @@ import {
   RuleAction,
   RiskLevel,
   TransactionState,
+  CountryCode,
 } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
@@ -286,14 +288,15 @@ export function useUpdateTenantSettings(successMessage?: string) {
 export function useGetAlias() {
   const { transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias } = useSettings();
   return useCallback(
-    (x: string) => {
-      return (
+    (x: string, humanize: boolean = false) => {
+      const alias =
         kycStatusAlias?.find((item) => item.state === x)?.alias ||
         userStateAlias?.find((item) => item.state === x)?.alias ||
         transactionStateAlias?.find((item) => item.state === x)?.alias ||
         riskLevelAlias?.find((item) => item.level === x)?.alias ||
-        humanizeConstant(x)
-      );
+        COUNTRIES[x.toUpperCase() as CountryCode] ||
+        x;
+      return humanize ? humanizeAuto(alias) : alias;
     },
     [transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias],
   );

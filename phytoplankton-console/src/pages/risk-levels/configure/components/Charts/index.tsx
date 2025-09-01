@@ -44,7 +44,7 @@ const GroupedColumn = React.memo((props: Props) => {
         colors={{}}
         data={success(data.map((x) => ({ category: x.name, series: x.label, value: x.value })))}
         grouping={'GROUPED'}
-        formatCategory={(x) => getAlias(x)}
+        formatCategory={(x) => getAlias(x, true)}
         customBarColors={(category, series, defaultColor) => {
           if (series === 'Before') {
             return colors[category].base;
