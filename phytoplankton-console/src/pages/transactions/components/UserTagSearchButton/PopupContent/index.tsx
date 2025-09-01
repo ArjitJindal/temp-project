@@ -61,6 +61,7 @@ export default function PopupContent(props: Props) {
               {(inputProps) => (
                 <Select<string>
                   allowClear
+                  value={inputProps.value}
                   isLoading={isLoading(result.data)}
                   options={(getOr(result.data, []) as unknown as Array<string>)
                     .filter((key) => key?.length > 0)
