@@ -34,7 +34,7 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
   }, [value]);
 
   const debouncedOnChange = useMemo(
-    () => (isDebounce ? debounce(onChange, 300) : onChange),
+    () => (isDebounce ? debounce(onChange, 1000) : onChange),
     [isDebounce, onChange],
   );
 
