@@ -1156,6 +1156,27 @@ export class UserService {
     }
   }
 
+  public async getUsersPreview(params: DefaultApiGetAllUsersListRequest) {
+    const data = await this.userRepository.getMongoUsersPaginate(
+      params,
+      this.mapAllUserToTableItem,
+      params.filterUserType,
+      {
+        projection: {
+          _id: 1,
+          userId: 1,
+          userDetails: {
+            name: 1,
+          },
+          legalEntity: 1,
+          type: 1,
+          riskLevel: 1,
+        },
+      }
+    )
+    return data
+  }
+
   public async getClickhouseUsers(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersOffsetPaginateListResponse> {

@@ -121,10 +121,7 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetAllUsersPreviewList(async (ctx, request) => {
-      if (isClickhouseEnabled()) {
-        return await userService.getClickhouseUsersPreview(request)
-      }
-      return (await userService.getUsers(request)).result
+      return await userService.getUsersPreview(request)
     })
 
     handlers.registerGetUsersItem(
