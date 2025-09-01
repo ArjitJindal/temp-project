@@ -55,7 +55,7 @@ const TableList = () => {
           to: '/rules/rules-library',
         },
         tab === 'ai-detection' && {
-          title: 'AI detection',
+          title: 'AI models',
           to: '/rules/ai-detection',
         },
       ].filter(notEmpty)}
@@ -155,7 +155,7 @@ function Content(props: { tab: string; hasMachineLearningFeature: boolean }) {
     // Add AI detection tab if machine learning feature is enabled (no permission check)
     if (props.hasMachineLearningFeature) {
       tabs.push({
-        title: 'AI detection',
+        title: 'AI models',
         key: 'ai-detection',
         children: (
           <PageWrapperContentContainer>

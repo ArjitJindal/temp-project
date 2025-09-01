@@ -13,7 +13,7 @@ export default function SimulationHistoryPage() {
       ? 'My rules'
       : rulesTab === 'rules-library' || !hasMachineLearningFeature
       ? 'Templates'
-      : 'AI detection';
+      : 'AI models';
   return (
     <BreadCrumbsWrapper
       simulationStorageKey="SIMULATION_RULES"
