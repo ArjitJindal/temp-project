@@ -6767,6 +6767,7 @@ components:
         - ETH
         - ETH2
         - EUR
+        - EURC
         - EUROC
         - ETHFI
         - FARM
@@ -6936,6 +6937,7 @@ components:
         - PAX
         - PEN
         - PENGU
+        - PEPE
         - PERP
         - PGK
         - PHP
@@ -7030,11 +7032,13 @@ components:
         - TMT
         - TND
         - TONE
+        - TON
         - TOP
         - TRAC
         - TRB
         - TRIBE
         - TRU
+        - TRUMP
         - TRY
         - TTD
         - TVK

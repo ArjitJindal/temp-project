@@ -483,6 +483,10 @@ export const mockedCurrencyExchangeRates: CoinbaseResponse = {
       TYUGA: '1',
       VIC: '1',
       XAI: '1',
+      EURC: '1',
+      PEPE: '1',
+      TON: '1',
+      TRUMP: '1',
     },
   },
 }
