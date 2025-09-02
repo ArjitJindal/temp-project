@@ -592,7 +592,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     primaryKey: '(negative_timestamp, originUserId, destinationUserId, id)',
     orderBy: '(negative_timestamp, originUserId, destinationUserId, id)',
     partitionBy: 'toYYYYMM(toDateTime(timestamp / 1000))',
-    mongoIdColumn: true,
     optimize: true,
     model: 'InternalTransaction',
   },

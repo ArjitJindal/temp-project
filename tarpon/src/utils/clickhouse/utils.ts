@@ -363,9 +363,6 @@ const getAllColumns = (table: ClickhouseTableDefinition) => {
       return [
         'id String',
         'is_deleted UInt8 DEFAULT 0',
-        ...(table.mongoIdColumn
-          ? ["mongo_id String MATERIALIZED JSONExtractString(data, '_id')"]
-          : []),
         ...modelColumns.map((col) => {
           // ClickHouse doesn't support Nullable(JSON), so handle this case
           if (col.nullable && col.type === 'JSON') {
