@@ -594,8 +594,10 @@ export const AggregationVariableFormContent: React.FC<
           {(formValues.aggregationFunc === 'UNIQUE_COUNT' ||
             formValues.aggregationFunc === 'UNIQUE_VALUES') && (
             <div className={s.hint}>
-              {`Please note that ${humanizeConstant(formValues.aggregationFunc).toLowerCase()}
-              aggregation is limited to 25,000.`}
+              {`For performance reasons ${humanizeConstant(
+                formValues.aggregationFunc,
+              ).toLowerCase()}
+              aggregation is limited to 25,000. Contact us to increase this limit.`}
             </div>
           )}
         </div>
