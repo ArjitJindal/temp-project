@@ -372,6 +372,7 @@ const getAllColumns = (table: ClickhouseTableDefinition) => {
             ? `${col.name} Nullable(${col.type})`
             : `${col.name} ${col.type}`
         }),
+        ...(table.materializedColumns || []),
       ]
     } catch (error) {
       logger.error(
