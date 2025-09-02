@@ -2283,5 +2283,11 @@
   "USER:userPreviousCRALevel__BOTH",
   "USER:currentTimestamp__SENDER",
   "USER:currentTimestamp__RECEIVER",
-  "USER:currentTimestamp__BOTH"
+  "USER:currentTimestamp__BOTH",
+  "USER:alertTimestamp__SENDER",
+  "USER:alertTimestamp__RECEIVER",
+  "USER:alertTimestamp__BOTH",
+  "USER:userEventTimestamp__SENDER",
+  "USER:userEventTimestamp__RECEIVER",
+  "USER:userEventTimestamp__BOTH"
 ]

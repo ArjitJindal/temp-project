@@ -66,6 +66,8 @@ import {
   FIRST_DIGITAL_CUSTOM_TAGS_KEYS_VARIABLES,
 } from './custom-tag-keys'
 import { CURRENT_TIMESTAMP } from './current-timestamp'
+import { ALERT_TIMESTAMP } from './alert-timestamp'
+import { USER_EVENT_TIMESTAMP } from './user-event-timestamp'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -230,6 +232,8 @@ const USER_DERIVED_VARIABLES: Array<
   SAR_DETAILS,
   USER_PREVIOUS_CRA_LEVEL,
   CURRENT_TIMESTAMP,
+  ALERT_TIMESTAMP,
+  USER_EVENT_TIMESTAMP,
 ]
 
 const TIMESTAMP_VARIABLES = [

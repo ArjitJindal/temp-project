@@ -142,6 +142,41 @@ export class AlertsRepository {
     return result
   }
 
+  public async getLatestAlertTimestampForUser(
+    userId: string
+  ): Promise<number | null> {
+    if (isConsoleMigrationEnabled()) {
+      const clickhouseRepository = await this.getClickhouseAlertRepository()
+      return await clickhouseRepository.getLatestAlertTimestampForUser(userId)
+    } else {
+      // Fallback to MongoDB for non-migrated tenants
+      const db = this.mongoDb.db()
+      const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+      const result = await collection
+        .aggregate([
+          {
+            $match: {
+              $or: [
+                { 'caseUsers.origin.userId': userId },
+                { 'caseUsers.destination.userId': userId },
+              ],
+            },
+          },
+          { $unwind: '$alerts' },
+          {
+            $group: {
+              _id: null,
+              maxTimestamp: { $max: '$alerts.createdTimestamp' },
+            },
+          },
+        ])
+        .toArray()
+
+      return result.length > 0 ? result[0].maxTimestamp : null
+    }
+  }
+
   // TODO: @amit implement this in dynamo, like in cases
   public async getAlerts(
     params: AlertParams,

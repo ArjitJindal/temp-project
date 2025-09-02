@@ -94,6 +94,37 @@ export class ClickhouseAlertRepository {
     return statusChangesData
   }
 
+  async getLatestAlertTimestampForUser(userId: string): Promise<number | null> {
+    let query = ''
+    if (isClickhouseMigrationEnabled()) {
+      query = `
+        SELECT 
+          timestamp as createdTimestamp
+        FROM ${ALERTS_TABLE_NAME_CH} 
+        WHERE (originUserId = '${userId}' OR destinationUserId = '${userId}')
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `
+    } else {
+      query = `
+        SELECT 
+          alerts.createdTimestamp
+        FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} 
+        ARRAY JOIN alerts 
+        WHERE (originUserId = '${userId}' OR destinationUserId = '${userId}')
+        ORDER BY alerts.createdTimestamp DESC
+        LIMIT 1
+      `
+    }
+
+    const result = await executeClickhouseQuery<{ createdTimestamp: number }[]>(
+      this.clickhouseClient,
+      query
+    )
+
+    return result.length > 0 ? result[0].createdTimestamp : null
+  }
+
   /**
    * Gets the alerts matching the given filter parameters
    * @param params - Filter parameters for alerts query

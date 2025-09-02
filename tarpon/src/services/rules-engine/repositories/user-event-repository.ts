@@ -261,4 +261,71 @@ export class UserEventRepository {
 
     return Item as ConsumerUserEvent | BusinessUserEvent
   }
+
+  /**
+   * Gets the latest user event timestamp for a specific user
+   * @param userId - The user ID to get the latest user event timestamp for
+   * @returns The timestamp of the latest user event, or null if no events exist
+   */
+  public async getLatestUserEventTimestampForUser(
+    userId: string,
+    userType: UserType
+  ): Promise<number | null> {
+    try {
+      // Define the keys for both user types
+      const consumerUserEventKey = DynamoDbKeys.CONSUMER_USER_EVENT(
+        this.tenantId,
+        userId
+      )
+      const businessUserEventKey = DynamoDbKeys.BUSINESS_USER_EVENT(
+        this.tenantId,
+        userId
+      )
+
+      // Query based on user type
+      if (userType === 'CONSUMER') {
+        // Query only consumer user events
+        const consumerEvents = await paginateQuery(this.dynamoDb, {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+          KeyConditionExpression: 'PartitionKeyID = :pk',
+          ExpressionAttributeValues: {
+            ':pk': consumerUserEventKey.PartitionKeyID,
+          },
+          ProjectionExpression: 'SortKeyID', // Only get timestamp
+          ScanIndexForward: false, // Descending order
+          Limit: 1,
+        })
+
+        const consumerLatest = consumerEvents.Items?.[0]?.SortKeyID
+        if (!consumerLatest) {
+          return null
+        }
+
+        return parseInt(consumerLatest)
+      } else {
+        // Query only business user events
+        const businessEvents = await paginateQuery(this.dynamoDb, {
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+          KeyConditionExpression: 'PartitionKeyID = :pk',
+          ExpressionAttributeValues: {
+            ':pk': businessUserEventKey.PartitionKeyID,
+          },
+          ProjectionExpression: 'SortKeyID', // Only get timestamp
+          ScanIndexForward: false, // Descending order
+          Limit: 1,
+        })
+
+        const businessLatest = businessEvents.Items?.[0]?.SortKeyID
+        if (!businessLatest) {
+          return null
+        }
+
+        return parseInt(businessLatest)
+      }
+    } catch (error) {
+      // Log error but don't fail
+      console.error('Error fetching latest user event timestamp:', error)
+      return null
+    }
+  }
 }
