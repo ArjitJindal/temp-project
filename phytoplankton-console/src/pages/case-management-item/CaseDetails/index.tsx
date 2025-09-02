@@ -279,13 +279,17 @@ function useTabs(
   }
 
   return [
-    {
-      title: 'Enhanced Due Diligence',
-      key: 'enhanced-due-diligence',
-      children: <EDDDetails userId={user?.userId ?? ''} />,
-      isClosable: false,
-      isDisabled: false,
-    },
+    ...(isEnhancedDueDiligenceEnabled
+      ? [
+          {
+            title: 'Enhanced Due Diligence',
+            key: 'enhanced-due-diligence',
+            children: <EDDDetails userId={user?.userId ?? ''} />,
+            isClosable: false,
+            isDisabled: false,
+          },
+        ]
+      : []),
     isPaymentSubject &&
       paymentDetails?.method && {
         title: 'Payment identifier details',
