@@ -25,7 +25,7 @@ export const FlagrightMLSettings = () => {
       {
         <SettingsCard
           title={whiteLabeled ? 'AI detections' : 'Flagright AI detections'}
-          description="Enable ‘Flagright AI’ Machine learning detection models to be used during rule configuration."
+          description="Enable Flagright AI detection models. Models are deployed from the Rules module."
           minRequiredResources={['read:::settings/add-ons/ai-detections/*']}
         >
           {hasMachineLearningFeature ? (

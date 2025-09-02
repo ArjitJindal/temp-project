@@ -39,9 +39,7 @@ export const FlagrightAISettings = () => {
     <div>
       <SettingsCard
         title={whiteLabeled ? 'AI Features' : 'Flagright AI features'}
-        description={`Supercharge your productivity with AI Features including ${
-          llmProvider === 'ANTHROPIC' ? 'Claude' : 'GPT'
-        }.`}
+        description={`Supercharge team productivity with advanced AI features including AI Forensics.`}
         minRequiredResources={['write:::settings/add-ons/ai-features/*']}
       >
         {isNarrativeCopilotEnabled || isAiForensicsEnabled ? (
