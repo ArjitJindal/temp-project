@@ -267,9 +267,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     ) as any;
   }, [formSteps, selectedEntity]);
 
-  const requiredResources = selectedEntity
-    ? readResources?.(selectedEntity)
-    : readResources?.({} as Entity);
+  const requiredResources = selectedEntity ? readResources?.(selectedEntity) : undefined;
 
   return (
     <Authorized minRequiredResources={requiredResources ?? []}>
