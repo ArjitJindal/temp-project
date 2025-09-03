@@ -242,6 +242,7 @@ export class AccountsService {
       })
       if (!account) {
         account = await this.createAccountInternal(tenant, params)
+        // this saves data to cache, don't remove this on account creation
         await this.roleService.setRole(
           { tenantId: tenant.id, orgName: tenant.orgName },
           account.id,
@@ -269,7 +270,8 @@ export class AccountsService {
       if (account) {
         deletedAccountIfError = false
         // while adding account to organization, we should patch the account with new updates
-        //await this.addAccountToOrganizationInternal(tenant, account) // already handled when we patch the account
+        // await this.addAccountToOrganizationInternal(tenant, account) // already handled when we patch the account
+        await this.auth0.addAccountToOrganization(tenant, account) // need to update auth0 only
         await this.sendPasswordResetEmail(params.email)
       }
     } catch (e) {
