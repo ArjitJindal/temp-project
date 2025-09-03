@@ -94,16 +94,30 @@ export const SearchBar = (props: Props) => {
   useEffect(() => {
     setHighlightedSuggestionIndex(undefined);
   }, [searchText]);
+
   useEffect(() => {
     if (isResponseReceived) {
       setSearchText('');
+      setClickedSuggestions(new Set());
+      setHighlightedSuggestionIndex(undefined);
     }
   }, [isResponseReceived]);
+
   useEffect(() => {
     setClickedSuggestions(new Set());
     setHighlightedSuggestionIndex(undefined);
   }, [debouncedSearch]);
+
   const searchInputText = highlightedSuggestion ?? searchText;
+
+  const handleSearch = () => {
+    if (searchText.trim()) {
+      searchMutation.mutate([{ searchString: searchText.trim() }]);
+      setSearchText('');
+      setClickedSuggestions(new Set());
+      setHighlightedSuggestionIndex(undefined);
+    }
+  };
 
   if (!isClickhouseEnabled) {
     return null;
@@ -140,7 +154,7 @@ export const SearchBar = (props: Props) => {
           </div>
         </div>
       )}
-      <Form initialValues={{}} className={s.form}>
+      <Form initialValues={{}} className={s.form} onSubmit={() => handleSearch()}>
         <ShineIcon height={14} />
         <div className={s.textInput}>
           <TextInput
@@ -176,16 +190,14 @@ export const SearchBar = (props: Props) => {
                 return (prevState + 1) % displayedSuggestions.length;
               });
             }}
+            onEnterKey={handleSearch}
           />
         </div>
         <button
           data-cy="ask-ai-button"
           type="submit"
-          onClick={() => {
-            setSearchText('');
-            searchMutation.mutate([{ searchString: searchText }]);
-          }}
-          disabled={!searchInputText}
+          onClick={handleSearch}
+          disabled={!searchText.trim()}
         >
           <AiForensicsLogo />
         </button>
@@ -196,6 +208,9 @@ export const SearchBar = (props: Props) => {
               className={s.autoButton}
               onClick={() => {
                 setSearchText('');
+                setClickedSuggestions(new Set());
+                setHighlightedSuggestionIndex(undefined);
+
                 if (isOntologyEnabled) {
                   SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.ONTOLOGY);
                 }
