@@ -4,8 +4,8 @@ import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import MoreLineIcon from '@/components/ui/icons/Remix/system/more-line.react.svg';
 
-export type Step = {
-  key: string;
+export type Step<Key = string> = {
+  key: Key;
   title: string;
   description?: string;
   isOptional?: boolean;
@@ -13,17 +13,17 @@ export type Step = {
   isInvalid?: boolean;
   isDisabled?: boolean;
 };
-interface Props {
-  steps: Step[];
+interface Props<Key = string> {
+  steps: Step<Key>[];
   active: string;
   className?: string;
   stepsClassName?: string;
   layout?: 'HORIZONTAL' | 'VERTICAL';
-  onChange: (key: string) => void;
+  onChange: (key: Key) => void;
   children?: (active: string) => React.ReactNode;
 }
 
-export default function Stepper(props: Props) {
+export default function Stepper<Key extends string = string>(props: Props<Key>) {
   const { layout = 'HORIZONTAL', active, className, children } = props;
 
   return (
@@ -36,8 +36,8 @@ export default function Stepper(props: Props) {
   );
 }
 
-export function StepperSteps(
-  props: Pick<Props, 'steps' | 'active' | 'stepsClassName' | 'layout' | 'onChange'>,
+export function StepperSteps<Key extends string = string>(
+  props: Pick<Props<Key>, 'steps' | 'active' | 'stepsClassName' | 'layout' | 'onChange'>,
 ) {
   const { active, layout, onChange, steps, stepsClassName } = props;
   const stepIndex = steps.findIndex(({ key }) => key === active);
