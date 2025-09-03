@@ -294,7 +294,7 @@ export function useGetAlias() {
         userStateAlias?.find((item) => item.state === x)?.alias ||
         transactionStateAlias?.find((item) => item.state === x)?.alias ||
         riskLevelAlias?.find((item) => item.level === x)?.alias ||
-        COUNTRIES[x.toUpperCase() as CountryCode] ||
+        `${COUNTRIES[x.toUpperCase() as CountryCode]} (${x.toUpperCase()})` ||
         x;
       return humanize ? humanizeAuto(alias) : alias;
     },
