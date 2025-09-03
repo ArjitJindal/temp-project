@@ -15,7 +15,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 
 const REASON_TYPE_LABEL_MAP: { label: string; type: ReasonType }[] = [
-  { label: 'Case and alert closure reason', type: 'CLOSURE' },
+  { label: 'Case, alert and payment reason', type: 'CLOSURE' },
   { label: 'Escalation reason', type: 'ESCALATION' },
 ];
 

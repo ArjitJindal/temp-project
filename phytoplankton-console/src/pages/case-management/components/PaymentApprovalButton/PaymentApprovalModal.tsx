@@ -4,11 +4,13 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Modal from '../../../../components/library/Modal/index';
 import { FormRef } from '@/components/library/Form';
 import { CaseReasons, RuleAction } from '@/apis';
-import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import Narrative, { FormValues, NarrativeFormValues, OTHER_REASON } from '@/components/Narrative';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import { useQuery } from '@/utils/queries/hooks';
+import { ACTION_REASONS } from '@/utils/queries/keys';
+import { getOr } from '@/utils/asyncResource';
 
 interface Props {
   visible: boolean;
@@ -39,6 +41,12 @@ const commentFormat = (props: CommentFormatProps) => {
 export default function PaymentApprovalModal(props: Props) {
   const { visible, action, transactionIds, hide, onSuccess } = props;
   const formRef = useRef<FormRef<FormValues<CaseReasons>>>(null);
+  const reasonsResult = useQuery(ACTION_REASONS('CLOSURE'), async () => {
+    return await api.getActionReasons({
+      type: 'CLOSURE',
+    });
+  });
+  const reasons = getOr(reasonsResult.data, []).map((reason) => reason.reason);
   const [narrativeValues, setNarrativeValues] = useState<NarrativeFormValues<CaseReasons>>({
     isValid: false,
     values: { reasons: [], comment: '', files: [], reasonOther: '' },
@@ -145,7 +153,7 @@ export default function PaymentApprovalModal(props: Props) {
         placeholder={'Write a narrative explaining the reason and findings, if any.'}
         entityType={'TRANSACTION'}
         onChange={setNarrativeValues}
-        possibleReasons={CASE_REASONSS}
+        possibleReasons={reasons}
         showErrors={alwaysShowErrors}
         isCopilotEnabled={true}
         otherReason={OTHER_REASON}
