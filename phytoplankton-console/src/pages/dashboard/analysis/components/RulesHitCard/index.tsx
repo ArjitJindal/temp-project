@@ -7,7 +7,7 @@ import { generateAlertsListUrl } from '../HitsPerUserCard/utils';
 import s from './style.module.less';
 import Tooltip from '@/components/library/Tooltip';
 import DatePicker from '@/components/ui/DatePicker';
-import { Dayjs, dayjs } from '@/utils/dayjs';
+import { Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
@@ -25,10 +25,7 @@ import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 export default function RuleHitCard(props: WidgetProps) {
   const api = useApi();
 
-  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
-    dayjs().subtract(1, 'week'),
-    dayjs(),
-  ]);
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(null);
   const [paginationParams, setPaginationParams] = useState<CommonParams>({
     page: 1,
     pageSize: 10,

@@ -26,6 +26,7 @@ import {
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { DashboardStatsRulesCount } from '@/@types/openapi-internal/DashboardStatsRulesCount'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 function getRuleStatsConditions(startDateText: string, endDateText: string) {
   return [
@@ -416,14 +417,20 @@ export class RuleHitsStatsDashboardMetric {
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number,
+    ruleInstances: RuleInstance[],
     pageSize?: number | 'DISABLED',
     page?: number
   ): Promise<DashboardStatsRulesCountResponse> {
+    const allRules = ruleInstances.map(({ id, ruleId }) => ({
+      id: id as string,
+      ruleId: ruleId as string,
+    }))
     if (isClickhouseEnabled()) {
       return this.getFromClickhouse(
         tenantId,
         startTimestamp,
         endTimestamp,
+        allRules,
         pageSize,
         page
       )
@@ -479,12 +486,11 @@ export class RuleHitsStatsDashboardMetric {
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number,
+    allRules: Array<{ id: string; ruleId: string }>,
     pageSize?: number | 'DISABLED',
     page?: number
   ): Promise<DashboardStatsRulesCountResponse> {
     const client = await getClickhouseClient(tenantId)
-    const limit =
-      pageSize === 'DISABLED' ? 'NULL' : pageSize ?? DEFAULT_PAGE_SIZE
     const offset =
       page && pageSize !== 'DISABLED'
         ? (page - 1) * (pageSize ?? DEFAULT_PAGE_SIZE)
@@ -497,7 +503,8 @@ export class RuleHitsStatsDashboardMetric {
         hitCount,
         openAlertsCount,
         runCount,
-        count() OVER() as totalCount
+        if(runCount > 0, hitCount / runCount, 0) as hitRate,
+  count() OVER() as totalCount
       FROM (
         SELECT
           ruleId,
@@ -506,29 +513,43 @@ export class RuleHitsStatsDashboardMetric {
           sum(openAlertsCount) as openAlertsCount,
           sum(runCount) as runCount
         FROM (
-          -- Transaction rule hits
+          -- Transaction event rule hits
           SELECT 
             rule.1 AS ruleInstanceId,
             rule.2 AS ruleId,
             count() as hitCount,
             0 as openAlertsCount,
             0 as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} FINAL
           ARRAY JOIN nonShadowHitRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
           GROUP BY rule.1, rule.2
           
           UNION ALL
+          -- user event rule hits
+          SELECT 
+            rule.1 AS ruleInstanceId,
+            rule.2 AS ruleId,
+            count() as hitCount,
+            0 as openAlertsCount,
+            0 as runCount
+          FROM ${CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName} FINAL
+          ARRAY JOIN nonShadowHitRuleIdPairs AS rule
+          WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+            AND rule.1 != '' AND rule.2 != ''
+          GROUP BY rule.1, rule.2
           
-          -- Transaction rule executions
+          UNION ALL
+
+          -- Transaction event rule executions
           SELECT 
             rule.1 AS ruleInstanceId,
             rule.2 AS ruleId,
             0 as hitCount,
             0 as openAlertsCount,
             count() as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} FINAL
           ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
@@ -536,21 +557,22 @@ export class RuleHitsStatsDashboardMetric {
           
           UNION ALL
           
-          -- User rule executions
+
+          -- User event rule executions
           SELECT 
             rule.1 AS ruleInstanceId,
             rule.2 AS ruleId,
             0 as hitCount,
             0 as openAlertsCount,
             count() as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName} FINAL
           ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
           GROUP BY rule.1, rule.2
-          
           UNION ALL
           
+
           -- Alert data
           SELECT
             alert.ruleInstanceId,
@@ -569,24 +591,65 @@ export class RuleHitsStatsDashboardMetric {
         GROUP BY ruleId, ruleInstanceId
       )
       ORDER BY hitCount DESC
-      LIMIT ${limit} OFFSET ${offset}
     `
-    const items = await executeClickhouseQuery<
-      Array<DashboardStatsRulesCount & { totalCount: number }>
-    >(client, {
-      query: finalQuery,
-      format: 'JSONEachRow',
+    const items = await executeClickhouseQuery<Array<DashboardStatsRulesCount>>(
+      client,
+      {
+        query: finalQuery,
+        format: 'JSONEachRow',
+      }
+    )
+    const existingDataMap = new Map<
+      string,
+      {
+        ruleId: string
+        ruleInstanceId: string
+        hitCount: number
+        openAlertsCount: number
+        runCount: number
+      }
+    >()
+
+    items.forEach((item) => {
+      if (item.ruleId && item.ruleInstanceId) {
+        const key = `${item.ruleId}-${item.ruleInstanceId}`
+        existingDataMap.set(key, {
+          ruleId: item.ruleId,
+          ruleInstanceId: item.ruleInstanceId,
+          hitCount: Number(item.hitCount ?? 0),
+          openAlertsCount: Number(item.openAlertsCount ?? 0),
+          runCount: Number(item.runCount ?? 0),
+        })
+      }
     })
 
+    const allRuleData =
+      allRules?.map(({ id, ruleId }) => {
+        const key = `${ruleId}-${id}`
+        const existingData = existingDataMap.get(key)
+        return (
+          existingData || {
+            ruleId,
+            ruleInstanceId: id,
+            hitCount: 0,
+            openAlertsCount: 0,
+            runCount: 0,
+          }
+        )
+      }) || []
+
+    allRuleData.sort((a, b) => b.hitCount - a.hitCount)
+    const total = allRuleData.length
+    let paginatedData = allRuleData
+
+    if (pageSize !== 'DISABLED') {
+      const limit = pageSize ?? DEFAULT_PAGE_SIZE
+      paginatedData = allRuleData.slice(offset, offset + limit)
+    }
+
     return {
-      data: items.map((item) => ({
-        ruleId: item.ruleId,
-        ruleInstanceId: item.ruleInstanceId,
-        hitCount: Number(item.hitCount ?? 0),
-        openAlertsCount: Number(item.openAlertsCount ?? 0),
-        runCount: Number(item.runCount ?? 0),
-      })),
-      total: Number(items[0]?.totalCount ?? 0),
+      data: paginatedData,
+      total,
     }
   }
 }

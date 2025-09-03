@@ -35,6 +35,7 @@ import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/
 import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 import { DashboardStatsTransactionTypeDistribution } from '@/@types/openapi-internal/DashboardStatsTransactionTypeDistribution'
 import { TransactionsTypeDistributionDashboardMetric } from '@/services/analytics/dashboard-metrics/transaction-type-stats'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 @traceable
 export class DashboardStatsRepository {
@@ -119,10 +120,15 @@ export class DashboardStatsRepository {
     pageSize?: number | 'DISABLED',
     page?: number
   ): Promise<DashboardStatsRulesCountResponse> {
+    const ruleRepository = new RuleInstanceRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    const ruleInstances = await ruleRepository.getAllRuleInstances()
     return RuleHitsStatsDashboardMetric.get(
       this.tenantId,
       startTimestamp,
       endTimestamp,
+      ruleInstances,
       pageSize,
       page
     )

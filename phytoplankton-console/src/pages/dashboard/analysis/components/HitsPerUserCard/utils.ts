@@ -46,7 +46,9 @@ export const generateAlertsListUrl = (
       showCases: 'ALL_ALERTS',
       ...keys,
       userFilterMode: direction,
-      createdTimestamp: `${startTimestamp},${endTimestamp}`,
+      ...(dateRange && startTimestamp != null && endTimestamp != null
+        ? { createdTimestamp: `${startTimestamp},${endTimestamp}` }
+        : {}),
       alertStatus: ['OPEN', 'ESCALATED', ...frozenStatuses].join(','),
     },
   );

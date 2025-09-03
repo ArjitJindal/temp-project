@@ -917,6 +917,26 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         splitByChar(',', JSON_VALUE(data, '$.reason')),
         []
       )`,
+      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+      arrayMap(x -> (
+        JSONExtractString(x, 'ruleInstanceId'),
+        JSONExtractString(x, 'ruleId')
+      ),
+      arrayFilter(
+        x -> JSONExtractBool(x, 'isShadow') != true,
+        JSONExtractArrayRaw(data, 'executedRules')
+      )
+    )`,
+      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+    arrayMap(x -> (
+      JSONExtractString(x, 'ruleInstanceId'),
+      JSONExtractString(x, 'ruleId')
+    ),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'hitRules')
+    )
+  )`,
     ],
   },
   {
@@ -929,6 +949,26 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     mongoIdColumn: true,
     materializedColumns: [
       "userId String MATERIALIZED JSON_VALUE(data, '$.userId')",
+      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+      arrayMap(x -> (
+        JSONExtractString(x, 'ruleInstanceId'),
+        JSONExtractString(x, 'ruleId')
+      ),
+      arrayFilter(
+        x -> JSONExtractBool(x, 'isShadow') != true,
+        JSONExtractArrayRaw(data, 'executedRules')
+      )
+    )`,
+      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+    arrayMap(x -> (
+      JSONExtractString(x, 'ruleInstanceId'),
+      JSONExtractString(x, 'ruleId')
+    ),
+    arrayFilter(
+      x -> JSONExtractBool(x, 'isShadow') != true,
+      JSONExtractArrayRaw(data, 'hitRules')
+    )
+  )`,
     ],
   },
   {

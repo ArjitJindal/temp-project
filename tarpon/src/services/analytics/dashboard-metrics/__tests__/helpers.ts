@@ -8,6 +8,8 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AlertsRepository } from '@/services/alerts/repository'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -58,6 +60,14 @@ export async function getAlertRepo(tenantId: string) {
 
 export async function getStatsRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
+    tenantId
+  )
+  await prepareClickhouseInsert(
+    CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
+    tenantId
+  )
   return new DashboardStatsRepository(tenantId, {
     mongoDb,
     dynamoDb: getDynamoDbClient(),
