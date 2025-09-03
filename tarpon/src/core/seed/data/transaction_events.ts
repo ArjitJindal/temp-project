@@ -33,12 +33,12 @@ const data: () => TransactionEventWithRulesResult[] = memoize(() => {
         timestamp: t.timestamp + 3600000,
         transactionId: t.transactionId,
         eventId: rng.r(1).randomGuid(),
-        hitRules: t.hitRules,
-        executedRules: t.executedRules,
         reason:
           'Some quite long reason here. It should take several lines to check work wrap',
         eventDescription:
           'Some quite long description here. It should take several lines to check work wrap',
+        hitRules: t.hitRules,
+        executedRules: t.executedRules,
         metaData: undefined,
         updatedTransactionAttributes: {
           originAmountDetails: {

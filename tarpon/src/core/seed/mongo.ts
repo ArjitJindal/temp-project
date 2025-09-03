@@ -86,8 +86,6 @@ import {
 } from '@/services/tenants/reasons-service'
 import { getNarrativeTemplates } from '@/core/seed/data/narrative'
 import { isV2RuleInstance } from '@/services/rules-engine/utils'
-import { TarponChangeMongoDbConsumer } from '@/lambdas/tarpon-change-mongodb-consumer/app'
-import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
@@ -138,7 +136,6 @@ export async function seedMongo(
     mongoDb: client,
     dynamoDb: getDynamoDbClient(),
   })
-  const consumer = new TarponChangeMongoDbConsumer()
 
   const settings = await tenantRepository.getTenantSettings(['auth0Domain'])
   const auth0Domain =
@@ -272,20 +269,6 @@ export async function seedMongo(
         ])
       }
     }
-  }
-
-  logger.info('Updating rule stats with events...')
-  const transactionEventsCollection =
-    db.collection<TransactionEventWithRulesResult>(
-      TRANSACTION_EVENTS_COLLECTION(tenantId)
-    )
-  const transactionEvents = await transactionEventsCollection.find().toArray()
-  for (const event of transactionEvents) {
-    await consumer.handleRuleStats(
-      tenantId,
-      { newExecutedRules: event.executedRules ?? [], oldExecutedRules: [] },
-      { mongoDb: client, dynamoDb }
-    )
   }
 
   logger.info('Refreshing dashboard stats...')
