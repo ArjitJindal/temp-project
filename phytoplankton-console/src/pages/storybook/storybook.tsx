@@ -14,6 +14,7 @@ import StepButtons from '@/components/library/StepButtons/story';
 import SelectionGroup from '@/components/library/SelectionGroup/story';
 import Stepper from '@/components/library/Stepper/story';
 import Card from '@/components/ui/Card/story';
+import ProgressBar from '@/components/ui/ProgressBar/story';
 import Form from '@/components/library/Form/story';
 import Drawer from '@/components/library/Drawer/story';
 import DrawerStepperJsonSchemaForm from '@/components/library/DrawerStepperJsonSchemaForm/story';
@@ -272,6 +273,10 @@ const config: Config = [
     key: 'to-add',
     title: 'To add to library',
     components: [
+      {
+        key: 'ProgressBar',
+        story: ProgressBar,
+      },
       {
         key: 'DateRangePicker',
         story: DateRangePicker,
