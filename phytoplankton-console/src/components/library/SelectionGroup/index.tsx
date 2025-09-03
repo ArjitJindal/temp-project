@@ -11,7 +11,7 @@ export type SelectionGroupValueType = string | boolean | number | undefined;
 export interface Option<Value extends SelectionGroupValueType = SelectionGroupValueType> {
   value: Value;
   label: string;
-  description?: string;
+  description?: string | React.ReactNode;
   isDisabled?: boolean;
   tooltip?: string;
 }
