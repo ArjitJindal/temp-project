@@ -672,7 +672,6 @@ export default function SuperAdminPanel() {
                         },
                       });
                     }}
-                    htmlAttrs={{ type: 'password' }}
                   />
                 </Label>
               </Label>
