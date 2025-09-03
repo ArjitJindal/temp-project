@@ -8617,8 +8617,12 @@ components:
           type: number
         total:
           type: number
+        processed:
+          type: number
         status:
           $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
+        isValidationJobFound:
+          type: boolean
         isValidationJobRunning:
           type: boolean
         erroredRecrodS3Key:

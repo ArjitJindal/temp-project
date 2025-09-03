@@ -63,6 +63,13 @@ export default function ListsItemPage() {
     {
       enabled: !!listId && isSuccess(listHeaderRes) && listHeaderData?.subtype === 'CUSTOM',
       onSuccess: (data) => {
+        if (data.isValidationJobFound) {
+          setShowProgress(false);
+          if (isInitialLoad) {
+            setIsInitialLoad(false);
+          }
+          return;
+        }
         setShowProgress(['IN_PROGRESS'].includes(data.status ?? ''));
         if (data.status === 'SUCCESS' || data.status === 'FAILED') {
           queryClient.invalidateQueries({

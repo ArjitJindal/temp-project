@@ -3,7 +3,6 @@ import fs from 'fs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
-import { NotFound } from 'http-errors'
 import { ClickHouseClient } from '@clickhouse/client'
 import { S3 } from '@aws-sdk/client-s3'
 import { getFlatFileErrorRecordS3Key } from '@flagright/lib/utils'
@@ -23,6 +22,7 @@ import { BulkSanctionsHitsUpdateRunner } from './runner/bulk-sanctions-hits-upda
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
+import { FlatFileProgressResponse } from '@/@types/openapi-internal/FlatFileProgressResponse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -233,7 +233,10 @@ export class FlatFilesService {
     await this.getErroredRows(s3Key)
   }
 
-  async getProgress(schema: FlatFileSchema, entityId: string) {
+  async getProgress(
+    schema: FlatFileSchema,
+    entityId: string
+  ): Promise<FlatFileProgressResponse> {
     const mongoDb = await getMongoDbClient()
     let s3Key: string | null = null
     let isValidationJobRunning = true
@@ -253,30 +256,38 @@ export class FlatFilesService {
       },
       1
     )
-    if (fileValidationJobs.length > 0) {
-      s3Key = fileValidationJobs[0].parameters?.s3Key ?? ''
-      batchJobStatus = fileValidationJobs[0].latestStatus.status
+    const lastFileValidationJob = fileValidationJobs[0]
+    if (lastFileValidationJob != null) {
+      s3Key = lastFileValidationJob.parameters?.s3Key ?? ''
+      batchJobStatus = lastFileValidationJob.latestStatus.status
     }
-    const fileRunnerJobs = await batchJobRepository.getJobs(
-      {
-        type: 'FLAT_FILES_RUNNER',
-        ...filterParams,
-      },
-      1
-    )
-    if (fileRunnerJobs.length > 0) {
-      isValidationJobRunning = false
-      s3Key = fileRunnerJobs[0].parameters?.s3Key ?? ''
-      batchJobStatus = fileRunnerJobs[0].latestStatus.status
+    // if there is ongoing validation job, do not search for file runner job
+    if (lastFileValidationJob?.latestStatus.status === 'SUCCESS') {
+      const fileRunnerJobs = await batchJobRepository.getJobs(
+        {
+          type: 'FLAT_FILES_RUNNER',
+          ...filterParams,
+        },
+        1
+      )
+      if (fileRunnerJobs.length > 0) {
+        isValidationJobRunning = false
+        s3Key = fileRunnerJobs[0].parameters?.s3Key ?? ''
+        batchJobStatus = fileRunnerJobs[0].latestStatus.status
+      }
     }
+
     if (!s3Key || !batchJobStatus) {
-      throw new NotFound('No running jobs found')
+      return {
+        isValidationJobFound: false,
+      }
     }
 
     const clickhouseClient = await getClickhouseClient(this.tenantId)
 
     const query = `
     SELECT COUNT(DISTINCT row) AS totalCount,
+    COUNT(DISTINCT IF(isProcessed = true, row, NULL)) AS processedRows,
     COUNT(DISTINCT IF(isProcessed = true AND isError = false, row, NULL)) AS savedRows,
     COUNT(DISTINCT IF(isError = true, row, NULL))  AS erroredRows
     FROM ${FlatFilesRecords.tableDefinition.tableName}
@@ -289,12 +300,14 @@ export class FlatFilesService {
     }>(clickhouseClient, query)
 
     // Extract count values
+    const processedCount = result[0].processedRows
     const totalCount = result[0].totalCount
     const savedRows = result[0].savedRows
     const erroredRows = result[0].erroredRows
 
     return {
       total: totalCount,
+      processed: processedCount,
       saved: savedRows,
       errored: erroredRows,
       status: batchJobStatus,
