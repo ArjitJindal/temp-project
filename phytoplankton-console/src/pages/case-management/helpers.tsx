@@ -18,7 +18,7 @@ import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules'
 import { TableSearchParams } from '@/pages/case-management/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import TransactionTagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
@@ -346,7 +346,7 @@ export const useCaseAlertFilters = (
       key: 'tagKey',
       title: 'Tags',
       renderer: ({ params, setParams }) => (
-        <TagSearchButton
+        <TransactionTagSearchButton
           initialState={{
             key: params.tagKey ?? null,
             value: params.tagValue ?? null,

@@ -78,6 +78,7 @@ export interface TagsProps<Value extends Comparable> extends CommonProps, InputP
 export interface DynamicProps extends CommonProps, InputProps<string> {
   mode: 'DYNAMIC';
   options: Option<string>[];
+  keepUnusedOptionsAvailable?: boolean;
 }
 
 export type Props<Value extends Comparable> =
@@ -117,8 +118,15 @@ export default function Select<Value extends Comparable = string>(props: Props<V
 
   const [virtualOptions, setVirtualOptions] = useState<Option<Value>[]>([]);
 
+  const keepUnusedOptionsAvailable =
+    props.mode === 'DYNAMIC' && props.keepUnusedOptionsAvailable !== false;
+
   const availableOptions = useMemo(() => {
-    const result: Option<Value>[] = [...virtualOptions, ...(options as Option<Value>[])];
+    const result: Option<Value>[] = [];
+    if (keepUnusedOptionsAvailable) {
+      result.push(...virtualOptions);
+    }
+    result.push(...(options as Option<Value>[]));
     if (mode === 'DYNAMIC') {
       const isOptionExists = value != null && result.some((x) => compare(x.value, value));
       if (!isOptionExists && value != null) {
@@ -133,7 +141,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       }
     }
     return result;
-  }, [virtualOptions, options, mode, value]);
+  }, [virtualOptions, options, mode, value, keepUnusedOptionsAvailable]);
 
   const applySearchStringValue = useCallback(
     (searchString: string, value: Value | Value[] | undefined | string) => {
@@ -146,7 +154,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         );
         newValue = uniq([...((value as Value[]) ?? []), ...parsedValues] as Value[]);
       } else if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == null) {
-        const parsedValues = parseSearchString<Value>(availableOptions, searchString, true);
+        const parsedValues = parseSearchString<Value>(
+          availableOptions,
+          searchString,
+          mode !== 'DYNAMIC',
+        );
         newValue = parsedValues[0] ?? value;
       } else {
         newValue = value;

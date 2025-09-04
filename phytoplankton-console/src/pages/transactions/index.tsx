@@ -12,7 +12,7 @@ import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import TransactionTagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { dayjs } from '@/utils/dayjs';
@@ -119,7 +119,7 @@ const TableList = () => {
               key: 'tagKey',
               title: 'Tags',
               renderer: ({ params, setParams }) => (
-                <TagSearchButton
+                <TransactionTagSearchButton
                   initialState={{
                     key: params.tagKey ?? undefined,
                     value: params.tagValue ?? undefined,

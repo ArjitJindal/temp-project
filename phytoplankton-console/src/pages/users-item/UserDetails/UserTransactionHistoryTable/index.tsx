@@ -44,7 +44,7 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 import { useRuleOptions } from '@/utils/rules';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import TagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';

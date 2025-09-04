@@ -10,7 +10,7 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Ta
 import { useDeepEqualEffect } from '@/utils/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { dayjs } from '@/utils/dayjs';
-import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import TransactionTagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 import { useTransactionsQuery } from '@/pages/transactions/utils';
@@ -88,7 +88,7 @@ export default function TransactionsList(props: Props) {
           key: 'tagKey',
           title: 'Tags',
           renderer: ({ params, setParams }) => (
-            <TagSearchButton
+            <TransactionTagSearchButton
               initialState={{
                 key: params.tagKey ?? undefined,
                 value: params.tagValue ?? undefined,
