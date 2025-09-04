@@ -4966,6 +4966,8 @@ components:
         specialInstructions:
           type: string
           description: Special instructions if any
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5059,6 +5061,9 @@ components:
           description: Transit number of the bank account
         address:
           $ref: '#/components/schemas/Address'
+        routingNumber:
+          type: string
+          description: Routing number of the bank
       required:
         - method
     UPIDetails:
@@ -6330,6 +6335,8 @@ components:
           maximum: 4133890801000
         shippingAddress:
           $ref: '#/components/schemas/Address'
+        accountNumber:
+          type: string
         tags:
           type: array
           description: Additional information that can be added via tags
