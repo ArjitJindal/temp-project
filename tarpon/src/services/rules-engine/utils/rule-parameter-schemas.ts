@@ -1,4 +1,4 @@
-import { lowerCase, startCase } from 'lodash'
+import { startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
@@ -14,7 +14,6 @@ import {
 } from '@/services/rules-engine/utils/rule-schema-utils'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
-import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
@@ -983,31 +982,6 @@ export const FUZZINESS_RANGE_SCHEMA = (options?: NumberSliderSchemaOptions) =>
     required: [],
   } as const)
 
-export const SANCTIONS_SCREENING_TYPES_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...uiSchema(options?.uiSchema),
-    type: 'array',
-    title: options?.title || 'Screening',
-    description:
-      options?.description ||
-      'Select type of screening that you want to run (Please refer to your contract to understand the cost implications for each screening type before you confirm.)',
-    items: {
-      type: 'string',
-      enum: SANCTIONS_SEARCH_TYPES,
-      enumNames: SANCTIONS_SEARCH_TYPES.map((type) =>
-        startCase(lowerCase(type))
-      ),
-    },
-    uniqueItems: true,
-  } as const)
-
-export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
-  options: PercentSchemaOptions
-) =>
-  ({
-    ...SANCTIONS_SCREENING_TYPES_SCHEMA(options),
-    nullable: true,
-  } as const)
 export const GENERIC_SANCTIONS_SCREENING_TYPES_SCHEMA = (
   options?: SchemaOptions
 ) =>

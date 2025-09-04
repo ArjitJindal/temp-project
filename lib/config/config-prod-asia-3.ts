@@ -105,8 +105,6 @@ export const config: Config = {
     MONGO_ATLAS_CLUSTER: 'Prod-HKG',
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.com/',
-    COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
-      '01c3b373-c01a-48b2-96f7-3fcf17dd0c91',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     ZENDUTY_WEBHOOK_URL:
       'https://events.zenduty.com/integration/ro7ie/cloudwatch_v2/f90e82f4-d250-4237-94e6-a5f89cfe49f5/',

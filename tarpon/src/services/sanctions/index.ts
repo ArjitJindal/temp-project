@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { intersection, omit, pick, round, startCase, uniq } from 'lodash'
+import { intersection, omit, pick, uniq } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import {
   getSourceUrl,
@@ -61,12 +61,8 @@ import {
   SanctionsSourceListResponse,
   SanctionsSourceType,
 } from '@/@types/openapi-internal/all'
-import {
-  SanctionsDataProvider,
-  SanctionsProviderResponse,
-} from '@/services/sanctions/providers/types'
+import { SanctionsDataProvider } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
-import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 import {
   DEFAULT_PROVIDER_TYEPS_MAP,
   getDefaultProviders,
@@ -90,7 +86,6 @@ export type ProviderConfig = {
 
 @traceable
 export class SanctionsService {
-  complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository: SanctionsSearchRepository
   sanctionsHitsRepository: SanctionsHitsRepository
   sanctionsSourcesRepository: MongoSanctionSourcesRepository
@@ -156,11 +151,6 @@ export class SanctionsService {
     providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
-      case 'comply-advantage':
-        return await ComplyAdvantageDataProvider.build(
-          this.tenantId,
-          providerConfig?.stage
-        )
       case 'dowjones':
         return await DowJonesProvider.build(this.tenantId, connections)
       case 'open-sanctions':
@@ -248,23 +238,18 @@ export class SanctionsService {
     )
   }
 
-  private isSearchTermInvalid(
-    searchTerm: string,
-    providerName: SanctionsDataProviderName
-  ): boolean {
+  private isSearchTermInvalid(searchTerm: string): boolean {
     if (!searchTerm) {
       return true
     }
-    if (providerName !== 'comply-advantage') {
-      if (
-        hasFeature('TRANSLITERATION') &&
-        !isLatinScript(normalize(searchTerm))
-      ) {
-        return false
-      }
-      if (!sanitizeString(searchTerm)) {
-        return true
-      }
+    if (
+      hasFeature('TRANSLITERATION') &&
+      !isLatinScript(normalize(searchTerm))
+    ) {
+      return false
+    }
+    if (!sanitizeString(searchTerm)) {
+      return true
     }
     return false
   }
@@ -297,14 +282,8 @@ export class SanctionsService {
     const providers = getDefaultProviders()
     const providerName = providerOverrides?.providerName || providers[0]
 
-    // Normalize search term
-    request.searchTerm =
-      providerName === 'comply-advantage'
-        ? startCase(request.searchTerm.toLowerCase())
-        : request.searchTerm
-
     if (
-      this.isSearchTermInvalid(request.searchTerm, providerName) ||
+      this.isSearchTermInvalid(request.searchTerm) ||
       !providerName ||
       this.isYearOfBirthInvalid(request.yearOfBirth)
     ) {
@@ -317,59 +296,26 @@ export class SanctionsService {
       }
     }
 
-    request.fuzziness = this.getSanitizedFuzziness(
-      request.fuzziness,
-      providerName
-    )
+    request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
     request.types = this.getSanctionsSearchType(request.types, providers)
     let searchId: string = uuidv4()
-    let providerSearchId: string
-    let createdAt: number | undefined = undefined
+    const createdAt: number | undefined = undefined
 
-    let existedSearch: SanctionsSearchHistory | null = null
-    existedSearch =
-      providerName === 'comply-advantage'
-        ? await this.sanctionsSearchRepository.getSearchResultByParams(
-            providerName,
-            request,
-            providerOverrides
-          )
-        : null
-    let sanctionsSearchResponse: SanctionsProviderResponse
-
-    // Only cache results from comply advantage
-    const shouldSearch =
-      !existedSearch?.response || providerName !== 'comply-advantage'
-    if (shouldSearch) {
-      const provider = await this.getProvider(
+    const provider = await this.getProvider(
+      providerName,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
+      providerOverrides
+    )
+    const [sanctionsSearchResponse, existedSearch] = await Promise.all([
+      provider.search(request),
+      this.sanctionsSearchRepository.getSearchResultByParams(
         providerName,
-        { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
+        request,
         providerOverrides
-      )
-
-      if (providerName !== 'comply-advantage') {
-        let existedSearch: SanctionsSearchHistory | null
-        ;[sanctionsSearchResponse, existedSearch] = await Promise.all([
-          provider.search(request),
-          this.sanctionsSearchRepository.getSearchResultByParams(
-            providerName,
-            request,
-            providerOverrides
-          ),
-        ])
-        searchId = existedSearch?.response?.searchId ?? searchId // As we search anyways when provider is not comply advantage, we can use the searchId from the response to avoid duplicates
-      } else {
-        sanctionsSearchResponse = await provider.search(request)
-      }
-      providerSearchId = sanctionsSearchResponse.providerSearchId
-    } else {
-      createdAt = existedSearch?.createdAt
-      searchId = existedSearch?.response?.searchId || ''
-      providerSearchId = existedSearch?.response?.providerSearchId || ''
-      sanctionsSearchResponse =
-        existedSearch?.response as SanctionsSearchResponse
-    }
-
+      ),
+    ])
+    searchId = existedSearch?.response?.searchId ?? searchId
+    const providerSearchId = sanctionsSearchResponse.providerSearchId
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
         sanctionsSearchResponse.data ?? [],
@@ -385,7 +331,7 @@ export class SanctionsService {
       createdAt: createdAt ?? Date.now(),
     }
 
-    if (shouldSearch && (!hasFeature('DOW_JONES') || response.hitsCount > 0)) {
+    if (!hasFeature('DOW_JONES') || response.hitsCount > 0) {
       await this.sanctionsSearchRepository.saveSearchResult({
         provider: providerName,
         createdAt: createdAt,
@@ -414,11 +360,7 @@ export class SanctionsService {
       })
     }
 
-    if (
-      !existedSearch?.response &&
-      providerName === 'comply-advantage' &&
-      request.monitoring
-    ) {
+    if (!existedSearch?.response && request.monitoring) {
       await this.updateSearch(searchId, request.monitoring, providerOverrides)
     }
 
@@ -491,15 +433,10 @@ export class SanctionsService {
   }
 
   private getSanitizedFuzziness(
-    fuzziness: number | undefined,
-    providerName: SanctionsDataProviderName
+    fuzziness: number | undefined
   ): number | undefined {
     if (fuzziness == null) {
       return DEFAULT_FUZZINESS
-    }
-    if (providerName === 'comply-advantage') {
-      // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.
-      return round(fuzziness, 1)
     }
     return fuzziness
   }

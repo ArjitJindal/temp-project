@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
+export default function ScreeningHitDetailsDrawer(props: Props) {
   const { hit, onClose } = props;
 
   return (

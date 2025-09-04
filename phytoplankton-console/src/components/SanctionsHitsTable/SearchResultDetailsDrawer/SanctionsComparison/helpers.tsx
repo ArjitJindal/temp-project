@@ -3,7 +3,7 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { SanctionsComparisonTableItem, SanctionsComparisonTableItemMatch } from './types';
 import {
-  ComplyAdvantageNameMatched,
+  SanctionsNameMatched,
   CountryCode,
   SanctionsEntity,
   SanctionsHitContext,
@@ -119,9 +119,7 @@ export function getComparisonItems(
   );
 }
 
-export function reduceMatched(
-  matches: ComplyAdvantageNameMatched[],
-): SanctionsComparisonTableItemMatch {
+export function reduceMatched(matches: SanctionsNameMatched[]): SanctionsComparisonTableItemMatch {
   [].reduce;
   const matchTypes: SanctionsComparisonTableItemMatch[] = matches.map(({ match_types = [] }) => {
     return match_types.reduce<SanctionsComparisonTableItemMatch>((result, x) => {

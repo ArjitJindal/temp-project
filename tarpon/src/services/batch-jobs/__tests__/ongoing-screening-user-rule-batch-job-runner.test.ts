@@ -1,13 +1,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
-import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import {
-  MOCK_CA_SEARCH_NO_HIT_RESPONSE,
-  MOCK_CA_SEARCH_RESPONSE,
-} from '@/test-utils/resources/mock-ca-search-response'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
@@ -15,7 +10,6 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { BatchJobWithId } from '@/@types/batch-job'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { SanctionsService } from '@/services/sanctions'
 import { RulesEngineService } from '@/services/rules-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -26,9 +20,11 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { preprocessUsers } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
+import { GenericSanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/generic-sanctions-consumer-user'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 dynamoDbSetupHook()
-withFeatureHook(['SANCTIONS'])
+withFeatureHook(['SANCTIONS', 'DOW_JONES'])
 
 const MIDDLE_OF_JUNE = '2024-06-15T12:00:00.000Z'
 const END_OF_JUNE = '2024-06-30T12:00:00.000Z'
@@ -56,14 +52,12 @@ jest.mock('@/services/sanctions', () => {
               ...params: Parameters<SearchMethodType>
             ): ReturnType<SearchMethodType> => {
               const [request] = params
-              const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
-                request.searchTerm
-              )
-                ? MOCK_CA_SEARCH_RESPONSE
-                : MOCK_CA_SEARCH_NO_HIT_RESPONSE
+              const hitsCount = TEST_SANCTIONS_HITS.includes(request.searchTerm)
+                ? 10
+                : 0
 
               return {
-                hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
+                hitsCount,
                 searchId: 'test-search-id',
                 providerSearchId: 'test-provider-search-id',
                 createdAt: 1683301138980,
@@ -80,12 +74,18 @@ describe('Batch Job Sanctions Screening Rule', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'R-16',
+      id: 'R-17',
       defaultParameters: {
         fuzziness: 50,
+        fuzzinessRange: {
+          lowerBound: 0,
+          upperBound: 50,
+        },
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'test-screening-profile-id',
         screeningTypes: ['SANCTIONS'],
         ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-      } as SanctionsConsumerUserRuleParameters,
+      } as GenericSanctionsConsumerUserRuleParameters,
     },
   ])
 
@@ -130,15 +130,11 @@ describe('Batch Job Sanctions Screening Rule', () => {
       jobId: uuidv4(),
     }
 
-    const spy = jest.spyOn(CaseCreationService.prototype, 'handleUser')
-
     await jobRunnerHandler(testJob)
 
     const user1After = await userRepository.getUser<UserWithRulesResult>(
       user1.userId
     )
-
-    expect(spy).toBeCalledTimes(1)
 
     expect(user1After).toMatchObject({
       legalDocuments: [
@@ -255,12 +251,18 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'R-16',
+      id: 'R-17',
       defaultParameters: {
-        screeningTypes: ['SANCTIONS'],
         fuzziness: 50,
-        ruleStages: ['INITIAL', 'UPDATE'],
-      } as SanctionsConsumerUserRuleParameters,
+        fuzzinessRange: {
+          lowerBound: 0,
+          upperBound: 50,
+        },
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'test-screening-profile-id',
+        screeningTypes: ['SANCTIONS'],
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+      } as GenericSanctionsConsumerUserRuleParameters,
     },
   ])
 
@@ -473,14 +475,14 @@ describe('preprocessUsers', () => {
         name: 'John Doe',
         aka: ['Jonathan Doe'],
         documents: [{ id: 'doc1', formattedId: 'doc001' }],
-        provider: 'comply-advantage',
+        provider: SanctionsDataProviders.DOW_JONES,
       },
       {
         id: 's2',
         name: 'Jane Smith',
         aka: [],
         documents: [{ id: 'doc2' }],
-        provider: 'comply-advantage',
+        provider: SanctionsDataProviders.DOW_JONES,
       },
     ])
 

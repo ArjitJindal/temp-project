@@ -11,13 +11,13 @@ import {
 } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 import { hasFeature } from '@/core/utils/context'
 import { bulkUpdate } from '@/utils/opensearch-utils'
+import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesSanctionsSearchType'
 import { generateHashFromString } from '@/utils/object'
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
@@ -138,7 +138,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
         id: string
         name: string
         occupations: SanctionsOccupation[]
-        sanctionSearchTypes: SanctionsSearchType[]
+        sanctionSearchTypes: DowJonesSanctionsSearchType[]
       }>([
         { $match: { id: { $in: assocationIds }, provider, version } },
         {

@@ -13,7 +13,7 @@ import {
   useColumns,
   useExtraFilters,
 } from '@/components/SanctionsWhitelistTable/helpers';
-import ComplyAdvantageHitDetailsDrawer from '@/components/ComplyAdvantageHitTable/ComplyAdvantageHitDetailsDrawer';
+import ScreeningHitDetailsDrawer from '@/components/ScreeningHitTable/ScreeningHitDetailsDrawer';
 
 interface Props {
   singleUserMode?: boolean;
@@ -70,7 +70,7 @@ export default function SanctionsWhitelistTable(props: Props) {
         onChangeParams={onChangeParams}
         columns={columns}
       />
-      <ComplyAdvantageHitDetailsDrawer
+      <ScreeningHitDetailsDrawer
         hit={selectedSearchHit?.sanctionsEntity ? selectedSearchHit.sanctionsEntity : null}
         onClose={() => setSelectedSearchHit(undefined)}
       />

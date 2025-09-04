@@ -11,7 +11,7 @@ import {
   useHasNoSanctionsProviders,
   useSettings,
 } from '../AppWrapper/Providers/SettingsProvider';
-import ComplyAdvantageHitDetailsDrawer from './ComplyAdvantageHitDetailsDrawer';
+import ScreeningHitDetailsDrawer from './ScreeningHitDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -25,7 +25,6 @@ import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID } from '@/components/library/Table/standardDataTypes';
@@ -86,7 +85,6 @@ export default function SanctionsSearchTable(props: Props) {
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
-  const hasFeatureSanctions = useFeatureEnabled('SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
@@ -241,26 +239,12 @@ export default function SanctionsSearchTable(props: Props) {
     );
   }, [settings, hasFeatureDowJones]);
 
-  const sanctionsOptions = useMemo(() => {
-    if (!hasFeatureSanctions || isScreeningProfileEnabled || hasFeatureOpenSanctions) {
-      return [];
-    }
-    return (
-      settings?.sanctions?.providerScreeningTypes?.find(
-        (type) => type.provider === 'comply-advantage',
-      )?.screeningTypes ?? SANCTIONS_SEARCH_TYPES
-    );
-  }, [settings, hasFeatureSanctions, isScreeningProfileEnabled, hasFeatureOpenSanctions]);
-
-  const options = uniq([
-    ...openSanctionsOptions,
-    ...acurisOptions,
-    ...sanctionsOptions,
-    ...dowJonesOptions,
-  ]).map((option) => ({
-    label: humanizeAuto(option),
-    value: option,
-  }));
+  const options = uniq([...openSanctionsOptions, ...acurisOptions, ...dowJonesOptions]).map(
+    (option) => ({
+      label: humanizeAuto(option),
+      value: option,
+    }),
+  );
 
   const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
   const selectedProfile = searchProfiles.find(
@@ -409,19 +393,16 @@ export default function SanctionsSearchTable(props: Props) {
       },
     });
   }
-
-  if (!settings.sanctions?.customSearchProfileId) {
-    extraFilters.push({
-      title: 'Matched type',
-      key: 'types',
-      renderer: {
-        kind: 'select',
-        options: options,
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    });
-  }
+  extraFilters.push({
+    title: 'Matched type',
+    key: 'types',
+    renderer: {
+      kind: 'select',
+      options: options,
+      mode: 'MULTIPLE',
+      displayMode: 'select',
+    },
+  });
 
   extraFilters.forEach((filter) => {
     const renderer = filter.renderer as any;
@@ -460,7 +441,7 @@ export default function SanctionsSearchTable(props: Props) {
         readOnlyFilters={readOnly}
         sizingMode="FULL_WIDTH"
       />
-      <ComplyAdvantageHitDetailsDrawer
+      <ScreeningHitDetailsDrawer
         hit={selectedSearchHit ?? null}
         searchedAt={searchedAt}
         onClose={() => setSelectedSearchHit(undefined)}

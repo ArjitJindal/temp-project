@@ -7,7 +7,6 @@ export type Secrets = {
   clueso: {
     privateKey: string
   }
-  complyAdvantageCreds: { apiKey: string }
   openAI: string
   ibanapiCreds: { apiKey: string }
   apininjasCreds: { apiKey: string }

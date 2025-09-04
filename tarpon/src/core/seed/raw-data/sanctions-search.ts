@@ -14,11 +14,11 @@ import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsMatchType'
-import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { SanctionsEntityDelta } from '@/@types/openapi-internal/SanctionsEntityDelta'
 import { hasFeature } from '@/core/utils/context'
+import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
 
 const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
   RU: 'Russian Federation',
@@ -491,7 +491,7 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
         types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
-            SANCTIONS_SEARCH_TYPES,
+            ACURIS_SANCTIONS_SEARCH_TYPES,
             this.rng.r(4).randomIntInclusive(1, 3)
           ),
       },
@@ -584,7 +584,7 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
         types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
-            SANCTIONS_SEARCH_TYPES,
+            ACURIS_SANCTIONS_SEARCH_TYPES,
             this.sanctionsRng.r(4).randomIntInclusive(1, 3)
           ),
       },
@@ -895,7 +895,7 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
 const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['RU'],
-    name: 'ComplyAdvantage PEP Data',
+    name: 'Head of State',
     fields: [
       {
         name: 'Country',

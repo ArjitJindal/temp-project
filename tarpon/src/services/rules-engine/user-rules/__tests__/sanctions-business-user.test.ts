@@ -8,10 +8,6 @@ import {
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import {
-  MOCK_CA_SEARCH_NO_HIT_RESPONSE,
-  MOCK_CA_SEARCH_RESPONSE,
-} from '@/test-utils/resources/mock-ca-search-response'
 import { SanctionsService } from '@/services/sanctions'
 const TEST_SANCTIONS_HITS = ['Company Name', 'Director 1', 'Shareholder 1']
 
@@ -28,14 +24,12 @@ jest.mock('@/services/sanctions', () => {
               ...params: Parameters<SearchMethodType>
             ): ReturnType<SearchMethodType> => {
               const [request] = params
-              const rawComplyAdvantageResponse = TEST_SANCTIONS_HITS.includes(
-                request.searchTerm
-              )
-                ? MOCK_CA_SEARCH_RESPONSE
-                : MOCK_CA_SEARCH_NO_HIT_RESPONSE
+              const hitsCount = TEST_SANCTIONS_HITS.includes(request.searchTerm)
+                ? 10
+                : 0
 
               return {
-                hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
+                hitsCount,
                 searchId: 'test-search-id',
                 providerSearchId: 'test-provider-search-id',
                 createdAt: 1683301138980,

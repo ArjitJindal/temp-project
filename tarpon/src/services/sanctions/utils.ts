@@ -22,7 +22,6 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
-import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { envIs } from '@/utils/env'
 
 export const COLLECTIONS_MAP: {
@@ -38,7 +37,6 @@ export const DEFAULT_PROVIDER_TYEPS_MAP: {
   [SanctionsDataProviders.ACURIS]: ACURIS_SANCTIONS_SEARCH_TYPES,
   [SanctionsDataProviders.OPEN_SANCTIONS]: OPEN_SANCTIONS_SEARCH_TYPES,
   [SanctionsDataProviders.DOW_JONES]: DOW_JONES_SANCTIONS_SEARCH_TYPES,
-  [SanctionsDataProviders.COMPLY_ADVANTAGE]: SANCTIONS_SEARCH_TYPES,
 }
 
 export const FEATURE_FLAG_PROVIDER_MAP: Record<
@@ -67,9 +65,6 @@ export function getDefaultProviders(): SanctionsDataProviderName[] {
   }
   if (hasFeature('ACURIS')) {
     providers.push(SanctionsDataProviders.ACURIS)
-  }
-  if (providers.length === 0 && hasFeature('SANCTIONS')) {
-    providers.push(SanctionsDataProviders.COMPLY_ADVANTAGE)
   }
   return providers
 }

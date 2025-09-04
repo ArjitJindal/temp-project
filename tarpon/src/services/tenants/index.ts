@@ -427,34 +427,9 @@ export class TenantService {
         },
         riskScoringAlgorithm: { type: 'FORMULA_SIMPLE_AVG' },
         auth0Domain: tenantData.auth0Domain,
-        ...(tenantData.sanctionsMarketType && {
-          sanctions: { marketType: tenantData.sanctionsMarketType },
-        }),
         ...(tenantData.features.includes('CRM') && {
           crmIntegrationName: 'ZENDESK',
         }),
-        ...(tenantData.sanctionsMarketType ||
-        tenantData.sanctionsScreeningTypes ||
-        tenantData.sanctionsEntityTypes
-          ? {
-              sanctions: {
-                ...(tenantData.sanctionsMarketType && {
-                  marketType: tenantData.sanctionsMarketType,
-                }),
-                providerScreeningTypes: [
-                  {
-                    provider: 'comply-advantage',
-                    ...(tenantData.sanctionsScreeningTypes && {
-                      screeningTypes: tenantData.sanctionsScreeningTypes,
-                    }),
-                    ...(tenantData.sanctionsEntityTypes && {
-                      entityTypes: tenantData.sanctionsEntityTypes,
-                    }),
-                  },
-                ],
-              },
-            }
-          : {}),
       }
 
       const dynamoDb = this.dynamoDb

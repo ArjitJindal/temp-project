@@ -179,9 +179,9 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
             fuzzinessSetting === 'LEVENSHTEIN_DISTANCE_DEFAULT',
           jarowinklerDistance: fuzzinessSetting === 'JAROWINKLER_DISTANCE',
         },
-        ...getIsActiveParameters(providers, screeningTypes, isActive),
-        ...getStopwordSettings(providers, stopwords),
-        ...getPartialMatchParameters(providers, partialMatch),
+        ...getIsActiveParameters(screeningTypes, isActive),
+        ...getStopwordSettings(stopwords),
+        ...getPartialMatchParameters(partialMatch),
         ...(providers.includes(SanctionsDataProviders.ACURIS)
           ? { screeningProfileId: screeningProfileId ?? undefined }
           : {}),
@@ -190,10 +190,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           fuzzyAddressMatching,
           user.contactDetails?.addresses
         ),
-        ...getEnableShortNameMatchingParameters(
-          providers,
-          enableShortNameMatching
-        ),
+        ...getEnableShortNameMatchingParameters(enableShortNameMatching),
       },
       hitContext,
       undefined

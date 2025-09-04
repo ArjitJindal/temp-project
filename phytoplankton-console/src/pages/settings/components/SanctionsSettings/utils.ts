@@ -7,7 +7,6 @@ import {
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearchType';
 
 export const DEFAULT_PROVIDER_TYEPS_MAP: {
@@ -16,7 +15,6 @@ export const DEFAULT_PROVIDER_TYEPS_MAP: {
   acuris: ACURIS_SANCTIONS_SEARCH_TYPES,
   'open-sanctions': OPEN_SANCTIONS_SEARCH_TYPES,
   dowjones: DOW_JONES_SANCTIONS_SEARCH_TYPES,
-  'comply-advantage': SANCTIONS_SEARCH_TYPES,
 };
 
 export function getSanctionsSearchTypeOptions(
@@ -47,8 +45,5 @@ const getProviders = (features: Feature[]) => {
       providers.push('dowjones');
     }
   });
-  if (providers.length === 0 && features.includes('SANCTIONS')) {
-    providers.push('comply-advantage');
-  }
   return providers;
 };

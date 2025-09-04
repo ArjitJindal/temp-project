@@ -13,15 +13,15 @@ import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
-import { SanctionsSearchType } from '@/apis';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import AccountTag from '@/components/AccountTag';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
+import { GenericSanctionsSearchType } from '@/apis';
+import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
-  types?: SanctionsSearchType[];
+  types?: GenericSanctionsSearchType[];
   createdAt?: RangeValue<Dayjs>;
   searchedBy?: string[];
 };
@@ -110,7 +110,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       key: 'types',
       renderer: {
         kind: 'select',
-        options: SANCTIONS_SEARCH_TYPES.map((value) => ({
+        options: GENERIC_SANCTIONS_SEARCH_TYPES.map((value) => ({
           label: humanizeCamelCase(value),
           value,
         })),

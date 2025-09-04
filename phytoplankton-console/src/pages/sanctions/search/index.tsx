@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ComplyAdvantageHitTable from 'src/components/ComplyAdvantageHitTable';
+import ScreeningHitTable from '@/components/ScreeningHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { OccupationCode, SanctionsSearchType } from '@/apis';
+import { OccupationCode, GenericSanctionsSearchType } from '@/apis';
 import { getOr, isLoading, isSuccess, map } from '@/utils/asyncResource';
 import { map as mapQuery } from '@/utils/queries/types';
 import { AllParams } from '@/components/library/Table/types';
@@ -28,7 +28,7 @@ interface TableSearchParams {
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
-  types?: Array<SanctionsSearchType>;
+  types?: Array<GenericSanctionsSearchType>;
   nationality?: Array<string>;
   occupationCode?: Array<OccupationCode>;
   documentId?: string;
@@ -119,7 +119,7 @@ export function SearchResultTable(props: Props) {
       setParams((prevState) => ({
         ...prevState,
         fuzziness: response?.fuzziness ?? prevState?.fuzziness,
-        types: (response?.types ?? prevState?.types) as SanctionsSearchType[],
+        types: (response?.types ?? prevState?.types) as GenericSanctionsSearchType[],
         nationality: response?.nationality ?? prevState?.nationality,
         yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
@@ -138,7 +138,7 @@ export function SearchResultTable(props: Props) {
           searchProfileId: defaultProfile.searchProfileId,
           ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
           ...(defaultProfile.types?.length
-            ? { types: defaultProfile.types as SanctionsSearchType[] }
+            ? { types: defaultProfile.types as GenericSanctionsSearchType[] }
             : {}),
           ...(defaultProfile.nationality?.length
             ? { nationality: defaultProfile.nationality }
@@ -297,7 +297,7 @@ export function SearchResultTable(props: Props) {
   }, [params, pageSize]);
 
   return (
-    <ComplyAdvantageHitTable
+    <ScreeningHitTable
       readOnly={searchId != null}
       params={allParams}
       onChangeParams={setParams}

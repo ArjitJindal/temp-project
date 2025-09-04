@@ -146,7 +146,7 @@ export class ApiUsageMetricsService {
       this.getDailySanctionSearchsCount(
         tenantInfo,
         timeRange,
-        SanctionsDataProviders.COMPLY_ADVANTAGE
+        'comply-advantage'
       ),
       this.getDailySanctionSearchsCount(
         tenantInfo,
@@ -639,7 +639,7 @@ export class ApiUsageMetricsService {
   private async getDailySanctionSearchsCount(
     tenantInfo: TenantBasic,
     timeRange: TimeRange,
-    provider: SanctionsDataProviderName | undefined,
+    provider: SanctionsDataProviderName | undefined | 'comply-advantage',
     screeningEntity?: 'USER' | 'TRANSACTION'
   ): Promise<DailyStats> {
     const db = await getMongoDbClientDb()

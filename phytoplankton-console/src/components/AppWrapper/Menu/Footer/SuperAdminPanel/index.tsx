@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { validate } from 'uuid';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import NumberInput from '../../../../library/NumberInput';
 import Label from '../../../../library/Label';
@@ -18,7 +17,6 @@ import {
   BatchJobNames,
   CrmIntegrationNames,
   Feature,
-  SanctionsSettingsMarketType,
   Tenant,
   TenantData,
   TenantSettings,
@@ -34,8 +32,6 @@ import Confirm from '@/components/utils/Confirm';
 import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';
 import Select, { Option } from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
-import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
-import SelectionGroup from '@/components/library/SelectionGroup';
 import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
@@ -402,21 +398,6 @@ export default function SuperAdminPanel() {
   }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleSave = async () => {
-    // Sanctions settings validation
-    if (isSanctionsToBeEnabled) {
-      if (!hasExternalSanctionsProvider && !sanctionsSettings?.marketType) {
-        message.fatal('ComplyAdvantage market type must be set');
-        return;
-      }
-      if (
-        sanctionsSettings?.customSearchProfileId &&
-        sanctionsSettings.customSearchProfileId.length > 0 &&
-        !validate(sanctionsSettings.customSearchProfileId)
-      ) {
-        message.fatal('Comply Advantage Search profile ID must be a valid UUID');
-        return;
-      }
-    }
     mutateTenantSettings.mutate({
       ...(features && { features }),
       ...(limits && { limits }),
@@ -594,56 +575,7 @@ export default function SuperAdminPanel() {
             )}
 
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
-              <Label label="ComplyAdvantage settings">
-                <Label level={2} label="Market type" required={{ value: true, showHint: true }}>
-                  <SelectionGroup
-                    value={sanctionsSettings?.marketType}
-                    onChange={(v) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        marketType: v as SanctionsSettingsMarketType,
-                      });
-                    }}
-                    mode={'SINGLE'}
-                    options={SANCTIONS_SETTINGS_MARKET_TYPES.map((v) => ({
-                      label: humanizeConstant(v),
-                      value: v,
-                    }))}
-                  />
-                </Label>
-                <Label
-                  level={2}
-                  label="Custom search profile ID"
-                  description="If being set, we'll only use this search profile ID for ComplyAdvantage searches, and users won't be able to select different search types"
-                >
-                  <TextInput
-                    value={sanctionsSettings?.customSearchProfileId}
-                    onChange={(value) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        marketType: sanctionsSettings?.marketType ?? 'EMERGING',
-                        customSearchProfileId: value?.trim() || '',
-                      });
-                    }}
-                  />
-                </Label>
-                <Label
-                  level={2}
-                  label="Custom initial search profile ID"
-                  description="If being set, we'll use this search profile for all initial screenings"
-                >
-                  <TextInput
-                    value={sanctionsSettings?.customInitialSearchProfileId}
-                    onChange={(value) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        marketType: sanctionsSettings?.marketType ?? 'EMERGING',
-                        customInitialSearchProfileId: value?.trim() || '',
-                      });
-                    }}
-                  />
-                </Label>
-              </Label>
+              <></>
             ) : isDowJonesToBeEnabled ? (
               <Label label="Dow Jones settings">
                 <Label level={2} label="Username" required={{ value: true, showHint: true }}>

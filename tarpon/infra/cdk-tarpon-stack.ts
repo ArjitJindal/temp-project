@@ -594,7 +594,6 @@ export class CdkTarponStack extends cdk.Stack {
         SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
         TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
-        COMPLYADVANTAGE_API_KEY: process.env.COMPLYADVANTAGE_API_KEY as string,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
         REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,

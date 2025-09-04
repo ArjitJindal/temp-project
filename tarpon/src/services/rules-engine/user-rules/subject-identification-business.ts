@@ -8,7 +8,6 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
-import { getDefaultProviders } from '@/services/sanctions/utils'
 
 export type SubjectIdentificationBusinessUserRuleParameters = {
   fuzzinessRange: {
@@ -62,7 +61,6 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
     if (!entities.length) {
       return
     }
-    const providers = getDefaultProviders()
 
     const hitResult: RuleHitResult = []
     const sanctionsDetails = (
@@ -87,7 +85,6 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
               fuzziness: undefined,
               monitoring: { enabled: false },
               ...getEntityTypeForSearch(
-                providers,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
             },

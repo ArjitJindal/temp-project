@@ -894,7 +894,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: {
       getIndexes: () => [
         { index: { sanctionsWhitelistId: -1 }, unique: true },
-        { index: { 'caEntity.id': 1, userId: 1 } },
         { index: { userId: 1 } },
         { index: { entity: 1 } },
         { index: { entityType: 1 } },

@@ -7272,20 +7272,6 @@ paths:
                 required:
                   - url
       description: Get a presigned URL for downloading a file
-  /webhooks/complyadvantage:
-    post:
-      summary: Receive webhook events from Comply Advantage
-      tags: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ComplyAdvantageWebhookEvent'
-        required: true
-      responses:
-        '200':
-          description: OK
-      operationId: post-webhook-comply-advantage
   /webhooks/auth0:
     post:
       summary: Receive webhook events from Auth0
@@ -14228,8 +14214,6 @@ components:
           type: string
         createdAt:
           type: number
-        caEntity:
-          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
         screenEntity:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
         sanctionsEntity:
@@ -14262,7 +14246,6 @@ components:
       type: string
       enum:
         - dowjones
-        - comply-advantage
         - list
         - open-sanctions
         - acuris
@@ -14883,14 +14866,6 @@ components:
         - PEP
         - ADVERSE_MEDIA
         - REGULATORY_ENFORCEMENT_LIST
-    SanctionsSearchType:
-      title: SanctionsSearchType
-      type: string
-      enum:
-        - SANCTIONS
-        - PEP
-        - ADVERSE_MEDIA
-        - WARNINGS
     StatusEnum:
       title: StatusEnum
       type: string
@@ -14906,7 +14881,6 @@ components:
         - ADVERSE_MEDIA
         - REGULATORY_ENFORCEMENT_LIST
         - CRIME
-        - WARNINGS
     AcurisSanctionsSearchType:
       title: AcurisSanctionsSearchType
       type: string
@@ -15232,126 +15206,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsScreeningEntityStats'
-    ComplyAdvantageSearchResponse:
-      title: ComplyAdvantageSearchResponse
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        status:
-          type: string
-        content:
-          type: object
-          properties:
-            data:
-              type: object
-              properties:
-                id:
-                  type: integer
-                  format: int32
-                ref:
-                  type: string
-                searcher_id:
-                  type: integer
-                  format: int32
-                assignee_id:
-                  type: integer
-                  format: int32
-                filters:
-                  type: object
-                  properties:
-                    types:
-                      type: array
-                      items:
-                        type: string
-                    country_codes:
-                      type: array
-                      items: {}
-                    birth_year:
-                      type: integer
-                      format: int32
-                    entity_type:
-                      type: string
-                    remove_deceased:
-                      type: integer
-                      format: int32
-                    exact_match:
-                      type: boolean
-                    fuzziness:
-                      type: number
-                      minimum: 0
-                      maximum: 1
-                match_status:
-                  type: string
-                risk_level:
-                  type: string
-                search_term:
-                  type: string
-                submitted_term:
-                  type: string
-                client_ref:
-                  type: string
-                total_hits:
-                  type: integer
-                  format: int32
-                updated_at:
-                  type: string
-                created_at:
-                  type: string
-                tags:
-                  type: array
-                  items: {}
-                labels:
-                  type: array
-                  items: {}
-                total_matches:
-                  type: integer
-                  format: int32
-                limit:
-                  type: integer
-                  format: int32
-                offset:
-                  type: integer
-                  format: int32
-                share_url:
-                  type: string
-                searcher:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      format: int32
-                    email:
-                      type: string
-                    name:
-                      type: string
-                    phone:
-                      type: string
-                    created_at:
-                      type: string
-                    user_is_active:
-                      type: boolean
-                assignee:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      format: int32
-                    email:
-                      type: string
-                    name:
-                      type: string
-                    phone:
-                      type: string
-                    created_at:
-                      type: string
-                    user_is_active:
-                      type: boolean
-                hits:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/ComplyAdvantageSearchHit'
     SanctionsHit:
       title: SanctionsHit
       type: object
@@ -15374,16 +15228,6 @@ components:
           type: number
         hitContext:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
-        caEntity:
-          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
-        caMatchTypes:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageMatchType'
-        caMatchTypesDetails:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
         entity:
           $ref: '#/components/schemas/SanctionsEntity'
         delta:
@@ -15759,45 +15603,6 @@ components:
           type: string
         title:
           type: string
-    ComplyAdvantageSearchHit:
-      type: object
-      properties:
-        doc:
-          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
-        match_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageMatchType'
-        match_types_details:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
-        score:
-          type: number
-      required:
-        - doc
-    ComplyAdvantageMatchTypeDetails:
-      title: ComplyAdvantageMatchTypeDetails
-      type: object
-      properties:
-        aml_types:
-          type: array
-          items:
-            type: string
-        matching_name:
-          type: string
-        name_matches:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageNameMatched'
-        secondary_matches:
-          type: array
-          items:
-            $ref: '#/components/schemas/ComplyAdvantageNameMatched'
-        sources:
-          type: array
-          items:
-            type: string
     SanctionsMatchTypeDetails:
       title: SanctionsMatchTypeDetails
       type: object
@@ -15862,103 +15667,6 @@ components:
             - gender
             - documentId
             - yearOfBirth
-    ComplyAdvantageNameMatched:
-      type: object
-      properties:
-        match_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/SanctionsMatchTypeDetailsEnum'
-        query_term:
-          type: string
-    ComplyAdvantageSearchHitDoc:
-      type: object
-      properties:
-        aka:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-        associates:
-          type: array
-          items:
-            type: object
-            properties:
-              association:
-                type: string
-              name:
-                type: string
-        entity_type:
-          type: string
-        fields:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              source:
-                type: string
-              value:
-                type: string
-              tag:
-                type: string
-        id:
-          type: string
-        keywords:
-          type: array
-          items:
-            type: string
-        last_updated_utc:
-          type: string
-          format: date-time
-        media:
-          type: array
-          items:
-            type: object
-            properties:
-              snippet:
-                type: string
-              title:
-                type: string
-              url:
-                type: string
-        name:
-          type: string
-        source_notes:
-          type: object
-        sources:
-          type: array
-          items:
-            type: string
-        types:
-          type: array
-          items:
-            type: string
-        flagrightWhitelistInfo:
-          type: object
-          properties:
-            whitelisted:
-              type: boolean
-            reason:
-              type: string
-            comment:
-              type: string
-          required:
-            - whitelisted
-    ComplyAdvantageWebhookEvent:
-      title: ComplyAdvantageWebhookEvent
-      type: object
-      properties:
-        event:
-          type: string
-          enum:
-            - monitored_search_updated
-        data:
-          oneOf:
-            - $ref: '#/components/schemas/ComplyAdvantageMonitoredSearchUpdated'
     Auth0WebhookEvent:
       title: Auth0WebhookEvent
       type: object
@@ -16120,26 +15828,6 @@ components:
               type: string
               description: Tenant name where the login attempt happened
               example: dev-flagright
-    ComplyAdvantageMonitoredSearchUpdated:
-      title: ComplyAdvantageMonitoredSearchUpdated
-      type: object
-      properties:
-        search_id:
-          type: number
-        updated:
-          type: array
-          items:
-            type: string
-        new:
-          type: array
-          items:
-            type: string
-        removed:
-          type: array
-          items:
-            type: string
-        is_suspended:
-          type: boolean
     TransactionsUniquesField:
       title: TransactionsUniquesField
       type: string
@@ -16174,28 +15862,8 @@ components:
         - SERVICES
         - SUBSCRIPTION
         - OTHER
-    ComplyAdvantageMatchType:
-      title: ComplyAdvantageMatchType
-      type: string
-      enum:
-        - name_exact
-        - aka_exact
-        - name_fuzzy
-        - aka_fuzzy
-        - phonetic_name
-        - phonetic_aka
-        - equivalent_name
-        - equivalent_aka
-        - unknown
-        - year_of_birth
-        - removed_personal_title
-        - removed_personal_suffix
-        - removed_organisation_prefix
-        - removed_organisation_suffix
-        - removed_clerical_mark
-        - name_variations_removal
     SanctionsMatchType:
-      title: ComplyAdvantageMatchType
+      title: SanctionsMatchType
       type: string
       enum:
         - name_exact
@@ -17018,16 +16686,6 @@ components:
           type: string
         seats:
           type: number
-        sanctionsMarketType:
-          $ref: '#/components/schemas/SanctionsSettingsMarketType'
-        sanctionsScreeningTypes:
-          type: array
-          items:
-            type: string
-        sanctionsEntityTypes:
-          type: array
-          items:
-            type: string
         siloDataMode:
           type: boolean
         sarJurisdiction:
@@ -18558,12 +18216,6 @@ components:
       title: SanctionsSettings
       type: object
       properties:
-        marketType:
-          $ref: '#/components/schemas/SanctionsSettingsMarketType'
-        customSearchProfileId:
-          type: string
-        customInitialSearchProfileId:
-          type: string
         dowjonesCreds:
           type: object
           properties:
@@ -18588,12 +18240,6 @@ components:
                   type: string
         aggregateScreeningProfileData:
           type: boolean
-    SanctionsSettingsMarketType:
-      title: SanctionsSettingsMarketType
-      type: string
-      enum:
-        - EMERGING
-        - FIRST_WORLD
     RuleInstanceStats:
       title: RuleInstanceStats
       type: object

@@ -1,3 +1,4 @@
+import { SanctionsDataProviders } from '../types'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -7,7 +8,7 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
-withFeatureHook(['SANCTIONS'])
+withFeatureHook(['SANCTIONS', 'ACURIS'])
 
 const SUBJECT_1 = {
   userId: 'test_business_user_id',
@@ -40,12 +41,12 @@ describe('Whitelist repository', () => {
 
     test('Adding entries should not duplicate', async () => {
       await repo.addWhitelistEntities(
-        'comply-advantage',
+        SanctionsDataProviders.ACURIS,
         [SAMPLE_HIT_1],
         SUBJECT_1
       )
       await repo.addWhitelistEntities(
-        'comply-advantage',
+        SanctionsDataProviders.ACURIS,
         [SAMPLE_HIT_1],
         SUBJECT_1
       )
@@ -59,7 +60,7 @@ describe('Whitelist repository', () => {
     describe('Single entity in list', () => {
       beforeEach(async () => {
         await repo.addWhitelistEntities(
-          'comply-advantage',
+          SanctionsDataProviders.ACURIS,
           [SAMPLE_HIT_1],
           SUBJECT_1
         )
@@ -101,7 +102,7 @@ describe('Whitelist repository', () => {
     describe('Multiple whitelist entities with the same subject', () => {
       beforeEach(async () => {
         await repo.addWhitelistEntities(
-          'comply-advantage',
+          SanctionsDataProviders.ACURIS,
           [SAMPLE_HIT_1, SAMPLE_HIT_2],
           SUBJECT_1
         )
@@ -147,12 +148,12 @@ describe('Whitelist repository', () => {
     describe('Multiple whitelist entities with the different subjects', () => {
       beforeEach(async () => {
         await repo.addWhitelistEntities(
-          'comply-advantage',
+          SanctionsDataProviders.ACURIS,
           [SAMPLE_HIT_1],
           SUBJECT_1
         )
         await repo.addWhitelistEntities(
-          'comply-advantage',
+          SanctionsDataProviders.ACURIS,
           [SAMPLE_HIT_2],
           SUBJECT_2
         )

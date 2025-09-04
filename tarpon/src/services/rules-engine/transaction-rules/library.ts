@@ -15,7 +15,6 @@ import {
 } from '../user-rules'
 import { SanctionsBusinessUserRuleParameters } from '../user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '../user-rules/sanctions-bank-name'
-import { SanctionsConsumerUserRuleParameters } from '../user-rules/sanctions-consumer-user'
 import { UserAddressChangeRuleParameters } from '../user-rules/user-address-change'
 import { getMigratedV8Config } from '../v8-migrations'
 import { UserOnboardedFromHighRiskCountryRuleParameters } from '../user-rules/user-onboarded-from-high-risk-country'
@@ -1834,39 +1833,6 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
         "A transaction’s recipient's name and bank name are checked against Sanctions/PEP/AM sanctions list, prompting further investigation.",
-    }
-  },
-  () => {
-    const defaultParameters: SanctionsConsumerUserRuleParameters = {
-      fuzziness: 20,
-      screeningTypes: [],
-      ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-    }
-
-    return {
-      id: 'R-16',
-      name: 'Screening consumer users',
-      type: 'USER',
-      description:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
-      descriptionTemplate:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'sanctions-consumer-user',
-      labels: [],
-      checksFor: [
-        RuleChecksForField.Username,
-        RuleChecksForField.UserDetails,
-        RuleChecksForField.UsersYearOfBirth,
-      ],
-      defaultNature: RuleNature.SCREENING,
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['SANCTIONS'],
-      types: [RuleTypeField.Screening],
-      typologies: [RuleTypology.ScreeningHits],
-      sampleUseCases:
-        'A consumer user can be checked for sanctions/PEP/AM match.',
     }
   },
   () => {

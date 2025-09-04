@@ -426,7 +426,6 @@ export type Config = {
     AUTH0_CUSTOM_CNAME?: string
     AUTH0_DOMAIN: string
     AUTH0_AUDIENCE: string
-    COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID: string
     CONSOLE_URI: string
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
     NODE_ENV?: string

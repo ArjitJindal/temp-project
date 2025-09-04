@@ -4,7 +4,6 @@ import UserInactivity from '../user-ongoing-rules/user-inactivity'
 import { UserOngoingRule, UserRule } from './rule'
 import SanctionsBankUserRule from './sanctions-bank-name'
 import SanctionsBusinessUserRule from './sanctions-business-user'
-import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
 import UserOnboardedFromHighRiskCountry from './user-onboarded-from-high-risk-country'
@@ -38,16 +37,15 @@ export class UserOngoingRuleBase extends UserOngoingRule<unknown> {
 export const _USER_RULES = {
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
-  'sanctions-consumer-user': SanctionsConsumerUserRule,
   'user-address-change': UserAddressChange,
   'user-onboarded-from-high-risk-country': UserOnboardedFromHighRiskCountry,
   'dowjones-consumer-user': DowJonesConsumerUserRule,
   'list-screening-consumer-user': ListScreeningConsumerUser,
   'subject-identification-consumer': SubjectIdentificationConsumerUser,
   'subject-identification-business': SubjectIdentificationBusinessUser,
+  'generic-sanction-screening-user': GenericSanctionsConsumerUserRule,
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,
-  'generic-sanction-screening-user': GenericSanctionsConsumerUserRule,
 } as const
 
 export type UserRuleImplementationName = keyof typeof _USER_RULES

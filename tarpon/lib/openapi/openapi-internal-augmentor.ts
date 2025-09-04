@@ -302,8 +302,6 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/update-proposal/{id}/action':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/webhooks/complyadvantage':
-    StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/nango': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
@@ -381,7 +379,6 @@ const openapi = getAugmentedOpenapi(
     iamAuthorizedPaths: ['/apikey'],
     publicPaths: [
       '/slack/oauth_redirect',
-      '/webhooks/complyadvantage',
       '/webhooks/auth0',
       '/webhooks/nango',
       '/webhooks/internal-proxy',

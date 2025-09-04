@@ -49,15 +49,12 @@ import { RuleExecutionMode } from '@/@types/openapi-internal/RuleExecutionMode'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import {
-  MOCK_CA_SEARCH_NO_HIT_RESPONSE,
-  MOCK_CA_SEARCH_RESPONSE,
-} from '@/test-utils/resources/mock-ca-search-response'
 import { SanctionsService } from '@/services/sanctions'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -72,24 +69,22 @@ jest.mock('@/services/sanctions', () => {
               ...params: Parameters<SearchMethodType>
             ): ReturnType<SearchMethodType> => {
               const [request] = params
-              let rawComplyAdvantageResponse
+              let hitsCount = 10
               let searchId = 'test-search-id'
 
               if (
                 request.searchTerm.toLowerCase().includes('huawei') ||
                 request.searchTerm.toLowerCase().includes('putin')
               ) {
-                rawComplyAdvantageResponse = MOCK_CA_SEARCH_RESPONSE
-
                 if (request.searchTerm.toLowerCase().includes('test-user-2')) {
                   searchId = 'test-search-id-2'
                 }
               } else {
-                rawComplyAdvantageResponse = MOCK_CA_SEARCH_NO_HIT_RESPONSE
+                hitsCount = 0
               }
 
               return {
-                hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
+                hitsCount,
                 searchId,
                 providerSearchId: 'test-provider-search-id',
                 createdAt: 1683301138980,
@@ -1586,7 +1581,7 @@ describe('Screening business user R-128', () => {
         searchId: 'test-search-id',
       },
       createdAt: Date.now(),
-      provider: 'comply-advantage',
+      provider: SanctionsDataProviders.ACURIS,
       request: { fuzziness: 0.5, searchTerm: 'John Putin' },
     })
     await sanctionsSearchesCollection.insertOne({
@@ -1601,7 +1596,7 @@ describe('Screening business user R-128', () => {
         searchId: 'test-search-id-2',
       },
       createdAt: Date.now(),
-      provider: 'comply-advantage',
+      provider: SanctionsDataProviders.ACURIS,
       request: { fuzziness: 0.5, searchTerm: 'test-user-2' },
     })
     const cases = await caseCreationService.handleUser({

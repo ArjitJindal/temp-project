@@ -1,5 +1,5 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { intersection, isNil, omit, omitBy } from 'lodash'
+import { isNil, omit, omitBy } from 'lodash'
 import { Search_Response } from '@opensearch-project/opensearch/api'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'
@@ -27,34 +27,18 @@ import { cursorPaginate } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { ProviderConfig } from '@/services/sanctions'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
-import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { getContext } from '@/core/utils/context-storage'
 import { hasFeature } from '@/core/utils/context'
 import { getOpensearchClient } from '@/utils/opensearch-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { ScreeningProfileService } from '@/services/screening-profile'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
-
-function toComplyAdvantageType(type: SanctionsSearchType) {
-  switch (type) {
-    case 'SANCTIONS':
-      return 'sanction'
-    case 'PEP':
-      return 'pep'
-    case 'ADVERSE_MEDIA':
-      return 'adverse-media'
-    case 'WARNINGS':
-      return 'warning'
-  }
-}
 
 @traceable
 export class SanctionsSearchRepository {
@@ -109,11 +93,7 @@ export class SanctionsSearchRepository {
       }
     }
 
-    if (
-      envIs('local', 'test') ||
-      getTriggerSource() !== 'PUBLIC_API' ||
-      provider === 'comply-advantage'
-    ) {
+    if (envIs('local', 'test') || getTriggerSource() !== 'PUBLIC_API') {
       await this.updateMessageSync(filter, updateMessage)
       return
     }
@@ -156,8 +136,6 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    const sanctions = getContext()?.settings?.sanctions
-    const hasInitialScreeningProfile = !!sanctions?.customInitialSearchProfileId
     const {
       monitoring: _monitoring,
       monitored: _monitored,
@@ -191,7 +169,7 @@ export class SanctionsSearchRepository {
       })
     }
 
-    if (providerConfig && providerConfig.stage && hasInitialScreeningProfile) {
+    if (providerConfig && providerConfig.stage) {
       filters.push({
         providerConfigHash: generateChecksum({
           ...providerConfig,
@@ -226,19 +204,6 @@ export class SanctionsSearchRepository {
         isNil
       ),
     ]
-    if (params.types && params.types.length > 0) {
-      const searchTypes = intersection(
-        params.types,
-        SANCTIONS_SEARCH_TYPES
-      ) as SanctionsSearchType[]
-      conditions.push({
-        $or: searchTypes.map((type) => ({
-          'response.data.types': prefixRegexMatchFilter(
-            toComplyAdvantageType(type)
-          ),
-        })),
-      })
-    }
 
     if (params.filterManualSearch) {
       conditions.push({

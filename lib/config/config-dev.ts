@@ -106,8 +106,6 @@ export const config: Config = {
       'dev-flagright-cd-dc9lyrkmponfpoa2.edge.tenants.eu.auth0.com',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',
-    COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
-      '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     ZENDUTY_WEBHOOK_URL:
       'https://events.zenduty.com/integration/ro7ie/cloudwatch_v2/75d478cc-8253-4d21-a10e-b96ad60db52a/',

@@ -53,7 +53,6 @@ import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { traceable } from '@/core/xray'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
@@ -614,8 +613,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   private getScreeningTypesForPerson(person): {
     pepRcaMatchTypes: string[]
-    sanctionSearchTypes: SanctionsSearchType[]
-    screeningProfileTypes: SanctionsSearchType[]
+    sanctionSearchTypes: DowJonesSanctionsSearchType[]
+    screeningProfileTypes: DowJonesSanctionsSearchType[]
   } {
     const sanctionsReferences = this.getActiveSanctionReferences(
       person.SanctionsReferences
@@ -627,8 +626,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       )
     )
 
-    const sanctionSearchTypes: SanctionsSearchType[] = []
-    const screeningProfileTypes: SanctionsSearchType[] = []
+    const sanctionSearchTypes: DowJonesSanctionsSearchType[] = []
+    const screeningProfileTypes: DowJonesSanctionsSearchType[] = []
     const descriptions = this.getDescriptions(person)
     const descriptionValues = descriptions
       ?.map((d) => d['@_Description1'])
@@ -1183,12 +1182,12 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     return String(name).trim()
   }
 
-  private getEntitySanctionsSearchType(entity): SanctionsSearchType[] {
+  private getEntitySanctionsSearchType(entity): DowJonesSanctionsSearchType[] {
     const descriptions = this.getDescriptions(entity)
     const description2Values = compact(
       descriptions?.map((d) => d['@_Description2'])
     ) as string[]
-    const sanctionsSearchTypes: SanctionsSearchType[] = []
+    const sanctionsSearchTypes: DowJonesSanctionsSearchType[] = []
     if (
       description2Values?.some((d) =>
         ENTITY_SANCTIONS_DESCRIPTION2_VALUES.includes(d)
@@ -1230,7 +1229,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const descriptions = this.getDescriptions(entity)
 
         const name = this.getEntityNames(entity.NameDetails.Name, true)?.[0]
-        const sanctionSearchTypes: SanctionsSearchType[] =
+        const sanctionSearchTypes: DowJonesSanctionsSearchType[] =
           this.getEntitySanctionsSearchType(entity)
         const entityType = this.getEntityType(this.getDescriptions(entity))
         if (!name || !entityType || !this.entityTypes.includes(entityType)) {

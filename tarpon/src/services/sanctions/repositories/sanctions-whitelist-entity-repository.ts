@@ -161,10 +161,7 @@ export class SanctionsWhitelistEntityRepository {
       // TODO change this after release.
       // https://github.com/flagright/orca/pull/4677
       {
-        $or: [
-          { 'sanctionsEntity.id': { $in: requestEntityIds } },
-          { 'caEntity.id': { $in: requestEntityIds } },
-        ],
+        'sanctionsEntity.id': { $in: requestEntityIds },
       },
       {
         provider: provider,

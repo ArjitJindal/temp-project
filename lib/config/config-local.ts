@@ -77,8 +77,6 @@ export const config: Config = {
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.dev/',
-    COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
-      '432dd5d0-d9ee-417e-90f3-647c4ce531ad',
     CONSOLE_URI: 'https://console.flagright.dev',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     NODE_ENV: 'development',

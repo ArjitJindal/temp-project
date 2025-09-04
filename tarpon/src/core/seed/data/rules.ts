@@ -11,7 +11,6 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
 import { SanctionsBankUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-bank-name'
-import { SanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-consumer-user'
 import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { TransactionsVelocityRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-velocity'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
@@ -1670,77 +1669,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   // reseed the rng to get different values for the next rule
   rng.setSeed(USER_RULES_SEED + 5)
 
-  const r16RuleInstance: RuleInstance[] = [
-    {
-      id: 'hODvd2',
-      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
-      alertConfig: {
-        slaPolicies: [
-          rng.r(1).pickRandom(getSLAPolicies()).id,
-          rng.r(2).pickRandom(getSLAPolicies()).id,
-        ],
-      },
-      ruleRunMode: 'LIVE',
-      ruleExecutionMode: 'SYNC',
-      ruleId: 'R-16',
-      casePriority: 'P1',
-      parameters: {
-        fuzziness: 20,
-        screeningTypes: ['PEP'],
-        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-      } as SanctionsConsumerUserRuleParameters,
-      action: 'BLOCK',
-      type: 'USER',
-      ruleNameAlias: 'Screening on Consumer users',
-      ruleDescriptionAlias:
-        'Sanctions/PEP/Adverse media screening on Consumer users.',
-      filters: {},
-      riskLevelParameters: {
-        VERY_HIGH: {
-          fuzziness: 20,
-          screeningTypes: ['PEP'],
-          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-        } as SanctionsConsumerUserRuleParameters,
-        HIGH: {
-          fuzziness: 20,
-          screeningTypes: ['PEP'],
-          ruleStages: ['INITIAL', 'UPDATE'],
-        } as SanctionsConsumerUserRuleParameters,
-        MEDIUM: {
-          fuzziness: 20,
-          screeningTypes: ['PEP'],
-          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-        } as SanctionsConsumerUserRuleParameters,
-        LOW: {
-          fuzziness: 20,
-          screeningTypes: ['PEP'],
-          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-        } as SanctionsConsumerUserRuleParameters,
-        VERY_LOW: {
-          fuzziness: 20,
-          screeningTypes: ['PEP'],
-          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
-        } as SanctionsConsumerUserRuleParameters,
-      },
-      riskLevelActions: {
-        VERY_HIGH: 'BLOCK',
-        HIGH: 'BLOCK',
-        MEDIUM: 'BLOCK',
-        LOW: 'BLOCK',
-        VERY_LOW: 'BLOCK',
-      },
-      nature: 'SCREENING',
-      labels: [],
-      status: 'ACTIVE',
-      createdAt: 1685604282954,
-      updatedAt: 1688114634781,
-      createdBy: rng.r(4).pickRandom(getAccounts()).id,
-      checksFor: ['Username', 'User’s Y.O.B'],
-      types: [],
-      typologies: [],
-    } as RuleInstance,
-  ]
-
   // reseed the rng to get different values for the next rule
   rng.setSeed(TRANSACTION_RULES_SEED + 6)
 
@@ -2449,7 +2377,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r1RuleInstance,
     ...r2RuleInstance,
     ...r8RuleInstance,
-    ...r16RuleInstance,
     ...r30RuleInstance,
     ...r32RuleInstance,
     ...r120RuleInstance,

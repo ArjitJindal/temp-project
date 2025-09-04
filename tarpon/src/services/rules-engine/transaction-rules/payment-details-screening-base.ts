@@ -29,7 +29,6 @@ import {
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import {
   extractBankInfoFromPaymentDetails,
@@ -44,6 +43,7 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
 
 export type ScreeningField = 'NAME' | 'BANK_NAME'
@@ -54,7 +54,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   transactionAmountThreshold?: {
     [currency: string]: number
   }
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes?: GenericSanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   screeningProfileId: string
@@ -164,21 +164,18 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...(providers.includes(SanctionsDataProviders.ACURIS)
                 ? { screeningProfileId: screeningProfileId ?? undefined }
                 : {}),
-              ...getFuzzinessSettings(providers, fuzzinessSetting),
-              ...getEntityTypeForSearch(providers, 'EXTERNAL_USER'),
-              ...getStopwordSettings(providers, stopwords),
-              ...getIsActiveParameters(providers, screeningTypes, isActive),
-              ...getPartialMatchParameters(providers, partialMatch),
-              ...getScreeningValues(providers, screeningValues, paymentDetail),
+              ...getFuzzinessSettings(fuzzinessSetting),
+              ...getEntityTypeForSearch('EXTERNAL_USER'),
+              ...getStopwordSettings(stopwords),
+              ...getIsActiveParameters(screeningTypes, isActive),
+              ...getPartialMatchParameters(partialMatch),
+              ...getScreeningValues(screeningValues, paymentDetail),
               ...getFuzzyAddressMatchingParameters(
                 providers,
                 fuzzyAddressMatching,
                 paymentDetail.address ? [paymentDetail.address] : undefined
               ),
-              ...getEnableShortNameMatchingParameters(
-                providers,
-                enableShortNameMatching
-              ),
+              ...getEnableShortNameMatchingParameters(enableShortNameMatching),
             },
             hitContext,
             undefined,
@@ -217,11 +214,11 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               monitoring: {
                 enabled: false,
               },
-              ...getFuzzinessSettings(providers, fuzzinessSetting),
-              ...getEntityTypeForSearch(providers, 'BANK'),
-              ...getStopwordSettings(providers, stopwords),
-              ...getIsActiveParameters(providers, screeningTypes, isActive),
-              ...getPartialMatchParameters(providers, partialMatch),
+              ...getFuzzinessSettings(fuzzinessSetting),
+              ...getEntityTypeForSearch('BANK'),
+              ...getStopwordSettings(stopwords),
+              ...getIsActiveParameters(screeningTypes, isActive),
+              ...getPartialMatchParameters(partialMatch),
               ...getFuzzyAddressMatchingParameters(
                 providers,
                 fuzzyAddressMatching,

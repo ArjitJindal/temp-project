@@ -8,14 +8,10 @@ import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { NangoService } from '../../services/nango'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { SanctionsService } from '@/services/sanctions'
-import { TenantService } from '@/services/tenants'
 import { logger } from '@/core/logger'
-import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal/ComplyAdvantageMonitoredSearchUpdated'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { updateLogMetadata } from '@/core/utils/context'
 import { AccountsService } from '@/services/accounts'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import {
@@ -23,19 +19,6 @@ import {
   verifyInternalProxyWebhook,
 } from '@/utils/internal-proxy'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-
-const COMPLYADVANTAGE_PRODUCTION_IPS = [
-  '54.76.153.128',
-  '52.19.50.164',
-  '18.200.42.250',
-  '3.216.162.15',
-  '3.214.3.128',
-  '52.73.76.4',
-  '3.105.135.152',
-  '54.79.153.96',
-  '52.63.190.126',
-]
 
 export const webhooksHandler = lambdaApi()(
   async (
@@ -46,60 +29,6 @@ export const webhooksHandler = lambdaApi()(
     const { sourceIp } = event.requestContext.identity
 
     const handlers = new Handlers()
-
-    handlers.registerPostWebhookComplyAdvantage(async (ctx, request) => {
-      if (process.env.ENV === 'prod') {
-        if (!COMPLYADVANTAGE_PRODUCTION_IPS.includes(sourceIp)) {
-          logger.error(`${sourceIp} is not authorized to make this request`)
-          throw new Forbidden(
-            `${sourceIp} is not authorized to make this request`
-          )
-        }
-      }
-
-      const webhookEvent = request.ComplyAdvantageWebhookEvent
-      if (webhookEvent.event === 'monitored_search_updated') {
-        const mongoDb = await getMongoDbClient()
-        const dynamoDb = getDynamoDbClient()
-        const searchUpdated =
-          webhookEvent.data as ComplyAdvantageMonitoredSearchUpdated
-        if (!searchUpdated.search_id) {
-          throw new Error('Missing search ID!')
-        }
-        const providerSearchId = `${searchUpdated.search_id}` as string
-        logger.info(
-          `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${providerSearchId})`
-        )
-        const allTenantIds = await TenantService.getAllTenantIds()
-        for (const tenantId of allTenantIds) {
-          const tenantRepository = new TenantRepository(tenantId, {
-            dynamoDb,
-          })
-          updateLogMetadata({ tenantId })
-          const tenantSettings = await tenantRepository.getTenantSettings()
-          if (tenantSettings.features?.includes('SANCTIONS')) {
-            const sanctionsService = new SanctionsService(tenantId, {
-              mongoDb,
-              dynamoDb,
-            })
-            const refreshed = await sanctionsService.refreshSearch(
-              providerSearchId,
-              'comply-advantage'
-            )
-            if (refreshed) {
-              logger.info(
-                `Sanctions search ${providerSearchId} refreshed for tenant ${tenantId}`
-              )
-            }
-          }
-        }
-      } else {
-        logger.error(
-          `Received unhandled ComplyAdvantage webhook event: ${event.body}`
-        )
-      }
-      return
-    })
 
     /**
      * Auth0 webhook IPs

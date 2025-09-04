@@ -26,7 +26,6 @@ import {
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
@@ -36,6 +35,7 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { Address } from '@/@types/openapi-public/Address'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -48,7 +48,7 @@ const BUSINESS_USER_ENTITY_TYPES: Array<{
 
 export type SanctionsBusinessUserRuleParameters = {
   entityTypes?: SanctionsDetailsEntityType[]
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes?: GenericSanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
   screeningProfileId: string
@@ -180,13 +180,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               fuzziness: fuzziness / 100,
               monitoring: { enabled: this.stage === 'ONGOING' },
               ...getEntityTypeForSearch(
-                providers,
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
-              ...getFuzzinessSettings(providers, fuzzinessSetting),
-              ...getStopwordSettings(providers, stopwords),
-              ...getIsActiveParameters(providers, screeningTypes, isActive),
-              ...getPartialMatchParameters(providers, partialMatch),
+              ...getFuzzinessSettings(fuzzinessSetting),
+              ...getStopwordSettings(stopwords),
+              ...getIsActiveParameters(screeningTypes, isActive),
+              ...getPartialMatchParameters(partialMatch),
               ...(providers.includes(SanctionsDataProviders.ACURIS) &&
               screeningProfileId
                 ? { screeningProfileId }
@@ -196,10 +195,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
                 fuzzyAddressMatching,
                 entity.addresses
               ),
-              ...getEnableShortNameMatchingParameters(
-                providers,
-                enableShortNameMatching
-              ),
+              ...getEnableShortNameMatchingParameters(enableShortNameMatching),
             },
             hitContext
           )

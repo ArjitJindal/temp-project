@@ -26,7 +26,6 @@ import {
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { GenericScreeningValues } from './generic-sanctions-consumer-user'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
 import { getDefaultProviders } from '@/services/sanctions/utils'
@@ -34,13 +33,14 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { Address } from '@/@types/openapi-public/Address'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 
 const caConcurrencyLimit = pLimit(10)
 
 type BankInfo = { bankName?: string; iban?: string; address?: Address }
 
 export type SanctionsBankUserRuleParameters = {
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes?: GenericSanctionsSearchType[]
   ruleStages: UserRuleStage[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
@@ -162,11 +162,11 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 types: screeningTypes,
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: this.stage === 'ONGOING' },
-                ...getEntityTypeForSearch(providers, 'BANK'),
-                ...getFuzzinessSettings(providers, fuzzinessSetting),
-                ...getStopwordSettings(providers, stopwords),
-                ...getIsActiveParameters(providers, screeningTypes, isActive),
-                ...getPartialMatchParameters(providers, partialMatch),
+                ...getEntityTypeForSearch('BANK'),
+                ...getFuzzinessSettings(fuzzinessSetting),
+                ...getStopwordSettings(stopwords),
+                ...getIsActiveParameters(screeningTypes, isActive),
+                ...getPartialMatchParameters(partialMatch),
                 ...(providers.includes(SanctionsDataProviders.ACURIS)
                   ? { screeningProfileId: screeningProfileId ?? undefined }
                   : {}),
@@ -176,7 +176,6 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                   bankInfo.address ? [bankInfo.address] : undefined
                 ),
                 ...getEnableShortNameMatchingParameters(
-                  providers,
                   enableShortNameMatching
                 ),
               },

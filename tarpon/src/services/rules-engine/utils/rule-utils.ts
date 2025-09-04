@@ -66,26 +66,18 @@ export function mergeRules<T extends { ruleInstanceId: string }>(
 }
 
 export function getEntityTypeForSearch(
-  providers: SanctionsDataProviderName[],
   entity: SanctionsSearchRequestEntityType
 ): {
   entityType?: SanctionsSearchRequestEntityType
 } {
-  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
-    return {}
-  }
   return {
     entityType: entity,
   }
 }
 
 export function getFuzzinessSettings(
-  providers: SanctionsDataProviderName[],
   fuzzinessSetting?: FuzzinessSettingOptions
 ): { fuzzinessSettings?: FuzzinessSetting } {
-  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
-    return {}
-  }
   return fuzzinessSetting
     ? {
         fuzzinessSettings: {
@@ -102,28 +94,18 @@ export function getFuzzinessSettings(
 }
 
 export function getEnableShortNameMatchingParameters(
-  providers: SanctionsDataProviderName[],
   enableShortNameMatching?: boolean
 ): {
   enableShortNameMatching?: boolean
 } {
-  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
-    return {}
-  }
   return {
     enableShortNameMatching,
   }
 }
 
-export function getStopwordSettings(
-  providers: SanctionsDataProviderName[],
-  stopwords?: string[]
-): {
+export function getStopwordSettings(stopwords?: string[]): {
   stopwords?: string[]
 } {
-  if (providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE)) {
-    return {}
-  }
   return stopwords?.length
     ? {
         stopwords,
@@ -132,17 +114,13 @@ export function getStopwordSettings(
 }
 
 export function getIsActiveParameters(
-  providers: SanctionsDataProviderName[],
   sanctionsSearchType?: Array<GenericSanctionsSearchType>,
   isActive?: boolean
 ): {
   isActivePep?: boolean
   isActiveSanctioned?: boolean
 } {
-  if (
-    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
-    !isActive
-  ) {
+  if (!isActive) {
     return {}
   }
 
@@ -160,16 +138,10 @@ export function getIsActiveParameters(
   }
 }
 
-export function getPartialMatchParameters(
-  providers: SanctionsDataProviderName[],
-  partialMatch?: boolean
-): {
+export function getPartialMatchParameters(partialMatch?: boolean): {
   partialMatch?: boolean
 } {
-  if (
-    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
-    !partialMatch
-  ) {
+  if (!partialMatch) {
     return {}
   }
   return {
@@ -178,18 +150,13 @@ export function getPartialMatchParameters(
 }
 
 export function getScreeningValues(
-  providers: SanctionsDataProviderName[],
   screeningValues?: GenericScreeningValues[],
   paymentDetails?: PaymentDetailsName
 ): {
   nationality?: Array<string>
   yearOfBirth?: number
 } {
-  if (
-    providers.includes(SanctionsDataProviders.COMPLY_ADVANTAGE) ||
-    !paymentDetails ||
-    !screeningValues
-  ) {
+  if (!paymentDetails || !screeningValues) {
     return {}
   }
   return {

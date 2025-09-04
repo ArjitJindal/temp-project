@@ -21,16 +21,15 @@ import {
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
-import { getDefaultProviders } from '@/services/sanctions/utils'
+import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesSanctionsSearchType'
 
 type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
 export type DowJonesConsumerUserRuleParameters = {
-  screeningTypes?: SanctionsSearchType[]
+  screeningTypes?: DowJonesSanctionsSearchType[]
   fuzzinessRange: {
     lowerBound: number
     upperBound: number
@@ -115,7 +114,6 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
-    const providers = getDefaultProviders()
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -146,10 +144,10 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
             }
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
-        ...getFuzzinessSettings(providers, fuzzinessSetting),
-        ...getStopwordSettings(providers, stopwords),
-        ...getIsActiveParameters(providers, screeningTypes, isActive),
-        ...getPartialMatchParameters(providers, partialMatch),
+        ...getFuzzinessSettings(fuzzinessSetting),
+        ...getStopwordSettings(stopwords),
+        ...getIsActiveParameters(screeningTypes, isActive),
+        ...getPartialMatchParameters(partialMatch),
       },
       hitContext,
       undefined

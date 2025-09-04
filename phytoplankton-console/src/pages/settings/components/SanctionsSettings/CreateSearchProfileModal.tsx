@@ -14,7 +14,7 @@ import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import NumberInput from '@/components/library/NumberInput';
 import {
-  SanctionsSearchType,
+  GenericSanctionsSearchType,
   SearchProfileRequest,
   SearchProfileResponse,
   TenantSettings,
@@ -22,13 +22,13 @@ import {
 import Button from '@/components/library/Button';
 import { useHasResources } from '@/utils/user-utils';
 import { SEARCH_PROFILES } from '@/utils/queries/keys';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import DeleteIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';
 import Checkbox from '@/components/library/Checkbox';
 import {
   useHasNoSanctionsProviders,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
 
 interface FilterRow {
   filter: string;
@@ -42,7 +42,7 @@ const AVAILABLE_FILTERS = (settings?: TenantSettings) => {
         settings?.features ?? [],
         settings?.sanctions?.providerScreeningTypes,
       ).map((type) => ({ label: humanizeAuto(type), value: type }))
-    : SANCTIONS_SEARCH_TYPES.map((type) => ({ label: humanizeAuto(type), value: type }));
+    : GENERIC_SANCTIONS_SEARCH_TYPES.map((type) => ({ label: humanizeAuto(type), value: type }));
   return [
     {
       label: 'Matched type',
@@ -120,7 +120,7 @@ export default function CreateSearchProfileModal({
       type: 'multi',
       options: Object.entries(COUNTRIES).map(([code, name]) => ({
         label: name,
-        value: code as SanctionsSearchType,
+        value: code as GenericSanctionsSearchType,
       })),
     });
   }

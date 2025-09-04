@@ -1,21 +1,17 @@
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { isValidEmail } from '@flagright/lib/utils';
 import { featureDescriptions } from '../../../Footer/SuperAdminPanel/index';
 import { tenantAuth0Domain } from '../../../../../../utils/auth0Domain';
 import s from './index.module.less';
-import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
 import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
 import { useApi } from '@/api';
-import { SanctionsSettingsMarketType, TenantCreationResponse } from '@/apis';
+import { TenantCreationResponse } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
-import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
 import { useSARReportCountries } from '@/components/Sar/utils';
 import { H3, P } from '@/components/ui/Typography';
 
@@ -33,9 +29,6 @@ interface FormDetails {
   emailsOfAdmins: string[];
   featureFlags: Feature[];
   demoMode: boolean;
-  sanctionsMarketType?: SanctionsSettingsMarketType;
-  sanctionsScreeningTypes?: string[];
-  sanctionsEntityTypes?: string[];
   siloDataMode: boolean;
 }
 
@@ -100,14 +93,7 @@ export const CreateTenantModal = (props: Props) => {
     const auth0DisplayName = formDetails.auth0DisplayName.replaceAll(' ', '');
     const auth0Domain = formDetails.auth0Domain.replaceAll(' ', '');
     const emailsOfAdmins = formDetails.emailsOfAdmins.map((email) => email.replaceAll(' ', ''));
-    const {
-      featureFlags,
-      demoMode,
-      sanctionsMarketType,
-      siloDataMode,
-      sanctionsScreeningTypes,
-      sanctionsEntityTypes,
-    } = formDetails;
+    const { featureFlags, demoMode, siloDataMode } = formDetails;
 
     if (tenantId && tenantId.endsWith('-test')) {
       message.error('Tenant id should not end with -test');
@@ -127,10 +113,6 @@ export const CreateTenantModal = (props: Props) => {
       message.error(`Invalid email(s): ${invalidEmails.join(', ')}`);
       return;
     }
-    if (featureFlags.includes('SANCTIONS') && !sanctionsMarketType) {
-      message.error('Please set ComplyAdvantage market type');
-      return;
-    }
 
     try {
       const response = await api.postCreateTenant({
@@ -142,9 +124,6 @@ export const CreateTenantModal = (props: Props) => {
           auth0Domain,
           adminEmails: emailsOfAdmins,
           features: demoMode ? [...featureFlags, 'DEMO_MODE'] : featureFlags,
-          sanctionsMarketType,
-          sanctionsScreeningTypes,
-          sanctionsEntityTypes,
           siloDataMode,
         },
       });
@@ -216,33 +195,6 @@ export const CreateTenantModal = (props: Props) => {
               type: 'string',
               enum: SARCountries.map((country) => country.countryCode),
               enumNames: SARCountries.map((country) => country.country),
-            },
-          },
-        }),
-        ...(isSanctionsEnabled && {
-          sanctionsMarketType: {
-            type: 'string',
-            title: 'ComplyAdvantage market type',
-            enum: SANCTIONS_SETTINGS_MARKET_TYPES,
-          },
-          sanctionsScreeningTypes: {
-            type: 'array',
-            title: 'Screening types',
-            uniqueItems: true,
-            items: {
-              type: 'string',
-              enum: SANCTIONS_SEARCH_TYPES,
-              enumNames: SANCTIONS_SEARCH_TYPES.map((type) => humanizeAuto(type)),
-            },
-          },
-          sanctionsEntityTypes: {
-            type: 'array',
-            title: 'Required entities data',
-            uniqueItems: true,
-            items: {
-              type: 'string',
-              enum: SANCTIONS_ENTITY_TYPES,
-              enumNames: SANCTIONS_ENTITY_TYPES.map((type) => humanizeAuto(type)),
             },
           },
         }),
