@@ -249,7 +249,7 @@ export default function (): JSX.Element {
           0,
           'R-32',
           'Screening on Bank name',
-          'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+          'Sanctions/PEP/Adverse media screening on Bank names. ',
           'SUSPEND',
           'SCREENING',
           'OPEN',

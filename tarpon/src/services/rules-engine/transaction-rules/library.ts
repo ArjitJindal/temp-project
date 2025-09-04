@@ -1755,10 +1755,9 @@ const _RULES_LIBRARY: Array<
       id: 'R-32',
       name: 'Screening bank names',
       type: 'USER',
-      description:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible',
+      description: 'Sanctions/PEP/Adverse media screening on Bank names.',
       descriptionTemplate:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution is possible',
+        'Sanctions/PEP/Adverse media screening on Bank names.',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'sanctions-bank-name',

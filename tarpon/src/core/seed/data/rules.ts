@@ -1867,7 +1867,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       type: 'USER',
       ruleNameAlias: 'Screening on Bank name',
       ruleDescriptionAlias:
-        'Sanctions/PEP/Adverse media screening on Bank names. IBAN number resolution option available in rule configuration.',
+        'Sanctions/PEP/Adverse media screening on Bank names. ',
       filters: {},
       checksFor: ['User’s bank name'],
       riskLevelParameters: {
