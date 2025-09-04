@@ -487,6 +487,10 @@ export const mockedCurrencyExchangeRates: CoinbaseResponse = {
       PEPE: '1',
       TON: '1',
       TRUMP: '1',
+      EURA: '1',
+      EURT: '1',
+      ISLM: '1',
+      NPC: '1',
     },
   },
 }

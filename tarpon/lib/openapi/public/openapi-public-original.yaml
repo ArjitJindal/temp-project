@@ -6767,7 +6767,9 @@ components:
         - ETH
         - ETH2
         - EUR
+        - EURA
         - EURC
+        - EURT
         - EUROC
         - ETHFI
         - FARM
@@ -6830,6 +6832,7 @@ components:
         - INR
         - INV
         - IOTX
+        - ISLM
         - IQD
         - IRR
         - ISK
@@ -6919,6 +6922,7 @@ components:
         - NKN
         - NMR
         - NOK
+        - NPC
         - NPR
         - NU
         - NZD

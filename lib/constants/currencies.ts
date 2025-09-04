@@ -489,6 +489,10 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   XAI: { label: 'Xai', symbol: null },
   RUNE: { label: 'THORChain', symbol: null },
   THETA: { label: 'Theta Network', symbol: null },
+  NPC: { label: 'NPC', symbol: null },
+  EURA: { label: 'Euroback', symbol: null },
+  EURT: { label: 'EuroT', symbol: null },
+  ISLM: { label: 'Islem', symbol: null },
 }
 
 export const CRYPTO_CURRENCIES_KEYS = [
