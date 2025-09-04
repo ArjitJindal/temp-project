@@ -1118,6 +1118,20 @@ export const ENABLE_SHORT_NAME_MATCHING_SCHEMA = (options?: SchemaOptions) =>
     }),
   } as const)
 
+export const ENABLE_PHONETIC_MATCHING_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'boolean',
+    nullable: true,
+    title: 'Phonetic matching',
+    labelProps: {
+      hint: `Enables phonetic matching to detect names with similar pronunciation or spelling variations.`,
+    },
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS', 'DOW_JONES'],
+      subtype: 'ENABLE_PHONETIC_MATCHING',
+    }),
+  } as const)
+
 export const PEP_RANK_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {

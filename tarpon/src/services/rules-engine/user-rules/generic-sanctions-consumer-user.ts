@@ -11,6 +11,7 @@ import {
   SCREENING_PROFILE_ID_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
+  ENABLE_PHONETIC_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -20,6 +21,7 @@ import {
   getIsActiveParameters,
   getPartialMatchParameters,
   getStopwordSettings,
+  getEnablePhoneticMatchingParameters,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
@@ -52,6 +54,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   ruleStages: UserRuleStage[]
   fuzzyAddressMatching?: boolean
   enableShortNameMatching?: boolean
+  enablePhoneticMatching?: boolean
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -79,6 +82,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         // PEPRank: PEP_RANK_SCHEMA({}),  //Open-sanctions does not provide PEP rank data,
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
+        enablePhoneticMatching: ENABLE_PHONETIC_MATCHING_SCHEMA(),
         ruleStages: USER_RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
@@ -112,6 +116,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       screeningProfileId,
       fuzzyAddressMatching,
       enableShortNameMatching,
+      enablePhoneticMatching,
     } = this.parameters
     const user = this.user as User
     if (
@@ -191,6 +196,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
           user.contactDetails?.addresses
         ),
         ...getEnableShortNameMatchingParameters(enableShortNameMatching),
+        ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
       },
       hitContext,
       undefined

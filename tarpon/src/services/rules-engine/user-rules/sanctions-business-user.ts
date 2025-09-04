@@ -12,10 +12,12 @@ import {
   SCREENING_PROFILE_ID_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
+  ENABLE_PHONETIC_MATCHING_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import {
+  getEnablePhoneticMatchingParameters,
   getEnableShortNameMatchingParameters,
   getEntityTypeForSearch,
   getFuzzinessSettings,
@@ -58,6 +60,7 @@ export type SanctionsBusinessUserRuleParameters = {
   partialMatch?: boolean
   fuzzyAddressMatching?: boolean
   enableShortNameMatching?: boolean
+  enablePhoneticMatching?: boolean
 }
 
 export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusinessUserRuleParameters> {
@@ -82,6 +85,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         fuzziness: FUZZINESS_SCHEMA(),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
+        enablePhoneticMatching: ENABLE_PHONETIC_MATCHING_SCHEMA(),
         ruleStages: USER_RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
@@ -115,6 +119,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       screeningProfileId,
       fuzzyAddressMatching,
       enableShortNameMatching,
+      enablePhoneticMatching,
     } = this.parameters
 
     if (
@@ -196,6 +201,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
                 entity.addresses
               ),
               ...getEnableShortNameMatchingParameters(enableShortNameMatching),
+              ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
             },
             hitContext
           )

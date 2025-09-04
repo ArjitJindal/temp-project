@@ -12,10 +12,12 @@ import {
   USER_RULE_STAGE_SCHEMA,
   SCREENING_PROFILE_ID_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
+  ENABLE_PHONETIC_MATCHING_SCHEMA,
   GENERIC_SCREENING_VALUES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
+  getEnablePhoneticMatchingParameters,
   getEnableShortNameMatchingParameters,
   getEntityTypeForSearch,
   getFuzzinessSettings,
@@ -50,6 +52,7 @@ export type SanctionsBankUserRuleParameters = {
   partialMatch?: boolean
   screeningValues?: GenericScreeningValues[]
   enableShortNameMatching?: boolean
+  enablePhoneticMatching?: boolean
 }
 
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
@@ -61,6 +64,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         fuzziness: FUZZINESS_SCHEMA(),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
+        enablePhoneticMatching: ENABLE_PHONETIC_MATCHING_SCHEMA(),
         ruleStages: USER_RULE_STAGE_SCHEMA({
           description:
             'Select specific stage(s) of the user lifecycle that this rule will run for',
@@ -98,6 +102,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       partialMatch,
       screeningProfileId,
       enableShortNameMatching,
+      enablePhoneticMatching,
       screeningValues,
     } = this.parameters
     const fuzzyAddressMatching = screeningValues?.includes('ADDRESS')
@@ -178,6 +183,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 ...getEnableShortNameMatchingParameters(
                   enableShortNameMatching
                 ),
+                ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
               },
               hitContext
             )

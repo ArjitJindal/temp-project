@@ -103,6 +103,16 @@ export function getEnableShortNameMatchingParameters(
   }
 }
 
+export function getEnablePhoneticMatchingParameters(
+  enablePhoneticMatching?: boolean
+): {
+  enablePhoneticMatching?: boolean
+} {
+  return {
+    enablePhoneticMatching,
+  }
+}
+
 export function getStopwordSettings(stopwords?: string[]): {
   stopwords?: string[]
 } {

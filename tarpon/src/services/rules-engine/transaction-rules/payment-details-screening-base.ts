@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import { compact, uniqBy } from 'lodash'
 import {
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
+  ENABLE_PHONETIC_MATCHING_SCHEMA,
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
   FUZZY_ADDRESS_MATCHING_SCHEMA,
@@ -17,6 +18,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import {
+  getEnablePhoneticMatchingParameters,
   getEnableShortNameMatchingParameters,
   getEntityTypeForSearch,
   getFuzzinessSettings,
@@ -64,6 +66,7 @@ export type PaymentDetailsScreeningRuleParameters = {
   screeningValues?: GenericScreeningValues[]
   fuzzyAddressMatching?: boolean
   enableShortNameMatching?: boolean
+  enablePhoneticMatching?: boolean
   ruleStages: TransactionRuleStage[]
 }
 
@@ -84,6 +87,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
         }),
         fuzzinessSetting: FUZZINESS_SETTINGS_SCHEMA(),
         enableShortNameMatching: ENABLE_SHORT_NAME_MATCHING_SCHEMA(),
+        enablePhoneticMatching: ENABLE_PHONETIC_MATCHING_SCHEMA(),
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
@@ -129,6 +133,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       screeningValues,
       fuzzyAddressMatching,
       enableShortNameMatching,
+      enablePhoneticMatching,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
       ? getPaymentDetailsName(paymentDetails)
@@ -176,6 +181,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
                 paymentDetail.address ? [paymentDetail.address] : undefined
               ),
               ...getEnableShortNameMatchingParameters(enableShortNameMatching),
+              ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
             },
             hitContext,
             undefined,

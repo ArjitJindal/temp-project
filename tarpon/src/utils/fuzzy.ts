@@ -6,6 +6,95 @@ export interface FuzzinessOptions {
   omitSpaces: boolean
   partialMatchLength: number
   fuzzinessThreshold: number
+  enablePhoneticMatching?: boolean // Added for Soundex support
+}
+
+/**
+ * Soundex code mapping for consonants
+ * Letters that sound similar are grouped together with the same digit
+ */
+const SOUNDEX_MAP: Record<string, string> = {
+  B: '1',
+  F: '1',
+  P: '1',
+  V: '1',
+  C: '2',
+  G: '2',
+  J: '2',
+  K: '2',
+  Q: '2',
+  S: '2',
+  X: '2',
+  Z: '2',
+  D: '3',
+  T: '3',
+  L: '4',
+  M: '5',
+  N: '5',
+  R: '6',
+}
+
+function generateSoundex(str: string): string {
+  if (!str || str.length === 0) {
+    return '0000'
+  }
+
+  const cleanStr = str.toUpperCase().replace(/[^A-Z]/g, '')
+
+  if (cleanStr.length === 0) {
+    return '0000'
+  }
+
+  let soundex = cleanStr[0]
+
+  for (let i = 1; i < cleanStr.length && soundex.length < 4; i++) {
+    const char = cleanStr[i]
+    const code = SOUNDEX_MAP[char]
+
+    if (code && code !== soundex[soundex.length - 1]) {
+      soundex += code
+    }
+  }
+
+  while (soundex.length < 4) {
+    soundex += '0'
+  }
+
+  return soundex
+}
+
+function calculateSoundexSimilarity(str1: string, str2: string): number {
+  const soundex1 = generateSoundex(str1)
+  const soundex2 = generateSoundex(str2)
+
+  if (soundex1 === soundex2) {
+    return 100
+  }
+
+  let matches = 0
+  for (let i = 0; i < 4; i++) {
+    if (soundex1[i] === soundex2[i]) {
+      matches++
+    }
+  }
+
+  return (matches / 4) * 100
+}
+
+function calculateCombinedSimilarity(
+  str1: string,
+  str2: string,
+  baseAlgorithm: (
+    s1: string,
+    s2: string
+  ) => number = calculateJaroWinklerDistance
+): number {
+  const baseScore = baseAlgorithm(str1, str2)
+  const soundexScore = calculateSoundexSimilarity(str1, str2)
+
+  // Weight base algorithm more heavily (70%) as it's more precise
+  // Soundex gets 30% weight as it's a coarser phonetic match
+  return baseScore * 0.7 + soundexScore * 0.3
 }
 
 /**
@@ -28,7 +117,14 @@ export function token_similarity_sort_ratio(
       tokens2,
       separator,
       options.partialMatchLength,
-      calculateLevenshteinDistancePercentageForNormalizedStrings,
+      options.enablePhoneticMatching
+        ? (s1: string, s2: string) =>
+            calculateCombinedSimilarity(
+              s1,
+              s2,
+              calculateLevenshteinDistancePercentageForNormalizedStrings
+            )
+        : calculateLevenshteinDistancePercentageForNormalizedStrings,
       options.fuzzinessThreshold
     )
   }
@@ -36,6 +132,13 @@ export function token_similarity_sort_ratio(
   const s2 = tokens2.join(separator)
   if (fuzzyEarlyTermination(s1, s2, options.fuzzinessThreshold)) {
     return 0
+  }
+  if (options.enablePhoneticMatching) {
+    return calculateCombinedSimilarity(
+      s1,
+      s2,
+      calculateLevenshteinDistancePercentageForNormalizedStrings
+    )
   }
   return calculateLevenshteinDistancePercentageForNormalizedStrings(s1, s2)
 }
@@ -49,6 +152,14 @@ export function fuzzy_levenshtein_distance(
     if (fuzzyEarlyTermination(str1, str2, options.fuzzinessThreshold)) {
       return 0
     }
+    // If phonetic matching is enabled, use combined similarity
+    if (options.enablePhoneticMatching) {
+      return calculateCombinedSimilarity(
+        str1,
+        str2,
+        calculateLevenshteinDistancePercentageForNormalizedStrings
+      )
+    }
     return calculateLevenshteinDistancePercentageForNormalizedStrings(
       str1,
       str2
@@ -61,7 +172,14 @@ export function fuzzy_levenshtein_distance(
     tokens2,
     separator,
     options.partialMatchLength,
-    calculateLevenshteinDistancePercentageForNormalizedStrings,
+    options.enablePhoneticMatching
+      ? (s1: string, s2: string) =>
+          calculateCombinedSimilarity(
+            s1,
+            s2,
+            calculateLevenshteinDistancePercentageForNormalizedStrings
+          )
+      : calculateLevenshteinDistancePercentageForNormalizedStrings,
     options.fuzzinessThreshold
   )
 }
@@ -279,6 +397,10 @@ export function jaro_winkler_distance(
   options: FuzzinessOptions
 ): number {
   if (!options.partialMatch) {
+    // If phonetic matching is enabled, use combined similarity
+    if (options.enablePhoneticMatching) {
+      return calculateCombinedSimilarity(s1, s2, calculateJaroWinklerDistance)
+    }
     return calculateJaroWinklerDistance(s1, s2)
   }
   const { tokens1, tokens2 } = arrange_token_lists(s1, s2)
@@ -288,7 +410,11 @@ export function jaro_winkler_distance(
     tokens2,
     separator,
     options.partialMatchLength,
-    calculateJaroWinklerDistance
+    options.enablePhoneticMatching
+      ? (s1: string, s2: string) =>
+          calculateCombinedSimilarity(s1, s2, calculateJaroWinklerDistance)
+      : calculateJaroWinklerDistance,
+    options.fuzzinessThreshold
   )
 }
 

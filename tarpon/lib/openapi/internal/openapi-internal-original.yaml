@@ -14559,6 +14559,8 @@ components:
           type: boolean
         enableShortNameMatching:
           type: boolean
+        enablePhoneticMatching:
+          type: boolean
         addresses:
           type: array
           items:

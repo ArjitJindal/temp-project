@@ -1314,6 +1314,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               partialMatch: !!request.partialMatch || !!request.manualSearch,
               partialMatchLength: searchTermTokensLength,
               fuzzinessThreshold,
+              enablePhoneticMatching: request.enablePhoneticMatching,
             })
             const fuzzyMatch =
               SanctionsDataFetcher.getFuzzinessEvaluationResult(
