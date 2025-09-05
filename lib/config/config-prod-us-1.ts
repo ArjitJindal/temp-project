@@ -127,6 +127,8 @@ export const config: Config = {
   clickhouse: {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.us-west-2.vpce-svc-03b4b1a843818b154',
+    maxTotalMemoryGb: 48,
+    numReplicas: 3,
   },
   opensearch: {
     deploy: true,
