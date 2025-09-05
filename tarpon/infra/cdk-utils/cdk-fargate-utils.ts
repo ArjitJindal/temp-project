@@ -96,9 +96,6 @@ export const addFargateContainer = (
       NODE_OPTIONS: `--max_old_space_size=${props.memoryLimitMiB ?? 512}`,
       LOG_LEVEL: 'info',
       CUSTOM_METRICS: 'false',
-      SEED_TRANSACTIONS_COUNT: scope.config.stage === 'dev' ? '400' : '4000',
-      SEED_CRYPTO_TRANSACTIONS_COUNT:
-        scope.config.stage === 'dev' ? '50' : '500',
     },
   })
 

@@ -168,7 +168,7 @@ export class NangoRepository {
     return records
   }
 
-  public async linkCrmRecord(link: CRMRecordLink) {
+  public linkCrmRecordWriteRequest(link: CRMRecordLink) {
     const key = DynamoDbKeys.CRM_USER_RECORD_LINK(
       this.tenantId,
       link.userId,
@@ -176,14 +176,32 @@ export class NangoRepository {
       link.crmName,
       link.id
     )
-
-    const crmRecord = new PutCommand({
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+    const item = {
       Item: {
         ...link,
         ...key,
       },
+    }
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    const crmRecord = new PutCommand({
+      TableName: tableName,
+      ...item,
     })
+    return {
+      key,
+      putItemCommand: crmRecord,
+      putItemInput: {
+        PutRequest: {
+          ...item,
+        },
+      },
+      tableName: tableName,
+    }
+  }
+
+  public async linkCrmRecord(link: CRMRecordLink) {
+    const { putItemCommand: crmRecord, key } =
+      this.linkCrmRecordWriteRequest(link)
 
     await this.dynamoDb.send(crmRecord)
 

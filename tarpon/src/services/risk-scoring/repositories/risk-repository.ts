@@ -991,7 +991,7 @@ export class RiskRepository {
     return drsScore
   }
 
-  async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
+  async createOrUpdateDemoRiskFactor(riskFactor: RiskFactor) {
     logger.debug(`Updating risk factor for V8.`)
 
     const now = Date.now()
@@ -1008,6 +1008,59 @@ export class RiskRepository {
       updatedAt: now,
       createdAt: oldRiskFactor?.createdAt ?? now,
     }
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...newRiskFactor,
+        ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
+      },
+    }
+    return putItemInput
+  }
+
+  private async getNewRiskFactor(riskFactor: RiskFactor) {
+    const now = Date.now()
+    const oldRiskFactor = await this.getRiskFactor(riskFactor.id)
+    const newRiskFactor: RiskFactor = {
+      ...riskFactor,
+      logicAggregationVariables:
+        (await getLogicAggVarsWithUpdatedVersion(
+          riskFactor,
+          riskFactor.id,
+          oldRiskFactor,
+          this.aggregationRepository
+        )) ?? [],
+      updatedAt: now,
+      createdAt: oldRiskFactor?.createdAt ?? now,
+    }
+    return newRiskFactor
+  }
+
+  async createDemoRiskFactor(riskFactors: RiskFactor[]) {
+    const newRiskFactors = await Promise.all(
+      riskFactors.map((riskFactor) => this.getNewRiskFactor(riskFactor))
+    )
+
+    const writeRequests: BatchWriteRequestInternal[] = newRiskFactors.map(
+      (riskFactor) => ({
+        PutRequest: {
+          Item: {
+            ...riskFactor,
+            ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
+          },
+        },
+      })
+    )
+    return {
+      writeRequests,
+      tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+    }
+  }
+
+  async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
+    logger.debug(`Updating risk factor for V8.`)
+
+    const newRiskFactor = await this.getNewRiskFactor(riskFactor)
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {

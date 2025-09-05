@@ -27,8 +27,8 @@ export class ClickhouseAuditLogRepository {
     this.clickhouseClient = connections.clickhouseClient
     this.tableName = AUDIT_LOGS_TABLE_NAME_CH
   }
-  public async saveAuditLog(auditLog: AuditLog): Promise<void> {
-    await batchInsertToClickhouse(this.tenantId, this.tableName, [auditLog])
+  public async saveAuditLog(auditLogs: AuditLog[]): Promise<void> {
+    await batchInsertToClickhouse(this.tenantId, this.tableName, auditLogs)
   }
   public async getAuditLogById(auditlogId: string): Promise<AuditLog> {
     const client = await getClickhouseClient(this.tenantId)

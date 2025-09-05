@@ -158,6 +158,7 @@ export class DynamoCaseRepository {
       caseToSaveWithId.caseSubjectIdentifiers = identifiers
 
       // Add primary case record
+      // cases should created by put method for demo data to work as we don't clear the demo data for cases
       batch.put({
         Item: {
           ...key,

@@ -92,6 +92,31 @@ export class DynamoDbTransactionRepository
     return transactions[0]
   }
 
+  public saveDemoTransaction(
+    transaction: Transaction,
+    rulesResult?: Undefined<TransactionMonitoringResult>
+  ) {
+    this.sanitizeTransactionInPlace(transaction)
+    transaction.timestamp = transaction.timestamp || Date.now()
+
+    const primaryKey = DynamoDbKeys.TRANSACTION(
+      this.tenantId,
+      transaction.transactionId
+    )
+    return {
+      putItemInput: {
+        PutRequest: {
+          Item: {
+            ...primaryKey,
+            ...transaction,
+            ...rulesResult,
+          },
+        },
+      },
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+    }
+  }
+
   public async saveTransactions(
     transactions: Array<{
       transaction: Transaction

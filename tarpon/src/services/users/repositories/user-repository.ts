@@ -1062,10 +1062,10 @@ export class UserRepository {
     }
   }
 
-  public async saveUser(
+  private preProcessSavingUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
     type: UserType
-  ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
+  ) {
     this.sanitizeUserInPlace(user)
     const userId = user.userId
     const newUser = {
@@ -1078,8 +1078,34 @@ export class UserRepository {
         ;(newUser.linkedEntities as any).childUserIds = undefined
       }
     }
+    return newUser
+  }
 
-    const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
+  private userKeys(userId: string) {
+    return DynamoDbKeys.USER(this.tenantId, userId)
+  }
+
+  public async saveDemoUser(
+    user: UserWithRulesResult | BusinessWithRulesResult,
+    type: UserType
+  ) {
+    const newUser = this.preProcessSavingUser(user, type)
+    const primaryKey = this.userKeys(user.userId)
+    return {
+      putItemInput: {
+        PutRequest: { Item: { ...primaryKey, ...newUser } },
+      },
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+    }
+  }
+
+  public async saveUser(
+    user: UserWithRulesResult | BusinessWithRulesResult,
+    type: UserType
+  ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
+    const newUser = this.preProcessSavingUser(user, type)
+    const userId = user.userId
+    const primaryKey = this.userKeys(userId)
     await upsertSaveDynamo(
       this.dynamoDb,
       {

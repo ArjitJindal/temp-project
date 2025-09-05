@@ -12,7 +12,11 @@ import { uniqBy } from 'lodash'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { sanitizeMongoObject, DynamoTransactionBatch } from '@/utils/dynamodb'
+import {
+  sanitizeMongoObject,
+  DynamoTransactionBatch,
+  BatchWriteRequestInternal,
+} from '@/utils/dynamodb'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 
 @traceable
@@ -89,6 +93,23 @@ export class DynamoReasonsRepository {
     return items
   }
 
+  private reasonKeys(id: string, reasonType: ReasonType) {
+    return DynamoDbKeys.REASONS(this.tenantId, id, reasonType)
+  }
+
+  public async saveDemoReasons(reasons: ConsoleActionReason[]) {
+    const writeRequests: BatchWriteRequestInternal[] = []
+    for (const reason of reasons) {
+      const key = this.reasonKeys(reason.id, reason.reasonType)
+      writeRequests.push({
+        PutRequest: {
+          Item: { ...key, ...sanitizeMongoObject(reason), isDeleted: false },
+        },
+      })
+    }
+    return { writeRequests, tableName: this.tableName }
+  }
+
   public async saveReasons(reasons: ConsoleActionReason[]) {
     const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
     const uniqueReasons = uniqBy(
@@ -99,11 +120,7 @@ export class DynamoReasonsRepository {
       if (!reason.id) {
         continue
       }
-      const key = DynamoDbKeys.REASONS(
-        this.tenantId,
-        reason.id,
-        reason.reasonType
-      )
+      const key = this.reasonKeys(reason.id, reason.reasonType)
       const data = sanitizeMongoObject(reason)
 
       batch.put({

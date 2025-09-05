@@ -6,7 +6,11 @@ import { ClickhouseAuditLogRepository } from './clickhouse-repository'
 import { traceable } from '@/core/xray'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { sanitizeMongoObject, DynamoTransactionBatch } from '@/utils/dynamodb'
+import {
+  sanitizeMongoObject,
+  BatchWriteRequestInternal,
+  DynamoTransactionBatch,
+} from '@/utils/dynamodb'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 @traceable
@@ -34,12 +38,36 @@ export class DynamoAuditLogRepository {
     )
     return this.clickhouseAuditLogRepository
   }
+
+  private auditLogKeys(auditLogId?: string) {
+    return DynamoDbKeys.AUDIT_LOGS(this.tenantId, auditLogId)
+  }
+
+  public async saveDemoAuditLog(auditLogs: AuditLog[]) {
+    const writeRequests: BatchWriteRequestInternal[] = []
+    for (const auditLog of auditLogs) {
+      const data = omit(sanitizeMongoObject(auditLog), ['_id'])
+      const key = this.auditLogKeys(auditLog.auditlogId)
+
+      writeRequests.push({
+        PutRequest: {
+          Item: {
+            ...key,
+            ...data,
+          },
+        },
+      })
+    }
+
+    return { writeRequests, tableName: this.tableName }
+  }
+
   public async saveAuditLog(auditLog: AuditLog): Promise<void> {
     const clickhouseAuditLogRepository =
       await this.getClickhouseAuditLogRepository()
     try {
       const data = omit(sanitizeMongoObject(auditLog), ['_id'])
-      const key = DynamoDbKeys.AUDIT_LOGS(this.tenantId, auditLog.auditlogId)
+      const key = this.auditLogKeys(auditLog.auditlogId)
 
       // Create batch for operations
       const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
@@ -61,7 +89,7 @@ export class DynamoAuditLogRepository {
         },
       })
     } finally {
-      await clickhouseAuditLogRepository.saveAuditLog(auditLog)
+      await clickhouseAuditLogRepository.saveAuditLog([auditLog])
     }
   }
 

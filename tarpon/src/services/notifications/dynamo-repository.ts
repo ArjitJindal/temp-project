@@ -12,6 +12,7 @@ import {
   batchGet,
   sanitizeMongoObject,
   DynamoTransactionBatch,
+  BatchWriteRequestInternal,
 } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
@@ -41,6 +42,21 @@ export class DynamoNotificationRepository {
     this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
   }
 
+  private notificationKeys(notificationId: string) {
+    return DynamoDbKeys.NOTIFICATIONS(this.tenantId, notificationId)
+  }
+
+  public async saveDemoNotifications(notifications: Notification[]) {
+    const writeRequests: BatchWriteRequestInternal[] = []
+    for (const notification of notifications) {
+      const key = this.notificationKeys(notification.id)
+      writeRequests.push({
+        PutRequest: { Item: { ...key, ...sanitizeMongoObject(notification) } },
+      })
+    }
+    return { writeRequests, tableName: this.tableName }
+  }
+
   public async saveToDynamoDb(notifications: Notification[]) {
     const keys: { PartitionKeyID: string; SortKeyID?: string }[] = []
 
@@ -50,7 +66,7 @@ export class DynamoNotificationRepository {
       if (!notification.id) {
         continue
       }
-      const key = DynamoDbKeys.NOTIFICATIONS(this.tenantId, notification.id)
+      const key = this.notificationKeys(notification.id)
       keys.push(key)
 
       batch.put({

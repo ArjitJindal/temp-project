@@ -31,6 +31,7 @@ import {
   dangerouslyDeletePartition,
   dangerouslyQueryPaginateDelete,
   DynamoTransactionBatch,
+  BatchWriteRequestInternal,
 } from '@/utils/dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
@@ -1914,6 +1915,32 @@ export class DynamoAlertRepository {
       }
     }
   }
+
+  private QASampleKeys(samplingId: string) {
+    return DynamoDbKeys.ALERTS_QA_SAMPLING(this.tenantId, samplingId)
+  }
+
+  public async saveDemoQASampleData(data: AlertsQaSampling[]) {
+    const writeRequests: BatchWriteRequestInternal[] = []
+    for (const item of data) {
+      if (!item.samplingId) {
+        logger.warn('Demo alerts Qa sampling data: Sampling ID is required')
+        continue
+      }
+      const alert = omit(sanitizeMongoObject(item), ['_id'])
+      const key = this.QASampleKeys(item.samplingId)
+      writeRequests.push({
+        PutRequest: {
+          Item: {
+            ...key,
+            ...alert,
+          },
+        },
+      })
+    }
+    return { writeRequests, tableName: this.tableName }
+  }
+
   /**
    * Save QA sample data to DynamoDB
    *
@@ -1921,26 +1948,27 @@ export class DynamoAlertRepository {
    */
   public async saveQASampleData(data: AlertsQaSampling) {
     const alert = omit(sanitizeMongoObject(data), ['_id'])
-    const key = DynamoDbKeys.ALERTS_QA_SAMPLING(
-      this.tenantId,
-      alert.samplingId as string
-    )
+    if (alert.samplingId) {
+      const key = this.QASampleKeys(alert.samplingId)
 
-    // Create document client from raw client for batch operations
+      // Create document client from raw client for batch operations
 
-    const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+      const batch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
 
-    batch.put({
-      Item: {
-        ...key,
-        ...alert,
-      },
-    })
+      batch.put({
+        Item: {
+          ...key,
+          ...alert,
+        },
+      })
 
-    await batch.execute()
+      await batch.execute()
 
-    if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, key)
+      if (envIs('local') || envIs('test')) {
+        await handleLocalChangeCapture(this.tenantId, key)
+      }
+    } else {
+      logger.warn('Sampling ID is required')
     }
   }
 

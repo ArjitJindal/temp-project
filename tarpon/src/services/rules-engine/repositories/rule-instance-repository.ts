@@ -278,10 +278,10 @@ export class RuleInstanceRepository {
     }
   }
 
-  public async createOrUpdateRuleInstance(
+  private async createOrUpdateRuleInstanceWriteRequest(
     ruleInstance: RuleInstance,
     updatedAt?: number
-  ): Promise<RuleInstance> {
+  ) {
     const ruleId = ruleInstance.ruleId ?? (await this.getNewCustomRuleId(true))
 
     if (envIsNot('test') && isV2RuleInstance(ruleInstance)) {
@@ -347,6 +347,33 @@ export class RuleInstanceRepository {
         ...newRuleInstance,
       },
     }
+    return { putItemInput, newRuleInstance }
+  }
+
+  public async createOrUpdateDemoRuleInstance(
+    ruleInstance: RuleInstance,
+    updatedAt?: number
+  ) {
+    const { putItemInput } = await this.createOrUpdateRuleInstanceWriteRequest(
+      ruleInstance,
+      updatedAt
+    )
+    return {
+      putItemInput: {
+        PutRequest: {
+          Item: putItemInput.Item,
+        },
+      },
+      tableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+    }
+  }
+
+  public async createOrUpdateRuleInstance(
+    ruleInstance: RuleInstance,
+    updatedAt?: number
+  ): Promise<RuleInstance> {
+    const { putItemInput, newRuleInstance } =
+      await this.createOrUpdateRuleInstanceWriteRequest(ruleInstance, updatedAt)
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
     return newRuleInstance

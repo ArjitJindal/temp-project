@@ -11,10 +11,7 @@ import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
-import { riskFactors } from './data/risk-factors'
 import { getUserEvents } from './data/user_events'
-import { ruleInstances } from './data/rules'
-import { ID_PREFIXES } from './data/seeds'
 import {
   allCollections,
   createGlobalMongoDBCollections,
@@ -79,19 +76,12 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { SLAService } from '@/services/sla/sla-service'
-import {
-  DEFAULT_CLOSURE_REASONS,
-  DEFAULT_ESCALATION_REASONS,
-  getDefaultReasonsData,
-} from '@/services/tenants/reasons-service'
+import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
 import { getNarrativeTemplates } from '@/core/seed/data/narrative'
-import { isV2RuleInstance } from '@/services/rules-engine/utils'
-import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
   [CASES_COLLECTION, () => getCases()],
-  [COUNTER_COLLECTION, () => getCounterCollectionData()],
   [USERS_COLLECTION, () => users],
   [USER_EVENTS_COLLECTION, () => getUserEvents()],
   [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
@@ -141,6 +131,7 @@ export async function seedMongo(
   const auth0Domain =
     settings.auth0Domain || (process.env.AUTH0_DOMAIN as string)
 
+  let now = Date.now()
   try {
     logger.info('Get all collections')
     const col = await allCollections(tenantId, db)
@@ -154,62 +145,24 @@ export async function seedMongo(
   } catch (e) {
     logger.info("Couldn't empty collections")
   }
+  logger.info(`TIME: MongoDB: Collections deletion took ~ ${Date.now() - now}`)
 
+  now = Date.now()
   await createMongoDBCollections(client, dynamoDb, tenantId)
+  logger.info(`TIME: MongoDB: Collections creation took ~ ${Date.now() - now}`)
+  now = Date.now()
   await createGlobalMongoDBCollections(client)
+  logger.info(
+    `TIME: MongoDB: Global collections creation took, ${Date.now() - now}`
+  )
 
   logger.info('Setting counters')
   const counterCollection = db.collection<EntityCounter>(
     COUNTER_COLLECTION(tenantId)
   )
-  const counters: [CounterEntity, number][] = [
-    [
-      'Report',
-      getCounterValue(
-        reports,
-        'id',
-        ID_PREFIXES.REPORT,
-        REPORT_COLLECTION(tenantId)
-      ),
-    ],
-    [
-      'Case',
-      getCounterValue(
-        getCases(),
-        'caseId',
-        ID_PREFIXES.CASE,
-        CASES_COLLECTION(tenantId)
-      ),
-    ],
-    [
-      'Alert',
-      getCounterValue(
-        getCases()
-          .flatMap((c) => c.alerts)
-          .filter(Boolean) as Alert[],
-        'alertId',
-        ID_PREFIXES.ALERT,
-        CASES_COLLECTION(tenantId) + 'Alerts'
-      ),
-    ],
-    ['SLAPolicy', getSLAPolicies().length],
-    [
-      'RiskFactor',
-      getCounterValue(
-        riskFactors(),
-        'id',
-        ID_PREFIXES.RISK_FACTOR,
-        'RiskFactor'
-      ) + RISK_FACTORS.length,
-    ],
-    ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
-    ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
-    [
-      'RC',
-      ruleInstances().filter((instance) => !isV2RuleInstance(instance)).length,
-    ],
-  ]
 
+  const counters: [CounterEntity, number][] = getCounterCollectionData(tenantId)
+  now = Date.now()
   for (const counter of counters) {
     await counterCollection.findOneAndUpdate(
       { entity: counter[0] },
@@ -217,8 +170,11 @@ export async function seedMongo(
       { upsert: true, returnDocument: 'after' }
     )
   }
+  logger.info(`TIME: MongoDB: Counters creation took ~ ${Date.now() - now}`)
 
+  now = Date.now()
   await db.collection(ML_MODELS_COLLECTION()).deleteMany({})
+  logger.info(`TIME: MongoDB: ML models deletion took ~ ${Date.now() - now}`)
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
@@ -230,6 +186,7 @@ export async function seedMongo(
     const collectionData = data()
     const clonedData = cloneDeep(collectionData)
 
+    now = Date.now()
     for await (const dataChunk of chunk(clonedData, 10000)) {
       try {
         await collection.insertMany(dataChunk as any[], { ordered: false })
@@ -241,6 +198,11 @@ export async function seedMongo(
         }
       }
     }
+    logger.info(
+      `TIME: MongoDB: ${collectionNameFn(tenantId)} insertion took ~ ${
+        Date.now() - now
+      }`
+    )
     logger.info(
       `Re-created collection: ${collectionNameFn(tenantId)} - ${
         clonedData.length
@@ -270,14 +232,23 @@ export async function seedMongo(
       }
     }
   }
+  logger.info(
+    `TIME: MongoDB: Updating transaction with alertIds took ~ ${
+      Date.now() - now
+    }`
+  )
 
   logger.info('Refreshing dashboard stats...')
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,
     dynamoDb,
   })
+  now = Date.now()
 
   await dashboardStatsRepository.refreshAllStats()
+  logger.info(
+    `TIME: MongoDB: Refreshing dashboard stats took ~ ${Date.now() - now}`
+  )
   logger.info('Dashboard stats refreshed')
 
   logger.info('Updating alerts SLA statuses')
@@ -287,42 +258,11 @@ export async function seedMongo(
     dynamoDb,
   })
 
+  now = Date.now()
   await alertsSLAService.calculateAndUpdateSLAStatusesForAlerts()
+  logger.info(
+    `TIME: MongoDB: Updating alerts SLA statuses took ~ ${Date.now() - now}`
+  )
 
   logger.info('Alerts SLA statuses updated')
-}
-
-const getCounterValue = (
-  data: object[],
-  idField: string,
-  idPrefix: string,
-  collectionName: string
-) => {
-  let maxId = 0
-  let erroredRow = 0
-
-  console.info(idField)
-  for (const row of data) {
-    const id = row[idField]
-    if (id.startsWith(idPrefix)) {
-      const idValue = id.slice(idPrefix.length)
-      const idNumber = parseInt(idValue)
-      if (isNaN(idNumber)) {
-        erroredRow++
-      }
-      maxId = Math.max(maxId, idNumber)
-    } else {
-      erroredRow++
-    }
-  }
-
-  if (erroredRow > 0) {
-    logger.warn(
-      `Found ${erroredRow} errored rows in ${collectionName} with id field ${idField} and id prefix ${idPrefix}`
-    )
-  }
-
-  logger.info(`Counter for ${collectionName} is ${maxId + erroredRow}`)
-
-  return maxId + erroredRow
 }

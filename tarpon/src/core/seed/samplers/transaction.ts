@@ -26,36 +26,36 @@ import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 import { CashDetails } from '@/@types/openapi-public/CashDetails'
 
 const RANDOM_IPS = [
-  '126.239.220.152',
-  '116.219.120.142',
-  '3.124.91.35',
-  '3.66.58.17',
-  '3.70.73.47',
-  '3.67.28.78',
-  '3.76.95.10',
-  '35.156.181.187',
-  '18.132.155.115',
-  '18.134.212.219',
-  '35.177.249.136',
-  '13.251.166.15',
-  '18.143.88.142',
-  '46.137.237.47',
-  '18.139.42.183',
-  '3.1.188.28',
-  '3.1.234.194',
-  '13.234.102.242',
-  '3.109.243.84',
-  '43.205.70.199',
-  '35.155.123.185',
-  '44.237.56.178',
-  '52.11.98.137',
-  '3.104.94.7',
-  '54.79.45.195',
-  '3.28.175.208',
-  '3.28.224.220',
-  '51.112.26.119',
-  '106.219.120.147',
-  '26.1.230.222',
+  { ip: '126.239.220.152', country: 'JP' },
+  { ip: '116.219.120.142', country: 'CN' },
+  { ip: '3.124.91.35', country: 'DE' },
+  { ip: '3.66.58.17', country: 'DE' },
+  { ip: '3.70.73.47', country: 'DE' },
+  { ip: '3.67.28.78', country: 'DE' },
+  { ip: '3.76.95.10', country: 'DE' },
+  { ip: '35.156.181.187', country: 'DE' },
+  { ip: '18.132.155.115', country: 'GB' },
+  { ip: '18.134.212.219', country: 'GB' },
+  { ip: '35.177.249.136', country: 'GB' },
+  { ip: '13.251.166.15', country: 'SG' },
+  { ip: '18.143.88.142', country: 'SG' },
+  { ip: '46.137.237.47', country: 'IE' },
+  { ip: '18.139.42.183', country: 'SG' },
+  { ip: '3.1.188.28', country: 'IN' },
+  { ip: '3.1.234.194', country: 'IN' },
+  { ip: '13.234.102.242', country: 'IN' },
+  { ip: '3.109.243.84', country: 'IN' },
+  { ip: '43.205.70.199', country: 'IN' },
+  { ip: '35.155.123.185', country: 'US' },
+  { ip: '44.237.56.178', country: 'US' },
+  { ip: '52.11.98.137', country: 'US' },
+  { ip: '3.104.94.7', country: 'AU' },
+  { ip: '54.79.45.195', country: 'AU' },
+  { ip: '3.28.175.208', country: 'US' },
+  { ip: '3.28.224.220', country: 'US' },
+  { ip: '51.112.26.119', country: 'GB' },
+  { ip: '106.219.120.147', country: 'IN' },
+  { ip: '26.1.230.222', country: 'US' },
 ]
 
 const RISK_INDICATOR_CATEGORIES = [
@@ -362,8 +362,9 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
 
 export class DeviceDataSampler extends BaseSampler<DeviceData> {
   generateSample(): DeviceData {
+    const ipInfo = this.rng.pickRandom(RANDOM_IPS)
     return {
-      ipAddress: this.rng.pickRandom(RANDOM_IPS),
+      ipAddress: ipInfo.ip,
       batteryLevel: Number(this.rng.randomFloat(100).toFixed(1)),
       deviceLatitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),
       deviceLongitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),
@@ -374,6 +375,7 @@ export class DeviceDataSampler extends BaseSampler<DeviceData> {
       deviceModel: this.rng.pickRandom(DEVICE_MODELS),
       deviceYear: this.rng.pickRandom(DEVICE_YEARS),
       appVersion: this.rng.pickRandom(APP_VERSIONS),
+      ipCountry: ipInfo.country as CountryCode,
     }
   }
 }

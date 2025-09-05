@@ -18,7 +18,7 @@ import { envIs, envIsNot } from '@/utils/env'
 
 // stores mocked user for once
 export let users: (InternalBusinessUser | InternalConsumerUser)[] = []
-const CONSUMER_USER_COUNT = envIs('sandbox') ? 500 : 200
+const CONSUMER_USER_COUNT = 500
 
 const businessUsers: (
   tenantId: string,

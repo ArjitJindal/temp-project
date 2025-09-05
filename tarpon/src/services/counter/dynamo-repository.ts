@@ -11,7 +11,10 @@ import {
 import { COUNTER_ENTITIES, CounterEntity } from './repository'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { DynamoTransactionBatch } from '@/utils/dynamodb'
+import {
+  BatchWriteRequestInternal,
+  DynamoTransactionBatch,
+} from '@/utils/dynamodb'
 
 @traceable
 export class DynamoCounterRepository {
@@ -85,11 +88,26 @@ export class DynamoCounterRepository {
     return [...new Array(count)].map((_, i) => value - i)
   }
 
+  private counterKeys(entity: CounterEntity) {
+    return DynamoDbKeys.COUNTER(this.tenantId, entity)
+  }
+
+  public async saveDemoCounterValue(counters: [CounterEntity, number][]) {
+    const writeRequests: BatchWriteRequestInternal[] = []
+    for (const counter of counters) {
+      const key = this.counterKeys(counter[0])
+      writeRequests.push({
+        PutRequest: { Item: { ...key, count: counter[1] } },
+      })
+    }
+    return { writeRequests, tableName: this.tableName }
+  }
+
   public async setCounterValue(
     entity: CounterEntity,
     count: number
   ): Promise<void> {
-    const key = DynamoDbKeys.COUNTER(this.tenantId, entity)
+    const key = this.counterKeys(entity)
     const commandInput: PutCommandInput = {
       TableName: this.tableName,
       Item: {
