@@ -28,7 +28,7 @@ function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement
         <div className={s.header}>
           <div className={s.title}>
             {setUserAlias(title, userAlias)}
-            {count != null ? `(${count})` : ''}
+            {count != null ? ` (${count})` : ''}
           </div>
           {tools && <div className={s.tools}>{tools}</div>}
         </div>
