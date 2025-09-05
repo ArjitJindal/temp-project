@@ -1,6 +1,5 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError, { BadRequest } from 'http-errors'
-import { removeStopwords, eng } from 'stopword'
 import { cloneDeep, compact, concat, isEmpty, set, uniq } from 'lodash'
 import { replaceMagicKeyword } from '@flagright/lib/utils/object'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
@@ -15,6 +14,7 @@ import {
   canAggregate,
   getVariableKeysFromLogic,
 } from '../logic-evaluator/engine/utils'
+import { STOPWORDS } from '../../utils/stopwords'
 import {
   RuleChecksForField,
   RuleNature,
@@ -68,6 +68,7 @@ import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { ModelTier } from '@/utils/llms/base-service'
 import { FilterTags } from '@/@types/openapi-internal/FilterTags'
 import { RULE_TAGS } from '@/@types/openapi-internal-custom/RuleTag'
+import { removeStopwords } from '@/utils/stopwords'
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -260,7 +261,7 @@ export class RuleService {
 
     const cleanedQueryStr = removePunctuation(
       compact(
-        removeStopwords(queryStr.split(' '), [...eng, 'rule', 'rules'])
+        removeStopwords(queryStr.split(' '), [...STOPWORDS, 'rule', 'rules'])
       ).join(' ')
     )
 

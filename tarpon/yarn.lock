@@ -11936,13 +11936,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/stopword@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "@types/stopword@npm:2.0.3"
-  checksum: 6635737f7b45a0985b85e50b0604c81371783d643e2444719f34abb94336b4e522a382ce8da1107bf79ef5e9f6091a7771428deb9616eff8196c6fcd4c4a4f50
-  languageName: node
-  linkType: hard
-
 "@types/strip-bom@npm:^3.0.0":
   version: 3.0.0
   resolution: "@types/strip-bom@npm:3.0.0"
@@ -22815,13 +22808,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stopword@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "stopword@npm:3.0.1"
-  checksum: 495dbb357c8197f2356b5afe92a3d4a1b2d5e08841bd2337a9f33a64418365d591596cac7924e6564e18351d18e9354489b010fe6d7f49e87b4a5bf06e1b0d85
-  languageName: node
-  linkType: hard
-
 "stream-browserify@npm:3.0.0":
   version: 3.0.0
   resolution: "stream-browserify@npm:3.0.0"
@@ -23309,7 +23295,6 @@ __metadata:
     "@types/pluralize": "npm:^0.0.30"
     "@types/progress": "npm:^2.0.5"
     "@types/ssh2-sftp-client": "npm:^9.0.4"
-    "@types/stopword": "npm:^2.0.3"
     "@types/unidecode": "npm:^0.1.1"
     "@types/unzipper": "npm:^0"
     "@types/uuid": "npm:^8.3.4"
@@ -23412,7 +23397,6 @@ __metadata:
     slackify-markdown: "npm:^4.4.0"
     source-map-support: "npm:^0.5.21"
     ssh2-sftp-client: "npm:^10.0.3"
-    stopword: "npm:^3.0.1"
     swagger-routes-express: "npm:^3.3.2"
     thunder-schema: "npm:1.0.28"
     timeout-signal: "npm:^1.1.0"
