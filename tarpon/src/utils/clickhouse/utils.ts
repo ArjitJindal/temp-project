@@ -429,7 +429,7 @@ export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
     ORDER BY ${table.orderBy}
     PRIMARY KEY ${table.primaryKey}
     ${table.partitionBy ? `PARTITION BY ${table.partitionBy}` : ''}
-    SETTINGS index_granularity = 8192
+    SETTINGS index_granularity = 8192, enable_json_type = 1
   `
 }
 
@@ -667,7 +667,7 @@ export const createMaterializedTableQuery = (
     ORDER BY ${view.orderBy}
     PRIMARY KEY ${view.primaryKey}
     ${view.partitionBy ? `PARTITION BY ${view.partitionBy}` : ''}
-    SETTINGS index_granularity = 8192
+    SETTINGS index_granularity = 8192, enable_json_type = 1
   `
 }
 
