@@ -21,6 +21,7 @@ import { PaymentDetailsScreeningRuleParameters } from '@/services/rules-engine/t
 import { hasFeature } from '@/core/utils/context'
 import { getRandomRuleQueues } from '@/core/seed/data/rule-queue'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
+import { GenericSanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/generic-sanctions-consumer-user'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -1669,6 +1670,113 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   // reseed the rng to get different values for the next rule
   rng.setSeed(USER_RULES_SEED + 5)
 
+  const r17RuleInstance: RuleInstance[] = [
+    {
+      id: 'hODvd2',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      ruleId: 'R-17',
+      casePriority: 'P1',
+      parameters: {
+        fuzziness: 20,
+        screeningTypes: ['SANCTIONS', 'PEP'],
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+        fuzzinessRange: {
+          lowerBound: 0,
+          upperBound: 20,
+        },
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'SCP-1',
+      } as GenericSanctionsConsumerUserRuleParameters,
+      action: 'BLOCK',
+      type: 'USER',
+      ruleNameAlias: 'Screening on Consumer users',
+      ruleDescriptionAlias:
+        'Sanctions/PEP/Adverse media screening on Consumer users.',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'BLOCK',
+        HIGH: 'BLOCK',
+        MEDIUM: 'BLOCK',
+        LOW: 'BLOCK',
+        VERY_LOW: 'BLOCK',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      checksFor: ['Username', 'User’s Y.O.B'],
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
   // reseed the rng to get different values for the next rule
   rng.setSeed(TRANSACTION_RULES_SEED + 6)
 
@@ -2377,6 +2485,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r1RuleInstance,
     ...r2RuleInstance,
     ...r8RuleInstance,
+    ...r17RuleInstance,
     ...r30RuleInstance,
     ...r32RuleInstance,
     ...r120RuleInstance,
