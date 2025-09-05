@@ -424,6 +424,16 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'SCREENING_ALERTS_EXPORT': {
+          await sendBatchJobCommand({
+            type: 'SCREENING_ALERTS_EXPORT',
+            tenantId: tenantId,
+            parameters: {
+              includeMatchedEntityDetails: true,
+            },
+          })
+          break
+        }
         case 'CLICKHOUSE_DATA_BACKFILL': {
           await sendBatchJobCommand({
             type: 'CLICKHOUSE_DATA_BACKFILL',

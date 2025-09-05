@@ -530,6 +530,17 @@ export type EddReviewBatchJob = {
   }
 }
 
+export type ScreeningAlertsExportBatchJob = {
+  type: 'SCREENING_ALERTS_EXPORT'
+  tenantId: string
+  parameters?: {
+    provider?: SanctionsDataProviderName
+    fromTimestamp?: number
+    toTimestamp?: number
+    includeMatchedEntityDetails?: boolean
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -588,6 +599,7 @@ export type BatchJob =
   | BatchRerunUsers
   | ScreeningProfileDataFetchBatchJob
   | EddReviewBatchJob
+  | ScreeningAlertsExportBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

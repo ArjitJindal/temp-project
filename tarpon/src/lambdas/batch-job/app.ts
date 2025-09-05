@@ -133,6 +133,7 @@ export const jobDecisionHandler = async (
     BATCH_RERUN_USERS: 'FARGATE',
     EDD_REVIEW: 'LAMBDA',
     SCREENING_PROFILE_DATA_FETCH: 'FARGATE',
+    SCREENING_ALERTS_EXPORT: 'FARGATE',
   }
 
   return {

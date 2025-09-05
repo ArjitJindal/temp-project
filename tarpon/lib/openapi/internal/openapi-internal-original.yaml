@@ -7395,13 +7395,12 @@ paths:
                   - $ref: '#/components/schemas/SimulationRiskLevelsJob'
                   - $ref: '#/components/schemas/SimulationBeaconJob'
                   - $ref: '#/components/schemas/V8RiskSimulationJob'
-      parameters: []
-    parameters:
-      - schema:
-          type: string
-        name: jobId
-        in: path
-        required: true
+      parameters:
+        - schema:
+            type: string
+          name: jobId
+          in: path
+          required: true
   /simulation/tasks/{taskId}/results:
     get:
       summary: Get a simulation task result by task ID
@@ -10613,6 +10612,7 @@ components:
         - PNB_PULL_USERS_DATA
         - CLICKHOUSE_DATA_BACKFILL
         - SYNC_DATABASES
+        - SCREENING_ALERTS_EXPORT
     CrmIntegrationNames:
       title: CrmIntegrationNames
       type: string

@@ -42,6 +42,7 @@ import { SanctionsScreeningDetailsMigrationBatchJobRunner } from './sanctions-sc
 import { GoCardlessBackfillBatchJobRunner } from './go-cardless-backfill'
 import { ScreeningProfileDataFetcherBatchJobRunner } from './screening-profile-data-fetcher'
 import { EddReviewBatchJobRunner } from './edd-review-batch-job-runner'
+import { ScreeningAlertsExportBatchJobRunner } from './screening-alerts-export-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -96,6 +97,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new SimulationV8RiskFactorsBatchJobRunner(jobId),
     BACKFILL_ASYNC_RULE_RUNS: (jobId) =>
       new BackfillAsyncRuleRunsBatchJobRunner(jobId),
+    SCREENING_ALERTS_EXPORT: (jobId) =>
+      new ScreeningAlertsExportBatchJobRunner(jobId),
     PNB_BACKFILL_ENTITIES: (jobId) =>
       new PnbBackfillEntitiesBatchJobRunner(jobId),
     PNB_BACKFILL_TRANSACTIONS: (jobId) =>
