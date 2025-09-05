@@ -1363,7 +1363,7 @@ export class AlertsService extends CaseAlertsCommonService {
       },
     }
 
-    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const accountsService = AccountsService.getInstance(this.dynamoDb, true)
     let userAccount: Account | undefined = undefined
     if (!externalRequest && userId) {
       userAccount =
