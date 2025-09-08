@@ -646,7 +646,8 @@ const SanctionsSourceTypeTab = ({
       <label className={s.label}>Relevance</label>
       <div className={s.select}>
         <Select
-          mode="TAGS"
+          mode="MULTIPLE"
+          allowNewOptions
           value={config.relevance}
           onChange={handleRelevanceChange}
           options={options[type].map((option) => ({

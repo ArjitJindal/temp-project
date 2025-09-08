@@ -64,7 +64,7 @@ const AssigneesDropdownContent: React.FC<Props> = ({
     <Select<string>
       testId={'assignee-dropdown'}
       fixedHeight={fixSelectorHeight}
-      mode="TAGS"
+      mode="MULTIPLE"
       allowClear={false}
       onSearch={() => {}}
       isDisabled={loadingUsers}

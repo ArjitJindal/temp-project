@@ -63,7 +63,7 @@ describe('InputField component', () => {
           {(inputProps) => (
             <Select<any>
               {...inputProps}
-              mode="TAGS"
+              mode={'MULTIPLE'}
               options={possibleReasons.map((label) => ({ value: label, label }))}
             />
           )}
@@ -105,7 +105,7 @@ describe('InputField component', () => {
           {(inputProps) => (
             <Select<any>
               {...inputProps}
-              mode="TAGS"
+              mode={'MULTIPLE'}
               options={possibleReasons.map((label) => ({ value: label, label }))}
             />
           )}

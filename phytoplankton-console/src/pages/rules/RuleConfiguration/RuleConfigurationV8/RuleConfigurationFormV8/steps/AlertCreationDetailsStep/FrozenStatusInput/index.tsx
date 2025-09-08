@@ -24,7 +24,7 @@ export function FrozenStatusesInput<FormValues extends { frozenStatuses: Derived
     >
       {(inputProps) => (
         <Select
-          mode="TAGS"
+          mode="MULTIPLE"
           {...inputProps}
           onChange={(value) => {
             setFrozenStatuses(value as DerivedStatus[]);

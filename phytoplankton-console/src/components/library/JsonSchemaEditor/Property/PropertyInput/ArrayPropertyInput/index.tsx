@@ -65,7 +65,8 @@ export default function ArrayPropertyInput(props: Props) {
     return (
       <Select
         isCopyable={true}
-        mode="TAGS"
+        allowNewOptions={enumItems.length === 0}
+        mode={'MULTIPLE'}
         options={enumItems
           .filter(isString)
           .map((item, i) => ({ label: getAlias(String(displayNames[i] ?? item)), value: item }))}

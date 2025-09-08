@@ -101,7 +101,8 @@ export const PepStatusForm = (props: PepFormProps) => {
             label: value,
             value: key as CountryCode,
           }))}
-          mode="TAGS"
+          mode="MULTIPLE"
+          allowNewOptions
           isDisabled={isDisabled}
         />
       </Label>

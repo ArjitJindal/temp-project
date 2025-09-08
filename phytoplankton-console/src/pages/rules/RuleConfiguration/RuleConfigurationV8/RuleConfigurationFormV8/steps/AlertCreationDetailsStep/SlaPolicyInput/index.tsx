@@ -18,7 +18,7 @@ function SlaPolicyInput<FormValues extends { slaPolicies?: string[] }>() {
         return (
           <Select<string>
             placeholder="Select from pre defined SLA policy"
-            mode="TAGS"
+            mode="MULTIPLE"
             options={options}
             isLoading={isLoading(slaPoliciesData)}
             {...inputProps}

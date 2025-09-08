@@ -202,10 +202,11 @@ const EXTENDED_DAY_RANGE_GRANULARITY: Option<RiskParameterValueDayRangeEndGranul
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
     options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
-    mode?: 'TAGS';
+    mode?: 'MULTIPLE';
+    allowNewOptions?: boolean;
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [], mode = 'TAGS' } = props;
+  const { value, disabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
@@ -409,7 +410,8 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           value: entry,
           label: entry,
         }))}
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         {...props}
       />
     );
@@ -427,7 +429,8 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           value: entry,
           label: entry,
         }))}
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         {...props}
       />
     );
@@ -467,7 +470,8 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
   TRANSACTION_TYPES: ((props) => {
     return (
       <MultipleSelect
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         options={TRANSACTION_TYPES.map((type) => ({ value: type, label: capitalizeWords(type) }))}
         {...props}
       />

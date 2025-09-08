@@ -105,7 +105,8 @@ const columns = helper.list([
       if (item.type === 'NEW' && newState?.tagType === 'ENUM') {
         return (
           <Select
-            mode="TAGS"
+            mode="MULTIPLE"
+            allowNewOptions
             isDisabled={item.type !== 'NEW' || !canEdit}
             options={
               item.options?.map((option) => ({

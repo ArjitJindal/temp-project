@@ -314,7 +314,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                     >
                       {(inputProps) => (
                         <UserIdsSelect
-                          mode="TAGS"
+                          mode="MULTIPLE"
                           {...inputProps}
                           placeholder={`Search for ${settings.userAlias} ID`}
                         />
@@ -328,7 +328,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                       {(inputProps) => {
                         return (
                           <Select<string>
-                            mode="TAGS"
+                            mode="MULTIPLE"
                             options={getOr(queryResults.data, []).map((list) => ({
                               label: list.metadata?.name || list.listId,
                               value: list.listId,
@@ -349,7 +349,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                     >
                       {(inputProps) => (
                         <TransactionIdsSelect
-                          mode="TAGS"
+                          mode="MULTIPLE"
                           placeholder="Search for transaction ID"
                           {...inputProps}
                         />

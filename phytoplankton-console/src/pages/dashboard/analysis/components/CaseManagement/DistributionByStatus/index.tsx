@@ -137,7 +137,7 @@ export default function DistributionByStatus(props: WidgetProps) {
         <div key="rule-filter" style={{ display: 'flex', alignItems: 'center', marginRight: 16 }}>
           <Feature name="NEW_FEATURES">
             <Select
-              mode="TAGS"
+              mode="MULTIPLE"
               allowClear
               placeholder="Filter by Rules"
               options={ruleOptions.filter(Boolean) as { value: string; label: string }[]}

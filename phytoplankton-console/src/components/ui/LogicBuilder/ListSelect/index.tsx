@@ -3,7 +3,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { LISTS } from '@/utils/queries/keys';
 import { isFailed, getOr, isSuccess } from '@/utils/asyncResource';
-import Select, { TagsProps as SelectProps } from '@/components/library/Select';
+import Select, { MultipleProps as SelectProps } from '@/components/library/Select';
 import Alert from '@/components/library/Alert';
 
 interface Props extends Pick<SelectProps<string>, 'value' | 'onChange'> {
@@ -28,7 +28,8 @@ export default function ListSelect(props: Props) {
   }
   return (
     <Select<string>
-      mode="TAGS"
+      mode={'MULTIPLE'}
+      allowNewOptions={true}
       allowClear={true}
       options={getOr(res, [])
         .filter((list) => list.subtype !== 'CUSTOM')
