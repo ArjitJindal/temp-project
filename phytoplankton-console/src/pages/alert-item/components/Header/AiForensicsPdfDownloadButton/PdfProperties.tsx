@@ -1,5 +1,7 @@
 import React from 'react';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import s from './index.module.less';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   QuestionResponseProperties,
   QuestionResponseRuleLogic,
@@ -10,6 +12,7 @@ interface Props {
 }
 
 const PdfProperties: React.FC<Props> = ({ item }) => {
+  const { userAlias } = useSettings();
   if (!item.properties?.length) {
     return <div className={s.noData}>No data available</div>;
   }
@@ -48,8 +51,12 @@ const PdfProperties: React.FC<Props> = ({ item }) => {
               <tbody>
                 {columnProperties.map((property, idx) => (
                   <tr key={`col${columnIndex}-${idx}`}>
-                    <td className={s.propertyKey}>{property.key}:</td>
-                    <td className={s.propertyValue}>{property.value || '-'}</td>
+                    <td className={s.propertyKey}>{setUserAlias(property.key, userAlias)}:</td>
+                    <td className={s.propertyValue}>
+                      {typeof property.value === 'string'
+                        ? setUserAlias(property.value, userAlias)
+                        : property.value || '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

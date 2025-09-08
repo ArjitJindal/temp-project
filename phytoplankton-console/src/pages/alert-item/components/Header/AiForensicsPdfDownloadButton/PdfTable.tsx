@@ -1,5 +1,7 @@
 import React from 'react';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import s from './index.module.less';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { QuestionResponseTable } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 
 interface Props {
@@ -7,12 +9,13 @@ interface Props {
 }
 
 const PdfTable: React.FC<Props> = ({ item }) => {
+  const { userAlias } = useSettings();
   if (!item.headers?.length || !item.rows?.length) {
     return <div className={s.noData}>No table data available</div>;
   }
 
   const tableData = {
-    headers: item.headers.map((header) => header.name),
+    headers: item.headers.map((header) => setUserAlias(header.name, userAlias)),
     rows: item.rows.slice(0, 20),
     title: item.title || '',
   };
@@ -28,7 +31,7 @@ const PdfTable: React.FC<Props> = ({ item }) => {
           <tr>
             {item.headers.map((header, index) => (
               <th key={index} className={s.tableHeader}>
-                {header.name}
+                {setUserAlias(header.name, userAlias)}
               </th>
             ))}
           </tr>
@@ -38,7 +41,7 @@ const PdfTable: React.FC<Props> = ({ item }) => {
             <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex} className={s.tableCell}>
-                  {cell || '-'}
+                  {typeof cell === 'string' ? setUserAlias(cell, userAlias) : cell || '-'}
                 </td>
               ))}
             </tr>

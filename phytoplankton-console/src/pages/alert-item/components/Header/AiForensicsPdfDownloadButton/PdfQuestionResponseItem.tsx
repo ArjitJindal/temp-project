@@ -1,4 +1,5 @@
 import React from 'react';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import s from './index.module.less';
 import PdfTable from './PdfTable';
 import PdfProperties from './PdfProperties';
@@ -7,6 +8,7 @@ import PdfStackedBarchart from './PdfStackedBarchart';
 import PdfTimeSeries from './PdfTimeSeries';
 import PdfRuleHit from './PdfRuleHit';
 import PdfEmbedded from './PdfEmbedded';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { QuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { neverReturn } from '@/utils/lang';
 
@@ -16,6 +18,7 @@ interface Props {
 }
 
 const PdfQuestionResponseItem: React.FC<Props> = ({ item, index }) => {
+  const { userAlias } = useSettings();
   const renderContent = () => {
     switch (item.questionType) {
       case 'TABLE':
@@ -44,12 +47,12 @@ const PdfQuestionResponseItem: React.FC<Props> = ({ item, index }) => {
   return (
     <div className={s.questionContainer}>
       <h3 className={s.questionTitle}>
-        {index + 1}. {item.title || `Question ${index + 1}`}
+        {index + 1}. {setUserAlias(item.title || `Question ${index + 1}`, userAlias)}{' '}
       </h3>
 
       {item.summary && (
         <div className={s.questionSummary}>
-          <strong>Summary:</strong> {item.summary}
+          <strong>Summary:</strong> {setUserAlias(item.summary, userAlias)}
         </div>
       )}
 
