@@ -119,6 +119,7 @@ function TooltipRoot(props: Props) {
           className={s.iconContainer}
           aria-describedby={tooltipId}
           {...getReferenceProps()}
+          style={{ maxWidth: 'fit-content' }}
         >
           {children}
         </div>

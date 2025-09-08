@@ -38,7 +38,7 @@ export const FlagrightMLSettings = () => {
           ) : (
             <Tooltip
               title={`Contact us to purchase machine learning features.`}
-              placement="topLeft"
+              placement="topRight"
             >
               <div>
                 <Toggle value={false} isDisabled={true} />
